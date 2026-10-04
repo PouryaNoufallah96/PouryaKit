@@ -49,7 +49,7 @@ failed `Result`, drains chained events to a fixed point, and retries on a fresh 
 - A business receipt `(consumer, event_id)` committed in the receiving module's transaction.
   Wolverine's own inbox dedup is keyed on envelope id and keeps handled envelopes 5 minutes by
   default, so it does not replace this.
-- `Contracts` + implementation project per module; proving sample before Cybernod; publish after proof.
+- `Contracts` + implementation project per module; proving sample first; publish after proof.
 
 ### Where I would change it
 
@@ -512,31 +512,9 @@ compilation.
 **Phase 6 — template and second profile** (optional, after 5)
 - `dotnet new` template extracted from the proven sample; single-service profile with RabbitMQ.
 
-**Phase 7 — Cybernod adoption** (separate exercise, after 5)
-1. Capture current behaviour of one feature path as tests.
-2. Move that path onto the kit's gateway and unit of work, keeping URLs, ids and schema.
-3. Switch its delivery owner once. Cybernod keeps per-module `outbox_messages`, `inbox_messages`
-   and `internal_command_messages` tables plus a consumer-receipt table for each
-   (`StoredMessageExtensions.cs:55-76`). Before cutover, reconcile message rows against those
-   receipts: rows are marked processed even after retries are exhausted
-   (`StoredMessageProcessor.cs:113-138`), while handlers that did succeed are recorded separately
-   (`IdempotentNotificationHandler.cs:32-43`). Map completed consumers into kit receipts so a replay
-   skips them, and decide explicitly what happens to messages whose outcome is unknown.
-   Internal-command receipts are **not** proof of completion: they are written on a separate
-   connection before the business transaction commits (`IdempotencyInternalCommandHandler.cs:36-40`,
-   `IdempotencyService.cs:83-101`), so a receipt can exist for an effect that rolled back. Treat
-   every receipt-present internal command as ambiguous, verify the business effect itself before
-   importing it as complete, and include that crash window in the migration tests.
-   More generally, **classify each receipt by the effect it actually proves**:
-   - a notification receipt whose handler only published to the in-memory channel
-     (`InMemoryEventChannelBus.cs:182-194`) proves a publish attempt, not delivery — reconcile it
-     against the recipient's inbox row;
-   - a receiving receipt whose handler only scheduled a command proves scheduling, not the
-     business effect — carry the pending command forward.
-   Recovered deliveries get a stable identity mapping before any completion marker is imported.
-   Migration tests include: sender receipt present with no recipient inbox row; receiving receipt
-   present with downstream work still pending.
-4. Expand module by module; remove old infrastructure last.
+**Out of scope: existing projects.** The kit is for new projects. Cybernod, Ultrabusiness and the
+other inspected codebases are sources of ideas only; nothing in this plan changes, migrates or
+refactors them. (An earlier draft had a "Cybernod adoption" phase; the owner removed it on 2026-10-04.)
 
 ### Provenance and licensing
 
@@ -620,7 +598,11 @@ evidence goes back to the owner. Where earlier sections differ, this section win
    through Dapper. The generic repository stays small (add, remove, find by id, find/list/any/count
    by specification). To keep `PouryaKit.Domain` dependency-free, the repository and specification
    abstractions live in a new **`PouryaKit.Persistence`** package (references Ardalis.Specification);
-   `PouryaKit.Persistence.EFCore` implements it. Wave 1 is now 13 packages.
+   `PouryaKit.Persistence.EFCore` implements it. Wave 1 is now 13 packages. Verified 2026-10-04 from
+   nuget.org: Ardalis.Specification 9.3.1 and Ardalis.Specification.EntityFrameworkCore 9.3.1 are MIT;
+   the base package has no dependencies on modern .NET; the EF package requires EF Core ≥ 9.0.8 on
+   its `net9.0` target (there is no `net10.0` target, so EF Core 10 compatibility is confirmed at
+   first build). The repository is not archived; its last push was 2025-11-25.
 5. **Module communication.** Same module: Domain Events. Across modules, asynchronous: Integration
    Events through outbox and inbox. Across modules, synchronous, only when genuinely required
    (permission, membership, availability checks): an interface published in the owning module's
@@ -639,6 +621,7 @@ evidence goes back to the owner. Where earlier sections differ, this section win
     protecting becomes a permanent integration or architecture test.
 11. **The kit ships an AI skill/plugin** in the repository so developers and agents can use every
     capability; it is updated with each capability.
+12. **New projects only.** The kit is not used to refactor or migrate any existing project.
 
 ## H. Workflow for every phase
 
@@ -679,4 +662,4 @@ Wolverine's outbox. EF Core/Npgsql for writes, Dapper for reads, native Wolverin
 durable local queues, a business receipt per consumer committed with its effect, and
 transport-neutral messaging contracts so RabbitMQ slots in at wave 2. Run the three spikes first,
 prove everything on a Catalog → Inventory + Billing sample with the acceptance tests in Phases 2–4,
-publish `0.x` privately, then adopt in Cybernod one feature path at a time.
+then publish `0.x` privately for use in new projects. Existing projects are not migrated.

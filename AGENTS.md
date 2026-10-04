@@ -11,6 +11,7 @@ A reusable .NET 10 foundation for modular monoliths built from vertical slices. 
 ## Rules
 
 - The owner's decisions in section G are final. If implementation produces concrete evidence against one, bring the evidence to the owner; do not change the decision silently.
+- The kit is for new projects. Never change, migrate or refactor the reference projects (Cybernod, Ultrabusiness and the others); they are sources of ideas only.
 - One implementation per concern, one naming scheme. Adopting code from a reference project is fine; ending up with two ways to do the same thing is not.
 - Cite upstream repository, commit and repo-relative path in docs and provenance records, never a local machine path.
 - The kit takes no runtime dependency on a reciprocal or commercially licensed package (ADR 0002).
