@@ -72,3 +72,22 @@ outstanding in the host's view. The plan changed after round 5, so the current f
 reviewed in its final form and must not be described as Codex-approved. Core decisions (owned kit, owned
 dispatcher, one container, Result-aware unit of work, per-consumer receipt, Wolverine + PostgreSQL) were
 not challenged in any round. Findings from round 3 onward concerned the sample and the Cybernod migration.
+
+## Second loop — final plan including owner decisions (section G) and workflow (section H)
+
+Reviewer: Codex gpt-6-astra, effort high, fresh session. Budget: 3 rounds. Plan now excludes any
+migration of existing projects.
+
+### Round 1 — completed, REVISE, plan sha 0767fe99…
+
+| Id | Sev | Finding | Host disposition |
+|---|---|---|---|
+| PK-001 | high | Rollback-only is checked before the drain; a nested command failing inside a domain reaction could still commit | Accepted. Failed reaction Results stop the drain; flag rechecked after the drain; acceptance case added |
+| PK-002 | medium | A Dapper write to an aggregate table joins the transaction but bypasses versioning and snapshots | Accepted. Dapper writes limited to non-aggregate tables; architecture test added |
+
+### Round 2 — completed, **APPROVED**, plan sha e3d99098…
+
+PK-001 and PK-002 confirmed resolved; no further material defects. Approval is bound to that exact
+plan hash and covers the plan only: upstream source claims, package compatibility, licensing and
+Wolverine runtime behaviour were not independently verified by the reviewer, and the Phase 0 spikes
+and runtime acceptance checks remain outstanding.

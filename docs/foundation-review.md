@@ -167,7 +167,7 @@ reason: a `Core` project that everything references.
 | Module definition, gateway | Cybernod API shape | **Adapt API, replace internals** | `GatewayProcessor.cs:24-40`, `ModuleExtensions.cs:143-157` | No collection snapshot, no static registries; scope opened in the host container |
 | EF base, audit, soft delete | Cybernod / CNK fragments | **Adapt** | CNK `EfDbContextBase.cs:44-71`; Cybernod `AuditableEntityInterceptor` | Audit stamping and soft-delete conversion run as an explicit *prepare* step of the unit of work, before snapshots are built, not as `SaveChanges` interceptors that change state afterwards (CNK's `SoftDeleteInterceptor.cs:30-35` flips a shadow flag only during save; its interceptors are also never attached: `…EfCore.Postgres/…/DependencyInjectionExtensions.cs:56-59,88`). Deletion state is a real property the mapper can read. No event dispatch inside interceptors |
 | Postgres registration, schema-per-module | Cybernod | **Adapt** | `EfCorePostgresExtensions.cs:34-58,98-111` | Remove global `EnableLegacyTimestampBehavior`, pgvector, `EnableRetryOnFailure` |
-| Dapper reads | Cybernod | **Adapt** | `BuildingBlocks.Persistence.EfCore.Postgres/DbConnectionFactory.cs:19-31` already returns a fresh caller-owned connection from `NpgsqlDataSource` (CNK, mm-ddd and Ultrabusiness cache one per scope) | Move into the Dapper package without the EF reference; add an explicit way for a module-internal Dapper write to join the unit-of-work transaction, which Cybernod lacks |
+| Dapper reads | Cybernod | **Adapt** | `BuildingBlocks.Persistence.EfCore.Postgres/DbConnectionFactory.cs:19-31` already returns a fresh caller-owned connection from `NpgsqlDataSource` (CNK, mm-ddd and Ultrabusiness cache one per scope) | Move into the Dapper package without the EF reference; add an explicit way for a module-internal Dapper write to join the unit-of-work transaction, which Cybernod lacks. **Dapper writes are limited to non-aggregate tables** (read models, projections); aggregates change only through the tracked EF path, otherwise versioning and snapshots are bypassed |
 | Durable messaging | WolverineFx 6.45 (MIT) | **Use package** | native EF outbox in the same `SaveChangesAsync`, durable local queues, PostgreSQL store | Wire correctly: publish through the enrolled `IDbContextOutbox<T>` (CNK enrolls one object and sends through another: `WolverineMessagePersistenceService.cs:30-32,122-143`) |
 | Wolverine policy block | Woo | **Extract** | `Wolverine/Extensions.cs:38-60,109-142` | Remove RabbitMQ; explicit queue naming |
 | Receiving receipt | proposal design; mm-ddd internal-command idea | **New** | no candidate commits receipt with effect | Unique `(consumer, event_id)` insert on the module transaction |
@@ -245,7 +245,9 @@ Notes on the choices:
   `Microsoft.EntityFrameworkCore.Design` at runtime.
 - **The commit sequence is fixed and owned by the unit of work:**
   1. handler returns; a failed `Result` or rollback-only flag ends here with rollback;
-  2. drain domain events sequentially to a fixed point (depth guard);
+  2. drain domain events sequentially to a fixed point (depth guard); a failed handler `Result`
+     stops the drain, and the rollback-only flag is checked again after the drain — a nested
+     command that failed inside a reaction rolls everything back even if the reaction ignored it;
   3. prepare persistence: audit fields, soft-delete conversion, change detection, one `Version`
      bump per changed aggregate;
   4. build snapshots from that final state — a deleted aggregate yields a versioned tombstone;
@@ -478,7 +480,8 @@ compilation.
 - Done when, with two aggregates and no per-aggregate helper: failed Result rolls back (rows 2);
   no-event command saves (3); chained events drain once, a cycle fails visibly (5); handlers are
   sequential (6); nested command joins, and a nested failure of any kind (handler, validation,
-  authorization) forces rollback even when the outer handler ignores it (12); a transient
+  authorization) forces rollback even when the outer handler — or a domain event handler during
+  the drain — ignores it, with business changes and outbox rows both gone (12); a transient
   failure never replays on a used DbContext (13); Dapper read lease is explicit and a Dapper write
   can join the module transaction (15); reading a soft-deleted row through Dapper returns `NotFound`
   and list queries omit it; two scopes updating the same aggregate — once with events,
@@ -488,7 +491,7 @@ compilation.
 - Adapt: Cybernod gateway API, endpoint convention, ProblemDetails mapping.
 - Done when: module scopes are created and disposed per operation; a missing module fails startup;
   `ValidateOnBuild` passes; architecture tests (with negative cases) reject cross-module references,
-  handler-level `SaveChanges`, and transport types in features; HTTP tests cover 400/404/409 mapping, including an
+  handler-level `SaveChanges`, and transport types in features; an architecture test rejects Dapper writes to aggregate tables; HTTP tests cover 400/404/409 mapping, including an
   empty id returning a validation response with nothing persisted.
 
 **Phase 4 — `PouryaKit.Messaging`, `PouryaKit.Messaging.Wolverine`, sample Inventory + Billing** (needs 3, S1, S2)
