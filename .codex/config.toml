@@ -1,0 +1,12 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+# Project config for PouryaKit. Codex loads it only when this repository is trusted in
+# ~/.codex/config.toml. Sandbox and approval policy stay with the user's own config.
+
+model = "gpt-6-astra"
+model_reasoning_effort = "high"
+# Reviews stay on Astra even when a session is started on another model.
+review_model = "gpt-6-astra"
+
+[agents]
+default_subagent_model = "gpt-6.1-sol"
+default_subagent_reasoning_effort = "high"

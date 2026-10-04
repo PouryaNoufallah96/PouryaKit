@@ -1,0 +1,7 @@
+{
+  "name": "kit-cockpit",
+  "version": "0.1.0",
+  "description": "A one-line band for the orchestrating session, and a Keep blocked / Run it once question when the guard hook denies one of its shell commands",
+  "author": { "name": "PouryaKit" },
+  "types": "./types/index.d.ts"
+}

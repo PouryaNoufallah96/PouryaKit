@@ -632,14 +632,17 @@ No test-first default. Each ticket goes through:
 
 1. **Implement** — Opus builds from the ticket.
 2. **Focused tests** — tests for the behaviour that matters; no redundant coverage.
-3. **Two independent reviews in parallel** — a Fable subagent and Codex (GPT-6 Astra, high or xhigh).
-4. **Fix and re-review** until the gates below hold.
+3. **Review, sized to the ticket** (owner, 2026-10-04) — two independent reviews in parallel, a Fable
+   subagent and Codex (GPT-6 Astra, high), for a ticket that claims a runtime guarantee or changes a
+   public API of the kit; one reviewer for any other ticket; none for a clear, small change.
+4. **One fix round, then a re-score** of the accepted findings only. A new full review only after a
+   high finding was fixed; a remaining medium or low finding gets a recorded disposition.
 5. **Runtime proof** where the ticket claims a runtime guarantee (PostgreSQL in Testcontainers).
 6. **Docs** — update documentation and C4 diagrams; run `/archify-review`.
 7. **AI setup** — add, update, simplify or remove the kit's skills, rules and agent docs, following
    `/skill-creator` and `/writing-for-agents`.
 
-Completion gates: relevant tests green · no unresolved actionable review finding · runtime proof
+Completion gates: relevant tests green · no open high finding and a recorded disposition for the rest · runtime proof
 where applicable · docs in sync · AI guidance in sync.
 
 ### Found incidentally in Cybernod (not part of this plan)
