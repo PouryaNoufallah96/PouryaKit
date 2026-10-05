@@ -23,6 +23,7 @@ public static class EfCoreServiceCollectionExtensions
                 provider.GetRequiredService<Operation>()
             ));
             services.TryAddScoped(typeof(IRepository<,>), typeof(EfRepository<,>));
+            services.TryAddScoped<IUnitOfWorkConnection, EfUnitOfWorkConnection>();
             return services;
         }
     }
