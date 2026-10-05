@@ -14,6 +14,8 @@ metadata:
 - macOS BSD `sed -E` silently ignores `\b` (no match, no error); use `[[:<:]]word[[:>:]]` for word boundaries, then grep to confirm the rename.
 - `check-ai-setup.py` parses frontmatter with a tiny YAML subset: a plain scalar containing `": "`, `" #"`, or ending in `:` fails. Write skill descriptions without colons.
 - Ticket #8: the guard hook refuses `rm -r` anywhere but system temp; delete files one by one, then `rmdir` the empty folders. Mutation checks: copy the file to the scratchpad, mutate with a python heredoc, run, copy back.
+- #8 fix round: `git merge-base … && echo` and `cd <memory dir> && git …` compounds were refused; run each git command alone. The worktree started at `33fd974` again.
+- An `AsyncLocal` write inside an awaited async method never flows back to the caller, so asserting `DomainClock.Current` after awaiting the dispatcher cannot fail; test binding restore synchronously (see `tests/ModularMonolith.Tests/TestClockTests.cs`).
 - No pyyaml/actionlint on the machine: `ruby -ryaml` parses YAML; `python3 -m venv <scratchpad>/venv && pip install actionlint-py` gives actionlint.
 
 **Why:** each cost a retry during ticket #4.

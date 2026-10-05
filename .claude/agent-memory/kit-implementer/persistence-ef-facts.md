@@ -17,6 +17,7 @@ Verified in ticket #8 (2026-10-05), EF Core 10.0.12, Npgsql EF 10.0.3, EFCore.Na
 - Ardalis.Specification.EntityFrameworkCore 9.3.1 restores and evaluates fine on EF Core 10; its `RepositoryBase.AddAsync` calls SaveChanges, so use only `SpecificationEvaluator.Default.GetQuery`.
 - dotnet-ef 10.0.12: `--namespace` puts the model snapshot in a folder named after the namespace; pass `--output-dir` only. A test-project migration was generated with a temporary `IDesignTimeDbContextFactory` + temporary Design package, both removed after.
 - `dotnet new tool-manifest` on SDK 10.0.401 writes `dotnet-tools.json` at the repo root; move it to `.config/`.
+- `HostFixture` migrates from a scope of the built, not yet started Host, then starts it (review F2): a hosted service (Wolverine, #15) must find its tables at start. The Proving Sample's own packages are recorded in `docs/provenance/ModularMonolith.md`.
 - `tests/PouryaKit.Cqrs.Tests` holds deliberately invalid operations: never `AddPouryaKitCqrs(thatAssembly)`; register test handlers by hand.
 
 **Why:** each cost a run or a design detour; #9-#16 build on these seams.

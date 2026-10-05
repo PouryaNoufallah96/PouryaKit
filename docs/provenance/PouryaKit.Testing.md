@@ -21,7 +21,7 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
 - **Adoption:** pattern
 - **Ticket:** #8
 - **Intentional differences:**
-  - The fixture also hosts the application: the consuming test builds its Host, and the fixture starts it and applies every Module's migrations, found as the DbContexts registered in the Host.
+  - The fixture also hosts the application: the consuming test builds its Host, and the fixture applies every Module's migrations, found as the DbContexts registered in the Host, and then starts it.
   - The data is reset before each test by a base test class; a reset failure fails the test instead of being written to the message sink.
   - No configuration binding, container name or database-creation check; the image is pinned.
   - Operations are sent through a Module's Gateway, as the application sends them.
