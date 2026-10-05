@@ -125,9 +125,11 @@ public sealed class IndependentDeliveryTests(AppFixture app) : HostTest<AppFixtu
             await dying.DisposeAsync();
         }
 
-        // The ledger was delivered once; the archive twice, its handler running only in the new Host.
+        // The ledger was delivered once. The archive was attempted in the dying Host, then recovered: by the new Host,
+        // and sometimes in the same moment by the fixture's own Host, which runs on the same store as the same Solo
+        // node; the Receipt stops the later of two such runs. Its handler ran once, outside the dying Host.
         Assert.Single(DeliveryProbes.AttemptsOf(Circulation.Ledger, circulated.Id));
-        Assert.Equal(2, DeliveryProbes.AttemptsOf(Circulation.Archive, circulated.Id).Count);
+        Assert.InRange(DeliveryProbes.AttemptsOf(Circulation.Archive, circulated.Id).Count, 2, 3);
         Assert.Single(Circulation.RunsOf(Circulation.Ledger, text));
         Assert.Single(Circulation.RunsOf(Circulation.Archive, text));
         Assert.Equal((1L, 1L), (await CopiesAsync(Circulation.Ledger, text), await CopiesAsync(Circulation.Archive, text)));

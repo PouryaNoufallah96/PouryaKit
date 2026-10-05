@@ -109,6 +109,7 @@ internal enum TrayEdit
 {
     Remove,
     PullPin,
+    PullPinThenRemove,
 }
 
 // Edits the tray and records every entry state the save itself changes to Added, Modified or Deleted, which a save
@@ -131,13 +132,14 @@ internal sealed class EditTrayCommandHandler(IRepository<Tray, TrayId> trays, St
         };
 
         var tray = (await trays.FindAsync(new TrayId(command.TrayId), cancellationToken))!;
-        if (command.Edit == TrayEdit.Remove)
-        {
-            trays.Remove(tray);
-        }
-        else
+        if (command.Edit is TrayEdit.PullPin or TrayEdit.PullPinThenRemove)
         {
             tray.PullPin();
+        }
+
+        if (command.Edit is TrayEdit.Remove or TrayEdit.PullPinThenRemove)
+        {
+            trays.Remove(tray);
         }
 
         return log;

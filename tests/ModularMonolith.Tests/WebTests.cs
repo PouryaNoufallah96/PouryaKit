@@ -218,6 +218,33 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.DoesNotContain(logs.Entries, entry => entry.Level >= LogLevel.Error);
     }
 
+    // Routing refuses both itself, before any endpoint or exception handler runs.
+    [Theory]
+    [InlineData("POST", "text/plain", HttpStatusCode.UnsupportedMediaType)]
+    [InlineData("PUT", "application/json", HttpStatusCode.MethodNotAllowed)]
+    public async Task A_request_routing_refuses_answers_its_status_as_a_problem_response_and_nothing_is_saved(
+        string method,
+        string contentType,
+        HttpStatusCode status
+    )
+    {
+        using var client = Fixture.Client("ada");
+        using var request = new HttpRequestMessage(new HttpMethod(method), "/catalog/products")
+        {
+            Content = new StringContent(
+                $$"""{"productId":"{{Guid.CreateVersion7()}}","categoryId":"{{Guid.CreateVersion7()}}","name":"Lamp"}""",
+                System.Text.Encoding.UTF8,
+                contentType
+            ),
+        };
+
+        var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        var problem = await ProblemAsync(response, status);
+        Assert.Equal((int)status, problem.GetProperty("status").GetInt32());
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
+    }
+
     [Fact]
     public async Task A_problem_response_is_written_whatever_the_caller_accepts()
     {
