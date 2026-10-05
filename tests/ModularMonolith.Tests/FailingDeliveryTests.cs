@@ -37,19 +37,25 @@ public sealed class FailingDeliveryTests(AppFixture app) : HostTest<AppFixture>(
     public async Task Exhausted_retries_set_only_that_subscriptions_delivery_aside_as_a_dead_letter_never_handled()
     {
         var text = Unique();
+        var circulated = new NoteToCirculateDomainEvent(text);
         Circulation.Fail(Circulation.Archive, text);
 
-        await Fixture.WaitForDeliveriesAsync(() => CirculateAsync(new NoteToCirculateDomainEvent(text)), TestContext.Current.CancellationToken);
+        await Fixture.WaitForDeliveriesAsync(() => CirculateAsync(circulated), TestContext.Current.CancellationToken);
 
         // Found by its subscription, with the Errors of the failed Result that set it aside.
-        var deadLetter = Assert.Single(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken), deadLetter => deadLetter.Subscription == Circulation.Archive);
-        Assert.Equal((WireName, typeof(IntegrationEventHandlerFailedException).FullName), (deadLetter.WireName, deadLetter.ExceptionType));
+        var deadLetter = Assert.Single(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(
+            (Circulation.Archive, WireName, typeof(IntegrationEventHandlerFailedException).FullName),
+            (deadLetter.Subscription, deadLetter.WireName, deadLetter.ExceptionType)
+        );
         Assert.Contains($"{Circulation.Refused.Code} ({Circulation.Refused.Message})", deadLetter.ExceptionMessage);
-        // Its envelope left the Inbox for dead-letter storage instead of being marked handled; the other is handled.
+        // Its envelope left the Inbox for dead-letter storage instead of being marked handled; the other's, delivered
+        // once, is handled.
         Assert.Equal(
             [[$"local://{Circulation.Ledger}/", "Handled"]],
             await Fixture.RowsAsync($"select received_at, status from wolverine.wolverine_incoming_envelopes where message_type = '{WireName}'")
         );
+        Assert.Single(DeliveryProbes.AttemptsOf(Circulation.Ledger, circulated.Id));
         Assert.Equal(1L, await CopiesAsync(Circulation.Ledger, text));
     }
 
@@ -70,7 +76,7 @@ public sealed class FailingDeliveryTests(AppFixture app) : HostTest<AppFixture>(
         await Fixture.ReplayAsync(deadLetter, TestContext.Current.CancellationToken);
 
         Assert.Equal(failedRuns + 1, Circulation.RunsOf(Circulation.Archive, text).Count);
-        Assert.Single(Circulation.RunsOf(Circulation.Ledger, text));
+        Assert.Single(DeliveryProbes.AttemptsOf(Circulation.Ledger, circulated.Id));
         Assert.Empty(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
         Assert.Equal((1L, 1L), (await CopiesAsync(Circulation.Archive, text), await CopiesAsync(Circulation.Ledger, text)));
 

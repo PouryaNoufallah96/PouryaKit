@@ -60,15 +60,21 @@ public sealed class IndependentDeliveryTests(AppFixture app) : HostTest<AppFixtu
     public async Task A_subscription_that_keeps_failing_never_runs_the_one_that_succeeded_again(string failing, string succeeding)
     {
         var text = Unique();
+        var circulated = new NoteToCirculateDomainEvent(text);
         Circulation.Fail(failing, text);
 
         await Fixture.WaitForDeliveriesAsync(
-            () => CirculateAsync(Fixture.Gateway<StubModule>(), new NoteToCirculateDomainEvent(text)),
+            () => CirculateAsync(Fixture.Gateway<StubModule>(), circulated),
             TestContext.Current.CancellationToken
         );
 
-        // Through every retry of the failing one and its dead letter, the other ran once.
-        Assert.Equal(1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count, Circulation.RunsOf(failing, text).Count);
+        // Through every retry of the failing one and its dead letter, the other was delivered once: not even handed
+        // out again for its Receipt to stop.
+        Assert.Equal(
+            1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count,
+            DeliveryProbes.AttemptsOf(failing, circulated.Id).Count
+        );
+        Assert.Single(DeliveryProbes.AttemptsOf(succeeding, circulated.Id));
         Assert.Single(Circulation.RunsOf(succeeding, text));
         Assert.Equal((1L, 0L), (await CopiesAsync(succeeding, text), await CopiesAsync(failing, text)));
     }
@@ -119,9 +125,11 @@ public sealed class IndependentDeliveryTests(AppFixture app) : HostTest<AppFixtu
             await dying.DisposeAsync();
         }
 
+        // The ledger was delivered once; the archive twice, its handler running only in the new Host.
+        Assert.Single(DeliveryProbes.AttemptsOf(Circulation.Ledger, circulated.Id));
+        Assert.Equal(2, DeliveryProbes.AttemptsOf(Circulation.Archive, circulated.Id).Count);
         Assert.Single(Circulation.RunsOf(Circulation.Ledger, text));
         Assert.Single(Circulation.RunsOf(Circulation.Archive, text));
-        Assert.Equal(2, DeliveryProbes.AttemptsOf(Circulation.Archive, circulated.Id).Count);
         Assert.Equal((1L, 1L), (await CopiesAsync(Circulation.Ledger, text), await CopiesAsync(Circulation.Archive, text)));
         Assert.Equal(
             [["Handled"], ["Handled"]],
