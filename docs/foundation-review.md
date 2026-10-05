@@ -546,8 +546,8 @@ food-delivery happy paths. Nothing tests failed-Result rollback, concurrent dupl
 multi-subscriber failure anywhere.
 
 **Inferred, not verified:**
-- Wolverine internals (send timing without an enrolled transaction, queue naming defaults, per-retry
-  scope). WolverineFx is not in the local package cache; claims come from official docs.
+- Wolverine internals: per-retry scope is still unverified (S2). Send timing without an enrolled
+  transaction and queue naming defaults were observed in Spike S1 against WolverineFx 6.46.0; see ADR 0004.
 - Whether Wolverine can route one message to several kit-registered consumers with independent ack
   without app-specific handler classes (S2).
 - Whether `Mediator` 3.x handles `internal` handlers across assemblies (S3). *Resolved, ADR 0002: only
