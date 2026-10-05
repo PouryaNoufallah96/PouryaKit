@@ -1,6 +1,6 @@
 # Provenance records
 
-Every implementation the Kit adopts from another codebase has a provenance record here, so that attribution holds and a later change upstream can be traced to the Kit file it affects. The licensing rules behind it are in plan section E, "Provenance and licensing", and G.
+Every implementation the Kit adopts from another codebase has a provenance record here, so that attribution holds and a later change upstream can be traced to the Kit file it affects. The licensing rules behind it are in plan section E, "Provenance and licensing", and section F, "Decided by the owner", items 2 and 7.
 
 ## Where records go
 
