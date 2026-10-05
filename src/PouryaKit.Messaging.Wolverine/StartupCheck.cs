@@ -7,7 +7,7 @@ using Wolverine.Runtime;
 namespace PouryaKit.Messaging.Wolverine;
 
 // Runs once every hosted service has started, Wolverine included, so it sees the queues as Wolverine built them. A
-// Notification or an Integration Event is durable only when an Outbox writes it in the Unit of Work's commit and its
+// Notification, an Integration Event or a Snapshot is durable only when an Outbox writes it in the Unit of Work's commit and its
 // subscription's queue stores it; otherwise the business change would commit with nothing behind it, so the Host does not start.
 internal sealed class StartupCheck(Subscriptions subscriptions, IServiceProvider services) : IHostedLifecycleService
 {
@@ -21,7 +21,7 @@ internal sealed class StartupCheck(Subscriptions subscriptions, IServiceProvider
         if (!services.GetRequiredService<IServiceProviderIsService>().IsService(typeof(INotificationOutbox)))
         {
             throw new InvalidOperationException(
-                "Notification Handlers or Integration Events are declared, but nothing writes them to an Outbox, so every Operation would commit and none would be delivered. Call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore on the Host."
+                "Notification Handlers, Integration Events or Snapshots are declared, but nothing writes them to an Outbox, so every Operation would commit and none would be delivered. Call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore on the Host."
             );
         }
 

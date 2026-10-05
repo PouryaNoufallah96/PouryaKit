@@ -1,25 +1,29 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
+using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Messaging.Wolverine;
 
-// Runs the mappers in the committing Operation's scope. A mapper and its aggregate may be internal: they are only ever
-// named through reflection, never in generated code.
-internal sealed class SnapshotMappers(Subscriptions subscriptions, IServiceProvider scope) : ISnapshotMappers
+// Runs the mappers in the committing Operation's scope, only those its own Module declared: a declaration for a base
+// type or an interface never reaches another Module's aggregates. A mapper and its aggregate may be internal: they are
+// only ever named through reflection, never in generated code.
+internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation operation, IServiceProvider scope) : ISnapshotMappers
 {
     private static readonly ConcurrentDictionary<SnapshotPublication, Mapping> Mappings = new();
 
-    public bool Declares(Type aggregateType) =>
-        subscriptions.Snapshots.Any(snapshot => snapshot.Aggregate.IsAssignableFrom(aggregateType));
+    private IEnumerable<SnapshotPublication> Declared =>
+        subscriptions.Snapshots.Where(snapshot => subscriptions.Publications[snapshot.Snapshot].Module == operation.Module);
+
+    public bool Declares(Type aggregateType) => Declared.Any(snapshot => snapshot.Aggregate.IsAssignableFrom(aggregateType));
 
     public IReadOnlyList<object> Map(object aggregate, bool removed)
     {
         ArgumentNullException.ThrowIfNull(aggregate);
         return
         [
-            .. subscriptions
-                .Snapshots.Where(snapshot => snapshot.Aggregate.IsInstanceOfType(aggregate))
+            .. Declared
+                .Where(snapshot => snapshot.Aggregate.IsInstanceOfType(aggregate))
                 .Select(snapshot =>
                     Mappings
                         .GetOrAdd(

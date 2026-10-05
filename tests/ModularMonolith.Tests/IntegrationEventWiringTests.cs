@@ -84,7 +84,7 @@ public sealed class IntegrationEventWiringTests
 
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
 
-        Assert.StartsWith("Notification Handlers or Integration Events are declared, but nothing writes them to an Outbox", thrown.Message);
+        Assert.StartsWith("Notification Handlers, Integration Events or Snapshots are declared, but nothing writes them to an Outbox", thrown.Message);
     }
 
     [Fact]

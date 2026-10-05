@@ -1,5 +1,7 @@
+using Catalog.Products.ValueObjects;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
+using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Dapper;
@@ -29,6 +31,17 @@ public sealed class StubModule : IModuleDefinition
         module.PublishSnapshot<Tray, TraySnapshotV1, TraySnapshotMapper>("stub.tray-snapshot.v1", typeof(StubModule));
         module.Subscribe<FolderSnapshotV1, RecordFolderSnapshotIntegrationEventHandler>("stub.folder-snapshots", typeof(StubModule));
         module.Subscribe<TraySnapshotV1, RecordTraySnapshotIntegrationEventHandler>("stub.tray-snapshots", typeof(StubModule));
+        module.PublishSnapshot<Shelf, ShelfSnapshotV1, ShelfSnapshotMapper>("stub.shelf-snapshot.v1", typeof(StubModule));
+        module.Subscribe<ShelfSnapshotV1, RecordSnapshotIntegrationEventHandler<ShelfSnapshotV1>>("stub.shelf-snapshots", typeof(StubModule));
+        module.PublishSnapshot<Counter, CounterSnapshotV1, CounterSnapshotMapper>("stub.counter-snapshot.v1", typeof(StubModule));
+        module.PublishSnapshot<AggregateRoot<ProductId>, ProductKeyedSnapshotV1, ProductKeyedSnapshotMapper>(
+            "stub.product-keyed-snapshot.v1",
+            typeof(StubModule)
+        );
+        module.Subscribe<ProductKeyedSnapshotV1, RecordSnapshotIntegrationEventHandler<ProductKeyedSnapshotV1>>(
+            "stub.product-keyed-snapshots",
+            typeof(StubModule)
+        );
         module.Publish<NoteCirculatedV1>("stub.note-circulated.v1", typeof(StubModule));
         module.Subscribe<NoteCirculatedV1, LedgerCirculatedNoteIntegrationEventHandler>(Circulation.Ledger, typeof(StubModule));
         module.Subscribe<NoteCirculatedV1, ArchiveCirculatedNoteIntegrationEventHandler>(Circulation.Archive, typeof(StubModule));

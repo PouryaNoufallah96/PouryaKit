@@ -126,7 +126,8 @@ internal static class DeliveryProbes
         public void Dispose() => dispose();
     }
 
-    // The subscription whose delivery runs in this scope, once its Receipt is recorded.
+    // The subscription whose delivery runs in this scope, once its Receipt is recorded: the first record, not the
+    // publication record the Outbox writes later in the same scope.
     private sealed class DeliveredSubscription
     {
         public string? Name { get; set; }
@@ -163,7 +164,7 @@ internal static class DeliveryProbes
         public async Task<bool> RecordAsync(string subscription, Guid messageId, CancellationToken cancellationToken)
         {
             Attempts.Enqueue((subscription, messageId, DateTimeOffset.UtcNow));
-            delivered.Name = subscription;
+            delivered.Name ??= subscription;
             var recorded = await receipts.RecordAsync(subscription, messageId, cancellationToken);
             if (!recorded)
             {
