@@ -17,8 +17,10 @@ public static class WolverineHostApplicationBuilderExtensions
         /// Integration Event Handler a Composition Root subscribed gets its own durable local queue and is delivered,
         /// retried and acknowledged on its own, in a scope begun as a continuation of the Operation that published the
         /// message, in the subscribing Module. A failed Result or an exception is retried after
-        /// <see cref="PouryaKitMessagingOptions.RetryDelays"/>. A stored delivery whose type nothing subscribes to any
-        /// more is set aside as a dead letter, never treated as handled. Wolverine discovers no handlers of its own.
+        /// <see cref="PouryaKitMessagingOptions.RetryDelays"/>, then that subscription's delivery alone is set aside as a
+        /// dead letter in Wolverine's dead-letter storage, received at <c>local://{subscription}/</c>, to inspect and
+        /// replay there. A stored delivery whose type or subscription no longer exists is set aside the same way. None of
+        /// them is ever treated as handled. Wolverine discovers no handlers of its own.
         /// Nothing this overload registers writes an Outbox (<see cref="INotificationOutbox"/>), so a Host that declares
         /// Notification Handlers, Integration Event Handlers or published Integration Events calls the overload of
         /// <c>PouryaKit.Messaging.Wolverine.EFCore</c> instead, or fails when it starts; so does a Host whose

@@ -3,7 +3,8 @@ using Npgsql;
 namespace PouryaKit.Testing;
 
 // Reads deliveries from the Host's message store itself, the record that survives a restart: a delivery is pending
-// while its envelope is neither handled nor dead-lettered, and every envelope an Operation's commit wrote has a row.
+// while its envelope is neither handled nor dead-lettered, or while it is a dead letter marked for replay that the store
+// has not yet moved back, and every envelope an Operation's commit wrote has a row.
 internal sealed class StoredDeliveries(
     string connectionString,
     string schema,
@@ -42,7 +43,9 @@ internal sealed class StoredDeliveries(
             ),
         ];
 
-    /// <summary>Waits until no delivery is pending: every stored envelope is handled or dead-lettered.</summary>
+    /// <summary>
+    /// Waits until no delivery is pending: every stored envelope is handled or dead-lettered, and no replay is waiting.
+    /// </summary>
     public async Task WaitUntilSettledAsync(TimeSpan timeout, CancellationToken cancellationToken)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -57,7 +60,7 @@ internal sealed class StoredDeliveries(
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             throw new TimeoutException(
-                $"Deliveries were still pending after {timeout.TotalSeconds} s: {await PendingAsync(CancellationToken.None)} envelopes in {schema} are neither handled nor dead-lettered."
+                $"Deliveries were still pending after {timeout.TotalSeconds} s: {await PendingAsync(CancellationToken.None)} envelopes in {schema} are neither handled nor dead-lettered, or wait to be replayed."
             );
         }
     }
@@ -71,7 +74,7 @@ internal sealed class StoredDeliveries(
     private async Task<long> PendingAsync(CancellationToken cancellationToken) =>
         (long)(
             await RowsAsync(
-                $"select (select count(*) from {schema}.wolverine_incoming_envelopes where status <> 'Handled') + (select count(*) from {schema}.wolverine_outgoing_envelopes)",
+                $"select (select count(*) from {schema}.wolverine_incoming_envelopes where status <> 'Handled') + (select count(*) from {schema}.wolverine_outgoing_envelopes) + (select count(*) from {schema}.wolverine_dead_letters where replayable)",
                 cancellationToken
             )
         )[0][0];

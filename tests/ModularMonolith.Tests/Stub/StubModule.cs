@@ -29,6 +29,9 @@ public sealed class StubModule : IModuleDefinition
         module.PublishSnapshot<Tray, TraySnapshotV1, TraySnapshotMapper>("stub.tray-snapshot.v1", typeof(StubModule));
         module.Subscribe<FolderSnapshotV1, RecordFolderSnapshotIntegrationEventHandler>("stub.folder-snapshots", typeof(StubModule));
         module.Subscribe<TraySnapshotV1, RecordTraySnapshotIntegrationEventHandler>("stub.tray-snapshots", typeof(StubModule));
+        module.Publish<NoteCirculatedV1>("stub.note-circulated.v1", typeof(StubModule));
+        module.Subscribe<NoteCirculatedV1, LedgerCirculatedNoteIntegrationEventHandler>(Circulation.Ledger, typeof(StubModule));
+        module.Subscribe<NoteCirculatedV1, ArchiveCirculatedNoteIntegrationEventHandler>(Circulation.Archive, typeof(StubModule));
         module.AddSingleton<IntegrationEventLog>();
         module.AddScoped<ReactionLog>();
         module.AddSingleton<DeliveryLog>();

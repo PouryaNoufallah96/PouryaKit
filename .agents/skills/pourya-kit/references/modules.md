@@ -24,6 +24,7 @@ public sealed class CatalogModule : IModuleDefinition
         module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);
         module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
         module.AddPouryaKitNotificationHandlers(typeof(CatalogModule).Assembly, typeof(CatalogModule));   // see messaging.md
+        module.Publish<ProductCreatedV1>("catalog.product-created.v1", typeof(CatalogModule));   // for other Modules; see messaging.md
         module.AddScoped<IProductRepository, ProductRepository>();   // see persistence.md, The repository
         module.AddScoped<ICatalogProducts, CatalogProducts>();       // see Asking another Module a question
         module.AddPouryaKitEndpoints("/catalog", typeof(CatalogModule).Assembly);   // see web.md
@@ -37,7 +38,7 @@ public static WebApplicationBuilder CreateBuilder(string[] args)
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
     builder.Services.AddAuthorization();
     builder.Services.AddPouryaKitWeb();
-    builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>());
+    builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>().Add<InventoryModule>());
     builder.UsePouryaKitWolverine(connectionName: "app");   // the Modules' deliveries; see messaging.md
     return builder;
 }
@@ -46,9 +47,9 @@ public static WebApplicationBuilder CreateBuilder(string[] args)
 ## The Composition Root
 
 - Implement `IModuleDefinition` once per Module, as a public sealed class with a parameterless constructor. Everything else in the Module stays `internal`.
-- `Configure(ModuleBuilder module)` declares everything the Module needs and offers: its data (`UsePostgres`, `MapUniqueConstraint`, `AddPouryaKitDapper`), its Features (`AddPouryaKitCqrs`, `AddPouryaKitValidation`), its Notification Handlers (`AddPouryaKitNotificationHandlers`), its endpoints (`AddPouryaKitEndpoints`) and its own services. `ModuleBuilder` is an `IServiceCollection` over the Host's one container, so every registration extension works on it.
+- `Configure(ModuleBuilder module)` declares everything the Module needs and offers: its data (`UsePostgres`, `MapUniqueConstraint`, `AddPouryaKitDapper`), its Features (`AddPouryaKitCqrs`, `AddPouryaKitValidation`), its Notification Handlers (`AddPouryaKitNotificationHandlers`), the Integration Events it publishes and the Integration Event Handlers it subscribes (`Publish`, `Subscribe`), its endpoints (`AddPouryaKitEndpoints`) and its own services. `ModuleBuilder` is an `IServiceCollection` over the Host's one container, so every registration extension works on it.
 - The Unit of Work registered on a Module's builder becomes that Module's own; every other registration goes into the Host's container as it is.
-- The Host adds each Module once: `builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>().Add<BillingModule>())`. That runs each Composition Root and registers the Module's Gateway.
+- The Host adds each Module once: `builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>().Add<InventoryModule>())`. That runs each Composition Root and registers the Module's Gateway.
 
 ## The Gateway
 
@@ -106,7 +107,7 @@ internal sealed class RemoveProductsCommandAuthorizer(OperationContext context) 
 Setting it:
 
 - Whoever opens an Operation's scope begins it once, before anything in the scope runs, with `scope.ServiceProvider.BeginOperation(context, module)` (`PouryaKit.Cqrs`). The Gateway does this for every call, so Feature code never calls it; only an application of one Module calls it itself (below). Beginning a scope's Operation twice throws.
-- At the HTTP boundary, the Web Capability begins each request's Operation with a context built from the authenticated caller, and the endpoint passes that context to the Gateway ([web.md](web.md#the-caller-and-the-actor)). The delivery of a Notification begins its scope with a continuation of the raising Operation's context and the subscribing Module ([messaging.md](messaging.md#what-the-kit-guarantees)). Integration Events (#16) are not yet available.
+- At the HTTP boundary, the Web Capability begins each request's Operation with a context built from the authenticated caller, and the endpoint passes that context to the Gateway ([web.md](web.md#the-caller-and-the-actor)). The delivery of a Notification begins its scope with a continuation of the raising Operation's context and the subscribing Module, and the delivery of an Integration Event with a continuation of the publishing Notification Handler's delivery and the receiving Module ([messaging.md](messaging.md#what-the-kit-guarantees)).
 
 ## Which Module an Operation belongs to
 
@@ -122,7 +123,7 @@ Setting it:
 
 ## Asking another Module a question
 
-Modules talk in the ways G.5 lists. Inside a Module, Domain Events. Across Modules, an Integration Event by default (#16, not yet available): when a Module reacts to something that happened in another, or keeps its own copy of another's data. A synchronous question only when the asking Operation genuinely needs the answer before it can go on, such as a permission, membership or availability check. Never HTTP or gRPC between Modules of one Host.
+Modules talk in the ways G.5 lists. Inside a Module, Domain Events. Across Modules, an Integration Event by default: when a Module reacts to something that happened in another, or keeps its own copy of another's data. The owning Module publishes it from a Notification Handler after its change commits, and the receiving Module applies it in an Operation of its own, as Inventory opens a stock item for each product Catalog creates ([messaging.md](messaging.md#integration-events-between-modules)). A synchronous question only when the asking Operation genuinely needs the answer before it can go on, such as a permission, membership or availability check. Never HTTP or gRPC between Modules of one Host.
 
 The owning Module publishes the question as an interface in its Contracts project and serves it through its own Gateway. From the Proving Sample, where Catalog answers product questions:
 

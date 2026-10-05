@@ -52,6 +52,7 @@ The Proving Sample's Host composition, one class shared by `Program` and the tes
 ```csharp
 using Catalog;
 using Catalog.Products.Events.Notifications;
+using Inventory;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -68,8 +69,12 @@ public static class ModularMonolithHost
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
         builder.Services.AddAuthorization();
         builder.Services.AddPouryaKitWeb();
-        builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>());
-        builder.UsePouryaKitWolverine(connectionName: "app");   // Notification Handlers' deliveries (messaging.md)
+        builder.AddPouryaKitModules(modules =>
+        {
+            modules.Add<CatalogModule>();
+            modules.Add<InventoryModule>();
+        });
+        builder.UsePouryaKitWolverine(connectionName: "app");   // the Modules' deliveries (messaging.md)
         builder.Services.AddSingleton<INewProductAnnouncer, LoggedNewProductAnnouncer>();
         return builder;
     }

@@ -8,6 +8,7 @@ using PouryaKit.Persistence.EFCore;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
 using Wolverine.Runtime;
+using Wolverine.Util;
 
 namespace PouryaKit.Messaging.Wolverine.EFCore;
 
@@ -39,19 +40,26 @@ internal sealed partial class WolverineOutbox(
         _written = null;
 
         // A message has a route for each of its subscriptions, and none without one.
-        List<(object Message, Dictionary<string, string> Headers)> published =
+        List<(object Message, Guid? DomainEventId, Dictionary<string, string> Headers)> published =
         [
-            .. messages.Select(message => (message, new Dictionary<string, string>())),
+            .. messages.Select(message => (message, (Guid?)null, new Dictionary<string, string>())),
             .. integrationEvents
                 .Take()
                 .Select(e =>
-                    (e.IntegrationEvent, new Dictionary<string, string> { [IntegrationEventHeaders.DomainEventId] = e.DomainEventId.ToString() })
+                    (
+                        e.IntegrationEvent,
+                        (Guid?)e.DomainEventId,
+                        new Dictionary<string, string> { [IntegrationEventHeaders.DomainEventId] = e.DomainEventId.ToString() }
+                    )
                 ),
+            // A Snapshot needs no publication record: the Kit builds one per aggregate and contract in this commit, and
+            // two commits of one version of an aggregate conflict, so its identity is never published twice.
             .. SnapshotStep
                 .Build(dbContext, changedAggregates, snapshotMappers)
                 .Select(built =>
                     (
                         built.Snapshot,
+                        (Guid?)null,
                         new Dictionary<string, string>
                         {
                             [SnapshotHeaders.AggregateId] = built.AggregateId,
@@ -71,8 +79,13 @@ internal sealed partial class WolverineOutbox(
         var outbox = new DbContextOutbox(runtime, []);
         outbox.Enroll(dbContext);
         var context = scope.GetRequiredService<OperationContext>();
-        foreach (var (message, headers) in published)
+        foreach (var (message, domainEventId, headers) in published)
         {
+            if (domainEventId is { } publishedFor)
+            {
+                await RecordPublicationAsync(message, publishedFor, cancellationToken);
+            }
+
             var options = new DeliveryOptions().WithOperationContext(context);
             foreach (var (name, value) in headers)
             {
@@ -83,6 +96,23 @@ internal sealed partial class WolverineOutbox(
         }
 
         _written = outbox;
+    }
+
+    // Two Notification Handlers of one Domain Event that publish one type would send two Integration Events with one
+    // identity, and every receiver's Receipt would drop the second. The publishing Module records each publication, in
+    // its own Receipt table and in this transaction, under a key no subscription name can take (a name has no '#'), so
+    // the second delivery to commit fails instead.
+    private async Task RecordPublicationAsync(object integrationEvent, Guid domainEventId, CancellationToken cancellationToken)
+    {
+        var wireName = integrationEvent.GetType().ToMessageTypeName();
+        // Resolved here, not injected: the Receipts depend on the Unit of Work, which depends on this Outbox.
+        var receipts = scope.GetRequiredService<IReceipts>();
+        if (!await receipts.RecordAsync($"{wireName.ToLowerInvariant()}#published", domainEventId, cancellationToken))
+        {
+            throw new InvalidOperationException(
+                $"Another Notification Handler of the Domain Event {domainEventId} already published {wireName}. One Domain Event yields at most one Integration Event of each type: both would carry its identity, and every receiver would apply only the first."
+            );
+        }
     }
 
     public async Task FlushAsync()
