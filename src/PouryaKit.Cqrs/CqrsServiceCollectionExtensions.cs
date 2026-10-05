@@ -16,12 +16,13 @@ public static class CqrsServiceCollectionExtensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers the dispatcher and every command handler, query handler and authorizer in
+        /// Registers the dispatcher and every command handler, query handler, authorizer and Domain Event Handler in
         /// <paramref name="featureAssemblies"/>, internal types included, and the system <see cref="TimeProvider"/>
         /// unless one is registered: the dispatcher binds it as each Operation's <c>DomainClock</c>, so register a
         /// different one to change the time Operations see. Throws here, at startup, when a command or
-        /// query has no handler or several, when an authorizer is not for one concrete command or query, or when a
-        /// command, query, handler or authorizer is a generic type definition.
+        /// query has no handler or several, when an authorizer is not for one concrete command or query, when a Domain
+        /// Event Handler handles several Domain Event types or an abstract one, or when a command, query, handler or
+        /// authorizer is a generic type definition.
         /// </summary>
         public IServiceCollection AddPouryaKitCqrs(params Assembly[] featureAssemblies)
         {
@@ -46,6 +47,11 @@ public static class CqrsServiceCollectionExtensions
             var authorizers = types
                 .SelectMany(type => AuthorizerInterfaces(type).Select(service => (Implementation: type, Service: service)))
                 .ToList();
+            var domainEventHandlers = types
+                .SelectMany(type =>
+                    DomainEventHandlerInterfaces(type).Select(service => (Implementation: type, Service: service))
+                )
+                .ToList();
 
             var handlersByOperation = handlers.ToLookup(handler => handler.Service!.GenericTypeArguments[0]);
             var operations = types.Where(IsOperation).Concat(handlersByOperation.Select(group => group.Key)).Distinct();
@@ -54,7 +60,12 @@ public static class CqrsServiceCollectionExtensions
                 .. classes
                     .Where(type =>
                         type.IsGenericTypeDefinition
-                        && (IsOperation(type) || HandlerBase(type) is not null || AuthorizerInterfaces(type).Any())
+                        && (
+                            IsOperation(type)
+                            || HandlerBase(type) is not null
+                            || AuthorizerInterfaces(type).Any()
+                            || DomainEventHandlerInterfaces(type).Any()
+                        )
                     )
                     .Select(type =>
                         $"{type.FullName} is generic; generic commands, queries, handlers and authorizers are not supported."
@@ -70,6 +81,18 @@ public static class CqrsServiceCollectionExtensions
                     .Select(authorizer =>
                         $"{authorizer.Implementation.FullName} is an authorizer, but not for one concrete command or query; the dispatcher would never run it."
                     ),
+                .. domainEventHandlers
+                    .GroupBy(handler => handler.Implementation)
+                    .Where(handler => handler.Count() > 1)
+                    .Select(handler =>
+                        $"{handler.Key.FullName} handles {handler.Count()} Domain Event types; a Domain Event Handler handles one."
+                    ),
+                // The drain runs the handlers of a Domain Event's exact type, so one for an abstract type never runs.
+                .. domainEventHandlers
+                    .Where(handler => handler.Service.GenericTypeArguments[0].IsAbstract)
+                    .Select(handler =>
+                        $"{handler.Implementation.FullName} handles {handler.Service.GenericTypeArguments[0].Name}, which is abstract; the drain would never run it."
+                    ),
             ];
             if (problems.Count > 0)
             {
@@ -82,6 +105,12 @@ public static class CqrsServiceCollectionExtensions
             }
 
             foreach (var (implementation, service) in authorizers)
+            {
+                services.TryAddEnumerable(ServiceDescriptor.Scoped(service, implementation));
+            }
+
+            services.TryAddScoped(provider => new DomainEventDrain(provider, provider.GetRequiredService<Operation>()));
+            foreach (var (implementation, service) in domainEventHandlers)
             {
                 services.TryAddEnumerable(ServiceDescriptor.Scoped(service, implementation));
             }
@@ -109,6 +138,10 @@ public static class CqrsServiceCollectionExtensions
 
     private static IEnumerable<Type> AuthorizerInterfaces(Type type) =>
         type.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAuthorizer<>));
+
+    private static IEnumerable<Type> DomainEventHandlerInterfaces(Type type) =>
+        type.GetInterfaces()
+            .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDomainEventHandler<>));
 
     private static Type? HandlerBase(Type type)
     {

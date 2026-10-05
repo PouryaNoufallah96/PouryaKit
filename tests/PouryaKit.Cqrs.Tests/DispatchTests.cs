@@ -223,6 +223,17 @@ public sealed class DispatchTests
         Assert.Contains(nameof(IUnitOfWork), error.Message);
     }
 
+    [Fact]
+    public async Task A_unit_of_work_that_reports_success_after_a_later_step_failed_the_operation_throws()
+    {
+        await using var host = TestHost.Build(unitOfWork: typeof(NoRecheckUnitOfWork));
+        using var scope = host.CreateScope();
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => ThingsGateway.CreateThing(Dispatcher(scope)));
+
+        Assert.Contains("rollback-only", error.Message);
+    }
+
     private static IDispatcher Dispatcher(IServiceScope scope) => scope.ServiceProvider.GetRequiredService<IDispatcher>();
 
     private static IReadOnlyList<string> Trace(IServiceScope scope) =>
