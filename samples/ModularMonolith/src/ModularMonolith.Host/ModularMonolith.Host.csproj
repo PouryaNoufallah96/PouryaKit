@@ -5,9 +5,12 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <!-- Wolverine 6 compiles its runtime code with Roslyn from this package; a Kit package never references it. -->
+    <PackageReference Include="WolverineFx.RuntimeCompilation" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Modules\Catalog\Catalog\Catalog.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.Messaging.Wolverine.EFCore\PouryaKit.Messaging.Wolverine.EFCore.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Web\PouryaKit.Web.csproj" />
   </ItemGroup>
 </Project>

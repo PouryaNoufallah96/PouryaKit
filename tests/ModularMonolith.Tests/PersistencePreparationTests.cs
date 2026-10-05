@@ -7,7 +7,6 @@ using Catalog.Products.Features.ListProducts;
 using Catalog.Products.Features.RemoveProducts;
 using Catalog.Products.Features.RenameProduct;
 using Microsoft.Extensions.DependencyInjection;
-using ModularMonolith.Host;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Modularity;
@@ -22,12 +21,10 @@ public sealed class PersistencePreparationTests(AppFixture app) : HostTest<AppFi
     {
         var monday = new DateTimeOffset(2026, 10, 5, 9, 0, 0, TimeSpan.Zero);
         using var clock = new TestClock(monday);
-        // Operations read the Host's TimeProvider, so this Host is built with the test clock in it.
-        var builder = ModularMonolithHost.CreateBuilder(
-            ["--environment", "Development", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
-        );
-        builder.Services.AddSingleton<TimeProvider>(clock.Time);
-        await using var host = ModularMonolithHost.Build(builder);
+        // Operations read the Host's TimeProvider, so this Host is built with the test clock in it. It is started: a new
+        // product's Notification is written to the Outbox, which needs Wolverine running.
+        using var host = Fixture.CreateSecondHost(builder => builder.Services.AddSingleton<TimeProvider>(clock.Time));
+        await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
         var catalog = host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>();
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();
@@ -46,6 +43,7 @@ public sealed class PersistencePreparationTests(AppFixture app) : HostTest<AppFi
             new OperationContext(Actor.Person("bob")),
             TestContext.Current.CancellationToken
         );
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal([monday.UtcDateTime, "alice", monday.UtcDateTime, "alice"], created);
         Assert.Equal([monday.UtcDateTime, "alice", monday.AddHours(1).UtcDateTime, "bob"], await AuditAsync());
