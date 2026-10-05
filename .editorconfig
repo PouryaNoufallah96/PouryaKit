@@ -1,0 +1,33 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+
+[*.{cs,py}]
+indent_size = 4
+
+[*.{csproj,props,slnx,json,yml,yaml,toml,sh,ts,js}]
+indent_size = 2
+
+# The C# 14 and .NET 10 idioms of .claude/rules/kit-code.md that have an analyzer in the SDK. EnforceCodeStyleInBuild
+# runs them in every build, and TreatWarningsAsErrors makes a warning fail it. Extension members, TimeProvider and
+# Guid.CreateVersion7 have no analyzer; review still judges those.
+[*.cs]
+# Collection expressions
+dotnet_diagnostic.IDE0028.severity = warning
+dotnet_diagnostic.IDE0300.severity = warning
+dotnet_diagnostic.IDE0301.severity = warning
+dotnet_diagnostic.IDE0302.severity = warning
+dotnet_diagnostic.IDE0303.severity = warning
+dotnet_diagnostic.IDE0304.severity = warning
+dotnet_diagnostic.IDE0305.severity = warning
+dotnet_diagnostic.IDE0306.severity = warning
+# Primary constructors
+dotnet_diagnostic.IDE0290.severity = warning
+# Auto properties, including the field keyword
+dotnet_diagnostic.IDE0032.severity = warning
+# System.Threading.Lock
+dotnet_diagnostic.IDE0330.severity = warning

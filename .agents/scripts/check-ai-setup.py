@@ -456,7 +456,23 @@ def check_instructions_and_rules() -> None:
             failures.append(f"{rel(workflow)}: first statement must be `export const meta`")
 
 
+def check_conflict_markers() -> None:
+    """No tracked text file holds a merge conflict marker. `=======` alone is a Markdown setext heading, so it is not one."""
+    listed = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True).stdout.decode().split("\0")
+    for name in sorted(set(filter(None, listed))):
+        path = ROOT / name
+        if path.is_symlink() or not path.is_file():
+            continue
+        data = path.read_bytes()
+        if b"\0" in data:  # binary
+            continue
+        for number, line in enumerate(data.decode("utf-8", "replace").splitlines(), start=1):
+            if line.startswith(("<" * 7 + " ", ">" * 7 + " ")):
+                failures.append(f"{name}:{number}: merge conflict marker")
+
+
 def main() -> int:
+    check_conflict_markers()
     check_skills()
     check_mods()
     check_agents()

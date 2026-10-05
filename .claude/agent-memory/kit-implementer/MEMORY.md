@@ -20,3 +20,4 @@
 - [Dead letter and stale time facts](dead-letter-and-stale-time-facts.md) — #17: replay mechanics, stale stored retry reproduced, dying Host without zombie, attempts not runs
 - [Architecture test facts](architecture-test-facts.md) — #19: BCL IL reader, Module/EF model discovery, routing's empty 405/415, Solo-node recovery race
 - [Snapshot facts](snapshot-facts.md) — #18: step 4 in the Outbox write, version gate beside the Receipt, Receipt masks the gate in redelivery tests
+- [Code-style analyzer facts](code-style-analyzer-facts.md) — listing the SDK's real IDE IDs, which C# 14 idioms have one, 2 s rebuilds are real
