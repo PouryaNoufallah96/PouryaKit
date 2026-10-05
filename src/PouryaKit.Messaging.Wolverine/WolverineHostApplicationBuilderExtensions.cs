@@ -34,6 +34,7 @@ public static class WolverineHostApplicationBuilderExtensions
             builder.Services.TryAddScoped<CommandHandler<Deliver>, DeliverHandler>();
             builder.Services.TryAddScoped<IntegrationEventPublisher>();
             builder.Services.TryAddScoped<IIntegrationEventPublisher>(scope => scope.GetRequiredService<IntegrationEventPublisher>());
+            builder.Services.TryAddScoped<ISnapshotMappers, SnapshotMappers>();
             builder.Services.AddSingleton<IWolverineExtension, PouryaKitWolverineExtension>();
             builder.UseWolverine(wolverine =>
             {

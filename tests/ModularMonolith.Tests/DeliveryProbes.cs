@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Persistence.EFCore;
@@ -7,13 +8,14 @@ namespace ModularMonolith.Tests;
 
 /// <summary>
 /// Stop points inside the Kit's delivery, for Integration Event tests: what an Operation of the test's own flow writes
-/// to the Outbox, and a hold on the first delivery of one subscription right after its Receipt is recorded, inside its
-/// still open transaction. Every other Operation and delivery runs as usual.
+/// to the Outbox, and a hold on the first delivery of one subscription right after its Receipt, or its Snapshot's
+/// version, is recorded, inside its still open transaction. Every other Operation and delivery runs as usual.
 /// </summary>
 internal static class DeliveryProbes
 {
     private static readonly AsyncLocal<List<object>?> Written = new();
     private static ReceiptHold? _hold;
+    private static ReceiptHold? _versionHold;
 
     /// <summary>Adds every message the commits of this flow write to the Outbox to <paramref name="written"/>, until disposed.</summary>
     public static IDisposable RecordWritten(List<object> written)
@@ -26,7 +28,14 @@ internal static class DeliveryProbes
     /// Holds the first delivery to <paramref name="subscription"/> that records its Receipt, until released or disposed:
     /// its transaction stays open with the Receipt written and not committed.
     /// </summary>
-    public static ReceiptHold HoldAfterReceipt(string subscription) => _hold = new ReceiptHold(subscription);
+    public static ReceiptHold HoldAfterReceipt(string subscription) => _hold = new ReceiptHold(subscription, () => _hold = null);
+
+    /// <summary>
+    /// Holds the first delivery to <paramref name="subscription"/> that records a Snapshot's version as the newest, until
+    /// released or disposed: its transaction stays open with the version written and not committed.
+    /// </summary>
+    public static ReceiptHold HoldAfterVersion(string subscription) =>
+        _versionHold = new ReceiptHold(subscription, () => _versionHold = null);
 
     /// <summary>Wraps the Host's Outbox and Receipts, after <see cref="CommitProbe.Install"/>.</summary>
     public static void Install(IServiceCollection services)
@@ -49,7 +58,7 @@ internal static class DeliveryProbes
         );
     }
 
-    public sealed class ReceiptHold(string subscription) : IDisposable
+    public sealed class ReceiptHold(string subscription, Action unset) : IDisposable
     {
         private readonly TaskCompletionSource _held = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly TaskCompletionSource _released = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -63,7 +72,7 @@ internal static class DeliveryProbes
         public void Dispose()
         {
             Release();
-            _hold = null;
+            unset();
         }
 
         internal async Task OnRecordedAsync(string recordedFor)
@@ -83,10 +92,15 @@ internal static class DeliveryProbes
 
     private sealed class RecordedOutbox(IUnitOfWorkOutbox outbox) : IUnitOfWorkOutbox
     {
-        public Task WriteAsync(DbContext dbContext, IReadOnlyList<object> messages, CancellationToken cancellationToken)
+        public Task WriteAsync(
+            DbContext dbContext,
+            IReadOnlyList<object> messages,
+            IReadOnlyList<EntityEntry> changedAggregates,
+            CancellationToken cancellationToken
+        )
         {
             Written.Value?.AddRange(messages);
-            return outbox.WriteAsync(dbContext, messages, cancellationToken);
+            return outbox.WriteAsync(dbContext, messages, changedAggregates, cancellationToken);
         }
 
         public Task FlushAsync() => outbox.FlushAsync();
@@ -98,6 +112,22 @@ internal static class DeliveryProbes
         {
             var recorded = await receipts.RecordAsync(subscription, messageId, cancellationToken);
             if (recorded && _hold is { } hold)
+            {
+                await hold.OnRecordedAsync(subscription);
+            }
+
+            return recorded;
+        }
+
+        public async Task<bool> RecordVersionAsync(
+            string subscription,
+            string aggregateId,
+            long version,
+            CancellationToken cancellationToken
+        )
+        {
+            var recorded = await receipts.RecordVersionAsync(subscription, aggregateId, version, cancellationToken);
+            if (recorded && _versionHold is { } hold)
             {
                 await hold.OnRecordedAsync(subscription);
             }

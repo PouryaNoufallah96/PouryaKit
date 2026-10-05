@@ -6,10 +6,10 @@ namespace PouryaKit.Persistence.EFCore;
 
 // The Unit of Work over one DbContext, in the order ADR 0003 and ADR 0004 fixed: begin a transaction, run the command,
 // check its Result and the Operation, drain the Domain Events of every tracked aggregate, check the Operation again,
-// prepare persistence, write the handled Domain Events to the Outbox, save, commit, and only then send them; otherwise
-// roll back, which leaves nothing in the Outbox. A save the database refuses for a concurrent change, or for a unique
-// constraint the Module mapped, rolls back and fails the Operation with an Error. Nothing retries: a retry needs a
-// new scope.
+// prepare persistence, write the handled Domain Events and the Snapshots of the changed aggregates to the Outbox, save,
+// commit, and only then send them; otherwise roll back, which leaves nothing in the Outbox. A save the database refuses
+// for a concurrent change, or for a unique constraint the Module mapped, rolls back and fails the Operation with an
+// Error. Nothing retries: a retry needs a new scope.
 internal sealed class EfUnitOfWork(
     DbContext dbContext,
     Operation operation,
@@ -44,10 +44,10 @@ internal sealed class EfUnitOfWork(
             // Checked again: a Domain Event Handler may have failed, or ignored a nested command that failed.
             if (!operation.IsRollbackOnly)
             {
-                PersistencePreparation.Run(dbContext, context);
+                var changed = PersistencePreparation.Run(dbContext, context);
                 if (outbox is not null)
                 {
-                    await outbox.WriteAsync(dbContext, handled, cancellationToken);
+                    await outbox.WriteAsync(dbContext, handled, changed, cancellationToken);
                 }
 
                 if (await SaveAsync(cancellationToken) is { } refused)

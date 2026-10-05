@@ -16,11 +16,12 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
     {
         /// <summary>
         /// Runs the Host's deliveries on Wolverine with its message store in PostgreSQL: every Module's Unit of Work then
-        /// writes the Domain Events its Operation handled, those with a Notification Handler, and the Integration Events
-        /// its Notification Handler published, those with an Integration Event Handler, to its Outbox in the same commit
-        /// as the change, one durable delivery per subscription, and sends them only after the commit. Each handler's
-        /// delivery records a Receipt in its Module's Unit of Work, so a redelivered or concurrently duplicated
-        /// Notification or Integration Event applies its effect once. The store is the database of the connection string named <paramref name="connectionName"/>,
+        /// writes the Domain Events its Operation handled, those with a Notification Handler, the Integration Events
+        /// its Notification Handler published, and the Snapshots of the aggregates it changed, those with an Integration
+        /// Event Handler, to its Outbox in the same commit as the change, one durable delivery per subscription, and sends
+        /// them only after the commit. Each handler's delivery records a Receipt in its Module's Unit of Work, so a
+        /// redelivered or concurrently duplicated Notification, Integration Event or Snapshot applies its effect once, and
+        /// a Snapshot older than one already applied not at all. The store is the database of the connection string named <paramref name="connectionName"/>,
         /// which every Module's DbContext must also use, in the schema <paramref name="schema"/>; Wolverine creates its
         /// tables there when the Host starts. <see cref="PouryaKitMessageStoreOptions"/> holds the durability mode and
         /// the inbox stale time. Everything <c>UsePouryaKitWolverine()</c> of <c>PouryaKit.Messaging.Wolverine</c> does

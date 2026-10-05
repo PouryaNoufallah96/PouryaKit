@@ -10,10 +10,11 @@ namespace PouryaKit.Persistence.EFCore;
 // Step 3 of the Unit of Work's commit sequence (ADR 0003), run once per Operation after the Domain Event drain and
 // before the save, so nothing changes these fields afterwards: removals of soft-deletable entities become a mark, the
 // cascades of the removals that stay deletions are resolved, every changed aggregate's Version advances by exactly
-// one, and auditable entities are stamped. The save then has nothing left to change.
+// one, and auditable entities are stamped. The save then has nothing left to change. It returns the changed aggregates,
+// each once, whose Snapshots step 4 builds from this final state.
 internal static class PersistencePreparation
 {
-    public static void Run(DbContext dbContext, Func<OperationContext> context)
+    public static IReadOnlyList<EntityEntry> Run(DbContext dbContext, Func<OperationContext> context)
     {
         var entries = dbContext.ChangeTracker.Entries().ToList();
 
@@ -64,6 +65,8 @@ internal static class PersistencePreparation
             entry.Property(nameof(IAuditable.LastChangedAt)).CurrentValue = at;
             entry.Property(nameof(IAuditable.LastChangedBy)).CurrentValue = by;
         }
+
+        return changed;
     }
 
     // The aggregates a changed entry changes: the entry itself when it is an aggregate root, otherwise the aggregates of
