@@ -1,4 +1,5 @@
 using Catalog;
+using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Errors;
 using Catalog.Products.Features.CreateProduct;
 using Catalog.Products.Features.GetProduct;
@@ -31,10 +32,12 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task Get_and_list_read_what_commands_committed_and_a_missing_product_is_not_found()
     {
         var gateway = Fixture.Gateway<CatalogModule>();
+        var furniture = Guid.CreateVersion7();
         var lamp = Guid.CreateVersion7();
         var desk = Guid.CreateVersion7();
-        await gateway.SendAsync(new CreateProductCommand(lamp, "Lamp"), TestContext.Current.CancellationToken);
-        await gateway.SendAsync(new CreateProductCommand(desk, "Desk"), TestContext.Current.CancellationToken);
+        await gateway.SendAsync(new CreateCategoryCommand(furniture, "Furniture"), TestContext.Current.CancellationToken);
+        await gateway.SendAsync(new CreateProductCommand(lamp, furniture, "Lamp"), TestContext.Current.CancellationToken);
+        await gateway.SendAsync(new CreateProductCommand(desk, furniture, "Desk"), TestContext.Current.CancellationToken);
 
         var found = await gateway.QueryAsync(new GetProductQuery(lamp), TestContext.Current.CancellationToken);
         var listed = await gateway.QueryAsync(new ListProductsQuery(), TestContext.Current.CancellationToken);
@@ -43,8 +46,11 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
             TestContext.Current.CancellationToken
         );
 
-        Assert.Equal(new ProductDto(lamp, "Lamp"), found.Value);
-        Assert.Equal([(desk, "Desk"), (lamp, "Lamp")], listed.Value.Select(product => (product.Id.Value, product.Name)));
+        Assert.Equal(new ProductDto(lamp, furniture, "Lamp"), found.Value);
+        Assert.Equal(
+            [(desk, furniture, "Desk"), (lamp, furniture, "Lamp")],
+            listed.Value.Select(product => (product.Id.Value, product.CategoryId.Value, product.Name))
+        );
         Assert.Equal(ProductErrors.NotFound, Assert.Single(missing.Errors));
     }
 

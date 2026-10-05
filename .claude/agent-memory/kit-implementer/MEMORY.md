@@ -4,6 +4,7 @@
 - [Docs verification tools](docs-verification-tools.md) — compile skill snippets, parse Mermaid C4, run dotnet-ef, all from the scratchpad
 - [Persistence and EF facts](persistence-ef-facts.md) — #8: Module UoW routing via keyed IUnitOfWork, EF 10/Npgsql/dotnet-ef/Ardalis gotchas
 - [Dapper facts](dapper-facts.md) — #9: Npgsql warm pool ignores cancelled token, Dapper locks handler registration, seam and test traps
+- [Domain Event drain facts](domain-event-drain-facts.md) — #10: drain in Cqrs, rollback-only as the one failure signal, mutation-proof test tricks
 - [Cqrs design facts](cqrs-design-facts.md) — FluentValidation licence and scanner API, generic failed Result trick, #7 design calls
 - [Worktree inherits main checkout](worktree-inherits-main-checkout.md) — root global.json and Directory.*.props reach a worktree by parent lookup; Spikes need stoppers
 - [Worktree .NET gotchas](worktree-dotnet-gotchas.md) — MTP filter syntax in worktrees (`--filter-class`, not `--filter`); worktree-guard command refusals

@@ -49,6 +49,20 @@ internal sealed class SuccessReportingUnitOfWork : IUnitOfWork
     }
 }
 
+/// <summary>
+/// Breaks the <see cref="IUnitOfWork"/> contract: after the command, a later step sends a nested command that fails, as
+/// a Domain Event Handler may, and the Unit of Work reports the command's success without checking the Operation again.
+/// </summary>
+internal sealed class NoRecheckUnitOfWork(IDispatcher dispatcher) : IUnitOfWork
+{
+    public async Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken)
+    {
+        var result = await command(cancellationToken);
+        _ = await ThingsGateway.RunNested(dispatcher, NestedOutcome.HandlerFails);
+        return result;
+    }
+}
+
 /// <summary>Stands in for the validation package: records the step and fails an invalid operation.</summary>
 internal sealed class ValidationStepStandIn<TOperation>(OperationTrace trace) : IValidationStep<TOperation>
     where TOperation : notnull

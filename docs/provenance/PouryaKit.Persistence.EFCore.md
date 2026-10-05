@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Persistence.EFCore`. Format and rules: [README](README.md).
 
-The Unit of Work (`EfUnitOfWork`), the generic repository (`EfRepository`), the DbContext base (`PouryaKitDbContext`) and the Unit of Work connection (`EfUnitOfWorkConnection`, ticket #9) are new Kit code (plan section B.2, "Unit of work"; ADR 0003; ADR 0004), so they have no record here.
+The Unit of Work (`EfUnitOfWork`), the generic repository (`EfRepository`), the DbContext base (`PouryaKitDbContext`) and the Unit of Work connection (`EfUnitOfWorkConnection`, ticket #9) are new Kit code (plan section B.2, "Unit of work"; ADR 0003; ADR 0004), so they have no record here. The order of the Unit of Work's Domain Event drain is recorded with the drain, in [PouryaKit.Cqrs](PouryaKit.Cqrs.md).
 
 ## Package dependencies
 

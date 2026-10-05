@@ -1,7 +1,7 @@
 using Catalog;
+using Catalog.Categories.Entities;
+using Catalog.Categories.Features.CreateCategory;
 using Catalog.Infrastructure.Data.Context;
-using Catalog.Products.Entities;
-using Catalog.Products.Features.CreateProduct;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
@@ -27,6 +27,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(
             [
                 ["catalog", "__EFMigrationsHistory"],
+                ["catalog", "categories"],
                 ["catalog", "products"],
                 ["stub", "__EFMigrationsHistory"],
                 ["stub", "note_tallies"],
@@ -34,10 +35,15 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
             ],
             tables
         );
-        Assert.Equal(["catalog", "stub"], history.Select(row => row[0]).Distinct());
-        Assert.All(history.DistinctBy(row => row[0]), row => Assert.EndsWith("_Initial", (string)row[1]));
-        // The typed ID is stored as its Guid value with no ID configuration in the Product mapping.
-        Assert.Equal([["id", "uuid"], ["name", "character varying"], ["version", "bigint"]], columns);
+        Assert.Equal(
+            ["catalog Initial", "catalog AddCategories", "stub Initial", "stub NoteTallies"],
+            history.Select(row => $"{row[0]} {((string)row[1]).Split('_', 2)[1]}")
+        );
+        // Typed IDs are stored as their Guid values with no ID configuration in the Product mapping.
+        Assert.Equal(
+            [["id", "uuid"], ["name", "character varying"], ["version", "bigint"], ["category_id", "uuid"]],
+            columns
+        );
     }
 
     [Fact]
@@ -59,14 +65,14 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         await Fixture
             .Gateway<CatalogModule>()
-            .SendAsync(new CreateProductCommand(Guid.CreateVersion7(), "Lamp"), TestContext.Current.CancellationToken);
-        var written = await Fixture.ScalarAsync<long>("select version from catalog.products");
-        await Fixture.RowsAsync("update catalog.products set version = 7");
+            .SendAsync(new CreateCategoryCommand(Guid.CreateVersion7(), "Lamps"), TestContext.Current.CancellationToken);
+        var written = await Fixture.ScalarAsync<long>("select version from catalog.categories");
+        await Fixture.RowsAsync("update catalog.categories set version = 7");
 
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
         var read = await scope
             .ServiceProvider.GetRequiredService<CatalogDbContext>()
-            .Set<Product>()
+            .Set<Category>()
             .SingleAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(0L, written);

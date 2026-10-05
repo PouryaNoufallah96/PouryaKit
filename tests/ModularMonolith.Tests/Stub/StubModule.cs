@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Dapper;
@@ -14,5 +15,6 @@ public sealed class StubModule : IModuleDefinition
         module.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
         module.AddPouryaKitDapper(connectionName: "app", typeof(StubModule).Assembly);
         module.AddPouryaKitCqrs(typeof(StubModule).Assembly);
+        module.AddScoped<ReactionLog>();
     }
 }
