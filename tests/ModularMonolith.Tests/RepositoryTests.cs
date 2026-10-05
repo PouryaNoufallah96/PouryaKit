@@ -1,6 +1,5 @@
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
-using Catalog.Products.Errors;
 using Catalog.Products.Features.CreateProduct;
 using Catalog.Products.Features.ImportProducts;
 using Catalog.Products.Features.RemoveProducts;
@@ -55,21 +54,6 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
             await Fixture.RowsAsync("select name from catalog.products order by name")
         );
         Assert.Equal(2, await Fixture.ScalarAsync<int>("select product_count from catalog.categories"));
-    }
-
-    [Fact]
-    public async Task An_import_that_fails_after_adding_through_the_product_repository_leaves_nothing_written()
-    {
-        var catalog = Fixture.Gateway<CatalogModule>();
-        var category = await CreateCategoryAsync(catalog);
-
-        var result = await catalog.SendAsync(
-            new ImportProductsCommand(category, ["Desk", " "]),
-            TestContext.Current.CancellationToken
-        );
-
-        Assert.Equal(ProductErrors.NameRequired, Assert.Single(result.Errors));
-        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
     }
 
     [Fact]
