@@ -1,3 +1,8 @@
+using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ModularMonolith.Host;
 using ModularMonolith.Tests;
@@ -11,7 +16,10 @@ using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
 
-/// <summary>The Proving Sample's Host, with the test-only <see cref="StubModule"/> beside Catalog.</summary>
+/// <summary>
+/// The Proving Sample's Host, with the test-only <see cref="StubModule"/> beside Catalog, served in memory and
+/// authenticating callers with <see cref="TestAuthentication"/>.
+/// </summary>
 public sealed class AppFixture : HostFixture
 {
     protected override IHost CreateHost(string connectionString)
@@ -20,7 +28,25 @@ public sealed class AppFixture : HostFixture
             ["--environment", "Development", $"--ConnectionStrings:app={connectionString}"]
         );
         builder.AddPouryaKitModules(modules => modules.Add<StubModule>());
-        return builder.Build();
+        builder.WebHost.UseTestServer();
+        builder
+            .Services.AddAuthentication(TestAuthentication.SchemeName)
+            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
+        return ModularMonolithHost.Build(builder);
+    }
+
+    /// <summary>
+    /// A client of the Host's HTTP pipeline, authenticated as the person <paramref name="caller"/>, or anonymous.
+    /// </summary>
+    public HttpClient Client(string? caller = null)
+    {
+        var client = Host.GetTestClient();
+        if (caller is not null)
+        {
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(TestAuthentication.SchemeName, caller);
+        }
+
+        return client;
     }
 
     /// <summary>Every row <paramref name="sql"/> returns, read on a connection of its own.</summary>
