@@ -66,6 +66,17 @@ public sealed class DomainEventTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(expected.Order(StringComparer.Ordinal), texts.Order(StringComparer.Ordinal));
     }
 
+    [Fact]
+    public async Task A_domain_event_that_nothing_handles_does_not_stop_the_operation_from_committing()
+    {
+        var result = await Fixture
+            .Gateway<StubModule>()
+            .SendAsync(new WriteReactingNoteCommand(Reaction.None), TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["None"], (await Fixture.RowsAsync("select text from stub.notes")).Select(row => row[0]));
+    }
+
     [Fact(Timeout = 60_000)]
     public async Task A_cycle_of_domain_events_throws_at_the_depth_limit_and_leaves_nothing_written()
     {
