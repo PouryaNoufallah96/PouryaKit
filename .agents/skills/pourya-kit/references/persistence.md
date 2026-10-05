@@ -87,7 +87,7 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
 
 - One DbContext per Module, `internal sealed`, deriving from `PouryaKitDbContext`, with an empty body. Its conventions store every typed ID declared in its assembly as its value, never map Domain Events, apply every `IEntityTypeConfiguration<T>` in its assembly, and make the Module's schema the default. They also make every aggregate's `Version` its concurrency token and leave every removed soft-deletable entity out of queries. Override `OnModelCreating` only to add to it, and call the base.
 - Write one mapping per aggregate, beside its Business Area, stating only what is specific: table name, lengths, unique indexes, owned types and children, keys the database generates. Write no ID converter, no schema, no concurrency token, no query filter and nothing for the audit or soft-delete properties.
-- A Guid typed ID created by the application (`TypedId.New<ProductId>()`) needs nothing more. A numeric typed ID the database generates needs `builder.Property(note => note.Id).ValueGeneratedOnAdd();` in its mapping, because conventions never make a converted key database-generated. Its `Id` stays null until the Unit of Work saves, after the handler has returned.
+- A Guid typed ID created by the application (`TypedId.New<ProductId>()`) needs nothing more. A numeric typed ID the database generates needs `builder.Property(note => note.Id).ValueGeneratedOnAdd();` in its mapping, because conventions never make a converted key database-generated. Its `Id` stays null until the Unit of Work saves, after the handler has returned, so such an aggregate cannot publish Snapshots ([messaging.md](messaging.md#the-rules-of-a-mapper-and-a-key)).
 - What an aggregate owns is an owned type (`OwnsOne`, `OwnsMany`) or a child entity it holds in a navigation, mapped with a foreign key from that navigation: `builder.HasMany(folder => folder.Pages).WithOne().IsRequired();`. That key is how the Unit of Work finds the aggregate a changed child belongs to. A child the aggregate reaches by no navigation is not part of it, and neither is another aggregate referenced by its typed ID, as `Product.CategoryId` is.
 - Change a part of an aggregate only through the aggregate, loaded through its repository in the same Operation. A changed part whose aggregate the Operation did not load throws `InvalidOperationException` when the Operation commits, and nothing is committed: an aggregate that was not loaded cannot advance its version, so a concurrent change would not conflict.
 
@@ -99,7 +99,7 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
 ## The repository
 
 - Inject `IRepository<TAggregate, TId>`: `AddAsync`, `Remove`, `FindAsync(id)`, and `FindAsync`, `ListAsync`, `AnyAsync`, `CountAsync` by an Ardalis.Specification `Specification<T>`. It tracks changes in the Operation's Unit of Work; nothing on it saves. Feature code reaches its data through it, never through the DbContext.
-- Add and remove only from a command's handler or a Domain Event Handler. `AddAsync` and `Remove` throw `InvalidOperationException` in a query, an authorizer or a validator at any depth, because a query nested in a command would otherwise write into the command's commit.
+- Add and remove only from a command's handler or a Domain Event Handler. `AddAsync` and `Remove` throw `InvalidOperationException` in code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, such as a Snapshot mapper, at any depth, because a query nested in a command would otherwise write into the command's commit.
 
 A named specification and a Feature that uses it, from the Proving Sample's Products Business Area:
 
@@ -183,12 +183,19 @@ internal sealed class ProductRepository(IUnitOfWork unitOfWork)
 
 ## The Unit of Work
 
-- Each command Operation runs in one transaction that the Unit of Work owns. When the outermost handler returns a success and no nested command failed, it runs the Domain Event Handlers and checks again that nothing failed. Then it prepares persistence (soft-delete marks, versions, audit fields; below), writes the Operation's Notifications to the Outbox, saves once and commits, and only after the commit sends the Notifications ([messaging.md](messaging.md#what-the-kit-guarantees)). Nothing changes those fields after the prepare step.
+- Each command Operation runs in one transaction that the Unit of Work owns, and commits in a fixed sequence:
+  1. The outermost handler returns. A failed Result, or a nested command that failed, ends the Operation here.
+  2. The Domain Event Handlers run ([below](#domain-event-handlers)), and the Unit of Work checks again that nothing failed.
+  3. It prepares persistence: soft-delete marks, one version advance per changed aggregate, audit fields ([below](#audit-and-soft-delete)).
+  4. It builds the Snapshot, or the Tombstone, of each changed aggregate that a Snapshot is declared for, from that final state, carrying the version the prepare step set ([messaging.md](messaging.md#snapshots-between-modules)).
+  5. It writes the Operation's Notifications and Snapshots to the Outbox, checks once more that nothing failed, saves once and commits, and only after the commit sends them ([messaging.md](messaging.md#what-the-kit-guarantees)).
+
+  Nothing changes an aggregate after the prepare step: a Snapshot mapper that does fails the Operation.
 - A failed Result, a failed nested command or a failed Domain Event Handler rolls everything back, and nothing is prepared or written to the Outbox. An exception rolls back and reaches the Gateway's caller.
-- The Outbox write and the send are a Kit seam, `IUnitOfWorkOutbox` (`PouryaKit.Persistence.EFCore`), which `UsePouryaKitWolverine(connectionName)` registers. Feature code never uses it.
+- Steps 4 and 5, from the Snapshots to the send, are a Kit seam, `IUnitOfWorkOutbox` (`PouryaKit.Persistence.EFCore`), which `UsePouryaKitWolverine(connectionName)` registers. Feature code never uses it.
 - A save the database refuses for a concurrent change, or for a unique index the Module mapped, rolls everything back and fails the Operation with an Error ([Versions and conflicts](#versions-and-conflicts), [Unique values](#unique-values)). Any other database error stays an exception.
 - Nothing retries: no retrying execution strategy, no retry in the Unit of Work. To retry, send the command again through the Gateway.
-- A plain-SQL write to a Module-internal table that no aggregate maps joins this transaction through `IUnitOfWorkConnection` (`PouryaKit.Persistence`), from a command's handler or a Domain Event Handler only; see [dapper-reads.md](dapper-reads.md).
+- A plain-SQL write to a Module-internal table that no aggregate maps joins this transaction through `IUnitOfWorkConnection` (`PouryaKit.Persistence`), from a command's handler, a Domain Event Handler, or a Notification or Integration Event Handler only; see [dapper-reads.md](dapper-reads.md).
 
 ## Audit and soft delete
 
@@ -200,7 +207,7 @@ Both are opt-in, per aggregate or entity, with a contract from `PouryaKit.Domain
 - Audit: an added entity gets its creation and last change from the Operation; a changed one gets its last change. A change to anything an aggregate owns counts as a change of its root, so an auditable root is stamped then too, and a child moved from one aggregate to another stamps both.
 - Soft delete: `Remove` on the repository of a soft-deletable aggregate keeps its row. The prepare step turns the removal into `IsDeleted = true` with `DeletedAt` and `DeletedBy`, and everything the aggregate owns is kept with it. Removing an aggregate that is not soft-deletable deletes its row.
 - EF Core queries leave a removed entity out by convention, so the repository never returns one in a later Operation. A Dapper read must say `is_deleted = false` itself ([dapper-reads.md](dapper-reads.md)).
-- Removal raises no Domain Event of its own. When other aggregates care, give the aggregate a domain method that raises one and call it before the repository's `Remove`, as `RemoveProducts` above calls `Product.Remove()`. Guard the method so that a second call in the same Operation raises nothing more, as `Product` does.
+- Removal raises no Domain Event of its own; an aggregate that publishes Snapshots publishes its Tombstone ([messaging.md](messaging.md#snapshots-between-modules)). When other aggregates care, give the aggregate a domain method that raises one and call it before the repository's `Remove`, as `RemoveProducts` above calls `Product.Remove()`. Guard the method so that a second call in the same Operation raises nothing more, as `Product` does.
 - Put `ISoftDeletable` on a type EF Core can filter: an aggregate or an entity that is not mapped as an owned type, at the root of its inheritance hierarchy or below a root that implements it too. An owned type, or a type derived from a root that is not soft-deletable, is refused when the model is built.
 - A soft-deletable child is kept when it is removed from its aggregate. It is deleted outright only when its parent is deleted outright and the child's key to that parent is required: its row cannot outlive the parent's. The Unit of Work resolves every such cascade in the prepare step, so the save itself changes nothing further.
 
