@@ -10,6 +10,7 @@ metadata:
 - Seen again in ticket #6: the worktree started at an unrelated old commit (`33fd974`), and `feat/wave-1` moved during the package, so merge its tip before the final verify.
 - The isolation also refuses any `git -C <reference repo>` (and git inside a `for` loop). When the reference checkout's HEAD equals the pinned commit, read its files with the Read tool by absolute path instead.
 - `gh issue view N --comments` printed nothing from the worktree; `gh issue view N --repo PouryaNoufallah96/PouryaKit` plus `gh api repos/PouryaNoufallah96/PouryaKit/issues/N/comments` works.
+- macOS BSD `sed -E` silently ignores `\b` (no match, no error); use `[[:<:]]word[[:>:]]` for word boundaries, then grep to confirm the rename.
 - `check-ai-setup.py` parses frontmatter with a tiny YAML subset: a plain scalar containing `": "`, `" #"`, or ending in `:` fails. Write skill descriptions without colons.
 - No pyyaml/actionlint on the machine: `ruby -ryaml` parses YAML; `python3 -m venv <scratchpad>/venv && pip install actionlint-py` gives actionlint.
 
