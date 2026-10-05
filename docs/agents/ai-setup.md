@@ -18,10 +18,11 @@ One home per concern. Anything both tools use lives in `.agents/` or at the root
 | Guard | `.agents/hooks/guard.py` | Both, wired from `.claude/settings.json` and `.codex/hooks.json` |
 | Mod | `.claude/mods/kit-cockpit/`, linked from `.claude/skills/kit-cockpit` | Claude Code |
 | Status line | `.claude/statusline.sh` | Claude Code, main session, through `statusLine` in `.claude/settings.json` |
-| Claude Code settings | `.claude/settings.json` | Claude Code: subagent default model, agent teams on, the output style, the status line, subagent rows, ask before `git push`, the guard |
+| Claude Code settings | `.claude/settings.json` | Claude Code: subagent default model, agent teams on, the output style, the status line, subagent rows, subagent worktree base, ask before `git push`, the guard |
 | Codex config | `.codex/config.toml` | Codex, once the repository is trusted: model, effort, review model, subagent defaults |
-| Check script | `.agents/scripts/check-ai-setup.py` | Run by hand after any change |
+| Check script | `.agents/scripts/check-ai-setup.py` | Run by hand after any change, and by the `ai-setup` CI job |
 | Role memory | `.claude/agent-memory/kit-implementer/` | Claude Code, for `kit-implementer` only; created on first use, committed |
+| Process docs | `docs/agents/running-a-spec.md`, `docs/agents/spikes.md` | The main session, through the output style and step 6 below. `spikes.md` reaches a Spike's implementer and its record's reviewer through their briefs, as `running-a-spec.md` says; the "Spikes" line of `.claude/rules/kit-code.md` also names it for work under `src/`, `tests/` and `samples/` |
 
 ## Roles
 
@@ -33,7 +34,7 @@ Each role is one pair with the same `name`, `description` and instructions. The 
 | `kit-implementer` | Opus, high | subagent default (GPT-6.1 Sol, high) | writes inside `allowed_files`; in Claude Code it also keeps project memory, the one exception to `allowed_files` |
 | `kit-reviewer` | Fable, high | GPT-6 Astra, high | read-only, no memory |
 
-`kit-reviewer` has no memory on purpose. Role memory is a tracked directory, and a write to it during `/kit-review` would change the tree the Codex leg fingerprints and abort that leg.
+`kit-reviewer` has no memory on purpose: an independent reviewer carries no conclusions from one diff into the next.
 
 The two tools resolve a role's model in a different order:
 
@@ -44,58 +45,62 @@ The two tools resolve a role's model in a different order:
 
 The steps and gates are in `AGENTS.md`, "Workflow for every ticket". This is how each one runs.
 
-**Before step 1: scope and brief.** Read the ticket (`gh issue view <n> --comments`) and record the base commit (`git rev-parse HEAD`). Save the ticket as a spec file outside the checkout, for example:
-
-```bash
-gh issue view 42 --json title,body --jq '"# " + .title + "\n\n" + .body' > /tmp/kit-ticket-42.md
-```
+**Before step 1: scope and brief.** Read the ticket (`gh issue view <n> --comments`) and record the base commit (`git rev-parse HEAD`). `/kit-review` fetches the ticket itself, so no spec file is needed for it.
 
 **Steps 1–2: implement, then focused tests.** Spawn `kit-implementer` with the brief. Check its report against the tree: read the diff and the `verify` output it reports. Re-run a check only when that leaves a doubt; the current models verify their own work, and a second run of everything is wasted time.
 
 **Step 3: review, sized to the ticket.** A ticket that claims a runtime guarantee or changes a public API of the Kit gets the dual review below. Any other ticket gets one `kit-reviewer` subagent with the base and the spec. A clear, small change gets none. The dual review, in Claude Code:
 
 ```text
-Run /kit-review with base <base commit> and spec /tmp/kit-ticket-42.md
+Run /kit-review with base <base commit> and ticket 42
 ```
 
-`kit-reviewer` and a Codex inspection run in parallel; one verification stage then merges duplicate findings and checks each against the code. Optional arguments: `scope` (one line of plain text), `codexEffort` (`high` by default, or `xhigh`), `previousFindings` (for a re-review; see step 4). Prepare these first:
+The work to review must be committed: the review reads one commit, never uncommitted changes. Pass `spec` (a file path, absolute or relative to the repository root) instead of `ticket` only for work with no ticket; exactly one of the two. Optional arguments: `head` (the commit to review; by default the commit your checkout is on when the run starts), `scope` (one line of plain text), `codexEffort` (`high` by default, or `xhigh`), and `previous` with `rescore` for a re-review (step 4). A wrong combination fails at once and says what to pass.
 
-- `spec` is a real UTF-8 file outside the checkout. An untracked spec inside the repository shows up in the inspected change set. Its path uses only letters, digits and `. _ / @ + -`.
-- `base` resolves to a commit.
-- The tree stays unchanged for the whole run. The Codex leg fingerprints tracked and untracked files and fails if anything changes, so no implementer runs meanwhile.
-- A changed submodule or nested repository aborts the Codex leg.
+The workflow resolves `base` and `head` to hashes, saves the ticket's title and body as `spec.md` in a run directory under the system temp directory, and checks `head` out as a detached worktree under `.claude/worktrees/kit-review-<random>`. `kit-reviewer` and a Codex inspection then review that worktree in parallel, and one verification stage merges duplicate findings and checks each against the code. `kit-reviewer` may build and run tests there. When the run ends, on success or failure, the worktree is removed with `git worktree remove`. Your checkout is never read for the diff, so you can keep working, merging and running implementers during a review. A changed submodule or nested repository in the diff still aborts the Codex leg.
 
-The result carries `complete`, `verdict` and the verified `findings`. Each finding has a stable `id` (`F1`, `F2`, …), a status of `confirmed`, `refuted` or `unverified`, and who raised it. `pass`, `fix` and `block` are computed from the findings that were not refuted: `block` when one of them is high, `fix` when any stands, `pass` when none does.
+The value returned is a digest that a task notification shows in full: it stays under about 5.5 KB whatever the number of findings. It starts with `complete`, `verdict`, `result` and, when needed, `cleanup` and `error`, then `counts` and each leg's verdict and one-line `note`. A re-review adds `rescored`, which maps each earlier finding's id to its state. Then come the findings, standing ones first and most severe first, each with only `id`, `severity`, `status`, `path`, `by` (who raised it) and a `claim` of at most 160 characters. When they do not all fit, the claims shrink to 100 and then 60 characters, and after that the list stops where the budget ends, with `omitted` giving how many more are in the file. `result` names the file with the full result: `<run directory>/result.json`, holding every finding's evidence, fix and verification, and each leg's read count and limitations. Read that file when you need more than the digest. If the file could not be written, `result` is null and the full result comes back under `full`, at the end; if the worktree could not be removed, `cleanup` gives the command.
 
-`unknown` is never a pass. It means a leg or the verification stage did not return a usable review. A leg counts only when it reports that it ran, gives a verdict that means "reviewed" (`block`, `fix` or `pass` from `kit-reviewer`; `APPROVED` or `REVISE` from Codex), lists what it read, and its verdict fits its findings. `reviewers.<leg>.note` says which of these failed.
+Each finding has a stable `id` (`F1`, `F2`, …) and a status of `confirmed`, `refuted` or `unverified`. `pass`, `fix` and `block` are computed from the findings that were not refuted: `block` when one of them is high, `fix` when any stands, `pass` when none does.
 
-The main session judges the findings; the workflow edits nothing.
+`unknown` is never a pass. It means a leg or the verification stage did not return a usable review. A leg counts only when it reports that it ran, gives a verdict that means "reviewed" (`block`, `fix` or `pass` from `kit-reviewer`; `APPROVED` or `REVISE` from Codex), read at least one changed file and left none of the diff unread, and its verdict fits its findings. The leg's `note` says which of these failed. When the Codex runner fails, the note quotes the runner's own reason, for example "Selected model is at capacity". The workflow does not retry it.
 
-The Codex leg has about 9.5 minutes, because a foreground shell call is capped at 10. When it runs out, the verdict is `unknown`. Run that leg yourself in the background and judge its findings together with the `kit-reviewer` leg:
+The main session judges the findings; the workflow edits nothing in the reviewed commit.
+
+The Codex leg has about 9.5 minutes, because a foreground shell call is capped at 10. When it runs out, the verdict is `unknown`. Run that leg yourself in the background against a fresh worktree of the same commit, using the `spec.md` from the run directory named in `result`, and judge its findings together with the `kit-reviewer` leg:
 
 ```bash
+git worktree add --detach .claude/worktrees/kit-review-codex <head>
 python3 .agents/skills/claudex-loop/scripts/runner.py inspect --host claude --builder claude \
-  --repo . --plan /tmp/kit-ticket-42.md --base <base commit> \
+  --repo .claude/worktrees/kit-review-codex --plan <run directory>/spec.md --base <base> \
   --model gpt-6-astra --effort high --timeout 1800
+git worktree remove .claude/worktrees/kit-review-codex
 ```
 
-Its first output line names an artifacts directory; `result.json` there holds the verdict, findings, coverage and limitations.
+The runner's first output line names an artifacts directory; `result.json` there holds the verdict, findings, coverage and limitations.
 
-From a Codex-hosted session, spawn the `kit-reviewer` agent for the Codex review and run the Claude inspection through the same runner:
+From a Codex-hosted session, spawn the `kit-reviewer` agent for the Codex review and run the Claude inspection through the same runner, on a worktree of the commit as above, with the ticket saved as a spec file outside the checkout:
 
 ```bash
+gh issue view 42 --json title,body --jq '"# " + .title + "\n\n" + .body' > /tmp/kit-ticket-42.md
 python3 .agents/skills/claudex-loop/scripts/runner.py inspect --host codex --builder codex \
-  --repo . --plan /tmp/kit-ticket-42.md --base <base commit> --model claude-fable-5-1
+  --repo .claude/worktrees/kit-review-codex --plan /tmp/kit-ticket-42.md --base <base> --model claude-fable-5-1
 ```
 
 **Step 4: one fix round, then a re-score.** Give the accepted findings to `kit-implementer` as a new brief. Then have `kit-reviewer` re-score those findings from fresh evidence; that is the default and it ends the loop. Record a disposition for any medium or low finding still open.
 
-Only after a high finding was fixed, run `/kit-review` again with the same `base` and `spec`, and `previousFindings` set to the `findings` array of the previous result (drop the ones you did not accept). `kit-reviewer` re-scores each earlier finding, and Codex inspects the whole change fresh.
+Only after a high finding was fixed and committed, run `/kit-review` again with the same `base` and `ticket`, and `previous` set to the earlier result file:
 
-The result's `rescored` list gives every earlier finding one state: `resolved`, `partial` or `unresolved`. A finding the reviewer did not re-score counts as `unresolved`. Each `partial` or `unresolved` one still stands under its earlier `id`, at no less than its earlier severity, with a `previous` field showing the re-score; a finding new in this round gets the next free `F` number.
-**Step 5: runtime proof.** The main session runs the proof commands itself; the reviewers only inspect.
+```text
+Run /kit-review with base <base commit>, ticket 42, previous <earlier result file> and rescore F1,F3
+```
 
-**Steps 6–7: docs and AI guidance.** After updating the AI guidance, run the check script (below).
+`rescore` is optional: leave it out to re-score every earlier finding that was not refuted, or list the ids you accepted. `kit-reviewer` re-scores each of them, and Codex inspects the whole change fresh. If the earlier findings do not all reach the reviewer, the run stops with `unknown` before reviewing.
+
+The digest's `rescored` map gives each of them one state: `resolved`, `partial` or `unresolved`. A finding the reviewer did not re-score counts as `unresolved`. Each `partial` or `unresolved` one still stands under its earlier `id`, at no less than its earlier severity, and the full result shows its re-score under `previous`; a finding new in this round gets the next `F` number after the highest one any earlier round used, so an id is never reused.
+**Step 5: runtime proof.** The main session runs the proof commands itself.
+
+**Steps 6–7: docs and AI guidance.** The value, cost and impact paragraph goes in the ticket's closing comment, whose other contents `docs/agents/running-a-spec.md` lists; `/archify-review` runs at the wave's close-out. After updating the AI guidance, run the check script (below).
 
 ## The main session in Claude Code
 
@@ -104,6 +109,8 @@ The result's `rescored` list gives every earlier finding one state: `resolved`, 
 **Agent teams.** `.claude/settings.json` enables them with `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`. Set the variable to `0` in `.claude/settings.local.json` (your own, untracked file) to turn them off for yourself. A session has one team, and teammates are not restored on resume.
 
 **Status line.** `statusLine` runs `.claude/statusline.sh`, which prints one line for the main session, such as `Opus 5.5 · xhigh · ctx 42% · 5h 31% · main · kit-orchestrator`: model, effort, context use, the five-hour limit, branch, and the output style when it is not the default. A part the payload does not carry is left out, and `ctx` turns red from 80%. A project `statusLine` replaces the user-level one, so the script first passes the same payload to the `statusLine` command in your own user settings and prints whatever that prints above its own line; an integration that lives in the user's own status line command keeps working. It needs `jq`: without it the line is blank and the user's own status line command is not run.
+
+**Subagent worktrees.** Claude Code creates each subagent worktree itself under the gitignored `.claude/worktrees/`, on a new branch, and removes it the usual way: at once if the agent changed nothing, otherwise by its periodic sweep. `"worktree": {"baseRef": "head"}` in `.claude/settings.json` bases it on the commit the session's checkout is on at spawn, instead of the remote's default branch; uncommitted changes do not carry over. The check script fails without it. To turn it off for yourself, put `{"worktree": {"baseRef": "fresh"}}` in `.claude/settings.local.json`. Codex creates no per-subagent worktree.
 
 **Subagent rows.** `subagentStatusLine` is an inline `jq` command that renders each row of the agent panel as `kit-implementer · opus-5-5 · high · 24% ctx`, leaving out a field the task does not report. Without `jq` the default rows show.
 
@@ -162,13 +169,13 @@ Done when `/debug-config` lists the project layer and `/hooks` shows the guard a
 python3 .agents/scripts/check-ai-setup.py
 ```
 
-It needs Python 3.11 or later, prints one `FAIL` line per problem naming the file and the reason, and exits non-zero on any. A rule glob that matches no file yet is a `WARN`.
+It needs Python 3.11 or later, prints one `FAIL` line per problem naming the file and the reason, and exits non-zero on any. A rule glob that matches no file yet is a `WARN`. Besides the AI setup it fails on a merge conflict marker in any tracked text file. The `ai-setup` job in CI runs it on every push and pull request.
 
 ## Verified against
 
-Claude Code 2.1.289 and Codex CLI 0.160.0, on 2026-10-04, each key on its live page:
+Claude Code 2.1.289 and Codex CLI 0.160.0, on 2026-10-04 (`worktree.baseRef` on 2026-10-06), each key on its live page:
 
-- Claude Code: `https://code.claude.com/docs/en/` + `sub-agents`, `memory`, `hooks`, `settings`, `settings-reference`, `agent-teams`, `workflows`, `permission-modes`, `output-styles`, `statusline`, `plugins/loading`, `plugins/mods/overview`, `plugins/mods/events`, `plugins/mods/reference`, `plugins/mods/test`. Appending `.md` returns the raw page.
+- Claude Code: `https://code.claude.com/docs/en/` + `sub-agents`, `memory`, `hooks`, `settings`, `settings-reference`, `worktrees`, `agent-teams`, `workflows`, `permission-modes`, `output-styles`, `statusline`, `plugins/loading`, `plugins/mods/overview`, `plugins/mods/events`, `plugins/mods/reference`, `plugins/mods/test`. Appending `.md` returns the raw page.
 - Codex: `https://learn.chatgpt.com/docs/` + `agent-configuration/agents-md`, `agent-configuration/subagents`, `config-file/config-reference`, `hooks`, `build-skills`, `non-interactive-mode`, and `config-schema.json`.
 
 ## Deliberately excluded
@@ -186,16 +193,19 @@ Ideas were taken from the owner's Ultrabusiness and ChainReporter setups. These 
 | Session figures, a pane, a command classifier in the mod | The status line and the agent panel carry the figures, and `guard.py` stays the only rule source. |
 | A main-thread `--agent` orchestrator | It would replace the prompt and tool list of every session in the repository. `AGENTS.md` and the output style carry the operating model instead. |
 | .NET layer rules | Only the scaffold exists. `.claude/rules/kit-code.md` states only decided facts. |
+| A glossary structure test | Probed on 2026-10-06: 46 hits on 366 public type and member names in the 13 Kit assemblies, none of them real drift (`*ServiceCollectionExtensions`, `DomainEvent`, `Error.Message` and the like), while the words reviewers actually flagged ("request", "caller") had no hits. Glossary drift stays a reviewer rule. |
 | Edits to vendored skills | `skills-lock.json` pins each one by hash. |
 | Changes to user-level config | Three edits the owner approved, and nothing else: a key Claude Code no longer reads (`teammateDefaultModel`) and a key Codex ignores (`agents.max_depth`) were removed, and this repository was trusted in Codex. |
 
 ## Known gaps
 
-- `kit-review` parses, and its verdict logic was exercised with stubbed agents. It has not been run end to end.
+- `kit-review` ran end to end on 2026-10-06 on ticket #4 (`base 43ff9ff`, `head 65d21b3`). It fetched the ticket by number, both legs ran, three findings were confirmed, the digest came back whole, `result.json` was written, and the review worktree was removed. A re-review of the same ticket ran the same day, with `previous` naming the first result file and `rescore F1,F3`: both came back `unresolved` under their earlier ids. Not yet taken in a live run: a failed leg, a result too large for the digest, and the finish step copying a large result byte for byte. Those paths were exercised only with stubbed agents.
+- A script cannot run commands, so `kit-review` uses two small agents: one to resolve the commits, fetch the ticket and create the worktree, and one to write the full result file and remove the worktree. The second copies the result as text; the workflow checks its byte count and returns the full result itself when the count is wrong. A run that is stopped by hand skips the cleanup: remove its worktree with `git worktree remove --force .claude/worktrees/kit-review-<random>`.
 - Two review paths exist and only one is the gate. `/kit-review` is the per-ticket gate. The vendored `code-review` skill, which reviews along a Standards axis and a Spec axis, is not part of it.
 - The guard was exercised with Codex-shaped payloads through the check script, not inside a live Codex session. Whether Codex loads `.codex/agents/*.toml` could not be observed without a model call.
 - Mods are early access (Claude Code 2.1.287 or later), and their API may change between releases; re-run the two `claude plugin` commands after an upgrade. `kit-cockpit` passes them and loads, but it has not run in a live session. Unconfirmed: that the guard's deny reaches the mod as a `PreToolUse` deny with the marker still in its reason (without it the mod asks nothing and the deny stands), that the question appears with permission prompts off and "Run it once" then runs the command, what the band shows for role subagents and teammates, and hot reload. The 30-second check settles the first two.
 - The status line script was tested against mock payloads and a stub user command, not in a live session and not against a live feed to the user's own status line command. Whether `statusLine` resolves the script when a session starts in a subdirectory depends on Claude Code loading the project settings there; the command falls back to the repository root through `git`.
 - The subagent row command was tested against mock payloads, not a live agent panel.
+- `worktree.baseRef` is not yet confirmed by a spawn: a subagent worktree created on 2026-10-06 still started at the remote's default branch. After the first spawn from a session whose checkout has the setting, the new row in `git worktree list` must show the checkout's commit.
 - Four vendored skills (`blast-radius`, `how`, `interrogate`, `unslop`) set `disable-model-invocation` and have no `agents/openai.yaml`, so Codex can invoke them implicitly. Fixing that means editing vendored skills.
 - The vendored `implement` skill says to use `/tdd` where possible. The workflow in `AGENTS.md` overrides it: implement first, then focused tests.

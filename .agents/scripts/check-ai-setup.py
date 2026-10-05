@@ -201,6 +201,9 @@ def check_claude_settings() -> None:
     chosen = settings.get("outputStyle")
     if chosen is not None and chosen not in styles:
         failures.append(f".claude/settings.json: outputStyle '{chosen}' names no style in .claude/output-styles")
+    worktree = settings.get("worktree")
+    if not isinstance(worktree, dict) or worktree.get("baseRef") != "head":  # code.claude.com/docs/en/settings-reference#worktree-baseref
+        failures.append(".claude/settings.json: worktree.baseRef must be \"head\", so a subagent worktree starts at the session's HEAD, not origin/HEAD")
 
 
 def check_agents() -> None:
@@ -456,7 +459,35 @@ def check_instructions_and_rules() -> None:
             failures.append(f"{rel(workflow)}: first statement must be `export const meta`")
 
 
+def check_doc_pointers() -> None:
+    """A doc under docs/agents/ is reached only through a pointer in a file an agent loads, so each needs one and each pointer must resolve."""
+    sources = [ROOT / "AGENTS.md", *sorted((ROOT / ".claude").glob("rules/*.md")), *sorted((ROOT / ".claude").glob("output-styles/*.md")), *sorted((ROOT / ".claude").glob("agents/*.md"))]
+    named = {name: rel(source) for source in sources if source.is_file() for name in re.findall(r"docs/agents/[\w.-]+\.md", source.read_text(encoding="utf-8"))}
+    for name, source in sorted(named.items()):
+        if not (ROOT / name).is_file():
+            failures.append(f"{source}: points to {name}, which does not exist")
+    for doc in sorted((ROOT / "docs/agents").glob("*.md")):
+        if rel(doc) not in named:
+            failures.append(f"{rel(doc)}: no pointer to it in AGENTS.md, a rule, the output style or a role file, so no agent reaches it")
+
+
+def check_conflict_markers() -> None:
+    """No tracked text file holds a merge conflict marker. `=======` alone is a Markdown setext heading, so it is not one."""
+    listed = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True).stdout.decode().split("\0")
+    for name in sorted(set(filter(None, listed))):
+        path = ROOT / name
+        if path.is_symlink() or not path.is_file():
+            continue
+        data = path.read_bytes()
+        if b"\0" in data:  # binary
+            continue
+        for number, line in enumerate(data.decode("utf-8", "replace").splitlines(), start=1):
+            if line.startswith(("<" * 7 + " ", ">" * 7 + " ")):
+                failures.append(f"{name}:{number}: merge conflict marker")
+
+
 def main() -> int:
+    check_conflict_markers()
     check_skills()
     check_mods()
     check_agents()
@@ -467,6 +498,7 @@ def main() -> int:
         load(ROOT / file)
     check_guard()
     check_instructions_and_rules()
+    check_doc_pointers()
     for message in warnings:
         print(f"WARN  {message}")
     for message in failures:

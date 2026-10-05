@@ -246,6 +246,10 @@ Amended on 2026-10-05, each addition MIT and already present in every Host:
   the owner delegated.
 - Persistence.EFCore also references Persistence and `Ardalis.Specification.EntityFrameworkCore`, as G.4 decided.
 
+Standing rule (owner, 2026-10-06), extending the amendments above: an MIT-licensed `Microsoft.Extensions.*`
+package may be referenced where a package needs it, and is added to this table in the same change. Any other
+reference outside the table stays an owner decision.
+
 Checks against your rules: Dapper does not reference EF. Postgres does not reference Wolverine. Web
 does not reference Modularity. Nothing chooses an identity provider. There is no `Core`/`Utils`.
 Module `Contracts` projects reference nothing from the kit: public events are plain records.
@@ -656,7 +660,9 @@ No test-first default. Each ticket goes through:
 4. **One fix round, then a re-score** of the accepted findings only. A new full review only after a
    high finding was fixed; a remaining medium or low finding gets a recorded disposition.
 5. **Runtime proof** where the ticket claims a runtime guarantee (PostgreSQL in Testcontainers).
-6. **Docs** — update documentation and C4 diagrams; run `/archify-review`.
+6. **Docs** — update documentation and C4 diagrams. The ticket's closing comment carries a value, cost and
+   impact paragraph (the `archify-review` lens); `/archify-review` itself runs once per wave, at close-out
+   (agent-setup retro, 2026-10-06).
 7. **AI setup** — add, update, simplify or remove the kit's skills, rules and agent docs, following
    `/skill-creator` and `/writing-for-agents`.
 
