@@ -662,7 +662,7 @@ No test-first default. Each ticket goes through:
 5. **Runtime proof** where the ticket claims a runtime guarantee (PostgreSQL in Testcontainers).
 6. **Docs** — update documentation and C4 diagrams. The ticket's closing comment carries a value, cost and
    impact paragraph (the `archify-review` lens); `/archify-review` itself runs once per wave, at close-out
-   (owner, 2026-10-06).
+   (agent-setup retro, 2026-10-06).
 7. **AI setup** — add, update, simplify or remove the kit's skills, rules and agent docs, following
    `/skill-creator` and `/writing-for-agents`.
 

@@ -98,7 +98,7 @@ Run /kit-review with base <base commit>, ticket 42, previous <earlier result fil
 `rescore` is optional: leave it out to re-score every earlier finding that was not refuted, or list the ids you accepted. `kit-reviewer` re-scores each of them, and Codex inspects the whole change fresh.
 
 The digest's `rescored` list gives each of them one state: `resolved`, `partial` or `unresolved`. A finding the reviewer did not re-score counts as `unresolved`. Each `partial` or `unresolved` one still stands under its earlier `id`, at no less than its earlier severity, and the full result shows its re-score under `previous`; a finding new in this round gets the next free `F` number.
-**Step 5: runtime proof.** The main session runs the proof commands itself; the reviewers only inspect.
+**Step 5: runtime proof.** The main session runs the proof commands itself.
 
 **Steps 6–7: docs and AI guidance.** The value, cost and impact paragraph goes in the ticket's closing comment, whose other contents `docs/agents/running-a-spec.md` lists; `/archify-review` runs at the wave's close-out. After updating the AI guidance, run the check script (below).
 
@@ -205,6 +205,6 @@ Ideas were taken from the owner's Ultrabusiness and ChainReporter setups. These 
 - Mods are early access (Claude Code 2.1.287 or later), and their API may change between releases; re-run the two `claude plugin` commands after an upgrade. `kit-cockpit` passes them and loads, but it has not run in a live session. Unconfirmed: that the guard's deny reaches the mod as a `PreToolUse` deny with the marker still in its reason (without it the mod asks nothing and the deny stands), that the question appears with permission prompts off and "Run it once" then runs the command, what the band shows for role subagents and teammates, and hot reload. The 30-second check settles the first two.
 - The status line script was tested against mock payloads and a stub user command, not in a live session and not against a live feed to the user's own status line command. Whether `statusLine` resolves the script when a session starts in a subdirectory depends on Claude Code loading the project settings there; the command falls back to the repository root through `git`.
 - The subagent row command was tested against mock payloads, not a live agent panel.
-- `worktree.baseRef` is not yet confirmed by a spawn: the last worktree seen (2026-10-06) still started at the remote's default branch, from a checkout without the setting. After the first spawn from a checkout that has it, the new row in `git worktree list` must show the checkout's commit.
+- `worktree.baseRef` is not yet confirmed by a spawn: a subagent worktree created on 2026-10-06 still started at the remote's default branch. After the first spawn from a session whose checkout has the setting, the new row in `git worktree list` must show the checkout's commit.
 - Four vendored skills (`blast-radius`, `how`, `interrogate`, `unslop`) set `disable-model-invocation` and have no `agents/openai.yaml`, so Codex can invoke them implicitly. Fixing that means editing vendored skills.
 - The vendored `implement` skill says to use `/tdd` where possible. The workflow in `AGENTS.md` overrides it: implement first, then focused tests.
