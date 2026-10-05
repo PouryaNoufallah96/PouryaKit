@@ -16,7 +16,7 @@ internal sealed record BookId(Guid Value) : TypedId<Guid>(Value);
 // different derived types and share the base's key.
 internal abstract class Case : AggregateRoot<CaseId>;
 
-internal sealed class PencilCase : Case
+internal sealed class PencilCase : Case, IDeskItem
 {
     private readonly List<Pencil> _pencils = [];
 
