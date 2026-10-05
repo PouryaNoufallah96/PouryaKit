@@ -5,11 +5,16 @@ namespace PouryaKit.Testing;
 // Reads deliveries from the Host's message store itself, the record that survives a restart: a delivery is pending
 // while its envelope is neither handled nor dead-lettered, or while it is a dead letter marked for replay that the store
 // has not yet moved back, and every envelope an Operation's commit wrote has a row.
-internal sealed class StoredDeliveries(string connectionString, string schema)
+internal sealed class StoredDeliveries(
+    string connectionString,
+    string schema,
+    IReadOnlyList<(string Schema, string Name)> storeTables
+)
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(25);
 
-    public string Schema => schema;
+    /// <summary>The tables the message store creates for itself, as it names them.</summary>
+    public IReadOnlyList<(string Schema, string Name)> StoreTables => storeTables;
 
     public async Task<HashSet<Guid>> IdsAsync(CancellationToken cancellationToken) =>
         [

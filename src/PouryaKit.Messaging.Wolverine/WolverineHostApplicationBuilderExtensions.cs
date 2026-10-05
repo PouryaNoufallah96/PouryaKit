@@ -13,18 +13,19 @@ public static class WolverineHostApplicationBuilderExtensions
     extension(IHostApplicationBuilder builder)
     {
         /// <summary>
-        /// Runs the Host's deliveries on Wolverine, with no database: every Notification Handler and Integration Event
-        /// Handler a Composition Root subscribed gets its own durable local queue and is delivered, retried and
-        /// acknowledged on its own, in a scope begun as a continuation of the Operation that published the message, in
-        /// the subscribing Module. A failed Result or an exception is retried after
+        /// Sets up the Host's routing, delivery and retry on Wolverine, but no Outbox: every Notification Handler and
+        /// Integration Event Handler a Composition Root subscribed gets its own durable local queue and is delivered,
+        /// retried and acknowledged on its own, in a scope begun as a continuation of the Operation that published the
+        /// message, in the subscribing Module. A failed Result or an exception is retried after
         /// <see cref="PouryaKitMessagingOptions.RetryDelays"/>, then that subscription's delivery alone is set aside as a
         /// dead letter in Wolverine's dead-letter storage, received at <c>local://{subscription}/</c>, to inspect and
         /// replay there. A stored delivery whose type or subscription no longer exists is set aside the same way. None of
         /// them is ever treated as handled. Wolverine discovers no handlers of its own.
-        /// The Host fails to start when a subscription's Integration Event is published by no Module of the Host, or
-        /// when Modules publish Integration Events and nothing registered an Outbox for them, as the overload of
-        /// <c>PouryaKit.Messaging.Wolverine.EFCore</c> does. <paramref name="configure"/> adds Host-specific Wolverine
-        /// configuration; a Host with a database calls that overload.
+        /// Nothing this overload registers writes an Outbox (<see cref="INotificationOutbox"/>), so a Host that declares
+        /// Notification Handlers, Integration Event Handlers or published Integration Events calls the overload of
+        /// <c>PouryaKit.Messaging.Wolverine.EFCore</c> instead, or fails when it starts; so does a Host whose
+        /// subscription's Integration Event no Module publishes. <paramref name="configure"/> adds Host-specific
+        /// Wolverine configuration.
         /// </summary>
         public IHostApplicationBuilder UsePouryaKitWolverine(Action<WolverineOptions>? configure = null)
         {
