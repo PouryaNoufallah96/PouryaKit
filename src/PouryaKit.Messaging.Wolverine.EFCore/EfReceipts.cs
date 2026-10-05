@@ -14,6 +14,7 @@ internal sealed class EfReceipts(IUnitOfWork unitOfWork) : IReceipts
     public Task<bool> RecordAsync(string subscription, Guid messageId, CancellationToken cancellationToken) =>
         ExecuteAsync(
             ReceiptTable.Name,
+            "Receipts",
             "CreateReceiptTable",
             table => $"insert into {table} (subscription, message_id) values ({{0}}, {{1}}) on conflict do nothing",
             [subscription, messageId],
@@ -30,6 +31,7 @@ internal sealed class EfReceipts(IUnitOfWork unitOfWork) : IReceipts
     ) =>
         ExecuteAsync(
             SnapshotVersionTable.Name,
+            "the versions of the Snapshots its handlers applied",
             "CreateSnapshotVersionTable",
             table =>
                 $"insert into {table} as applied (subscription, aggregate_id, version) values ({{0}}, {{1}}, {{2}}) on conflict (subscription, aggregate_id) do update set version = excluded.version where applied.version < excluded.version",
@@ -39,6 +41,7 @@ internal sealed class EfReceipts(IUnitOfWork unitOfWork) : IReceipts
 
     private async Task<bool> ExecuteAsync(
         string name,
+        string keeps,
         string creator,
         Func<string, string> sql,
         object[] parameters,
@@ -60,7 +63,7 @@ internal sealed class EfReceipts(IUnitOfWork unitOfWork) : IReceipts
         catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.UndefinedTable)
         {
             throw new InvalidOperationException(
-                $"{dbContext.GetType().Name} has no {table} table to keep Receipts in. Add a migration to the Module that calls {creator} with its schema.",
+                $"{dbContext.GetType().Name} has no {table} table to keep {keeps} in. Add a migration to the Module that calls {creator} with its schema.",
                 exception
             );
         }

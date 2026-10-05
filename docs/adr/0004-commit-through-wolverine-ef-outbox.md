@@ -298,3 +298,14 @@ Wolverine documents are cited at tag `V6.46.0`.
   CLR type and local queue.
 - Disposing a Host logs `ObjectDisposedException` errors from Wolverine's database batcher. They are noise,
   and test log assertions should tolerate them.
+
+## Amendment (2026-10-05, ticket #17)
+
+The decision above stands. Ticket #17 extended the cost of its `InboxStaleTime` remedy.
+
+- **The stale time covers the whole retry schedule.** The invariant owned by #15 says `InboxStaleTime` must exceed
+  the longest handler run, queue wait included. The release compares the insert time, and a stored retry keeps it, so
+  a delivery that fails ages through its retry delays as well. `InboxStaleTime` must exceed the sum of the retry
+  delays plus every attempt's run, queue wait included: an attempt that runs after it is handed out again while it
+  runs, and the Receipt keeps the effect to one (`InboxStaleTimeTests`). The evidence, and the default retry delays
+  shortened to fit, are in ADR 0006's amendment for ticket #17.

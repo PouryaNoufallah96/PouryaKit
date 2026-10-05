@@ -347,7 +347,7 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
 
         Assert.Equal(
-            $"{typeof(TwinIntegrationEventHandler).FullName} subscribes to {typeof(TwinV1).FullName} under tests.unpublished-twin, but no Module of this Host publishes it, so it has no wire name. Declare Publish<TwinV1>(wireName, module) in the publishing Module's Composition Root.",
+            $"{typeof(TwinIntegrationEventHandler).FullName} subscribes to {typeof(TwinV1).FullName} under tests.unpublished-twin, but no Module of this Host publishes it, so it has no wire name. Declare Publish<TwinV1>(wireName, module), or PublishSnapshot for a Snapshot, in the publishing Module's Composition Root.",
             thrown.Message
         );
     }

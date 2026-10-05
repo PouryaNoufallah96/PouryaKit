@@ -2,7 +2,7 @@
 
 `PouryaKit.Messaging`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Messaging.Wolverine.EFCore`: Notification Handlers that run after the commit, and the Integration Events they publish for other Modules, each delivery durable, retried and recorded on its own, on Wolverine with its message store in PostgreSQL. Feature code uses `PouryaKit.Messaging` only. The Composition Root uses `PouryaKit.Messaging.Wolverine`; the Host and the Receipt migration use `PouryaKit.Messaging.Wolverine.EFCore`, which brings the other two, so a Module that declares Notification Handlers or subscribes Integration Event Handlers references it. A Contracts project references nothing from the Kit.
 
-*Not yet available*: a second subscriber and dead letters (#17), Snapshots and Tombstones (#18).
+*Not yet documented here*: Snapshots and Tombstones (#18).
 
 - [Notification Handler or Domain Event Handler](#notification-handler-or-domain-event-handler)
 - [Writing a Notification Handler](#writing-a-notification-handler)
@@ -16,7 +16,9 @@
 - [Receipts](#receipts)
 - [Names](#names)
 - [Retries](#retries)
+- [Dead letters](#dead-letters)
 - [The message store](#the-message-store)
+- [The stale-time rule](#the-stale-time-rule)
 - [Startup checks](#startup-checks)
 
 A Notification Handler and the port it reaches outside the Module through, from the Proving Sample's Products Business Area:
@@ -62,7 +64,7 @@ Both react to a Domain Event the Module raised. Choose by when the reaction may 
 ## Writing a Notification Handler
 
 - Implement `INotificationHandler<TDomainEvent>` (`PouryaKit.Messaging`) for one concrete Domain Event type, in an `internal sealed` class of the Business Area that raises it, under `Events/Notifications/`. The handler and its Domain Event stay `internal`. It runs only for a Domain Event of exactly its type, never for one derived from it.
-- Return a Result. A failed Result is a failure like an exception: the delivery is retried ([Retries](#retries)).
+- Return a Result. A failed Result is a failure like an exception: the delivery is retried ([Retries](#retries)), then set aside as a dead letter that names each Error ([Dead letters](#dead-letters)).
 - Reach outside the Module through a port: an interface the Module declares beside the handler, public so the Host can implement it, as `INewProductAnnouncer` above. The Host registers the implementation (below). The handler never names a transport, an SMTP client or another Module's types.
 - Inject what a command handler may: the `OperationContext` (a continuation of the raising Operation), the Module's repositories, `IDispatcher`, and `IIntegrationEventPublisher` to tell other Modules ([Publishing from a Notification Handler](#publishing-from-a-notification-handler)). A change made through the Module's repositories commits in the handler's own Unit of Work, with its Receipt, and a Domain Event it raises is handled as in any Operation. A change that must commit with the change that raised the Domain Event belongs in a Domain Event Handler instead.
 - Never save, commit, begin a transaction, touch the Outbox or reference a Wolverine type: the delivery and its Unit of Work own all of that.
@@ -107,11 +109,11 @@ public sealed partial class LoggedNewProductAnnouncer(ILogger<LoggedNewProductAn
 
 Across Modules, a Module tells the others what happened with an Integration Event (G.5): use one when another Module reacts to something that happened in this one, or keeps its own copy of this one's data. The receiving Module applies it later, in an Operation of its own, and the publishing Operation never waits for it. A synchronous question through the owning Module's Contracts ([modules.md](modules.md#asking-another-module-a-question)) is the exception, for an Operation that cannot go on without the answer.
 
-In the Proving Sample, Catalog tells Inventory about each new product, and Inventory opens a stock item for it:
+In the Proving Sample, Catalog tells Inventory and Billing about each new product: Inventory opens a stock item for it, and Billing a price list:
 
 1. `CreateProduct` commits the product; its `ProductCreatedDomainEvent` is stored as a Notification in the same commit.
-2. After that commit, Catalog's `PublishProductCreatedNotificationHandler` publishes `ProductCreatedV1`, which is stored in Catalog's Outbox in the commit of that delivery.
-3. After that commit, Inventory's `OpenStockItemIntegrationEventHandler` opens the stock item in Inventory's Unit of Work.
+2. After that commit, Catalog's `PublishProductCreatedNotificationHandler` publishes `ProductCreatedV1`, which is stored in Catalog's Outbox in the commit of that delivery, once per subscription.
+3. After that commit, Inventory's `OpenStockItemIntegrationEventHandler` opens the stock item in Inventory's Unit of Work, and Billing's `OpenPriceListIntegrationEventHandler` opens the price list in Billing's, each in a delivery of its own.
 
 ### The Integration Event
 
@@ -158,10 +160,13 @@ public sealed class InventoryModule : IModuleDefinition
 
 // In Catalog's Composition Root, the publishing side (modules.md):
 //     module.Publish<ProductCreatedV1>("catalog.product-created.v1", typeof(CatalogModule));
+// In Billing's Composition Root, a second subscription to the same Integration Event, under its own name:
+//     module.Subscribe<ProductCreatedV1, OpenPriceListIntegrationEventHandler>("billing.product-created", typeof(BillingModule));
 ```
 
 - The publishing Module declares each Integration Event it publishes with `module.Publish<TIntegrationEvent>(wireName, typeof(CatalogModule))` (`PouryaKit.Messaging.Wolverine`). One Module publishes a type, under one wire name.
 - The receiving Module subscribes each Integration Event Handler with `module.Subscribe<TIntegrationEvent, THandler>(subscriptionName, typeof(InventoryModule))`. The subscription name is declared, not derived, and the handler's deliveries run in the Module the last argument names, so they reach its Unit of Work. `Subscribe` registers the handler, which may be `internal`.
+- Several Modules may subscribe to one Integration Event, each with its own `Subscribe` and subscription name, as Inventory and Billing do to `ProductCreatedV1`. The publisher changes nothing for a new subscription: each gets its own delivery, and one that fails never makes another run again ([What the Kit guarantees](#what-the-kit-guarantees)).
 - The receiving Module needs its own Unit of Work (`UsePostgres`) and the Receipt table in its schema ([Receipts](#receipts)).
 - The receiving Module's project references the publishing Module's Contracts project and never the publishing Module: Inventory references `Catalog.Contracts` only. Neither Module references a Wolverine type.
 - The Host adds both Modules and calls `UsePouryaKitWolverine(connectionName: "app")` once, as for Notification Handlers ([web.md](web.md#the-host)).
@@ -228,7 +233,7 @@ internal sealed class OpenStockItemIntegrationEventHandler(IRepository<StockItem
 ```
 
 - Implement `IIntegrationEventHandler<TIntegrationEvent>` (`PouryaKit.Messaging`) in an `internal sealed` class of the receiving Module, beside the Feature it serves, and subscribe it in the Composition Root (above).
-- Hold only the business effect, through the Module's repositories, and return a Result. A failed Result is a failure like an exception: the delivery is retried ([Retries](#retries)), and nothing the attempt changed commits, its Receipt included.
+- Hold only the business effect, through the Module's repositories, and return a Result. A failed Result is a failure like an exception: the delivery is retried ([Retries](#retries)), then set aside as a dead letter of its subscription ([Dead letters](#dead-letters)), and nothing the attempt changed commits, its Receipt included.
 - Inject what a command handler may: the `OperationContext`, the Module's repositories, `IDispatcher`. Read when the fact happened from the Integration Event, as `StockItem.Open` takes `OccurredOn`; the Operation's own clock gives the time of the delivery.
 - Never save, commit, begin a transaction, record a Receipt, acknowledge or reference a Wolverine type, and never publish: an Integration Event is published only from a Notification Handler.
 
@@ -237,14 +242,14 @@ internal sealed class OpenStockItemIntegrationEventHandler(IRepository<StockItem
 - **Stored in the commit.** The Unit of Work writes each Domain Event the Operation raised that a Notification Handler subscribes to into the Outbox, once per subscription, after it prepares persistence and before it saves, in the same transaction. The Notification exists if and only if the change commits: a failed Result, a failed Domain Event Handler, a refused save or an exception leaves none. A Domain Event that no Notification Handler subscribes to stores nothing.
 - **Sent after the commit.** The Unit of Work sends what it wrote only after the commit. When the send fails, or the Host dies first, the Notification stays in the store: a Host that starts recovers it, and a live Host hands it out again after `InboxStaleTime` ([The message store](#the-message-store)). The Operation's Result is unaffected, because its change is committed; the failed send is logged as a warning.
 - **A continuation in its own scope.** Each delivery attempt runs in a new scope, as an Operation of the subscribing Module, begun with a continuation of the raising Operation's context: the same Actor, tenant and correlation, the raising Operation's `OperationId` as its causation, a new `OperationId`. It runs through the dispatcher, with the Module's Unit of Work and the Host's clock, and nothing from a failed attempt reaches the next.
-- **Each handler on its own.** Each Notification Handler of a Domain Event has its own stored delivery, retried, recorded and acknowledged apart from the others, so a handler that fails never makes one that succeeded run again.
+- **Each handler on its own.** Each Notification Handler of a Domain Event has its own stored delivery, retried, recorded, acknowledged and set aside as a dead letter apart from the others, so a handler that fails never makes one that succeeded run again.
 - **A database effect once.** Before the handler runs, the delivery records a Receipt, the subscription name and the Domain Event's `Id`, in the handler's transaction, so the Receipt commits with the handler's effect or not at all. A redelivery after that commit, such as after a crash before the store marked the delivery handled, finds the Receipt and does nothing. A concurrent copy of the same delivery waits until the first commits, then does nothing; if the first rolled back, the copy runs. A handler whose effect is in its Module's database needs nothing more to be safe to run again.
 - **An outside effect at least once.** An effect outside the database, such as an email, cannot roll back with the Receipt. When the attempt that sent it fails or dies before its Receipt commits, the next attempt sends it again. Make a repeat harmless where the outside system allows it, for example by passing it the Domain Event's `Id` as an idempotency key, and do the outside effect last.
 
 An Integration Event is delivered the same way, sent after the commit, in a new scope per attempt, on its own and applied once, and also:
 
 - **Stored with the publishing handler's Receipt.** It is written to the publishing Module's Outbox, once per subscription, in the commit of the Notification Handler's delivery that published it, together with that handler's Receipt and effect. A delivery that fails after publishing leaves no Integration Event; only the attempt that commits stores one.
-- **One durable delivery per subscription**, on the subscription's own queue, retried, recorded and acknowledged apart from every other.
+- **One durable delivery per subscription**, on the subscription's own queue, retried, recorded, acknowledged and set aside as a dead letter apart from every other. When several Modules subscribe to one Integration Event, a subscription that keeps failing never runs one that succeeded again: not through its retries, not when it is set aside or replayed, and not when its Host dies during it and another Host takes it over.
 - **Applied once.** Its identity is the `Id` of the Domain Event it follows from, carried by every delivery of it in the `IntegrationEventHeaders.DomainEventId` header. The receiving handler's Receipt, the subscription name and that identity, commits together with its effect, so a redelivery after the commit, or a concurrent duplicate, applies it once.
 - **A continuation, two Operations on.** The receiving Operation continues the publishing Notification Handler's delivery: the same Actor, tenant and correlation as the Operation that made the change, the delivery's `OperationId` as its causation, a new `OperationId`. No HTTP request is involved.
 - **The same identity and time at both ends.** The Kit enforces the identity: `Publish` refuses any other. The time is the same when the Integration Event carries the Domain Event's `OccurredOn`, as `ProductCreatedV1` does.
@@ -310,23 +315,75 @@ internal sealed class AnnounceAddedProductNotificationHandler(INewProductAnnounc
 
 ## Retries
 
-- A delivery whose handler returns a failed Result or throws is retried after each of `PouryaKitMessagingOptions.RetryDelays` (`PouryaKit.Messaging.Wolverine`; 1 s, 10 s, 1 min and 10 min by default): one attempt more than there are delays, so five. Each wait is stored with the delivery, so a restart neither loses nor repeats it.
-- After the last attempt the delivery is set aside as a dead letter in the message store, never marked handled; a failed Result is recorded as a `NotificationHandlerFailedException` or an `IntegrationEventHandlerFailedException` naming the subscription and its Errors. The other handlers of the same Domain Event or Integration Event are not affected. Inspecting and replaying dead letters is #17.
+- A delivery fails when its handler throws or returns a failed Result: the two are the same failure, and a failed Result is never acknowledged. Nothing the attempt changed commits, its Receipt included.
+- A failed delivery is retried after each of `PouryaKitMessagingOptions.RetryDelays` (`PouryaKit.Messaging.Wolverine`; 1 s, 10 s and 1 min by default): one attempt more than there are delays, so four. Each wait is stored with the delivery, which no Host instance holds while it waits, so a restart neither loses nor repeats it.
+- Each attempt runs in a new scope, as a new Operation, and nothing of the attempt before is left in it: no DbContext, tracked aggregate or scoped service of the failed attempt reaches the next.
+- Only the failing subscription's delivery is retried. The other subscriptions of the same Domain Event or Integration Event are not delivered again, whether they succeeded or fail too.
+- Change the delays together with the inbox stale time, never alone ([The stale-time rule](#the-stale-time-rule)).
+
+## Dead letters
+
+- When its attempts are used up, the delivery is set aside as a dead letter of its own subscription: its envelope leaves the Inbox for Wolverine's dead-letter storage, the table `wolverine_dead_letters` in the store's schema, and is never marked handled. Only that subscription's delivery is set aside; the others of the same message keep what they did.
+- A dead letter says why. It keeps the exception of its last attempt, type and message: a handler that threw records its own exception, and one that returned a failed Result records a `NotificationHandlerFailedException` or an `IntegrationEventHandlerFailedException` (`PouryaKit.Messaging.Wolverine`), whose message names the subscription and each Error as its code and message, such as `PriceList.Closed (The price list is closed.)`. Both exceptions also carry `Subscription` and `Errors`.
+- A dead letter is found by its subscription: it was received at `local://{subscription}/`, its `received_at`, with the subscription name lower-cased, and its `message_type` is the wire name.
+- A stored delivery whose subscription or type no longer exists is set aside the same way, never run and never treated as handled: one to a subscription the Host no longer declares fails with `UnknownSubscriptionException`, through its retries, and one whose type no subscription of the Host handles any more is dead-lettered as an unknown message. Renaming or removing a subscription, or the last subscription to a type, while deliveries are in flight leaves those deliveries as dead letters ([Names](#names)).
+- The Kit adds no dead-letter API of its own: Wolverine's dead-letter storage already finds a dead letter by its subscription and replays it, and a second way to do the same would be a second implementation of one concern. The Host reads and replays them through `IWolverineRuntime.Storage.DeadLetters`, from operator code such as an admin endpoint or a maintenance command, never from Feature code:
+
+```csharp
+using Wolverine.Persistence.Durability;
+using Wolverine.Persistence.Durability.DeadLetterManagement;
+using Wolverine.Runtime;
+
+// ModularMonolith.Host: operator code. Feature code never references Wolverine.
+public sealed class DeadLetterTriage(IWolverineRuntime runtime)
+{
+    // Every dead letter of one subscription; a page size of 0 reads them all.
+    public async Task<IReadOnlyList<DeadLetterEnvelope>> OfAsync(string subscription, CancellationToken cancellationToken) =>
+        (
+            await runtime.Storage.DeadLetters.QueryAsync(
+                new DeadLetterEnvelopeQuery { ReceivedAt = $"local://{subscription.ToLowerInvariant()}/", PageSize = 0 },
+                cancellationToken
+            )
+        ).Envelopes;
+
+    // Once the cause is fixed. The store moves each back to its subscription's queue on its next recovery poll.
+    public Task ReplayAsync(IEnumerable<DeadLetterEnvelope> deadLetters, CancellationToken cancellationToken) =>
+        runtime.Storage.DeadLetters.ReplayAsync(
+            new DeadLetterEnvelopeQuery([.. deadLetters.Select(deadLetter => deadLetter.Id)]),
+            cancellationToken
+        );
+}
+```
+
+- Replaying marks the dead letter for replay; the store's next recovery poll moves it back to its subscription's queue, with its attempts counted from zero. Only that subscription's handler runs: the other subscriptions of the message are not delivered again. If it fails again, it is retried and set aside again.
+- A replay never applies a message twice. A delivery replayed after one of its attempts committed, such as one set aside again by hand, finds its Receipt and does nothing, so replaying the same delivery twice applies it once.
+- Fix the cause before replaying: a replay into the same failure only uses up the retries again.
 
 ## The message store
 
 - `PouryaKitMessageStoreOptions` (`PouryaKit.Messaging.Wolverine.EFCore`) holds the store's settings:
   - `Durability`: `DurabilityMode.Balanced`, the default, is safe with any number of Host instances on one store. `DurabilityMode.Solo` assumes a single instance and recovers a stopped instance's deliveries at once; the tests use it.
-  - `InboxStaleTime`, 5 minutes by default: how long a delivery may stay with the instance that took it before the store hands it out again. It is what delivers a Notification or Integration Event committed but never sent while its Host lives on. Set it longer than the longest delivery the Host expects, queue wait included: a delivery still running when it passes is handed out again, and runs again concurrently, on every recovery cycle until one run finishes.
+  - `InboxStaleTime`, 5 minutes by default: how long after a delivery was stored the store hands it out again when an instance still holds it. It is what delivers a Notification or Integration Event committed but never sent while its Host lives on, so such a delivery waits that long. Set it by [the stale-time rule](#the-stale-time-rule).
 - The store's schema is the second argument of `UsePouryaKitWolverine(connectionName, schema)`, `wolverine` by default.
-- Change the settings anywhere in the Host's composition, before it is built:
+- Change the settings anywhere in the Host's composition, before it is built, as in [the stale-time rule](#the-stale-time-rule).
+
+## The stale-time rule
+
+`InboxStaleTime` counts from when the delivery was stored, not from its latest attempt, and a retry keeps that time. A delivery waiting for its retry is held by no instance, so the store never hands it out again, however long it waits. But an attempt that runs after the stale time has passed is stale from its start: if it still runs when the store next looks, the store hands it out again, concurrently, and again on every recovery poll until one run finishes. The Receipt keeps the effect to one, because each copy waits on the running attempt's Receipt and then does nothing; but each copy holds a database connection while it waits, and when the attempt it waits on fails, a copy runs the handler itself, so a handler with an effect outside the database can repeat it beyond its retries ([What the Kit guarantees](#what-the-kit-guarantees)).
+
+**The rule a Host must follow:** `InboxStaleTime` exceeds the sum of `RetryDelays` plus the run of every attempt, queue wait included, for the slowest handler of the Host, since both settings apply to every delivery it runs. The defaults keep it: 1 s, 10 s and 1 min are 71 s of waiting, which leaves about 3 min 49 s of the 5 minutes for four attempts, just under a minute each.
+
+When a handler is slower, change the two together, and check the sum again: raise the stale time, shorten the delays, or both. For a handler that may run two minutes:
 
 ```csharp
+// Four attempts of up to 2 min each, plus 5 s + 30 s + 2 min of waiting: 10 min 35 s, under the 15 min stale time.
 builder.Services.Configure<PouryaKitMessagingOptions>(messaging =>
-    messaging.RetryDelays = [TimeSpan.FromSeconds(5), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(15)]
+    messaging.RetryDelays = [TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(2)]
 );
 builder.Services.Configure<PouryaKitMessageStoreOptions>(store => store.InboxStaleTime = TimeSpan.FromMinutes(15));
 ```
+
+A longer stale time has its price: a delivery committed but never sent waits that long on a live Host ([The message store](#the-message-store)).
 
 ## Startup checks
 

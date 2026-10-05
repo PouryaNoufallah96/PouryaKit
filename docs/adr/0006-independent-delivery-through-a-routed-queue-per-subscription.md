@@ -408,3 +408,35 @@ The decision above stands. Implementing it departed from one consequence and set
 - **The startup check.** Once every hosted service has started, a Host that declares Notification Handlers,
   Integration Event Handlers or published Integration Events fails unless an Outbox writes them in the Unit of Work's
   commit and every subscription's queue, as Wolverine built it, is a durable application queue.
+
+## Amendment (2026-10-05, ticket #17)
+
+The decision above stands. Ticket #17's permanent tests decided what the record inferred about the inbox stale time,
+and refine one of its invariants.
+
+- **A persisted retry and a short schedule, not one or the other.** The invariant owned by #17 reads "use a persisted
+  retry, or keep the whole retry ladder plus handling below the stale time". It is "and". A persisted retry keeps a
+  delivery that waits for its retry from being handed out again, because the row is owned by no node while it waits.
+  It does not reset the insert time the release compares, so once the delivery is older than `InboxStaleTime`, an
+  attempt that runs is released while it runs and handed out again, concurrently. The Kit keeps the stored retry (owner
+  decision 1) and requires `InboxStaleTime` to exceed the sum of the retry delays plus every attempt's run, queue wait
+  included.
+- **The "Not tested" inference held.** A persisted retry that fires after `InboxStaleTime` is now tested against
+  PostgreSQL, with a 500 ms stale time and one retry after 1 s. In
+  `InboxStaleTimeTests.A_retry_that_runs_after_the_stale_time_is_handed_out_again_while_it_runs_and_its_receipt_keeps_one_effect`
+  the retry is held after its Receipt, no row is touched, and the store hands out a copy that waits on the Receipt's
+  lock; the handler ran twice, the failed attempt and the retry, and one effect committed. In
+  `InboxStaleTimeTests.A_delivery_waiting_for_its_retry_is_not_handed_out_again_and_one_that_succeeded_never_runs_again`,
+  with the same settings, the retry waits out its whole delay, twice the stale time, without being handed out, and
+  neither handled delivery runs again.
+- **The default delays were shortened to fit.** `PouryaKitMessagingOptions.RetryDelays` was 1 s, 10 s, 1 min and
+  10 min, whose sum alone exceeds the default 5-minute `InboxStaleTime`. It is now 1 s, 10 s and 1 min: four attempts
+  and 71 s of waiting.
+- **No dead-letter API of the Kit's own.** A dead letter stays in Wolverine's dead-letter storage, found by its
+  subscription in `received_at` and replayed there (owner decision 4; the triage question above is dissolved). The Kit
+  adds only the reason a failed Result gives: `NotificationHandlerFailedException` and
+  `IntegrationEventHandlerFailedException` name each Error's code and message. `PouryaKit.Testing` reads and replays
+  dead letters through Wolverine's `IDeadLetters`, as an application does.
+- **A subscription removed while its type keeps another**, which "A removed subscription or type" above says was not
+  tested separately, is now tested:
+  `FailingDeliveryTests.A_stored_delivery_to_a_removed_subscription_is_dead_lettered_while_the_remaining_subscription_handles_its_own`.
