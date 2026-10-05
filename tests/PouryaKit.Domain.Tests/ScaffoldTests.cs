@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace PouryaKit.Domain.Tests;
 
-// Proves the test pipeline reaches the Domain package. Ticket #6 replaces it with the Domain tests.
+// Placeholder until ticket #6 adds the Domain tests; a test project with no tests fails `dotnet test`.
 public class ScaffoldTests
 {
     [Fact]
