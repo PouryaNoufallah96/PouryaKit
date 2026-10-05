@@ -34,6 +34,14 @@ public sealed class Operation
     /// </summary>
     public Type? Module { get; private set; }
 
+    /// <summary>
+    /// False while a query, an authorizer or a validator runs in the Operation, at any depth, including those of a command
+    /// nested in another; true otherwise, as in a command's handler or a Domain Event Handler. Where it is false the
+    /// Operation only reads: a command is refused there, and so is any other write, because a failed query marks nothing
+    /// rollback-only and a check runs before its command may proceed.
+    /// </summary>
+    public bool MayChangeState => _runningQueries == 0 && _runningChecks == 0;
+
     internal OperationContext? Context { get; private set; }
 
     internal void Begin(OperationContext context, Type? module)
