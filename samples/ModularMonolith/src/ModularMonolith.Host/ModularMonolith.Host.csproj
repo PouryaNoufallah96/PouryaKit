@@ -9,6 +9,7 @@
     <PackageReference Include="WolverineFx.RuntimeCompilation" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Modules\Billing\Billing\Billing.csproj" />
     <ProjectReference Include="..\Modules\Catalog\Catalog\Catalog.csproj" />
     <ProjectReference Include="..\Modules\Inventory\Inventory\Inventory.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Messaging.Wolverine.EFCore\PouryaKit.Messaging.Wolverine.EFCore.csproj" />

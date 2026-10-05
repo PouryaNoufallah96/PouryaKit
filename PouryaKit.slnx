@@ -17,6 +17,7 @@
   <Folder Name="/samples/" />
   <Folder Name="/samples/ModularMonolith/">
     <Project Path="samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj" />
+    <Project Path="samples/ModularMonolith/src/Modules/Billing/Billing/Billing.csproj" />
     <Project Path="samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj" />
     <Project Path="samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj" />
     <Project Path="samples/ModularMonolith/src/Modules/Inventory/Inventory/Inventory.csproj" />

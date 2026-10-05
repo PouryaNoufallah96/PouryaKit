@@ -8,6 +8,8 @@ using Respawn;
 using Respawn.Graph;
 using Testcontainers.PostgreSql;
 using Weasel.Core.Migrations;
+using Wolverine.Persistence.Durability;
+using Wolverine.Persistence.Durability.DeadLetterManagement;
 using Wolverine.RDBMS;
 using Wolverine.Runtime;
 
@@ -123,6 +125,46 @@ public abstract class HostFixture : IAsyncLifetime
         );
 
     /// <summary>
+    /// Every delivery the message store has set aside as a dead letter, read through Wolverine's dead-letter storage as
+    /// an application inspects it. Each test starts with none, so these are what its Operations caused.
+    /// </summary>
+    public async Task<IReadOnlyList<DeadLetter>> DeadLettersAsync(CancellationToken cancellationToken = default)
+    {
+        // A page size of 0 reads every one.
+        var found = await DeadLetterStorage().QueryAsync(new DeadLetterEnvelopeQuery { PageSize = 0 }, cancellationToken);
+        return
+        [
+            .. found.Envelopes.Select(deadLetter => new DeadLetter(
+                deadLetter.Id,
+                new Uri(deadLetter.ReceivedAt).Host,
+                deadLetter.MessageType,
+                deadLetter.ExceptionType,
+                deadLetter.ExceptionMessage
+            )),
+        ];
+    }
+
+    /// <summary>
+    /// Replays <paramref name="deadLetter"/> through Wolverine, which moves it back to its subscription's queue, where only
+    /// that subscription's handler runs, then waits until it is handled or set aside again. Fails when it is not a dead
+    /// letter, so a replay never passes on nothing.
+    /// </summary>
+    public async Task ReplayAsync(DeadLetter deadLetter, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(deadLetter);
+        var storage = DeadLetterStorage();
+        if (await storage.DeadLetterEnvelopeByIdAsync(deadLetter.Id) is null)
+        {
+            throw new DeliveryAssertionException(
+                $"The delivery {deadLetter.Id} to {deadLetter.Subscription} is not a dead letter, so there is nothing to replay."
+            );
+        }
+
+        await storage.ReplayAsync(new DeadLetterEnvelopeQuery([deadLetter.Id]), cancellationToken);
+        await WaitUntilDeliveredAsync(cancellationToken);
+    }
+
+    /// <summary>
     /// Runs <paramref name="operation"/> and fails unless it stored no delivery: what a rolled-back Operation leaves.
     /// It first waits until no earlier delivery is pending, so nothing an earlier Operation caused is charged to this
     /// one; a delivery is stored in the Operation's own commit, so nothing needs waiting for afterwards.
@@ -191,6 +233,11 @@ public abstract class HostFixture : IAsyncLifetime
         await store.WaitUntilSettledAsync(DeliveryTimeout, cancellationToken);
         return await store.IdsAsync(cancellationToken);
     }
+
+    private IDeadLetters DeadLetterStorage() =>
+        (Host.Services.GetService<IWolverineRuntime>() ?? throw new InvalidOperationException("The Host stores no deliveries."))
+            .Storage
+            .DeadLetters;
 
     private StoredDeliveries? Deliveries() =>
         _deliveries ??= Host.Services.GetService<IWolverineRuntime>()?.Storage is IMessageDatabase store
