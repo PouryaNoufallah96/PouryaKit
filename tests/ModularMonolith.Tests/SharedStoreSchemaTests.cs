@@ -16,7 +16,7 @@ namespace ModularMonolith.Tests;
 public sealed class SharedStoreSchemaTests
 {
     [Fact]
-    public async Task A_reset_clears_a_modules_tables_in_the_stores_schema_and_spares_only_the_stores_own()
+    public async Task A_reset_clears_a_modules_tables_in_the_stores_schema_and_the_store_still_delivers()
     {
         await using var fixture = new SharedSchemaFixture();
         await fixture.InitializeAsync();
@@ -25,8 +25,8 @@ public sealed class SharedStoreSchemaTests
 
         await fixture.ResetAsync(TestContext.Current.CancellationToken);
 
-        // The Module's rows and Receipts are gone with the stored deliveries; the store still delivers, so its own
-        // tables were spared.
+        // The Module's rows and Receipts are gone with the stored deliveries, and the store still delivers. That the
+        // reset leaves the store's own tables alone is not asserted here: a Solo Host keeps no row in them.
         var after = await fixture.CountsAsync();
         var (_, deliveries) = await fixture.WaitForDeliveriesAsync(
             () => fixture.FileForCopyAsync("after the reset"),
