@@ -79,6 +79,39 @@ internal sealed class HostModules
             ? service.GenericTypeArguments[0]
             : null;
 
+    // Called once a Composition Root has run: a command it handles needs its Unit of Work, which only the Composition
+    // Root registers, so the mistake is named while the Host is composed rather than at the command's first run.
+    public void EnsureUnitOfWorkForCommands(Type module, IServiceCollection services)
+    {
+        var command = _ownerByOperation.FirstOrDefault(owned => owned.Value == module && IsCommand(owned.Key)).Key;
+        if (
+            command is null
+            || services.Any(descriptor =>
+                descriptor.IsKeyedService && descriptor.ServiceType == typeof(IUnitOfWork) && Equals(descriptor.ServiceKey, module)
+            )
+        )
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            $"{module.Name} handles the command {command.FullName} but registers no Unit of Work. Declare its data in its Composition Root, for example with UsePostgres."
+        );
+    }
+
+    private static bool IsCommand(Type operation)
+    {
+        for (var type = operation.BaseType; type is not null; type = type.BaseType)
+        {
+            if (type == typeof(Command) || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Command<>)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public void EnsureOwns(Type module, Type operation)
     {
         if (!_ownerByOperation.TryGetValue(operation, out var owner))

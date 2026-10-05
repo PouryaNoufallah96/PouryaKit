@@ -1,6 +1,8 @@
 using System.Reflection;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Web;
@@ -12,8 +14,9 @@ public static class WebServiceCollectionExtensions
         /// <summary>
         /// Registers what every endpoint answers with: problem responses, the handler that turns an unexpected
         /// exception into a 500 problem response without its message and a request that cannot be read into a 400
-        /// problem response in every environment, typed IDs written as their bare values in JSON, and the claims that
-        /// fill the <c>OperationContext</c>.
+        /// problem response in every environment, status code pages that write any other failure answered with an
+        /// empty body (such as routing's own 405 and 415) as a problem response, typed IDs written as their bare
+        /// values in JSON, and the claims that fill the <c>OperationContext</c>.
         /// </summary>
         /// <remarks>
         /// The handler sees only what runs after it, so <c>app.UseExceptionHandler()</c> comes first in the pipeline,
@@ -30,6 +33,7 @@ public static class WebServiceCollectionExtensions
             // Outside Development a parameter that fails to bind answers an empty 400; throwing hands it to the
             // exception handler, which answers the same problem response in every environment.
             services.PostConfigure<RouteHandlerOptions>(routeHandlers => routeHandlers.ThrowOnBadRequest = true);
+            services.TryAddEnumerable(ServiceDescriptor.Transient<IStartupFilter, ProblemStatusCodePages>());
             services.ConfigureHttpJsonOptions(json =>
                 json.SerializerOptions.Converters.Add(new TypedIdJsonConverterFactory())
             );

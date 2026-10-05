@@ -47,6 +47,22 @@ public sealed class ModuleWiringTests
     }
 
     [Fact]
+    public void A_module_that_handles_a_command_without_a_unit_of_work_fails_startup_naming_it_and_a_query_only_module_needs_none()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            builder.AddPouryaKitModules(modules => modules.Add<UnstoredCommandModule>())
+        );
+        builder.AddPouryaKitModules(modules => modules.Add<QueryOnlyModule>());
+
+        Assert.Contains(
+            $"UnstoredCommandModule handles the command {typeof(WriteNoteCommand).FullName} but registers no Unit of Work",
+            thrown.Message
+        );
+    }
+
+    [Fact]
     public void A_registration_error_that_only_validation_catches_fails_startup_outside_development()
     {
         var host = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
@@ -109,6 +125,19 @@ public sealed class HandlerReplacingModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module) =>
         module.Replace(ServiceDescriptor.Scoped<CommandHandler<WriteNoteCommand>, WriteNoteCommandHandler>());
+}
+
+// Handles a command, but declares no data, so nothing would keep or discard what the command changes.
+public sealed class UnstoredCommandModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module) =>
+        module.AddScoped<CommandHandler<WriteNoteCommand>, WriteNoteCommandHandler>();
+}
+
+public sealed class QueryOnlyModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module) =>
+        module.AddScoped<QueryHandler<ReadOperationContextQuery, OperationContext>, ReadOperationContextQueryHandler>();
 }
 
 // A Module whose service needs Catalog's Gateway, in a Host that never adds Catalog.
