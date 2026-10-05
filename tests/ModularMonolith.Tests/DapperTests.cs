@@ -88,6 +88,8 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task Typed_ids_of_every_value_type_are_dapper_parameters_and_results_with_no_code_of_their_own()
     {
+        // Registered again, as a second Module or a second Host in this process would.
+        new ServiceCollection().AddPouryaKitDapper("app", typeof(DapperTests).Assembly);
         var sent = new TypedIdRow(new GuidKey(Guid.CreateVersion7()), new LongKey(5_000_000_000), new IntKey(7), new StringKey("sku-1"));
         await using var connection = await Connections.OpenAsync(TestContext.Current.CancellationToken);
 
@@ -133,13 +135,39 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Fact]
-    public async Task Joining_the_unit_of_work_connection_where_no_unit_of_work_is_active_throws()
+    public async Task A_query_cannot_join_the_unit_of_work_connection()
     {
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            Fixture.Gateway<StubModule>().QueryAsync(new JoinUnitOfWorkQuery(), TestContext.Current.CancellationToken)
+            Fixture
+                .Gateway<StubModule>()
+                .QueryAsync(new TallyNoteInQueryQuery("read"), TestContext.Current.CancellationToken)
         );
 
-        Assert.StartsWith("No Unit of Work is active", thrown.Message);
+        Assert.StartsWith("A query, an authorizer or a validator asked to write", thrown.Message);
+    }
+
+    [Fact]
+    public async Task A_query_sent_from_a_command_cannot_join_the_commands_unit_of_work_connection()
+    {
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            Fixture
+                .Gateway<StubModule>()
+                .SendAsync(new TallyNoteThroughQueryCommand("nested"), TestContext.Current.CancellationToken)
+        );
+
+        Assert.StartsWith("A query, an authorizer or a validator asked to write", thrown.Message);
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.note_tallies"));
+    }
+
+    [Fact]
+    public void Dapper_reads_in_one_host_cannot_name_a_second_connection()
+    {
+        var services = new ServiceCollection().AddPouryaKitDapper("app");
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => services.AddPouryaKitDapper("reports"));
+
+        Assert.Contains("'app'", thrown.Message);
+        Assert.Contains("'reports'", thrown.Message);
     }
 
     private static Task<int> BackendAsync(System.Data.Common.DbConnection connection) =>
