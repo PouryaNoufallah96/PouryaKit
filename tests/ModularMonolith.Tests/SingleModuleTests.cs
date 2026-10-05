@@ -42,6 +42,28 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.notes"));
     }
 
+    [Fact]
+    public async Task An_auditable_change_in_an_operation_nobody_began_throws_and_writes_nothing()
+    {
+        await using var services = SingleModuleServices();
+        await using var scope = services.CreateAsyncScope();
+
+        // A note is not auditable, so it needs no Actor; a folder is, and no Actor is ever made up for it.
+        var note = await scope
+            .ServiceProvider.GetRequiredService<IDispatcher>()
+            .SendAsync(new WriteNoteCommand("solo"), TestContext.Current.CancellationToken);
+        await using var folderScope = services.CreateAsyncScope();
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            folderScope
+                .ServiceProvider.GetRequiredService<IDispatcher>()
+                .SendAsync(new CreateFolderCommand(Guid.CreateVersion7()), TestContext.Current.CancellationToken)
+        );
+
+        Assert.True(note.IsSuccess);
+        Assert.StartsWith("No Operation Context was set", thrown.Message);
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.folders"));
+    }
+
     private ServiceProvider SingleModuleServices()
     {
         var services = new ServiceCollection();

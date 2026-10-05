@@ -20,7 +20,7 @@ internal sealed class ImportProductsCommandHandler(IProductRepository products)
 
         var categoryId = new CategoryId(command.CategoryId);
         var imported = 0;
-        foreach (var name in names.Except(inUse))
+        foreach (var name in names.Where(candidate => !inUse.Contains(candidate)))
         {
             var product = Product.Create(new ProductId(Guid.CreateVersion7()), categoryId, name);
             if (product.IsFailure)

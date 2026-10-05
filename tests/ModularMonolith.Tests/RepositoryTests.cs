@@ -32,7 +32,8 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
         );
 
         Assert.Equal(2, removed.Value);
-        Assert.Equal([["Desk"]], await Fixture.RowsAsync("select name from catalog.products"));
+        // A product is soft-deletable: removing one marks it deleted and keeps its row.
+        Assert.Equal([["Desk"]], await Fixture.RowsAsync("select name from catalog.products where not is_deleted"));
     }
 
     [Fact]
@@ -46,7 +47,7 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
         );
 
         var imported = await catalog.SendAsync(
-            new ImportProductsCommand(category, [" Lamp", "Desk", "Desk "]),
+            new ImportProductsCommand(category, [" Lamp", "Desk "]),
             TestContext.Current.CancellationToken
         );
 

@@ -1,5 +1,6 @@
 using Catalog.Categories.ValueObjects;
 using Catalog.Products.Data.Repository;
+using Catalog.Products.Data.Specifications;
 using Catalog.Products.Entities;
 using Catalog.Products.ValueObjects;
 using PouryaKit.Cqrs;
@@ -28,4 +29,19 @@ internal sealed class ProbeProductRepositoriesCommandHandler(
         await generic.AddAsync(product, cancellationToken);
         return ReferenceEquals(product, await specific.FindAsync(id, cancellationToken));
     }
+}
+
+// Asks the generic repository for a product by ID and by a specification, as a Catalog Feature would.
+internal sealed record ProductsFound(bool ById, int ByName);
+
+internal sealed record FindProductQuery(Guid ProductId, string Name) : Query<ProductsFound>;
+
+internal sealed class FindProductQueryHandler(IRepository<Product, ProductId> products)
+    : QueryHandler<FindProductQuery, ProductsFound>
+{
+    public override async Task<Result<ProductsFound>> Handle(FindProductQuery query, CancellationToken cancellationToken) =>
+        new ProductsFound(
+            await products.FindAsync(new ProductId(query.ProductId), cancellationToken) is not null,
+            (await products.ListAsync(new ProductsNamed([query.Name]), cancellationToken)).Count
+        );
 }
