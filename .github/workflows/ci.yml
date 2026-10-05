@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    # ubuntu-latest ships Docker, which the Testcontainers tests of later tickets need.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      # Installs the SDK band pinned in global.json.
+      - uses: actions/setup-dotnet@v6
+
+      - run: dotnet build PouryaKit.slnx
+
+      - run: dotnet test PouryaKit.slnx --no-build
