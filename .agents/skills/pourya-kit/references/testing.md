@@ -5,6 +5,10 @@
 One fixture for the test assembly and a test against the hosted application, after the Proving Sample:
 
 ```csharp
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ModularMonolith.Host;
 using PouryaKit.Testing;
@@ -14,10 +18,17 @@ using PouryaKit.Testing;
 
 public sealed class AppFixture : HostFixture
 {
-    protected override IHost CreateHost(string connectionString) =>
-        ModularMonolithHost
-            .CreateBuilder(["--environment", "Development", $"--ConnectionStrings:app={connectionString}"])
-            .Build();
+    protected override IHost CreateHost(string connectionString)
+    {
+        var builder = ModularMonolithHost.CreateBuilder(
+            ["--environment", "Development", $"--ConnectionStrings:app={connectionString}"]
+        );
+        builder.WebHost.UseTestServer();   // served in memory, for HTTP tests (web.md)
+        builder
+            .Services.AddAuthentication(TestAuthentication.SchemeName)
+            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
+        return ModularMonolithHost.Build(builder);
+    }
 }
 
 public sealed class UnitOfWorkTests(AppFixture app) : HostTest<AppFixture>(app)
@@ -38,15 +49,16 @@ public sealed class UnitOfWorkTests(AppFixture app) : HostTest<AppFixture>(app)
 
 ## The fixture
 
-- Derive one `HostFixture` per test assembly and register it with `AssemblyFixture`. Its `CreateHost(connectionString)` builds the application's Host, not started, with that connection string for its Modules. Build it from the same builder method `Program` uses, so the tests run the real composition, with the container validated on build as `AddPouryaKitModules` does in every environment.
+- Derive one `HostFixture` per test assembly and register it with `AssemblyFixture`. Its `CreateHost(connectionString)` builds the application's Host, not started, with that connection string for its Modules. Build it with the same builder and pipeline methods `Program` uses, so the tests run the real composition, with the container validated on build as `AddPouryaKitModules` does in every environment. A Host that serves HTTP is a `WebApplication`, which is an `IHost`; serve it in memory and give it a test authentication scheme, as above, to test it over HTTP ([web.md](web.md#testing-over-http)).
 - Before the first test, the fixture runs PostgreSQL in a container and hosts the application on it with every Module's migrations applied. After the last test it stops both.
 - `CreateHost` may add test-only Modules beside the application's with a second `builder.AddPouryaKitModules(...)` call.
-- The test project references `PouryaKit.Testing` and the Host project, and each Module grants it its internals: `<InternalsVisibleTo Include="ModularMonolith.Tests" />` in the Module's project.
+- The test project references `PouryaKit.Testing` and the Host project, `Microsoft.AspNetCore.TestHost` for HTTP tests, and each Module grants it its internals: `<InternalsVisibleTo Include="ModularMonolith.Tests" />` in the Module's project.
 
 ## Each test
 
 - Derive each test class from `HostTest<TFixture>`. Before each test it deletes every row in every schema except the migrations history, so no test sees another's data. Tests that share a fixture run one at a time: `CollectionBehavior.CollectionPerAssembly`.
 - Send Operations with `Fixture.Gateway<TModule>()`, exactly as the application does, each in its own scope. Assert on the returned Result and its `Errors`; read rows back with your own SQL on `Fixture.ConnectionString`. `Fixture.Host` is the started Host.
+- Test an endpoint with HTTP requests through `Fixture.Host.GetTestClient()`, authenticated as the caller the test names; see [web.md](web.md#testing-over-http).
 
 ## The Operation Context in tests
 
