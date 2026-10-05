@@ -1,3 +1,4 @@
+using Catalog.Categories.ValueObjects;
 using Catalog.Products.Entities;
 using Catalog.Products.ValueObjects;
 using PouryaKit.Cqrs;
@@ -11,7 +12,11 @@ internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId
 {
     public override async Task<Result<Guid>> Handle(CreateProductCommand command, CancellationToken cancellationToken)
     {
-        var product = Product.Create(new ProductId(command.ProductId), command.Name);
+        var product = Product.Create(
+            new ProductId(command.ProductId),
+            new CategoryId(command.CategoryId),
+            command.Name
+        );
         if (product.IsFailure)
         {
             return product.Errors;

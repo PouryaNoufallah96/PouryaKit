@@ -16,6 +16,13 @@ internal sealed class Note : AggregateRoot<NoteId>
     public string Text { get; private set; } = "";
 
     public static Note Write(string text) => new() { Text = text };
+
+    // The Stub's Domain Events exist only to drive the drain, so a note raises whichever one a test needs.
+    public Note Raising(DomainEvent domainEvent)
+    {
+        Raise(domainEvent);
+        return this;
+    }
 }
 
 internal sealed class NoteConfiguration : IEntityTypeConfiguration<Note>

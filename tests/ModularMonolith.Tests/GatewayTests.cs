@@ -1,5 +1,5 @@
 using Catalog;
-using Catalog.Products.Features.CreateProduct;
+using Catalog.Categories.Features.CreateCategory;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
@@ -26,18 +26,18 @@ public sealed class GatewayTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task Each_modules_command_commits_through_its_own_db_context()
     {
-        var product = Guid.CreateVersion7();
+        var category = Guid.CreateVersion7();
 
         var created = await Fixture
             .Gateway<CatalogModule>()
-            .SendAsync(new CreateProductCommand(product, "Lamp"), TestContext.Current.CancellationToken);
+            .SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
         var written = await Fixture
             .Gateway<StubModule>()
             .SendAsync(new WriteNoteCommand("hello"), TestContext.Current.CancellationToken);
 
         Assert.True(created.IsSuccess);
         Assert.True(written.IsSuccess);
-        Assert.Equal(product, await Fixture.ScalarAsync<Guid>("select id from catalog.products"));
+        Assert.Equal(category, await Fixture.ScalarAsync<Guid>("select id from catalog.categories"));
         Assert.Equal("hello", await Fixture.ScalarAsync<string>("select text from stub.notes"));
     }
 
