@@ -64,6 +64,8 @@ const PREPARED = {
     worktree: { type: 'string' },
     run: { type: 'string' },
     previousBase: { type: 'string' },
+    previousCount: { type: 'integer', minimum: 0 },
+    lastId: { type: 'integer', minimum: 0 },
     previous: { type: 'array', items: FINDING },
   },
 }
@@ -143,7 +145,10 @@ if missing:
     sys.exit("kit-review: no finding " + ", ".join(missing) + " in " + path)
 pick = [by[i] for i in ids] if ids else [f for f in r["findings"] if f.get("status") != "refuted"]
 keys = ("id", "severity", "path", "evidence", "fix")
-json.dump({"previousBase": r.get("base") or "", "previous": [{k: f[k] for k in keys} for f in pick]}, sys.stdout)`
+numbers = [int(x["id"][1:]) for x in r["findings"] + r.get("rescored", []) if str(x.get("id", "")).startswith("F") and x["id"][1:].isdigit()]
+last = max(numbers + [r.get("lastId") or 0])
+json.dump({"previousBase": r.get("base") or "", "previousCount": len(pick), "lastId": last,
+           "previous": [{k: f[k] for k in keys} for f in pick]}, sys.stdout)`
 const prepareCommand = `set -euo pipefail
 top=$(git rev-parse --show-toplevel)
 cd "$top"
@@ -169,7 +174,7 @@ const preparePrompt = `You prepare a code review. You do not review anything you
 \`\`\`bash
 ${prepareCommand}
 \`\`\`
-2. If it exits 0, its stdout is two JSON lines. Return ok true, the fields top, base, head, worktree and run from the first line, and previousBase and previous from the second line when it has them, copied verbatim.
+2. If it exits 0, its stdout is two JSON lines. Return ok true, the fields top, base, head, worktree and run from the first line, and previousBase, previousCount, lastId and every entry of previous from the second line when it has them, copied verbatim.
 3. If it exits non-zero, return ok false and error set to its last stderr line, verbatim.`
 
 phase('Prepare')
@@ -179,19 +184,30 @@ try {
 } catch (error) {
   log(`Prepare failed: ${error?.message ?? error}`)
 }
-if (!prepared?.ok) return fail(`Could not prepare the review: ${prepared?.error ?? 'the prepare agent did not return'}`)
+// The prepare agent may have created the worktree before it failed, so every early exit says how to remove it.
+const leftover = (worktree) => `Remove the review worktree it may have left with \`git worktree remove --force ${typeof worktree === 'string' && worktree ? worktree : '.claude/worktrees/kit-review-<random>'}\` (\`git worktree list\` shows it).`
+if (!prepared?.ok) return fail(`Could not prepare the review: ${prepared?.error ?? 'the prepare agent did not return'}. ${leftover(prepared?.worktree)}`)
 const { top, worktree, run } = prepared
 const absolute = (p) => typeof p === 'string' && /^\/[^'\u0000-\u001f\u007f]{1,500}$/.test(p)
 if (![top, worktree, run].every(absolute) || !/\/\.claude\/worktrees\/kit-review-[^/]+$/.test(worktree)
   || !/^[0-9a-f]{40}$/.test(prepared.base ?? '') || !/^[0-9a-f]{40}$/.test(prepared.head ?? '')) {
-  return fail(`The prepare agent returned an unexpected result; remove any .claude/worktrees/kit-review-* worktree it left with \`git worktree remove --force\`: ${JSON.stringify(prepared).slice(0, 400)}`)
+  return fail(`The prepare agent returned an unexpected result. ${leftover(absolute(worktree) ? worktree : null)} ${JSON.stringify(prepared).slice(0, 400)}`)
 }
 const head = prepared.head
 const baseCommit = prepared.base
 const specFile = `${run}/spec.md`
 const resultFile = `${run}/result.json`
 const previous = list(prepared.previous)
-if (previousFile && !previous.length) log('The earlier result file names no finding to re-score; this runs as a first review.')
+// A re-review that lost earlier findings on the way would pass them unseen, so the list must match what the
+// extraction counted, and the ids asked for. The worktree exists by now, so the finish step below still removes it.
+const ids = previous.map((p) => p.id)
+const lostPrevious = !previousFile ? null
+  : !Number.isInteger(prepared.previousCount) || !Number.isInteger(prepared.lastId) ? 'the prepare agent did not report previousCount and lastId'
+  : previous.length !== prepared.previousCount ? `the prepare agent returned ${previous.length} of the ${prepared.previousCount} earlier findings`
+  : new Set(ids).size !== ids.length ? 'the earlier findings repeat an id'
+  : rescoreIds.length && (ids.length !== rescoreIds.length || rescoreIds.some((id) => !ids.includes(id))) ? `the earlier findings returned (${ids.join(', ')}) are not the ids asked for (${rescoreIds.join(', ')})`
+  : null
+if (previousFile && !lostPrevious && !previous.length) log('The earlier result file names no finding to re-score; this runs as a first review.')
 if (previousFile && prepared.previousBase && !baseCommit.startsWith(prepared.previousBase) && !prepared.previousBase.startsWith(baseCommit)) {
   log(`The earlier result was reviewed against base ${prepared.previousBase}, this run against ${baseCommit}.`)
 }
@@ -200,6 +216,7 @@ const source = ticket ? `ticket #${ticket}` : `spec ${spec}`
 let full = null
 let finished = null
 try {
+  if (lostPrevious) throw new Error(`Re-review stopped before reviewing: ${lostPrevious}. Run it again.`)
   const reviewerPrompt = `Review commit ${head} against base ${baseCommit} for ${source}; its text is in ${specFile}.
 The commit is checked out, detached and clean, in the review worktree ${worktree}. Work only there: run \`git -C ${worktree} diff --stat ${baseCommit} HEAD\` and \`git -C ${worktree} diff ${baseCommit} HEAD\`, and open each changed file by its absolute path under ${worktree}. Never read the diff from any other checkout.
 You may build and run tests in the review worktree (dotnet build, dotnet test); their output lands in gitignored folders. Edit, create, stage or delete nothing there that git would see: the Codex leg fingerprints the same worktree and fails if it changes.${scope ? `\nScope: ${scope}` : ''}
@@ -208,7 +225,9 @@ Return the structured review: available true, verdict set to your derived dispos
 
   // The runner's coverage is free text, so the Codex leg reports it as a count: read_count is the number of coverage
   // entries the runner returned, and unread carries the limitations of a BLOCKED review. A failed run reports the
-  // runner's own reason: Codex's error events in stdout.txt, then the last stderr line, then result.json's error.
+  // runner's own reason: Codex's error events in stdout.txt, then the last stderr line, then the record's error. A
+  // runner that fails before it starts Codex (CLI not on PATH, version probe) prints no artifacts line, only its
+  // indented record, so then the whole stdout is read as the record.
   const summarizeCodex = `import json, pathlib, sys
 run = pathlib.Path(sys.argv[1])
 def text(p):
@@ -216,19 +235,17 @@ def text(p):
         return p.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return ""
-out = {"available": False, "verdict": "NONE", "findings": [], "read_count": 0, "unread": [], "limitations": [], "error": ""}
-lines = text(run / "codex.out").splitlines()
-art = None
-try:
-    art = pathlib.Path(json.loads(lines[0])["artifacts"])
-except (IndexError, ValueError, KeyError, TypeError):
-    pass
-record = {}
-if art:
+def parse(s):
     try:
-        record = json.loads(text(art / "result.json"))
+        value = json.loads(s)
     except ValueError:
-        pass
+        return {}
+    return value if isinstance(value, dict) else {}
+out = {"available": False, "verdict": "NONE", "findings": [], "read_count": 0, "unread": [], "limitations": [], "error": ""}
+stdout = text(run / "codex.out")
+first = parse((stdout.splitlines() or [""])[0])
+art = pathlib.Path(first["artifacts"]) if isinstance(first.get("artifacts"), str) else None
+record = parse(text(art / "result.json")) if art else parse(stdout)
 if record.get("status") == "completed":
     r = record["response"]
     out.update(available=True, verdict=r["verdict"], findings=r["findings"], limitations=r["limitations"],
@@ -370,10 +387,11 @@ ${JSON.stringify(raised, null, 2)}
     carried.set(current, r.id)
   }
 
-  // Stable ids: a carried finding keeps its earlier id, every other finding gets the next free F-number.
+  // Stable ids: a carried finding keeps its earlier id, every other finding gets the next F-number after the highest
+  // one the earlier file ever used (lastId), so an id dropped at extraction is never reused.
   // The id is set last, so nothing a reviewer or the verifier returned can replace it.
   const used = new Set(previous.map((p) => p.id))
-  let next = previous.reduce((top, p) => Math.max(top, /^F(\d+)$/.test(p.id) ? Number(p.id.slice(1)) : 0), 0)
+  let next = previous.reduce((top, p) => Math.max(top, /^F(\d+)$/.test(p.id) ? Number(p.id.slice(1)) : 0), prepared.lastId ?? 0)
   findings = findings.map((f) => {
     let id = carried.get(f)
     if (!id) {
@@ -414,6 +432,7 @@ ${JSON.stringify(raised, null, 2)}
     counts: { confirmed: count('confirmed'), unverified: count('unverified'), refuted: count('refuted') },
     findings,
     rescored,
+    lastId: next,
     note: 'Read-only: nothing in the reviewed commit was edited. The main session judges these findings and decides fix or done. To re-review after a high finding was fixed, run kit-review again with previous set to this file. A verdict of "unknown" means a reviewer or the verification stage did not return a usable review; it is not a pass.',
   }
 } catch (error) {
@@ -424,7 +443,7 @@ ${JSON.stringify(raised, null, 2)}
   // this agent call, which removing the worktree needs anyway. Non-ASCII is escaped, so the length is the byte count.
   phase('Finish')
   const content = `${JSON.stringify(full ?? fail('the review stopped early'), null, 2)}\n`
-    .replace(/[\u007f-￿]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)
+    .replace(/[\u007f-\uffff]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)
   const finishPrompt = `You save a review result and remove a git worktree. You do not review or change anything else.
 
 1. Use the Write tool to create ${resultFile} with exactly the text between the two marker lines below, byte for byte: no marker lines, nothing added, nothing reformatted.
@@ -443,8 +462,11 @@ wc -c < '${resultFile}'; git -C '${top}' worktree remove --force '${worktree}'; 
   full = { ...full, size: content.length }
 }
 
-// The digest is what reaches the main session, so it stays well under the task notification's limit (about 9.8 KB):
-// one short line per finding, with the full result in the file it names.
+// The digest is what reaches the main session, so it stays well under the task notification's limit (about 9.8 KB)
+// for any number of findings: what must not be lost (verdict, result file, cleanup) comes first, then one short line
+// per finding, standing ones first and most severe first. Claims shrink, then the list is cut with a count of the
+// rest, which the result file holds.
+const DIGEST_LIMIT = 5500
 const saved = !!finished && Math.abs(finished.bytes - full.size) <= 1
 const cleanup = finished?.removed ? null : `The review worktree was not removed; run \`git worktree remove --force ${worktree}\`.`
 if (cleanup) log(cleanup)
@@ -455,10 +477,17 @@ const oneLine = (value, max) => {
 }
 const legNote = (r) => (!r ? null : !r.available ? oneLine(r.note, 300)
   : `${r === full.reviewers?.codex ? `${r.read_count} coverage entries` : `read ${r.read_count} changed files`}, ${r.findings} finding${r.findings === 1 ? '' : 's'}`)
-const digest = (claimMax, keepRefuted) => ({
+const RESCORED_MAX = 60
+const header = {
   workflow: 'kit-review',
   complete: full.complete,
   verdict: full.verdict,
+  result: saved ? resultFile : null,
+  ...(cleanup ? { cleanup } : {}),
+  ...(full.error ? { error: oneLine(full.error, 300) } : {}),
+  note: saved
+    ? `Full result (evidence, fix and verification per finding; each leg's limitations) in ${resultFile}. Re-review after a high fix: previous = that file. "unknown" is never a pass.`
+    : 'The result file was not written; the full result is under `full` at the end. "unknown" is never a pass.',
   base: full.base,
   head: full.head,
   ...(ticket ? { ticket: Number(ticket) } : { spec }),
@@ -466,27 +495,32 @@ const digest = (claimMax, keepRefuted) => ({
   legs: full.reviewers
     ? { claude: { verdict: full.reviewers.claude.verdict, note: legNote(full.reviewers.claude) }, codex: { verdict: full.reviewers.codex.verdict, note: legNote(full.reviewers.codex) } }
     : null,
-  findings: list(full.findings).filter((f) => keepRefuted || f.status !== 'refuted').map((f) => ({
-    id: f.id,
-    severity: f.severity,
-    status: f.status,
-    path: oneLine(f.path, 120),
-    by: list(f.raisedBy).join('+'),
-    ...(claimMax ? { claim: oneLine(f.claim || f.evidence, claimMax) } : {}),
-  })),
-  ...(keepRefuted ? {} : { refutedOmitted: full.counts?.refuted ?? 0 }),
-  ...(list(full.rescored).length ? { rescored: full.rescored.map((r) => ({ id: r.id, state: r.state })) } : {}),
-  ...(full.error ? { error: oneLine(full.error, 300) } : {}),
-  result: saved ? resultFile : null,
-  ...(cleanup ? { cleanup } : {}),
-  note: saved
-    ? `Full result (evidence, fix and verification per finding; each leg's limitations) in ${resultFile}. Re-review after a high fix: previous = that file. "unknown" is never a pass.`
-    : 'The result file was not written; the full result is under `full` below. "unknown" is never a pass.',
-})
-let out = digest(160, true)
-for (const [claimMax, keepRefuted] of [[100, true], [100, false], [60, false], [0, false]]) {
-  if (JSON.stringify(out).length <= 5000) break
-  out = digest(claimMax, keepRefuted)
+  ...(list(full.rescored).length ? {
+    rescored: Object.fromEntries(full.rescored.slice(0, RESCORED_MAX).map((r) => [r.id, r.state])),
+    ...(full.rescored.length > RESCORED_MAX ? { rescoredOmitted: full.rescored.length - RESCORED_MAX } : {}),
+  } : {}),
 }
+const order = (f) => [f.status === 'refuted' ? 1 : 0, -SEVERITY.indexOf(f.severity), f.status === 'confirmed' ? 0 : 1]
+const ordered = [...list(full.findings)].sort((a, b) => {
+  const [x, y] = [order(a), order(b)]
+  return x[0] - y[0] || x[1] - y[1] || x[2] - y[2]
+})
+const line = (f, claimMax) => ({
+  id: f.id,
+  severity: f.severity,
+  status: f.status,
+  path: oneLine(f.path, 120),
+  by: list(f.raisedBy).join('+'),
+  claim: oneLine(f.claim || f.evidence, claimMax),
+})
+const size = (value) => JSON.stringify(value).length
+const claimMax = [160, 100, 60].find((max) => size({ ...header, findings: ordered.map((f) => line(f, max)) }) <= DIGEST_LIMIT) ?? 60
+const lines = ordered.map((f) => line(f, claimMax))
+// Keep the longest prefix that fits beside the header and the omitted count; one comma separates each line.
+let room = DIGEST_LIMIT - size({ ...header, findings: [], omitted: lines.length })
+let kept = 0
+while (kept < lines.length && room - size(lines[kept]) - 1 >= 0) room -= size(lines[kept++]) + 1
+let out = { ...header, findings: lines.slice(0, kept), ...(kept < lines.length ? { omitted: lines.length - kept } : {}) }
+if (kept < lines.length) log(`The digest lists ${kept} of ${lines.length} findings; the rest are in the result file.`)
 if (!saved) out = { ...out, full }
 return out
