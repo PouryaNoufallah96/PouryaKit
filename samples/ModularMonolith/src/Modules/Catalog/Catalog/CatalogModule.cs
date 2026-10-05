@@ -1,6 +1,7 @@
 using Catalog.Infrastructure.Data.Context;
 using PouryaKit.Cqrs;
 using PouryaKit.Modularity;
+using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.Postgres;
 using PouryaKit.Validation;
 
@@ -12,6 +13,7 @@ public sealed class CatalogModule : IModuleDefinition
     public void Configure(ModuleBuilder module)
     {
         module.UsePostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
+        module.AddPouryaKitDapper(connectionName: "app", typeof(CatalogModule).Assembly);
         module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);
         module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
     }
