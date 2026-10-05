@@ -64,7 +64,7 @@ internal sealed class Product : AggregateRoot<ProductId>
 
 **Result and Error**
 
-- Return a value or an Error directly; each converts to a Result. `Result.Success()` is the success without a value.
+- Return a value or an Error directly; each converts to a Result. `Result.Success()` is the success without a value. When the value's static type is an interface (such as `IReadOnlyList<T>`), C# applies no implicit conversion, so return `Result.Success(value)`.
 - Pass a failure on with `return result.Errors;`; it converts to a failed Result of any type and keeps every Error.
 - Check `IsSuccess` or `IsFailure` before reading `Value`; reading it from a failure throws. No conversion turns a Result into its value, and a null value throws instead of becoming a success.
 - Give each Error a stable code (`Product.NameRequired`), a message and a kind through its factory: `Validation`, `NotFound`, `Conflict`, `Forbidden` or `Unexpected`. Never an HTTP status; the Web package maps kinds to responses.
@@ -75,7 +75,7 @@ internal sealed class Product : AggregateRoot<ProductId>
 - Declare one per aggregate as a sealed record over `Guid`, `long`, `int` or `string`, as above. Two IDs are equal only when type and value are equal, so IDs of different aggregates cannot be mixed up.
 - Create a new Guid ID with `TypedId.New<ProductId>()`; it is time-ordered (version 7). Wrap a value from input with `new ProductId(value)`.
 - The constructor throws on an empty Guid or a blank string: that is a bug, so validate input before it reaches the constructor.
-- Write no converter. JSON needs `TypedIdJsonConverterFactory` once in the serializer options, which the Kit's packages add; EF Core and Dapper registration arrive with those packages.
+- Write no converter. JSON needs `TypedIdJsonConverterFactory` once in the serializer options. Until the Web (#14) and Messaging packages register it, add it to your serializer options yourself. It also handles typed IDs as dictionary keys, and reports an empty ID in JSON as a `JsonException`. EF Core and Dapper registration arrive with those packages.
 
 **Aggregates, entities and value objects**
 
@@ -87,6 +87,8 @@ internal sealed class Product : AggregateRoot<ProductId>
 
 - Declare each as a sealed record deriving from `DomainEvent`, named in the past tense with the `DomainEvent` suffix. Its `Id` and UTC `OccurredOn` are assigned once when it is created and survive serialization; never set them yourself.
 - Carry typed IDs and values, never the aggregate itself or its version.
+- Serialize a Domain Event by its runtime type (`JsonSerializer.Serialize(e, e.GetType(), options)`); serializing it as `DomainEvent` drops the derived members.
+- A payload without `Id` deserializes with a new identity, so a stored or sent event must always include its `Id`.
 
 **Business rules**
 

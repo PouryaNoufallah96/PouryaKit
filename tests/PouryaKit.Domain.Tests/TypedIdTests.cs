@@ -42,6 +42,26 @@ public class TypedIdTests
     }
 
     [Fact]
+    public void Ids_round_trip_through_json_as_dictionary_keys()
+    {
+        var stock = new Dictionary<ProductId, int> { [TypedId.New<ProductId>()] = 3, [TypedId.New<ProductId>()] = 5 };
+
+        var read = JsonSerializer.Deserialize<Dictionary<ProductId, int>>(JsonSerializer.Serialize(stock, Json), Json);
+
+        Assert.Equal(stock, read);
+    }
+
+    [Fact]
+    public void An_empty_id_in_json_is_a_json_error()
+    {
+        var error = Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<ProductId>($"\"{Guid.Empty}\"", Json)
+        );
+
+        Assert.IsType<ArgumentException>(error.InnerException);
+    }
+
+    [Fact]
     public void Empty_values_are_rejected()
     {
         Assert.Throws<ArgumentException>(() => new ProductId(Guid.Empty));
