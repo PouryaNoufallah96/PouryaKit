@@ -15,6 +15,7 @@ public sealed class RestartTests(PostgresServer server)
     /// run again.
     /// </summary>
     [Theory]
+    [InlineData(DeliveryChoice.RoutedQueues)]
     [InlineData(DeliveryChoice.SeparatedQueues)]
     [InlineData(DeliveryChoice.DeliveryEnvelope)]
     public async Task A_handler_that_succeeded_is_not_run_again_after_the_host_is_killed(DeliveryChoice delivery)

@@ -96,8 +96,12 @@ public sealed class SpikeDatabase(string connectionString) : IAsyncDisposable
     /// </summary>
     private const string SubscriptionSql = """
         coalesce(substring(encode(body, 'escape') from '(?i)"subscription"\s*:\s*"([^"]+)"'),
-                 substring(received_at from 'local://([^/]+)/'))
+                 substring(received_at from 'local://([^/]+)/'), received_at)
         """;
+
+    public Task<List<Guid>> ScopesAsync(string handler, Guid productId) => ListAsync(
+        "select scope_id from spike.deliveries where handler = $1 and product_id = $2 order by id",
+        r => r.GetGuid(0), handler, productId);
 
     public Task<List<EnvelopeRow>> IncomingAsync() => ListAsync(
         $"select id, status, received_at, message_type, attempts, owner_id, {SubscriptionSql} as s from wolverine.wolverine_incoming_envelopes order by s",

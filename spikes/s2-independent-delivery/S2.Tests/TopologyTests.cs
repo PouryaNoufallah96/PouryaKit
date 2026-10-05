@@ -36,11 +36,13 @@ public sealed class TopologyTests(PostgresServer server)
     }
 
     /// <summary>
-    /// Option A as configured for the decision pins a lone subscriber's messages to its subscription queue, the queue
-    /// its sticky handler keeps once Wolverine separates; Option B's queue depends on the message type only and its
-    /// envelope names its subscription. Either way the pending delivery reaches Inventory.
+    /// Option C routes every subscription to its own queue whatever their number, with no special case. Option A pins a
+    /// lone subscriber's messages to its subscription queue, the queue its sticky handler keeps once Wolverine
+    /// separates. Option B's queue depends on the message type only and its envelope names its subscription. In each
+    /// case the pending delivery reaches Inventory.
     /// </summary>
     [Theory]
+    [InlineData(DeliveryChoice.RoutedQueues)]
     [InlineData(DeliveryChoice.SeparatedQueues)]
     [InlineData(DeliveryChoice.DeliveryEnvelope)]
     public async Task A_pending_delivery_is_delivered_after_a_second_subscriber_is_added(DeliveryChoice delivery)

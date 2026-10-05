@@ -28,25 +28,26 @@ public static class HandlerScript
     }
 }
 
-/// <summary>Records every handler invocation in <c>spike.deliveries</c>, on its own connection, before the outcome.</summary>
+/// <summary>
+/// Records every handler invocation in <c>spike.deliveries</c>, on its own connection, before the outcome. Registered
+/// scoped, so <see cref="ScopeId"/> identifies the scope the invocation ran in.
+/// </summary>
 public sealed class DeliveryLog(NpgsqlDataSource db)
 {
-    public async Task RecordAsync(string handler, Guid productId, Guid eventId, string outcome)
-    {
-        await using var cmd = db.CreateCommand(
-            "insert into spike.deliveries(handler, product_id, event_id, outcome) values ($1, $2, $3, $4)");
-        cmd.Parameters.AddWithValue(handler);
-        cmd.Parameters.AddWithValue(productId);
-        cmd.Parameters.AddWithValue(eventId);
-        cmd.Parameters.AddWithValue(outcome);
-        await cmd.ExecuteNonQueryAsync();
-    }
+    public Guid ScopeId { get; } = Guid.CreateVersion7();
 
     /// <summary>The handler body every Spike handler shares: log the invocation, then do what the script says.</summary>
     public async Task<Result> RunAsync(string handler, Guid productId, Guid eventId)
     {
         var failure = HandlerScript.Next(handler, productId);
-        await RecordAsync(handler, productId, eventId, failure?.ToString() ?? "Succeeded");
+        await using var cmd = db.CreateCommand(
+            "insert into spike.deliveries(handler, product_id, event_id, outcome, scope_id) values ($1, $2, $3, $4, $5)");
+        cmd.Parameters.AddWithValue(handler);
+        cmd.Parameters.AddWithValue(productId);
+        cmd.Parameters.AddWithValue(eventId);
+        cmd.Parameters.AddWithValue(failure?.ToString() ?? "Succeeded");
+        cmd.Parameters.AddWithValue(ScopeId);
+        await cmd.ExecuteNonQueryAsync();
         return failure switch
         {
             null => Result.Success(),

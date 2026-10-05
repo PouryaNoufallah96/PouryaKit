@@ -24,7 +24,6 @@ public sealed class SeparatedQueues(bool separated = true, bool pinSingleSubscri
 
         foreach (var s in messaging.Subscriptions)
         {
-            services.AddScoped(s.HandlerType);
             var adapter = typeof(SeparatedHandler<,>).MakeGenericType(s.HandlerType, s.MessageType);
             opts.Discovery.IncludeType(adapter);
             if (separated) opts.LocalQueue(s.Name).AddStickyHandler(adapter);
@@ -36,14 +35,9 @@ public sealed class SeparatedQueues(bool separated = true, bool pinSingleSubscri
     public ValueTask PublishAsync(IMessageBus outbox, object message) => outbox.PublishAsync(message);
 }
 
-/// <summary>The Kit-owned Wolverine handler for one subscription: a fresh scope, the Kit handler, a failed Result thrown.</summary>
-public sealed class SeparatedHandler<THandler, TMessage>(IServiceScopeFactory scopes)
-    where THandler : class, IIntegrationEventHandler<TMessage>
+/// <summary>The Kit-owned Wolverine handler for one subscription. Generated code names <typeparamref name="THandler"/>.</summary>
+public sealed class SeparatedHandler<THandler, TMessage>(KitMessaging messaging, IServiceScopeFactory scopes)
 {
-    public async Task Handle(TMessage message, CancellationToken ct)
-    {
-        await using var scope = scopes.CreateAsyncScope();
-        var result = await scope.ServiceProvider.GetRequiredService<THandler>().Handle(message, ct);
-        if (result.IsFailure) throw new HandlerFailedException(typeof(THandler).Name, result.Error!);
-    }
+    public Task Handle(TMessage message, CancellationToken ct) =>
+        messaging.Subscriptions.Single(s => s.HandlerType == typeof(THandler)).DeliverAsync(scopes, message!, ct);
 }

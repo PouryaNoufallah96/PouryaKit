@@ -10,6 +10,7 @@ public sealed class DeadLetterTests(PostgresServer server)
 {
     public static TheoryData<DeliveryChoice, string> Cases => new()
     {
+        { DeliveryChoice.RoutedQueues, "catalog.product-created.v1" },
         { DeliveryChoice.SeparatedQueues, "catalog.product-created.v1" },
         { DeliveryChoice.DeliveryEnvelope, "kit.delivery.catalog.product-created.v1" },
     };

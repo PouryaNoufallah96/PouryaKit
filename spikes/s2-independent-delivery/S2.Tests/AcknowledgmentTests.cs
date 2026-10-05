@@ -15,6 +15,8 @@ public sealed class AcknowledgmentTests(PostgresServer server)
 
     public static TheoryData<DeliveryChoice, MessageIdentity, string, string[]> Cases => new()
     {
+        { DeliveryChoice.RoutedQueues, MessageIdentity.IdOnly, CatalogModule.ProductCreatedWireName, SubscriptionQueues },
+        { DeliveryChoice.RoutedQueues, MessageIdentity.IdAndDestination, CatalogModule.ProductCreatedWireName, SubscriptionQueues },
         { DeliveryChoice.SeparatedQueues, MessageIdentity.IdOnly, CatalogModule.ProductCreatedWireName, SubscriptionQueues },
         { DeliveryChoice.SeparatedQueues, MessageIdentity.IdAndDestination, CatalogModule.ProductCreatedWireName, SubscriptionQueues },
         { DeliveryChoice.DeliveryEnvelope, MessageIdentity.IdOnly, Envelope, OneQueue },
@@ -23,7 +25,7 @@ public sealed class AcknowledgmentTests(PostgresServer server)
 
     /// <summary>
     /// One published message becomes one durable envelope row per subscription, written in the Unit of Work's commit,
-    /// each with its own envelope id, and each marked Handled on its own. Option A tells the rows apart by queue
+    /// each with its own envelope id, and each marked Handled on its own. Options A and C tell the rows apart by queue
     /// (<c>received_at</c>); Option B's rows share one queue and carry the subscription in the body.
     /// </summary>
     [Theory]

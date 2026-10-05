@@ -7,7 +7,7 @@ namespace S2.Shipping;
 /// <summary>A third subscriber whose handler keeps the realistic shape: internal to its Module assembly.</summary>
 public static class ShippingModule
 {
-    public const string Subscription = "shipping.product-created";
+    public const string Subscription = "shipping.Product-Created"; // mixed case: Wolverine lower-cases queue names
     public const string HandlerName = nameof(PrepareShippingOnProductCreated);
 
     public static void Configure(KitMessaging messaging) =>
