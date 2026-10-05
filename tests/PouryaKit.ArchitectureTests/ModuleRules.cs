@@ -30,7 +30,8 @@ internal static partial class ModuleRules
     /// implementation fails, direct or through other projects. The rule reads the project's restored closure, so a
     /// project or package reference counts even when no emitted code uses it, and the compiled assembly's references,
     /// for an assembly referenced by file. Not seen: a Module that loads another's assembly or resolves its services at
-    /// run time by name, without referencing it.
+    /// run time by name, without referencing it; and a reference to a Module whose assembly name differs from its
+    /// project name, since the restored closure names projects and the rule compares assembly names.
     /// </summary>
     public static IEnumerable<string> ReferencesToOtherModules(Assembly module, RestoredPackage restored, IReadOnlySet<string> modules) =>
         from reached in ReachedBy(module, restored)
@@ -55,9 +56,9 @@ internal static partial class ModuleRules
             .Order(StringComparer.Ordinal);
 
     /// <summary>
-    /// ADR 0003: Feature code never saves, commits, begins or ends a transaction, or writes around the Unit of Work. The
-    /// rule reads every method of the Module's assembly, its DbContext and Composition Root included, and leaves out only
-    /// EF Core migrations. It rejects a call to:
+    /// ADR 0003: Feature code never saves, commits, begins or ends a transaction, or writes around the Unit of Work's
+    /// tracked changes. The rule reads every method of the Module's assembly, its DbContext and Composition Root
+    /// included, and leaves out only EF Core migrations. It rejects a call to:
     /// <list type="bullet">
     /// <item><c>DbContext.SaveChanges(Async)</c> or <c>DbContext.Database</c>, which reaches raw SQL, transactions and
     /// migrations;</item>
@@ -65,17 +66,21 @@ internal static partial class ModuleRules
     /// at once, outside the tracked changes the Unit of Work prepares;</item>
     /// <item>beginning, committing, rolling back or releasing a transaction or savepoint on an ADO.NET connection or
     /// transaction, or an EF Core transaction; a new <c>TransactionScope</c> or <c>CommittableTransaction</c>;</item>
-    /// <item>the Kit's own steps: <c>IUnitOfWork</c>, <c>IUnitOfWorkOutbox</c>, <c>IReceipts</c>,
-    /// <c>IIntegrationEventOutbox</c>, <c>ISnapshotMappers</c>, <c>DomainEventDrain</c>, beginning an Operation
-    /// (<c>BeginOperation</c>), which only the Gateway and the Kit's delivery step do, and opening a reading step
-    /// (<c>Operation.OnlyReading</c>).</item>
+    /// <item>the Kit's own steps: <c>IUnitOfWork</c>, the Unit of Work's DbContext (<c>EfUnitOfWorkExtensions</c>),
+    /// <c>IUnitOfWorkOutbox</c>, <c>IReceipts</c>, <c>IIntegrationEventOutbox</c>, <c>ISnapshotMappers</c>,
+    /// <c>DomainEventDrain</c>, opening a reading step (<c>Operation.OnlyReading</c>), and beginning an Operation
+    /// (<c>BeginOperation</c>). The Gateway, the Web boundary and the Kit's delivery step begin Operations; so does an
+    /// application of one Module that opens its own scopes, in its own assembly, which this rule would reject if that
+    /// assembly were judged as a Module.</item>
     /// </list>
     /// It also rejects a string literal holding a transaction-control statement (<c>begin</c>, <c>start transaction</c>,
     /// <c>commit</c>, <c>end</c>, <c>abort</c>, <c>rollback</c>, <c>savepoint</c>, <c>release</c>, two-phase
-    /// <c>prepare</c>/<c>commit prepared</c>) at any statement boundary of the literal. Not seen: a call made through
-    /// reflection, <c>dynamic</c> or an expression tree compiled at run time; a call a library the Module calls makes
-    /// for it; SQL text assembled at run time. A literal that is exactly one of those words (a label reading "End") is
-    /// rejected as if it were SQL.
+    /// <c>prepare</c>/<c>commit prepared</c>), read as <see cref="HoldsTransactionControl"/> reads it. Not seen: a call
+    /// made through reflection, <c>dynamic</c> or an expression tree compiled at run time; a call a library the Module
+    /// calls makes for it; EF Core's transaction manager reached without <c>Database</c>
+    /// (<c>GetService&lt;IDbContextTransactionManager&gt;()</c>); SQL text assembled at run time; a write on a
+    /// connection outside the Unit of Work (the read connection from <c>IReadConnectionFactory.OpenAsync()</c>, or one
+    /// the Module opens), which neither this rule nor the Dapper write rule sees when it names a table no aggregate maps.
     /// </summary>
     public static IEnumerable<string> SavesOrCommits(Assembly module) =>
         (
@@ -88,9 +93,19 @@ internal static partial class ModuleRules
             select $"{literal.Owner.FullName} runs the SQL statement \"{literal.Text}\"."
         ).Distinct();
 
-    /// <summary>Whether any statement of <paramref name="sql"/>, split at its semicolons, is transaction control.</summary>
-    public static bool HoldsTransactionControl(string sql) =>
-        sql.Split(';').Any(statement => TransactionStatement().IsMatch(statement.Trim()));
+    /// <summary>
+    /// Whether <paramref name="sql"/> holds a transaction-control statement. Its comments, the bodies of its
+    /// single-quoted strings and its dollar-quoted blocks are removed first; what is left is split at its semicolons, and
+    /// it counts as SQL only when every statement starts with a SQL command word, so prose such as "Abort; retry?" is
+    /// not. Not seen: transaction control inside a dollar-quoted block (a <c>DO</c> block or a procedure body that
+    /// commits). A literal that is nothing but one of the keywords (a label reading "End") is read as SQL.
+    /// </summary>
+    public static bool HoldsTransactionControl(string sql)
+    {
+        string[] statements = [.. Sql.Code(sql, keepDollarQuoted: false).Split(';').Select(statement => statement.Trim()).Where(statement => statement.Length > 0)];
+        return statements.All(statement => SqlCommand().IsMatch(statement))
+            && statements.Any(statement => TransactionStatement().IsMatch(statement));
+    }
 
     /// <summary>
     /// ADR 0004 and 0006: no type from Wolverine or JasperFx, so never <c>IMessageBus</c>, <c>IMessageContext</c>,
@@ -152,9 +167,12 @@ internal static partial class ModuleRules
     /// <c>truncate</c>) names no table an aggregate of any Module maps; a name without its schema is compared with every
     /// aggregate table of that name, and quotes, case and whitespace around the schema's dot do not matter. It reads the
     /// string literals of the Module's code outside EF Core migrations, so whatever SQL calls them (Dapper, ADO.NET,
-    /// <c>ExecuteSqlRaw</c>); EF Core's LINQ bulk writes are rejected by <see cref="SavesOrCommits"/>. Not seen: SQL
-    /// built at run time (an interpolated or concatenated table name, text read from a file or a resource), a write
-    /// through a view, and writes inside stored procedures, functions or triggers.
+    /// <c>ExecuteSqlRaw</c>), with their comments and the bodies of their single-quoted strings removed first; a
+    /// dollar-quoted block is read as code, since a <c>DO</c> block that writes still writes. EF Core's LINQ bulk writes
+    /// are rejected by <see cref="SavesOrCommits"/>. Not seen: SQL built at run time (an interpolated or concatenated
+    /// table name, text read from a file or a resource); a three-part name (<c>database.schema.table</c>); a write
+    /// through a view; writes inside stored procedures, functions or triggers the literal only calls; and a write on a
+    /// connection outside the Unit of Work to a table no aggregate maps, which this rule allows by design.
     /// </summary>
     public static IEnumerable<string> WritesToAggregateTables(Assembly module, IReadOnlySet<string> aggregateTables) =>
         (
@@ -167,7 +185,7 @@ internal static partial class ModuleRules
 
     /// <summary>The tables <paramref name="sql"/> writes, lower case, with their schema when it names one.</summary>
     public static IEnumerable<string> TablesWrittenBy(string sql) =>
-        from match in SqlWrite().Matches(sql)
+        from match in SqlWrite().Matches(Sql.Code(sql, keepDollarQuoted: true))
         let table = Unquoted(match.Groups["table"].Value)
         select match.Groups["schema"].Success ? $"{Unquoted(match.Groups["schema"].Value)}.{table}" : table;
 
@@ -229,6 +247,7 @@ internal static partial class ModuleRules
 
     private static bool IsKitStep(MethodBase callee) =>
         KitSteps.Any(step => callee.DeclaringType!.IsAssignableTo(step))
+        || callee.DeclaringType == typeof(EfUnitOfWorkExtensions)
         || (callee.DeclaringType == typeof(OperationContextServiceProviderExtensions) && callee.Name == "BeginOperation")
         || (callee.DeclaringType == typeof(Operation) && callee.Name == nameof(Operation.OnlyReading));
 
@@ -255,6 +274,13 @@ internal static partial class ModuleRules
         RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace
     )]
     private static partial Regex TransactionStatement();
+
+    // A statement that starts with a PostgreSQL command word.
+    [GeneratedRegex(
+        @"^(?:abort|alter|analyze|begin|call|checkpoint|close|cluster|comment|commit|copy|create|deallocate|declare|delete|discard|do|drop|end|execute|explain|fetch|grant|import|insert|listen|load|lock|merge|move|notify|prepare|reassign|refresh|reindex|release|reset|revoke|rollback|savepoint|security|select|set|show|start|table|truncate|unlisten|update|vacuum|values|with)\b",
+        RegexOptions.IgnoreCase
+    )]
+    private static partial Regex SqlCommand();
 
     [GeneratedRegex(
         @"\b(?:insert\s+into|(?<!\b(?:for|on)\s+)update(?!\s+set\b)|delete\s+from|merge\s+into|truncate(?:\s+table)?)\s+(?:only\s+)?(?:(?<schema>""?[a-z_][\w$]*""?)\s*\.\s*)?(?<table>""?[a-z_][\w$]*""?)",

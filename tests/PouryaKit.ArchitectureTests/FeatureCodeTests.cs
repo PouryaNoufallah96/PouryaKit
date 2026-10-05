@@ -38,9 +38,11 @@ public sealed class FeatureCodeTests
                 "Offending.CommittingCommandHandler runs the SQL statement \"update offending_marks set seen = true; abort work\".",
                 "Offending.ConnectingCommandHandler calls DbContext.get_Database.",
                 "Offending.KitStepCallingCommandHandler calls DomainEventDrain.RunAsync.",
+                "Offending.KitStepCallingCommandHandler calls EfUnitOfWorkExtensions.get_DbContext.",
                 "Offending.KitStepCallingCommandHandler calls IIntegrationEventOutbox.Add.",
                 "Offending.KitStepCallingCommandHandler calls IReceipts.RecordAsync.",
                 "Offending.KitStepCallingCommandHandler calls ISnapshotMappers.Map.",
+                "Offending.KitStepCallingCommandHandler calls IUnitOfWork.RunAsync.",
                 "Offending.KitStepCallingCommandHandler calls IUnitOfWorkOutbox.WriteAsync.",
                 "Offending.KitStepCallingCommandHandler calls Operation.OnlyReading.",
                 "Offending.KitStepCallingCommandHandler calls OperationContextServiceProviderExtensions.BeginOperation.",
@@ -55,9 +57,18 @@ public sealed class FeatureCodeTests
     [InlineData("insert into marks values (1); COMMIT AND CHAIN;", true)]
     [InlineData("rollback to savepoint before_marks", true)]
     [InlineData("prepare transaction 'offending'", true)]
+    [InlineData("-- note\ncommit", true)]
+    [InlineData("/* x */ commit", true)]
+    [InlineData("commit -- done", true)]
+    [InlineData("select 1; /* then */ end transaction", true)]
     [InlineData("do $$ begin perform 1; end $$", false)]
+    [InlineData("do $$ begin perform 1; end; $$", false)]
+    [InlineData("create function touch() returns void language plpgsql as $body$ begin perform 1; end; $body$", false)]
+    [InlineData("select 'a;commit;b'", false)]
+    [InlineData("select 1 -- ; commit", false)]
+    [InlineData("Abort; retry?", false)]
     [InlineData("select ended_at from marks where committed", false)]
-    public void Transaction_control_is_found_at_any_statement_boundary(string sql, bool isTransactionControl)
+    public void Transaction_control_is_found_at_any_statement_boundary_outside_comments_and_strings(string sql, bool isTransactionControl)
     {
         Assert.Equal(isTransactionControl, ModuleRules.HoldsTransactionControl(sql));
     }

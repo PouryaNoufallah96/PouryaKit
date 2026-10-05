@@ -61,6 +61,10 @@ public sealed class DapperWriteTests
     [InlineData("truncate table billing.price_lists", "billing.price_lists")]
     [InlineData("update catalog.\nproducts set name = @Name", "catalog.products")]
     [InlineData("delete from catalog\t. \"Products\" where id = @Id", "catalog.products")]
+    [InlineData("update /* c */ catalog.products set name = @Name", "catalog.products")]
+    [InlineData("do $$ begin update catalog.products set name = 'x'; end $$", "catalog.products")]
+    [InlineData("-- update catalog.products\ninsert into marks (id) values (@Id)", "marks")]
+    [InlineData("insert into marks (note) values ('update catalog.products set name = 1')", "marks")]
     public void Sql_writes_are_read_by_the_table_they_name(string sql, string? table)
     {
         Assert.Equal(table is null ? [] : [table], ModuleRules.TablesWrittenBy(sql));
