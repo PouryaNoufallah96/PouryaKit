@@ -10,7 +10,7 @@ namespace PouryaKit.Persistence.EFCore;
 public interface IUnitOfWorkOutbox
 {
     /// <summary>
-    /// Writes each of <paramref name="messages"/> that has a subscriber through <paramref name="dbContext"/>'s open
+    /// Writes each of <paramref name="messages"/> that has a subscription through <paramref name="dbContext"/>'s open
     /// transaction, once per commit attempt, after persistence is prepared and before the save. The messages are the
     /// Domain Events the Operation handled, in the order handled.
     /// </summary>

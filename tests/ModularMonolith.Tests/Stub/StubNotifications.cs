@@ -121,3 +121,19 @@ internal sealed class CopyThenRefuseNotificationHandler(IRepository<Note, NoteId
         return Refused;
     }
 }
+
+// Its subscription name is declared in mixed case; its queue, and so its identity, is lower-cased.
+internal sealed record NoteFiledForCasedCopyDomainEvent(string Text) : DomainEvent;
+
+[SubscriptionName(Name)]
+internal sealed class CasedCopyNotificationHandler(IRepository<Note, NoteId> notes)
+    : INotificationHandler<NoteFiledForCasedCopyDomainEvent>
+{
+    public const string Name = "stub.Cased-Copy";
+
+    public async Task<Result> Handle(NoteFiledForCasedCopyDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        await notes.AddAsync(Note.Write(CopyFiledNoteNotificationHandler.CopyOf(domainEvent.Text)), cancellationToken);
+        return Result.Success();
+    }
+}

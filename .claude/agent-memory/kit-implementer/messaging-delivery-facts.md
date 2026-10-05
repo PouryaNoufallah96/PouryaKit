@@ -16,5 +16,9 @@ Verified in ticket #15 (2026-10-05), WolverineFx 6.46.0; check the merged code b
 - EF1002 (error under TreatWarningsAsErrors) flags an interpolated string passed straight to `ExecuteSqlRawAsync`; build the SQL in a local first.
 - `IHostApplicationBuilder.UseWolverine` exists in 6.46; the Kit's entry is `builder.UsePouryaKitWolverine(connectionName: "app")`. `dotnet ef` with the Host as startup still works (the Host is built, never started).
 
+- #15 fix round: Wolverine 6.46 creates the local queues `agents` (System, in memory), `default`, `durable`, `replies`, `scheduled`, `system` itself; a route to `agents` is never stored. `LocalTransport` is internal: read a queue's final `Role`/`Mode` with `runtime.Options.Transports.TryGetEndpoint(new Uri("local://name"))` after start (an `IHostedLifecycleService.StartedAsync` runs after every hosted service). An explicit `LocalQueue(name).BufferedInMemory()` wins over `UseDurableLocalQueues`.
+- Dead-Host proof in-process: set `((WolverineRuntime)runtime).StopMode = StopMode.Quick` before `StopAsync`: no drain and no ownership release, as a kill leaves it. A Solo Host's start clears node records and releases *all* ownership, which recovers it.
+- `Uri.TryCreate("x://12345/")`, a 64-char label, and 200-char names all round-trip as the host; only a trailing newline fails, and `^...$` regex accepts it (use `\A...\z`).
+
 **Why:** each cost a run or would make a delivery test pass vacuously.
 **How to apply:** for #16 (Integration Events through the same outbox seam and delivery step), #17 (dead letters) and #18 (Snapshots via `IUnitOfWorkOutbox`). Related: [[wolverine-spike-gotchas]], [[wolverine-6-spike-facts]], [[persistence-preparation-facts]].
