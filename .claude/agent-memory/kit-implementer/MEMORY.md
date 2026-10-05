@@ -3,3 +3,8 @@
 - [STJ and record facts](stj-and-record-facts.md) — base-type JsonConverter ignored, init props survive, derived record reuses Value
 - [Cqrs design facts](cqrs-design-facts.md) — FluentValidation licence and scanner API, generic failed Result trick, #7 design calls
 - [Worktree inherits main checkout](worktree-inherits-main-checkout.md) — root global.json and Directory.*.props reach a worktree by parent lookup; Spikes need stoppers
+- [Worktree .NET gotchas](worktree-dotnet-gotchas.md) — MTP filter syntax in worktrees (`--filter-class`, not `--filter`); worktree-guard command refusals
+- [Wolverine 6 Spike facts](wolverine-6-spike-facts.md) — Spike S1: RuntimeCompilation required, commit-timestamp proof, ~75 s default recovery, one outbox instance per commit attempt
+- [Wolverine spike gotchas](wolverine-spike-gotchas.md) — Spike S2: codegen needs public types, AddMessageHandler avoids it, EndpointFor writes Outgoing rows, stale-time vs in-memory retry
+- [Spike test project gotchas](spike-test-project-gotchas.md) — no VSTest packages; xunit.v3 4.x parallelization attribute; worktree guard on computed sed/for
+- [Spike fair comparison](spike-fair-comparison.md) — reject an option for its mechanism, not my adapter; test every reaction kind with internal types
