@@ -17,7 +17,9 @@ public interface IUnitOfWork
     /// rollback; the Unit of Work then fails with an Error naming that reason, and retries nothing. Return the
     /// command's Result after a commit, and a failed Result after a rollback: the command's own failure,
     /// <see cref="Operation.RollbackErrors"/>, or the refused save's Error. An exception from
-    /// <paramref name="command"/>, and any other failure of the save or the commit, propagates with nothing committed.
+    /// <paramref name="command"/>, and any other failure of the save or the commit, propagates with nothing committed;
+    /// so does preparing the save when it finds a bug: an auditable or soft-deletable change in an Operation with no
+    /// <see cref="OperationContext"/>, or a change to a part of an aggregate the Operation did not load.
     /// Returning any other success is a bug the dispatcher reports with an <see cref="InvalidOperationException"/>.
     /// </summary>
     Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken);

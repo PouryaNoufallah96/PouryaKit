@@ -16,10 +16,15 @@ namespace PouryaKit.Persistence.EFCore;
 public abstract class PouryaKitDbContext : DbContext
 {
     protected PouryaKitDbContext(DbContextOptions options)
-        : base(options) =>
+        : base(options)
+    {
         // A removed soft-deletable aggregate is kept, so nothing it owns may be deleted with it before the Unit of Work
-        // turns the removal into a mark; a removal that stays one still cascades when it is saved.
+        // turns the removal into a mark; the Unit of Work cascades a removal that stays one when it prepares the save.
         ChangeTracker.CascadeDeleteTiming = CascadeTiming.OnSaveChanges;
+        // An orphan is deleted as soon as changes are detected, so the Unit of Work sees it when it prepares the save,
+        // and a soft-deletable one is kept; deleted later, inside the save, it would be neither.
+        ChangeTracker.DeleteOrphansTiming = CascadeTiming.Immediate;
+    }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
