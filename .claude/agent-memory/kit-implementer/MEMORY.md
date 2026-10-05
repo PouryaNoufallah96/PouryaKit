@@ -1,7 +1,7 @@
 - [.NET test conventions](dotnet-test-conventions.md) — MTP + xunit.v3 4.x, zero-test failure, nuget.config/NU1507, SDK pin band
 - [Worktree and check gotchas](worktree-and-check-gotchas.md) — stale worktree base, refused shell compounds and git -C, gh issue view quirk, no colons in skill frontmatter
 - [STJ and record facts](stj-and-record-facts.md) — base-type JsonConverter ignored, init props survive, derived record reuses Value
-- [Docs verification tools](docs-verification-tools.md) — compile skill snippets, parse Mermaid C4, run dotnet-ef, all from the scratchpad
+- [Docs verification tools](docs-verification-tools.md) — compile skill snippets, parse Mermaid C4, check links, names and provenance paths, all from the scratchpad
 - [Persistence and EF facts](persistence-ef-facts.md) — #8: Module UoW routing via keyed IUnitOfWork, EF 10/Npgsql/dotnet-ef/Ardalis gotchas
 - [Dapper facts](dapper-facts.md) — #9: Npgsql warm pool ignores cancelled token, Dapper locks handler registration, seam and test traps
 - [Domain Event drain facts](domain-event-drain-facts.md) — #10: drain in Cqrs, rollback-only as the one failure signal, mutation-proof test tricks
