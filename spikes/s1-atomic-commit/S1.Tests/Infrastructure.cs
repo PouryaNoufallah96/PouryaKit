@@ -54,8 +54,9 @@ public sealed class SpikeDatabase(string connectionString) : IAsyncDisposable
         TransactionMiddlewareMode mode = TransactionMiddlewareMode.Eager,
         EnvelopeMapping mapping = EnvelopeMapping.Raw,
         Wolverine.DurabilityMode durability = Wolverine.DurabilityMode.Balanced,
-        bool shortDurabilityTimers = true) =>
-        SpikeHost.Build(new SpikeSettings(connectionString, mode, mapping, durability, shortDurabilityTimers),
+        bool shortDurabilityTimers = true,
+        TimeSpan? inboxStaleTime = null) =>
+        SpikeHost.Build(new SpikeSettings(connectionString, mode, mapping, durability, shortDurabilityTimers, inboxStaleTime),
             l => l.AddProvider(new TestOutputLoggerProvider()).SetMinimumLevel(LogLevel.Warning));
 
     public async Task<long> CountAsync(string sql, params object[] args)

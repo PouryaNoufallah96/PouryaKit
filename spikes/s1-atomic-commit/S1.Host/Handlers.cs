@@ -27,6 +27,18 @@ public static class StockItemCreatedHandler
     }
 }
 
+/// <summary>Notification whose handler records its delivery, then keeps running for a while.</summary>
+public sealed record SlowProductCreated(Guid ProductId, int HandlerSeconds);
+
+public static class SlowProductCreatedHandler
+{
+    public static async Task Handle(SlowProductCreated message, Envelope envelope, NpgsqlDataSource db)
+    {
+        await DeliveryLog.RecordAsync(db, nameof(SlowProductCreatedHandler), message.ProductId, envelope.Id);
+        await Task.Delay(TimeSpan.FromSeconds(message.HandlerSeconds));
+    }
+}
+
 /// <summary>Message for the EF mode comparison: handled with Wolverine's EF transactional middleware.</summary>
 public sealed record CreateProductThroughMiddleware(Guid ProductId);
 

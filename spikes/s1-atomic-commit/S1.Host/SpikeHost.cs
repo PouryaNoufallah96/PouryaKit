@@ -17,7 +17,8 @@ public sealed record SpikeSettings(
     TransactionMiddlewareMode EfMode = TransactionMiddlewareMode.Eager,
     EnvelopeMapping Mapping = EnvelopeMapping.Raw,
     DurabilityMode Durability = DurabilityMode.Balanced,
-    bool ShortDurabilityTimers = true);
+    bool ShortDurabilityTimers = true,
+    TimeSpan? InboxStaleTime = null);
 
 /// <summary>
 /// One Host container holding two Modules (Catalog and Inventory), each with its own DbContext and schema
@@ -62,6 +63,9 @@ public static class SpikeHost
             opts.Policies.UseDurableLocalQueues();
 
             opts.Durability.Mode = settings.Durability;
+            // Null by default. When set, the durability agent releases any inbox row older than this,
+            // even one owned by a live node, and Wolverine adds a "timestamp" column to the inbox table.
+            opts.Durability.InboxStaleTime = settings.InboxStaleTime;
             if (!settings.ShortDurabilityTimers) return;
             // Short timers so a killed node is detected and its envelopes recovered within a test's budget.
             opts.Durability.HealthCheckPollingTime = TimeSpan.FromSeconds(1);
