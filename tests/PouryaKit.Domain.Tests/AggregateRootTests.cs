@@ -21,6 +21,7 @@ public class AggregateRootTests
     public void The_unit_of_work_contract_clears_the_recorded_domain_events()
     {
         IAggregateRoot product = Product.Create(TypedId.New<ProductId>(), "Lamp").Value;
+        Assert.NotEmpty(product.DomainEvents);
 
         product.ClearDomainEvents();
 
