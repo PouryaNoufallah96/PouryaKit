@@ -216,6 +216,11 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
 
         Assert.Single(FolderSnapshots(folder));
+        // The redelivery carried the same identity, so its Receipt was the one already recorded.
+        Assert.Equal(
+            1L,
+            await Fixture.ScalarAsync<long>($"select count(*) from stub.pouryakit_receipts where subscription = '{FolderSubscription}'")
+        );
     }
 
     [Fact]
