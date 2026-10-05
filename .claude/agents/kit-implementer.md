@@ -20,7 +20,7 @@ Find these four in your brief. If one is missing, stop and return a `blocked` re
 
 Then read what the package touches: the ticket or spec, the `GLOSSARY.md` terms it names, and the ADRs and section G decisions in `docs/foundation-review.md` that cover the area.
 
-In a worktree, confirm its base: `git merge-base --is-ancestor <integration branch> HEAD` must succeed, where the integration branch is the one the brief names, else the main checkout's (the first row of `git worktree list`). When it fails on a clean branch, run `git reset --hard <integration branch>`.
+In a worktree, confirm its base: `git merge-base --is-ancestor <integration branch> HEAD` must succeed, where the integration branch is the one the brief names, else the main checkout's (the first row of `git worktree list`). When it fails, run `git merge --ff-only <integration branch>`; if that refuses, the branch has commits of its own, so merge the integration branch instead.
 
 ## Contract
 
