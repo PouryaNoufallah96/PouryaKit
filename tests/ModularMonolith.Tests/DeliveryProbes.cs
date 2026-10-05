@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Messaging.Wolverine;
@@ -8,12 +9,20 @@ namespace ModularMonolith.Tests;
 /// <summary>
 /// Stop points inside the Kit's delivery, for Integration Event tests: what an Operation of the test's own flow writes
 /// to the Outbox, and a hold on the first delivery of one subscription right after its Receipt is recorded, inside its
-/// still open transaction. Every other Operation and delivery runs as usual.
+/// still open transaction. Every other Operation and delivery runs as usual. Every delivery attempt is recorded.
 /// </summary>
 internal static class DeliveryProbes
 {
     private static readonly AsyncLocal<List<object>?> Written = new();
+    private static readonly ConcurrentQueue<(string Subscription, Guid MessageId, DateTimeOffset At)> Attempts = [];
     private static ReceiptHold? _hold;
+
+    /// <summary>
+    /// When each delivery of the message <paramref name="messageId"/> to <paramref name="subscription"/> began recording
+    /// its Receipt, in any Host of the process: every attempt the store handed out, whether or not its handler then ran.
+    /// </summary>
+    public static IReadOnlyList<DateTimeOffset> AttemptsOf(string subscription, Guid messageId) =>
+        [.. Attempts.Where(attempt => attempt.Subscription == subscription && attempt.MessageId == messageId).Select(attempt => attempt.At)];
 
     /// <summary>Adds every message the commits of this flow write to the Outbox to <paramref name="written"/>, until disposed.</summary>
     public static IDisposable RecordWritten(List<object> written)
@@ -60,6 +69,9 @@ internal static class DeliveryProbes
 
         public void Release() => _released.TrySetResult();
 
+        /// <summary>Holds nothing more and never releases the held delivery, as a killed process leaves it.</summary>
+        public void Abandon() => _hold = null;
+
         public void Dispose()
         {
             Release();
@@ -96,6 +108,7 @@ internal static class DeliveryProbes
     {
         public async Task<bool> RecordAsync(string subscription, Guid messageId, CancellationToken cancellationToken)
         {
+            Attempts.Enqueue((subscription, messageId, DateTimeOffset.UtcNow));
             var recorded = await receipts.RecordAsync(subscription, messageId, cancellationToken);
             if (recorded && _hold is { } hold)
             {
