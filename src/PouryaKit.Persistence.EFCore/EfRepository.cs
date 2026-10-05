@@ -6,8 +6,13 @@ using PouryaKit.Domain;
 
 namespace PouryaKit.Persistence.EFCore;
 
-// Tracks changes in the DbContext of the scope's Unit of Work, so what a handler adds is what that Unit of Work saves.
-internal sealed class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository<TAggregate, TId>
+/// <summary>
+/// The generic repository over EF Core. It tracks changes in the DbContext of the scope's Unit of Work, so what a
+/// handler adds is what that Unit of Work saves. An aggregate-specific repository derives from it and builds its extra
+/// members on the inherited ones and on <see cref="ListAsync{TResult}"/>, which return loaded results. It gets no query
+/// and no DbContext from this class.
+/// </summary>
+public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository<TAggregate, TId>
     where TAggregate : AggregateRoot<TId>
     where TId : notnull
 {
@@ -50,6 +55,19 @@ internal sealed class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IR
 
     public Task<int> CountAsync(ISpecification<TAggregate> specification, CancellationToken cancellationToken = default) =>
         Query(specification, evaluateCriteriaOnly: true).CountAsync(cancellationToken);
+
+    /// <summary>
+    /// What the projection <paramref name="specification"/> selects, loaded into a list. The whole specification
+    /// applies, its ordering and paging included, before its <c>Select</c>.
+    /// </summary>
+    protected Task<List<TResult>> ListAsync<TResult>(
+        ISpecification<TAggregate, TResult> specification,
+        CancellationToken cancellationToken = default
+    )
+    {
+        ArgumentNullException.ThrowIfNull(specification);
+        return SpecificationEvaluator.Default.GetQuery(_aggregates, specification).ToListAsync(cancellationToken);
+    }
 
     private IQueryable<TAggregate> Query(ISpecification<TAggregate> specification, bool evaluateCriteriaOnly = false)
     {

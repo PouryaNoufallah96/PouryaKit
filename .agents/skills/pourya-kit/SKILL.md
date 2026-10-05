@@ -29,7 +29,9 @@ using PouryaKit.Domain;
 
 internal sealed record ProductId(Guid Value) : TypedId<Guid>(Value);
 
-internal sealed record ProductCreatedDomainEvent(ProductId ProductId, string Name) : DomainEvent;
+internal sealed record CategoryId(Guid Value) : TypedId<Guid>(Value);
+
+internal sealed record ProductCreatedDomainEvent(ProductId ProductId, CategoryId CategoryId, string Name) : DomainEvent;
 
 internal static class ProductErrors
 {
@@ -48,18 +50,20 @@ internal sealed class Product : AggregateRoot<ProductId>
 {
     public string Name { get; private set; } = "";
 
-    public static Result<Product> Create(ProductId id, string name)
+    public CategoryId CategoryId { get; private set; } = null!;
+
+    public static Result<Product> Create(ProductId id, CategoryId categoryId, string name)
     {
         var rule = CheckRule(new ProductNameMustNotBeBlank(name));
         if (rule.IsFailure) return rule.Errors;
 
-        var product = new Product { Id = id, Name = name.Trim() };
-        product.Raise(new ProductCreatedDomainEvent(id, product.Name));
+        var product = new Product { Id = id, CategoryId = categoryId, Name = name.Trim() };
+        product.Raise(new ProductCreatedDomainEvent(id, categoryId, product.Name));
         return product;
     }
 }
 
-// Elsewhere: var created = Product.Create(TypedId.New<ProductId>(), command.Name);
+// Elsewhere: var created = Product.Create(TypedId.New<ProductId>(), new CategoryId(command.CategoryId), command.Name);
 ```
 
 **Result and Error**
@@ -79,7 +83,7 @@ internal sealed class Product : AggregateRoot<ProductId>
 
 **Aggregates, entities and value objects**
 
-- Raise a Domain Event with `Raise` from inside the aggregate. Never clear Domain Events and never set `Version`: the Unit of Work owns both (#10, #11), and raising an event does not change the version.
+- Raise a Domain Event with `Raise` from inside the aggregate. Never clear Domain Events and never set `Version`: the Unit of Work owns both. It takes and clears Domain Events when it runs their handlers (see Persistence and the Unit of Work); versions arrive with #11. Raising an event does not change the version.
 - Entities are equal when type and ID are equal; do not override equality.
 - Declare a value object as a record deriving from `ValueObject`. Its equality covers every member; a collection member compares by reference, so wrap it in a value object of its own.
 
@@ -89,6 +93,7 @@ internal sealed class Product : AggregateRoot<ProductId>
 - Carry typed IDs and values, never the aggregate itself or its version.
 - Serialize a Domain Event by its runtime type (`JsonSerializer.Serialize(e, e.GetType(), options)`); serializing it as `DomainEvent` drops the derived members.
 - A payload without `Id` deserializes with a new identity, so a stored or sent event must always include its `Id`.
+- React to one inside the Module with a Domain Event Handler; see Persistence and the Unit of Work.
 
 **Business rules**
 
@@ -130,13 +135,14 @@ using PouryaKit.Domain;
 using PouryaKit.Persistence;
 
 // Products/Features/CreateProduct/
-internal sealed record CreateProductCommand(Guid ProductId, string Name) : Command<Guid>;
+internal sealed record CreateProductCommand(Guid ProductId, Guid CategoryId, string Name) : Command<Guid>;
 
 internal sealed class CreateProductCommandValidator : AbstractValidator<CreateProductCommand>
 {
     public CreateProductCommandValidator()
     {
         RuleFor(x => x.ProductId).NotEmpty();      // checked before the typed-ID constructor can throw
+        RuleFor(x => x.CategoryId).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200).WithErrorCode("Product.NameTooLong");
     }
 }
@@ -146,7 +152,7 @@ internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId
 {
     public override async Task<Result<Guid>> Handle(CreateProductCommand command, CancellationToken ct)
     {
-        var product = Product.Create(new ProductId(command.ProductId), command.Name);
+        var product = Product.Create(new ProductId(command.ProductId), new CategoryId(command.CategoryId), command.Name);
         if (product.IsFailure) return product.Errors;
 
         await products.AddAsync(product.Value, ct);
@@ -173,6 +179,7 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 - Commands, queries, handlers and authorizers are never generic type definitions (no `EchoQuery<T>`): registration rejects them at startup.
 - A handler returns a Result and never saves, commits, begins a transaction or touches the Outbox: the Unit of Work does all of that once, for the whole Operation.
 - A query reads. Its handler never sends a command: that throws, because a query runs without a Unit of Work.
+- A Domain Event Handler (`IDomainEventHandler<TDomainEvent>`, also in `PouryaKit.Cqrs`) is the third kind of handler. The Unit of Work runs it, so it is taught under Persistence and the Unit of Work.
 
 **The pipeline**
 
@@ -197,7 +204,7 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 **Registration**
 
 ```csharp
-module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);        // handlers and authorizers
+module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);        // handlers, authorizers, Domain Event Handlers
 module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);  // validators
 ```
 
@@ -222,6 +229,7 @@ public sealed class CatalogModule : IModuleDefinition
         module.UsePostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
         module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);
         module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
+        module.AddScoped<IProductRepository, ProductRepository>();   // see The repository
     }
 }
 
@@ -249,7 +257,8 @@ public static HostApplicationBuilder CreateBuilder(string[] args)
 
 ```csharp
 var gateway = host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>();
-var created = await gateway.SendAsync(new CreateProductCommand(Guid.CreateVersion7(), "Lamp"), ct);
+var lamps = await gateway.SendAsync(new CreateCategoryCommand(Guid.CreateVersion7(), "Lamps"), ct);
+var created = await gateway.SendAsync(new CreateProductCommand(Guid.CreateVersion7(), lamps.Value, "Desk lamp"), ct);
 ```
 
 *Not yet available* (#13): the Operation Context, startup validation of each Module, and synchronous questions one Module asks another.
@@ -286,8 +295,9 @@ internal sealed class Product : AggregateRoot<ProductId>
 
     public string Name { get; private set; } = "";
 
-    public static Result<Product> Create(ProductId id, string name) =>
-        string.IsNullOrWhiteSpace(name) ? ProductErrors.NameRequired : new Product { Id = id, Name = name.Trim() };
+    public CategoryId CategoryId { get; private set; } = null!;   // stored as its value, like the key
+
+    // Create(id, categoryId, name) as in Domain primitives: it checks the name and raises ProductCreatedDomainEvent.
 }
 
 // In the Composition Root: module.UsePostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
@@ -308,19 +318,118 @@ internal sealed class Product : AggregateRoot<ProductId>
 
 - Inject `IRepository<TAggregate, TId>`: `AddAsync`, `Remove`, `FindAsync(id)`, and `FindAsync`, `ListAsync`, `AnyAsync`, `CountAsync` by an Ardalis.Specification `Specification<T>`. It tracks changes in the Operation's Unit of Work; nothing on it saves. Feature code reaches its data through it, never through the DbContext.
 
+A named specification and a Feature that uses it, from the Proving Sample's Products Business Area:
+
 ```csharp
-internal sealed class NotesWithText : Specification<Note>
+using Ardalis.Specification;
+using PouryaKit.Cqrs;
+using PouryaKit.Domain;
+using PouryaKit.Persistence;
+
+// Products/Data/Specifications/
+internal sealed class ProductsNamed : Specification<Product>
 {
-    public NotesWithText(string text) => Query.Where(note => note.Text == text).OrderBy(note => note.Id);
+    public ProductsNamed(IReadOnlyCollection<string> names) => Query.Where(product => names.Contains(product.Name));
 }
-// var notes = await repository.ListAsync(new NotesWithText("draft"), ct);
+
+// Products/Features/RemoveProducts/: the generic repository and the specification are enough
+internal sealed class RemoveProductsCommandHandler(IRepository<Product, ProductId> products)
+    : CommandHandler<RemoveProductsCommand, int>
+{
+    public override async Task<Result<int>> Handle(RemoveProductsCommand command, CancellationToken ct)
+    {
+        var named = await products.ListAsync(new ProductsNamed(command.Names), ct);
+        foreach (var product in named) products.Remove(product);
+        return named.Count;
+    }
+}
 ```
+
+- Name a specification for what it selects and put it beside its Business Area in `Data/Specifications/`: an `internal sealed` class deriving from `Specification<T>` that builds its query in its constructor. Any Feature of the Module may use it with the repository's specification members. `FindAsync` returns the first aggregate it selects, or null. `AnyAsync` and `CountAsync` apply only its filters, never its ordering, paging or includes.
+- An aggregate the repository returns is tracked, unless its specification turns tracking off: change it through its methods and return; the Unit of Work saves the change.
+
+The Proving Sample's aggregate-specific repository. Its import needs only the product names already in use, a projection the generic members, which answer with aggregates, a flag or a count, cannot give:
+
+```csharp
+using Ardalis.Specification;
+using PouryaKit.Cqrs;
+using PouryaKit.Persistence;
+using PouryaKit.Persistence.EFCore;
+
+// Products/Data/Specifications/: a projection specification selects a value, not the aggregate
+internal sealed class ProductNamesInUse : Specification<Product, string>
+{
+    public ProductNamesInUse(IReadOnlyCollection<string> names)
+    {
+        Query.Where(product => names.Contains(product.Name));
+        Query.Select(product => product.Name);
+    }
+}
+
+// Products/Data/Repository/
+internal interface IProductRepository : IRepository<Product, ProductId>
+{
+    Task<List<string>> ListNamesInUseAsync(IReadOnlyCollection<string> names, CancellationToken ct = default);
+}
+
+internal sealed class ProductRepository(IUnitOfWork unitOfWork)
+    : EfRepository<Product, ProductId>(unitOfWork), IProductRepository
+{
+    public async Task<List<string>> ListNamesInUseAsync(IReadOnlyCollection<string> names, CancellationToken ct = default) =>
+        [.. (await ListAsync(new ProductNamesInUse(names), ct)).Distinct()];
+}
+
+// In the Composition Root: module.AddScoped<IProductRepository, ProductRepository>();
+// In ImportProductsCommandHandler(IProductRepository products):
+//     var inUse = await products.ListNamesInUseAsync(names, ct);  ...  await products.AddAsync(product.Value, ct);
+```
+
+- Add an aggregate-specific repository only when a Business Area needs a query the generic contract cannot express, such as the projection above. A filter is a specification, not a repository member, and a wrapper that only forwards the generic members is not warranted. Features that need nothing more keep injecting `IRepository<,>`.
+- Declare it as an `internal` interface deriving from `IRepository<TAggregate, TId>` with only the extra members, in `Data/Repository/` beside its Business Area. Implement it with an `internal sealed` class deriving from `EfRepository<TAggregate, TId>` (`PouryaKit.Persistence.EFCore`), taking `IUnitOfWork` and passing it to the base: it inherits every generic member.
+- Build each extra member on the inherited members, or on a projection specification (`Specification<TAggregate, TResult>` with `Query.Select`) passed to the protected `ListAsync<TResult>`. It applies the whole specification, its ordering and paging included, and returns a loaded list; finish the result in memory, as `Distinct` does above.
+- Register it in the Module's Composition Root: `module.AddScoped<IProductRepository, ProductRepository>()`. It tracks in the same Unit of Work as the generic repository, so a Feature may use both.
+- The base class gives it no query, no DbSet and no DbContext, so it has no way to save and no way to write around the Unit of Work. Never add one: the Unit of Work saves what the repositories track.
 
 **The Unit of Work**
 
-- Each command Operation runs in one transaction that the Unit of Work owns. When the outermost handler returns a success and no nested command failed, it saves once and commits. A failed Result or a failed nested command rolls everything back; an exception rolls back and reaches the Gateway's caller.
+- Each command Operation runs in one transaction that the Unit of Work owns. When the outermost handler returns a success and no nested command failed, it runs the Domain Event Handlers, checks again that nothing failed, then saves once and commits. A failed Result, a failed nested command or a failed Domain Event Handler rolls everything back; an exception rolls back and reaches the Gateway's caller.
 - Nothing retries: no retrying execution strategy, no retry in the Unit of Work. To retry, send the command again through the Gateway.
-- Today the Unit of Work leaves `Version` at 0 and handles no Domain Event: versions arrive with #11 and Domain Event Handlers with #10.
+- Today the Unit of Work leaves `Version` at 0: versions arrive with #11.
+
+**Domain Event Handlers**
+
+A Domain Event Handler is a reaction inside the Module that commits with the change that caused it, or not at all. The Proving Sample's Categories Business Area counts each new product in its category:
+
+```csharp
+using PouryaKit.Cqrs;
+using PouryaKit.Domain;
+using PouryaKit.Persistence;
+
+// Categories/Events/DomainEventHandlers/
+internal sealed class CountProductInCategoryHandler(IRepository<Category, CategoryId> categories)
+    : IDomainEventHandler<ProductCreatedDomainEvent>
+{
+    public async Task<Result> Handle(ProductCreatedDomainEvent domainEvent, CancellationToken ct)
+    {
+        var category = await categories.FindAsync(domainEvent.CategoryId, ct);
+        if (category is null) return CategoryErrors.NotFound;   // the product is not created either
+
+        category.CountProduct();
+        return Result.Success();                                 // no save: the Unit of Work saves both
+    }
+}
+```
+
+- Implement `IDomainEventHandler<TDomainEvent>` (`PouryaKit.Cqrs`) for one Domain Event type, in an `internal sealed` class in the Business Area that reacts, under `Events/DomainEventHandlers/`. `AddPouryaKitCqrs` registers it with the Module's other handlers. A class that handles several Domain Event types, or an abstract one, fails at startup.
+- It runs only for a Domain Event of exactly its type, never for one derived from it. A Domain Event may have several handlers or none; one with no handler is fine, and the Operation commits.
+- It runs after the outermost command's handler returned a success and no nested command failed, before the save, in the same transaction. Handlers run one at a time, never concurrently; the handlers of one Domain Event run in the ordinal order of their full type names. An aggregate's Domain Events are handled in the order it raised them.
+- The Unit of Work takes the Domain Events of every aggregate it tracks: those added, found or listed through a repository in the Operation. It clears them as it takes them.
+- A handler may change other aggregates through repositories, and they may raise Domain Events of their own: those are handled in the next round, until none remain, for at most `DomainEventDrain.MaxDepth` rounds. Domain Events still raised after that throw `InvalidOperationException` and nothing commits: handlers that keep raising each other's Domain Events are a cycle, which is a bug.
+- A failed Result stops the handling at once, so no further handler or Domain Event runs; the whole Operation rolls back and fails with that handler's Errors. An exception rolls back and reaches the Gateway's caller.
+- A handler may send a nested command with an injected `IDispatcher`; it joins the same Unit of Work. If it fails, the whole Operation rolls back even when the handler ignores its Result and returns a success, and the Operation fails with the nested command's Errors.
+- A handler returns a Result and never saves, commits, begins a transaction or touches the Outbox.
+- Choose a Domain Event Handler to keep the Module's own aggregates consistent with each other in the same commit. Anything that reaches outside the Module's own data, such as sending an email, pushing to a client or publishing an Integration Event, belongs in a Notification Handler, which runs after the commit (#15, not yet available): a Domain Event Handler runs before the commit, so whatever it sent would stay sent when the Operation rolls back.
+- Test it through the Gateway with the command whose aggregate raises its Domain Event: assert that both aggregates' rows are written, and that a failed reaction leaves neither.
 
 **Migrations**
 
@@ -337,7 +446,7 @@ dotnet ef migrations add Initial \
 - `dotnet-ef` builds the Host as its `Program` does and finds the internal DbContext in its container, so the DbContext stays internal and needs no design-time factory. Name it with `--context`; set the folder with `--output-dir` and the namespace follows.
 - The Host applies no migration at startup. `HostFixture` applies every Module's in tests.
 
-*Not yet available*: Domain Event Handlers (#10); audit, soft delete, versions and conflicts (#11); specifications in depth and aggregate-specific repositories (#12).
+*Not yet available*: audit, soft delete, versions and conflicts (#11).
 
 ### Dapper reads
 
@@ -382,13 +491,13 @@ public sealed class AppFixture : HostFixture
 public sealed class UnitOfWorkTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     [Fact]
-    public async Task A_command_is_committed_though_its_handler_never_saves()
+    public async Task A_command_that_raises_no_domain_event_is_committed_though_its_handler_never_saves()
     {
         var id = Guid.CreateVersion7();
 
         var created = await Fixture
             .Gateway<CatalogModule>()
-            .SendAsync(new CreateProductCommand(id, " Lamp "), TestContext.Current.CancellationToken);
+            .SendAsync(new CreateCategoryCommand(id, " Lamps "), TestContext.Current.CancellationToken);
 
         Assert.Equal(id, created.Value);
     }

@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Catalog.Contracts\Catalog.Contracts.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Modularity\PouryaKit.Modularity.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Persistence.Dapper\PouryaKit.Persistence.Dapper.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Persistence.Postgres\PouryaKit.Persistence.Postgres.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Validation\PouryaKit.Validation.csproj" />
   </ItemGroup>

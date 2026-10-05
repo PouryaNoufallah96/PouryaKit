@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Persistence`. Format and rules: [README](README.md).
 
-The generic repository contract, `IRepository<TAggregate, TId>`, is new Kit code (G.4), so it has no record here.
+The generic repository contract, `IRepository<TAggregate, TId>`, is new Kit code (G.4), so it has no record here. Neither has the Unit of Work connection seam, `IUnitOfWorkConnection` (ticket #9): Cybernod's Dapper reads never join the Unit of Work's transaction (plan section B.2, "Dapper reads"), so it is new Kit code.
 
 ## Package dependency
 

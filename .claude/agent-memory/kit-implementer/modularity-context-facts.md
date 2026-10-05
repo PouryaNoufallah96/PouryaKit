@@ -14,6 +14,7 @@ Verified in ticket #13 (2026-10-05):
 - `Microsoft.Extensions.Hosting.Host` collides with the namespace `ModularMonolith.Host` inside `ModularMonolith.Tests`; qualify it fully.
 - Host-wide composition state (Modules added, which Module owns each operation) is kept as a singleton `ImplementationInstance` in the service collection, found-or-added, because `AddPouryaKitModules` is called more than once per Host (the test fixture adds the Stub Module in a second call).
 - A test can observe the context of another Module's Operation without changing that Module: an `IAuthorizer<ThatQuery>` in the test assembly is picked up by the Stub Module's assembly scan and runs in the other Module's scope.
+- The Gateway ownership check refuses a test-assembly command sent through a sample Module's Gateway (the Stub scan registers it). To run such a probe in Catalog's Unit of Work, begin a scope with `BeginOperation(context, typeof(CatalogModule))` and send it through `IDispatcher`, as a delivery step does (RepositoryTests).
 - Ultrabusiness: the local checkout's HEAD differs from the pinned `a85eacd`, but `git ls-tree`/`git show a85eacd:<path>` against it works for citing files at the pinned commit.
 
 **Why:** each cost a detour or decides how #14-#16 plug in.

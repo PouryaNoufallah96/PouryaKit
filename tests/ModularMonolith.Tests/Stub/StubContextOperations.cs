@@ -1,5 +1,5 @@
 using Catalog.Contracts.Products;
-using Catalog.Products.Features.GetProductSummary;
+using Catalog.Products.Features.GetProduct;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Persistence;
@@ -47,9 +47,9 @@ internal sealed class CatalogQuestionContexts
 // Registered by StubModule's assembly scan, so the test sees the context Catalog's Operation reads without changing
 // Catalog. Reading the Operation Context is what an authorizer is for.
 internal sealed class RecordCatalogQuestionContext(OperationContext context, CatalogQuestionContexts contexts)
-    : IAuthorizer<GetProductSummaryQuery>
+    : IAuthorizer<GetProductQuery>
 {
-    public Task<Result> AuthorizeAsync(GetProductSummaryQuery operation, CancellationToken cancellationToken)
+    public Task<Result> AuthorizeAsync(GetProductQuery operation, CancellationToken cancellationToken)
     {
         contexts.Seen.Add(context);
         return Task.FromResult(Result.Success());

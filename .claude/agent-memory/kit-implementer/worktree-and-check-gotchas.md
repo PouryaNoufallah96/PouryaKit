@@ -16,6 +16,7 @@ metadata:
 - Ticket #8: the guard hook refuses `rm -r` anywhere but system temp; delete files one by one, then `rmdir` the empty folders. Mutation checks: copy the file to the scratchpad, mutate with a python heredoc, run, copy back.
 - #8 fix round: `git merge-base … && echo` and `cd <memory dir> && git …` compounds were refused; run each git command alone. The worktree started at `33fd974` again.
 - An `AsyncLocal` write inside an awaited async method never flows back to the caller, so asserting `DomainClock.Current` after awaiting the dispatcher cannot fail; test binding restore synchronously (see `tests/ModularMonolith.Tests/TestClockTests.cs`).
+- #10/#12 docs pass: started at `33fd974` again. `cd <worktree> && python3 … ; git rev-parse …` was refused ("git in a form too complex"); run git alone. The system-reminder's copy of `AGENTS.md` comes from the main checkout and can be older than the worktree's: read the worktree file before editing. When `feat/wave-1` moved mid-package (it carries memory commits too), uncommitted memory edits blocked the update: copy them to the scratchpad, `git checkout --` them, `git rebase feat/wave-1` (keeps the brief's one commit), then copy back only what the new tip did not already supersede.
 - No pyyaml/actionlint on the machine: `ruby -ryaml` parses YAML; `python3 -m venv <scratchpad>/venv && pip install actionlint-py` gives actionlint.
 
 **Why:** each cost a retry during ticket #4.
