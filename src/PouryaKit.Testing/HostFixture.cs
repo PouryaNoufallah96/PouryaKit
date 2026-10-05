@@ -7,6 +7,7 @@ using PouryaKit.Modularity;
 using Respawn;
 using Respawn.Graph;
 using Testcontainers.PostgreSql;
+using Weasel.Core.Migrations;
 using Wolverine.RDBMS;
 using Wolverine.Runtime;
 
@@ -49,7 +50,8 @@ public abstract class HostFixture : IAsyncLifetime
 
     /// <summary>
     /// Waits until every delivery an earlier test caused has finished, then deletes every row except the migrations
-    /// history, in every schema, and every stored delivery.
+    /// history and the message store's own tables, in every schema, and every stored delivery. A Module whose tables
+    /// share the store's schema is reset like any other.
     /// </summary>
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
@@ -62,13 +64,17 @@ public abstract class HostFixture : IAsyncLifetime
         await using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync(cancellationToken);
         // The message store's own tables, such as its node records, belong to the running Host; only its deliveries go.
+        // They are spared by name, so the store may share its schema with a Module whose tables are reset.
         _respawner ??= await Respawner.CreateAsync(
             connection,
             new RespawnerOptions
             {
                 DbAdapter = DbAdapter.Postgres,
-                TablesToIgnore = [new Table(HistoryRepository.DefaultTableName)],
-                SchemasToExclude = deliveries is null ? [] : [deliveries.Schema],
+                TablesToIgnore =
+                [
+                    new Table(HistoryRepository.DefaultTableName),
+                    .. (deliveries?.StoreTables ?? []).Select(table => new Table(table.Schema, table.Name)),
+                ],
             }
         );
         await _respawner.ResetAsync(connection);
@@ -82,6 +88,7 @@ public abstract class HostFixture : IAsyncLifetime
     /// Runs <paramref name="operation"/>, typically a Gateway call, then waits until every delivery it caused has been
     /// handled or dead-lettered, including deliveries those deliveries caused, and returns them in no particular order.
     /// Fails when the Operation stored no delivery at all, so a test that waits for deliveries never passes on none.
+    /// It first waits until no earlier delivery is pending, so nothing an earlier Operation caused is credited to this one.
     /// </summary>
     public async Task<(T Outcome, IReadOnlyList<Delivery> Deliveries)> WaitForDeliveriesAsync<T>(
         Func<Task<T>> operation,
@@ -90,7 +97,7 @@ public abstract class HostFixture : IAsyncLifetime
     {
         ArgumentNullException.ThrowIfNull(operation);
         var store = Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.");
-        var before = await store.IdsAsync(cancellationToken);
+        var before = await SettledIdsAsync(store, cancellationToken);
 
         var outcome = await operation();
 
@@ -117,13 +124,14 @@ public abstract class HostFixture : IAsyncLifetime
 
     /// <summary>
     /// Runs <paramref name="operation"/> and fails unless it stored no delivery: what a rolled-back Operation leaves.
-    /// A delivery is stored in the Operation's own commit, so nothing needs waiting for.
+    /// It first waits until no earlier delivery is pending, so nothing an earlier Operation caused is charged to this
+    /// one; a delivery is stored in the Operation's own commit, so nothing needs waiting for afterwards.
     /// </summary>
     public async Task<T> AssertNothingSentAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(operation);
         var store = Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.");
-        var before = await store.IdsAsync(cancellationToken);
+        var before = await SettledIdsAsync(store, cancellationToken);
 
         var outcome = await operation();
 
@@ -177,8 +185,19 @@ public abstract class HostFixture : IAsyncLifetime
         GC.SuppressFinalize(this);
     }
 
+    // A delivery still running when the baseline is read could store one more before the Operation ends.
+    private static async Task<HashSet<Guid>> SettledIdsAsync(StoredDeliveries store, CancellationToken cancellationToken)
+    {
+        await store.WaitUntilSettledAsync(DeliveryTimeout, cancellationToken);
+        return await store.IdsAsync(cancellationToken);
+    }
+
     private StoredDeliveries? Deliveries() =>
         _deliveries ??= Host.Services.GetService<IWolverineRuntime>()?.Storage is IMessageDatabase store
-            ? new StoredDeliveries(ConnectionString, store.SchemaName)
+            ? new StoredDeliveries(
+                ConnectionString,
+                store.SchemaName,
+                [.. ((IFeatureSchema)store).Objects.Select(table => (table.Identifier.Schema, table.Identifier.Name))]
+            )
             : null;
 }

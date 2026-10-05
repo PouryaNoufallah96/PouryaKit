@@ -137,3 +137,21 @@ internal sealed class CasedCopyNotificationHandler(IRepository<Note, NoteId> not
         return Result.Success();
     }
 }
+
+// Delivered slowly, then writes a note whose Domain Event another subscription delivers: a cascade that is stored after
+// the Operation that raised the first Domain Event returned.
+internal sealed record NoteCascadingDomainEvent(string Text) : DomainEvent;
+
+internal sealed class CascadeLateNotificationHandler(IRepository<Note, NoteId> notes)
+    : INotificationHandler<NoteCascadingDomainEvent>
+{
+    public static readonly TimeSpan Delay = TimeSpan.FromMilliseconds(200);
+
+    public async Task<Result> Handle(NoteCascadingDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        await Task.Delay(Delay, cancellationToken);
+        var cascaded = $"cascaded from {domainEvent.Text}";
+        await notes.AddAsync(Note.Write(cascaded).Raising(new NoteFiledForCopyDomainEvent(cascaded)), cancellationToken);
+        return Result.Success();
+    }
+}

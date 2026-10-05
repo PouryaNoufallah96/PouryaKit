@@ -263,6 +263,9 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.pouryakit_receipts"));
     }
 
+    // Shows, in one process, that a Notification committed by a Host that dies before sending it stays with that Host
+    // while others run, and is handled once after a Host starts. A killed process, and the recovery of a dead node's
+    // deliveries in Balanced mode by stale-node detection, are proven only by Spike S1, as ADR 0004 records.
     [Fact]
     public async Task A_notification_committed_by_a_host_that_died_before_sending_it_is_handled_after_a_host_starts()
     {
@@ -501,6 +504,40 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
             await Fixture.RowsAsync("select received_at, exception_type from wolverine.wolverine_dead_letters")
         );
         Assert.Equal(1L, await CopiesOfAsync(text));
+    }
+
+    [Fact]
+    public async Task The_delivery_assertions_charge_an_earlier_operations_late_cascade_to_neither_operation_that_follows()
+    {
+        var stub = Fixture.Gateway<StubModule>();
+        // Each asserted Operation sends nothing, but only once the earlier Operation's delivery has had time to cascade:
+        // the waits build the race, they do not wait for a delivery.
+        async Task<Result> NothingAfterTheCascade()
+        {
+            await Task.Delay(CascadeLateNotificationHandler.Delay * 3, TestContext.Current.CancellationToken);
+            return await stub.SendAsync(new WriteNoteCommand(Unique()), TestContext.Current.CancellationToken);
+        }
+
+        var first = Unique();
+        await stub.SendAsync(
+            new WriteNoteRaisingCommand(first, [new NoteCascadingDomainEvent(first)]),
+            TestContext.Current.CancellationToken
+        );
+        var nothing = await Fixture.AssertNothingSentAsync(NothingAfterTheCascade, TestContext.Current.CancellationToken);
+        var second = Unique();
+        await stub.SendAsync(
+            new WriteNoteRaisingCommand(second, [new NoteCascadingDomainEvent(second)]),
+            TestContext.Current.CancellationToken
+        );
+        var thrown = await Assert.ThrowsAsync<DeliveryAssertionException>(() =>
+            Fixture.WaitForDeliveriesAsync(NothingAfterTheCascade, TestContext.Current.CancellationToken)
+        );
+
+        Assert.True(nothing.IsSuccess);
+        Assert.StartsWith("The Operation sent nothing", thrown.Message);
+        // Both cascades happened, and were waited for before each assertion began.
+        Assert.Equal(1L, await CopiesOfAsync($"cascaded from {first}"));
+        Assert.Equal(1L, await CopiesOfAsync($"cascaded from {second}"));
     }
 
     [Fact]
