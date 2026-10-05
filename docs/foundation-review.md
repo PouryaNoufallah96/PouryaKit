@@ -119,7 +119,9 @@ replace your conventions with Wolverine's.
 fixed pipeline; a few hundred lines with tests). The pipeline is fixed by the kit, so nothing needs a
 pluggable behaviour model. martinothamar `Mediator` 3.x (MIT, source-generated) is the alternative;
 its generator runs in the host project and whether it can see `internal` handlers in module
-assemblies is not verified. Phase 0 checks it; default is the owned dispatcher.
+assemblies is not verified. Phase 0 checks it; default is the owned dispatcher. *Resolved by Spike S3
+(ADR 0002): it can, but only with `InternalsVisibleTo` from each module to the host or a generator and
+generated mediator inside every module; the owned dispatcher stands.*
 
 ---
 
@@ -548,7 +550,8 @@ multi-subscriber failure anywhere.
   scope). WolverineFx is not in the local package cache; claims come from official docs.
 - Whether Wolverine can route one message to several kit-registered consumers with independent ack
   without app-specific handler classes (S2).
-- Whether `Mediator` 3.x handles `internal` handlers across assemblies (S3).
+- Whether `Mediator` 3.x handles `internal` handlers across assemblies (S3). *Resolved, ADR 0002: only
+  with `InternalsVisibleTo` to the host or a generator inside every module.*
 - How Lucky Penny §4.2.e.3 would be applied to your case is a legal question; the text is clear enough
   that I would not build on it.
 
