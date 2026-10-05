@@ -71,3 +71,30 @@ internal sealed class FindNotesQueryHandler(IRepository<Note, NoteId> notes) : Q
         );
     }
 }
+
+internal sealed record WriteNoteInQueryQuery(string Text) : Query<bool>;
+
+// A query that adds a note through the repository and then fails: a failed query marks nothing rollback-only, so the
+// note would commit with the command that sent it if the query could write.
+internal sealed class WriteNoteInQueryQueryHandler(IRepository<Note, NoteId> notes) : QueryHandler<WriteNoteInQueryQuery, bool>
+{
+    public static readonly Error Failed = Error.Unexpected("Note.QueryFailed", "The query failed after it wrote.");
+
+    public override async Task<Result<bool>> Handle(WriteNoteInQueryQuery query, CancellationToken cancellationToken)
+    {
+        await notes.AddAsync(Note.Write(query.Text), cancellationToken);
+        return Failed;
+    }
+}
+
+internal sealed record WriteNoteThroughQueryCommand(string Text) : Command;
+
+// Ignores the nested query's Result, as a careless handler would.
+internal sealed class WriteNoteThroughQueryCommandHandler(IDispatcher dispatcher) : CommandHandler<WriteNoteThroughQueryCommand>
+{
+    public override async Task<Result> Handle(WriteNoteThroughQueryCommand command, CancellationToken cancellationToken)
+    {
+        await dispatcher.QueryAsync(new WriteNoteInQueryQuery(command.Text), cancellationToken);
+        return Result.Success();
+    }
+}

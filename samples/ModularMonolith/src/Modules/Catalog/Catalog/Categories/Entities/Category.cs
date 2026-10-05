@@ -25,4 +25,6 @@ internal sealed class Category : AggregateRoot<CategoryId>
     }
 
     public void CountProduct() => ProductCount++;
+
+    public void UncountProduct() => ProductCount--;
 }

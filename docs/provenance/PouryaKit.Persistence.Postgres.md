@@ -2,6 +2,8 @@
 
 Adopted implementations in `PouryaKit.Persistence.Postgres`. Format and rules: [README](README.md).
 
+The reader of unique violations (`PostgresUniqueConstraintReader`, ticket #11) is new Kit code, so it has no record here.
+
 ## Package dependencies
 
 Checked on nuget.org on 2026-10-05; licence expressions from each package's nuspec. Neither is reciprocal or commercial (ADR 0002), and neither brings Wolverine.

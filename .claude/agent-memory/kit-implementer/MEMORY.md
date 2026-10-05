@@ -14,3 +14,4 @@
 - [Spike fair comparison](spike-fair-comparison.md) — reject an option for its mechanism, not my adapter; test every reaction kind with internal types
 - [Web and ASP.NET Core facts](web-aspnetcore-facts.md) — #14: binding before filters, Finally wrapper, .NET 10 handler logging, TestServer, dotnet-ef check
 - [Modularity and context facts](modularity-context-facts.md) — #13: validation needs the DI impl package, Gateway signature vs parallel merges, host-wide state in the service collection
+- [Persistence preparation facts](persistence-preparation-facts.md) — #11: EF savepoint hides rollback bugs, two-scope race technique, TestClock vs Gateway, ef remove trap

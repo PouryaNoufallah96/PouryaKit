@@ -16,7 +16,7 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
         await using var connection = await connections.OpenAsync(cancellationToken);
         var products = await connection.QueryAsync<ProductListItemDto>(
             new CommandDefinition(
-                "select id, category_id as categoryid, name from catalog.products order by name, id",
+                "select id, category_id as categoryid, name from catalog.products where is_deleted = false order by name, id",
                 cancellationToken: cancellationToken
             )
         );

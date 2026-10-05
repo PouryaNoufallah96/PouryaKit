@@ -30,18 +30,32 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["catalog", "categories"],
                 ["catalog", "products"],
                 ["stub", "__EFMigrationsHistory"],
+                ["stub", "folders"],
                 ["stub", "note_tallies"],
                 ["stub", "notes"],
+                ["stub", "pages"],
             ],
             tables
         );
         Assert.Equal(
-            ["catalog Initial", "catalog AddCategories", "stub Initial", "stub NoteTallies"],
+            ["catalog Initial", "catalog AddCategories", "catalog PersistencePreparation", "stub Initial", "stub NoteTallies", "stub Folders"],
             history.Select(row => $"{row[0]} {((string)row[1]).Split('_', 2)[1]}")
         );
         // Typed IDs are stored as their Guid values with no ID configuration in the Product mapping.
         Assert.Equal(
-            [["id", "uuid"], ["name", "character varying"], ["version", "bigint"], ["category_id", "uuid"]],
+            [
+                ["id", "uuid"],
+                ["name", "character varying"],
+                ["version", "bigint"],
+                ["category_id", "uuid"],
+                ["created_at", "timestamp with time zone"],
+                ["created_by", "text"],
+                ["deleted_at", "timestamp with time zone"],
+                ["deleted_by", "text"],
+                ["is_deleted", "boolean"],
+                ["last_changed_at", "timestamp with time zone"],
+                ["last_changed_by", "text"],
+            ],
             columns
         );
     }
@@ -75,7 +89,8 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
             .Set<Category>()
             .SingleAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal(0L, written);
+        // A new aggregate's first committed version is 1.
+        Assert.Equal(1L, written);
         Assert.Equal(7L, read.Version);
     }
 

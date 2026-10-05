@@ -4,6 +4,8 @@ Adopted implementations in `PouryaKit.Persistence.EFCore`. Format and rules: [RE
 
 The Unit of Work (`EfUnitOfWork`), the generic repository (`EfRepository`), the DbContext base (`PouryaKitDbContext`) and the Unit of Work connection (`EfUnitOfWorkConnection`, ticket #9) are new Kit code (plan section B.2, "Unit of work"; ADR 0003; ADR 0004), so they have no record here. The order of the Unit of Work's Domain Event drain is recorded with the drain, in [PouryaKit.Cqrs](PouryaKit.Cqrs.md).
 
+Persistence preparation (`PersistencePreparation`, `PouryaKitModelConvention`) and the conflict Errors (`UnitOfWorkErrors`, `IUniqueConstraintReader`, `MapUniqueConstraint`), ticket #11, are new Kit code too: no upstream code was taken. Plan section B.2, "EF base, audit, soft delete", names the designs they replace. `PouryaNoufallah96/cybernod` at `bae8ac3`, `src/BuildingBlocks/BuildingBlocks.Core/Persistence/Interceptors/AuditableEntityInterceptor.cs`, stamps dates in a `SaveChanges` interceptor and counts only owned references that are added or modified; `mehdihadeli/CloudNativeKit` at `e81d65e`, `src/CloudNativeKit.Core/Persistence/EfCore/Interceptors/SoftDeleteInterceptor.cs`, flips a shadow flag during the save. The Kit stamps and converts as a Unit of Work step before the save, with deletion state in real properties, and counts any change to an owned type or a child entity, a removed one included, as a change of its aggregate. The aggregate version it advances is recorded in [PouryaKit.Domain](PouryaKit.Domain.md).
+
 ## Package dependencies
 
 Checked on nuget.org on 2026-10-05; licence expressions from each package's nuspec. Neither is reciprocal or commercial (ADR 0002).

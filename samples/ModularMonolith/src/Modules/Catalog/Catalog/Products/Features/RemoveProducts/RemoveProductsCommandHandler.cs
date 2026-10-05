@@ -15,6 +15,7 @@ internal sealed class RemoveProductsCommandHandler(IRepository<Product, ProductI
         var named = await products.ListAsync(new ProductsNamed(command.Names), cancellationToken);
         foreach (var product in named)
         {
+            product.Remove();
             products.Remove(product);
         }
 
