@@ -2,6 +2,11 @@
   <Folder Name="/src/">
     <Project Path="src/PouryaKit.Cqrs/PouryaKit.Cqrs.csproj" />
     <Project Path="src/PouryaKit.Domain/PouryaKit.Domain.csproj" />
+    <Project Path="src/PouryaKit.Modularity/PouryaKit.Modularity.csproj" />
+    <Project Path="src/PouryaKit.Persistence/PouryaKit.Persistence.csproj" />
+    <Project Path="src/PouryaKit.Persistence.EFCore/PouryaKit.Persistence.EFCore.csproj" />
+    <Project Path="src/PouryaKit.Persistence.Postgres/PouryaKit.Persistence.Postgres.csproj" />
+    <Project Path="src/PouryaKit.Testing/PouryaKit.Testing.csproj" />
     <Project Path="src/PouryaKit.Validation/PouryaKit.Validation.csproj" />
   </Folder>
   <Folder Name="/tests/">

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Respawn" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="xunit.v3.extensibility.core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PouryaKit.Modularity\PouryaKit.Modularity.csproj" />
+    <ProjectReference Include="..\PouryaKit.Persistence.Postgres\PouryaKit.Persistence.Postgres.csproj" />
+  </ItemGroup>
+</Project>
