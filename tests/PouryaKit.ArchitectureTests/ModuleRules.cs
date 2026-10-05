@@ -66,8 +66,9 @@ internal static partial class ModuleRules
     /// <item>beginning, committing, rolling back or releasing a transaction or savepoint on an ADO.NET connection or
     /// transaction, or an EF Core transaction; a new <c>TransactionScope</c> or <c>CommittableTransaction</c>;</item>
     /// <item>the Kit's own steps: <c>IUnitOfWork</c>, <c>IUnitOfWorkOutbox</c>, <c>IReceipts</c>,
-    /// <c>IIntegrationEventOutbox</c>, <c>ISnapshotMappers</c>, <c>DomainEventDrain</c>, and beginning an Operation
-    /// (<c>BeginOperation</c>), which only the Gateway and the Kit's delivery step do.</item>
+    /// <c>IIntegrationEventOutbox</c>, <c>ISnapshotMappers</c>, <c>DomainEventDrain</c>, beginning an Operation
+    /// (<c>BeginOperation</c>), which only the Gateway and the Kit's delivery step do, and opening a reading step
+    /// (<c>Operation.OnlyReading</c>).</item>
     /// </list>
     /// It also rejects a string literal holding a transaction-control statement (<c>begin</c>, <c>start transaction</c>,
     /// <c>commit</c>, <c>end</c>, <c>abort</c>, <c>rollback</c>, <c>savepoint</c>, <c>release</c>, two-phase
@@ -214,8 +215,8 @@ internal static partial class ModuleRules
         callee.Name is "ExecuteUpdate" or "ExecuteUpdateAsync" or "ExecuteDelete" or "ExecuteDeleteAsync"
         && (callee.DeclaringType!.Namespace?.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal) ?? false);
 
-    // The seams the Kit's own steps call. INotificationOutbox is a marker with nothing to call, and Operation's members
-    // that change it are internal, so neither is listed.
+    // The seams the Kit's own steps call. INotificationOutbox is a marker with nothing to call, and Operation's other
+    // public members only read it, so neither is listed.
     private static readonly Type[] KitSteps =
     [
         typeof(IUnitOfWork),
@@ -228,7 +229,8 @@ internal static partial class ModuleRules
 
     private static bool IsKitStep(MethodBase callee) =>
         KitSteps.Any(step => callee.DeclaringType!.IsAssignableTo(step))
-        || (callee.DeclaringType == typeof(OperationContextServiceProviderExtensions) && callee.Name == "BeginOperation");
+        || (callee.DeclaringType == typeof(OperationContextServiceProviderExtensions) && callee.Name == "BeginOperation")
+        || (callee.DeclaringType == typeof(Operation) && callee.Name == nameof(Operation.OnlyReading));
 
     private static bool IsMigration(Type type) => type.IsAssignableTo(typeof(Migration)) || type.IsAssignableTo(typeof(ModelSnapshot));
 

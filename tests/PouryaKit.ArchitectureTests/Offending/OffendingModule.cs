@@ -66,7 +66,7 @@ internal sealed class OffendingRow
 }
 
 // Calls the steps only the Kit runs: the Outbox write, a Receipt, a Snapshot mapping, an Integration Event added to the
-// Outbox, the Domain Event drain, and a new Operation begun in its own scope.
+// Outbox, the Domain Event drain, a new Operation begun in its own scope, and a reading step.
 internal sealed class KitStepCallingCommandHandler(
     IUnitOfWorkOutbox outbox,
     IReceipts receipts,
@@ -74,6 +74,7 @@ internal sealed class KitStepCallingCommandHandler(
     IIntegrationEventOutbox integrationEvents,
     DomainEventDrain drain,
     IServiceProvider services,
+    Operation operation,
     OffendingDbContext dbContext
 ) : CommandHandler<OffendCommand>
 {
@@ -85,6 +86,7 @@ internal sealed class KitStepCallingCommandHandler(
         integrationEvents.Add(Guid.CreateVersion7(), command);
         await drain.RunAsync(() => [], cancellationToken);
         services.BeginOperation(new OperationContext(Actor.System("offending")));
+        using var reading = operation.OnlyReading("offending");
         return Result.Success();
     }
 }

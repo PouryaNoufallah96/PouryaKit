@@ -42,6 +42,7 @@ public sealed class FeatureCodeTests
                 "Offending.KitStepCallingCommandHandler calls IReceipts.RecordAsync.",
                 "Offending.KitStepCallingCommandHandler calls ISnapshotMappers.Map.",
                 "Offending.KitStepCallingCommandHandler calls IUnitOfWorkOutbox.WriteAsync.",
+                "Offending.KitStepCallingCommandHandler calls Operation.OnlyReading.",
                 "Offending.KitStepCallingCommandHandler calls OperationContextServiceProviderExtensions.BeginOperation.",
                 "Offending.SavingCommandHandler calls DbContext.SaveChangesAsync.",
             ],
