@@ -2,7 +2,7 @@
 
 A reusable .NET 10 foundation for modular monoliths built from vertical slices.
 
-Status: Wave 1 in progress. The solution scaffold and an empty `PouryaKit.Domain` exist; no Capability is usable yet.
+Status: Wave 1 in progress. `PouryaKit.Domain` is usable: Result and Error, typed IDs, entities, value objects, aggregates, Domain Events and business rules. No other Capability is usable yet.
 
 Build and test with the .NET SDK pinned in `global.json`:
 
