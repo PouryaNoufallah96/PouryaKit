@@ -702,7 +702,7 @@ where applicable · docs in sync · AI guidance in sync.
 
 ## Recommended plan in one paragraph
 
-Build an owned kit on .NET 10 with no mediator dependency, 12 packages in the first wave and the
+Build an owned kit on .NET 10 with no mediator dependency, 13 packages in the first wave and the
 full catalogue after it. Conventions come from Cybernod: typed IDs, aggregates, `Result`, command
 shapes, business-area folders. One host container holds module-tagged scopes behind
 `IGatewayProcessor<TModule>`; a small owned dispatcher runs a fixed pipeline. One Result-aware unit
