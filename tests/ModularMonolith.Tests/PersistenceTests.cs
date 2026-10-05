@@ -1,3 +1,4 @@
+using Billing.Infrastructure.Data.Context;
 using Catalog;
 using Catalog.Categories.Entities;
 using Catalog.Categories.Features.CreateCategory;
@@ -27,6 +28,9 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.Equal(
             [
+                ["billing", "__EFMigrationsHistory"],
+                ["billing", "pouryakit_receipts"],
+                ["billing", "price_lists"],
                 ["catalog", "__EFMigrationsHistory"],
                 ["catalog", "categories"],
                 ["catalog", "pouryakit_receipts"],
@@ -94,7 +98,10 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
             .Select(options => (DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType))
             .ToDictionary(dbContext => dbContext.GetType(), dbContext => dbContext.Database.CreateExecutionStrategy());
 
-        Assert.Equal([typeof(CatalogDbContext), typeof(InventoryDbContext), typeof(StubDbContext)], strategies.Keys.OrderBy(type => type.Name));
+        Assert.Equal(
+            [typeof(BillingDbContext), typeof(CatalogDbContext), typeof(InventoryDbContext), typeof(StubDbContext)],
+            strategies.Keys.OrderBy(type => type.Name)
+        );
         Assert.All(strategies.Values, strategy => Assert.False(strategy.RetriesOnFailure));
     }
 

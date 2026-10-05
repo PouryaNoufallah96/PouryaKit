@@ -1,3 +1,4 @@
+using Billing;
 using Catalog;
 using Catalog.Products.Events.Notifications;
 using Inventory;
@@ -23,6 +24,7 @@ public static class ModularMonolithHost
         {
             modules.Add<CatalogModule>();
             modules.Add<InventoryModule>();
+            modules.Add<BillingModule>();
         });
         builder.UsePouryaKitWolverine(connectionName: "app");
         builder.Services.AddSingleton<INewProductAnnouncer, LoggedNewProductAnnouncer>();
