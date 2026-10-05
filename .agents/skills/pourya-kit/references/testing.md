@@ -95,7 +95,7 @@ public async Task The_context_a_caller_passes_to_a_gateway_is_the_context_the_ha
 
 ## Deliveries
 
-A test of a Notification Handler, after the Proving Sample, whose Catalog announces each new product:
+A test of the deliveries one Operation causes, after the Proving Sample, whose Catalog announces each new product and publishes `ProductCreatedV1`, which Inventory handles:
 
 ```csharp
 [Fact]
@@ -112,13 +112,22 @@ public async Task A_new_product_is_announced_by_the_host_after_it_is_committed()
     );
 
     Assert.True(created.IsSuccess);
-    Assert.Equal([new Delivery("catalog.product-created.announce-new-product", "catalog.product-created", false)], deliveries);
+    Assert.Equal(
+        [
+            new Delivery("catalog.product-created.announce-new-product", "catalog.product-created", false),
+            new Delivery("catalog.product-created.publish-product-created", "catalog.product-created", false),
+            new Delivery("inventory.product-created", "catalog.product-created.v1", false),
+        ],
+        deliveries.OrderBy(delivery => delivery.Subscription, StringComparer.Ordinal)
+    );
 }
 ```
 
+The first two deliveries are the Notification's, stored in the product's commit; the third is the Integration Event's, stored in the commit of `publish-product-created`'s delivery. The wait includes deliveries that deliveries caused, and their order is not fixed, so the test sorts them.
+
 - In `CreateHost`, call `builder.Services.UsePouryaKitTestDelivery()` after `UsePouryaKitWolverine`, which the application's builder method calls, as the fixture above does. Deliveries then run at test speed: Solo durability, so a stopped Host's deliveries are recovered at once; a failed delivery retried twice, 100 ms apart (`TestDeliveryServiceCollectionExtensions.RetryDelays`), so three attempts; and the message store polled every 100 ms (`PollingTime`).
 - `Fixture.WaitForDeliveriesAsync(operation, ct)` runs the Operation, typically a Gateway call, waits until every delivery it caused is handled or set aside as a dead letter, including deliveries those deliveries caused, and returns the Operation's outcome with one `Delivery(Subscription, WireName, DeadLettered)` per delivery, in no particular order. It fails with a `DeliveryAssertionException` when the Operation stored no delivery at all, so a test that waits never passes on nothing, and with a `TimeoutException` when deliveries are still pending after 30 seconds.
-- After it returns, assert the handler's effect: the rows it wrote, or what the Host's implementation of the port recorded.
+- After it returns, assert the handler's effect: the rows it wrote, such as Inventory's stock item, or what the Host's implementation of the port recorded.
 - `Fixture.AssertNothingSentAsync(operation, ct)` runs the Operation and fails unless it stored no delivery: what a rolled-back Operation leaves. A delivery is stored in the Operation's own commit, so there is nothing to wait for.
 - `Fixture.WaitUntilDeliveredAsync(ct)` waits until no stored delivery is pending, such as after a test made the store hand one out again.
 - Between tests, the reset waits for every pending delivery, then deletes every stored delivery, dead letters included. The message store's own tables, such as its node records, stay: they belong to the running Host.
