@@ -9,9 +9,17 @@ public interface ISnapshotMappers
 {
     /// <summary>
     /// True when the running Operation's Module declared a Snapshot for <paramref name="aggregateType"/> or a type it
-    /// derives from.
+    /// derives from. Throws when a Snapshot of it is declared without a Module while the Operation runs in one, or with a
+    /// Module while it runs in none, since such a declaration would never publish.
     /// </summary>
     bool Declares(Type aggregateType);
+
+    /// <summary>
+    /// Throws when one Snapshot the running Operation's Module declared covers more than one of
+    /// <paramref name="aggregateRoots"/>, the roots of the aggregate hierarchies its Unit of Work maps: each root has keys
+    /// of its own, which one Snapshot's identities and versions cannot tell apart.
+    /// </summary>
+    void CheckKeySpaces(IReadOnlyCollection<Type> aggregateRoots);
 
     /// <summary>
     /// The Snapshot of <paramref name="aggregate"/> under each contract the running Operation's Module declared for it,

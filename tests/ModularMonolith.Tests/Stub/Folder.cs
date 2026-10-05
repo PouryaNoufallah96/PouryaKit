@@ -13,7 +13,7 @@ internal sealed record StickerId(Guid Value) : TypedId<Guid>(Value);
 // An aggregate with an owned part (its label, stored in its own row) and child entities (its pages, in a table of
 // their own, on a required key; its stickers, on an optional one), so a change to any of them alone is a change of the
 // aggregate. It is auditable and soft-deletable too.
-internal sealed class Folder : AggregateRoot<FolderId>, IAuditable, ISoftDeletable
+internal sealed class Folder : AggregateRoot<FolderId>, IAuditable, ISoftDeletable, IDeskItem
 {
     private readonly List<Page> _pages = [];
     private readonly List<Sticker> _stickers = [];
