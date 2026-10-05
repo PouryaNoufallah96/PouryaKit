@@ -18,3 +18,4 @@
 - [Messaging delivery facts](messaging-delivery-facts.md) — #15: Wolverine start/extension timing, store-polling test helpers, redelivery and unknown-subscription tricks
 - [Integration Event facts](integration-event-facts.md) — #16: process-global wire names, StartAsync-time checks, receipt-hold concurrency proof
 - [Dead letter and stale time facts](dead-letter-and-stale-time-facts.md) — #17: replay mechanics, stale stored retry reproduced, dying Host without zombie, attempts not runs
+- [Snapshot facts](snapshot-facts.md) — #18: step 4 in the Outbox write, version gate beside the Receipt, Receipt masks the gate in redelivery tests
