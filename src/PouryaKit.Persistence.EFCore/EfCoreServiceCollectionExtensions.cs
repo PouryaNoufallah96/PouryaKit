@@ -17,7 +17,8 @@ public static class EfCoreServiceCollectionExtensions
             where TDbContext : PouryaKitDbContext
         {
             ArgumentNullException.ThrowIfNull(services);
-            services.TryAddScoped<IUnitOfWork>(provider => new EfUnitOfWork(
+            // Added, not tried: on a Module's builder it becomes that Module's own, whatever the Host already holds.
+            services.AddScoped<IUnitOfWork>(provider => new EfUnitOfWork(
                 provider.GetRequiredService<TDbContext>(),
                 provider.GetRequiredService<Operation>()
             ));
