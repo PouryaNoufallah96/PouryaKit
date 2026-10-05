@@ -113,8 +113,8 @@ The Spike decided "join" by nesting depth, which also counts queries, so a comma
 handler would join a Unit of Work nobody owns. Open points for ticket #7:
 
 - whether a failed nested query marks the Operation rollback-only too (the Spike marked failed nested
-  commands only);
-- whether a query handler may send a command at all.
+  commands only); *answered by ticket #7: it does not, see the amendment below;*
+- whether a query handler may send a command at all. *Answered by ticket #7: it may not, see the amendment below.*
 
 ### Invariants to keep as permanent tests (ticket #7)
 
@@ -129,3 +129,25 @@ in a separate test Module assembly:
    seam proves the same against PostgreSQL, data and Outbox included, in Phase 2 (plan section E).
 3. Handlers that are internal types in another assembly are found without `InternalsVisibleTo`, and a
    command or query with zero or several handlers fails registration at startup.
+
+## Amendment (2026-10-06, Wave 1 as built)
+
+The decision above stands. Ticket #7 closed its two open points, and these rules are now behaviour Feature code relies
+on (`src/PouryaKit.Cqrs/Dispatcher.cs`, `src/PouryaKit.Cqrs/Operation.cs`):
+
+- **A failed nested query marks nothing.** Only a command that fails, at any step or by an exception, marks the
+  Operation rollback-only; a query has no effect to undo
+  (`DispatchTests.A_failed_nested_query_leaves_the_operation_free_to_commit`).
+- **A query handler that sends a command throws** `InvalidOperationException`: a query runs without a Unit of Work, so
+  it cannot change state (`DispatchTests.A_query_handler_that_sends_a_command_throws`).
+- **Authorizers and validators may run queries, never commands, at any depth**, a nested command's own checks included:
+  they run before their command may proceed, so a command they sent would change state for one that may still be
+  refused (`DispatchTests.An_authorizer_that_sends_a_command_throws_before_the_nested_handler_runs`,
+  `DispatchTests.A_nested_commands_authorizer_that_sends_a_command_throws_inside_the_unit_of_work`,
+  `DispatchTests.An_authorizer_may_run_a_query_before_the_unit_of_work_starts`).
+- **The authorization hook runs for queries as well as commands.** Every `IAuthorizer<T>` registered for a query runs
+  before its validation, as invariant 1 above already states
+  (`DispatchTests.A_query_runs_the_same_steps_without_the_unit_of_work`). Plan G.6 calls it a "command-level"
+  authorization hook; the hook covers queries too, and this was reported to the owner when ticket #7 closed. G.6 is
+  unchanged. Narrowing the hook to commands would leave every query authorizer an application registered silently
+  unrun.

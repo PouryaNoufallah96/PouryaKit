@@ -70,3 +70,24 @@ creates its context with a named `Actor.System(...)` (G.6).
   `BeginOperation(context, receivingModule)` before the handler runs, so the Unit of Work routes to the receiving
   Module. `Messaging.Wolverine` references Cqrs only, which is enough.
 - **#11 (audit)** reads the Actor from the injected `OperationContext`.
+
+## Amendment (2026-10-06, Wave 1 as built)
+
+The decision above stands. Ticket #14 fixed these facts of the context `PouryaKit.Web` opens each request's Operation
+with (`src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs`), which a project's authorization and tracing build
+on.
+
+- **A configured tenant claim missing on the token stays a null tenant.** When `PouryaKitWebOptions.TenantClaim` is
+  set and an authenticated caller's identity lacks that claim, the Operation runs with a null tenant; the caller is
+  not refused. Some callers legitimately have no tenant, and what a null tenant may see is the tenant filter's
+  business, not the HTTP boundary's. **Security-relevant:** the Kit does not refuse such a caller, so an application
+  in which every caller must carry a tenant enforces that itself, in its authentication scheme or an `IAuthorizer<T>`
+  (`PouryaKitWebOptions.TenantClaim`;
+  `WebTests.The_tenant_claim_fills_the_tenant_and_a_caller_without_it_runs_with_none`).
+- **Every request starts a new correlation chain.** The context is created with no correlation, so its correlation is
+  its own `OperationId` and it has no causation; no incoming header sets either. Accepting a caller's correlation
+  would move a trust boundary (G.6), so it is a decision to take explicitly
+  (`WebTests.The_handler_reads_the_authenticated_caller_as_the_actor_of_a_new_chain_of_work`).
+- The explicit Actor an unauthenticated endpoint needs (Consequences, #14) is named with `AllowAnonymousAs(actor)`;
+  plain `AllowAnonymous` on a Module's endpoint fails when the endpoint is built
+  (`WebTests.A_module_endpoint_that_allows_anonymous_callers_without_naming_an_actor_fails_the_host_at_start`).
