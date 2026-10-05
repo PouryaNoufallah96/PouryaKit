@@ -13,6 +13,7 @@ metadata:
 - `gh issue view N --comments` printed nothing from the worktree; `gh issue view N --repo PouryaNoufallah96/PouryaKit` plus `gh api repos/PouryaNoufallah96/PouryaKit/issues/N/comments` works.
 - macOS BSD `sed -E` silently ignores `\b` (no match, no error); use `[[:<:]]word[[:>:]]` for word boundaries, then grep to confirm the rename.
 - `check-ai-setup.py` parses frontmatter with a tiny YAML subset: a plain scalar containing `": "`, `" #"`, or ending in `:` fails. Write skill descriptions without colons.
+- Ticket #8: the guard hook refuses `rm -r` anywhere but system temp; delete files one by one, then `rmdir` the empty folders. Mutation checks: copy the file to the scratchpad, mutate with a python heredoc, run, copy back.
 - No pyyaml/actionlint on the machine: `ruby -ryaml` parses YAML; `python3 -m venv <scratchpad>/venv && pip install actionlint-py` gives actionlint.
 
 **Why:** each cost a retry during ticket #4.
