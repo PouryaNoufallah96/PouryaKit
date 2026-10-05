@@ -11,8 +11,8 @@ public class AggregateRootTests
 
         Assert.Collection(
             product.DomainEvents,
-            first => Assert.Equal("Lamp", Assert.IsType<ProductCreated>(first).Name),
-            second => Assert.Equal("Desk lamp", Assert.IsType<ProductRenamed>(second).NewName)
+            first => Assert.Equal("Lamp", Assert.IsType<ProductCreatedDomainEvent>(first).Name),
+            second => Assert.Equal("Desk lamp", Assert.IsType<ProductRenamedDomainEvent>(second).NewName)
         );
         Assert.Equal(0, product.Version);
     }

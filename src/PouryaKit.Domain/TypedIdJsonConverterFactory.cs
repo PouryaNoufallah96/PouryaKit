@@ -25,9 +25,31 @@ public sealed class TypedIdJsonConverterFactory : JsonConverterFactory
         where TValue : notnull
     {
         public override TId Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-            TypedId.From<TId, TValue>(JsonSerializer.Deserialize<TValue>(ref reader, options)!);
+            Create(ValueConverter(options).Read(ref reader, typeof(TValue), options)!);
 
         public override void Write(Utf8JsonWriter writer, TId value, JsonSerializerOptions options) =>
-            JsonSerializer.Serialize(writer, value.Value, options);
+            ValueConverter(options).Write(writer, value.Value, options);
+
+        public override TId ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+            Create(ValueConverter(options).ReadAsPropertyName(ref reader, typeof(TValue), options));
+
+        public override void WriteAsPropertyName(Utf8JsonWriter writer, TId value, JsonSerializerOptions options) =>
+            ValueConverter(options).WriteAsPropertyName(writer, value.Value, options);
+
+        private static JsonConverter<TValue> ValueConverter(JsonSerializerOptions options) =>
+            (JsonConverter<TValue>)options.GetConverter(typeof(TValue));
+
+        // An empty value is invalid input here, so it surfaces as JsonException, which ASP.NET Core turns into a 400.
+        private static TId Create(TValue value)
+        {
+            try
+            {
+                return TypedId.From<TId, TValue>(value);
+            }
+            catch (ArgumentException exception)
+            {
+                throw new JsonException($"{typeof(TId).Name} cannot be empty.", exception);
+            }
+        }
     }
 }

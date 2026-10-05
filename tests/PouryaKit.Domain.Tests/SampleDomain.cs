@@ -13,9 +13,9 @@ internal sealed record Sku(string Value) : TypedId<string>(Value);
 
 public sealed record PriceId(decimal Value) : TypedId<decimal>(Value);
 
-public sealed record ProductCreated(ProductId ProductId, string Name) : DomainEvent;
+public sealed record ProductCreatedDomainEvent(ProductId ProductId, string Name) : DomainEvent;
 
-public sealed record ProductRenamed(ProductId ProductId, string NewName) : DomainEvent;
+public sealed record ProductRenamedDomainEvent(ProductId ProductId, string NewName) : DomainEvent;
 
 public static class ProductErrors
 {
@@ -42,14 +42,14 @@ public sealed class Product : AggregateRoot<ProductId>
         }
 
         var product = new Product { Id = id, Name = name };
-        product.Raise(new ProductCreated(id, name));
+        product.Raise(new ProductCreatedDomainEvent(id, name));
         return product;
     }
 
     public void Rename(string newName)
     {
         Name = newName;
-        Raise(new ProductRenamed(Id, newName));
+        Raise(new ProductRenamedDomainEvent(Id, newName));
     }
 }
 

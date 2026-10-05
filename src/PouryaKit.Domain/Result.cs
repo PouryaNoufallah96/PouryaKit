@@ -21,6 +21,21 @@ public class Result
 
     public static Result Success() => SuccessResult;
 
+    /// <summary>
+    /// A success holding <paramref name="value"/>. The implicit conversion from a value uses it; call it directly
+    /// when the value's static type is an interface, which C# never converts implicitly.
+    /// </summary>
+    public static Result<T> Success<T>(T value)
+        where T : notnull
+    {
+        if (value is null)
+        {
+            throw new ArgumentNullException(nameof(value), "Null is never a successful Result.");
+        }
+
+        return new(value);
+    }
+
     public static implicit operator Result(Error error) => new(OneError(error));
 
     public static implicit operator Result(ImmutableArray<Error> errors) => new(FailureErrors(errors));
@@ -54,7 +69,7 @@ public sealed class Result<T> : Result
 {
     private readonly T? _value;
 
-    private Result(T value)
+    internal Result(T value)
         : base([]) => _value = value;
 
     private Result(ImmutableArray<Error> errors)
@@ -64,15 +79,7 @@ public sealed class Result<T> : Result
     public T Value =>
         IsSuccess ? _value! : throw new InvalidOperationException("A failed Result has no value; read its Errors.");
 
-    public static implicit operator Result<T>(T value)
-    {
-        if (value is null)
-        {
-            throw new ArgumentNullException(nameof(value), "Null never converts to a successful Result.");
-        }
-
-        return new(value);
-    }
+    public static implicit operator Result<T>(T value) => Success(value);
 
     public static implicit operator Result<T>(Error error) => new(OneError(error));
 

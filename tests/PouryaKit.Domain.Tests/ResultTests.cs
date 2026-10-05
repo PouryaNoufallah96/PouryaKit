@@ -19,6 +19,17 @@ public class ResultTests
     }
 
     [Fact]
+    public void A_value_typed_as_an_interface_becomes_a_success_through_the_factory()
+    {
+        IReadOnlyList<string> names = ["Lamp", "Desk"];
+
+        var result = Result.Success(names);
+
+        Assert.True(result.IsSuccess);
+        Assert.Same(names, result.Value);
+    }
+
+    [Fact]
     public void An_error_converts_to_a_failure_whose_value_cannot_be_read()
     {
         Result<int> result = Missing;
