@@ -10,7 +10,9 @@ namespace PouryaKit.Persistence.EFCore;
 /// The generic repository over EF Core. It tracks changes in the DbContext of the scope's Unit of Work, so what a
 /// handler adds is what that Unit of Work saves. An aggregate-specific repository derives from it and builds its extra
 /// members on the inherited ones and on <see cref="ListAsync{TResult}"/>, which return loaded results. It gets no query
-/// and no DbContext from this class.
+/// and no DbContext from this class. <see cref="AddAsync"/> and <see cref="Remove"/> throw an
+/// <see cref="InvalidOperationException"/> where <see cref="Operation.MayChangeState"/> is false: in a query, an
+/// authorizer or a validator.
 /// </summary>
 public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository<TAggregate, TId>
     where TAggregate : AggregateRoot<TId>
@@ -22,15 +24,19 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
             $"The repository of {typeof(TAggregate).Name} needs the EF Core Unit of Work, but the scope's Unit of Work is {unitOfWork.GetType().Name}."
         );
 
+    private readonly Operation _operation = ((EfUnitOfWork)unitOfWork).Operation;
+
     public async Task AddAsync(TAggregate aggregate, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(aggregate);
+        EnsureMayChangeState();
         await _aggregates.AddAsync(aggregate, cancellationToken);
     }
 
     public void Remove(TAggregate aggregate)
     {
         ArgumentNullException.ThrowIfNull(aggregate);
+        EnsureMayChangeState();
         _aggregates.Remove(aggregate);
     }
 
@@ -67,6 +73,18 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
     {
         ArgumentNullException.ThrowIfNull(specification);
         return SpecificationEvaluator.Default.GetQuery(_aggregates, specification).ToListAsync(cancellationToken);
+    }
+
+    // A query nested in a command runs inside the command's Unit of Work, so what it added would commit with the
+    // command, though a failed query marks nothing rollback-only.
+    private void EnsureMayChangeState()
+    {
+        if (!_operation.MayChangeState)
+        {
+            throw new InvalidOperationException(
+                "A query, an authorizer or a validator asked to write through the Unit of Work. They only read; add or remove an aggregate from a command's handler or a Domain Event Handler."
+            );
+        }
     }
 
     private IQueryable<TAggregate> Query(ISpecification<TAggregate> specification, bool evaluateCriteriaOnly = false)

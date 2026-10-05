@@ -78,6 +78,19 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(id, await Fixture.ScalarAsync<Guid>("select id from catalog.products"));
     }
 
+    [Fact]
+    public async Task A_query_sent_from_a_command_cannot_add_an_aggregate_through_the_repository()
+    {
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            Fixture
+                .Gateway<StubModule>()
+                .SendAsync(new WriteNoteThroughQueryCommand("nested"), TestContext.Current.CancellationToken)
+        );
+
+        Assert.StartsWith("A query, an authorizer or a validator asked to write", thrown.Message);
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.notes"));
+    }
+
     private static async Task<Guid> CreateCategoryAsync(IGatewayProcessor<CatalogModule> catalog) =>
         (
             await catalog.SendAsync(
