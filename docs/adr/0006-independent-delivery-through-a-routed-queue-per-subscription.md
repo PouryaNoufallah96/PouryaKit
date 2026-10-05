@@ -386,3 +386,25 @@ needs neither. The dead-letter triage question is dissolved too: the subscriptio
 - **Packages.** The runtime package closure is the same as ADR 0004's, and its licence table applies.
 - **Seen by the reviewer, not repeated here.** Under Option C, a Notification Handler published an Integration Event
   through a Unit of Work opened inside its delivery scope. The Spike has no test of this.
+
+## Amendment (2026-10-05, tickets #15 and #16)
+
+The decision above stands. Implementing it departed from one consequence and settled what the record left open.
+
+- **Where the declarations live.** The Consequences say `PouryaKit.Messaging` keeps the `Publish`, `Subscribe` and
+  `SubscribeNotification` declarations. They live in `PouryaKit.Messaging.Wolverine` instead: they are registration
+  calls on a Module's builder, and plan section C gives `PouryaKit.Messaging` no dependency-injection reference.
+  `PouryaKit.Messaging` keeps the handler and publisher interfaces, the name rules and the header names. Neither
+  package references `PouryaKit.Modularity`, so each declaration takes the Module's definition type as an argument.
+- **The names used.** `AddPouryaKitNotificationHandlers(assembly, module)` replaces `SubscribeNotification`: it
+  subscribes every Notification Handler of an assembly, under a derived subscription name unless the handler declares
+  one (owner decision 2). `Publish<TIntegrationEvent>(wireName, module)` declares an Integration Event's wire name and
+  publishing Module, and refuses a Domain Event, whose wire name is derived or declared on the type.
+  `Subscribe<TIntegrationEvent, THandler>(subscriptionName, module)` subscribes one Integration Event Handler.
+- **Subscription names are stored lower-cased**, as their local queues are, so a change of case only is the same
+  subscription, Receipts included.
+- **Reserved queue names are refused.** A subscription may not be named after a local queue Wolverine 6.46.0 keeps for
+  itself: `agents`, `default`, `durable`, `replies`, `scheduled` or `system`.
+- **The startup check.** Once every hosted service has started, a Host that declares Notification Handlers,
+  Integration Event Handlers or published Integration Events fails unless an Outbox writes them in the Unit of Work's
+  commit and every subscription's queue, as Wolverine built it, is a durable application queue.
