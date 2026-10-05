@@ -44,55 +44,59 @@ The two tools resolve a role's model in a different order:
 
 The steps and gates are in `AGENTS.md`, "Workflow for every ticket". This is how each one runs.
 
-**Before step 1: scope and brief.** Read the ticket (`gh issue view <n> --comments`) and record the base commit (`git rev-parse HEAD`). Save the ticket as a spec file outside the checkout, for example:
-
-```bash
-gh issue view 42 --json title,body --jq '"# " + .title + "\n\n" + .body' > /tmp/kit-ticket-42.md
-```
+**Before step 1: scope and brief.** Read the ticket (`gh issue view <n> --comments`) and record the base commit (`git rev-parse HEAD`). `/kit-review` fetches the ticket itself, so no spec file is needed for it.
 
 **Steps 1–2: implement, then focused tests.** Spawn `kit-implementer` with the brief. Check its report against the tree: read the diff and the `verify` output it reports. Re-run a check only when that leaves a doubt; the current models verify their own work, and a second run of everything is wasted time.
 
 **Step 3: review, sized to the ticket.** A ticket that claims a runtime guarantee or changes a public API of the Kit gets the dual review below. Any other ticket gets one `kit-reviewer` subagent with the base and the spec. A clear, small change gets none. The dual review, in Claude Code:
 
 ```text
-Run /kit-review with base <base commit> and spec /tmp/kit-ticket-42.md
+Run /kit-review with base <base commit> and ticket 42
 ```
 
-`kit-reviewer` and a Codex inspection run in parallel; one verification stage then merges duplicate findings and checks each against the code. Optional arguments: `scope` (one line of plain text), `codexEffort` (`high` by default, or `xhigh`), `previousFindings` (for a re-review; see step 4). Prepare these first:
+The work to review must be committed: the review reads one commit, never uncommitted changes. Pass `spec` (a file path, absolute or relative to the repository root) instead of `ticket` only for work with no ticket; exactly one of the two. Optional arguments: `head` (the commit to review; by default the commit your checkout is on when the run starts), `scope` (one line of plain text), `codexEffort` (`high` by default, or `xhigh`), and `previous` with `rescore` for a re-review (step 4). A wrong combination fails at once and says what to pass.
 
-- `spec` is a real UTF-8 file outside the checkout. An untracked spec inside the repository shows up in the inspected change set. Its path uses only letters, digits and `. _ / @ + -`.
-- `base` resolves to a commit.
-- The tree stays unchanged for the whole run. The Codex leg fingerprints tracked and untracked files and fails if anything changes, so no implementer runs meanwhile.
-- A changed submodule or nested repository aborts the Codex leg.
+The workflow resolves `base` and `head` to hashes, saves the ticket's title and body as `spec.md` in a run directory under the system temp directory, and checks `head` out as a detached worktree under `.claude/worktrees/kit-review-<random>`. `kit-reviewer` and a Codex inspection then review that worktree in parallel, and one verification stage merges duplicate findings and checks each against the code. `kit-reviewer` may build and run tests there. When the run ends, on success or failure, the worktree is removed with `git worktree remove`. Your checkout is never read for the diff, so you can keep working, merging and running implementers during a review. A changed submodule or nested repository in the diff still aborts the Codex leg.
 
-The result carries `complete`, `verdict` and the verified `findings`. Each finding has a stable `id` (`F1`, `F2`, …), a status of `confirmed`, `refuted` or `unverified`, and who raised it. `pass`, `fix` and `block` are computed from the findings that were not refuted: `block` when one of them is high, `fix` when any stands, `pass` when none does.
+The value returned is a digest of a few KB that a task notification shows in full: `complete`, `verdict`, `counts`, each leg's verdict and a one-line `note`, and per finding only `id`, `severity`, `status`, `path`, `by` (who raised it) and a `claim` of at most 160 characters. A re-review adds each earlier finding's state under `rescored`. `result` names the file with the full result: `<run directory>/result.json`, holding every finding's evidence, fix and verification, and each leg's read count and limitations. Read that file when you need more than the claim. If the file could not be written, `result` is null and the full result comes back under `full`; if the worktree could not be removed, `cleanup` gives the command.
 
-`unknown` is never a pass. It means a leg or the verification stage did not return a usable review. A leg counts only when it reports that it ran, gives a verdict that means "reviewed" (`block`, `fix` or `pass` from `kit-reviewer`; `APPROVED` or `REVISE` from Codex), lists what it read, and its verdict fits its findings. `reviewers.<leg>.note` says which of these failed.
+Each finding has a stable `id` (`F1`, `F2`, …) and a status of `confirmed`, `refuted` or `unverified`. `pass`, `fix` and `block` are computed from the findings that were not refuted: `block` when one of them is high, `fix` when any stands, `pass` when none does.
 
-The main session judges the findings; the workflow edits nothing.
+`unknown` is never a pass. It means a leg or the verification stage did not return a usable review. A leg counts only when it reports that it ran, gives a verdict that means "reviewed" (`block`, `fix` or `pass` from `kit-reviewer`; `APPROVED` or `REVISE` from Codex), read at least one changed file and left none of the diff unread, and its verdict fits its findings. The leg's `note` says which of these failed. When the Codex runner fails, the note quotes the runner's own reason, for example "Selected model is at capacity". The workflow does not retry it.
 
-The Codex leg has about 9.5 minutes, because a foreground shell call is capped at 10. When it runs out, the verdict is `unknown`. Run that leg yourself in the background and judge its findings together with the `kit-reviewer` leg:
+The main session judges the findings; the workflow edits nothing in the reviewed commit.
+
+The Codex leg has about 9.5 minutes, because a foreground shell call is capped at 10. When it runs out, the verdict is `unknown`. Run that leg yourself in the background against a fresh worktree of the same commit, using the `spec.md` from the run directory named in `result`, and judge its findings together with the `kit-reviewer` leg:
 
 ```bash
+git worktree add --detach .claude/worktrees/kit-review-codex <head>
 python3 .agents/skills/claudex-loop/scripts/runner.py inspect --host claude --builder claude \
-  --repo . --plan /tmp/kit-ticket-42.md --base <base commit> \
+  --repo .claude/worktrees/kit-review-codex --plan <run directory>/spec.md --base <base> \
   --model gpt-6-astra --effort high --timeout 1800
+git worktree remove .claude/worktrees/kit-review-codex
 ```
 
-Its first output line names an artifacts directory; `result.json` there holds the verdict, findings, coverage and limitations.
+The runner's first output line names an artifacts directory; `result.json` there holds the verdict, findings, coverage and limitations.
 
-From a Codex-hosted session, spawn the `kit-reviewer` agent for the Codex review and run the Claude inspection through the same runner:
+From a Codex-hosted session, spawn the `kit-reviewer` agent for the Codex review and run the Claude inspection through the same runner, on a worktree of the commit as above, with the ticket saved as a spec file outside the checkout:
 
 ```bash
+gh issue view 42 --json title,body --jq '"# " + .title + "\n\n" + .body' > /tmp/kit-ticket-42.md
 python3 .agents/skills/claudex-loop/scripts/runner.py inspect --host codex --builder codex \
-  --repo . --plan /tmp/kit-ticket-42.md --base <base commit> --model claude-fable-5-1
+  --repo .claude/worktrees/kit-review-codex --plan /tmp/kit-ticket-42.md --base <base> --model claude-fable-5-1
 ```
 
 **Step 4: one fix round, then a re-score.** Give the accepted findings to `kit-implementer` as a new brief. Then have `kit-reviewer` re-score those findings from fresh evidence; that is the default and it ends the loop. Record a disposition for any medium or low finding still open.
 
-Only after a high finding was fixed, run `/kit-review` again with the same `base` and `spec`, and `previousFindings` set to the `findings` array of the previous result (drop the ones you did not accept). `kit-reviewer` re-scores each earlier finding, and Codex inspects the whole change fresh.
+Only after a high finding was fixed and committed, run `/kit-review` again with the same `base` and `ticket`, and `previous` set to the earlier result file:
 
-The result's `rescored` list gives every earlier finding one state: `resolved`, `partial` or `unresolved`. A finding the reviewer did not re-score counts as `unresolved`. Each `partial` or `unresolved` one still stands under its earlier `id`, at no less than its earlier severity, with a `previous` field showing the re-score; a finding new in this round gets the next free `F` number.
+```text
+Run /kit-review with base <base commit>, ticket 42, previous <earlier result file> and rescore F1,F3
+```
+
+`rescore` is optional: leave it out to re-score every earlier finding that was not refuted, or list the ids you accepted. `kit-reviewer` re-scores each of them, and Codex inspects the whole change fresh.
+
+The digest's `rescored` list gives each of them one state: `resolved`, `partial` or `unresolved`. A finding the reviewer did not re-score counts as `unresolved`. Each `partial` or `unresolved` one still stands under its earlier `id`, at no less than its earlier severity, and the full result shows its re-score under `previous`; a finding new in this round gets the next free `F` number.
 **Step 5: runtime proof.** The main session runs the proof commands itself; the reviewers only inspect.
 
 **Steps 6–7: docs and AI guidance.** After updating the AI guidance, run the check script (below).
@@ -191,7 +195,8 @@ Ideas were taken from the owner's Ultrabusiness and ChainReporter setups. These 
 
 ## Known gaps
 
-- `kit-review` parses, and its verdict logic was exercised with stubbed agents. It has not been run end to end.
+- `kit-review` with ticket input, a review worktree and a digest was exercised with stubbed agents (input checks, verdicts, digest size, the re-score merge), its prepare and finish commands were run against this repository, and the Codex runner was run on a detached worktree under `.claude/worktrees/`. The workflow itself has not yet run end to end in this form.
+- A script cannot run commands, so `kit-review` uses two small agents: one to resolve the commits, fetch the ticket and create the worktree, and one to write the full result file and remove the worktree. The second copies the result as text; the workflow checks its byte count and returns the full result itself when the count is wrong. A run that is stopped by hand skips the cleanup: remove its worktree with `git worktree remove --force .claude/worktrees/kit-review-<random>`.
 - Two review paths exist and only one is the gate. `/kit-review` is the per-ticket gate. The vendored `code-review` skill, which reviews along a Standards axis and a Spec axis, is not part of it.
 - The guard was exercised with Codex-shaped payloads through the check script, not inside a live Codex session. Whether Codex loads `.codex/agents/*.toml` could not be observed without a model call.
 - Mods are early access (Claude Code 2.1.287 or later), and their API may change between releases; re-run the two `claude plugin` commands after an upgrade. `kit-cockpit` passes them and loads, but it has not run in a live session. Unconfirmed: that the guard's deny reaches the mod as a `PreToolUse` deny with the marker still in its reason (without it the mod asks nothing and the deny stands), that the question appears with permission prompts off and "Run it once" then runs the command, what the band shows for role subagents and teammates, and hot reload. The 30-second check settles the first two.
