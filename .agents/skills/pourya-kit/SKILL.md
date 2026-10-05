@@ -20,9 +20,81 @@ Each section below is filled by the ticket that delivers its Capability. A secti
 
 ### Domain primitives
 
-`PouryaKit.Domain`: Result and Error, typed IDs, entities, value objects, aggregates, Domain Events and business rules.
+`PouryaKit.Domain`: Result and Error, typed IDs, entities, value objects, aggregates, Domain Events and business rules. One namespace, `PouryaKit.Domain`; no dependencies.
 
-*Not yet available* (#6).
+An aggregate with a typed ID that checks a business rule, raises a Domain Event and returns a Result:
+
+```csharp
+using PouryaKit.Domain;
+
+internal sealed record ProductId(Guid Value) : TypedId<Guid>(Value);
+
+internal sealed record ProductCreatedDomainEvent(ProductId ProductId, string Name) : DomainEvent;
+
+internal static class ProductErrors
+{
+    public static readonly Error NameRequired = Error.Validation("Product.NameRequired", "A product needs a name.");
+    public static readonly Error NotFound = Error.NotFound("Product.NotFound", "The product does not exist.");
+}
+
+internal sealed class ProductNameMustNotBeBlank(string name) : IBusinessRule
+{
+    public Error Error => ProductErrors.NameRequired;
+
+    public bool IsBroken() => string.IsNullOrWhiteSpace(name);
+}
+
+internal sealed class Product : AggregateRoot<ProductId>
+{
+    public string Name { get; private set; } = "";
+
+    public static Result<Product> Create(ProductId id, string name)
+    {
+        var rule = CheckRule(new ProductNameMustNotBeBlank(name));
+        if (rule.IsFailure) return rule.Errors;
+
+        var product = new Product { Id = id, Name = name.Trim() };
+        product.Raise(new ProductCreatedDomainEvent(id, product.Name));
+        return product;
+    }
+}
+
+// Elsewhere: var created = Product.Create(TypedId.New<ProductId>(), command.Name);
+```
+
+**Result and Error**
+
+- Return a value or an Error directly; each converts to a Result. `Result.Success()` is the success without a value.
+- Pass a failure on with `return result.Errors;`; it converts to a failed Result of any type and keeps every Error.
+- Check `IsSuccess` or `IsFailure` before reading `Value`; reading it from a failure throws. No conversion turns a Result into its value, and a null value throws instead of becoming a success.
+- Give each Error a stable code (`Product.NameRequired`), a message and a kind through its factory: `Validation`, `NotFound`, `Conflict`, `Forbidden` or `Unexpected`. Never an HTTP status; the Web package maps kinds to responses.
+- Declare a Business Area's Errors once, as static fields.
+
+**Typed IDs**
+
+- Declare one per aggregate as a sealed record over `Guid`, `long`, `int` or `string`, as above. Two IDs are equal only when type and value are equal, so IDs of different aggregates cannot be mixed up.
+- Create a new Guid ID with `TypedId.New<ProductId>()`; it is time-ordered (version 7). Wrap a value from input with `new ProductId(value)`.
+- The constructor throws on an empty Guid or a blank string: that is a bug, so validate input before it reaches the constructor.
+- Write no converter. JSON needs `TypedIdJsonConverterFactory` once in the serializer options, which the Kit's packages add; EF Core and Dapper registration arrive with those packages.
+
+**Aggregates, entities and value objects**
+
+- Raise a Domain Event with `Raise` from inside the aggregate. Never clear Domain Events and never set `Version`: the Unit of Work does both, and raising an event does not change the version.
+- Entities are equal when type and ID are equal; do not override equality.
+- Declare a value object as a record deriving from `ValueObject`. Its equality covers every member; a collection member compares by reference, so wrap it in a value object of its own.
+
+**Domain Events**
+
+- Declare each as a sealed record deriving from `DomainEvent`, named in the past tense with the `DomainEvent` suffix. Its `Id` and UTC `OccurredOn` are assigned once when it is created and survive serialization; never set them yourself.
+- Carry typed IDs and values, never the aggregate itself or its version.
+
+**Business rules**
+
+- Implement `IBusinessRule` with `IsBroken()` and the Error it returns. `CheckRule(rule)` in an entity, aggregate or value object returns a Result; a broken rule is a failed Result, never an exception.
+
+**Testing**
+
+- Test an aggregate through its public methods and assert on `DomainEvents` and on the returned Result's `Errors`.
 
 ### Commands, queries and validation
 
