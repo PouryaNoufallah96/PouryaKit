@@ -218,17 +218,26 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.DoesNotContain(logs.Entries, entry => entry.Level >= LogLevel.Error);
     }
 
-    // Routing refuses both itself, before any endpoint or exception handler runs.
+    // Routing refuses both itself, before any endpoint or exception handler runs; the answer is a problem response
+    // whatever the caller accepts.
     [Theory]
-    [InlineData("POST", "text/plain", HttpStatusCode.UnsupportedMediaType)]
-    [InlineData("PUT", "application/json", HttpStatusCode.MethodNotAllowed)]
+    [InlineData("POST", "text/plain", HttpStatusCode.UnsupportedMediaType, null)]
+    [InlineData("PUT", "application/json", HttpStatusCode.MethodNotAllowed, null)]
+    [InlineData("POST", "text/plain", HttpStatusCode.UnsupportedMediaType, "text/html")]
+    [InlineData("PUT", "application/json", HttpStatusCode.MethodNotAllowed, "text/html")]
     public async Task A_request_routing_refuses_answers_its_status_as_a_problem_response_and_nothing_is_saved(
         string method,
         string contentType,
-        HttpStatusCode status
+        HttpStatusCode status,
+        string? accept
     )
     {
         using var client = Fixture.Client("ada");
+        if (accept is not null)
+        {
+            client.DefaultRequestHeaders.Accept.ParseAdd(accept);
+        }
+
         using var request = new HttpRequestMessage(new HttpMethod(method), "/catalog/products")
         {
             Content = new StringContent(
