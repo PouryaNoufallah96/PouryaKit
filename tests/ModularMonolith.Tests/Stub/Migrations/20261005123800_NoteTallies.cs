@@ -6,7 +6,7 @@ namespace ModularMonolith.Tests.Stub.Migrations;
 // A projection table written with Dapper and never mapped by EF Core, so it is created with SQL and leaves the model
 // snapshot unchanged.
 [DbContext(typeof(StubDbContext))]
-[Migration("20261006090000_NoteTallies")]
+[Migration("20261005123800_NoteTallies")]
 internal sealed class NoteTallies : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder) =>
