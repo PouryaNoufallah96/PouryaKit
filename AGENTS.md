@@ -86,4 +86,4 @@ Single-context: `GLOSSARY.md` at the root, decisions in `docs/adr/`. See `docs/a
 
 ### The Kit's own skill
 
-`.agents/skills/pourya-kit/` teaches developers and agents to use each Capability. Workflow step 7 fills the section of the Capability a ticket delivers.
+`.agents/skills/pourya-kit/` teaches developers and agents to use each Capability. `SKILL.md` routes to one file per Capability under `references/`; workflow step 7 writes or updates the reference file of the Capability a ticket delivers and its row in `SKILL.md`.
