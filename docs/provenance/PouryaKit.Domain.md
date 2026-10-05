@@ -2,6 +2,10 @@
 
 Adopted implementations in `PouryaKit.Domain`. Format and rules: [README](README.md).
 
+## Package dependencies
+
+None. `PouryaKit.Domain` references no package and no other Kit package, as plan section C lists.
+
 ## Result and Error
 
 - **Kit files:** `src/PouryaKit.Domain/Result.cs`, `src/PouryaKit.Domain/Error.cs`, `src/PouryaKit.Domain/ErrorKind.cs`
@@ -34,7 +38,7 @@ Adopted implementations in `PouryaKit.Domain`. Format and rules: [README](README
   - New Guid IDs come from `TypedId.New<TId>()` as version 7 Guids.
   - No implicit conversion to the raw value; `ToString` is sealed and culture-invariant.
   - `TypedId.From` creates any typed ID from its value through a constructor looked up once per type, so no ID declares a factory, and `TypedId.GetValueType` recognises typed IDs. The JSON converter factory is new and built on both.
-  - The EF Core converter selector and the Dapper type handler (`Persistence/Converters/StronglyTypedIdValueConverterSelector.cs`, `Persistence/Converters/TypedIdValueHandler.cs`) are not adopted here; the EF Core and Dapper packages register typed IDs through `TypedId.GetValueType` and `TypedId.From`.
+  - The EF Core converter selector and the Dapper type handler (`src/BuildingBlocks/BuildingBlocks.Core/Persistence/Converters/StronglyTypedIdValueConverterSelector.cs`, `src/BuildingBlocks/BuildingBlocks.Core/Persistence/Converters/TypedIdValueHandler.cs`) are not adopted here; the EF Core and Dapper packages register typed IDs through `TypedId.GetValueType` and `TypedId.From`.
 
 ## Entity, aggregate root, value object and business rules
 

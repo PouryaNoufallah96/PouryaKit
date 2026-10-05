@@ -22,7 +22,7 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
 - **Ticket:** #8
 - **Intentional differences:**
   - No `EnableRetryOnFailure`: the Unit of Work owns an explicit transaction, and a retry needs a new scope (ADR 0003, ADR 0004).
-  - No global `Npgsql.EnableLegacyTimestampBehavior` switch, no pgvector, and no interceptors: audit and soft delete are Unit of Work steps (ticket #11), and the Outbox is ticket #15.
+  - No global `Npgsql.EnableLegacyTimestampBehavior` switch, no pgvector, and no interceptors: audit and soft delete are Unit of Work steps (ticket #11), and the Outbox is written in the Unit of Work's transaction by `PouryaKit.Messaging.Wolverine.EFCore` (ticket #15).
   - The connection string is named, `Name=ConnectionStrings:<connectionName>`, and resolved from the Host's configuration by EF Core, instead of being passed in as a string.
   - The migrations history table is put in the Module's schema, and the DbContext base takes its default schema from it, so one `schema` argument sets both. The migrations assembly is EF Core's default, the DbContext's own.
   - snake_case names through `EFCore.NamingConventions`, set here rather than in a shared options helper.
