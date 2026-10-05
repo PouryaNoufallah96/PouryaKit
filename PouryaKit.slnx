@@ -9,6 +9,7 @@
     <Project Path="src/PouryaKit.Persistence.Postgres/PouryaKit.Persistence.Postgres.csproj" />
     <Project Path="src/PouryaKit.Testing/PouryaKit.Testing.csproj" />
     <Project Path="src/PouryaKit.Validation/PouryaKit.Validation.csproj" />
+    <Project Path="src/PouryaKit.Web/PouryaKit.Web.csproj" />
   </Folder>
   <Folder Name="/samples/" />
   <Folder Name="/samples/ModularMonolith/">
