@@ -43,7 +43,7 @@ Not test-first. Implement, then write focused tests for behaviour that matters; 
 1. Implement (Opus).
 2. Focused tests.
 3. Review, sized to the ticket. A ticket that claims a runtime guarantee or changes a public API of the Kit gets two independent reviews in parallel: a Fable subagent and Codex (GPT-6 Astra, high). Any other ticket gets one `kit-reviewer`.
-4. One fix round for the accepted findings, then a re-score of those findings only. Run a new full review only after a high finding was fixed. For any medium or low finding still open, record a disposition and move on.
+4. One fix round for the accepted findings, then a re-score of those findings only. Run a new full review only after a high finding was fixed, and at most once: a ticket gets two full reviews, then re-scores only. For any medium or low finding still open, record a disposition and move on.
 5. Runtime proof where the ticket claims a runtime guarantee.
 6. Update docs and C4 diagrams. The ticket's closing comment carries a value, cost and impact paragraph (the `archify-review` lens); `/archify-review` itself runs once per wave, at close-out.
 7. Update the Kit's own AI skill, rules and agent docs to match the change.

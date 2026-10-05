@@ -89,7 +89,7 @@ python3 .agents/skills/claudex-loop/scripts/runner.py inspect --host codex --bui
 
 **Step 4: one fix round, then a re-score.** Give the accepted findings to `kit-implementer` as a new brief. Then have `kit-reviewer` re-score those findings from fresh evidence; that is the default and it ends the loop. Record a disposition for any medium or low finding still open.
 
-Only after a high finding was fixed and committed, run `/kit-review` again with the same `base` and `ticket`, and `previous` set to the earlier result file:
+Only after a high finding was fixed and committed, and only once per ticket, run `/kit-review` again with the same `base` and `ticket`, and `previous` set to the earlier result file:
 
 ```text
 Run /kit-review with base <base commit>, ticket 42, previous <earlier result file> and rescore F1,F3

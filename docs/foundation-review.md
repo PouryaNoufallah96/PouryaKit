@@ -658,7 +658,9 @@ No test-first default. Each ticket goes through:
    subagent and Codex (GPT-6 Astra, high), for a ticket that claims a runtime guarantee or changes a
    public API of the kit; one reviewer for any other ticket; none for a clear, small change.
 4. **One fix round, then a re-score** of the accepted findings only. A new full review only after a
-   high finding was fixed; a remaining medium or low finding gets a recorded disposition.
+   high finding was fixed, and at most once: a ticket gets two full reviews, then re-scores only
+   (the cap applied on #11, #15 and #18; agent-setup retro, 2026-10-06). A remaining medium or low
+   finding gets a recorded disposition.
 5. **Runtime proof** where the ticket claims a runtime guarantee (PostgreSQL in Testcontainers).
 6. **Docs** — update documentation and C4 diagrams. The ticket's closing comment carries a value, cost and
    impact paragraph (the `archify-review` lens); `/archify-review` itself runs once per wave, at close-out
