@@ -5,7 +5,8 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 /// <summary>
 /// The table a Module keeps its handlers' Receipts in, in its own schema beside its data, so a Receipt commits on the
 /// Module's transaction. It is not part of the Module's model: a migration creates it with
-/// <see cref="CreateReceiptTable"/>, once, in every Module that declares a Notification Handler.
+/// <see cref="CreateReceiptTable"/>, once, in every Module that declares a Notification Handler or subscribes an
+/// Integration Event Handler.
 /// </summary>
 public static class ReceiptTable
 {

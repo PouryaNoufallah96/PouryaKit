@@ -38,7 +38,7 @@ public static class OperationContextHeaderExtensions
             envelope.Headers.TryGetValue(name, out var value) && value is not null
                 ? value
                 : throw new InvalidOperationException(
-                    $"The message {envelope.Id} has no {name} header, so it carries no Operation Context to continue. Only the Unit of Work's Outbox sends Notifications."
+                    $"The message {envelope.Id} has no {name} header, so it carries no Operation Context to continue. Only the Unit of Work's Outbox sends Notifications and Integration Events."
                 );
 
         var actor = Enum.Parse<ActorKind>(Header(OperationContextHeaders.ActorKind)) switch

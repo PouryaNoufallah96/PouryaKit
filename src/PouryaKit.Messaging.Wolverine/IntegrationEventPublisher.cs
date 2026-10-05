@@ -1,0 +1,44 @@
+using Microsoft.Extensions.DependencyInjection;
+using PouryaKit.Cqrs;
+using PouryaKit.Domain;
+
+namespace PouryaKit.Messaging.Wolverine;
+
+// Publishing is allowed only where G.2 puts it, in a Notification Handler's delivery, which always runs in a Unit of
+// Work, and only with the identity of the Domain Event delivered, so no Integration Event gets an identity a redelivery
+// would not repeat.
+internal sealed class IntegrationEventPublisher(Subscriptions subscriptions, Operation operation, IServiceProvider scope)
+    : IIntegrationEventPublisher
+{
+    /// <summary>The Domain Event whose Notification Handler runs in this scope; null in any other scope.</summary>
+    public DomainEvent? Following { get; set; }
+
+    public void Publish<TIntegrationEvent>(Guid domainEventId, TIntegrationEvent integrationEvent)
+        where TIntegrationEvent : class
+    {
+        ArgumentNullException.ThrowIfNull(integrationEvent);
+        var type = integrationEvent.GetType();
+        if (Following is not { } domainEvent)
+        {
+            throw new InvalidOperationException(
+                $"{type.Name} was published outside a Notification Handler's delivery. An Integration Event is published by a Notification Handler, so it is written to the Outbox with that delivery's commit."
+            );
+        }
+
+        if (domainEventId != domainEvent.Id)
+        {
+            throw new InvalidOperationException(
+                $"{type.Name} was published with the identity {domainEventId}, but it follows from the {domainEvent.GetType().Name} {domainEvent.Id} being delivered. Publish it with the Domain Event's Id."
+            );
+        }
+
+        if (!subscriptions.Publications.TryGetValue(type, out var publication) || publication.Module != operation.Module)
+        {
+            throw new InvalidOperationException(
+                $"{operation.Module?.Name ?? "The application"} does not declare that it publishes {type.FullName}. Declare it, with its wire name, in the Composition Root with Publish<{type.Name}>(wireName, module)."
+            );
+        }
+
+        scope.GetRequiredService<IIntegrationEventOutbox>().Add(domainEventId, integrationEvent);
+    }
+}
