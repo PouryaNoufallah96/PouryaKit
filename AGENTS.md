@@ -1,6 +1,6 @@
 # PouryaKit
 
-A reusable .NET 10 foundation for modular monoliths built from vertical slices. Status: Wave 1 in progress; `PouryaKit.Domain` (domain primitives), `PouryaKit.Cqrs` and `PouryaKit.Validation` (dispatcher, pipeline and validation), `PouryaKit.Modularity`, `PouryaKit.Persistence`, `PouryaKit.Persistence.EFCore` and `PouryaKit.Persistence.Postgres` (Modules, Gateways, the generic repository, named specifications and aggregate-specific repositories, and the Unit of Work on PostgreSQL with its Domain Event Handlers) and `PouryaKit.Testing` (the hosted application against PostgreSQL) are usable, and no other Capability is yet.
+A reusable .NET 10 foundation for modular monoliths built from vertical slices. Status: Wave 1 in progress; `PouryaKit.Domain` (domain primitives), `PouryaKit.Cqrs` and `PouryaKit.Validation` (dispatcher, pipeline and validation), `PouryaKit.Modularity`, `PouryaKit.Persistence`, `PouryaKit.Persistence.EFCore` and `PouryaKit.Persistence.Postgres` (Modules, Gateways with the Operation Context, the generic repository, named specifications and aggregate-specific repositories, and the Unit of Work on PostgreSQL with its Domain Event Handlers), `PouryaKit.Persistence.Dapper` (Dapper reads) and `PouryaKit.Testing` (the hosted application against PostgreSQL) are usable, and no other Capability is yet.
 
 ## Read first
 
@@ -86,4 +86,4 @@ Single-context: `GLOSSARY.md` at the root, decisions in `docs/adr/`. See `docs/a
 
 ### The Kit's own skill
 
-`.agents/skills/pourya-kit/` teaches developers and agents to use each Capability. Workflow step 7 fills the section of the Capability a ticket delivers.
+`.agents/skills/pourya-kit/` teaches developers and agents to use each Capability. `SKILL.md` routes to one file per Capability under `references/`; workflow step 7 writes or updates the reference file of the Capability a ticket delivers and its row in `SKILL.md`.

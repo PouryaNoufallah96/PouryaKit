@@ -10,13 +10,14 @@ C4Container
 
     System_Boundary(kit, "PouryaKit") {
         Container(domain, "PouryaKit.Domain", ".NET 10 library, no dependencies", "Result and Error, typed IDs, entities, value objects, aggregates, Domain Events, business rules, the Domain clock")
-        Container(cqrs, "PouryaKit.Cqrs", ".NET 10 library, DI and logging abstractions", "Commands, queries, handlers, the dispatcher and its fixed pipeline, the Operation, IUnitOfWork, the authorization hook")
+        Container(cqrs, "PouryaKit.Cqrs", ".NET 10 library, DI and logging abstractions", "Commands, queries, handlers, the dispatcher and its fixed pipeline, the Operation and its Operation Context, IUnitOfWork, the authorization hook")
         Container(validation, "PouryaKit.Validation", ".NET 10 library, FluentValidation", "The pipeline's validation step: every validator failure as one validation Result")
-        Container(modularity, "PouryaKit.Modularity", ".NET 10 library, Hosting abstractions", "The Composition Root, the Gateway, one tagged scope per Operation, each Module's own Unit of Work")
-        Container(persistence, "PouryaKit.Persistence", ".NET 10 library, Ardalis.Specification", "The generic repository and its specifications")
-        Container(efcore, "PouryaKit.Persistence.EFCore", ".NET 10 library, EF Core Relational", "PouryaKitDbContext and its conventions, the EF Core Unit of Work, the repository over it")
+        Container(modularity, "PouryaKit.Modularity", ".NET 10 library, Hosting abstractions, DI", "The Composition Root, the Gateway, one scope per Operation begun with its context and Module, each Module's own Unit of Work, container validation")
+        Container(persistence, "PouryaKit.Persistence", ".NET 10 library, Ardalis.Specification", "The generic repository and its specifications, the Unit of Work connection for plain-SQL writes")
+        Container(efcore, "PouryaKit.Persistence.EFCore", ".NET 10 library, EF Core Relational", "PouryaKitDbContext and its conventions, the EF Core Unit of Work, the repository and the Unit of Work connection over it")
         Container(postgres, "PouryaKit.Persistence.Postgres", ".NET 10 library, Npgsql EF provider", "A Module's DbContext in PostgreSQL: its own schema and migrations history, snake_case names")
-        Container(testing, "PouryaKit.Testing", ".NET 10 library, Testcontainers, Respawn, xUnit v3", "PostgreSQL in a container, the hosted application, data reset between tests, the test clock")
+        Container(dapper, "PouryaKit.Persistence.Dapper", ".NET 10 library, Dapper, Npgsql", "Dapper reads on the Host's pooled PostgreSQL connection, typed IDs as Dapper parameters and results")
+        Container(testing, "PouryaKit.Testing", ".NET 10 library, Testcontainers, Respawn, xUnit v3", "PostgreSQL in a container, the hosted application, data reset between tests, Gateway calls as the test Actor, the test clock")
     }
 
     System_Ext(host, "Consuming Host", "A modular monolith whose Modules reference the Kit")
@@ -25,14 +26,16 @@ C4Container
     Rel(host, cqrs, "declares commands, queries and handlers with")
     Rel(host, modularity, "composes Modules and sends Operations through")
     Rel(host, postgres, "stores each Module's data with")
+    Rel(host, dapper, "reads with plain SQL through")
     Rel(host, validation, "registers validators with")
     Rel(host, testing, "is tested with")
     Rel(validation, cqrs, "fills the validation step of")
     Rel(modularity, cqrs, "dispatches each Gateway call through")
     Rel(postgres, efcore, "configures the DbContext and Unit of Work of")
     Rel(efcore, cqrs, "implements IUnitOfWork of")
-    Rel(efcore, persistence, "implements IRepository of")
+    Rel(efcore, persistence, "implements IRepository and IUnitOfWorkConnection of")
     Rel(persistence, domain, "stores aggregates of")
+    Rel(dapper, domain, "maps typed IDs of")
     Rel(testing, modularity, "sends Operations through Gateways of")
     Rel(testing, postgres, "migrates and resets the databases of")
     Rel(cqrs, domain, "returns Results of")
@@ -70,6 +73,7 @@ The execution core every Operation passes through. It references `PouryaKit.Doma
 | Dispatch | `IDispatcher`, `CqrsServiceCollectionExtensions.AddPouryaKitCqrs` |
 | Pipeline seams | `IAuthorizer<TOperation>`, `IValidationStep<TOperation>`, `IUnitOfWork` |
 | Per-Operation state | `Operation` |
+| Operation Context | `OperationContext`, `Actor`, `ActorKind`, `OperationContextServiceProviderExtensions.BeginOperation` |
 
 The pipeline is written out in the dispatcher and never registered: logging, the authorization hook, validation, then the handler, inside the Unit of Work for the outermost command. Failure tracking wraps all of it: a command that fails anywhere, by Result or by exception, marks the Operation rollback-only even when the handler that sent it ignores the outcome. A failed query marks nothing. Sending a command from a query handler, or from an authorizer or validator at any nesting depth, throws, as does any command sent while no Unit of Work is active; authorizers and validators may run queries. An exception is logged once, at Error level, by the pipeline where it began.
 
@@ -79,7 +83,9 @@ Seams later packages build on:
 
 - **Unit of Work (#8).** `IUnitOfWork.RunAsync` is called once per Operation, for the outermost command only; a nested command runs inside that call and so joins it. An implementation commits only when the command's Result is a success and `Operation.IsRollbackOnly` is false, checked again after every step that can run nested commands, rolls back otherwise, and returns the command's Result after a commit or a failed Result after a rollback. The dispatcher throws `InvalidOperationException` for any other success, and for a success returned while the Operation is rollback-only, because that Unit of Work may already have committed. The dispatcher resolves it only when a command runs, so a query-only service registers none.
 - **Domain Event drain (#10, #15).** `DomainEventDrain` is step 2 of the commit sequence of [plan section C](../foundation-review.md#c-package-structure). It is scoped and registered by `AddPouryaKitCqrs`; an `IUnitOfWork` calls `RunAsync` once, after the outermost command succeeded and before it saves, passing the aggregates it tracks, and Feature code never calls it. Each round takes and clears every listed aggregate's Domain Events and runs the handlers of each one's exact type, one at a time, in the ordinal order of their full type names. Rounds repeat until no Domain Event remains, at most `DomainEventDrain.MaxDepth`; more throws `InvalidOperationException`. A failed handler Result marks the Operation rollback-only with its Errors and stops the drain, so the caller checks `IsRollbackOnly` again before it saves. `RunAsync` returns the Domain Events it handled, in the order handled: the EF Core Unit of Work discards them today, and the Outbox write (#15) is meant to store them as Notifications.
-- **Operation state (#13).** `Operation` is scoped: one per scope, so one per Operation, and a second outermost command in a scope throws. `IsRollbackOnly` and `RollbackErrors` are read-only outside the package; a failed command or a failed Domain Event Handler sets them, the first failure winning. The Operation Context (#13) is meant to hang off this type rather than replace it.
+- **Operation state.** `Operation` is scoped: one per scope, so one per Operation, and a second outermost command in a scope throws. `IsRollbackOnly` and `RollbackErrors` are read-only outside the package; a failed command or a failed Domain Event Handler sets them, the first failure winning. `Operation.MayChangeState` is false while a query, an authorizer or a validator runs at any depth, and true in a command's handler or a Domain Event Handler; a write seam outside the package checks it before it hands out a connection (see `IUnitOfWorkConnection` below).
+- **Operation Context (#13, ADR 0007).** `OperationContext` is an immutable record of the `Actor` (`Actor.Person` or `Actor.System`, with no anonymous or default one), the tenant, the correlation, the causation and its own `OperationId`, a new version 7 Guid for each context. `Continue()` gives the context of an Operation this one causes: the same Actor, tenant and correlation, this `OperationId` as its causation, a new `OperationId`. A continuation is trusted (G.6): the Kit adds no authorization of its own for it, while an `IAuthorizer` registered for the operation it runs still runs, with the original Actor, and can recognise a continuation by its `CausationId`. Whoever opens an Operation's scope begins it once with `IServiceProvider.BeginOperation(context, module)`, which sets the context and `Operation.Module` on the scope's `Operation`; beginning it twice throws. `AddPouryaKitCqrs` registers `OperationContext` as a scoped service read from the scope's `Operation`, so a handler, an authorizer or a validator injects it; resolving it in a scope nobody began throws. The dispatcher itself does not require a context. Nothing in the Kit reads an ambient request.
+- **The Operation's Module.** `Operation.Module`, a `Type`, is the Module the scope's opener named, null in an application without Modules. It belongs to the scope rather than to the context, because work an Operation causes may run in another Module. `PouryaKit.Modularity` routes the Unit of Work by it, and delivery steps (#15, #16) will begin their scopes the same way without referencing Modularity.
 - **Outcome after a rollback (#14).** When the outermost handler succeeds but the Operation is rollback-only, the dispatcher returns a failure carrying `RollbackErrors`, the Errors of the first failed nested command, so the transport maps the real reason. A nested command that threw yields one `Operation.CommandThrew` Error of kind unexpected, with no exception text.
 - **Validation step.** `IValidationStep<TOperation>` is resolved per operation type; when nothing registers it, the step does nothing.
 - **Clock (ADR 0005).** `AddPouryaKitCqrs` registers `TimeProvider.System` unless a `TimeProvider` is already registered, and the dispatcher binds the container's `TimeProvider` as the `DomainClock` around each Operation. A Host or a test changes the time Operations see by registering its own.
@@ -97,7 +103,7 @@ FluentValidation behind the pipeline's validation step. It references `PouryaKit
 
 ## PouryaKit.Modularity
 
-Modules in one Host and one container. It references `PouryaKit.Cqrs` and `Microsoft.Extensions.Hosting.Abstractions` only.
+Modules in one Host and one container. It references `PouryaKit.Cqrs`, `Microsoft.Extensions.Hosting.Abstractions` and `Microsoft.Extensions.DependencyInjection`, the last for the service provider factory that validates the container (owner, ticket #13; see [plan section C](../foundation-review.md#allowed-references)).
 
 | Concern | Types |
 |---|---|
@@ -105,12 +111,15 @@ Modules in one Host and one container. It references `PouryaKit.Cqrs` and `Micro
 | Host composition | `ModularityHostApplicationBuilderExtensions.AddPouryaKitModules`, `ModulesBuilder` |
 | Gateway | `IGatewayProcessor<TModule>` |
 
-`AddPouryaKitModules` runs each Module's `Configure` once, on a `ModuleBuilder` for that Module, and registers its Gateway as a singleton. Each Gateway call opens a new scope of the Host container, tags it with the Module, sends the command or query through `IDispatcher`, and disposes the scope when the call returns, so one call is one Operation.
+`AddPouryaKitModules` runs each Module's `Configure` once, on a `ModuleBuilder` for that Module, and registers its Gateway as a singleton. Each Gateway call takes a required `OperationContext`, checks that the Module owns the command or query, opens a new scope of the Host container, begins the scope's Operation with that context and the Module (`BeginOperation`), sends the command or query through `IDispatcher`, and disposes the scope when the call returns, so one call is one Operation. A null context throws `ArgumentNullException`; the Gateway never supplies a default Actor.
 
 Seams later packages build on:
 
-- **Each Module's Unit of Work.** `ModuleBuilder` is an `IServiceCollection` over the Host's container. It passes every registration through unchanged except an unkeyed `IUnitOfWork`, which it keys by the Module type, so a persistence package registers its Unit of Work as it would in a single-Module application. `AddPouryaKitModules` then adds the one unkeyed `IUnitOfWork`, which resolves the keyed one of the Module the scope is tagged with, and throws in a scope no Gateway opened or for a Module that registers none.
-- **Module tag (#13).** The internal scoped `ModuleTag` names the Module of the current scope. The Operation Context, startup validation and synchronous questions between Modules (#13) are not built yet.
+- **Each Module's Unit of Work.** `ModuleBuilder` is an `IServiceCollection` over the Host's container. It passes every registration through unchanged except an unkeyed `IUnitOfWork`, which it keys by the Module type, so a persistence package registers its Unit of Work as it would in a single-Module application. `AddPouryaKitModules` then adds the one unkeyed `IUnitOfWork`, which resolves the keyed one of the scope's `Operation.Module`, and throws in a scope whose Operation names no Module or for a Module that registers none.
+- **Ownership.** A command or query belongs to the Module whose `ModuleBuilder` registers its handler; the internal `HostModules`, kept in the Host's service collection so every `AddPouryaKitModules` call shares it, records each owner. A Gateway refuses, before it opens a scope, a command or query another Module owns, naming both Modules, and one no Module handles. `ModuleBuilder` reports every registration, replacement and removal, so a second Module that registers or removes the handler of an operation another Module owns fails composition, naming both; the container would otherwise resolve the last handler registered and run it in the wrong Unit of Work. A Module added twice, in one call or across calls, throws naming it.
+- **Container validation.** `AddPouryaKitModules` sets a `DefaultServiceProviderFactory` with `ValidateOnBuild` and `ValidateScopes`, so in every environment `Build()` throws when a registration cannot be constructed or a singleton depends on a scoped service. A Host that later calls `ConfigureContainer` with another factory replaces it, and the validation with it.
+- **Synchronous questions between Modules (G.5, ADR 0007).** The owning Module publishes an interface in its Contracts project and registers its implementation scoped, so it is resolved in the asking Operation's scope, receives the asking `OperationContext` by injection, and sends a query through its own Module's Gateway with `Continue()`. In the Proving Sample, `CatalogProducts` answers `ICatalogProducts` from `Catalog.Contracts` this way.
+- **Without Modularity.** An application of one Module registers Cqrs, Validation and its database package on its own services, opens a scope per Operation and calls `BeginOperation(context)` with no Module; its one Unit of Work is unkeyed and nothing routes.
 
 ## PouryaKit.Persistence
 
@@ -119,8 +128,11 @@ The write-side data access contracts, with no storage technology (G.4). It refer
 | Concern | Types |
 |---|---|
 | Repository | `IRepository<TAggregate, TId>` |
+| Plain-SQL writes | `IUnitOfWorkConnection` |
 
-The repository adds, removes and finds by ID, and finds, lists, checks and counts by an Ardalis `ISpecification<TAggregate>`. Nothing on it saves; reads for display are meant to go through Dapper (#9). It stays this small: a Module names its specifications beside their Business Area, and a Business Area that needs a query the contract cannot express declares an aggregate-specific repository, an interface deriving from `IRepository<TAggregate, TId>` with only its extra members, implemented over `EfRepository<TAggregate, TId>` (below).
+The repository adds, removes and finds by ID, and finds, lists, checks and counts by an Ardalis `ISpecification<TAggregate>`. Nothing on it saves; reads for display go through Dapper (`PouryaKit.Persistence.Dapper`, below). It stays this small: a Module names its specifications beside their Business Area, and a Business Area that needs a query the contract cannot express declares an aggregate-specific repository, an interface deriving from `IRepository<TAggregate, TId>` with only its extra members, implemented over `EfRepository<TAggregate, TId>` (below).
+
+`IUnitOfWorkConnection.Join()` hands out the connection and transaction of the Operation's active Unit of Work, for a Module-internal write with plain SQL, such as Dapper, to a table no aggregate maps (a projection or read model), so that write commits or rolls back with the Operation. The caller passes the transaction to every statement and never disposes, commits or rolls back either. It is a contract here, beside the repository, so a Module's plain-SQL write depends on no storage technology; `PouryaKit.Persistence.EFCore` implements it.
 
 ## PouryaKit.Persistence.EFCore
 
@@ -132,13 +144,14 @@ EF Core behind the Unit of Work and the repository. It references `PouryaKit.Cqr
 | Repository | `EfRepository<TAggregate, TId>` |
 | Registration | `EfCoreServiceCollectionExtensions.AddPouryaKitEfCore<TDbContext>` |
 
-`PouryaKitDbContext` applies the Kit's conventions once: every typed ID in the DbContext's assembly is stored as its value through `TypedId.GetValueType` and `TypedId.From`, Domain Events are never mapped, every `IEntityTypeConfiguration<T>` in the assembly is applied, and the default schema is the schema of the migrations history table. A typed-ID key is never made database-generated by convention; a mapping marks a numeric one with `ValueGeneratedOnAdd()`. `AddPouryaKitEfCore<TDbContext>`, called by a database package, adds the DbContext's Unit of Work, not tried, so on a Module's builder it becomes that Module's own, and the generic repository.
+`PouryaKitDbContext` applies the Kit's conventions once: every typed ID in the DbContext's assembly is stored as its value through `TypedId.GetValueType` and `TypedId.From`, Domain Events are never mapped, every `IEntityTypeConfiguration<T>` in the assembly is applied, and the default schema is the schema of the migrations history table. A typed-ID key is never made database-generated by convention; a mapping marks a numeric one with `ValueGeneratedOnAdd()`. `AddPouryaKitEfCore<TDbContext>`, called by a database package, adds the DbContext's Unit of Work, not tried, so on a Module's builder it becomes that Module's own, the generic repository, and the `IUnitOfWorkConnection` over the scope's Unit of Work.
 
 Seams later packages build on:
 
 - **The Unit of Work (ADR 0003, ADR 0004).** It begins a transaction and runs the command. When the Result is a success and the Operation is not rollback-only, it runs the Domain Event drain over every aggregate its DbContext's change tracker holds, checks the Operation again, and only then saves and commits; otherwise it rolls back and returns the command's failure or `RollbackErrors`. An exception, from the command, a Domain Event Handler, the save or the commit, rolls back by disposing the transaction. Nothing retries: a retry needs a new scope. Audit, soft delete and version bumps (#11) and the Outbox write (Messaging) go between the drain and the save, in the order of [plan section C](../foundation-review.md#c-package-structure).
 - **The repository's DbContext.** The repository tracks changes in the DbContext of the scope's Unit of Work, so what a handler adds is what that Unit of Work saves. Specifications are evaluated with `SpecificationEvaluator.Default` only, because Ardalis's own `RepositoryBase` saves.
 - **Aggregate-specific repositories (#12).** `EfRepository<TAggregate, TId>` is public and unsealed. A Module's specific repository derives from it, passing the scope's `IUnitOfWork` to its constructor, inherits every generic member, and builds its extra members on them and on the one protected member, `ListAsync<TResult>(ISpecification<TAggregate, TResult>)`, which applies a whole projection specification and returns a loaded list. It gets no `IQueryable`, DbSet or DbContext, because each would let it save or run a bulk update or delete around the Unit of Work's sequence. The Module registers it on its own builder; `ModuleBuilder` re-keys only `IUnitOfWork`, so it shares the scope's DbContext with the generic repository.
+- **The Unit of Work connection (#9).** The internal `EfUnitOfWorkConnection` takes the scope's `IUnitOfWork`, so in a Host of Modules the one the scope's `Operation.Module` routes to, and returns its DbContext's connection and current transaction. It throws where `Operation.MayChangeState` is false: a query nested in a command, or a nested command's authorizer or validator, runs inside the active transaction, yet a failed query marks nothing rollback-only and a check runs before its command may proceed, so the transaction alone cannot keep such a write out of the Operation's outcome. It throws too when no transaction is active, and for a Unit of Work that is not the EF Core one. A plain-SQL statement runs when it is called, so it precedes the Unit of Work's save of what the repositories track.
 
 ## PouryaKit.Persistence.Postgres
 
@@ -150,6 +163,23 @@ PostgreSQL for a Module's DbContext. It references `PouryaKit.Persistence.EFCore
 
 `UsePostgres<TDbContext>(connectionName, schema)` registers the DbContext on the connection string named in the Host's configuration, puts its migrations history table in the Module's schema (which `PouryaKitDbContext` then makes the default schema), names tables and columns in snake_case, and makes the DbContext the Unit of Work through `AddPouryaKitEfCore`. It configures no retrying execution strategy, because the Unit of Work owns its transaction. Migrations are created with `dotnet-ef` against the Host; the Host applies none at startup.
 
+## PouryaKit.Persistence.Dapper
+
+Dapper reads in plain SQL (G.4). It references `PouryaKit.Domain`, `Dapper`, `Npgsql`, `Microsoft.Extensions.Configuration.Abstractions` and `Microsoft.Extensions.DependencyInjection.Abstractions`, and no EF Core package.
+
+| Concern | Types |
+|---|---|
+| Read connections | `IReadConnectionFactory` |
+| Registration | `DapperServiceCollectionExtensions.AddPouryaKitDapper` |
+
+`AddPouryaKitDapper(connectionName, typedIdAssemblies)`, called in each Composition Root that reads with Dapper, registers one `IReadConnectionFactory` per Host over the connection string named in the Host's configuration, and a Dapper type handler for every typed ID in the assemblies given. `IReadConnectionFactory.OpenAsync` leases a new open connection from the Host's one Npgsql data source; the caller disposes it, which returns it to the pool. A read connection never joins the Unit of Work. A plain-SQL write that must commit with the Operation uses `IUnitOfWorkConnection` from `PouryaKit.Persistence` instead.
+
+Seams later packages build on:
+
+- **One read connection per Host.** Every Module that reads with Dapper names the same connection; a second name throws at composition. Disposing the Host disposes the pool. `OpenAsync` checks its cancellation token itself before leasing, because Npgsql hands out an idle pooled connection without looking at it.
+- **Typed-ID handlers.** Dapper's type handlers are process-wide. A handler depends only on its typed ID's type and holds no state, so a second Module or a second Host in the process registering the same typed ID replaces it with one that behaves identically; Dapper serialises registration. A handler sends a typed ID as its value and converts a column of another type, such as an integer column read into a long ID, to the ID's value type.
+- **No model filters.** Dapper runs the SQL it is given; no EF Core query filter, such as the one that leaves soft-deleted rows out (#11), applies to it, so a read states every predicate it needs in its SQL.
+
 ## PouryaKit.Testing
 
 Tests against the hosted application and a real database. It references `PouryaKit.Modularity`, `PouryaKit.Persistence.Postgres`, `Testcontainers.PostgreSql`, `Respawn`, `xunit.v3.extensibility.core` and `Microsoft.Extensions.TimeProvider.Testing`.
@@ -157,6 +187,7 @@ Tests against the hosted application and a real database. It references `PouryaK
 | Concern | Types |
 |---|---|
 | Hosted application | `HostFixture`, `HostTest<TFixture>` |
+| Gateway calls | `GatewayTestExtensions`, `GatewayTestExtensions.TestActor` |
 | Time | `TestClock` |
 
-`HostFixture` runs PostgreSQL in a container and hosts on it the application the test project builds in `CreateHost`, with the migrations of every DbContext registered with `AddDbContext` applied; `Gateway<TModule>()` sends Operations as the application does. `HostTest<TFixture>` resets the data before each test with Respawn, keeping each schema's migrations history; tests sharing a fixture do not run in parallel. `TestClock` binds a `FakeTimeProvider` as the `DomainClock` for code a test runs directly, inside the test method (ADR 0005). Delivery assertions are #15.
+`HostFixture` runs PostgreSQL in a container and hosts on it the application the test project builds in `CreateHost`, with the migrations of every DbContext registered with `AddDbContext` applied; `Gateway<TModule>()` sends Operations as the application does. `GatewayTestExtensions` adds `SendAsync` and `QueryAsync` overloads without an `OperationContext` to every Gateway, as C# 14 extension members: each call runs as a new Operation of `TestActor`, the named system Actor `PouryaKit.Testing`. Application code never references this package, so it always names its context (ADR 0007); a test that needs a particular Actor, tenant or correlation passes its own context to the Gateway's own methods. `HostTest<TFixture>` resets the data before each test with Respawn, keeping each schema's migrations history; tests sharing a fixture do not run in parallel. `TestClock` binds a `FakeTimeProvider` as the `DomainClock` for code a test runs directly, inside the test method (ADR 0005). Delivery assertions are #15.
