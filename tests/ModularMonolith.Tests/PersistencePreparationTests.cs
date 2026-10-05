@@ -265,6 +265,57 @@ public sealed class PersistencePreparationTests(AppFixture app) : HostTest<AppFi
             );
     }
 
+    [Fact]
+    public async Task Removing_an_aggregate_resolves_its_cascades_before_the_save_so_the_save_changes_nothing_further()
+    {
+        var stub = Fixture.Gateway<StubModule>();
+        var tray = Guid.CreateVersion7();
+        await stub.SendAsync(new CreateTrayCommand(tray), new OperationContext(Actor.Person("alice")), TestContext.Current.CancellationToken);
+
+        var removed = await stub.SendAsync(
+            new EditTrayCommand(tray, TrayEdit.Remove),
+            new OperationContext(Actor.Person("bob")),
+            TestContext.Current.CancellationToken
+        );
+
+        // The card, on an optional key, is kept with its key cleared, and stamped as changed by the removal.
+        Assert.Equal([[DBNull.Value, "alice", "bob"]], await Fixture.RowsAsync("select tray_id, created_by, last_changed_by from stub.cards"));
+        // The pin, on a required key, cannot outlive the tray: it is deleted with it, though it is soft-deletable.
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.pins"));
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.trays"));
+        Assert.Empty(removed.Value.Entries);
+    }
+
+    [Fact]
+    public async Task A_soft_deletable_child_removed_from_its_aggregate_is_kept_marked_deleted_before_the_save()
+    {
+        var stub = Fixture.Gateway<StubModule>();
+        var tray = Guid.CreateVersion7();
+        await stub.SendAsync(new CreateTrayCommand(tray), TestContext.Current.CancellationToken);
+
+        var pulled = await stub.SendAsync(new EditTrayCommand(tray, TrayEdit.PullPin), TestContext.Current.CancellationToken);
+
+        // An orphan is deleted as soon as changes are detected, so the prepare step sees it and keeps it.
+        Assert.Equal([[tray, true]], await Fixture.RowsAsync("select tray_id, is_deleted from stub.pins"));
+        Assert.Equal(2L, await Fixture.ScalarAsync<long>("select version from stub.trays"));
+        Assert.Empty(pulled.Value.Entries);
+    }
+
+    [Fact]
+    public async Task Children_of_two_aggregates_derived_from_one_base_change_in_one_operation()
+    {
+        var stub = Fixture.Gateway<StubModule>();
+        Guid pencilCase = Guid.CreateVersion7(), bookCase = Guid.CreateVersion7();
+        await stub.SendAsync(new CreateCasesCommand(pencilCase, bookCase), TestContext.Current.CancellationToken);
+
+        var touched = await stub.SendAsync(new TouchCasesCommand(pencilCase, bookCase), TestContext.Current.CancellationToken);
+
+        Assert.True(touched.IsSuccess);
+        Assert.Equal([[2L], [2L]], await Fixture.RowsAsync("select version from stub.cases"));
+        Assert.Equal("sharp", await Fixture.ScalarAsync<string>("select colour from stub.pencils"));
+        Assert.Equal("final", await Fixture.ScalarAsync<string>("select title from stub.books"));
+    }
+
     private Task<long> VersionAsync() => Fixture.ScalarAsync<long>("select version from stub.folders");
 
     private async Task<object[]> AuditAsync() =>

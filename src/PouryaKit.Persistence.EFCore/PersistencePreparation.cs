@@ -8,8 +8,9 @@ using PouryaKit.Domain;
 namespace PouryaKit.Persistence.EFCore;
 
 // Step 3 of the Unit of Work's commit sequence (ADR 0003), run once per Operation after the Domain Event drain and
-// before the save, so nothing changes these fields afterwards: removals of soft-deletable entities become a mark,
-// every changed aggregate's Version advances by exactly one, and auditable entities are stamped.
+// before the save, so nothing changes these fields afterwards: removals of soft-deletable entities become a mark, the
+// cascades of the removals that stay deletions are resolved, every changed aggregate's Version advances by exactly
+// one, and auditable entities are stamped. The save then has nothing left to change.
 internal static class PersistencePreparation
 {
     public static void Run(DbContext dbContext, Func<OperationContext> context)
@@ -21,6 +22,8 @@ internal static class PersistencePreparation
         (DateTimeOffset At, string By)? stamp = null;
         (DateTimeOffset At, string By) Stamp() => stamp ??= (DomainClock.Current.GetUtcNow(), context().Actor.Id);
 
+        // The removals the Operation made, orphans included: PouryaKitDbContext deletes an orphan as soon as changes are
+        // detected, which listing the entries above did. A soft-deletable one is kept, so nothing cascades from it.
         foreach (var entry in entries.Where(entry => entry is { State: EntityState.Deleted, Entity: ISoftDeletable }))
         {
             var (at, by) = Stamp();
@@ -29,6 +32,11 @@ internal static class PersistencePreparation
             entry.Property(nameof(ISoftDeletable.DeletedAt)).CurrentValue = at;
             entry.Property(nameof(ISoftDeletable.DeletedBy)).CurrentValue = by;
         }
+
+        // A removal that stays a deletion cascades now, not inside the save: a loaded dependent on a required key is
+        // deleted with its principal, soft-deletable or not, since its row cannot outlive it; one on an optional key has
+        // its key cleared. Both are then attributed and stamped below like any other change.
+        dbContext.ChangeTracker.CascadeChanges();
 
         // Read before any Version moves, so the bump below is the only change it can see.
         var holders = new Holders(entries);
@@ -115,8 +123,9 @@ internal static class PersistencePreparation
         {
             if (!_byKey.TryGetValue(foreignKey.PrincipalKey, out var byValues))
             {
+                // Every entry that has the key, whatever its derived type: keys to sibling derived types share it.
                 byValues = new(Comparer);
-                foreach (var entry in entries.Where(entry => foreignKey.PrincipalEntityType.IsAssignableFrom(entry.Metadata)))
+                foreach (var entry in entries.Where(entry => foreignKey.PrincipalKey.DeclaringEntityType.IsAssignableFrom(entry.Metadata)))
                 {
                     byValues.TryAdd(
                         [.. foreignKey.PrincipalKey.Properties.Select(property => entry.Property(property.Name).CurrentValue)],

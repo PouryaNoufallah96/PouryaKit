@@ -23,6 +23,94 @@ namespace ModularMonolith.Tests.Stub.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Book", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BookCaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("book_case_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id")
+                        .HasName("pk_books");
+
+                    b.HasIndex("BookCaseId")
+                        .HasDatabaseName("ix_books_book_case_id");
+
+                    b.ToTable("books", "stub");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Card", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("LastChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_changed_at");
+
+                    b.Property<string>("LastChangedBy")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("last_changed_by");
+
+                    b.Property<Guid?>("TrayId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tray_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_cards");
+
+                    b.HasIndex("TrayId")
+                        .HasDatabaseName("ix_cards_tray_id");
+
+                    b.ToTable("cards", "stub");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Case", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(13)
+                        .HasColumnType("character varying(13)")
+                        .HasColumnName("discriminator");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_cases");
+
+                    b.ToTable("cases", "stub");
+
+                    b.HasDiscriminator<string>("Discriminator").HasValue("Case");
+
+                    b.UseTphMappingStrategy();
+                });
+
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Folder", b =>
                 {
                     b.Property<Guid>("Id")
@@ -124,6 +212,79 @@ namespace ModularMonolith.Tests.Stub.Migrations
                     b.ToTable("pages", "stub");
                 });
 
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Pencil", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Colour")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("colour");
+
+                    b.Property<Guid>("PencilCaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("pencil_case_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_pencils");
+
+                    b.HasIndex("PencilCaseId")
+                        .HasDatabaseName("ix_pencils_pencil_case_id");
+
+                    b.ToTable("pencils", "stub");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Pin", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<DateTimeOffset>("LastChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_changed_at");
+
+                    b.Property<string>("LastChangedBy")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("last_changed_by");
+
+                    b.Property<Guid>("TrayId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tray_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_pins");
+
+                    b.HasIndex("TrayId")
+                        .HasDatabaseName("ix_pins_tray_id");
+
+                    b.ToTable("pins", "stub");
+                });
+
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Sticker", b =>
                 {
                     b.Property<Guid>("Id")
@@ -146,6 +307,59 @@ namespace ModularMonolith.Tests.Stub.Migrations
                         .HasDatabaseName("ix_stickers_folder_id");
 
                     b.ToTable("stickers", "stub");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Tray", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_trays");
+
+                    b.ToTable("trays", "stub");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.BookCase", b =>
+                {
+                    b.HasBaseType("ModularMonolith.Tests.Stub.Case");
+
+                    b.ToTable("cases", "stub");
+
+                    b.HasDiscriminator().HasValue("BookCase");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.PencilCase", b =>
+                {
+                    b.HasBaseType("ModularMonolith.Tests.Stub.Case");
+
+                    b.ToTable("cases", "stub");
+
+                    b.HasDiscriminator().HasValue("PencilCase");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Book", b =>
+                {
+                    b.HasOne("ModularMonolith.Tests.Stub.BookCase", null)
+                        .WithMany("Books")
+                        .HasForeignKey("BookCaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_books_case_book_case_id");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Card", b =>
+                {
+                    b.HasOne("ModularMonolith.Tests.Stub.Tray", null)
+                        .WithMany("Cards")
+                        .HasForeignKey("TrayId")
+                        .HasConstraintName("fk_cards_tray_tray_id");
                 });
 
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Folder", b =>
@@ -184,6 +398,26 @@ namespace ModularMonolith.Tests.Stub.Migrations
                         .HasConstraintName("fk_pages_folders_folder_id");
                 });
 
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Pencil", b =>
+                {
+                    b.HasOne("ModularMonolith.Tests.Stub.PencilCase", null)
+                        .WithMany("Pencils")
+                        .HasForeignKey("PencilCaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_pencils_cases_pencil_case_id");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Pin", b =>
+                {
+                    b.HasOne("ModularMonolith.Tests.Stub.Tray", null)
+                        .WithMany("Pins")
+                        .HasForeignKey("TrayId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_pins_tray_tray_id");
+                });
+
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Sticker", b =>
                 {
                     b.HasOne("ModularMonolith.Tests.Stub.Folder", null)
@@ -197,6 +431,23 @@ namespace ModularMonolith.Tests.Stub.Migrations
                     b.Navigation("Pages");
 
                     b.Navigation("Stickers");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Tray", b =>
+                {
+                    b.Navigation("Cards");
+
+                    b.Navigation("Pins");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.BookCase", b =>
+                {
+                    b.Navigation("Books");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.PencilCase", b =>
+                {
+                    b.Navigation("Pencils");
                 });
 #pragma warning restore 612, 618
         }

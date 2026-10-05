@@ -39,7 +39,9 @@ public static class EfCoreServiceCollectionExtensions
         /// Makes a violation of the unique constraint or unique index named <paramref name="constraint"/>, in the tables
         /// of <typeparamref name="TDbContext"/>, fail the Operation with <paramref name="error"/>: the Unit of Work rolls
         /// back and returns it as a failed Result. A Module calls it in its Composition Root, once per constraint; any
-        /// other database error stays an exception. Throws when the constraint is already mapped for that DbContext.
+        /// other database error stays an exception. It covers a constraint the database checks when the row is written;
+        /// a violation of one declared <c>DEFERRABLE INITIALLY DEFERRED</c> surfaces when the transaction commits, as an
+        /// exception. Throws when the constraint is already mapped for that DbContext.
         /// </summary>
         public IServiceCollection MapUniqueConstraint<TDbContext>(string constraint, Error error)
             where TDbContext : PouryaKitDbContext
