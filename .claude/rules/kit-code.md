@@ -23,5 +23,5 @@ paths:
 
 - **Test behaviour that matters:** an invariant, a failure path, an ordering, or a guarantee the ticket states. One test per behaviour; leave out coverage that restates another test or the compiler.
 - **Runtime proof.** A ticket that claims a runtime guarantee is proven against PostgreSQL in Testcontainers (H.5). A Phase is done when its tests pass there, never on compilation alone (section E).
-- **Stack.** xUnit v3, Testcontainers and Respawn, through `PouryaKit.Testing`; one test project per package plus `ArchitectureTests` under `tests/` (section C).
+- **Stack.** xUnit v3, Testcontainers and Respawn, through `PouryaKit.Testing`; one test project per package plus `ArchitectureTests` under `tests/` (section C). Test projects run on Microsoft.Testing.Platform (set in `global.json`) with the `xunit.v3` package only, never the VSTest packages (`Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`); a test project with no test fails the run.
 - **Spikes.** A Spike is deleted once its decision is recorded; one that proves an invariant worth protecting becomes a permanent integration or architecture test (G.10).
