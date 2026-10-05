@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -57,6 +58,32 @@ internal static class Sample
             .Where(assembly => Modules.Any(module => assembly.GetName().Name == $"{module.GetName().Name}.Contracts"))
             .OrderBy(assembly => assembly.GetName().Name, StringComparer.Ordinal),
     ];
+
+    /// <summary>
+    /// The restored project of each application project the Host references, by assembly name, as the Host's own
+    /// restore found it: a reference that no emitted code uses is still in it.
+    /// </summary>
+    private static readonly Dictionary<string, string> ProjectFiles = HostProjectFiles();
+
+    public static RestoredPackage RestoredOf(Assembly assembly) =>
+        RestoredPackage.Of(
+            ProjectFiles.GetValueOrDefault(assembly.GetName().Name!)
+                ?? throw new InvalidOperationException($"{assembly.GetName().Name} is no project the Host restores.")
+        );
+
+    private static Dictionary<string, string> HostProjectFiles()
+    {
+        var host = Path.Combine(Repository.Root, "samples", "ModularMonolith", "src", "ModularMonolith.Host");
+        using var assets = JsonDocument.Parse(File.ReadAllText(Path.Combine(host, "obj", "project.assets.json")));
+        return assets
+            .RootElement.GetProperty("libraries")
+            .EnumerateObject()
+            .Where(library => library.Value.GetProperty("type").GetString() == "project")
+            .ToDictionary(
+                library => library.Name.Split('/')[0],
+                library => Path.GetFullPath(Path.Combine(host, library.Value.GetProperty("path").GetString()!))
+            );
+    }
 
     /// <summary>The Kit's packages, one per folder under <c>src/</c>.</summary>
     public static readonly IReadOnlyList<Assembly> KitPackages =

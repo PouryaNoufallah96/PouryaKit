@@ -17,27 +17,49 @@ public sealed class FeatureCodeTests
     public void No_module_saves_commits_or_touches_its_database_and_only_the_unit_of_work_does()
     {
         Assert.Empty(Sample.Modules.SelectMany(ModuleRules.SavesOrCommits));
-        Assert.Contains(
-            "PouryaKit.Persistence.EFCore.EfUnitOfWork calls DbContext.SaveChangesAsync.",
-            ModuleRules.SavesOrCommits(Kit("PouryaKit.Persistence.EFCore"))
-        );
+        var kitSaves = ModuleRules.SavesOrCommits(Kit("PouryaKit.Persistence.EFCore")).ToList();
+        Assert.Contains("PouryaKit.Persistence.EFCore.EfUnitOfWork calls DbContext.SaveChangesAsync.", kitSaves);
+        Assert.Contains("PouryaKit.Persistence.EFCore.EfUnitOfWork calls IUnitOfWorkOutbox.WriteAsync.", kitSaves);
     }
 
     [Fact]
-    public void A_module_that_saves_commits_or_touches_its_database_is_rejected()
+    public void A_module_that_saves_commits_writes_in_bulk_or_runs_a_kit_step_is_rejected()
     {
         var violations = ModuleRules.SavesOrCommits(OffendingModuleAssembly);
 
         Assert.Equal(
             [
+                "Offending.BulkWritingCommandHandler calls EntityFrameworkQueryableExtensions.ExecuteDelete.",
+                "Offending.BulkWritingCommandHandler calls EntityFrameworkQueryableExtensions.ExecuteUpdateAsync.",
                 "Offending.CommittingCommandHandler calls DbConnection.BeginTransactionAsync.",
                 "Offending.CommittingCommandHandler calls DbTransaction.CommitAsync.",
                 "Offending.CommittingCommandHandler runs the SQL statement \"commit\".",
+                "Offending.CommittingCommandHandler runs the SQL statement \"select 1;\n  END ;\".",
+                "Offending.CommittingCommandHandler runs the SQL statement \"update offending_marks set seen = true; abort work\".",
                 "Offending.ConnectingCommandHandler calls DbContext.get_Database.",
+                "Offending.KitStepCallingCommandHandler calls DomainEventDrain.RunAsync.",
+                "Offending.KitStepCallingCommandHandler calls IIntegrationEventOutbox.Add.",
+                "Offending.KitStepCallingCommandHandler calls IReceipts.RecordAsync.",
+                "Offending.KitStepCallingCommandHandler calls ISnapshotMappers.Map.",
+                "Offending.KitStepCallingCommandHandler calls IUnitOfWorkOutbox.WriteAsync.",
+                "Offending.KitStepCallingCommandHandler calls Operation.OnlyReading.",
+                "Offending.KitStepCallingCommandHandler calls OperationContextServiceProviderExtensions.BeginOperation.",
                 "Offending.SavingCommandHandler calls DbContext.SaveChangesAsync.",
             ],
             violations.Order(StringComparer.Ordinal)
         );
+    }
+
+    [Theory]
+    [InlineData("begin transaction isolation level serializable, read write", true)]
+    [InlineData("insert into marks values (1); COMMIT AND CHAIN;", true)]
+    [InlineData("rollback to savepoint before_marks", true)]
+    [InlineData("prepare transaction 'offending'", true)]
+    [InlineData("do $$ begin perform 1; end $$", false)]
+    [InlineData("select ended_at from marks where committed", false)]
+    public void Transaction_control_is_found_at_any_statement_boundary(string sql, bool isTransactionControl)
+    {
+        Assert.Equal(isTransactionControl, ModuleRules.HoldsTransactionControl(sql));
     }
 
     [Fact]

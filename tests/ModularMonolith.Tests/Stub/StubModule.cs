@@ -6,6 +6,7 @@ using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.Postgres;
+using PouryaKit.Validation;
 using PouryaKit.Web;
 
 namespace ModularMonolith.Tests.Stub;
@@ -19,6 +20,7 @@ public sealed class StubModule : IModuleDefinition
         module.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
         module.AddPouryaKitDapper(connectionName: "app", typeof(StubModule).Assembly);
         module.AddPouryaKitCqrs(typeof(StubModule).Assembly);
+        module.AddPouryaKitValidation(typeof(StubModule).Assembly);
         module.AddPouryaKitNotificationHandlers(typeof(StubModule).Assembly, typeof(StubModule));
         module.Publish<NoteSharedV1>("stub.note-shared.v1", typeof(StubModule));
         module.Publish<NoteCopyRequestedV1>("stub.note-copy-requested.v1", typeof(StubModule));

@@ -4,6 +4,7 @@ using Catalog.Categories.Features.CreateCategory;
 using Catalog.Categories.ValueObjects;
 using Catalog.Products.Features.CreateProduct;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Messaging;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -57,5 +58,52 @@ public sealed class UnitOfWorkTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.Equal(["CategoryId", "Name", "ProductId"], result.Errors.Select(error => error.Target).Order());
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
+    }
+
+    // The outer handler posts a note, whose Notification the commit would store, then ignores its nested command's
+    // failure and returns success: the Operation still fails, and neither note nor Notification is left.
+    [Theory]
+    [InlineData(NestedFailure.Handler, "Note.NestedRefused")]
+    [InlineData(NestedFailure.Validation, "NotEqualValidator")]
+    [InlineData(NestedFailure.Authorization, "Note.NestedForbidden")]
+    public async Task A_nested_command_that_fails_rolls_back_the_operations_data_and_outbox_though_the_outer_handler_ignores_it(
+        NestedFailure failure,
+        string errorCode
+    )
+    {
+        var text = $"note {Guid.CreateVersion7()}";
+
+        var result = await Fixture.AssertNothingSentAsync(
+            () => Fixture.Gateway<StubModule>().SendAsync(new PostNoteThenNestCommand(text, failure), TestContext.Current.CancellationToken),
+            TestContext.Current.CancellationToken
+        );
+
+        Assert.Equal(errorCode, Assert.Single(result.Errors).Code);
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text in ('{text}', 'nested {text}')"));
+    }
+
+    [Fact]
+    public async Task The_same_operation_with_a_nested_command_that_succeeds_commits_both_notes_and_stores_the_notification()
+    {
+        var text = $"note {Guid.CreateVersion7()}";
+
+        var (result, deliveries) = await Fixture.WaitForDeliveriesAsync(
+            () =>
+                Fixture
+                    .Gateway<StubModule>()
+                    .SendAsync(new PostNoteThenNestCommand(text, NestedFailure.None), TestContext.Current.CancellationToken),
+            TestContext.Current.CancellationToken
+        );
+
+        Assert.True(result.IsSuccess);
+        Assert.Contains(
+            new Delivery(
+                MessageNames.SubscriptionNameOf(typeof(RecordPostedNoteNotificationHandler), typeof(NotePostedDomainEvent)),
+                MessageNames.WireNameOf(typeof(NotePostedDomainEvent)),
+                false
+            ),
+            deliveries
+        );
+        Assert.Equal(2L, await Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text in ('{text}', 'nested {text}')"));
     }
 }
