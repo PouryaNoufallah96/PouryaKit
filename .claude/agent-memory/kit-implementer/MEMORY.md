@@ -10,3 +10,4 @@
 - [Wolverine spike gotchas](wolverine-spike-gotchas.md) — Spike S2: codegen needs public types, AddMessageHandler avoids it, EndpointFor writes Outgoing rows, stale-time vs in-memory retry
 - [Spike test project gotchas](spike-test-project-gotchas.md) — no VSTest packages; xunit.v3 4.x parallelization attribute; worktree guard on computed sed/for
 - [Spike fair comparison](spike-fair-comparison.md) — reject an option for its mechanism, not my adapter; test every reaction kind with internal types
+- [Modularity and context facts](modularity-context-facts.md) — #13: validation needs the DI impl package, Gateway signature vs parallel merges, host-wide state in the service collection
