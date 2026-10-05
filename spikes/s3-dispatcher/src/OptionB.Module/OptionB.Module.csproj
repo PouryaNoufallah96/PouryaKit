@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\OptionB.Pipeline\OptionB.Pipeline.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Required by Option B: Mediator's generator runs in the Host and emits code naming every internal
+         message and handler type. Without this the Host fails with CS0122 (Spike S3, experiment 1). -->
+    <InternalsVisibleTo Include="OptionB.Tests" />
+  </ItemGroup>
+</Project>

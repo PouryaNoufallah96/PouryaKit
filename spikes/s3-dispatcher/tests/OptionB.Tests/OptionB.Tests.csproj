@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Mediator.SourceGenerator" Version="3.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+    <PackageReference Include="xunit.v3" Version="4.0.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\OptionB.Module\OptionB.Module.csproj" />
+    <ProjectReference Include="..\..\src\OptionB.SelfGenerated.Alpha\OptionB.SelfGenerated.Alpha.csproj" />
+    <ProjectReference Include="..\..\src\OptionB.SelfGenerated.Beta\OptionB.SelfGenerated.Beta.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,6 @@
+<!-- Stopper: Spike S3 pins package versions inline, not through repository central package management. -->
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Spike.Common/Spike.Common.csproj" />
+    <Project Path="src/OptionA.Dispatcher/OptionA.Dispatcher.csproj" />
+    <Project Path="src/OptionA.Module/OptionA.Module.csproj" />
+    <Project Path="src/OptionB.Pipeline/OptionB.Pipeline.csproj" />
+    <Project Path="src/OptionB.Module/OptionB.Module.csproj" />
+    <Project Path="src/OptionB.SelfGenerated.Alpha/OptionB.SelfGenerated.Alpha.csproj" />
+    <Project Path="src/OptionB.SelfGenerated.Beta/OptionB.SelfGenerated.Beta.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OptionA.Tests/OptionA.Tests.csproj" />
+    <Project Path="tests/OptionB.Tests/OptionB.Tests.csproj" />
+  </Folder>
+</Solution>
