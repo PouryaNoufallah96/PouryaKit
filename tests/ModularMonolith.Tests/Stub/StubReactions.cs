@@ -14,6 +14,7 @@ internal enum Reaction
     Cycle,
     Refuse,
     IgnoreNestedFailure,
+    None,
 }
 
 internal sealed record WriteReactingNoteCommand(Reaction Reaction) : Command;
@@ -29,12 +30,16 @@ internal sealed class WriteReactingNoteCommandHandler(IRepository<Note, NoteId> 
             Reaction.Cycle => new NotePingedDomainEvent(),
             Reaction.Refuse => new NoteRefusedDomainEvent(),
             Reaction.IgnoreNestedFailure => new NoteForwardedDomainEvent(),
+            Reaction.None => new NoteFiledDomainEvent(),
             _ => throw new ArgumentOutOfRangeException(nameof(command)),
         };
         await notes.AddAsync(Note.Write($"{command.Reaction}").Raising(raised), cancellationToken);
         return Result.Success();
     }
 }
+
+// Nothing handles this one.
+internal sealed record NoteFiledDomainEvent : DomainEvent;
 
 // A chain exactly as deep as the drain allows: link n is written in round n and raises link n + 1.
 internal sealed record NoteLinkedDomainEvent(int Link) : DomainEvent;

@@ -18,6 +18,10 @@ Verified in ticket #8 (2026-10-05), EF Core 10.0.12, Npgsql EF 10.0.3, EFCore.Na
 - dotnet-ef 10.0.12: `--namespace` puts the model snapshot in a folder named after the namespace; pass `--output-dir` only. A test-project migration was generated with a temporary `IDesignTimeDbContextFactory` + temporary Design package, both removed after.
 - `dotnet new tool-manifest` on SDK 10.0.401 writes `dotnet-tools.json` at the repo root; move it to `.config/`.
 - `HostFixture` migrates from a scope of the built, not yet started Host, then starts it (review F2): a hosted service (Wolverine, #15) must find its tables at start. The Proving Sample's own packages are recorded in `docs/provenance/ModularMonolith.md`.
+- #12: `EfRepository<,>` is public and unsealed; a specific repository derives from it and builds on `protected Query(spec, evaluateCriteriaOnly)` only (no DbSet/DbContext exposed: `DbSet.Entry(x).Context` reaches SaveChanges). Registered with `module.AddScoped<IProductRepository, ProductRepository>()`; ModuleBuilder re-keys only `IUnitOfWork`, so both repositories share the scope's DbContext.
+- Test technique (one container): a command/handler in the test assembly is registered by `StubModule`'s `AddPouryaKitCqrs` scan yet can be sent through `Gateway<CatalogModule>()` and runs in Catalog's Unit of Work. Used by `Stub/ProductRepositoriesProbe.cs`.
+- After #10 a Product needs an existing Category (`CountProductInCategoryHandler` fails NotFound otherwise): any Catalog test creating products sends `CreateCategoryCommand` first. Parallel tickets that touch the sample model break each other's branches; expect a post-merge repair round.
+- Avoid sample Features premised on duplicate product names: #11 is expected to put a unique constraint on `products.name`. Avoid row locks (`FOR UPDATE`) as an example: a second concurrency mechanism beside versions.
 - `tests/PouryaKit.Cqrs.Tests` holds deliberately invalid operations: never `AddPouryaKitCqrs(thatAssembly)`; register test handlers by hand.
 
 **Why:** each cost a run or a design detour; #9-#16 build on these seams.

@@ -1,4 +1,6 @@
 using Catalog.Infrastructure.Data.Context;
+using Catalog.Products.Data.Repository;
+using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Dapper;
@@ -16,5 +18,6 @@ public sealed class CatalogModule : IModuleDefinition
         module.AddPouryaKitDapper(connectionName: "app", typeof(CatalogModule).Assembly);
         module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);
         module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
+        module.AddScoped<IProductRepository, ProductRepository>();
     }
 }
