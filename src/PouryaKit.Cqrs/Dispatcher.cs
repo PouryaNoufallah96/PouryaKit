@@ -169,22 +169,30 @@ internal sealed partial class Dispatcher(IServiceProvider services, Operation op
         where TCommandOrQuery : notnull
         where TResult : Result
     {
-        foreach (var authorizer in services.GetServices<IAuthorizer<TCommandOrQuery>>())
+        operation.EnterChecks();
+        try
         {
-            var authorized = await authorizer.AuthorizeAsync(commandOrQuery, cancellationToken);
-            if (authorized.IsFailure)
+            foreach (var authorizer in services.GetServices<IAuthorizer<TCommandOrQuery>>())
             {
-                return fail(authorized.Errors);
+                var authorized = await authorizer.AuthorizeAsync(commandOrQuery, cancellationToken);
+                if (authorized.IsFailure)
+                {
+                    return fail(authorized.Errors);
+                }
+            }
+
+            if (services.GetService<IValidationStep<TCommandOrQuery>>() is { } validation)
+            {
+                var validated = await validation.ValidateAsync(commandOrQuery, cancellationToken);
+                if (validated.IsFailure)
+                {
+                    return fail(validated.Errors);
+                }
             }
         }
-
-        if (services.GetService<IValidationStep<TCommandOrQuery>>() is { } validation)
+        finally
         {
-            var validated = await validation.ValidateAsync(commandOrQuery, cancellationToken);
-            if (validated.IsFailure)
-            {
-                return fail(validated.Errors);
-            }
+            operation.ExitChecks();
         }
 
         // A query, or a command nested in another one: it joins the Operation's Unit of Work, if any.

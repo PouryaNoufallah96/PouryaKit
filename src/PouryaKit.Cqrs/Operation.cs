@@ -13,6 +13,7 @@ public sealed class Operation
     private int _runningQueries;
     private bool _commandStarted;
     private bool _unitOfWorkActive;
+    private int _runningChecks;
 
     /// <summary>
     /// True once a command inside the Operation has failed, whether or not its caller read the Result. The Unit of
@@ -34,6 +35,15 @@ public sealed class Operation
     /// <summary>Records a command starting and returns true when it is the outermost one, which owns the Unit of Work.</summary>
     internal bool EnterCommand()
     {
+        // Authorizers and validators run before their command's handler, at every depth; a command they sent would
+        // change state for a command that may still be refused.
+        if (_runningChecks > 0)
+        {
+            throw new InvalidOperationException(
+                "A command was sent from an authorizer or a validator. They may run queries; only a handler may send a nested command."
+            );
+        }
+
         if (_runningQueries > 0)
         {
             throw new InvalidOperationException(
@@ -48,12 +58,11 @@ public sealed class Operation
             );
         }
 
-        // Between the outermost command's start and its Unit of Work's start (its authorizers and validators), a
-        // nested command would run its handler with no Unit of Work to own it.
+        // A nested command joins the active Unit of Work; with none active, its handler would run with no owner.
         if (_runningCommands > 0 && !_unitOfWorkActive)
         {
             throw new InvalidOperationException(
-                "A command was sent before the Operation's Unit of Work started, from an authorizer or a validator. Only a handler may send a nested command."
+                "A command was sent before the Operation's Unit of Work started. Only a handler may send a nested command."
             );
         }
 
@@ -66,6 +75,10 @@ public sealed class Operation
     internal void StartUnitOfWork() => _unitOfWorkActive = true;
 
     internal void EndUnitOfWork() => _unitOfWorkActive = false;
+
+    internal void EnterChecks() => _runningChecks++;
+
+    internal void ExitChecks() => _runningChecks--;
 
     internal void EnterQuery() => _runningQueries++;
 

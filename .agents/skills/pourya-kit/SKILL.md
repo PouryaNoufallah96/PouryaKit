@@ -150,6 +150,7 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 
 - Declare each as a sealed record: `Command<TResponse>` for a command with a value, `Command` for one without (its handler derives from `CommandHandler<TCommand>` and returns `Result`), `Query<TResponse>` for a read. Name it after its intent with the `Command` or `Query` suffix.
 - Give each exactly one handler class deriving from `CommandHandler<,>`, `CommandHandler<>` or `QueryHandler<,>`. Keep both `internal`; the Kit finds them without `InternalsVisibleTo`. A command or query with no handler or several fails at startup.
+- Commands, queries, handlers and authorizers are never generic type definitions (no `EchoQuery<T>`): registration rejects them at startup.
 - A handler returns a Result and never saves, commits, begins a transaction or touches the Outbox: the Unit of Work does all of that once, for the whole Operation.
 - A query reads. Its handler never sends a command: that throws, because a query runs without a Unit of Work.
 
@@ -171,7 +172,7 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 **Authorization hook**
 
 - The Actor is authenticated and authorized at the external entry point. Add a per-operation rule only when one command or query needs it: an `internal` class implementing `IAuthorizer<TOperation>` for that one concrete command or query, returning `Result.Success()` or a `Forbidden` Error. It runs before validation. Without one, the step does nothing. An authorizer for a base type, a marker interface or an open type fails at startup, because it would never run.
-- An authorizer or a validator may run a query (a permission or existence lookup), but never sends a command: it runs before the Unit of Work starts, so that throws.
+- An authorizer or a validator may run a query (a permission or existence lookup), but never sends a command: it runs before its command's handler, at every nesting depth, so that throws.
 
 **Registration**
 
