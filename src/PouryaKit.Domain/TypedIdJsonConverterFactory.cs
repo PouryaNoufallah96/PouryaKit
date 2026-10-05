@@ -24,11 +24,12 @@ public sealed class TypedIdJsonConverterFactory : JsonConverterFactory
         where TId : TypedId<TValue>
         where TValue : notnull
     {
+        // Through JsonSerializer, not the value converter, so the options' number handling applies as to a raw value.
         public override TId Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-            Create(ValueConverter(options).Read(ref reader, typeof(TValue), options)!);
+            Create(JsonSerializer.Deserialize<TValue>(ref reader, options)!);
 
         public override void Write(Utf8JsonWriter writer, TId value, JsonSerializerOptions options) =>
-            ValueConverter(options).Write(writer, value.Value, options);
+            JsonSerializer.Serialize(writer, value.Value, options);
 
         public override TId ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
             Create(ValueConverter(options).ReadAsPropertyName(ref reader, typeof(TValue), options));
