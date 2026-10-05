@@ -546,10 +546,12 @@ food-delivery happy paths. Nothing tests failed-Result rollback, concurrent dupl
 multi-subscriber failure anywhere.
 
 **Inferred, not verified:**
-- Wolverine internals: per-retry scope is still unverified (S2). Send timing without an enrolled
-  transaction and queue naming defaults were observed in Spike S1 against WolverineFx 6.46.0; see ADR 0004.
+- Wolverine internals: per-retry scope (S2). *Resolved, ADR 0006: each attempt runs in a new scope
+  that the Kit opens.* Send timing without an enrolled transaction and queue naming defaults were
+  observed in Spike S1 against WolverineFx 6.46.0; see ADR 0004.
 - Whether Wolverine can route one message to several kit-registered consumers with independent ack
-  without app-specific handler classes (S2).
+  without app-specific handler classes (S2). *Resolved, ADR 0006: yes, with one route and durable
+  local queue per subscription and one pre-built Kit handler per message type.*
 - Whether `Mediator` 3.x handles `internal` handlers across assemblies (S3). *Resolved, ADR 0002: only
   with `InternalsVisibleTo` to the host or a generator inside every module.*
 - How Lucky Penny §4.2.e.3 would be applied to your case is a legal question; the text is clear enough
