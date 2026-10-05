@@ -1,0 +1,20 @@
+---
+name: integration-event-facts
+description: Ticket #16 facts - process-global Wolverine wire names, extension checks fail at StartAsync, receipt-hold concurrency proof, envelope rows untouched until handled
+metadata:
+  type: project
+---
+
+Verified in ticket #16 (2026-10-05), WolverineFx 6.46.0; check the merged code before relying on the design:
+
+- **Wolverine message type names are process-global.** `WolverineMessageNaming` caches `Type -> name` in a static `ImHashMap` and `Envelope.MessageType` comes from `GetType().ToMessageTypeName()`. A per-Host declared wire name (Integration Events: plain Contracts records, no Kit attribute) must go into a static map in `WireNaming`; a second Host in the process declaring another name is refused. Declare only after the Host's own checks pass.
+- **`IWolverineExtension.Configure` runs inside the `WolverineOptions` singleton factory**, built when `IWolverineRuntime` (a hosted service) is resolved: an exception there reaches `host.StartAsync()` unwrapped, not `Build()`. Whole-Host checks (subscription nobody publishes, no Outbox) live there.
+- **Concurrency proof without flakiness:** decorate `IReceipts` to hold the first delivery right after `RecordAsync` returns true (transaction open, Receipt uncommitted); `update wolverine_incoming_envelopes set owner_id = 0 where id = X` makes recovery hand out the same row again at once (local queues run `max(ProcessorCount, 5)` in parallel); wait until `pg_stat_activity` shows `wait_event_type = 'Lock'` on the receipts insert; repeat; release. Mutation "RecordAsync always true" gave 3 effects.
+- A local durable envelope row is not rewritten when Wolverine starts handling it, only when marked Handled: `pg_xact_commit_timestamp(xmin)` read while the receiver is held still shows the publishing commit.
+- Test `AssertNothingSentAsync` after a setup Operation that causes deliveries races with them: wrap the setup in `WaitForDeliveriesAsync`.
+- A publisher that must reach the Outbox across packages: Kit seams are public interfaces "for a Kit package" (`IReceipts`, `IIntegrationEventOutbox`), never `InternalsVisibleTo`. The test `CommitProbe.Install` reads `ImplementationType`, so any further decorator of `IUnitOfWorkOutbox` must be installed after it and handle a factory descriptor.
+
+- After the #15 fix round (merged 2026-10-05): subscription names are lower-cased in `Subscription`'s constructor, so duplicate-name messages print the lower-cased name; the Outbox and durable-queue checks live in one `StartupCheck` (an `IHostedLifecycleService.StartedAsync`, registered with `TryAddEnumerable` by every declaration call), keyed on the `INotificationOutbox` marker. Add any new whole-Host delivery check there, not in a second place.
+
+**Why:** each decides how #17/#18 extend delivery or would make a test pass vacuously.
+**How to apply:** for dead letters (#17) and Snapshots (#18) through the same subscription registry and Outbox. Related: [[messaging-delivery-facts]], [[wolverine-spike-gotchas]].
