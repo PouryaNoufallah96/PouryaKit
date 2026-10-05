@@ -98,7 +98,7 @@ internal static partial class ModuleRules
     /// single-quoted strings and its dollar-quoted blocks are removed first; what is left is split at its semicolons, and
     /// it counts as SQL only when every statement starts with a SQL command word, so prose such as "Abort; retry?" is
     /// not. Not seen: transaction control inside a dollar-quoted block (a <c>DO</c> block or a procedure body that
-    /// commits). A literal that is nothing but one of the keywords (a label reading "End") is read as SQL.
+    /// commits). A literal that reads as one such statement (a label reading "End" or "Release notes") is read as SQL.
     /// </summary>
     public static bool HoldsTransactionControl(string sql)
     {
