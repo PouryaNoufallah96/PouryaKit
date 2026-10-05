@@ -9,8 +9,8 @@ public static class InventoryModule
     public const string Subscription = "inventory.product-created";
     public const string HandlerName = nameof(ReserveStockOnProductCreated);
 
-    public static void Configure(KitMessaging messaging) =>
-        messaging.Subscribe<ProductCreatedV1, ReserveStockOnProductCreated>(Subscription);
+    public static void Configure(KitMessaging messaging, string subscription = Subscription) =>
+        messaging.Subscribe<ProductCreatedV1, ReserveStockOnProductCreated>(subscription);
 }
 
 /// <summary>A Kit-shaped Integration Event Handler: no Wolverine type, returns a Result.</summary>

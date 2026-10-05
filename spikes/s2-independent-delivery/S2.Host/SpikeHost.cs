@@ -62,7 +62,9 @@ public sealed record SpikeSettings(
     TimeSpan[]? RetryCooldowns = null,
     bool PersistedRetry = false,
     TimeSpan? InboxStaleTime = null,
-    int FirstTcpPort = 0)
+    int FirstTcpPort = 0,
+    string InventorySubscription = InventoryModule.Subscription,
+    UnknownMessageBehavior UnknownMessages = UnknownMessageBehavior.LogOnly)
 {
     /// <summary>Default: two quick retries, so three attempts, then the error queue.</summary>
     public TimeSpan[] Cooldowns => RetryCooldowns ?? [TimeSpan.FromMilliseconds(200), TimeSpan.FromMilliseconds(200)];
@@ -88,7 +90,7 @@ public static class SpikeHost
         // Billing first, so that in the combined control Billing runs before Inventory on every attempt.
         CatalogModule.Configure(messaging);
         if (settings.BillingSubscribes) BillingModule.Configure(messaging);
-        if (settings.InventorySubscribes) InventoryModule.Configure(messaging);
+        if (settings.InventorySubscribes) InventoryModule.Configure(messaging, settings.InventorySubscription);
         if (settings.ShippingSubscribes) ShippingModule.Configure(messaging);
         if (settings.CatalogNotifications) CatalogNotifications.Configure(messaging);
         messaging.AddHandlers(builder.Services);
@@ -114,6 +116,7 @@ public static class SpikeHost
             opts.UseEntityFrameworkCoreTransactions(TransactionMiddlewareMode.Eager);
             opts.Policies.UseDurableLocalQueues();
             opts.Durability.MessageIdentity = settings.Identity;
+            opts.UnknownMessageBehavior = settings.UnknownMessages;
 
             WireNames.UseInWolverine();
             delivery.Configure(messaging, builder.Services, opts);
