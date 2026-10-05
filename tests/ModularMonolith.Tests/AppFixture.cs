@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using ModularMonolith.Host;
 using ModularMonolith.Tests;
 using ModularMonolith.Tests.Stub;
@@ -32,8 +33,12 @@ public sealed class AppFixture : HostFixture
         builder
             .Services.AddAuthentication(TestAuthentication.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
+        builder.Logging.AddProvider(Logs);
         return ModularMonolithHost.Build(builder);
     }
+
+    /// <summary>Every log entry the Host has written.</summary>
+    public RecordedLogs Logs { get; } = new();
 
     /// <summary>
     /// A client of the Host's HTTP pipeline, authenticated as the person <paramref name="caller"/>, or anonymous.

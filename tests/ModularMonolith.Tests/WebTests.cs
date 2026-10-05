@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Testing;
@@ -108,9 +109,15 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Fact]
-    public async Task An_unexpected_exception_answers_500_as_a_problem_response_without_its_message()
+    public async Task An_unexpected_exception_answers_500_as_a_problem_response_without_its_message_and_is_logged()
     {
         using var client = Fixture.Client("ada");
+        int LoggedByWeb() =>
+            Fixture.Logs.Entries.Count(entry =>
+                entry is { Category: "PouryaKit.Web.UnexpectedExceptionHandler", Level: LogLevel.Error }
+                && entry.Exception?.Message == "The note handler threw."
+            );
+        var loggedBefore = LoggedByWeb();
 
         var response = await client.PostAsync("/stub/notes/throwing", null, TestContext.Current.CancellationToken);
 
@@ -119,12 +126,14 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         var body = problem.GetRawText();
         Assert.DoesNotContain("The note handler threw", body);
         Assert.DoesNotContain(nameof(InvalidOperationException), body);
+        Assert.Equal(loggedBefore + 1, LoggedByWeb());
     }
 
     [Fact]
     public async Task A_module_endpoint_refuses_an_anonymous_caller_and_a_public_endpoint_runs_it_as_its_named_actor()
     {
         using var anonymous = Fixture.Client();
+        using var ada = Fixture.Client("ada");
 
         var refused = await anonymous.PostAsJsonAsync(
             "/catalog/products",
@@ -132,12 +141,16 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
             TestContext.Current.CancellationToken
         );
         var listed = await anonymous.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
-        var context = await ContextAsync(anonymous, "/stub/public/context");
+        var anonymousContext = await ContextAsync(anonymous, "/stub/public/context");
+        var adaContext = await ContextAsync(ada, "/stub/public/context");
 
         Assert.Equal(HttpStatusCode.Unauthorized, refused.StatusCode);
         Assert.Equal(HttpStatusCode.OK, listed.StatusCode);
-        Assert.Equal(ReadOperationContextEndpoint.Visitor.Id, context.Actor.Id);
-        Assert.Equal(ActorKind.System, context.Actor.Kind);
+        Assert.Equal(ReadOperationContextEndpoint.Visitor.Id, anonymousContext.Actor.Id);
+        Assert.Equal(ActorKind.System, anonymousContext.Actor.Kind);
+        // An authenticated caller of a public endpoint still runs as themselves.
+        Assert.Equal("ada", adaContext.Actor.Id);
+        Assert.Equal(ActorKind.Person, adaContext.Actor.Kind);
     }
 
     [Fact]
