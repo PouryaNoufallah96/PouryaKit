@@ -52,4 +52,18 @@ public sealed class GatewayTests(AppFixture app) : HostTest<AppFixture>(app)
         );
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.notes"));
     }
+
+    [Fact]
+    public async Task A_command_sent_through_another_modules_gateway_is_refused_naming_both_modules()
+    {
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            Fixture
+                .Gateway<StubModule>()
+                .SendAsync(new CreateProductCommand(Guid.CreateVersion7(), "Lamp"), TestContext.Current.CancellationToken)
+        );
+
+        Assert.Contains("belongs to CatalogModule", thrown.Message);
+        Assert.Contains("Gateway of StubModule", thrown.Message);
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
+    }
 }

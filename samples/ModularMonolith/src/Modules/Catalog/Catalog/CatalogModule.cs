@@ -1,4 +1,7 @@
+using Catalog.Contracts.Products;
 using Catalog.Infrastructure.Data.Context;
+using Catalog.Products.Features.GetProductSummary;
+using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Postgres;
@@ -14,5 +17,6 @@ public sealed class CatalogModule : IModuleDefinition
         module.UsePostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
         module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);
         module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
+        module.AddScoped<ICatalogProducts, CatalogProducts>();
     }
 }
