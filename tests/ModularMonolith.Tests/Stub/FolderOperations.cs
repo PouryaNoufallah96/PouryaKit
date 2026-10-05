@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Persistence;
@@ -25,6 +26,7 @@ internal enum FolderEdit
     TearOutPage,
     Nothing,
     Remove,
+    PeelSticker,
 }
 
 internal sealed record EditFolderCommand(Guid FolderId, FolderEdit Edit, string Colour = "red") : Command;
@@ -47,6 +49,9 @@ internal sealed class EditFolderCommandHandler(IRepository<Folder, FolderId> fol
                 break;
             case FolderEdit.Remove:
                 folders.Remove(folder);
+                break;
+            case FolderEdit.PeelSticker:
+                folder.PeelSticker();
                 break;
             case FolderEdit.Nothing:
                 break;
@@ -78,6 +83,32 @@ internal sealed class AddPageOnRenameReaction(IRepository<Folder, FolderId> fold
     {
         var folder = (await folders.FindAsync(domainEvent.FolderId, cancellationToken))!;
         folder.AddPage("added on rename");
+        return Result.Success();
+    }
+}
+
+internal sealed record MovePageCommand(Guid From, Guid To, string Text) : Command;
+
+internal sealed class MovePageCommandHandler(IRepository<Folder, FolderId> folders) : CommandHandler<MovePageCommand>
+{
+    public override async Task<Result> Handle(MovePageCommand command, CancellationToken cancellationToken)
+    {
+        var from = (await folders.FindAsync(new FolderId(command.From), cancellationToken))!;
+        var to = (await folders.FindAsync(new FolderId(command.To), cancellationToken))!;
+        from.MovePage(command.Text, to);
+        return Result.Success();
+    }
+}
+
+internal sealed record RewritePageUnloadedCommand(string Text) : Command;
+
+// Feature code never touches its DbContext; this handler does, to change a page without loading its folder.
+internal sealed class RewritePageUnloadedCommandHandler(StubDbContext dbContext) : CommandHandler<RewritePageUnloadedCommand>
+{
+    public override async Task<Result> Handle(RewritePageUnloadedCommand command, CancellationToken cancellationToken)
+    {
+        var page = await dbContext.Set<Page>().SingleAsync(page => page.Text == command.Text, cancellationToken);
+        page.Rewrite("rewritten unloaded");
         return Result.Success();
     }
 }

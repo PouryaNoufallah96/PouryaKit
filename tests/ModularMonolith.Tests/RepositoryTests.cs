@@ -1,5 +1,6 @@
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
+using Catalog.Products.Errors;
 using Catalog.Products.Features.CreateProduct;
 using Catalog.Products.Features.ImportProducts;
 using Catalog.Products.Features.RemoveProducts;
@@ -57,6 +58,27 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
             await Fixture.RowsAsync("select name from catalog.products order by name")
         );
         Assert.Equal(2, await Fixture.ScalarAsync<int>("select product_count from catalog.categories"));
+    }
+
+    [Fact]
+    public async Task An_import_that_gives_a_name_twice_fails_and_creates_nothing()
+    {
+        var catalog = Fixture.Gateway<CatalogModule>();
+        var category = await CreateCategoryAsync(catalog);
+        await catalog.SendAsync(
+            new CreateProductCommand(Guid.CreateVersion7(), category, "Lamp"),
+            TestContext.Current.CancellationToken
+        );
+
+        // Lamp is in use, so skipping names in use would hide that it is given twice.
+        var imported = await catalog.SendAsync(
+            new ImportProductsCommand(category, ["Lamp", "Lamp ", "Desk"]),
+            TestContext.Current.CancellationToken
+        );
+
+        Assert.Equal(ProductErrors.NameRepeated, Assert.Single(imported.Errors));
+        Assert.Equal([["Lamp"]], await Fixture.RowsAsync("select name from catalog.products"));
+        Assert.Equal(1, await Fixture.ScalarAsync<int>("select product_count from catalog.categories"));
     }
 
     [Fact]

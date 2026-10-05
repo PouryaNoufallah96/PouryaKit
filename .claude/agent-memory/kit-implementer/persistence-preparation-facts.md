@@ -14,7 +14,11 @@ Verified in ticket #11 (2026-10-05), EF Core 10.0.12 / Npgsql 10.0.3; check the 
 - Model snapshot drift (e.g. `IsConcurrencyToken`) makes `Migrate()` throw in EF 9+, so a convention change needs a migration in every DbContext, the test-only Stub's too (temporary `IDesignTimeDbContextFactory` + temporary Design package, both removed after).
 - `Enumerable.Except` is a set operation: it silently deduplicates the left side.
 - `CascadeDeleteTiming.OnSaveChanges` is what keeps a soft-deleted aggregate's owned parts and children; with `Immediate`, `Remove` marks them Deleted before the prepare step and the save fails.
-- An optional child FK turns an orphan into an FK-null update the bottom-up "which aggregate" walk cannot attribute; aggregate children need a required FK.
+- #11 fix round (review F1): the walk reads a child's holder from both the current and the original FK value, so a moved child bumps both aggregates and a nulled optional key bumps the one it left; an untracked holder throws (an unloaded aggregate cannot conflict). The Stub `Folder` has pages (required key), stickers (optional key) and `MovePage`; EF reparents a child moved between two tracked collections as an FK update, not an orphan delete.
+- `PouryaKitDbContext`'s constructor touches `ChangeTracker`, which builds the model: a model-convention refusal throws from `new MyContext()`, not from `.Model`.
+- Converting a removed soft-deletable entry Deleted -> Unchanged keeps the Operation's earlier changes to it (checked: a rename before removal was saved).
+- `AppFixture.RowsAsync` returns `DBNull.Value` for SQL null, not null.
+- A domain transition that raises an event (Product.Remove) needs its own once-guard: a removed aggregate is still found by later queries in the Operation until the prepare step marks it.
 
 **Why:** each cost a run or would have let a test pass vacuously.
 **How to apply:** when touching the Unit of Work, conflicts, Snapshots (#18) or test migrations. Related: [[persistence-ef-facts]], [[domain-event-drain-facts]].

@@ -6,10 +6,12 @@ using PouryaKit.Persistence;
 namespace ModularMonolith.Tests.Stub;
 
 /// <summary>Where a held Operation waits: it reports that it has made its change, then waits to be let go.</summary>
-internal sealed class Hold(string mark)
+internal sealed class Hold(string? mark = null)
 {
-    /// <summary>The name of the category the Operation writes with plain SQL, which only a commit keeps.</summary>
-    public string Mark { get; } = mark;
+    /// <summary>
+    /// The name of the category the Operation writes with plain SQL, which only a commit keeps; null to write none.
+    /// </summary>
+    public string? Mark { get; } = mark;
 
     public TaskCompletionSource Changed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -29,15 +31,18 @@ internal sealed class HoldChangeCommandHandler(IDispatcher dispatcher, IUnitOfWo
     public override async Task<Result> Handle(HoldChangeCommand command, CancellationToken cancellationToken)
     {
         var changed = await command.Change(dispatcher, cancellationToken);
-        var (connection, transaction) = unitOfWork.Join();
-        await connection.ExecuteAsync(
-            new CommandDefinition(
-                "insert into catalog.categories (id, name, product_count, version) values (@Id, @Mark, 0, 1)",
-                new { Id = Guid.CreateVersion7(), command.Hold.Mark },
-                transaction,
-                cancellationToken: cancellationToken
-            )
-        );
+        if (command.Hold.Mark is not null)
+        {
+            var (connection, transaction) = unitOfWork.Join();
+            await connection.ExecuteAsync(
+                new CommandDefinition(
+                    "insert into catalog.categories (id, name, product_count, version) values (@Id, @Mark, 0, 1)",
+                    new { Id = Guid.CreateVersion7(), command.Hold.Mark },
+                    transaction,
+                    cancellationToken: cancellationToken
+                )
+            );
+        }
         command.Hold.Changed.SetResult();
         await command.Hold.Released.Task.WaitAsync(cancellationToken);
         return changed;
