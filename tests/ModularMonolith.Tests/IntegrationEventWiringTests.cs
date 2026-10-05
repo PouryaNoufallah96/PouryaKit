@@ -14,7 +14,7 @@ public sealed class IntegrationEventWiringTests
     private static readonly Dictionary<string, (Action<IServiceCollection> Declare, string Problem)> Mistakes = new()
     {
         ["no wire name"] = (s => s.Publish<TwinV1>(""), $"{typeof(TwinV1).FullName}'s wire name is missing"),
-        ["an invalid wire name"] = (s => s.Publish<TwinV1>("tests.twin v1"), "wire name tests.twin v1 is not valid as a queue name"),
+        ["an invalid wire name"] = (s => s.Publish<TwinV1>("tests.twin v1"), "wire name tests.twin v1 is not a valid name"),
         ["a wire name twice"] = (
             s => s.Publish<TwinV1>("tests.twin.v1").Publish<OtherTwinV1>("Tests.Twin.V1"),
             "have the wire name Tests.Twin.V1, ignoring case"
@@ -42,13 +42,13 @@ public sealed class IntegrationEventWiringTests
         ),
         ["an invalid subscription name"] = (
             s => s.Subscribe<TwinV1, TwinIntegrationEventHandler>("tests.twin/one"),
-            "subscription name tests.twin/one is not valid as a queue name"
+            "subscription name tests.twin/one is not a valid name"
         ),
         ["a subscription name twice"] = (
             s =>
                 s.Subscribe<TwinV1, TwinIntegrationEventHandler>("tests.twin")
                     .Subscribe<OtherTwinV1, OtherTwinIntegrationEventHandler>("Tests.Twin"),
-            "have the subscription name Tests.Twin, ignoring case"
+            "have the subscription name tests.twin, ignoring case"
         ),
         ["no handler"] = (
             s => s.Subscribe<TwinV1, AbstractTwinIntegrationEventHandler>("tests.twin"),
@@ -83,7 +83,7 @@ public sealed class IntegrationEventWiringTests
 
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
 
-        Assert.StartsWith("Modules of this Host publish Integration Events, but it has no Outbox", thrown.Message);
+        Assert.StartsWith("Notification Handlers or Integration Events are declared, but nothing writes them to an Outbox", thrown.Message);
     }
 
     [Fact]

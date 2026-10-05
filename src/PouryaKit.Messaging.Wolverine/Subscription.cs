@@ -7,7 +7,8 @@ namespace PouryaKit.Messaging.Wolverine;
 /// <summary>
 /// One handler subscribed to one message type: a Notification Handler to a Domain Event, or an Integration Event Handler
 /// to an Integration Event. Its durable <see cref="Name"/> is its queue and half of its Receipts' key, and
-/// <see cref="Module"/> is the Module its deliveries run in, null in an application without Modules.
+/// <see cref="Module"/> is the Module its deliveries run in, null in an application without Modules. The name is kept
+/// lower-cased, as its local queue is, so a change of case only is the same subscription everywhere, Receipts included.
 /// </summary>
 internal sealed class Subscription
 {
@@ -15,7 +16,7 @@ internal sealed class Subscription
 
     private Subscription(string name, Type message, Type handler, Type? module, Type invoker)
     {
-        Name = name;
+        Name = (name ?? "").ToLowerInvariant();
         Message = message;
         Handler = handler;
         Module = module;

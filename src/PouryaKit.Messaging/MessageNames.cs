@@ -50,12 +50,18 @@ public static partial class MessageNames
 
     /// <summary>
     /// True when <paramref name="name"/> can serve as a wire name or a subscription name, which is also a queue name:
-    /// letters and digits in segments joined by single dots or hyphens. Names are compared ignoring case, because
-    /// transports such as local queues lower-case them.
+    /// letters and digits in segments joined by single dots or hyphens, and nothing else, that come back unchanged, but
+    /// for case, as the host of a queue's address. Names are compared ignoring case, because transports such as local
+    /// queues lower-case them.
     /// </summary>
-    public static bool IsValid(string? name) => name is not null && ValidName().IsMatch(name);
+    public static bool IsValid(string? name) =>
+        name is not null
+        && ValidName().IsMatch(name)
+        && Uri.TryCreate($"queue://{name}/", UriKind.Absolute, out var address)
+        && address.Host == name.ToLowerInvariant();
 
-    [GeneratedRegex("^[A-Za-z0-9]+(?:[.-][A-Za-z0-9]+)*$")]
+    // \A and \z, not ^ and $: $ also matches before a final newline.
+    [GeneratedRegex(@"\A[A-Za-z0-9]+(?:[.-][A-Za-z0-9]+)*\z")]
     private static partial Regex ValidName();
 
     private static string WithoutSuffix(string name, string suffix) =>

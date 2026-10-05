@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 
 namespace PouryaKit.Messaging.Wolverine;
 
@@ -15,8 +16,10 @@ public static class NotificationHandlerServiceCollectionExtensions
         /// Module's definition type, so they reach its Unit of Work. A Module's Composition Root calls it on its builder;
         /// an application without Modules calls it on its own services with no Module. Throws here, at startup, when the
         /// assembly has no Notification Handler, when a handler handles several Domain Event types, an abstract or a
-        /// generic one, or is generic itself, and when a wire name or a subscription name is missing, invalid as a queue
-        /// name, or equal ignoring case to another's.
+        /// generic one, or is generic itself, and when a wire name or a subscription name is missing, invalid, equal
+        /// ignoring case to another's, or, for a subscription, the name of a queue Wolverine keeps for itself. The Host
+        /// then fails to start unless an Outbox writes the Notifications (<see cref="INotificationOutbox"/>) and every
+        /// subscription's queue, as Wolverine built it, is a durable application queue.
         /// </summary>
         public IServiceCollection AddPouryaKitNotificationHandlers(Assembly handlerAssembly, Type? module = null)
         {
@@ -59,6 +62,8 @@ public static class NotificationHandlerServiceCollectionExtensions
             {
                 services.TryAddScoped(subscription.Handler);
             }
+
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
 
             return services;
         }

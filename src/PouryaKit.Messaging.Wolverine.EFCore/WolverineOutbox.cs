@@ -17,7 +17,8 @@ internal sealed partial class WolverineOutbox(
     IServiceProvider scope,
     PublishedIntegrationEvents integrationEvents,
     ILogger<WolverineOutbox> logger
-) : IUnitOfWorkOutbox
+) : IUnitOfWorkOutbox,
+    INotificationOutbox
 {
     private DbContextOutbox? _written;
 
