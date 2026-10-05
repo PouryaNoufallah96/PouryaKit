@@ -1,6 +1,6 @@
 # PouryaKit
 
-A reusable .NET 10 foundation for modular monoliths built from vertical slices. Status: Wave 1 in progress; `PouryaKit.Domain` (domain primitives) is usable, and no other Capability is yet.
+A reusable .NET 10 foundation for modular monoliths built from vertical slices. Status: Wave 1 in progress; `PouryaKit.Domain` (domain primitives), `PouryaKit.Cqrs` and `PouryaKit.Validation` (dispatcher, pipeline and validation, with no Unit of Work implementation until #8) are usable, and no other Capability is yet.
 
 ## Read first
 

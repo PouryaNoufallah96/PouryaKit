@@ -100,9 +100,91 @@ internal sealed class Product : AggregateRoot<ProductId>
 
 ### Commands, queries and validation
 
-`PouryaKit.Cqrs`, `PouryaKit.Validation`: commands and queries, their handlers, the fixed pipeline and validators.
+`PouryaKit.Cqrs`, `PouryaKit.Validation`: commands and queries, their handlers, the fixed pipeline and validators. Namespaces `PouryaKit.Cqrs` and `PouryaKit.Validation`; validators are FluentValidation's `AbstractValidator<T>`.
 
-*Not yet available* (#7).
+A Feature with a command, its validator and its handler, and a query with its handler. Every type is `internal`:
+
+```csharp
+using FluentValidation;
+using PouryaKit.Cqrs;
+using PouryaKit.Domain;
+
+// Products/Features/CreateProduct/
+internal sealed record CreateProductCommand(Guid ProductId, string Name) : Command<Guid>;
+
+internal sealed class CreateProductCommandValidator : AbstractValidator<CreateProductCommand>
+{
+    public CreateProductCommandValidator()
+    {
+        RuleFor(x => x.ProductId).NotEmpty();      // checked before the typed-ID constructor can throw
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(200).WithErrorCode("Product.NameTooLong");
+    }
+}
+
+internal sealed class CreateProductCommandHandler(IProductRepository products)
+    : CommandHandler<CreateProductCommand, Guid>
+{
+    public override async Task<Result<Guid>> Handle(CreateProductCommand command, CancellationToken ct)
+    {
+        var product = Product.Create(new ProductId(command.ProductId), command.Name);
+        if (product.IsFailure) return product.Errors;
+
+        await products.AddAsync(product.Value, ct);
+        return product.Value.Id.Value;             // no SaveChanges, no transaction, no Outbox
+    }
+}
+
+// Products/Features/GetProduct/
+internal sealed record GetProductQuery(Guid ProductId) : Query<ProductDto>;
+
+internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandler<GetProductQuery, ProductDto>
+{
+    public override async Task<Result<ProductDto>> Handle(GetProductQuery query, CancellationToken ct) =>
+        await reader.FindAsync(query.ProductId, ct) is { } product ? product : ProductErrors.NotFound;
+}
+```
+
+`IProductRepository` and `IProductReader` stand for the Feature's data access; repositories arrive with #11 and Dapper reads with #9.
+
+**Commands and queries**
+
+- Declare each as a sealed record: `Command<TResponse>` for a command with a value, `Command` for one without (its handler derives from `CommandHandler<TCommand>` and returns `Result`), `Query<TResponse>` for a read. Name it after its intent with the `Command` or `Query` suffix.
+- Give each exactly one handler class deriving from `CommandHandler<,>`, `CommandHandler<>` or `QueryHandler<,>`. Keep both `internal`; the Kit finds them without `InternalsVisibleTo`. A command or query with no handler or several fails at startup.
+- A handler returns a Result and never saves, commits, begins a transaction or touches the Outbox: the Unit of Work does all of that once, for the whole Operation.
+- A query reads. Its handler never sends a command: that throws, because a query runs without a Unit of Work.
+
+**The pipeline**
+
+- Every command and query passes the same fixed steps: logging, the authorization hook, validation, then the handler; a command's handler runs inside the Unit of Work. Never register a pipeline step or a behaviour yourself.
+- Send from outside the Module through its Gateway (#8). Inside a handler, send a nested command with an injected `IDispatcher`: `await dispatcher.SendAsync(new ReserveStockCommand(id), ct)`. It joins the outer Unit of Work, so the Operation commits once.
+- A nested command that fails, in its handler, its validation or its authorization, or by throwing, rolls the whole Operation back, even if your handler ignores its Result. The Operation then fails with that nested command's Errors. Pass a failure on with `return result.Errors;` instead of ignoring it.
+- A failed nested query rolls nothing back; act on its Result as you need.
+- One scope holds one Operation. Never send a second top-level command in a scope that already ran one, and never retry a failed command in the same scope: open a new scope.
+
+**Validation**
+
+- Write one `AbstractValidator<T>` per command or query that needs input checks, beside it in the Feature, and keep it `internal`. Several validators for one type all run.
+- Every failure of every validator comes back as one failed Result before the handler runs; nothing throws. Each failure is an Error of kind `Validation`, with FluentValidation's error code as `Code` (set your own with `WithErrorCode`) and the property name as `Target`.
+- Validate input shape here. A business rule that depends on state belongs in the aggregate, through `CheckRule`.
+- Without `PouryaKit.Validation`, the validation step does nothing.
+
+**Authorization hook**
+
+- The Actor is authenticated and authorized at the external entry point. Add a per-operation rule only when one command or query needs it: an `internal` class implementing `IAuthorizer<TOperation>`, returning `Result.Success()` or a `Forbidden` Error. It runs before validation. Without one, the step does nothing.
+
+**Registration**
+
+```csharp
+services.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);        // handlers and authorizers
+services.AddPouryaKitValidation(typeof(CatalogModule).Assembly);  // validators
+```
+
+The Host also registers logging and, through a persistence package, the Unit of Work (#8). Until the Modularity package composes these calls per Module (#8), make them yourself.
+
+**Testing**
+
+- Test a Feature through `IDispatcher` from a scope of the real container, built with `ValidateOnBuild` and `ValidateScopes`. Assert on the returned Result's `Errors`, never on exceptions, for business and validation failures.
+- Use one scope per Operation in tests, as in production.
 
 ### Modules
 

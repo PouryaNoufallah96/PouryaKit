@@ -21,6 +21,16 @@ public class ErrorTests
         Assert.Equal(kind, error.Kind);
         Assert.Equal("Product.Code", error.Code);
         Assert.Equal("A message.", error.Message);
+        Assert.Null(error.Target);
+    }
+
+    [Fact]
+    public void A_validation_error_can_name_its_target_and_differs_from_one_without()
+    {
+        var withTarget = Error.Validation("Product.NameRequired", "A product needs a name.", "Name");
+
+        Assert.Equal("Name", withTarget.Target);
+        Assert.NotEqual(Error.Validation("Product.NameRequired", "A product needs a name."), withTarget);
     }
 
     [Fact]

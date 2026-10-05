@@ -1,8 +1,13 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/PouryaKit.Cqrs/PouryaKit.Cqrs.csproj" />
     <Project Path="src/PouryaKit.Domain/PouryaKit.Domain.csproj" />
+    <Project Path="src/PouryaKit.Validation/PouryaKit.Validation.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/PouryaKit.Cqrs.Tests.Module/PouryaKit.Cqrs.Tests.Module.csproj" />
+    <Project Path="tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.csproj" />
     <Project Path="tests/PouryaKit.Domain.Tests/PouryaKit.Domain.Tests.csproj" />
+    <Project Path="tests/PouryaKit.Validation.Tests/PouryaKit.Validation.Tests.csproj" />
   </Folder>
 </Solution>
