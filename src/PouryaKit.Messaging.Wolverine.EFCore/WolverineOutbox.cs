@@ -9,10 +9,15 @@ using Wolverine.Runtime;
 
 namespace PouryaKit.Messaging.Wolverine.EFCore;
 
-// Writes each message that has a subscription as one durable envelope per subscription, on the Unit of Work's own
-// connection and transaction (ADR 0004), carrying the Operation Context, and sends them after the commit.
-internal sealed partial class WolverineOutbox(IWolverineRuntime runtime, IServiceProvider scope, ILogger<WolverineOutbox> logger)
-    : IUnitOfWorkOutbox
+// Writes each Domain Event and each Integration Event the Operation published that has a subscription as one durable
+// envelope per subscription, on the Unit of Work's own connection and transaction (ADR 0004), carrying the Operation
+// Context, and an Integration Event its identity too, and sends them after the commit.
+internal sealed partial class WolverineOutbox(
+    IWolverineRuntime runtime,
+    IServiceProvider scope,
+    PublishedIntegrationEvents integrationEvents,
+    ILogger<WolverineOutbox> logger
+) : IUnitOfWorkOutbox
 {
     private DbContextOutbox? _written;
 
@@ -23,7 +28,12 @@ internal sealed partial class WolverineOutbox(IWolverineRuntime runtime, IServic
         _written = null;
 
         // A message has a route for each of its subscriptions, and none without one.
-        var published = messages.Where(message => runtime.RoutingFor(message.GetType()).Routes.Length > 0).ToList();
+        List<(object Message, Guid? Identity)> published =
+        [
+            .. messages.Select(message => (message, (Guid?)null)),
+            .. integrationEvents.Take().Select(e => (e.IntegrationEvent, (Guid?)e.DomainEventId)),
+        ];
+        published.RemoveAll(message => runtime.RoutingFor(message.Message.GetType()).Routes.Length == 0);
         if (published.Count == 0)
         {
             return;
@@ -34,9 +44,15 @@ internal sealed partial class WolverineOutbox(IWolverineRuntime runtime, IServic
         var outbox = new DbContextOutbox(runtime, []);
         outbox.Enroll(dbContext);
         var context = scope.GetRequiredService<OperationContext>();
-        foreach (var message in published)
+        foreach (var (message, identity) in published)
         {
-            await outbox.PublishAsync(message, new DeliveryOptions().WithOperationContext(context));
+            var options = new DeliveryOptions().WithOperationContext(context);
+            if (identity is { } domainEventId)
+            {
+                options.Headers[IntegrationEventHeaders.DomainEventId] = domainEventId.ToString();
+            }
+
+            await outbox.PublishAsync(message, options);
         }
 
         _written = outbox;
@@ -64,7 +80,7 @@ internal sealed partial class WolverineOutbox(IWolverineRuntime runtime, IServic
     [LoggerMessage(
         EventName = "NotSent",
         Level = LogLevel.Warning,
-        Message = "Notifications committed with the Operation could not be sent; the message store recovers them after the inbox stale time"
+        Message = "Notifications and Integration Events committed with the Operation could not be sent; the message store recovers them after the inbox stale time"
     )]
     private static partial void LogNotSent(ILogger logger, Exception exception);
 }

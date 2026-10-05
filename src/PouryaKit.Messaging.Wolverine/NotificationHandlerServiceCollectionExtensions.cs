@@ -24,7 +24,7 @@ public static class NotificationHandlerServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(handlerAssembly);
 
             List<string> problems = [];
-            List<NotificationSubscription> subscriptions = [];
+            List<Subscription> subscriptions = [];
             foreach (var type in handlerAssembly.GetTypes().Where(type => type is { IsClass: true, IsAbstract: false }))
             {
                 var handled = type.GetInterfaces()
@@ -45,7 +45,7 @@ public static class NotificationHandlerServiceCollectionExtensions
                 }
 
                 subscriptions.Add(
-                    new NotificationSubscription(MessageNames.SubscriptionNameOf(type, handled[0]), handled[0], type, module)
+                    Subscription.OfNotificationHandler(MessageNames.SubscriptionNameOf(type, handled[0]), handled[0], type, module)
                 );
             }
 
@@ -54,7 +54,7 @@ public static class NotificationHandlerServiceCollectionExtensions
                 problems.Add($"{handlerAssembly.GetName().Name} has no Notification Handler.");
             }
 
-            NotificationSubscriptions.In(services).Add(subscriptions, problems);
+            Subscriptions.In(services).Add(subscriptions, problems);
             foreach (var subscription in subscriptions)
             {
                 services.TryAddScoped(subscription.Handler);
