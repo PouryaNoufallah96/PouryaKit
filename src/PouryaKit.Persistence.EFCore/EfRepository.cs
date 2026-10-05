@@ -6,8 +6,12 @@ using PouryaKit.Domain;
 
 namespace PouryaKit.Persistence.EFCore;
 
-// Tracks changes in the DbContext of the scope's Unit of Work, so what a handler adds is what that Unit of Work saves.
-internal sealed class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository<TAggregate, TId>
+/// <summary>
+/// The generic repository over EF Core. It tracks changes in the DbContext of the scope's Unit of Work, so what a
+/// handler adds is what that Unit of Work saves. An aggregate-specific repository derives from it and builds its extra
+/// members on <see cref="Query"/>; it has no way to save either.
+/// </summary>
+public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository<TAggregate, TId>
     where TAggregate : AggregateRoot<TId>
     where TId : notnull
 {
@@ -51,7 +55,11 @@ internal sealed class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IR
     public Task<int> CountAsync(ISpecification<TAggregate> specification, CancellationToken cancellationToken = default) =>
         Query(specification, evaluateCriteriaOnly: true).CountAsync(cancellationToken);
 
-    private IQueryable<TAggregate> Query(ISpecification<TAggregate> specification, bool evaluateCriteriaOnly = false)
+    /// <summary>
+    /// The aggregates <paramref name="specification"/> selects, as a query to compose further. With
+    /// <paramref name="evaluateCriteriaOnly"/>, only its filters apply: no ordering, paging or includes.
+    /// </summary>
+    protected IQueryable<TAggregate> Query(ISpecification<TAggregate> specification, bool evaluateCriteriaOnly = false)
     {
         ArgumentNullException.ThrowIfNull(specification);
         return SpecificationEvaluator.Default.GetQuery(_aggregates, specification, evaluateCriteriaOnly);
