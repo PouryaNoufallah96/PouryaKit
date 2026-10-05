@@ -1,17 +1,13 @@
-- [.NET test conventions](dotnet-test-conventions.md) — MTP + xunit.v3 4.x, zero-test failure, nuget.config/NU1507, SDK pin band
-- [Worktree and check gotchas](worktree-and-check-gotchas.md) — stale worktree base, refused shell compounds and git -C, gh issue view quirk, no colons in skill frontmatter
+- [.NET test conventions](dotnet-test-conventions.md) — MTP + xunit.v3 4.x, zero-test failure, MTP filter syntax, nuget.config/NU1507, SDK pin band
+- [Worktree and check gotchas](worktree-and-check-gotchas.md) — refused shell shapes, integration branch moving mid-package, gh issue view quirk, frontmatter colons, guard rm -r
 - [STJ and record facts](stj-and-record-facts.md) — base-type JsonConverter ignored, init props survive, derived record reuses Value
 - [Docs verification tools](docs-verification-tools.md) — compile skill snippets, parse Mermaid C4, check links, names and provenance paths, all from the scratchpad
 - [Persistence and EF facts](persistence-ef-facts.md) — #8: Module UoW routing via keyed IUnitOfWork, EF 10/Npgsql/dotnet-ef/Ardalis gotchas
 - [Dapper facts](dapper-facts.md) — #9: Npgsql warm pool ignores cancelled token, Dapper locks handler registration, seam and test traps
 - [Domain Event drain facts](domain-event-drain-facts.md) — #10: drain in Cqrs, rollback-only as the one failure signal, mutation-proof test tricks
 - [Cqrs design facts](cqrs-design-facts.md) — FluentValidation licence and scanner API, generic failed Result trick, #7 design calls
-- [Worktree inherits main checkout](worktree-inherits-main-checkout.md) — root global.json and Directory.*.props reach a worktree by parent lookup; Spikes need stoppers
-- [Worktree .NET gotchas](worktree-dotnet-gotchas.md) — MTP filter syntax in worktrees (`--filter-class`, not `--filter`); worktree-guard command refusals
 - [Wolverine 6 Spike facts](wolverine-6-spike-facts.md) — Spike S1: RuntimeCompilation required, commit-timestamp proof, ~75 s default recovery, one outbox instance per commit attempt
 - [Wolverine spike gotchas](wolverine-spike-gotchas.md) — Spike S2: codegen needs public types, AddMessageHandler avoids it, EndpointFor writes Outgoing rows, stale-time vs in-memory retry
-- [Spike test project gotchas](spike-test-project-gotchas.md) — no VSTest packages; xunit.v3 4.x parallelization attribute; worktree guard on computed sed/for
-- [Spike fair comparison](spike-fair-comparison.md) — reject an option for its mechanism, not my adapter; test every reaction kind with internal types
 - [Web and ASP.NET Core facts](web-aspnetcore-facts.md) — #14: binding before filters, Finally wrapper, .NET 10 handler logging, TestServer, dotnet-ef check
 - [Modularity and context facts](modularity-context-facts.md) — #13: validation needs the DI impl package, Gateway signature vs parallel merges, host-wide state in the service collection
 - [Persistence preparation facts](persistence-preparation-facts.md) — #11: EF savepoint hides rollback bugs, two-scope race technique, TestClock vs Gateway, ef remove trap

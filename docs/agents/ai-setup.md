@@ -18,10 +18,11 @@ One home per concern. Anything both tools use lives in `.agents/` or at the root
 | Guard | `.agents/hooks/guard.py` | Both, wired from `.claude/settings.json` and `.codex/hooks.json` |
 | Mod | `.claude/mods/kit-cockpit/`, linked from `.claude/skills/kit-cockpit` | Claude Code |
 | Status line | `.claude/statusline.sh` | Claude Code, main session, through `statusLine` in `.claude/settings.json` |
-| Claude Code settings | `.claude/settings.json` | Claude Code: subagent default model, agent teams on, the output style, the status line, subagent rows, ask before `git push`, the guard |
+| Claude Code settings | `.claude/settings.json` | Claude Code: subagent default model, agent teams on, the output style, the status line, subagent rows, subagent worktree base, ask before `git push`, the guard |
 | Codex config | `.codex/config.toml` | Codex, once the repository is trusted: model, effort, review model, subagent defaults |
-| Check script | `.agents/scripts/check-ai-setup.py` | Run by hand after any change |
+| Check script | `.agents/scripts/check-ai-setup.py` | Run by hand after any change, and by the `ai-setup` CI job |
 | Role memory | `.claude/agent-memory/kit-implementer/` | Claude Code, for `kit-implementer` only; created on first use, committed |
+| Process docs | `docs/agents/running-a-spec.md`, `docs/agents/spikes.md` | Through pointers: the output style and step 6 below; the "Spikes" line of `.claude/rules/kit-code.md` |
 
 ## Roles
 
@@ -33,7 +34,7 @@ Each role is one pair with the same `name`, `description` and instructions. The 
 | `kit-implementer` | Opus, high | subagent default (GPT-6.1 Sol, high) | writes inside `allowed_files`; in Claude Code it also keeps project memory, the one exception to `allowed_files` |
 | `kit-reviewer` | Fable, high | GPT-6 Astra, high | read-only, no memory |
 
-`kit-reviewer` has no memory on purpose. Role memory is a tracked directory, and a write to it during `/kit-review` would change the tree the Codex leg fingerprints and abort that leg.
+`kit-reviewer` has no memory on purpose: an independent reviewer carries no conclusions from one diff into the next.
 
 The two tools resolve a role's model in a different order:
 
@@ -97,9 +98,9 @@ Run /kit-review with base <base commit>, ticket 42, previous <earlier result fil
 `rescore` is optional: leave it out to re-score every earlier finding that was not refuted, or list the ids you accepted. `kit-reviewer` re-scores each of them, and Codex inspects the whole change fresh.
 
 The digest's `rescored` list gives each of them one state: `resolved`, `partial` or `unresolved`. A finding the reviewer did not re-score counts as `unresolved`. Each `partial` or `unresolved` one still stands under its earlier `id`, at no less than its earlier severity, and the full result shows its re-score under `previous`; a finding new in this round gets the next free `F` number.
-**Step 5: runtime proof.** The main session runs the proof commands itself; the reviewers only inspect.
+**Step 5: runtime proof.** The main session runs the proof commands itself.
 
-**Steps 6–7: docs and AI guidance.** After updating the AI guidance, run the check script (below).
+**Steps 6–7: docs and AI guidance.** The value, cost and impact paragraph goes in the ticket's closing comment, whose other contents `docs/agents/running-a-spec.md` lists; `/archify-review` runs at the wave's close-out. After updating the AI guidance, run the check script (below).
 
 ## The main session in Claude Code
 
@@ -108,6 +109,8 @@ The digest's `rescored` list gives each of them one state: `resolved`, `partial`
 **Agent teams.** `.claude/settings.json` enables them with `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`. Set the variable to `0` in `.claude/settings.local.json` (your own, untracked file) to turn them off for yourself. A session has one team, and teammates are not restored on resume.
 
 **Status line.** `statusLine` runs `.claude/statusline.sh`, which prints one line for the main session, such as `Opus 5.5 · xhigh · ctx 42% · 5h 31% · main · kit-orchestrator`: model, effort, context use, the five-hour limit, branch, and the output style when it is not the default. A part the payload does not carry is left out, and `ctx` turns red from 80%. A project `statusLine` replaces the user-level one, so the script first passes the same payload to the `statusLine` command in your own user settings and prints whatever that prints above its own line; an integration that lives in the user's own status line command keeps working. It needs `jq`: without it the line is blank and the user's own status line command is not run.
+
+**Subagent worktrees.** Claude Code creates each subagent worktree itself under the gitignored `.claude/worktrees/`, on a new branch, and removes it the usual way: at once if the agent changed nothing, otherwise by its periodic sweep. `"worktree": {"baseRef": "head"}` in `.claude/settings.json` bases it on the commit the session's checkout is on at spawn, instead of the remote's default branch; uncommitted changes do not carry over. The check script fails without it. To turn it off for yourself, put `{"worktree": {"baseRef": "fresh"}}` in `.claude/settings.local.json`. Codex creates no per-subagent worktree.
 
 **Subagent rows.** `subagentStatusLine` is an inline `jq` command that renders each row of the agent panel as `kit-implementer · opus-5-5 · high · 24% ctx`, leaving out a field the task does not report. Without `jq` the default rows show.
 
@@ -166,13 +169,13 @@ Done when `/debug-config` lists the project layer and `/hooks` shows the guard a
 python3 .agents/scripts/check-ai-setup.py
 ```
 
-It needs Python 3.11 or later, prints one `FAIL` line per problem naming the file and the reason, and exits non-zero on any. A rule glob that matches no file yet is a `WARN`.
+It needs Python 3.11 or later, prints one `FAIL` line per problem naming the file and the reason, and exits non-zero on any. A rule glob that matches no file yet is a `WARN`. Besides the AI setup it fails on a merge conflict marker in any tracked text file. The `ai-setup` job in CI runs it on every push and pull request.
 
 ## Verified against
 
-Claude Code 2.1.289 and Codex CLI 0.160.0, on 2026-10-04, each key on its live page:
+Claude Code 2.1.289 and Codex CLI 0.160.0, on 2026-10-04 (`worktree.baseRef` on 2026-10-06), each key on its live page:
 
-- Claude Code: `https://code.claude.com/docs/en/` + `sub-agents`, `memory`, `hooks`, `settings`, `settings-reference`, `agent-teams`, `workflows`, `permission-modes`, `output-styles`, `statusline`, `plugins/loading`, `plugins/mods/overview`, `plugins/mods/events`, `plugins/mods/reference`, `plugins/mods/test`. Appending `.md` returns the raw page.
+- Claude Code: `https://code.claude.com/docs/en/` + `sub-agents`, `memory`, `hooks`, `settings`, `settings-reference`, `worktrees`, `agent-teams`, `workflows`, `permission-modes`, `output-styles`, `statusline`, `plugins/loading`, `plugins/mods/overview`, `plugins/mods/events`, `plugins/mods/reference`, `plugins/mods/test`. Appending `.md` returns the raw page.
 - Codex: `https://learn.chatgpt.com/docs/` + `agent-configuration/agents-md`, `agent-configuration/subagents`, `config-file/config-reference`, `hooks`, `build-skills`, `non-interactive-mode`, and `config-schema.json`.
 
 ## Deliberately excluded
@@ -202,5 +205,6 @@ Ideas were taken from the owner's Ultrabusiness and ChainReporter setups. These 
 - Mods are early access (Claude Code 2.1.287 or later), and their API may change between releases; re-run the two `claude plugin` commands after an upgrade. `kit-cockpit` passes them and loads, but it has not run in a live session. Unconfirmed: that the guard's deny reaches the mod as a `PreToolUse` deny with the marker still in its reason (without it the mod asks nothing and the deny stands), that the question appears with permission prompts off and "Run it once" then runs the command, what the band shows for role subagents and teammates, and hot reload. The 30-second check settles the first two.
 - The status line script was tested against mock payloads and a stub user command, not in a live session and not against a live feed to the user's own status line command. Whether `statusLine` resolves the script when a session starts in a subdirectory depends on Claude Code loading the project settings there; the command falls back to the repository root through `git`.
 - The subagent row command was tested against mock payloads, not a live agent panel.
+- `worktree.baseRef` is not yet confirmed by a spawn: a subagent worktree created on 2026-10-06 still started at the remote's default branch. After the first spawn from a session whose checkout has the setting, the new row in `git worktree list` must show the checkout's commit.
 - Four vendored skills (`blast-radius`, `how`, `interrogate`, `unslop`) set `disable-model-invocation` and have no `agents/openai.yaml`, so Codex can invoke them implicitly. Fixing that means editing vendored skills.
 - The vendored `implement` skill says to use `/tdd` where possible. The workflow in `AGENTS.md` overrides it: implement first, then focused tests.

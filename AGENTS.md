@@ -1,6 +1,6 @@
 # PouryaKit
 
-A reusable .NET 10 foundation for modular monoliths built from vertical slices. Status: Wave 1 is complete: thirteen packages, `PouryaKit.Domain` (domain primitives), `PouryaKit.Cqrs` and `PouryaKit.Validation` (commands, queries and validation), `PouryaKit.Modularity` (Modules), `PouryaKit.Persistence`, `PouryaKit.Persistence.EFCore` and `PouryaKit.Persistence.Postgres` (persistence and the Unit of Work), `PouryaKit.Persistence.Dapper` (Dapper reads), `PouryaKit.Messaging`, `PouryaKit.Messaging.Wolverine` and `PouryaKit.Messaging.Wolverine.EFCore` (messaging), `PouryaKit.Web` (web) and `PouryaKit.Testing` (testing), proven by the Proving Sample in `samples/ModularMonolith/`; the Kit's skill is `.agents/skills/pourya-kit/`, the architecture `docs/architecture/README.md`, the decisions `docs/adr/` and the acceptance map `docs/acceptance.md`. Not in Wave 1: packaging and publishing (Phase 5) and the Capabilities of Wave 2 and later.
+A reusable .NET 10 foundation for modular monoliths built from vertical slices. What is built, and where each part is documented: `README.md`.
 
 ## Read first
 
@@ -45,12 +45,12 @@ Not test-first. Implement, then write focused tests for behaviour that matters; 
 3. Review, sized to the ticket. A ticket that claims a runtime guarantee or changes a public API of the Kit gets two independent reviews in parallel: a Fable subagent and Codex (GPT-6 Astra, high). Any other ticket gets one `kit-reviewer`.
 4. One fix round for the accepted findings, then a re-score of those findings only. Run a new full review only after a high finding was fixed. For any medium or low finding still open, record a disposition and move on.
 5. Runtime proof where the ticket claims a runtime guarantee.
-6. Update docs and C4 diagrams; run `/archify-review`.
+6. Update docs and C4 diagrams. The ticket's closing comment carries a value, cost and impact paragraph (the `archify-review` lens); `/archify-review` itself runs once per wave, at close-out.
 7. Update the Kit's own AI skill, rules and agent docs to match the change.
 
 Gates: relevant tests green · no open high finding, and a recorded disposition for the rest · runtime proof where applicable · docs in sync · AI guidance in sync.
 
-The dual review in step 3 runs as `/kit-review` with `{ base, spec }` in Claude Code; from a Codex-hosted session, spawn `kit-reviewer` and run a Claude inspection through the `claudex-loop` runner. Exact invocations: `docs/agents/ai-setup.md`.
+The dual review in step 3 runs as `/kit-review` with `{ base, ticket }` in Claude Code; from a Codex-hosted session, spawn `kit-reviewer` and run a Claude inspection through the `claudex-loop` runner. Exact invocations: `docs/agents/ai-setup.md`.
 
 ## Code Review Rules
 
@@ -86,4 +86,4 @@ Single-context: `GLOSSARY.md` at the root, decisions in `docs/adr/`. See `docs/a
 
 ### The Kit's own skill
 
-`.agents/skills/pourya-kit/` teaches developers and agents to use each Capability. `SKILL.md` routes to one file per Capability under `references/`; workflow step 7 writes or updates the reference file of the Capability a ticket delivers and its row in `SKILL.md`.
+`.agents/skills/pourya-kit/`: step 7 updates the delivered Capability's file under `references/` and its row in `SKILL.md`.
