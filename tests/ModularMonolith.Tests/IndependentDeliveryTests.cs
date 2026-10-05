@@ -47,7 +47,7 @@ public sealed class IndependentDeliveryTests(AppFixture app) : HostTest<AppFixtu
         Assert.Equal(
             [["billing.product-created", published], ["inventory.product-created", published]],
             await Fixture.RowsAsync(
-                "select subscription, message_id from billing.pouryakit_receipts union all select subscription, message_id from inventory.pouryakit_receipts order by 1"
+                "select subscription, message_id from billing.pouryakit_receipts union all select subscription, message_id from inventory.pouryakit_receipts where subscription = 'inventory.product-created' order by 1"
             )
         );
     }

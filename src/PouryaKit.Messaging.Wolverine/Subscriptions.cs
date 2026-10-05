@@ -5,7 +5,7 @@ namespace PouryaKit.Messaging.Wolverine;
 
 /// <summary>
 /// Every subscription of one Host, of Notification Handlers and Integration Event Handlers, and every Integration Event
-/// its Modules publish. It lives in the Host's service collection, not in a static, so every Module's declaration adds to
+/// and Snapshot its Modules publish. It lives in the Host's service collection, not in a static, so every Module's declaration adds to
 /// the same one, whenever it runs, and two Hosts in one process never share it. Names are compared ignoring case,
 /// because local queue names are lower-cased.
 /// </summary>
@@ -28,12 +28,18 @@ internal sealed class Subscriptions
     // The wire name of every Domain Event delivered as a Notification and of every Integration Event published.
     private readonly Dictionary<string, Type> _typeByWireName = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Type, Publication> _publications = [];
+    // Every published Snapshot contract, by its type.
+    private readonly Dictionary<Type, SnapshotPublication> _snapshots = [];
 
     public IEnumerable<Subscription> All => _byName.Values;
 
     public IEnumerable<Type> MessageTypes => _byName.Values.Select(subscription => subscription.Message).Distinct();
 
     public IReadOnlyDictionary<Type, Publication> Publications => _publications;
+
+    public IEnumerable<SnapshotPublication> Snapshots => _snapshots.Values;
+
+    public bool IsSnapshot(Type message) => _snapshots.ContainsKey(message);
 
     public static Subscriptions In(IServiceCollection services)
     {
@@ -121,7 +127,18 @@ internal sealed class Subscriptions
     /// equal ignoring case to another type's, and when the type is already published under another name or by another
     /// Module. Declaring the same publication again adds nothing.
     /// </summary>
-    public void Publish(Type integrationEvent, string wireName, Type? module)
+    public void Publish(Type integrationEvent, string wireName, Type? module) =>
+        Publish(integrationEvent, wireName, module, snapshot: null);
+
+    /// <summary>
+    /// Records that <paramref name="module"/> publishes the Snapshot of <paramref name="snapshot"/>'s aggregate under
+    /// <paramref name="wireName"/>, mapped by its mapper: with the checks of <see cref="Publish(Type, string, Type?)"/>,
+    /// and refused when the type is already published as an Integration Event or as another declaration's Snapshot.
+    /// </summary>
+    public void PublishSnapshot(SnapshotPublication snapshot, string wireName, Type? module) =>
+        Publish(snapshot.Snapshot, wireName, module, snapshot);
+
+    private void Publish(Type integrationEvent, string wireName, Type? module, SnapshotPublication? snapshot)
     {
         List<string> problems = [];
         if (integrationEvent.IsAssignableTo(typeof(DomainEvent)))
@@ -140,6 +157,12 @@ internal sealed class Subscriptions
                         $"{integrationEvent.FullName} is published as {published.WireName} by {published.Module?.Name ?? "the application"} and as {wireName} by {module?.Name ?? "the application"}; one Module publishes it, under one wire name."
                     );
                 }
+                else if (_snapshots.GetValueOrDefault(integrationEvent) != snapshot)
+                {
+                    problems.Add(
+                        $"{integrationEvent.FullName} is published as {Describe(_snapshots.GetValueOrDefault(integrationEvent))} and as {Describe(snapshot)}; a contract is an Integration Event or the Snapshot of one aggregate, with one mapper."
+                    );
+                }
 
                 ThrowIfAny(problems);
                 return;
@@ -156,7 +179,16 @@ internal sealed class Subscriptions
         ThrowIfAny(problems);
         _publications.Add(integrationEvent, new Publication(wireName, module));
         _typeByWireName.Add(wireName, integrationEvent);
+        if (snapshot is not null)
+        {
+            _snapshots.Add(integrationEvent, snapshot);
+        }
     }
+
+    private static string Describe(SnapshotPublication? snapshot) =>
+        snapshot is null
+            ? "an Integration Event"
+            : $"the Snapshot of {snapshot.Aggregate.FullName} mapped by {snapshot.Mapper.FullName}";
 
     private static void ThrowIfAny(List<string> problems)
     {
@@ -194,3 +226,6 @@ internal sealed class Subscriptions
 
 /// <summary>The wire name an Integration Event is published under, and the Module that publishes it.</summary>
 internal sealed record Publication(string WireName, Type? Module);
+
+/// <summary>A Snapshot contract, the aggregate it is the Snapshot of, and the mapper that builds it.</summary>
+internal sealed record SnapshotPublication(Type Aggregate, Type Snapshot, Type Mapper);

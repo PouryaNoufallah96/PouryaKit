@@ -27,12 +27,15 @@ internal enum FolderEdit
     Nothing,
     Remove,
     PeelSticker,
+    RelabelThenRefuse,
 }
 
 internal sealed record EditFolderCommand(Guid FolderId, FolderEdit Edit, string Colour = "red") : Command;
 
 internal sealed class EditFolderCommandHandler(IRepository<Folder, FolderId> folders) : CommandHandler<EditFolderCommand>
 {
+    public static readonly Error Refused = Error.Conflict("Folder.Refused", "The folder was refused after it was relabelled.");
+
     public override async Task<Result> Handle(EditFolderCommand command, CancellationToken cancellationToken)
     {
         var folder = (await folders.FindAsync(new FolderId(command.FolderId), cancellationToken))!;
@@ -41,6 +44,9 @@ internal sealed class EditFolderCommandHandler(IRepository<Folder, FolderId> fol
             case FolderEdit.Relabel:
                 folder.Relabel(command.Colour);
                 break;
+            case FolderEdit.RelabelThenRefuse:
+                folder.Relabel(command.Colour);
+                return Refused;
             case FolderEdit.RewritePage:
                 folder.RewritePage("first page", "rewritten");
                 break;

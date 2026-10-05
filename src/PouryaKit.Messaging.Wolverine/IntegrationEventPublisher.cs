@@ -42,6 +42,13 @@ internal sealed class IntegrationEventPublisher(Subscriptions subscriptions, Ope
             );
         }
 
+        if (subscriptions.IsSnapshot(type))
+        {
+            throw new InvalidOperationException(
+                $"{type.FullName} is a Snapshot. The Kit publishes it whenever the Unit of Work commits a change of its aggregate; nothing publishes it by hand."
+            );
+        }
+
         if (!subscriptions.Publications.TryGetValue(type, out var publication) || publication.Module != operation.Module)
         {
             throw new InvalidOperationException(

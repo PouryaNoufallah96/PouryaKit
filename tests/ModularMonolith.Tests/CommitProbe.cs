@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Persistence.EFCore;
 
@@ -37,8 +38,12 @@ internal static class CommitProbe
 
     private sealed class ProbedOutbox(IUnitOfWorkOutbox outbox) : IUnitOfWorkOutbox
     {
-        public Task WriteAsync(DbContext dbContext, IReadOnlyList<object> messages, CancellationToken cancellationToken) =>
-            outbox.WriteAsync(dbContext, messages, cancellationToken);
+        public Task WriteAsync(
+            DbContext dbContext,
+            IReadOnlyList<object> messages,
+            IReadOnlyList<EntityEntry> changedAggregates,
+            CancellationToken cancellationToken
+        ) => outbox.WriteAsync(dbContext, messages, changedAggregates, cancellationToken);
 
         public async Task FlushAsync()
         {

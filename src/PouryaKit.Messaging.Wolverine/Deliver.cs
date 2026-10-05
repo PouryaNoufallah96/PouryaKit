@@ -5,9 +5,12 @@ namespace PouryaKit.Messaging.Wolverine;
 
 // One delivery attempt, run as the Operation of the scope the delivery step opened: through the dispatcher, so it gets
 // the subscribing Module's Unit of Work, the Operation's clock, and everything a command gets, and a nested command or
-// a Domain Event the handler causes joins it. MessageId is the Notification's or Integration Event's identity, the same
-// in every delivery of it.
-internal sealed record Deliver(Subscription Subscription, object Message, Guid MessageId) : Command;
+// a Domain Event the handler causes joins it. MessageId is the Notification's, Integration Event's or Snapshot's
+// identity, the same in every delivery of it; Snapshot is the aggregate and version a Snapshot is of.
+internal sealed record Deliver(Subscription Subscription, object Message, Guid MessageId, SnapshotOf? Snapshot = null) : Command;
+
+/// <summary>The aggregate a Snapshot is of, by its key, and the version of it the Snapshot carries.</summary>
+internal sealed record SnapshotOf(string AggregateId, long Version);
 
 internal sealed class DeliverHandler(IServiceProvider scope, IntegrationEventPublisher publisher, IReceipts? receipts = null)
     : CommandHandler<Deliver>
@@ -19,6 +22,20 @@ internal sealed class DeliverHandler(IServiceProvider scope, IntegrationEventPub
         if (
             receipts is not null
             && !await receipts.RecordAsync(command.Subscription.Name, command.MessageId, cancellationToken)
+        )
+        {
+            return Result.Success();
+        }
+
+        // The Receipt stops a duplicate; the version stops an older Snapshot that arrives late or concurrently.
+        if (
+            command.Snapshot is { } snapshot
+            && !await (
+                receipts
+                ?? throw new InvalidOperationException(
+                    $"The subscription {command.Subscription.Name} receives Snapshots, which are applied only when newer, but the Host keeps no Receipts. Call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore on the Host."
+                )
+            ).RecordVersionAsync(command.Subscription.Name, snapshot.AggregateId, snapshot.Version, cancellationToken)
         )
         {
             return Result.Success();

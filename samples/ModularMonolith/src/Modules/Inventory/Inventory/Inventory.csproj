@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\Catalog\Catalog.Contracts\Catalog.Contracts.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Messaging.Wolverine.EFCore\PouryaKit.Messaging.Wolverine.EFCore.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Modularity\PouryaKit.Modularity.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Persistence.Dapper\PouryaKit.Persistence.Dapper.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Persistence.Postgres\PouryaKit.Persistence.Postgres.csproj" />
   </ItemGroup>
 </Project>
