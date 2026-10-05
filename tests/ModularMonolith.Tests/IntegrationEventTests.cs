@@ -295,7 +295,7 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
 
         // The query's refusal fails the delivery, whose handler ignored the query's Result; nothing was published.
         Assert.True(Assert.Single(deliveries).DeadLettered);
-        Assert.Contains("They only read", await Fixture.ScalarAsync<string>("select exception_message from wolverine.wolverine_dead_letters"));
+        Assert.Contains("Code that only reads", await Fixture.ScalarAsync<string>("select exception_message from wolverine.wolverine_dead_letters"));
         Assert.DoesNotContain(Received.All, received => received.IntegrationEvent is NoteSharedV1 shared && shared.Text == text);
     }
 

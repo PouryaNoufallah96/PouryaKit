@@ -24,7 +24,7 @@ internal sealed class IntegrationEventPublisher(Subscriptions subscriptions, Ope
         if (!operation.MayChangeState)
         {
             throw new InvalidOperationException(
-                $"A query, an authorizer or a validator published {type.Name}. They only read; publish an Integration Event from a Notification Handler."
+                $"Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, published {type.Name}. Publish an Integration Event from a Notification Handler."
             );
         }
 
