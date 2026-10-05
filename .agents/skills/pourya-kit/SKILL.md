@@ -1,6 +1,6 @@
 ---
 name: pourya-kit
-description: How to build a .NET modular monolith on PouryaKit. Use when writing, reviewing or testing code in a project that references PouryaKit packages, such as a Module, an aggregate, a command or query, a Domain Event Handler, a Notification Handler, a Dapper read, an Integration Event Handler, a Snapshot mapper or an endpoint.
+description: How to build a .NET modular monolith on PouryaKit. Use when writing, reviewing or testing code in a project that references PouryaKit packages, such as a Module, an aggregate, a command or query, a Domain Event Handler, a Notification Handler, a Dapper read, an Integration Event Handler, a Snapshot mapper, an endpoint, a test against the hosted application or an architecture test of a Module's boundaries.
 ---
 
 # PouryaKit
@@ -14,6 +14,8 @@ These hold in every Capability:
 - Anything outside a Module reaches it through its Gateway, and every Gateway call is one Operation in its own scope, run with the `OperationContext` the caller passes. There is no anonymous or default Actor.
 - A reaction is one of three kinds, kept distinct: a Domain Event Handler inside the Module and its Unit of Work, a Notification Handler after the commit for anything that reaches outside the Module's data, and an Integration Event Handler in the receiving Module.
 - Modules talk through Domain Events inside a Module, Integration Events and Snapshots across Modules, and a synchronous question through the owning Module's Contracts only when the answer is needed before the Operation can go on.
+- A query, an authorizer, a validator and a Snapshot mapper only read: every write the Kit guards is refused there ([commands-queries-validation.md](references/commands-queries-validation.md#code-that-only-reads)).
+- A Module references no other Module's implementation, makes public only its Composition Root and what its Host implements, and never names a transport type, clears Domain Events or writes an aggregate's table with SQL. Structure tests reject each of these, and any save or commit in a Module's code ([testing.md](references/testing.md#structure-tests)).
 - Names follow the Kit's `GLOSSARY.md`: Module, Feature, Operation, Operation Context, Actor, Domain Event, Notification Handler, Integration Event, Snapshot.
 
 ## Capabilities
@@ -29,4 +31,4 @@ Read the reference file of each Capability the code touches before writing it.
 | Dapper reads | `PouryaKit.Persistence.Dapper` | Writing a query's read in SQL, using typed IDs with Dapper, or writing a Module-internal table with plain SQL in the Unit of Work | [dapper-reads.md](references/dapper-reads.md) |
 | Messaging | `PouryaKit.Messaging`, `.Wolverine`, `.Wolverine.EFCore` | Writing a Notification Handler, telling other Modules what happened with an Integration Event, writing an Integration Event Handler, subscribing a second Module to an Integration Event, publishing the Snapshot and Tombstone of an aggregate, writing a Snapshot mapper, keeping a copy of another Module's data, declaring Notification Handlers, publications, Snapshots and subscriptions in a Composition Root, running deliveries in the Host, renaming or removing a Domain Event, an Integration Event, a Snapshot, a handler or a subscription, or giving one a stable name, adding the Receipt or Snapshot version table, setting the retries and the inbox stale time together, or finding and replaying dead letters | [messaging.md](references/messaging.md) |
 | Web | `PouryaKit.Web` | Writing an endpoint, composing the Host's HTTP pipeline, choosing a response's shape, making an endpoint public, reading the caller's claims into the Operation Context, or testing over HTTP | [web.md](references/web.md) |
-| Testing | `PouryaKit.Testing` | Writing a test against the hosted application, choosing the Actor a test runs as, fixing the time in a test, waiting for and asserting the deliveries an Operation caused, or reading and replaying its dead letters | [testing.md](references/testing.md) |
+| Testing | `PouryaKit.Testing` | Writing a test against the hosted application, choosing the Actor a test runs as, fixing the time in a test, waiting for and asserting the deliveries an Operation caused, reading and replaying its dead letters, abandoning a Host in a test, or checking or copying the structure rules a Module follows into architecture tests | [testing.md](references/testing.md) |

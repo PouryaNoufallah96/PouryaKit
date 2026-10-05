@@ -2,7 +2,14 @@
 
 Adopted implementations in `PouryaKit.Cqrs`. Format and rules: [README](README.md).
 
-The dispatcher, its fixed pipeline, `Operation` and `IUnitOfWork` are new Kit code (plan section B.2, "Dispatcher + pipeline"; ADR 0002), and so are `OperationContext` and `Actor` (plan section B.2, "Background context"; ADR 0007), so they have no record here.
+The dispatcher, its fixed pipeline, `Operation` and `IUnitOfWork` are new Kit code (plan section B.2, "Dispatcher + pipeline"; ADR 0002), and so are `OperationContext` and `Actor` (plan section B.2, "Background context"; ADR 0007), so they have no record here. So are the steps that only read (`Operation.OnlyReading`, ticket #18), which the Kit opens around a Snapshot mapper.
+
+## Package dependencies
+
+Checked against the NuGet cache on 2026-10-06; licence expressions from each package's nuspec. Neither is reciprocal or commercial (ADR 0002), and neither is a mediator.
+
+- `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.12, `MIT`.
+- `Microsoft.Extensions.Logging.Abstractions` 10.0.12, `MIT`.
 
 ## Commands, queries and their handlers
 
@@ -33,4 +40,4 @@ The dispatcher, its fixed pipeline, `Operation` and `IUnitOfWork` are new Kit co
   - The order is kept: take the Domain Events of every aggregate the DbContext tracks, clear them, run their handlers, then save. Upstream re-runs the dispatcher after each handler through a decorator, with no limit; the Kit repeats in rounds until no aggregate holds a Domain Event and throws after `DomainEventDrain.MaxDepth` rounds.
   - Handlers run one at a time, in the ordinal order of their full type names, instead of through MediatR's publish.
   - A handler returns a `Result`. A failed one, or a nested command that failed during the drain, stops it and rolls the Operation back; upstream handlers signal failure only by throwing.
-  - No Notification is written to an Outbox here; the Kit's Outbox arrives with #15.
+  - The drain writes nothing to an Outbox: it returns every Domain Event it took, and the Unit of Work writes those a Notification Handler subscribes to as Notifications after the prepare step (ticket #15).

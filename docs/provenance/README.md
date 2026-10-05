@@ -35,6 +35,8 @@ An idea that only shaped a design, with no code or test scenario taken, needs no
   - `pattern`: no upstream code is taken. The Kit reimplements the design or ports test scenarios. This is the only level allowed for a source that is `none`, `unconfirmed` or not permissively licensed (CC BY-SA, Stack Overflow answers, Ultrabusiness).
 - **Intentional differences** lists each deliberate change from upstream, so that an upstream fix can be judged against it. Write `none` when there are none.
 
+Every record also has one `## Package dependencies` section, before its adopted implementations: each third-party package the Kit package references directly, with the version `Directory.Packages.props` pins and the licence expression its nuspec declares, and the date it was checked; or `None.` when it references none. Code that is new to the Kit is named in a sentence under the title, so a reader knows it has no record rather than a missing one.
+
 ## Package licences
 
 The Kit takes no dependency on a reciprocal or commercially licensed package (ADR 0002). `LicenceTests` in `tests/PouryaKit.ArchitectureTests` reads every package in every Kit package's restored closure, analyzers and source generators included, and checks the licence expression its nuspec declares against this list of permissive SPDX identifiers:

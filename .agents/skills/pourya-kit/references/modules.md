@@ -47,7 +47,7 @@ public static WebApplicationBuilder CreateBuilder(string[] args)
 
 ## The Composition Root
 
-- Implement `IModuleDefinition` once per Module, as a public sealed class with a parameterless constructor. Everything else in the Module stays `internal`.
+- Implement `IModuleDefinition` once per Module, as a public sealed class with a parameterless constructor. Everything else in the Module stays `internal`, except the ports its Host implements for it with the records they carry ([messaging.md](messaging.md#writing-a-notification-handler)) and the migrations `dotnet-ef` writes; a structure test rejects any other public type ([testing.md](testing.md#structure-tests)).
 - `Configure(ModuleBuilder module)` declares everything the Module needs and offers: its data (`UsePostgres`, `MapUniqueConstraint`, `AddPouryaKitDapper`), its Features (`AddPouryaKitCqrs`, `AddPouryaKitValidation`), its Notification Handlers (`AddPouryaKitNotificationHandlers`), the Integration Events and Snapshots it publishes and the Integration Event Handlers it subscribes (`Publish`, `PublishSnapshot`, `Subscribe`), its endpoints (`AddPouryaKitEndpoints`) and its own services. `ModuleBuilder` is an `IServiceCollection` over the Host's one container, so every registration extension works on it.
 - The Unit of Work registered on a Module's builder becomes that Module's own; every other registration goes into the Host's container as it is.
 - The Host adds each Module once: `builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>().Add<InventoryModule>().Add<BillingModule>())`. That runs each Composition Root and registers the Module's Gateway.
@@ -119,6 +119,7 @@ Setting it:
 ## Startup checks
 
 - A Module added twice, in one `AddPouryaKitModules` call or across calls, throws naming it.
+- A Module whose Composition Root registers the handler of a command but no Unit of Work throws while the Host is composed, naming the Module and the command (`… handles the command … but registers no Unit of Work. Declare its data in its Composition Root, for example with UsePostgres.`). A Module that only answers queries needs no Unit of Work.
 - `AddPouryaKitModules` validates the container when the Host is built, in every environment: every registration must be constructible and no singleton may depend on a scoped service, or `Build()` throws an `AggregateException` naming the problem. A Host that later calls `ConfigureContainer` with another service provider factory replaces it, and that validation with it.
 - A service that needs the Gateway of a Module the Host never added fails `Build()`, naming that Gateway.
 
@@ -176,7 +177,7 @@ internal sealed class AddOrderLineCommandHandler(ICatalogProducts catalog, IRepo
 - Implement it in the owning Module, `internal sealed`, and register it scoped in its Composition Root. Resolved in the asking Operation's scope, it receives the asking `OperationContext` by injection. That scope belongs to the asking Module, so the implementation uses nothing of its own Module but its Gateway.
 - Answer each question with a query sent through the Gateway with `asking.Continue()`. The answer is then its own Operation in its own scope, through the owning Module's full pipeline, and it changes nothing.
 - Map the Result to the Contracts types. Turn only the expected failures into an answer, such as null for "not found"; any other failure is a bug in the question.
-- The asking Module's project references the owning Module's Contracts project only, and injects the interface into its handler.
+- The asking Module's project references the owning Module's Contracts project only, and injects the interface into its handler. A Contracts project references nothing from the Kit and no Module. A structure test rejects a Module that references another Module's implementation, and Contracts that reference the Kit or a Module, even when no code uses the reference ([testing.md](testing.md#structure-tests)).
 
 ## An application of one Module
 

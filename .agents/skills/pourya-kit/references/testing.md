@@ -1,6 +1,6 @@
 # Testing
 
-`PouryaKit.Testing`: PostgreSQL in a container, data reset between tests, Operations sent through a Gateway, waiting for and asserting deliveries, reading and replaying dead letters. Namespace `PouryaKit.Testing`, on xUnit v3; the fixture needs Docker.
+`PouryaKit.Testing`: PostgreSQL in a container, data reset between tests, Operations sent through a Gateway, waiting for and asserting deliveries, reading and replaying dead letters. Namespace `PouryaKit.Testing`, on xUnit v3; the fixture needs Docker. The structure rules every Module follows, and how to test them, need no package ([Structure tests](#structure-tests)).
 
 - [The fixture](#the-fixture)
 - [Each test](#each-test)
@@ -8,6 +8,7 @@
 - [Time](#time)
 - [Deliveries](#deliveries)
 - [Dead letters](#dead-letters)
+- [Structure tests](#structure-tests)
 
 One fixture for the test assembly and a test against the hosted application, after the Proving Sample:
 
@@ -136,6 +137,7 @@ The two `catalog.` deliveries are the Notification's, stored in the product's co
 - `Fixture.WaitUntilDeliveredAsync(ct)` waits until no stored delivery is pending, such as after a test made the store hand one out again. A dead letter marked for replay counts as pending until the store has moved it back and it is handled or set aside again.
 - Between tests, the reset waits for every pending delivery, then deletes every stored delivery, dead letters included. The message store's own tables, such as its node records, stay: they belong to the running Host.
 - A test that starts a second Host of the application, for example to prove that a Notification committed by a Host that died is delivered by the next, starts it with `HostFixture.StartHostAsync(host, ct)`, which applies the migrations first, and stops or disposes it before the test ends. Compose it with its own `RetryDelays` or `InboxStaleTime` to test a setting, keeping [the stale-time rule](messaging.md#the-stale-time-rule) unless the test is about breaking it.
+- Every Host composed with `UsePouryaKitTestDelivery` runs in Solo mode as the same node of the message store, the fixture's Host included. So when a test abandons a Host in the middle of a delivery, two live Hosts on the same store, such as the fixture's and the one that replaces it, can each recover that delivery at the same moment. The Receipt keeps its effect to one, but the delivery may be attempted once more. A test that abandons a Host asserts the effect, or a range of attempts, never an exact number of attempts; `IndependentDeliveryTests.A_subscription_that_succeeded_is_not_run_again_after_its_host_dies_during_the_other_and_a_new_host_takes_over` in the Kit's repository shows it.
 
 ## Dead letters
 
@@ -175,3 +177,28 @@ public async Task A_delivery_that_keeps_failing_is_set_aside_and_replayed_once_i
 - `Fixture.DeadLettersAsync(ct)` reads every dead letter through Wolverine's dead-letter storage, as an application inspects it ([messaging.md](messaging.md#dead-letters)), each as a `DeadLetter(Id, Subscription, WireName, ExceptionType, ExceptionMessage)`: the subscription it was received at, the wire name it was stored under, and the exception of its last attempt. Each test starts with none, so these are what its Operations caused. For a failed Result the exception is `NotificationHandlerFailedException` or `IntegrationEventHandlerFailedException` (`PouryaKit.Messaging.Wolverine`), whose message names each Error as `Code (Message)`; for a handler that threw, the exception it threw.
 - `Fixture.ReplayAsync(deadLetter, ct)` replays one dead letter through Wolverine, which moves it back to its subscription's queue, where only that subscription's handler runs, and waits until it is handled or set aside again. It fails with a `DeliveryAssertionException` when the delivery is not a dead letter, so a replay never passes on nothing.
 - Assert what the replay changed: the handler's effect, and that the other subscriptions of the message did not run again.
+
+## Structure tests
+
+The Kit proves the boundaries of its Proving Sample with architecture tests, in `tests/PouryaKit.ArchitectureTests` of the Kit's repository. Wave 1 ships no package of rules: a consuming project that wants the same protection copies the pattern into an architecture test project of its own (below). Either way, these are the rules every Module follows.
+
+### The rules
+
+| Rule | What the Kit's test rejects | What it cannot see |
+|---|---|---|
+| A Module reaches another only through that Module's Contracts; Contracts reference nothing from the Kit and no Module (ADR 0001, [modules.md](modules.md#asking-another-module-a-question)) | A reference to another Module's implementation, or from Contracts to a Kit package or a Module, anywhere in the project's restored closure, direct or through other projects, even when no code uses it | An assembly loaded, or a service resolved, by name at run time |
+| A Module's only public types are its Composition Root, the ports its Host implements with the records they carry, and EF Core migrations ([modules.md](modules.md#the-composition-root)) | Any other exported type; the test lists each Module's ports by name | Internal types opened with `InternalsVisibleTo` |
+| Feature code never saves, commits or writes around the Unit of Work (ADR 0003, [commands-queries-validation.md](commands-queries-validation.md#commands-and-queries)) | A call to `SaveChanges(Async)`, `DbContext.Database`, EF Core's `ExecuteUpdate(Async)` or `ExecuteDelete(Async)`; beginning, committing, rolling back or releasing a transaction or savepoint on an ADO.NET connection or transaction or an EF Core transaction; a new `TransactionScope` or `CommittableTransaction`; a step only the Kit runs (`IUnitOfWork`, `IUnitOfWorkOutbox`, `IReceipts`, `IIntegrationEventOutbox`, `ISnapshotMappers`, `DomainEventDrain`, `BeginOperation`, `Operation.OnlyReading`); a string literal holding a transaction-control statement (`begin`, `start transaction`, `commit`, `end`, `abort`, `rollback`, `savepoint`, `release`, `prepare transaction`, `commit prepared`) at any statement boundary | A call through reflection, `dynamic` or an expression compiled at run time; a call a library makes for the Module; SQL assembled at run time. A literal that is exactly one of those words, such as a label reading "End", is rejected as if it were SQL |
+| No transport type in a Module or its Contracts (ADR 0004, ADR 0006, [messaging.md](messaging.md#writing-a-notification-handler)) | Any type from a Wolverine or JasperFx assembly that the code, a signature or an attribute names | A transport type reached by name at run time, or held only as `object` or `dynamic` |
+| No envelope storage in a Module's DbContext (ADR 0004) | An entity type from a Wolverine or JasperFx assembly, or a table named `wolverine_*` | An envelope table mapped by an entity of the Module's own under another name |
+| Only the Kit clears Domain Events ([domain-primitives.md](domain-primitives.md#aggregates-entities-and-value-objects)) | A call to `ClearDomainEvents` on any aggregate type | A call through reflection or `dynamic` |
+| No SQL write to a table an aggregate maps ([dapper-reads.md](dapper-reads.md#writing-with-plain-sql-in-the-unit-of-work)) | `insert into`, `update`, `delete from`, `merge into` or `truncate` in a string literal, naming a table that any Module's aggregate, owned part or child entity maps, with or without its schema, whatever the quotes, case or whitespace around the schema's dot | SQL built at run time (an interpolated or concatenated table name, text read from a file or resource), a write through a view, and writes inside stored procedures, functions or triggers |
+
+Every rule reads a Module's code outside its EF Core migrations and model snapshots, which `dotnet-ef` writes. The Kit's repository also asserts each Kit package's dependency closure and the licence of every package in it; those protect the Kit itself, not a consuming project.
+
+### Copying the pattern
+
+- Each rule is a function from a compiled Module, or one Module's EF Core model, to its violations, in `ModuleRules.cs`. It reads method bodies with `Il.cs`, which finds the calls and string literals of every method, those the compiler generates for async methods and lambdas included, with nothing but the base class library, and a project's restored closure with `RestoredPackage.cs`, from its `obj/project.assets.json`. Copy the three files into your architecture test project and adapt their names.
+- Find the Modules from the Host, as `Sample.cs` does: walk the Host assembly's references among the repository's own projects (`DependencyContext.Default.RuntimeLibraries` of type `project`) and keep each assembly that implements `IModuleDefinition`. A Module's Contracts are the project named after it with `.Contracts`.
+- Read each Module's EF Core model from the Host built but never started, with a placeholder connection string, so the tables carry the schemas and snake_case names the database has: resolve each DbContext from a scope and read `GetService<IDesignTimeModel>().Model`. Nothing connects.
+- Judge every Module with each function and assert no violations. Then judge an offending fixture Module with the same function and assert its exact violations, so a rule that reads nothing fails: the Kit's is `tests/PouryaKit.ArchitectureTests/Offending`, a project of its own that breaks every rule, inside async methods and lambdas, referenced by the test project and never by the Host.

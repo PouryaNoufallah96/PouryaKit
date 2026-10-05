@@ -11,8 +11,9 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
 - `Microsoft.EntityFrameworkCore.Design` 10.0.12, `MIT`, referenced by the Host with `PrivateAssets="all"`, so it reaches no other project. `dotnet-ef` needs it in its startup project, the Host, whose services create the Modules' DbContexts. Its closure (`Humanizer.Core`, `Mono.TextTemplating`, `Newtonsoft.Json`, `Microsoft.Build.Framework` and the `Microsoft.CodeAnalysis` packages) is all `MIT`.
 - The `dotnet-ef` 10.0.12 tool, `MIT`, pinned in `.config/dotnet-tools.json`. It generates the Modules' migrations and is never referenced at run time.
 - `WolverineFx.RuntimeCompilation` 6.46.0, `MIT`, checked on 2026-10-05 (ticket #15), referenced by the Host only. Wolverine 6 compiles its runtime code with it, and a Host without it fails at start (ADR 0004, "Defaults chosen", 2); no Kit package references it. It adds `JasperFx.RuntimeCompiler` 5.0.0 and the `Microsoft.CodeAnalysis` packages, all `MIT`. With it and the Kit's messaging packages, the Host's restored closure is 72 packages: 62 `MIT`, 4 `Apache-2.0`, 3 `BSD-3-Clause` and 3 `PostgreSQL`; none is reciprocal or commercial.
+- `xunit.v3` 4.0.1, `Apache-2.0`, checked against the NuGet cache on 2026-10-06, the test framework of `tests/ModularMonolith.Tests` and `tests/PouryaKit.ArchitectureTests`, and of the Kit's own test projects. No Kit package references it; `PouryaKit.Testing` references only its library form, `xunit.v3.extensibility.core`.
 
-The Billing Module (ticket #17) adds no package: it references what Inventory references.
+The Billing Module (ticket #17) adds no package: it references what Inventory references, except `PouryaKit.Persistence.Dapper`.
 
 ## Dead-letter and replay acceptance scenario
 

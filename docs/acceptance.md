@@ -27,7 +27,7 @@ The plan row is the B.1 behaviour the Phase acceptance line cites, or the Phase 
 
 ## Structure seam
 
-The third seam of the Testing Decisions is proven in `tests/PouryaKit.ArchitectureTests`. Each rule judges the Proving Sample and an offending fixture Module (`tests/PouryaKit.ArchitectureTests/Offending`) with the same function.
+The third seam of the Testing Decisions is proven in `tests/PouryaKit.ArchitectureTests`, described in [the architecture doc](architecture/README.md#structure-tests). Each rule judges the Proving Sample and an offending fixture Module (`tests/PouryaKit.ArchitectureTests/Offending`) with the same function.
 
 | Rule | Proven by |
 |---|---|

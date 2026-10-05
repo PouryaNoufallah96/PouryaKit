@@ -2,7 +2,9 @@
 
 Adopted implementations in `PouryaKit.Web`. Format and rules: [README](README.md).
 
-## Package dependency
+The status code pages that answer a failure ASP.NET Core leaves with an empty body, such as routing's 405 and 415, as a problem response (`ProblemStatusCodePages`, ticket #19) are new Kit code over ASP.NET Core's own `UseStatusCodePages`, so they have no record here.
+
+## Package dependencies
 
 None. `PouryaKit.Web` references `PouryaKit.Cqrs` and the ASP.NET Core shared framework (`FrameworkReference Microsoft.AspNetCore.App`), as plan section C lists; it takes no NuGet package and does not reference `PouryaKit.Modularity`.
 

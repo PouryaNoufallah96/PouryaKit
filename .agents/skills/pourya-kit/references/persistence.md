@@ -98,8 +98,8 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
 
 ## The repository
 
-- Inject `IRepository<TAggregate, TId>`: `AddAsync`, `Remove`, `FindAsync(id)`, and `FindAsync`, `ListAsync`, `AnyAsync`, `CountAsync` by an Ardalis.Specification `Specification<T>`. It tracks changes in the Operation's Unit of Work; nothing on it saves. Feature code reaches its data through it, never through the DbContext.
-- Add and remove only from a command's handler or a Domain Event Handler. `AddAsync` and `Remove` throw `InvalidOperationException` in code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, such as a Snapshot mapper, at any depth, because a query nested in a command would otherwise write into the command's commit.
+- Inject `IRepository<TAggregate, TId>`: `AddAsync`, `Remove`, `FindAsync(id)`, and `FindAsync`, `ListAsync`, `AnyAsync`, `CountAsync` by an Ardalis.Specification `Specification<T>`. It tracks changes in the Operation's Unit of Work; nothing on it saves. Feature code reaches its data through it, never through the DbContext: a structure test rejects a Module that calls `SaveChanges`, `DbContext.Database` or EF Core's bulk `ExecuteUpdate` and `ExecuteDelete` ([testing.md](testing.md#structure-tests)).
+- Add and remove only where the Operation may change state. `AddAsync` and `Remove` throw `InvalidOperationException` in [code that only reads](commands-queries-validation.md#code-that-only-reads), because a query nested in a command would otherwise write into the command's commit.
 
 A named specification and a Feature that uses it, from the Proving Sample's Products Business Area:
 
@@ -183,12 +183,12 @@ internal sealed class ProductRepository(IUnitOfWork unitOfWork)
 
 ## The Unit of Work
 
-- Each command Operation runs in one transaction that the Unit of Work owns, and commits in a fixed sequence:
+- Each command Operation runs in one transaction that the Unit of Work begins and owns, and commits in a fixed sequence:
   1. The outermost handler returns. A failed Result, or a nested command that failed, ends the Operation here.
   2. The Domain Event Handlers run ([below](#domain-event-handlers)), and the Unit of Work checks again that nothing failed.
-  3. It prepares persistence: soft-delete marks, one version advance per changed aggregate, audit fields ([below](#audit-and-soft-delete)).
+  3. It prepares persistence: soft-delete marks, the cascades of what was deleted, one version advance per changed aggregate, audit fields ([below](#audit-and-soft-delete)).
   4. It builds the Snapshot, or the Tombstone, of each changed aggregate that a Snapshot is declared for, from that final state, carrying the version the prepare step set ([messaging.md](messaging.md#snapshots-between-modules)).
-  5. It writes the Operation's Notifications and Snapshots to the Outbox, checks once more that nothing failed, saves once and commits, and only after the commit sends them ([messaging.md](messaging.md#what-the-kit-guarantees)).
+  5. It writes the Operation's Notifications, the Integration Events a Notification Handler's delivery published, and the Snapshots to the Outbox, checks once more that nothing failed, because a Snapshot mapper may have caught a refused command, saves once and commits, and only after the commit sends them ([messaging.md](messaging.md#what-the-kit-guarantees)).
 
   Nothing changes an aggregate after the prepare step: a Snapshot mapper that does fails the Operation.
 - A failed Result, a failed nested command or a failed Domain Event Handler rolls everything back, and nothing is prepared or written to the Outbox. An exception rolls back and reaches the Gateway's caller.
@@ -259,7 +259,7 @@ Its counterpart, `UncountProductInCategoryHandler`, handles `ProductRemovedDomai
 - A handler may change other aggregates through repositories, and they may raise Domain Events of their own: those are handled in the next round, until none remain, for at most `DomainEventDrain.MaxDepth` rounds. Domain Events still raised after that throw `InvalidOperationException` and nothing commits: handlers that keep raising each other's Domain Events are a cycle, which is a bug.
 - A failed Result stops the handling at once, so no further handler or Domain Event runs; the whole Operation rolls back and fails with that handler's Errors. An exception rolls back and reaches the Gateway's caller.
 - A handler may send a nested command with an injected `IDispatcher`; it joins the same Unit of Work. If it fails, the whole Operation rolls back even when the handler ignores its Result and returns a success, and the Operation fails with the nested command's Errors.
-- A handler returns a Result and never saves, commits, begins a transaction or touches the Outbox.
+- A handler returns a Result and never saves, commits, begins a transaction or touches the Outbox ([commands-queries-validation.md](commands-queries-validation.md#commands-and-queries)).
 - Choose a Domain Event Handler to keep the Module's own aggregates consistent with each other in the same commit. Anything that reaches outside the Module's own data, such as sending an email, pushing to a client or publishing an Integration Event, belongs in a Notification Handler, which runs after the commit ([messaging.md](messaging.md)): a Domain Event Handler runs before the commit, so whatever it sent would stay sent when the Operation rolls back.
 - Test it through the Gateway with the command whose aggregate raises its Domain Event: assert that both aggregates' rows are written, and that a failed reaction leaves neither.
 
