@@ -1,12 +1,13 @@
 # Testing
 
-`PouryaKit.Testing`: PostgreSQL in a container, data reset between tests, Operations sent through a Gateway, waiting for and asserting deliveries. Namespace `PouryaKit.Testing`, on xUnit v3; the fixture needs Docker.
+`PouryaKit.Testing`: PostgreSQL in a container, data reset between tests, Operations sent through a Gateway, waiting for and asserting deliveries, reading and replaying dead letters. Namespace `PouryaKit.Testing`, on xUnit v3; the fixture needs Docker.
 
 - [The fixture](#the-fixture)
 - [Each test](#each-test)
 - [The Operation Context in tests](#the-operation-context-in-tests)
 - [Time](#time)
 - [Deliveries](#deliveries)
+- [Dead letters](#dead-letters)
 
 One fixture for the test assembly and a test against the hosted application, after the Proving Sample:
 
@@ -95,7 +96,7 @@ public async Task The_context_a_caller_passes_to_a_gateway_is_the_context_the_ha
 
 ## Deliveries
 
-A test of the deliveries one Operation causes, after the Proving Sample, whose Catalog announces each new product and publishes `ProductCreatedV1`, which Inventory handles:
+A test of the deliveries one Operation causes, after the Proving Sample, whose Catalog announces each new product and publishes `ProductCreatedV1`, which Inventory and Billing each handle:
 
 ```csharp
 [Fact]
@@ -114,21 +115,63 @@ public async Task A_new_product_is_announced_by_the_host_after_it_is_committed()
     Assert.True(created.IsSuccess);
     Assert.Equal(
         [
+            new Delivery("billing.product-created", "catalog.product-created.v1", false),
             new Delivery("catalog.product-created.announce-new-product", "catalog.product-created", false),
             new Delivery("catalog.product-created.publish-product-created", "catalog.product-created", false),
             new Delivery("inventory.product-created", "catalog.product-created.v1", false),
         ],
-        deliveries.OrderBy(delivery => delivery.Subscription, StringComparer.Ordinal)
+        deliveries
+            .Where(delivery => delivery.WireName is "catalog.product-created" or "catalog.product-created.v1")
+            .OrderBy(delivery => delivery.Subscription, StringComparer.Ordinal)
     );
 }
 ```
 
-The first two deliveries are the Notification's, stored in the product's commit; the third is the Integration Event's, stored in the commit of `publish-product-created`'s delivery. The wait includes deliveries that deliveries caused, and their order is not fixed, so the test sorts them.
+The two `catalog.` deliveries are the Notification's, stored in the product's commit; the other two are the Integration Event's, one per subscription, stored in the commit of `publish-product-created`'s delivery. The wait includes deliveries that deliveries caused, and their order is not fixed, so the test sorts them. It keeps only these two wire names: the sample's product also stores a Snapshot delivery, not yet documented here (#18).
 
-- In `CreateHost`, call `builder.Services.UsePouryaKitTestDelivery()` after `UsePouryaKitWolverine`, which the application's builder method calls, as the fixture above does. Deliveries then run at test speed: Solo durability, so a stopped Host's deliveries are recovered at once; a failed delivery retried twice, 100 ms apart (`TestDeliveryServiceCollectionExtensions.RetryDelays`), so three attempts; and the message store polled every 100 ms (`PollingTime`).
-- `Fixture.WaitForDeliveriesAsync(operation, ct)` runs the Operation, typically a Gateway call, waits until every delivery it caused is handled or set aside as a dead letter, including deliveries those deliveries caused, and returns the Operation's outcome with one `Delivery(Subscription, WireName, DeadLettered)` per delivery, in no particular order. It fails with a `DeliveryAssertionException` when the Operation stored no delivery at all, so a test that waits never passes on nothing, and with a `TimeoutException` when deliveries are still pending after 30 seconds.
+- In `CreateHost`, call `builder.Services.UsePouryaKitTestDelivery()` after `UsePouryaKitWolverine`, which the application's builder method calls, as the fixture above does. Deliveries then run at test speed: Solo durability, so a stopped Host's deliveries are recovered at once; a failed delivery retried twice, 100 ms apart (`TestDeliveryServiceCollectionExtensions.RetryDelays`), so three attempts, and then set aside as a dead letter; and the message store polled every 100 ms (`PollingTime`). Count attempts from the setting, `1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count`, rather than a literal.
+- `Fixture.WaitForDeliveriesAsync(operation, ct)` runs the Operation, typically a Gateway call, waits until every delivery it caused is handled or set aside as a dead letter, including deliveries those deliveries caused, and returns the Operation's outcome with one `Delivery(Subscription, WireName, DeadLettered)` per delivery, in no particular order. A failing delivery stays pending through every retry, so the wait ends only once it is set aside, and it comes back with `DeadLettered` true. It fails with a `DeliveryAssertionException` when the Operation stored no delivery at all, so a test that waits never passes on nothing, and with a `TimeoutException` when deliveries are still pending after 30 seconds.
 - After it returns, assert the handler's effect: the rows it wrote, such as Inventory's stock item, or what the Host's implementation of the port recorded.
 - `Fixture.AssertNothingSentAsync(operation, ct)` runs the Operation and fails unless it stored no delivery: what a rolled-back Operation leaves. A delivery is stored in the Operation's own commit, so there is nothing to wait for.
-- `Fixture.WaitUntilDeliveredAsync(ct)` waits until no stored delivery is pending, such as after a test made the store hand one out again.
+- `Fixture.WaitUntilDeliveredAsync(ct)` waits until no stored delivery is pending, such as after a test made the store hand one out again. A dead letter marked for replay counts as pending until the store has moved it back and it is handled or set aside again.
 - Between tests, the reset waits for every pending delivery, then deletes every stored delivery, dead letters included. The message store's own tables, such as its node records, stay: they belong to the running Host.
-- A test that starts a second Host of the application, for example to prove that a Notification committed by a Host that died is delivered by the next, starts it with `HostFixture.StartHostAsync(host, ct)`, which applies the migrations first, and stops or disposes it before the test ends.
+- A test that starts a second Host of the application, for example to prove that a Notification committed by a Host that died is delivered by the next, starts it with `HostFixture.StartHostAsync(host, ct)`, which applies the migrations first, and stops or disposes it before the test ends. Compose it with its own `RetryDelays` or `InboxStaleTime` to test a setting, keeping [the stale-time rule](messaging.md#the-stale-time-rule) unless the test is about breaking it.
+
+## Dead letters
+
+A test of a delivery that keeps failing, after the Proving Sample's tests. Their test-only Module publishes one Integration Event to two subscriptions, `Circulation.Archive` and `Circulation.Ledger`, and a test makes one handler return a failed Result for its note until it heals it:
+
+```csharp
+[Fact]
+public async Task A_delivery_that_keeps_failing_is_set_aside_and_replayed_once_its_cause_is_fixed()
+{
+    var circulated = new NoteToCirculateDomainEvent($"note {Guid.CreateVersion7()}");
+    Circulation.Fail(Circulation.Archive, circulated.Text);
+
+    var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
+        () =>
+            Fixture
+                .Gateway<StubModule>()
+                .SendAsync(new WriteNoteRaisingCommand(circulated.Text, [circulated]), TestContext.Current.CancellationToken),
+        TestContext.Current.CancellationToken
+    );
+
+    // Only the failing subscription's delivery is set aside, with the Errors of its failed Result.
+    Assert.Contains(new Delivery(Circulation.Archive, "stub.note-circulated.v1", true), deliveries);
+    Assert.Contains(new Delivery(Circulation.Ledger, "stub.note-circulated.v1", false), deliveries);
+    var deadLetter = Assert.Single(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
+    Assert.Equal(typeof(IntegrationEventHandlerFailedException).FullName, deadLetter.ExceptionType);
+    Assert.Contains($"{Circulation.Refused.Code} ({Circulation.Refused.Message})", deadLetter.ExceptionMessage);
+
+    // The cause is fixed, then the dead letter is replayed: only the archive runs again.
+    Circulation.Heal(Circulation.Archive, circulated.Text);
+    await Fixture.ReplayAsync(deadLetter, TestContext.Current.CancellationToken);
+
+    Assert.Empty(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
+    Assert.Single(Circulation.RunsOf(Circulation.Ledger, circulated.Text));
+}
+```
+
+- `Fixture.DeadLettersAsync(ct)` reads every dead letter through Wolverine's dead-letter storage, as an application inspects it ([messaging.md](messaging.md#dead-letters)), each as a `DeadLetter(Id, Subscription, WireName, ExceptionType, ExceptionMessage)`: the subscription it was received at, the wire name it was stored under, and the exception of its last attempt. Each test starts with none, so these are what its Operations caused. For a failed Result the exception is `NotificationHandlerFailedException` or `IntegrationEventHandlerFailedException` (`PouryaKit.Messaging.Wolverine`), whose message names each Error as `Code (Message)`; for a handler that threw, the exception it threw.
+- `Fixture.ReplayAsync(deadLetter, ct)` replays one dead letter through Wolverine, which moves it back to its subscription's queue, where only that subscription's handler runs, and waits until it is handled or set aside again. It fails with a `DeliveryAssertionException` when the delivery is not a dead letter, so a replay never passes on nothing.
+- Assert what the replay changed: the handler's effect, and that the other subscriptions of the message did not run again.
