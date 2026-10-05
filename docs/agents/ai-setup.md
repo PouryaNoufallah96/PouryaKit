@@ -11,6 +11,7 @@ One home per concern. Anything both tools use lives in `.agents/` or at the root
 | Shared instructions | `AGENTS.md` | Codex directly; Claude Code through `CLAUDE.md`, which is the bare `@AGENTS.md` import |
 | Main-session guidance | `.claude/output-styles/kit-orchestrator.md` | Claude Code, main session only |
 | Skills | `.agents/skills/<name>/` | Codex directly; Claude Code through the `.claude/skills/<name>` symlinks |
+| The Kit's own skill | `.agents/skills/pourya-kit/`, owned by this repository and so absent from `skills-lock.json` | Same as other skills; workflow step 7 updates it as each Capability lands |
 | Roles | `.claude/agents/<name>.md` paired with `.codex/agents/<name>.toml` | Each tool reads its own file |
 | Rules | `.claude/rules/*.md` | Claude Code by `paths`; Codex through the rule router in `AGENTS.md` |
 | Review workflow | `.claude/workflows/kit-review.js` | Claude Code (`/kit-review`) |
@@ -184,7 +185,7 @@ Ideas were taken from the owner's Ultrabusiness and ChainReporter setups. These 
 | Notification hooks | Personal runtime preferences; they belong in user settings. |
 | Session figures, a pane, a command classifier in the mod | The status line and the agent panel carry the figures, and `guard.py` stays the only rule source. |
 | A main-thread `--agent` orchestrator | It would replace the prompt and tool list of every session in the repository. `AGENTS.md` and the output style carry the operating model instead. |
-| .NET layer rules | No code exists yet. `.claude/rules/kit-code.md` states only decided facts. |
+| .NET layer rules | Only the scaffold exists. `.claude/rules/kit-code.md` states only decided facts. |
 | Edits to vendored skills | `skills-lock.json` pins each one by hash. |
 | Changes to user-level config | Three edits the owner approved, and nothing else: a key Claude Code no longer reads (`teammateDefaultModel`) and a key Codex ignores (`agents.max_depth`) were removed, and this repository was trusted in Codex. |
 

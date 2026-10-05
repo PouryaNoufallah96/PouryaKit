@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PouryaKit.Domain/PouryaKit.Domain.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PouryaKit.Domain.Tests/PouryaKit.Domain.Tests.csproj" />
+  </Folder>
+</Solution>

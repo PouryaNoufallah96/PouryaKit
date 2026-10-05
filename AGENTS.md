@@ -1,6 +1,6 @@
 # PouryaKit
 
-A reusable .NET 10 foundation for modular monoliths built from vertical slices. Status: planning; no packages exist yet.
+A reusable .NET 10 foundation for modular monoliths built from vertical slices. Status: Wave 1 in progress; the solution scaffold and an empty `PouryaKit.Domain` exist, and no Capability is usable yet.
 
 ## Read first
 
@@ -83,3 +83,7 @@ The five default triage labels, each named after its role. See `docs/agents/tria
 ### Domain docs
 
 Single-context: `GLOSSARY.md` at the root, decisions in `docs/adr/`. See `docs/agents/domain.md`.
+
+### The Kit's own skill
+
+`.agents/skills/pourya-kit/` teaches developers and agents to use each Capability. Workflow step 7 fills the section of the Capability a ticket delivers.
