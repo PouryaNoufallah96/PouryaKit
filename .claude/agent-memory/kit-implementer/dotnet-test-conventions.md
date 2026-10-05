@@ -13,4 +13,6 @@ Test projects use xunit.v3 4.0.1, which pulls xunit.v3.mtp-v2 (Microsoft.Testing
 - A test csproj is `OutputType Exe`, `IsPackable false`, `PackageReference xunit.v3` (version in Directory.Packages.props), `<Using Include="Xunit" />`. Never add Microsoft.NET.Test.Sdk or xunit.runner.visualstudio.
 - MTP fails a test project that runs zero tests (exit code 8), so a new test project needs at least one real test before it joins the solution.
 - `nuget.config` clears sources to nuget.org only: with central package management plus TreatWarningsAsErrors, a second source without mapping turns NU1507 into a restore error.
+- xUnit analyzer xUnit1051 is an error under TreatWarningsAsErrors: any test call to a method taking a CancellationToken must pass `TestContext.Current.CancellationToken`.
+- Ticket #7 (2026-10-05): Cqrs and Validation test projects reference `Microsoft.Extensions.DependencyInjection` (10.0.12, test-only, recorded as a deviation) to build a strict container; logging in tests is an own `ILogger<>` open-generic stand-in or `NullLogger<>`, never `Microsoft.Extensions.Logging`.
 - CI's setup-dotnet reads global.json; `rollForward: latestPatch` maps to `10.0.4xx`, `latestFeature` would float to any 10.0.
