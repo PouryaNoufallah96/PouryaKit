@@ -12,9 +12,13 @@ public interface IIntegrationEventPublisher
     /// <summary>
     /// Publishes <paramref name="integrationEvent"/>, which follows from the Domain Event identified by
     /// <paramref name="domainEventId"/>: the one the Notification Handler handles. That identity is the Integration
-    /// Event's own, in every delivery and redelivery, so each Integration Event Handler applies it once. Throws when
-    /// called outside a Notification Handler's delivery, with the identity of another Domain Event, or with a type the
-    /// running Module did not declare it publishes.
+    /// Event's own, in every delivery and redelivery, so each Integration Event Handler applies it once. One Domain
+    /// Event therefore yields at most one Integration Event of each type, from one Notification Handler: a second one
+    /// would carry the same identity, and every receiver would acknowledge it without applying it. Throws when called
+    /// outside a Notification Handler's delivery, where the Operation only reads (in a query, an authorizer or a
+    /// validator), with the identity of another Domain Event, with a type the running Module did not declare it
+    /// publishes, or a second time with one type in one delivery. When two Notification Handlers of one Domain Event
+    /// publish one type, the second delivery to commit fails, and keeps failing until it is set aside.
     /// </summary>
     void Publish<TIntegrationEvent>(Guid domainEventId, TIntegrationEvent integrationEvent)
         where TIntegrationEvent : class;

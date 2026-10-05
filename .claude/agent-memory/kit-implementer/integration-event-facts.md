@@ -16,5 +16,10 @@ Verified in ticket #16 (2026-10-05), WolverineFx 6.46.0; check the merged code b
 
 - After the #15 fix round (merged 2026-10-05): subscription names are lower-cased in `Subscription`'s constructor, so duplicate-name messages print the lower-cased name; the Outbox and durable-queue checks live in one `StartupCheck` (an `IHostedLifecycleService.StartedAsync`, registered with `TryAddEnumerable` by every declaration call), keyed on the `INotificationOutbox` marker. Add any new whole-Host delivery check there, not in a second place.
 
+- #16 fix round: `IUnitOfWork -> IUnitOfWorkOutbox -> IReceipts -> IUnitOfWork` is a cycle through factory registrations; MS DI does not detect it and the test run hung (no error) for 10 minutes. Resolve such a Kit service lazily from the scope. Run any new delivery test with `--timeout 180s` (MTP) in the background.
+- A durable local queue hands the first attempt the published in-memory instance (checked with ReferenceEquals); a `ScheduleRetry` attempt is read back from the store, a new instance. A test that claims identity/time survive serialisation must assert on a retry or a recovered delivery.
+- The restart proof for a receiver: hold in the test `IUnitOfWorkOutbox.FlushAsync` decorator (runs after commit, before the delivery returns, so before acknowledgment) by `Operation.Module`, `StopMode.Quick` the Host, start a new one; count `IReceipts.RecordAsync == false` to prove the new Host really handed it out again.
+- Mutation code under TreatWarningsAsErrors: `if (false)` fails the build (CS0162); use `DateTime.Now.Year < 0`.
+
 **Why:** each decides how #17/#18 extend delivery or would make a test pass vacuously.
 **How to apply:** for dead letters (#17) and Snapshots (#18) through the same subscription registry and Outbox. Related: [[messaging-delivery-facts]], [[wolverine-spike-gotchas]].
