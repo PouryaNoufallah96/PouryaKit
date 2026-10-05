@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Modularity;
@@ -50,6 +51,22 @@ internal sealed class ThrowingNoteEndpoint : IEndpoint
                     await stub.SendAsync(new WriteNoteThenFailCommand("throwing", Ending.Throw), context, cancellationToken)
                 ).ToHttpResult()
         );
+}
+
+/// <summary>Registered only by a test that builds a Host of its own, to map <see cref="PlainAnonymousEndpoint"/>.</summary>
+internal sealed class PlainAnonymousRoute;
+
+// A public endpoint that names no Actor for its anonymous callers, which the Host must refuse. It is mapped only in a
+// Host that registers PlainAnonymousRoute, so the shared Host still starts.
+internal sealed class PlainAnonymousEndpoint : IEndpoint
+{
+    public void Map(IEndpointRouteBuilder routes)
+    {
+        if (routes.ServiceProvider.GetService<PlainAnonymousRoute>() is not null)
+        {
+            routes.MapGet("/plain-anonymous", () => "anyone").AllowAnonymous();
+        }
+    }
 }
 
 internal sealed class MixedErrorsEndpoint : IEndpoint

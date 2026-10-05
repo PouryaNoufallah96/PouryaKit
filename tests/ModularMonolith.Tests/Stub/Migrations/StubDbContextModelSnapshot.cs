@@ -124,6 +124,30 @@ namespace ModularMonolith.Tests.Stub.Migrations
                     b.ToTable("pages", "stub");
                 });
 
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Sticker", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("FolderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("folder_id");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("text");
+
+                    b.HasKey("Id")
+                        .HasName("pk_stickers");
+
+                    b.HasIndex("FolderId")
+                        .HasDatabaseName("ix_stickers_folder_id");
+
+                    b.ToTable("stickers", "stub");
+                });
+
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Folder", b =>
                 {
                     b.OwnsOne("ModularMonolith.Tests.Stub.Label", "Label", b1 =>
@@ -160,9 +184,19 @@ namespace ModularMonolith.Tests.Stub.Migrations
                         .HasConstraintName("fk_pages_folders_folder_id");
                 });
 
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Sticker", b =>
+                {
+                    b.HasOne("ModularMonolith.Tests.Stub.Folder", null)
+                        .WithMany("Stickers")
+                        .HasForeignKey("FolderId")
+                        .HasConstraintName("fk_stickers_folders_folder_id");
+                });
+
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Folder", b =>
                 {
                     b.Navigation("Pages");
+
+                    b.Navigation("Stickers");
                 });
 #pragma warning restore 612, 618
         }

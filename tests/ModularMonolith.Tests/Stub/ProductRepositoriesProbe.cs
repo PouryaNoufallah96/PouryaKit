@@ -2,6 +2,7 @@ using Catalog.Categories.ValueObjects;
 using Catalog.Products.Data.Repository;
 using Catalog.Products.Data.Specifications;
 using Catalog.Products.Entities;
+using Catalog.Products.Features.RemoveProducts;
 using Catalog.Products.ValueObjects;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
@@ -28,6 +29,18 @@ internal sealed class ProbeProductRepositoriesCommandHandler(
         var product = Product.Create(id, new CategoryId(command.CategoryId), "Lamp").Value;
         await generic.AddAsync(product, cancellationToken);
         return ReferenceEquals(product, await specific.FindAsync(id, cancellationToken));
+    }
+}
+
+// Removes the same products twice in one Operation, as two nested commands that both select them would.
+internal sealed record RemoveProductsTwiceCommand(string Name) : Command;
+
+internal sealed class RemoveProductsTwiceCommandHandler(IDispatcher dispatcher) : CommandHandler<RemoveProductsTwiceCommand>
+{
+    public override async Task<Result> Handle(RemoveProductsTwiceCommand command, CancellationToken cancellationToken)
+    {
+        await dispatcher.SendAsync(new RemoveProductsCommand([command.Name]), cancellationToken);
+        return await dispatcher.SendAsync(new RemoveProductsCommand([command.Name]), cancellationToken);
     }
 }
 

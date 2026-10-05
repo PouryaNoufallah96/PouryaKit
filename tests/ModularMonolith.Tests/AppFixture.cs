@@ -12,6 +12,7 @@ using ModularMonolith.Tests.Stub;
 using Npgsql;
 using PouryaKit.Modularity;
 using PouryaKit.Testing;
+using PouryaKit.Web;
 
 [assembly: AssemblyFixture(typeof(AppFixture))]
 [assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
@@ -20,23 +21,28 @@ namespace ModularMonolith.Tests;
 
 /// <summary>
 /// The Proving Sample's Host, with the test-only <see cref="StubModule"/> beside Catalog, served in memory,
-/// authenticating callers with <see cref="TestAuthentication"/>, delivering at test speed, and committing through the
-/// <see cref="CommitProbe"/>.
+/// authenticating callers with <see cref="TestAuthentication"/>, whose tenant claim fills the tenant, delivering at test
+/// speed, and committing through the <see cref="CommitProbe"/>.
 /// </summary>
 public sealed class AppFixture : HostFixture
 {
-    protected override IHost CreateHost(string connectionString) => Compose(connectionString, configure: null);
+    protected override IHost CreateHost(string connectionString) =>
+        ComposeHost("Development", connectionString, Logs);
 
     /// <summary>
-    /// Another Host of the same application on the fixture's database, not yet started, with
-    /// <paramref name="configure"/> applied before it is built. A test that starts it stops it.
+    /// The application as the tests host it, in <paramref name="environment"/>, built but not started;
+    /// <paramref name="configure"/> may change its composition first. Starting it starts Wolverine on the database's
+    /// message store, so a test that starts it stops or disposes it before it ends.
     /// </summary>
-    public IHost CreateSecondHost(Action<WebApplicationBuilder>? configure = null) => Compose(ConnectionString, configure);
-
-    private IHost Compose(string connectionString, Action<WebApplicationBuilder>? configure)
+    public static WebApplication ComposeHost(
+        string environment,
+        string connectionString,
+        RecordedLogs logs,
+        Action<WebApplicationBuilder>? configure = null
+    )
     {
         var builder = ModularMonolithHost.CreateBuilder(
-            ["--environment", "Development", $"--ConnectionStrings:app={connectionString}"]
+            ["--environment", environment, $"--ConnectionStrings:app={connectionString}"]
         );
         builder.AddPouryaKitModules(modules => modules.Add<StubModule>());
         builder.Services.UsePouryaKitTestDelivery();
@@ -45,7 +51,8 @@ public sealed class AppFixture : HostFixture
         builder
             .Services.AddAuthentication(TestAuthentication.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
-        builder.Logging.AddProvider(Logs);
+        builder.Services.Configure<PouryaKitWebOptions>(web => web.TenantClaim = TestAuthentication.TenantClaim);
+        builder.Logging.AddProvider(logs);
         configure?.Invoke(builder);
         return ModularMonolithHost.Build(builder);
     }
@@ -56,12 +63,20 @@ public sealed class AppFixture : HostFixture
     /// <summary>
     /// A client of the Host's HTTP pipeline, authenticated as the person <paramref name="caller"/>, or anonymous.
     /// </summary>
-    public HttpClient Client(string? caller = null)
+    public HttpClient Client(string? caller = null, string? tenant = null) => ClientOf(Host, caller, tenant);
+
+    /// <summary>A client of <paramref name="host"/>'s HTTP pipeline, as <see cref="Client"/> makes one.</summary>
+    public static HttpClient ClientOf(IHost host, string? caller = null, string? tenant = null)
     {
-        var client = Host.GetTestClient();
+        var client = host.GetTestClient();
         if (caller is not null)
         {
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(TestAuthentication.SchemeName, caller);
+        }
+
+        if (tenant is not null)
+        {
+            client.DefaultRequestHeaders.Add(TestAuthentication.TenantHeader, tenant);
         }
 
         return client;

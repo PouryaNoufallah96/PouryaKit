@@ -252,7 +252,7 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
     public async Task A_notification_committed_by_a_host_that_stopped_before_sending_it_is_handled_by_the_next()
     {
         var text = Unique();
-        using var stopping = Fixture.CreateSecondHost();
+        await using var stopping = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
         await HostFixture.StartHostAsync(stopping, TestContext.Current.CancellationToken);
         var stub = stopping.Services.GetRequiredService<IGatewayProcessor<StubModule>>();
 

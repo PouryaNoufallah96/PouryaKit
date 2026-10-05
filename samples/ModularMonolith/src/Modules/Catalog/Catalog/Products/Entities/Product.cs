@@ -9,6 +9,9 @@ namespace Catalog.Products.Entities;
 // Auditable and soft-deletable: the Unit of Work sets those properties, so the domain never does.
 internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDeletable
 {
+    // Set by Remove, not mapped: IsDeleted is set only by the Unit of Work, after every handler of the Operation ran.
+    private bool _removed;
+
     private Product() { }
 
     public string Name { get; private set; } = "";
@@ -60,6 +63,18 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
         return Result.Success();
     }
 
-    /// <summary>Records that the product is leaving the catalog; the repository's <c>Remove</c> then removes it.</summary>
-    public void Remove() => Raise(new ProductRemovedDomainEvent(Id, CategoryId));
+    /// <summary>
+    /// Records that the product is leaving the catalog, once; the repository's <c>Remove</c> then removes it. Removing it
+    /// again in the same Operation raises nothing: it is still found until the Unit of Work marks it deleted.
+    /// </summary>
+    public void Remove()
+    {
+        if (_removed)
+        {
+            return;
+        }
+
+        _removed = true;
+        Raise(new ProductRemovedDomainEvent(Id, CategoryId));
+    }
 }

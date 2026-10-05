@@ -1,6 +1,7 @@
 using Catalog.Categories.ValueObjects;
 using Catalog.Products.Data.Repository;
 using Catalog.Products.Entities;
+using Catalog.Products.Errors;
 using Catalog.Products.ValueObjects;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
@@ -12,10 +13,16 @@ internal sealed class ImportProductsCommandHandler(IProductRepository products)
 {
     public override async Task<Result<int>> Handle(ImportProductsCommand command, CancellationToken cancellationToken)
     {
-        // Names are compared as Product stores them. A name already in use is skipped, which makes a repeated import
-        // harmless. That is a courtesy, not the guard: the unique index on the name is, so a name given twice, or taken
-        // by a concurrent Operation, fails the import with ProductErrors.NameInUse.
+        // Names are compared as Product stores them. A name given twice is a mistake in the request, refused before
+        // anything else. A name already in use is skipped, which makes a repeated import harmless. That is a courtesy,
+        // not the guard: the unique index on the name is, so a name a concurrent Operation takes first fails the import
+        // with ProductErrors.NameInUse.
         var names = command.Names.Select(name => name.Trim()).ToList();
+        if (names.Distinct(StringComparer.Ordinal).Count() != names.Count)
+        {
+            return ProductErrors.NameRepeated;
+        }
+
         var inUse = await products.ListNamesInUseAsync(names, cancellationToken);
 
         var categoryId = new CategoryId(command.CategoryId);

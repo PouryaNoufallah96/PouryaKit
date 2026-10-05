@@ -28,7 +28,11 @@ public static class ModularMonolithHost
     public static WebApplication Build(WebApplicationBuilder builder)
     {
         var app = builder.Build();
+        // First, so an exception in routing or authentication still answers a problem response.
         app.UseExceptionHandler();
+        app.UseRouting();
+        app.UseAuthentication();
+        app.UseAuthorization();
         app.MapPouryaKitModuleEndpoints();
         return app;
     }
