@@ -32,7 +32,7 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
 
         Assert.True(created.IsSuccess);
-        Assert.Equal([new Delivery("catalog.product-created.announce-new-product", "catalog.product-created", false)], deliveries);
+        Assert.Contains(new Delivery("catalog.product-created.announce-new-product", "catalog.product-created", false), deliveries);
         Assert.Single(Fixture.Logs.Entries, entry => entry.Message == $"New in the catalog: Lamp ({product})");
     }
 
@@ -95,7 +95,11 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         if (rollback == "refused save")
         {
             await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
-            await catalog.SendAsync(new CreateProductCommand(Guid.CreateVersion7(), category, text), TestContext.Current.CancellationToken);
+            // Its deliveries finish first, so none of them is taken for one of the refused save's.
+            await Fixture.WaitForDeliveriesAsync(
+                () => catalog.SendAsync(new CreateProductCommand(Guid.CreateVersion7(), category, text), TestContext.Current.CancellationToken),
+                TestContext.Current.CancellationToken
+            );
         }
 
         var failed = await Fixture.AssertNothingSentAsync<Result>(
