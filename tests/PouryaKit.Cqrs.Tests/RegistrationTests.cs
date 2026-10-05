@@ -53,6 +53,37 @@ internal sealed class GenericClosedAuthorizer<TUnused> : IAuthorizer<TwiceHandle
         Task.FromResult(Result.Success());
 }
 
+internal abstract record ThingDomainEvent : DomainEvent;
+
+internal sealed record ThingNamedDomainEvent : ThingDomainEvent;
+
+internal sealed record ThingMovedDomainEvent : ThingDomainEvent;
+
+internal sealed class TwoEventsHandler
+    : IDomainEventHandler<ThingNamedDomainEvent>,
+        IDomainEventHandler<ThingMovedDomainEvent>
+{
+    public Task<Result> Handle(ThingNamedDomainEvent domainEvent, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success());
+
+    public Task<Result> Handle(ThingMovedDomainEvent domainEvent, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success());
+}
+
+// The drain runs the handlers of a Domain Event's exact type, so this one would never run.
+internal sealed class AnyThingEventHandler : IDomainEventHandler<ThingDomainEvent>
+{
+    public Task<Result> Handle(ThingDomainEvent domainEvent, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success());
+}
+
+internal sealed class AnyEventHandler<TDomainEvent> : IDomainEventHandler<TDomainEvent>
+    where TDomainEvent : DomainEvent
+{
+    public Task<Result> Handle(TDomainEvent domainEvent, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success());
+}
+
 public sealed class RegistrationTests
 {
     [Fact]
@@ -78,8 +109,20 @@ public sealed class RegistrationTests
             typeof(EchoHandler<>),
             typeof(AnyOperationAuthorizer<>),
             typeof(GenericClosedAuthorizer<>),
+            typeof(AnyEventHandler<>),
         ];
         Assert.All(generics, type => Assert.Contains($"{type.FullName} is generic", error.Message));
+    }
+
+    [Fact]
+    public void A_domain_event_handler_for_several_events_or_for_an_abstract_one_fails_registration()
+    {
+        var error = Assert.Throws<InvalidOperationException>(() =>
+            new ServiceCollection().AddPouryaKitCqrs(typeof(RegistrationTests).Assembly)
+        );
+
+        Assert.Contains($"{typeof(TwoEventsHandler).FullName} handles 2 Domain Event types", error.Message);
+        Assert.Contains($"{typeof(AnyThingEventHandler).FullName} handles ThingDomainEvent, which is abstract", error.Message);
     }
 
     [Fact]

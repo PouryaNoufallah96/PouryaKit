@@ -16,12 +16,15 @@ public sealed class Operation
     private int _runningChecks;
 
     /// <summary>
-    /// True once a command inside the Operation has failed, whether or not its caller read the Result. The Unit of
-    /// Work then rolls back; nothing clears it.
+    /// True once a command or a Domain Event Handler inside the Operation has failed, whether or not its caller read the
+    /// Result. The Unit of Work then rolls back; nothing clears it.
     /// </summary>
     public bool IsRollbackOnly => !RollbackErrors.IsEmpty;
 
-    /// <summary>The Errors of the first failed command, which the rolled-back Operation fails with; empty until then.</summary>
+    /// <summary>
+    /// The Errors of the first failed command or Domain Event Handler, which the rolled-back Operation fails with; empty
+    /// until then.
+    /// </summary>
     public ImmutableArray<Error> RollbackErrors { get; private set; } = [];
 
     internal void MarkRollbackOnly(ImmutableArray<Error> errors)

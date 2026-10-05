@@ -233,6 +233,15 @@ internal sealed partial class Dispatcher(
             operation.EndUnitOfWork();
         }
 
+        // A step after the handler, such as a Domain Event Handler's nested command, may have failed the Operation; a
+        // success now would report a commit the Unit of Work was bound not to make.
+        if (outcome.IsSuccess && operation.IsRollbackOnly)
+        {
+            throw new InvalidOperationException(
+                $"{unitOfWork.GetType().Name} returned a success for an Operation that is rollback-only. An IUnitOfWork checks Operation.IsRollbackOnly again after every step that can run nested commands, and rolls back."
+            );
+        }
+
         if (ReferenceEquals(outcome, returned))
         {
             return returned!;

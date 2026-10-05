@@ -25,6 +25,9 @@ public static class ThingsGateway
     public static Task<Result<string>> RunOuter(IDispatcher dispatcher, NestedOutcome nested) =>
         dispatcher.SendAsync(new RunOuterCommand(nested));
 
+    public static Task<Result<string>> RunNested(IDispatcher dispatcher, NestedOutcome outcome) =>
+        dispatcher.SendAsync(new RunNestedCommand(outcome));
+
     public static Task<Result<string>> RunOuterIgnoringAFailedQuery(IDispatcher dispatcher) =>
         dispatcher.SendAsync(new ReadMissingThingCommand());
 
