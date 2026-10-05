@@ -72,7 +72,7 @@ Both react to a Domain Event the Module raised. Choose by when the reaction may 
 - Return a Result. A failed Result is a failure like an exception: the delivery is retried ([Retries](#retries)), then set aside as a dead letter that names each Error ([Dead letters](#dead-letters)).
 - Reach outside the Module through a port: an interface the Module declares beside the handler, public so the Host can implement it, as `INewProductAnnouncer` above. The Host registers the implementation (below). The handler never names a transport, an SMTP client or another Module's types.
 - Inject what a command handler may: the `OperationContext` (a continuation of the raising Operation), the Module's repositories, `IDispatcher`, and `IIntegrationEventPublisher` to tell other Modules ([Publishing from a Notification Handler](#publishing-from-a-notification-handler)). A change made through the Module's repositories commits in the handler's own Unit of Work, with its Receipt, and a Domain Event it raises is handled as in any Operation. A change that must commit with the change that raised the Domain Event belongs in a Domain Event Handler instead.
-- Never save, commit, begin a transaction, touch the Outbox or reference a Wolverine type: the delivery and its Unit of Work own all of that.
+- Never save, commit, begin a transaction, touch the Outbox or reference a Wolverine type: the delivery and its Unit of Work own all of that. A structure test rejects a Module or a Contracts project whose code names any Wolverine or JasperFx type, and a Module DbContext that maps the message store's envelope tables ([testing.md](testing.md#structure-tests)).
 
 ## Declaring handlers and running deliveries
 
@@ -215,7 +215,7 @@ internal sealed class PublishProductCreatedNotificationHandler(IIntegrationEvent
   - with a type the running Module did not declare with `Publish`, another Module's Integration Event included;
   - with a type declared as a Snapshot: the Unit of Work publishes it, and nothing publishes one by hand ([Snapshots between Modules](#snapshots-between-modules));
   - a second time with the same type in one Notification Handler's delivery, because both would carry one identity and every receiver would apply only the first;
-  - where the Operation may not change state: in code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, even one the Notification Handler runs.
+  - in [code that only reads](commands-queries-validation.md#code-that-only-reads), even a query or validator the Notification Handler runs.
 
   In a Notification Handler, the exception fails the delivery, which is retried and then set aside as a dead letter.
 - One Domain Event yields at most one Integration Event of each type, from one Notification Handler. When two Notification Handlers of one Domain Event publish the same type, the second delivery to commit fails, and keeps failing until it is set aside as a dead letter: the Outbox records each publication in the publishing Module's Receipt table, keyed by the wire name and the Domain Event's `Id`.
@@ -371,8 +371,8 @@ internal sealed class CatalogProducts : Migration
 }
 ```
 
-- A Module that subscribes to any Snapshot needs both tables in its schema: `pouryakit_receipts` from `CreateReceiptTable` and `pouryakit_snapshot_versions` from `CreateSnapshotVersionTable`, each created once. Nothing checks either at startup; without one, every Snapshot delivery to the Module fails with an `InvalidOperationException` that names the call to add, and is retried and set aside as a dead letter.
-- The Kit removes no row from either table, and nothing should. A Receipt is what keeps a redelivered Snapshot from applying twice; a version row is what keeps an older Snapshot from undoing a newer one or a Tombstone. A version row is not a Receipt: it holds, for each subscription and aggregate, the newest version applied.
+- A Module that subscribes to any Snapshot needs both tables in its schema, each created once; [Receipts](#receipts) says which Module needs which table and what fails without one.
+- A version row is not a Receipt: it holds, for each subscription and aggregate, the newest version applied, and is what keeps an older Snapshot from undoing a newer one or a Tombstone. The Kit removes no row from it, and nothing should.
 
 ### What the Kit guarantees for a Snapshot
 
@@ -390,7 +390,7 @@ internal sealed class CatalogProducts : Migration
 A feature author keeps four rules, or the copies in other Modules go wrong:
 
 - **A mapper only reads.** It runs after every Domain Event was handled and every version and audit field set, so what it changed would commit unversioned and unseen by the Snapshot, and a Domain Event it raised would never be handled. It may read the aggregate and run queries, nothing else:
-  - It runs as a step of the Unit of Work that only reads, as a query does, so the Kit refuses every write it attempts: a nested command (`A command was sent from a Snapshot mapper, a step that only reads.`), the repository's `AddAsync` and `Remove`, `IUnitOfWorkConnection.Join()` and publishing an Integration Event (`Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, ...`). Each refusal is an `InvalidOperationException` that fails the Operation and reaches the Gateway's caller, and nothing commits. A mapper that catches the refusal of its command still fails the Operation: the refused command marks it rollback-only, and the Unit of Work checks that once more after the mappers ran, so the Operation fails with `Operation.CommandThrew`.
+  - It runs as a step of the Unit of Work that only reads, so the Kit refuses every write it attempts, as in any [code that only reads](commands-queries-validation.md#code-that-only-reads): a nested command, the repository's `AddAsync` and `Remove`, `IUnitOfWorkConnection.Join()` and publishing an Integration Event. Each refusal is an `InvalidOperationException` that fails the Operation and reaches the Gateway's caller, and nothing commits. A mapper that catches the refusal of its command still fails the Operation: the refused command marks it rollback-only, and the Unit of Work checks that once more after the mappers ran, so the Operation fails with `Operation.CommandThrew`.
   - What a mapper changes directly on the entities it is given is detected afterwards: the Unit of Work compares every entity it saves with its state before the mappers ran, and a changed value, or a Domain Event an aggregate raised, fails the Operation with an `InvalidOperationException`, and nothing commits.
   - One change is not seen: a change inside an EF Core complex collection.
 - **The aggregate's key is set by the application, not generated by the database.** The Snapshot is built before the save, and a key the database generates does not exist until then. Nothing checks it at startup: an Operation that creates such an aggregate fails at its commit with an `InvalidOperationException`, and nothing commits. Create keys as `Product` does, with `TypedId.New<ProductId>()`.
@@ -416,8 +416,12 @@ An Integration Event is delivered the same way, sent after the commit, in a new 
 
 ## Receipts
 
-- A Module keeps its handlers' Receipts in a table `pouryakit_receipts` in its own schema, keyed by the subscription name, lower-cased, and the Notification's or Integration Event's identity, the Domain Event's `Id`. The table is not part of the Module's model, so a migration creates it: each Module that declares a Notification Handler or subscribes an Integration Event Handler adds one that calls `CreateReceiptTable` with the Module's schema. Inventory calls it in its first migration, beside its own tables. A Module that publishes Integration Events needs it too: the Outbox records each publication there, under the wire name followed by `#published`, which no subscription name can take.
-- A publishing Module's table also holds one row per Domain Event and wire name it published for it, keyed `<wire name>#published`. That row is how the Kit refuses a second Notification Handler publishing the same type for one Domain Event; it is not a Receipt, and no subscription name can equal it.
+- A Module keeps its handlers' Receipts in a table `pouryakit_receipts` in its own schema, keyed by the subscription name, lower-cased, and the identity of what was delivered: a Notification's or Integration Event's is the Domain Event's `Id`; a Snapshot's is derived from its wire name, its aggregate's key and its version. The table is not part of the Module's model, so a migration creates it with `CreateReceiptTable` and the Module's schema.
+- Which Module needs which table:
+  - `pouryakit_receipts` (`CreateReceiptTable`): every Module that declares a Notification Handler, subscribes an Integration Event Handler or publishes Integration Events. Inventory calls it in its first migration, beside its own tables. A publishing Module's table also holds one row per Domain Event and wire name it published, keyed `<wire name>#published`, which no subscription name can take: it is how the Kit refuses a second Notification Handler publishing the same type for one Domain Event, and it is not a Receipt.
+  - `pouryakit_snapshot_versions` (`CreateSnapshotVersionTable`, [Keeping a copy](#keeping-a-copy)): every Module that subscribes to a Snapshot, beside its Receipt table.
+- Nothing checks either table at startup. Without one, every delivery that needs it fails with an `InvalidOperationException` that names the call to add, and is retried and set aside as a dead letter. `HostFixture` applies every migration before it starts the Host, so a test shows the gap at once.
+- The Kit removes no row from either table, and nothing should: a Receipt is what keeps a redelivery from applying twice.
 - Add it with `dotnet ef migrations add Receipts` and the Module's `--project`, `--context` and `--output-dir`, as in [persistence.md](persistence.md#migrations). The model did not change, so the migration is empty and the snapshot stays as it was; fill its `Up` and `Down`:
 
 ```csharp
@@ -435,9 +439,6 @@ internal sealed class Receipts : Migration
     protected override void Down(MigrationBuilder migrationBuilder) => migrationBuilder.DropReceiptTable("catalog");
 }
 ```
-
-- Nothing checks the table at startup. Without it, every delivery to the Module fails with an `InvalidOperationException` that names `CreateReceiptTable`, and is retried and set aside as a dead letter. `HostFixture` applies every migration before it starts the Host, so a test shows the gap at once.
-- A Module that subscribes to a Snapshot also needs the Snapshot version table, `CreateSnapshotVersionTable` ([Keeping a copy](#keeping-a-copy)). A Snapshot's Receipt is keyed by an identity the Kit derives from its wire name, its aggregate's key and its version.
 
 ## Names
 
@@ -555,6 +556,6 @@ A longer stale time has its price: a delivery committed but never sent waits tha
   - `Subscribe`, for a Domain Event; an abstract handler; and a subscription name that is missing, invalid, reserved or colliding.
 - **When the Host starts**, it fails, naming each problem, for a subscription to an Integration Event or Snapshot that no Module of the Host publishes; for an Integration Event this process already sends under another wire name; and for an Integration Event that Wolverine had already named otherwise before the Host declared it, because Wolverine keeps the first name it gives a type and would send it under that name. Wire names are declared all or none.
 - **After every hosted service started**, it fails when Notification Handlers, Integration Events or Snapshots are declared but nothing writes them to an Outbox: `UsePouryaKitWolverine()` without a connection name, from `PouryaKit.Messaging.Wolverine`, runs Wolverine with no database, for a Host that declares none of them. It also fails when Host configuration made a subscription's queue one that does not store what it receives, such as `LocalQueue(name).BufferedInMemory()`.
-- Not checked: that a subscribing Module has a Unit of Work, a Receipt table ([Receipts](#receipts)) and, for a Snapshot, the Snapshot version table. Not checked at startup either, but failing the Operation that commits: a Snapshot of an aggregate whose key the database generates, a Snapshot declaration without its Module in a Host of Modules, and one that covers independent aggregates ([The rules of a mapper and a key](#the-rules-of-a-mapper-and-a-key)).
+- Not checked: that a Module whose Composition Root handles no command of its own, but declares Notification Handlers or subscriptions, has a Unit of Work (one that handles a command is checked when the Host is composed, [modules.md](modules.md#startup-checks)); and that a Module has the Receipt table and, for a Snapshot, the Snapshot version table ([Receipts](#receipts)). Not checked at startup either, but failing the Operation that commits: a Snapshot of an aggregate whose key the database generates, a Snapshot declaration without its Module in a Host of Modules, and one that covers independent aggregates ([The rules of a mapper and a key](#the-rules-of-a-mapper-and-a-key)).
 
 Testing deliveries: [testing.md](testing.md#deliveries).

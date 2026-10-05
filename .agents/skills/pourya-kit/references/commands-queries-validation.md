@@ -53,8 +53,8 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 - Declare each as a sealed record: `Command<TResponse>` for a command with a value, `Command` for one without (its handler derives from `CommandHandler<TCommand>` and returns `Result`), `Query<TResponse>` for a read. Name it after its intent with the `Command` or `Query` suffix.
 - Give each exactly one handler class deriving from `CommandHandler<,>`, `CommandHandler<>` or `QueryHandler<,>`. Keep both `internal`; the Kit finds them without `InternalsVisibleTo`. A command or query with no handler or several fails at startup.
 - Commands, queries, handlers and authorizers are never generic type definitions (no `EchoQuery<T>`): registration rejects them at startup.
-- A handler returns a Result and never saves, commits, begins a transaction or touches the Outbox: the Unit of Work does all of that once, for the whole Operation.
-- A query reads. Its handler never sends a command: that throws, because a query runs without a Unit of Work.
+- A handler returns a Result and never saves, commits, begins a transaction or touches the Outbox: the Unit of Work does all of that once, for the whole Operation. This holds for every kind of handler, and a structure test rejects a Module whose code does any of it ([testing.md](testing.md#structure-tests)).
+- A query reads. Its handler is [code that only reads](#code-that-only-reads), and runs without a Unit of Work.
 - A Domain Event Handler (`IDomainEventHandler<TDomainEvent>`, also in `PouryaKit.Cqrs`) is the third kind of handler. The Unit of Work runs it, so it is taught in [persistence.md](persistence.md).
 
 ## The pipeline
@@ -64,6 +64,20 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 - A nested command that fails, in its handler, its validation or its authorization, or by throwing, rolls the whole Operation back, even if your handler ignores its Result. The Operation then fails with that nested command's Errors. Pass a failure on with `return result.Errors;` instead of ignoring it.
 - A failed nested query rolls nothing back; act on its Result as you need.
 - One scope holds one Operation. Never send a second top-level command in a scope that already ran one, and never retry a failed command in the same scope: send it again through the Gateway, which opens a new scope for each call.
+
+## Code that only reads
+
+Some code runs inside an Operation but may change nothing, because its outcome cannot roll the Operation back or because it runs after the Operation's last change:
+
+- a query's handler, and an authorizer or a validator, at any nesting depth, including those of a query or command nested in a command's handler;
+- a step of the Unit of Work that only reads, which the Kit opens around application code it runs after the last change: a Snapshot mapper ([messaging.md](messaging.md#writing-a-snapshot-mapper)).
+
+Such code may run queries. Every write is refused with an `InvalidOperationException`, and nothing commits:
+
+- a command sent from it: `A query handler sent a command.`, `A command was sent from an authorizer or a validator.`, or `A command was sent from a Snapshot mapper, a step that only reads.`; a refused command still marks the Operation rollback-only;
+- the repository's `AddAsync` and `Remove` ([persistence.md](persistence.md#the-repository)), `IUnitOfWorkConnection.Join()` ([dapper-reads.md](dapper-reads.md#writing-with-plain-sql-in-the-unit-of-work)) and `IIntegrationEventPublisher.Publish` ([messaging.md](messaging.md#publishing-from-a-notification-handler)), each with a message that begins `Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, ...`.
+
+A command's handler, a Domain Event Handler, and a Notification or Integration Event Handler, whose delivery runs as a command, may change state.
 
 ## Validation
 
@@ -76,7 +90,7 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 
 - The Actor is authenticated and authorized at the external entry point. Add a per-operation rule only when one command or query needs it: an `internal` class implementing `IAuthorizer<TOperation>` for that one concrete command or query, returning `Result.Success()` or a `Forbidden` Error. It runs before validation. Without one, the step does nothing. An authorizer for a base type, a marker interface or an open type fails at startup, because it would never run.
 - An authorizer reads the Actor and tenant from an injected `OperationContext` (see [modules.md](modules.md)). It runs for every Operation of its command or query, including one that continues another Module's Operation.
-- An authorizer or a validator may run a query (a permission or existence lookup), but never sends a command: it runs before its command's handler, at every nesting depth, so that throws.
+- An authorizer or a validator may run a query (a permission or existence lookup), but it is [code that only reads](#code-that-only-reads): it runs before its command's handler, at every nesting depth, so a command it sends throws.
 
 ## Registration
 

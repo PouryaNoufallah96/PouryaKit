@@ -96,7 +96,7 @@ public static class ModularMonolithHost
 // Program.cs: await ModularMonolithHost.Build(ModularMonolithHost.CreateBuilder(args)).RunAsync();
 ```
 
-- `builder.Services.AddPouryaKitWeb()` registers what every endpoint answers with: problem responses, the handler that turns an exception into one, the same answer to an unreadable request in every environment, typed IDs written as their bare values in JSON, and `PouryaKitWebOptions`.
+- `builder.Services.AddPouryaKitWeb()` registers what every endpoint answers with: problem responses, the handler that turns an exception into one, the same answer to an unreadable request in every environment, a problem response for every failure answered with an empty body ([Problem responses](#problem-responses)), typed IDs written as their bare values in JSON, and `PouryaKitWebOptions`.
 - The application configures its own authentication and authorization; the Kit chooses no identity provider and issues no token.
 - `app.UseExceptionHandler()` comes first in the pipeline, and `UseRouting()`, `UseAuthentication()` and `UseAuthorization()` follow it, each called explicitly. Left out, `WebApplication` inserts those three ahead of everything the application adds, and an exception thrown in authentication escapes the handler.
 - `app.MapPouryaKitModuleEndpoints()` maps every Module's endpoints, each Module under its own route group.
@@ -159,10 +159,11 @@ internal sealed class ListProductsEndpoint : IEndpoint
 - Validation failures from the pipeline answer 400 with each failure's code and target. The Unit of Work's Errors answer by their kinds as well: a concurrent change (`UnitOfWork.ConcurrencyConflict`) 409, and a unique index the Module mapped the status of its Error, 409 for `Product.NameInUse` ([persistence.md](persistence.md#unique-values)).
 - An exception, from a handler, the database, authentication or an endpoint, answers 500 with no message, type or stack in the body. The Kit logs it at Error level.
 - A request ASP.NET Core cannot read, such as malformed JSON or a route value that does not parse, answers 400 as a problem response in every environment, with no `detail` and no `errors`, and is logged only at Debug level.
+- A failure that ASP.NET Core answers itself with an empty body, before any endpoint or exception handler runs, is written as the same problem response, with its status and no `errors`: routing's 405 for a method the route does not serve and 415 for a body of a content type the endpoint does not accept, and the 401, 403 or 404 that authentication, authorization or routing answers. `AddPouryaKitWeb` adds this through a startup filter, outermost in the pipeline, so the Host adds nothing for it. A response that already has a body is left as it is.
 
 ## The caller and the Actor
 
-- Every Module's route group requires an authenticated caller. A request without one is refused by the application's authentication scheme (401 with JwtBearer) before the endpoint runs.
+- Every Module's route group requires an authenticated caller. A request without one is refused by the application's authentication scheme before the endpoint runs (401 with JwtBearer, written as a problem response).
 - Before the endpoint binds its parameters, the Kit begins the request's Operation with an `OperationContext` built from the caller: `Actor.Person(id)` from the Actor claim, the tenant from the tenant claim when one is configured, and a new chain of work (correlated with its own `OperationId`, no causation; no incoming header sets them). The endpoint injects that context and passes it to the Gateway; it never builds one itself.
 - `PouryaKitWebOptions` names the claims: `ActorClaim`, by default `ClaimTypes.NameIdentifier`, which JwtBearer maps a token's `sub` to (set `"sub"` when the scheme keeps the token's claim names), and `TenantClaim`, null by default for an application without tenants. Set them with `AddPouryaKitWeb(web => web.TenantClaim = "tenant")` or `Configure<PouryaKitWebOptions>`.
 - A caller whose identity lacks the tenant claim runs with a null tenant and is not refused. An authenticated caller without the Actor claim is a configuration bug: the request answers 500 and the log names the missing claim.
