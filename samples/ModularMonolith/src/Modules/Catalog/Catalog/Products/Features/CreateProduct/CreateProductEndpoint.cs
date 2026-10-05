@@ -13,14 +13,14 @@ internal sealed class CreateProductEndpoint : IEndpoint
         routes.MapPost(
             "/products",
             async (
-                CreateProductRequest request,
+                CreateProductBody body,
                 OperationContext context,
                 IGatewayProcessor<CatalogModule> catalog,
                 CancellationToken cancellationToken
             ) =>
                 (
                     await catalog.SendAsync(
-                        new CreateProductCommand(request.ProductId, request.CategoryId, request.Name),
+                        new CreateProductCommand(body.ProductId, body.CategoryId, body.Name),
                         context,
                         cancellationToken
                     )
@@ -28,4 +28,4 @@ internal sealed class CreateProductEndpoint : IEndpoint
         );
 }
 
-internal sealed record CreateProductRequest(Guid ProductId, Guid CategoryId, string Name);
+internal sealed record CreateProductBody(Guid ProductId, Guid CategoryId, string Name);

@@ -1,4 +1,5 @@
 using System.Reflection;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Domain;
 
@@ -10,16 +11,25 @@ public static class WebServiceCollectionExtensions
     {
         /// <summary>
         /// Registers what every endpoint answers with: problem responses, the handler that turns an unexpected
-        /// exception into a 500 problem response without its message (add <c>app.UseExceptionHandler()</c> to the
-        /// pipeline), typed IDs written as their bare values in JSON, and the claims that fill the
-        /// <c>OperationContext</c>.
+        /// exception into a 500 problem response without its message and a request that cannot be read into a 400
+        /// problem response in every environment, typed IDs written as their bare values in JSON, and the claims that
+        /// fill the <c>OperationContext</c>.
         /// </summary>
+        /// <remarks>
+        /// The handler sees only what runs after it, so <c>app.UseExceptionHandler()</c> comes first in the pipeline,
+        /// before <c>UseRouting()</c>, <c>UseAuthentication()</c> and <c>UseAuthorization()</c>, each called
+        /// explicitly: left to <c>WebApplication</c>, those three are inserted ahead of everything the application
+        /// adds, and an exception thrown in authentication escapes the handler.
+        /// </remarks>
         public IServiceCollection AddPouryaKitWeb(Action<PouryaKitWebOptions>? configure = null)
         {
             ArgumentNullException.ThrowIfNull(services);
 
             services.AddProblemDetails();
             services.AddExceptionHandler<UnexpectedExceptionHandler>();
+            // Outside Development a parameter that fails to bind answers an empty 400; throwing hands it to the
+            // exception handler, which answers the same problem response in every environment.
+            services.PostConfigure<RouteHandlerOptions>(routeHandlers => routeHandlers.ThrowOnBadRequest = true);
             services.ConfigureHttpJsonOptions(json =>
                 json.SerializerOptions.Converters.Add(new TypedIdJsonConverterFactory())
             );

@@ -10,7 +10,8 @@ namespace PouryaKit.Web;
 /// <summary>
 /// The one place a <see cref="Result"/> becomes an HTTP response. A success takes the shape the endpoint chooses; a
 /// failure is an RFC 9457 problem response whose <c>errors</c> member lists every Error, in order, by code and message,
-/// with the target of a validation Error.
+/// with the target of a validation Error. It is written as <c>application/problem+json</c> even when the caller's
+/// <c>Accept</c> asks for something else.
 /// </summary>
 /// <remarks>
 /// The status comes from the Errors' kinds: validation 400, not found 404, conflict 409, forbidden 403, anything else
