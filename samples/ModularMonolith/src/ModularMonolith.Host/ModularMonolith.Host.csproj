@@ -10,4 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Modules\Catalog\Catalog\Catalog.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

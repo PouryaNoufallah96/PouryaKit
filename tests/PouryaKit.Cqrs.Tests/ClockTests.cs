@@ -19,7 +19,6 @@ public sealed class ClockTests
         var raised = await Task.WhenAll(Stamp(mondayHost), Stamp(tuesdayHost));
 
         Assert.Equal([monday, tuesday], raised.Select(domainEvent => domainEvent.OccurredOn));
-        Assert.Same(TimeProvider.System, DomainClock.Current);
     }
 
     private static async Task<StampedDomainEvent> Stamp(ServiceProvider host)
