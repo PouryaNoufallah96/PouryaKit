@@ -75,7 +75,7 @@ public sealed class StrandedNotificationTests(PostgresServer server)
     }
 
     [Fact]
-    public async Task Inbox_stale_time_shorter_than_a_running_handler_hands_the_notification_out_again()
+    public async Task Inbox_stale_time_shorter_than_a_running_handler_hands_the_notification_out_on_every_recovery_cycle()
     {
         await using var db = await server.CreateDatabaseAsync();
         using var host = db.BuildHost(inboxStaleTime: TimeSpan.FromSeconds(3));
@@ -93,10 +93,16 @@ public sealed class StrandedNotificationTests(PostgresServer server)
             });
         }
 
-        // The first run is still inside its 15 s handler when the row is released and handed out again.
-        Assert.True(await Eventually.WaitAsync(async () => await db.DeliveriesAsync(id) == 2, TimeSpan.FromSeconds(14)),
-            "the in-flight Notification was not handed out a second time");
-        TestContext.Current.TestOutputHelper?.WriteLine($"second delivery {clock.Elapsed.TotalSeconds:F1}s after commit");
+        // The insert-time timestamp never moves, so while no run has marked the envelope handled, every
+        // recovery cycle (1 s here) releases the row again. All hand-outs below start before the first
+        // 15 s run can finish, so they run concurrently.
+        Assert.True(await Eventually.WaitAsync(async () => await db.DeliveriesAsync(id) >= 2, TimeSpan.FromSeconds(10)));
+        var secondAt = clock.Elapsed;
+        await Task.Delay(TimeSpan.FromSeconds(14) - clock.Elapsed);
+        var handOuts = await db.DeliveriesAsync(id);
+        TestContext.Current.TestOutputHelper?.WriteLine(
+            $"second hand-out {secondAt.TotalSeconds:F1}s after commit; {handOuts} hand-outs within {clock.Elapsed.TotalSeconds:F1}s");
+        Assert.True(handOuts > 2, $"expected repeated hand-outs, saw {handOuts}");
     }
 
     [Fact]
