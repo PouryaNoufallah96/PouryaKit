@@ -6,8 +6,6 @@ namespace PouryaKit.Domain;
 /// </summary>
 public abstract record DomainEvent
 {
-    private readonly DateTimeOffset _occurredOn;
-
     protected DomainEvent()
     {
         var now = DateTimeOffset.UtcNow;
@@ -19,7 +17,7 @@ public abstract record DomainEvent
 
     public DateTimeOffset OccurredOn
     {
-        get => _occurredOn;
-        init => _occurredOn = value.ToUniversalTime();
+        get;
+        init => field = value.ToUniversalTime();
     }
 }

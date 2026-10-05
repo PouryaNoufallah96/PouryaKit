@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PouryaKit.Domain;
 
@@ -59,8 +60,6 @@ public class Result
 public sealed class Result<T> : Result
     where T : notnull
 {
-    private readonly T? _value;
-
     // Every success is built here, so this is the one place that keeps null out of a success.
     internal Result(T value)
         : base([])
@@ -70,15 +69,19 @@ public sealed class Result<T> : Result
             throw new ArgumentNullException(nameof(value), "Null is never a successful Result.");
         }
 
-        _value = value;
+        Value = value;
     }
 
     private Result(ImmutableArray<Error> errors)
         : base(errors) { }
 
     /// <summary>The value of a success. Reading it from a failure is a bug and throws.</summary>
-    public T Value =>
-        IsSuccess ? _value! : throw new InvalidOperationException("A failed Result has no value; read its Errors.");
+    [field: MaybeNull]
+    public T Value
+    {
+        get =>
+            IsSuccess ? field! : throw new InvalidOperationException("A failed Result has no value; read its Errors.");
+    }
 
     public static implicit operator Result<T>(T value) => Success(value);
 
