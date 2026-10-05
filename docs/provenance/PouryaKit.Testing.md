@@ -29,7 +29,7 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
 
 ## Delivery assertions
 
-- **Kit files:** `src/PouryaKit.Testing/HostFixture.cs`, `src/PouryaKit.Testing/StoredDeliveries.cs`, `src/PouryaKit.Testing/Delivery.cs`, `src/PouryaKit.Testing/DeliveryAssertionException.cs`, `src/PouryaKit.Testing/TestDeliveryServiceCollectionExtensions.cs`
+- **Kit files:** `src/PouryaKit.Testing/HostFixture.cs`, `src/PouryaKit.Testing/StoredDeliveries.cs`, `src/PouryaKit.Testing/Delivery.cs`, `src/PouryaKit.Testing/DeadLetter.cs`, `src/PouryaKit.Testing/DeliveryAssertionException.cs`, `src/PouryaKit.Testing/TestDeliveryServiceCollectionExtensions.cs`
 - **Upstream:** https://github.com/meysamhadeli/woo
 - **Commit:** 149a3cf168496c3bec85945f83ad222e43720e4d
 - **Upstream paths:** `src/TestBase/TestBase.cs`
@@ -42,3 +42,4 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
   - Waiting fails when the Operation stored no delivery, and a separate assertion checks that a rolled-back Operation stored none. `mehdihadeli/food-delivery-microservices` at `c83bca3`, `tests/Shared/Tests.Shared/Fixtures/SharedFixture.cs`, passes a wait for messages when none was sent (plan section B.2, "Test support").
   - The reset before each test first waits until no delivery is pending, then deletes the stored deliveries but keeps the message store's own node records, which belong to the running Host.
   - Deliveries run at test speed: Solo durability, two retries 100 ms apart, and the store polled every 100 ms.
+  - Dead letters are read and replayed through Wolverine's own dead-letter storage (`IDeadLetters`), as an application inspects them, with the subscription taken from the queue each was received at (ticket #17). A replay fails when its delivery is not a dead letter, and waiting counts a dead letter marked for replay as pending until it is handled or set aside again.
