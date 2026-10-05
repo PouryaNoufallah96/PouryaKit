@@ -11,20 +11,46 @@ namespace PouryaKit.Messaging.Wolverine;
 internal sealed class WireNaming : IMessageTypeNaming
 {
     private static readonly ConcurrentDictionary<Type, string> Declared = new();
+    private static readonly Lock Declaring = new();
 
     /// <summary>
-    /// Records the wire name of every Integration Event in <paramref name="publications"/> for this process, and returns
-    /// a problem for each one this process already knows under another name.
+    /// Records the wire name of every Integration Event in <paramref name="publications"/> for this process, all or
+    /// none, and returns a problem for each one this process already knows under another name, or that Wolverine named
+    /// before it was declared: Wolverine keeps the first name it gives a type, and its envelopes would carry that one.
     /// </summary>
-    public static IEnumerable<string> Declare(IReadOnlyDictionary<Type, Publication> publications)
+    public static List<string> Declare(IReadOnlyDictionary<Type, Publication> publications)
     {
-        foreach (var (type, publication) in publications)
+        lock (Declaring)
         {
-            var name = Declared.GetOrAdd(type, publication.WireName);
-            if (name != publication.WireName)
+            List<string> problems =
+            [
+                .. publications
+                    .Where(publication =>
+                        Declared.TryGetValue(publication.Key, out var name) && name != publication.Value.WireName
+                    )
+                    .Select(publication =>
+                        $"{publication.Key.FullName} is published as {publication.Value.WireName}, but this process already sends it as {Declared[publication.Key]}; a type keeps one wire name in a process."
+                    ),
+            ];
+            if (problems.Count > 0)
             {
-                yield return $"{type.FullName} is published as {publication.WireName}, but this process already sends it as {name}; a type keeps one wire name in a process.";
+                return problems;
             }
+
+            foreach (var (type, publication) in publications)
+            {
+                Declared.TryAdd(type, publication.WireName);
+            }
+
+            return
+            [
+                .. publications
+                    .Select(publication => (publication.Key, Declared: publication.Value.WireName, Sent: publication.Key.ToMessageTypeName()))
+                    .Where(named => named.Sent != named.Declared)
+                    .Select(named =>
+                        $"{named.Key.FullName} is published as {named.Declared}, but Wolverine named it {named.Sent} before it was declared and would send it under that name. Declare it before anything in the process sends or names it."
+                    ),
+            ];
         }
     }
 

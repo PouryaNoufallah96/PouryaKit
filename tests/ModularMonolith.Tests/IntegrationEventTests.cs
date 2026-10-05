@@ -10,7 +10,11 @@ using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Modularity;
 using PouryaKit.Testing;
+using Wolverine;
+using Wolverine.Runtime;
+using Wolverine.Util;
 
 namespace ModularMonolith.Tests;
 
@@ -130,25 +134,52 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from wolverine.wolverine_dead_letters"));
     }
 
+    // Shows, in one process, that a delivery whose receiver committed its effect and Receipt, on a Host that then died
+    // before acknowledging it, is handed out again by the next Host and applied once: its Receipt turns it away. A killed
+    // process, and the recovery of a dead node's deliveries in Balanced mode by stale-node detection, are proven only by
+    // Spike S1, as ADR 0004 records.
     [Fact]
-    public async Task An_integration_event_handed_out_again_after_its_effect_committed_does_not_repeat_it()
+    public async Task An_integration_event_whose_receiver_committed_on_a_host_that_died_before_acknowledging_it_is_applied_once()
     {
         var product = Guid.CreateVersion7();
-        await Fixture.WaitForDeliveriesAsync(() => CreateProductAsync(product), TestContext.Current.CancellationToken);
+        await using var dying = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
+        await using var starting = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
+        await HostFixture.StartHostAsync(dying, TestContext.Current.CancellationToken);
+        var turnedAway = DeliveryProbes.TurnedAwayFrom(InventorySubscription);
+        long committedBeforeDeath = -1;
+        List<object[]> afterDeath = [];
 
-        // The row as a crash between the receiver's commit and its acknowledgment leaves it, once recovery released it.
-        Assert.Single(
-            await Fixture.RowsAsync(
-                $"update wolverine.wolverine_incoming_envelopes set status = 'Incoming', owner_id = 0 where received_at = 'local://{InventorySubscription}/' and status = 'Handled' returning id"
-            )
-        );
-        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+        using (var hold = DeliveryProbes.HoldAfterCommit(typeof(InventoryModule)))
+        {
+            await Fixture.WaitForDeliveriesAsync(
+                async () =>
+                {
+                    var created = await CreateProductAsync(product, gateway: dying.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>());
+                    // Inventory committed its stock item and Receipt on the dying Host, which never acknowledges them.
+                    await hold.Held;
+                    committedBeforeDeath = await StockItemsOfAsync(product);
+                    // Wolverine's quick stop neither drains nor gives up what the Host holds, as a killed process leaves it.
+                    ((WolverineRuntime)dying.Services.GetRequiredService<IWolverineRuntime>()).StopMode = StopMode.Quick;
+                    await dying.StopAsync(TestContext.Current.CancellationToken);
+                    afterDeath = await Fixture.RowsAsync(
+                        $"select status, owner_id <> 0 from wolverine.wolverine_incoming_envelopes where received_at = 'local://{InventorySubscription}/'"
+                    );
 
+                    await HostFixture.StartHostAsync(starting, TestContext.Current.CancellationToken);
+                    return created;
+                },
+                TestContext.Current.CancellationToken
+            );
+        }
+
+        Assert.Equal(1L, committedBeforeDeath);
+        Assert.Equal([["Incoming", true]], afterDeath);
+        Assert.Equal(turnedAway + 1, DeliveryProbes.TurnedAwayFrom(InventorySubscription));
         Assert.Equal(
             [["Handled"]],
             await Fixture.RowsAsync($"select status from wolverine.wolverine_incoming_envelopes where received_at = 'local://{InventorySubscription}/'")
         );
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>($"select count(*) from inventory.stock_items where product_id = '{product}'"));
+        Assert.Equal(1L, await StockItemsOfAsync(product));
     }
 
     [Fact]
@@ -156,14 +187,20 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
     {
         var text = Unique();
 
+        var requested = new NoteCopyRequestedDomainEvent(text);
+
         var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
-            () => WriteNoteRaisingAsync(text, new NoteCopyRequestedDomainEvent(text)),
+            () => WriteNoteRaisingAsync(text, requested),
             TestContext.Current.CancellationToken
         );
 
         var attempts = Received.All.Where(received => received.IntegrationEvent is NoteCopyRequestedV1 requested && requested.Text == text).ToList();
         Assert.Equal(1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count, attempts.Count);
         Assert.Equal(attempts.Count, attempts.Select(attempt => attempt.Operation).Distinct().Count());
+        // The first attempt gets the published instance; each retry is read back from the store, a new instance, so the
+        // identity and time it carries crossed serialisation unchanged.
+        Assert.All(attempts, attempt => Assert.Equal(new NoteCopyRequestedV1(requested.Id, requested.OccurredOn, text), attempt.IntegrationEvent));
+        Assert.Equal(attempts.Count, attempts.Select(attempt => attempt.IntegrationEvent).Distinct(ReferenceEqualityComparer.Instance).Count());
         Assert.Contains(new Delivery("stub.note-copy-requested", "stub.note-copy-requested.v1", true), deliveries);
         Assert.Equal(
             [[typeof(IntegrationEventHandlerFailedException).FullName]],
@@ -207,6 +244,7 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
     [InlineData(nameof(Misuse.AnotherIdentity), "was published with the identity")]
     [InlineData(nameof(Misuse.UndeclaredType), "StubModule does not declare that it publishes ModularMonolith.Tests.Stub.UndeclaredV1")]
     [InlineData(nameof(Misuse.AnotherModulesType), "StubModule does not declare that it publishes Catalog.Contracts.Products.Events.V1.ProductCreatedV1")]
+    [InlineData(nameof(Misuse.SameTypeTwice), "NoteSharedV1 was published twice for the PublishingMisusedDomainEvent")]
     public async Task A_notification_handler_that_publishes_what_it_must_not_fails_its_delivery(string misuse, string error)
     {
         var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
@@ -216,6 +254,46 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
 
         Assert.True(Assert.Single(deliveries).DeadLettered);
         Assert.Contains(error, await Fixture.ScalarAsync<string>("select exception_message from wolverine.wolverine_dead_letters"));
+    }
+
+    [Fact]
+    public async Task A_second_notification_handler_of_one_domain_event_publishing_the_same_type_fails_instead_of_being_dropped()
+    {
+        var text = Unique();
+
+        var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
+            () => WriteNoteRaisingAsync(text, new NoteToShareTwiceDomainEvent(text)),
+            TestContext.Current.CancellationToken
+        );
+
+        // Whichever commits first publishes; the other keeps failing until it is set aside.
+        Assert.Single(Received.All, received => received.IntegrationEvent is NoteSharedV1 shared && shared.Text == text);
+        Assert.Equal(
+            [("stub.note-shared", false), ("x", false), ("x", true)],
+            deliveries
+                .Select(delivery => (delivery.Subscription.EndsWith("-share-twice", StringComparison.Ordinal) ? "x" : delivery.Subscription, delivery.DeadLettered))
+                .Order()
+        );
+        Assert.Contains(
+            "already published stub.note-shared.v1",
+            await Fixture.ScalarAsync<string>("select exception_message from wolverine.wolverine_dead_letters")
+        );
+    }
+
+    [Fact]
+    public async Task Publishing_from_a_query_nested_in_a_notification_handler_stores_no_integration_event()
+    {
+        var text = Unique();
+
+        var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
+            () => WriteNoteRaisingAsync(text, new NoteToShareThroughQueryDomainEvent(text)),
+            TestContext.Current.CancellationToken
+        );
+
+        // The query's refusal fails the delivery, whose handler ignored the query's Result; nothing was published.
+        Assert.True(Assert.Single(deliveries).DeadLettered);
+        Assert.Contains("They only read", await Fixture.ScalarAsync<string>("select exception_message from wolverine.wolverine_dead_letters"));
+        Assert.DoesNotContain(Received.All, received => received.IntegrationEvent is NoteSharedV1 shared && shared.Text == text);
     }
 
     [Fact]
@@ -271,9 +349,62 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
         );
     }
 
-    private async Task<Result<Guid>> CreateProductAsync(Guid product, OperationContext? context = null)
+    [Fact]
+    public async Task Startup_fails_when_another_host_of_the_process_already_sends_the_type_under_another_wire_name()
     {
-        var catalog = Fixture.Gateway<CatalogModule>();
+        await using (
+            var first = AppFixture.ComposeHost(
+                "Development",
+                Fixture.ConnectionString,
+                Fixture.Logs,
+                builder => builder.Services.Publish<ProcessNamedV1>("tests.process-named.v1")
+            )
+        )
+        {
+            await first.StartAsync(TestContext.Current.CancellationToken);
+            await first.StopAsync(TestContext.Current.CancellationToken);
+        }
+
+        await using var second = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            Fixture.Logs,
+            builder => builder.Services.Publish<ProcessNamedV1>("tests.process-named.v2")
+        );
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => second.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(
+            $"{typeof(ProcessNamedV1).FullName} is published as tests.process-named.v2, but this process already sends it as tests.process-named.v1; a type keeps one wire name in a process.",
+            thrown.Message
+        );
+    }
+
+    [Fact]
+    public async Task Startup_fails_on_an_integration_event_wolverine_named_before_it_was_declared()
+    {
+        // Something in the process named the type before any Host declared it; Wolverine keeps that name.
+        var named = typeof(EarlyNamedV1).ToMessageTypeName();
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.UsePouryaKitWolverine();
+        builder.Services.Publish<EarlyNamedV1>("tests.early-named.v1");
+        using var host = builder.Build();
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(
+            $"{typeof(EarlyNamedV1).FullName} is published as tests.early-named.v1, but Wolverine named it {named} before it was declared and would send it under that name. Declare it before anything in the process sends or names it.",
+            thrown.Message
+        );
+    }
+
+    private async Task<Result<Guid>> CreateProductAsync(
+        Guid product,
+        OperationContext? context = null,
+        IGatewayProcessor<CatalogModule>? gateway = null
+    )
+    {
+        var catalog = gateway ?? Fixture.Gateway<CatalogModule>();
         var category = Guid.CreateVersion7();
         await catalog.SendAsync(new CreateCategoryCommand(category, $"Lamps {category}"), TestContext.Current.CancellationToken);
         return await catalog.SendAsync(
@@ -282,6 +413,9 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
             TestContext.Current.CancellationToken
         );
     }
+
+    private Task<long> StockItemsOfAsync(Guid product) =>
+        Fixture.ScalarAsync<long>($"select count(*) from inventory.stock_items where product_id = '{product}'");
 
     private Task<Result> WriteNoteRaisingAsync(string text, DomainEvent raised) =>
         Fixture.Gateway<StubModule>().SendAsync(new WriteNoteRaisingCommand(text, [raised]), TestContext.Current.CancellationToken);
@@ -308,6 +442,11 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
 
 internal sealed record TwinV1(Guid Id);
 
+// Each named for the process by one test only.
+internal sealed record ProcessNamedV1(Guid Id);
+
+internal sealed record EarlyNamedV1(Guid Id);
+
 internal sealed record OtherTwinV1(Guid Id);
 
 internal sealed class TwinIntegrationEventHandler : IIntegrationEventHandler<TwinV1>
@@ -325,7 +464,7 @@ internal abstract class AbstractTwinIntegrationEventHandler : IIntegrationEventH
     public abstract Task<Result> Handle(TwinV1 integrationEvent, CancellationToken cancellationToken);
 }
 
-internal sealed class NoteToShareDomainEventSubscriber : IIntegrationEventHandler<NoteToShareDomainEvent>
+internal sealed class NoteToShareIntegrationEventHandler : IIntegrationEventHandler<NoteToShareDomainEvent>
 {
     public Task<Result> Handle(NoteToShareDomainEvent integrationEvent, CancellationToken cancellationToken) =>
         Task.FromResult(Result.Success());

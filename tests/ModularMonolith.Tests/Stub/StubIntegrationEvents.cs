@@ -91,6 +91,7 @@ internal enum Misuse
     AnotherIdentity,
     UndeclaredType,
     AnotherModulesType,
+    SameTypeTwice,
 }
 
 internal sealed record UndeclaredV1(Guid Id);
@@ -111,6 +112,10 @@ internal sealed class MisusePublisherNotificationHandler(IIntegrationEventPublis
             case Misuse.UndeclaredType:
                 events.Publish(domainEvent.Id, new UndeclaredV1(domainEvent.Id));
                 break;
+            case Misuse.SameTypeTwice:
+                events.Publish(domainEvent.Id, new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, "misused"));
+                events.Publish(domainEvent.Id, new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, "misused again"));
+                break;
             default:
                 events.Publish(domainEvent.Id, new ProductCreatedV1(domainEvent.Id, domainEvent.OccurredOn, Guid.CreateVersion7(), "misused"));
                 break;
@@ -129,5 +134,57 @@ internal sealed class PublishFromCommandCommandHandler(IIntegrationEventPublishe
     {
         events.Publish(Guid.CreateVersion7(), new NoteSharedV1(Guid.CreateVersion7(), DateTimeOffset.UtcNow, command.Text));
         return Task.FromResult(Result.Success());
+    }
+}
+
+// Two Notification Handlers of one Domain Event that each publish the same type: one Integration Event too many.
+internal sealed record NoteToShareTwiceDomainEvent(string Text) : DomainEvent;
+
+internal sealed class FirstShareTwiceNotificationHandler(IIntegrationEventPublisher events)
+    : INotificationHandler<NoteToShareTwiceDomainEvent>
+{
+    public Task<Result> Handle(NoteToShareTwiceDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        events.Publish(domainEvent.Id, new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.Text));
+        return Task.FromResult(Result.Success());
+    }
+}
+
+internal sealed class SecondShareTwiceNotificationHandler(IIntegrationEventPublisher events)
+    : INotificationHandler<NoteToShareTwiceDomainEvent>
+{
+    public Task<Result> Handle(NoteToShareTwiceDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        events.Publish(domainEvent.Id, new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.Text));
+        return Task.FromResult(Result.Success());
+    }
+}
+
+// A Notification Handler whose nested query publishes, then fails; the handler ignores the query's Result.
+internal sealed record NoteToShareThroughQueryDomainEvent(string Text) : DomainEvent;
+
+internal sealed record PublishInQueryQuery(Guid DomainEventId, DateTimeOffset OccurredOn, string Text) : Query<bool>;
+
+internal sealed class PublishInQueryQueryHandler(IIntegrationEventPublisher events) : QueryHandler<PublishInQueryQuery, bool>
+{
+    public static readonly Error Failed = Error.Unexpected("Note.QueryPublished", "The query failed after it published.");
+
+    public override Task<Result<bool>> Handle(PublishInQueryQuery query, CancellationToken cancellationToken)
+    {
+        events.Publish(query.DomainEventId, new NoteSharedV1(query.DomainEventId, query.OccurredOn, query.Text));
+        return Task.FromResult<Result<bool>>(Failed);
+    }
+}
+
+internal sealed class ShareThroughQueryNotificationHandler(IDispatcher dispatcher)
+    : INotificationHandler<NoteToShareThroughQueryDomainEvent>
+{
+    public async Task<Result> Handle(NoteToShareThroughQueryDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        await dispatcher.QueryAsync(
+            new PublishInQueryQuery(domainEvent.Id, domainEvent.OccurredOn, domainEvent.Text),
+            cancellationToken
+        );
+        return Result.Success();
     }
 }

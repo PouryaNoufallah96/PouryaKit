@@ -55,7 +55,7 @@ public sealed class IntegrationEventWiringTests
             "is abstract, so the subscription tests.twin has no handler to run"
         ),
         ["a subscribed Domain Event"] = (
-            s => s.Subscribe<NoteToShareDomainEvent, NoteToShareDomainEventSubscriber>("tests.note-shared"),
+            s => s.Subscribe<NoteToShareDomainEvent, NoteToShareIntegrationEventHandler>("tests.note-shared"),
             "subscribes to the Domain Event"
         ),
     };

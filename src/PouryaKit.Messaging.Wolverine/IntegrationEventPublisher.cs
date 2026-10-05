@@ -5,11 +5,14 @@ using PouryaKit.Domain;
 namespace PouryaKit.Messaging.Wolverine;
 
 // Publishing is allowed only where G.2 puts it, in a Notification Handler's delivery, which always runs in a Unit of
-// Work, and only with the identity of the Domain Event delivered, so no Integration Event gets an identity a redelivery
-// would not repeat.
+// Work, where the Operation may change state, and only with the identity of the Domain Event delivered, so no
+// Integration Event gets an identity a redelivery would not repeat. Each receiver keeps one Receipt per identity, so a
+// second Integration Event of one type with the same identity would be acknowledged and never applied.
 internal sealed class IntegrationEventPublisher(Subscriptions subscriptions, Operation operation, IServiceProvider scope)
     : IIntegrationEventPublisher
 {
+    private readonly HashSet<Type> _published = [];
+
     /// <summary>The Domain Event whose Notification Handler runs in this scope; null in any other scope.</summary>
     public DomainEvent? Following { get; set; }
 
@@ -18,6 +21,13 @@ internal sealed class IntegrationEventPublisher(Subscriptions subscriptions, Ope
     {
         ArgumentNullException.ThrowIfNull(integrationEvent);
         var type = integrationEvent.GetType();
+        if (!operation.MayChangeState)
+        {
+            throw new InvalidOperationException(
+                $"A query, an authorizer or a validator published {type.Name}. They only read; publish an Integration Event from a Notification Handler."
+            );
+        }
+
         if (Following is not { } domainEvent)
         {
             throw new InvalidOperationException(
@@ -36,6 +46,13 @@ internal sealed class IntegrationEventPublisher(Subscriptions subscriptions, Ope
         {
             throw new InvalidOperationException(
                 $"{operation.Module?.Name ?? "The application"} does not declare that it publishes {type.FullName}. Declare it, with its wire name, in the Composition Root with Publish<{type.Name}>(wireName, module)."
+            );
+        }
+
+        if (!_published.Add(type))
+        {
+            throw new InvalidOperationException(
+                $"{type.Name} was published twice for the {domainEvent.GetType().Name} {domainEvent.Id}. One Domain Event yields at most one Integration Event of each type: both would carry its identity, and every receiver would apply only the first."
             );
         }
 
