@@ -10,5 +10,7 @@ metadata:
 - The claudex-loop runner in `inspect` mode accepts a detached worktree under `.claude/worktrees/` as `--repo` (Codex 0.160, gpt-6-astra, 2026-10-06; it completed in about 200 s). It uses `--skip-git-repo-check`, so project trust does not matter.
 - When Codex fails, the runner's `result.json` `error` only says "inspect stdout.txt". The real reason is in `<artifacts>/stdout.txt`, as `{"type":"error","message":...}` and `{"type":"turn.failed","error":{"message":...}}` events.
 
+- Writing `￿` in a file through the Write tool once left a literal U+FFFF character in the source, while `\u007f` beside it stayed escaped. After writing a regex with `\u` escapes, check for non-ASCII bytes (`grep -c -P '[^\x00-\x7F]'`).
+
 **Why:** these cost a full investigation to find during the kit-review rework (retro item 1).
 **How to apply:** when a brief says to verify a workflow with `node --check`, report that it cannot pass and run the wrapped check as well. See [[worktree-and-check-gotchas]].
