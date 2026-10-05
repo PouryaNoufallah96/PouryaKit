@@ -106,6 +106,16 @@ public abstract class HostFixture : IAsyncLifetime
     }
 
     /// <summary>
+    /// Waits until no stored delivery is pending: every one handled or dead-lettered, such as after a test handed one
+    /// out again.
+    /// </summary>
+    public Task WaitUntilDeliveredAsync(CancellationToken cancellationToken = default) =>
+        (Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.")).WaitUntilSettledAsync(
+            DeliveryTimeout,
+            cancellationToken
+        );
+
+    /// <summary>
     /// Runs <paramref name="operation"/> and fails unless it stored no delivery: what a rolled-back Operation leaves.
     /// A delivery is stored in the Operation's own commit, so nothing needs waiting for.
     /// </summary>

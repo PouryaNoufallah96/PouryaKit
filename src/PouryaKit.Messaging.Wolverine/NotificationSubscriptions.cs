@@ -44,16 +44,19 @@ internal sealed class NotificationSubscriptions
         Dictionary<string, Type> domainEventByWireName = new(_domainEventByWireName, StringComparer.OrdinalIgnoreCase);
         foreach (var subscription in subscriptions)
         {
+            // A derived subscription name starts with the wire name, so a bad wire name is reported once, for itself.
             var wireName = MessageNames.WireNameOf(subscription.DomainEvent);
-            if (Check(wireName, $"{subscription.DomainEvent.FullName}'s wire name", problems))
+            if (!Check(wireName, $"{subscription.DomainEvent.FullName}'s wire name", problems))
             {
-                if (!domainEventByWireName.TryAdd(wireName, subscription.DomainEvent)
-                    && domainEventByWireName[wireName] != subscription.DomainEvent)
-                {
-                    problems.Add(
-                        $"{subscription.DomainEvent.FullName} and {domainEventByWireName[wireName].FullName} have the wire name {wireName}, ignoring case; give one a WireName of its own."
-                    );
-                }
+                continue;
+            }
+
+            if (!domainEventByWireName.TryAdd(wireName, subscription.DomainEvent)
+                && domainEventByWireName[wireName] != subscription.DomainEvent)
+            {
+                problems.Add(
+                    $"{subscription.DomainEvent.FullName} and {domainEventByWireName[wireName].FullName} have the wire name {wireName}, ignoring case; give one a WireName of its own."
+                );
             }
 
             if (!Check(subscription.Name, $"{subscription.Handler.FullName}'s subscription name", problems))

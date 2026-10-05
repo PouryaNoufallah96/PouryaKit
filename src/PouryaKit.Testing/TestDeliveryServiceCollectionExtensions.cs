@@ -11,14 +11,14 @@ public static class TestDeliveryServiceCollectionExtensions
     {
         /// <summary>
         /// Runs the Host's deliveries at test speed: Solo durability, so a stopped Host's deliveries are recovered at
-        /// once; two retries of a failed delivery, after <see cref="RetryDelay"/> each; and the message store polled for
+        /// once; a failed delivery retried after each of <see cref="RetryDelays"/>; and the message store polled for
         /// retries and recoverable deliveries every <see cref="PollingTime"/>. Call it after <c>UsePouryaKitWolverine</c>.
         /// </summary>
         public IServiceCollection UsePouryaKitTestDelivery()
         {
             ArgumentNullException.ThrowIfNull(services);
             services.Configure<PouryaKitMessageStoreOptions>(store => store.Durability = DurabilityMode.Solo);
-            services.Configure<PouryaKitMessagingOptions>(messaging => messaging.RetryDelays = [RetryDelay, RetryDelay]);
+            services.Configure<PouryaKitMessagingOptions>(messaging => messaging.RetryDelays = [.. RetryDelays]);
             services.ConfigureWolverine(wolverine =>
             {
                 wolverine.Durability.ScheduledJobFirstExecution = TimeSpan.Zero;
@@ -28,7 +28,8 @@ public static class TestDeliveryServiceCollectionExtensions
         }
     }
 
-    public static TimeSpan RetryDelay { get; } = TimeSpan.FromMilliseconds(100);
+    /// <summary>The waits before each retry of a failed delivery: a delivery is attempted once more than there are.</summary>
+    public static IReadOnlyList<TimeSpan> RetryDelays { get; } = [TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100)];
 
     public static TimeSpan PollingTime { get; } = TimeSpan.FromMilliseconds(100);
 }
