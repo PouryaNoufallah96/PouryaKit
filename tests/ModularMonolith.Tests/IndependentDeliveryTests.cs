@@ -52,6 +52,51 @@ public sealed class IndependentDeliveryTests(AppFixture app) : HostTest<AppFixtu
         );
     }
 
+    public static TheoryData<string, string> FailingAndSucceedingModules =>
+        new() { { "inventory.product-created", "billing.product-created" }, { "billing.product-created", "inventory.product-created" } };
+
+    // The failure is injected by the test at the delivery step, right after the failing subscription's Receipt is
+    // recorded and before its handler runs: its transaction rolls back, Receipt included, as if the handler had thrown.
+    // Neither Module's code knows the test.
+    [Theory]
+    [MemberData(nameof(FailingAndSucceedingModules))]
+    public async Task A_module_whose_delivery_keeps_failing_never_runs_the_other_modules_handler_again(string failing, string succeeding)
+    {
+        var product = Guid.CreateVersion7();
+
+        using (DeliveryProbes.FailAfterReceipt(failing))
+        {
+            await Fixture.WaitForDeliveriesAsync(() => CreateProductAsync(product), TestContext.Current.CancellationToken);
+        }
+
+        var published = await Fixture.ScalarAsync<Guid>(
+            "select message_id from catalog.pouryakit_receipts where subscription = 'catalog.product-created.publish-product-created'"
+        );
+        // Every attempt of the failing subscription, through its retries to its dead letter; the other's one delivery.
+        Assert.Equal(1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count, DeliveryProbes.AttemptsOf(failing, published).Count);
+        Assert.Single(DeliveryProbes.AttemptsOf(succeeding, published));
+        Assert.Equal(
+            [failing],
+            (await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken)).Select(deadLetter => deadLetter.Subscription)
+        );
+        // The succeeding Module applied it once, with its Receipt; the failing one left neither effect nor Receipt.
+        Assert.Equal((1L, 1L), await EffectAndReceiptsAsync(succeeding, product, published));
+        Assert.Equal((0L, 0L), await EffectAndReceiptsAsync(failing, product, published));
+    }
+
+    private async Task<(long Effects, long Receipts)> EffectAndReceiptsAsync(string subscription, Guid product, Guid published)
+    {
+        var (module, table) = subscription.StartsWith("inventory", StringComparison.Ordinal)
+            ? ("inventory", "stock_items")
+            : ("billing", "price_lists");
+        return (
+            await Fixture.ScalarAsync<long>($"select count(*) from {module}.{table} where product_id = '{product}'"),
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from {module}.pouryakit_receipts where subscription = '{subscription}' and message_id = '{published}'"
+            )
+        );
+    }
+
     public static TheoryData<string, string> FailingAndSucceeding =>
         new() { { Circulation.Archive, Circulation.Ledger }, { Circulation.Ledger, Circulation.Archive } };
 

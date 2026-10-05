@@ -23,6 +23,7 @@ internal static class DeliveryProbes
     private static Hold? _receiptHold;
     private static Hold? _commitHold;
     private static Hold? _versionHold;
+    private static string? _failing;
 
     /// <summary>
     /// When each delivery of the message <paramref name="messageId"/> to <paramref name="subscription"/> began recording
@@ -61,6 +62,17 @@ internal static class DeliveryProbes
             reached => reached is (Type committed, string recordedFor) && committed == module && string.Equals(recordedFor, subscription, StringComparison.OrdinalIgnoreCase),
             () => _commitHold = null
         );
+
+    /// <summary>
+    /// Fails every delivery to <paramref name="subscription"/> right after it records its Receipt, before its handler
+    /// runs, with an exception thrown inside its transaction, until disposed: the Receipt rolls back with it, and the
+    /// delivery is retried and then dead-lettered. The Module's own code is untouched.
+    /// </summary>
+    public static IDisposable FailAfterReceipt(string subscription)
+    {
+        _failing = subscription;
+        return new Binding(() => _failing = null);
+    }
 
     /// <summary>How many deliveries to <paramref name="subscription"/> found their Receipt already committed.</summary>
     public static int TurnedAwayFrom(string subscription) => TurnedAway.GetValueOrDefault(subscription);
@@ -173,6 +185,11 @@ internal static class DeliveryProbes
             else if (_receiptHold is { } hold)
             {
                 await hold.OnReachedAsync(subscription);
+            }
+
+            if (recorded && string.Equals(_failing, subscription, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"The test failed the delivery to {subscription} after its Receipt.");
             }
 
             return recorded;
