@@ -7,13 +7,13 @@ using Wolverine.Runtime;
 namespace PouryaKit.Messaging.Wolverine;
 
 // Runs once every hosted service has started, Wolverine included, so it sees the queues as Wolverine built them. A
-// Notification is durable only when an Outbox writes it in the Unit of Work's commit and its subscription's queue
-// stores it; otherwise the business change would commit with nothing behind it, so the Host does not start.
-internal sealed class StartupCheck(NotificationSubscriptions subscriptions, IServiceProvider services) : IHostedLifecycleService
+// Notification or an Integration Event is durable only when an Outbox writes it in the Unit of Work's commit and its
+// subscription's queue stores it; otherwise the business change would commit with nothing behind it, so the Host does not start.
+internal sealed class StartupCheck(Subscriptions subscriptions, IServiceProvider services) : IHostedLifecycleService
 {
     public Task StartedAsync(CancellationToken cancellationToken)
     {
-        if (!subscriptions.All.Any())
+        if (!subscriptions.All.Any() && subscriptions.Publications.Count == 0)
         {
             return Task.CompletedTask;
         }
@@ -21,7 +21,7 @@ internal sealed class StartupCheck(NotificationSubscriptions subscriptions, ISer
         if (!services.GetRequiredService<IServiceProviderIsService>().IsService(typeof(INotificationOutbox)))
         {
             throw new InvalidOperationException(
-                "Notification Handlers are declared, but nothing writes their Notifications to an Outbox, so every Operation would commit and none would be delivered. Call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore on the Host."
+                "Notification Handlers or Integration Events are declared, but nothing writes them to an Outbox, so every Operation would commit and none would be delivered. Call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore on the Host."
             );
         }
 

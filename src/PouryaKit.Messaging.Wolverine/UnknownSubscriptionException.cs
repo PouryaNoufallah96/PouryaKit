@@ -6,7 +6,7 @@ namespace PouryaKit.Messaging.Wolverine;
 /// </summary>
 public sealed class UnknownSubscriptionException(string subscription)
     : Exception(
-        $"No Notification Handler subscribes under the name {subscription} in this Host, so its delivery cannot run. Declare the subscription again, under that name, to deliver it."
+        $"No Notification Handler or Integration Event Handler subscribes under the name {subscription} in this Host, so its delivery cannot run. Declare the subscription again, under that name, to deliver it."
     )
 {
     public string Subscription { get; } = subscription;

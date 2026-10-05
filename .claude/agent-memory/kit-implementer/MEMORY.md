@@ -16,3 +16,4 @@
 - [Modularity and context facts](modularity-context-facts.md) — #13: validation needs the DI impl package, Gateway signature vs parallel merges, host-wide state in the service collection
 - [Persistence preparation facts](persistence-preparation-facts.md) — #11: EF savepoint hides rollback bugs, two-scope race technique, TestClock vs Gateway, ef remove trap
 - [Messaging delivery facts](messaging-delivery-facts.md) — #15: Wolverine start/extension timing, store-polling test helpers, redelivery and unknown-subscription tricks
+- [Integration Event facts](integration-event-facts.md) — #16: process-global wire names, StartAsync-time checks, receipt-hold concurrency proof

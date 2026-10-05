@@ -2,6 +2,7 @@ using Catalog;
 using Catalog.Categories.Entities;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Infrastructure.Data.Context;
+using Inventory.Infrastructure.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
@@ -30,6 +31,9 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["catalog", "categories"],
                 ["catalog", "pouryakit_receipts"],
                 ["catalog", "products"],
+                ["inventory", "__EFMigrationsHistory"],
+                ["inventory", "pouryakit_receipts"],
+                ["inventory", "stock_items"],
                 ["stub", "__EFMigrationsHistory"],
                 ["stub", "books"],
                 ["stub", "cards"],
@@ -90,7 +94,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
             .Select(options => (DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType))
             .ToDictionary(dbContext => dbContext.GetType(), dbContext => dbContext.Database.CreateExecutionStrategy());
 
-        Assert.Equal([typeof(CatalogDbContext), typeof(StubDbContext)], strategies.Keys.OrderBy(type => type.Name));
+        Assert.Equal([typeof(CatalogDbContext), typeof(InventoryDbContext), typeof(StubDbContext)], strategies.Keys.OrderBy(type => type.Name));
         Assert.All(strategies.Values, strategy => Assert.False(strategy.RetriesOnFailure));
     }
 

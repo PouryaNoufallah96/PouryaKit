@@ -1,4 +1,5 @@
 using Catalog.Contracts.Products;
+using Catalog.Contracts.Products.Events.V1;
 using Catalog.Infrastructure.Data.Context;
 using Catalog.Products.Data.Configurations;
 using Catalog.Products.Data.Repository;
@@ -27,6 +28,7 @@ public sealed class CatalogModule : IModuleDefinition
         module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);
         module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
         module.AddPouryaKitNotificationHandlers(typeof(CatalogModule).Assembly, typeof(CatalogModule));
+        module.Publish<ProductCreatedV1>("catalog.product-created.v1", typeof(CatalogModule));
         module.AddScoped<IProductRepository, ProductRepository>();
         module.AddScoped<ICatalogProducts, CatalogProducts>();
         module.AddPouryaKitEndpoints("/catalog", typeof(CatalogModule).Assembly);

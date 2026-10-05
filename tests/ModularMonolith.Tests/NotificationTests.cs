@@ -36,7 +36,14 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
 
         Assert.True(created.IsSuccess);
-        Assert.Equal([new Delivery("catalog.product-created.announce-new-product", "catalog.product-created", false)], deliveries);
+        Assert.Equal(
+            [
+                new Delivery("catalog.product-created.announce-new-product", "catalog.product-created", false),
+                new Delivery("catalog.product-created.publish-product-created", "catalog.product-created", false),
+                new Delivery("inventory.product-created", "catalog.product-created.v1", false),
+            ],
+            deliveries.OrderBy(delivery => delivery.Subscription, StringComparer.Ordinal)
+        );
         Assert.Single(Fixture.Logs.Entries, entry => entry.Message == $"New in the catalog: Lamp ({product})");
     }
 
@@ -99,7 +106,11 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         if (rollback == "refused save")
         {
             await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
-            await catalog.SendAsync(new CreateProductCommand(Guid.CreateVersion7(), category, text), TestContext.Current.CancellationToken);
+            // Its deliveries finish first, so none of them is taken for one of the refused save's.
+            await Fixture.WaitForDeliveriesAsync(
+                () => catalog.SendAsync(new CreateProductCommand(Guid.CreateVersion7(), category, text), TestContext.Current.CancellationToken),
+                TestContext.Current.CancellationToken
+            );
         }
 
         var failed = await Fixture.AssertNothingSentAsync<Result>(
@@ -423,7 +434,7 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
         await host.StopAsync(TestContext.Current.CancellationToken);
 
-        Assert.StartsWith("Notification Handlers are declared, but nothing writes their Notifications to an Outbox", thrown.Message);
+        Assert.StartsWith("Notification Handlers or Integration Events are declared, but nothing writes them to an Outbox", thrown.Message);
     }
 
     [Fact]

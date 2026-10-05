@@ -1,5 +1,6 @@
 using Catalog;
 using Catalog.Products.Events.Notifications;
+using Inventory;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
@@ -18,7 +19,11 @@ public static class ModularMonolithHost
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
         builder.Services.AddAuthorization();
         builder.Services.AddPouryaKitWeb();
-        builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>());
+        builder.AddPouryaKitModules(modules =>
+        {
+            modules.Add<CatalogModule>();
+            modules.Add<InventoryModule>();
+        });
         builder.UsePouryaKitWolverine(connectionName: "app");
         builder.Services.AddSingleton<INewProductAnnouncer, LoggedNewProductAnnouncer>();
         return builder;

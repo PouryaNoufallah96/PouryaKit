@@ -18,6 +18,14 @@ public sealed class StubModule : IModuleDefinition
         module.AddPouryaKitDapper(connectionName: "app", typeof(StubModule).Assembly);
         module.AddPouryaKitCqrs(typeof(StubModule).Assembly);
         module.AddPouryaKitNotificationHandlers(typeof(StubModule).Assembly, typeof(StubModule));
+        module.Publish<NoteSharedV1>("stub.note-shared.v1", typeof(StubModule));
+        module.Publish<NoteCopyRequestedV1>("stub.note-copy-requested.v1", typeof(StubModule));
+        module.Subscribe<NoteSharedV1, RecordSharedNoteIntegrationEventHandler>("stub.note-shared", typeof(StubModule));
+        module.Subscribe<NoteCopyRequestedV1, CopyRequestedNoteThenRefuseIntegrationEventHandler>(
+            "stub.note-copy-requested",
+            typeof(StubModule)
+        );
+        module.AddSingleton<IntegrationEventLog>();
         module.AddScoped<ReactionLog>();
         module.AddSingleton<DeliveryLog>();
         module.AddSingleton<CatalogQuestionContexts>();
