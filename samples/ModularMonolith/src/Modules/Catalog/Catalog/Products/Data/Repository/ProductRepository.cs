@@ -1,7 +1,6 @@
 using Catalog.Products.Data.Specifications;
 using Catalog.Products.Entities;
 using Catalog.Products.ValueObjects;
-using Microsoft.EntityFrameworkCore;
 using PouryaKit.Cqrs;
 using PouryaKit.Persistence.EFCore;
 
@@ -13,12 +12,8 @@ internal sealed class ProductRepository(IUnitOfWork unitOfWork)
     : EfRepository<Product, ProductId>(unitOfWork),
         IProductRepository
 {
-    public Task<List<string>> ListNamesInUseAsync(
+    public async Task<List<string>> ListNamesInUseAsync(
         IReadOnlyCollection<string> names,
         CancellationToken cancellationToken = default
-    ) =>
-        Query(new ProductsNamed(names), evaluateCriteriaOnly: true)
-            .Select(product => product.Name)
-            .Distinct()
-            .ToListAsync(cancellationToken);
+    ) => [.. (await ListAsync(new ProductNamesInUse(names), cancellationToken)).Distinct()];
 }
