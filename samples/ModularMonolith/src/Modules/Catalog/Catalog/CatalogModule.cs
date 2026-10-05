@@ -3,7 +3,9 @@ using Catalog.Contracts.Products.Events.V1;
 using Catalog.Infrastructure.Data.Context;
 using Catalog.Products.Data.Configurations;
 using Catalog.Products.Data.Repository;
+using Catalog.Products.Entities;
 using Catalog.Products.Errors;
+using Catalog.Products.Events;
 using Catalog.Products.Features.GetProduct;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
@@ -29,6 +31,7 @@ public sealed class CatalogModule : IModuleDefinition
         module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
         module.AddPouryaKitNotificationHandlers(typeof(CatalogModule).Assembly, typeof(CatalogModule));
         module.Publish<ProductCreatedV1>("catalog.product-created.v1", typeof(CatalogModule));
+        module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1", typeof(CatalogModule));
         module.AddScoped<IProductRepository, ProductRepository>();
         module.AddScoped<ICatalogProducts, CatalogProducts>();
         module.AddPouryaKitEndpoints("/catalog", typeof(CatalogModule).Assembly);

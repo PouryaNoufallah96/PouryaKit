@@ -52,7 +52,7 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
         );
         Assert.Equal(
             [[InventorySubscription, created.Id]],
-            await Fixture.RowsAsync("select subscription, message_id from inventory.pouryakit_receipts")
+            await Fixture.RowsAsync($"select subscription, message_id from inventory.pouryakit_receipts where subscription = '{InventorySubscription}'")
         );
     }
 
@@ -122,7 +122,10 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
 
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
         Assert.Equal(1L, await Fixture.ScalarAsync<long>($"select count(*) from inventory.stock_items where product_id = '{product}'"));
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>("select count(*) from inventory.pouryakit_receipts"));
+        Assert.Equal(
+            1L,
+            await Fixture.ScalarAsync<long>($"select count(*) from inventory.pouryakit_receipts where subscription = '{InventorySubscription}'")
+        );
         Assert.Equal(
             [["Handled"]],
             await Fixture.RowsAsync($"select status from wolverine.wolverine_incoming_envelopes where received_at = 'local://{InventorySubscription}/'")
