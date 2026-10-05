@@ -1,0 +1,10 @@
+<Solution>
+  <Project Path="S2.Kit/S2.Kit.csproj" />
+  <Project Path="S2.Catalog/S2.Catalog.csproj" />
+  <Project Path="S2.Catalog.Contracts/S2.Catalog.Contracts.csproj" />
+  <Project Path="S2.Inventory/S2.Inventory.csproj" />
+  <Project Path="S2.Billing/S2.Billing.csproj" />
+  <Project Path="S2.Shipping/S2.Shipping.csproj" />
+  <Project Path="S2.Host/S2.Host.csproj" />
+  <Project Path="S2.Tests/S2.Tests.csproj" />
+</Solution>

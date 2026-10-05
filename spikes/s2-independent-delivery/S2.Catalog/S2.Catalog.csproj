@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The publishing Module. -->
+  <PropertyGroup>
+    <RootNamespace>S2.Catalog</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../S2.Kit/S2.Kit.csproj" />
+    <ProjectReference Include="../S2.Catalog.Contracts/S2.Catalog.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- One Host container composing Catalog, Inventory and Billing; also the child process the kill test runs. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>S2.Host</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WolverineFx.RuntimeCompilation" Version="6.46.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../S2.Kit/S2.Kit.csproj" />
+    <ProjectReference Include="../S2.Catalog/S2.Catalog.csproj" />
+    <ProjectReference Include="../S2.Inventory/S2.Inventory.csproj" />
+    <ProjectReference Include="../S2.Billing/S2.Billing.csproj" />
+    <ProjectReference Include="../S2.Shipping/S2.Shipping.csproj" />
+  </ItemGroup>
+
+</Project>

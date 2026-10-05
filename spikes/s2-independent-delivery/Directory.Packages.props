@@ -1,0 +1,6 @@
+<Project>
+  <!-- Stopper: the Spike pins its package versions inline, outside the repository's central package management. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

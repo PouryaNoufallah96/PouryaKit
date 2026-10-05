@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- A subscribing Module. Its handler is public only because Option A cannot compile an adapter over an internal one. -->
+  <PropertyGroup>
+    <RootNamespace>S2.Billing</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../S2.Kit/S2.Kit.csproj" />
+    <ProjectReference Include="../S2.Catalog.Contracts/S2.Catalog.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

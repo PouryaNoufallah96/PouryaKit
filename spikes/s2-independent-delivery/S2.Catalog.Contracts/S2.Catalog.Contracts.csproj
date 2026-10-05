@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Catalog's Contracts: plain records, no Kit or transport reference. -->
+  <PropertyGroup>
+    <RootNamespace>S2.Catalog.Contracts</RootNamespace>
+  </PropertyGroup>
+
+</Project>
