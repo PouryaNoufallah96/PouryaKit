@@ -79,7 +79,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         );
     }
 
-    // Catalog has no Feature that fails with a conflict yet; the Stub Module's rejected note does.
+    // A conflict a handler returns itself: the Stub Module's rejected note.
     [Fact]
     public async Task A_conflict_error_answers_409_with_its_error()
     {
@@ -92,6 +92,39 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
             """[{"code":"Note.Rejected","message":"The note was rejected after it was written."}]""",
             problem.GetProperty("errors").GetRawText()
         );
+    }
+
+    // A conflict the database finds: the unique index on the name, which Catalog maps to ProductErrors.NameInUse.
+    [Fact]
+    public async Task Creating_a_product_with_a_name_in_use_answers_409_with_its_error_and_writes_nothing()
+    {
+        using var client = Fixture.Client("ada");
+        var category = Guid.CreateVersion7();
+        await client.PostAsJsonAsync(
+            "/catalog/categories",
+            new { categoryId = category, name = "Lamps" },
+            TestContext.Current.CancellationToken
+        );
+        var lamp = Guid.CreateVersion7();
+        await client.PostAsJsonAsync(
+            "/catalog/products",
+            new { productId = lamp, categoryId = category, name = "Desk lamp" },
+            TestContext.Current.CancellationToken
+        );
+
+        var response = await client.PostAsJsonAsync(
+            "/catalog/products",
+            new { productId = Guid.CreateVersion7(), categoryId = category, name = "Desk lamp" },
+            TestContext.Current.CancellationToken
+        );
+
+        var problem = await ProblemAsync(response, HttpStatusCode.Conflict);
+        Assert.Equal(
+            """[{"code":"Product.NameInUse","message":"Another product already has this name."}]""",
+            problem.GetProperty("errors").GetRawText()
+        );
+        Assert.Equal([[lamp]], await Fixture.RowsAsync("select id from catalog.products"));
+        Assert.Equal(1, await Fixture.ScalarAsync<int>("select product_count from catalog.categories"));
     }
 
     [Fact]

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ModularMonolith.Tests.Stub.Migrations
 {
     [DbContext(typeof(StubDbContext))]
-    [Migration("20261006100000_Folders")]
+    [Migration("20261005162559_Folders")]
     partial class Folders
     {
         /// <inheritdoc />

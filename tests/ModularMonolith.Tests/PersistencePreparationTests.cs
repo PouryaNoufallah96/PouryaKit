@@ -27,7 +27,7 @@ public sealed class PersistencePreparationTests(AppFixture app) : HostTest<AppFi
             ["--environment", "Development", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
         );
         builder.Services.AddSingleton<TimeProvider>(clock.Time);
-        using var host = builder.Build();
+        await using var host = ModularMonolithHost.Build(builder);
         var catalog = host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>();
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();
