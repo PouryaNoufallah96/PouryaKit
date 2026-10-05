@@ -17,4 +17,4 @@ These facts were found in Spike S1 (ticket #2, 2026-10-05). The authoritative re
 
 **Why:** each of these cost a debugging round or would silently weaken a test.
 
-**How to apply:** use these when writing #15, #16 or Testing-package code and tests. Related: [[worktree-dotnet-gotchas]].
+**How to apply:** use these when writing #15, #16 or Testing-package code and tests. Related: [[dotnet-test-conventions]].
