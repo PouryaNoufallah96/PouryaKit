@@ -22,7 +22,7 @@ One home per concern. Anything both tools use lives in `.agents/` or at the root
 | Codex config | `.codex/config.toml` | Codex, once the repository is trusted: model, effort, review model, subagent defaults |
 | Check script | `.agents/scripts/check-ai-setup.py` | Run by hand after any change, and by the `ai-setup` CI job |
 | Role memory | `.claude/agent-memory/kit-implementer/` | Claude Code, for `kit-implementer` only; created on first use, committed |
-| Process docs | `docs/agents/running-a-spec.md`, `docs/agents/spikes.md` | Through pointers: the output style and step 6 below; the "Spikes" line of `.claude/rules/kit-code.md` |
+| Process docs | `docs/agents/running-a-spec.md`, `docs/agents/spikes.md` | The main session, through the output style and step 6 below. `spikes.md` reaches a Spike's implementer and its record's reviewer through their briefs, as `running-a-spec.md` says; the "Spikes" line of `.claude/rules/kit-code.md` also names it for work under `src/`, `tests/` and `samples/` |
 
 ## Roles
 
@@ -193,6 +193,7 @@ Ideas were taken from the owner's Ultrabusiness and ChainReporter setups. These 
 | Session figures, a pane, a command classifier in the mod | The status line and the agent panel carry the figures, and `guard.py` stays the only rule source. |
 | A main-thread `--agent` orchestrator | It would replace the prompt and tool list of every session in the repository. `AGENTS.md` and the output style carry the operating model instead. |
 | .NET layer rules | Only the scaffold exists. `.claude/rules/kit-code.md` states only decided facts. |
+| A glossary structure test | Probed on 2026-10-06: 46 hits on 366 public type and member names in the 13 Kit assemblies, none of them real drift (`*ServiceCollectionExtensions`, `DomainEvent`, `Error.Message` and the like), while the words reviewers actually flagged ("request", "caller") had no hits. Glossary drift stays a reviewer rule. |
 | Edits to vendored skills | `skills-lock.json` pins each one by hash. |
 | Changes to user-level config | Three edits the owner approved, and nothing else: a key Claude Code no longer reads (`teammateDefaultModel`) and a key Codex ignores (`agents.max_depth`) were removed, and this repository was trusted in Codex. |
 

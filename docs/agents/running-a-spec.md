@@ -30,4 +30,4 @@ The vendored skill holds in shape: an integration branch, a frontier computed fr
 
 ## Spikes
 
-A Phase that opens with Spikes follows `docs/agents/spikes.md`.
+A Phase that opens with Spikes follows `docs/agents/spikes.md`. Name that document in each Spike's brief and in the brief of the review of its record: no rule loads for `spikes/` or `docs/adr/`, so the brief is how it reaches them.
