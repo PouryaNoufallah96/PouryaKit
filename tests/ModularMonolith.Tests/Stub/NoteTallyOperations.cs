@@ -33,13 +33,37 @@ internal sealed class WriteTalliedNoteCommandHandler(IRepository<Note, NoteId> n
     }
 }
 
-internal sealed record JoinUnitOfWorkQuery : Query<bool>;
+internal sealed record TallyNoteInQueryQuery(string Text) : Query<bool>;
 
-internal sealed class JoinUnitOfWorkQueryHandler(IUnitOfWorkConnection unitOfWork) : QueryHandler<JoinUnitOfWorkQuery, bool>
+// A query that tallies through the Unit of Work and then fails: a failed query marks nothing rollback-only, so the
+// tally would commit with the command that sent it if the query could write.
+internal sealed class TallyNoteInQueryQueryHandler(IUnitOfWorkConnection unitOfWork) : QueryHandler<TallyNoteInQueryQuery, bool>
 {
-    public override Task<Result<bool>> Handle(JoinUnitOfWorkQuery query, CancellationToken cancellationToken)
+    public static readonly Error Failed = Error.Unexpected("Note.TallyFailed", "The query failed after it tallied.");
+
+    public override async Task<Result<bool>> Handle(TallyNoteInQueryQuery query, CancellationToken cancellationToken)
     {
-        unitOfWork.Join();
-        return Task.FromResult<Result<bool>>(true);
+        var (connection, transaction) = unitOfWork.Join();
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                "insert into stub.note_tallies (text, count) values (@Text, 1)",
+                new { query.Text },
+                transaction,
+                cancellationToken: cancellationToken
+            )
+        );
+        return Failed;
+    }
+}
+
+internal sealed record TallyNoteThroughQueryCommand(string Text) : Command;
+
+// Ignores the nested query's Result, as a careless handler would.
+internal sealed class TallyNoteThroughQueryCommandHandler(IDispatcher dispatcher) : CommandHandler<TallyNoteThroughQueryCommand>
+{
+    public override async Task<Result> Handle(TallyNoteThroughQueryCommand command, CancellationToken cancellationToken)
+    {
+        await dispatcher.QueryAsync(new TallyNoteInQueryQuery(command.Text), cancellationToken);
+        return Result.Success();
     }
 }
