@@ -6,6 +6,7 @@ metadata:
 ---
 
 - The implementer worktree was created from an older commit than `feat/wave-1` (seen 2026-10-05). Always run `git merge-base --is-ancestor feat/wave-1 HEAD` first and reset onto it if it fails.
+- Ticket #7 (2026-10-05): the worktree again started at `33fd974`; `git reset --hard feat/wave-1` on the clean branch fixed it. A `git commit -F - <<'EOF'` heredoc was accepted this time, so the refusal below is not universal.
 - The worktree isolation refuses compound shell commands (heredocs, `cd x && mkdir && cat <<EOF`, gh with `--jq` filters containing `\(`). Write files with the Write tool and keep each Bash call plain.
 - Seen again in ticket #6: the worktree started at an unrelated old commit (`33fd974`), and `feat/wave-1` moved during the package, so merge its tip before the final verify.
 - The isolation also refuses any `git -C <reference repo>` (and git inside a `for` loop). When the reference checkout's HEAD equals the pinned commit, read its files with the Read tool by absolute path instead.
