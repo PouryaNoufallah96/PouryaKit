@@ -1,2 +1,3 @@
 - [.NET test conventions](dotnet-test-conventions.md) — MTP + xunit.v3 4.x, zero-test failure, nuget.config/NU1507, SDK pin band
-- [Worktree and check gotchas](worktree-and-check-gotchas.md) — stale worktree base, refused shell compounds, no colons in skill frontmatter
+- [Worktree and check gotchas](worktree-and-check-gotchas.md) — stale worktree base, refused shell compounds and git -C, gh issue view quirk, no colons in skill frontmatter
+- [STJ and record facts](stj-and-record-facts.md) — base-type JsonConverter ignored, init props survive, derived record reuses Value
