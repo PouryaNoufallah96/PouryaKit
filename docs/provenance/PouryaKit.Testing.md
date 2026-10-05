@@ -8,6 +8,7 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
 
 - `Testcontainers.PostgreSql` 4.15.0, `MIT`. Its closure on `net10.0` (`Testcontainers`, the `Docker.DotNet.Enhanced` packages, `SSH.NET`, `SharpZipLib`, `BouncyCastle.Cryptography`) is all `MIT`.
 - `Respawn` 7.0.0, `Apache-2.0`, with no dependencies.
+- `Microsoft.Extensions.TimeProvider.Testing` 10.10.0, `MIT`, with no dependencies on `net10.0`. It supplies `FakeTimeProvider` for `TestClock` (ADR 0005).
 - `xunit.v3.extensibility.core` 4.0.1, `Apache-2.0`, with `xunit.v3.common` 4.0.1, `Apache-2.0`. It is the library form of xUnit v3; the test runner packages stay in test projects.
 
 ## PostgreSQL test fixture

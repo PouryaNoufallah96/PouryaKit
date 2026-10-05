@@ -17,7 +17,9 @@ public static class CqrsServiceCollectionExtensions
     {
         /// <summary>
         /// Registers the dispatcher and every command handler, query handler and authorizer in
-        /// <paramref name="featureAssemblies"/>, internal types included. Throws here, at startup, when a command or
+        /// <paramref name="featureAssemblies"/>, internal types included, and the system <see cref="TimeProvider"/>
+        /// unless one is registered: the dispatcher binds it as each Operation's <c>DomainClock</c>, so register a
+        /// different one to change the time Operations see. Throws here, at startup, when a command or
         /// query has no handler or several, when an authorizer is not for one concrete command or query, or when a
         /// command, query, handler or authorizer is a generic type definition.
         /// </summary>
@@ -28,6 +30,7 @@ public static class CqrsServiceCollectionExtensions
 
             services.TryAddScoped<Operation>();
             services.TryAddScoped<IDispatcher, Dispatcher>();
+            services.TryAddSingleton(TimeProvider.System);
 
             var classes = featureAssemblies
                 .Distinct()
