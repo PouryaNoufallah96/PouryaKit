@@ -19,18 +19,23 @@ public sealed class CatalogModule : IModuleDefinition
     public void Configure(ModuleBuilder module)
     {
         module.UsePostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
+        module.MapUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);   // see persistence.md
         module.AddPouryaKitDapper(connectionName: "app", typeof(CatalogModule).Assembly);   // see dapper-reads.md
         module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);
         module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
         module.AddScoped<IProductRepository, ProductRepository>();   // see persistence.md, The repository
         module.AddScoped<ICatalogProducts, CatalogProducts>();       // see Asking another Module a question
+        module.AddPouryaKitEndpoints("/catalog", typeof(CatalogModule).Assembly);   // see web.md
     }
 }
 
-// ModularMonolith.Host: one builder method, shared by Program and the tests
-public static HostApplicationBuilder CreateBuilder(string[] args)
+// ModularMonolith.Host: one builder method, shared by Program and the tests; its Build method adds the pipeline (web.md)
+public static WebApplicationBuilder CreateBuilder(string[] args)
 {
-    var builder = Host.CreateApplicationBuilder(args);
+    var builder = WebApplication.CreateBuilder(args);
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+    builder.Services.AddAuthorization();
+    builder.Services.AddPouryaKitWeb();
     builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>());
     return builder;
 }
@@ -39,7 +44,7 @@ public static HostApplicationBuilder CreateBuilder(string[] args)
 ## The Composition Root
 
 - Implement `IModuleDefinition` once per Module, as a public sealed class with a parameterless constructor. Everything else in the Module stays `internal`.
-- `Configure(ModuleBuilder module)` declares everything the Module needs: its data (`UsePostgres`, `AddPouryaKitDapper`), its Features (`AddPouryaKitCqrs`, `AddPouryaKitValidation`) and its own services. `ModuleBuilder` is an `IServiceCollection` over the Host's one container, so every registration extension works on it.
+- `Configure(ModuleBuilder module)` declares everything the Module needs and offers: its data (`UsePostgres`, `MapUniqueConstraint`, `AddPouryaKitDapper`), its Features (`AddPouryaKitCqrs`, `AddPouryaKitValidation`), its endpoints (`AddPouryaKitEndpoints`) and its own services. `ModuleBuilder` is an `IServiceCollection` over the Host's one container, so every registration extension works on it.
 - The Unit of Work registered on a Module's builder becomes that Module's own; every other registration goes into the Host's container as it is.
 - The Host adds each Module once: `builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>().Add<BillingModule>())`. That runs each Composition Root and registers the Module's Gateway.
 
@@ -99,7 +104,7 @@ internal sealed class RemoveProductsCommandAuthorizer(OperationContext context) 
 Setting it:
 
 - Whoever opens an Operation's scope begins it once, before anything in the scope runs, with `scope.ServiceProvider.BeginOperation(context, module)` (`PouryaKit.Cqrs`). The Gateway does this for every call, so Feature code never calls it; only an application of one Module calls it itself (below). Beginning a scope's Operation twice throws.
-- Setting it at the HTTP boundary belongs to the Web Capability (#14), not yet documented here; message delivery (#15, #16) is not yet available.
+- At the HTTP boundary, the Web Capability begins each request's Operation with a context built from the authenticated caller, and the endpoint passes that context to the Gateway ([web.md](web.md#the-caller-and-the-actor)). Message delivery (#15, #16) is not yet available.
 
 ## Which Module an Operation belongs to
 

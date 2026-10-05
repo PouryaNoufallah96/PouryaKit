@@ -66,7 +66,7 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
 - Pass the cancellation token through `new CommandDefinition(sql, parameters, cancellationToken: cancellationToken)`; Dapper's overloads that take the SQL and parameters directly take no token.
 - Name each table with its Module's schema (`catalog.products`): the read connection is the Host's, not the Module's. Read only your own Module's schema; another Module's data comes through its Contracts (see [modules.md](modules.md)).
 - Columns are in snake_case (see [persistence.md](persistence.md)); alias each to its member name (`category_id as categoryid`). Dapper matches names without regard to case.
-- Dapper runs exactly the SQL you write. No EF Core query filter applies to it, so state every predicate the read needs in the SQL itself, as the Proving Sample's reads state `is_deleted = false` because EF Core's soft-delete filter does not reach them. Soft delete itself is not yet documented here (#11).
+- Dapper runs exactly the SQL you write; no EF Core query filter reaches it. A removed soft-deletable aggregate keeps its row, marked `is_deleted = true` (see [persistence.md](persistence.md#audit-and-soft-delete)), so every read of a soft-deletable table states `is_deleted = false` itself, as both reads above do. A read that leaves it out returns removed aggregates. State every other predicate the read needs in the SQL too.
 - Read into an `internal` DTO record declared in the Feature, as above, and return a missing row as the Business Area's `NotFound` Error.
 
 ## Typed IDs
@@ -111,6 +111,6 @@ internal sealed class WriteNoteCommandHandler(IRepository<Note, NoteId> notes, I
 
 - `Join()` returns the active Unit of Work's connection and transaction. Call it only from a command's handler or a Domain Event Handler. It throws `InvalidOperationException` in a query, an authorizer or a validator at any depth, including a query sent from a command's handler, and wherever no Unit of Work is active.
 - Pass the transaction to every statement through `CommandDefinition`. The connection and the transaction belong to the Unit of Work: never dispose, commit or roll back either.
-- Write only to the Module's own tables that no aggregate maps. An aggregate changes only through its repository; a plain-SQL write to its table bypasses its version and its Snapshots.
+- Write only to the Module's own tables that no aggregate maps. An aggregate changes only through its repository; a plain-SQL write to its table bypasses its version, its audit and soft-delete fields and its Snapshots.
 - The statement runs when you call it, inside the transaction, before the Unit of Work saves what the repositories track. It cannot see or reference rows added through a repository in the same Operation.
 - If the Operation fails anywhere, the write rolls back with everything else; on a success it commits in the same commit.

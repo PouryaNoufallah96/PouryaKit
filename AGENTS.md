@@ -1,6 +1,6 @@
 # PouryaKit
 
-A reusable .NET 10 foundation for modular monoliths built from vertical slices. Status: Wave 1 in progress; `PouryaKit.Domain` (domain primitives), `PouryaKit.Cqrs` and `PouryaKit.Validation` (dispatcher, pipeline and validation), `PouryaKit.Modularity`, `PouryaKit.Persistence`, `PouryaKit.Persistence.EFCore` and `PouryaKit.Persistence.Postgres` (Modules, Gateways with the Operation Context, the generic repository, named specifications and aggregate-specific repositories, and the Unit of Work on PostgreSQL with its Domain Event Handlers), `PouryaKit.Persistence.Dapper` (Dapper reads) and `PouryaKit.Testing` (the hosted application against PostgreSQL) are usable, and no other Capability is yet.
+A reusable .NET 10 foundation for modular monoliths built from vertical slices. Status: Wave 1 in progress; `PouryaKit.Domain` (domain primitives), `PouryaKit.Cqrs` and `PouryaKit.Validation` (dispatcher, pipeline and validation), `PouryaKit.Modularity`, `PouryaKit.Persistence`, `PouryaKit.Persistence.EFCore` and `PouryaKit.Persistence.Postgres` (Modules, Gateways with the Operation Context, the generic repository, named specifications and aggregate-specific repositories, and the Unit of Work on PostgreSQL with its Domain Event Handlers, audit, soft delete, versions and conflicts), `PouryaKit.Persistence.Dapper` (Dapper reads), `PouryaKit.Web` (endpoints, Result to HTTP and the Operation Context from the caller) and `PouryaKit.Testing` (the hosted application against PostgreSQL) are usable, and no other Capability is yet.
 
 ## Read first
 
