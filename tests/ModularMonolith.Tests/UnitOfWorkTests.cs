@@ -1,7 +1,8 @@
 using Catalog;
-using Catalog.Products.Entities;
+using Catalog.Categories.Entities;
+using Catalog.Categories.Features.CreateCategory;
+using Catalog.Categories.ValueObjects;
 using Catalog.Products.Features.CreateProduct;
-using Catalog.Products.ValueObjects;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Testing;
 
@@ -13,15 +14,15 @@ public sealed class UnitOfWorkTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task A_command_that_raises_no_domain_event_is_committed_though_its_handler_never_saves()
     {
         var id = Guid.CreateVersion7();
-        Assert.Empty(Product.Create(new ProductId(id), "Lamp").Value.DomainEvents);
+        Assert.Empty(Category.Create(new CategoryId(id), "Lamps").Value.DomainEvents);
 
         var created = await Fixture
             .Gateway<CatalogModule>()
-            .SendAsync(new CreateProductCommand(id, " Lamp "), TestContext.Current.CancellationToken);
+            .SendAsync(new CreateCategoryCommand(id, " Lamps "), TestContext.Current.CancellationToken);
 
         Assert.Equal(id, created.Value);
-        var row = Assert.Single(await Fixture.RowsAsync("select id, name from catalog.products"));
-        Assert.Equal([id, "Lamp"], row);
+        var row = Assert.Single(await Fixture.RowsAsync("select id, name from catalog.categories"));
+        Assert.Equal([id, "Lamps"], row);
     }
 
     [Fact]
@@ -52,9 +53,9 @@ public sealed class UnitOfWorkTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var result = await Fixture
             .Gateway<CatalogModule>()
-            .SendAsync(new CreateProductCommand(Guid.Empty, ""), TestContext.Current.CancellationToken);
+            .SendAsync(new CreateProductCommand(Guid.Empty, Guid.Empty, ""), TestContext.Current.CancellationToken);
 
-        Assert.Equal(["Name", "ProductId"], result.Errors.Select(error => error.Target).Order());
+        Assert.Equal(["CategoryId", "Name", "ProductId"], result.Errors.Select(error => error.Target).Order());
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
     }
 }

@@ -1,4 +1,5 @@
 using Catalog;
+using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
@@ -46,10 +47,7 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public async Task A_module_answers_another_modules_question_through_its_contracts_and_its_gateway()
     {
-        var lamp = Guid.CreateVersion7();
-        await Fixture
-            .Gateway<CatalogModule>()
-            .SendAsync(new CreateProductCommand(lamp, "Lamp"), TestContext.Current.CancellationToken);
+        var lamp = await CreateLampAsync();
         var questionsBefore = Questions.Seen.Count;
 
         var noted = await Fixture
@@ -69,10 +67,7 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public async Task A_question_to_another_module_continues_the_asking_operations_context()
     {
-        var lamp = Guid.CreateVersion7();
-        await Fixture
-            .Gateway<CatalogModule>()
-            .SendAsync(new CreateProductCommand(lamp, "Lamp"), TestContext.Current.CancellationToken);
+        var lamp = await CreateLampAsync();
         var asking = new OperationContext(Actor.Person("ada"), tenant: "acme");
 
         await Fixture
@@ -85,6 +80,18 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
         Assert.Equal(asking.CorrelationId, answering.CorrelationId);
         Assert.Equal(asking.OperationId, answering.CausationId);
         Assert.NotEqual(asking.OperationId, answering.OperationId);
+    }
+
+    private async Task<Guid> CreateLampAsync()
+    {
+        var catalog = Fixture.Gateway<CatalogModule>();
+        var lamps = Guid.CreateVersion7();
+        await catalog.SendAsync(new CreateCategoryCommand(lamps, "Lamps"), TestContext.Current.CancellationToken);
+        var lamp = await catalog.SendAsync(
+            new CreateProductCommand(Guid.CreateVersion7(), lamps, "Lamp"),
+            TestContext.Current.CancellationToken
+        );
+        return lamp.Value;
     }
 
     private CatalogQuestionContexts Questions => Fixture.Host.Services.GetRequiredService<CatalogQuestionContexts>();

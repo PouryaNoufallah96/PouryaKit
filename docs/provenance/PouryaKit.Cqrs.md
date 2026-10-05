@@ -19,3 +19,18 @@ The dispatcher, its fixed pipeline, `Operation` and `IUnitOfWork` are new Kit co
   - The `Id` generated for every command and query instance is dropped: it made two equal commands unequal, and who and what caused an Operation belongs to the Operation Context.
   - The abstract records and handler classes are the only way to declare an operation and its handler. The interfaces `ICommand<T>`, `IBaseCommand`, `IQuery<T>`, `IBaseQuery`, `ICommandHandler<,>` and `IQueryHandler<,>` are dropped, so a command or query is always a record.
   - A command that yields no value (`Command`, `CommandHandler<TCommand>`, returning `Result`) is added.
+
+## The order of the Domain Event drain
+
+- **Kit files:** `src/PouryaKit.Cqrs/DomainEventDrain.cs`, `src/PouryaKit.Persistence.EFCore/EfUnitOfWork.cs`
+- **Upstream:** https://github.com/kgrzybek/modular-monolith-with-ddd
+- **Commit:** 91c8ef24b4cb6ef558c95d8267fa07d68c7059f8
+- **Upstream paths:** `src/BuildingBlocks/Infrastructure/DomainEventsDispatching/DomainEventsDispatcher.cs`, `src/BuildingBlocks/Infrastructure/DomainEventsDispatching/DomainEventsDispatcherNotificationHandlerDecorator.cs`, `src/BuildingBlocks/Infrastructure/UnitOfWork.cs`
+- **Licence:** MIT
+- **Adoption:** pattern
+- **Ticket:** #10
+- **Intentional differences:**
+  - The order is kept: take the Domain Events of every aggregate the DbContext tracks, clear them, run their handlers, then save. Upstream re-runs the dispatcher after each handler through a decorator, with no limit; the Kit repeats in rounds until no aggregate holds a Domain Event and throws after `DomainEventDrain.MaxDepth` rounds.
+  - Handlers run one at a time, in the ordinal order of their full type names, instead of through MediatR's publish.
+  - A handler returns a `Result`. A failed one, or a nested command that failed during the drain, stops it and rolls the Operation back; upstream handlers signal failure only by throwing.
+  - No Notification is written to an Outbox here; the Kit's Outbox arrives with #15.

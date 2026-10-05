@@ -23,11 +23,41 @@ namespace Catalog.Infrastructure.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Catalog.Categories.Entities.Category", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("ProductCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("product_count");
+
+                    b.Property<long>("Version")
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_categories");
+
+                    b.ToTable("categories", "catalog");
+                });
+
             modelBuilder.Entity("Catalog.Products.Entities.Product", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("category_id");
 
                     b.Property<string>("Name")
                         .IsRequired()

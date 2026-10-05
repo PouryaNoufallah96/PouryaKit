@@ -1,4 +1,6 @@
+using Catalog.Categories.ValueObjects;
 using Catalog.Products.Errors;
+using Catalog.Products.Events.DomainEvents;
 using Catalog.Products.ValueObjects;
 using PouryaKit.Domain;
 
@@ -10,16 +12,24 @@ internal sealed class Product : AggregateRoot<ProductId>
 
     public string Name { get; private set; } = "";
 
-    // Raises no Domain Event: nothing handles one before ticket #10, and creating a product is the proof that a
-    // command which raises none is still saved.
-    public static Result<Product> Create(ProductId id, string name)
+    public CategoryId CategoryId { get; private set; } = null!;
+
+    public static Result<Product> Create(ProductId id, CategoryId categoryId, string name)
     {
         ArgumentNullException.ThrowIfNull(id);
+        ArgumentNullException.ThrowIfNull(categoryId);
         if (string.IsNullOrWhiteSpace(name))
         {
             return ProductErrors.NameRequired;
         }
 
-        return new Product { Id = id, Name = name.Trim() };
+        var product = new Product
+        {
+            Id = id,
+            CategoryId = categoryId,
+            Name = name.Trim(),
+        };
+        product.Raise(new ProductCreatedDomainEvent(id, categoryId, product.Name));
+        return product;
     }
 }

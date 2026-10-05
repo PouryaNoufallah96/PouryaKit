@@ -13,6 +13,7 @@ public sealed class StubModule : IModuleDefinition
     {
         module.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
         module.AddPouryaKitCqrs(typeof(StubModule).Assembly);
+        module.AddScoped<ReactionLog>();
         module.AddSingleton<CatalogQuestionContexts>();
     }
 }
