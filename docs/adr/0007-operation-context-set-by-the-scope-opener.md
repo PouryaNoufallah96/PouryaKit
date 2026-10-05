@@ -73,7 +73,7 @@ creates its context with a named `Actor.System(...)` (G.6).
 
 ## Amendment (2026-10-06, Wave 1 as built)
 
-The decision above stands. Ticket #14 fixed two facts of the context `PouryaKit.Web` opens each request's Operation
+The decision above stands. Ticket #14 fixed these facts of the context `PouryaKit.Web` opens each request's Operation
 with (`src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs`), which a project's authorization and tracing build
 on.
 
