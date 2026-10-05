@@ -223,15 +223,25 @@ pourya-kit/
 | Domain | — | none |
 | Cqrs | Domain | `Microsoft.Extensions.DependencyInjection.Abstractions`, `Logging.Abstractions` |
 | Validation | Cqrs | FluentValidation |
-| Modularity | Cqrs | `Microsoft.Extensions.Hosting.Abstractions` |
+| Modularity | Cqrs | `Microsoft.Extensions.Hosting.Abstractions`, `Microsoft.Extensions.DependencyInjection` |
 | Persistence.EFCore | Cqrs | EF Core Relational |
 | Persistence.Postgres | Persistence.EFCore | Npgsql EF provider, EFCore.NamingConventions |
-| Persistence.Dapper | Domain | Dapper, Npgsql (ADO.NET driver only, no EF) |
+| Persistence.Dapper | Domain | Dapper, Npgsql (ADO.NET driver only, no EF), `Microsoft.Extensions.Configuration.Abstractions` |
 | Messaging | Domain (handlers return `Result`) | none |
 | Messaging.Wolverine | Cqrs, Messaging | WolverineFx |
 | Messaging.Wolverine.EFCore | Messaging.Wolverine, Persistence.EFCore | WolverineFx.EntityFrameworkCore, WolverineFx.Postgresql |
 | Web | Cqrs | ASP.NET Core framework reference |
-| Testing | Modularity, Persistence.Postgres, Messaging.Wolverine.EFCore | Testcontainers, Respawn, xUnit v3 |
+| Testing | Modularity, Persistence.Postgres, Messaging.Wolverine.EFCore | Testcontainers, Respawn, xUnit v3, `Microsoft.Extensions.TimeProvider.Testing` |
+
+Amended on 2026-10-05, each addition MIT and already present in every Host:
+
+- Modularity references `Microsoft.Extensions.DependencyInjection` (owner, ticket #13): the options that validate the
+  container at build live only there, and `AddPouryaKitModules` turns them on in every environment.
+- Persistence.Dapper references `Microsoft.Extensions.Configuration.Abstractions` (owner, ticket #9): the read
+  connection is registered by connection name, as `UsePostgres` is. Its closure still holds no EF Core.
+- Testing references `Microsoft.Extensions.TimeProvider.Testing` (ticket #8): the test clock of ADR 0005, a decision
+  the owner delegated.
+- Persistence.EFCore also references Persistence and `Ardalis.Specification.EntityFrameworkCore`, as G.4 decided.
 
 Checks against your rules: Dapper does not reference EF. Postgres does not reference Wolverine. Web
 does not reference Modularity. Nothing chooses an identity provider. There is no `Core`/`Utils`.
