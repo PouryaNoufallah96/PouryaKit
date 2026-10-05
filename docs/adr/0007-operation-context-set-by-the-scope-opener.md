@@ -28,7 +28,8 @@ creates its context with a named `Actor.System(...)` (G.6).
 
 - **Capture the context from the calling scope at the Gateway.** Rejected: the Gateway would have to be resolved in
   the caller's scope, so it could not be a singleton. Callers outside any scope (a hosted service, a test reaching the
-  Host's root provider) would then fail scope validation, which ticket #13 turns on in every environment. The capture
+  Host's root provider) would then fail scope validation, which is on in Development and which story 53 asks for in
+  every environment. The capture
   that is needed happens one step earlier, in the Contracts implementation, where it is plain injection.
 - **An ambient binding, as the clock is bound (ADR 0005).** Rejected: an `AsyncLocal` context is hidden state that flows
   into every task started under it, including work that is not a continuation, and an Operation started with no
