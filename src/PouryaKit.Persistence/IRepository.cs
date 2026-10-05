@@ -14,7 +14,10 @@ public interface IRepository<TAggregate, in TId>
     /// <summary>Starts tracking a new aggregate; the Unit of Work inserts it when the Operation commits.</summary>
     Task AddAsync(TAggregate aggregate, CancellationToken cancellationToken = default);
 
-    /// <summary>Marks an aggregate for deletion when the Operation commits.</summary>
+    /// <summary>
+    /// Removes an aggregate when the Operation commits: its row is deleted, or, when it is <see cref="ISoftDeletable"/>,
+    /// kept and marked deleted.
+    /// </summary>
     void Remove(TAggregate aggregate);
 
     Task<TAggregate?> FindAsync(TId id, CancellationToken cancellationToken = default);
