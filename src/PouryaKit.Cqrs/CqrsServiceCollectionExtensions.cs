@@ -15,8 +15,8 @@ public static class CqrsServiceCollectionExtensions
 
     /// <summary>
     /// Registers the dispatcher and every command handler, query handler and authorizer in
-    /// <paramref name="featureAssemblies"/>, internal types included. Throws here, at startup, when a command or query
-    /// has no handler or several.
+    /// <paramref name="featureAssemblies"/>, internal types included. Throws here, at startup, when a command or
+    /// query has no handler or several, or when an authorizer is not for one concrete command or query.
     /// </summary>
     public static IServiceCollection AddPouryaKitCqrs(
         this IServiceCollection services,
@@ -29,29 +29,40 @@ public static class CqrsServiceCollectionExtensions
         services.TryAddScoped<Operation>();
         services.TryAddScoped<IDispatcher, Dispatcher>();
 
-        var types = featureAssemblies
+        var classes = featureAssemblies
             .Distinct()
             .SelectMany(assembly => assembly.GetTypes())
-            .Where(type => type is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false })
+            .Where(type => type is { IsClass: true, IsAbstract: false })
             .ToList();
+        var types = classes.Where(type => !type.IsGenericTypeDefinition).ToList();
 
         var handlers = types
             .Select(type => (Implementation: type, Service: HandlerBase(type)))
             .Where(handler => handler.Service is not null)
             .ToList();
+        var authorizers = classes
+            .SelectMany(type => AuthorizerInterfaces(type).Select(service => (Implementation: type, Service: service)))
+            .ToList();
 
         var handlersByOperation = handlers.ToLookup(handler => handler.Service!.GenericTypeArguments[0]);
         var operations = types.Where(IsOperation).Concat(handlersByOperation.Select(group => group.Key)).Distinct();
-        var mismatches = operations
-            .Select(operation => (Operation: operation, Count: handlersByOperation[operation].Count()))
-            .Where(operation => operation.Count != 1)
-            .Select(operation =>
-                $"{operation.Operation.FullName} has {operation.Count} handlers; exactly one is required."
-            )
-            .ToList();
-        if (mismatches.Count > 0)
+        List<string> problems =
+        [
+            .. operations
+                .Select(operation => (Operation: operation, Count: handlersByOperation[operation].Count()))
+                .Where(operation => operation.Count != 1)
+                .Select(operation =>
+                    $"{operation.Operation.FullName} has {operation.Count} handlers; exactly one is required."
+                ),
+            .. authorizers
+                .Where(authorizer => !IsConcreteOperation(authorizer.Service.GenericTypeArguments[0]))
+                .Select(authorizer =>
+                    $"{authorizer.Implementation.FullName} is an authorizer, but not for one concrete command or query; the dispatcher would never run it."
+                ),
+        ];
+        if (problems.Count > 0)
         {
-            throw new InvalidOperationException(string.Join(Environment.NewLine, mismatches));
+            throw new InvalidOperationException(string.Join(Environment.NewLine, problems));
         }
 
         foreach (var (implementation, service) in handlers)
@@ -59,15 +70,9 @@ public static class CqrsServiceCollectionExtensions
             AddHandler(services, service!, implementation);
         }
 
-        foreach (var type in types)
+        foreach (var (implementation, service) in authorizers)
         {
-            foreach (
-                var authorizer in type.GetInterfaces()
-                    .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAuthorizer<>))
-            )
-            {
-                services.TryAddEnumerable(ServiceDescriptor.Scoped(authorizer, type));
-            }
+            services.TryAddEnumerable(ServiceDescriptor.Scoped(service, implementation));
         }
 
         return services;
@@ -90,6 +95,9 @@ public static class CqrsServiceCollectionExtensions
         }
     }
 
+    private static IEnumerable<Type> AuthorizerInterfaces(Type type) =>
+        type.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAuthorizer<>));
+
     private static Type? HandlerBase(Type type)
     {
         for (var current = type.BaseType; current is not null; current = current.BaseType)
@@ -102,6 +110,11 @@ public static class CqrsServiceCollectionExtensions
 
         return null;
     }
+
+    // The dispatcher resolves an authorizer by the exact runtime type, so one for an open type parameter, a base type
+    // or a marker interface would register and never run.
+    private static bool IsConcreteOperation(Type type) =>
+        !type.IsGenericParameter && !type.ContainsGenericParameters && !type.IsAbstract && IsOperation(type);
 
     private static bool IsOperation(Type type)
     {

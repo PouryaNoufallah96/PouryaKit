@@ -150,6 +150,65 @@ public sealed class DispatchTests
         Assert.Single(Trace(scope), step => step == "uow:begin");
     }
 
+    [Fact]
+    public async Task An_authorizer_that_sends_a_command_throws_before_the_nested_handler_runs()
+    {
+        await using var host = TestHost.Build();
+        using var scope = host.CreateScope();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ThingsGateway.AuthorizeBySendingACommand(Dispatcher(scope))
+        );
+
+        Assert.DoesNotContain("handle PingCommand", Trace(scope));
+        Assert.DoesNotContain("uow:begin", Trace(scope));
+    }
+
+    [Fact]
+    public async Task An_authorizer_may_run_a_query_before_the_unit_of_work_starts()
+    {
+        await using var host = TestHost.Build();
+        using var scope = host.CreateScope();
+
+        var result = await ThingsGateway.AuthorizeByRunningAQuery(Dispatcher(scope));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(
+            ["handle GetThingQuery", "uow:begin", "handle GuardedByQueryCommand", "uow:commit"],
+            Trace(scope)
+                .Where(step =>
+                    step.StartsWith("handle", StringComparison.Ordinal) || step.StartsWith("uow", StringComparison.Ordinal)
+                )
+        );
+    }
+
+    [Fact]
+    public async Task A_command_exception_is_logged_once_with_its_exception_where_it_began()
+    {
+        await using var host = TestHost.Build();
+        using var scope = host.CreateScope();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ThingsGateway.RunOuterLettingANestedExceptionThrough(Dispatcher(scope))
+        );
+
+        Assert.Equal(
+            ["log:Threw RunNestedCommand InvalidOperationException"],
+            Trace(scope).Where(step => step.StartsWith("log:Threw", StringComparison.Ordinal))
+        );
+    }
+
+    [Fact]
+    public async Task A_unit_of_work_that_reports_a_success_other_than_the_commands_result_throws()
+    {
+        await using var host = TestHost.Build(unitOfWork: typeof(SuccessReportingUnitOfWork));
+        using var scope = host.CreateScope();
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => ThingsGateway.CreateThing(Dispatcher(scope)));
+
+        Assert.Contains(nameof(IUnitOfWork), error.Message);
+    }
+
     private static IDispatcher Dispatcher(IServiceScope scope) => scope.ServiceProvider.GetRequiredService<IDispatcher>();
 
     private static IReadOnlyList<string> Trace(IServiceScope scope) =>

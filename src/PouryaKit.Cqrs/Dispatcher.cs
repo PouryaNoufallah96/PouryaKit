@@ -21,6 +21,9 @@ internal sealed partial class Dispatcher(IServiceProvider services, Operation op
         "A command failed with an exception, so the Operation was rolled back."
     );
 
+    // The exception last logged in this scope: one that leaves several nested pipelines is logged once, where it began.
+    private Exception? _loggedException;
+
     public Task<Result> SendAsync(Command command, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(command);
@@ -62,14 +65,14 @@ internal sealed partial class Dispatcher(IServiceProvider services, Operation op
     // Failure tracking wraps the whole pipeline, outside every step that can short-circuit, so a command that fails
     // anywhere (authorization, validation, its handler, or an exception) marks the Operation rollback-only even when
     // the handler that sent it ignores the Result. A failed query marks nothing: it has no effect to undo.
-    private async Task<TResult> Run<TOperation, TResult>(
-        TOperation request,
+    private async Task<TResult> Run<TCommandOrQuery, TResult>(
+        TCommandOrQuery commandOrQuery,
         bool isCommand,
-        Func<IServiceProvider, TOperation, CancellationToken, Task<TResult>> handle,
+        Func<IServiceProvider, TCommandOrQuery, CancellationToken, Task<TResult>> handle,
         Func<ImmutableArray<Error>, TResult> fail,
         CancellationToken cancellationToken
     )
-        where TOperation : notnull
+        where TCommandOrQuery : notnull
         where TResult : Result
     {
         try
@@ -86,7 +89,7 @@ internal sealed partial class Dispatcher(IServiceProvider services, Operation op
 
             try
             {
-                var result = await Pipeline(request, ownsUnitOfWork, handle, fail, cancellationToken);
+                var result = await Pipeline(commandOrQuery, ownsUnitOfWork, handle, fail, cancellationToken);
                 if (isCommand && result.IsFailure)
                 {
                     operation.MarkRollbackOnly(result.Errors);
@@ -114,22 +117,34 @@ internal sealed partial class Dispatcher(IServiceProvider services, Operation op
     }
 
     // The fixed order, written out here and never registered: logging, authorization hook, validation, Unit of Work.
-    private async Task<TResult> Pipeline<TOperation, TResult>(
-        TOperation request,
+    private async Task<TResult> Pipeline<TCommandOrQuery, TResult>(
+        TCommandOrQuery commandOrQuery,
         bool ownsUnitOfWork,
-        Func<IServiceProvider, TOperation, CancellationToken, Task<TResult>> handle,
+        Func<IServiceProvider, TCommandOrQuery, CancellationToken, Task<TResult>> handle,
         Func<ImmutableArray<Error>, TResult> fail,
         CancellationToken cancellationToken
     )
-        where TOperation : notnull
+        where TCommandOrQuery : notnull
         where TResult : Result
     {
-        var name = typeof(TOperation).Name;
+        var name = typeof(TCommandOrQuery).Name;
         using var scope = OperationScope(logger, name);
         LogRunning(logger, name);
         var started = Stopwatch.GetTimestamp();
 
-        var result = await Steps(request, ownsUnitOfWork, handle, fail, cancellationToken);
+        TResult result;
+        try
+        {
+            result = await Steps(commandOrQuery, ownsUnitOfWork, handle, fail, cancellationToken);
+        }
+        catch (Exception exception)
+            when (!ReferenceEquals(exception, _loggedException)
+                && !(exception is OperationCanceledException && cancellationToken.IsCancellationRequested))
+        {
+            _loggedException = exception;
+            LogThrew(logger, exception, name, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+            throw;
+        }
 
         var elapsed = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
         if (result.IsSuccess)
@@ -144,28 +159,28 @@ internal sealed partial class Dispatcher(IServiceProvider services, Operation op
         return result;
     }
 
-    private async Task<TResult> Steps<TOperation, TResult>(
-        TOperation request,
+    private async Task<TResult> Steps<TCommandOrQuery, TResult>(
+        TCommandOrQuery commandOrQuery,
         bool ownsUnitOfWork,
-        Func<IServiceProvider, TOperation, CancellationToken, Task<TResult>> handle,
+        Func<IServiceProvider, TCommandOrQuery, CancellationToken, Task<TResult>> handle,
         Func<ImmutableArray<Error>, TResult> fail,
         CancellationToken cancellationToken
     )
-        where TOperation : notnull
+        where TCommandOrQuery : notnull
         where TResult : Result
     {
-        foreach (var authorizer in services.GetServices<IAuthorizer<TOperation>>())
+        foreach (var authorizer in services.GetServices<IAuthorizer<TCommandOrQuery>>())
         {
-            var authorized = await authorizer.AuthorizeAsync(request, cancellationToken);
+            var authorized = await authorizer.AuthorizeAsync(commandOrQuery, cancellationToken);
             if (authorized.IsFailure)
             {
                 return fail(authorized.Errors);
             }
         }
 
-        if (services.GetService<IValidationStep<TOperation>>() is { } validation)
+        if (services.GetService<IValidationStep<TCommandOrQuery>>() is { } validation)
         {
-            var validated = await validation.ValidateAsync(request, cancellationToken);
+            var validated = await validation.ValidateAsync(commandOrQuery, cancellationToken);
             if (validated.IsFailure)
             {
                 return fail(validated.Errors);
@@ -175,7 +190,7 @@ internal sealed partial class Dispatcher(IServiceProvider services, Operation op
         // A query, or a command nested in another one: it joins the Operation's Unit of Work, if any.
         if (!ownsUnitOfWork)
         {
-            return await handle(services, request, cancellationToken);
+            return await handle(services, commandOrQuery, cancellationToken);
         }
 
         var unitOfWork =
@@ -184,16 +199,36 @@ internal sealed partial class Dispatcher(IServiceProvider services, Operation op
                 "No IUnitOfWork is registered, so a command cannot run. Register the Unit of Work of a persistence package."
             );
 
-        var outcome = await unitOfWork.RunAsync(
-            async ct =>
-            {
-                var handled = await handle(services, request, ct);
-                return handled.IsSuccess && operation.IsRollbackOnly ? fail(operation.RollbackErrors) : handled;
-            },
-            cancellationToken
-        );
+        TResult? returned = null;
+        Result outcome;
+        operation.StartUnitOfWork();
+        try
+        {
+            outcome = await unitOfWork.RunAsync(
+                async ct =>
+                {
+                    var handled = await handle(services, commandOrQuery, ct);
+                    returned = handled.IsSuccess && operation.IsRollbackOnly ? fail(operation.RollbackErrors) : handled;
+                    return returned;
+                },
+                cancellationToken
+            );
+        }
+        finally
+        {
+            operation.EndUnitOfWork();
+        }
 
-        return outcome as TResult ?? fail(outcome.Errors);
+        if (ReferenceEquals(outcome, returned))
+        {
+            return returned!;
+        }
+
+        return outcome.IsFailure
+            ? outcome as TResult ?? fail(outcome.Errors)
+            : throw new InvalidOperationException(
+                $"{unitOfWork.GetType().Name} returned a success that is not the command's own Result. An IUnitOfWork returns the command's Result after a commit and a failed Result after a rollback."
+            );
     }
 
     [LoggerMessage(EventName = "Running", Level = LogLevel.Debug, Message = "Running {Operation}")]
@@ -213,18 +248,33 @@ internal sealed partial class Dispatcher(IServiceProvider services, Operation op
     )]
     private static partial void LogFailed(ILogger logger, string operation, string errorCodes, double elapsedMilliseconds);
 
+    [LoggerMessage(
+        EventName = "Threw",
+        Level = LogLevel.Error,
+        Message = "{Operation} threw after {ElapsedMilliseconds} ms"
+    )]
+    private static partial void LogThrew(ILogger logger, Exception exception, string operation, double elapsedMilliseconds);
+
     private abstract class Invoker<TResult>
         where TResult : Result
     {
-        public abstract Task<TResult> Invoke(Dispatcher dispatcher, object request, CancellationToken cancellationToken);
+        public abstract Task<TResult> Invoke(
+            Dispatcher dispatcher,
+            object commandOrQuery,
+            CancellationToken cancellationToken
+        );
     }
 
     private sealed class CommandInvoker<TCommand> : Invoker<Result>
         where TCommand : Command
     {
-        public override Task<Result> Invoke(Dispatcher dispatcher, object request, CancellationToken cancellationToken) =>
+        public override Task<Result> Invoke(
+            Dispatcher dispatcher,
+            object commandOrQuery,
+            CancellationToken cancellationToken
+        ) =>
             dispatcher.Run(
-                (TCommand)request,
+                (TCommand)commandOrQuery,
                 isCommand: true,
                 static (services, command, ct) =>
                     services.GetRequiredService<CommandHandler<TCommand>>().Handle(command, ct),
@@ -239,11 +289,11 @@ internal sealed partial class Dispatcher(IServiceProvider services, Operation op
     {
         public override Task<Result<TResponse>> Invoke(
             Dispatcher dispatcher,
-            object request,
+            object commandOrQuery,
             CancellationToken cancellationToken
         ) =>
             dispatcher.Run(
-                (TCommand)request,
+                (TCommand)commandOrQuery,
                 isCommand: true,
                 static (services, command, ct) =>
                     services.GetRequiredService<CommandHandler<TCommand, TResponse>>().Handle(command, ct),
@@ -258,11 +308,11 @@ internal sealed partial class Dispatcher(IServiceProvider services, Operation op
     {
         public override Task<Result<TResponse>> Invoke(
             Dispatcher dispatcher,
-            object request,
+            object commandOrQuery,
             CancellationToken cancellationToken
         ) =>
             dispatcher.Run(
-                (TQuery)request,
+                (TQuery)commandOrQuery,
                 isCommand: false,
                 static (services, query, ct) =>
                     services.GetRequiredService<QueryHandler<TQuery, TResponse>>().Handle(query, ct),

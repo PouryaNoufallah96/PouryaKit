@@ -17,6 +17,7 @@ Adopted implementations in `PouryaKit.Domain`. Format and rules: [README](README
   - Reading `Value` from a failure throws instead of returning the default.
   - `Errors` is an `ImmutableArray<Error>`, empty on success, never null. A failure needs at least one Error, and an `ImmutableArray<Error>` converts to a failed Result of any type, so a handler passes every Error of a failed Result on with `return result.Errors;`.
   - The constructor is `private protected`, so no type outside the package can derive a Result with other rules. The JSON attributes and the equality members are dropped.
+  - A validation Error may name the input it is about in `Target` (ticket #7), through an overload of `Error.Validation`; every other Error has none. Upstream `AppError` has no such field; the Kit adds it so a transport can group validation Errors by input (RFC 9457 `errors`).
 
 ## Typed IDs
 
