@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Hosting;
 using ModularMonolith.Host;
 
-await ModularMonolithHost.CreateBuilder(args).Build().RunAsync();
+await ModularMonolithHost.Build(ModularMonolithHost.CreateBuilder(args)).RunAsync();
