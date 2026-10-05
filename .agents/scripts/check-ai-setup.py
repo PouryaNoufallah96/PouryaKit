@@ -201,6 +201,9 @@ def check_claude_settings() -> None:
     chosen = settings.get("outputStyle")
     if chosen is not None and chosen not in styles:
         failures.append(f".claude/settings.json: outputStyle '{chosen}' names no style in .claude/output-styles")
+    worktree = settings.get("worktree")
+    if not isinstance(worktree, dict) or worktree.get("baseRef") != "head":  # code.claude.com/docs/en/settings-reference#worktree-baseref
+        failures.append(".claude/settings.json: worktree.baseRef must be \"head\", so a subagent worktree starts at the session's HEAD, not origin/HEAD")
 
 
 def check_agents() -> None:
