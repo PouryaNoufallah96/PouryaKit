@@ -72,7 +72,7 @@ Some code runs inside an Operation but may change nothing, because its outcome c
 - a query's handler, and an authorizer or a validator, at any nesting depth, including those of a query or command nested in a command's handler;
 - a step of the Unit of Work that only reads, which the Kit opens around application code it runs after the last change: a Snapshot mapper ([messaging.md](messaging.md#writing-a-snapshot-mapper)).
 
-Such code may run queries. Every write is refused with an `InvalidOperationException`, and nothing commits:
+Such code may run queries. Every write is refused with an `InvalidOperationException` before it happens; left uncaught, the exception fails the Operation and nothing commits:
 
 - a command sent from it: `A query handler sent a command.`, `A command was sent from an authorizer or a validator.`, or `A command was sent from a Snapshot mapper, a step that only reads.`; a refused command still marks the Operation rollback-only;
 - the repository's `AddAsync` and `Remove` ([persistence.md](persistence.md#the-repository)), `IUnitOfWorkConnection.Join()` ([dapper-reads.md](dapper-reads.md#writing-with-plain-sql-in-the-unit-of-work)) and `IIntegrationEventPublisher.Publish` ([messaging.md](messaging.md#publishing-from-a-notification-handler)), each with a message that begins `Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, ...`.
