@@ -10,7 +10,9 @@ using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Host;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
+using PouryaKit.Domain;
 using PouryaKit.Modularity;
+using PouryaKit.Persistence.EFCore;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -124,19 +126,140 @@ public sealed class PersistencePreparationTests(AppFixture app) : HostTest<AppFi
         var reworked = await Fixture.RowsAsync(
             "select name, label_colour, (select count(*) from stub.pages) from stub.folders"
         );
-        foreach (var edit in new[] { FolderEdit.Relabel, FolderEdit.RewritePage, FolderEdit.TearOutPage, FolderEdit.Nothing })
+        foreach (
+            var edit in new[]
+            {
+                FolderEdit.Relabel,
+                FolderEdit.RewritePage,
+                FolderEdit.TearOutPage,
+                FolderEdit.PeelSticker,
+                FolderEdit.Nothing,
+            }
+        )
         {
             await stub.SendAsync(new EditFolderCommand(folder, edit, Colour: "blue"), TestContext.Current.CancellationToken);
             versions.Add(await VersionAsync());
         }
 
         Assert.Equal([["reworked", "red", 3L]], reworked);
-        // Created; reworked three ways; the owned label alone; one page alone; one page torn out; nothing.
-        Assert.Equal([1L, 2L, 3L, 4L, 5L, 5L], versions);
+        // Created; reworked three ways; the owned label alone; one page alone; one page torn out; the sticker peeled
+        // off, its optional key set to null; nothing.
+        Assert.Equal([1L, 2L, 3L, 4L, 5L, 6L, 6L], versions);
         Assert.Equal(
             [["added on rename"], ["rewritten"]],
             await Fixture.RowsAsync("select text from stub.pages order by text")
         );
+        Assert.Equal([["fragile", DBNull.Value]], await Fixture.RowsAsync("select text, folder_id from stub.stickers"));
+    }
+
+    [Fact]
+    public async Task A_page_moved_to_another_folder_advances_and_stamps_both_folders_once()
+    {
+        var stub = Fixture.Gateway<StubModule>();
+        Guid from = Guid.CreateVersion7(), to = Guid.CreateVersion7();
+        await stub.SendAsync(new CreateFolderCommand(from), TestContext.Current.CancellationToken);
+        await stub.SendAsync(new CreateFolderCommand(to), TestContext.Current.CancellationToken);
+
+        var moved = await stub.SendAsync(
+            new MovePageCommand(from, to, "first page"),
+            new OperationContext(Actor.Person("carol")),
+            TestContext.Current.CancellationToken
+        );
+
+        Assert.True(moved.IsSuccess);
+        Assert.Equal(
+            [[2L, "carol", 1L], [2L, "carol", 3L]],
+            await Fixture.RowsAsync(
+                $"""
+                select version, last_changed_by, (select count(*) from stub.pages where folder_id = folders.id)
+                from stub.folders order by id = '{to}'
+                """
+            )
+        );
+    }
+
+    [Fact(Timeout = 60_000)]
+    public async Task Two_operations_that_move_the_same_page_out_of_one_folder_commit_once_and_the_other_fails_with_a_conflict()
+    {
+        var stub = Fixture.Gateway<StubModule>();
+        Guid from = Guid.CreateVersion7(), first = Guid.CreateVersion7(), second = Guid.CreateVersion7();
+        foreach (var folder in new[] { from, first, second })
+        {
+            await stub.SendAsync(new CreateFolderCommand(folder), TestContext.Current.CancellationToken);
+        }
+
+        Hold firstHold = new(), secondHold = new();
+        var firstRun = SendHeldAsync(new MovePageCommand(from, first, "first page"), firstHold);
+        var secondRun = SendHeldAsync(new MovePageCommand(from, second, "first page"), secondHold);
+        await Task.WhenAll(firstHold.Changed.Task, secondHold.Changed.Task).WaitAsync(TestContext.Current.CancellationToken);
+        firstHold.Released.SetResult();
+        var firstResult = await firstRun;
+        secondHold.Released.SetResult();
+        var secondResult = await secondRun;
+
+        Assert.True(firstResult.IsSuccess);
+        Assert.Equal(UnitOfWorkErrors.ConcurrencyConflict, Assert.Single(secondResult.Errors));
+        // Each folder was created with two pages; only the commit that won moved one.
+        Guid[] folders = [from, first, second];
+        Assert.Equal(
+            [[from, 2L, 1L], [first, 2L, 3L], [second, 1L, 2L]],
+            (
+                await Fixture.RowsAsync(
+                    "select id, version, (select count(*) from stub.pages where folder_id = folders.id) from stub.folders"
+                )
+            ).OrderBy(row => Array.IndexOf(folders, (Guid)row[0]))
+        );
+    }
+
+    [Fact]
+    public async Task Changing_a_part_of_an_aggregate_the_operation_did_not_load_throws_and_writes_nothing()
+    {
+        var stub = Fixture.Gateway<StubModule>();
+        await stub.SendAsync(new CreateFolderCommand(Guid.CreateVersion7()), TestContext.Current.CancellationToken);
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            stub.SendAsync(new RewritePageUnloadedCommand("first page"), TestContext.Current.CancellationToken)
+        );
+
+        Assert.Contains("which this Operation did not load", thrown.Message);
+        Assert.Equal(1L, await VersionAsync());
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.pages where text = 'rewritten unloaded'"));
+    }
+
+    [Fact]
+    public async Task Removing_a_product_twice_in_one_operation_lowers_its_categorys_count_once()
+    {
+        var catalog = Fixture.Gateway<CatalogModule>();
+        var category = Guid.CreateVersion7();
+        await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(
+            new CreateProductCommand(Guid.CreateVersion7(), category, "Lamp"),
+            TestContext.Current.CancellationToken
+        );
+
+        await using var scope = Fixture.Host.Services.CreateAsyncScope();
+        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(CatalogModule));
+        var removed = await scope
+            .ServiceProvider.GetRequiredService<IDispatcher>()
+            .SendAsync(new RemoveProductsTwiceCommand("Lamp"), TestContext.Current.CancellationToken);
+
+        Assert.True(removed.IsSuccess);
+        Assert.Equal(0, await Fixture.ScalarAsync<int>("select product_count from catalog.categories"));
+        Assert.True(await Fixture.ScalarAsync<bool>("select is_deleted from catalog.products"));
+    }
+
+    // Runs the command in a Stub Operation of its own that waits, after its change, until the test lets it go.
+    private async Task<Result> SendHeldAsync(Command command, Hold hold)
+    {
+        await Task.Yield();
+        await using var scope = Fixture.Host.Services.CreateAsyncScope();
+        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(StubModule));
+        return await scope
+            .ServiceProvider.GetRequiredService<IDispatcher>()
+            .SendAsync(
+                new HoldChangeCommand(async (dispatcher, ct) => await dispatcher.SendAsync(command, ct), hold),
+                TestContext.Current.CancellationToken
+            );
     }
 
     private Task<long> VersionAsync() => Fixture.ScalarAsync<long>("select version from stub.folders");

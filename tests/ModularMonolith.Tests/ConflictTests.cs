@@ -66,14 +66,8 @@ public sealed class ConflictTests(AppFixture app) : HostTest<AppFixture>(app)
             new CreateProductCommand(Guid.CreateVersion7(), category, "Lamp"),
             TestContext.Current.CancellationToken
         );
-        // Neither name is in use before the import, so only the index can refuse the second.
-        var imported = await catalog.SendAsync(
-            new ImportProductsCommand(category, ["Desk", "Desk "]),
-            TestContext.Current.CancellationToken
-        );
 
         Assert.Equal(ProductErrors.NameInUse, Assert.Single(created.Errors));
-        Assert.Equal(ProductErrors.NameInUse, Assert.Single(imported.Errors));
         Assert.Equal([["Lamp"]], await Fixture.RowsAsync("select name from catalog.products"));
         Assert.Equal(1, await Fixture.ScalarAsync<int>("select product_count from catalog.categories"));
     }

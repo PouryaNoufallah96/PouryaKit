@@ -22,6 +22,17 @@ internal sealed class PouryaKitModelConvention : IModelFinalizingConvention
             // Filters and tokens belong to the root of a hierarchy; an owned type is reached through its owner.
             if (entityType.BaseType is not null || entityType.IsOwned())
             {
+                // Such a type would be marked deleted on removal, yet still be read: EF Core filters only the root.
+                if (
+                    typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType)
+                    && (entityType.IsOwned() || !typeof(ISoftDeletable).IsAssignableFrom(entityType.GetRootType().ClrType))
+                )
+                {
+                    throw new InvalidOperationException(
+                        $"{entityType.ClrType.Name} is ISoftDeletable but is mapped as {(entityType.IsOwned() ? "an owned type" : $"a type derived from {entityType.GetRootType().ClrType.Name}, which is not")}, so no query filter can leave its deleted rows out. Implement ISoftDeletable on an aggregate or entity that is not owned, at the root of its hierarchy."
+                    );
+                }
+
                 continue;
             }
 

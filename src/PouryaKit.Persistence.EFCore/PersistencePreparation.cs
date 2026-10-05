@@ -1,5 +1,7 @@
+using System.Collections;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Metadata;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 
@@ -29,10 +31,10 @@ internal static class PersistencePreparation
         }
 
         // Read before any Version moves, so the bump below is the only change it can see.
+        var holders = new Holders(entries);
         var changed = entries
             .Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
-            .Select(entry => AggregateOf(entry, entries))
-            .OfType<EntityEntry>()
+            .SelectMany(entry => AggregatesOf(entry, holders, new HashSet<object>(ReferenceEqualityComparer.Instance)))
             .DistinctBy(entry => entry.Entity, ReferenceEqualityComparer.Instance)
             .ToList();
         foreach (var aggregate in changed)
@@ -56,48 +58,80 @@ internal static class PersistencePreparation
         }
     }
 
-    // The aggregate an entry belongs to: the entry itself when it is an aggregate root, otherwise the aggregate of the
-    // entity that holds it, reached through the foreign key whose principal navigates to it. Every owned type has
+    // The aggregates a changed entry changes: the entry itself when it is an aggregate root, otherwise the aggregates of
+    // the entities that hold it, reached through each foreign key whose principal navigates to it. Every owned type has
     // such a key, and so does a child entity its parent holds in a navigation; a reference to another aggregate by ID
-    // has none. Null when no tracked entity holds it.
-    private static EntityEntry? AggregateOf(EntityEntry entry, List<EntityEntry> entries)
+    // has none. Both holders count: the one the key names now, and the one it named when loaded. So a child moved from
+    // one aggregate to another changes both, and one deleted, or detached by setting an optional key to null, changes
+    // the aggregate it left. A holder must be tracked: an aggregate whose part changes without the aggregate being
+    // loaded cannot advance its version, so concurrent writers would not conflict, and that throws instead. A child the
+    // aggregate reaches by no navigation is not part of it.
+    private static IEnumerable<EntityEntry> AggregatesOf(EntityEntry entry, Holders holders, HashSet<object> seen)
     {
-        HashSet<object> seen = new(ReferenceEqualityComparer.Instance);
-        for (EntityEntry? current = entry; current is not null && seen.Add(current.Entity); current = Holder(current, entries))
+        if (!seen.Add(entry.Entity))
         {
-            if (current.Entity is IAggregateRoot)
-            {
-                return current;
-            }
+            return [];
         }
 
-        return null;
+        if (entry.Entity is IAggregateRoot)
+        {
+            return [entry];
+        }
+
+        return entry
+            .Metadata.GetForeignKeys()
+            .Where(foreignKey => foreignKey.PrincipalToDependent is not null)
+            .SelectMany(foreignKey => KeyValues(entry, foreignKey).Select(values => holders.Find(entry, foreignKey, values)))
+            .ToList()
+            .SelectMany(holder => AggregatesOf(holder, holders, seen));
     }
 
-    private static EntityEntry? Holder(EntityEntry entry, List<EntityEntry> entries)
+    // The values of the key now, unless deleted, and when loaded, unless added; a null key names no holder.
+    private static IEnumerable<object?[]> KeyValues(EntityEntry entry, IForeignKey foreignKey)
     {
-        foreach (var foreignKey in entry.Metadata.GetForeignKeys().Where(key => key.PrincipalToDependent is not null))
-        {
-            // A deleted child no longer sits in its parent's navigation; the key it was saved with still names it.
-            var values = foreignKey
-                .Properties.Select(property =>
-                    entry.State == EntityState.Deleted
-                        ? entry.Property(property.Name).OriginalValue
-                        : entry.Property(property.Name).CurrentValue
-                )
-                .ToList();
-            var holder = entries.FirstOrDefault(candidate =>
-                foreignKey.PrincipalEntityType.IsAssignableFrom(candidate.Metadata)
-                && foreignKey
-                    .PrincipalKey.Properties.Select(property => candidate.Property(property.Name).CurrentValue)
-                    .SequenceEqual(values)
-            );
-            if (holder is not null)
-            {
-                return holder;
-            }
-        }
+        object?[]? current = entry.State == EntityState.Deleted
+            ? null
+            : [.. foreignKey.Properties.Select(property => entry.Property(property.Name).CurrentValue)];
+        object?[]? original = entry.State == EntityState.Added
+            ? null
+            : [.. foreignKey.Properties.Select(property => entry.Property(property.Name).OriginalValue)];
+        return new[] { current, original }
+            .OfType<object?[]>()
+            .Where(values => !values.Contains(null))
+            .Distinct(Holders.Comparer);
+    }
 
-        return null;
+    // The tracked entries by the values of each principal key a foreign key names, indexed once per key.
+    private sealed class Holders(List<EntityEntry> entries)
+    {
+        public static readonly IEqualityComparer<object?[]> Comparer = EqualityComparer<object?[]>.Create(
+            (left, right) => StructuralComparisons.StructuralEqualityComparer.Equals(left, right),
+            values => StructuralComparisons.StructuralEqualityComparer.GetHashCode(values)
+        );
+
+        private readonly Dictionary<IKey, Dictionary<object?[], EntityEntry>> _byKey = [];
+
+        public EntityEntry Find(EntityEntry dependent, IForeignKey foreignKey, object?[] values)
+        {
+            if (!_byKey.TryGetValue(foreignKey.PrincipalKey, out var byValues))
+            {
+                byValues = new(Comparer);
+                foreach (var entry in entries.Where(entry => foreignKey.PrincipalEntityType.IsAssignableFrom(entry.Metadata)))
+                {
+                    byValues.TryAdd(
+                        [.. foreignKey.PrincipalKey.Properties.Select(property => entry.Property(property.Name).CurrentValue)],
+                        entry
+                    );
+                }
+
+                _byKey[foreignKey.PrincipalKey] = byValues;
+            }
+
+            return byValues.TryGetValue(values, out var holder)
+                ? holder
+                : throw new InvalidOperationException(
+                    $"A {dependent.Metadata.ClrType.Name} changed, and it belongs to the {foreignKey.PrincipalEntityType.ClrType.Name} with key {string.Join(", ", values)}, which this Operation did not load. Load the aggregate through its repository and change it there, so its version advances and a concurrent change conflicts."
+                );
+        }
     }
 }

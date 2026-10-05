@@ -9,7 +9,10 @@ public abstract class AggregateRoot<TId> : Entity<TId>, IAggregateRoot
     /// <summary>
     /// The committed version: 0 until first saved, 1 once saved, and one more for each later Operation that changed
     /// the aggregate, removing it included. Only the Unit of Work advances it, through the persistence mapping;
-    /// nothing in the domain sets it, and raising a Domain Event does not move it.
+    /// nothing in the domain sets it, and raising a Domain Event does not move it. A change to anything the aggregate
+    /// holds in a navigation, an owned type or a child entity, changed, added or removed, changes the aggregate; a child
+    /// moved from one aggregate to another changes both. Changing a part of an aggregate the Operation did not load
+    /// throws when the Operation commits. A child the aggregate reaches by no navigation is not part of it.
     /// </summary>
     public long Version { get; private set; }
 
