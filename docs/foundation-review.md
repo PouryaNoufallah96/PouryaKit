@@ -226,7 +226,7 @@ pourya-kit/
 | Modularity | Cqrs | `Microsoft.Extensions.Hosting.Abstractions`, `Microsoft.Extensions.DependencyInjection` |
 | Persistence.EFCore | Cqrs | EF Core Relational |
 | Persistence.Postgres | Persistence.EFCore | Npgsql EF provider, EFCore.NamingConventions |
-| Persistence.Dapper | Domain | Dapper, Npgsql (ADO.NET driver only, no EF), `Microsoft.Extensions.Configuration.Abstractions` |
+| Persistence.Dapper | Domain | Dapper, Npgsql (ADO.NET driver only, no EF), `Microsoft.Extensions.Configuration.Abstractions`, `Microsoft.Extensions.DependencyInjection.Abstractions` |
 | Messaging | Domain (handlers return `Result`) | none |
 | Messaging.Wolverine | Cqrs, Messaging | WolverineFx |
 | Messaging.Wolverine.EFCore | Messaging.Wolverine, Persistence.EFCore | WolverineFx.EntityFrameworkCore, WolverineFx.Postgresql |
@@ -238,7 +238,10 @@ Amended on 2026-10-05, each addition MIT and already present in every Host:
 - Modularity references `Microsoft.Extensions.DependencyInjection` (owner, ticket #13): the options that validate the
   container at build live only there, and `AddPouryaKitModules` turns them on in every environment.
 - Persistence.Dapper references `Microsoft.Extensions.Configuration.Abstractions` (owner, ticket #9): the read
-  connection is registered by connection name, as `UsePostgres` is. Its closure still holds no EF Core.
+  connection is registered by connection name, as `UsePostgres` is. It also references
+  `Microsoft.Extensions.DependencyInjection.Abstractions` explicitly (owner, ticket #9 review): its registration call
+  on a Module's builder needs it, and the transitive copy Npgsql brings is not the pinned version. Its closure still
+  holds no EF Core.
 - Testing references `Microsoft.Extensions.TimeProvider.Testing` (ticket #8): the test clock of ADR 0005, a decision
   the owner delegated.
 - Persistence.EFCore also references Persistence and `Ardalis.Specification.EntityFrameworkCore`, as G.4 decided.

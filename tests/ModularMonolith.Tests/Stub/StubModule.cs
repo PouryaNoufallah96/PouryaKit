@@ -3,6 +3,7 @@ using PouryaKit.Cqrs;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.Postgres;
+using PouryaKit.Web;
 
 namespace ModularMonolith.Tests.Stub;
 
@@ -17,5 +18,6 @@ public sealed class StubModule : IModuleDefinition
         module.AddPouryaKitCqrs(typeof(StubModule).Assembly);
         module.AddScoped<ReactionLog>();
         module.AddSingleton<CatalogQuestionContexts>();
+        module.AddPouryaKitEndpoints("/stub", typeof(StubModule).Assembly);
     }
 }

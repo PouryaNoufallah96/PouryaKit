@@ -11,6 +11,7 @@ using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.EFCore;
 using PouryaKit.Persistence.Postgres;
 using PouryaKit.Validation;
+using PouryaKit.Web;
 
 namespace Catalog;
 
@@ -26,5 +27,6 @@ public sealed class CatalogModule : IModuleDefinition
         module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
         module.AddScoped<IProductRepository, ProductRepository>();
         module.AddScoped<ICatalogProducts, CatalogProducts>();
+        module.AddPouryaKitEndpoints("/catalog", typeof(CatalogModule).Assembly);
     }
 }

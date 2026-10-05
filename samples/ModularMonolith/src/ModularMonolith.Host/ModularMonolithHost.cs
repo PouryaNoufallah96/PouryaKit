@@ -1,16 +1,31 @@
 using Catalog;
-using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using PouryaKit.Modularity;
+using PouryaKit.Web;
 
 namespace ModularMonolith.Host;
 
 /// <summary>The Host's composition, shared by <c>Program</c> and the tests that host the application.</summary>
 public static class ModularMonolithHost
 {
-    public static HostApplicationBuilder CreateBuilder(string[] args)
+    public static WebApplicationBuilder CreateBuilder(string[] args)
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args);
+        var builder = WebApplication.CreateBuilder(args);
+        // The Host authenticates its callers itself. JwtBearer reads its authority, audiences and signing keys from
+        // the configuration section Authentication:Schemes:Bearer; `dotnet user-jwts` fills it for development.
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+        builder.Services.AddAuthorization();
+        builder.Services.AddPouryaKitWeb();
         builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>());
         return builder;
+    }
+
+    /// <summary>Builds the application <paramref name="builder"/> composed, with its request pipeline.</summary>
+    public static WebApplication Build(WebApplicationBuilder builder)
+    {
+        var app = builder.Build();
+        app.UseExceptionHandler();
+        app.MapPouryaKitModuleEndpoints();
+        return app;
     }
 }

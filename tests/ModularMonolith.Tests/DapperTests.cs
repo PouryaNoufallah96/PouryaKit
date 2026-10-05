@@ -7,7 +7,9 @@ using Catalog.Products.Features.ListProducts;
 using Dapper;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using PouryaKit.Persistence;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Testing;
 
@@ -144,6 +146,20 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
         );
 
         Assert.StartsWith("A query, an authorizer or a validator asked to write", thrown.Message);
+    }
+
+    [Fact]
+    public async Task Joining_the_unit_of_work_connection_where_no_unit_of_work_is_active_throws()
+    {
+        // A scope begun as a Stub Operation in which no command runs: nothing opened a transaction to join.
+        await using var scope = Fixture.Host.Services.CreateAsyncScope();
+        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(StubModule));
+
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            scope.ServiceProvider.GetRequiredService<IUnitOfWorkConnection>().Join()
+        );
+
+        Assert.StartsWith("No Unit of Work is active", thrown.Message);
     }
 
     [Fact]
