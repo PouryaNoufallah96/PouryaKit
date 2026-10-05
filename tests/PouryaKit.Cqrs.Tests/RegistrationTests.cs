@@ -22,11 +22,22 @@ internal sealed class SecondTwiceHandledHandler : QueryHandler<TwiceHandledQuery
 
 internal interface IAuditedOperation;
 
-// Each registers under IAuthorizer<T> for a T the dispatcher never resolves, so each would never run.
+// Registers under IAuthorizer<T> for a T the dispatcher never resolves, so it would never run.
 internal sealed class MarkerAuthorizer : IAuthorizer<IAuditedOperation>
 {
     public Task<Result> AuthorizeAsync(IAuditedOperation operation, CancellationToken cancellationToken) =>
         Task.FromResult(Result.Success());
+}
+
+// Generic definitions: each would otherwise be skipped silently or registered as an open implementation.
+internal sealed record EchoQuery<TValue>(TValue Value) : Query<TValue>
+    where TValue : notnull;
+
+internal sealed class EchoHandler<TValue> : QueryHandler<EchoQuery<TValue>, TValue>
+    where TValue : notnull
+{
+    public override Task<Result<TValue>> Handle(EchoQuery<TValue> query, CancellationToken cancellationToken) =>
+        Task.FromResult<Result<TValue>>(query.Value);
 }
 
 internal sealed class AnyOperationAuthorizer<TOperation> : IAuthorizer<TOperation>
@@ -36,20 +47,39 @@ internal sealed class AnyOperationAuthorizer<TOperation> : IAuthorizer<TOperatio
         Task.FromResult(Result.Success());
 }
 
+internal sealed class GenericClosedAuthorizer<TUnused> : IAuthorizer<TwiceHandledQuery>
+{
+    public Task<Result> AuthorizeAsync(TwiceHandledQuery operation, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success());
+}
+
 public sealed class RegistrationTests
 {
     [Fact]
-    public void An_authorizer_for_a_marker_interface_or_an_open_type_fails_registration()
+    public void An_authorizer_for_a_marker_interface_fails_registration()
     {
         var error = Assert.Throws<InvalidOperationException>(() =>
             new ServiceCollection().AddPouryaKitCqrs(typeof(RegistrationTests).Assembly)
         );
 
         Assert.Contains($"{typeof(MarkerAuthorizer).FullName} is an authorizer, but not for one concrete", error.Message);
-        Assert.Contains(
-            $"{typeof(AnyOperationAuthorizer<>).FullName} is an authorizer, but not for one concrete",
-            error.Message
+    }
+
+    [Fact]
+    public void A_generic_query_handler_or_authorizer_fails_registration()
+    {
+        var error = Assert.Throws<InvalidOperationException>(() =>
+            new ServiceCollection().AddPouryaKitCqrs(typeof(RegistrationTests).Assembly)
         );
+
+        Type[] generics =
+        [
+            typeof(EchoQuery<>),
+            typeof(EchoHandler<>),
+            typeof(AnyOperationAuthorizer<>),
+            typeof(GenericClosedAuthorizer<>),
+        ];
+        Assert.All(generics, type => Assert.Contains($"{type.FullName} is generic", error.Message));
     }
 
     [Fact]

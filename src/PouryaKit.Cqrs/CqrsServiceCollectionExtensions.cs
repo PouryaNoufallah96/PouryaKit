@@ -18,7 +18,8 @@ public static class CqrsServiceCollectionExtensions
         /// <summary>
         /// Registers the dispatcher and every command handler, query handler and authorizer in
         /// <paramref name="featureAssemblies"/>, internal types included. Throws here, at startup, when a command or
-        /// query has no handler or several, or when an authorizer is not for one concrete command or query.
+        /// query has no handler or several, when an authorizer is not for one concrete command or query, or when a
+        /// command, query, handler or authorizer is a generic type definition.
         /// </summary>
         public IServiceCollection AddPouryaKitCqrs(params Assembly[] featureAssemblies)
         {
@@ -39,7 +40,7 @@ public static class CqrsServiceCollectionExtensions
                 .Select(type => (Implementation: type, Service: HandlerBase(type)))
                 .Where(handler => handler.Service is not null)
                 .ToList();
-            var authorizers = classes
+            var authorizers = types
                 .SelectMany(type => AuthorizerInterfaces(type).Select(service => (Implementation: type, Service: service)))
                 .ToList();
 
@@ -47,6 +48,14 @@ public static class CqrsServiceCollectionExtensions
             var operations = types.Where(IsOperation).Concat(handlersByOperation.Select(group => group.Key)).Distinct();
             List<string> problems =
             [
+                .. classes
+                    .Where(type =>
+                        type.IsGenericTypeDefinition
+                        && (IsOperation(type) || HandlerBase(type) is not null || AuthorizerInterfaces(type).Any())
+                    )
+                    .Select(type =>
+                        $"{type.FullName} is generic; generic commands, queries, handlers and authorizers are not supported."
+                    ),
                 .. operations
                     .Select(operation => (Operation: operation, Count: handlersByOperation[operation].Count()))
                     .Where(operation => operation.Count != 1)

@@ -34,6 +34,9 @@ public static class ThingsGateway
     public static Task<Result> AuthorizeBySendingACommand(IDispatcher dispatcher) =>
         dispatcher.SendAsync(new GuardedByCommandCommand());
 
+    public static Task<Result> NestACommandWhoseAuthorizerSendsACommand(IDispatcher dispatcher) =>
+        dispatcher.SendAsync(new SendGuardedByCommandCommand());
+
     public static Task<Result> AuthorizeByRunningAQuery(IDispatcher dispatcher) =>
         dispatcher.SendAsync(new GuardedByQueryCommand());
 
@@ -56,6 +59,15 @@ internal sealed class GuardedByCommandHandler(OperationTrace trace) : CommandHan
         trace.Add("handle GuardedByCommandCommand");
         return Task.FromResult(Result.Success());
     }
+}
+
+internal sealed record SendGuardedByCommandCommand : Command;
+
+// Inside the active Unit of Work, the nested command's authorizer must still not send a command.
+internal sealed class SendGuardedByCommandHandler(IDispatcher dispatcher) : CommandHandler<SendGuardedByCommandCommand>
+{
+    public override Task<Result> Handle(SendGuardedByCommandCommand command, CancellationToken cancellationToken) =>
+        dispatcher.SendAsync(new GuardedByCommandCommand(), cancellationToken);
 }
 
 internal sealed record GuardedByQueryCommand : Command;

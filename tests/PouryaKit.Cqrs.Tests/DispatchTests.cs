@@ -165,6 +165,20 @@ public sealed class DispatchTests
     }
 
     [Fact]
+    public async Task A_nested_commands_authorizer_that_sends_a_command_throws_inside_the_unit_of_work()
+    {
+        await using var host = TestHost.Build();
+        using var scope = host.CreateScope();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ThingsGateway.NestACommandWhoseAuthorizerSendsACommand(Dispatcher(scope))
+        );
+
+        Assert.DoesNotContain("handle PingCommand", Trace(scope));
+        Assert.DoesNotContain("handle GuardedByCommandCommand", Trace(scope));
+    }
+
+    [Fact]
     public async Task An_authorizer_may_run_a_query_before_the_unit_of_work_starts()
     {
         await using var host = TestHost.Build();

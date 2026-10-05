@@ -51,6 +51,15 @@ internal sealed class ArchiveProductHandler(HandledCommands handled) : CommandHa
     }
 }
 
+internal sealed record ArchiveCatalogCommand : Command;
+
+// Sends ArchiveProductCommand as a nested command, so its validator runs inside the active Unit of Work.
+internal sealed class ArchiveCatalogHandler(IDispatcher dispatcher) : CommandHandler<ArchiveCatalogCommand>
+{
+    public override Task<Result> Handle(ArchiveCatalogCommand command, CancellationToken cancellationToken) =>
+        dispatcher.SendAsync(new ArchiveProductCommand(Guid.CreateVersion7()), cancellationToken);
+}
+
 internal sealed class HandledCommands
 {
     public int Count { get; set; }
@@ -102,6 +111,19 @@ public sealed class ValidationTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             Dispatcher(scope).SendAsync(new ArchiveProductCommand(Guid.CreateVersion7()), TestContext.Current.CancellationToken)
+        );
+
+        Assert.Equal(0, scope.ServiceProvider.GetRequiredService<HandledCommands>().Count);
+    }
+
+    [Fact]
+    public async Task A_nested_commands_validator_that_sends_a_command_throws_inside_the_unit_of_work()
+    {
+        await using var host = BuildHost();
+        using var scope = host.CreateScope();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            Dispatcher(scope).SendAsync(new ArchiveCatalogCommand(), TestContext.Current.CancellationToken)
         );
 
         Assert.Equal(0, scope.ServiceProvider.GetRequiredService<HandledCommands>().Count);
