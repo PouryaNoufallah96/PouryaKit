@@ -8,7 +8,7 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
 
 - `Dapper` 2.1.89, `Apache-2.0`; no dependencies on `net10.0`.
 - `Npgsql` 10.0.3, `PostgreSQL`, the ADO.NET driver alone. It is the version `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3 already resolves, so a Host has one driver. It brings `Microsoft.Extensions.Logging.Abstractions` 10.0.0, which brings `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.0, both `MIT`.
-- `Microsoft.Extensions.Configuration.Abstractions` 10.0.12, `MIT`, so that `AddPouryaKitDapper` takes a connection name and reads the connection string from the Host's configuration, as `UsePostgres` does. It brings `Microsoft.Extensions.Primitives` 10.0.12, `MIT`.
+- `Microsoft.Extensions.Configuration.Abstractions` 10.0.12, `MIT`. It is a reference beyond the package's row in plan section C (Domain; Dapper, Npgsql), approved by the owner on 2026-10-05: `AddPouryaKitDapper` takes a connection name and reads `ConnectionStrings:<name>` from the Host's configuration, as `UsePostgres` does, and Npgsql's closure has no configuration abstractions. It brings only `Microsoft.Extensions.Primitives` 10.0.12, `MIT`, and no EF Core.
 
 ## Read-connection lease
 

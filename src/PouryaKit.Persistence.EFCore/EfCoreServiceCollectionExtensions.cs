@@ -10,7 +10,8 @@ public static class EfCoreServiceCollectionExtensions
     {
         /// <summary>
         /// Makes <typeparamref name="TDbContext"/>, already registered, the Unit of Work of the commands that run in this
-        /// container, or in this Module when called on a Module's builder, and adds the generic repository over it.
+        /// container, or in this Module when called on a Module's builder. It adds the generic repository over it, and the
+        /// <see cref="IUnitOfWorkConnection"/> through which a plain SQL write joins the active Unit of Work's transaction.
         /// A database package such as <c>PouryaKit.Persistence.Postgres</c> calls it; Feature code never does.
         /// </summary>
         public IServiceCollection AddPouryaKitEfCore<TDbContext>()
