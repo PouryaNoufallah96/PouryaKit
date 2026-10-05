@@ -29,6 +29,8 @@ public static class CqrsServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(featureAssemblies);
 
             services.TryAddScoped<Operation>();
+            services.TryAddScoped<OperationContextSlot>();
+            services.TryAddScoped(OperationContextSlot.Read);
             services.TryAddScoped<IDispatcher, Dispatcher>();
             services.TryAddSingleton(TimeProvider.System);
 
