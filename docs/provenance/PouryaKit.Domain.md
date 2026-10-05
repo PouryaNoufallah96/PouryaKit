@@ -65,4 +65,5 @@ Adopted implementations in `PouryaKit.Domain`. Format and rules: [README](README
   - No MediatR base, and no default interface members: upstream `IEvent.cs:15,20` computed a new ID and time on every read.
   - `IDomainEvent` is folded into the one base record, so every Domain Event gets its identity and time the same way.
   - The ID is a version 7 Guid and the time a UTC `DateTimeOffset`, both from one reading of the clock, instead of the static `IdGenerator` and `SystemClock`. A time given in another offset is stored in UTC.
+  - The clock is `DomainClock` (ticket #8, ADR 0005): the `TimeProvider` bound to the running Operation, or `TimeProvider.System`. It is an `AsyncLocal` binding, not a settable static like upstream `SystemClock`, so parallel Operations and tests each keep their own time.
   - The `(Guid, DateTime)` constructor is removed; deserialization restores the `init` properties.

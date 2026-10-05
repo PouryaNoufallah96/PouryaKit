@@ -7,8 +7,12 @@ using PouryaKit.Domain;
 
 namespace PouryaKit.Cqrs;
 
-internal sealed partial class Dispatcher(IServiceProvider services, Operation operation, ILogger<Dispatcher> logger)
-    : IDispatcher
+internal sealed partial class Dispatcher(
+    IServiceProvider services,
+    Operation operation,
+    TimeProvider timeProvider,
+    ILogger<Dispatcher> logger
+) : IDispatcher
 {
     private static readonly ConcurrentDictionary<Type, object> Invokers = new();
 
@@ -75,6 +79,8 @@ internal sealed partial class Dispatcher(IServiceProvider services, Operation op
         where TCommandOrQuery : notnull
         where TResult : Result
     {
+        // Everything the Operation stamps with a time, Domain Events included, reads the Host's one clock.
+        using var clock = DomainClock.Use(timeProvider);
         try
         {
             var ownsUnitOfWork = false;

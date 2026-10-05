@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ModularMonolith.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Modularity\PouryaKit.Modularity.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Persistence.Postgres\PouryaKit.Persistence.Postgres.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Validation\PouryaKit.Validation.csproj" />
+  </ItemGroup>
+</Project>
