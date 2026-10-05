@@ -301,6 +301,23 @@ public sealed class PersistencePreparationTests(AppFixture app) : HostTest<AppFi
         Assert.Empty(pulled.Value.Entries);
     }
 
+    // The pin is first kept as a soft deletion, then its tray is deleted outright, and the database's cascade would
+    // remove the row the save meant to update.
+    [Fact]
+    public async Task A_soft_deletable_child_taken_out_of_an_aggregate_that_is_then_deleted_is_deleted_with_it_before_the_save()
+    {
+        var stub = Fixture.Gateway<StubModule>();
+        var tray = Guid.CreateVersion7();
+        await stub.SendAsync(new CreateTrayCommand(tray), TestContext.Current.CancellationToken);
+
+        var removed = await stub.SendAsync(new EditTrayCommand(tray, TrayEdit.PullPinThenRemove), TestContext.Current.CancellationToken);
+
+        Assert.True(removed.IsSuccess);
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.pins"));
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.trays"));
+        Assert.Empty(removed.Value.Entries);
+    }
+
     [Fact]
     public async Task Children_of_two_aggregates_derived_from_one_base_change_in_one_operation()
     {

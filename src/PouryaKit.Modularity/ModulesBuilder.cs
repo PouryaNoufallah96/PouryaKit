@@ -16,13 +16,15 @@ public sealed class ModulesBuilder
 
     /// <summary>
     /// Runs <typeparamref name="TModule"/>'s Composition Root and registers its Gateway. Throws when the Module was
-    /// already added to this Host, by this call or an earlier one.
+    /// already added to this Host, by this call or an earlier one, and when it handles a command but registers no
+    /// Unit of Work.
     /// </summary>
     public ModulesBuilder Add<TModule>()
         where TModule : IModuleDefinition, new()
     {
         _modules.Add(typeof(TModule));
         new TModule().Configure(new ModuleBuilder(typeof(TModule), _services, _modules));
+        _modules.EnsureUnitOfWorkForCommands(typeof(TModule), _services);
         _services.AddSingleton<IGatewayProcessor<TModule>, GatewayProcessor<TModule>>();
         return this;
     }

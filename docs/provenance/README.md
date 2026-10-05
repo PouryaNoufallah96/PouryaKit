@@ -35,6 +35,18 @@ An idea that only shaped a design, with no code or test scenario taken, needs no
   - `pattern`: no upstream code is taken. The Kit reimplements the design or ports test scenarios. This is the only level allowed for a source that is `none`, `unconfirmed` or not permissively licensed (CC BY-SA, Stack Overflow answers, Ultrabusiness).
 - **Intentional differences** lists each deliberate change from upstream, so that an upstream fix can be judged against it. Write `none` when there are none.
 
+## Package licences
+
+The Kit takes no dependency on a reciprocal or commercially licensed package (ADR 0002). `LicenceTests` in `tests/PouryaKit.ArchitectureTests` reads every package in every Kit package's restored closure, analyzers and source generators included, and checks the licence expression its nuspec declares against this list of permissive SPDX identifiers:
+
+- `MIT`
+- `Apache-2.0`
+- `BSD-2-Clause`
+- `BSD-3-Clause`
+- `PostgreSQL`
+
+An expression passes when it is one of them, an `OR` choice that offers one, or an `AND` of listed ones only. A package with no expression (a licence file or URL only), or with anything else, fails the test by name; adding an identifier to the list is an owner decision. On 2026-10-06 the closures held only `MIT`, `Apache-2.0`, `BSD-3-Clause` and `PostgreSQL`.
+
 ## Notices
 
 A `copied` or `adapted` record needs the upstream project's copyright notice and licence text in [`THIRD-PARTY-NOTICES.md`](../../THIRD-PARTY-NOTICES.md), once per upstream repository:
