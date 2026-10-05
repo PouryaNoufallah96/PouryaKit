@@ -14,6 +14,9 @@ Verified in ticket #14 (2026-10-05), ASP.NET Core 10.0.12:
 - A test `AuthenticationHandler` subclass cannot declare a member named `Scheme` (CS0108 under TreatWarningsAsErrors).
 - `TypedIdJsonConverterFactory` must be added to `ConfigureHttpJsonOptions` or typed IDs serialize as `{"value":...}`.
 - Check `dotnet ef` without writing into a Module's migrations: `dotnet ef dbcontext info --project src/Modules/Catalog/Catalog --startup-project src/ModularMonolith.Host --context CatalogDbContext` from `samples/ModularMonolith`.
+- #14 fix round: `WebApplication` inserts routing/authentication/authorization ahead of app middleware, so `UseExceptionHandler()` must come first with the other three called explicitly. Outside Development a bind failure answers an empty 400; `PostConfigure<RouteHandlerOptions>(ThrowOnBadRequest = true)` sends it to the exception handler in every environment. `IProblemDetailsService.TryWriteAsync` declines when `Accept` excludes JSON; `ProblemHttpResult.ExecuteAsync` falls back to writing `application/problem+json`, so write exceptions through it too. The authorization middleware reads endpoints when the Host starts, so an endpoint-build convention that throws fails `StartAsync`.
+- A test needing a different composition builds its own Host (`AppFixture.ComposeHost(environment, ...)`) and starts it without migrating; Modules touch the database only on use. A test-only endpoint that must not exist in the shared Host maps itself only when a marker service is registered.
+- The worktree guard refused a python heredoc that mutated files in one Bash call with cp; do mutations with the Edit tool and restore with plain `cp` from the scratchpad.
 - Sdk.Web globs appsettings*.json as content; an explicit `<Content Include="appsettings.json">` would duplicate it.
 
 **Why:** each decided the Web design or cost a build round.

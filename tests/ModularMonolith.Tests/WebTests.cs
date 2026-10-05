@@ -213,6 +213,8 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
         Assert.Equal(400, problem.GetProperty("status").GetInt32());
+        // The binding failure's own message, which quotes what the caller sent, stays out of the response.
+        Assert.False(problem.TryGetProperty("detail", out _));
         Assert.DoesNotContain(logs.Entries, entry => entry.Level >= LogLevel.Error);
     }
 
