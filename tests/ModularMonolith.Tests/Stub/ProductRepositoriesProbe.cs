@@ -8,8 +8,8 @@ using PouryaKit.Persistence;
 
 namespace ModularMonolith.Tests.Stub;
 
-// Sent through Catalog's Gateway, so it runs in Catalog's Unit of Work; StubModule only registers it, from this
-// assembly. It adds a product through the generic repository and finds it by ID through the product repository
+// Run in a scope the test begins as a Catalog Operation, so it runs in Catalog's Unit of Work; StubModule only
+// registers it, from this assembly, so Catalog's Gateway would refuse it. It adds a product through the generic repository and finds it by ID through the product repository
 // before anything is saved: only a shared DbContext returns the same instance.
 internal sealed record ProbeProductRepositoriesCommand(Guid ProductId, Guid CategoryId) : Command<bool>;
 

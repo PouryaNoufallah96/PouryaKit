@@ -3,7 +3,9 @@ using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
 using Catalog.Products.Features.ImportProducts;
 using Catalog.Products.Features.RemoveProducts;
+using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Cqrs;
 using PouryaKit.Modularity;
 using PouryaKit.Testing;
 
@@ -63,10 +65,13 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
         var category = await CreateCategoryAsync(catalog);
         var id = Guid.CreateVersion7();
 
-        var probed = await catalog.SendAsync(
-            new ProbeProductRepositoriesCommand(id, category),
-            TestContext.Current.CancellationToken
-        );
+        // The probe is test code, so no Gateway runs it: Catalog's Gateway refuses an operation another Module
+        // registered. The test begins a scope as a Catalog Operation itself, as a delivery step does.
+        await using var scope = Fixture.Host.Services.CreateAsyncScope();
+        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(CatalogModule));
+        var probed = await scope
+            .ServiceProvider.GetRequiredService<IDispatcher>()
+            .SendAsync(new ProbeProductRepositoriesCommand(id, category), TestContext.Current.CancellationToken);
 
         Assert.True(probed.Value);
         Assert.Equal(id, await Fixture.ScalarAsync<Guid>("select id from catalog.products"));

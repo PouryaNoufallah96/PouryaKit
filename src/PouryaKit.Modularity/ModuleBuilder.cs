@@ -8,17 +8,20 @@ namespace PouryaKit.Modularity;
 /// What a Module's Composition Root registers on: the Host container's services, seen from one Module. Every Kit
 /// registration (<c>AddPouryaKitCqrs</c>, <c>AddPouryaKitValidation</c>, <c>UsePostgres</c>) is called on it. The
 /// Unit of Work registered here belongs to this Module alone: an Operation reaches it only through the Module's
-/// Gateway.
+/// Gateway, and the commands and queries whose handlers are registered here belong to this Module: its Gateway is the
+/// only one that runs them.
 /// </summary>
 public sealed class ModuleBuilder : IServiceCollection
 {
     private readonly Type _module;
     private readonly IServiceCollection _services;
+    private readonly HostModules _modules;
 
-    internal ModuleBuilder(Type module, IServiceCollection services)
+    internal ModuleBuilder(Type module, IServiceCollection services, HostModules modules)
     {
         _module = module;
         _services = services;
+        _modules = modules;
     }
 
     public int Count => _services.Count;
@@ -56,6 +59,7 @@ public sealed class ModuleBuilder : IServiceCollection
     private ServiceDescriptor Own(ServiceDescriptor descriptor)
     {
         ArgumentNullException.ThrowIfNull(descriptor);
+        _modules.Record(_module, descriptor);
         if (descriptor.ServiceType != typeof(IUnitOfWork) || descriptor.IsKeyedService)
         {
             return descriptor;

@@ -1,5 +1,7 @@
+using Catalog.Contracts.Products;
 using Catalog.Infrastructure.Data.Context;
 using Catalog.Products.Data.Repository;
+using Catalog.Products.Features.GetProduct;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
 using PouryaKit.Modularity;
@@ -19,5 +21,6 @@ public sealed class CatalogModule : IModuleDefinition
         module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);
         module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
         module.AddScoped<IProductRepository, ProductRepository>();
+        module.AddScoped<ICatalogProducts, CatalogProducts>();
     }
 }

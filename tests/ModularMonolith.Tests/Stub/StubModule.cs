@@ -16,5 +16,6 @@ public sealed class StubModule : IModuleDefinition
         module.AddPouryaKitDapper(connectionName: "app", typeof(StubModule).Assembly);
         module.AddPouryaKitCqrs(typeof(StubModule).Assembly);
         module.AddScoped<ReactionLog>();
+        module.AddSingleton<CatalogQuestionContexts>();
     }
 }

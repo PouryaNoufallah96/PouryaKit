@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Cqrs`. Format and rules: [README](README.md).
 
-The dispatcher, its fixed pipeline, `Operation` and `IUnitOfWork` are new Kit code (plan section B.2, "Dispatcher + pipeline"; ADR 0002), so they have no record here.
+The dispatcher, its fixed pipeline, `Operation` and `IUnitOfWork` are new Kit code (plan section B.2, "Dispatcher + pipeline"; ADR 0002), and so are `OperationContext` and `Actor` (plan section B.2, "Background context"; ADR 0007), so they have no record here.
 
 ## Commands, queries and their handlers
 
