@@ -8,12 +8,6 @@ namespace PouryaKit.Persistence.Dapper;
 
 public static class DapperServiceCollectionExtensions
 {
-    // Dapper's type handlers are process-wide and its registry is not safe for concurrent writers, so the Kit adds each
-    // typed ID's handler once per process, under this lock. A handler depends only on its type, so a later Module, or a
-    // second Host built in the same process, finds it already in place and registers nothing.
-    private static readonly Lock TypedIdHandlersLock = new();
-    private static readonly HashSet<Type> TypedIdsHandled = [];
-
     extension(IServiceCollection services)
     {
         /// <summary>
@@ -55,19 +49,17 @@ public static class DapperServiceCollectionExtensions
         }
     }
 
+    // Dapper's type handlers are process-wide, and Dapper serialises their registration. A handler depends only on its
+    // typed ID's type, so when a second Module, or a second Host in the same process, registers the same typed ID again,
+    // the handler it replaces behaves identically and every Host keeps the same mapping.
     private static void AddTypedIdHandlers(Assembly[] assemblies)
     {
-        lock (TypedIdHandlersLock)
+        foreach (var type in assemblies.Distinct().SelectMany(assembly => assembly.GetTypes()))
         {
-            foreach (var type in assemblies.Distinct().SelectMany(assembly => assembly.GetTypes()))
+            if (TypedId.GetValueType(type) is { } valueType)
             {
-                if (TypedId.GetValueType(type) is { } valueType && TypedIdsHandled.Add(type))
-                {
-                    var handler = Activator.CreateInstance(
-                        typeof(TypedIdTypeHandler<,>).MakeGenericType(type, valueType)
-                    )!;
-                    SqlMapper.AddTypeHandler(type, (SqlMapper.ITypeHandler)handler);
-                }
+                var handler = Activator.CreateInstance(typeof(TypedIdTypeHandler<,>).MakeGenericType(type, valueType))!;
+                SqlMapper.AddTypeHandler(type, (SqlMapper.ITypeHandler)handler);
             }
         }
     }

@@ -6,7 +6,7 @@ using PouryaKit.Domain;
 namespace PouryaKit.Persistence.Dapper;
 
 // Passes a typed ID to the database as its value and reads a column back into the typed ID. One closed type per typed
-// ID, registered by AddPouryaKitDapper; it holds no state, so one instance serves every Host in the process.
+// ID, registered by AddPouryaKitDapper; it holds no state, so any instance serves every Host in the process.
 internal sealed class TypedIdTypeHandler<TId, TValue> : SqlMapper.TypeHandler<TId>
     where TId : TypedId<TValue>
     where TValue : notnull
