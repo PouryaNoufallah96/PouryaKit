@@ -18,8 +18,11 @@ this decision on 2026-10-05.
   time and thread it through, which lengthens all Feature code for a fact the Kit can supply.
 - **Stamp the time in the Unit of Work.** Rejected: story 17 requires a Domain Event's identity and time to be assigned
   once, when it is raised. Stamping at commit changes them after the event exists.
-- **A plain static clock** (Cybernod, modular-monolith-with-ddd and Ultrabusiness each have one). Rejected: a test that
-  sets it changes the time for every test running in parallel. `ClockTests` in `PouryaKit.Cqrs.Tests` fails when
+- **A plain static clock**, as in `PouryaNoufallah96/cybernod` at `bae8ac3`,
+  `src/BuildingBlocks/BuildingBlocks.Core/Clock/SystemClock.cs`; `kgrzybek/modular-monolith-with-ddd` at `91c8ef2`,
+  `src/Modules/Meetings/Domain/SharedKernel/SystemClock.cs`; and Ultrabusiness at `a85eacd`,
+  `src/BuildingBlocks/BuildingBlocks.Core/Common/SystemClock.cs`. Rejected: a test that sets it changes the time for
+  every test running in parallel. `ClockTests` in `PouryaKit.Cqrs.Tests` fails when
   `DomainClock` is made a plain static field.
 
 ## Consequences

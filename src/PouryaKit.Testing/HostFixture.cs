@@ -12,7 +12,8 @@ namespace PouryaKit.Testing;
 
 /// <summary>
 /// Hosts the application against a PostgreSQL started in a container: it builds the Host with
-/// <see cref="CreateHost"/>, starts it, and applies every Module's migrations. Share one per test assembly and derive
+/// <see cref="CreateHost"/>, applies every Module's migrations, and then starts it, so a hosted service finds its
+/// tables when the Host starts. Share one per test assembly and derive
 /// test classes from <see cref="HostTest{TFixture}"/>, which resets the data before each test.
 /// </summary>
 public abstract class HostFixture : IAsyncLifetime
@@ -57,15 +58,18 @@ public abstract class HostFixture : IAsyncLifetime
     {
         await _postgres.StartAsync();
         _host = CreateHost(ConnectionString);
-        await _host.StartAsync();
 
         // Every DbContext registered with AddDbContext is also registered as one non-generic DbContextOptions.
-        await using var scope = _host.Services.CreateAsyncScope();
-        foreach (var options in scope.ServiceProvider.GetServices<DbContextOptions>())
+        await using (var scope = _host.Services.CreateAsyncScope())
         {
-            var dbContext = (DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType);
-            await dbContext.Database.MigrateAsync();
+            foreach (var options in scope.ServiceProvider.GetServices<DbContextOptions>())
+            {
+                var dbContext = (DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType);
+                await dbContext.Database.MigrateAsync();
+            }
         }
+
+        await _host.StartAsync();
     }
 
     public async ValueTask DisposeAsync()

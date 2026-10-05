@@ -6,6 +6,8 @@ Every implementation the Kit adopts from another codebase has a provenance recor
 
 One file per Kit package, named after the package: `docs/provenance/PouryaKit.Domain.md`, `docs/provenance/PouryaKit.Cqrs.md`, and so on. The ticket that adopts the first implementation for a package creates its file. Each adopted implementation is one section in it, added in the same change as the code.
 
+The Proving Sample has one file, `docs/provenance/ModularMonolith.md`, for the packages only it references.
+
 An idea that only shaped a design, with no code or test scenario taken, needs no record.
 
 ## Record format
