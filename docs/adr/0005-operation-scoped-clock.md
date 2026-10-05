@@ -24,10 +24,10 @@ this decision on 2026-10-05.
 
 ## Consequences
 
-- Scopes the dispatcher does not open bind no clock and read the system clock. Wolverine opens its own scopes for
-  Notification and Integration Event Handlers (tickets #15 and #16), and those never pass through the dispatcher, so
-  the Kit's delivery adapter must bind the container's `TimeProvider` with `DomainClock.Use` in each scope it runs a
-  handler in.
+- Scopes the dispatcher does not open bind no clock and read the system clock. Notification and Integration Event
+  Handlers (tickets #15 and #16) run in a scope the Kit's shared delivery step opens for each attempt (ADR 0006), not
+  through the dispatcher, so that step must bind the container's `TimeProvider` with `DomainClock.Use` around the
+  handler.
 - Code a test runs directly, outside an Operation, binds a fake clock with `TestClock` from `PouryaKit.Testing`. It is
   created inside the test method: whether an `AsyncLocal` set in an xUnit constructor or fixture reaches the test method
   is unverified, so nothing relies on it. An Operation sent through a Gateway reads the Host's registered
