@@ -6,13 +6,28 @@ using PouryaKit.Domain;
 
 namespace Catalog.Products.Entities;
 
-internal sealed class Product : AggregateRoot<ProductId>
+// Auditable and soft-deletable: the Unit of Work sets those properties, so the domain never does.
+internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDeletable
 {
     private Product() { }
 
     public string Name { get; private set; } = "";
 
     public CategoryId CategoryId { get; private set; } = null!;
+
+    public DateTimeOffset CreatedAt { get; private set; }
+
+    public string CreatedBy { get; private set; } = "";
+
+    public DateTimeOffset LastChangedAt { get; private set; }
+
+    public string LastChangedBy { get; private set; } = "";
+
+    public bool IsDeleted { get; private set; }
+
+    public DateTimeOffset? DeletedAt { get; private set; }
+
+    public string? DeletedBy { get; private set; }
 
     public static Result<Product> Create(ProductId id, CategoryId categoryId, string name)
     {
@@ -32,4 +47,19 @@ internal sealed class Product : AggregateRoot<ProductId>
         product.Raise(new ProductCreatedDomainEvent(id, categoryId, product.Name));
         return product;
     }
+
+    // Raises no Domain Event: renaming is the proof that a change with none still conflicts with a concurrent one.
+    public Result Rename(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return ProductErrors.NameRequired;
+        }
+
+        Name = name.Trim();
+        return Result.Success();
+    }
+
+    /// <summary>Records that the product is leaving the catalog; the repository's <c>Remove</c> then removes it.</summary>
+    public void Remove() => Raise(new ProductRemovedDomainEvent(Id, CategoryId));
 }

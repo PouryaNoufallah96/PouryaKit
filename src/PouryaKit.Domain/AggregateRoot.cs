@@ -7,9 +7,9 @@ public abstract class AggregateRoot<TId> : Entity<TId>, IAggregateRoot
     private readonly List<DomainEvent> _domainEvents = [];
 
     /// <summary>
-    /// The committed version. Only the Unit of Work advances it, once per Operation that changed the
-    /// aggregate, through the persistence mapping; nothing in the domain sets it, and raising a
-    /// Domain Event does not move it.
+    /// The committed version: 0 until first saved, 1 once saved, and one more for each later Operation that changed
+    /// the aggregate, removing it included. Only the Unit of Work advances it, through the persistence mapping;
+    /// nothing in the domain sets it, and raising a Domain Event does not move it.
     /// </summary>
     public long Version { get; private set; }
 

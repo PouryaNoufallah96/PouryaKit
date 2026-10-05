@@ -13,8 +13,9 @@ internal sealed class ImportProductsCommandHandler(IProductRepository products)
     public override async Task<Result<int>> Handle(ImportProductsCommand command, CancellationToken cancellationToken)
     {
         // Names are compared as Product stores them. A name already in use is skipped, which makes a repeated import
-        // harmless; it is not a uniqueness check.
-        var names = command.Names.Select(name => name.Trim()).Distinct().ToList();
+        // harmless. That is a courtesy, not the guard: the unique index on the name is, so a name given twice, or taken
+        // by a concurrent Operation, fails the import with ProductErrors.NameInUse.
+        var names = command.Names.Select(name => name.Trim()).ToList();
         var inUse = await products.ListNamesInUseAsync(names, cancellationToken);
 
         var categoryId = new CategoryId(command.CategoryId);
