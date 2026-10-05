@@ -9,7 +9,7 @@ using PouryaKit.Validation;
 namespace ModularMonolith.Tests;
 
 // An application of one Module composes Cqrs, validation and its database directly on its services: no Modules, no
-// Gateway, no ModuleBuilder. It opens a scope per Operation and sets the scope's Operation Context itself.
+// Gateway, no ModuleBuilder. It opens a scope per Operation and begins the scope's Operation itself.
 public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     [Fact]
@@ -17,7 +17,7 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
     {
         await using var services = SingleModuleServices();
         await using var scope = services.CreateAsyncScope();
-        scope.ServiceProvider.SetOperationContext(new OperationContext(Actor.System("single-module")));
+        scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("single-module")));
 
         var written = await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
@@ -32,7 +32,7 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
     {
         await using var services = SingleModuleServices();
         await using var scope = services.CreateAsyncScope();
-        scope.ServiceProvider.SetOperationContext(new OperationContext(Actor.System("single-module")));
+        scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("single-module")));
 
         var result = await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()

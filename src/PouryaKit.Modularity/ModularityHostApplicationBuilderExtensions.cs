@@ -11,7 +11,10 @@ public static class ModularityHostApplicationBuilderExtensions
     {
         /// <summary>
         /// Adds the Host's Modules, all in the Host's one container. Each Module's Composition Root runs once, and each
-        /// Module is reached through its <see cref="IGatewayProcessor{TModule}"/>.
+        /// Module is reached through its <see cref="IGatewayProcessor{TModule}"/>. The container is validated when the
+        /// Host is built, in every environment: every registration must be constructible and no singleton may depend on
+        /// a scoped service, or <c>Build</c> throws. A Host that later calls <c>ConfigureContainer</c> with another
+        /// service provider factory replaces this one, and that validation with it.
         /// </summary>
         public IHostApplicationBuilder AddPouryaKitModules(Action<ModulesBuilder> modules)
         {
@@ -20,9 +23,12 @@ public static class ModularityHostApplicationBuilderExtensions
 
             modules(new ModulesBuilder(builder.Services));
 
-            builder.Services.TryAddScoped<ModuleTag>();
+            builder.Services.TryAddScoped<Operation>();
             // Added after every Composition Root, so it is the IUnitOfWork the dispatcher resolves.
             builder.Services.AddScoped(RouteUnitOfWork);
+            builder.ConfigureContainer(
+                new DefaultServiceProviderFactory(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true })
+            );
             return builder;
         }
     }
@@ -30,9 +36,9 @@ public static class ModularityHostApplicationBuilderExtensions
     private static IUnitOfWork RouteUnitOfWork(IServiceProvider services)
     {
         var module =
-            services.GetRequiredService<ModuleTag>().Module
+            services.GetRequiredService<Operation>().Module
             ?? throw new InvalidOperationException(
-                "The Unit of Work was needed in a scope that no Module's Gateway opened. Send the Operation through IGatewayProcessor<TModule>."
+                "The Unit of Work was needed in a scope whose Operation names no Module. Send the Operation through IGatewayProcessor<TModule>, or begin the scope's Operation with its Module."
             );
         return services.GetKeyedService<IUnitOfWork>(module)
             ?? throw new InvalidOperationException(

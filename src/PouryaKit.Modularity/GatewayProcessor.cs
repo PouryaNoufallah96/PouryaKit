@@ -50,8 +50,7 @@ internal sealed class GatewayProcessor<TModule>(IServiceScopeFactory scopes, Hos
         modules.EnsureOwns(typeof(TModule), commandOrQuery.GetType());
 
         await using var scope = scopes.CreateAsyncScope();
-        scope.ServiceProvider.GetRequiredService<ModuleTag>().Module = typeof(TModule);
-        scope.ServiceProvider.SetOperationContext(context);
+        scope.ServiceProvider.BeginOperation(context, typeof(TModule));
         return await run(scope.ServiceProvider.GetRequiredService<IDispatcher>());
     }
 }

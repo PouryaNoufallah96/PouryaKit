@@ -5,8 +5,9 @@ namespace PouryaKit.Modularity;
 
 /// <summary>
 /// The Gateway of <typeparamref name="TModule"/>: the only way anything outside the Module runs one of its commands or
-/// queries. Each call is one Operation in a new scope of the Host container, tagged with the Module, running with the
-/// <see cref="OperationContext"/> the caller passes, and disposed when the call returns. A command or query that
+/// queries. Each call is one Operation in a new scope of the Host container, begun with the Module as its
+/// <see cref="Operation.Module"/> and the <see cref="OperationContext"/> the caller passes, and disposed when the call
+/// returns. A command or query that
 /// belongs to another Module is refused with an exception.
 /// </summary>
 /// <remarks>

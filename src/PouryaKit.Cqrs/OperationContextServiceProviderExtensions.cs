@@ -7,35 +7,23 @@ public static class OperationContextServiceProviderExtensions
     extension(IServiceProvider scope)
     {
         /// <summary>
-        /// Sets the Operation Context of the scope this provider belongs to, once, before the Operation runs. Whoever
-        /// opens an Operation's scope calls it: a Module's Gateway, the HTTP boundary, or a message delivery.
+        /// Begins the Operation of the scope this provider belongs to, once, before anything in the scope runs: sets
+        /// its <see cref="OperationContext"/> and, in a Host of Modules, the <paramref name="module"/> it runs in, which
+        /// routes it to that Module's Unit of Work. Whoever opens an Operation's scope calls it: a Module's Gateway, the
+        /// HTTP boundary, or a message delivery.
         /// </summary>
-        public void SetOperationContext(OperationContext context)
+        public void BeginOperation(OperationContext context, Type? module = null)
         {
             ArgumentNullException.ThrowIfNull(scope);
             ArgumentNullException.ThrowIfNull(context);
-            var slot = scope.GetRequiredService<OperationContextSlot>();
-            if (slot.Context is not null)
-            {
-                throw new InvalidOperationException(
-                    "This scope already has an Operation Context. A scope runs one Operation; open a new scope for another."
-                );
-            }
-
-            slot.Context = context;
+            scope.GetRequiredService<Operation>().Begin(context, module);
         }
     }
-}
-
-/// <summary>Holds the Operation Context of one scope; <see cref="OperationContext"/> is resolved from it.</summary>
-internal sealed class OperationContextSlot
-{
-    public OperationContext? Context { get; set; }
 
     // An Operation with no context never runs as an anonymous or system Actor by default: reading it fails.
-    public static OperationContext Read(IServiceProvider services) =>
-        services.GetRequiredService<OperationContextSlot>().Context
+    internal static OperationContext Read(IServiceProvider services) =>
+        services.GetRequiredService<Operation>().Context
         ?? throw new InvalidOperationException(
-            "No Operation Context was set for this scope. Send the Operation through a Module's Gateway with an OperationContext, or call SetOperationContext on the scope before it runs."
+            "No Operation Context was set for this scope. Send the Operation through a Module's Gateway with an OperationContext, or call BeginOperation on the scope before it runs."
         );
 }

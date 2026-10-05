@@ -27,6 +27,28 @@ public sealed class Operation
     /// </summary>
     public ImmutableArray<Error> RollbackErrors { get; private set; } = [];
 
+    /// <summary>
+    /// The Module the Operation runs in, as its scope's opener declared it; null in an application without Modules.
+    /// It belongs to the scope, not to the <see cref="OperationContext"/>: work an Operation causes may run in another
+    /// Module.
+    /// </summary>
+    public Type? Module { get; private set; }
+
+    internal OperationContext? Context { get; private set; }
+
+    internal void Begin(OperationContext context, Type? module)
+    {
+        if (Context is not null)
+        {
+            throw new InvalidOperationException(
+                "This scope's Operation has already begun. A scope runs one Operation; open a new scope for another."
+            );
+        }
+
+        Context = context;
+        Module = module;
+    }
+
     internal void MarkRollbackOnly(ImmutableArray<Error> errors)
     {
         if (!IsRollbackOnly)

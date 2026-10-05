@@ -9,6 +9,11 @@ namespace PouryaKit.Testing;
 /// Operation of <see cref="TestActor"/>. A test that needs a particular Actor, tenant or correlation passes its own
 /// <see cref="OperationContext"/> to the Gateway's own methods.
 /// </summary>
+/// <remarks>
+/// These overloads take no context, and still satisfy the rule that an Operation never runs as a default Actor
+/// (ADR 0007): a test is independent system work under an explicit, named identity, and they exist only in
+/// <c>PouryaKit.Testing</c>, which application code never references.
+/// </remarks>
 public static class GatewayTestExtensions
 {
     /// <summary>The named system Actor a test's Operations run as when the test passes no context.</summary>
