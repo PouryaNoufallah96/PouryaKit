@@ -1,5 +1,6 @@
 using PouryaKit.Cqrs;
 using PouryaKit.Modularity;
+using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.Postgres;
 
 namespace ModularMonolith.Tests.Stub;
@@ -11,6 +12,7 @@ public sealed class StubModule : IModuleDefinition
     public void Configure(ModuleBuilder module)
     {
         module.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        module.AddPouryaKitDapper(connectionName: "app", typeof(StubModule).Assembly);
         module.AddPouryaKitCqrs(typeof(StubModule).Assembly);
     }
 }

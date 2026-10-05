@@ -18,7 +18,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
             "select table_schema, table_name from information_schema.tables where table_schema not in ('pg_catalog', 'information_schema') order by 1, 2"
         );
         var history = await Fixture.RowsAsync(
-            """select 'catalog', migration_id from catalog."__EFMigrationsHistory" union all select 'stub', migration_id from stub."__EFMigrationsHistory" order by 1"""
+            """select 'catalog', migration_id from catalog."__EFMigrationsHistory" union all select 'stub', migration_id from stub."__EFMigrationsHistory" order by 1, 2"""
         );
         var columns = await Fixture.RowsAsync(
             "select column_name, data_type from information_schema.columns where table_schema = 'catalog' and table_name = 'products' order by ordinal_position"
@@ -29,12 +29,13 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["catalog", "__EFMigrationsHistory"],
                 ["catalog", "products"],
                 ["stub", "__EFMigrationsHistory"],
+                ["stub", "note_tallies"],
                 ["stub", "notes"],
             ],
             tables
         );
-        Assert.Equal(["catalog", "stub"], history.Select(row => row[0]));
-        Assert.All(history, row => Assert.EndsWith("_Initial", (string)row[1]));
+        Assert.Equal(["catalog", "stub"], history.Select(row => row[0]).Distinct());
+        Assert.All(history.DistinctBy(row => row[0]), row => Assert.EndsWith("_Initial", (string)row[1]));
         // The typed ID is stored as its Guid value with no ID configuration in the Product mapping.
         Assert.Equal([["id", "uuid"], ["name", "character varying"], ["version", "bigint"]], columns);
     }
