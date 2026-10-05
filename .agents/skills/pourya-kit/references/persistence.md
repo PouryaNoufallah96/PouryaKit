@@ -201,6 +201,7 @@ Both are opt-in, per aggregate or entity, with a contract from `PouryaKit.Domain
 - EF Core queries leave a removed entity out by convention, so the repository never returns one in a later Operation. A Dapper read must say `is_deleted = false` itself ([dapper-reads.md](dapper-reads.md)).
 - Removal raises no Domain Event of its own. When other aggregates care, give the aggregate a domain method that raises one and call it before the repository's `Remove`, as `RemoveProducts` above calls `Product.Remove()`. Guard the method so that a second call in the same Operation raises nothing more, as `Product` does.
 - Put `ISoftDeletable` on a type EF Core can filter: an aggregate or an entity that is not mapped as an owned type, at the root of its inheritance hierarchy or below a root that implements it too. An owned type, or a type derived from a root that is not soft-deletable, is refused when the model is built.
+- A soft-deletable child is kept when it is removed from its aggregate. It is deleted outright only when its parent is deleted outright and the child's key to that parent is required: its row cannot outlive the parent's. The Unit of Work resolves every such cascade in the prepare step, so the save itself changes nothing further.
 
 ## Versions and conflicts
 
@@ -213,6 +214,7 @@ Both are opt-in, per aggregate or entity, with a contract from `PouryaKit.Domain
 
 - Guard a unique value with a unique index in the mapping, never with a check before the write: a check reads only what is committed and cannot see a concurrent Operation. Name the index with a constant (`HasDatabaseName(NameIndex)`, as above). On a soft-deletable table, filter the index to the rows not removed (`HasFilter("is_deleted = false")`, SQL with snake_case names), so a removed aggregate's value is free again.
 - Map its violation to the Module's own Error in the Composition Root: `module.MapUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse)` (`PouryaKit.Persistence.EFCore`). The Error is usually of kind `Conflict`. Map each index once; mapping one twice for the same DbContext throws at composition.
+- The mapping covers a unique index or constraint the database checks when the row is written. A constraint declared `DEFERRABLE INITIALLY DEFERRED` is checked at commit, and its violation is an exception, not the mapped Error.
 - When the save violates a mapped index, the Unit of Work rolls everything back and the Operation fails with that Error. Any other database error, such as an unmapped constraint, a duplicate primary key or a foreign key, stays an exception: it rolls back and reaches the Gateway's caller.
 - A check before the write may still make the common case friendlier, as the import above skips names already in use; the index stays the guard.
 
