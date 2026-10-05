@@ -13,6 +13,7 @@ public static class EfCoreServiceCollectionExtensions
         /// Makes <typeparamref name="TDbContext"/>, already registered, the Unit of Work of the commands that run in this
         /// container, or in this Module when called on a Module's builder. It adds the generic repository over it, and the
         /// <see cref="IUnitOfWorkConnection"/> through which a plain SQL write joins the active Unit of Work's transaction.
+        /// When a messaging package registered an <see cref="IUnitOfWorkOutbox"/>, the Unit of Work commits through it.
         /// A database package such as <c>PouryaKit.Persistence.Postgres</c> calls it; Feature code never does.
         /// </summary>
         public IServiceCollection AddPouryaKitEfCore<TDbContext>()
@@ -26,7 +27,8 @@ public static class EfCoreServiceCollectionExtensions
                 provider.GetRequiredService<DomainEventDrain>(),
                 () => provider.GetRequiredService<OperationContext>(),
                 provider.GetService<IUniqueConstraintReader>(),
-                provider.GetKeyedServices<UniqueConstraintError>(typeof(TDbContext))
+                provider.GetKeyedServices<UniqueConstraintError>(typeof(TDbContext)),
+                provider.GetService<IUnitOfWorkOutbox>()
             ));
             services.TryAddScoped(typeof(IRepository<,>), typeof(EfRepository<,>));
             services.TryAddScoped<IUnitOfWorkConnection, EfUnitOfWorkConnection>();
