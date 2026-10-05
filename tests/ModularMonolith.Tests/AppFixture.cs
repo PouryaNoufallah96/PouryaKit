@@ -19,8 +19,9 @@ using PouryaKit.Testing;
 namespace ModularMonolith.Tests;
 
 /// <summary>
-/// The Proving Sample's Host, with the test-only <see cref="StubModule"/> beside Catalog, served in memory and
-/// authenticating callers with <see cref="TestAuthentication"/>.
+/// The Proving Sample's Host, with the test-only <see cref="StubModule"/> beside Catalog, served in memory,
+/// authenticating callers with <see cref="TestAuthentication"/>, delivering at test speed, and committing through the
+/// <see cref="CommitProbe"/>.
 /// </summary>
 public sealed class AppFixture : HostFixture
 {

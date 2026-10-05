@@ -306,6 +306,34 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
     }
 
     [Fact]
+    public async Task A_stored_delivery_to_a_subscription_the_host_no_longer_declares_is_dead_lettered_with_a_kit_error()
+    {
+        var text = Unique();
+        await Fixture.WaitForDeliveriesAsync(
+            () =>
+                Fixture
+                    .Gateway<StubModule>()
+                    .SendAsync(
+                        new WriteNoteRaisingCommand(text, [new NoteFiledForCopyDomainEvent(text)]),
+                        TestContext.Current.CancellationToken
+                    ),
+            TestContext.Current.CancellationToken
+        );
+
+        // As if the subscription had been renamed while its delivery was stored.
+        await Fixture.RowsAsync(
+            "update wolverine.wolverine_incoming_envelopes set status = 'Incoming', owner_id = 0, received_at = 'local://stub.renamed/' returning id"
+        );
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            [["local://stub.renamed/", typeof(UnknownSubscriptionException).FullName]],
+            await Fixture.RowsAsync("select received_at, exception_type from wolverine.wolverine_dead_letters")
+        );
+        Assert.Equal(1L, await CopiesOfAsync(text));
+    }
+
+    [Fact]
     public async Task Waiting_for_deliveries_fails_when_the_operation_sent_nothing()
     {
         var thrown = await Assert.ThrowsAsync<DeliveryAssertionException>(() =>

@@ -10,6 +10,7 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
 - `Respawn` 7.0.0, `Apache-2.0`, with no dependencies.
 - `Microsoft.Extensions.TimeProvider.Testing` 10.10.0, `MIT`, with no dependencies on `net10.0`. It supplies `FakeTimeProvider` for `TestClock` (ADR 0005).
 - `xunit.v3.extensibility.core` 4.0.1, `Apache-2.0`, with `xunit.v3.common` 4.0.1, `Apache-2.0`. It is the library form of xUnit v3; the test runner packages stay in test projects.
+- `PouryaKit.Messaging.Wolverine.EFCore`, as plan section C lists (ticket #15). With it the package's restored closure is 101 packages: 90 `MIT`, 5 `Apache-2.0`, 3 `BSD-3-Clause` and 3 `PostgreSQL`, all recorded with the packages that bring them.
 
 ## PostgreSQL test fixture
 
@@ -25,3 +26,19 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
   - The data is reset before each test by a base test class; a reset failure fails the test instead of being written to the message sink.
   - No configuration binding, container name or database-creation check; the image is pinned.
   - Operations are sent through a Module's Gateway, as the application sends them.
+
+## Delivery assertions
+
+- **Kit files:** `src/PouryaKit.Testing/HostFixture.cs`, `src/PouryaKit.Testing/StoredDeliveries.cs`, `src/PouryaKit.Testing/Delivery.cs`, `src/PouryaKit.Testing/DeliveryAssertionException.cs`, `src/PouryaKit.Testing/TestDeliveryServiceCollectionExtensions.cs`
+- **Upstream:** https://github.com/meysamhadeli/woo
+- **Commit:** 149a3cf168496c3bec85945f83ad222e43720e4d
+- **Upstream paths:** `src/TestBase/TestBase.cs`
+- **Licence:** MIT
+- **Adoption:** pattern
+- **Ticket:** #15
+- **Intentional differences:**
+  - Kept: the stored envelopes are read before the Operation runs, as a baseline, and what it caused is what was stored after it.
+  - No Wolverine tracked session: one ends when a handler's execution finishes, before a stored retry runs. The Kit waits on the message store instead, until no stored delivery is pending, so retries, dead letters and the deliveries that deliveries cause are all waited for.
+  - Waiting fails when the Operation stored no delivery, and a separate assertion checks that a rolled-back Operation stored none. `mehdihadeli/food-delivery-microservices` at `c83bca3`, `tests/Shared/Tests.Shared/Fixtures/SharedFixture.cs`, passes a wait for messages when none was sent (plan section B.2, "Test support").
+  - The reset before each test first waits until no delivery is pending, then deletes the stored deliveries but keeps the message store's own node records, which belong to the running Host.
+  - Deliveries run at test speed: Solo durability, two retries 100 ms apart, and the store polled every 100 ms.
