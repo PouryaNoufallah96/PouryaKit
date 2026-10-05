@@ -14,8 +14,8 @@ public sealed class Operation
     private bool _commandStarted;
     private bool _unitOfWorkActive;
     private int _runningChecks;
-    // The steps that only read, innermost last.
-    private readonly List<string> _readingSteps = [];
+    // The open steps that only read, in the order opened.
+    private readonly List<ReadingStep> _readingSteps = [];
 
     /// <summary>
     /// True once a command or a Domain Event Handler inside the Operation has failed, whether or not its caller read the
@@ -50,13 +50,15 @@ public sealed class Operation
     /// opens it around application code it runs after the Operation's last change, such as the code that builds what
     /// the Unit of Work publishes. While it is open <see cref="MayChangeState"/> is false, so every write the Kit
     /// guards is refused, and a command is refused with a message naming <paramref name="step"/>; a query runs as usual.
-    /// Steps nest, and disposing one restores what held before it opened. Feature code never opens one.
+    /// Steps nest; disposing one closes that step only, whatever else is open, and disposing it again does nothing.
+    /// Feature code never opens one.
     /// </summary>
     public IDisposable OnlyReading(string step)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(step);
-        _readingSteps.Add(step);
-        return new ReadingStep(this, _readingSteps.Count);
+        var reading = new ReadingStep(this, step);
+        _readingSteps.Add(reading);
+        return reading;
     }
 
     internal OperationContext? Context { get; private set; }
@@ -104,7 +106,7 @@ public sealed class Operation
         if (_readingSteps.Count > 0)
         {
             throw new InvalidOperationException(
-                $"A command was sent from {_readingSteps[^1]}, a step that only reads. It may run queries; only a handler may send a nested command."
+                $"A command was sent from {_readingSteps[^1].Name}, a step that only reads. It may run queries; only a handler may send a nested command."
             );
         }
 
@@ -141,23 +143,11 @@ public sealed class Operation
 
     internal void ExitQuery() => _runningQueries--;
 
-    // Closes its step and any opened inside it and left open, once.
-    private sealed class ReadingStep(Operation operation, int depth) : IDisposable
+    // Closes its own step, once; any other step stays as it is.
+    private sealed class ReadingStep(Operation operation, string name) : IDisposable
     {
-        private bool _closed;
+        public string Name { get; } = name;
 
-        public void Dispose()
-        {
-            if (_closed)
-            {
-                return;
-            }
-
-            _closed = true;
-            if (operation._readingSteps.Count >= depth)
-            {
-                operation._readingSteps.RemoveRange(depth - 1, operation._readingSteps.Count - depth + 1);
-            }
-        }
+        public void Dispose() => operation._readingSteps.Remove(this);
     }
 }

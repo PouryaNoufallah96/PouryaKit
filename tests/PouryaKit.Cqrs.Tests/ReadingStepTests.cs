@@ -6,7 +6,7 @@ namespace PouryaKit.Cqrs.Tests;
 public sealed class ReadingStepTests
 {
     [Fact]
-    public async Task A_step_that_only_reads_refuses_commands_and_runs_queries_until_it_and_every_step_around_it_close()
+    public async Task A_step_that_only_reads_refuses_commands_and_runs_queries_until_it_closes_and_closes_only_itself()
     {
         await using var host = TestHost.Build();
         using var scope = host.CreateScope();
@@ -17,11 +17,12 @@ public sealed class ReadingStepTests
         var inner = operation.OnlyReading("the inner step");
         var refusedInside = await Assert.ThrowsAsync<InvalidOperationException>(() => ThingsGateway.Ping(dispatcher));
         var read = await ThingsGateway.GetThing(dispatcher);
+        // Closed out of order: the inner step stays open.
+        outer.Dispose();
+        outer.Dispose();
+        var mayChangeInInner = operation.MayChangeState;
+        var refusedInInner = await Assert.ThrowsAsync<InvalidOperationException>(() => ThingsGateway.Ping(dispatcher));
         inner.Dispose();
-        var mayChangeInOuter = operation.MayChangeState;
-        var refusedOutside = await Assert.ThrowsAsync<InvalidOperationException>(() => ThingsGateway.Ping(dispatcher));
-        outer.Dispose();
-        outer.Dispose();
         var mayChangeAfter = operation.MayChangeState;
 
         Assert.Equal(
@@ -29,8 +30,8 @@ public sealed class ReadingStepTests
             refusedInside.Message
         );
         Assert.Equal("thing", read.Value);
-        Assert.False(mayChangeInOuter);
-        Assert.StartsWith("A command was sent from the outer step,", refusedOutside.Message);
+        Assert.False(mayChangeInInner);
+        Assert.StartsWith("A command was sent from the inner step,", refusedInInner.Message);
         Assert.True(mayChangeAfter);
     }
 }

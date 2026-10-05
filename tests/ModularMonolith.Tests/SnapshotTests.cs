@@ -361,7 +361,7 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Fact]
-    public async Task A_snapshot_declared_for_two_separately_mapped_aggregates_fails_the_operation_that_would_publish_it()
+    public async Task A_snapshot_declared_for_aggregates_of_two_mapped_hierarchies_fails_the_operation_that_would_publish_it()
     {
         var folder = Guid.CreateVersion7();
 
@@ -371,10 +371,43 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         );
 
         Assert.Equal(
-            $"The Snapshot {typeof(DeskItemSnapshotV1).FullName} is declared for {typeof(IDeskItem).FullName}, which the separately mapped aggregates {typeof(Folder).FullName}, {typeof(Tray).FullName} all are. Their keys are their own, so their Snapshots would share identities and versions, and a receiver would turn one aggregate's away for another's. Declare a Snapshot for each aggregate, or for a type of one mapped hierarchy.",
+            $"The Snapshot {typeof(DeskItemSnapshotV1).FullName} is declared for {typeof(IDeskItem).FullName}, which covers aggregates of the separately mapped hierarchies of {typeof(Folder).FullName}, {typeof(Case).FullName}. Their keys are their own, so their Snapshots would share identities and versions, and a receiver would turn one aggregate's away for another's. Declare a Snapshot for each aggregate, or for a type of one mapped hierarchy.",
             thrown.Message
         );
         Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from stub.folders where id = '{folder}'"));
+    }
+
+    [Fact]
+    public async Task A_snapshot_declared_for_a_base_class_of_one_mapped_hierarchy_is_published_for_each_of_its_aggregates()
+    {
+        Guid pencilCase = Guid.CreateVersion7(), bookCase = Guid.CreateVersion7();
+
+        await Fixture.WaitForDeliveriesAsync(
+            () => StubAsync(new CreateCasesCommand(pencilCase, bookCase)),
+            TestContext.Current.CancellationToken
+        );
+
+        Assert.Equal(
+            [new CaseSnapshotV1(bookCase, nameof(BookCase), false, 1L), new CaseSnapshotV1(pencilCase, nameof(PencilCase), false, 1L)],
+            Received.All.Select(received => received.IntegrationEvent).OfType<CaseSnapshotV1>()
+                .Where(snapshot => snapshot.CaseId == pencilCase || snapshot.CaseId == bookCase)
+                .OrderBy(snapshot => snapshot.Kind, StringComparer.Ordinal)
+        );
+    }
+
+    [Fact]
+    public async Task A_snapshot_mapper_that_writes_while_it_is_built_fails_the_operation_that_would_publish_it()
+    {
+        var leaflet = Guid.CreateVersion7();
+
+        var thrown = await WithDeclarationAsync(
+            services =>
+                services.PublishSnapshot<Leaflet, LeafletSnapshotV1, LeafletSnapshotMapperThatWritesWhenBuilt>("tests.leaflet.v1", typeof(StubModule)),
+            stub => stub.SendAsync(new PrintLeafletCommand(leaflet, "Lamps"), TestContext.Current.CancellationToken)
+        );
+
+        Assert.StartsWith("Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write", thrown.Message);
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from stub.leaflets where id = '{leaflet}'"));
     }
 
     [Fact]

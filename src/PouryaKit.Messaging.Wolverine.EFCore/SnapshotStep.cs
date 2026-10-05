@@ -27,12 +27,11 @@ internal static class SnapshotStep
         }
 
         mappers.CheckKeySpaces(
-            [
-                .. dbContext
-                    .Model.GetEntityTypes()
-                    .Where(type => type.BaseType is null && !type.IsOwned() && type.ClrType.IsAssignableTo(typeof(IAggregateRoot)))
-                    .Select(type => type.ClrType),
-            ]
+            dbContext
+                .Model.GetEntityTypes()
+                .Where(type => !type.IsOwned() && type.ClrType.IsAssignableTo(typeof(IAggregateRoot)))
+                .DistinctBy(type => type.ClrType)
+                .ToDictionary(type => type.ClrType, type => type.GetRootType().ClrType)
         );
 
         var prepared = PreparedState.Of(dbContext);
