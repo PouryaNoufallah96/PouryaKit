@@ -13,14 +13,14 @@ internal sealed class CreateCategoryEndpoint : IEndpoint
         routes.MapPost(
             "/categories",
             async (
-                CreateCategoryRequest request,
+                CreateCategoryBody body,
                 OperationContext context,
                 IGatewayProcessor<CatalogModule> catalog,
                 CancellationToken cancellationToken
             ) =>
                 (
                     await catalog.SendAsync(
-                        new CreateCategoryCommand(request.CategoryId, request.Name),
+                        new CreateCategoryCommand(body.CategoryId, body.Name),
                         context,
                         cancellationToken
                     )
@@ -28,4 +28,4 @@ internal sealed class CreateCategoryEndpoint : IEndpoint
         );
 }
 
-internal sealed record CreateCategoryRequest(Guid CategoryId, string Name);
+internal sealed record CreateCategoryBody(Guid CategoryId, string Name);

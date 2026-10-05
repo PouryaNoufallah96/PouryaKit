@@ -45,6 +45,6 @@ None. `PouryaKit.Web` references `PouryaKit.Cqrs` and the ASP.NET Core shared fr
 - **Adoption:** pattern
 - **Ticket:** #14
 - **Intentional differences:**
-  - An `IExceptionHandler` writes through ASP.NET Core's own `IProblemDetailsService` instead of replacing it, so failed Results and exceptions share one problem envelope.
-  - The response never carries the exception's message, type or stack; upstream copies the message into `detail` and the type name into `title`. Every exception answers 500: an expected failure is a Result, not an exception (G.1), so there are no exception-to-status mappers.
-  - The handler logs the exception, because the .NET 10 exception handler middleware no longer logs one a handler handled.
+  - An `IExceptionHandler` writes through ASP.NET Core's own `ProblemHttpResult`, as a failed Result is written, instead of replacing `IProblemDetailsService`, so failed Results and exceptions share one problem envelope; it falls back to `application/problem+json` when the caller's `Accept` rules out every writer.
+  - The response never carries the exception's message, type or stack; upstream copies the message into `detail` and the type name into `title`. Every exception answers 500, except a request ASP.NET Core could not read (`BadHttpRequestException`), which answers its own status: an expected failure is a Result, not an exception (G.1), so there are no exception-to-status mappers. Binding failures throw in every environment, so they answer the same problem response everywhere.
+  - The handler logs an unexpected exception at Error as the HTTP-level record of the failed request; the dispatcher logs one a handler throws as well, but an exception raised outside an Operation has only this entry, and the .NET 10 exception handler middleware no longer logs one a handler handled.

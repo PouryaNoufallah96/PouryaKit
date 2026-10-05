@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ using ModularMonolith.Tests.Stub;
 using Npgsql;
 using PouryaKit.Modularity;
 using PouryaKit.Testing;
+using PouryaKit.Web;
 
 [assembly: AssemblyFixture(typeof(AppFixture))]
 [assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
@@ -19,21 +21,35 @@ namespace ModularMonolith.Tests;
 
 /// <summary>
 /// The Proving Sample's Host, with the test-only <see cref="StubModule"/> beside Catalog, served in memory and
-/// authenticating callers with <see cref="TestAuthentication"/>.
+/// authenticating callers with <see cref="TestAuthentication"/>, whose tenant claim fills the tenant.
 /// </summary>
 public sealed class AppFixture : HostFixture
 {
-    protected override IHost CreateHost(string connectionString)
+    protected override IHost CreateHost(string connectionString) =>
+        ComposeHost("Development", connectionString, Logs);
+
+    /// <summary>
+    /// The application as the tests host it, in <paramref name="environment"/>, built but not started;
+    /// <paramref name="configure"/> may change its composition first. Starting it needs no database.
+    /// </summary>
+    public static WebApplication ComposeHost(
+        string environment,
+        string connectionString,
+        RecordedLogs logs,
+        Action<WebApplicationBuilder>? configure = null
+    )
     {
         var builder = ModularMonolithHost.CreateBuilder(
-            ["--environment", "Development", $"--ConnectionStrings:app={connectionString}"]
+            ["--environment", environment, $"--ConnectionStrings:app={connectionString}"]
         );
         builder.AddPouryaKitModules(modules => modules.Add<StubModule>());
         builder.WebHost.UseTestServer();
         builder
             .Services.AddAuthentication(TestAuthentication.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
-        builder.Logging.AddProvider(Logs);
+        builder.Services.Configure<PouryaKitWebOptions>(web => web.TenantClaim = TestAuthentication.TenantClaim);
+        builder.Logging.AddProvider(logs);
+        configure?.Invoke(builder);
         return ModularMonolithHost.Build(builder);
     }
 
@@ -43,12 +59,20 @@ public sealed class AppFixture : HostFixture
     /// <summary>
     /// A client of the Host's HTTP pipeline, authenticated as the person <paramref name="caller"/>, or anonymous.
     /// </summary>
-    public HttpClient Client(string? caller = null)
+    public HttpClient Client(string? caller = null, string? tenant = null) => ClientOf(Host, caller, tenant);
+
+    /// <summary>A client of <paramref name="host"/>'s HTTP pipeline, as <see cref="Client"/> makes one.</summary>
+    public static HttpClient ClientOf(IHost host, string? caller = null, string? tenant = null)
     {
-        var client = Host.GetTestClient();
+        var client = host.GetTestClient();
         if (caller is not null)
         {
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(TestAuthentication.SchemeName, caller);
+        }
+
+        if (tenant is not null)
+        {
+            client.DefaultRequestHeaders.Add(TestAuthentication.TenantHeader, tenant);
         }
 
         return client;

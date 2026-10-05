@@ -14,7 +14,7 @@ namespace PouryaKit.Web;
 /// {
 ///     public void Map(IEndpointRouteBuilder routes) =>
 ///         routes.MapGet(
-///             "/products/{productId:guid}",
+///             "/products/{productId}",
 ///             async (Guid productId, OperationContext context, IGatewayProcessor&lt;CatalogModule&gt; catalog, CancellationToken ct) =>
 ///                 (await catalog.QueryAsync(new GetProductQuery(productId), context, ct)).ToHttpResult()
 ///         );

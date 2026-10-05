@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text.Json;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
@@ -58,9 +61,17 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal("https://tools.ietf.org/html/rfc9110#section-15.5.1", problem.GetProperty("type").GetString());
         Assert.Equal("Bad Request", problem.GetProperty("title").GetString());
         Assert.Equal(400, problem.GetProperty("status").GetInt32());
+        // Messages follow the current UI culture; codes and targets do not.
         Assert.Equal(
-            """[{"code":"NotEmptyValidator","message":"'Product Id' must not be empty.","target":"ProductId"},{"code":"NotEmptyValidator","message":"'Name' must not be empty.","target":"Name"}]""",
-            problem.GetProperty("errors").GetRawText()
+            [("NotEmptyValidator", "ProductId"), ("NotEmptyValidator", "Name")],
+            problem
+                .GetProperty("errors")
+                .EnumerateArray()
+                .Select(error => (error.GetProperty("code").GetString(), error.GetProperty("target").GetString()))
+        );
+        Assert.All(
+            problem.GetProperty("errors").EnumerateArray(),
+            error => Assert.NotEmpty(error.GetProperty("message").GetString()!)
         );
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
     }
@@ -162,6 +173,79 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(loggedBefore + 1, LoggedByWeb());
     }
 
+    // Each case builds a Host of its own in the environment: outside Development, ASP.NET Core answers these
+    // differently unless the Kit makes them the same. None of them reaches the database.
+    [Theory]
+    [InlineData("Development")]
+    [InlineData("Production")]
+    public async Task An_exception_in_authentication_answers_500_as_a_problem_response_without_its_message(string environment)
+    {
+        await using var host = await StartHostAsync(environment);
+        using var client = AppFixture.ClientOf(host, TestAuthentication.Throwing);
+
+        var response = await client.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
+
+        var problem = await ProblemAsync(response, HttpStatusCode.InternalServerError);
+        Assert.DoesNotContain(TestAuthentication.ThrownMessage, problem.GetRawText());
+    }
+
+    [Theory]
+    [InlineData("Development", "POST", "/catalog/products", "{\"productId\":")]
+    [InlineData("Production", "POST", "/catalog/products", "{\"productId\":")]
+    [InlineData("Development", "GET", "/catalog/products/not-a-guid", null)]
+    [InlineData("Production", "GET", "/catalog/products/not-a-guid", null)]
+    public async Task A_request_that_cannot_be_read_answers_400_as_a_problem_response_and_is_not_logged_as_an_error(
+        string environment,
+        string method,
+        string path,
+        string? json
+    )
+    {
+        var logs = new RecordedLogs();
+        await using var host = await StartHostAsync(environment, logs);
+        using var client = AppFixture.ClientOf(host, "ada");
+        using var request = new HttpRequestMessage(new HttpMethod(method), path)
+        {
+            Content = json is null ? null : new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
+        };
+
+        var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
+        Assert.Equal(400, problem.GetProperty("status").GetInt32());
+        Assert.DoesNotContain(logs.Entries, entry => entry.Level >= LogLevel.Error);
+    }
+
+    [Fact]
+    public async Task A_problem_response_is_written_whatever_the_caller_accepts()
+    {
+        using var client = Fixture.Client("ada");
+        client.DefaultRequestHeaders.Accept.ParseAdd("text/html");
+
+        var failed = await client.GetAsync("/stub/mixed-errors", TestContext.Current.CancellationToken);
+        var threw = await client.PostAsync("/stub/notes/throwing", null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(404, (await ProblemAsync(failed, HttpStatusCode.NotFound)).GetProperty("status").GetInt32());
+        Assert.Equal(500, (await ProblemAsync(threw, HttpStatusCode.InternalServerError)).GetProperty("status").GetInt32());
+    }
+
+    [Fact]
+    public async Task A_module_endpoint_that_allows_anonymous_callers_without_naming_an_actor_fails_the_host_at_start()
+    {
+        await using var host = AppFixture.ComposeHost(
+            "Production",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder => builder.Services.AddSingleton<PlainAnonymousRoute>()
+        );
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
+
+        Assert.Contains("allows anonymous callers but names no Actor", thrown.Message);
+    }
+
     [Fact]
     public async Task A_module_endpoint_refuses_an_anonymous_caller_and_a_public_endpoint_runs_it_as_its_named_actor()
     {
@@ -200,6 +284,33 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Fact]
+    public async Task The_tenant_claim_fills_the_tenant_and_a_caller_without_it_runs_with_none()
+    {
+        using var acme = Fixture.Client("ada", tenant: "acme");
+        using var noTenant = Fixture.Client("ada");
+
+        Assert.Equal("acme", (await ContextAsync(acme, "/stub/context")).Tenant);
+        Assert.Null((await ContextAsync(noTenant, "/stub/context")).Tenant);
+    }
+
+    [Fact]
+    public async Task An_authenticated_caller_without_the_actor_claim_is_refused_with_a_500_problem_response()
+    {
+        using var client = Fixture.Client(TestAuthentication.WithoutActorClaim);
+
+        var response = await client.GetAsync("/stub/context", TestContext.Current.CancellationToken);
+
+        var problem = await ProblemAsync(response, HttpStatusCode.InternalServerError);
+        Assert.DoesNotContain("claim", problem.GetRawText());
+        Assert.Contains(
+            Fixture.Logs.Entries,
+            entry =>
+                entry.Category == "PouryaKit.Web.UnexpectedExceptionHandler"
+                && entry.Exception?.Message.Contains($"no {ClaimTypes.NameIdentifier} claim") == true
+        );
+    }
+
+    [Fact]
     public async Task Each_modules_endpoints_are_mapped_under_its_own_route_group()
     {
         using var client = Fixture.Client("ada");
@@ -233,7 +344,20 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         return (await response.Content.ReadFromJsonAsync<SeenContext>(TestContext.Current.CancellationToken))!;
     }
 
-    private sealed record SeenContext(Guid OperationId, SeenActor Actor, Guid CorrelationId, Guid? CausationId);
+    private async Task<WebApplication> StartHostAsync(string environment, RecordedLogs? logs = null)
+    {
+        var host = AppFixture.ComposeHost(environment, Fixture.ConnectionString, logs ?? new RecordedLogs());
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        return host;
+    }
+
+    private sealed record SeenContext(
+        Guid OperationId,
+        SeenActor Actor,
+        string? Tenant,
+        Guid CorrelationId,
+        Guid? CausationId
+    );
 
     private sealed record SeenActor(string Id, ActorKind Kind);
 }
