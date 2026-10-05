@@ -9,8 +9,12 @@ using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
+using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
+using Wolverine;
+using Wolverine.Runtime;
 
 namespace ModularMonolith.Tests;
 
@@ -249,18 +253,20 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
     }
 
     [Fact]
-    public async Task A_notification_committed_by_a_host_that_stopped_before_sending_it_is_handled_by_the_next()
+    public async Task A_notification_committed_by_a_host_that_died_before_sending_it_is_handled_after_a_host_starts()
     {
         var text = Unique();
-        await using var stopping = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
-        await HostFixture.StartHostAsync(stopping, TestContext.Current.CancellationToken);
-        var stub = stopping.Services.GetRequiredService<IGatewayProcessor<StubModule>>();
+        await using var dying = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
+        await using var starting = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
+        await HostFixture.StartHostAsync(dying, TestContext.Current.CancellationToken);
+        var stub = dying.Services.GetRequiredService<IGatewayProcessor<StubModule>>();
+        List<object[]> afterDeath = [];
 
         var (written, deliveries) = await Fixture.WaitForDeliveriesAsync(
             async () =>
             {
                 Result result;
-                // The Host commits, then stops before it sends what it committed, as if it went down in between.
+                // The Host commits, then goes down before it sends what it committed.
                 using (CommitProbe.AfterCommit(() => Task.FromResult(false)))
                 {
                     result = await stub.SendAsync(
@@ -269,19 +275,85 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
                     );
                 }
 
-                // Committed, held by the stopping Host, and not handled.
-                Assert.Equal(
-                    [["Incoming", true]],
-                    await Fixture.RowsAsync("select status, owner_id <> 0 from wolverine.wolverine_incoming_envelopes")
-                );
-                await stopping.StopAsync(TestContext.Current.CancellationToken);
+                // Wolverine's quick stop neither drains nor gives up what the Host holds, as a killed process leaves it.
+                ((WolverineRuntime)dying.Services.GetRequiredService<IWolverineRuntime>()).StopMode = StopMode.Quick;
+                await dying.StopAsync(TestContext.Current.CancellationToken);
+                // A bounded wait for something that must not happen: the fixture's Host, alive throughout, polls the
+                // store several times and leaves the dead Host's delivery where it is.
+                await Task.Delay(TestDeliveryServiceCollectionExtensions.PollingTime * 5, TestContext.Current.CancellationToken);
+                afterDeath = await Fixture.RowsAsync("select status, owner_id <> 0 from wolverine.wolverine_incoming_envelopes");
+
+                await HostFixture.StartHostAsync(starting, TestContext.Current.CancellationToken);
                 return result;
             },
             TestContext.Current.CancellationToken
         );
 
         Assert.True(written.IsSuccess);
+        Assert.Equal([["Incoming", true]], afterDeath);
         Assert.False(Assert.Single(deliveries).DeadLettered);
+        Assert.Equal(1L, await CopiesOfAsync(text));
+        Assert.Equal(1L, await Fixture.ScalarAsync<long>("select count(*) from stub.pouryakit_receipts"));
+    }
+
+    [Fact]
+    public async Task A_notification_committed_but_never_sent_is_delivered_on_a_live_host_after_the_inbox_stale_time()
+    {
+        var text = Unique();
+        await using var live = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            Fixture.Logs,
+            builder =>
+                builder.Services.Configure<PouryaKitMessageStoreOptions>(store => store.InboxStaleTime = TimeSpan.FromSeconds(1))
+        );
+        await HostFixture.StartHostAsync(live, TestContext.Current.CancellationToken);
+
+        // The commit succeeds and the send never happens; the Host stays up, so no start or stop releases the delivery.
+        var (written, deliveries) = await Fixture.WaitForDeliveriesAsync(
+            async () =>
+            {
+                using (CommitProbe.AfterCommit(() => Task.FromResult(false)))
+                {
+                    return await live.Services.GetRequiredService<IGatewayProcessor<StubModule>>()
+                        .SendAsync(
+                            new WriteNoteRaisingCommand(text, [new NoteFiledForCopyDomainEvent(text)]),
+                            TestContext.Current.CancellationToken
+                        );
+                }
+            },
+            TestContext.Current.CancellationToken
+        );
+
+        Assert.True(written.IsSuccess);
+        Assert.False(Assert.Single(deliveries).DeadLettered);
+        Assert.Equal(1L, await CopiesOfAsync(text));
+    }
+
+    [Fact]
+    public async Task A_receipt_is_keyed_by_the_lower_cased_subscription_so_a_change_of_case_only_finds_it()
+    {
+        var text = Unique();
+        var filed = new NoteFiledForCasedCopyDomainEvent(text);
+        var queue = $"local://{CasedCopyNotificationHandler.Name.ToLowerInvariant()}/";
+        await Fixture.WaitForDeliveriesAsync(
+            () =>
+                Fixture
+                    .Gateway<StubModule>()
+                    .SendAsync(new WriteNoteRaisingCommand(text, [filed]), TestContext.Current.CancellationToken),
+            TestContext.Current.CancellationToken
+        );
+        // Declared as stub.Cased-Copy; kept as its queue keeps it, whichever case a later declaration uses.
+        var receipts = await Fixture.RowsAsync("select subscription, message_id from stub.pouryakit_receipts");
+
+        Assert.Single(
+            await Fixture.RowsAsync(
+                $"update wolverine.wolverine_incoming_envelopes set status = 'Incoming', owner_id = 0 where received_at = '{queue}' returning id"
+            )
+        );
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal([["stub.cased-copy", filed.Id]], receipts);
         Assert.Equal(1L, await CopiesOfAsync(text));
     }
 
@@ -296,12 +368,99 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
 
         Assert.Equal(
             [
+                "ModularMonolith.Tests.Misnamed.BadlyNamedDomainEvent's wire name misnamed.bad name is not a valid name: use letters and digits in segments joined by single dots or hyphens.",
                 "ModularMonolith.Tests.Misnamed.BlankNotificationHandler's subscription name is missing; declare one or remove the empty name.",
+                "ModularMonolith.Tests.Misnamed.ReservedNotificationHandler's subscription name agents is a queue Wolverine keeps for itself; choose another.",
                 "ModularMonolith.Tests.Misnamed.SecondTwinNotificationHandler and ModularMonolith.Tests.Misnamed.FirstTwinNotificationHandler have the subscription name misnamed.twin, ignoring case; give one a SubscriptionName of its own.",
-                "ModularMonolith.Tests.Misnamed.SpacedNotificationHandler's subscription name misnamed.has space is not valid as a queue name: use letters and digits in segments joined by single dots or hyphens.",
+                "ModularMonolith.Tests.Misnamed.Shelved and ModularMonolith.Tests.Misnamed.ShelvedDomainEvent have the wire name modular-monolith.tests.misnamed.shelved, ignoring case; give one a WireName of its own.",
+                "ModularMonolith.Tests.Misnamed.SpacedNotificationHandler's subscription name misnamed.has space is not a valid name: use letters and digits in segments joined by single dots or hyphens.",
                 "ModularMonolith.Tests.Misnamed.UnnamedDomainEvent's wire name is missing; declare one or remove the empty name.",
             ],
             thrown.Message.Split(Environment.NewLine).Order(StringComparer.Ordinal)
+        );
+    }
+
+    [Fact]
+    public void A_name_with_a_trailing_line_break_is_not_valid()
+    {
+        // A queue address cannot hold it, so a delivery could never find the subscription it was stored under.
+        Assert.True(MessageNames.IsValid("stub.copy"));
+        Assert.False(MessageNames.IsValid("stub.copy\n"));
+    }
+
+    [Fact]
+    public async Task A_host_whose_subscription_queue_does_not_store_its_deliveries_fails_at_start()
+    {
+        var subscription = Subscription<CopyFiledNoteNotificationHandler, NoteFiledForCopyDomainEvent>();
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder => builder.Services.ConfigureWolverine(wolverine => wolverine.LocalQueue(subscription).BufferedInMemory())
+        );
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken)
+        );
+
+        Assert.StartsWith(
+            $"The queues of these subscriptions do not store what they receive, so their Notifications would not survive a restart: local://{subscription}/ (Application, BufferedInMemory).",
+            thrown.Message
+        );
+    }
+
+    [Fact]
+    public async Task A_host_that_declares_notification_handlers_but_writes_no_outbox_fails_at_start()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.Services.AddPouryaKitNotificationHandlers(typeof(StubModule).Assembly);
+        // The transport-neutral overload: Wolverine runs, but no Unit of Work writes an Outbox.
+        builder.UsePouryaKitWolverine();
+        using var host = builder.Build();
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
+        await host.StopAsync(TestContext.Current.CancellationToken);
+
+        Assert.StartsWith("Notification Handlers are declared, but nothing writes their Notifications to an Outbox", thrown.Message);
+    }
+
+    [Fact]
+    public async Task An_application_without_modules_delivers_its_notifications_with_their_receipts()
+    {
+        var text = Unique();
+        var filed = new NoteFiledForCopyDomainEvent(text);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
+        );
+        builder.Services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        builder.Services.AddPouryaKitCqrs(typeof(StubDbContext).Assembly);
+        builder.Services.AddPouryaKitNotificationHandlers(typeof(StubDbContext).Assembly);
+        builder.UsePouryaKitWolverine(connectionName: "app");
+        builder.Services.UsePouryaKitTestDelivery();
+        using var host = builder.Build();
+        await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
+
+        var (written, deliveries) = await Fixture.WaitForDeliveriesAsync(
+            async () =>
+            {
+                await using var scope = host.Services.CreateAsyncScope();
+                scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("single-module")));
+                return await scope
+                    .ServiceProvider.GetRequiredService<IDispatcher>()
+                    .SendAsync(new WriteNoteRaisingCommand(text, [filed]), TestContext.Current.CancellationToken);
+            },
+            TestContext.Current.CancellationToken
+        );
+        await host.StopAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(written.IsSuccess);
+        Assert.False(Assert.Single(deliveries).DeadLettered);
+        Assert.Equal(1L, await CopiesOfAsync(text));
+        Assert.Equal(
+            [[Subscription<CopyFiledNoteNotificationHandler, NoteFiledForCopyDomainEvent>(), filed.Id]],
+            await Fixture.RowsAsync("select subscription, message_id from stub.pouryakit_receipts")
         );
     }
 
@@ -336,9 +495,16 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
     [Fact]
     public async Task Waiting_for_deliveries_fails_when_the_operation_sent_nothing()
     {
+        // The note raises a Domain Event that no Notification Handler subscribes to, which stores nothing.
         var thrown = await Assert.ThrowsAsync<DeliveryAssertionException>(() =>
             Fixture.WaitForDeliveriesAsync(
-                () => Fixture.Gateway<StubModule>().SendAsync(new WriteNoteCommand(Unique()), TestContext.Current.CancellationToken),
+                () =>
+                    Fixture
+                        .Gateway<StubModule>()
+                        .SendAsync(
+                            new WriteNoteRaisingCommand(Unique(), [new NoteFiledDomainEvent()]),
+                            TestContext.Current.CancellationToken
+                        ),
                 TestContext.Current.CancellationToken
             )
         );

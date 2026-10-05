@@ -39,6 +39,7 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
             builder.Services.AddOptions<PouryaKitMessageStoreOptions>();
             builder.Services.AddSingleton<IWolverineExtension, MessageStoreExtension>();
             builder.Services.TryAddScoped<IUnitOfWorkOutbox, WolverineOutbox>();
+            builder.Services.TryAddScoped<INotificationOutbox, WolverineOutbox>();
             builder.Services.TryAddScoped<IReceipts, EfReceipts>();
             return builder.UsePouryaKitWolverine(wolverine =>
             {

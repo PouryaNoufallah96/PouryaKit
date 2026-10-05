@@ -12,7 +12,8 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 // Writes each message that has a subscription as one durable envelope per subscription, on the Unit of Work's own
 // connection and transaction (ADR 0004), carrying the Operation Context, and sends them after the commit.
 internal sealed partial class WolverineOutbox(IWolverineRuntime runtime, IServiceProvider scope, ILogger<WolverineOutbox> logger)
-    : IUnitOfWorkOutbox
+    : IUnitOfWorkOutbox,
+        INotificationOutbox
 {
     private DbContextOutbox? _written;
 

@@ -80,7 +80,7 @@ public abstract class HostFixture : IAsyncLifetime
 
     /// <summary>
     /// Runs <paramref name="operation"/>, typically a Gateway call, then waits until every delivery it caused has been
-    /// handled or dead-lettered, including deliveries those deliveries caused, and returns them in the order stored.
+    /// handled or dead-lettered, including deliveries those deliveries caused, and returns them in no particular order.
     /// Fails when the Operation stored no delivery at all, so a test that waits for deliveries never passes on none.
     /// </summary>
     public async Task<(T Outcome, IReadOnlyList<Delivery> Deliveries)> WaitForDeliveriesAsync<T>(

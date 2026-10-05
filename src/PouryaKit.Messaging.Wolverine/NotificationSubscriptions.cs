@@ -9,6 +9,19 @@ namespace PouryaKit.Messaging.Wolverine;
 /// </summary>
 internal sealed class NotificationSubscriptions
 {
+    // The local queues Wolverine 6.46.0 creates for itself (LocalTransport, TransportConstants): "agents" is held in
+    // memory, and none of them is a subscription's durable queue. StartupCheck verifies the queues Wolverine built, so a
+    // name a later Wolverine reserves fails the Host's start too.
+    private static readonly HashSet<string> ReservedQueues = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "agents",
+        "default",
+        "durable",
+        "replies",
+        "scheduled",
+        "system",
+    };
+
     private readonly Dictionary<string, NotificationSubscription> _byName = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Type> _domainEventByWireName = new(StringComparer.OrdinalIgnoreCase);
 
@@ -46,7 +59,7 @@ internal sealed class NotificationSubscriptions
         {
             // A derived subscription name starts with the wire name, so a bad wire name is reported once, for itself.
             var wireName = MessageNames.WireNameOf(subscription.DomainEvent);
-            if (!Check(wireName, $"{subscription.DomainEvent.FullName}'s wire name", problems))
+            if (!Check(wireName, $"{subscription.DomainEvent.FullName}'s wire name", isQueue: false, problems))
             {
                 continue;
             }
@@ -59,7 +72,7 @@ internal sealed class NotificationSubscriptions
                 );
             }
 
-            if (!Check(subscription.Name, $"{subscription.Handler.FullName}'s subscription name", problems))
+            if (!Check(subscription.Name, $"{subscription.Handler.FullName}'s subscription name", isQueue: true, problems))
             {
                 continue;
             }
@@ -95,7 +108,7 @@ internal sealed class NotificationSubscriptions
         }
     }
 
-    private static bool Check(string name, string what, List<string> problems)
+    private static bool Check(string name, string what, bool isQueue, List<string> problems)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -106,8 +119,14 @@ internal sealed class NotificationSubscriptions
         if (!MessageNames.IsValid(name))
         {
             problems.Add(
-                $"{what} {name} is not valid as a queue name: use letters and digits in segments joined by single dots or hyphens."
+                $"{what} {name} is not a valid name: use letters and digits in segments joined by single dots or hyphens."
             );
+            return false;
+        }
+
+        if (isQueue && ReservedQueues.Contains(name))
+        {
+            problems.Add($"{what} {name} is a queue Wolverine keeps for itself; choose another.");
             return false;
         }
 
