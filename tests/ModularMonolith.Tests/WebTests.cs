@@ -299,7 +299,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         var anonymousContext = await ContextAsync(anonymous, "/stub/public/context");
         var adaContext = await ContextAsync(ada, "/stub/public/context");
 
-        Assert.Equal(HttpStatusCode.Unauthorized, refused.StatusCode);
+        await ProblemAsync(refused, HttpStatusCode.Unauthorized);
         Assert.Equal(HttpStatusCode.OK, listed.StatusCode);
         Assert.Equal(ReadOperationContextEndpoint.Visitor.Id, anonymousContext.Actor.Id);
         Assert.Equal(ActorKind.System, anonymousContext.Actor.Kind);
@@ -358,7 +358,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.Equal(HttpStatusCode.OK, await StatusOf("/catalog/products"));
         Assert.Equal(HttpStatusCode.OK, await StatusOf("/stub/context"));
-        Assert.Equal(HttpStatusCode.NotFound, await StatusOf("/products"));
+        await ProblemAsync(await client.GetAsync("/products", TestContext.Current.CancellationToken), HttpStatusCode.NotFound);
         Assert.Equal(HttpStatusCode.NotFound, await StatusOf("/context"));
         Assert.Equal(HttpStatusCode.NotFound, await StatusOf("/stub/products"));
         Assert.Equal(HttpStatusCode.NotFound, await StatusOf("/catalog/context"));
