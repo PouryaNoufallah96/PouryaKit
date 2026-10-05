@@ -47,8 +47,6 @@ internal sealed class Subscriptions
         return subscriptions;
     }
 
-    public bool HasAny(Type domainEvent) => _typeByWireName.ContainsValue(domainEvent);
-
     public Subscription Named(string name) =>
         _byName.TryGetValue(name, out var subscription) ? subscription : throw new UnknownSubscriptionException(name);
 

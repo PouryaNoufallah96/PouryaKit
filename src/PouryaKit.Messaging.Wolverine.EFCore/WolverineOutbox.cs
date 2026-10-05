@@ -6,6 +6,7 @@ using PouryaKit.Persistence.EFCore;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
 using Wolverine.Runtime;
+using Wolverine.Util;
 
 namespace PouryaKit.Messaging.Wolverine.EFCore;
 
@@ -50,6 +51,7 @@ internal sealed partial class WolverineOutbox(
             var options = new DeliveryOptions().WithOperationContext(context);
             if (identity is { } domainEventId)
             {
+                await RecordPublicationAsync(message, domainEventId, cancellationToken);
                 options.Headers[IntegrationEventHeaders.DomainEventId] = domainEventId.ToString();
             }
 
@@ -57,6 +59,23 @@ internal sealed partial class WolverineOutbox(
         }
 
         _written = outbox;
+    }
+
+    // Two Notification Handlers of one Domain Event that publish one type would send two Integration Events with one
+    // identity, and every receiver's Receipt would drop the second. The publishing Module records each publication, in
+    // its own Receipt table and in this transaction, under a key no subscription name can take (a name has no '#'), so
+    // the second delivery to commit fails instead.
+    private async Task RecordPublicationAsync(object integrationEvent, Guid domainEventId, CancellationToken cancellationToken)
+    {
+        var wireName = integrationEvent.GetType().ToMessageTypeName();
+        // Resolved here, not injected: the Receipts depend on the Unit of Work, which depends on this Outbox.
+        var receipts = scope.GetRequiredService<IReceipts>();
+        if (!await receipts.RecordAsync($"{wireName.ToLowerInvariant()}#published", domainEventId, cancellationToken))
+        {
+            throw new InvalidOperationException(
+                $"Another Notification Handler of the Domain Event {domainEventId} already published {wireName}. One Domain Event yields at most one Integration Event of each type: both would carry its identity, and every receiver would apply only the first."
+            );
+        }
     }
 
     public async Task FlushAsync()
