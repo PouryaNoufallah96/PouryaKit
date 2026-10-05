@@ -33,7 +33,14 @@ internal sealed class WriteReactingNoteCommandHandler(IRepository<Note, NoteId> 
             Reaction.None => new NoteFiledDomainEvent(),
             _ => throw new ArgumentOutOfRangeException(nameof(command)),
         };
-        await notes.AddAsync(Note.Write($"{command.Reaction}").Raising(raised), cancellationToken);
+        var note = Note.Write($"{command.Reaction}").Raising(raised);
+        if (command.Reaction == Reaction.IgnoreNestedFailure)
+        {
+            // A Notification Handler subscribes to this one, so a commit would store a Notification in the Outbox.
+            note.Raising(new NotePostedDomainEvent($"{command.Reaction}"));
+        }
+
+        await notes.AddAsync(note, cancellationToken);
         return Result.Success();
     }
 }

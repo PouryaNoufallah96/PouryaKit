@@ -102,12 +102,17 @@ public sealed class DomainEventTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.notes"));
     }
 
+    // The note also raises a Domain Event a Notification Handler subscribes to, so a commit would store a Notification.
     [Fact]
     public async Task A_nested_command_that_fails_inside_a_handler_rolls_the_operation_back_though_the_handler_succeeds()
     {
-        var result = await Fixture
-            .Gateway<StubModule>()
-            .SendAsync(new WriteReactingNoteCommand(Reaction.IgnoreNestedFailure), TestContext.Current.CancellationToken);
+        var result = await Fixture.AssertNothingSentAsync(
+            () =>
+                Fixture
+                    .Gateway<StubModule>()
+                    .SendAsync(new WriteReactingNoteCommand(Reaction.IgnoreNestedFailure), TestContext.Current.CancellationToken),
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(WriteNoteThenFailCommandHandler.Rejected, Assert.Single(result.Errors));
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.notes"));

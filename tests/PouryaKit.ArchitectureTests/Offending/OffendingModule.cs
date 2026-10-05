@@ -65,9 +65,10 @@ internal sealed class OffendingRow
     public string Name { get; set; } = "";
 }
 
-// Calls the steps only the Kit runs: the Outbox write, a Receipt, a Snapshot mapping, an Integration Event added to the
+// Calls the steps only the Kit runs: the Unit of Work and its DbContext, the Outbox write, a Receipt, a Snapshot mapping, an Integration Event added to the
 // Outbox, the Domain Event drain, a new Operation begun in its own scope, and a reading step.
 internal sealed class KitStepCallingCommandHandler(
+    IUnitOfWork unitOfWork,
     IUnitOfWorkOutbox outbox,
     IReceipts receipts,
     ISnapshotMappers snapshots,
@@ -80,6 +81,8 @@ internal sealed class KitStepCallingCommandHandler(
 {
     public override async Task<Result> Handle(OffendCommand command, CancellationToken cancellationToken)
     {
+        await unitOfWork.RunAsync(_ => Task.FromResult(Result.Success()), cancellationToken);
+        _ = unitOfWork.DbContext;
         await outbox.WriteAsync(dbContext, [command], [], cancellationToken);
         await receipts.RecordAsync("offending", Guid.CreateVersion7(), cancellationToken);
         _ = snapshots.Map(command, removed: false);
