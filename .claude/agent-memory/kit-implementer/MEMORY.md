@@ -1,6 +1,7 @@
 - [.NET test conventions](dotnet-test-conventions.md) — MTP + xunit.v3 4.x, zero-test failure, nuget.config/NU1507, SDK pin band
 - [Worktree and check gotchas](worktree-and-check-gotchas.md) — stale worktree base, refused shell compounds and git -C, gh issue view quirk, no colons in skill frontmatter
 - [STJ and record facts](stj-and-record-facts.md) — base-type JsonConverter ignored, init props survive, derived record reuses Value
+- [Docs verification tools](docs-verification-tools.md) — compile skill snippets, parse Mermaid C4, run dotnet-ef, all from the scratchpad
 - [Persistence and EF facts](persistence-ef-facts.md) — #8: Module UoW routing via keyed IUnitOfWork, EF 10/Npgsql/dotnet-ef/Ardalis gotchas
 - [Cqrs design facts](cqrs-design-facts.md) — FluentValidation licence and scanner API, generic failed Result trick, #7 design calls
 - [Worktree inherits main checkout](worktree-inherits-main-checkout.md) — root global.json and Directory.*.props reach a worktree by parent lookup; Spikes need stoppers
