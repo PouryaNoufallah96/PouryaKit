@@ -11,7 +11,8 @@ namespace ModularMonolith.Tests.Stub;
 // Aggregates whose Snapshots test what the Kit refuses or keeps apart: a shelf, with a composite string key, a list of
 // labels changed in place and a complex size, whose mapper misbehaves when a label asks it to; a counter, whose key the
 // database generates; and a leaflet, keyed by Catalog's product IDs, so a Snapshot the Stub declares for every aggregate
-// keyed that way could reach Catalog's products too.
+// keyed that way could reach Catalog's products too. Two declarations only a test's own Host makes: one for every desk
+// item, which folders and trays both are, each mapped with keys of its own, and one of shelves made without a Module.
 
 internal sealed class Shelf : AggregateRoot<string>
 {
@@ -46,14 +47,21 @@ internal sealed record ShelfAnnouncedDomainEvent(string Aisle, string Bay) : Dom
 
 internal sealed record ShelfSnapshotV1(string Aisle, string Bay, int Labels, bool IsRemoved, long Version);
 
-internal sealed class ShelfSnapshotMapper : ISnapshotMapper<Shelf, ShelfSnapshotV1>
+internal sealed class ShelfSnapshotMapper(IDispatcher dispatcher) : ISnapshotMapper<Shelf, ShelfSnapshotV1>
 {
     public const string AddsALabel = "mapper adds a label";
     public const string Resizes = "mapper resizes";
     public const string Announces = "mapper announces";
+    public const string SendsAFailingCommand = "mapper sends a failing command";
 
     public ShelfSnapshotV1 Map(Shelf shelf)
     {
+        if (shelf.Labels.Contains(SendsAFailingCommand))
+        {
+            // A mapper is synchronous; this one waits for the command, then ignores its Result.
+            _ = dispatcher.SendAsync(new RefuseCommand(), CancellationToken.None).GetAwaiter().GetResult();
+        }
+
         if (shelf.Labels.Contains(AddsALabel))
         {
             shelf.AddLabel("added by its mapper");
@@ -193,4 +201,33 @@ internal sealed class RecordSnapshotIntegrationEventHandler<TSnapshot>(Integrati
         log.Add(new Received(snapshot, context, operation));
         return Task.FromResult(Result.Success());
     }
+}
+
+internal sealed record RefuseCommand : Command;
+
+internal sealed class RefuseCommandHandler : CommandHandler<RefuseCommand>
+{
+    public static readonly Error Refused = Error.Conflict("Stub.Refused", "The command was refused.");
+
+    public override Task<Result> Handle(RefuseCommand command, CancellationToken cancellationToken) => Task.FromResult<Result>(Refused);
+}
+
+internal interface IDeskItem : IAggregateRoot;
+
+internal sealed record DeskItemSnapshotV1(string Aggregate, long Version);
+
+internal sealed class DeskItemSnapshotMapper : ISnapshotMapper<IDeskItem, DeskItemSnapshotV1>
+{
+    public DeskItemSnapshotV1 Map(IDeskItem item) => new(item.GetType().Name, item.Version);
+
+    public DeskItemSnapshotV1 Tombstone(IDeskItem item) => new(item.GetType().Name, item.Version);
+}
+
+internal sealed record MislaidShelfSnapshotV1(string Aisle, string Bay, long Version);
+
+internal sealed class MislaidShelfSnapshotMapper : ISnapshotMapper<Shelf, MislaidShelfSnapshotV1>
+{
+    public MislaidShelfSnapshotV1 Map(Shelf shelf) => new(shelf.Aisle, shelf.Bay, shelf.Version);
+
+    public MislaidShelfSnapshotV1 Tombstone(Shelf shelf) => new(shelf.Aisle, shelf.Bay, shelf.Version);
 }

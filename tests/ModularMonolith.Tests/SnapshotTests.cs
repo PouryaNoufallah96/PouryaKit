@@ -8,6 +8,7 @@ using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Modularity;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -327,6 +328,50 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.counters"));
     }
 
+    [Fact(Timeout = 60_000)]
+    public async Task A_snapshot_mapper_that_ignores_a_failed_nested_command_fails_the_operation_with_its_errors()
+    {
+        var result = await Fixture.AssertNothingSentAsync(
+            () => StubAsync(new PutShelvesCommand([["A1", "B1", ShelfSnapshotMapper.SendsAFailingCommand]])),
+            TestContext.Current.CancellationToken
+        );
+
+        Assert.Equal(RefuseCommandHandler.Refused, Assert.Single(result.Errors));
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.shelves"));
+    }
+
+    [Fact]
+    public async Task A_snapshot_declared_for_two_separately_mapped_aggregates_fails_the_operation_that_would_publish_it()
+    {
+        var folder = Guid.CreateVersion7();
+
+        var thrown = await WithDeclarationAsync(
+            services => services.PublishSnapshot<IDeskItem, DeskItemSnapshotV1, DeskItemSnapshotMapper>("tests.desk-item.v1", typeof(StubModule)),
+            stub => stub.SendAsync(new CreateFolderCommand(folder), TestContext.Current.CancellationToken)
+        );
+
+        Assert.Equal(
+            $"The Snapshot {typeof(DeskItemSnapshotV1).FullName} is declared for {typeof(IDeskItem).FullName}, which the separately mapped aggregates {typeof(Folder).FullName}, {typeof(Tray).FullName} all are. Their keys are their own, so their Snapshots would share identities and versions, and a receiver would turn one aggregate's away for another's. Declare a Snapshot for each aggregate, or for a type of one mapped hierarchy.",
+            thrown.Message
+        );
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from stub.folders where id = '{folder}'"));
+    }
+
+    [Fact]
+    public async Task A_snapshot_declared_without_its_module_in_a_host_of_modules_fails_the_operation_that_would_publish_it()
+    {
+        var thrown = await WithDeclarationAsync(
+            services => services.PublishSnapshot<Stub.Shelf, MislaidShelfSnapshotV1, MislaidShelfSnapshotMapper>("tests.mislaid-shelf.v1"),
+            stub => stub.SendAsync(new PutShelvesCommand([["A1", "B1"]]), TestContext.Current.CancellationToken)
+        );
+
+        Assert.Equal(
+            $"The Snapshot {typeof(MislaidShelfSnapshotV1).FullName} of {typeof(Stub.Shelf).FullName} is declared without a Module, but Shelf changed in an Operation of StubModule. Declare it with PublishSnapshot(wireName, module) in that Module's Composition Root.",
+            thrown.Message
+        );
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.shelves"));
+    }
+
     [Fact]
     public async Task A_notification_handler_that_publishes_a_snapshot_by_hand_fails_its_delivery()
     {
@@ -358,6 +403,27 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
             $"{typeof(FolderSnapshotV1).FullName} is published as an Integration Event and as the Snapshot of {typeof(Folder).FullName} mapped by {typeof(FolderSnapshotMapper).FullName}; a contract is an Integration Event or the Snapshot of one aggregate, with one mapper.",
             thrown.Message
         );
+    }
+
+    // Runs one Stub Operation on a Host of the application that also makes the declaration, and returns what it threw.
+    private async Task<InvalidOperationException> WithDeclarationAsync(
+        Action<IServiceCollection> declare,
+        Func<IGatewayProcessor<StubModule>, Task<Result>> operation
+    )
+    {
+        await using var host = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs, builder => declare(builder.Services));
+        await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
+        try
+        {
+            return await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                operation(host.Services.GetRequiredService<IGatewayProcessor<StubModule>>())
+            );
+        }
+        finally
+        {
+            // Stopped, so a delivery it took is finished or handed back before the next test waits for the store.
+            await host.StopAsync(TestContext.Current.CancellationToken);
+        }
     }
 
     // Creates the product, renames it, then renames or removes it, each in an Operation of its own, and returns the
