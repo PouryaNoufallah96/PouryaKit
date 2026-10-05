@@ -1,6 +1,12 @@
 # Testing
 
-`PouryaKit.Testing`: PostgreSQL in a container, data reset between tests, Operations sent through a Gateway, delivery assertions. Namespace `PouryaKit.Testing`, on xUnit v3; the fixture needs Docker.
+`PouryaKit.Testing`: PostgreSQL in a container, data reset between tests, Operations sent through a Gateway, waiting for and asserting deliveries. Namespace `PouryaKit.Testing`, on xUnit v3; the fixture needs Docker.
+
+- [The fixture](#the-fixture)
+- [Each test](#each-test)
+- [The Operation Context in tests](#the-operation-context-in-tests)
+- [Time](#time)
+- [Deliveries](#deliveries)
 
 One fixture for the test assembly and a test against the hosted application, after the Proving Sample:
 
@@ -23,6 +29,7 @@ public sealed class AppFixture : HostFixture
         var builder = ModularMonolithHost.CreateBuilder(
             ["--environment", "Development", $"--ConnectionStrings:app={connectionString}"]
         );
+        builder.Services.UsePouryaKitTestDelivery();   // deliveries at test speed (below)
         builder.WebHost.UseTestServer();   // served in memory, for HTTP tests (web.md)
         builder
             .Services.AddAuthentication(TestAuthentication.SchemeName)
@@ -50,13 +57,13 @@ public sealed class UnitOfWorkTests(AppFixture app) : HostTest<AppFixture>(app)
 ## The fixture
 
 - Derive one `HostFixture` per test assembly and register it with `AssemblyFixture`. Its `CreateHost(connectionString)` builds the application's Host, not started, with that connection string for its Modules. Build it with the same builder and pipeline methods `Program` uses, so the tests run the real composition, with the container validated on build as `AddPouryaKitModules` does in every environment. A Host that serves HTTP is a `WebApplication`, which is an `IHost`; serve it in memory and give it a test authentication scheme, as above, to test it over HTTP ([web.md](web.md#testing-over-http)).
-- Before the first test, the fixture runs PostgreSQL in a container and hosts the application on it with every Module's migrations applied. After the last test it stops both.
+- Before the first test, the fixture runs PostgreSQL in a container, applies every Module's migrations to it, Receipt tables included, and then starts the application on it, so Wolverine finds every table when it starts. After the last test it stops both.
 - `CreateHost` may add test-only Modules beside the application's with a second `builder.AddPouryaKitModules(...)` call.
 - The test project references `PouryaKit.Testing` and the Host project, `Microsoft.AspNetCore.TestHost` for HTTP tests, and each Module grants it its internals: `<InternalsVisibleTo Include="ModularMonolith.Tests" />` in the Module's project.
 
 ## Each test
 
-- Derive each test class from `HostTest<TFixture>`. Before each test it deletes every row in every schema except the migrations history, so no test sees another's data. Tests that share a fixture run one at a time: `CollectionBehavior.CollectionPerAssembly`.
+- Derive each test class from `HostTest<TFixture>`. Before each test it waits until every delivery an earlier test caused has finished, then deletes every row in every schema except the migrations history, and every stored delivery, so no test sees another's data or deliveries. Tests that share a fixture run one at a time: `CollectionBehavior.CollectionPerAssembly`.
 - Send Operations with `Fixture.Gateway<TModule>()`, exactly as the application does, each in its own scope. Assert on the returned Result and its `Errors`; read rows back with your own SQL on `Fixture.ConnectionString`. `Fixture.Host` is the started Host.
 - Test an endpoint with HTTP requests through `Fixture.Host.GetTestClient()`, authenticated as the caller the test names; see [web.md](web.md#testing-over-http).
 
@@ -86,4 +93,33 @@ public async Task The_context_a_caller_passes_to_a_gateway_is_the_context_the_ha
 - For domain code the test runs directly, create a `TestClock` with `using` inside the test method; see [domain-primitives.md](domain-primitives.md).
 - For Operations sent through a Gateway, register a `FakeTimeProvider` as the Host's `TimeProvider` in `CreateHost` (`builder.Services.AddSingleton<TimeProvider>(time)`) and advance it from the tests.
 
-*Not yet available*: delivery assertions (#15).
+## Deliveries
+
+A test of a Notification Handler, after the Proving Sample, whose Catalog announces each new product:
+
+```csharp
+[Fact]
+public async Task A_new_product_is_announced_by_the_host_after_it_is_committed()
+{
+    var catalog = Fixture.Gateway<CatalogModule>();
+    var category = Guid.CreateVersion7();
+    var product = Guid.CreateVersion7();
+    await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
+
+    var (created, deliveries) = await Fixture.WaitForDeliveriesAsync(
+        () => catalog.SendAsync(new CreateProductCommand(product, category, "Lamp"), TestContext.Current.CancellationToken),
+        TestContext.Current.CancellationToken
+    );
+
+    Assert.True(created.IsSuccess);
+    Assert.Equal([new Delivery("catalog.product-created.announce-new-product", "catalog.product-created", false)], deliveries);
+}
+```
+
+- In `CreateHost`, call `builder.Services.UsePouryaKitTestDelivery()` after `UsePouryaKitWolverine`, which the application's builder method calls, as the fixture above does. Deliveries then run at test speed: Solo durability, so a stopped Host's deliveries are recovered at once; a failed delivery retried twice, 100 ms apart (`TestDeliveryServiceCollectionExtensions.RetryDelays`), so three attempts; and the message store polled every 100 ms (`PollingTime`).
+- `Fixture.WaitForDeliveriesAsync(operation, ct)` runs the Operation, typically a Gateway call, waits until every delivery it caused is handled or set aside as a dead letter, including deliveries those deliveries caused, and returns the Operation's outcome with one `Delivery(Subscription, WireName, DeadLettered)` per delivery, in no particular order. It fails with a `DeliveryAssertionException` when the Operation stored no delivery at all, so a test that waits never passes on nothing, and with a `TimeoutException` when deliveries are still pending after 30 seconds.
+- After it returns, assert the handler's effect: the rows it wrote, or what the Host's implementation of the port recorded.
+- `Fixture.AssertNothingSentAsync(operation, ct)` runs the Operation and fails unless it stored no delivery: what a rolled-back Operation leaves. A delivery is stored in the Operation's own commit, so there is nothing to wait for.
+- `Fixture.WaitUntilDeliveredAsync(ct)` waits until no stored delivery is pending, such as after a test made the store hand one out again.
+- Between tests, the reset waits for every pending delivery, then deletes every stored delivery, dead letters included. The message store's own tables, such as its node records, stay: they belong to the running Host.
+- A test that starts a second Host of the application, for example to prove that a Notification committed by a Host that died is delivered by the next, starts it with `HostFixture.StartHostAsync(host, ct)`, which applies the migrations first, and stops or disposes it before the test ends.
