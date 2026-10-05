@@ -7,8 +7,9 @@ namespace PouryaKit.ArchitectureTests;
 internal sealed record PackageLicence(string Id, string Version, string? Expression);
 
 /// <summary>
-/// What restore resolved for one Kit package, read from its <c>obj/project.assets.json</c>: the references its project
-/// declares, and the full closure, every package and project that arrives with it, directly or not.
+/// What restore resolved for one project, a Kit package or a project of the application, read from its
+/// <c>obj/project.assets.json</c>: the references its project declares, and the full closure, every package and project
+/// that arrives with it, directly or not, whether or not its compiled code uses them.
 /// </summary>
 internal sealed record RestoredPackage(
     string Name,
@@ -27,6 +28,13 @@ internal sealed record RestoredPackage(
             .Order(StringComparer.Ordinal)
             .Select(folder => Read(Path.GetFileName(folder), Path.Combine(folder, "obj", "project.assets.json"))),
     ];
+
+    /// <summary>The project <paramref name="projectFile"/> (a <c>.csproj</c> path) as restored.</summary>
+    public static RestoredPackage Of(string projectFile) =>
+        Read(
+            Path.GetFileNameWithoutExtension(projectFile),
+            Path.Combine(Path.GetDirectoryName(projectFile)!, "obj", "project.assets.json")
+        );
 
     private static RestoredPackage Read(string name, string assetsFile)
     {

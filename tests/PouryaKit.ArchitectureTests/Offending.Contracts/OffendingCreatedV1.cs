@@ -1,6 +1,5 @@
-using PouryaKit.Domain;
-
 namespace Offending.Contracts;
 
-// A published message that carries a Kit type, so the Contracts project references the Kit.
-public sealed record OffendingCreatedV1(Guid Id, ErrorKind Kind);
+// A plain record, as Contracts should be; the project still references the Kit, though no code uses it, so the
+// compiled assembly shows no trace of the reference.
+public sealed record OffendingCreatedV1(Guid Id);

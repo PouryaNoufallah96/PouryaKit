@@ -45,6 +45,7 @@ public sealed class DapperWriteTests
 
         Assert.Equal(
             [
+                "Offending.RenamingProductsCommandHandler writes the aggregate table catalog.products with SQL: \"update catalog\n.\tproducts set name = 'renamed again'\".",
                 "Offending.RenamingProductsCommandHandler writes the aggregate table catalog.products with SQL: \"update catalog.products set name = 'renamed'\".",
                 "Offending.RenamingProductsCommandHandler writes the aggregate table categories with SQL: \"delete from categories\".",
             ],
@@ -58,6 +59,8 @@ public sealed class DapperWriteTests
     [InlineData("merge into stock_items using x on true when matched then update set quantity = 1", "stock_items")]
     [InlineData("select id from catalog.products for update", null)]
     [InlineData("truncate table billing.price_lists", "billing.price_lists")]
+    [InlineData("update catalog.\nproducts set name = @Name", "catalog.products")]
+    [InlineData("delete from catalog\t. \"Products\" where id = @Id", "catalog.products")]
     public void Sql_writes_are_read_by_the_table_they_name(string sql, string? table)
     {
         Assert.Equal(table is null ? [] : [table], ModuleRules.TablesWrittenBy(sql));

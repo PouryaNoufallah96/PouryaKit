@@ -1,12 +1,13 @@
-using Catalog;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence;
+using PouryaKit.Persistence.EFCore;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
 
@@ -15,10 +16,10 @@ namespace Offending;
 // Each type breaks one structure rule, so the rule is seen to reject it. Every offence sits inside an async method or a
 // lambda, which the compiler moves into a type of its own, so a rule that reads only the declared methods misses it.
 
-// Knows Catalog's implementation, not only its Contracts.
+// Its project references Catalog's implementation, not only its Contracts, though no code here uses it.
 public sealed class OffendingModule : IModuleDefinition
 {
-    public void Configure(ModuleBuilder module) => module.AddSingleton(typeof(CatalogModule));
+    public void Configure(ModuleBuilder module) => module.AddScoped<SavingCommandHandler>();
 }
 
 internal sealed record OffendCommand : Command;
@@ -40,6 +41,50 @@ internal sealed class CommittingCommandHandler(IUnitOfWorkConnection unitOfWork)
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition("commit", cancellationToken: cancellationToken));
+        await connection.ExecuteAsync(new CommandDefinition("select 1;\n  END ;", cancellationToken: cancellationToken));
+        await connection.ExecuteAsync(new CommandDefinition("update offending_marks set seen = true; abort work", cancellationToken: cancellationToken));
+        return Result.Success();
+    }
+}
+
+// Writes rows at once, outside the changes the Unit of Work tracks and prepares.
+internal sealed class BulkWritingCommandHandler(OffendingDbContext dbContext) : CommandHandler<OffendCommand>
+{
+    public override async Task<Result> Handle(OffendCommand command, CancellationToken cancellationToken)
+    {
+        await dbContext.Set<OffendingRow>().ExecuteUpdateAsync(setters => setters.SetProperty(row => row.Name, "renamed"), cancellationToken);
+        Func<int> forget = () => dbContext.Set<OffendingRow>().ExecuteDelete();
+        return forget() > 0 ? Result.Success() : Result.Success();
+    }
+}
+
+internal sealed class OffendingRow
+{
+    public Guid Id { get; set; }
+
+    public string Name { get; set; } = "";
+}
+
+// Calls the steps only the Kit runs: the Outbox write, a Receipt, a Snapshot mapping, an Integration Event added to the
+// Outbox, the Domain Event drain, and a new Operation begun in its own scope.
+internal sealed class KitStepCallingCommandHandler(
+    IUnitOfWorkOutbox outbox,
+    IReceipts receipts,
+    ISnapshotMappers snapshots,
+    IIntegrationEventOutbox integrationEvents,
+    DomainEventDrain drain,
+    IServiceProvider services,
+    OffendingDbContext dbContext
+) : CommandHandler<OffendCommand>
+{
+    public override async Task<Result> Handle(OffendCommand command, CancellationToken cancellationToken)
+    {
+        await outbox.WriteAsync(dbContext, [command], [], cancellationToken);
+        await receipts.RecordAsync("offending", Guid.CreateVersion7(), cancellationToken);
+        _ = snapshots.Map(command, removed: false);
+        integrationEvents.Add(Guid.CreateVersion7(), command);
+        await drain.RunAsync(() => [], cancellationToken);
+        services.BeginOperation(new OperationContext(Actor.System("offending")));
         return Result.Success();
     }
 }
@@ -80,6 +125,9 @@ internal sealed class RenamingProductsCommandHandler(IUnitOfWorkConnection unitO
             new CommandDefinition("update catalog.products set name = 'renamed'", transaction: transaction, cancellationToken: cancellationToken)
         );
         await connection.ExecuteAsync(new CommandDefinition(ForgetCategories, transaction: transaction, cancellationToken: cancellationToken));
+        await connection.ExecuteAsync(
+            new CommandDefinition("update catalog\n.\tproducts set name = 'renamed again'", transaction: transaction, cancellationToken: cancellationToken)
+        );
         return Result.Success();
     }
 }
