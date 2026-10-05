@@ -19,6 +19,18 @@ public sealed class IntegrationEventWiringTests
             s => s.Publish<TwinV1>("tests.twin.v1").Publish<OtherTwinV1>("Tests.Twin.V1"),
             "have the wire name Tests.Twin.V1, ignoring case"
         ),
+        ["a Domain Event's wire name"] = (
+            s =>
+                s.AddPouryaKitNotificationHandlers(typeof(StubModule).Assembly)
+                    .Publish<TwinV1>("Modular-Monolith.Tests.Note-To-Share"),
+            "have the wire name Modular-Monolith.Tests.Note-To-Share, ignoring case"
+        ),
+        ["a Notification Handler's subscription name"] = (
+            s =>
+                s.AddPouryaKitNotificationHandlers(typeof(StubModule).Assembly)
+                    .Subscribe<TwinV1, TwinIntegrationEventHandler>("modular-monolith.tests.note-to-share.share-note"),
+            "have the subscription name modular-monolith.tests.note-to-share.share-note, ignoring case"
+        ),
         ["one type under two wire names"] = (
             s => s.Publish<TwinV1>("tests.twin.v1").Publish<TwinV1>("tests.twin.v2"),
             $"{typeof(TwinV1).FullName} is published as tests.twin.v1 by the application and as tests.twin.v2"

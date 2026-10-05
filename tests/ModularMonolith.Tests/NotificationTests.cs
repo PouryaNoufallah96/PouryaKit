@@ -32,7 +32,14 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
 
         Assert.True(created.IsSuccess);
-        Assert.Contains(new Delivery("catalog.product-created.announce-new-product", "catalog.product-created", false), deliveries);
+        Assert.Equal(
+            [
+                new Delivery("catalog.product-created.announce-new-product", "catalog.product-created", false),
+                new Delivery("catalog.product-created.publish-product-created", "catalog.product-created", false),
+                new Delivery("inventory.product-created", "catalog.product-created.v1", false),
+            ],
+            deliveries.OrderBy(delivery => delivery.Subscription, StringComparer.Ordinal)
+        );
         Assert.Single(Fixture.Logs.Entries, entry => entry.Message == $"New in the catalog: Lamp ({product})");
     }
 
