@@ -15,7 +15,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task Each_module_has_its_own_schema_and_migrations_history_with_snake_case_names()
     {
         var tables = await Fixture.RowsAsync(
-            "select table_schema, table_name from information_schema.tables where table_schema not in ('pg_catalog', 'information_schema') order by 1, 2"
+            "select table_schema, table_name from information_schema.tables where table_schema not in ('pg_catalog', 'information_schema', 'wolverine') order by 1, 2"
         );
         var history = await Fixture.RowsAsync(
             """select 'catalog', migration_id from catalog."__EFMigrationsHistory" union all select 'stub', migration_id from stub."__EFMigrationsHistory" order by 1, 2"""
@@ -28,6 +28,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
             [
                 ["catalog", "__EFMigrationsHistory"],
                 ["catalog", "categories"],
+                ["catalog", "pouryakit_receipts"],
                 ["catalog", "products"],
                 ["stub", "__EFMigrationsHistory"],
                 ["stub", "books"],
@@ -39,13 +40,25 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["stub", "pages"],
                 ["stub", "pencils"],
                 ["stub", "pins"],
+                ["stub", "pouryakit_receipts"],
                 ["stub", "stickers"],
                 ["stub", "trays"],
             ],
             tables
         );
         Assert.Equal(
-            ["catalog Initial", "catalog AddCategories", "catalog PersistencePreparation", "stub Initial", "stub NoteTallies", "stub Folders", "stub Stickers", "stub TraysAndCases"],
+            [
+                "catalog Initial",
+                "catalog AddCategories",
+                "catalog PersistencePreparation",
+                "catalog Receipts",
+                "stub Initial",
+                "stub NoteTallies",
+                "stub Folders",
+                "stub Stickers",
+                "stub TraysAndCases",
+                "stub Receipts",
+            ],
             history.Select(row => $"{row[0]} {((string)row[1]).Split('_', 2)[1]}")
         );
         // Typed IDs are stored as their Guid values with no ID configuration in the Product mapping.

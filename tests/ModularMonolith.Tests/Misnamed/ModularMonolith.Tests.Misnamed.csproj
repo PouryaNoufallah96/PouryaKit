@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Notification Handlers whose names must fail startup. They need an assembly apart from the Stub Module's, which
+       the fixture's Host scans and must start; ModularMonolith.Tests leaves this folder out of its own sources. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\PouryaKit.Messaging\PouryaKit.Messaging.csproj" />
+  </ItemGroup>
+</Project>

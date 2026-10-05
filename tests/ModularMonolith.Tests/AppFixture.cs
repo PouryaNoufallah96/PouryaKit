@@ -20,8 +20,9 @@ using PouryaKit.Web;
 namespace ModularMonolith.Tests;
 
 /// <summary>
-/// The Proving Sample's Host, with the test-only <see cref="StubModule"/> beside Catalog, served in memory and
-/// authenticating callers with <see cref="TestAuthentication"/>, whose tenant claim fills the tenant.
+/// The Proving Sample's Host, with the test-only <see cref="StubModule"/> beside Catalog, served in memory,
+/// authenticating callers with <see cref="TestAuthentication"/>, whose tenant claim fills the tenant, delivering at test
+/// speed, and committing through the <see cref="CommitProbe"/>.
 /// </summary>
 public sealed class AppFixture : HostFixture
 {
@@ -30,7 +31,8 @@ public sealed class AppFixture : HostFixture
 
     /// <summary>
     /// The application as the tests host it, in <paramref name="environment"/>, built but not started;
-    /// <paramref name="configure"/> may change its composition first. Starting it needs no database.
+    /// <paramref name="configure"/> may change its composition first. Starting it starts Wolverine on the database's
+    /// message store, so a test that starts it stops or disposes it before it ends.
     /// </summary>
     public static WebApplication ComposeHost(
         string environment,
@@ -43,6 +45,8 @@ public sealed class AppFixture : HostFixture
             ["--environment", environment, $"--ConnectionStrings:app={connectionString}"]
         );
         builder.AddPouryaKitModules(modules => modules.Add<StubModule>());
+        builder.Services.UsePouryaKitTestDelivery();
+        CommitProbe.Install(builder.Services);
         builder.WebHost.UseTestServer();
         builder
             .Services.AddAuthentication(TestAuthentication.SchemeName)

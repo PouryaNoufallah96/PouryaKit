@@ -6,16 +6,18 @@ namespace PouryaKit.Persistence.EFCore;
 
 // The Unit of Work over one DbContext, in the order ADR 0003 and ADR 0004 fixed: begin a transaction, run the command,
 // check its Result and the Operation, drain the Domain Events of every tracked aggregate, check the Operation again,
-// prepare persistence, save, commit; otherwise roll back. A save the database refuses for a concurrent change, or for
-// a unique constraint the Module mapped, rolls back and fails the Operation with an Error. Nothing retries: a retry
-// needs a new scope.
+// prepare persistence, write the handled Domain Events to the Outbox, save, commit, and only then send them; otherwise
+// roll back, which leaves nothing in the Outbox. A save the database refuses for a concurrent change, or for a unique
+// constraint the Module mapped, rolls back and fails the Operation with an Error. Nothing retries: a retry needs a
+// new scope.
 internal sealed class EfUnitOfWork(
     DbContext dbContext,
     Operation operation,
     DomainEventDrain domainEvents,
     Func<OperationContext> context,
     IUniqueConstraintReader? uniqueConstraints,
-    IEnumerable<UniqueConstraintError> uniqueConstraintErrors
+    IEnumerable<UniqueConstraintError> uniqueConstraintErrors,
+    IUnitOfWorkOutbox? outbox
 ) : IUnitOfWork
 {
     /// <summary>The DbContext the Operation's repositories track their changes in.</summary>
@@ -34,7 +36,7 @@ internal sealed class EfUnitOfWork(
         var result = await command(cancellationToken);
         if (result.IsSuccess && !operation.IsRollbackOnly)
         {
-            await domainEvents.RunAsync(
+            var handled = await domainEvents.RunAsync(
                 () => dbContext.ChangeTracker.Entries<IAggregateRoot>().Select(entry => entry.Entity),
                 cancellationToken
             );
@@ -43,6 +45,11 @@ internal sealed class EfUnitOfWork(
             if (!operation.IsRollbackOnly)
             {
                 PersistencePreparation.Run(dbContext, context);
+                if (outbox is not null)
+                {
+                    await outbox.WriteAsync(dbContext, handled, cancellationToken);
+                }
+
                 if (await SaveAsync(cancellationToken) is { } refused)
                 {
                     result = refused;
@@ -50,6 +57,11 @@ internal sealed class EfUnitOfWork(
                 else
                 {
                     await transaction.CommitAsync(cancellationToken);
+                    if (outbox is not null)
+                    {
+                        await outbox.FlushAsync();
+                    }
+
                     return result;
                 }
             }

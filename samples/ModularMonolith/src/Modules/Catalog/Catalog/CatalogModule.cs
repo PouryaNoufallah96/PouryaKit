@@ -6,6 +6,7 @@ using Catalog.Products.Errors;
 using Catalog.Products.Features.GetProduct;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
+using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.EFCore;
@@ -25,6 +26,7 @@ public sealed class CatalogModule : IModuleDefinition
         module.AddPouryaKitDapper(connectionName: "app", typeof(CatalogModule).Assembly);
         module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);
         module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
+        module.AddPouryaKitNotificationHandlers(typeof(CatalogModule).Assembly, typeof(CatalogModule));
         module.AddScoped<IProductRepository, ProductRepository>();
         module.AddScoped<ICatalogProducts, CatalogProducts>();
         module.AddPouryaKitEndpoints("/catalog", typeof(CatalogModule).Assembly);
