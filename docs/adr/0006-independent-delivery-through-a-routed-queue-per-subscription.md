@@ -8,23 +8,26 @@ Spike S2 (ticket #5) compared ways to retry and acknowledge each Notification Ha
 Handler on its own, against WolverineFx 6.46.0 and PostgreSQL.
 
 The Kit takes **Option C**. Each subscription gets one Wolverine route
-(`PublishMessage(type).ToLocalQueue(subscriptionName)`), so a published message becomes one durable envelope per
-subscription on that subscription's own queue. Each message type gets one pre-built Kit handler, registered with
+(`PublishMessage(type).ToLocalQueue(subscriptionName)`), so a published Notification or Integration Event becomes one
+durable envelope per subscription on that subscription's own queue. Each message type gets one pre-built Kit handler, registered with
 `WolverineOptions.AddMessageHandler`, which generates no code. The handler finds the subscription from the queue the
 envelope was delivered to, then runs the subscribed handler in a new scope.
 
-Of the options that meet the ticket's rule, Option C has the least owned code: 21 lines. It is also the only tested
-shape with no Kit envelope type and no generated code. It delivers to `internal` handlers, and it delivers an
-`internal` Domain Event to `internal` Notification Handlers. Options whose Wolverine handler is generated code cannot
-do the last of these. Nothing observed contradicts ADR 0001–0004 or section G.
+What decides it is visibility, not size. Option A (Wolverine's separated queues) is the smallest by the count below,
+25 lines against C's 27, but it needs `public` handlers, which ADR 0001's isolation by `internal` types rules out, and
+it cannot deliver an `internal` Domain Event. Of the options compared, only C and the pre-built variant of the delivery
+envelope (B) deliver an `internal` Domain Event to `internal` Notification Handlers, and C is far smaller (27 lines
+against 48). C is also the only tested shape with no Kit envelope type and no generated code. Nothing observed
+contradicts ADR 0001–0004 or section G.
 
 ## Evidence
 
-The Spike code is in `spikes/s2-independent-delivery/` at commit `a65f7deb0f18abe42c764257fe437a23b9673ed4`. It is not
-merged. An earlier round was committed at `d265b24`. The tests were run on 2026-10-05 with
-`dotnet test spikes/s2-independent-delivery` (.NET SDK 10.0.401, Microsoft Testing Platform, xunit.v3 4.0.1) against
-`postgres:18.6` in Testcontainers 4.15.0, with `track_commit_timestamp=on`. 39 of 39 tests passed. Each test gets a
-fresh database.
+The Spike code is in `spikes/s2-independent-delivery/` at commit `73acc25c25fe9dea957542985998fae078bde709`, reachable
+through tag `spike/s2-independent-delivery`. It is not merged. Earlier rounds were committed at `d265b24` and
+`a65f7de`; the option files and the shared stand-ins are unchanged since `a65f7de`. The tests were run on 2026-10-05
+with `dotnet test spikes/s2-independent-delivery` (.NET SDK 10.0.401, Microsoft Testing Platform, xunit.v3 4.0.1)
+against `postgres:18.6` in Testcontainers 4.15.0, with `track_commit_timestamp=on`. 43 of 43 tests passed. Each test
+gets a fresh database. ADR number 0005 is reserved for the clock decision; this record is 0006 on purpose.
 
 The Host is one container with these Modules:
 
@@ -78,6 +81,10 @@ These configurations were run:
 | Same, A without the single-subscription route (rejected) | `TopologyTests.Unpinned_separated_queues_dead_letter_a_pending_delivery_when_a_second_subscriber_is_added` | The lone handler's delivery goes to `local://catalog.product-created.v1/`. After Billing is added, that queue has no handler, and the delivery is dead-lettered with `NoHandlerForEndpointException`. |
 | B through `EndpointFor` (rejected) | `RestartTests.A_delivery_sent_with_EndpointFor_through_the_outbox_is_not_recovered_after_the_host_is_killed` | The row is stored as `Outgoing` with owner 0. After a kill and restart it stays `Outgoing` and Inventory does not run again within 15 s. |
 | C over a non-local transport | `ExternalTransportTests.Each_handler_is_retried_on_its_own_when_deliveries_arrive_over_tcp` | One receiving TCP endpoint per subscription (Wolverine's built-in transport, durable inbox and outbox), standing in for a broker queue per subscription. Retry is independent (Inventory 3 invocations, Billing 1). The inbox rows have `received_at` `tcp://localhost:<port>/` and the Contracts wire name in `message_type`. The handler finds the subscription by port, because the destination's host is `localhost` and not the subscription name. |
+| Every subscription to a type removed | `SubscriptionChangeTests.A_pending_delivery_whose_type_lost_every_subscription_is_discarded_by_default` (C) | Inventory, the only subscription, is left with a pending delivery at a graceful stop. The next Host has no subscription to `ProductCreatedV1`. Wolverine, with its default `UnknownMessageBehavior.LogOnly`, marks the row `Handled`: the handler never runs and nothing is dead-lettered. The committed delivery is silently discarded. |
+| Remedy: unknown types to the dead-letter queue | `SubscriptionChangeTests.A_pending_delivery_whose_type_lost_every_subscription_is_dead_lettered_when_unknown_messages_go_to_the_dead_letter_queue` (C) | The same with `UnknownMessageBehavior.DeadLetterQueue`: the row is dead-lettered at the old queue with `UnknownMessageTypeNameException` ("Unknown message type: 'catalog.product-created.v1'"), and never marked `Handled`. |
+| Subscription renamed | `SubscriptionChangeTests.A_pending_delivery_whose_subscription_was_renamed_is_dead_lettered` (C) | The next Host subscribes the same handler under a new name. The row on the old queue is recovered and handed to the routed handler, whose name lookup throws `KeyNotFoundException`. The retry ladder runs and the row is dead-lettered. The renamed subscription never receives it. |
+| Internal Domain Event across a graceful stop | `SubscriptionChangeTests.A_pending_internal_domain_event_is_delivered_by_the_next_host` (C) | Index's delivery of the internal `ProductCreated` is pending at a graceful stop. The next Host delivers it, and Announce, which had succeeded, does not run again. |
 | `InboxStaleTime` with an in-memory retry | `StaleRetryTests.An_in_memory_retry_longer_than_inbox_stale_time_runs_the_handler_again_after_it_succeeded` (C) | `RetryWithCooldown(10 s)` with `InboxStaleTime` 3 s and 1 s polls. Inventory fails, is handed out again and succeeds within 9 s, then runs a third time from the first hand-out's in-memory retry: `[FailedResult, Succeeded, Succeeded]`. |
 | Remedy: a persisted retry | `StaleRetryTests.A_persisted_retry_is_not_handed_out_again_by_inbox_stale_time` (C) | `ScheduleRetry(10 s)`. After the failure the row is `Scheduled` with owner 0 and attempts 1. Nothing runs during the next 6 s. Inventory then runs once more: `[FailedResult, Succeeded]`. |
 | Remedy: a short in-memory ladder | `StaleRetryTests.An_in_memory_retry_ladder_that_ends_before_inbox_stale_time_runs_the_handler_once_more` (C) | `RetryWithCooldown(1 s)` with a 3 s stale time gives `[FailedResult, Succeeded]` and nothing more within 6 s. |
@@ -108,6 +115,9 @@ the release source archive) explains these results:
   0004).
 - **Persisted retry.** `src/Persistence/Wolverine.RDBMS/MessageDatabase.Scheduled.cs:95-99`: `ScheduleRetry` writes
   the row back as `Scheduled`, owner 0, with its attempt count.
+- **Unknown message types.** `src/Wolverine/WolverineOptions.cs:66-78`: `UnknownMessageBehavior.LogOnly`, the default,
+  logs a received envelope with no known handler and discards it; `DeadLetterQueue` moves it to the receiving
+  endpoint's dead-letter queue.
 - **Other sources.** `src/Persistence/Wolverine.RDBMS/Durability/MoveReplayableErrorMessagesToIncomingOperation.cs`
   (replay). `src/Persistence/Wolverine.Postgresql/Schema/IncomingEnvelopeTable.cs:20-29` (primary key).
   `src/Wolverine/DurabilitySettings.cs:41-54` (`MessageIdentity`). `src/Wolverine/Util/WolverineMessageNaming.cs:142-152`
@@ -115,9 +125,11 @@ the release source archive) explains these results:
 
 ## Comparison
 
-**Counting rule.** An option's owned code is the lines of its own file that are neither blank nor `//` or `///`
-comments, in the configuration the option is judged on, with lines used only by a variant or a control removed. The
-stand-ins every option shares are excluded because they are identical for all of them:
+**Counting rule.** An option's owned code is the lines of its own file, exactly as it ran, that are neither blank nor
+`//` or `///` comments, after removing whole lines that only a control or a rejected variant uses (including a `using`
+and the braces of a block that only that variant has). No line is rewritten or merged; a line that the judged
+configuration runs stays, even if it also tests a variant flag. The stand-ins the options share are counted once,
+apart:
 
 | Shared stand-in | Lines |
 |---|---|
@@ -126,26 +138,30 @@ stand-ins every option shares are excluded because they are identical for all of
 | Wire names | 19 |
 | Unit of Work | 32 |
 
-Each option was judged on the code in its file at the Spike commit, with these lines removed:
+They are not used identically. In the registration file, the case-insensitive name map and `Named` serve C, B and A
+with key types, and `For` serves A, A with key types and B. Each of those is one line, so a figure below would move by
+a line or two if they were charged to the options.
 
-| Option | File | Removed before counting |
-|---|---|---|
-| A | `OptionA/SeparatedQueues.cs` | The Classic control ternary |
-| A with key types | `OptionA/SeparatedSlots.cs` | Nothing |
-| B | `OptionB/DeliveryEnvelope.cs` | The `EndpointFor` and pre-built branches |
-| B pre-built | `OptionB/DeliveryEnvelope.cs` | The `EndpointFor` branch and the generated handler |
-| C | `OptionC/RoutedQueues.cs` | The TCP branch |
+These lines were removed before counting, by line number in the file at the Spike commit:
+
+| Option | File | Removed | Owned lines |
+|---|---|---|---|
+| A | `OptionA/SeparatedQueues.cs` | 23 (the Classic control's arm of the ternary) | 25 |
+| A with key types | `OptionA/SeparatedSlots.cs` | none | 31 |
+| B | `OptionB/DeliveryEnvelope.cs` | 30-31 and 50 (`EndpointFor`); 3-4, 38, 56-60, 64-66 and 76-84 (pre-built) | 34 |
+| B pre-built | `OptionB/DeliveryEnvelope.cs` | 30-31 and 50 (`EndpointFor`); 39 and 69-73 (generated handler) | 48 |
+| C | `OptionC/RoutedQueues.cs` | 5, 23-24 and 28-34 (TCP) | 27 |
 
 | | C: routed queues | A: separated, handler type | A: separated, key types | B: envelope | B: envelope, pre-built |
 |---|---|---|---|---|---|
-| Owned lines | **21** | 24 | 31 | 34 | 48 |
+| Owned lines | 27 | 25 | 31 | 34 | 48 |
 | Independent retry and acknowledgment (Integration Event Handlers) | Yes | Yes, public handlers only | Not run (only delivery was tested) | Yes | Not run |
 | Internal Integration Event Handler | Delivered | Dead-lettered (CS0122) | Delivered | Delivered | Not run |
 | Internal Domain Event to internal Notification Handlers | Delivered, independent retry | Not run (its generated code names both internal types) | Dead-lettered (CS0122) | Dead-lettered (CS0122) | Delivered, independent retry |
 | Application handler written against Wolverine | No | No | No | No | No |
 | Generated code | None | One chain per subscription | One chain per subscription | One chain per message type | None |
 | Queues | One per subscription | One per subscription | One per subscription | One per message type | One per message type |
-| Envelope rows per published message | One per subscription | One per subscription | One per subscription | One per subscription | One per subscription |
+| Envelope rows per published Notification or Integration Event | One per subscription | One per subscription | One per subscription | One per subscription | One per subscription |
 | Subscription visible in | `received_at` | `received_at` | `received_at` | Body only | Body only |
 | `message_type` | Contracts wire name | Contracts wire name | Contracts wire name | `kit.delivery.<wire name>` | `kit.delivery.<wire name>` |
 | A single subscription, then a second | No special case | Needs an explicit route | Needs an explicit route | No special case | No special case |
@@ -153,6 +169,11 @@ Each option was judged on the code in its file at the Spike commit, with these l
 
 The Feature author writes the same thing under every option: the handler class and one `Subscribe` or
 `SubscribeNotification` call in the Composition Root. Option A alone also requires the class to be `public`.
+
+By the ticket's rule (independent retry and acknowledgment, no application-specific handler class written against
+Wolverine, least owned code), A is the smallest, but only with `public` handlers, which ADR 0001 rules out, and it
+cannot deliver an `internal` Domain Event. A with key types and B fail that last point too. Between the two options
+that pass every point, C (27) and B pre-built (48), C has the least owned code.
 
 ## The registration and handler code that worked
 
@@ -165,13 +186,15 @@ messaging.Publish<ProductCreated>("catalog.product-created");                   
 messaging.SubscribeNotification<ProductCreated, IndexProductOnProductCreated>("catalog.product-created.index");
 ```
 
-Option C, from `S2.Kit/OptionC/RoutedQueues.cs`, inside `UseWolverine`:
+Option C, abridged from `S2.Kit/OptionC/RoutedQueues.cs`, inside `UseWolverine`. The TCP branch and the `foreach`
+braces it needs are left out; the count above measures the file as it ran.
 
 ```csharp
 foreach (var s in messaging.Subscriptions) opts.PublishMessage(s.MessageType).ToLocalQueue(s.Name);
 foreach (var messageType in messaging.Subscriptions.Select(s => s.MessageType).Distinct())
     opts.AddMessageHandler(messageType, new RoutedHandler(messaging));
-// The Unit of Work publishes with outbox.PublishAsync(message); Wolverine writes one envelope per route.
+// The Unit of Work publishes each Notification or Integration Event with outbox.PublishAsync;
+// Wolverine writes one envelope per route.
 
 public sealed class RoutedHandler(KitMessaging messaging) : MessageHandler
 {
@@ -199,12 +222,12 @@ itself. In the TCP variant that is the port: `ports[destination.Port]`.
 ## Where the Receipt attaches
 
 The Receipt belongs inside `DeliverAsync`, around the handler call. `DeliverAsync` opens the receiving Module's scope
-and its Unit of Work transaction, inserts the Receipt keyed by **(subscription name, the message's identity)**, runs the
-handler, and commits the Receipt and the effect together. The message's identity is the Domain Event's id, which an
-Integration Event carries (G.2).
+and its Unit of Work transaction, inserts the Receipt keyed by **(subscription name, the Notification's or Integration
+Event's identity)**, runs the handler, and commits the Receipt and the effect together. That identity is the Domain
+Event's id, which an Integration Event carries (G.2).
 
 The key cannot be the Wolverine envelope id. That id differs per route, as `AcknowledgmentTests` shows with two distinct
-ids for one message. Under Option C the subscription name comes from the queue the envelope was delivered to.
+ids for one Integration Event. Under Option C the subscription name comes from the queue the envelope was delivered to.
 
 The Spike built no Receipts. The pre-built handler runs no Wolverine middleware, so Wolverine marks the envelope
 `Handled` after `HandleAsync` returns, separately from the effect. That follows from the construction and from ADR
@@ -225,6 +248,21 @@ The Spike declared both explicitly in Catalog's Composition Root. #15 has to cho
 convention such as `<module>.<event>` and `<module>.<event>.<handler>`. Startup must fail when a published Notification
 has no wire name or a subscribed handler has no subscription (spec story 71).
 
+A renamed subscription dead-letters its pending deliveries (`A_pending_delivery_whose_subscription_was_renamed_is_dead_lettered`).
+Names derived from CLR type names would therefore make a class rename a breaking change for deliveries in flight.
+
+## Requirements for #16: subscription names
+
+These follow from Option C, not from preference:
+
+- **Unique ignoring case.** Wolverine lower-cases local queue names, so two names that differ only in case would share
+  one queue. The Spike's registration already rejects them.
+- **Valid as a URI host.** C reads the subscription back from the queue URI's host. Names that are not valid hosts
+  were not tested; the Kit should reject them at startup.
+- **A Kit-named error for an unknown subscription.** Today the routed handler's lookup throws a bare
+  `KeyNotFoundException` for a queue that no subscription names (the rename test). It should throw a Kit exception that
+  names the queue and says the subscription is unknown.
+
 ## What this refines in ADR 0004
 
 - **How Notifications are distinguished.** ADR 0004's consequence says "distinguished by CLR type and local queue".
@@ -239,6 +277,9 @@ has no wire name or a subscribed handler has no subscription (spec story 71).
 - **`MessageIdentity`.** Routed fan-out gives each route its own envelope id, locally and over TCP. `IdAndDestination`
   changed only the primary key and nothing else that was observed. The case it exists for, one envelope id arriving on
   several endpoints, was not tested; see Consequences on brokers.
+- **What the TCP test does not show.** It runs sender and receiver in one process. It shows independent retry and the
+  endpoint-to-subscription mapping over a non-local transport. It does not show that the sender's envelopes are written
+  in the Unit of Work's commit; that was shown for local queues only (`AcknowledgmentTests`).
 - **`EndpointFor` through the outbox** writes a local row as `Outgoing`, owner 0, and recovery never picks it up.
 - **`InboxStaleTime` against in-memory retries.** With ADR 0004's remedy set, a delivery waiting in an in-memory
   `RetryWithCooldown` is an owned row like any other. Once its insert time is older than the stale time it is released
@@ -250,10 +291,16 @@ has no wire name or a subscribed handler has no subscription (spec story 71).
     plus handling must end before the stale time, not just each step. That is inferred from source; only a one-step
     ladder was tested.
 
-  Not tested: after a scheduled retry fires, the row is owned again with its old insert time. A run longer than one
-  recovery poll could then be handed out concurrently; that is inferred from the same SQL.
+  Not tested: a persisted retry that fires after `InboxStaleTime` keeps its old insert time, so once it is owned again
+  it is already past the stale time. A run longer than one recovery poll could then be handed out concurrently; that is
+  inferred from the same SQL.
 - **Attempt count.** With `RetryWithCooldown` the `attempts` column stayed 0 after a failure, after a kill and after a
   graceful stop, so in-memory retries start counting again after a crash. `ScheduleRetry` persisted 1.
+- **A removed subscription or type.** With Wolverine's default `UnknownMessageBehavior.LogOnly`, a stored delivery
+  whose type no longer has any subscription is marked `Handled` without running anything. With
+  `UnknownMessageBehavior.DeadLetterQueue` it is dead-lettered instead. A stored delivery whose subscription was
+  renamed fails the name lookup and is dead-lettered after the retry ladder. A subscription removed while its type
+  keeps others takes the same code path; that case was not tested separately.
 - **Lazy code generation.** Generated chains compile at first delivery, not at Host start. Option C generates none, but
   spec story 71 still needs the Kit's own startup check of every subscription.
 
@@ -265,10 +312,11 @@ has no wire name or a subscribed handler has no subscription (spec story 71).
 | No local send through `EndpointFor` inside the Unit of Work | Structure | #15 |
 | Every published Notification type has a wire name and every Notification Handler a subscription name, or startup fails | Gateway | #15 |
 | An `internal` Domain Event reaches `internal` Notification Handlers; Notification Handlers and Integration Event Handlers may be `internal` and reference no Wolverine type | Gateway and Structure | #15, #16 |
-| A failing handler never re-runs one that succeeded: across retries, across a kill and restart, and between two Notification Handlers of one Domain Event (Inventory and Billing in the Proving Sample) | Gateway | #16 |
+| A failing handler never re-runs one that succeeded: across retries and across a kill and restart, for two Integration Event Handlers in different Modules (Inventory and Billing in the Proving Sample), and for two Notification Handlers of one Domain Event in one Module | Gateway | #15, #16 |
 | A failed Result is retried and never acknowledged; each attempt runs in a new scope | Gateway | #16 |
 | Every subscription resolves to a handler at startup, or startup fails (story 71) | Gateway | #16 |
-| A redelivered or concurrently duplicated envelope applies its effect once, through the Receipt keyed by (subscription, message identity) | Gateway | #16 |
+| A redelivered or concurrently duplicated envelope applies its effect once, through the Receipt keyed by (subscription, the Notification's or Integration Event's identity) | Gateway | #16 |
+| A stored delivery whose subscription or type no longer exists is dead-lettered, never marked `Handled`: `UnknownMessageBehavior.DeadLetterQueue`, and a Kit-named error for an unknown subscription | Gateway | #16, #17 |
 | Exhausted retries move only that subscription's envelope to dead-letter storage, never marked `Handled`. A replay runs only that handler. The dead letter is found by `received_at` | Gateway | #17 |
 | With `InboxStaleTime` set, a delivery waiting to retry is not handed out again and does not run again after it succeeded. Use a persisted retry, or keep the whole retry ladder plus handling below the stale time | Gateway | #17 |
 
@@ -280,25 +328,27 @@ None of these reverses the decision.
    (`ScheduleRetry`). A persisted retry also keeps the attempt count across a crash. An in-memory ladder holds only while
    the whole ladder plus handling stays below the stale time. Which one should the Kit default to?
 2. **Naming Notifications (#15).** Should the wire name and the subscription name be explicit declarations or a
-   convention? See "Requirements for #15" above.
-3. **Subscription-name rules (#16).** Subscription names become local queue names: Wolverine lower-cases them, and C
-   reads them back from the queue URI's host. The Kit should reject names that differ only in case (the Spike's
-   registration does) and names that are not valid as a URI host (not tested).
+   convention? A rename dead-letters pending deliveries, so a convention derived from CLR type names makes a class
+   rename a breaking change. See "Requirements for #15" above.
+
+The subscription-name rules are no longer open: Option C forces them (see "Requirements for #16").
 
 The earlier question, whether a public handler or a code-generation build step is acceptable, is dissolved: Option C
 needs neither. The dead-letter triage question is dissolved too: the subscription is in `received_at`.
 
 ## Considered Options
 
-- **A, separated queues with the handler type in generated code.** Rejected. It cannot deliver to an internal handler
-  or an internal Domain Event, and a single subscription needs an explicit route.
+- **A, separated queues with the handler type in generated code.** Rejected, although it is the smallest (25 lines). It
+  cannot deliver to an internal handler or an internal Domain Event, so it needs `public` handlers, which ADR 0001 rules
+  out. A single subscription also needs an explicit route.
 - **A with key types.** Rejected. It cannot deliver an internal Domain Event, because the message type is still in
   generated code. It is 31 lines, it needs the single-subscription route, and Wolverine's logs name nested `Slot<…>`
   types.
-- **B, a Kit delivery envelope with a generated handler.** Rejected. It cannot deliver an internal Domain Event (R2 of
-  the review). It uses one queue per message type, so the subscription is visible only in the body.
+- **B, a Kit delivery envelope with a generated handler.** Rejected. It cannot deliver an internal Domain Event, because
+  its generated handler is closed over the payload type. It uses one queue per message type, so the subscription is
+  visible only in the body.
 - **B with a pre-built handler.** It works, but it is rejected: it is Option C's mechanism plus a Kit envelope type, at
-  48 lines.
+  48 lines against 27.
 - **B through `EndpointFor`, and A without the single-subscription route.** Rejected for the observed failures above.
 
 ## Consequences
@@ -310,21 +360,27 @@ needs neither. The dead-letter triage question is dissolved too: the subscriptio
 - The Kit relies on `AddMessageHandler`, which Wolverine labels "for advanced usages". No Wolverine middleware runs for
   these handlers. Wolverine's failure policies do run, as the tests show. The Gateway tests in the invariants table are
   what will catch a change in a later Wolverine version.
+- **One durable local queue per subscription.** That is a cost: the number of listening queues, with their polling and
+  recovery work, grows with the number of subscriptions rather than with the number of message types.
 - Subscription names are durable identifiers: they are queue names, they appear in `received_at` of stored envelopes,
-  and they are half of the Receipt key. Renaming one strands its pending envelopes on the old queue (inferred, not
-  tested).
+  and they are half of the Receipt key. Renaming one dead-letters its pending deliveries after the retry ladder; the
+  renamed subscription never receives them.
+- **A Kit Host sets `UnknownMessageBehavior.DeadLetterQueue`.** With Wolverine's default, removing every subscription to
+  a type silently discards its committed, pending deliveries.
 - **Brokers in Wave 2.**
   - The bare Notification or Integration Event is what is stored and sent, under its own wire name. The TCP test shows
     it arriving with the Contracts wire name in `message_type`.
   - A broker queue per subscription keeps this shape: one route per subscription, and the Kit maps the receiving
     endpoint to its subscription by that endpoint. The map is the only Kit-owned addition. It cannot be the URI host,
     which for TCP was `localhost`; a broker URI names the queue elsewhere.
-  - If instead the broker fans one envelope out to several queues (an exchange bound to several queues), the same
-    envelope id arrives on several endpoints. Wolverine's source then recommends `MessageIdentity.IdAndDestination`.
-    That case is untested.
+  - With separate Hosts the broker, not the sender's routing, does the fan-out (an exchange bound to one queue per
+    subscription). One envelope id arriving on several endpoints is then the expected case, not the exception, and
+    Wolverine's source recommends `MessageIdentity.IdAndDestination` for it. That case is untested.
 - The Kit's wire-name registry plugs into Wolverine as a process-global `IMessageTypeNaming`.
 - **Test run and `global.json`.** The worktree that ran the Spike has no `global.json`. `dotnet test` used the main
   checkout's root `global.json`, in a directory above it, which selects the Microsoft.Testing.Platform runner. The same
   root file exists on `feat/wave-1`. The test project carries `xunit.v3` only. A run without that `global.json` was not
   attempted.
 - **Packages.** The runtime package closure is the same as ADR 0004's, and its licence table applies.
+- **Seen by the reviewer, not repeated here.** Under Option C, a Notification Handler published an Integration Event
+  through a Unit of Work opened inside its delivery scope. The Spike has no test of this.
