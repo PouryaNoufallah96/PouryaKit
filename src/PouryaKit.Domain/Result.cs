@@ -26,15 +26,7 @@ public class Result
     /// when the value's static type is an interface, which C# never converts implicitly.
     /// </summary>
     public static Result<T> Success<T>(T value)
-        where T : notnull
-    {
-        if (value is null)
-        {
-            throw new ArgumentNullException(nameof(value), "Null is never a successful Result.");
-        }
-
-        return new(value);
-    }
+        where T : notnull => new(value);
 
     public static implicit operator Result(Error error) => new(OneError(error));
 
@@ -69,8 +61,17 @@ public sealed class Result<T> : Result
 {
     private readonly T? _value;
 
+    // Every success is built here, so this is the one place that keeps null out of a success.
     internal Result(T value)
-        : base([]) => _value = value;
+        : base([])
+    {
+        if (value is null)
+        {
+            throw new ArgumentNullException(nameof(value), "Null is never a successful Result.");
+        }
+
+        _value = value;
+    }
 
     private Result(ImmutableArray<Error> errors)
         : base(errors) { }

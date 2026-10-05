@@ -42,6 +42,14 @@ public class TypedIdTests
     }
 
     [Fact]
+    public void A_numeric_id_follows_the_options_number_handling_like_its_raw_value()
+    {
+        var web = new JsonSerializerOptions(JsonSerializerDefaults.Web) { Converters = { new TypedIdJsonConverterFactory() } };
+
+        Assert.Equal(new InvoiceNumber(42), JsonSerializer.Deserialize<InvoiceNumber>("\"42\"", web));
+    }
+
+    [Fact]
     public void Ids_round_trip_through_json_as_dictionary_keys()
     {
         var stock = new Dictionary<ProductId, int> { [TypedId.New<ProductId>()] = 3, [TypedId.New<ProductId>()] = 5 };
