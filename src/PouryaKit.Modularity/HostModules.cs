@@ -42,18 +42,42 @@ internal sealed class HostModules
     }
 
     // A Composition Root registers its handlers on its ModuleBuilder, which reports each one here: the command or query
-    // a handler serves belongs to that Module.
+    // a handler serves belongs to that Module alone. The container resolves the last handler registered, so a second
+    // Module registering or removing it would run its handler in the owner's Unit of Work, or the owner's in its own.
     public void Record(Type module, ServiceDescriptor descriptor)
     {
-        if (
-            !descriptor.IsKeyedService
-            && descriptor.ServiceType is { IsConstructedGenericType: true } service
-            && HandlerDefinitions.Contains(service.GetGenericTypeDefinition())
-        )
+        if (OperationOf(descriptor) is { } operation)
         {
-            _ownerByOperation.TryAdd(service.GenericTypeArguments[0], module);
+            EnsureNotOwnedByAnother(module, operation, "registers a handler for");
+            _ownerByOperation[operation] = module;
         }
     }
+
+    public void Release(Type module, ServiceDescriptor descriptor)
+    {
+        if (OperationOf(descriptor) is { } operation)
+        {
+            EnsureNotOwnedByAnother(module, operation, "removes the handler of");
+            _ownerByOperation.Remove(operation);
+        }
+    }
+
+    private void EnsureNotOwnedByAnother(Type module, Type operation, string action)
+    {
+        if (_ownerByOperation.TryGetValue(operation, out var owner) && owner != module)
+        {
+            throw new InvalidOperationException(
+                $"{module.Name} {action} {operation.FullName}, which belongs to {owner.Name}. A command or query belongs to one Module; another Module asks it through its Contracts."
+            );
+        }
+    }
+
+    private static Type? OperationOf(ServiceDescriptor descriptor) =>
+        !descriptor.IsKeyedService
+        && descriptor.ServiceType is { IsConstructedGenericType: true } service
+        && HandlerDefinitions.Contains(service.GetGenericTypeDefinition())
+            ? service.GenericTypeArguments[0]
+            : null;
 
     public void EnsureOwns(Type module, Type operation)
     {

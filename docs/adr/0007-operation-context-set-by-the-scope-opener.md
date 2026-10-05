@@ -11,7 +11,9 @@ Operation's scope begins it once with `IServiceProvider.BeginOperation(context, 
 A Module's Gateway takes the context as a required argument and runs the Operation with exactly that context. A context belongs to one
 Operation: its `OperationId` is a new `Guid.CreateVersion7()` when it is created, and its correlation is that
 `OperationId` unless the caller gives one. Work an Operation causes runs with `Continue()`: the same Actor, tenant and
-correlation, with the causing Operation's `OperationId` as its causation and a new `OperationId` of its own. The
+correlation, with the causing Operation's `OperationId` as its causation and a new `OperationId` of its own. A
+continuation is trusted (G.6): the Kit adds no authorization of its own for it, while an `IAuthorizer<T>` registered for
+the continued operation still runs, with the original Actor, and can recognise a continuation by its `CausationId`. The
 owner delegated this decision to ticket #13 on 2026-10-05.
 
 The Module an Operation runs in is a fact of its scope, not of the context: work an Operation causes may run in another

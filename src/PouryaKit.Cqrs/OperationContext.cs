@@ -38,7 +38,9 @@ public sealed record OperationContext
 
     /// <summary>
     /// The context of a new Operation this one causes: the same Actor, tenant and correlation, caused by this Operation.
-    /// It is a trusted continuation and is not authorized again (G.6).
+    /// It is a trusted continuation (G.6): the Kit adds no authorization of its own for it. An authorizer registered for
+    /// the continued operation still runs, with the original Actor, and can recognise a continuation by its
+    /// <see cref="CausationId"/>.
     /// </summary>
     public OperationContext Continue() => new(Actor, Tenant, CorrelationId, OperationId);
 }

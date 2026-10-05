@@ -9,7 +9,8 @@ namespace PouryaKit.Modularity;
 /// registration (<c>AddPouryaKitCqrs</c>, <c>AddPouryaKitValidation</c>, <c>UsePostgres</c>) is called on it. The
 /// Unit of Work registered here belongs to this Module alone: an Operation reaches it only through the Module's
 /// Gateway, and the commands and queries whose handlers are registered here belong to this Module: its Gateway is the
-/// only one that runs them.
+/// only one that runs them, and another Module that registers or removes one of their handlers fails while the Host is
+/// composed.
 /// </summary>
 public sealed class ModuleBuilder : IServiceCollection
 {
@@ -31,14 +32,26 @@ public sealed class ModuleBuilder : IServiceCollection
     public ServiceDescriptor this[int index]
     {
         get => _services[index];
-        set => _services[index] = Own(value);
+        set
+        {
+            _modules.Release(_module, _services[index]);
+            _services[index] = Own(value);
+        }
     }
 
     public void Add(ServiceDescriptor item) => _services.Add(Own(item));
 
     public void Insert(int index, ServiceDescriptor item) => _services.Insert(index, Own(item));
 
-    public void Clear() => _services.Clear();
+    public void Clear()
+    {
+        foreach (var descriptor in _services)
+        {
+            _modules.Release(_module, descriptor);
+        }
+
+        _services.Clear();
+    }
 
     public bool Contains(ServiceDescriptor item) => _services.Contains(item);
 
@@ -48,9 +61,21 @@ public sealed class ModuleBuilder : IServiceCollection
 
     public int IndexOf(ServiceDescriptor item) => _services.IndexOf(item);
 
-    public bool Remove(ServiceDescriptor item) => _services.Remove(item);
+    public bool Remove(ServiceDescriptor item)
+    {
+        if (_services.Contains(item))
+        {
+            _modules.Release(_module, item);
+        }
 
-    public void RemoveAt(int index) => _services.RemoveAt(index);
+        return _services.Remove(item);
+    }
+
+    public void RemoveAt(int index)
+    {
+        _modules.Release(_module, _services[index]);
+        _services.RemoveAt(index);
+    }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
