@@ -12,7 +12,7 @@ namespace PouryaKit.Persistence.EFCore;
 /// members on the inherited ones and on <see cref="ListAsync{TResult}"/>, which return loaded results. It gets no query
 /// and no DbContext from this class. <see cref="AddAsync"/> and <see cref="Remove"/> throw an
 /// <see cref="InvalidOperationException"/> where <see cref="Operation.MayChangeState"/> is false: in a query, an
-/// authorizer or a validator.
+/// authorizer, a validator or a step of the Unit of Work that only reads.
 /// </summary>
 public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository<TAggregate, TId>
     where TAggregate : AggregateRoot<TId>
@@ -82,7 +82,7 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
         if (!_operation.MayChangeState)
         {
             throw new InvalidOperationException(
-                "A query, an authorizer or a validator asked to write through the Unit of Work. They only read; add or remove an aggregate from a command's handler or a Domain Event Handler."
+                "Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write through the Unit of Work. Write from a command's handler or a Domain Event Handler."
             );
         }
     }

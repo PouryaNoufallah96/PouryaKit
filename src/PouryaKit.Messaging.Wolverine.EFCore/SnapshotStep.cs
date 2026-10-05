@@ -10,7 +10,8 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 // contract declared for it, a Tombstone when the Operation removed it, kept marked deleted or deleted outright, each
 // with the aggregate's key and the version being committed. Built from the prepared state, which nothing may change
 // afterwards (ADR 0003), so the mappers' run is checked against it: anything they changed, or a Domain Event they
-// raised, fails the Operation.
+// raised, fails the Operation, except a change inside an EF Core complex collection, which is not seen. One declaration
+// covers the aggregates of one mapped hierarchy only, whose keys its identities and versions can tell apart.
 internal static class SnapshotStep
 {
     public static List<(object Snapshot, string AggregateId, long Version)> Build(
@@ -24,6 +25,15 @@ internal static class SnapshotStep
         {
             return [];
         }
+
+        mappers.CheckKeySpaces(
+            [
+                .. dbContext
+                    .Model.GetEntityTypes()
+                    .Where(type => type.BaseType is null && !type.IsOwned() && type.ClrType.IsAssignableTo(typeof(IAggregateRoot)))
+                    .Select(type => type.ClrType),
+            ]
+        );
 
         var prepared = PreparedState.Of(dbContext);
         List<(object, string, long)> built = [];

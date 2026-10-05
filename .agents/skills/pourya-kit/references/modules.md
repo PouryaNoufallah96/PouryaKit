@@ -25,6 +25,7 @@ public sealed class CatalogModule : IModuleDefinition
         module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
         module.AddPouryaKitNotificationHandlers(typeof(CatalogModule).Assembly, typeof(CatalogModule));   // see messaging.md
         module.Publish<ProductCreatedV1>("catalog.product-created.v1", typeof(CatalogModule));   // for other Modules; see messaging.md
+        module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1", typeof(CatalogModule));   // likewise
         module.AddScoped<IProductRepository, ProductRepository>();   // see persistence.md, The repository
         module.AddScoped<ICatalogProducts, CatalogProducts>();       // see Asking another Module a question
         module.AddPouryaKitEndpoints("/catalog", typeof(CatalogModule).Assembly);   // see web.md
@@ -47,7 +48,7 @@ public static WebApplicationBuilder CreateBuilder(string[] args)
 ## The Composition Root
 
 - Implement `IModuleDefinition` once per Module, as a public sealed class with a parameterless constructor. Everything else in the Module stays `internal`.
-- `Configure(ModuleBuilder module)` declares everything the Module needs and offers: its data (`UsePostgres`, `MapUniqueConstraint`, `AddPouryaKitDapper`), its Features (`AddPouryaKitCqrs`, `AddPouryaKitValidation`), its Notification Handlers (`AddPouryaKitNotificationHandlers`), the Integration Events it publishes and the Integration Event Handlers it subscribes (`Publish`, `Subscribe`), its endpoints (`AddPouryaKitEndpoints`) and its own services. `ModuleBuilder` is an `IServiceCollection` over the Host's one container, so every registration extension works on it.
+- `Configure(ModuleBuilder module)` declares everything the Module needs and offers: its data (`UsePostgres`, `MapUniqueConstraint`, `AddPouryaKitDapper`), its Features (`AddPouryaKitCqrs`, `AddPouryaKitValidation`), its Notification Handlers (`AddPouryaKitNotificationHandlers`), the Integration Events and Snapshots it publishes and the Integration Event Handlers it subscribes (`Publish`, `PublishSnapshot`, `Subscribe`), its endpoints (`AddPouryaKitEndpoints`) and its own services. `ModuleBuilder` is an `IServiceCollection` over the Host's one container, so every registration extension works on it.
 - The Unit of Work registered on a Module's builder becomes that Module's own; every other registration goes into the Host's container as it is.
 - The Host adds each Module once: `builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>().Add<InventoryModule>().Add<BillingModule>())`. That runs each Composition Root and registers the Module's Gateway.
 
@@ -123,7 +124,7 @@ Setting it:
 
 ## Asking another Module a question
 
-Modules talk in the ways G.5 lists. Inside a Module, Domain Events. Across Modules, an Integration Event by default: when a Module reacts to something that happened in another, or keeps its own copy of another's data. The owning Module publishes it from a Notification Handler after its change commits, and the receiving Module applies it in an Operation of its own, as Inventory opens a stock item and Billing a price list for each product Catalog creates ([messaging.md](messaging.md#integration-events-between-modules)). A synchronous question only when the asking Operation genuinely needs the answer before it can go on, such as a permission, membership or availability check. Never HTTP or gRPC between Modules of one Host.
+Modules talk in the ways G.5 lists. Inside a Module, Domain Events. Across Modules, asynchronously by default: an Integration Event when a Module reacts to something that happened in another, and a Snapshot when it keeps its own copy of another's data. The owning Module's Notification Handler publishes an Integration Event after its change commits, and its Unit of Work stores a Snapshot in the commit of the change; the receiving Module applies either in an Operation of its own, as Inventory opens a stock item and Billing a price list for each product Catalog creates ([messaging.md](messaging.md#integration-events-between-modules)), and Inventory keeps its copy of Catalog's products ([messaging.md](messaging.md#snapshots-between-modules)). A synchronous question only when the asking Operation genuinely needs the answer before it can go on, such as a permission, membership or availability check. Never HTTP or gRPC between Modules of one Host.
 
 The owning Module publishes the question as an interface in its Contracts project and serves it through its own Gateway. From the Proving Sample, where Catalog answers product questions:
 

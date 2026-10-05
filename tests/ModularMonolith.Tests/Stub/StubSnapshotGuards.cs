@@ -1,3 +1,4 @@
+using Dapper;
 using Catalog.Products.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -11,7 +12,8 @@ namespace ModularMonolith.Tests.Stub;
 // Aggregates whose Snapshots test what the Kit refuses or keeps apart: a shelf, with a composite string key, a list of
 // labels changed in place and a complex size, whose mapper misbehaves when a label asks it to; a counter, whose key the
 // database generates; and a leaflet, keyed by Catalog's product IDs, so a Snapshot the Stub declares for every aggregate
-// keyed that way could reach Catalog's products too.
+// keyed that way could reach Catalog's products too. Two declarations only a test's own Host makes: one for every desk
+// item, which folders and trays both are, each mapped with keys of its own, and one of shelves made without a Module.
 
 internal sealed class Shelf : AggregateRoot<string>
 {
@@ -46,14 +48,50 @@ internal sealed record ShelfAnnouncedDomainEvent(string Aisle, string Bay) : Dom
 
 internal sealed record ShelfSnapshotV1(string Aisle, string Bay, int Labels, bool IsRemoved, long Version);
 
-internal sealed class ShelfSnapshotMapper : ISnapshotMapper<Shelf, ShelfSnapshotV1>
+internal sealed class ShelfSnapshotMapper(
+    IDispatcher dispatcher,
+    IRepository<Shelf, string> shelves,
+    IUnitOfWorkConnection unitOfWork
+) : ISnapshotMapper<Shelf, ShelfSnapshotV1>
 {
     public const string AddsALabel = "mapper adds a label";
     public const string Resizes = "mapper resizes";
     public const string Announces = "mapper announces";
+    public const string SendsACommand = "mapper sends a command";
+    public const string SwallowsItsRefusedCommand = "mapper swallows its refused command";
+    public const string AddsAShelf = "mapper adds a shelf";
+    public const string JoinsTheConnection = "mapper joins the connection";
 
+    // A mapper is synchronous, so these wait for what they start.
     public ShelfSnapshotV1 Map(Shelf shelf)
     {
+        if (shelf.Labels.Contains(SendsACommand))
+        {
+            _ = dispatcher.SendAsync(new MarkShelfCommand(shelf.Aisle), CancellationToken.None).GetAwaiter().GetResult();
+        }
+
+        if (shelf.Labels.Contains(SwallowsItsRefusedCommand))
+        {
+            try
+            {
+                _ = dispatcher.SendAsync(new MarkShelfCommand(shelf.Aisle), CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (InvalidOperationException)
+            {
+                // Ignored, as a careless mapper would.
+            }
+        }
+
+        if (shelf.Labels.Contains(AddsAShelf))
+        {
+            shelves.AddAsync(Shelf.Put(shelf.Aisle, "added by its mapper"), CancellationToken.None).GetAwaiter().GetResult();
+        }
+
+        if (shelf.Labels.Contains(JoinsTheConnection))
+        {
+            _ = unitOfWork.Join();
+        }
+
         if (shelf.Labels.Contains(AddsALabel))
         {
             shelf.AddLabel("added by its mapper");
@@ -193,4 +231,44 @@ internal sealed class RecordSnapshotIntegrationEventHandler<TSnapshot>(Integrati
         log.Add(new Received(snapshot, context, operation));
         return Task.FromResult(Result.Success());
     }
+}
+
+internal sealed record MarkShelfCommand(string Aisle) : Command;
+
+// Would succeed: it writes a row with plain SQL in the Operation's transaction, which no mapper guard could see.
+internal sealed class MarkShelfCommandHandler(IUnitOfWorkConnection unitOfWork) : CommandHandler<MarkShelfCommand>
+{
+    public override async Task<Result> Handle(MarkShelfCommand command, CancellationToken cancellationToken)
+    {
+        var (connection, transaction) = unitOfWork.Join();
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                "insert into stub.note_tallies (text, count) values (@Aisle, 1)",
+                command,
+                transaction,
+                cancellationToken: cancellationToken
+            )
+        );
+        return Result.Success();
+    }
+}
+
+internal interface IDeskItem : IAggregateRoot;
+
+internal sealed record DeskItemSnapshotV1(string Aggregate, long Version);
+
+internal sealed class DeskItemSnapshotMapper : ISnapshotMapper<IDeskItem, DeskItemSnapshotV1>
+{
+    public DeskItemSnapshotV1 Map(IDeskItem item) => new(item.GetType().Name, item.Version);
+
+    public DeskItemSnapshotV1 Tombstone(IDeskItem item) => new(item.GetType().Name, item.Version);
+}
+
+internal sealed record MislaidShelfSnapshotV1(string Aisle, string Bay, long Version);
+
+internal sealed class MislaidShelfSnapshotMapper : ISnapshotMapper<Shelf, MislaidShelfSnapshotV1>
+{
+    public MislaidShelfSnapshotV1 Map(Shelf shelf) => new(shelf.Aisle, shelf.Bay, shelf.Version);
+
+    public MislaidShelfSnapshotV1 Tombstone(Shelf shelf) => new(shelf.Aisle, shelf.Bay, shelf.Version);
 }

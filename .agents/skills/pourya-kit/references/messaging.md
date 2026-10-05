@@ -1,8 +1,6 @@
 # Messaging
 
-`PouryaKit.Messaging`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Messaging.Wolverine.EFCore`: Notification Handlers that run after the commit, and the Integration Events they publish for other Modules, each delivery durable, retried and recorded on its own, on Wolverine with its message store in PostgreSQL. Feature code uses `PouryaKit.Messaging` only. The Composition Root uses `PouryaKit.Messaging.Wolverine`; the Host and the Receipt migration use `PouryaKit.Messaging.Wolverine.EFCore`, which brings the other two, so a Module that declares Notification Handlers or subscribes Integration Event Handlers references it. A Contracts project references nothing from the Kit.
-
-*Not yet documented here*: Snapshots and Tombstones (#18).
+`PouryaKit.Messaging`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Messaging.Wolverine.EFCore`: Notification Handlers that run after the commit, the Integration Events they publish for other Modules, and the Snapshots of a Module's aggregates that the Unit of Work publishes for other Modules, each delivery durable, retried and recorded on its own, on Wolverine with its message store in PostgreSQL. Feature code uses `PouryaKit.Messaging` only. The Composition Root uses `PouryaKit.Messaging.Wolverine`; the Host and the Receipt and Snapshot version migrations use `PouryaKit.Messaging.Wolverine.EFCore`, which brings the other two, so a Module that declares Notification Handlers, publishes Snapshots or subscribes Integration Event Handlers references it. A Contracts project references nothing from the Kit.
 
 - [Notification Handler or Domain Event Handler](#notification-handler-or-domain-event-handler)
 - [Writing a Notification Handler](#writing-a-notification-handler)
@@ -12,6 +10,13 @@
 - [Declaring what a Module publishes and subscribes](#declaring-what-a-module-publishes-and-subscribes)
 - [Publishing from a Notification Handler](#publishing-from-a-notification-handler)
 - [Writing an Integration Event Handler](#writing-an-integration-event-handler)
+- [Snapshots between Modules](#snapshots-between-modules)
+- [The Snapshot](#the-snapshot)
+- [Writing a Snapshot mapper](#writing-a-snapshot-mapper)
+- [Declaring a Snapshot](#declaring-a-snapshot)
+- [Keeping a copy](#keeping-a-copy)
+- [What the Kit guarantees for a Snapshot](#what-the-kit-guarantees-for-a-snapshot)
+- [The rules of a mapper and a key](#the-rules-of-a-mapper-and-a-key)
 - [What the Kit guarantees](#what-the-kit-guarantees)
 - [Receipts](#receipts)
 - [Names](#names)
@@ -107,7 +112,7 @@ public sealed partial class LoggedNewProductAnnouncer(ILogger<LoggedNewProductAn
 
 ## Integration Events between Modules
 
-Across Modules, a Module tells the others what happened with an Integration Event (G.5): use one when another Module reacts to something that happened in this one, or keeps its own copy of this one's data. The receiving Module applies it later, in an Operation of its own, and the publishing Operation never waits for it. A synchronous question through the owning Module's Contracts ([modules.md](modules.md#asking-another-module-a-question)) is the exception, for an Operation that cannot go on without the answer.
+Across Modules, a Module tells the others what happened with an Integration Event (G.5): use one when another Module reacts to something that happened in this one. When another Module keeps its own copy of this one's data, publish a Snapshot instead ([Snapshots between Modules](#snapshots-between-modules)). The receiving Module applies it later, in an Operation of its own, and the publishing Operation never waits for it. A synchronous question through the owning Module's Contracts ([modules.md](modules.md#asking-another-module-a-question)) is the exception, for an Operation that cannot go on without the answer.
 
 In the Proving Sample, Catalog tells Inventory and Billing about each new product: Inventory opens a stock item for it, and Billing a price list:
 
@@ -137,6 +142,7 @@ The receiving Module's Composition Root, from the Proving Sample:
 
 ```csharp
 using Catalog.Contracts.Products.Events.V1;
+using Inventory.CatalogProducts.Features.CopyProduct;
 using Inventory.Infrastructure.Data.Context;
 using Inventory.StockItems.Features.OpenStockItem;
 using PouryaKit.Cqrs;
@@ -155,11 +161,17 @@ public sealed class InventoryModule : IModuleDefinition
             "inventory.product-created",
             typeof(InventoryModule)
         );
+        // Catalog's Snapshot of each product, for Inventory's copy (Snapshots between Modules, below).
+        module.Subscribe<ProductSnapshotV1, CopyProductIntegrationEventHandler>(
+            "inventory.catalog-products",
+            typeof(InventoryModule)
+        );
     }
 }
 
 // In Catalog's Composition Root, the publishing side (modules.md):
 //     module.Publish<ProductCreatedV1>("catalog.product-created.v1", typeof(CatalogModule));
+//     module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1", typeof(CatalogModule));
 // In Billing's Composition Root, a second subscription to the same Integration Event, under its own name:
 //     module.Subscribe<ProductCreatedV1, OpenPriceListIntegrationEventHandler>("billing.product-created", typeof(BillingModule));
 ```
@@ -201,8 +213,9 @@ internal sealed class PublishProductCreatedNotificationHandler(IIntegrationEvent
   - outside a Notification Handler's delivery, such as in a command handler or in an Integration Event Handler;
   - with an identity other than the `Id` of the Domain Event being delivered;
   - with a type the running Module did not declare with `Publish`, another Module's Integration Event included;
+  - with a type declared as a Snapshot: the Unit of Work publishes it, and nothing publishes one by hand ([Snapshots between Modules](#snapshots-between-modules));
   - a second time with the same type in one Notification Handler's delivery, because both would carry one identity and every receiver would apply only the first;
-  - where the Operation may not change state: in a query, an authorizer or a validator, even one the Notification Handler runs.
+  - where the Operation may not change state: in code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, even one the Notification Handler runs.
 
   In a Notification Handler, the exception fails the delivery, which is retried and then set aside as a dead letter.
 - One Domain Event yields at most one Integration Event of each type, from one Notification Handler. When two Notification Handlers of one Domain Event publish the same type, the second delivery to commit fails, and keeps failing until it is set aside as a dead letter: the Outbox records each publication in the publishing Module's Receipt table, keyed by the wire name and the Domain Event's `Id`.
@@ -236,6 +249,153 @@ internal sealed class OpenStockItemIntegrationEventHandler(IRepository<StockItem
 - Hold only the business effect, through the Module's repositories, and return a Result. A failed Result is a failure like an exception: the delivery is retried ([Retries](#retries)), then set aside as a dead letter of its subscription ([Dead letters](#dead-letters)), and nothing the attempt changed commits, its Receipt included.
 - Inject what a command handler may: the `OperationContext`, the Module's repositories, `IDispatcher`. Read when the fact happened from the Integration Event, as `StockItem.Open` takes `OccurredOn`; the Operation's own clock gives the time of the delivery.
 - Never save, commit, begin a transaction, record a Receipt, acknowledge or reference a Wolverine type, and never publish: an Integration Event is published only from a Notification Handler.
+
+## Snapshots between Modules
+
+A Snapshot is the current state of one aggregate, published for other Modules, and it supersedes every earlier Snapshot of that aggregate. A Tombstone is the Snapshot that says the aggregate no longer exists. Choose between a Snapshot and an Integration Event by what the receiver needs (G.2, G.5):
+
+- An Integration Event is a fact: something happened, and the receiver reacts to it, as Inventory opens a stock item for each new product. Each one matters on its own, and a Notification Handler publishes it.
+- A Snapshot is state: what the aggregate is now, for a Module that keeps its own copy of it, as Inventory keeps a copy of each catalog product. Only the newest matters: once a newer one is applied, an older one is worth nothing. Feature code never publishes it; the Unit of Work does, in the commit of every change of the aggregate.
+- One aggregate may have both, as Catalog's product does: `ProductCreatedV1` for what happened, `ProductSnapshotV1` for what it is.
+
+In the Proving Sample, Inventory keeps a copy of Catalog's products:
+
+1. Every Operation of Catalog that creates, renames or removes a product stores the product's `ProductSnapshotV1` in Catalog's Outbox, in the commit of that change, once per subscription.
+2. After that commit, Inventory's `CopyProductIntegrationEventHandler` writes it into Inventory's copy, in Inventory's Unit of Work, when it is newer than every Snapshot of that product Inventory applied.
+
+### The Snapshot
+
+```csharp
+// Catalog.Contracts/Products/Events/V1/: public, plain values only, nothing from the Kit
+/// <summary>
+/// The current state of one product, which supersedes every earlier Snapshot of it: <paramref name="Version"/> grows
+/// with every change Catalog commits. When <paramref name="IsRemoved"/> is true it is the product's Tombstone: the
+/// product has left the catalog. Catalog publishes it under the wire name <c>catalog.product-snapshot.v1</c>; a change
+/// other Modules could not read is a new version, not an edit of this one.
+/// </summary>
+public sealed record ProductSnapshotV1(Guid ProductId, string Name, bool IsRemoved, long Version);
+```
+
+- Declare it as a `public sealed record` in the publishing Module's Contracts project, under `Events/V1/`, named with its version, with plain values only, as an Integration Event ([The Integration Event](#the-integration-event)).
+- Give it the aggregate's key, the state other Modules need, a field that says whether it is the Tombstone, as `IsRemoved` does, and the aggregate's `Version`. The Kit orders Snapshots by the version it sends beside the message, not by these fields; the sample carries the version too, so its copy shows which one it holds.
+- A type is either an Integration Event or the Snapshot of one aggregate: declaring it with `Publish` and with `PublishSnapshot`, or with two `PublishSnapshot` declarations that differ in aggregate or mapper, fails the Host's composition, and `IIntegrationEventPublisher.Publish` refuses a Snapshot.
+- A change that receivers could not read is a new type with its own version and wire name, never an edit of the old one.
+
+### Writing a Snapshot mapper
+
+```csharp
+using Catalog.Contracts.Products.Events.V1;
+using PouryaKit.Messaging;
+
+// Catalog/Products/Events/: the product as other Modules see it. The Kit calls it once for every product an
+// Operation changed, after every reaction ran, with the version being committed; it only reads.
+internal sealed class ProductSnapshotMapper : ISnapshotMapper<Product, ProductSnapshotV1>
+{
+    public ProductSnapshotV1 Map(Product product) => new(product.Id.Value, product.Name, IsRemoved: false, product.Version);
+
+    public ProductSnapshotV1 Tombstone(Product product) => new(product.Id.Value, product.Name, IsRemoved: true, product.Version);
+}
+```
+
+- Implement `ISnapshotMapper<TAggregate, TSnapshot>` (`PouryaKit.Messaging`) in an `internal sealed` class of the aggregate's Business Area, under `Events/`. It has two methods: `Map` builds the Snapshot of an aggregate that exists, and `Tombstone` builds the Snapshot of one the Operation removed, whether it is kept marked deleted or deleted outright. Both receive the aggregate in its final state.
+- Map by hand, member by member, with no mapping library (G.7). Read the version from the aggregate's `Version`: it is the version being committed.
+- `PublishSnapshot` registers the mapper scoped, and the Kit resolves it in the scope of the Operation that commits and runs it as a step of the Unit of Work that only reads. It reads the aggregate, and may run a query through an injected `IDispatcher` when it needs more; it writes nothing. The sample's takes nothing. [The rules of a mapper and a key](#the-rules-of-a-mapper-and-a-key) say what is refused and what fails the Operation.
+
+### Declaring a Snapshot
+
+- The publishing Module declares each Snapshot in its Composition Root: `module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1", typeof(CatalogModule))` (`PouryaKit.Messaging.Wolverine`). It names the aggregate, the Snapshot type and the mapper, then the wire name and the Module whose Operations publish it ([modules.md](modules.md#the-composition-root)). One aggregate may have several Snapshot types, each with its own declaration, wire name and mapper.
+- The receiving Module subscribes an ordinary `IIntegrationEventHandler<TSnapshot>` with `Subscribe`, as Inventory does above ([Declaring what a Module publishes and subscribes](#declaring-what-a-module-publishes-and-subscribes)). Several Modules may subscribe, each under its own subscription name.
+- A Snapshot's wire name and its subscriptions' names are declared, never derived, and follow [Names](#names) like an Integration Event's.
+- An application without Modules calls `PublishSnapshot` on its own services and leaves the Module out.
+
+### Keeping a copy
+
+```csharp
+using Catalog.Contracts.Products.Events.V1;
+using Dapper;
+using PouryaKit.Domain;
+using PouryaKit.Messaging;
+using PouryaKit.Persistence;
+
+// Inventory/CatalogProducts/Features/CopyProduct/: keeps Inventory's copy of each catalog product current, in a table
+// of its own that is no aggregate. Only the effect: the Kit runs this only for a Snapshot newer than every one applied
+// of that product, so the copy simply follows each one, and is deleted on the Tombstone.
+internal sealed class CopyProductIntegrationEventHandler(IUnitOfWorkConnection unitOfWork)
+    : IIntegrationEventHandler<ProductSnapshotV1>
+{
+    public async Task<Result> Handle(ProductSnapshotV1 snapshot, CancellationToken cancellationToken)
+    {
+        var (connection, transaction) = unitOfWork.Join();
+        var sql = snapshot.IsRemoved
+            ? "delete from inventory.catalog_products where product_id = @ProductId"
+            : """
+              insert into inventory.catalog_products (product_id, name, version) values (@ProductId, @Name, @Version)
+              on conflict (product_id) do update set name = excluded.name, version = excluded.version
+              """;
+        await connection.ExecuteAsync(new CommandDefinition(sql, snapshot, transaction, cancellationToken: cancellationToken));
+        return Result.Success();
+    }
+}
+```
+
+- Keep the copy in a Module-internal table that no aggregate maps, written with plain SQL through `IUnitOfWorkConnection` in the receiving Module's Unit of Work ([dapper-reads.md](dapper-reads.md#writing-with-plain-sql-in-the-unit-of-work)), so the copy, the Receipt and the version the Kit records commit together or not at all.
+- The copy is not an aggregate. It holds what the publishing Module last published and nothing the receiving Module decides: it has no rule to guard, raises no Domain Event, and needs no version of its own, because the Kit already decides which Snapshot is applied. Inventory's own decisions about a product live in its own aggregates, such as the stock item.
+- Write only the effect: insert or update for a Snapshot, delete for a Tombstone. The handler compares no version: the Kit runs it only for a newer one, and after a Tombstone it runs for no older one, so a deleted row stays deleted.
+- Inventory's project references `PouryaKit.Persistence.Dapper`, which brings Dapper for `ExecuteAsync` and `CommandDefinition`. It does not call `AddPouryaKitDapper`: that registers Dapper reads and typed-ID handlers, and the copy needs neither. `IUnitOfWorkConnection` comes with `UsePostgres`.
+
+The receiving Module's migration creates the copy and the table the Kit keeps the applied versions in, `CreateSnapshotVersionTable` (`PouryaKit.Messaging.Wolverine.EFCore`), beside the Receipt table it already has ([Receipts](#receipts)). Neither is in the Module's model, so the model does not change; add the migration with `dotnet ef migrations add` as for the Receipt table and fill its `Up` and `Down`:
+
+```csharp
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using PouryaKit.Messaging.Wolverine.EFCore;
+
+// Inventory/Infrastructure/Data/Migrations/: the copy, written with plain SQL, and the versions of the Snapshots applied
+[DbContext(typeof(InventoryDbContext))]
+[Migration("20261005190000_CatalogProducts")]
+internal sealed class CatalogProducts : Migration
+{
+    protected override void Up(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.Sql(
+            "create table inventory.catalog_products (product_id uuid primary key, name text not null, version bigint not null)"
+        );
+        migrationBuilder.CreateSnapshotVersionTable("inventory");
+    }
+
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropSnapshotVersionTable("inventory");
+        migrationBuilder.Sql("drop table inventory.catalog_products");
+    }
+}
+```
+
+- A Module that subscribes to any Snapshot needs both tables in its schema: `pouryakit_receipts` from `CreateReceiptTable` and `pouryakit_snapshot_versions` from `CreateSnapshotVersionTable`, each created once. Nothing checks either at startup; without one, every Snapshot delivery to the Module fails with an `InvalidOperationException` that names the call to add, and is retried and set aside as a dead letter.
+- The Kit removes no row from either table, and nothing should. A Receipt is what keeps a redelivered Snapshot from applying twice; a version row is what keeps an older Snapshot from undoing a newer one or a Tombstone. A version row is not a Receipt: it holds, for each subscription and aggregate, the newest version applied.
+
+### What the Kit guarantees for a Snapshot
+
+- **One per changed aggregate, per Snapshot type, per Operation.** Each Operation of the declaring Module that changes an aggregate, or anything the aggregate owns, publishes one Snapshot of it under each Snapshot type declared for it, however many times the Operation changed it: in the handler, in a nested command and in a Domain Event Handler, it is still one. That holds for every Operation of the Module, a delivery's included, as when one of its Notification Handlers changes the aggregate. An Operation that changes nothing, or rolls back, publishes none.
+- **Built from what commits.** The Unit of Work builds it after every Domain Event Handler ran and persistence is prepared (step 4 of its commit sequence, [persistence.md](persistence.md#the-unit-of-work)): the aggregate is in its final state, audit and soft-delete fields set, and its `Version` is the one being committed.
+- **Stored in the commit, sent after it.** It is written to the publishing Module's Outbox, once per subscription, in the same transaction as the change, so it exists if and only if the change commits, and it is sent after the commit, as a Notification is ([What the Kit guarantees](#what-the-kit-guarantees)). A Snapshot type that no Module of the Host subscribes to is not stored.
+- **A Tombstone with a newer version.** An aggregate the Operation removed, whether soft-deletable and kept marked deleted or deleted outright, publishes the mapper's `Tombstone` instead, with the version the removal advanced it to, one newer than its last Snapshot.
+- **Applied only when newer.** Each Snapshot carries its aggregate's key, as the database stores it, and its version, in the `SnapshotHeaders.AggregateId` and `SnapshotHeaders.Version` headers. Its identity follows from its wire name, key and version, so every delivery of one Snapshot has the same identity and two versions never share one. The receiving delivery first records the Receipt, so a redelivery or a concurrent duplicate of the same Snapshot does nothing. It then records the version, and the handler runs only when that version is strictly newer than every version of that aggregate the subscription applied before; otherwise the delivery succeeds without running it. A concurrent delivery of another version of the same aggregate waits until the first commits or rolls back, then compares with what committed. So Snapshots delivered in reverse order, concurrently or twice, and a live Snapshot delivered after the Tombstone, all leave the receiver's copy at the newest version. The version is recorded in the handler's transaction, with its effect and Receipt, or not at all.
+- **Not every version.** A receiver applies the newest Snapshot it is given and skips the older ones it gets later: a Snapshot handler keeps a copy current, and never counts or reacts to each change. React to what happened with an Integration Event.
+- **A continuation of the change.** The receiving Operation continues the Operation that committed the change: the same Actor, tenant and correlation, that Operation's `OperationId` as its causation, a new `OperationId`.
+- **Each subscription on its own.** Each subscription's delivery is retried, recorded and set aside as a dead letter apart from the others, as for an Integration Event ([Retries](#retries), [Dead letters](#dead-letters)).
+
+### The rules of a mapper and a key
+
+A feature author keeps four rules, or the copies in other Modules go wrong:
+
+- **A mapper only reads.** It runs after every Domain Event was handled and every version and audit field set, so what it changed would commit unversioned and unseen by the Snapshot, and a Domain Event it raised would never be handled. It may read the aggregate and run queries, nothing else:
+  - It runs as a step of the Unit of Work that only reads, as a query does, so the Kit refuses every write it attempts: a nested command (`A command was sent from a Snapshot mapper, a step that only reads.`), the repository's `AddAsync` and `Remove`, `IUnitOfWorkConnection.Join()` and publishing an Integration Event (`Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, ...`). Each refusal is an `InvalidOperationException` that fails the Operation and reaches the Gateway's caller, and nothing commits. A mapper that catches the refusal of its command still fails the Operation: the refused command marks it rollback-only, and the Unit of Work checks that once more after the mappers ran, so the Operation fails with `Operation.CommandThrew`.
+  - What a mapper changes directly on the entities it is given is detected afterwards: the Unit of Work compares every entity it saves with its state before the mappers ran, and a changed value, or a Domain Event an aggregate raised, fails the Operation with an `InvalidOperationException`, and nothing commits.
+  - One change is not seen: a change inside an EF Core complex collection.
+- **The aggregate's key is set by the application, not generated by the database.** The Snapshot is built before the save, and a key the database generates does not exist until then. Nothing checks it at startup: an Operation that creates such an aggregate fails at its commit with an `InvalidOperationException`, and nothing commits. Create keys as `Product` does, with `TypedId.New<ProductId>()`.
+- **The key of an aggregate that publishes Snapshots is never used again after the aggregate is deleted outright.** Every receiver keeps its Tombstone's version and would turn away a new aggregate's lower versions under the same key until they passed it. The Kit's Guid version 7 keys are never used again. A soft-deleted aggregate keeps its key and its version, and the repository never returns it again; a key a person chooses, such as a code, is the one to watch.
+- **A declaration names its Module and covers one aggregate.** Snapshots are built only in Operations of the Module the declaration names, so in a Host of Modules pass it the Module, and in an application without Modules leave it out. A declaration without its Module in a Host of Modules, or with one in an application without Modules, would never publish: it fails the Operation that changes its aggregate with an `InvalidOperationException` instead, and nothing commits. A declaration of one Module never publishes for another Module's aggregates. Declare it for one aggregate, or for a type of one mapped inheritance hierarchy, never for a base type that independent aggregates share: their keys are their own, so their Snapshots would share identities and versions, and a receiver would turn one aggregate's away for another's. Such a declaration is refused the same way, by the first Operation of the Module that commits a change to any aggregate the Module declares a Snapshot for.
 
 ## What the Kit guarantees
 
@@ -277,6 +437,7 @@ internal sealed class Receipts : Migration
 ```
 
 - Nothing checks the table at startup. Without it, every delivery to the Module fails with an `InvalidOperationException` that names `CreateReceiptTable`, and is retried and set aside as a dead letter. `HostFixture` applies every migration before it starts the Host, so a test shows the gap at once.
+- A Module that subscribes to a Snapshot also needs the Snapshot version table, `CreateSnapshotVersionTable` ([Keeping a copy](#keeping-a-copy)). A Snapshot's Receipt is keyed by an identity the Kit derives from its wire name, its aggregate's key and its version.
 
 ## Names
 
@@ -285,7 +446,7 @@ Each Notification and Integration Event is stored under its wire name, and each 
 - **A Domain Event's wire name, by convention:** the assembly's name and the type's name without the `DomainEvent` suffix, each in kebab case: `catalog.product-created` for `ProductCreatedDomainEvent` in the assembly `Catalog`. It comes from the assembly, not from the Module.
 - **A Notification Handler's subscription name, by convention:** the wire name, a dot, and the handler's name without the `NotificationHandler` or `Handler` suffix, in kebab case: `catalog.product-created.announce-new-product`.
 - **Overrides:** `[WireName("...")]` on the Domain Event and `[SubscriptionName("...")]` on the Notification Handler (`PouryaKit.Messaging`) declare a stable name instead.
-- **An Integration Event's names are declared, never derived:** its wire name is the first argument of `Publish` (`catalog.product-created.v1`), and each Integration Event Handler's subscription name the first argument of `Subscribe` (`inventory.product-created`). Neither depends on a CLR name, so renaming or moving the record or the handler keeps them. Put the version in the wire name, and change it only with a new version of the type.
+- **An Integration Event's and a Snapshot's names are declared, never derived:** the wire name is the first argument of `Publish` (`catalog.product-created.v1`) or `PublishSnapshot` (`catalog.product-snapshot.v1`), and each Integration Event Handler's subscription name the first argument of `Subscribe` (`inventory.product-created`). Neither depends on a CLR name, so renaming or moving the record or the handler keeps them. Put the version in the wire name, and change it only with a new version of the type.
 - **One wire name per type in a process.** Wolverine keeps message names for the whole process, so a second Host in the same process, such as one a test starts, that publishes a type under another wire name fails to start.
 - **A rename is a breaking change.** A derived name changes when its Domain Event, its handler or its assembly is renamed, or the type moves to another assembly; a declared one changes when its declaration does. Deliveries already stored keep the old name: those under a wire name nothing declares any more no longer find their type, those under a subscription name nothing declares arrive on a queue no subscription declares, and either is set aside as a dead letter, never run and never treated as handled. Before renaming a type or handler that uses a derived name while deliveries may be in flight, declare the name it had:
 
@@ -390,9 +551,10 @@ A longer stale time has its price: a delivery committed but never sent waits tha
 - **When the Host is composed**, each declaration throws, naming every problem:
   - `AddPouryaKitNotificationHandlers`, for an assembly with no Notification Handler; a handler that handles several Domain Event types, an abstract or generic one, or is generic itself; and a wire name or subscription name that is missing, invalid, reserved or colliding.
   - `Publish`, for a Domain Event; a wire name that is missing, invalid or colliding; and a type already published under another wire name or by another Module.
+  - `PublishSnapshot`, for everything `Publish` refuses, and for a type already published as an Integration Event or as the Snapshot of another aggregate or with another mapper.
   - `Subscribe`, for a Domain Event; an abstract handler; and a subscription name that is missing, invalid, reserved or colliding.
-- **When the Host starts**, it fails, naming each problem, for a subscription to an Integration Event that no Module of the Host publishes; for an Integration Event this process already sends under another wire name; and for an Integration Event that Wolverine had already named otherwise before the Host declared it, because Wolverine keeps the first name it gives a type and would send it under that name. Wire names are declared all or none.
-- **After every hosted service started**, it fails when Notification Handlers or Integration Events are declared but nothing writes them to an Outbox: `UsePouryaKitWolverine()` without a connection name, from `PouryaKit.Messaging.Wolverine`, runs Wolverine with no database, for a Host that declares neither. It also fails when Host configuration made a subscription's queue one that does not store what it receives, such as `LocalQueue(name).BufferedInMemory()`.
-- Not checked: that a subscribing Module has a Unit of Work and a Receipt table ([Receipts](#receipts)).
+- **When the Host starts**, it fails, naming each problem, for a subscription to an Integration Event or Snapshot that no Module of the Host publishes; for an Integration Event this process already sends under another wire name; and for an Integration Event that Wolverine had already named otherwise before the Host declared it, because Wolverine keeps the first name it gives a type and would send it under that name. Wire names are declared all or none.
+- **After every hosted service started**, it fails when Notification Handlers, Integration Events or Snapshots are declared but nothing writes them to an Outbox: `UsePouryaKitWolverine()` without a connection name, from `PouryaKit.Messaging.Wolverine`, runs Wolverine with no database, for a Host that declares none of them. It also fails when Host configuration made a subscription's queue one that does not store what it receives, such as `LocalQueue(name).BufferedInMemory()`.
+- Not checked: that a subscribing Module has a Unit of Work, a Receipt table ([Receipts](#receipts)) and, for a Snapshot, the Snapshot version table. Not checked at startup either, but failing the Operation that commits: a Snapshot of an aggregate whose key the database generates, a Snapshot declaration without its Module in a Host of Modules, and one that covers independent aggregates ([The rules of a mapper and a key](#the-rules-of-a-mapper-and-a-key)).
 
 Testing deliveries: [testing.md](testing.md#deliveries).

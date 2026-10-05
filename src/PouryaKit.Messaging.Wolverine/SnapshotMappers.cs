@@ -5,8 +5,8 @@ using PouryaKit.Domain;
 
 namespace PouryaKit.Messaging.Wolverine;
 
-// Runs the mappers in the committing Operation's scope, only those its own Module declared: a declaration for a base
-// type or an interface never reaches another Module's aggregates. A mapper and its aggregate may be internal: they are
+// Runs the mappers in the committing Operation's scope, only those its own Module declared, each as a step that only
+// reads: a declaration for a base type or an interface never reaches another Module's aggregates. A mapper and its aggregate may be internal: they are
 // only ever named through reflection, never in generated code.
 internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation operation, IServiceProvider scope) : ISnapshotMappers
 {
@@ -15,7 +15,41 @@ internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation ope
     private IEnumerable<SnapshotPublication> Declared =>
         subscriptions.Snapshots.Where(snapshot => subscriptions.Publications[snapshot.Snapshot].Module == operation.Module);
 
-    public bool Declares(Type aggregateType) => Declared.Any(snapshot => snapshot.Aggregate.IsAssignableFrom(aggregateType));
+    public bool Declares(Type aggregateType)
+    {
+        // A declaration made without its Module in a Host of Modules, or with one in an application without Modules,
+        // would match no Operation and publish nothing, silently.
+        if (
+            subscriptions
+                .Snapshots.Where(snapshot => snapshot.Aggregate.IsAssignableFrom(aggregateType))
+                .FirstOrDefault(snapshot => (subscriptions.Publications[snapshot.Snapshot].Module is null) != (operation.Module is null))
+            is { } misdeclared
+        )
+        {
+            throw new InvalidOperationException(
+                operation.Module is { } module
+                    ? $"The Snapshot {misdeclared.Snapshot.FullName} of {misdeclared.Aggregate.FullName} is declared without a Module, but {aggregateType.Name} changed in an Operation of {module.Name}. Declare it with PublishSnapshot(wireName, module) in that Module's Composition Root."
+                    : $"The Snapshot {misdeclared.Snapshot.FullName} of {misdeclared.Aggregate.FullName} is declared by the Module {subscriptions.Publications[misdeclared.Snapshot].Module!.Name}, but {aggregateType.Name} changed in an application without Modules. Declare it with PublishSnapshot(wireName) and no Module."
+            );
+        }
+
+        return Declared.Any(snapshot => snapshot.Aggregate.IsAssignableFrom(aggregateType));
+    }
+
+    public void CheckKeySpaces(IReadOnlyCollection<Type> aggregateRoots)
+    {
+        ArgumentNullException.ThrowIfNull(aggregateRoots);
+        foreach (var snapshot in Declared)
+        {
+            List<Type> covered = [.. aggregateRoots.Where(snapshot.Aggregate.IsAssignableFrom)];
+            if (covered.Count > 1)
+            {
+                throw new InvalidOperationException(
+                    $"The Snapshot {snapshot.Snapshot.FullName} is declared for {snapshot.Aggregate.FullName}, which the separately mapped aggregates {string.Join(", ", covered.Select(root => root.FullName))} all are. Their keys are their own, so their Snapshots would share identities and versions, and a receiver would turn one aggregate's away for another's. Declare a Snapshot for each aggregate, or for a type of one mapped hierarchy."
+                );
+            }
+        }
+    }
 
     public IReadOnlyList<object> Map(object aggregate, bool removed)
     {
@@ -25,15 +59,17 @@ internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation ope
             .. Declared
                 .Where(snapshot => snapshot.Aggregate.IsInstanceOfType(aggregate))
                 .Select(snapshot =>
-                    Mappings
-                        .GetOrAdd(
-                            snapshot,
-                            declared =>
-                                (Mapping)
-                                    Activator.CreateInstance(typeof(Mapping<,>).MakeGenericType(declared.Aggregate, declared.Snapshot))!
-                        )
-                        .Map(scope.GetRequiredService(snapshot.Mapper), aggregate, removed)
-                ),
+                {
+                    var mapping = Mappings.GetOrAdd(
+                        snapshot,
+                        declared =>
+                            (Mapping)Activator.CreateInstance(typeof(Mapping<,>).MakeGenericType(declared.Aggregate, declared.Snapshot))!
+                    );
+                    var mapper = scope.GetRequiredService(snapshot.Mapper);
+                    // A mapper only reads: a command it sends is refused, and so is every write the Kit guards.
+                    using var reading = operation.OnlyReading("a Snapshot mapper");
+                    return mapping.Map(mapper, aggregate, removed);
+                }),
         ];
     }
 
