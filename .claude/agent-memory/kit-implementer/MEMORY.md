@@ -17,3 +17,4 @@
 - [Persistence preparation facts](persistence-preparation-facts.md) — #11: EF savepoint hides rollback bugs, two-scope race technique, TestClock vs Gateway, ef remove trap
 - [Messaging delivery facts](messaging-delivery-facts.md) — #15: Wolverine start/extension timing, store-polling test helpers, redelivery and unknown-subscription tricks
 - [Integration Event facts](integration-event-facts.md) — #16: process-global wire names, StartAsync-time checks, receipt-hold concurrency proof
+- [Dead letter and stale time facts](dead-letter-and-stale-time-facts.md) — #17: replay mechanics, stale stored retry reproduced, dying Host without zombie, attempts not runs
