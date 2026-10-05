@@ -30,6 +30,64 @@ public static class ThingsGateway
 
     public static Task<Result<string>> QuerySendingACommand(IDispatcher dispatcher) =>
         dispatcher.QueryAsync(new SendCommandQuery());
+
+    public static Task<Result> AuthorizeBySendingACommand(IDispatcher dispatcher) =>
+        dispatcher.SendAsync(new GuardedByCommandCommand());
+
+    public static Task<Result> AuthorizeByRunningAQuery(IDispatcher dispatcher) =>
+        dispatcher.SendAsync(new GuardedByQueryCommand());
+
+    public static Task<Result<string>> RunOuterLettingANestedExceptionThrough(IDispatcher dispatcher) =>
+        dispatcher.SendAsync(new RunOuterUncaughtCommand());
+}
+
+internal sealed record GuardedByCommandCommand : Command;
+
+internal sealed class GuardedByCommandAuthorizer(IDispatcher dispatcher) : IAuthorizer<GuardedByCommandCommand>
+{
+    public async Task<Result> AuthorizeAsync(GuardedByCommandCommand command, CancellationToken cancellationToken) =>
+        await dispatcher.SendAsync(new PingCommand(), cancellationToken);
+}
+
+internal sealed class GuardedByCommandHandler(OperationTrace trace) : CommandHandler<GuardedByCommandCommand>
+{
+    public override Task<Result> Handle(GuardedByCommandCommand command, CancellationToken cancellationToken)
+    {
+        trace.Add("handle GuardedByCommandCommand");
+        return Task.FromResult(Result.Success());
+    }
+}
+
+internal sealed record GuardedByQueryCommand : Command;
+
+// A permission lookup: an authorizer may read through a query before the Unit of Work starts.
+internal sealed class GuardedByQueryAuthorizer(IDispatcher dispatcher) : IAuthorizer<GuardedByQueryCommand>
+{
+    public async Task<Result> AuthorizeAsync(GuardedByQueryCommand command, CancellationToken cancellationToken)
+    {
+        var thing = await dispatcher.QueryAsync(new GetThingQuery(Guid.CreateVersion7()), cancellationToken);
+        return thing.IsSuccess ? Result.Success() : thing.Errors;
+    }
+}
+
+internal sealed class GuardedByQueryHandler(OperationTrace trace) : CommandHandler<GuardedByQueryCommand>
+{
+    public override Task<Result> Handle(GuardedByQueryCommand command, CancellationToken cancellationToken)
+    {
+        trace.Add("handle GuardedByQueryCommand");
+        return Task.FromResult(Result.Success());
+    }
+}
+
+internal sealed record RunOuterUncaughtCommand : Command<string>;
+
+internal sealed class RunOuterUncaughtHandler(IDispatcher dispatcher) : CommandHandler<RunOuterUncaughtCommand, string>
+{
+    public override async Task<Result<string>> Handle(RunOuterUncaughtCommand command, CancellationToken cancellationToken)
+    {
+        await dispatcher.SendAsync(new RunNestedCommand(NestedOutcome.Throws), cancellationToken);
+        return "unreachable";
+    }
 }
 
 internal sealed record CreateThingCommand(string Name) : Command<Guid>;

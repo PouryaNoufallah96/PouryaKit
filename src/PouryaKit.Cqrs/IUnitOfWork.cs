@@ -14,7 +14,8 @@ public interface IUnitOfWork
     /// command's Result is a success and <see cref="Operation.IsRollbackOnly"/> is false, checked again after any
     /// further step that can run nested commands; otherwise roll back. Return the command's Result after a commit, and
     /// a failed Result after a rollback: the command's own failure, or <see cref="Operation.RollbackErrors"/>. An
-    /// exception from <paramref name="command"/> propagates with nothing committed.
+    /// exception from <paramref name="command"/> propagates with nothing committed. Returning any other success is a
+    /// bug the dispatcher reports with an <see cref="InvalidOperationException"/>.
     /// </summary>
     Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken);
 }

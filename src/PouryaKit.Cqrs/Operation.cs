@@ -12,6 +12,7 @@ public sealed class Operation
     private int _runningCommands;
     private int _runningQueries;
     private bool _commandStarted;
+    private bool _unitOfWorkActive;
 
     /// <summary>
     /// True once a command inside the Operation has failed, whether or not its caller read the Result. The Unit of
@@ -47,11 +48,24 @@ public sealed class Operation
             );
         }
 
+        // Between the outermost command's start and its Unit of Work's start (its authorizers and validators), a
+        // nested command would run its handler with no Unit of Work to own it.
+        if (_runningCommands > 0 && !_unitOfWorkActive)
+        {
+            throw new InvalidOperationException(
+                "A command was sent before the Operation's Unit of Work started, from an authorizer or a validator. Only a handler may send a nested command."
+            );
+        }
+
         _commandStarted = true;
         return _runningCommands++ == 0;
     }
 
     internal void ExitCommand() => _runningCommands--;
+
+    internal void StartUnitOfWork() => _unitOfWorkActive = true;
+
+    internal void EndUnitOfWork() => _unitOfWorkActive = false;
 
     internal void EnterQuery() => _runningQueries++;
 

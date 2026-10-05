@@ -170,7 +170,8 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 
 **Authorization hook**
 
-- The Actor is authenticated and authorized at the external entry point. Add a per-operation rule only when one command or query needs it: an `internal` class implementing `IAuthorizer<TOperation>`, returning `Result.Success()` or a `Forbidden` Error. It runs before validation. Without one, the step does nothing.
+- The Actor is authenticated and authorized at the external entry point. Add a per-operation rule only when one command or query needs it: an `internal` class implementing `IAuthorizer<TOperation>` for that one concrete command or query, returning `Result.Success()` or a `Forbidden` Error. It runs before validation. Without one, the step does nothing. An authorizer for a base type, a marker interface or an open type fails at startup, because it would never run.
+- An authorizer or a validator may run a query (a permission or existence lookup), but never sends a command: it runs before the Unit of Work starts, so that throws.
 
 **Registration**
 

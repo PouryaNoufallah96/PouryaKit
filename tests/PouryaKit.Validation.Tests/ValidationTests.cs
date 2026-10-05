@@ -30,6 +30,27 @@ internal sealed class RegisterProductHandler(HandledCommands handled) : CommandH
     }
 }
 
+internal sealed record ArchiveProductCommand(Guid ProductId) : Command;
+
+// Misuse under test: a validator that sends a command runs before the Unit of Work starts.
+internal sealed class ArchiveProductValidator : AbstractValidator<ArchiveProductCommand>
+{
+    public ArchiveProductValidator(IDispatcher dispatcher) =>
+        RuleFor(x => x.ProductId)
+            .MustAsync(async (id, ct) =>
+                (await dispatcher.SendAsync(new RegisterProductCommand("Lamp", 1), ct)).IsSuccess
+            );
+}
+
+internal sealed class ArchiveProductHandler(HandledCommands handled) : CommandHandler<ArchiveProductCommand>
+{
+    public override Task<Result> Handle(ArchiveProductCommand command, CancellationToken cancellationToken)
+    {
+        handled.Count++;
+        return Task.FromResult(Result.Success());
+    }
+}
+
 internal sealed class HandledCommands
 {
     public int Count { get; set; }
@@ -71,6 +92,19 @@ public sealed class ValidationTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(1, scope.ServiceProvider.GetRequiredService<HandledCommands>().Count);
+    }
+
+    [Fact]
+    public async Task A_validator_that_sends_a_command_throws_before_any_handler_runs()
+    {
+        await using var host = BuildHost();
+        using var scope = host.CreateScope();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            Dispatcher(scope).SendAsync(new ArchiveProductCommand(Guid.CreateVersion7()), TestContext.Current.CancellationToken)
+        );
+
+        Assert.Equal(0, scope.ServiceProvider.GetRequiredService<HandledCommands>().Count);
     }
 
     private static ServiceProvider BuildHost() =>
