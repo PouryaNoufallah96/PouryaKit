@@ -1,6 +1,6 @@
 # Persistence and the Unit of Work
 
-`PouryaKit.Persistence`, `PouryaKit.Persistence.EFCore`, `PouryaKit.Persistence.Postgres`: repositories and specifications, a DbContext and schema per Module, Domain Event Handlers, versions and conflicts. A Module references `PouryaKit.Persistence.Postgres`, which brings the other two.
+`PouryaKit.Persistence`, `PouryaKit.Persistence.EFCore`, `PouryaKit.Persistence.Postgres`: repositories and specifications, a DbContext and schema per Module, the Unit of Work and its Domain Event Handlers, versions and conflicts. A Module references `PouryaKit.Persistence.Postgres`, which brings the other two. Reads for display go through Dapper instead ([dapper-reads.md](dapper-reads.md)).
 
 - [The DbContext and its mappings](#the-dbcontext-and-its-mappings)
 - [PostgreSQL](#postgresql)
@@ -136,7 +136,7 @@ internal sealed class ProductRepository(IUnitOfWork unitOfWork)
 
 - Each command Operation runs in one transaction that the Unit of Work owns. When the outermost handler returns a success and no nested command failed, it runs the Domain Event Handlers, checks again that nothing failed, then saves once and commits. A failed Result, a failed nested command or a failed Domain Event Handler rolls everything back; an exception rolls back and reaches the Gateway's caller.
 - Nothing retries: no retrying execution strategy, no retry in the Unit of Work. To retry, send the command again through the Gateway.
-- Today the Unit of Work leaves `Version` at 0: versions arrive with #11.
+- A plain-SQL write to a Module-internal table that no aggregate maps joins this transaction through `IUnitOfWorkConnection` (`PouryaKit.Persistence`), from a command's handler or a Domain Event Handler only; see [dapper-reads.md](dapper-reads.md).
 
 ## Domain Event Handlers
 
@@ -188,4 +188,4 @@ dotnet ef migrations add Initial \
 - `dotnet-ef` builds the Host as its `Program` does and finds the internal DbContext in its container, so the DbContext stays internal and needs no design-time factory. Name it with `--context`; set the folder with `--output-dir` and the namespace follows.
 - The Host applies no migration at startup. `HostFixture` applies every Module's in tests.
 
-*Not yet available*: audit, soft delete, versions and conflicts (#11).
+*Not yet documented here*: audit, soft delete, versions and conflicts (#11, which has its own docs pass).

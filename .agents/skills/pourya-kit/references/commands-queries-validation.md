@@ -46,7 +46,7 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 }
 ```
 
-`IRepository<,>` is the Kit's generic repository (`PouryaKit.Persistence`, see [persistence.md](persistence.md)). `IProductReader` stands for the Feature's read access; Dapper reads arrive with #9.
+`IRepository<,>` is the Kit's generic repository (`PouryaKit.Persistence`, see [persistence.md](persistence.md)). `IProductReader` stands for the Feature's read access; a query usually reads with Dapper, as the Proving Sample's `GetProduct` does (see [dapper-reads.md](dapper-reads.md)).
 
 ## Commands and queries
 
@@ -60,7 +60,7 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 ## The pipeline
 
 - Every command and query passes the same fixed steps: logging, the authorization hook, validation, then the handler; a command's handler runs inside the Unit of Work. Never register a pipeline step or a behaviour yourself.
-- Send from outside the Module through its Gateway (see [modules.md](modules.md)). Inside a handler, send a nested command with an injected `IDispatcher`: `await dispatcher.SendAsync(new ReserveStockCommand(id), ct)`. It joins the outer Unit of Work, so the Operation commits once.
+- Send from outside the Module through its Gateway, with an Operation Context (see [modules.md](modules.md)). Inside a handler, send a nested command with an injected `IDispatcher`: `await dispatcher.SendAsync(new ReserveStockCommand(id), ct)`. It joins the outer Unit of Work, so the Operation commits once, and it reads the same Operation Context.
 - A nested command that fails, in its handler, its validation or its authorization, or by throwing, rolls the whole Operation back, even if your handler ignores its Result. The Operation then fails with that nested command's Errors. Pass a failure on with `return result.Errors;` instead of ignoring it.
 - A failed nested query rolls nothing back; act on its Result as you need.
 - One scope holds one Operation. Never send a second top-level command in a scope that already ran one, and never retry a failed command in the same scope: send it again through the Gateway, which opens a new scope for each call.
@@ -75,6 +75,7 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 ## Authorization hook
 
 - The Actor is authenticated and authorized at the external entry point. Add a per-operation rule only when one command or query needs it: an `internal` class implementing `IAuthorizer<TOperation>` for that one concrete command or query, returning `Result.Success()` or a `Forbidden` Error. It runs before validation. Without one, the step does nothing. An authorizer for a base type, a marker interface or an open type fails at startup, because it would never run.
+- An authorizer reads the Actor and tenant from an injected `OperationContext` (see [modules.md](modules.md)). It runs for every Operation of its command or query, including one that continues another Module's Operation.
 - An authorizer or a validator may run a query (a permission or existence lookup), but never sends a command: it runs before its command's handler, at every nesting depth, so that throws.
 
 ## Registration

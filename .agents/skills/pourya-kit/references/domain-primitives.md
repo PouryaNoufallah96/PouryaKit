@@ -67,11 +67,11 @@ internal sealed class Product : AggregateRoot<ProductId>
 - Declare one per aggregate as a sealed record over `Guid`, `long`, `int` or `string`, as above. Two IDs are equal only when type and value are equal, so IDs of different aggregates cannot be mixed up.
 - Create a new Guid ID with `TypedId.New<ProductId>()`; it is time-ordered (version 7). Wrap a value from input with `new ProductId(value)`.
 - The constructor throws on an empty Guid or a blank string: that is a bug, so validate input before it reaches the constructor.
-- Write no converter. JSON needs `TypedIdJsonConverterFactory` once in the serializer options. Until the Web (#14) and Messaging packages register it, add it to your serializer options yourself. It also handles typed IDs as dictionary keys, and reports an empty ID in JSON as a `JsonException`. EF Core needs nothing either: `PouryaKitDbContext` stores every typed ID as its value (see [persistence.md](persistence.md)). Dapper registration arrives with #9.
+- Write no converter. JSON needs `TypedIdJsonConverterFactory` once in the serializer options. Until the Web (#14) and Messaging packages register it, add it to your serializer options yourself. It also handles typed IDs as dictionary keys, and reports an empty ID in JSON as a `JsonException`. EF Core needs nothing either: `PouryaKitDbContext` stores every typed ID as its value (see [persistence.md](persistence.md)). Nor does Dapper: `AddPouryaKitDapper` makes every typed ID a parameter and a result (see [dapper-reads.md](dapper-reads.md)).
 
 ## Aggregates, entities and value objects
 
-- Raise a Domain Event with `Raise` from inside the aggregate. Never clear Domain Events and never set `Version`: the Unit of Work owns both. It takes and clears Domain Events when it runs their handlers (see [persistence.md](persistence.md)); versions arrive with #11. Raising an event does not change the version.
+- Raise a Domain Event with `Raise` from inside the aggregate. Never clear Domain Events and never set `Version`: the Unit of Work owns both. It takes and clears Domain Events when it runs their handlers (see [persistence.md](persistence.md)); versions are not yet documented here (#11). Raising an event does not change the version.
 - Entities are equal when type and ID are equal; do not override equality.
 - Declare a value object as a record deriving from `ValueObject`. Its equality covers every member; a collection member compares by reference, so wrap it in a value object of its own.
 
