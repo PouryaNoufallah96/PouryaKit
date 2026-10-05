@@ -15,11 +15,11 @@ public interface ISnapshotMappers
     bool Declares(Type aggregateType);
 
     /// <summary>
-    /// Throws when one Snapshot the running Operation's Module declared covers more than one of
-    /// <paramref name="aggregateRoots"/>, the roots of the aggregate hierarchies its Unit of Work maps: each root has keys
-    /// of its own, which one Snapshot's identities and versions cannot tell apart.
+    /// Throws when one Snapshot the running Operation's Module declared covers aggregates of more than one mapped
+    /// hierarchy. <paramref name="mappedAggregates"/> holds every aggregate type the Unit of Work maps, each with the root
+    /// of its hierarchy: each root has keys of its own, which one Snapshot's identities and versions cannot tell apart.
     /// </summary>
-    void CheckKeySpaces(IReadOnlyCollection<Type> aggregateRoots);
+    void CheckKeySpaces(IReadOnlyDictionary<Type, Type> mappedAggregates);
 
     /// <summary>
     /// The Snapshot of <paramref name="aggregate"/> under each contract the running Operation's Module declared for it,

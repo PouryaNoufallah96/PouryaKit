@@ -14,7 +14,7 @@ internal sealed record PinId(Guid Value) : TypedId<Guid>(Value);
 
 // An aggregate that is deleted when removed, with an auditable card on an optional key and a pin on a required key that
 // is soft-deletable and auditable itself: what removing the tray does to each is decided before the save.
-internal sealed class Tray : AggregateRoot<TrayId>, IDeskItem
+internal sealed class Tray : AggregateRoot<TrayId>
 {
     private readonly List<Card> _cards = [];
     private readonly List<Pin> _pins = [];

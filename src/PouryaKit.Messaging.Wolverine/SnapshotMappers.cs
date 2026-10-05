@@ -36,16 +36,19 @@ internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation ope
         return Declared.Any(snapshot => snapshot.Aggregate.IsAssignableFrom(aggregateType));
     }
 
-    public void CheckKeySpaces(IReadOnlyCollection<Type> aggregateRoots)
+    public void CheckKeySpaces(IReadOnlyDictionary<Type, Type> mappedAggregates)
     {
-        ArgumentNullException.ThrowIfNull(aggregateRoots);
+        ArgumentNullException.ThrowIfNull(mappedAggregates);
         foreach (var snapshot in Declared)
         {
-            List<Type> covered = [.. aggregateRoots.Where(snapshot.Aggregate.IsAssignableFrom)];
-            if (covered.Count > 1)
+            List<Type> roots =
+            [
+                .. mappedAggregates.Where(mapped => snapshot.Aggregate.IsAssignableFrom(mapped.Key)).Select(mapped => mapped.Value).Distinct(),
+            ];
+            if (roots.Count > 1)
             {
                 throw new InvalidOperationException(
-                    $"The Snapshot {snapshot.Snapshot.FullName} is declared for {snapshot.Aggregate.FullName}, which the separately mapped aggregates {string.Join(", ", covered.Select(root => root.FullName))} all are. Their keys are their own, so their Snapshots would share identities and versions, and a receiver would turn one aggregate's away for another's. Declare a Snapshot for each aggregate, or for a type of one mapped hierarchy."
+                    $"The Snapshot {snapshot.Snapshot.FullName} is declared for {snapshot.Aggregate.FullName}, which covers aggregates of the separately mapped hierarchies of {string.Join(", ", roots.Select(root => root.FullName))}. Their keys are their own, so their Snapshots would share identities and versions, and a receiver would turn one aggregate's away for another's. Declare a Snapshot for each aggregate, or for a type of one mapped hierarchy."
                 );
             }
         }
@@ -65,10 +68,10 @@ internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation ope
                         declared =>
                             (Mapping)Activator.CreateInstance(typeof(Mapping<,>).MakeGenericType(declared.Aggregate, declared.Snapshot))!
                     );
-                    var mapper = scope.GetRequiredService(snapshot.Mapper);
-                    // A mapper only reads: a command it sends is refused, and so is every write the Kit guards.
+                    // A mapper only reads, from its construction on: a command it sends is refused, and so is every
+                    // write the Kit guards.
                     using var reading = operation.OnlyReading("a Snapshot mapper");
-                    return mapping.Map(mapper, aggregate, removed);
+                    return mapping.Map(scope.GetRequiredService(snapshot.Mapper), aggregate, removed);
                 }),
         ];
     }

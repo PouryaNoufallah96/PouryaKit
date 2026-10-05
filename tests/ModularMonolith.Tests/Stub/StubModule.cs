@@ -44,6 +44,8 @@ public sealed class StubModule : IModuleDefinition
             "stub.product-keyed-snapshots",
             typeof(StubModule)
         );
+        module.PublishSnapshot<Case, CaseSnapshotV1, CaseSnapshotMapper>("stub.case-snapshot.v1", typeof(StubModule));
+        module.Subscribe<CaseSnapshotV1, RecordSnapshotIntegrationEventHandler<CaseSnapshotV1>>("stub.case-snapshots", typeof(StubModule));
         module.Publish<NoteCirculatedV1>("stub.note-circulated.v1", typeof(StubModule));
         module.Subscribe<NoteCirculatedV1, LedgerCirculatedNoteIntegrationEventHandler>(Circulation.Ledger, typeof(StubModule));
         module.Subscribe<NoteCirculatedV1, ArchiveCirculatedNoteIntegrationEventHandler>(Circulation.Archive, typeof(StubModule));

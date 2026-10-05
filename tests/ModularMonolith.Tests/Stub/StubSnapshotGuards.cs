@@ -12,8 +12,10 @@ namespace ModularMonolith.Tests.Stub;
 // Aggregates whose Snapshots test what the Kit refuses or keeps apart: a shelf, with a composite string key, a list of
 // labels changed in place and a complex size, whose mapper misbehaves when a label asks it to; a counter, whose key the
 // database generates; and a leaflet, keyed by Catalog's product IDs, so a Snapshot the Stub declares for every aggregate
-// keyed that way could reach Catalog's products too. Two declarations only a test's own Host makes: one for every desk
-// item, which folders and trays both are, each mapped with keys of its own, and one of shelves made without a Module.
+// keyed that way could reach Catalog's products too. The Stub also declares one Snapshot for its cases, two aggregates of
+// one mapped hierarchy. Three declarations only a test's own Host makes: one for every desk item, which a folder is and
+// so is a pencil case, of another hierarchy with keys of its own; one of shelves made without a Module; and one of
+// leaflets whose mapper writes while it is built.
 
 internal sealed class Shelf : AggregateRoot<string>
 {
@@ -271,4 +273,24 @@ internal sealed class MislaidShelfSnapshotMapper : ISnapshotMapper<Shelf, Mislai
     public MislaidShelfSnapshotV1 Map(Shelf shelf) => new(shelf.Aisle, shelf.Bay, shelf.Version);
 
     public MislaidShelfSnapshotV1 Tombstone(Shelf shelf) => new(shelf.Aisle, shelf.Bay, shelf.Version);
+}
+
+internal sealed record CaseSnapshotV1(Guid CaseId, string Kind, bool IsRemoved, long Version);
+
+internal sealed class CaseSnapshotMapper : ISnapshotMapper<Case, CaseSnapshotV1>
+{
+    public CaseSnapshotV1 Map(Case @case) => new(@case.Id.Value, @case.GetType().Name, IsRemoved: false, @case.Version);
+
+    public CaseSnapshotV1 Tombstone(Case @case) => new(@case.Id.Value, @case.GetType().Name, IsRemoved: true, @case.Version);
+}
+
+internal sealed record LeafletSnapshotV1(Guid ProductId, long Version);
+
+internal sealed class LeafletSnapshotMapperThatWritesWhenBuilt : ISnapshotMapper<Leaflet, LeafletSnapshotV1>
+{
+    public LeafletSnapshotMapperThatWritesWhenBuilt(IUnitOfWorkConnection unitOfWork) => _ = unitOfWork.Join();
+
+    public LeafletSnapshotV1 Map(Leaflet leaflet) => new(leaflet.Id.Value, leaflet.Version);
+
+    public LeafletSnapshotV1 Tombstone(Leaflet leaflet) => new(leaflet.Id.Value, leaflet.Version);
 }
