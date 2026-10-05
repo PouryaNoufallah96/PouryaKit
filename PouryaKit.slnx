@@ -9,6 +9,11 @@
     <Project Path="src/PouryaKit.Testing/PouryaKit.Testing.csproj" />
     <Project Path="src/PouryaKit.Validation/PouryaKit.Validation.csproj" />
   </Folder>
+  <Folder Name="/samples/" />
+  <Folder Name="/samples/ModularMonolith/">
+    <Project Path="samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj" />
+    <Project Path="samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/PouryaKit.Cqrs.Tests.Module/PouryaKit.Cqrs.Tests.Module.csproj" />
     <Project Path="tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.csproj" />
