@@ -18,6 +18,9 @@ Verified in ticket #11 (2026-10-05), EF Core 10.0.12 / Npgsql 10.0.3; check the 
 - `PouryaKitDbContext`'s constructor touches `ChangeTracker`, which builds the model: a model-convention refusal throws from `new MyContext()`, not from `.Model`.
 - Converting a removed soft-deletable entry Deleted -> Unchanged keeps the Operation's earlier changes to it (checked: a rename before removal was saved).
 - `AppFixture.RowsAsync` returns `DBNull.Value` for SQL null, not null.
+- #11 second fix round (F5): with `CascadeDeleteTiming.OnSaveChanges`, EF cascades hard deletes inside `SaveChanges` (dependent Deleted, or optional key cleared -> Modified), after the prepare step. The prepare step now calls `ChangeTracker.CascadeChanges()` after the soft-delete conversion. `CascadeChanges` also deletes severed orphans, so `DeleteOrphansTiming` must stay `Immediate` (pinned in `PouryaKitDbContext`): orphans are then Deleted at the prepare step's first DetectChanges and a soft-deletable one is converted.
+- Observing save-time mutation honestly: subscribe `DbContext.SavingChanges` (raised before the save's DetectChanges and cascades) and `ChangeTracker.StateChanged`, and record any transition to Added/Modified/Deleted after saving began (Stub `EditTrayCommand`). Accepting changes after the save goes only to Unchanged/Detached.
+- An EF base type with `ToTable` and derived types configured without one defaulted to one table per derived type in EF 10 here; say `UseTphMappingStrategy()` to get one table. Keys to sibling derived types share the base's `IKey` (F6).
 - A domain transition that raises an event (Product.Remove) needs its own once-guard: a removed aggregate is still found by later queries in the Operation until the prepare step marks it.
 
 **Why:** each cost a run or would have let a test pass vacuously.

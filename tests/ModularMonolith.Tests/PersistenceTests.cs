@@ -30,16 +30,22 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["catalog", "categories"],
                 ["catalog", "products"],
                 ["stub", "__EFMigrationsHistory"],
+                ["stub", "books"],
+                ["stub", "cards"],
+                ["stub", "cases"],
                 ["stub", "folders"],
                 ["stub", "note_tallies"],
                 ["stub", "notes"],
                 ["stub", "pages"],
+                ["stub", "pencils"],
+                ["stub", "pins"],
                 ["stub", "stickers"],
+                ["stub", "trays"],
             ],
             tables
         );
         Assert.Equal(
-            ["catalog Initial", "catalog AddCategories", "catalog PersistencePreparation", "stub Initial", "stub NoteTallies", "stub Folders", "stub Stickers"],
+            ["catalog Initial", "catalog AddCategories", "catalog PersistencePreparation", "stub Initial", "stub NoteTallies", "stub Folders", "stub Stickers", "stub TraysAndCases"],
             history.Select(row => $"{row[0]} {((string)row[1]).Split('_', 2)[1]}")
         );
         // Typed IDs are stored as their Guid values with no ID configuration in the Product mapping.
