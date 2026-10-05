@@ -28,18 +28,19 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
     }
 
     [Fact]
-    public async Task A_failed_result_leaves_nothing_written_without_the_modularity_package()
+    public async Task A_query_sent_through_the_dispatcher_reads_without_the_modularity_package()
     {
+        var id = await Fixture.ScalarAsync<long>("insert into stub.notes (text, version) values ('solo', 0) returning id");
         await using var services = SingleModuleServices();
         await using var scope = services.CreateAsyncScope();
         scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("single-module")));
 
-        var result = await scope
+        var found = await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
-            .SendAsync(new WriteNoteThenFailCommand("draft", Ending.Fail), TestContext.Current.CancellationToken);
+            .QueryAsync(new FindNotesQuery(id, "solo"), TestContext.Current.CancellationToken);
 
-        Assert.Equal(WriteNoteThenFailCommandHandler.Rejected, Assert.Single(result.Errors));
-        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.notes"));
+        Assert.Equal("solo", found.Value.ById?.Text);
+        Assert.Equal(1, found.Value.Count);
     }
 
     private ServiceProvider SingleModuleServices()
