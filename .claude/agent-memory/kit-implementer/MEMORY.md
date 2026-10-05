@@ -1,0 +1,2 @@
+- [.NET test conventions](dotnet-test-conventions.md) — MTP + xunit.v3 4.x, zero-test failure, nuget.config/NU1507, SDK pin band
+- [Worktree and check gotchas](worktree-and-check-gotchas.md) — stale worktree base, refused shell compounds, no colons in skill frontmatter
