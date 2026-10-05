@@ -5,8 +5,8 @@ using PouryaKit.Domain;
 
 namespace PouryaKit.Messaging.Wolverine;
 
-// Runs the mappers in the committing Operation's scope, only those its own Module declared: a declaration for a base
-// type or an interface never reaches another Module's aggregates. A mapper and its aggregate may be internal: they are
+// Runs the mappers in the committing Operation's scope, only those its own Module declared, each as a step that only
+// reads: a declaration for a base type or an interface never reaches another Module's aggregates. A mapper and its aggregate may be internal: they are
 // only ever named through reflection, never in generated code.
 internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation operation, IServiceProvider scope) : ISnapshotMappers
 {
@@ -59,15 +59,17 @@ internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation ope
             .. Declared
                 .Where(snapshot => snapshot.Aggregate.IsInstanceOfType(aggregate))
                 .Select(snapshot =>
-                    Mappings
-                        .GetOrAdd(
-                            snapshot,
-                            declared =>
-                                (Mapping)
-                                    Activator.CreateInstance(typeof(Mapping<,>).MakeGenericType(declared.Aggregate, declared.Snapshot))!
-                        )
-                        .Map(scope.GetRequiredService(snapshot.Mapper), aggregate, removed)
-                ),
+                {
+                    var mapping = Mappings.GetOrAdd(
+                        snapshot,
+                        declared =>
+                            (Mapping)Activator.CreateInstance(typeof(Mapping<,>).MakeGenericType(declared.Aggregate, declared.Snapshot))!
+                    );
+                    var mapper = scope.GetRequiredService(snapshot.Mapper);
+                    // A mapper only reads: a command it sends is refused, and so is every write the Kit guards.
+                    using var reading = operation.OnlyReading("a Snapshot mapper");
+                    return mapping.Map(mapper, aggregate, removed);
+                }),
         ];
     }
 

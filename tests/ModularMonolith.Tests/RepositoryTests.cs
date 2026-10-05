@@ -109,7 +109,7 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
                 .SendAsync(new WriteNoteThroughQueryCommand("nested"), TestContext.Current.CancellationToken)
         );
 
-        Assert.StartsWith("A query, an authorizer or a validator asked to write", thrown.Message);
+        Assert.StartsWith("Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write", thrown.Message);
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.notes"));
     }
 

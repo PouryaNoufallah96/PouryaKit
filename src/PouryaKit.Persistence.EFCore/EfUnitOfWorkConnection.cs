@@ -16,7 +16,7 @@ internal sealed class EfUnitOfWorkConnection(IUnitOfWork unitOfWork, Operation o
         if (!operation.MayChangeState)
         {
             throw new InvalidOperationException(
-                "A query, an authorizer or a validator asked to write through the Unit of Work. They only read; write with plain SQL from a command's handler or a Domain Event Handler."
+                "Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write through the Unit of Work. Write from a command's handler or a Domain Event Handler."
             );
         }
 

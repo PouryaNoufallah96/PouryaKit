@@ -1,3 +1,4 @@
+using Dapper;
 using Catalog.Products.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -47,19 +48,48 @@ internal sealed record ShelfAnnouncedDomainEvent(string Aisle, string Bay) : Dom
 
 internal sealed record ShelfSnapshotV1(string Aisle, string Bay, int Labels, bool IsRemoved, long Version);
 
-internal sealed class ShelfSnapshotMapper(IDispatcher dispatcher) : ISnapshotMapper<Shelf, ShelfSnapshotV1>
+internal sealed class ShelfSnapshotMapper(
+    IDispatcher dispatcher,
+    IRepository<Shelf, string> shelves,
+    IUnitOfWorkConnection unitOfWork
+) : ISnapshotMapper<Shelf, ShelfSnapshotV1>
 {
     public const string AddsALabel = "mapper adds a label";
     public const string Resizes = "mapper resizes";
     public const string Announces = "mapper announces";
-    public const string SendsAFailingCommand = "mapper sends a failing command";
+    public const string SendsACommand = "mapper sends a command";
+    public const string SwallowsItsRefusedCommand = "mapper swallows its refused command";
+    public const string AddsAShelf = "mapper adds a shelf";
+    public const string JoinsTheConnection = "mapper joins the connection";
 
+    // A mapper is synchronous, so these wait for what they start.
     public ShelfSnapshotV1 Map(Shelf shelf)
     {
-        if (shelf.Labels.Contains(SendsAFailingCommand))
+        if (shelf.Labels.Contains(SendsACommand))
         {
-            // A mapper is synchronous; this one waits for the command, then ignores its Result.
-            _ = dispatcher.SendAsync(new RefuseCommand(), CancellationToken.None).GetAwaiter().GetResult();
+            _ = dispatcher.SendAsync(new MarkShelfCommand(shelf.Aisle), CancellationToken.None).GetAwaiter().GetResult();
+        }
+
+        if (shelf.Labels.Contains(SwallowsItsRefusedCommand))
+        {
+            try
+            {
+                _ = dispatcher.SendAsync(new MarkShelfCommand(shelf.Aisle), CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (InvalidOperationException)
+            {
+                // Ignored, as a careless mapper would.
+            }
+        }
+
+        if (shelf.Labels.Contains(AddsAShelf))
+        {
+            shelves.AddAsync(Shelf.Put(shelf.Aisle, "added by its mapper"), CancellationToken.None).GetAwaiter().GetResult();
+        }
+
+        if (shelf.Labels.Contains(JoinsTheConnection))
+        {
+            _ = unitOfWork.Join();
         }
 
         if (shelf.Labels.Contains(AddsALabel))
@@ -203,13 +233,24 @@ internal sealed class RecordSnapshotIntegrationEventHandler<TSnapshot>(Integrati
     }
 }
 
-internal sealed record RefuseCommand : Command;
+internal sealed record MarkShelfCommand(string Aisle) : Command;
 
-internal sealed class RefuseCommandHandler : CommandHandler<RefuseCommand>
+// Would succeed: it writes a row with plain SQL in the Operation's transaction, which no mapper guard could see.
+internal sealed class MarkShelfCommandHandler(IUnitOfWorkConnection unitOfWork) : CommandHandler<MarkShelfCommand>
 {
-    public static readonly Error Refused = Error.Conflict("Stub.Refused", "The command was refused.");
-
-    public override Task<Result> Handle(RefuseCommand command, CancellationToken cancellationToken) => Task.FromResult<Result>(Refused);
+    public override async Task<Result> Handle(MarkShelfCommand command, CancellationToken cancellationToken)
+    {
+        var (connection, transaction) = unitOfWork.Join();
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                "insert into stub.note_tallies (text, count) values (@Aisle, 1)",
+                command,
+                transaction,
+                cancellationToken: cancellationToken
+            )
+        );
+        return Result.Success();
+    }
 }
 
 internal interface IDeskItem : IAggregateRoot;
