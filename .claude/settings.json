@@ -16,6 +16,9 @@
   "permissions": {
     "ask": ["Bash(git push *)"]
   },
+  "worktree": {
+    "baseRef": "head"
+  },
   "hooks": {
     "PreToolUse": [
       {
