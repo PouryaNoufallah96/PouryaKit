@@ -76,7 +76,7 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
 
 ## Writing with plain SQL in the Unit of Work
 
-A Module-internal table that no aggregate maps, such as a projection, a read model or a tally, may be written with plain SQL that commits or rolls back with the Operation. Inject `IUnitOfWorkConnection` (`PouryaKit.Persistence`, registered by `UsePostgres`) and pass its transaction to every statement:
+A Module-internal table that no aggregate maps, such as a projection, a read model or a tally, may be written with plain SQL that commits or rolls back with the Operation. Inject `IUnitOfWorkConnection` (`PouryaKit.Persistence`, registered by `UsePostgres`) and pass its transaction to every statement. The Proving Sample's projection is Inventory's copy of Catalog's products, which its Integration Event Handler writes this way from each Snapshot ([messaging.md](messaging.md#keeping-a-copy)); a tally shows the same in a command's handler:
 
 ```csharp
 using Dapper;
@@ -109,7 +109,7 @@ internal sealed class WriteNoteCommandHandler(IRepository<Note, NoteId> notes, I
 }
 ```
 
-- `Join()` returns the active Unit of Work's connection and transaction. Call it only from a command's handler or a Domain Event Handler. It throws `InvalidOperationException` in a query, an authorizer or a validator at any depth, including a query sent from a command's handler, and wherever no Unit of Work is active.
+- `Join()` returns the active Unit of Work's connection and transaction. Call it only from a command's handler, a Domain Event Handler, or a Notification or Integration Event Handler, whose delivery runs as a command. It throws `InvalidOperationException` in code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, such as a Snapshot mapper, at any depth, including a query sent from a command's handler, and wherever no Unit of Work is active.
 - Pass the transaction to every statement through `CommandDefinition`. The connection and the transaction belong to the Unit of Work: never dispose, commit or roll back either.
 - Write only to the Module's own tables that no aggregate maps. An aggregate changes only through its repository; a plain-SQL write to its table bypasses its version, its audit and soft-delete fields and its Snapshots.
 - The statement runs when you call it, inside the transaction, before the Unit of Work saves what the repositories track. It cannot see or reference rows added through a repository in the same Operation.
