@@ -252,6 +252,7 @@ An Integration Event is delivered the same way, sent after the commit, in a new 
 ## Receipts
 
 - A Module keeps its handlers' Receipts in a table `pouryakit_receipts` in its own schema, keyed by the subscription name, lower-cased, and the Notification's or Integration Event's identity, the Domain Event's `Id`. The table is not part of the Module's model, so a migration creates it: each Module that declares a Notification Handler or subscribes an Integration Event Handler adds one that calls `CreateReceiptTable` with the Module's schema. Inventory calls it in its first migration, beside its own tables. A Module that publishes Integration Events needs it too: the Outbox records each publication there, under the wire name followed by `#published`, which no subscription name can take.
+- A publishing Module's table also holds one row per Domain Event and wire name it published for it, keyed `<wire name>#published`. That row is how the Kit refuses a second Notification Handler publishing the same type for one Domain Event; it is not a Receipt, and no subscription name can equal it.
 - Add it with `dotnet ef migrations add Receipts` and the Module's `--project`, `--context` and `--output-dir`, as in [persistence.md](persistence.md#migrations). The model did not change, so the migration is empty and the snapshot stays as it was; fill its `Up` and `Down`:
 
 ```csharp
