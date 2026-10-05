@@ -6,7 +6,9 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 /// The table a Module keeps, beside its Receipts, the newest version of each aggregate each of its subscriptions to a
 /// Snapshot has applied, so a Snapshot is applied only when it is newer and a late one never undoes a newer one or a
 /// Tombstone. It is not part of the Module's model: a migration creates it with
-/// <see cref="CreateSnapshotVersionTable"/>, once, in every Module that subscribes to a Snapshot.
+/// <see cref="CreateSnapshotVersionTable"/>, once, in every Module that subscribes to a Snapshot. A row is never removed
+/// and its version only grows, so the key of an aggregate deleted outright must never be used again: the new
+/// aggregate's Snapshots would be turned away until its version passed the old Tombstone's.
 /// </summary>
 public static class SnapshotVersionTable
 {

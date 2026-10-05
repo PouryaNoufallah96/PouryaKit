@@ -7,12 +7,16 @@ namespace PouryaKit.Messaging.Wolverine;
 /// </summary>
 public interface ISnapshotMappers
 {
-    /// <summary>True when a Snapshot is declared for <paramref name="aggregateType"/> or a type it derives from.</summary>
+    /// <summary>
+    /// True when the running Operation's Module declared a Snapshot for <paramref name="aggregateType"/> or a type it
+    /// derives from.
+    /// </summary>
     bool Declares(Type aggregateType);
 
     /// <summary>
-    /// The Snapshot of <paramref name="aggregate"/> under each contract declared for it, or its Tombstone when
-    /// <paramref name="removed"/>, each built by the contract's mapper; none when nothing is declared for it.
+    /// The Snapshot of <paramref name="aggregate"/> under each contract the running Operation's Module declared for it,
+    /// or its Tombstone when <paramref name="removed"/>, each built by the contract's mapper; none when nothing is
+    /// declared for it.
     /// </summary>
     IReadOnlyList<object> Map(object aggregate, bool removed);
 }

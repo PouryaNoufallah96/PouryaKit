@@ -85,27 +85,19 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal([["grey", 1L]], await Fixture.RowsAsync("select label_colour, version from stub.folders"));
     }
 
-    [Theory]
-    [InlineData(nameof(FolderEdit.Relabel), "red", 2)]
-    [InlineData(nameof(FolderEdit.RewritePage), "grey", 2)]
-    [InlineData(nameof(FolderEdit.TearOutPage), "grey", 1)]
-    [InlineData(nameof(FolderEdit.PeelSticker), "grey", 2)]
-    public async Task A_change_to_only_an_owned_part_or_a_child_of_an_aggregate_publishes_its_snapshot(
-        string edit,
-        string colour,
-        int pages
-    )
+    [Fact]
+    public async Task A_change_made_only_through_a_child_of_an_aggregate_publishes_its_snapshot()
     {
         var folder = Guid.CreateVersion7();
         await Fixture.WaitForDeliveriesAsync(() => StubAsync(new CreateFolderCommand(folder)), TestContext.Current.CancellationToken);
 
         var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
-            () => StubAsync(new EditFolderCommand(folder, Enum.Parse<FolderEdit>(edit))),
+            () => StubAsync(new EditFolderCommand(folder, FolderEdit.RewritePage)),
             TestContext.Current.CancellationToken
         );
 
         Assert.Single(deliveries, delivery => delivery.Subscription == FolderSubscription);
-        Assert.Equal(new FolderSnapshotV1(folder, "drafts", colour, pages, false, 2L), FolderSnapshots(folder)[^1]);
+        Assert.Equal(new FolderSnapshotV1(folder, "drafts", "grey", 2, false, 2L), FolderSnapshots(folder)[^1]);
     }
 
     [Fact]
@@ -265,6 +257,74 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.StartsWith("A Snapshot mapper changed a Folder the Operation saves", thrown.Message);
         Assert.Equal([["drafts", "grey", 1L]], await Fixture.RowsAsync("select name, label_colour, version from stub.folders"));
+    }
+
+    [Theory]
+    [InlineData(ShelfSnapshotMapper.AddsALabel, "A Snapshot mapper changed a Shelf the Operation saves")]
+    [InlineData(ShelfSnapshotMapper.Resizes, "A Snapshot mapper changed a Shelf the Operation saves")]
+    [InlineData(ShelfSnapshotMapper.Announces, "A Snapshot mapper raised a Domain Event on a Shelf")]
+    public async Task A_snapshot_mapper_that_changes_a_value_in_place_or_a_complex_property_or_raises_a_domain_event_fails_the_operation(
+        string mischief,
+        string error
+    )
+    {
+        // A new shelf, so it is already Added when its mapper runs: its state cannot show the change.
+        var thrown = await Fixture.AssertNothingSentAsync(
+            () => Assert.ThrowsAsync<InvalidOperationException>(() => StubAsync(new PutShelvesCommand([["A1", "B1", mischief]]))),
+            TestContext.Current.CancellationToken
+        );
+
+        Assert.StartsWith(error, thrown.Message);
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.shelves"));
+    }
+
+    [Fact]
+    public async Task Composite_keys_whose_parts_join_alike_keep_their_snapshots_apart()
+    {
+        await Fixture.WaitForDeliveriesAsync(
+            () => StubAsync(new PutShelvesCommand([["a/b", "c"], ["a", "b/c"]])),
+            TestContext.Current.CancellationToken
+        );
+
+        Assert.Equal(
+            [new ShelfSnapshotV1("a", "b/c", 0, false, 1L), new ShelfSnapshotV1("a/b", "c", 0, false, 1L)],
+            Received.All.Select(received => received.IntegrationEvent).OfType<ShelfSnapshotV1>().Where(snapshot => snapshot.Aisle.StartsWith('a')).OrderBy(snapshot => snapshot.Aisle, StringComparer.Ordinal)
+        );
+        Assert.Equal(
+            2L,
+            await Fixture.ScalarAsync<long>("select count(distinct aggregate_id) from stub.pouryakit_snapshot_versions where subscription = 'stub.shelf-snapshots'")
+        );
+    }
+
+    [Fact]
+    public async Task A_snapshot_declared_for_a_shared_base_type_is_published_only_for_its_own_modules_aggregates()
+    {
+        Guid product = Guid.CreateVersion7(), leaflet = Guid.CreateVersion7();
+
+        await ChangeProductAsync(() => CreateProductAsync(product, "Lamp"));
+        await Fixture.WaitForDeliveriesAsync(() => StubAsync(new PrintLeafletCommand(leaflet, "Lamps")), TestContext.Current.CancellationToken);
+
+        // Catalog's product is keyed by a product ID too, yet publishes only Catalog's own Snapshot.
+        Assert.Equal(
+            [new ProductKeyedSnapshotV1(nameof(Leaflet), leaflet, false, 1L)],
+            Received.All.Select(received => received.IntegrationEvent).OfType<ProductKeyedSnapshotV1>().Where(snapshot => snapshot.ProductId == product || snapshot.ProductId == leaflet)
+        );
+        Assert.Equal([[product, 1L]], await Fixture.RowsAsync("select product_id, version from inventory.catalog_products"));
+    }
+
+    [Fact]
+    public async Task A_snapshot_of_an_aggregate_whose_key_the_database_generates_fails_the_operation_that_creates_it()
+    {
+        var thrown = await Fixture.AssertNothingSentAsync(
+            () => Assert.ThrowsAsync<InvalidOperationException>(() => StubAsync(new StartCounterCommand("visits"))),
+            TestContext.Current.CancellationToken
+        );
+
+        Assert.Equal(
+            "A Snapshot of Counter is declared, but its key is generated by the database when it is saved, after the Snapshot is built. Give Counter a key the application sets, such as a Guid version 7.",
+            thrown.Message
+        );
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.counters"));
     }
 
     [Fact]

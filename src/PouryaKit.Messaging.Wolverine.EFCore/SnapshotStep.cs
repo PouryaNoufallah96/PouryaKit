@@ -9,7 +9,8 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 // Step 4 of the Unit of Work's commit sequence: one Snapshot of each aggregate the prepare step advanced, under each
 // contract declared for it, a Tombstone when the Operation removed it, kept marked deleted or deleted outright, each
 // with the aggregate's key and the version being committed. Built from the prepared state, which nothing may change
-// afterwards (ADR 0003), so the mappers' run is checked against it: anything they changed fails the Operation.
+// afterwards (ADR 0003), so the mappers' run is checked against it: anything they changed, or a Domain Event they
+// raised, fails the Operation.
 internal static class SnapshotStep
 {
     public static List<(object Snapshot, string AggregateId, long Version)> Build(
@@ -38,11 +39,13 @@ internal static class SnapshotStep
         return built;
     }
 
-    // The key as the database stores it, so it is the same in every version of the aggregate.
-    private static string AggregateId(EntityEntry entry) =>
-        string.Join(
-            '/',
-            entry.Metadata.FindPrimaryKey()!.Properties.Select(property =>
+    // The key as the database stores it, so it is the same in every version of the aggregate. A key of one part is its
+    // value; one of several parts prefixes each with its length, so no two keys read alike.
+    private static string AggregateId(EntityEntry entry)
+    {
+        List<string> parts =
+        [
+            .. entry.Metadata.FindPrimaryKey()!.Properties.Select(property =>
             {
                 var key = entry.Property(property.Name);
                 return key.IsTemporary
@@ -54,37 +57,56 @@ internal static class SnapshotStep
                             ? converter.ConvertToProvider(key.CurrentValue)
                             : key.CurrentValue,
                         CultureInfo.InvariantCulture
-                    );
-            })
-        );
+                    ) ?? "";
+            }),
+        ];
+        return parts.Count == 1 ? parts[0] : string.Concat(parts.Select(part => $"{part.Length}:{part}"));
+    }
 
-    // Every tracked entry's state and values as the prepare step left them.
-    private sealed class PreparedState
+    // Every tracked entry's state, every value it saves, those of its complex types included, each copied by the
+    // property's own comparer so a value changed in place still differs, and the Domain Events each aggregate holds.
+    private sealed class PreparedState(List<(EntityEntry Entry, EntityState State, object?[] Values, int DomainEvents)> entries)
     {
-        private readonly List<(EntityEntry Entry, EntityState State, PropertyValues Values)> _entries;
-
-        private PreparedState(List<(EntityEntry, EntityState, PropertyValues)> entries) => _entries = entries;
-
         public static PreparedState Of(DbContext dbContext) =>
-            new([.. dbContext.ChangeTracker.Entries().Select(entry => (entry, entry.State, entry.CurrentValues.Clone()))]);
+            new(
+                [
+                    .. dbContext.ChangeTracker.Entries().Select(entry =>
+                        (
+                            entry,
+                            entry.State,
+                            entry.Metadata.GetFlattenedProperties().Select(property => property.GetValueComparer().Snapshot(entry.CurrentValues[property])).ToArray(),
+                            DomainEventsOf(entry)
+                        )
+                    ),
+                ]
+            );
 
         public void ThrowIfChanged(DbContext dbContext)
         {
             // Listing the entries detects what changed since.
             var tracked = dbContext.ChangeTracker.Entries().Count();
-            var changed = _entries.FirstOrDefault(prepared =>
+            var changed = entries.FirstOrDefault(prepared =>
                 prepared.Entry.State != prepared.State
-                || prepared.Entry.Metadata.GetProperties().Any(property => !Same(property, prepared.Values, prepared.Entry))
+                || prepared
+                    .Entry.Metadata.GetFlattenedProperties()
+                    .Select((property, index) => property.GetValueComparer().Equals(prepared.Values[index], prepared.Entry.CurrentValues[property]))
+                    .Contains(false)
             );
-            if (tracked != _entries.Count || changed.Entry is not null)
+            if (tracked != entries.Count || changed.Entry is not null)
             {
                 throw new InvalidOperationException(
                     $"A Snapshot mapper changed {(changed.Entry is { } entry ? $"a {entry.Metadata.ClrType.Name}" : "the entities")} the Operation saves, after persistence was prepared. A mapper only reads the aggregate: what it publishes must be what is committed."
                 );
             }
+
+            if (entries.FirstOrDefault(prepared => DomainEventsOf(prepared.Entry) != prepared.DomainEvents).Entry is { } raising)
+            {
+                throw new InvalidOperationException(
+                    $"A Snapshot mapper raised a Domain Event on a {raising.Metadata.ClrType.Name} after every Domain Event was handled, so nothing would ever handle it. A mapper only reads the aggregate."
+                );
+            }
         }
 
-        private static bool Same(IProperty property, PropertyValues prepared, EntityEntry entry) =>
-            property.GetValueComparer().Equals(prepared[property], entry.CurrentValues[property]);
+        private static int DomainEventsOf(EntityEntry entry) => entry.Entity is IAggregateRoot aggregate ? aggregate.DomainEvents.Count : 0;
     }
 }
