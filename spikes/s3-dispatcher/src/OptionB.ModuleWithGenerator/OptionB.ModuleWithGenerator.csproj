@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Option B, generator inside the Module, with the full behaviour set (Spike S3, review finding R1).
+       No InternalsVisibleTo: the Module's own compilation sees its internal types. -->
+  <ItemGroup>
+    <PackageReference Include="Mediator.SourceGenerator" Version="3.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OptionB.Pipeline\OptionB.Pipeline.csproj" />
+  </ItemGroup>
+</Project>

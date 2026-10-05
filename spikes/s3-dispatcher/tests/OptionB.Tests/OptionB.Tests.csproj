@@ -2,6 +2,8 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <!-- Left off so OrphanCommand builds for its runtime test. With <WarningsAsErrors>MSG0005</WarningsAsErrors>
+         the build fails: "CSC : error MSG0005: MediatorGenerator found message without any registered handler". -->
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Mediator.SourceGenerator" Version="3.0.2">
@@ -13,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\OptionB.Module\OptionB.Module.csproj" />
+    <ProjectReference Include="..\..\src\OptionB.ModuleWithGenerator\OptionB.ModuleWithGenerator.csproj" />
     <ProjectReference Include="..\..\src\OptionB.SelfGenerated.Alpha\OptionB.SelfGenerated.Alpha.csproj" />
     <ProjectReference Include="..\..\src\OptionB.SelfGenerated.Beta\OptionB.SelfGenerated.Beta.csproj" />
   </ItemGroup>

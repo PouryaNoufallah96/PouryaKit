@@ -90,8 +90,8 @@ public sealed class SourceGeneratedMediatorTests
         ], scope.ServiceProvider.GetRequiredService<OperationTrace>().Steps);
     }
 
-    // OrphanCommand has no handler. The Host build only warns (MSG0005) and the strict container builds;
-    // the failure surfaces on the first send.
+    // OrphanCommand has no handler. By default the Host build only warns (MSG0005) and the strict container
+    // builds; the failure surfaces on the first send. Opting in to WarningsAsErrors MSG0005 fails the build.
     [Fact]
     public async Task Missing_handler_is_only_a_build_warning_and_fails_on_first_send()
     {
