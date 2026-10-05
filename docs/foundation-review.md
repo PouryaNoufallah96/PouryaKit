@@ -216,6 +216,22 @@ pourya-kit/
 └── samples/ModularMonolith/        Catalog (2 aggregates), Inventory, Billing (second subscriber)
 ```
 
+Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its original wording:
+
+- `PouryaKit.Domain` has no `IDomainEvent`. A Domain Event derives from the abstract record `DomainEvent`, which
+  assigns its `Id` and `OccurredOn` once (ticket #6).
+- The unique-constraint → Error mapping, `MapUniqueConstraint`, lives in `PouryaKit.Persistence.EFCore`;
+  `PouryaKit.Persistence.Postgres` only reads the violated constraint's name from PostgreSQL's error (ticket #11).
+- The typed-ID conventions (G.3) store a typed ID as its value and never make a key database-generated: a numeric
+  typed ID the database generates needs `ValueGeneratedOnAdd()` in its entity's own mapping (ticket #8).
+- An aggregate-specific repository (G.4) derives from `EfRepository` and gets one protected `ListAsync<TResult>` that
+  returns a loaded list, never an `IQueryable` (ticket #12).
+- `tests/` follows the three seams of spec #1's Testing Decisions, not one project per package:
+  `ModularMonolith.Tests` (Gateway seam, the Proving Sample against PostgreSQL), `PouryaKit.Domain.Tests` (Domain seam)
+  and `PouryaKit.ArchitectureTests` (Structure seam), plus `PouryaKit.Cqrs.Tests` (with its test Module
+  `PouryaKit.Cqrs.Tests.Module`) and `PouryaKit.Validation.Tests`, which run the dispatcher and the validation step
+  without a database.
+
 ### Allowed references
 
 | Package | References | Third-party |
@@ -271,7 +287,8 @@ Notes on the choices:
      bump per changed aggregate;
   4. build snapshots from that final state — a deleted aggregate yields a versioned tombstone;
   5. write the outbox (domain notifications and snapshots), save and commit once.
-  Nothing mutates exported fields after step 3.
+  Nothing mutates exported fields after step 3. The sequence as built, with its rollback-only checks and where the
+  Snapshots are built, is in ADR 0003's amendment of 2026-10-06.
 - **`IUnitOfWork` lives in `PouryaKit.Cqrs`**, because the pipeline that calls it lives there. That removes
   `Persistence.Abstractions`, and lets a single-module vertical-slice API use Cqrs + EFCore without
   Modularity.
@@ -283,7 +300,7 @@ Notes on the choices:
 
 ### Full target catalogue
 
-The goal is a complete kit, not a minimal one. The 12 projects above are **wave 1** because every
+The goal is a complete kit, not a minimal one. The 13 projects above (12 until G.4; corrected 2026-10-06) are **wave 1** because every
 other capability sits on top of the execution core, and that core is the part no source gets right.
 Waves are a build order, not a cut list. A capability becomes a package only where the kit adds
 behaviour or a convention of its own; where .NET already ships the capability, the kit ships a
@@ -291,7 +308,7 @@ registration recipe inside the template instead of a wrapper.
 
 | Capability | Form | Wave | Best source | Kit's own contribution |
 |---|---|---|---|---|
-| Domain, CQRS, validation, modularity, persistence, messaging, web, testing | 12 packages above | 1 | section B | the execution core |
+| Domain, CQRS, validation, modularity, persistence, messaging, web, testing | 13 packages above | 1 | section B | the execution core |
 | API versioning, OpenAPI, Scalar | `PouryaKit.Web.OpenApi` | 2 | Woo `ApiVersioningExtensions.cs`, Cybernod `OpenApi/*` transformers | per-module route groups and version sets; security transformer that adds requirements |
 | Authorization | `PouryaKit.Security` | 2 | Cybernod `AuthExtensions.cs:47-59`, `UserAccessor` | actor/permission contracts, pipeline authorization step (also covers background commands, which Cybernod never authorizes), fallback policy on by default |
 | JWT bearer adapter | `PouryaKit.Security.JwtBearer` | 2 | Cybernod `ClerkExtensions.cs:95-149` minus Clerk | claim normalisation into `OperationContext`; no provider SDK |
@@ -311,6 +328,8 @@ registration recipe inside the template instead of a wrapper.
 ---
 
 ## D. Consuming application
+
+This section is the plan's sketch; the API as built is in the Kit's skill, `.agents/skills/pourya-kit/`.
 
 Layout follows Cybernod's real structure (documented from `Cybernod.Modules.Assets/AssetDiscovery`
 and `Cybernod.Modules.Identity/User`), with its naming drift normalised to one spelling:

@@ -263,6 +263,10 @@ These follow from Option C, not from preference:
   `KeyNotFoundException` for a queue that no subscription names (the rename test). It should throw a Kit exception that
   names the queue and says the subscription is unknown.
 
+*Both answered: owner decision 3 below, and `UnknownSubscriptionException` since ticket #16
+(`NotificationTests.Startup_fails_on_a_missing_an_invalid_or_a_duplicate_name`,
+`NotificationTests.A_stored_delivery_to_a_subscription_the_host_no_longer_declares_is_dead_lettered_with_a_kit_error`).*
+
 ## What this refines in ADR 0004
 
 - **How Notifications are distinguished.** ADR 0004's consequence says "distinguished by CLR type and local queue".
@@ -293,7 +297,7 @@ These follow from Option C, not from preference:
 
   Not tested: a persisted retry that fires after `InboxStaleTime` keeps its old insert time, so once it is owned again
   it is already past the stale time. A run longer than one recovery poll could then be handed out concurrently; that is
-  inferred from the same SQL.
+  inferred from the same SQL. *Tested by ticket #17; see its amendment below.*
 - **Attempt count.** With `RetryWithCooldown` the `attempts` column stayed 0 after a failure, after a kill and after a
   graceful stop, so in-memory retries start counting again after a crash. `ScheduleRetry` persisted 1.
 - **A removed subscription or type.** With Wolverine's default `UnknownMessageBehavior.LogOnly`, a stored delivery
@@ -385,7 +389,8 @@ needs neither. The dead-letter triage question is dissolved too: the subscriptio
   attempted.
 - **Packages.** The runtime package closure is the same as ADR 0004's, and its licence table applies.
 - **Seen by the reviewer, not repeated here.** Under Option C, a Notification Handler published an Integration Event
-  through a Unit of Work opened inside its delivery scope. The Spike has no test of this.
+  through a Unit of Work opened inside its delivery scope. The Spike has no test of this. *Tested since ticket #16:
+  `IntegrationEventTests.An_integration_event_is_stored_in_the_commit_of_the_publishing_notification_handlers_receipt`.*
 
 ## Amendment (2026-10-05, tickets #15 and #16)
 
@@ -440,3 +445,49 @@ and refine one of its invariants.
 - **A subscription removed while its type keeps another**, which "A removed subscription or type" above says was not
   tested separately, is now tested:
   `FailingDeliveryTests.A_stored_delivery_to_a_removed_subscription_is_dead_lettered_while_the_remaining_subscription_handles_its_own`.
+
+## Amendment (2026-10-06, Wave 1 as built)
+
+The decision above stands. Tickets #15, #16 and #18 fixed the formats below, which stored rows and every receiver now
+depend on, and the rules a consuming project must keep.
+
+- **Stored formats.** Each Module keeps its Receipts in its own schema, in the table `pouryakit_receipts`
+  (`subscription` text, `message_id` uuid, both the primary key), which a Module migration creates with
+  `CreateReceiptTable(schema)`; it is not part of the Module's EF Core model
+  (`src/PouryaKit.Messaging.Wolverine.EFCore/ReceiptTable.cs`). A publishing Module keeps there, too, one row per
+  Domain Event and Integration Event type it published, keyed `<wire name, lower-cased>#published` and the Domain
+  Event's `Id`; a subscription name cannot contain `#`, so the two never collide. A Module that subscribes to a
+  Snapshot keeps the newest version each subscription applied per aggregate in `pouryakit_snapshot_versions`
+  (`subscription`, `aggregate_id` text, `version` bigint; key `subscription`, `aggregate_id`), created with
+  `CreateSnapshotVersionTable(schema)` (`SnapshotVersionTable.cs`).
+- **Snapshot identity.** A Snapshot's identity, the Receipt's key for it, is a name-based UUID (RFC 9562 version 8)
+  from the SHA-256 of the lower-cased wire name, the aggregate's key and the version, so every delivery of one version
+  repeats it and two versions never share it (`src/PouryaKit.Messaging.Wolverine/SubscriptionDelivery.cs`). Changing
+  the formula would make Receipts already stored miss redeliveries.
+- **"Strictly newer" is the Kit's.** Plan section D's sketch left the version check to the receiving Feature. The
+  Kit's delivery step does it instead, after the Receipt and in the same transaction, with one conditional upsert that
+  replaces the stored version only with a greater one; the handler runs only when it did. A late, duplicated or
+  concurrent older Snapshot is never applied (`src/PouryaKit.Messaging.Wolverine/Deliver.cs`, `EfReceipts.cs`;
+  `SnapshotTests.Snapshots_delivered_in_reverse_order_leave_the_newest`,
+  `SnapshotTests.Two_versions_delivered_concurrently_leave_the_newer`,
+  `SnapshotTests.A_live_snapshot_delivered_after_the_tombstone_does_not_bring_the_copy_back`).
+- **The mapper.** `ISnapshotMapper<TAggregate, TSnapshot>` has two methods, `Map` for an aggregate that exists and
+  `Tombstone` for one the Operation removed, and the declaration names it:
+  `PublishSnapshot<TAggregate, TSnapshot, TMapper>(wireName, module)`. Plan section D sketched one method and two type
+  parameters.
+- **One Integration Event of each type per Domain Event.** The Outbox records each publication in the publishing
+  Module's Receipt table, in the delivery's transaction, so when two Notification Handlers of one Domain Event publish
+  the same type, the second delivery to commit fails instead of sending a second event every receiver would drop
+  (`IntegrationEventTests.A_second_notification_handler_of_one_domain_event_publishing_the_same_type_fails_instead_of_being_dropped`).
+- **No subscription, nothing written.** The Outbox writes no envelope for a Notification, Integration Event or Snapshot
+  that no subscription in the Host receives: it has no route (`WolverineOutbox.cs`). This changes when brokers arrive in
+  Wave 2: a subscriber may then live in another Host, so the publishing Host can no longer tell an unsubscribed type
+  from one subscribed elsewhere.
+- **What a consuming project must keep.**
+  - The key of an aggregate that publishes Snapshots is never used again after the aggregate is deleted outright:
+    every receiver keeps its Tombstone's version and would turn away the new aggregate's lower ones. The Kit's Guid
+    version 7 keys never are.
+  - An aggregate whose key the database generates cannot publish a Snapshot: the key is unknown when the Snapshot is
+    built, so the Operation that creates it fails
+    (`SnapshotTests.A_snapshot_of_an_aggregate_whose_key_the_database_generates_fails_the_operation_that_creates_it`).
+  - Nothing removes a Receipt or a Snapshot-version row, so both tables grow with the messages a Module receives.

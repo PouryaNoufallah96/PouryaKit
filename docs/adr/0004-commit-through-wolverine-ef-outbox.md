@@ -134,7 +134,8 @@ await outbox.FlushOutgoingMessagesAsync();         // only after a successful co
 
 ## Observed behaviour previously listed as inferred (plan section F)
 
-Per-retry scope, also listed in section F, was not examined and remains unverified (S2).
+Per-retry scope, also listed in section F, was not examined and remains unverified (S2). *Answered by ADR 0006, "What
+this refines in ADR 0004": each attempt runs in a new scope the Kit opens.*
 
 - **Send timing with the outbox.** Publishing writes the envelope row at once, inside the Unit of Work's
   transaction. With a Wolverine-mapped DbContext it is written at `SaveChangesAsync` instead. Nothing is sent
@@ -266,11 +267,12 @@ Wolverine documents are cited at tag `V6.46.0`.
   for modular monoliths that receive one envelope on several endpoints, which bears on separated per-handler
   queues. This was not tested.
 - Each Notification type had one handler here. What one local queue does with several handlers of the same
-  type was not tested.
+  type was not tested. *Answered by ADR 0006, "What this refines in ADR 0004"; the Kit gives each subscription its
+  own queue.*
 - Retry and recovery tests need short durability timers or Solo mode. The defaults take more than a minute
   to recover a dead node's envelopes. An `InboxStaleTime` shorter than a handler's run hands the envelope out
   again on every recovery cycle while the handler is still running.
-- Per-retry scope (plan section F) was not examined.
+- Per-retry scope (plan section F) was not examined. *Answered by ADR 0006, as above.*
 - Woo's block also sets `ConventionalLocalRoutingIsAdditive`, `UseDurableInboxOnAllListeners`,
   `UseDurableOutboxOnAllSendingEndpoints`, `RetryWithCooldown` and the inbox and outbox stale times. S1 used
   none of them, except `InboxStaleTime` in the stranded-Notification tests.
@@ -309,3 +311,17 @@ The decision above stands. Ticket #17 extended the cost of its `InboxStaleTime` 
   delays plus every attempt's run, queue wait included: an attempt that runs after it is handed out again while it
   runs, and the Receipt keeps the effect to one (`InboxStaleTimeTests`). The evidence, and the default retry delays
   shortened to fit, are in ADR 0006's amendment for ticket #17.
+
+## Amendment (2026-10-06, Wave 1 as built)
+
+The decision above stands. Ticket #15 met its one-instance invariant by another route than the text names.
+
+- **A new outbox for each commit attempt.** The decision and the invariant "One `IDbContextOutbox<T>` instance, one
+  scope, serves exactly one commit attempt" name the scope's `IDbContextOutbox<TDbContext>`. The Unit of Work's Outbox
+  builds a new `DbContextOutbox` for each commit attempt instead and enrolls the Unit of Work's DbContext in it, so an
+  instance that saw a rollback is never flushed and the invariant holds by construction
+  (`src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs`). A failed flush after the commit is logged and not
+  reported: the change committed, and a failure would invite the caller to make it twice; the store recovers the
+  envelopes after `InboxStaleTime`.
+- `DurabilitySettings.MessageIdentity` (Notes for S2) is still open; it belongs with brokers in Wave 2 (ADR 0006,
+  Consequences).

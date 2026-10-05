@@ -36,3 +36,11 @@ this decision on 2026-10-05.
   is unverified, so nothing relies on it. An Operation sent through a Gateway reads the Host's registered
   `TimeProvider`, so a test that needs a fixed time for Operations registers a fake one when it builds the Host.
 - Feature code never binds `DomainClock`; a handler that needs the time takes `TimeProvider` from the container.
+
+## Amendment (2026-10-06, Wave 1 as built)
+
+The decision above stands; the first consequence is met by another route. Tickets #15 and #16 run each delivery
+attempt through the dispatcher, as the Kit's internal `Deliver` command in the scope the delivery step opens
+(`src/PouryaKit.Messaging.Wolverine/SubscriptionDelivery.cs`), so the dispatcher binds the container's `TimeProvider`
+as it does for every Operation, and no delivery code calls `DomainClock.Use`. Whether an `AsyncLocal` set in an xUnit
+constructor or fixture reaches the test method is still unverified.
