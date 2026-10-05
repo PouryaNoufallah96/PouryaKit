@@ -1,3 +1,4 @@
+using Catalog.Categories.ValueObjects;
 using Catalog.Products.Data.Repository;
 using Catalog.Products.Entities;
 using Catalog.Products.ValueObjects;
@@ -16,10 +17,11 @@ internal sealed class ImportProductsCommandHandler(IProductRepository products)
         var names = command.Names.Select(name => name.Trim()).Distinct().ToList();
         var inUse = await products.ListNamesInUseAsync(names, cancellationToken);
 
+        var categoryId = new CategoryId(command.CategoryId);
         var imported = 0;
         foreach (var name in names.Except(inUse))
         {
-            var product = Product.Create(new ProductId(Guid.CreateVersion7()), name);
+            var product = Product.Create(new ProductId(Guid.CreateVersion7()), categoryId, name);
             if (product.IsFailure)
             {
                 return product.Errors;

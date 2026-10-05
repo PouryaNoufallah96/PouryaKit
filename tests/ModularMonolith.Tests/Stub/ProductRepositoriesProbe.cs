@@ -1,3 +1,4 @@
+using Catalog.Categories.ValueObjects;
 using Catalog.Products.Data.Repository;
 using Catalog.Products.Entities;
 using Catalog.Products.ValueObjects;
@@ -10,7 +11,7 @@ namespace ModularMonolith.Tests.Stub;
 // Sent through Catalog's Gateway, so it runs in Catalog's Unit of Work; StubModule only registers it, from this
 // assembly. It adds a product through the generic repository and finds it by ID through the product repository
 // before anything is saved: only a shared DbContext returns the same instance.
-internal sealed record ProbeProductRepositoriesCommand(Guid ProductId) : Command<bool>;
+internal sealed record ProbeProductRepositoriesCommand(Guid ProductId, Guid CategoryId) : Command<bool>;
 
 internal sealed class ProbeProductRepositoriesCommandHandler(
     IRepository<Product, ProductId> generic,
@@ -23,7 +24,7 @@ internal sealed class ProbeProductRepositoriesCommandHandler(
     )
     {
         var id = new ProductId(command.ProductId);
-        var product = Product.Create(id, "Lamp").Value;
+        var product = Product.Create(id, new CategoryId(command.CategoryId), "Lamp").Value;
         await generic.AddAsync(product, cancellationToken);
         return ReferenceEquals(product, await specific.FindAsync(id, cancellationToken));
     }
