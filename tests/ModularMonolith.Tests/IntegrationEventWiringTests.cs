@@ -1,4 +1,5 @@
 using System.Reflection;
+using Billing;
 using Catalog;
 using Catalog.Contracts.Products.Events.V1;
 using Inventory;
@@ -87,11 +88,16 @@ public sealed class IntegrationEventWiringTests
     }
 
     [Fact]
-    public void Inventory_knows_catalog_only_through_its_contracts_and_no_contract_or_module_references_a_transport()
+    public void Inventory_and_billing_know_catalog_only_through_its_contracts_and_no_contract_or_module_references_a_transport()
     {
         var inventory = ReferencedBy(typeof(InventoryModule).Assembly);
         Assert.Contains("Catalog.Contracts", inventory);
         Assert.DoesNotContain("Catalog", inventory);
+        var billing = ReferencedBy(typeof(BillingModule).Assembly);
+        Assert.Contains("Catalog.Contracts", billing);
+        Assert.DoesNotContain("Catalog", billing);
+        Assert.DoesNotContain("Inventory", billing);
+        Assert.DoesNotContain("Billing", inventory);
         // Contracts are plain records: nothing of the Kit, nothing of a transport.
         Assert.DoesNotContain(ReferencedBy(typeof(ProductCreatedV1).Assembly), name => name.StartsWith("PouryaKit", StringComparison.Ordinal));
         Assert.All(
@@ -99,7 +105,7 @@ public sealed class IntegrationEventWiringTests
             name => Assert.True(name == "PouryaKit.Domain" || name.StartsWith("System", StringComparison.Ordinal), name)
         );
         Assert.All(
-            [typeof(CatalogModule).Assembly, typeof(InventoryModule).Assembly],
+            [typeof(CatalogModule).Assembly, typeof(InventoryModule).Assembly, typeof(BillingModule).Assembly],
             module => Assert.DoesNotContain(ReferencedBy(module), name => name.StartsWith("Wolverine", StringComparison.Ordinal))
         );
     }

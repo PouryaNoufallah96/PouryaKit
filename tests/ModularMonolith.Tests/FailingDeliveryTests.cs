@@ -15,20 +15,23 @@ public sealed class FailingDeliveryTests(AppFixture app) : HostTest<AppFixture>(
 {
     private const string WireName = "stub.note-circulated.v1";
 
-    [Theory]
-    [InlineData(nameof(Failure.FailedResult), typeof(IntegrationEventHandlerFailedException))]
-    [InlineData(nameof(Failure.Exception), typeof(InvalidOperationException))]
-    public async Task A_failed_result_is_retried_like_an_exception_each_attempt_in_a_new_scope(string failure, Type lastFailure)
+    // A handler that returns a failed Result is proven retried, each attempt in a new scope, by
+    // IntegrationEventTests; this is the same path for one that throws.
+    [Fact]
+    public async Task A_handler_that_throws_is_retried_like_one_that_returns_a_failed_result_each_attempt_in_a_new_scope()
     {
         var text = Unique();
-        Circulation.Fail(Circulation.Archive, text, Enum.Parse<Failure>(failure));
+        Circulation.Fail(Circulation.Archive, text, Failure.Exception);
 
         await Fixture.WaitForDeliveriesAsync(() => CirculateAsync(new NoteToCirculateDomainEvent(text)), TestContext.Current.CancellationToken);
 
         var runs = Circulation.RunsOf(Circulation.Archive, text);
         Assert.Equal(1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count, runs.Count);
         Assert.Equal(runs.Count, runs.Select(run => run.Operation).Distinct().Count());
-        Assert.Equal(lastFailure.FullName, Assert.Single(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken)).ExceptionType);
+        Assert.Equal(
+            typeof(InvalidOperationException).FullName,
+            Assert.Single(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken)).ExceptionType
+        );
         // Each attempt rolled back, so none of them left its copy behind.
         Assert.Equal(0L, await CopiesAsync(Circulation.Archive, text));
     }
