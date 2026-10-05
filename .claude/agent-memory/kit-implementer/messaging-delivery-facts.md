@@ -20,5 +20,7 @@ Verified in ticket #15 (2026-10-05), WolverineFx 6.46.0; check the merged code b
 - Dead-Host proof in-process: set `((WolverineRuntime)runtime).StopMode = StopMode.Quick` before `StopAsync`: no drain and no ownership release, as a kill leaves it. A Solo Host's start clears node records and releases *all* ownership, which recovers it.
 - `Uri.TryCreate("x://12345/")`, a 64-char label, and 200-char names all round-trip as the host; only a trailing newline fails, and `^...$` regex accepts it (use `\A...\z`).
 
+- #15 last round: a delivery helper must wait for a settled store before its baseline (a running handler's cascade lands later). The store's own tables come from `((IFeatureSchema)messageDatabase).Objects` (Weasel.Core.Migrations), so Respawn can spare them by name when a Module shares the store schema. A Host with its store in a Module schema needs its own database (separate HostFixture, one container, ~1.6 s).
+
 **Why:** each cost a run or would make a delivery test pass vacuously.
 **How to apply:** for #16 (Integration Events through the same outbox seam and delivery step), #17 (dead letters) and #18 (Snapshots via `IUnitOfWorkOutbox`). Related: [[wolverine-spike-gotchas]], [[wolverine-6-spike-facts]], [[persistence-preparation-facts]].

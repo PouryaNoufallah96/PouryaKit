@@ -183,8 +183,9 @@ internal sealed class ProductRepository(IUnitOfWork unitOfWork)
 
 ## The Unit of Work
 
-- Each command Operation runs in one transaction that the Unit of Work owns. When the outermost handler returns a success and no nested command failed, it runs the Domain Event Handlers and checks again that nothing failed. Then it prepares persistence (soft-delete marks, versions, audit fields; below), saves once and commits. Nothing changes those fields after the prepare step.
-- A failed Result, a failed nested command or a failed Domain Event Handler rolls everything back, and nothing is prepared. An exception rolls back and reaches the Gateway's caller.
+- Each command Operation runs in one transaction that the Unit of Work owns. When the outermost handler returns a success and no nested command failed, it runs the Domain Event Handlers and checks again that nothing failed. Then it prepares persistence (soft-delete marks, versions, audit fields; below), writes the Operation's Notifications to the Outbox, saves once and commits, and only after the commit sends the Notifications ([messaging.md](messaging.md#what-the-kit-guarantees)). Nothing changes those fields after the prepare step.
+- A failed Result, a failed nested command or a failed Domain Event Handler rolls everything back, and nothing is prepared or written to the Outbox. An exception rolls back and reaches the Gateway's caller.
+- The Outbox write and the send are a Kit seam, `IUnitOfWorkOutbox` (`PouryaKit.Persistence.EFCore`), which `UsePouryaKitWolverine(connectionName)` registers. Feature code never uses it.
 - A save the database refuses for a concurrent change, or for a unique index the Module mapped, rolls everything back and fails the Operation with an Error ([Versions and conflicts](#versions-and-conflicts), [Unique values](#unique-values)). Any other database error stays an exception.
 - Nothing retries: no retrying execution strategy, no retry in the Unit of Work. To retry, send the command again through the Gateway.
 - A plain-SQL write to a Module-internal table that no aggregate maps joins this transaction through `IUnitOfWorkConnection` (`PouryaKit.Persistence`), from a command's handler or a Domain Event Handler only; see [dapper-reads.md](dapper-reads.md).
@@ -252,7 +253,7 @@ Its counterpart, `UncountProductInCategoryHandler`, handles `ProductRemovedDomai
 - A failed Result stops the handling at once, so no further handler or Domain Event runs; the whole Operation rolls back and fails with that handler's Errors. An exception rolls back and reaches the Gateway's caller.
 - A handler may send a nested command with an injected `IDispatcher`; it joins the same Unit of Work. If it fails, the whole Operation rolls back even when the handler ignores its Result and returns a success, and the Operation fails with the nested command's Errors.
 - A handler returns a Result and never saves, commits, begins a transaction or touches the Outbox.
-- Choose a Domain Event Handler to keep the Module's own aggregates consistent with each other in the same commit. Anything that reaches outside the Module's own data, such as sending an email, pushing to a client or publishing an Integration Event, belongs in a Notification Handler, which runs after the commit (#15, not yet available): a Domain Event Handler runs before the commit, so whatever it sent would stay sent when the Operation rolls back.
+- Choose a Domain Event Handler to keep the Module's own aggregates consistent with each other in the same commit. Anything that reaches outside the Module's own data, such as sending an email, pushing to a client or publishing an Integration Event, belongs in a Notification Handler, which runs after the commit ([messaging.md](messaging.md)): a Domain Event Handler runs before the commit, so whatever it sent would stay sent when the Operation rolls back.
 - Test it through the Gateway with the command whose aggregate raises its Domain Event: assert that both aggregates' rows are written, and that a failed reaction leaves neither.
 
 ## Migrations
