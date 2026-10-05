@@ -11,27 +11,40 @@ begin, run the Operation, `SaveChangesAsync`, commit, and only then `FlushOutgoi
 `IDbContextOutbox<TDbContext>`. Module DbContexts carry no Wolverine mapping. The EF mode is `Eager`.
 Nothing observed contradicts ADR 0001–0003 or section G.
 
+One gap remains for ticket #15. If the commit succeeds but the flush never happens, and the Host stays
+alive, the Notification is delayed rather than lost. It is delivered when the Host stops, or within
+`InboxStaleTime` if that is set. See "Committed but not flushed" below.
+
 ## Evidence
 
-Spike code: `spikes/s1-atomic-commit/` at commit `64e2b165ee7444b9c615812bcce25ae2d377115a`. It is not
-merged. Run on 2026-10-05 with `dotnet test spikes/s1-atomic-commit` (.NET SDK 10.0.401, Microsoft Testing
-Platform), against `postgres:18.6` in Testcontainers 4.15.0. 33 of 33 tests passed. Each test gets a fresh
-database. Catalog (`catalog` schema) and Inventory (`inventory` schema) each have their own DbContext, and
-each Module publishes one Notification to a durable local queue. The handler records every delivery in
-`spike.deliveries`. No EF retrying execution strategy is configured anywhere.
+The Spike code is `spikes/s1-atomic-commit/` at commit `72fefdec49c80c2473a122c14f01c7eafdbe332d`, reachable
+through tag `spike/s1-atomic-commit`. It is not merged. The first round of tests was committed at
+`64e2b16`.
+
+The tests were run on 2026-10-05 with `dotnet test spikes/s1-atomic-commit` (.NET SDK 10.0.401, Microsoft
+Testing Platform), against `postgres:18.6` in Testcontainers 4.15.0. 38 of 38 tests passed.
+
+- Each test gets a fresh database.
+- Catalog (`catalog` schema) and Inventory (`inventory` schema) each have their own DbContext.
+- Each Module publishes one Notification to a durable local queue, and the handler records every delivery in
+  `spike.deliveries`.
+- No EF retrying execution strategy is configured anywhere.
 
 | Point | Deciding test (class.method, all cases) | Observed |
 |---|---|---|
-| Atomic commit, each Module | `AtomicCommitTests.Commit_writes_business_row_and_envelope_row_in_one_transaction` (Catalog and Inventory × Raw and mapped × Eager and Lightweight) | After `SaveChangesAsync` and before commit, the Operation's own connection sees the business row and the envelope row, and a second connection sees neither. After commit both rows exist with the same `pg_xact_commit_timestamp`, which means one commit. The message is delivered only after the flush. |
+| Atomic commit, each Module | `AtomicCommitTests.Commit_writes_business_row_and_envelope_row_in_one_transaction` (Catalog and Inventory × Raw and mapped × Eager and Lightweight) | After `SaveChangesAsync` and before commit, the Operation's own connection sees the business row and the envelope row, and a second connection sees neither. After commit both rows exist with the same `pg_xact_commit_timestamp`, which means one commit. The Notification is then delivered. |
 | Rollback after save | `AtomicCommitTests.Exception_after_save_rolls_back_business_row_and_envelope_row` | No business row, no envelope row, and no delivery within 3 s. |
-| Failed Result | `AtomicCommitTests.Failed_outcome_after_publish_leaves_no_business_row_and_no_envelope_row` | The same, although publish had already written the envelope row inside the transaction. |
+| Failed Result | `AtomicCommitTests.Failed_outcome_after_publish_leaves_no_business_row_and_no_envelope_row` | No business row, no envelope row, and no delivery within 3 s. In the unmapped path, publish writes the envelope row inside the transaction before the Result is checked. That part is inferred from source (`EfCoreEnvelopeTransaction.cs`); this test does not observe it. |
 | Failed save | `AtomicCommitTests.Failed_save_leaves_no_envelope_row` | A duplicate key in `SaveChangesAsync` leaves no envelope row and no delivery. |
-| Crash after commit | `CrashRecoveryTests.Message_committed_before_the_process_is_killed_is_delivered_after_restart` | A child process (`dotnet S1.Host.dll`) commits, prints `COMMITTED` before flushing, and is killed with `Process.Kill` (SIGKILL). The envelope row stays `Incoming`, owned by the dead node, with no delivery. A restarted Host delivers it exactly once: in 4.9 s in Balanced mode with shortened timers, in **74.6 s in Balanced mode with Wolverine's default timers**, and in 3.9 s in Solo mode. |
+| Crash after commit | `CrashRecoveryTests.Message_committed_before_the_process_is_killed_is_delivered_after_restart` | A child process (`dotnet S1.Host.dll`) commits, prints `COMMITTED` before flushing, and is killed with `Process.Kill` (SIGKILL). Until the flush nothing is delivered: the envelope row stays `Incoming`, owned by the dead node. A restarted Host delivers it: in 4.9 s in Balanced mode with shortened timers, in **74.6 s in Balanced mode with Wolverine's default timers**, and in 3.9 s in Solo mode. |
 | Crash during handling | `CrashRecoveryTests.Message_whose_handler_was_running_when_the_process_was_killed_is_handled_again_after_restart` | The handler's side effect was already written when the process was killed. After restart the handler runs again, so delivery is at-least-once. |
 | EF mode | `EfModeTests.Middleware_handler_effect_and_inbox_mark_share_a_transaction_only_in_eager_mode` (Eager and Lightweight × Raw and mapped) | For a `[Transactional]` Wolverine handler, `Eager` opens a transaction before the handler runs, and the effect and the inbox `Handled` mark commit together. `Lightweight` opens no transaction, so the effect commits alone and the mark commits about 1 ms later in a separate transaction. For the owned Unit of Work the mode makes no difference: every case of the first row passes in both modes. |
-| One store, two DbContexts | `ObservationTests.One_message_store_in_the_wolverine_schema_serves_both_module_DbContexts` | See "Observed behaviour" below. |
+| Committed, not flushed, Host alive | `StrandedNotificationTests.Notification_committed_but_not_flushed_waits_on_a_live_host_until_the_host_stops` | See "Committed but not flushed" below. |
+| Remedy: `InboxStaleTime` | `StrandedNotificationTests.Notification_committed_but_not_flushed_is_delivered_on_the_same_live_host_when_inbox_stale_time_is_set` | See below. |
+| Cost of the remedy | `StrandedNotificationTests.Inbox_stale_time_shorter_than_a_running_handler_hands_the_notification_out_again` | See below. |
+| One outbox instance, one attempt | `StrandedNotificationTests.An_outbox_instance_reused_after_a_rollback_sends_the_rolled_back_notification_with_the_next_commit`, `StrandedNotificationTests.A_second_commit_on_an_outbox_instance_that_already_flushed_is_committed_but_not_sent`, `ObservationTests.Flushing_the_outbox_after_a_rollback_delivers_a_message_whose_business_row_was_rolled_back` | See below. |
+| One store, two DbContexts | `ObservationTests.One_message_store_in_the_wolverine_schema_serves_both_module_DbContexts` | See below. |
 | Send without the outbox | `ObservationTests.Publish_through_the_plain_message_bus_escapes_the_unit_of_work_and_is_delivered_after_rollback` | See below. |
-| Flush after rollback | `ObservationTests.Flushing_the_outbox_after_a_rollback_delivers_a_message_whose_business_row_was_rolled_back` | See below. |
 | Mapping schema trap | `ObservationTests.Envelope_storage_mapped_without_the_store_schema_fails_the_commit` (Catalog, Inventory) | See below. |
 
 Source reading at `jasperfx/wolverine` tag `V6.46.0` (commit `1f22835a2b3e32dbf4b75c7a5273622ee74a4929`)
@@ -60,11 +73,19 @@ Versions and licences are as published on nuget.org and read from the restored n
 
 The Host's full closure is 90 packages: 83 MIT, 3 BSD-3-Clause (NetTopologySuite, NetTopologySuite.IO.PostGis,
 Polly.Core), 3 PostgreSQL (the Npgsql packages) and 1 Apache-2.0 (NewId). None is reciprocal or commercial,
-so no `stop_if` applies. The closure includes two heavy transitive packages:
+so no `stop_if` applies.
 
-- `Microsoft.EntityFrameworkCore.Design` 10.0.4, through WolverineFx.EntityFrameworkCore. Plan section C
-  already expects it.
-- Roslyn (`Microsoft.CodeAnalysis.*` 5.0.0), through WolverineFx.RuntimeCompilation.
+The closure contains Roslyn, and it arrives from two sources:
+
+- `Microsoft.EntityFrameworkCore.Design` 10.0.4 comes through WolverineFx.EntityFrameworkCore, as plan
+  section C expects. It already depends on `Microsoft.CodeAnalysis.CSharp`, `Microsoft.CodeAnalysis.CSharp.Workspaces`
+  and `Microsoft.CodeAnalysis.Workspaces.MSBuild` 5.0.0.
+- WolverineFx.RuntimeCompilation, through `JasperFx.RuntimeCompiler` 5.0.0, adds the `Microsoft.CodeAnalysis`
+  meta-package, `Microsoft.CodeAnalysis.Scripting` and the VisualBasic packages.
+
+Pre-generated code (`TypeLoadMode.Static`) therefore does not remove Roslyn from a Host that uses the EF
+outbox. The argument about keeping the closure small matters only for the transport-neutral
+`PouryaKit.Messaging.Wolverine` package.
 
 **Wolverine 6 no longer ships its runtime compiler.** Without `WolverineFx.RuntimeCompilation`, the Host fails
 at start with "Wolverine is running in TypeLoadMode.Dynamic … but no IAssemblyGenerator (Roslyn) is
@@ -111,15 +132,48 @@ await outbox.FlushOutgoingMessagesAsync();         // only after a successful co
 
 ## Observed behaviour previously listed as inferred (plan section F)
 
+Per-retry scope, also listed in section F, was not examined and remains unverified (S2).
+
 - **Send timing with the outbox.** Publishing writes the envelope row at once, inside the Unit of Work's
   transaction. With a Wolverine-mapped DbContext it is written at `SaveChangesAsync` instead. Nothing is sent
   until `FlushOutgoingMessagesAsync`.
 - **Send timing without an enrolled transaction.** `IMessageBus.PublishAsync` stores the envelope on its own
   connection and sends it at once. The handler had already run while the Operation's transaction was still
   open, and the rollback that followed could not undo it.
-- **A flush after a rollback still sends.** Rollback removes the envelope row, but the outbox keeps the
-  envelope in memory. A flush after rollback delivered a Notification whose business row does not exist. The
-  Unit of Work must never flush after a rollback.
+- **One `IDbContextOutbox<T>` instance, which means one scope, serves exactly one commit attempt.** Three
+  tests observe this:
+  - Rollback removes the envelope row, but the instance keeps the envelope in its outstanding list. A flush
+    after the rollback delivered a Notification whose business row does not exist.
+  - On a reused instance, the rolled-back Notification was delivered with the next successful commit's
+    flush. This happened even with EF's change tracker cleared in between.
+  - `MultiFlushMode` defaults to `OnlyOnce` (`src/Wolverine/Runtime/MessageContext.cs:85`). A second commit on
+    an instance that has already flushed is committed, but it is never sent: the row stays `Incoming` and is
+    owned by the live node.
+- **Committed but not flushed.** Any failure after the server commits skips the flush. That includes an
+  exception between commit and flush, and a lost commit acknowledgement, which looks like a failed commit to
+  the Unit of Work. Wolverine's flush also logs and discards a send failure
+  (`src/Wolverine/Runtime/MessageContext.cs:251-261`).
+  - **The row is stranded while its node lives.** The row stays `Incoming`, owned by a live node. Inbox
+    recovery selects only `owner_id = 0`
+    (`src/Persistence/Wolverine.RDBMS/Durability/CheckRecoverableIncomingMessagesOperation.cs:34`). The orphan
+    sweep releases only owners missing from the node table
+    (`src/Persistence/Wolverine.RDBMS/Durability/ReleaseOrphanedMessagesCommand.cs:171`). Observed: no
+    delivery within 20 s with 1 s timers.
+  - **Stopping the Host releases it.** A graceful stop set `owner_id = 0`, and the next Host delivered the
+    Notification. It is delayed, not lost.
+  - **Remedy: `InboxStaleTime`.** When set, the durability agent sets `owner_id = 0` on every inbox row with
+    `owner_id != 0` whose `timestamp` is older than the stale time
+    (`src/Persistence/Wolverine.RDBMS/DurabilityAgent.cs:348`, `BumpStaleIncomingEnvelopesOperation.cs:27`;
+    the default is null, `src/Wolverine/DurabilitySettings.cs:234`). With 5 s, the stranded Notification was
+    delivered on the same live Host 6.8 s after commit, exactly once.
+  - **Cost of the remedy.** The release does not distinguish a stranded row from one still in flight. With
+    3 s, a Notification whose handler runs for 15 s was handed out a second time 4.3 s after commit, while
+    the first run was still going. The stale time must exceed the longest queue wait plus handling time, and
+    the duplicates that remain must be absorbed by Receipts (G.2). Setting it also makes Wolverine add a
+    `timestamp` column to the inbox table (`src/Persistence/Wolverine.Postgresql/Schema/IncomingEnvelopeTable.cs:34`).
+  - **Woo's setting.** Woo sets `InboxStaleTime` to 5 minutes (`meysamhadeli/woo` `149a3cf`,
+    `src/Wolverine/Extensions.cs:45`). With that value, a stranded Notification waits about 5 minutes on a
+    live Host, and any handler running longer than 5 minutes is handed out again.
 - **Queue naming defaults.** There is one durable local queue per message type, named after the type's full
   name in lower case: `local://s1.productcreated/` and `local://s1.stockitemcreated/`.
 - **Where envelopes are stored.** Envelopes are stored in `wolverine.wolverine_incoming_envelopes`; the
@@ -135,8 +189,8 @@ await outbox.FlushOutgoingMessagesAsync();         // only after a successful co
   because EF Core runs `SaveChangesAsync` inside an automatic savepoint. They are still one commit. Use the
   commit timestamp, not `xmin`, to prove "same transaction". `pg_xact_commit_timestamp` returns NULL unless
   the server runs with `track_commit_timestamp=on`; the Spike's container sets it.
-- **Recovery.** A node killed after commit leaves rows owned by its node number. In Balanced mode they are
-  released only after the node is judged stale and the orphan sweep runs
+- **Recovery after a crash.** A node killed after commit leaves rows owned by its node number. In Balanced
+  mode they are released only after the node is judged stale and the orphan sweep runs
   (`src/Persistence/Wolverine.RDBMS/Durability/ReleaseOrphanedMessagesCommand.cs`). That took 74.6 s with
   defaults. In Solo mode the restarted node takes the same number, 1, and delivered them 3.9 s after it
   started.
@@ -148,9 +202,44 @@ await outbox.FlushOutgoingMessagesAsync();         // only after a successful co
 | A failed Result, a failure after save, or a failed save leaves no business row, no Outbox row and no delivery, for each Module | Gateway | #15 |
 | A successful Operation's business rows and Notifications become visible together, and the Notification is delivered | Gateway | #15 |
 | A Notification committed before the Host dies is delivered after restart (the test needs a stop point between commit and flush) | Gateway | #15 |
+| A Notification committed but not flushed on a live Host is delivered without a restart. The remedy the evidence supports is setting `InboxStaleTime` from a Kit setting; Woo's 5 minutes is a starting value. Its cost: delivery is delayed by up to that time, a handler running longer than it is handed out again (absorbed by Receipts), and the inbox table gains a `timestamp` column. Rejected: retrying the flush, because the flush swallows send failures and a lost commit acknowledgement hides the commit; and accepting delivery at the next restart, which is unbounded on a long-lived Host. | Gateway | #15 |
+| One `IDbContextOutbox<T>` instance, one scope, serves exactly one commit attempt: never reused after a rollback, never asked to commit twice | Gateway | #15 |
 | Feature code never reaches `IMessageBus`, `IMessageContext` or `IDbContextOutbox<>`; only the Unit of Work publishes and flushes | Structure | #15 |
 | Module DbContexts do not map Wolverine envelope storage (`MapWolverineEnvelopeStorage`, `AddDbContextWithWolverineIntegration`) | Structure | #15 |
-| A message re-handled after a crash during handling applies its effect once, through the handler's Receipt | Gateway | #16 |
+| A Notification or Integration Event re-handled after a crash during handling, or released by `InboxStaleTime`, applies its effect once, through the handler's Receipt | Gateway | #16 |
+
+## Defaults chosen
+
+On 2026-10-05 the owner asked for these defaults to be settled by what the reference projects and Wolverine
+recommend across a monolith, a modular monolith and microservices. The owner can overturn any of them.
+Wolverine documents are cited at tag `V6.46.0`.
+
+1. **Durability mode.** A Kit Host keeps Wolverine's default, Balanced, because it is the only mode that is
+   safe with more than one replica.
+   - A Host may opt into Solo and set the node timers.
+   - The Testing package forces Solo (`services.RunWolverineInSoloMode()`, `docs/guide/testing.md`).
+   - Tests that kill a node in Balanced mode use short timers.
+   - Wolverine recommends Solo for development and frequent restarts
+     (`docs/guide/durability/leadership-and-troubleshooting.md`, "Solo Mode").
+   - Evidence: recovery took 74.6 s in Balanced mode with default timers and 3.9 s in Solo mode.
+2. **Runtime code generation.** No Kit runtime package references `WolverineFx.RuntimeCompilation`. The Host
+   references it, following `docs/guide/codegen.md`: dynamic code in development, pre-generated code in
+   production, and a package reference that can be made conditional on the build configuration.
+   - The Testing package may reference it.
+   - Wave 1's Proving Sample Host runs dynamic. Pre-generation belongs with the project template (plan
+     Phase 6).
+   - As corrected above, Roslyn still reaches any Host that uses the EF outbox through
+     `Microsoft.EntityFrameworkCore.Design`. Keeping Roslyn out is a property of the transport-neutral
+     `PouryaKit.Messaging.Wolverine` package only.
+3. **Store schema.** The schema is set explicitly from one Kit setting, default `wolverine`, and is
+   configurable per Host.
+   - `docs/tutorials/modular-monolith.md` sets `Durability.MessageStorageSchemaName` so that all modules share
+     one inbox and outbox.
+   - `docs/guide/durability/postgresql.md` says separate logical services that share a database should each
+     use their own schema name.
+4. **Outbox and Inbox wording.** A Module owns its Outbox and Inbox logically, on its Host's one shared
+   physical store. `GLOSSARY.md` now defines each as a Module's share of its Host's durable message store.
+   G.2 is unchanged.
 
 ## Notes for S2
 
@@ -158,15 +247,17 @@ await outbox.FlushOutgoingMessagesAsync();         // only after a successful co
   handler's effect. A crash between effect and mark re-runs the handler, as the second crash test showed, so
   independent retry per handler still needs the Kit's Receipt (G.2).
 - `DurabilitySettings.MessageIdentity` defaults to `IdOnly`. Its source comment recommends `IdAndDestination`
-  for modular monoliths that receive one message on several endpoints, which bears on separated per-handler
+  for modular monoliths that receive one envelope on several endpoints, which bears on separated per-handler
   queues. This was not tested.
-- Each message type had one handler here. What one local queue does with several handlers of the same type
-  was not tested.
+- Each Notification type had one handler here. What one local queue does with several handlers of the same
+  type was not tested.
 - Retry and recovery tests need short durability timers or Solo mode. The defaults take more than a minute
-  to recover a dead node's envelopes.
+  to recover a dead node's envelopes. An `InboxStaleTime` shorter than a handler's run hands the envelope out
+  again while the handler is still running.
+- Per-retry scope (plan section F) was not examined.
 - Woo's block also sets `ConventionalLocalRoutingIsAdditive`, `UseDurableInboxOnAllListeners`,
   `UseDurableOutboxOnAllSendingEndpoints`, `RetryWithCooldown` and the inbox and outbox stale times. S1 used
-  none of them.
+  none of them, except `InboxStaleTime` in the stranded-Notification tests.
 
 ## Considered Options
 
@@ -178,16 +269,16 @@ await outbox.FlushOutgoingMessagesAsync();         // only after a successful co
   schema (a wrong one fails the commit), and is a second way to do the same thing.
 - **`Lightweight` mode.** It gives the same result for the owned Unit of Work, but rejected. For any handler
   that uses Wolverine's EF middleware, it commits the effect and the inbox mark separately.
-- **Solo durability mode.** It recovers fastest, but it assumes a single node. The Spike kept Balanced, which
-  is Wolverine's default.
+- **Solo durability mode as the Host default.** It recovers fastest, but it assumes a single node. It is the
+  default for tests only (Defaults chosen, 1).
 
 ## Consequences
 
 - The Unit of Work always holds an explicit transaction. That is incompatible with an EF retrying execution
   strategy, which matches the decision to run none. A whole-Operation retry starts a new scope (ADR 0003).
-- The Host must reference `WolverineFx.RuntimeCompilation`, or pre-generate handler code
-  (`TypeLoadMode.Static`). The package graph and Testing must account for Roslyn in the closure.
+- The Host references `WolverineFx.RuntimeCompilation` while it runs dynamic code (Defaults chosen, 2). With
+  the EF outbox, Roslyn is in the Host's closure either way.
 - Physically, the Outbox is one Wolverine store per Host. Each Module's Notifications are distinguished by
-  message type and local queue.
+  CLR type and local queue.
 - Disposing a Host logs `ObjectDisposedException` errors from Wolverine's database batcher. They are noise,
   and test log assertions should tolerate them.

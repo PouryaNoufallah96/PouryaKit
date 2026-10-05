@@ -104,11 +104,11 @@ A Module's reaction to an Integration Event or Snapshot published by another Mod
 _Avoid_: Consumer, subscriber, listener
 
 **Outbox**:
-A Module's durable record of Notifications and Snapshots it has committed but not yet finished reacting to.
+A Module's share of its Host's durable message store: the Notifications and Snapshots the Module has committed but not yet finished reacting to.
 _Avoid_: Message table, queue
 
 **Inbox**:
-A Module's durable record of Integration Events and Snapshots it has received but not yet applied.
+A Module's share of its Host's durable message store: the Integration Events and Snapshots the Module has received but not yet applied.
 _Avoid_: Queue, message table
 
 **Receipt**:
