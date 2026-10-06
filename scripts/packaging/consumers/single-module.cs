@@ -20,6 +20,4 @@ await using var scope = app.Services.CreateAsyncScope();
 scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("package-consumer")));
 _ = scope.ServiceProvider.GetRequiredService<IDispatcher>();
 
-IntentionalHostedConsumerFailure();
-
 internal sealed class NotesDbContext(DbContextOptions<NotesDbContext> options) : PouryaKitDbContext(options);
