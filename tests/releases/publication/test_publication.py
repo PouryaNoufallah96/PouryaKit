@@ -18,6 +18,7 @@ import threading
 import unittest
 from unittest.mock import patch
 import urllib.parse
+import urllib.request
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -55,11 +56,16 @@ class Protocol:
         self.remote = {}
         self.events = []
         self.auth = []
+        self.requests = []
         self.failures = {}
         self.visibility = "private"
         self.change_upload_bytes = False
+        self.drop_upload_bytes = False
+        self.upload_status = 201
         self.change_earlier_on_last = False
         self.redirect = None
+        self.raw_redirect = None
+        self.responses = {}
         self.extra_packages = 0
         self.extra_artifacts = 0
         self.archive = self.bundle()
@@ -84,12 +90,20 @@ class Protocol:
 
             def do_PUT(self):
                 protocol.auth.append((self.path, self.headers.get("Authorization")))
+                body = self.rfile.read(int(self.headers.get("Content-Length", "0")))
+                if self.path in protocol.responses:
+                    status, body, headers = protocol.responses[self.path]
+                    self.send_response(status)
+                    for key, value in headers.items():
+                        self.send_header(key, value)
+                    self.end_headers()
+                    self.wfile.write(body)
+                    return
                 if self.path in protocol.failures:
                     self.send_response(protocol.failures[self.path])
                     self.end_headers()
                     return
                 self.server.received_key = self.headers.get("X-NuGet-ApiKey")
-                body = self.rfile.read(int(self.headers["Content-Length"]))
                 message = BytesParser(policy=default).parsebytes(
                     ("Content-Type: " + self.headers["Content-Type"] + "\r\n\r\n").encode() + body)
                 parts = list(message.iter_parts())
@@ -99,11 +113,12 @@ class Protocol:
                 if (package_id, version) in protocol.remote:
                     self.send_response(409)
                 else:
-                    protocol.remote[package_id, version] = content + (b"rewritten-by-feed" if protocol.change_upload_bytes else b"")
+                    if not protocol.drop_upload_bytes:
+                        protocol.remote[package_id, version] = content + (b"rewritten-by-feed" if protocol.change_upload_bytes else b"")
                     if protocol.change_earlier_on_last and len(protocol.remote) == 13:
                         first = next(iter(protocol.remote))
                         protocol.remote[first] += b"changed-after-initial-verification"
-                    self.send_response(201)
+                    self.send_response(protocol.upload_status)
                 self.end_headers()
 
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
@@ -140,6 +155,8 @@ class Protocol:
         route = urllib.parse.urlsplit(path).path
         if route in self.failures:
             return self.failures[route], b"private upstream response must never be retained", {}
+        if route in self.responses:
+            return self.responses[route]
         prefix = f"/repos/{REPOSITORY}"
         if route == prefix:
             return 200, encoded({"full_name": REPOSITORY, "private": True, "default_branch": "main"}), {}
@@ -158,6 +175,13 @@ class Protocol:
             return 200, self.archive, {}
         if route == "/storage/original.zip":
             return 200, self.archive, {}
+        if route.startswith("/storage/first/"):
+            return 307, b"", {"Location": "https://assets.githubusercontent.com/storage/final/" +
+                              route.split("/storage/first/")[1] + "?signature=private-signed-query"}
+        if route.startswith("/storage/final/"):
+            package_id, version = route.split("/storage/final/")[1].removesuffix(".nupkg").split("/")
+            content = self.remote.get((package_id, version))
+            return (200, content, {}) if content is not None else (404, b"", {})
         if route == f"/{OWNER}/index.json":
             return 200, encoded({"version": "3.0.0", "resources": [
                 {"@type": "PackageBaseAddress/3.0.0", "@id": f"https://nuget.pkg.github.com/{OWNER}/original-content/"},
@@ -179,25 +203,29 @@ class Protocol:
                 return (200, encoded({"versions": versions}), {}) if versions else (404, b"", {})
             self.events.append(("GET", rest[0]))
             content = self.remote.get((rest[0], rest[1]))
+            if content is not None and self.raw_redirect:
+                return 302, b"", {"Location": self.raw_redirect.format(id=rest[0], version=rest[1])}
             return (200, content, {}) if content is not None else (404, b"", {})
         return 404, b"", {}
 
     def client(self, token="test-token"):
         origin = f"http://127.0.0.1:{self.server.server_port}"
 
-        class LocalHttp(Http):
-            def checked_url(self, url, auth):
-                if url.startswith(origin + "/"):
-                    return
-                super().checked_url(url, auth)
+        protocol = self
+        opener = urllib.request.build_opener(transport.NoRedirect())
 
-            def request(self, method, url, **kwargs):
-                super().checked_url(url, kwargs.get("auth", "api"))
-                parsed = urllib.parse.urlsplit(url)
+        class LocalOpener:
+            def open(self, request, timeout):
+                protocol.requests.append((request.method, request.full_url, dict(request.header_items())))
+                parsed = urllib.parse.urlsplit(request.full_url)
                 target = origin + parsed.path + ("?" + parsed.query if parsed.query else "")
-                return super().request(method, target, **kwargs)
+                local = urllib.request.Request(target, data=request.data, method=request.method,
+                                               headers=dict(request.header_items()))
+                return opener.open(local, timeout=timeout)
 
-        return LocalHttp(token)
+        client = Http(token)
+        client.opener = LocalOpener()
+        return client
 
 
 class PublicationTests(unittest.TestCase):
@@ -347,6 +375,46 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(0, self.execute())
         self.assertEqual(12, len(self.receipt_document()["uploaded"]))
         self.assertEqual(13, len(self.receipt_document()["verified"]))
+
+    def test_all_successful_upload_statuses_are_recorded_and_verified(self):
+        for status in (200, 201, 202, 204, 299):
+            with self.subTest(status=status):
+                self.protocol.remote.clear()
+                self.protocol.upload_status = status
+                self.assertEqual(0, self.execute())
+                result = self.receipt_document()
+                self.assertTrue(result["complete"])
+                self.assertEqual(13, len(result["verified"]))
+                self.assertEqual([{"id": p["id"], "status": status} for p in self.manifest["packages"]],
+                                 result["upload_responses"])
+
+    def test_non_success_uploads_fail_without_retry_or_completion(self):
+        for status in (400, 401, 403, 500):
+            with self.subTest(status=status):
+                self.protocol.requests.clear()
+                self.protocol.failures[f"/{OWNER}/upload"] = status
+                self.assertEqual(1, self.execute())
+                self.assertIn(f"HTTP {status}", self.receipt_document()["error"])
+                self.assertEqual(1, sum(method == "PUT" for method, _, _ in self.protocol.requests))
+                self.assertFalse(self.protocol.remote)
+                self.assertFalse(self.receipt_document()["complete"])
+
+    def test_success_status_still_requires_first_upload_bytes_and_private_link_before_next_put(self):
+        for status, fault in ((200, "missing"), (204, "changed"), (299, "public")):
+            with self.subTest(fault=fault):
+                self.protocol.remote.clear()
+                self.protocol.events.clear()
+                self.protocol.upload_status = status
+                self.protocol.drop_upload_bytes = fault == "missing"
+                self.protocol.change_upload_bytes = fault == "changed"
+                self.protocol.visibility = "public" if fault == "public" else "private"
+                with patch.object(publisher.time, "sleep"):
+                    self.assertEqual(1, self.execute())
+                result = self.receipt_document()
+                self.assertEqual([{"id": self.manifest["packages"][0]["id"], "status": status}], result["upload_responses"])
+                self.assertEqual(1, sum(event[0] == "PUT" for event in self.protocol.events))
+                self.assertEqual([], result["confirmed"])
+                self.assertFalse(result["complete"])
 
     def test_all_existing_checked_before_missing_write_and_late_byte_conflict_rejected(self):
         self.seed(-1)
@@ -534,6 +602,102 @@ class PublicationTests(unittest.TestCase):
         self.protocol.redirect = "https://attacker.example/storage/original.zip"
         self.assertEqual(1, self.execute())
         self.assertIn("unsupported host", self.receipt_document()["error"])
+
+    def test_raw_package_redirect_chain_preserves_hashes_and_drops_every_initial_header(self):
+        for index in range(13):
+            self.seed(index)
+        self.protocol.raw_redirect = "https://retained.blob.core.windows.net/storage/first/{id}/{version}.nupkg?signature=private-signed-query"
+        self.assertEqual(0, self.execute())
+        result = self.receipt_document()
+        self.assertTrue(result["complete"])
+        self.assertEqual(13, len(result["verified"]))
+        self.assertEqual([p["sha256"] for p in self.manifest["packages"]], [p["sha256"] for p in result["verified"]])
+        client = self.protocol.client()
+        feed = publisher.Feed(client)
+        package = self.manifest["packages"][0]
+        url = f"{feed.base.rstrip('/')}/{package['id'].lower()}/{self.manifest['version']}/{package['file'].lower()}"
+        status, content, _ = client.request("GET", url, auth="feed", raw_package=True,
+                                            headers={"X-NuGet-ApiKey": "test-token", "X-Initial-Credential": "test-token"})
+        self.assertEqual(200, status)
+        self.assertEqual(package["sha256"], hashlib.sha256(content).hexdigest())
+        storage = [(url, headers) for _, url, headers in self.protocol.requests if "/storage/" in url]
+        self.assertTrue(storage)
+        for _, headers in storage:
+            self.assertEqual({"user-agent"}, {key.lower() for key in headers})
+        self.assertNotIn("private-signed-query", self.receipt.read_text())
+        self.assertNotIn("test-token", self.receipt.read_text())
+        self.assertTrue(all(row["result"] == "followed" for row in result["redirects"]))
+
+    def test_raw_package_redirect_refuses_unsafe_destinations_with_only_host_diagnostics(self):
+        self.seed(0)
+        for url in ("https://attacker.example/private-path?signature=private-signed-query",
+                    "http://retained.blob.core.windows.net/private-path?signature=private-signed-query",
+                    "https://user:private-password@retained.blob.core.windows.net/private-path",
+                    "https://retained.blob.core.windows.net/private-path#private-fragment",
+                    "https://retained.blob.core.windows.net:8443/private-path"):
+            with self.subTest(url=url):
+                self.protocol.raw_redirect = url
+                self.protocol.requests.clear()
+                self.assertEqual(1, self.execute("probe"))
+                self.assertFalse(any("private-path" in target for _, target, _ in self.protocol.requests))
+                result = self.receipt_document()
+                self.assertEqual("refused", result["redirects"][-1]["result"])
+                self.assertEqual(302, result["redirects"][-1]["status"])
+                for forbidden in ("private-path", "private-signed-query", "private-password", "private-fragment"):
+                    self.assertNotIn(forbidden, self.receipt.read_text())
+
+    def test_raw_package_redirect_loops_and_long_chains_are_bounded(self):
+        self.seed(0)
+        url = "https://retained.blob.core.windows.net/storage/loop.nupkg?signature=private-signed-query"
+        self.protocol.raw_redirect = url
+        self.protocol.responses["/storage/loop.nupkg"] = (302, b"", {"Location": url})
+        self.assertEqual(1, self.execute("probe"))
+        self.assertIn("cycles", self.receipt_document()["error"])
+        self.protocol.responses.clear()
+        self.protocol.requests.clear()
+        self.protocol.raw_redirect = "https://retained.blob.core.windows.net/storage/hop0.nupkg?signature=private-signed-query"
+        for index in range(4):
+            self.protocol.responses[f"/storage/hop{index}.nupkg"] = (
+                302, b"", {"Location": f"https://retained.blob.core.windows.net/storage/hop{index+1}.nupkg?signature=private-signed-query"})
+        self.assertEqual(1, self.execute("probe"))
+        self.assertEqual(3, sum("/storage/" in target for _, target, _ in self.protocol.requests))
+        self.assertEqual(4, len(self.receipt_document()["redirects"]))
+        self.assertEqual("refused", self.receipt_document()["redirects"][-1]["result"])
+        self.assertNotIn("private-signed-query", self.receipt.read_text())
+
+    def test_feed_index_api_and_put_redirects_remain_refused_and_storage_cannot_request_credentials(self):
+        target = "https://retained.blob.core.windows.net/storage/final/package.nupkg?signature=private-signed-query"
+        for method, url, auth in (("GET", FEED, "feed"), ("GET", f"{API}/users/{OWNER}/packages", "api"),
+                                  ("PUT", f"https://nuget.pkg.github.com/{OWNER}/upload", "feed")):
+            with self.subTest(method=method, url=url):
+                route = urllib.parse.urlsplit(url).path
+                self.protocol.responses[route] = (302, b"", {"Location": target})
+                try:
+                    with self.assertRaisesRegex(PublicationError, "Unexpected authenticated redirect"):
+                        self.protocol.client().request(method, url, auth=auth)
+                finally:
+                    self.protocol.responses.clear()
+        self.seed(0)
+        self.protocol.raw_redirect = "https://retained.blob.core.windows.net/storage/first/{id}/{version}.nupkg"
+        first = self.manifest["packages"][0]
+        route = f"/storage/first/{first['id'].lower()}/{self.manifest['version']}.nupkg"
+        for status in (401, 403):
+            self.protocol.failures[route] = status
+            self.assertEqual(1, self.execute("probe"))
+            self.assertIn(f"HTTP {status}", self.receipt_document()["error"])
+            self.assertFalse(any(event[0] == "PUT" for event in self.protocol.events))
+
+    def test_raw_package_redirect_opt_in_and_response_size_remain_bounded(self):
+        client = self.protocol.client()
+        for method, url, auth in (("GET", FEED, "feed"), ("PUT", FEED, "feed"), ("GET", API + "/package.nupkg", "api")):
+            with self.assertRaisesRegex(PublicationError, "Only a raw private package GET"):
+                client.request(method, url, auth=auth, raw_package=True)
+        self.seed(0)
+        self.protocol.raw_redirect = "https://retained.blob.core.windows.net/storage/first/{id}/{version}.nupkg"
+        package = self.manifest["packages"][0]
+        url = f"https://nuget.pkg.github.com/{OWNER}/original-content/{package['id'].lower()}/{self.manifest['version']}/{package['file'].lower()}"
+        with patch.object(transport, "MAX_BYTES", 1), self.assertRaisesRegex(PublicationError, "size limit"):
+            client.request("GET", url, auth="feed", raw_package=True)
 
 
 class WorkflowTests(unittest.TestCase):

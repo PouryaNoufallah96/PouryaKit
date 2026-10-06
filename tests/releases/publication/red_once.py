@@ -9,6 +9,12 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[3]
 CONTROLS = [
+    ("publisher.py", 'if not (200 <= status < 300 or status == 409):', 'if status not in (201, 202, 409):',
+     "PublicationTests.test_all_successful_upload_statuses_are_recorded_and_verified", "all successful 2xx upload responses"),
+    ("transport.py", 'or raw_package)', 'or False)',
+     "PublicationTests.test_raw_package_redirect_chain_preserves_hashes_and_drops_every_initial_header", "scoped raw package redirect support"),
+    ("transport.py", 'request_headers = {"User-Agent": "PouryaKit-publication"}\n                        break', 'pass\n                        break',
+     "PublicationTests.test_raw_package_redirect_chain_preserves_hashes_and_drops_every_initial_header", "credential-free requests at every redirect hop"),
     ("publisher.py", "parsed = parse_version(version)", 'parsed = {"major": "0", "channel": "preview", "metadata": ""}',
      "PublicationTests.test_candidate_reuses_strict_semver_and_minver_package_identity_policy", "shared strict SemVer and package version policy"),
     ("artifacts.py", 'or run.get("event") != "push"', "or False",
