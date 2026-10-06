@@ -1,0 +1,32 @@
+tests/PouryaKit.Security.Tests/PasswordHashingTests.cs
+  s_41c3eef9abbce4::t_73123850d9db4e 129-133
+scripts/packaging/consumers/PouryaKit.Security.cs
+  s_41c3eef9abbce4::t_085886eb6f7b1d 1-10
+src/PouryaKit.Security/Pbkdf2PasswordHasher.cs
+  s_41c3eef9abbce4::t_47e0a1e3f36b99 135-145
+  s_41c3eef9abbce4::t_1bbdee5478acdb 13
+scripts/packaging/validate.py
+  s_41c3eef9abbce4::t_62787b1e798921 323-325
+.agents/skills/pourya-kit/references/security.md
+  s_41c3eef9abbce4::t_6d523b417a6e8c 157,174
+README.md
+  s_41c3eef9abbce4::t_6d523b417a6e8c 5
+docs/acceptance.md
+  s_41c3eef9abbce4::t_6d523b417a6e8c 158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b4f33709f5a0675dc222a669f0c43d21ace2dd26",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
