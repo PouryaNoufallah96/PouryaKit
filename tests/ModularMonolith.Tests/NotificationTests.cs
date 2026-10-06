@@ -392,7 +392,28 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
                 "ModularMonolith.Tests.Misnamed.SpacedNotificationHandler's subscription name misnamed.has space is not a valid name: use letters and digits in segments joined by single dots or hyphens.",
                 "ModularMonolith.Tests.Misnamed.UnnamedDomainEvent's wire name is missing; declare one or remove the empty name.",
             ],
-            thrown.Message.Split(Environment.NewLine).Order(StringComparer.Ordinal)
+            thrown.Message.Split(Environment.NewLine).Where(line => !line.Contains(MisshapenMark, StringComparison.Ordinal)).Order(StringComparer.Ordinal)
+        );
+    }
+
+    [Fact]
+    public void Startup_fails_on_a_notification_handler_that_is_generic_or_handles_several_an_abstract_or_a_generic_domain_event()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            builder.AddPouryaKitModules(modules => modules.Add<MisnamedModule>())
+        );
+
+        const string Rule = "a Notification Handler is a non-generic class that handles one concrete, non-generic Domain Event type.";
+        Assert.Equal(
+            [
+                $"ModularMonolith.Tests.Misnamed.AnyEventNotificationHandler`1{MisshapenMark}TDomainEvent; {Rule}",
+                $"ModularMonolith.Tests.Misnamed.AnyShapedNotificationHandler{MisshapenMark}ShapedDomainEvent; {Rule}",
+                $"ModularMonolith.Tests.Misnamed.BoxedNotificationHandler{MisshapenMark}BoxedDomainEvent`1; {Rule}",
+                $"ModularMonolith.Tests.Misnamed.TwoEventsNotificationHandler{MisshapenMark}PackedDomainEvent, SealedDomainEvent; {Rule}",
+            ],
+            thrown.Message.Split(Environment.NewLine).Where(line => line.Contains(MisshapenMark, StringComparison.Ordinal)).Order(StringComparer.Ordinal)
         );
     }
 
@@ -583,6 +604,9 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.pouryakit_receipts"));
     }
+
+    // What the registration says of a Notification Handler of the wrong shape, which the Misnamed assembly also holds.
+    private const string MisshapenMark = " is a Notification Handler of ";
 
     private static string Unique() => $"note {Guid.CreateVersion7()}";
 

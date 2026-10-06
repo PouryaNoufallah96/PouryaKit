@@ -39,12 +39,11 @@ public class ImplementingTypesTests
     }
 
     [Fact]
-    public void Candidates_leave_out_the_classes_the_compiler_generated()
+    public void Candidates_include_a_class_the_compiler_generated()
     {
-        var iterator = Assert.Single(ImplementingTypes.Of(typeof(IEnumerable<NoteHandler>), Fixtures));
+        var iterator = Assert.Single(ImplementingTypes.Candidates(typeof(IEnumerable<NoteHandler>), Fixtures));
 
         Assert.True(iterator.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false));
-        Assert.Empty(ImplementingTypes.Candidates(typeof(IEnumerable<NoteHandler>), Fixtures));
     }
 
     [Fact]

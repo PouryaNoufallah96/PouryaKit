@@ -3,7 +3,7 @@ using PouryaKit.Messaging;
 
 namespace ModularMonolith.Tests.Misnamed;
 
-/// <summary>Marks the assembly whose Notification Handlers are misnamed.</summary>
+/// <summary>Marks the assembly whose Notification Handlers are misnamed or of the wrong shape.</summary>
 public static class MisnamedNotifications;
 
 // A wire name declared empty.
@@ -85,5 +85,42 @@ internal sealed class ShelveNotificationHandler : INotificationHandler<ShelvedDo
 internal sealed class ShelveAgainNotificationHandler : INotificationHandler<Shelved>
 {
     public Task<Result> Handle(Shelved domainEvent, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success());
+}
+
+// Notification Handlers of the wrong shape: generic, for two Domain Events, for an abstract one, for a generic one.
+internal sealed class AnyEventNotificationHandler<TDomainEvent> : INotificationHandler<TDomainEvent>
+    where TDomainEvent : DomainEvent
+{
+    public Task<Result> Handle(TDomainEvent domainEvent, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success());
+}
+
+internal sealed record PackedDomainEvent : DomainEvent;
+
+internal sealed record SealedDomainEvent : DomainEvent;
+
+internal sealed class TwoEventsNotificationHandler : INotificationHandler<PackedDomainEvent>, INotificationHandler<SealedDomainEvent>
+{
+    public Task<Result> Handle(PackedDomainEvent domainEvent, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success());
+
+    public Task<Result> Handle(SealedDomainEvent domainEvent, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success());
+}
+
+internal abstract record ShapedDomainEvent : DomainEvent;
+
+internal sealed class AnyShapedNotificationHandler : INotificationHandler<ShapedDomainEvent>
+{
+    public Task<Result> Handle(ShapedDomainEvent domainEvent, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success());
+}
+
+internal sealed record BoxedDomainEvent<TContent> : DomainEvent;
+
+internal sealed class BoxedNotificationHandler : INotificationHandler<BoxedDomainEvent<int>>
+{
+    public Task<Result> Handle(BoxedDomainEvent<int> domainEvent, CancellationToken cancellationToken) =>
         Task.FromResult(Result.Success());
 }

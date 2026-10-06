@@ -78,7 +78,7 @@ The input contract:
 - **Only concrete classes come back**: no interface, abstract or static class, struct or open generic class. Internal and nested classes are included, so a Module's internal implementations are found.
 - **A type that fails to load throws** `ReflectionTypeLoadException` rather than being skipped. A contract that is a generic parameter, or a generic type neither closed nor a definition, throws `ArgumentException`.
 
-`ImplementingTypes.Candidates(contract, assemblies)` reads the contract the same way and returns every class it describes, abstract classes and open generic definitions included; interfaces, structs and the classes the compiler generated stay out, and the order is the same. Use it when a registration must reject a declaration `Of` would skip silently, as the Kit's own registrations reject a generic handler or a permission on an abstract type:
+`ImplementingTypes.Candidates(contract, assemblies)` reads the contract the same way and returns every class it describes, abstract classes, open generic definitions and the classes the compiler generated included; interfaces and structs stay out, and the order is the same. Use it when a registration must reject a declaration `Of` would skip silently, as the Kit's own registrations reject a generic handler or a permission on an abstract type:
 
 ```csharp
 using PouryaKit.Core;

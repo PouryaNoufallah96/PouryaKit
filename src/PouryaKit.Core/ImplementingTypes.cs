@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace PouryaKit.Core;
 
@@ -55,9 +54,9 @@ public static class ImplementingTypes
     /// <item><paramref name="contract"/> is read as <see cref="Of"/> reads it: an interface or a class, either
     /// non-generic or closed, and a class is returned when it can be assigned to it; or an open generic definition,
     /// and a class is returned when it implements, or derives from, a form of it, closed or open.</item>
-    /// <item>Every class is returned, abstract, static or open generic, public or not, nested or not, except a class
-    /// the compiler generated. Interfaces and structs are left out. A non-generic or closed class given as the
-    /// contract is returned itself.</item>
+    /// <item>Every class is returned, abstract, static or open generic, public or not, nested or not, compiler-generated
+    /// or not. Interfaces and structs are left out. A non-generic or closed class given as the contract is returned
+    /// itself.</item>
     /// <item>Every type of every assembly is read, so an assembly whose types cannot all be loaded throws
     /// <see cref="ReflectionTypeLoadException"/>. An assembly given twice is read once.</item>
     /// </list>
@@ -72,7 +71,7 @@ public static class ImplementingTypes
             .. assemblies
                 .Distinct()
                 .SelectMany(assembly => assembly.GetTypes())
-                .Where(type => type.IsClass && !type.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false))
+                .Where(type => type.IsClass)
                 .Where(type => Describes(contract, type))
                 .OrderBy(type => type.FullName, StringComparer.Ordinal),
         ];
