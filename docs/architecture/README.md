@@ -84,6 +84,11 @@ C4Container
     Rel(efcore, persistence, "implements IRepository and IUnitOfWorkConnection of")
     Rel(postgres, efcore, "configures the DbContext and Unit of Work of")
     Rel(dapper, domain, "maps typed IDs of")
+    Rel(cqrs, corehelpers, "finds handlers, authorizers and Domain Event Handlers with")
+    Rel(security, corehelpers, "finds the commands and queries that declare a permission with")
+    Rel(efcore, corehelpers, "finds typed IDs with")
+    Rel(dapper, corehelpers, "finds typed IDs with")
+    Rel(web, corehelpers, "finds endpoints with")
     Rel(web, cqrs, "begins each request's Operation with")
     Rel(testing, modularity, "sends Operations through Gateways of")
     Rel(testing, postgres, "migrates and resets the databases of")
@@ -110,6 +115,7 @@ C4Container
     Container_Ext(cqrs, "PouryaKit.Cqrs", "Execution core view")
     Container_Ext(efcore, "PouryaKit.Persistence.EFCore", "Execution core view")
     Container_Ext(testing, "PouryaKit.Testing", "Execution core view")
+    Container_Ext(corehelpers, "PouryaKit.Core", "Execution core view")
     ContainerDb_Ext(database, "PostgreSQL", "One database", "The message store's schema, and each Module's Receipt and Snapshot version tables")
 
     Rel(host, messaging, "writes Notification Handlers, Integration Event Handlers and Snapshot mappers with")
@@ -118,6 +124,7 @@ C4Container
     Rel(messaging, domain, "handles Domain Events of")
     Rel(wolverine, messaging, "delivers to the handlers of")
     Rel(wolverine, cqrs, "runs each delivery as an Operation through")
+    Rel(wolverine, corehelpers, "finds Notification Handlers with")
     Rel(wolverineef, wolverine, "adds the Outbox, the message store and Receipts to")
     Rel(wolverineef, efcore, "writes the Outbox, Receipts and Snapshot versions in the Unit of Work of")
     Rel(testing, wolverineef, "waits for and asserts the deliveries of")
@@ -200,7 +207,7 @@ Seams later packages build on:
 
 ## PouryaKit.Cqrs
 
-The execution core every Operation passes through. It references `PouryaKit.Domain`, `Microsoft.Extensions.DependencyInjection.Abstractions` and `Microsoft.Extensions.Logging.Abstractions`, and no other package (ADR 0002: no mediator).
+The execution core every Operation passes through. It references `PouryaKit.Domain`, `PouryaKit.Core`, whose `ImplementingTypes` finds its handlers, authorizers and Domain Event Handlers (#55), `Microsoft.Extensions.DependencyInjection.Abstractions` and `Microsoft.Extensions.Logging.Abstractions`, and no other package (ADR 0002: no mediator).
 
 | Concern | Types |
 |---|---|
@@ -242,7 +249,7 @@ FluentValidation behind the pipeline's validation step. It references `PouryaKit
 
 ## PouryaKit.Security
 
-Permissions a command or query declares, checked on the pipeline's authorization hook (G.6, ticket #38). It references `PouryaKit.Cqrs` only: no ASP.NET Core, no identity store and no role system, so a Host without HTTP uses it too. The authenticated HTTP default lives in `PouryaKit.Web`, which owns the HTTP boundary.
+Permissions a command or query declares, checked on the pipeline's authorization hook (G.6, ticket #38). It references `PouryaKit.Cqrs` and `PouryaKit.Core`, for its type lookup (#55), and nothing else: no ASP.NET Core, no identity store and no role system, so a Host without HTTP uses it too. The authenticated HTTP default lives in `PouryaKit.Web`, which owns the HTTP boundary.
 
 | Concern | Types |
 |---|---|
@@ -288,7 +295,7 @@ The repository adds, removes and finds by ID, and finds, lists, checks and count
 
 ## PouryaKit.Persistence.EFCore
 
-EF Core behind the Unit of Work and the repository. It references `PouryaKit.Cqrs`, `PouryaKit.Persistence`, `Microsoft.EntityFrameworkCore.Relational` and `Ardalis.Specification.EntityFrameworkCore`.
+EF Core behind the Unit of Work and the repository. It references `PouryaKit.Cqrs`, `PouryaKit.Persistence`, `PouryaKit.Core` for its typed-ID lookup (#55), `Microsoft.EntityFrameworkCore.Relational` and `Ardalis.Specification.EntityFrameworkCore`.
 
 | Concern | Types |
 |---|---|
@@ -323,7 +330,7 @@ PostgreSQL for a Module's DbContext. It references `PouryaKit.Persistence.EFCore
 
 ## PouryaKit.Persistence.Dapper
 
-Dapper reads in plain SQL (G.4). It references `PouryaKit.Domain`, `Dapper`, `Npgsql`, `Microsoft.Extensions.Configuration.Abstractions` and `Microsoft.Extensions.DependencyInjection.Abstractions`, and no EF Core package.
+Dapper reads in plain SQL (G.4). It references `PouryaKit.Domain`, `PouryaKit.Core` for its typed-ID lookup (#55), `Dapper`, `Npgsql`, `Microsoft.Extensions.Configuration.Abstractions` and `Microsoft.Extensions.DependencyInjection.Abstractions`, and no EF Core package.
 
 | Concern | Types |
 |---|---|
@@ -364,7 +371,7 @@ Seams later packages build on:
 
 ## PouryaKit.Messaging.Wolverine
 
-Deliveries on Wolverine, with no database: the declarations a Composition Root makes, the route and queue per subscription, the delivery step, the publisher, retries and the startup checks. It references `PouryaKit.Cqrs`, `PouryaKit.Messaging` and `WolverineFx`, and no EF Core or message-store package, so a Host that only receives messages pulls neither.
+Deliveries on Wolverine, with no database: the declarations a Composition Root makes, the route and queue per subscription, the delivery step, the publisher, retries and the startup checks. It references `PouryaKit.Cqrs`, `PouryaKit.Messaging`, `PouryaKit.Core` for its Notification Handler lookup (#55) and `WolverineFx`, and no EF Core or message-store package, so a Host that only receives messages pulls neither.
 
 | Concern | Types |
 |---|---|
@@ -414,7 +421,7 @@ Seams later packages build on:
 
 ## PouryaKit.Web
 
-HTTP endpoints over the Modules' Gateways. It references `PouryaKit.Cqrs` and the ASP.NET Core shared framework (`FrameworkReference Microsoft.AspNetCore.App`), no NuGet package, and not `PouryaKit.Modularity`: an endpoint resolves its Module's Gateway from the Host's services itself.
+HTTP endpoints over the Modules' Gateways. It references `PouryaKit.Cqrs`, `PouryaKit.Core` for its endpoint lookup (#55), and the ASP.NET Core shared framework (`FrameworkReference Microsoft.AspNetCore.App`), no NuGet package, and not `PouryaKit.Modularity`: an endpoint resolves its Module's Gateway from the Host's services itself.
 
 | Concern | Types |
 |---|---|
@@ -447,16 +454,17 @@ Delivery assertions read the message store itself, through the internal `StoredD
 
 ## PouryaKit.Core
 
-Three helpers and nothing else (plan I.3, ticket #37). It references no package and no other Kit package, and no Kit package references it; a structure test keeps it at its three public types, so it never becomes the place unrelated helpers go.
+Three helpers and nothing else (plan I.3, ticket #37). It references no package and no other Kit package. Since #55 (2026-10-07) Cqrs, Web, Messaging.Wolverine, Persistence.Dapper, Persistence.EFCore and Security reference it, and their registrations find their types through `ImplementingTypes`: one implementation per concern, and a structure test fails any other Kit package that lists an assembly's types itself. A structure test keeps it at its three public types, so it never becomes the place unrelated helpers go.
 
 | Concern | Types |
 |---|---|
 | Predicate composition | `PredicateBuilder`, whose C# 14 extension members `AndAlso` and `OrElse` compose two `Expression<Func<T, bool>>` |
-| Implementing-type lookup | `ImplementingTypes.Of(contract, assemblies)` |
+| Implementing-type lookup | `ImplementingTypes.Of(contract, assemblies)`, `ImplementingTypes.Candidates(contract, assemblies)` |
 | Synchronization context | `SynchronizationContextScope` |
 
 - **Short circuit.** `left.AndAlso(right)` and `left.OrElse(right)` combine the two bodies with `Expression.AndAlso` and `Expression.OrElse`, never the bitwise `And` and `Or` its Cybernod origin used, so the right predicate runs only when the left one has not decided the result. Both bodies are put on one new parameter, so a LINQ provider such as EF Core sees one lambda and no invocation, and a lambda nested in either predicate that declares the other's parameter instance keeps its own binding.
 - **Lookup contract.** The contract is an interface or a class, non-generic or closed, matched by assignability, or an open generic definition, interface or class, matched when a type implements or derives from a closed form of it. Only concrete classes come back: no interface, abstract or static class, struct or open generic class. Each type once, ordered by full name; an assembly that cannot load all its types throws rather than being skipped. No `dynamic`, and no other reflection API.
+- **Candidates.** `Candidates` reads the contract the same way and returns every class it describes, abstract classes and open generic definitions included, compiler-generated classes and interfaces and structs left out, in the same order. A registration validates them, so it can reject a declaration that `Of` would skip silently: Cqrs's generic handlers and authorizers, Security's permission on an abstract, generic or non-Operation type, Messaging.Wolverine's generic Notification Handler (#55). Web, Persistence.Dapper and Persistence.EFCore register what `Of` returns; endpoints are mapped in full-name order.
 - **Scope on one thread.** `SynchronizationContextScope.Enter(context)` sets `SynchronizationContext.Current` to the context, or to none by default, and `Dispose` restores the one it found, after a normal or an exceptional exit. It is a `ref struct`, so it cannot live across an `await` that could resume on another thread; a `default` scope restores nothing.
 
 ## Structure tests
@@ -471,6 +479,7 @@ Three helpers and nothing else (plan I.3, ticket #37). It references no package 
 | `DapperWriteTests` | No SQL in a Module writes a table that an aggregate of any Module maps, its owned parts and child entities included, read from each Module's EF Core model as the Host composes it (story 45) |
 | `PackageGraphTests` | Each Kit package's direct project, package and framework references are exactly those of plan section C as amended (`PackageGraph`), and its restored closure keeps out what that table keeps out: no EF Core in Dapper, no Wolverine or Messaging in Postgres, no Modularity in Web, no EF Core, Npgsql or message store in `PouryaKit.Messaging.Wolverine`, no package at all in Core, Domain or Messaging, and `WolverineFx.RuntimeCompilation` in none (story 84) |
 | `CoreTests` | `PouryaKit.Core`'s public types are exactly its three helpers, the unspeakable types of its extension block aside, so a fourth helper fails (plan I.3, ticket #37) |
+| `TypeLookupTests` | No Kit package but Core lists the types of an assembly (`Assembly.GetTypes`, `DefinedTypes`, `ExportedTypes`, `GetExportedTypes`, `Modules`, `GetModules`, `Module.GetTypes`, `Module.FindTypes`), read from the IL; every other one asks `ImplementingTypes` (ticket #55) |
 | `LicenceTests` | Every package in every Kit package's restored closure, analyzers included, declares a licence expression from the permissive list in [`docs/provenance/README.md`](../provenance/README.md#package-licences) (ADR 0002, story 85) |
 | `PackageArtifactTests` and the `--validate-packages` entrypoint | Expected package IDs/version, embedded MIT/notices, repository commit and SourceLink, produced nuspec references and restored consumer closures, using `PackageGraph` and `LicenceTests`; the shared Python path runs artifact controls and isolated consumer builds |
 

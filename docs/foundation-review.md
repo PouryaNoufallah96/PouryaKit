@@ -244,18 +244,18 @@ Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its origi
 | Package | References | Third-party |
 |---|---|---|
 | Domain | — | none |
-| Core (I.3, ticket #37) | — | none; no Kit package references it |
-| Cqrs | Domain | `Microsoft.Extensions.DependencyInjection.Abstractions`, `Logging.Abstractions` |
+| Core (I.3, ticket #37) | — | none; referenced by Cqrs, Web, Messaging.Wolverine, Persistence.Dapper, Persistence.EFCore and Security since #55 (2026-10-07), whose registrations find their types through its `ImplementingTypes` |
+| Cqrs | Domain, Core | `Microsoft.Extensions.DependencyInjection.Abstractions`, `Logging.Abstractions` |
 | Validation | Cqrs | FluentValidation |
 | Modularity | Cqrs | `Microsoft.Extensions.Hosting.Abstractions`, `Microsoft.Extensions.DependencyInjection` |
-| Persistence.EFCore | Cqrs | EF Core Relational |
+| Persistence.EFCore | Cqrs, Core | EF Core Relational |
 | Persistence.Postgres | Persistence.EFCore | Npgsql EF provider, EFCore.NamingConventions |
-| Persistence.Dapper | Domain | Dapper, Npgsql (ADO.NET driver only, no EF), `Microsoft.Extensions.Configuration.Abstractions`, `Microsoft.Extensions.DependencyInjection.Abstractions` |
+| Persistence.Dapper | Domain, Core | Dapper, Npgsql (ADO.NET driver only, no EF), `Microsoft.Extensions.Configuration.Abstractions`, `Microsoft.Extensions.DependencyInjection.Abstractions` |
 | Messaging | Domain (handlers return `Result`) | none |
-| Messaging.Wolverine | Cqrs, Messaging | WolverineFx |
+| Messaging.Wolverine | Cqrs, Messaging, Core | WolverineFx |
 | Messaging.Wolverine.EFCore | Messaging.Wolverine, Persistence.EFCore | WolverineFx.EntityFrameworkCore, WolverineFx.Postgresql |
-| Web | Cqrs | ASP.NET Core framework reference |
-| Security (I.3, ticket #38) | Cqrs | none; no ASP.NET Core framework reference: the authenticated HTTP fallback policy is set by Web |
+| Web | Cqrs, Core | ASP.NET Core framework reference |
+| Security (I.3, ticket #38) | Cqrs, Core | none; no ASP.NET Core framework reference: the authenticated HTTP fallback policy is set by Web |
 | Testing | Modularity, Persistence.Postgres, Messaging.Wolverine.EFCore | Testcontainers, Respawn, xUnit v3, `Microsoft.Extensions.TimeProvider.Testing` |
 
 Amended on 2026-10-05, each addition MIT and already present in every Host:

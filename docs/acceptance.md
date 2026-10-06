@@ -40,6 +40,7 @@ The third seam of the Testing Decisions is proven in `tests/PouryaKit.Architectu
 | Only the Kit's drain clears Domain Events | `FeatureCodeTests` |
 | Only Domain sets up JSON options; Web and Messaging.Wolverine apply `UsePouryaKitJson` | `SharedJsonTests` (ticket #34) |
 | No Dapper write to an aggregate's table | `DapperWriteTests` |
+| Only Core lists the types of an assembly; every other Kit package asks `ImplementingTypes` | `TypeLookupTests` (ticket #55) |
 | Every Kit package's dependency closure matches plan section C | `PackageGraphTests` |
 | No package with a licence outside the permissive list | `LicenceTests` |
 
@@ -133,4 +134,18 @@ Spec #33, user stories 17 to 19. The JWT test issuer of the spec's acceptance be
 | A permission declared on a type that is not one concrete command or query fails registration | `PouryaKit.Security.Tests` `RegistrationTests.A_permission_declared_on_a_type_that_is_not_one_concrete_command_or_query_fails_registration` | No database |
 | A Host whose Modules declare permissions and that registers no `IActorPermissions` fails when built | `SecurityTests.A_host_whose_modules_declare_permissions_but_that_registers_no_permission_source_fails_when_built` | Container validation of `AddPouryaKitModules` |
 | A fallback policy the application set before `AddPouryaKitWeb` is kept | `SecurityTests.A_fallback_policy_the_application_set_before_the_kits_registration_is_kept` | |
-| `PouryaKit.Security` references Cqrs only, with no shared framework | `PackageGraphTests` | Its row in `PackageGraph` |
+| `PouryaKit.Security` references Cqrs only, with no shared framework | `PackageGraphTests` | Its row in `PackageGraph`; Core joined it in #55 |
+
+## Wave 2 one implementing-type lookup, ticket #55
+
+[Ticket #55](https://github.com/PouryaNoufallah96/PouryaKit/issues/55) under spec #33 (owner decision 2026-10-07: one implementation per concern). The six Kit registrations that found types themselves now ask `PouryaKit.Core`'s `ImplementingTypes`, and behaviour is unchanged: each registration's existing tests pass as they were.
+
+| Acceptance | Proven by | Notes |
+|---|---|---|
+| Cqrs, Security and Messaging.Wolverine reject what they rejected, with the same messages, from `ImplementingTypes.Candidates` | `PouryaKit.Cqrs.Tests` `RegistrationTests`; `PouryaKit.Security.Tests` `RegistrationTests`; `NotificationTests.Startup_fails_on_a_missing_an_invalid_or_a_duplicate_name` | Cqrs and Messaging.Wolverine keep declaration order on top of `Candidates`, so authorizers run, and a clashing name is reported, as before |
+| Web, Persistence.Dapper and Persistence.EFCore register what they registered, from `ImplementingTypes.Of` | `ModularMonolith.Tests` (every endpoint, Dapper read and typed-ID mapping of the Proving Sample) | Endpoints are mapped in full-name order instead of declaration order |
+| `Candidates` returns abstract classes and open generic definitions, and leaves out compiler-generated classes, interfaces and structs; `Of` still leaves the first two out | `ImplementingTypesTests.Candidates_include_the_abstract_and_open_generic_classes_that_of_leaves_out`; `ImplementingTypesTests.Candidates_leave_out_the_classes_the_compiler_generated`; `ImplementingTypesTests.An_open_generic_definition_finds_each_concrete_class_that_closes_it_directly_or_through_a_base_class` | Both new tests fail with `Of`'s filter in `Candidates`. Core keeps three public types (`CoreTests`) |
+| No Kit package but Core lists the types of an assembly | `TypeLookupTests.Only_core_lists_the_types_of_an_assembly`; `TypeLookupTests.Code_that_lists_the_types_of_an_assembly_itself_is_rejected` | Read from the IL: `Assembly.GetTypes`, `DefinedTypes`, `ExportedTypes`, `GetExportedTypes`, `Modules`, `GetModules`, `Module.GetTypes`, `Module.FindTypes`. Fails when `PouryaKitDbContext` calls `GetTypes()` again; the negative case is `Offending.OwnTypeLookup` |
+| The six packages reference Core directly, as plan section C now allows | `PackageGraphTests` | Their rows in `PackageGraph`; Core's own row and `NoPackages` are unchanged |
+
+`python3 scripts/packaging/validate.py --no-fetch` on the refactor's source (commit `d338d59`, before this paragraph was added) printed `PASS 15 packages, 17 clean consumers, negative controls and MinVer proof`, with the Release runtime suite at 423 passed, 0 failed, 0 skipped. The package-only consumers of Cqrs, Web, Messaging.Wolverine, Persistence.Dapper, Persistence.EFCore and Security, and the copied Proving Sample, restored `PouryaKit.Core` transitively. A first run failed one test, `IntegrationEventTests.An_integration_event_whose_receiver_committed_on_a_host_that_died_before_acknowledging_it_is_applied_once`: the delivery was turned away twice instead of once while the effect stayed single, the Solo-mode recovery race between two live test Hosts that the [Testing section](architecture/README.md#pouryakittesting) describes; the rerun passed.

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using PouryaKit.Core.Tests.Lookup;
 
 namespace PouryaKit.Core.Tests;
@@ -23,11 +24,36 @@ public class ImplementingTypesTests
     }
 
     [Fact]
+    public void Candidates_include_the_abstract_and_open_generic_classes_that_of_leaves_out()
+    {
+        // Interface and struct implementations are still left out.
+        Assert.Equal(
+            [typeof(AbstractHandler), typeof(DerivedHandler), typeof(NoteHandler), typeof(OpenHandler<>)],
+            ImplementingTypes.Candidates(typeof(IHandler<>), Fixtures, Fixtures)
+        );
+        Assert.Equal([typeof(AbstractStore), typeof(Ledger)], ImplementingTypes.Candidates(typeof(Store<>), Fixtures));
+        Assert.Equal(
+            [typeof(AbstractHandler), typeof(DerivedHandler), typeof(NoteHandler), typeof(OpenHandler<>)],
+            ImplementingTypes.Candidates(typeof(IAudited), Fixtures)
+        );
+    }
+
+    [Fact]
+    public void Candidates_leave_out_the_classes_the_compiler_generated()
+    {
+        var iterator = Assert.Single(ImplementingTypes.Of(typeof(IEnumerable<NoteHandler>), Fixtures));
+
+        Assert.True(iterator.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false));
+        Assert.Empty(ImplementingTypes.Candidates(typeof(IEnumerable<NoteHandler>), Fixtures));
+    }
+
+    [Fact]
     public void A_contract_that_is_neither_closed_nor_a_generic_definition_is_rejected()
     {
         var parameter = typeof(IHandler<>).GetGenericArguments()[0];
 
         Assert.Throws<ArgumentException>(() => ImplementingTypes.Of(parameter, Fixtures));
         Assert.Throws<ArgumentException>(() => ImplementingTypes.Of(typeof(IHandler<>).MakeGenericType(typeof(Store<>)), Fixtures));
+        Assert.Throws<ArgumentException>(() => ImplementingTypes.Candidates(parameter, Fixtures));
     }
 }

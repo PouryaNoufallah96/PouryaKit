@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using PouryaKit.Core;
 using PouryaKit.Cqrs;
 
 namespace PouryaKit.Security;
@@ -23,9 +24,8 @@ public static class SecurityServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(featureAssemblies);
 
-            var declared = featureAssemblies
-                .Distinct()
-                .SelectMany(assembly => assembly.GetTypes())
+            var declared = ImplementingTypes
+                .Candidates(typeof(object), featureAssemblies)
                 .Where(type => type.IsDefined(typeof(RequiresPermissionAttribute), inherit: false))
                 .ToList();
             List<string> problems =
