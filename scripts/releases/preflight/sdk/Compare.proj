@@ -1,0 +1,20 @@
+<Project>
+  <Import Project="$(Inputs)" />
+  <UsingTask TaskName="Microsoft.DotNet.ApiCompat.Task.ValidatePackageTask"
+             AssemblyFile="$(MSBuildToolsPath)/Sdks/Microsoft.NET.Sdk/tools/net10.0/Microsoft.DotNet.ApiCompat.Task.dll" />
+  <Target Name="Compare">
+    <Microsoft.DotNet.ApiCompat.Task.ValidatePackageTask
+      PackageTargetPath="$(Candidate)"
+      BaselinePackageTargetPath="$(Baseline)"
+      RuntimeGraph="$(MSBuildToolsPath)/PortableRuntimeIdentifierGraph.json"
+      RoslynAssembliesPath="$(MSBuildToolsPath)/Roslyn/bincore"
+      PackageAssemblyReferences="@(References)"
+      RunApiCompat="true"
+      EnableRuleCannotChangeParameterName="true"
+      EnableRuleAttributesMustMatch="true"
+      GenerateSuppressionFile="$(Generate)"
+      SuppressionOutputFile="$(Suppression)"
+      PermitUnnecessarySuppressions="false"
+      PreserveUnnecessarySuppressions="false" />
+  </Target>
+</Project>
