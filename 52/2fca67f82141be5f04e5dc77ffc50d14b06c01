@@ -1,0 +1,78 @@
+docs/ci.md
+  s_74540ce945d2e7::t_fe2f22321686ab 37
+  s_74540ce945d2e7::t_b8653f15f1da8d 3
+tests/releases/publication/red_once.py
+  s_74540ce945d2e7::t_80217beaeee962 1-51
+.github/workflows/package-publication.yml
+  s_74540ce945d2e7::t_3638490e3e50ae 1-73
+.agents/skills/pourya-kit/SKILL.md
+  s_74540ce945d2e7::t_ebec9ef9d27933 36
+scripts/releases/publication/authorize.py
+  s_74540ce945d2e7::t_80217beaeee962 20
+  s_74540ce945d2e7::t_ba5427121d2985 1-19,21-22,24-28
+  s_74540ce945d2e7::t_fe2f22321686ab 23
+.github/workflows/private-publication.yml
+  s_74540ce945d2e7::t_3638490e3e50ae 1-29,31-35,37-42,79-89
+  s_74540ce945d2e7::t_ba5427121d2985 36,43-61,76-78
+  s_74540ce945d2e7::t_fe2f22321686ab 62-75
+  s_74540ce945d2e7::t_80217beaeee962 30
+docs/architecture/README.md
+  s_74540ce945d2e7::t_ebec9ef9d27933 13,22-23,28-30
+.github/workflows/ci.yml
+  s_74540ce945d2e7::t_b8653f15f1da8d 34-50
+scripts/releases/publication/transport.py
+  s_74540ce945d2e7::t_ba5427121d2985 47-48
+  s_74540ce945d2e7::t_fd7143db31e514 1-3,5-44,46,49-79,84-119
+  s_74540ce945d2e7::t_ebec9ef9d27933 4,45,80-83
+README.md
+  s_74540ce945d2e7::t_ebec9ef9d27933 7
+.agents/skills/pourya-kit/references/publication.md
+  s_74540ce945d2e7::t_ebec9ef9d27933 1-4,6-11
+  s_74540ce945d2e7::t_fe2f22321686ab 5
+scripts/releases/publication/publisher.py
+  s_74540ce945d2e7::t_ba5427121d2985 168-174,179-181
+  s_74540ce945d2e7::t_4d5990f80118e2 118-121,153-156
+  s_74540ce945d2e7::t_fd7143db31e514 15
+  s_74540ce945d2e7::t_dbc4c969ca2584 1-14,16-117,122-152,157-161,163-167,175-178,182-191,196-209
+  s_74540ce945d2e7::t_80217beaeee962 162,192-195
+scripts/releases/publication/artifacts.py
+  s_74540ce945d2e7::t_fd7143db31e514 12
+  s_74540ce945d2e7::t_ba5427121d2985 36,56-60
+  s_74540ce945d2e7::t_fe2f22321686ab 52,55
+  s_74540ce945d2e7::t_dbc4c969ca2584 1-11,13-35,37-51,53-54,61-132
+scripts/releases/publication/run.py
+  s_74540ce945d2e7::t_dbc4c969ca2584 1-5,7-13,15-42,45-50,55,57-72,74-78
+  s_74540ce945d2e7::t_b21a04f83eb6f7 6,43-44,51-53
+  s_74540ce945d2e7::t_fd7143db31e514 14
+  s_74540ce945d2e7::t_80217beaeee962 54,56,73
+docs/private-packages.md
+  s_74540ce945d2e7::t_ebec9ef9d27933 1-26,28-56,58-64,66-73,75-76
+  s_74540ce945d2e7::t_fe2f22321686ab 27,57
+  s_74540ce945d2e7::t_b21a04f83eb6f7 65,74
+tests/releases/publication/test_publication.py
+  s_74540ce945d2e7::t_a0d116de41eda1 417-424
+  s_74540ce945d2e7::t_9113098ffe85e9 1-53,55-60,63-102,106-155,158,161-194,196-314,321,332-353,355-377,397-416,425-463,472-481,486-500
+  s_74540ce945d2e7::t_80217beaeee962 61-62,103-105,156-157,159-160,195,315-320,322-331,464-471
+  s_74540ce945d2e7::t_fe2f22321686ab 54,354
+  s_74540ce945d2e7::t_b8653f15f1da8d 482-485
+  s_74540ce945d2e7::t_b21a04f83eb6f7 378-396
+docs/acceptance.md
+  s_74540ce945d2e7::t_ebec9ef9d27933 77-83,85-90
+  s_74540ce945d2e7::t_18c61e3a7a1259 84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "522fca67f82141be5f04e5dc77ffc50d14b06c01",
+  "prompts": {},
+  "sessions": {
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
