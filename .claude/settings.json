@@ -14,7 +14,19 @@
     "command": "jq -c '.tasks[]? | {id, content: ([([.name, .description, .type] | map(select(. != null and . != \"\")) | first // \"agent\"), ((.model // empty) | sub(\"^claude-\"; \"\")), ((.effort // empty) | tostring), (if (.contextWindowSize // 0) > 0 then ((((.tokenCount // 0) * 100 / .contextWindowSize) | floor | tostring) + \"% ctx\") else empty end)] | join(\" · \"))}' 2>/dev/null || true"
   },
   "permissions": {
-    "ask": ["Bash(git push *)"]
+    "allow": ["Bash(git push *)"],
+    "ask": [
+      "Bash(git push main *)",
+      "Bash(git push * main)",
+      "Bash(git push * main *)",
+      "Bash(git push *:main)",
+      "Bash(git push *:main *)",
+      "Bash(git push *heads/main)",
+      "Bash(git push *heads/main *)",
+      "Bash(git push --all *)",
+      "Bash(git push * --all)",
+      "Bash(git push * --all *)"
+    ]
   },
   "worktree": {
     "baseRef": "head"

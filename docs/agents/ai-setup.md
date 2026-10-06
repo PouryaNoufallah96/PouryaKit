@@ -18,7 +18,7 @@ One home per concern. Anything both tools use lives in `.agents/` or at the root
 | Guard | `.agents/hooks/guard.py` | Both, wired from `.claude/settings.json` and `.codex/hooks.json` |
 | Mod | `.claude/mods/kit-cockpit/`, linked from `.claude/skills/kit-cockpit` | Claude Code |
 | Status line | `.claude/statusline.sh` | Claude Code, main session, through `statusLine` in `.claude/settings.json` |
-| Claude Code settings | `.claude/settings.json` | Claude Code: subagent default model, agent teams on, the output style, the status line, subagent rows, subagent worktree base, ask before `git push`, the guard |
+| Claude Code settings | `.claude/settings.json` | Claude Code: subagent default model, agent teams on, the output style, the status line, subagent rows, subagent worktree base, allow a branch `git push` and ask before a push to `main`, the guard |
 | Codex config | `.codex/config.toml` | Codex, once the repository is trusted: model, effort, review model, subagent defaults |
 | Check script | `.agents/scripts/check-ai-setup.py` | Run by hand after any change, and by the `ai-setup` CI job |
 | Role memory | `.claude/agent-memory/kit-implementer/` | Claude Code, for `kit-implementer` only; created on first use, committed |
@@ -140,7 +140,7 @@ The guard is a seatbelt against accidents, not a sandbox. It stops the common de
 | Recursive delete | `rm -r`, `find -delete`, `find -exec rm`, `git clean -d` | One form only: a direct `rm -r` (optionally under `sudo`, `env` and the like) whose every argument is an option or a literal absolute path under a system temp directory, with no `--`. Never through `xargs` |
 | Destructive push | `git push` with `--force`, `-f`, `--mirror`, `--delete`, `-d`, `+refspec` or `:branch` | `--force-with-lease` |
 
-The first rule is how "never change the reference projects" is enforced without naming their locations. `.claude/settings.json` also sets an `ask` rule for `git push` in Claude Code.
+The first rule is how "never change the reference projects" is enforced without naming their locations. `.claude/settings.json` allows `Bash(git push *)` and asks when the command names `main` as a destination (`git push origin main`, `git push main`, `HEAD:main`, `refs/heads/main`) or uses `--all`. Ask is checked before allow, so those commands still prompt. A bare `git push`, or `git push -u origin HEAD`, is allowed: the rule sees the command text, not the branch checked out in this worktree. `git -C <dir> push` is a different command and is not covered by either rule. Codex has no ask rules; its approval policy stays in the user's own config, and this guard still blocks a destructive push.
 
 The docstring of `guard.py` states how a shell command is matched (for example, after a wrapper such as `sudo` every guarded word is judged), what is not covered and what is over-blocked. What it does not say:
 
