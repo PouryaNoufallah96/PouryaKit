@@ -3,6 +3,7 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -32,7 +33,7 @@ jobs:
       contents: read
     uses: ./.github/workflows/package-validation.yml
 
-  publication-protocol:
+  publication-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -44,7 +45,5 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-      - name: Check publication without feed credentials
-        run: |
-          python3 -m unittest discover -s tests/releases/publication -p 'test_*.py'
-          python3 tests/releases/publication/red_once.py
+      - name: Check publication trust and original artifacts
+        run: python3 -m unittest discover -s tests/releases/publication -p 'test_*.py'

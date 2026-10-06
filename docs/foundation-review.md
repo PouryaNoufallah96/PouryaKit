@@ -551,86 +551,37 @@ compilation.
 
 ### Phase 5 packaging and releases
 
-Needs Phase 4. Wave 1 is merged; complete this Phase before Wave 2 feature work. This is the
-authoritative packaging, versioning and release plan, not shipped automation.
+Needs Phase 4. Wave 1 is merged. On 2026-10-06 the owner narrowed the active scope to "packaging versioning and nuget packages in cleanest way and efficient if any sample references covers all follow them". Deliver the existing shared package validation and a standard private GitHub Packages publisher. This replaces the custom publication protocol and preflight machinery from this wave. #28/#29 compatibility automation, named cuts and content-verified recovery are deferred, and the current scope does not claim all original #24 acceptance criteria. Section G and the ADRs remain unchanged.
 
-Keep central package management, MinVer as the only version engine, SourceLink,
-`EnablePackageValidation`, MIT and `THIRD-PARTY-NOTICES.md` in each nupkg. All shipped Kit packages
-share one version. Private GitHub Packages comes first, with named `0.x` prereleases; nuget.org
-activation and stable `1.0` each need a later owner decision. A private release cut cannot enable
-public publishing. Once public, nuget.org packages are unlisted rather than deleted.
+Keep central package management, MinVer as the only version engine, SourceLink, `EnablePackageValidation`, MIT and `THIRD-PARTY-NOTICES.md` in each nupkg. All thirteen shipped Kit packages share one version. Private GitHub Packages comes first. Nuget.org activation and stable `1.0` each require a later owner decision.
 
-Configure MinVer with minimum major/minor `0.1`, tag prefix `v` and default prerelease identifiers
-`preview.0`. Fetch full history and tags. Untagged main commits use MinVer's Git height, initially
-for example `0.1.0-preview.0.H`; subsequent versions follow MinVer's tag rules. No GitVersion,
-date suffix, run-number version or independent dispatch version calculation.
-[MinVer's pinned README](https://github.com/adamralph/minver/blob/9f485aabb9936efd8fb8b633ae09ae4d0659c94f/README.md#L179)
-documents height; configuration is at lines 204–211, 236–244 and 282–292 of the same revision.
+MinVer uses minimum major/minor `0.1`, tag prefix `v` and default prerelease identifiers `preview.0`. Fetch full history and tags. Untagged main commits use Git height, such as `0.1.0-preview.0.H`. Owner-created `v0.x` preview/rc tags on current main supply exact named versions when the owner then runs CI manually on main. No workflow creates a tag or GitHub Release, and no version override or second calculation is added. See [MinVer's pinned README](https://github.com/adamralph/minver/blob/9f485aabb9936efd8fb8b633ae09ae4d0659c94f/README.md#L179) and [private package guidance](private-packages.md#versions-and-triggers).
 
-| Trigger | Required behaviour |
+| Trigger | Active behaviour |
 |---|---|
-| Pull request, including a fork | Build, test, pack, check dependencies and restore/build package-only consumers from the produced packages. No publishing, tag or release writes, or release credentials. |
-| Green `main` | Publish internal prerelease packages from the exact tested SHA through the same build/test/pack path. These snapshots receive no version tag or GitHub Release. |
-| Owner-approved `workflow_dispatch` release cut | Select an exact green `main` SHA and validate SemVer progression and compatibility before creating immutable `v<version>`. Build under that tag's version, run the same validation/publish path explicitly, publish the packages, verify the full set, then create the GitHub Release. Initially use named `0.x` `preview` or `rc` releases. |
+| Pull request, branch push or tag push | Read-only build, tests, pack, dependency checks and package-only consumers. No publishing, tag/release writes or release credentials. |
+| Successful main push CI | Publish original validated MinVer `0.x` preview/rc packages to the fixed private feed. |
+| Manual CI on main after an owner-created prerelease tag | Validate that main SHA with full tags, then publish its original packages at MinVer's tag version. |
+| Manual private publication on main | Select the original successful main CI run, attempt and SHA. Download the same retained packages and manifest. |
 
-A version tag changes the build version. Rebuild and validate the tagged SHA; never relabel internal
-snapshot packages as a named release. A tag pushed with `GITHUB_TOKEN` does not trigger a second
-workflow, so the cut calls the shared path itself. No PAT solely to trigger another workflow.
-[GitHub's token trigger rule](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow)
-is the reason for this explicit execution path.
+The read-only authorization job requires successful CI and AI/package-validation jobs, the fixed private repository, exact main source SHA and attempt, and a producer event of `push` or `workflow_dispatch`. PR/tag-head artifacts cannot authorize publication. The publisher uses trusted main code, official artifact download, the original receipt/inventory/hash checks, standard `dotnet nuget push` and a clean all-thirteen private-feed restore. It never builds replacement packages. The existing literal concurrency group disables cancellation of an active publisher; GitHub's one pending slot is not a durable queue.
 
-Patches contain compatible fixes; minors add compatible behaviour. Before `1.0`, a breaking change
-needs an explicitly reviewed minor increment and migration notes. From `1.0`, breaking changes need
-a major increment. Compare packaged public APIs with the last named release before the cut;
-`EnablePackageValidation` findings need a disposition against this policy. Check progression against
-prior named releases and already published versions, including prerelease ordering.
+`--skip-duplicate` skips HTTP 409. It does not verify matching remote contents or fulfill the original identical-content recovery guarantee. Preserve the Domain `0.1.0-preview.0.10` partial publication and its original main CI `37456433718`, attempt `1`, artifact `11408539884`, source `2de265641b8cd94a5ddc17980cdcad530f0a8f60`. Complete it only from those original bytes; do not delete, replace or repack it.
 
-**Adopt, adapt and reject from verified source.** These are static source checks, not evidence of
-successful upstream publishing runs. Sources are
-[`mehdihadeli/CloudNativeKit@e81d65e6376008cb001fdbd886086dc6e84790c6`](https://github.com/mehdihadeli/CloudNativeKit/tree/e81d65e6376008cb001fdbd886086dc6e84790c6)
-and [`meysamhadeli/woo@149a3cf168496c3bec85945f83ad222e43720e4d`](https://github.com/meysamhadeli/woo/tree/149a3cf168496c3bec85945f83ad222e43720e4d).
-- Adopt CNK's full checkout history and build/test gating, `.github/workflows/build-and-publish.yml:26,36-43,76-78`.
-  Adapt its publication flow to private packages and exact tested SHAs. Reject release drafting
-  under `always()` at line 112 and stable-only publishing at line 119 for the Kit's prerelease policy.
-- Adopt Woo's common Release version and `pack --no-build`, `.github/workflows/publish.yml:52,61`.
-  Adapt its package-count gate at lines 71–75 to an explicit expected inventory. Reject its independent
-  checkout ref/version inputs at lines 24,34 without CI linkage, and `--skip-duplicate` alone at
-  lines 93 onward as retry proof; it does not compare package contents.
-- Keep MinVer rather than CNK's `calculate-version.sh:22-24,39-41` date/run calculation; retain its
-  tag/version mismatch rejection at line 16. Reject copying CNK's packability setup,
-  `Directory.Packages.props:9` and `Directory.Build.targets:3-4`; the Windows-backslash condition
-  appears to leave Ubuntu projects non-packable. This is a static inference to test, not a runtime claim.
-  Neither inspected workflow provides publication concurrency or preservation of package checksum manifests.
+**Verified reference sources.** These are static source checks, not successful upstream publication evidence:
 
-The cost is one shared build/publish path plus inventory, consumer and retry checks. Reuse MinVer
-and the existing graph rules; keep artifact recovery checks because partial publication is irreversible.
+- [`meysamhadeli/woo@149a3cf168496c3bec85945f83ad222e43720e4d .github/workflows/publish.yml`](https://github.com/meysamhadeli/woo/blob/149a3cf168496c3bec85945f83ad222e43720e4d/.github/workflows/publish.yml) supplies the common Release build at line 52, `pack --no-build` at lines 59–65 and standard NuGet push at lines 89–93. Keep the Kit's existing exact inventory and MinVer instead of its count-only gate, separate version input and public-feed secret. Duplicate skipping is accepted with the limited HTTP 409 meaning above.
+- [`mehdihadeli/CloudNativeKit@e81d65e6376008cb001fdbd886086dc6e84790c6 .github/workflows/build-and-publish.yml`](https://github.com/mehdihadeli/CloudNativeKit/blob/e81d65e6376008cb001fdbd886086dc6e84790c6/.github/workflows/build-and-publish.yml) supplies full history and build/test gating at lines 26, 36–43 and 76–78. Do not adopt its separate version calculation, repeated publication build or release drafting under `always()`.
 
-**Work packages and acceptance, in order:**
-1. Package metadata and consumer proof. Evaluate all packable `src` projects against a nonempty,
-   explicit expected package inventory, initially the thirteen Wave 1 packages; exclude tests and
-   samples. Build Release once, test that Release build with `--no-build`, then pack with
-   `--no-build` at the same MinVer version. Verify package
-   IDs, versions, MIT/notices, repository/source commit metadata and SourceLink. Extend the existing
-   `PackageGraphTests` rules to produced nuspecs and restored consumer closures, rather than add a
-   competing graph. Keep row 17 exclusions, including no EF in Dapper or Messaging.Wolverine, no
-   Wolverine in Postgres and no Modularity in Web. Restore/build every package and supported profile
-   in clean package-only consumers, with no Kit project references or source checkout fallback.
-2. PR validation and main snapshots. Reuse the package checks and runtime suite; prove a fork PR
-   has no publication writes or release credentials, and a failing check cannot publish. Main
-   publication records the tested SHA, MinVer version, expected package IDs and artifact hashes in
-   a manifest. Prove full history/tags are available and missing publish secrets fail clearly.
-3. Named release and retry proof. Check the approved SHA is green on main; reject invalid progression
-   or unreviewed breaking changes. Assert tag SemVer = MinVer package/build version = manifest
-   version, allowing documented assembly-version normalization. Serialize all publication paths
-   without cancelling an active publisher. Preserve the original SHA, version, hash manifest and
-   artifacts for retries; an identical rerun verifies and accepts existing identical packages and
-   uploads only missing ones. Refuse any different bytes or SHA for that version, including a moved
-   tag, and fail if original artifacts cannot be recovered. Prove a partial publish can resume;
-   validation or publishing failure announces no GitHub Release. Prove public publishing remains off.
+**Active acceptance:**
 
-Completion requires evidence for these gates, current consumer/release docs and AI guidance through
-section H. A failed cut may leave an immutable tag or partial packages; recovery uses the same
-recorded artifacts and never retargets the tag or announces an incomplete release.
+1. Package metadata and consumer proof remain the existing #25 path. Evaluate the nonempty thirteen-package inventory, build Release once, test with `--no-build`, pack with `--no-build`, check metadata/SourceLink and package graph rules, and restore/build every package and supported profile in clean package-only consumers.
+2. CI remains read-only and preserves the tested SHA, MinVer version, package inventory, hashes and original artifacts. Successful main producer metadata authorizes a separate package-write job; failure or PR provenance cannot authorize it.
+3. Publish originals to the fixed private feed with the ephemeral job token, preserve the manifest, and restore all thirteen exact versions with fresh caches. Keep public publication and tag/Release writes disabled. Record actual hosted evidence in [#27](https://github.com/PouryaNoufallah96/PouryaKit/issues/27), with the existing fork-execution exception in #26.
+
+**Deferred original acceptance:** #28/#29 require packaged public API comparison, reviewed compatibility/progression and migration notes, approved immutable named cuts, tagged validation, tag/package/manifest version agreement, GitHub Release announcement only after complete publication, remote raw-byte/SHA conflict checks and partial-publish identical-content recovery from original artifacts. These remain the broader #24 plan, not guarantees of standard duplicate skipping. [Deferred release guidance](releases-preflight.md) records this boundary. Resuming that work needs a new scoped brief; MinVer remains the sole version engine.
+
+The active scope's value is validated private packages with one version and a clean consumer restore. Its cost is the existing package validator plus standard Actions/CLI jobs and small provenance checks. Its impact is packaging and CI only; Kit runtime APIs, reference projects, credentials and access settings are unchanged. Completion requires the active checks, hosted publication/restore evidence, current docs and AI guidance through section H. The broader original #24 acceptance remains incomplete.
 
 **Phase 6 — template and second profile** (optional, after 5)
 - `dotnet new` template extracted from the proven sample; single-service profile with RabbitMQ.
