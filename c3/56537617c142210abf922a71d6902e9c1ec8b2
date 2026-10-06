@@ -1,0 +1,46 @@
+docs/acceptance.md
+  s_41c3eef9abbce4::t_f4eacd54c6a296 99
+.github/workflows/package-publication.yml
+  s_41c3eef9abbce4::t_21f9f6bbeb1549 85,121
+.agents/skills/pourya-kit/references/publication.md
+  s_41c3eef9abbce4::t_21f9f6bbeb1549 5,9
+tests/PouryaKit.Core.Tests/PredicateBuilderTests.cs
+  s_41c3eef9abbce4::t_9a5a658d04b2c7 38-58
+.agents/skills/pourya-kit/references/packages.md
+  s_41c3eef9abbce4::t_21f9f6bbeb1549 5
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_21f9f6bbeb1549 234-235,277
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_21f9f6bbeb1549 440
+src/PouryaKit.Core/PredicateBuilder.cs
+  s_41c3eef9abbce4::t_8951cb1522bfd0 38-41,43
+  s_41c3eef9abbce4::t_f51e29c17437f2 9-11
+docs/ci.md
+  s_41c3eef9abbce4::t_21f9f6bbeb1549 3
+docs/private-packages.md
+  s_41c3eef9abbce4::t_21f9f6bbeb1549 7,43,51,71
+docs/provenance/PouryaKit.Core.md
+  s_41c3eef9abbce4::t_21f9f6bbeb1549 23
+.agents/skills/pourya-kit/references/core.md
+  s_41c3eef9abbce4::t_21f9f6bbeb1549 12,40
+docs/packages.md
+  s_41c3eef9abbce4::t_21f9f6bbeb1549 15,27
+.claude/rules/kit-code.md
+  s_41c3eef9abbce4::t_7b85ef21f6944c 29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c356537617c142210abf922a71d6902e9c1ec8b2",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
