@@ -23,12 +23,12 @@ The main session is judge and orchestrator. It scopes the ticket, writes the bri
 
 Match the process to the task:
 
-- **Clear and small** (a typo, a config value, a doc line, a few-line fix with an obvious check): do it directly. No brief, no review.
+- **Clear and small** (a typo, a config value, a doc line, a few-line fix with an obvious check): do it directly. If the session requires delegation, use one bounded worker to edit, check, commit and push only within explicit authority; the main session judges the result. A separate reviewer is needed only when risk or ambiguity requires it.
 - **A normal ticket**: one `kit-implementer`, then one review sized as in step 3.
 - **Unclear or stuck**: stop. Ask the owner, or send a `kit-scout` for the facts, and start only when the objective and its check are clear. Two failed attempts at the same thing is stuck.
 - Tickets with disjoint files run in parallel.
 
-When delegating: a `kit-implementer` brief carries `objective`, `allowed_files`, `verify` and `stop_if`, and why the work matters. The objective states the deliverable, costly guarantees and reference baseline. Finish the selected acceptance criteria; an additional release framework or guarantee needs an owner scope decision. A role's report is a claim: read the diff and the `verify` output it reports before the next step, and re-run a check only when that leaves a doubt.
+When delegating: a `kit-implementer` brief carries `objective`, `allowed_files` and `verify`, and why the work matters. `stop_if` adds optional package-specific conditions; without it, apply the role's existing hard stops and record that assumption in the report. The objective states the deliverable, costly guarantees and reference baseline. Finish the selected acceptance criteria; an additional release framework or guarantee needs an owner scope decision. A role's report is a claim: read the diff and the `verify` output it reports before the next step, and re-run a check only when that leaves a doubt.
 
 Explicit session instructions about providers, models and effort override defaults. Keep model defaults in host configuration; see `docs/agents/ai-setup.md`, "Roles", for routing.
 
@@ -44,7 +44,7 @@ Not test-first. Implement, then write focused tests for behaviour that matters; 
 
 1. Implement from the ticket and brief.
 2. Focused tests.
-3. Review, sized to the ticket. A ticket that claims a Kit runtime guarantee or changes a public API of the Kit gets two independent reviews in parallel. Routine CI, config, docs and packaging tickets get one focused `kit-reviewer`; executing a workflow does not itself make a Kit runtime guarantee. Any other ticket gets one `kit-reviewer`.
+3. Review, sized to the ticket. A ticket that claims a Kit runtime guarantee or changes a public API of the Kit gets two independent reviews in parallel. Other tickets follow the Operating model: clear, small changes need no separate reviewer unless risk or ambiguity requires one; normal tickets get one focused `kit-reviewer`. Executing a workflow does not itself make a Kit runtime guarantee.
 4. One fix round for the accepted findings, then a re-score of those findings only. Run a new full review only after a high finding was fixed, and at most once: a ticket gets two full reviews, then re-scores only. For any medium or low finding still open, record a disposition and move on.
 5. Complete the runtime proof required by the ticket, including Kit guarantees and hosted publication where claimed.
 6. Update docs and C4 diagrams. The ticket's closing comment carries a value, cost and impact paragraph (the `archify-review` lens); `/archify-review` itself runs once per wave, at close-out.

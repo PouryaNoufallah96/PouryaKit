@@ -559,7 +559,7 @@ MinVer uses minimum major/minor `0.1`, tag prefix `v` and default prerelease ide
 
 | Trigger | Active behaviour |
 |---|---|
-| Pull request, branch push or tag push | Read-only build, tests, pack, dependency checks and package-only consumers. No publishing, tag/release writes or release credentials. |
+| Pull request, tag push or manual CI on a non-main branch | Read-only build, tests, pack, dependency checks and package-only consumers. No publishing, tag/release writes or release credentials. |
 | Successful main push CI | Publish original validated MinVer `0.x` preview/rc packages to the fixed private feed. |
 | Manual CI on main after an owner-created prerelease tag | Validate that main SHA with full tags, then publish its original packages at MinVer's tag version. |
 | Manual private publication on main | Select the original successful main CI run, attempt and SHA. Download the same retained packages and manifest. |

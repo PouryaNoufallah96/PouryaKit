@@ -8,7 +8,7 @@ The vendored skill holds in shape: an integration branch, a frontier computed fr
 
 | The skill says | Here |
 |---|---|
-| An implementer subagent calls `tdd` | A `kit-implementer` with a brief: `objective`, `allowed_files`, `verify`, `stop_if`, and why the work matters. |
+| An implementer subagent calls `tdd` | A `kit-implementer` with a brief: `objective`, `allowed_files`, `verify`, optional `stop_if`, and why the work matters. |
 | One `code-review` over the integration branch at the end | Review per ticket, sized as workflow step 3 says. The wave's last ticket is the close-out, where `/archify-review` runs once (step 6). |
 | A draft pull request | None. A ticket closes with `gh issue close <n> --comment` as soon as it is merged into the integration branch and its gates pass, so the blocking edges give the next frontier. |
 | A merger subagent | The orchestrator merges a clean branch itself (`git merge --no-ff`); a merger subagent only on conflicts. |

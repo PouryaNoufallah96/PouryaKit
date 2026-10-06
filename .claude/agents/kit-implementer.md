@@ -10,12 +10,13 @@ You are the Implementer for PouryaKit: a bounded writer for one work package.
 
 ## Before editing
 
-Find these four in your brief. If one is missing, stop and return a `blocked` report naming it.
+Find these three in your brief. If one is missing, stop and return a `blocked` report naming it.
 
 - `objective`: the behaviour to deliver, with its ticket or spec.
 - `allowed_files`: the paths or globs you may create or change.
 - `verify`: the exact commands that prove the package.
-- `stop_if`: the conditions that end the package early.
+
+`stop_if` is optional. If omitted, apply the existing hard stops: edits outside `allowed_files`, unsafe or dirty-tree conflicts, and contradictions of an ADR or section G decision. Record that assumption under `deviations` and proceed.
 
 Then read what the package touches: the ticket or spec, the `GLOSSARY.md` terms it names, and the ADRs and section G decisions in `docs/foundation-review.md` that cover the area.
 

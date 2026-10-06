@@ -12,7 +12,7 @@ Thirteen packages and their references no longer read as one diagram, so the C4 
 C4Container
     title PouryaKit package validation and private publication, container level
     Person(maintainer, "Maintainer", "Validates one source commit")
-    Container_Ext(ci, "CI validation", "GitHub Actions, read-only repository token", "Full-history push/PR/manual checkout; token removed before the shared path")
+    Container_Ext(ci, "CI validation", "GitHub Actions, read-only repository token", "Full-history CI checkout; token removed before the shared path")
     System_Boundary(validation, "Shared package validation") {
         Container(path, "Shared validation path", "Python, .NET SDK and MinVer", "One Release build, existing tests, no-build pack and artifact checks")
         ContainerDb(artifacts, "Verified package set", "Thirteen nupkgs and checksum manifest", "One MinVer version and source commit, MIT, notices and SourceLink")
@@ -36,7 +36,7 @@ C4Container
     Rel(path, consumers, "builds and checks dependency closures of")
 ```
 
-The artifact and consumer checks reuse `PackageGraph` and the license policy of the Structure seam. [CI](../ci.md) invokes the same path on pushes, PRs and manual runs, and distinguishes a PR's tested merge revision from its head SHA. Hosted same-repository success/failure, retained packages and read-only permissions are proven by PR #30; real private fork execution remains explicitly unverified under the owner exception. The [private publisher](../private-packages.md) authorizes successful main push/manual CI, downloads the original artifact, checks local provenance and hashes, then uses standard NuGet push and a fresh thirteen-package restore. HTTP 409 skipping does not verify remote byte identity. The active Phase 5 scope is complete; [hosted completion evidence](../private-packages.md#hosted-completion) records the final main CI and publication at `0.1.0-preview.0.13`. Compatibility automation, named cuts and content-verified recovery in #28/#29 are closed as not planned and require a new scoped ticket.
+The artifact and consumer checks reuse `PackageGraph` and the license policy of the Structure seam. [CI](../ci.md) invokes the same path and distinguishes a PR's tested merge revision from its head SHA. Hosted same-repository success/failure, retained packages and read-only permissions are proven by PR #30; real private fork execution remains explicitly unverified under the owner exception. The [private publisher](../private-packages.md) authorizes successful main push/manual CI, downloads the original artifact, checks local provenance and hashes, then uses standard NuGet push and a fresh thirteen-package restore. HTTP 409 skipping does not verify remote byte identity. The active Phase 5 scope is complete; [hosted completion evidence](../private-packages.md#hosted-completion) records the final main CI and publication at `0.1.0-preview.0.13`. Compatibility automation, named cuts and content-verified recovery in #28/#29 are closed as not planned and require a new scoped ticket.
 
 ### Execution core
 
