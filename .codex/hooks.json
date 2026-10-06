@@ -1,0 +1,18 @@
+{
+  "description": "PouryaKit guard, shared with Claude Code. Runs once the project and this hook are trusted (/hooks).",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.agents/hooks/guard.py\"",
+            "statusMessage": "Checking PouryaKit guard",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

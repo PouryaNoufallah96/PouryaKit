@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A Module that breaks every structure rule, so each rule is seen to reject it. It is never part of the sample, and
+       PouryaKit.ArchitectureTests leaves this folder out of its own sources. It references Catalog's implementation,
+       and no code of it uses Catalog, so only the restored project shows the reference. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\samples\ModularMonolith\src\Modules\Catalog\Catalog\Catalog.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Misnamed\**" />
+    <None Remove="Misnamed\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\samples\ModularMonolith\src\ModularMonolith.Host\ModularMonolith.Host.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.Testing\PouryaKit.Testing.csproj" />
+    <ProjectReference Include="Misnamed\ModularMonolith.Tests.Misnamed.csproj" />
+  </ItemGroup>
+</Project>

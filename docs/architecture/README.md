@@ -1,0 +1,407 @@
+# Architecture
+
+Wave 1 of PouryaKit as built: thirteen packages, each a project that ships as one NuGet package in Phase 5 and that a consuming Host references, and the Proving Sample, `samples/ModularMonolith/` with its tests in `tests/ModularMonolith.Tests/`, whose passing tests are the evidence that the Kit's guarantees hold. The references between the packages are those [plan section C](../foundation-review.md#c-package-structure) allows, as amended there and by G.4; `tests/PouryaKit.ArchitectureTests` asserts each package's references and full dependency closure against that table ([Structure tests](#structure-tests)). Which test proves each acceptance scenario of the spec is in [the acceptance map](../acceptance.md). How to use each Capability is the Kit's own skill, [`.agents/skills/pourya-kit/`](../../.agents/skills/pourya-kit/SKILL.md); the decisions behind the design are in [`docs/adr/`](../adr/).
+
+Thirteen packages and their references no longer read as one diagram, so the C4 container level is split into three views: the execution core, messaging and delivery, and the Proving Sample. A package of another view that a view's packages reference appears in it as an external container.
+
+## Views
+
+### Execution core
+
+```mermaid
+C4Container
+    title PouryaKit execution core, container level
+
+    Person(author, "Feature author", "Writes aggregates, commands, queries, validators, handlers, mappings, reads and endpoints in a Module")
+    System_Ext(host, "Consuming Host", "A modular monolith whose Modules reference the Kit, such as the Proving Sample")
+
+    System_Boundary(core, "PouryaKit execution core") {
+        Container(domain, "PouryaKit.Domain", ".NET 10 library, no dependencies", "Result and Error, typed IDs, entities, value objects, aggregates and their audit and soft-delete contracts, Domain Events, business rules, the Domain clock")
+        Container(cqrs, "PouryaKit.Cqrs", ".NET 10 library, DI and logging abstractions", "Commands, queries, their handlers and Domain Event Handlers, the dispatcher and its fixed pipeline, the Domain Event drain, the Operation, its steps that only read and its Operation Context, IUnitOfWork, the authorization hook")
+        Container(validation, "PouryaKit.Validation", ".NET 10 library, FluentValidation", "The pipeline's validation step: every validator failure as one validation Result")
+        Container(modularity, "PouryaKit.Modularity", ".NET 10 library, Hosting abstractions, DI", "The Composition Root, the Gateway, one scope per Operation begun with its context and Module, each Module's own Unit of Work, composition checks, container validation")
+        Container(persistence, "PouryaKit.Persistence", ".NET 10 library, Ardalis.Specification", "The generic repository and its specifications, the Unit of Work connection for plain-SQL writes")
+        Container(efcore, "PouryaKit.Persistence.EFCore", ".NET 10 library, EF Core Relational, Ardalis.Specification.EntityFrameworkCore", "PouryaKitDbContext and its conventions, the EF Core Unit of Work and its commit sequence, the prepare step, conflict and unique-constraint Errors, the repository and the Unit of Work connection over it, the Outbox seam")
+        Container(postgres, "PouryaKit.Persistence.Postgres", ".NET 10 library, Npgsql EF provider, EFCore.NamingConventions", "A Module's DbContext in PostgreSQL: its own schema and migrations history, snake_case names, which unique index a refused save violated")
+        Container(dapper, "PouryaKit.Persistence.Dapper", ".NET 10 library, Dapper, Npgsql, configuration and DI abstractions", "Dapper reads on the Host's pooled PostgreSQL connection, typed IDs as Dapper parameters and results")
+        Container(web, "PouryaKit.Web", ".NET 10 library, ASP.NET Core shared framework", "Endpoints beside their Feature in each Module's route group, Result to HTTP, one problem response for every failure, the Operation Context from the authenticated caller")
+        Container(testing, "PouryaKit.Testing", ".NET 10 library, Testcontainers, Respawn, xUnit v3, fake TimeProvider", "PostgreSQL in a container, the hosted application, data reset between tests, Gateway calls as the test Actor, the test clock, waiting for and asserting deliveries and dead letters")
+    }
+
+    Container_Ext(wolverineef, "PouryaKit.Messaging.Wolverine.EFCore", "Messaging and delivery view")
+    ContainerDb_Ext(database, "PostgreSQL", "One database", "A schema per Module, with its migrations history")
+
+    Rel(author, host, "writes Features in")
+    Rel(host, cqrs, "declares commands, queries and handlers with")
+    Rel(host, validation, "registers validators with")
+    Rel(host, modularity, "composes Modules and sends Operations through")
+    Rel(host, postgres, "stores each Module's data with")
+    Rel(host, dapper, "reads with plain SQL through")
+    Rel(host, web, "maps endpoints and answers HTTP with")
+    Rel(host, testing, "is tested with")
+    Rel(cqrs, domain, "returns Results of")
+    Rel(validation, cqrs, "fills the validation step of")
+    Rel(modularity, cqrs, "dispatches each Gateway call through")
+    Rel(persistence, domain, "stores aggregates of")
+    Rel(efcore, cqrs, "implements IUnitOfWork of")
+    Rel(efcore, persistence, "implements IRepository and IUnitOfWorkConnection of")
+    Rel(postgres, efcore, "configures the DbContext and Unit of Work of")
+    Rel(dapper, domain, "maps typed IDs of")
+    Rel(web, cqrs, "begins each request's Operation with")
+    Rel(testing, modularity, "sends Operations through Gateways of")
+    Rel(testing, postgres, "migrates and resets the databases of")
+    Rel(testing, wolverineef, "waits for and asserts the deliveries of")
+    Rel(postgres, database, "writes and migrates")
+    Rel(dapper, database, "reads")
+```
+
+### Messaging and delivery
+
+```mermaid
+C4Container
+    title PouryaKit messaging and delivery, container level
+
+    System_Ext(host, "Consuming Host", "Its Modules publish and subscribe; the Host runs the deliveries")
+
+    System_Boundary(messagingkit, "PouryaKit messaging and delivery") {
+        Container(messaging, "PouryaKit.Messaging", ".NET 10 library, no third-party dependencies", "The Notification Handler, Integration Event Handler, publisher and Snapshot mapper contracts, wire and subscription names with their overrides, the Operation Context, Integration Event and Snapshot headers")
+        Container(wolverine, "PouryaKit.Messaging.Wolverine", ".NET 10 library, WolverineFx", "Notification Handlers, publications, Snapshots and subscriptions declared in Composition Roots, a durable local queue and route per subscription, the delivery step with its Receipt and Snapshot version gate, the publisher, the Snapshot mappers' run, retries and dead letters, the startup checks; no database")
+        Container(wolverineef, "PouryaKit.Messaging.Wolverine.EFCore", ".NET 10 library, WolverineFx.EntityFrameworkCore, WolverineFx.Postgresql", "The Outbox of Notifications, Integration Events and Snapshots in the Unit of Work's commit, Snapshots built from the prepared state, Receipts and Snapshot versions in each Module's schema, the PostgreSQL message store")
+    }
+
+    Container_Ext(domain, "PouryaKit.Domain", "Execution core view")
+    Container_Ext(cqrs, "PouryaKit.Cqrs", "Execution core view")
+    Container_Ext(efcore, "PouryaKit.Persistence.EFCore", "Execution core view")
+    Container_Ext(testing, "PouryaKit.Testing", "Execution core view")
+    ContainerDb_Ext(database, "PostgreSQL", "One database", "The message store's schema, and each Module's Receipt and Snapshot version tables")
+
+    Rel(host, messaging, "writes Notification Handlers, Integration Event Handlers and Snapshot mappers with")
+    Rel(host, wolverine, "declares publications, Snapshots and subscriptions with")
+    Rel(host, wolverineef, "runs deliveries and migrates Receipt and Snapshot version tables with")
+    Rel(messaging, domain, "handles Domain Events of")
+    Rel(wolverine, messaging, "delivers to the handlers of")
+    Rel(wolverine, cqrs, "runs each delivery as an Operation through")
+    Rel(wolverineef, wolverine, "adds the Outbox, the message store and Receipts to")
+    Rel(wolverineef, efcore, "writes the Outbox, Receipts and Snapshot versions in the Unit of Work of")
+    Rel(testing, wolverineef, "waits for and asserts the deliveries of")
+    Rel(wolverineef, database, "stores envelopes, dead letters, Receipts and Snapshot versions in")
+```
+
+### The Proving Sample
+
+```mermaid
+C4Container
+    title The Proving Sample, container level
+
+    System_Boundary(sample, "samples/ModularMonolith") {
+        Container(sampleHost, "ModularMonolith.Host", "ASP.NET Core application; PouryaKit.Web, PouryaKit.Messaging.Wolverine.EFCore, JwtBearer, WolverineFx.RuntimeCompilation", "Composes the three Modules, authenticates callers, runs the deliveries, announces new products in the log")
+        Container(catalog, "Catalog", "Module; Modularity, Persistence.Postgres, Persistence.Dapper, Validation, Web, Messaging.Wolverine.EFCore", "Products and categories: commands, Dapper reads, endpoints, Domain Event Handlers, Notification Handlers, the product's Snapshot")
+        Container(contracts, "Catalog.Contracts", "Plain records, no references", "ProductCreatedV1, ProductSnapshotV1, ICatalogProducts")
+        Container(inventory, "Inventory", "Module; Modularity, Persistence.Postgres, Persistence.Dapper, Messaging.Wolverine.EFCore", "Opens a stock item for each product and keeps a copy of Catalog's products")
+        Container(billing, "Billing", "Module; Modularity, Persistence.Postgres, Messaging.Wolverine.EFCore", "Opens a price list for each product, the second subscriber")
+    }
+
+    ContainerDb_Ext(database, "PostgreSQL", "One database", "Schemas catalog, inventory, billing and wolverine")
+    System_Ext(tests, "Tests", "tests/ModularMonolith.Tests through Gateways and HTTP; tests/PouryaKit.ArchitectureTests over the compiled Modules")
+
+    Rel(sampleHost, catalog, "composes")
+    Rel(sampleHost, inventory, "composes")
+    Rel(sampleHost, billing, "composes")
+    Rel(catalog, contracts, "publishes and answers through")
+    Rel(inventory, contracts, "references only")
+    Rel(billing, contracts, "references only")
+    Rel(catalog, inventory, "ProductCreatedV1 and ProductSnapshotV1, through the Outbox")
+    Rel(catalog, billing, "ProductCreatedV1, through the Outbox")
+    Rel(sampleHost, database, "stores each Module's data and the message store in")
+    Rel(tests, sampleHost, "host and judge")
+```
+
+Inventory and Billing reference Catalog's Contracts and never Catalog. Each subscribes to `ProductCreatedV1` under its own subscription and applies it on its own: Inventory opens a stock item for each product, and Billing a price list. Catalog also publishes `ProductSnapshotV1`, the Snapshot of each product it changes and the Tombstone of each it removes, and Inventory keeps from it its own copy of Catalog's products, a table no aggregate maps, written with plain SQL in Inventory's Unit of Work.
+
+## The commit sequence
+
+The EF Core Unit of Work (`EfUnitOfWork`, `PouryaKit.Persistence.EFCore`) runs every command Operation in this order, the order ADR 0003 and ADR 0004 fixed:
+
+1. **Begin** a transaction on the Module's DbContext.
+2. **Run the command**: the outermost handler, with every nested command joining this Unit of Work.
+3. **Check** that the command's Result is a success and the Operation is not rollback-only; otherwise roll back.
+4. **Drain the Domain Events** of every aggregate the DbContext tracks (`DomainEventDrain`, `PouryaKit.Cqrs`), round after round, one Domain Event Handler at a time, until none remains or the depth guard throws; a failed handler stops it.
+5. **Check again**: a Domain Event Handler may have failed, or ignored a nested command that failed.
+6. **Prepare persistence** (`PersistencePreparation`): turn the removal of a soft-deletable entity into its mark, resolve the cascades of what is deleted, advance each changed aggregate's `Version` by one, stamp audit fields; it returns the changed aggregates.
+7. **Build the Snapshots** of the changed aggregates a Snapshot is declared for, or their Tombstones, from that prepared state, each mapper in a step that only reads, and check that nothing the Unit of Work saves changed (`SnapshotStep`, `PouryaKit.Messaging.Wolverine.EFCore`).
+8. **Write the Outbox**: each Domain Event a Notification Handler subscribes to, as a Notification, each Integration Event a Notification Handler's delivery published, and each Snapshot, once per subscription, in this transaction (`WolverineOutbox`).
+9. **Check once more**: a Snapshot mapper may have caught the refusal of a command it sent, which still marked the Operation rollback-only.
+10. **Save** once. A concurrency conflict, or a violation of a unique constraint the Module mapped, rolls back and fails the Operation with an Error.
+11. **Commit**.
+12. **Flush**: send what step 8 wrote. A failed send is logged; the message store recovers the committed envelopes.
+
+Any other outcome rolls back and returns the command's failure or the Operation's `RollbackErrors`, leaving nothing in the Outbox; an exception at any step rolls back by disposing the transaction. Nothing retries: a retry needs a new scope. Steps 7, 8 and 12 run through the `IUnitOfWorkOutbox` seam and are skipped when no messaging package registers one. Plan section C states the same sequence in five steps: its step 1 is steps 2 and 3 here, its step 2 steps 4 and 5, its step 3 step 6, its step 4 step 7, and its step 5 steps 8 to 12.
+
+## PouryaKit.Domain
+
+The bottom of the package graph: every other package, and every Module, builds on it. It references no package, not even another Kit package.
+
+| Concern | Types |
+|---|---|
+| Outcomes | `Result`, `Result<T>`, `Error`, `ErrorKind` |
+| Identity | `TypedId<TValue>`, `TypedId`, `TypedIdJsonConverterFactory` |
+| Model | `Entity<TId>`, `AggregateRoot<TId>`, `IAggregateRoot`, `ValueObject`, `IBusinessRule` |
+| Audit and soft delete | `IAuditable`, `ISoftDeletable` |
+| Facts | `DomainEvent` |
+| Time | `DomainClock` |
+
+Seams later packages build on:
+
+- **Typed-ID registration.** `TypedId.GetValueType(Type)` recognises a concrete typed ID and returns its value type; `TypedId.From<TId, TValue>(value)` creates one. EF Core conventions and Dapper type handlers are registered once from these two; JSON uses `TypedIdJsonConverterFactory`, added once to the serializer options.
+- **Version.** `AggregateRoot<TId>.Version` has no mutator in the domain. It is 0 until saved, 1 after the first commit, and exactly one more for each later Operation that changes the aggregate or anything it holds in a navigation, a removal included; a child moved from one aggregate to another changes both. The Unit of Work advances it through the persistence mapping, where it is the concurrency token; raising a Domain Event does not move it.
+- **Audit and soft delete.** `IAuditable` (`CreatedAt`, `CreatedBy`, `LastChangedAt`, `LastChangedBy`) and `ISoftDeletable` (`IsDeleted`, `DeletedAt`, `DeletedBy`) are opt-in contracts with getters only. An aggregate or entity implements their properties with private setters that nothing in the domain calls; the Unit of Work sets them through the persistence mapping.
+- **Domain Events.** An aggregate records Domain Events in the order raised. The Unit of Work reads them through `IAggregateRoot.DomainEvents` and clears them through `IAggregateRoot.ClearDomainEvents()`, which is not on the aggregate's own surface.
+- **Validation target.** A validation Error may name the input it is about in `Error.Target`; every other Error has none. The Web package groups validation Errors by it.
+- **Clock (ADR 0005).** A Domain Event reads its Id and `OccurredOn` once from `DomainClock.Current`: the `TimeProvider` bound to the current asynchronous flow with `DomainClock.Use`, or the system clock when none is bound. The dispatcher binds one for each Operation. The delivery step of `PouryaKit.Messaging.Wolverine` runs each Notification Handler and Integration Event Handler as an Operation through the dispatcher, so it is bound there too.
+
+## PouryaKit.Cqrs
+
+The execution core every Operation passes through. It references `PouryaKit.Domain`, `Microsoft.Extensions.DependencyInjection.Abstractions` and `Microsoft.Extensions.Logging.Abstractions`, and no other package (ADR 0002: no mediator).
+
+| Concern | Types |
+|---|---|
+| Operations | `Command`, `Command<TResponse>`, `Query<TResponse>` |
+| Handlers | `CommandHandler<TCommand>`, `CommandHandler<TCommand, TResponse>`, `QueryHandler<TQuery, TResponse>` |
+| Domain Events | `IDomainEventHandler<TDomainEvent>`, `DomainEventDrain` |
+| Dispatch | `IDispatcher`, `CqrsServiceCollectionExtensions.AddPouryaKitCqrs` |
+| Pipeline seams | `IAuthorizer<TOperation>`, `IValidationStep<TOperation>`, `IUnitOfWork` |
+| Per-Operation state | `Operation`, `Operation.OnlyReading` |
+| Operation Context | `OperationContext`, `Actor`, `ActorKind`, `OperationContextServiceProviderExtensions.BeginOperation` |
+
+The pipeline is written out in the dispatcher and never registered: logging, the authorization hook, validation, then the handler, inside the Unit of Work for the outermost command. Failure tracking wraps all of it: a command that fails anywhere, by Result or by exception, marks the Operation rollback-only even when the handler that sent it ignores the outcome. A failed query marks nothing. Sending a command from a query handler, from an authorizer or validator at any nesting depth, or from a step that only reads (`Operation.OnlyReading`, below), throws, as does any command sent while no Unit of Work is active; authorizers, validators and steps that only read may run queries. An exception is logged once, at Error level, by the pipeline where it began.
+
+A Domain Event Handler, `IDomainEventHandler<TDomainEvent>`, reacts to one Domain Event type inside its Module and returns a Result. The contract lives here, beside the other handlers, because the drain that runs it must mark the Operation rollback-only, which only this package can do.
+
+Seams later packages build on:
+
+- **Unit of Work.** `IUnitOfWork.RunAsync` is called once per Operation, for the outermost command only; a nested command runs inside that call and so joins it. An implementation commits only when the command's Result is a success and `Operation.IsRollbackOnly` is false, checked again after every step that can run nested commands, rolls back otherwise, and returns the command's Result after a commit or a failed Result after a rollback. The dispatcher throws `InvalidOperationException` for any other success, and for a success returned while the Operation is rollback-only, because that Unit of Work may already have committed. The dispatcher resolves it only when a command runs, so a query-only service registers none.
+- **Domain Event drain.** `DomainEventDrain` is step 4 of [the commit sequence](#the-commit-sequence). It is scoped and registered by `AddPouryaKitCqrs`; an `IUnitOfWork` calls `RunAsync` once, after the outermost command succeeded and before it saves, passing the aggregates it tracks, and Feature code never calls it. Each round takes and clears every listed aggregate's Domain Events and runs the handlers of each one's exact type, one at a time, in the ordinal order of their full type names. Rounds repeat until no Domain Event remains, at most `DomainEventDrain.MaxDepth`; more throws `InvalidOperationException`. A failed handler Result marks the Operation rollback-only with its Errors and stops the drain, so the caller checks `IsRollbackOnly` again before it saves. `RunAsync` returns every Domain Event it took, whether or not a Domain Event Handler handled it, in the order handled: the EF Core Unit of Work passes them to the Outbox write (step 8), which stores those a Notification Handler subscribes to as Notifications.
+- **Operation state.** `Operation` is scoped: one per scope, so one per Operation, and a second outermost command in a scope throws. `IsRollbackOnly` and `RollbackErrors` are read-only outside the package; a failed command or a failed Domain Event Handler sets them, the first failure winning. `Operation.MayChangeState` is false in code that only reads: while a query, an authorizer or a validator runs at any depth, and while a step opened with `Operation.OnlyReading` runs; it is true in a command's handler or a Domain Event Handler. A write seam outside the package checks it before it writes or hands out a connection (see the repository and `IUnitOfWorkConnection` below, and the publisher of `PouryaKit.Messaging.Wolverine`).
+- **Steps that only read.** `Operation.OnlyReading(step)` opens a step that only reads, named `step`, until the returned `IDisposable` is disposed. A Kit package opens it around application code it runs after the Operation's last change; `SnapshotMappers.Map` opens it around each Snapshot mapper call as `a Snapshot mapper`. While it is open `MayChangeState` is false, so every write the Kit guards is refused, and a command is refused with a message naming the step (`A command was sent from a Snapshot mapper, a step that only reads.`); a query runs as usual. A refused command still marks the Operation rollback-only, as any command that throws does. Steps nest; disposing one closes that step only, whatever else is open, and disposing it again does nothing. The step opens before the mapper is resolved, so a mapper's constructor only reads too. Feature code never opens one.
+- **Operation Context (ADR 0007).** `OperationContext` is an immutable record of the `Actor` (`Actor.Person` or `Actor.System`, with no anonymous or default one), the tenant, the correlation, the causation and its own `OperationId`, a new version 7 Guid for each context. `Continue()` gives the context of an Operation this one causes: the same Actor, tenant and correlation, this `OperationId` as its causation, a new `OperationId`. A continuation is trusted (G.6): the Kit adds no authorization of its own for it, while an `IAuthorizer` registered for the operation it runs still runs, with the original Actor, and can recognise a continuation by its `CausationId`. Whoever opens an Operation's scope begins it once with `IServiceProvider.BeginOperation(context, module)`, which sets the context and `Operation.Module` on the scope's `Operation`; beginning it twice throws. `AddPouryaKitCqrs` registers `OperationContext` as a scoped service read from the scope's `Operation`, so a handler, an authorizer or a validator injects it; resolving it in a scope nobody began throws. The dispatcher itself does not require a context. Nothing in the Kit reads an ambient request.
+- **The Operation's Module.** `Operation.Module`, a `Type`, is the Module the scope's opener named, null in an application without Modules. It belongs to the scope rather than to the context, because work an Operation causes may run in another Module. `PouryaKit.Modularity` routes the Unit of Work by it, and the delivery step of `PouryaKit.Messaging.Wolverine` begins its scopes the same way, with the subscribing Module, without referencing Modularity.
+- **Outcome after a rollback.** When the outermost handler succeeds but the Operation is rollback-only, the dispatcher returns a failure carrying `RollbackErrors`, the Errors of the first failed nested command, so the transport maps the real reason; `PouryaKit.Web` answers them by their kinds. A nested command that threw yields one `Operation.CommandThrew` Error of kind unexpected, with no exception text.
+- **Validation step.** `IValidationStep<TOperation>` is resolved per operation type; when nothing registers it, the step does nothing.
+- **Clock (ADR 0005).** `AddPouryaKitCqrs` registers `TimeProvider.System` unless a `TimeProvider` is already registered, and the dispatcher binds the container's `TimeProvider` as the `DomainClock` around each Operation. A Host or a test changes the time Operations see by registering its own.
+- **Registration.** `AddPouryaKitCqrs(featureAssemblies)` finds internal handlers, authorizers and Domain Event Handlers by reflection, with no `InternalsVisibleTo`, and throws before the container is built when a command or query has no handler or several, when an authorizer is not for one concrete command or query (the dispatcher resolves authorizers by exact type, so one for a base type, a marker interface or an open type would never run), or when a Domain Event Handler handles several Domain Event types or an abstract one (the drain resolves handlers by exact type too). Generic commands, queries, handlers and authorizers are not supported: a generic type definition among them fails registration. A Host must register logging (`ILogger<>`); the Kit never registers a logger of its own.
+
+## PouryaKit.Validation
+
+FluentValidation behind the pipeline's validation step. It references `PouryaKit.Cqrs` and `FluentValidation` only.
+
+| Concern | Types |
+|---|---|
+| Registration | `ValidationServiceCollectionExtensions.AddPouryaKitValidation` |
+
+`AddPouryaKitValidation(featureAssemblies)` registers the validation step once and every validator in the assemblies given, internal types included. The step runs every validator of the operation and returns one failed Result holding each failure as a validation Error with its property as `Target`; it never throws for invalid input.
+
+## PouryaKit.Modularity
+
+Modules in one Host and one container. It references `PouryaKit.Cqrs`, `Microsoft.Extensions.Hosting.Abstractions` and `Microsoft.Extensions.DependencyInjection`, the last for the service provider factory that validates the container (owner, ticket #13; see [plan section C](../foundation-review.md#allowed-references)).
+
+| Concern | Types |
+|---|---|
+| Composition Root | `IModuleDefinition`, `ModuleBuilder` |
+| Host composition | `ModularityHostApplicationBuilderExtensions.AddPouryaKitModules`, `ModulesBuilder` |
+| Gateway | `IGatewayProcessor<TModule>` |
+
+`AddPouryaKitModules` runs each Module's `Configure` once, on a `ModuleBuilder` for that Module, and registers its Gateway as a singleton. Each Gateway call takes a required `OperationContext`, checks that the Module owns the command or query, opens a new scope of the Host container, begins the scope's Operation with that context and the Module (`BeginOperation`), sends the command or query through `IDispatcher`, and disposes the scope when the call returns, so one call is one Operation. A null context throws `ArgumentNullException`; the Gateway never supplies a default Actor.
+
+Seams later packages build on:
+
+- **Each Module's Unit of Work.** `ModuleBuilder` is an `IServiceCollection` over the Host's container. It passes every registration through unchanged except an unkeyed `IUnitOfWork`, which it keys by the Module type, so a persistence package registers its Unit of Work as it would in a single-Module application. `AddPouryaKitModules` then adds the one unkeyed `IUnitOfWork`, which resolves the keyed one of the scope's `Operation.Module`, and throws in a scope whose Operation names no Module or for a Module that registers none.
+- **Ownership.** A command or query belongs to the Module whose `ModuleBuilder` registers its handler; the internal `HostModules`, kept in the Host's service collection so every `AddPouryaKitModules` call shares it, records each owner. A Gateway refuses, before it opens a scope, a command or query another Module owns, naming both Modules, and one no Module handles. `ModuleBuilder` reports every registration, replacement and removal, so a second Module that registers or removes the handler of an operation another Module owns fails composition, naming both; the container would otherwise resolve the last handler registered and run it in the wrong Unit of Work. A Module added twice, in one call or across calls, throws naming it. Once a Module's Composition Root has run, `ModulesBuilder.Add` throws when the Module owns a command but registered no Unit of Work, naming the Module and the command, rather than leaving it to fail at that command's first run; a Module that owns only queries needs none.
+- **Container validation.** `AddPouryaKitModules` sets a `DefaultServiceProviderFactory` with `ValidateOnBuild` and `ValidateScopes`, so in every environment `Build()` throws when a registration cannot be constructed or a singleton depends on a scoped service. A Host that later calls `ConfigureContainer` with another factory replaces it, and the validation with it.
+- **Synchronous questions between Modules (G.5, ADR 0007).** The owning Module publishes an interface in its Contracts project and registers its implementation scoped, so it is resolved in the asking Operation's scope, receives the asking `OperationContext` by injection, and sends a query through its own Module's Gateway with `Continue()`. In the Proving Sample, `CatalogProducts` answers `ICatalogProducts` from `Catalog.Contracts` this way.
+- **Without Modularity.** An application of one Module registers Cqrs, Validation and its database package on its own services, opens a scope per Operation and calls `BeginOperation(context)` with no Module; its one Unit of Work is unkeyed and nothing routes.
+
+## PouryaKit.Persistence
+
+The write-side data access contracts, with no storage technology (G.4). It references `PouryaKit.Domain` and `Ardalis.Specification` only.
+
+| Concern | Types |
+|---|---|
+| Repository | `IRepository<TAggregate, TId>` |
+| Plain-SQL writes | `IUnitOfWorkConnection` |
+
+The repository adds, removes and finds by ID, and finds, lists, checks and counts by an Ardalis `ISpecification<TAggregate>`. Nothing on it saves; reads for display go through Dapper (`PouryaKit.Persistence.Dapper`, below). It stays this small: a Module names its specifications beside their Business Area, and a Business Area that needs a query the contract cannot express declares an aggregate-specific repository, an interface deriving from `IRepository<TAggregate, TId>` with only its extra members, implemented over `EfRepository<TAggregate, TId>` (below).
+
+`IUnitOfWorkConnection.Join()` hands out the connection and transaction of the Operation's active Unit of Work, for a Module-internal write with plain SQL, such as Dapper, to a table no aggregate maps (a projection or read model), so that write commits or rolls back with the Operation. The caller passes the transaction to every statement and never disposes, commits or rolls back either. It is a contract here, beside the repository, so a Module's plain-SQL write depends on no storage technology; `PouryaKit.Persistence.EFCore` implements it.
+
+## PouryaKit.Persistence.EFCore
+
+EF Core behind the Unit of Work and the repository. It references `PouryaKit.Cqrs`, `PouryaKit.Persistence`, `Microsoft.EntityFrameworkCore.Relational` and `Ardalis.Specification.EntityFrameworkCore`.
+
+| Concern | Types |
+|---|---|
+| Model | `PouryaKitDbContext` |
+| Repository | `EfRepository<TAggregate, TId>` |
+| Registration | `EfCoreServiceCollectionExtensions.AddPouryaKitEfCore<TDbContext>` |
+| Refused saves | `UnitOfWorkErrors`, `EfCoreServiceCollectionExtensions.MapUniqueConstraint<TDbContext>`, `IUniqueConstraintReader` |
+| Kit seams | `IUnitOfWorkOutbox`, `EfUnitOfWorkExtensions.DbContext` |
+
+`PouryaKitDbContext` applies the Kit's conventions once: every typed ID in the DbContext's assembly is stored as its value through `TypedId.GetValueType` and `TypedId.From`, Domain Events are never mapped, every `IEntityTypeConfiguration<T>` in the assembly is applied, and the default schema is the schema of the migrations history table. A typed-ID key is never made database-generated by convention; a mapping marks a numeric one with `ValueGeneratedOnAdd()`. A model-finalizing convention, which also covers entities a derived DbContext maps after the base, makes every aggregate's `Version` its concurrency token and gives every `ISoftDeletable` root entity a named query filter, `PouryaKit.SoftDelete`, that leaves deleted rows out. An `ISoftDeletable` type the filter cannot reach, one derived from a root that is not soft-deletable or an owned type, is refused when the model is built. The DbContext does not cascade a delete when an entity is removed, so a soft-deletable aggregate turned into a mark keeps what it owns; the prepare step resolves the cascades that remain, and an orphan is deleted as soon as it is detected. `AddPouryaKitEfCore<TDbContext>`, called by a database package, adds the DbContext's Unit of Work, not tried, so on a Module's builder it becomes that Module's own, the generic repository, and the `IUnitOfWorkConnection` over the scope's Unit of Work.
+
+Seams later packages build on:
+
+- **The Unit of Work (ADR 0003, ADR 0004).** `EfUnitOfWork` runs [the commit sequence](#the-commit-sequence), steps 1 to 12, on the DbContext of its Module.
+- **The Outbox (ADR 0004).** `IUnitOfWorkOutbox` is the seam a messaging package registers, scoped; the Unit of Work resolves it when one is registered and runs without it otherwise. `WriteAsync(dbContext, messages, changedAggregates)` runs once per commit attempt, as steps 7 and 8 of the commit sequence, after the prepare step and before the save, on the DbContext's open transaction, with the Domain Events the drain returned and the entries of the aggregates the prepare step advanced, each once, in their final state; it builds their Snapshots from them as they are and must change nothing. `FlushAsync()` runs only after the commit, as step 12, and never throws: the change is committed, and what it did not send stays in the store, which recovers it. `PouryaKit.Messaging.Wolverine.EFCore` implements it. Feature code never uses it.
+- **The Unit of Work's DbContext.** `EfUnitOfWorkExtensions.DbContext` is the DbContext an EF Core Unit of Work saves and commits, null for any other Unit of Work. It exists for a Kit package that writes in that transaction, as the Receipt does; Feature code changes data through its repositories.
+- **The prepare step (ADR 0003).** Step 6 of the commit sequence, run once, after the drain and before the save, so nothing changes these fields afterwards. It turns the removal of an `ISoftDeletable` entity into its mark; then resolves EF Core's pending cascades itself, so the save changes nothing further: a child of a parent deleted outright is detached when its key is optional, and deleted with the parent when its key is required, even when the child is soft-deletable, because its row cannot outlive the parent's; advances by one, from the value the Operation read, the `Version` of every aggregate with an added, changed or removed entry; and stamps `IAuditable` entities that are added or changed. The time is the Operation's `DomainClock` and the Actor the Id of its `OperationContext`, read once and only when something is stamped, so an Operation that stamps nothing needs no context and one that does in a scope nobody began throws. A child or owned entry reaches its aggregate through each foreign key whose principal navigates to it, by both the holder the key names now and the one it named when loaded, so a moved child changes both aggregates and a detached one the aggregate it left. A holder the Operation did not load throws `InvalidOperationException` and nothing commits, because its version could not advance and a concurrent change would not conflict. `Run` returns the entries of the aggregates whose version it advanced, each once, which the Unit of Work passes to the Outbox write for step 7.
+- **A refused save.** A `DbUpdateConcurrencyException` rolls back and fails the Operation with `UnitOfWorkErrors.ConcurrencyConflict` (kind conflict). A `DbUpdateException` that the registered `IUniqueConstraintReader` names a constraint for, and that the DbContext's Module mapped with `MapUniqueConstraint<TDbContext>(constraint, error)`, rolls back and fails with that Error. Mappings are keyed by DbContext type; mapping one constraint twice throws at composition. Every other database error stays an exception. The Unit of Work never retries either.
+- **The repository's DbContext.** The repository tracks changes in the DbContext of the scope's Unit of Work, so what a handler adds is what that Unit of Work saves. `AddAsync` and `Remove` throw where `Operation.MayChangeState` is false, in code that only reads. Specifications are evaluated with `SpecificationEvaluator.Default` only, because Ardalis's own `RepositoryBase` saves.
+- **Aggregate-specific repositories.** `EfRepository<TAggregate, TId>` is public and unsealed. A Module's specific repository derives from it, passing the scope's `IUnitOfWork` to its constructor, inherits every generic member, and builds its extra members on them and on the one protected member, `ListAsync<TResult>(ISpecification<TAggregate, TResult>)`, which applies a whole projection specification and returns a loaded list. It gets no `IQueryable`, DbSet or DbContext, because each would let it save or run a bulk update or delete around the Unit of Work's sequence. The Module registers it on its own builder; `ModuleBuilder` re-keys only `IUnitOfWork`, so it shares the scope's DbContext with the generic repository.
+- **The Unit of Work connection.** The internal `EfUnitOfWorkConnection` takes the scope's `IUnitOfWork`, so in a Host of Modules the one the scope's `Operation.Module` routes to, and returns its DbContext's connection and current transaction. It throws where `Operation.MayChangeState` is false, in code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads: a query nested in a command, a nested command's authorizer or validator, or a Snapshot mapper runs inside the active transaction, yet a failed query marks nothing rollback-only and a check runs before its command may proceed, so the transaction alone cannot keep such a write out of the Operation's outcome. It throws too when no transaction is active, and for a Unit of Work that is not the EF Core one. A plain-SQL statement runs when it is called, so it precedes the Unit of Work's save of what the repositories track.
+
+## PouryaKit.Persistence.Postgres
+
+PostgreSQL for a Module's DbContext. It references `PouryaKit.Persistence.EFCore`, `Npgsql.EntityFrameworkCore.PostgreSQL` and `EFCore.NamingConventions`.
+
+| Concern | Types |
+|---|---|
+| Registration | `PostgresServiceCollectionExtensions.UsePostgres<TDbContext>` |
+
+`UsePostgres<TDbContext>(connectionName, schema)` registers the DbContext on the connection string named in the Host's configuration, puts its migrations history table in the Module's schema (which `PouryaKitDbContext` then makes the default schema), names tables and columns in snake_case, and makes the DbContext the Unit of Work through `AddPouryaKitEfCore`. It also registers, tried, the internal `PostgresUniqueConstraintReader`, the `IUniqueConstraintReader` that names the constraint or unique index of a unique violation (SQLSTATE 23505), so a constraint a Module maps with `MapUniqueConstraint` (`PouryaKit.Persistence.EFCore`) fails the Operation with the Module's Error. It configures no retrying execution strategy, because the Unit of Work owns its transaction. Migrations are created with `dotnet-ef` against the Host; the Host applies none at startup.
+
+## PouryaKit.Persistence.Dapper
+
+Dapper reads in plain SQL (G.4). It references `PouryaKit.Domain`, `Dapper`, `Npgsql`, `Microsoft.Extensions.Configuration.Abstractions` and `Microsoft.Extensions.DependencyInjection.Abstractions`, and no EF Core package.
+
+| Concern | Types |
+|---|---|
+| Read connections | `IReadConnectionFactory` |
+| Registration | `DapperServiceCollectionExtensions.AddPouryaKitDapper` |
+
+`AddPouryaKitDapper(connectionName, typedIdAssemblies)`, called in each Composition Root that reads with Dapper, registers one `IReadConnectionFactory` per Host over the connection string named in the Host's configuration, and a Dapper type handler for every typed ID in the assemblies given. `IReadConnectionFactory.OpenAsync` leases a new open connection from the Host's one Npgsql data source; the caller disposes it, which returns it to the pool. A read connection never joins the Unit of Work. A plain-SQL write that must commit with the Operation uses `IUnitOfWorkConnection` from `PouryaKit.Persistence` instead.
+
+Seams later packages build on:
+
+- **One read connection per Host.** Every Module that reads with Dapper names the same connection; a second name throws at composition. Disposing the Host disposes the pool. `OpenAsync` checks its cancellation token itself before leasing, because Npgsql hands out an idle pooled connection without looking at it.
+- **Typed-ID handlers.** Dapper's type handlers are process-wide. A handler depends only on its typed ID's type and holds no state, so a second Module or a second Host in the process registering the same typed ID replaces it with one that behaves identically; Dapper serialises registration. A handler sends a typed ID as its value and converts a column of another type, such as an integer column read into a long ID, to the ID's value type.
+- **No model filters.** Dapper runs the SQL it is given; no EF Core query filter, such as the one that leaves soft-deleted rows out, applies to it, so a read states every predicate it needs in its SQL, `is_deleted = false` on a soft-deletable table included.
+
+## PouryaKit.Messaging
+
+The transport-neutral contracts of messaging, the only messaging package Feature code uses. It references `PouryaKit.Domain` and no third-party package.
+
+| Concern | Types |
+|---|---|
+| Handlers | `INotificationHandler<TDomainEvent>`, `IIntegrationEventHandler<TIntegrationEvent>` |
+| Publishing | `IIntegrationEventPublisher` |
+| Snapshots | `ISnapshotMapper<TAggregate, TSnapshot>` |
+| Durable names | `MessageNames`, `WireNameAttribute`, `SubscriptionNameAttribute` |
+| On the wire | `OperationContextHeaders`, `IntegrationEventHeaders`, `SnapshotHeaders` |
+
+A Notification Handler handles one concrete Domain Event type, returns a Result, and may be internal, as may its Domain Event. An Integration Event Handler handles one Integration Event or Snapshot type, a plain class of the publishing Module's Contracts that references nothing from the Kit, holds only the business effect, returns a Result, and may be internal. `IIntegrationEventPublisher.Publish(domainEventId, integrationEvent)` is what a Notification Handler calls to publish an Integration Event for other Modules, with the identity of the Domain Event it handles; the package declares the contract only, and `PouryaKit.Messaging.Wolverine` implements it. `MessageNames` derives the two durable names a delivery is stored and routed under (ADR 0006, owner decision 2): a Domain Event's wire name, its assembly's name and its own name without the `DomainEvent` suffix, each in kebab case (`catalog.product-created`), and a Notification Handler's subscription name, the wire name followed by the handler's name without the `NotificationHandler` or `Handler` suffix (`catalog.product-created.announce-new-product`). `WireNameAttribute` and `SubscriptionNameAttribute` declare a stable name instead, so a renamed type or handler keeps the name its stored deliveries carry; a derived name changes with the type, which strands those deliveries. `MessageNames.IsValid` accepts letters and digits in segments joined by single dots or hyphens that come back unchanged, but for case, as the host of a queue address.
+
+`ISnapshotMapper<TAggregate, TSnapshot>` maps one aggregate to its Snapshot, a plain record of the publishing Module's Contracts, with two methods: `Map` for an aggregate that exists and `Tombstone` for one the Operation removed, kept marked deleted or deleted outright. The Kit calls it when the Unit of Work commits, once for every changed aggregate a Snapshot is declared for, after the Domain Event drain and the prepare step, so the aggregate is in its final state and its `Version` is the one being committed. It may be internal and only reads: it runs as a step of the Unit of Work that only reads (`Operation.OnlyReading`), so a command it sends, and a write through a repository or the Unit of Work's connection, is refused, and the Operation fails if it changes anything the Unit of Work saves, except a change inside an EF Core complex collection, which is not seen. Plan section D sketched one `Map` method and a receiving handler that compared versions itself; the built contract has the two methods, the declaration names the mapper, and the delivery step compares versions, so the receiving handler holds only the effect.
+
+Seams later packages build on:
+
+- **Names compared ignoring case.** Local queues lower-case their names, so every consumer of a name compares it ignoring case, and a subscription is stored lower-cased.
+- **The Operation Context headers.** `OperationContextHeaders` names the headers that carry the publishing Operation's Actor, tenant, correlation and `OperationId` (as the causation), so the work a message causes continues that Operation (ADR 0007). Every transport writes and reads these names.
+- **The Integration Event's identity.** `IntegrationEventHeaders.DomainEventId` names the header that carries an Integration Event's identity, the `Id` of the Domain Event it follows from, the same in every delivery of it, so the receiving handler's Receipt recognises a redelivery. Every transport writes and reads this name.
+- **The Snapshot's aggregate and version.** `SnapshotHeaders.AggregateId` and `SnapshotHeaders.Version` name the headers that carry the key of the aggregate a Snapshot is of, as the publishing Module stores it, and the version it was built at, the one committed with it, so the receiving side identifies the Snapshot by both and applies only a newer one. Every transport writes and reads these names.
+- **Declarations live in the Wolverine package.** `Publish`, `PublishSnapshot`, `Subscribe` and `AddPouryaKitNotificationHandlers` are registration calls on a Module's builder, and this package references no dependency injection (plan section C), so they live in `PouryaKit.Messaging.Wolverine` (ADR 0006, amendment).
+
+## PouryaKit.Messaging.Wolverine
+
+Deliveries on Wolverine, with no database: the declarations a Composition Root makes, the route and queue per subscription, the delivery step, the publisher, retries and the startup checks. It references `PouryaKit.Cqrs`, `PouryaKit.Messaging` and `WolverineFx`, and no EF Core or message-store package, so a Host that only receives messages pulls neither.
+
+| Concern | Types |
+|---|---|
+| Composition Root | `NotificationHandlerServiceCollectionExtensions.AddPouryaKitNotificationHandlers`, `IntegrationEventServiceCollectionExtensions.Publish`, `IntegrationEventServiceCollectionExtensions.Subscribe`, `SnapshotServiceCollectionExtensions.PublishSnapshot` |
+| Host | `WolverineHostApplicationBuilderExtensions.UsePouryaKitWolverine`, `PouryaKitMessagingOptions` |
+| Seams for a persistence package | `INotificationOutbox`, `IIntegrationEventOutbox`, `IReceipts`, `ISnapshotMappers`, `OperationContextHeaderExtensions.WithOperationContext` |
+| Failures | `NotificationHandlerFailedException`, `IntegrationEventHandlerFailedException`, `UnknownSubscriptionException` |
+
+Every declaration is recorded in the internal `Subscriptions`, kept in the Host's service collection so every Composition Root adds to the same one, as one `Subscription` per handler, with its subscription name, its message type, its handler and the Module its deliveries run in, one publication per Integration Event or Snapshot, with its wire name and its Module, and for a Snapshot its aggregate and mapper. Names are compared ignoring case and a subscription name is kept lower-cased. Each declaration throws, naming every problem, before the container is built:
+
+- `AddPouryaKitNotificationHandlers(assembly, module)` finds every `INotificationHandler<>` in the assembly, internal ones included, and subscribes each one under its subscription name. It throws for an assembly with no handler, a handler of several, abstract or generic Domain Event types or a generic handler, and a wire or subscription name that is missing, invalid, equal ignoring case to another's, or, for a subscription, one of the local queues Wolverine 6.46 keeps for itself (`agents`, `default`, `durable`, `replies`, `scheduled`, `system`) or the same subscription declared for another Module. Repeating its declaration for the same Module adds nothing.
+- `Publish<TIntegrationEvent>(wireName, module)` records that the Module publishes the type under that wire name. It throws for a type that is not a concrete class or is a Domain Event, a wire name that is missing, invalid or equal ignoring case to another message type's, and a type already published under another name or by another Module.
+- `PublishSnapshot<TAggregate, TSnapshot, TMapper>(wireName, module)` records that the Module publishes the Snapshot `TSnapshot` of every `TAggregate` under that wire name, built by `TMapper`, which it registers scoped. It throws as `Publish` does, and for a type already published as an Integration Event or as the Snapshot of another aggregate or with another mapper. A Snapshot is subscribed with `Subscribe`, like an Integration Event.
+- `Subscribe<TIntegrationEvent, THandler>(subscriptionName, module)` subscribes one Integration Event Handler, registered scoped, under that name. It throws for a Domain Event, an abstract handler, and a subscription name that is missing, invalid, reserved or equal ignoring case to another subscription's, or the same subscription declared for another Module. Repeating its declaration for the same Module adds nothing.
+
+`UsePouryaKitWolverine()` turns off Wolverine's handler discovery, sends an unknown message type to the dead-letter queue rather than discarding it, makes local queues durable, serialises with System.Text.Json and the typed-ID converter, inserts the Kit's `WireNaming` as Wolverine's first, process-wide message-type naming, and registers the publisher, the Snapshot mappers and the delivery step. Routes, handlers and the failure policy are added by an `IWolverineExtension` applied when Wolverine's options are first resolved, after every Composition Root ran, so Modules added after `UsePouryaKitWolverine` still get theirs; it first fails the Host's start for a subscription to an Integration Event or Snapshot no Module of the Host publishes.
+
+Seams later packages build on:
+
+- **One route and queue per subscription (ADR 0006).** Each subscription gets `PublishMessage(messageType).ToLocalQueue(subscriptionName)`, so a published Notification or Integration Event becomes one durable envelope per subscription, retried and acknowledged on its own. Each subscribed message type gets one pre-built `SubscriptionDelivery`, registered with `AddMessageHandler`, which generates no code, so the Domain Event, the Integration Event and their handlers may stay internal.
+- **Wire names, process-wide.** Wolverine names message types for the whole process, so `WireNaming` is static: it derives a Domain Event's wire name from its type and holds each Integration Event's declared wire name for the process. A second Host in the process that publishes a type under another wire name fails its start.
+- **The delivery step.** `SubscriptionDelivery` reads the subscription from the queue the envelope arrived on (`local://{subscription}/`) and throws `UnknownSubscriptionException` for a queue no subscription in the Host names, so a stored delivery of a renamed or removed subscription is retried and dead-lettered, never handled. The message's identity is a Domain Event's `Id`, for an Integration Event the `IntegrationEventHeaders.DomainEventId` header, and for a Snapshot a name-based UUID (RFC 9562 version 8) from the SHA-256 of its wire name, lower-cased, and its `SnapshotHeaders.AggregateId` and `SnapshotHeaders.Version` headers, so every delivery of one Snapshot repeats it and two versions of an aggregate never share it; a missing header fails the delivery. Each attempt opens a new scope, begins its Operation with the context read from the envelope's headers, continued, and the subscription's Module, and sends the internal command `Deliver` through `IDispatcher`. The delivery therefore gets the Module's Unit of Work, the Operation's clock and the whole pipeline, and a nested command or a Domain Event the handler causes joins it. `DeliverHandler` records the Receipt through `IReceipts`, when one is registered, before it invokes the handler, and returns success without invoking it when a committed Receipt exists. For a Snapshot it then records the version through `IReceipts.RecordVersionAsync` and returns success without invoking the handler unless the version is strictly newer than every version of that aggregate the subscription applied, so the receiving handler holds only the effect; a Snapshot delivered where no `IReceipts` is registered fails. A failed delivery Operation, including nested work that made it rollback-only even when the handler returned success, becomes `NotificationHandlerFailedException` or `IntegrationEventHandlerFailedException`, so it is retried like an exception and never acknowledged. Each carries the `Subscription` and the `Errors`, and its message names each Error's code and message, so the dead letter it ends in says why.
+- **The publisher.** The internal `IntegrationEventPublisher`, scoped, implements `IIntegrationEventPublisher`. `DeliverHandler` tells it which Domain Event a Notification Handler's delivery is handling; in any other scope it knows none. `Publish` refuses, with `InvalidOperationException`, an Integration Event published where the Operation may not change state, in code that only reads, outside a Notification Handler's delivery, with an identity other than that Domain Event's `Id`, of a type the running Module did not declare with `Publish`, of a type declared as a Snapshot, which only the Unit of Work publishes, or a second time with the same type in one delivery. Otherwise it adds the Integration Event to the scope's `IIntegrationEventOutbox`, so it is written in the delivery's commit. Two Notification Handlers of one Domain Event that publish one type are caught at the Outbox instead (below).
+- **Retries and dead letters.** `OnException<Exception>().ScheduleRetry(RetryDelays).Then.MoveToErrorQueue()`: a stored retry, written back with the delivery as owned by no node, so the inbox stale time never hands out a delivery waiting to retry (ADR 0006, owner decision 1), then a dead letter. `PouryaKitMessagingOptions.RetryDelays` defaults to 1 s, 10 s and 1 min, four attempts, short enough for the default inbox stale time (ADR 0006, amendment for #17). Only the failing subscription's envelope is retried and then moved to Wolverine's dead-letter storage, received at `local://{subscription}/`, with the last attempt's exception, never marked handled. The Kit adds no dead-letter API: an application reads and replays dead letters through Wolverine's `IDeadLetters` (`IWolverineRuntime.Storage.DeadLetters`), and a replay runs only that subscription's handler, whose Receipt keeps a second replay from applying again.
+- **The startup checks.** When Wolverine's options are resolved, as the Host starts, the extension fails the start for a subscription to an Integration Event or Snapshot no Module publishes, for an Integration Event the process already sends under another wire name, and for one Wolverine named otherwise before the Host declared it, since Wolverine keeps the first name it gives a type; `WireNaming` declares the Host's wire names all or none, under a lock. The internal `StartupCheck`, an `IHostedLifecycleService` that every declaration registers, runs in `StartedAsync`, once every hosted service, Wolverine included, has started. When subscriptions or publications exist, it fails the start unless an `INotificationOutbox` is registered, because the Host's Operations would commit and nothing would store their Notifications, Integration Events or Snapshots, and unless every subscription's queue, as Wolverine built it, is a durable application queue.
+- **The persistence seams.** `INotificationOutbox` is a marker a package registers when it writes Notifications and Integration Events in the Unit of Work's commit. `IIntegrationEventOutbox.Add(domainEventId, integrationEvent)`, registered scoped by that package, holds what the publisher accepted until the Unit of Work writes it. `IReceipts.RecordAsync(subscription, messageId)` records a Receipt in the active Unit of Work's transaction and returns false when a committed one exists; `IReceipts.RecordVersionAsync(subscription, aggregateId, version)` records a Snapshot's version in that transaction only when it is newer than every version of the aggregate the subscription applied, and returns false otherwise, a concurrent delivery of any version of the same aggregate waiting until it commits or rolls back. `ISnapshotMappers`, registered scoped by `UsePouryaKitWolverine`, runs the mappers the running Operation's Module declared. `Declares(aggregateType)` says whether a Snapshot is declared for a changed aggregate, and throws when one covering it is declared without a Module while the Operation runs in one, or with a Module while it runs in none, each with its own message, since such a declaration would never publish. `CheckKeySpaces(mappedAggregates)` takes every aggregate type the Unit of Work maps with the root of its mapped hierarchy, and throws when one Snapshot the Module declared covers aggregates of more than one hierarchy, derived types counted, naming the Snapshot, the declared type and every hierarchy root it covers. `Map(aggregate, removed)` builds the aggregate's Snapshots, or its Tombstones, one per declared Snapshot type, calling each mapper inside `Operation.OnlyReading("a Snapshot mapper")`. `WithOperationContext` writes the `OperationContextHeaders` on a message's delivery options; the Outbox calls it.
+
+## PouryaKit.Messaging.Wolverine.EFCore
+
+The Outbox, its Snapshots and the Receipts on the EF Core Unit of Work, and Wolverine's message store in PostgreSQL. It references `PouryaKit.Messaging.Wolverine`, `PouryaKit.Persistence.EFCore`, `WolverineFx.EntityFrameworkCore` and `WolverineFx.Postgresql`. A Module that declares Notification Handlers or subscribes Integration Event Handlers references it for its Receipt migration, and one that subscribes to a Snapshot for its Snapshot version migration too.
+
+| Concern | Types |
+|---|---|
+| Host | `WolverineEfCoreHostApplicationBuilderExtensions.UsePouryaKitWolverine(connectionName, schema)`, `PouryaKitMessageStoreOptions` |
+| Receipts | `ReceiptTable`, `ReceiptTable.CreateReceiptTable`, `ReceiptTable.DropReceiptTable` |
+| Snapshot versions | `SnapshotVersionTable`, `SnapshotVersionTable.CreateSnapshotVersionTable`, `SnapshotVersionTable.DropSnapshotVersionTable` |
+
+`UsePouryaKitWolverine(connectionName, schema = "wolverine")` does everything the overload without a database does, and stores messages with `PersistMessagesWithPostgresql` on the connection string named, which every Module's DbContext must use too, in `schema`, where Wolverine creates its tables when the Host starts. It sets Wolverine's EF Core transaction mode to `Eager`, maps no Wolverine entity into any Module's DbContext (ADR 0004), and registers, scoped, the internal `WolverineOutbox` as both `IUnitOfWorkOutbox` and `INotificationOutbox`, the internal `PublishedIntegrationEvents` as `IIntegrationEventOutbox`, and the internal `EfReceipts` as `IReceipts`. `PouryaKitMessageStoreOptions` sets the durability mode, `Balanced` by default and `Solo` in tests, and the `InboxStaleTime`, 5 minutes by default, which must exceed the sum of `RetryDelays` plus every attempt's run, queue wait included (below).
+
+Seams later packages build on:
+
+- **The Outbox.** `WolverineOutbox.WriteAsync` takes the Domain Events the drain returned, the Integration Events the scope's `PublishedIntegrationEvents` holds and the Snapshots the internal `SnapshotStep` builds from the changed aggregates (below), keeps only the messages Wolverine has a route for, so an Integration Event no Module subscribes to is not stored, enrolls a new `DbContextOutbox` in the DbContext's transaction for every commit attempt, so one that rolled back never sends its envelopes, and publishes each message with the Operation's context in its headers, each Integration Event with its identity in the `IntegrationEventHeaders.DomainEventId` header, and each Snapshot with its aggregate's key and version in the `SnapshotHeaders` headers. Before it writes an Integration Event, it records the publication through `IReceipts` in the publishing Module's Receipt table, keyed by the wire name followed by `#published`, which no subscription name can take, and the identity: when two Notification Handlers of one Domain Event publish one type, the second delivery to commit fails rather than send a second Integration Event every receiver's Receipt would drop. `FlushAsync` sends them after the commit (step 12); a failure is logged as a warning, and the store recovers the committed envelopes after the inbox stale time, or when a Host starts.
+- **The Receipt.** A row `(subscription, message_id)` in the table `pouryakit_receipts` of the receiving Module's own schema, written by `EfReceipts` on the scope's EF Core Unit of Work's transaction with `insert … on conflict do nothing`, before the handler runs, so it commits with the handler's effect or not at all. The primary key makes a concurrent duplicate wait for the first transaction and then insert nothing. The table is outside every Module's model: a migration creates it with `CreateReceiptTable(schema)`, and a missing table fails the delivery with an `InvalidOperationException` that names that call. Nothing checks the table at start.
+- **The inbox stale time and the retries (ADR 0004, ADR 0006, amendments for #17).** `InboxStaleTime` releases an owned inbox row whose insert time is older than it, and a stored retry keeps that time. A delivery waiting for its retry is owned by no node and is never released; an attempt that runs after the stale time is released while it runs and handed out again, concurrently, on every recovery poll until one run finishes. The Receipt keeps the effect to one, and each copy holds a connection while it waits on it. The stale time must therefore exceed the sum of `RetryDelays` plus every attempt's run, queue wait included; the defaults, 71 s of delays against 5 minutes, leave each of four attempts under a minute.
+- **Snapshots (ADR 0003).** `SnapshotStep.Build`, step 7 of the commit sequence, called by `WolverineOutbox.WriteAsync` before anything is written, keeps the changed aggregates the running Operation's Module declared a Snapshot for, through `ISnapshotMappers`, and builds for each one Snapshot per declared Snapshot type, or a Tombstone when the entry is deleted or an `ISoftDeletable` marked deleted, carrying the aggregate's key, its primary key as the database stores it (a composite key prefixes each part with its length), and the `Version` the prepare step set. A key still temporary, generated by the database at the save, throws `InvalidOperationException`. A Snapshot needs no publication record: two commits of one version of an aggregate conflict, so its identity is never published twice. Built from the prepared state, which nothing may change afterwards, the run is checked: before the mappers it copies every tracked entry's state and every value it saves, complex properties included, each with its property's value comparer, and the count of Domain Events each aggregate holds; after them, a changed state or value, a change in the number of tracked entries, or a changed number of Domain Events throws `InvalidOperationException`, and nothing commits. A change inside an EF Core complex collection is not seen. The step also refuses, with `InvalidOperationException` through `ISnapshotMappers`, a declaration without its Module in a Host of Modules, or with one in an application without Modules, when an aggregate it covers changed (`Declares`), and, once any aggregate the Module declares a Snapshot for changed, a declaration of that Module whose type covers more than one aggregate root its DbContext maps, the roots of its mapped hierarchies that are neither owned nor derived (`CheckKeySpaces`), since independent aggregates' keys would share one Snapshot's identities and versions. Each refusal fails the Operation that would publish, never the Host's start.
+- **The Snapshot version.** A row `(subscription, aggregate_id, version)` in the table `pouryakit_snapshot_versions` of the receiving Module's own schema, keyed by the subscription and the aggregate, written by `EfReceipts.RecordVersionAsync` on the Unit of Work's transaction after the Receipt, in one statement, `insert … on conflict (subscription, aggregate_id) do update set version = excluded.version where applied.version < excluded.version`. Under read committed, a concurrent delivery of the same aggregate waits on the row and then decides against what committed, so if the older commits first both handlers can run in increasing version order, and if the newer commits first the older is skipped. The committed version only increases. The table is outside every Module's model: a migration creates it with `CreateSnapshotVersionTable(schema)` in every Module that subscribes to a Snapshot, and a missing table fails the delivery with an `InvalidOperationException` that names that call. Nothing removes a version row or a Receipt. Because the version row of an aggregate deleted outright keeps its Tombstone's version, that aggregate's key must never be used again: a new aggregate's Snapshots would be turned away until its version passed the Tombstone's.
+
+## PouryaKit.Web
+
+HTTP endpoints over the Modules' Gateways. It references `PouryaKit.Cqrs` and the ASP.NET Core shared framework (`FrameworkReference Microsoft.AspNetCore.App`), no NuGet package, and not `PouryaKit.Modularity`: an endpoint resolves its Module's Gateway from the Host's services itself.
+
+| Concern | Types |
+|---|---|
+| Endpoints | `IEndpoint`, `WebServiceCollectionExtensions.AddPouryaKitEndpoints`, `WebEndpointRouteBuilderExtensions.MapPouryaKitModuleEndpoints`, `WebEndpointRouteBuilderExtensions.AllowAnonymousAs` |
+| Registration | `WebServiceCollectionExtensions.AddPouryaKitWeb`, `PouryaKitWebOptions` |
+| Result to HTTP | `ResultHttpExtensions.ToHttpResult` |
+
+`AddPouryaKitWeb` registers problem details, the internal `UnexpectedExceptionHandler`, `RouteHandlerOptions.ThrowOnBadRequest` so a binding failure reaches that handler in every environment, the internal `ProblemStatusCodePages` startup filter, `TypedIdJsonConverterFactory` in the HTTP JSON options, and `PouryaKitWebOptions`. A Composition Root calls `AddPouryaKitEndpoints(routePrefix, assembly)` on its builder, which needs nothing from Modularity because the builder is an `IServiceCollection`; it records every `IEndpoint` of the assembly, internal ones included, with the route prefix, and throws when there is none. `MapPouryaKitModuleEndpoints` maps each Module's endpoints under a route group of its prefix that requires an authenticated caller.
+
+Seams later packages build on:
+
+- **The request's Operation (ADR 0007).** A route-group `Finally` convention wraps each endpoint's built request delegate, so it runs after authorization and before the endpoint binds its parameters; an endpoint filter would run after binding, too late for an endpoint that injects `OperationContext`. It begins the request scope's Operation with no Module: the Gateway the endpoint calls opens the Operation's own scope. The context's Actor is `Actor.Person` from `PouryaKitWebOptions.ActorClaim`, its tenant the `TenantClaim` value or null, and it starts a new chain of work; nothing reads an incoming correlation header. An authenticated caller without the Actor claim throws. An endpoint marked `AllowAnonymous` without `AllowAnonymousAs(actor)` throws when the endpoint is built, which fails the Host's start, so no Operation runs as an unnamed Actor.
+- **One failure shape.** `ToHttpResult` writes a failed Result as an RFC 9457 problem response through `ProblemHttpResult`, with every Error in an `errors` member (code, message, validation target) and the status of the most severe kind: unexpected 500, forbidden 403, not found 404, conflict 409, validation 400. `UnexpectedExceptionHandler` writes an exception the same way: 500 without its message, logged at Error, or a `BadHttpRequestException`'s own status, logged at Debug. Both fall back to `application/problem+json` when the caller's `Accept` rules out every problem details writer. A failure answered with an empty body before any endpoint or exception handler runs gets the same envelope: `ProblemStatusCodePages`, an `IStartupFilter`, adds status code pages outermost in the pipeline, which write every response of status 400 to 599 that left the body empty as a problem response with that status through `ProblemHttpResult`, whatever the caller accepts, and leave a response with a body alone. That covers routing's own 405 (a method the route does not serve) and 415 (a body of a content type the endpoint does not accept), which `WebTests` proves, and the empty 401, 403 or 404 that authentication, authorization or routing answers. A Host does nothing for it.
+- **The pipeline order.** The Host calls `UseExceptionHandler()` first and `UseRouting()`, `UseAuthentication()` and `UseAuthorization()` explicitly after it; `WebApplication` would otherwise insert those three ahead of the handler. The application configures its own authentication; Web chooses no identity provider (plan section C).
+
+## PouryaKit.Testing
+
+Tests against the hosted application and a real database. It references `PouryaKit.Modularity`, `PouryaKit.Persistence.Postgres`, `PouryaKit.Messaging.Wolverine.EFCore`, `Testcontainers.PostgreSql`, `Respawn`, `xunit.v3.extensibility.core` and `Microsoft.Extensions.TimeProvider.Testing`.
+
+| Concern | Types |
+|---|---|
+| Hosted application | `HostFixture`, `HostTest<TFixture>` |
+| Gateway calls | `GatewayTestExtensions`, `GatewayTestExtensions.TestActor` |
+| Time | `TestClock` |
+| Deliveries | `TestDeliveryServiceCollectionExtensions.UsePouryaKitTestDelivery`, `Delivery`, `DeadLetter`, `DeliveryAssertionException` |
+
+`HostFixture` runs PostgreSQL in a container, with commit timestamps recorded, builds on it the application the test project composes in `CreateHost`, applies the migrations of every DbContext registered with `AddDbContext`, and then starts the Host, so a hosted service such as Wolverine finds every Module's tables, Receipts included; `StartHostAsync(host)` does the same for a second Host a test starts. `Gateway<TModule>()` sends Operations as the application does. `GatewayTestExtensions` adds `SendAsync` and `QueryAsync` overloads without an `OperationContext` to every Gateway, as C# 14 extension members: each call runs as a new Operation of `TestActor`, the named system Actor `PouryaKit.Testing`. Application code never references this package, so it always names its context (ADR 0007); a test that needs a particular Actor, tenant or correlation passes its own context to the Gateway's own methods. `HostTest<TFixture>` resets the data before each test: it waits until no stored delivery is pending, deletes every row with Respawn, keeping each schema's migrations history and excluding the message store's schema, whose node tables belong to the running Host, and then deletes the store's envelopes and dead letters. Tests sharing a fixture do not run in parallel. `TestClock` binds a `FakeTimeProvider` as the `DomainClock` for code a test runs directly, inside the test method (ADR 0005).
+
+Delivery assertions read the message store itself, through the internal `StoredDeliveries`, rather than a Wolverine tracked session, which completes before a stored retry fires: a delivery is pending while its envelope is neither handled nor dead-lettered, or while it is a dead letter marked for replay that the store has not yet moved back. `WaitForDeliveriesAsync(operation)` notes the stored envelopes, runs the Operation, fails with `DeliveryAssertionException` when it stored none, waits up to 30 seconds until nothing is pending, deliveries caused by deliveries included, and returns each new one as a `Delivery(Subscription, WireName, DeadLettered)`. `AssertNothingSentAsync(operation)` fails when the Operation stored any delivery. `WaitUntilDeliveredAsync()` waits until nothing is pending. `DeadLettersAsync()` reads every dead letter through Wolverine's `IDeadLetters`, as an application inspects them, as a `DeadLetter(Id, Subscription, WireName, ExceptionType, ExceptionMessage)`, the subscription taken from the queue it was received at. `ReplayAsync(deadLetter)` fails with `DeliveryAssertionException` unless the delivery is a dead letter, marks it for replay through `IDeadLetters`, and waits until nothing is pending. `DeliveryAssertionException` implements an interface named `IAssertionException`, which xUnit reports as an assertion failure without the package referencing `xunit.v3.assert`. `UsePouryaKitTestDelivery()`, called after `UsePouryaKitWolverine`, sets Solo durability, two retries 100 ms apart and a 100 ms store polling interval. Every Host it configures runs in Solo mode as the same node of the message store: Wolverine 6.46 gives a Solo Host node number 1 and releases every live Host's rows when one starts, and its recovery takes a row owned by no node without checking that no other Host took it first. So when a test abandons a Host in the middle of a delivery, the Host that replaces it and the fixture's own Host can each recover that delivery at the same moment; the Receipt keeps the effect to one, and the delivery is attempted once more. A test that abandons a Host asserts the effect, or a range of attempts (`IndependentDeliveryTests`).
+
+## Structure tests
+
+`tests/PouryaKit.ArchitectureTests` is the structure seam of the spec's Testing Decisions. It references the Proving Sample's Host, `PouryaKit.Testing` and an offending fixture, and needs no database. The Kit ships no rules package in Wave 1; the Kit's skill teaches a consuming project to copy the pattern ([Structure tests](../../.agents/skills/pourya-kit/references/testing.md#structure-tests)).
+
+| Test class | What it asserts |
+|---|---|
+| `ModuleBoundaryTests` | No Module references another Module's implementation, and Contracts reference nothing from the Kit and no Module (ADR 0001), read from each project's restored closure, so a reference no code uses still counts; a Module's only public types are its Composition Root, the ports its Host implements, listed by name, and EF Core migrations |
+| `FeatureCodeTests` | No Module saves, commits, begins or ends a transaction, writes in bulk with EF Core, runs transaction control as SQL or calls a step only the Kit runs (ADR 0003); no Module, Contracts or `PouryaKit.Messaging` names a Wolverine or JasperFx type, and no Module's DbContext maps the message store's envelopes (ADR 0004, ADR 0006); only the Kit's Domain Event drain clears Domain Events |
+| `DapperWriteTests` | No SQL in a Module writes a table that an aggregate of any Module maps, its owned parts and child entities included, read from each Module's EF Core model as the Host composes it (story 45) |
+| `PackageGraphTests` | Each Kit package's direct project, package and framework references are exactly those of plan section C as amended (`PackageGraph`), and its restored closure keeps out what that table keeps out: no EF Core in Dapper, no Wolverine or Messaging in Postgres, no Modularity in Web, no EF Core, Npgsql or message store in `PouryaKit.Messaging.Wolverine`, no package at all in Domain or Messaging, and `WolverineFx.RuntimeCompilation` in none (story 84) |
+| `LicenceTests` | Every package in every Kit package's restored closure, analyzers included, declares a licence expression from the permissive list in [`docs/provenance/README.md`](../provenance/README.md#package-licences) (ADR 0002, story 85) |
+
+Each Module rule is a function in `ModuleRules` from a compiled assembly, or a Module's EF Core model, to its violations, and its XML documentation states what it cannot see. The IL is read by `Il`, with the base class library only, and a project's restored closure by `RestoredPackage`, from its `obj/project.assets.json`. `Sample` finds the Proving Sample's Modules from the Host's references and builds each Module's model from the Host built but never started. Every rule judges the Proving Sample, then `tests/PouryaKit.ArchitectureTests/Offending`, a Module that breaks each rule inside async methods and lambdas, and asserts its exact violations, so a rule that reads nothing fails; `Offending.Contracts` does the same for Contracts. `docs/acceptance.md` maps each rule to its test class beside the Gateway-seam scenarios.

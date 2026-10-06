@@ -12,3 +12,8 @@ artifacts/
 .env
 .env.*
 *.local.json
+CLAUDE.local.md
+.claude/agent-memory-local/
+.claude/worktrees/
+__pycache__/
+.claude-plugin/types/

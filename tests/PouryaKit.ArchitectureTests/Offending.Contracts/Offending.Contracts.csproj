@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Contracts that reference the Kit without using it, so the Contracts rule is seen to reject a reference that
+       leaves no trace in the compiled assembly. Never part of the sample. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\PouryaKit.Domain\PouryaKit.Domain.csproj" />
+  </ItemGroup>
+</Project>

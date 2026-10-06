@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="WolverineFx.EntityFrameworkCore" />
+    <PackageReference Include="WolverineFx.Postgresql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PouryaKit.Messaging.Wolverine\PouryaKit.Messaging.Wolverine.csproj" />
+    <ProjectReference Include="..\PouryaKit.Persistence.EFCore\PouryaKit.Persistence.EFCore.csproj" />
+  </ItemGroup>
+</Project>

@@ -2,7 +2,9 @@
 
 Status: draft 6, 2026-10-04 (five Codex review rounds and the owner's decisions applied; see `foundation-review-log.md`). Analysis only — nothing was built, restored, run or modified in any
 inspected repository. The kit is named **PouryaKit**. Every API shown under the `PouryaKit.*` prefix is
-**proposed**, not existing CloudNativeKit/Woo functionality.
+**proposed**, not existing CloudNativeKit/Woo functionality. *Phase 0 and Wave 1 have since been built from this plan
+(closed 2026-10-06). Where the build departed from it, a dated note in place or an amendment in `docs/adr/` says so;
+`docs/acceptance.md` maps the acceptance scenarios to tests, and the API as built is in the Kit's skill.*
 
 ## Inspected snapshots
 
@@ -119,7 +121,9 @@ replace your conventions with Wolverine's.
 fixed pipeline; a few hundred lines with tests). The pipeline is fixed by the kit, so nothing needs a
 pluggable behaviour model. martinothamar `Mediator` 3.x (MIT, source-generated) is the alternative;
 its generator runs in the host project and whether it can see `internal` handlers in module
-assemblies is not verified. Phase 0 checks it; default is the owned dispatcher.
+assemblies is not verified. Phase 0 checks it; default is the owned dispatcher. *Resolved by Spike S3
+(ADR 0002): it can, but only with `InternalsVisibleTo` from each module to the host or a generator and
+generated mediator inside every module; the owned dispatcher stands.*
 
 ---
 
@@ -214,6 +218,26 @@ pourya-kit/
 └── samples/ModularMonolith/        Catalog (2 aggregates), Inventory, Billing (second subscriber)
 ```
 
+Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its original wording:
+
+- `PouryaKit.Domain` has no `IDomainEvent`. A Domain Event derives from the abstract record `DomainEvent`, which
+  assigns its `Id` and `OccurredOn` once (ticket #6).
+- The unique-constraint → Error mapping, `MapUniqueConstraint`, lives in `PouryaKit.Persistence.EFCore`;
+  `PouryaKit.Persistence.Postgres` only reads the violated constraint's name from PostgreSQL's error (ticket #11).
+- The typed-ID conventions (G.3) store a typed ID as its value and never make a key database-generated: a numeric
+  typed ID the database generates needs `ValueGeneratedOnAdd()` in its entity's own mapping (ticket #8).
+- An aggregate-specific repository (G.4) derives from `EfRepository` and gets one protected `ListAsync<TResult>` that
+  returns a loaded list, never an `IQueryable` (ticket #12).
+- `tests/` follows the three seams of spec #1's Testing Decisions, not one project per package:
+  `ModularMonolith.Tests` (Gateway seam, the Proving Sample against PostgreSQL), `PouryaKit.Domain.Tests` (Domain seam)
+  and `PouryaKit.ArchitectureTests` (Structure seam), plus `PouryaKit.Cqrs.Tests` (with its test Module
+  `PouryaKit.Cqrs.Tests.Module`) and `PouryaKit.Validation.Tests`, which run the dispatcher and the validation step
+  without a database.
+- `PouryaKit.Persistence` (G.4), the thirteenth project, has no entry in the tree above and no row in the table
+  below. It holds `IRepository` and `IUnitOfWorkConnection`, the seam through which a Module's plain-SQL write joins
+  the Unit of Work (ticket #9), and references Domain and `Ardalis.Specification`. `PouryaKit.Persistence.EFCore`
+  references it beside Cqrs, with `Ardalis.Specification.EntityFrameworkCore`.
+
 ### Allowed references
 
 | Package | References | Third-party |
@@ -221,15 +245,32 @@ pourya-kit/
 | Domain | — | none |
 | Cqrs | Domain | `Microsoft.Extensions.DependencyInjection.Abstractions`, `Logging.Abstractions` |
 | Validation | Cqrs | FluentValidation |
-| Modularity | Cqrs | `Microsoft.Extensions.Hosting.Abstractions` |
+| Modularity | Cqrs | `Microsoft.Extensions.Hosting.Abstractions`, `Microsoft.Extensions.DependencyInjection` |
 | Persistence.EFCore | Cqrs | EF Core Relational |
 | Persistence.Postgres | Persistence.EFCore | Npgsql EF provider, EFCore.NamingConventions |
-| Persistence.Dapper | Domain | Dapper, Npgsql (ADO.NET driver only, no EF) |
+| Persistence.Dapper | Domain | Dapper, Npgsql (ADO.NET driver only, no EF), `Microsoft.Extensions.Configuration.Abstractions`, `Microsoft.Extensions.DependencyInjection.Abstractions` |
 | Messaging | Domain (handlers return `Result`) | none |
 | Messaging.Wolverine | Cqrs, Messaging | WolverineFx |
 | Messaging.Wolverine.EFCore | Messaging.Wolverine, Persistence.EFCore | WolverineFx.EntityFrameworkCore, WolverineFx.Postgresql |
 | Web | Cqrs | ASP.NET Core framework reference |
-| Testing | Modularity, Persistence.Postgres, Messaging.Wolverine.EFCore | Testcontainers, Respawn, xUnit v3 |
+| Testing | Modularity, Persistence.Postgres, Messaging.Wolverine.EFCore | Testcontainers, Respawn, xUnit v3, `Microsoft.Extensions.TimeProvider.Testing` |
+
+Amended on 2026-10-05, each addition MIT and already present in every Host:
+
+- Modularity references `Microsoft.Extensions.DependencyInjection` (owner, ticket #13): the options that validate the
+  container at build live only there, and `AddPouryaKitModules` turns them on in every environment.
+- Persistence.Dapper references `Microsoft.Extensions.Configuration.Abstractions` (owner, ticket #9): the read
+  connection is registered by connection name, as `UsePostgres` is. It also references
+  `Microsoft.Extensions.DependencyInjection.Abstractions` explicitly (owner, ticket #9 review): its registration call
+  on a Module's builder needs it, and the transitive copy Npgsql brings is not the pinned version. Its closure still
+  holds no EF Core.
+- Testing references `Microsoft.Extensions.TimeProvider.Testing` (ticket #8): the test clock of ADR 0005, a decision
+  the owner delegated.
+- Persistence.EFCore also references Persistence and `Ardalis.Specification.EntityFrameworkCore`, as G.4 decided.
+
+Standing rule (owner, 2026-10-06), extending the amendments above: an MIT-licensed `Microsoft.Extensions.*`
+package may be referenced where a package needs it, and is added to this table in the same change. Any other
+reference outside the table stays an owner decision.
 
 Checks against your rules: Dapper does not reference EF. Postgres does not reference Wolverine. Web
 does not reference Modularity. Nothing chooses an identity provider. There is no `Core`/`Utils`.
@@ -252,7 +293,8 @@ Notes on the choices:
      bump per changed aggregate;
   4. build snapshots from that final state — a deleted aggregate yields a versioned tombstone;
   5. write the outbox (domain notifications and snapshots), save and commit once.
-  Nothing mutates exported fields after step 3.
+  Nothing mutates exported fields after step 3. The sequence as built, with its rollback-only checks and where the
+  Snapshots are built, is in ADR 0003's amendment of 2026-10-06.
 - **`IUnitOfWork` lives in `PouryaKit.Cqrs`**, because the pipeline that calls it lives there. That removes
   `Persistence.Abstractions`, and lets a single-module vertical-slice API use Cqrs + EFCore without
   Modularity.
@@ -264,7 +306,7 @@ Notes on the choices:
 
 ### Full target catalogue
 
-The goal is a complete kit, not a minimal one. The 12 projects above are **wave 1** because every
+The goal is a complete kit, not a minimal one. The 13 projects above (12 until G.4; corrected 2026-10-06) are **wave 1** because every
 other capability sits on top of the execution core, and that core is the part no source gets right.
 Waves are a build order, not a cut list. A capability becomes a package only where the kit adds
 behaviour or a convention of its own; where .NET already ships the capability, the kit ships a
@@ -272,7 +314,7 @@ registration recipe inside the template instead of a wrapper.
 
 | Capability | Form | Wave | Best source | Kit's own contribution |
 |---|---|---|---|---|
-| Domain, CQRS, validation, modularity, persistence, messaging, web, testing | 12 packages above | 1 | section B | the execution core |
+| Domain, CQRS, validation, modularity, persistence, messaging, web, testing | 13 packages above | 1 | section B | the execution core |
 | API versioning, OpenAPI, Scalar | `PouryaKit.Web.OpenApi` | 2 | Woo `ApiVersioningExtensions.cs`, Cybernod `OpenApi/*` transformers | per-module route groups and version sets; security transformer that adds requirements |
 | Authorization | `PouryaKit.Security` | 2 | Cybernod `AuthExtensions.cs:47-59`, `UserAccessor` | actor/permission contracts, pipeline authorization step (also covers background commands, which Cybernod never authorizes), fallback policy on by default |
 | JWT bearer adapter | `PouryaKit.Security.JwtBearer` | 2 | Cybernod `ClerkExtensions.cs:95-149` minus Clerk | claim normalisation into `OperationContext`; no provider SDK |
@@ -292,6 +334,8 @@ registration recipe inside the template instead of a wrapper.
 ---
 
 ## D. Consuming application
+
+This section is the plan's sketch; the API as built is in the Kit's skill, `.agents/skills/pourya-kit/`.
 
 Layout follows Cybernod's real structure (documented from `Cybernod.Modules.Assets/AssetDiscovery`
 and `Cybernod.Modules.Identity/User`), with its naming drift normalised to one spelling:
@@ -544,11 +588,14 @@ food-delivery happy paths. Nothing tests failed-Result rollback, concurrent dupl
 multi-subscriber failure anywhere.
 
 **Inferred, not verified:**
-- Wolverine internals (send timing without an enrolled transaction, queue naming defaults, per-retry
-  scope). WolverineFx is not in the local package cache; claims come from official docs.
+- Wolverine internals: per-retry scope (S2). *Resolved, ADR 0006: each attempt runs in a new scope
+  that the Kit opens.* Send timing without an enrolled transaction and queue naming defaults were
+  observed in Spike S1 against WolverineFx 6.46.0; see ADR 0004.
 - Whether Wolverine can route one message to several kit-registered consumers with independent ack
-  without app-specific handler classes (S2).
-- Whether `Mediator` 3.x handles `internal` handlers across assemblies (S3).
+  without app-specific handler classes (S2). *Resolved, ADR 0006: yes, with one route and durable
+  local queue per subscription and one pre-built Kit handler per message type.*
+- Whether `Mediator` 3.x handles `internal` handlers across assemblies (S3). *Resolved, ADR 0002: only
+  with `InternalsVisibleTo` to the host or a generator inside every module.*
 - How Lucky Penny §4.2.e.3 would be applied to your case is a legal question; the text is clear enough
   that I would not build on it.
 
@@ -573,7 +620,7 @@ document has been compiled.
 6. **.NET 10 only**, latest C# language version, current .NET idioms throughout.
 7. The "no local files" rule is confirmed as a docs/provenance rule.
 8. The owner authorised finalising this plan and splitting it into phases worked through the
-   repo's skills. Building has not started.
+   repo's skills. Building has not started. *Phase 0 and Wave 1 were built by 2026-10-06 (spec #1).*
 
 ---
 
@@ -632,14 +679,21 @@ No test-first default. Each ticket goes through:
 
 1. **Implement** — Opus builds from the ticket.
 2. **Focused tests** — tests for the behaviour that matters; no redundant coverage.
-3. **Two independent reviews in parallel** — a Fable subagent and Codex (GPT-6 Astra, high or xhigh).
-4. **Fix and re-review** until the gates below hold.
+3. **Review, sized to the ticket** (owner, 2026-10-04) — two independent reviews in parallel, a Fable
+   subagent and Codex (GPT-6 Astra, high), for a ticket that claims a runtime guarantee or changes a
+   public API of the kit; one reviewer for any other ticket; none for a clear, small change.
+4. **One fix round, then a re-score** of the accepted findings only. A new full review only after a
+   high finding was fixed, and at most once: a ticket gets two full reviews, then re-scores only
+   (the cap applied on #11, #15 and #18; agent-setup retro, 2026-10-06). A remaining medium or low
+   finding gets a recorded disposition.
 5. **Runtime proof** where the ticket claims a runtime guarantee (PostgreSQL in Testcontainers).
-6. **Docs** — update documentation and C4 diagrams; run `/archify-review`.
+6. **Docs** — update documentation and C4 diagrams. The ticket's closing comment carries a value, cost and
+   impact paragraph (the `archify-review` lens); `/archify-review` itself runs once per wave, at close-out
+   (agent-setup retro, 2026-10-06).
 7. **AI setup** — add, update, simplify or remove the kit's skills, rules and agent docs, following
    `/skill-creator` and `/writing-for-agents`.
 
-Completion gates: relevant tests green · no unresolved actionable review finding · runtime proof
+Completion gates: relevant tests green · no open high finding and a recorded disposition for the rest · runtime proof
 where applicable · docs in sync · AI guidance in sync.
 
 ### Found incidentally in Cybernod (not part of this plan)
@@ -654,7 +708,7 @@ where applicable · docs in sync · AI guidance in sync.
 
 ## Recommended plan in one paragraph
 
-Build an owned kit on .NET 10 with no mediator dependency, 12 packages in the first wave and the
+Build an owned kit on .NET 10 with no mediator dependency, 13 packages in the first wave and the
 full catalogue after it. Conventions come from Cybernod: typed IDs, aggregates, `Result`, command
 shapes, business-area folders. One host container holds module-tagged scopes behind
 `IGatewayProcessor<TModule>`; a small owned dispatcher runs a fixed pipeline. One Result-aware unit

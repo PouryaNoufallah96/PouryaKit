@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "opus",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "outputStyle": "kit-orchestrator",
+  "statusLine": {
+    "type": "command",
+    "command": "p=$(cat); d=$(printf '%s' \"$p\" | jq -r '.workspace.project_dir // empty' 2>/dev/null); s=\"$d/.claude/statusline.sh\"; [ -x \"$s\" ] || s=\"$(git -C \"${d:-.}\" rev-parse --show-toplevel 2>/dev/null)/.claude/statusline.sh\"; [ -x \"$s\" ] && printf '%s' \"$p\" | \"$s\"; true"
+  },
+  "subagentStatusLine": {
+    "type": "command",
+    "command": "jq -c '.tasks[]? | {id, content: ([([.name, .description, .type] | map(select(. != null and . != \"\")) | first // \"agent\"), ((.model // empty) | sub(\"^claude-\"; \"\")), ((.effort // empty) | tostring), (if (.contextWindowSize // 0) > 0 then ((((.tokenCount // 0) * 100 / .contextWindowSize) | floor | tostring) + \"% ctx\") else empty end)] | join(\" · \"))}' 2>/dev/null || true"
+  },
+  "permissions": {
+    "ask": ["Bash(git push *)"]
+  },
+  "worktree": {
+    "baseRef": "head"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Grep|Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PROJECT_DIR}/.agents/hooks/guard.py"],
+            "timeout": 10,
+            "statusMessage": "Checking PouryaKit guard"
+          }
+        ]
+      }
+    ]
+  }
+}
