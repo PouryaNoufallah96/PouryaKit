@@ -1,0 +1,22 @@
+.claude/settings.json
+  s_bccfa831433375::t_8db4f1f44bbc11 17-29
+docs/agents/ai-setup.md
+  s_bccfa831433375::t_e18bd75ac9ba11 21
+  s_bccfa831433375::t_65b047f7d9a51c 143
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c271b044577f96b7fb0ec4bc4c19c91ccd70875d",
+  "prompts": {},
+  "sessions": {
+    "s_bccfa831433375": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "6f77c3ee-3205-4f95-89bc-8ef584c87187",
+        "model": "grok-4.7"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
