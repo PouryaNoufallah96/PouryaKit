@@ -1,0 +1,77 @@
+src/PouryaKit.Messaging.Wolverine/PouryaKit.Messaging.Wolverine.csproj
+  s_41c3eef9abbce4::t_bb21f23c655444 6
+src/PouryaKit.Messaging.Wolverine/NotificationHandlerServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_bb21f23c655444 5
+  s_41c3eef9abbce4::t_9714be81a38e65 33-38
+src/PouryaKit.Web/PouryaKit.Web.csproj
+  s_41c3eef9abbce4::t_bb21f23c655444 6
+src/PouryaKit.Security/SecurityServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_bb21f23c655444 4,27-28
+src/PouryaKit.Persistence.EFCore/PouryaKitDbContext.cs
+  s_41c3eef9abbce4::t_bb21f23c655444 4,35
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_41c3eef9abbce4::t_8d22689948771f 21,31,39,43,48-49
+tests/PouryaKit.ArchitectureTests/TypeLookupTests.cs
+  s_41c3eef9abbce4::t_8d22689948771f 39-41
+  s_41c3eef9abbce4::t_89c8d3ff07120f 1-38,42-60
+docs/acceptance.md
+  s_41c3eef9abbce4::t_7d8086e67af087 150-151
+  s_41c3eef9abbce4::t_858624d836e4c3 43,137
+  s_41c3eef9abbce4::t_4b267e73d0a720 138-149
+.agents/skills/pourya-kit/references/web.md
+  s_41c3eef9abbce4::t_b7aaf4bf990557 3
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_bb21f23c655444 7,72-73
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_41c3eef9abbce4::t_56de9adda034d7 76
+.agents/skills/pourya-kit/references/security.md
+  s_41c3eef9abbce4::t_b7aaf4bf990557 3
+src/PouryaKit.Persistence.Dapper/DapperServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_bb21f23c655444 5,58
+tests/PouryaKit.Core.Tests/ImplementingTypesTests.cs
+  s_41c3eef9abbce4::t_21466889774158 1,26-49,57
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_858624d836e4c3 247-248,251,253,255,257-258
+tests/PouryaKit.Core.Tests/Lookup.cs
+  s_41c3eef9abbce4::t_21466889774158 15,26-34
+src/PouryaKit.Persistence.Dapper/PouryaKit.Persistence.Dapper.csproj
+  s_41c3eef9abbce4::t_bb21f23c655444 9
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_41c3eef9abbce4::t_86e28bd262ccd8 1
+  s_41c3eef9abbce4::t_8c0a5d30c18874 174-189
+src/PouryaKit.Core/ImplementingTypes.cs
+  s_41c3eef9abbce4::t_b780c055b89d45 2,7-9,35,42-58,61-76,81-92
+  s_41c3eef9abbce4::t_5a25560e3d4214 93
+  s_41c3eef9abbce4::t_21466889774158 59-60
+src/PouryaKit.Security/PouryaKit.Security.csproj
+  s_41c3eef9abbce4::t_bb21f23c655444 3
+src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_9714be81a38e65 39-44
+  s_41c3eef9abbce4::t_bb21f23c655444 4
+src/PouryaKit.Cqrs/PouryaKit.Cqrs.csproj
+  s_41c3eef9abbce4::t_bb21f23c655444 7
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_858624d836e4c3 87-91,118,127,210,298,333,374,424,457,462,467,482
+  s_41c3eef9abbce4::t_4be1563b44430f 252
+src/PouryaKit.Persistence.EFCore/PouryaKit.Persistence.EFCore.csproj
+  s_41c3eef9abbce4::t_bb21f23c655444 7
+.agents/skills/pourya-kit/references/core.md
+  s_41c3eef9abbce4::t_b7aaf4bf990557 3,44,81-101
+  s_41c3eef9abbce4::t_275398ce88faa6 102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c331056d432de31763746bbbe6ada521d3d04d0e",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": null
+    }
+  }
+}
