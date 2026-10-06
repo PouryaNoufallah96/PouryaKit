@@ -320,8 +320,9 @@ def validate(output, *, fetch=True):
         folder.mkdir(parents=True)
         consumer_config(folder, package_output)
         project = sample_consumer(folder, consumer["source"], evidence["Version"]) if "source" in consumer else simple_consumer(folder, consumer["packages"], types, evidence["Version"])
-        if name == "single-module":
-            shutil.copy(ROOT / "scripts/packaging/consumers/single-module.cs", folder / "Program.cs")
+        # A consumer with its own source under consumers/ exercises the packed API instead of only naming its types.
+        if (source := ROOT / "scripts/packaging/consumers" / f"{name}.cs").exists():
+            shutil.copy(source, folder / "Program.cs")
         # Kit references use the artifact version; third-party references retain central package management.
         central = ET.parse(folder / "Directory.Packages.props")
         for name_id in ids:

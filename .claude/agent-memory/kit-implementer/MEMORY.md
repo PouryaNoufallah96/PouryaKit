@@ -25,3 +25,4 @@
 - [Security and permission facts](security-permission-facts.md) — #38: fallback policy reaches unmatched paths, non-Module endpoint test, TestActor grant, rebase recount, validate.py timing
 - [Declared authorizer check facts](declared-authorizer-check-facts.md) — #56: why a Cqrs seam, build-time factory hook, keyed ImplementationType throws, Gateway proof
 - [ImplementingTypes lookup facts](implementing-types-lookup-facts.md) — #55: Of vs Candidates, GetTypes order is MetadataToken order and a test pins it
+- [Password hashing facts](password-hashing-facts.md) — #40: PBKDF2 key floor, TryParse takes trailing NUL, strict base64, consumers/<name>.cs, OWASP pin, IL check
