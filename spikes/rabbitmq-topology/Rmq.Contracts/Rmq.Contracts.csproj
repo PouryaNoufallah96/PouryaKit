@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Catalog's Contracts: plain records, no Kit or transport reference. -->
+
+</Project>

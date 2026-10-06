@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Microsoft.Testing.Platform comes from the root global.json; xunit.v3 only, no VSTest packages. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Rmq.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.RabbitMq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Rmq.Catalog/Rmq.Catalog.csproj" />
+    <ProjectReference Include="../Rmq.Inventory/Rmq.Inventory.csproj" />
+  </ItemGroup>
+
+</Project>

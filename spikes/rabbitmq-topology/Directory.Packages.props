@@ -1,0 +1,19 @@
+<Project>
+  <!-- Stopper: the Spike pins its own package versions and does not inherit the repository's. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Under test (#50): current stable on 2026-10-07. -->
+    <PackageVersion Include="WolverineFx.RabbitMQ" Version="6.46.0" />
+    <PackageVersion Include="Testcontainers.RabbitMq" Version="4.15.0" />
+    <!-- As pinned by the Kit (ADR 0004). -->
+    <PackageVersion Include="WolverineFx" Version="6.46.0" />
+    <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.46.0" />
+    <PackageVersion Include="WolverineFx.Postgresql" Version="6.46.0" />
+    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.46.0" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.15.0" />
+    <PackageVersion Include="xunit.v3" Version="4.0.1" />
+  </ItemGroup>
+</Project>

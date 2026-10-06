@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The producing Module: it publishes ProductCreatedV1 and has no subscriber of it in its own Host. -->
+  <ItemGroup>
+    <ProjectReference Include="../Rmq.Kit/Rmq.Kit.csproj" />
+    <ProjectReference Include="../Rmq.Contracts/Rmq.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

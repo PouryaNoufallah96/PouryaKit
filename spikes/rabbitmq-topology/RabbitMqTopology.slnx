@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Rmq.Kit/Rmq.Kit.csproj" />
+  <Project Path="Rmq.Contracts/Rmq.Contracts.csproj" />
+  <Project Path="Rmq.Catalog/Rmq.Catalog.csproj" />
+  <Project Path="Rmq.Inventory/Rmq.Inventory.csproj" />
+  <Project Path="Rmq.Tests/Rmq.Tests.csproj" />
+</Solution>
