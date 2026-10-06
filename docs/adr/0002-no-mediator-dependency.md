@@ -135,8 +135,8 @@ in a separate test Module assembly:
 The decision above stands. Ticket #7 closed its two open points, and these rules are now behaviour Feature code relies
 on (`src/PouryaKit.Cqrs/Dispatcher.cs`, `src/PouryaKit.Cqrs/Operation.cs`):
 
-- **A failed nested query marks nothing.** Only a command that fails, at any step or by an exception, marks the
-  Operation rollback-only; a query has no effect to undo
+- **A failed nested query marks nothing.** A command that fails, at any step or by an exception, or a failed Domain Event Handler,
+  marks the Operation rollback-only; a query marks nothing, because it has no effect to undo
   (`DispatchTests.A_failed_nested_query_leaves_the_operation_free_to_commit`).
 - **A query handler that sends a command throws** `InvalidOperationException`: a query runs without a Unit of Work, so
   it cannot change state (`DispatchTests.A_query_handler_that_sends_a_command_throws`).

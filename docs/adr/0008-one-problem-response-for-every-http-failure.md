@@ -27,4 +27,4 @@ so these decisions are recorded here.
   (`src/PouryaKit.Web/ProblemStatusCodePages.cs`;
   `WebTests.A_request_routing_refuses_answers_its_status_as_a_problem_response_and_nothing_is_saved` for 405 and 415,
   `WebTests.A_module_endpoint_refuses_an_anonymous_caller_and_a_public_endpoint_runs_it_as_its_named_actor` for 401;
-  403 and 404 take the same path untested).
+  `WebTests.Each_modules_endpoints_are_mapped_under_its_own_route_group` for 404; 403 takes the same path untested).
