@@ -1,12 +1,13 @@
 # Security
 
-`PouryaKit.Security`: a permission declared on a command or query, checked through the pipeline's existing authorization hook against the application's source of an Actor's permissions, and never checked again for a trusted continuation. Namespace `PouryaKit.Security`. It references `PouryaKit.Cqrs` only, no ASP.NET Core, so a Module or a Host without HTTP uses it too. Authenticated HTTP access by default is `PouryaKit.Web`'s ([web.md](web.md#the-caller-and-the-actor)).
+`PouryaKit.Security`: a permission declared on a command or query, checked through the pipeline's existing authorization hook against the application's source of an Actor's permissions, and never checked again for a trusted continuation; and optional PBKDF2 password hashing for an application that stores passwords. Namespace `PouryaKit.Security`. It references `PouryaKit.Cqrs` only, no ASP.NET Core, so a Module or a Host without HTTP uses it too. Authenticated HTTP access by default is `PouryaKit.Web`'s ([web.md](web.md#the-caller-and-the-actor)).
 
 - [Declaring a permission](#declaring-a-permission)
 - [The Actor's permissions](#the-actors-permissions)
 - [Denial](#denial)
 - [Continuations](#continuations)
 - [Testing permissions](#testing-permissions)
+- [Password hashing](#password-hashing)
 
 The Kit has no role system, policy framework, identity store or admin bypass, and issues no token. A rule that is not "this Actor holds this permission", such as one that reads the command's data, is an `IAuthorizer<T>` of the Module's own ([commands-queries-validation.md](commands-queries-validation.md#authorization-hook)).
 
@@ -100,3 +101,74 @@ public sealed class CallerPermissions(IHttpContextAccessor http, IOptions<Pourya
 - Gateway tests run as `GatewayTestExtensions.TestActor`, independent work with no HTTP caller. Grant it, in the test Host only, the permissions those tests need, by name, as a named system Actor of the Host would be granted them; delegate every other Actor to the Host's own source. The Proving Sample's `TestActorPermissions` does this and is registered after the Host's composition. Never grant every permission or every Actor.
 - Prove a declared permission over HTTP both ways, the effect committed for a caller holding it and a 403 with nothing committed for one without it, and read the rows back from the database.
 - Prove a continuation through a real delivery: an Actor who holds no permission raises a Domain Event whose Notification Handler sends the protected command, and the effect commits; the same Actor sending the command directly is refused.
+
+## Password hashing
+
+For an application that stores its own passwords. The Kit only hashes and verifies: it stores nothing and has no user, account, identity store or token issuance.
+
+```csharp
+using PouryaKit.Security;
+
+// In the Host, or the Composition Root of the Module that owns the credentials; independent of permissions:
+// builder.Services.AddPouryaKitPasswordHashing();
+// builder.Services.AddPouryaKitPasswordHashing(options => options.Iterations = 700_000);
+
+internal sealed class Account
+{
+    public string? PasswordHash { get; private set; }
+
+    public void SetPassword(string password, IPasswordHasher hasher) => PasswordHash = hasher.Hash(password);
+
+    // True when the password is right; a hash weaker than the configured parameters is replaced on the way.
+    public bool SignIn(string password, IPasswordHasher hasher)
+    {
+        switch (hasher.Verify(password, PasswordHash))
+        {
+            case PasswordVerification.SucceededNeedsUpgrade:
+                PasswordHash = hasher.Hash(password);
+                return true;
+            case PasswordVerification.Succeeded:
+                return true;
+            default:
+                return false;
+        }
+    }
+}
+```
+
+- `hasher.Hash(password)` returns the string to store; `hasher.Verify(password, stored)` answers `Succeeded`, `SucceededNeedsUpgrade` or `Failed`. On `SucceededNeedsUpgrade`, store `Hash(password)` in place of the old hash while the plain password is at hand, in the same command as the sign-in's other changes, which its Unit of Work commits. Stored hashes are never invalidated by a configuration change.
+- `Verify` never throws: a missing password, a missing or malformed stored hash, an unsupported version or algorithm, and a password with no UTF-8 form are all `Failed`. Each `Hash` and `Verify` is CPU work by design, about 0.1 s at the defaults on current hardware; rate-limit sign-in at the HTTP boundary.
+- The empty password hashes like any other; what a password must look like is the application's rule, enforced before `Hash`.
+- Options outside their bounds fail `AddPouryaKitPasswordHashing` with an `InvalidOperationException` naming each one, so the Host never starts with a weak configuration.
+
+| Option | Default | Allowed |
+|---|---|---|
+| `Algorithm` | `Sha256`, PBKDF2-HMAC-SHA256 | `Sha256` or `Sha512` |
+| `Iterations` | 600,000 | at least 600,000 for `Sha256`, 220,000 for `Sha512`; at most 10,000,000 |
+| `SaltSize` | 16 bytes, from `RandomNumberGenerator`, fresh for every hash | 16 to 64 |
+| `KeySize` | 32 bytes | 32 to the HMAC's output: 32 for `Sha256`, 64 for `Sha512` |
+
+### The stored format
+
+`pbkdf2$1$<algorithm>$<iterations>$<base64 salt>$<base64 key>`, for example `pbkdf2$1$sha256$600000$<24 characters>$<44 characters>`:
+
+- `pbkdf2` and the format version `1`; another prefix or version is `Failed`.
+- The algorithm, `sha256` or `sha512`, lower case. SHA-1 and SHA-384 are refused.
+- The iterations in decimal digits, with no sign, space, separator or leading zero, from 1 to 10,000,000. A hash with fewer iterations than options now allow, from an older configuration, still verifies and needs an upgrade.
+- Salt and key in standard padded base64 (RFC 4648), canonical only: text that decodes but does not encode back the same, such as one with white space or no padding, is `Failed`. A salt of 16 to 64 bytes; a key of 32 bytes to the algorithm's output. The lower key bound is what stops a stored key cut short from verifying, since PBKDF2's shorter output is a prefix of its longer one.
+
+`Verify` derives a key of the stored key's length with the stored algorithm, iterations and salt, using `Rfc2898DeriveBytes.Pbkdf2` (the password as UTF-8), and compares it with `CryptographicOperations.FixedTimeEquals`. The hash needs an upgrade when it used another algorithm than the configured one, or fewer iterations, or a shorter salt or key; a hash stronger than the configuration is left as it is.
+
+### Why these parameters
+
+Chosen on 2026-10-07 from one check of two sources:
+
+- OWASP Password Storage Cheat Sheet, `OWASP/CheatSheetSeries@3c07d4a cheatsheets/Password_Storage_Cheat_Sheet.md` (2026-10-04), PBKDF2 section: PBKDF2-HMAC-SHA256 at 600,000 iterations is the recommended PBKDF2 setting, HMAC-SHA-512 needs 220,000, and SHA-1 is legacy only. It names Argon2id first, but the platform has no Argon2id and the Kit takes no third-party cryptography; PBKDF2 is the sheet's choice when FIPS-140 validated implementations matter. It also recommends upgrading the work factor by re-hashing at the next sign-in, and storing the algorithm and work factor with the hash.
+- .NET 10 API reference, `Rfc2898DeriveBytes.Pbkdf2` (learn.microsoft.com, page updated 2026-07-01): the one-shot static methods support SHA-1, SHA-256, SHA-384 and SHA-512 and convert a `string` or `char` password to UTF-8, throwing `EncoderFallbackException` when it has no UTF-8 form.
+
+Raise `Iterations` when the guidance does; existing hashes keep verifying and are re-hashed as their owners sign in.
+
+### Testing password hashing
+
+- Test through `IPasswordHasher` from `AddPouryaKitPasswordHashing`, with no Host: the Kit's own tests take it from the service collection's descriptor.
+- The minimum iterations apply in tests too; at the defaults the Kit's 40-odd password tests run in about 4 s.
