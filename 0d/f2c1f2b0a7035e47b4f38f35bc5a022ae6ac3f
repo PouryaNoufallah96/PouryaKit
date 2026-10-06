@@ -3,6 +3,8 @@
   s_41c3eef9abbce4::t_4f2d4bed86f9e1 1-42,44-95
 docs/acceptance.md
   s_41c3eef9abbce4::t_dc16b41c02cb37 91,103-115
+  s_41c3eef9abbce4::t_e61daa4355b9be 56,59
+  s_41c3eef9abbce4::t_171e1352b25040 102
 docs/architecture/README.md
   s_41c3eef9abbce4::t_c1d3fd0d7e7185 74
   s_41c3eef9abbce4::t_aeb2e5591a8349 224
@@ -11,6 +13,7 @@ docs/architecture/README.md
   s_41c3eef9abbce4::t_5ef6641f725ae8 59-60
   s_41c3eef9abbce4::t_d13af2e3187007 423
   s_41c3eef9abbce4::t_a0fc0c9b212a48 134-135
+  s_41c3eef9abbce4::t_00081e445fa6de 3,5,18-19
 samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj
   s_41c3eef9abbce4::t_fcaefb2d1a2005 14
 docs/provenance/PouryaKit.Web.md
@@ -70,6 +73,7 @@ tests/ModularMonolith.Tests/TestAuthentication.cs
   s_41c3eef9abbce4::t_8008f18e4ee322 17
   s_41c3eef9abbce4::t_6f633c8bb9cc15 3
   s_41c3eef9abbce4::t_c9578037a901f9 34-35
+  s_41c3eef9abbce4::t_03dc587c7d3cd6 38-39
 tests/ModularMonolith.Tests/Stub/StubModule.cs
   s_41c3eef9abbce4::t_52cc6e83460515 9
   s_41c3eef9abbce4::t_8f4742f4c6dff9 25-26
@@ -86,6 +90,12 @@ tests/ModularMonolith.Tests/AppFixture.cs
   s_41c3eef9abbce4::t_3107f771871ec8 14
 samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RemoveProducts/RemoveProductsCommand.cs
   s_41c3eef9abbce4::t_35563e1ef88dcf 2,7-11
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_61bdf1e399ca92 257
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_41c3eef9abbce4::t_6cdb0dc0ef161b 21
+README.md
+  s_41c3eef9abbce4::t_bf416757db742c 5,7
 ---
 {
   "schema_version": "authorship/3.0.0",
