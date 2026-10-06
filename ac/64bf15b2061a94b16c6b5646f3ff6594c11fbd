@@ -1,0 +1,96 @@
+src/PouryaKit.Cqrs/PageDeclaration.cs
+  s_41c3eef9abbce4::t_fca7faff98963f 255-258
+  s_41c3eef9abbce4::t_e2f3af9b674e96 1-101,103-254,259-296
+  s_41c3eef9abbce4::t_5eac1943488c18 102
+src/PouryaKit.Cqrs/Page.cs
+  s_41c3eef9abbce4::t_99b00e03619e6e 32
+  s_41c3eef9abbce4::t_5fc6d4611a2e2a 1-31,33-35
+tests/ModularMonolith.Tests/PersistencePreparationTests.cs
+  s_41c3eef9abbce4::t_605da1f84a87fe 87
+tests/ModularMonolith.Tests/PagingTests.cs
+  s_41c3eef9abbce4::t_a91d486dc55eca 208
+  s_41c3eef9abbce4::t_f50239674d2afc 1-49,51-207,209-292
+  s_41c3eef9abbce4::t_0385a33bb91e3d 50
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_7d695d29209072 834
+.agents/skills/pourya-kit/references/persistence.md
+  s_41c3eef9abbce4::t_59c41907d8b20b 184-216
+src/PouryaKit.Persistence.Dapper/PouryaKit.Persistence.Dapper.csproj
+  s_41c3eef9abbce4::t_9d5401374a5d53 10
+src/PouryaKit.Persistence.EFCore/EfRepository.cs
+  s_41c3eef9abbce4::t_28af88726efd14 78-110,112-120
+  s_41c3eef9abbce4::t_ffed33ce1555c9 111
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_39f53f7b749785 3,52,56,58,60,86,222,240,311,327,347,356,442,450
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQuery.cs
+  s_41c3eef9abbce4::t_a6296d6e8baec8 5-17
+docs/acceptance.md
+  s_41c3eef9abbce4::t_8860c508877e87 178-193
+src/PouryaKit.Cqrs/PageRequest.cs
+  s_41c3eef9abbce4::t_980ad94dfc02dc 1-35
+src/PouryaKit.Persistence.Dapper/PageSql.cs
+  s_41c3eef9abbce4::t_b2ffcb857afe0c 76
+  s_41c3eef9abbce4::t_ffed33ce1555c9 131
+  s_41c3eef9abbce4::t_ea7f72580caf5f 132
+  s_41c3eef9abbce4::t_79d8c9e3ea8861 26,64
+  s_41c3eef9abbce4::t_a01bdd82591ec6 1-25,27-63,65-75,77-130,133-156
+src/PouryaKit.Web/HttpPageRequest.cs
+  s_41c3eef9abbce4::t_99b00e03619e6e 40
+  s_41c3eef9abbce4::t_23ddebf422043a 1-39,41-95
+src/PouryaKit.Persistence.Dapper/DapperPageExtensions.cs
+  s_41c3eef9abbce4::t_ea7f72580caf5f 30
+  s_41c3eef9abbce4::t_e69efa6f417aa0 1-29,31-39,41-48
+  s_41c3eef9abbce4::t_358ecb2fd8baaf 40
+tests/ModularMonolith.Tests/SharedJsonTests.cs
+  s_41c3eef9abbce4::t_605da1f84a87fe 45
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryHandler.cs
+  s_41c3eef9abbce4::t_31ebdc844b8be4 8,10-28,34
+tests/ModularMonolith.Tests/Stub/ProductPagesProbe.cs
+  s_41c3eef9abbce4::t_2da20d6d4c9963 1-42
+src/PouryaKit.Persistence.EFCore/PageExpressions.cs
+  s_41c3eef9abbce4::t_81332ff8683566 129
+  s_41c3eef9abbce4::t_7f0bc03819e0b9 1-31,34-128,130-160
+  s_41c3eef9abbce4::t_be9cc41a66e97a 32-33
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_41c3eef9abbce4::t_be952792d1f093 77
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_41c3eef9abbce4::t_655bd63d26fdb1 7,38,42,44-62,65,85-94
+  s_41c3eef9abbce4::t_f0f4ac8f42858d 82
+  s_41c3eef9abbce4::t_c56da0d2cf38ed 95
+.agents/skills/pourya-kit/references/web.md
+  s_41c3eef9abbce4::t_118d4a25c178cb 8,147-152,164-169
+  s_41c3eef9abbce4::t_82e0ecec237369 170
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_41c3eef9abbce4::t_ceea41ab18ee4d 15-16
+src/PouryaKit.Cqrs/FilterOperator.cs
+  s_41c3eef9abbce4::t_73e297a7c6d873 1-73
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryValidator.cs
+  s_41c3eef9abbce4::t_57336be26acaa7 1-9,11-21
+  s_41c3eef9abbce4::t_f4fea8209db43d 10
+tests/ModularMonolith.Tests/WebTests.cs
+  s_41c3eef9abbce4::t_075ec116959d0f 46-50
+tests/PouryaKit.Cqrs.Tests/PageTests.cs
+  s_41c3eef9abbce4::t_865b9c1bb9a3c2 1-84
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsEndpoint.cs
+  s_41c3eef9abbce4::t_26f16922195953 17-22
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_41c3eef9abbce4::t_958703f595dbe0 93-140
+tests/ModularMonolith.Tests/DapperTests.cs
+  s_41c3eef9abbce4::t_605da1f84a87fe 45,54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ac64bf15b2061a94b16c6b5646f3ff6594c11fbd",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
