@@ -1,0 +1,112 @@
+tests/ModularMonolith.Tests/AppFixture.cs
+  s_41c3eef9abbce4::t_c2b1df760dcab8 58-59
+  s_41c3eef9abbce4::t_3107f771871ec8 14
+  s_41c3eef9abbce4::t_048f3b8b9b301d 89-93
+  s_41c3eef9abbce4::t_e8bf4eca2005fa 25-27
+  s_41c3eef9abbce4::t_affba5633a0c0b 69-70,72-73,76
+tests/ModularMonolith.Tests/Stub/StubModule.cs
+  s_41c3eef9abbce4::t_8f4742f4c6dff9 25-26
+  s_41c3eef9abbce4::t_52cc6e83460515 9
+samples/ModularMonolith/src/ModularMonolith.Host/CallerPermissions.cs
+  s_41c3eef9abbce4::t_a99caa40814f37 26
+  s_41c3eef9abbce4::t_1e43f8dcce5b58 1-25,27-29
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_41c3eef9abbce4::t_2af179006430f5 8,23,25-27
+docs/acceptance.md
+  s_41c3eef9abbce4::t_dc16b41c02cb37 120-132
+  s_41c3eef9abbce4::t_171e1352b25040 119
+  s_41c3eef9abbce4::t_e61daa4355b9be 73,76
+src/PouryaKit.Security/PermissionErrors.cs
+  s_41c3eef9abbce4::t_ea408b86c7672c 1-10,12-13
+  s_41c3eef9abbce4::t_102bfea911bf14 11
+tests/ModularMonolith.Tests/TestActorPermissions.cs
+  s_41c3eef9abbce4::t_6f4cdcb4c15f7d 1-20
+tests/ModularMonolith.Tests/SecurityTests.cs
+  s_41c3eef9abbce4::t_0505d53f8ab7df 56
+  s_41c3eef9abbce4::t_a8e07df5f88f0c 37-39
+  s_41c3eef9abbce4::t_32e7bc0ff9ca79 1-36,40-55,57-160
+tests/ModularMonolith.Tests/Stub/StubPermissions.cs
+  s_41c3eef9abbce4::t_aed4d47bb247db 1-85
+tests/ModularMonolith.Tests/TestAuthentication.cs
+  s_41c3eef9abbce4::t_3b2745b661f3de 6,12,25-26,56-61
+  s_41c3eef9abbce4::t_f0089ebe6e9529 62
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_41c3eef9abbce4::t_fcaefb2d1a2005 14
+PouryaKit.slnx
+  s_41c3eef9abbce4::t_d3aadb28621540 14
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_41c3eef9abbce4::t_7d2577436c398f 48
+.agents/skills/pourya-kit/references/security.md
+  s_41c3eef9abbce4::t_a3f79db43e04c6 43
+  s_41c3eef9abbce4::t_4f2d4bed86f9e1 1-42,44-95
+src/PouryaKit.Security/RequiresPermissionAttribute.cs
+  s_41c3eef9abbce4::t_b35228911c0c4a 1-19
+src/PouryaKit.Security/SecurityServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_07c21e0e950dd7 1-77
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_41c3eef9abbce4::t_6cdb0dc0ef161b 21
+docs/provenance/PouryaKit.Security.md
+  s_41c3eef9abbce4::t_37e3a98ccc7195 1-24
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RemoveProducts/RemoveProductsCommand.cs
+  s_41c3eef9abbce4::t_35563e1ef88dcf 2,7-11
+README.md
+  s_41c3eef9abbce4::t_bf416757db742c 5,7
+src/PouryaKit.Security/PouryaKit.Security.csproj
+  s_41c3eef9abbce4::t_6d633837f0d3ad 1-5
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_ba393b9094f612 2
+  s_41c3eef9abbce4::t_1687a1e1f2d3ba 44
+  s_41c3eef9abbce4::t_4f5c3aba2cc6d3 42-43,45
+src/PouryaKit.Security/IActorPermissions.cs
+  s_41c3eef9abbce4::t_0258df26bba813 1-14
+src/PouryaKit.Security/PermissionAuthorizer.cs
+  s_41c3eef9abbce4::t_e2f13e07da7f08 19
+  s_41c3eef9abbce4::t_e7e489db7b51a0 1-18,20-23,25-28
+  s_41c3eef9abbce4::t_994971de7eb47c 24
+scripts/packaging/inventory.json
+  s_41c3eef9abbce4::t_7d2577436c398f 12,28
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_61bdf1e399ca92 257
+.agents/skills/pourya-kit/references/web.md
+  s_41c3eef9abbce4::t_923832e8c4a661 170
+  s_41c3eef9abbce4::t_9407a2d925c98f 177
+  s_41c3eef9abbce4::t_7fb30a76168047 3
+  s_41c3eef9abbce4::t_2764f2f7d9fc63 243-244
+  s_41c3eef9abbce4::t_2f08d48dbce078 171-172
+  s_41c3eef9abbce4::t_6ed2dcd02e69f8 62,73-76
+samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs
+  s_41c3eef9abbce4::t_d4b75823ea3073 17,33
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_c1d3fd0d7e7185 74
+  s_41c3eef9abbce4::t_7a1b1109cb9f88 80
+  s_41c3eef9abbce4::t_a0fc0c9b212a48 134-135
+  s_41c3eef9abbce4::t_5ef6641f725ae8 59-60
+  s_41c3eef9abbce4::t_aeb2e5591a8349 226
+  s_41c3eef9abbce4::t_f5489b5a490c94 243-255
+  s_41c3eef9abbce4::t_00081e445fa6de 3,5,18-19
+docs/provenance/PouryaKit.Web.md
+  s_41c3eef9abbce4::t_15b80422327c7b 53-67
+.agents/skills/pourya-kit/SKILL.md
+  s_41c3eef9abbce4::t_6f633c8bb9cc15 3
+  s_41c3eef9abbce4::t_8008f18e4ee322 17
+  s_41c3eef9abbce4::t_03dc587c7d3cd6 38-39
+  s_41c3eef9abbce4::t_c9578037a901f9 34-35
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_41c3eef9abbce4::t_2af179006430f5 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "20453302a29f06dfd00bcbfe261c719cb8af68af",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": null
+    }
+  }
+}
