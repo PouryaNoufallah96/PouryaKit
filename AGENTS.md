@@ -28,7 +28,9 @@ Match the process to the task:
 - **Unclear or stuck**: stop. Ask the owner, or send a `kit-scout` for the facts, and start only when the objective and its check are clear. Two failed attempts at the same thing is stuck.
 - Tickets with disjoint files run in parallel.
 
-When delegating: a `kit-implementer` brief carries `objective`, `allowed_files`, `verify` and `stop_if`, and a role's report is a claim: read the diff and the `verify` output it reports before the next step, and re-run a check only when that leaves a doubt.
+When delegating: a `kit-implementer` brief carries `objective`, `allowed_files`, `verify` and `stop_if`, and why the work matters. The objective states the deliverable, costly guarantees and reference baseline. Finish the selected acceptance criteria; an additional release framework or guarantee needs an owner scope decision. A role's report is a claim: read the diff and the `verify` output it reports before the next step, and re-run a check only when that leaves a doubt.
+
+Explicit session instructions about providers, models and effort override defaults. Keep model defaults in host configuration; see `docs/agents/ai-setup.md`, "Roles", for routing.
 
 | Role | Use it for |
 |---|---|
@@ -40,17 +42,21 @@ When delegating: a `kit-implementer` brief carries `objective`, `allowed_files`,
 
 Not test-first. Implement, then write focused tests for behaviour that matters; no redundant coverage.
 
-1. Implement (Opus).
+1. Implement from the ticket and brief.
 2. Focused tests.
-3. Review, sized to the ticket. A ticket that claims a runtime guarantee or changes a public API of the Kit gets two independent reviews in parallel: a Fable subagent and Codex (GPT-6 Astra, high). Any other ticket gets one `kit-reviewer`.
+3. Review, sized to the ticket. A ticket that claims a Kit runtime guarantee or changes a public API of the Kit gets two independent reviews in parallel. Routine CI, config, docs and packaging tickets get one focused `kit-reviewer`; executing a workflow does not itself make a Kit runtime guarantee. Any other ticket gets one `kit-reviewer`.
 4. One fix round for the accepted findings, then a re-score of those findings only. Run a new full review only after a high finding was fixed, and at most once: a ticket gets two full reviews, then re-scores only. For any medium or low finding still open, record a disposition and move on.
-5. Runtime proof where the ticket claims a runtime guarantee.
+5. Complete the runtime proof required by the ticket, including Kit guarantees and hosted publication where claimed.
 6. Update docs and C4 diagrams. The ticket's closing comment carries a value, cost and impact paragraph (the `archify-review` lens); `/archify-review` itself runs once per wave, at close-out.
 7. Update the Kit's own AI skill, rules and agent docs to match the change.
 
+For infrastructure, CI and packaging, start with the installed standard Actions, `dotnet`/NuGet clients and MinVer. Implement custom protocol handling only after demonstrating a requirement those tools cannot cover.
+
+When an external service is on the critical path, prepare and run the smallest real probe before full implementation and review. For publication, prove push, download and private-feed restore with the standard client. If the probe needs remote authority, prepare its exact commands, target and expected writes, then obtain the required owner approval before running it. Carry that evidence into final proof; local mocks and lint do not prove the service boundary.
+
 Gates: relevant tests green · no open high finding, and a recorded disposition for the rest · runtime proof where applicable · docs in sync · AI guidance in sync.
 
-The dual review in step 3 runs as `/kit-review` with `{ base, ticket }` in Claude Code; from a Codex-hosted session, spawn `kit-reviewer` and run a Claude inspection through the `claudex-loop` runner. Exact invocations: `docs/agents/ai-setup.md`.
+Dual review invocations, including session provider/model overrides, are in `docs/agents/ai-setup.md`.
 
 ## Code Review Rules
 

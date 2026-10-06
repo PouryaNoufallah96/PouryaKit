@@ -1,7 +1,7 @@
 export const meta = {
   name: 'kit-review',
   description: 'Per-ticket dual review: kit-reviewer and a Codex inspection in parallel on a worktree of one commit, then every finding checked against the code',
-  whenToUse: 'The dual review in AGENTS.md workflow step 3, for a ticket that claims a runtime guarantee or changes a public API of the Kit. Pass { base, ticket } (or { base, spec } for work with no ticket); add previous (the earlier result file) only to re-review after a high finding was fixed. Read-only; returns a short digest and names the file with the full result; the main session judges it.',
+  whenToUse: 'The dual review in AGENTS.md workflow step 3, for a ticket that claims a Kit runtime guarantee or changes a public API of the Kit. Pass { base, ticket } (or { base, spec } for work with no ticket); add previous (the earlier result file) only to re-review after a high finding was fixed. Read-only; returns a short digest and names the file with the full result; the main session judges it.',
   phases: [
     { title: 'Prepare', detail: 'resolve the commits, fetch the ticket, check out a detached review worktree' },
     { title: 'Review', detail: 'kit-reviewer and Codex (claudex-loop runner, inspect mode) review the same commit independently' },
@@ -108,7 +108,8 @@ const ticket = str(input.ticket).replace(/^#/, '')
 const spec = str(input.spec)
 const headInput = str(input.head) || 'HEAD'
 const scope = str(input.scope)
-const codexEffort = str(input.codexEffort) || 'high'
+const codexModel = str(input.codexModel)
+const codexEffort = str(input.codexEffort)
 const previousFile = str(input.previous)
 const rescoreIds = (Array.isArray(input.rescore) ? input.rescore : str(input.rescore).split(',')).map(str).filter(Boolean)
 const list = (value) => (Array.isArray(value) ? value : [])
@@ -117,16 +118,17 @@ const list = (value) => (Array.isArray(value) ? value : [])
 const fail = (error) => ({ workflow: 'kit-review', complete: false, verdict: 'unknown', error })
 const REF = /^[A-Za-z0-9][A-Za-z0-9._\/~^-]{0,199}$/
 const PATH = /^[A-Za-z0-9_.\/~][A-Za-z0-9_.\/@+-]{0,399}$/
-const USAGE = 'Pass { base, ticket } for a ticket, or { base, spec } for work with no ticket; optional head, scope, codexEffort, and for a re-review previous (the earlier result file) with optional rescore ids.'
+const USAGE = 'Pass { base, ticket } for a ticket, or { base, spec } for work with no ticket; optional head, scope, codexModel, codexEffort, and for a re-review previous (the earlier result file) with optional rescore ids.'
 for (const key of Object.keys(input)) {
-  if (!['base', 'ticket', 'spec', 'head', 'scope', 'codexEffort', 'previous', 'rescore'].includes(key)) return fail(`Unknown argument \`${key}\`. ${USAGE}`)
+  if (!['base', 'ticket', 'spec', 'head', 'scope', 'codexModel', 'codexEffort', 'previous', 'rescore'].includes(key)) return fail(`Unknown argument \`${key}\`. ${USAGE}`)
 }
 if (!REF.test(base) || base.includes('..')) return fail(`\`base\` must be the pre-change commit or ref, using only letters, digits and . _ / ~ ^ -. ${USAGE}`)
 if (!!ticket === !!spec) return fail(`Pass exactly one of \`ticket\` (an issue number) and \`spec\` (a file path). ${USAGE}`)
 if (ticket && !/^[1-9][0-9]{0,6}$/.test(ticket)) return fail('`ticket` must be an issue number, for example 42.')
 if (spec && (!PATH.test(spec) || spec.includes('..'))) return fail('`spec` must be a file path (absolute, or relative to the repository root) using only letters, digits and . _ / @ + -')
 if (!REF.test(headInput) || headInput.includes('..')) return fail('`head` must be a commit or ref, using only letters, digits and . _ / ~ ^ -')
-if (!['high', 'xhigh'].includes(codexEffort)) return fail('`codexEffort` must be "high" or "xhigh".')
+if (codexModel && !/^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(codexModel)) return fail('`codexModel` must use only letters, digits and . _ -')
+if (codexEffort && !['high', 'xhigh'].includes(codexEffort)) return fail('`codexEffort` must be "high" or "xhigh".')
 if (scope.length > 1000 || /[\u0000-\u001f\u007f]/.test(scope)) return fail('`scope` must be one plain-text line of at most 1000 characters.')
 if (previousFile && (!PATH.test(previousFile) || previousFile.includes('..'))) return fail('`previous` must be the path of an earlier kit-review result file.')
 if (rescoreIds.length && !previousFile) return fail('`rescore` needs `previous`, the earlier kit-review result file that holds those findings.')
@@ -180,7 +182,7 @@ ${prepareCommand}
 phase('Prepare')
 let prepared = null
 try {
-  prepared = await agent(preparePrompt, { label: 'prepare', phase: 'Prepare', model: 'sonnet', effort: 'low', schema: PREPARED })
+  prepared = await agent(preparePrompt, { label: 'prepare', phase: 'Prepare', effort: 'low', schema: PREPARED })
 } catch (error) {
   log(`Prepare failed: ${error?.message ?? error}`)
 }
@@ -268,7 +270,7 @@ else:
         why.append("runner: " + record["error"])
     out["error"] = " | ".join(why)[:600] or "the runner left no result.json and no error message"
 print(json.dumps(out, ensure_ascii=False))`
-  const runnerCommand = `python3 '${top}/.agents/skills/claudex-loop/scripts/runner.py' inspect --host claude --builder claude --repo '${worktree}' --plan '${specFile}' --base '${baseCommit}' --model gpt-6-astra --effort ${codexEffort} --timeout 570 > '${run}/codex.out' 2> '${run}/codex.err'
+  const runnerCommand = `python3 '${top}/.agents/skills/claudex-loop/scripts/runner.py' inspect --host claude --builder claude --repo '${worktree}' --plan '${specFile}' --base '${baseCommit}'${codexModel ? ` --model ${codexModel}` : ''}${codexEffort ? ` --effort ${codexEffort}` : ''} --timeout 570 > '${run}/codex.out' 2> '${run}/codex.err'
 python3 - '${run}' <<'PY'
 ${summarizeCodex}
 PY`
@@ -284,7 +286,7 @@ ${runnerCommand}
   phase('Review')
   const [claudeRaw, codexRaw] = await parallel([
     () => agent(reviewerPrompt, { label: 'review:kit-reviewer', phase: 'Review', agentType: 'kit-reviewer', schema: CLAUDE_REVIEW }),
-    () => agent(relayPrompt, { label: 'review:codex', phase: 'Review', model: 'sonnet', effort: 'low', schema: CODEX_REVIEW }),
+    () => agent(relayPrompt, { label: 'review:codex', phase: 'Review', effort: 'low', schema: CODEX_REVIEW }),
   ])
   const missing = (note) => ({ available: false, verdict: null, findings: [], read_count: 0, unread: [], limitations: [], note })
   const claude = claudeRaw ?? missing('kit-reviewer did not return')
@@ -428,7 +430,7 @@ ${JSON.stringify(raised, null, 2)}
     spec: spec || null,
     specFile,
     previous: previousFile || null,
-    reviewers: { claude: leg(claude, claudeGap), codex: { ...leg(codex, codexGap), effort: codexEffort } },
+    reviewers: { claude: leg(claude, claudeGap), codex: { ...leg(codex, codexGap), effort: codexEffort || null } },
     counts: { confirmed: count('confirmed'), unverified: count('unverified'), refuted: count('refuted') },
     findings,
     rescored,
@@ -455,7 +457,7 @@ wc -c < '${resultFile}'; git -C '${top}' worktree remove --force '${worktree}'; 
 \`\`\`
 3. Return bytes (the number wc printed), removed (true when the last line is "removed") and error (any error line the command printed, verbatim; omit it when there is none).`
   try {
-    finished = await agent(finishPrompt, { label: 'finish', phase: 'Finish', model: 'sonnet', effort: 'low', schema: FINISHED })
+    finished = await agent(finishPrompt, { label: 'finish', phase: 'Finish', effort: 'low', schema: FINISHED })
   } catch (error) {
     log(`Finish failed: ${error?.message ?? error}`)
   }

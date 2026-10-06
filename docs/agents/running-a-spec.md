@@ -26,7 +26,7 @@ The vendored skill holds in shape: an integration branch, a frontier computed fr
 - **One session owns the integration branch's checkout.** A second session works only in worktrees and signals through the tracker or a pushed tag. Hand off at a ticket boundary with nothing running: a session that ran eleven tickets without a handoff died with "Prompt is too long" before closing the last one.
 - **The tracker is the state.** The orchestrator's run-state memory note holds only what the tracker cannot: the integration branch, what is running now, and owner decisions not yet posted. Keep it under about 40 lines; narrative goes in closing comments, stable knowledge in this document.
 - **The closing comment is the ticket's record:** what landed and at which commits, the review and the disposition of each finding, a value, cost and impact paragraph (the `archify-review` lens), and the decisions and seams later tickets depend on. Copy commit hashes from command output.
-- **A brief carries the ticket's own content.** The worktree base, the status (`README.md`) and the C# idioms (the build and `.claude/rules/kit-code.md`) are covered elsewhere.
+- **A brief carries the ticket's own content and scope statement**, as `AGENTS.md`, "Operating model", requires. For CI and packaging, apply its standard-tool and early external-probe rules before extending the implementation. The worktree base, the status (`README.md`) and the C# idioms (the build and `.claude/rules/kit-code.md`) are covered elsewhere.
 
 ## Spikes
 
