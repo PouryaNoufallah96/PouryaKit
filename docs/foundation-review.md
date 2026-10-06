@@ -3,8 +3,8 @@
 Status: draft 6, 2026-10-04 (five Codex review rounds and the owner's decisions applied; see `foundation-review-log.md`). Analysis only — nothing was built, restored, run or modified in any
 inspected repository. The kit is named **PouryaKit**. Every API shown under the `PouryaKit.*` prefix is
 **proposed**, not existing CloudNativeKit/Woo functionality. *Phase 0 and Wave 1 have since been built from this plan
-(closed 2026-10-06). Where the build departed from it, a dated note says so in place; `docs/acceptance.md` maps the
-acceptance scenarios to tests, and the API as built is in the Kit's skill.*
+(closed 2026-10-06). Where the build departed from it, a dated note in place or an amendment in `docs/adr/` says so;
+`docs/acceptance.md` maps the acceptance scenarios to tests, and the API as built is in the Kit's skill.*
 
 ## Inspected snapshots
 
