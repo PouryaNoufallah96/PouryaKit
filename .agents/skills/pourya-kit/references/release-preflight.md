@@ -1,11 +1,5 @@
-# Named-release preflight
+# Deferred named-release automation
 
-Read [the preflight guide](../../../../docs/releases-preflight.md) when selecting a named preview/rc version, preparing a baseline, reviewing SDK compatibility findings or consuming the preflight result in a release workflow.
+[#28/#29 are deferred](../../../../docs/releases-preflight.md) by the owner's 2026-10-06 scope adjustment. Their compatibility/progression engine, automated named cut and content-verified recovery are outside the current pipeline; the prior scripts and tests are removed.
 
-Consume the shared package proof's inventory and preserved manifest/package bytes. Prepare named candidate artifacts under a scratch tag before touching production refs. MinVer is the sole version engine. Use the SDK validator through `scripts/releases/preflight/preflight.py`; never infer compatibility from source builds or suppression generation.
-
-Keep strict SemVer ordering separate from MinVer generation. The SDK loader must establish candidate and baseline reference availability before API comparison or review, including first releases. A loader failure cannot be approved as an API finding. Its filename-based resolution does not prove dependency version identity.
-
-A failed result with findings is a review request. Disposition every exact finding with its required increment, reviewer and rationale; reviewed breaks also need migration notes. Bind the review to the unchanged candidate/baseline identity objects from the result. A changed hash requires a fresh review.
-
-Only observed history can make a passed preflight eligible for a production cut. `--history` is always a fixture and cannot prove hosted baseline absence or publication readiness. Owner approval, green-main provenance, current history/conflict checks, serialization and content-verified publication remain separate workflow gates. Preserve the result and artifacts; SDK API checks do not prove semantic compatibility.
+Use the existing MinVer configuration and the owner-created tag followed by manual main CI path in [private package guidance](../../../../docs/private-packages.md#versions-and-triggers). Do not introduce a second version engine, claim compatibility approval from ordinary SDK package validation, or treat HTTP 409 duplicate skipping as identical-content proof. Resuming the original automation requires a new scoped ticket.

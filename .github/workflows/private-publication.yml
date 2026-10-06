@@ -8,26 +8,17 @@ on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: Original trusted main CI run ID
+        description: Original successful main CI run ID
         required: true
         type: string
       run_attempt:
         description: Original successful validation attempt
         required: true
         type: string
-      artifact_id:
-        description: Immutable original package-validation artifact ID
-        required: true
-        type: string
       source_sha:
         description: Exact original main source SHA
         required: true
         type: string
-      proof:
-        description: Bounded hosted proof, changes only recovered local copies
-        default: none
-        type: choice
-        options: [none, probe, fail-after-one, hold, negative-content, negative-sha, missing-credential]
 
 permissions:
   contents: read
@@ -37,7 +28,9 @@ jobs:
     if: >-
       github.repository == 'PouryaNoufallah96/PouryaKit' && github.ref == 'refs/heads/main' &&
       (github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' &&
+      (github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') &&
+      github.event.workflow_run.head_branch == 'main' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       github.event.workflow_run.repository.full_name == github.repository))
     runs-on: ubuntu-latest
@@ -45,34 +38,47 @@ jobs:
     permissions:
       contents: read
       actions: read
+    outputs:
+      source_event: ${{ steps.authorize.outputs.source_event }}
     steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.sha }}
-          persist-credentials: false
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.13'
-      - name: Require successful trusted main validation jobs
+      - name: Require successful trusted main validation
+        id: authorize
+        uses: actions/github-script@v9
         env:
-          PUBLICATION_TOKEN: ${{ github.token }}
           ORIGINAL_RUN: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.id) || inputs.run_id }}
           ORIGINAL_ATTEMPT: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.run_attempt) || inputs.run_attempt }}
           ORIGINAL_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.source_sha }}
-        shell: bash
-        run: |
-          set -o pipefail
-          python3 scripts/releases/publication/authorize.py --run-id "$ORIGINAL_RUN" \
-            --attempt "$ORIGINAL_ATTEMPT" --source-sha "$ORIGINAL_SHA" \
-            2>&1 | tee "$RUNNER_TEMP/publication-authorization.log"
-      - name: Retain bounded authorization diagnostics
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v7
         with:
-          name: private-publication-authorization-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/publication-authorization.log
-          if-no-files-found: error
-          retention-days: 90
+          script: |
+            const { ORIGINAL_RUN: id, ORIGINAL_ATTEMPT: attempt, ORIGINAL_SHA: sha } = process.env;
+            if (!/^[1-9][0-9]*$/.test(id) || !/^[1-9][0-9]*$/.test(attempt) || !/^[0-9a-f]{40}$/.test(sha)) {
+              throw new Error('An original run ID, attempt and exact SHA are required.');
+            }
+            const repository = 'PouryaNoufallah96/PouryaKit';
+            const { data: repo } = await github.rest.repos.get(context.repo);
+            const { data: run } = await github.rest.actions.getWorkflowRunAttempt({
+              ...context.repo, run_id: id, attempt_number: attempt
+            });
+            if (repo.full_name !== repository || repo.private !== true || repo.default_branch !== 'main' ||
+                String(run.id) !== id || String(run.run_attempt) !== attempt ||
+                run.status !== 'completed' || run.conclusion !== 'success' ||
+                !['push', 'workflow_dispatch'].includes(run.event) ||
+                run.head_branch !== 'main' || run.head_sha !== sha ||
+                run.path !== '.github/workflows/ci.yml' ||
+                run.repository?.full_name !== repository || run.head_repository?.full_name !== repository) {
+              throw new Error('Publication requires the exact successful private-repository main CI attempt.');
+            }
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRunAttempt, {
+              ...context.repo, run_id: id, attempt_number: attempt, per_page: 100
+            });
+            for (const name of ['ai-setup', 'build-and-test / validate']) {
+              const matches = jobs.filter(job => job.name === name);
+              if (matches.length !== 1 || matches[0].status !== 'completed' || matches[0].conclusion !== 'success') {
+                throw new Error('AI and package validation jobs must have succeeded.');
+              }
+            }
+            core.setOutput('source_event', run.event);
+            core.info(`Authorized main CI ${id}, attempt ${attempt}, SHA ${sha}.`);
 
   publish:
     needs: authorize
@@ -84,6 +90,5 @@ jobs:
     with:
       run_id: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.id) || inputs.run_id }}
       run_attempt: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.run_attempt) || inputs.run_attempt }}
-      artifact_id: ${{ inputs.artifact_id || '' }}
       source_sha: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.source_sha }}
-      proof: ${{ inputs.proof || 'none' }}
+      source_event: ${{ needs.authorize.outputs.source_event }}

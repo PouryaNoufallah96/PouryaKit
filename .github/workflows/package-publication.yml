@@ -9,14 +9,11 @@ on:
       run_attempt:
         required: true
         type: string
-      artifact_id:
-        default: ''
-        type: string
       source_sha:
         required: true
         type: string
-      proof:
-        default: none
+      source_event:
+        required: true
         type: string
 
 permissions:
@@ -29,7 +26,6 @@ jobs:
     if: github.repository == 'PouryaNoufallah96/PouryaKit' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    # Acquire the lock only here. A caller taking the same lock would deadlock its reusable child.
     concurrency:
       group: pouryakit-private-publication
       cancel-in-progress: false
@@ -38,36 +34,88 @@ jobs:
       actions: read
       packages: write
     steps:
-      # Execute publisher code from the trusted main workflow revision, never from the source artifact.
+      # Publisher code comes from trusted main, never from the downloaded artifact.
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
 
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.13'
+      - uses: actions/setup-dotnet@v6
 
-      - name: Recover and verify the original private package set
+      - name: Download original validated packages
+        uses: actions/download-artifact@v8
+        with:
+          name: package-validation-${{ inputs.run_id }}-${{ inputs.run_attempt }}
+          run-id: ${{ inputs.run_id }}
+          repository: PouryaNoufallah96/PouryaKit
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/publication
+          digest-mismatch: error
+
+      - name: Verify original validation artifact
         env:
-          PUBLICATION_TOKEN: ${{ inputs.proof != 'missing-credential' && github.token || '' }}
           ORIGINAL_RUN: ${{ inputs.run_id }}
           ORIGINAL_ATTEMPT: ${{ inputs.run_attempt }}
-          ORIGINAL_ARTIFACT: ${{ inputs.artifact_id }}
           ORIGINAL_SHA: ${{ inputs.source_sha }}
-          PROOF: ${{ inputs.proof }}
+          ORIGINAL_EVENT: ${{ inputs.source_event }}
+          PACKAGES_DIR: ${{ runner.temp }}/publication
         shell: bash
         run: |
-          python3 scripts/releases/publication/run.py \
-            --run-id "$ORIGINAL_RUN" --attempt "$ORIGINAL_ATTEMPT" \
-            --artifact-id "$ORIGINAL_ARTIFACT" --source-sha "$ORIGINAL_SHA" \
-            --proof "${PROOF/missing-credential/none}" --receipt "$RUNNER_TEMP/publication/receipt.json"
+          set -euo pipefail
+          jq -e --arg sha "$ORIGINAL_SHA" --arg run "$ORIGINAL_RUN" --arg attempt "$ORIGINAL_ATTEMPT" --arg event "$ORIGINAL_EVENT" '
+            .repository == "PouryaNoufallah96/PouryaKit" and .ref == "refs/heads/main" and
+            .event == $event and .tested_sha == $sha and .run_id == $run and .run_attempt == $attempt and
+            .shallow == false and .pull_request == null and .validation_result == "success" and
+            .manifest == "manifest.json" and .artifact_name == ("package-validation-" + $run + "-" + $attempt)
+          ' "$PACKAGES_DIR/validation.json" > /dev/null
+          version=$(jq -er '.version' "$PACKAGES_DIR/validation.json")
+          jq -e --arg sha "$ORIGINAL_SHA" --arg version "$version" '
+            .commit == $sha and .version == $version and
+            ($version | test("^0\\.[0-9]+\\.[0-9]+-(preview|rc)(\\.[0-9A-Za-z-]+)*$")) and
+            all(.packages[]; .file == (.id + "." + $version + ".nupkg") and (.sha256 | test("^[0-9a-f]{64}$")))
+          ' "$PACKAGES_DIR/manifest.json" > /dev/null
+          diff <(jq -r '.packages[].id' scripts/packaging/inventory.json | sort) \
+               <(jq -r '.packages[].id' "$PACKAGES_DIR/manifest.json" | sort)
+          diff <(jq -r '.packages[].file' "$PACKAGES_DIR/manifest.json" | sort) \
+               <(printf '%s\n' "$PACKAGES_DIR/packages/"*.nupkg | sed 's|.*/||' | sort)
+          jq -r '.packages[] | .sha256 + "  packages/" + .file' "$PACKAGES_DIR/manifest.json" > "$RUNNER_TEMP/package-checksums.txt"
+          (cd "$PACKAGES_DIR" && sha256sum --check "$RUNNER_TEMP/package-checksums.txt")
+          echo "Validated main SHA: $ORIGINAL_SHA. MinVer version: $version." >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Retain publication receipt on success or failure
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: private-publication-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/publication/receipt.json
-          if-no-files-found: error
-          retention-days: 90
+      - name: Push original packages and restore all thirteen
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          NuGetPackageSourceCredentials_GitHub: Username=${{ github.actor }};Password=${{ github.token }};ValidAuthenticationTypes=Basic
+          PACKAGES_DIR: ${{ runner.temp }}/publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GITHUB_TOKEN"
+          cat > "$RUNNER_TEMP/publication.NuGet.Config" <<'XML'
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="GitHub" value="https://nuget.pkg.github.com/PouryaNoufallah96/index.json" />
+              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+            </packageSources>
+            <packageSourceMapping>
+              <packageSource key="GitHub"><package pattern="PouryaKit.*" /></packageSource>
+              <packageSource key="nuget.org"><package pattern="*" /></packageSource>
+            </packageSourceMapping>
+          </configuration>
+          XML
+          while IFS= read -r filename; do
+            dotnet nuget push "$PACKAGES_DIR/packages/$filename" \
+              --source GitHub --api-key "$GITHUB_TOKEN" --skip-duplicate --no-symbols \
+              --configfile "$RUNNER_TEMP/publication.NuGet.Config"
+          done < <(jq -r '.packages[].file' "$PACKAGES_DIR/manifest.json")
+          consumer=$(mktemp -d "$RUNNER_TEMP/private-consumer.XXXXXX")
+          {
+            echo '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup>'
+            jq -r '.version as $version | .packages[] | "<PackageReference Include=\"" + .id + "\" Version=\"[" + $version + "]\" />"' "$PACKAGES_DIR/manifest.json"
+            echo '</ItemGroup></Project>'
+          } > "$consumer/Consumer.csproj"
+          NUGET_HTTP_CACHE_PATH="$consumer/http-cache" NUGET_PLUGINS_CACHE_PATH="$consumer/plugin-cache" \
+            dotnet restore "$consumer/Consumer.csproj" --packages "$consumer/packages" \
+              --configfile "$RUNNER_TEMP/publication.NuGet.Config"
+          echo 'NuGet push and clean thirteen-package restore completed. HTTP 409 duplicates are skipped; remote byte identity is not verified.' >> "$GITHUB_STEP_SUMMARY"
