@@ -937,7 +937,8 @@ choose tools). Scheduled agent work uses Wolverine scheduling under a system Act
 own messages go out through the same outbox.
 
 **Observability.** The Kit emits; the template exports. Activities: `pouryakit.operation` with
-module, operation, actor kind, outcome; delivery activities link to the publishing Operation.
+module, operation, actor kind, outcome; delivery activities link to the publishing Operation. *Resolved, ADR 0009
+(2026-10-07): a child relationship, not a link; see the record for what #47 implements.*
 
 ### I.5 What the Proving Sample gains after Wave 1 (nothing enters Wave 1)
 
@@ -979,7 +980,8 @@ Answered by the owner on 2026-10-06:
 
 Spikes before building (no owner input, recorded as ADRs): the Marten two-store spike (I.4); the
 RabbitMQ topology spike under ADR 0006; a check whether Wolverine already propagates W3C trace
-context into envelopes.
+context into envelopes. *Resolved, ADR 0009 (2026-10-07): it writes and restores `traceparent` on the
+local path; #47 adds only the Operation activity's placement, `tracestate` and a parent fallback.*
 
 ### I.7 Recommended plan after Wave 1
 
