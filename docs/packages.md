@@ -23,14 +23,14 @@ The inventory also enumerates the two compositions already supported by Wave 1:
 | Consumer | What is built |
 |---|---|
 | Each of the thirteen package IDs | A separate application compiling a public type from that package, with one direct Kit package reference |
-| Single Module | Cqrs, Validation, Postgres persistence, Dapper reads and Web together, as documented in [the Modules guidance](../.agents/skills/pourya-kit/references/modules.md#an-application-of-one-module), without Modularity or Messaging |
+| Single Module | The registrations and explicit Operation scope of [the Modules guidance](../.agents/skills/pourya-kit/references/modules.md#an-application-of-one-module), using Cqrs, Validation, Postgres persistence, Dapper reads and Web without Modularity or Messaging |
 | Modular monolith | A copy of the Proving Sample's Host, Modules and Contracts, with every Kit ProjectReference replaced by a package reference |
 
 The Service composition depends on the future RabbitMQ transport and is outside Wave 1. This validation adds no service profile or template.
 
 Every consumer lives outside the checkout, has its own empty NuGet package and HTTP caches, and uses source mapping to resolve `PouryaKit.*` only from the produced local feed. It inherits neither the checkout's build settings nor user feed configuration. Restored assets must name the expected Kit IDs at the exact release version as packages, with no source fallback. Each cached Kit nupkg must have the same SHA-256 as the produced artifact. The modular monolith's ProjectReferences are only between its copied application projects.
 
-`PackageGraph` checks produced nuspecs and each Kit package's reachable restored consumer closure using the same section C reference table as source tests. `LicenceTests` checks third-party licenses in those closures under ADR 0002. Private MinVer is excluded from the source dependency graph but remains in the source license check; a shipped MinVer reference fails the nuspec graph. Negative controls reject missing/extra artifacts, wrong versions and commit metadata, missing notices, forbidden dependencies and invalid symbols. Inventory controls and the focused metadata tests cover the remaining inventory and license cases.
+`PackageGraph` checks produced nuspecs and each Kit package's reachable restored consumer closure using the same section C reference table as source tests. `LicenceTests` checks third-party licenses in those closures under ADR 0002. Private MinVer is excluded from the source dependency graph but remains in the source license check; a shipped MinVer reference fails the nuspec graph. Negative controls reject missing/extra artifacts, wrong versions and commit metadata, missing notices, forbidden direct and restored transitive dependencies, and invalid symbols. The transitive control adds Npgsql under WolverineFx in real consumer assets and must fail specifically on the transport-neutral package's Npgsql exclusion. Inventory controls and the focused metadata tests cover the remaining inventory and license cases.
 
 ## Consume a verified local set
 

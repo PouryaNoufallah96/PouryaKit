@@ -34,7 +34,10 @@ internal static class PackageArtifacts
             foreach (var error in SourceLinkViolations(archive, name, evidence.Commit, evidence.Version)) yield return error;
         }
         if (!nuspecs.Keys.ToHashSet().SetEquals(evidence.Packages))
+        {
             yield return "Produced packages differ from the explicit inventory.";
+            yield break;
+        }
 
         foreach (var consumer in evidence.Consumers)
         {

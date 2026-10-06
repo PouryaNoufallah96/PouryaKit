@@ -233,6 +233,31 @@ def artifact_controls(evidence, output):
         result = run(["dotnet", ARCHITECTURE, "--validate-packages", path], log=output / f"control-{case}.log", expect_failure=True)
         print(f"PASS negative control {case}: {result.splitlines()[0]}", flush=True)
 
+    # Change a real restored transitive edge, keeping the shipped nuspec and its allowed direct references intact.
+    neutral = next(consumer for consumer in evidence["Consumers"] if consumer["Name"] == "PouryaKit.Messaging.Wolverine")
+    dapper = next(consumer for consumer in evidence["Consumers"] if consumer["Name"] == "PouryaKit.Persistence.Dapper")
+    assets = json.loads(Path(neutral["Assets"][0]).read_text())
+    dapper_assets = json.loads(Path(dapper["Assets"][0]).read_text())
+    cache = output / "controls/forbidden-transitive/cache"
+    shutil.copytree(Path(next(iter(assets["packageFolders"]))), cache)
+    npgsql = next(name for name in dapper_assets["libraries"] if name.startswith("Npgsql/"))
+    npgsql_library = dapper_assets["libraries"][npgsql]
+    shutil.copytree(Path(next(iter(dapper_assets["packageFolders"]))) / npgsql_library["path"], cache / npgsql_library["path"])
+    assets["packageFolders"] = {str(cache) + os.sep: {}}
+    assets["libraries"][npgsql] = npgsql_library
+    target = next(iter(assets["targets"].values()))
+    target[npgsql] = {"type": "package"}
+    wolverine = next(name for name in target if name.startswith("WolverineFx/"))
+    target[wolverine].setdefault("dependencies", {})["Npgsql"] = npgsql.split("/")[1]
+    asset_path = output / "controls/forbidden-transitive/project.assets.json"
+    asset_path.write_text(json.dumps(assets))
+    path = output / "controls/forbidden-transitive.json"
+    path.write_text(json.dumps({**evidence, "Consumers": [{**neutral, "Assets": [str(asset_path)]}]}))
+    result = run(["dotnet", ARCHITECTURE, "--validate-packages", path], log=output / "control-forbidden-transitive.log", expect_failure=True)
+    if "PouryaKit.Messaging.Wolverine's closure holds Npgsql" not in result:
+        raise RuntimeError(f"Transitive control failed for an unrelated reason: {result}")
+    print(f"PASS negative control forbidden-transitive: {result.splitlines()[0]}", flush=True)
+
 
 def validate(output):
     output.mkdir(parents=True, exist_ok=True)
@@ -274,6 +299,8 @@ def validate(output):
         folder.mkdir(parents=True)
         consumer_config(folder, package_output)
         project = sample_consumer(folder, consumer["source"], evidence["Version"]) if "source" in consumer else simple_consumer(folder, consumer["packages"], types, evidence["Version"])
+        if name == "single-module":
+            shutil.copy(ROOT / "scripts/packaging/consumers/single-module.cs", folder / "Program.cs")
         # Kit references use the artifact version; third-party references retain central package management.
         central = ET.parse(folder / "Directory.Packages.props")
         for name_id in ids:
