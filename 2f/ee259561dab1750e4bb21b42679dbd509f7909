@@ -1,0 +1,31 @@
+docs/adr/0009-w3c-trace-context-through-the-outbox.md
+  s_41c3eef9abbce4::t_d22f2794e19d49 5
+  s_41c3eef9abbce4::t_4492cd6c19dbd0 11-15
+  s_41c3eef9abbce4::t_1ebad75151327c 224
+  s_41c3eef9abbce4::t_8fbc3a4945189e 185
+  s_41c3eef9abbce4::t_226211e0dc6768 112-113
+  s_41c3eef9abbce4::t_09d46c1edc4826 160-161,165-167
+  s_41c3eef9abbce4::t_13edf434baae27 70
+  s_41c3eef9abbce4::t_37e669580e065d 143-149,152-153
+  s_41c3eef9abbce4::t_bf1333145260c1 1-4,6-10,16-69,71-111,114-125,131-142,150-151,154-159,162-164,168-184,186-223
+  s_41c3eef9abbce4::t_f722ae88846f42 126-130
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_4153578e041ea9 939-940
+  s_41c3eef9abbce4::t_c14f4e531d1172 982-983
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2fee259561dab1750e4bb21b42679dbd509f7909",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": null
+    }
+  }
+}
