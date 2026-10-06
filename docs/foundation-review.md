@@ -549,12 +549,88 @@ compilation.
   tombstone, and an older live snapshot arriving after the tombstone does not resurrect the row; actor and
   correlation arrive in the receiver without an HTTP request (16).
 
-**Phase 5 — packaging** (needs 4)
-- Central package management, MinVer, Source Link, `EnablePackageValidation`, `THIRD-PARTY-NOTICES`
-  packed into each nupkg, MIT licence. Publish `0.x` prereleases to GitHub Packages first; nuget.org
-  only unlists, never deletes.
-- Done when: a test asserts each package's transitive closure (row 17) — e.g. Dapper has no EF,
-  Postgres has no Wolverine, Web has no Modularity, `PouryaKit.Messaging.Wolverine` has no EF; a consumer of each profile builds from packages.
+### Phase 5 packaging and releases
+
+Needs Phase 4. Wave 1 is merged; complete this Phase before Wave 2 feature work. This is the
+authoritative packaging, versioning and release plan, not shipped automation.
+
+Keep central package management, MinVer as the only version engine, SourceLink,
+`EnablePackageValidation`, MIT and `THIRD-PARTY-NOTICES.md` in each nupkg. All shipped Kit packages
+share one version. Private GitHub Packages comes first, with named `0.x` prereleases; nuget.org
+activation and stable `1.0` each need a later owner decision. A private release cut cannot enable
+public publishing. Once public, nuget.org packages are unlisted rather than deleted.
+
+Configure MinVer with minimum major/minor `0.1`, tag prefix `v` and default prerelease identifiers
+`preview.0`. Fetch full history and tags. Untagged main commits use MinVer's Git height, initially
+for example `0.1.0-preview.0.H`; subsequent versions follow MinVer's tag rules. No GitVersion,
+date suffix, run-number version or independent dispatch version calculation.
+[MinVer's pinned README](https://github.com/adamralph/minver/blob/9f485aabb9936efd8fb8b633ae09ae4d0659c94f/README.md#L179)
+documents height; configuration is at lines 204–211, 236–244 and 282–292 of the same revision.
+
+| Trigger | Required behaviour |
+|---|---|
+| Pull request, including a fork | Build, test, pack, check dependencies and restore/build package-only consumers from the produced packages. No publishing, tag or release writes, or release credentials. |
+| Green `main` | Publish internal prerelease packages from the exact tested SHA through the same build/test/pack path. These snapshots receive no version tag or GitHub Release. |
+| Owner-approved `workflow_dispatch` release cut | Select an exact green `main` SHA and validate SemVer progression and compatibility before creating immutable `v<version>`. Build under that tag's version, run the same validation/publish path explicitly, publish the packages, verify the full set, then create the GitHub Release. Initially use named `0.x` `preview` or `rc` releases. |
+
+A version tag changes the build version. Rebuild and validate the tagged SHA; never relabel internal
+snapshot packages as a named release. A tag pushed with `GITHUB_TOKEN` does not trigger a second
+workflow, so the cut calls the shared path itself. No PAT solely to trigger another workflow.
+[GitHub's token trigger rule](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow)
+is the reason for this explicit execution path.
+
+Patches contain compatible fixes; minors add compatible behaviour. Before `1.0`, a breaking change
+needs an explicitly reviewed minor increment and migration notes. From `1.0`, breaking changes need
+a major increment. Compare packaged public APIs with the last named release before the cut;
+`EnablePackageValidation` findings need a disposition against this policy. Check progression against
+prior named releases and already published versions, including prerelease ordering.
+
+**Adopt, adapt and reject from verified source.** These are static source checks, not evidence of
+successful upstream publishing runs. Sources are
+[`mehdihadeli/CloudNativeKit@e81d65e6376008cb001fdbd886086dc6e84790c6`](https://github.com/mehdihadeli/CloudNativeKit/tree/e81d65e6376008cb001fdbd886086dc6e84790c6)
+and [`meysamhadeli/woo@149a3cf168496c3bec85945f83ad222e43720e4d`](https://github.com/meysamhadeli/woo/tree/149a3cf168496c3bec85945f83ad222e43720e4d).
+- Adopt CNK's full checkout history and build/test gating, `.github/workflows/build-and-publish.yml:26,36-43,76-78`.
+  Adapt its publication flow to private packages and exact tested SHAs. Reject release drafting
+  under `always()` at line 112 and stable-only publishing at line 119 for the Kit's prerelease policy.
+- Adopt Woo's common Release version and `pack --no-build`, `.github/workflows/publish.yml:52,61`.
+  Adapt its package-count gate at lines 71–75 to an explicit expected inventory. Reject its independent
+  checkout ref/version inputs at lines 24,34 without CI linkage, and `--skip-duplicate` alone at
+  lines 93 onward as retry proof; it does not compare package contents.
+- Keep MinVer rather than CNK's `calculate-version.sh:22-24,39-41` date/run calculation; retain its
+  tag/version mismatch rejection at line 16. Reject copying CNK's packability setup,
+  `Directory.Packages.props:9` and `Directory.Build.targets:3-4`; the Windows-backslash condition
+  appears to leave Ubuntu projects non-packable. This is a static inference to test, not a runtime claim.
+  Neither inspected workflow provides publication concurrency or preservation of package checksum manifests.
+
+The cost is one shared build/publish path plus inventory, consumer and retry checks. Reuse MinVer
+and the existing graph rules; keep artifact recovery checks because partial publication is irreversible.
+
+**Work packages and acceptance, in order:**
+1. Package metadata and consumer proof. Evaluate all packable `src` projects against a nonempty,
+   explicit expected package inventory, initially the thirteen Wave 1 packages; exclude tests and
+   samples. Build Release once, test that Release build with `--no-build`, then pack with
+   `--no-build` at the same MinVer version. Verify package
+   IDs, versions, MIT/notices, repository/source commit metadata and SourceLink. Extend the existing
+   `PackageGraphTests` rules to produced nuspecs and restored consumer closures, rather than add a
+   competing graph. Keep row 17 exclusions, including no EF in Dapper or Messaging.Wolverine, no
+   Wolverine in Postgres and no Modularity in Web. Restore/build every package and supported profile
+   in clean package-only consumers, with no Kit project references or source checkout fallback.
+2. PR validation and main snapshots. Reuse the package checks and runtime suite; prove a fork PR
+   has no publication writes or release credentials, and a failing check cannot publish. Main
+   publication records the tested SHA, MinVer version, expected package IDs and artifact hashes in
+   a manifest. Prove full history/tags are available and missing publish secrets fail clearly.
+3. Named release and retry proof. Check the approved SHA is green on main; reject invalid progression
+   or unreviewed breaking changes. Assert tag SemVer = MinVer package/build version = manifest
+   version, allowing documented assembly-version normalization. Serialize all publication paths
+   without cancelling an active publisher. Preserve the original SHA, version, hash manifest and
+   artifacts for retries; an identical rerun verifies and accepts existing identical packages and
+   uploads only missing ones. Refuse any different bytes or SHA for that version, including a moved
+   tag, and fail if original artifacts cannot be recovered. Prove a partial publish can resume;
+   validation or publishing failure announces no GitHub Release. Prove public publishing remains off.
+
+Completion requires evidence for these gates, current consumer/release docs and AI guidance through
+section H. A failed cut may leave an immutable tag or partial packages; recovery uses the same
+recorded artifacts and never retargets the tag or announces an incomplete release.
 
 **Phase 6 — template and second profile** (optional, after 5)
 - `dotnet new` template extracted from the proven sample; single-service profile with RabbitMQ.
@@ -610,7 +686,13 @@ document has been compiled.
    kit's own docs and provenance records cite upstream repository, commit and repo-relative path,
    never a local machine path. Ultrabusiness ownership is unconfirmed, so it is adopted at pattern
    level (reimplemented, with its test scenarios ported); the public MIT samples may be copied with
-   attribution.
+   attribution. For every concern, compare verified CNK/Woo behaviour and the Kit's requirements
+   across API/design, correctness and runtime failure behaviour, performance where relevant,
+   tests, developer experience/docs, security/operations and CI/packaging/releases. Record an
+   adopt/adapt/reject rationale with repo/commit/path, proof boundary and implementation/maintenance
+   cost. Choose the strongest requirement-aligned behaviour per concern; no whole-repository winner
+   and no extra abstraction merely to match a reference. Require evidence for correctness and keep
+   implementation and maintenance cost proportionate. Phase 5 applies this rule to release automation.
 3. **Private first, public later.** `0.x` on GitHub Packages, then nuget.org under MIT.
 4. **Monolith and modular monolith first, broker-ready from day one.** Messaging contracts, wire
    names, headers, routing declarations and receipts are transport-neutral in wave 1; the RabbitMQ
@@ -802,8 +884,9 @@ a call between Modules goes through the Gateway, never through YARP or gRPC loop
 
 Form: **P** = its own package · **R** = a registration method on an existing package · **T** =
 template recipe (native .NET; the Kit adds nothing) · **A** = application code · **–** = refused.
-Wave 2 is the first follow-on set after Wave 1; Wave 3 needs Wave 2 pieces; Wave 4 is the sample
-agent and the template's third composition.
+Complete [Phase 5 packaging and releases](#phase-5-packaging-and-releases) before Wave 2 feature work.
+Wave 2 is the first follow-on Capability set after the merged Wave 1; Wave 3 needs Wave 2 pieces;
+Wave 4 is the sample agent and the template's third composition.
 
 | Capability | Form | Package or home | Wave | Adopted from (`repo@commit path:line`) | What the Kit adds | Proof |
 |---|---|---|---|---|---|---|
@@ -964,7 +1047,8 @@ context into envelopes.
 
 ### I.7 Recommended plan after Wave 1
 
-Open the pull request for Wave 1. Then one spec per wave: **Wave 2** — paging, one JSON setup, Web
+Wave 1 is merged. First complete [Phase 5 packaging and releases](#phase-5-packaging-and-releases).
+Then one spec per wave: **Wave 2** — paging, one JSON setup, Web
 defaults, Web.OpenApi, Core, Security and JwtBearer, request idempotency, Caching, scheduling,
 Observability, the HttpClient handler, the versioning rule, the RabbitMQ transport after its spike,
 and the template's first two compositions; **Wave 3** — Marten after its spike, multi-tenancy, AI,

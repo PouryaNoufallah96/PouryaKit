@@ -4,7 +4,7 @@ A reusable .NET 10 foundation for modular monoliths built from vertical slices.
 
 Status: Wave 1 is complete. Its thirteen packages, each usable on its own, make up eight Capabilities: domain primitives (`PouryaKit.Domain`); commands, queries and validation (`PouryaKit.Cqrs`, `PouryaKit.Validation`); Modules (`PouryaKit.Modularity`); persistence and the Unit of Work (`PouryaKit.Persistence`, `PouryaKit.Persistence.EFCore`, `PouryaKit.Persistence.Postgres`); Dapper reads (`PouryaKit.Persistence.Dapper`); messaging (`PouryaKit.Messaging`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Messaging.Wolverine.EFCore`); web (`PouryaKit.Web`); and testing (`PouryaKit.Testing`). The Proving Sample in `samples/ModularMonolith/`, a Host of three Modules, proves every guarantee against PostgreSQL, and architecture tests guard its boundaries and every package's dependencies.
 
-Not in Wave 1: packaging and publishing the packages, which is Phase 5, and the Capabilities of Wave 2 and later, such as API versioning and OpenAPI, security, request idempotency, caching, scheduling, observability, the RabbitMQ transport, multi-tenancy and the project template.
+Next, before Wave 2 feature work: [Phase 5 packaging and releases](docs/foundation-review.md#phase-5-packaging-and-releases), covering shared MinVer versions, PR package validation, private main snapshots and owner-approved tagged releases. This automation is planned, not shipped. The Capabilities of Wave 2 and later include API versioning and OpenAPI, security, request idempotency, caching, scheduling, observability, the RabbitMQ transport, multi-tenancy and the project template.
 
 Build and test with the .NET SDK pinned in `global.json`:
 
