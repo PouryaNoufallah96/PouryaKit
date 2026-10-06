@@ -20,3 +20,4 @@
 - [Code-style analyzer facts](code-style-analyzer-facts.md) — listing the SDK's real IDE IDs, which C# 14 idioms have one, 2 s rebuilds are real
 - [Core helpers facts](core-helpers-facts.md) — #37: extension blocks emit public nested types, new src package needs arch-test reference, aliased offending copy
 - [Shared JSON facts](shared-json-facts.md) — #34: getter-only ASP.NET JsonOptions, Wolverine STJ mutates options, reading a stored envelope body
+- [W3C propagation facts](w3c-propagation-facts.md) — #46: parent-id at publish, Wolverine span only when sampled, SampleUsingParentId trap, no retry link, spike layout
