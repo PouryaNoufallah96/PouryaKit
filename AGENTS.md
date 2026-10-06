@@ -23,12 +23,12 @@ The main session is judge and orchestrator. It scopes the ticket, writes the bri
 
 Match the process to the task:
 
-- **Clear and small** (a typo, a config value, a doc line, a few-line fix with an obvious check): do it directly. No brief, no review.
+- **Clear and small** (a typo, a config value, a doc line, a few-line fix with an obvious check): do it directly. If the session requires delegation, use one bounded worker to edit, check, commit and push only within explicit authority; the main session judges the result. A separate reviewer or operations worker is needed only when risk or ambiguity requires it.
 - **A normal ticket**: one `kit-implementer`, then one review sized as in step 3.
 - **Unclear or stuck**: stop. Ask the owner, or send a `kit-scout` for the facts, and start only when the objective and its check are clear. Two failed attempts at the same thing is stuck.
 - Tickets with disjoint files run in parallel.
 
-When delegating: a `kit-implementer` brief carries `objective`, `allowed_files`, `verify` and `stop_if`, and why the work matters. The objective states the deliverable, costly guarantees and reference baseline. Finish the selected acceptance criteria; an additional release framework or guarantee needs an owner scope decision. A role's report is a claim: read the diff and the `verify` output it reports before the next step, and re-run a check only when that leaves a doubt.
+When delegating: a `kit-implementer` brief carries `objective`, `allowed_files` and `verify`, and why the work matters. `stop_if` adds optional package-specific conditions; without it, apply the role's existing hard stops and record that assumption in the report. The objective states the deliverable, costly guarantees and reference baseline. Finish the selected acceptance criteria; an additional release framework or guarantee needs an owner scope decision. A role's report is a claim: read the diff and the `verify` output it reports before the next step, and re-run a check only when that leaves a doubt.
 
 Explicit session instructions about providers, models and effort override defaults. Keep model defaults in host configuration; see `docs/agents/ai-setup.md`, "Roles", for routing.
 

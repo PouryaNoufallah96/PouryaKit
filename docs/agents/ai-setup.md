@@ -44,9 +44,9 @@ The steps and gates are in `AGENTS.md`, "Workflow for every ticket". This is how
 
 **Before step 1: scope and brief.** Read the ticket (`gh issue view <n> --comments`) and record the base commit (`git rev-parse HEAD`). Apply the scope and early external-probe rules in `AGENTS.md` before full implementation. `/kit-review` fetches the ticket itself, so no spec file is needed for it.
 
-**Steps 1–2: implement, then focused tests.** Spawn `kit-implementer` with the brief. Check its report against the tree: read the diff and the `verify` output it reports. Re-run a check only when that leaves a doubt; the current models verify their own work, and a second run of everything is wasted time.
+**Steps 1–2: implement, then focused tests.** Choose the task shape from `AGENTS.md`, "Operating model". A clear, small delegated fix uses one bounded worker; a normal ticket uses `kit-implementer` with the brief. Check its report against the tree: read the diff and the `verify` output it reports. Re-run a check only when that leaves a doubt; the current models verify their own work, and a second run of everything is wasted time.
 
-**Step 3: review, sized to the ticket.** Use the review size from `AGENTS.md`. Give a single `kit-reviewer` the base and the spec. For dual review, the saved workflow in Claude Code is:
+**Step 3: review, sized to the ticket.** Use the review size from `AGENTS.md`. When one reviewer is required, give `kit-reviewer` the base and the spec. For dual review, the saved workflow in Claude Code is:
 
 ```text
 Run /kit-review with base <base commit> and ticket 42

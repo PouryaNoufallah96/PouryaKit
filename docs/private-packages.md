@@ -8,10 +8,12 @@ MinVer is the only version engine. All thirteen Kit packages use the same versio
 
 | Event | Version and behaviour |
 |---|---|
-| PR, branch push or tag push | Read-only CI validates packages and consumers. No publication from these runs. |
+| PR, tag push or manual CI on a non-main branch | Read-only CI validates packages and consumers. No publication from these runs. |
 | Main push | CI derives the MinVer Git-height prerelease, then successful CI authorizes private publication. |
 | Owner-created `v0.x` preview/rc tag on current main, followed by manual CI on main | CI fetches the tag and validates its exact MinVer version. Successful CI uses the same private publisher. |
 | Manual private-publication run on main | Select an original successful main CI run, attempt and SHA. Reuse its preserved packages and manifest. |
+
+Topic and integration branch pushes do not trigger CI; use PR validation or [manual branch CI](ci.md) when hosted proof is needed. A non-main manual run cannot authorize publication.
 
 For a named version, choose and create an immutable tag such as `v0.2.0-rc.1` on the current main SHA using the normal owner-controlled Git process. Then select **CI**, **Run workflow**, branch **main**, or run:
 
