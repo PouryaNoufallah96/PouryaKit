@@ -6,6 +6,13 @@ namespace PouryaKit.Cqrs;
 /// <c>AddPouryaKitModules</c> fails when it is built if a command or query whose handler it registers carries one and
 /// that authorizer is not registered, so a declared check never silently stays off.
 /// </summary>
+/// <remarks>
+/// It is a public Cqrs type because nothing else reaches every Host. The failure it catches is a Module whose
+/// Composition Root never called the attribute's registration, so that registration cannot carry the check, and the
+/// Host's permission source is a plain registration that runs no Kit code. Modularity is the only Kit code that runs
+/// after every Composition Root, and it may reference Cqrs only, not the attribute's package; the Kit has no
+/// <c>InternalsVisibleTo</c> between packages.
+/// </remarks>
 public interface IRequiresAuthorizer
 {
     /// <summary>The registration that adds the authorizer, named in the failure.</summary>
