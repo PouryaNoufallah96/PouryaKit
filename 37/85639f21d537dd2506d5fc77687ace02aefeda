@@ -1,0 +1,22 @@
+docs/adr/0009-w3c-trace-context-through-the-outbox.md
+  s_41c3eef9abbce4::t_13edf434baae27 68
+  s_41c3eef9abbce4::t_19afd644d542c9 175
+  s_41c3eef9abbce4::t_226211e0dc6768 110-111
+  s_41c3eef9abbce4::t_bf1333145260c1 1-67,69-109,112-174,176-214
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3785639f21d537dd2506d5fc77687ace02aefeda",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
