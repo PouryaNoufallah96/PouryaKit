@@ -1,0 +1,81 @@
+src/PouryaKit.Security/SecurityServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 4,27-28
+src/PouryaKit.Persistence.Dapper/DapperServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 5,58
+src/PouryaKit.Core/ImplementingTypes.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 6-8,34,41-75,80-91
+  s_41c3eef9abbce4::t_487521eeb41ddf 92
+tests/ModularMonolith.Tests/Misnamed/ModularMonolith.Tests.Misnamed.csproj
+  s_41c3eef9abbce4::t_53fe03d405df0d 2
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_53fe03d405df0d 87-91,118,127,210,254,300,335,376,426,459,464,469,484
+docs/acceptance.md
+  s_41c3eef9abbce4::t_53fe03d405df0d 43,137,148-161
+.claude/agent-memory/kit-implementer/implementing-types-lookup-facts.md
+  s_41c3eef9abbce4::t_53fe03d405df0d 1-21
+src/PouryaKit.Security/PouryaKit.Security.csproj
+  s_41c3eef9abbce4::t_53fe03d405df0d 3
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 395-416,608-609
+  s_41c3eef9abbce4::t_102f9dc25973e5 610
+.agents/skills/pourya-kit/references/web.md
+  s_41c3eef9abbce4::t_53fe03d405df0d 3
+tests/PouryaKit.Core.Tests/Lookup.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 15,26-34
+src/PouryaKit.Persistence.EFCore/PouryaKit.Persistence.EFCore.csproj
+  s_41c3eef9abbce4::t_53fe03d405df0d 7
+tests/ModularMonolith.Tests/Misnamed/MisnamedNotifications.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 6,90-126
+.agents/skills/pourya-kit/references/core.md
+  s_41c3eef9abbce4::t_53fe03d405df0d 3,44,81-101
+  s_41c3eef9abbce4::t_509da3abdee199 102
+src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 4,39-44
+.agents/skills/pourya-kit/references/security.md
+  s_41c3eef9abbce4::t_53fe03d405df0d 3
+src/PouryaKit.Persistence.Dapper/PouryaKit.Persistence.Dapper.csproj
+  s_41c3eef9abbce4::t_53fe03d405df0d 9
+src/PouryaKit.Web/PouryaKit.Web.csproj
+  s_41c3eef9abbce4::t_53fe03d405df0d 6
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 21,31,39,43,48-49
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_41c3eef9abbce4::t_53fe03d405df0d 27
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 76
+src/PouryaKit.Cqrs/PouryaKit.Cqrs.csproj
+  s_41c3eef9abbce4::t_53fe03d405df0d 7
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 1,174-187
+  s_41c3eef9abbce4::t_f31a0930d9ad46 188-189
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_53fe03d405df0d 247-248,251,253,255,257-258,840
+src/PouryaKit.Persistence.EFCore/PouryaKitDbContext.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 4,35
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 7,72-73
+src/PouryaKit.Messaging.Wolverine/NotificationHandlerServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 5,33-38
+src/PouryaKit.Messaging.Wolverine/PouryaKit.Messaging.Wolverine.csproj
+  s_41c3eef9abbce4::t_53fe03d405df0d 6
+tests/PouryaKit.ArchitectureTests/TypeLookupTests.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 1-60
+tests/PouryaKit.Core.Tests/ImplementingTypesTests.cs
+  s_41c3eef9abbce4::t_53fe03d405df0d 1,26-48,56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "19aa1f7e0174ff002b7c5c13039280e04a05dd44",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
