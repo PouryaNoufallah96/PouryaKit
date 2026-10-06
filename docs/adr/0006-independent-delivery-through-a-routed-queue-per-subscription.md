@@ -463,7 +463,10 @@ depend on, and the rules a consuming project must keep.
 - **Snapshot identity.** A Snapshot's identity, the Receipt's key for it, is a name-based UUID (RFC 9562 version 8)
   from the SHA-256 of the lower-cased wire name, the aggregate's key and the version, so every delivery of one version
   repeats it and two versions never share it (`src/PouryaKit.Messaging.Wolverine/SubscriptionDelivery.cs`). Changing
-  the formula would make Receipts already stored miss redeliveries.
+  the formula would make Receipts already stored miss redeliveries. The key is unique only within one mapped
+  hierarchy, so a declaration covers the aggregates of one: when its aggregate type spans two, the Operation that
+  would publish it fails (`SnapshotMappers.CheckKeySpaces`;
+  `SnapshotTests.A_snapshot_declared_for_aggregates_of_two_mapped_hierarchies_fails_the_operation_that_would_publish_it`).
 - **"Strictly newer" is the Kit's.** Plan section D's sketch left the version check to the receiving Feature. The
   Kit's delivery step does it instead, after the Receipt and in the same transaction, with one conditional upsert that
   replaces the stored version only with a greater one; the handler runs only when it did. A late, duplicated or

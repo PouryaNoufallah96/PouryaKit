@@ -2,7 +2,9 @@
 
 Status: draft 6, 2026-10-04 (five Codex review rounds and the owner's decisions applied; see `foundation-review-log.md`). Analysis only — nothing was built, restored, run or modified in any
 inspected repository. The kit is named **PouryaKit**. Every API shown under the `PouryaKit.*` prefix is
-**proposed**, not existing CloudNativeKit/Woo functionality.
+**proposed**, not existing CloudNativeKit/Woo functionality. *Phase 0 and Wave 1 have since been built from this plan
+(closed 2026-10-06). Where the build departed from it, a dated note says so in place; `docs/acceptance.md` maps the
+acceptance scenarios to tests, and the API as built is in the Kit's skill.*
 
 ## Inspected snapshots
 
@@ -231,6 +233,10 @@ Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its origi
   and `PouryaKit.ArchitectureTests` (Structure seam), plus `PouryaKit.Cqrs.Tests` (with its test Module
   `PouryaKit.Cqrs.Tests.Module`) and `PouryaKit.Validation.Tests`, which run the dispatcher and the validation step
   without a database.
+- `PouryaKit.Persistence` (G.4), the thirteenth project, has no entry in the tree above and no row in the table
+  below. It holds `IRepository` and `IUnitOfWorkConnection`, the seam through which a Module's plain-SQL write joins
+  the Unit of Work (ticket #9), and references Domain and `Ardalis.Specification`. `PouryaKit.Persistence.EFCore`
+  references it beside Cqrs, with `Ardalis.Specification.EntityFrameworkCore`.
 
 ### Allowed references
 
@@ -614,7 +620,7 @@ document has been compiled.
 6. **.NET 10 only**, latest C# language version, current .NET idioms throughout.
 7. The "no local files" rule is confirmed as a docs/provenance rule.
 8. The owner authorised finalising this plan and splitting it into phases worked through the
-   repo's skills. Building has not started.
+   repo's skills. Building has not started. *Phase 0 and Wave 1 were built by 2026-10-06 (spec #1).*
 
 ---
 
