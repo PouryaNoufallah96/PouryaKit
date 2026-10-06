@@ -5,13 +5,17 @@ using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
 using Catalog.Products.Features.RemoveProducts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Security;
 using PouryaKit.Testing;
+using PouryaKit.Web;
 
 namespace ModularMonolith.Tests;
 
@@ -37,6 +41,51 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         // A path no route matches has no endpoint either: the fallback policy answers before routing's 404.
         await ProblemAsync(await anonymous.GetAsync("/nowhere", TestContext.Current.CancellationToken), HttpStatusCode.Unauthorized);
         await ProblemAsync(await ada.GetAsync("/nowhere", TestContext.Current.CancellationToken), HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public void A_fallback_policy_the_application_set_before_the_kits_registration_is_kept()
+    {
+        var applications = new AuthorizationPolicyBuilder().RequireClaim("application").Build();
+        var services = new ServiceCollection();
+        services.AddAuthorization(authorization => authorization.FallbackPolicy = applications);
+
+        services.AddPouryaKitWeb();
+
+        using var provider = services.BuildServiceProvider();
+        Assert.Same(applications, provider.GetRequiredService<IOptions<AuthorizationOptions>>().Value.FallbackPolicy);
+    }
+
+    [Fact]
+    public void A_host_whose_modules_declare_permissions_but_that_registers_no_permission_source_fails_when_built()
+    {
+        var thrown = Assert.Throws<AggregateException>(() =>
+            AppFixture.ComposeHost(
+                "Production",
+                Fixture.ConnectionString,
+                new RecordedLogs(),
+                builder => builder.Services.RemoveAll<IActorPermissions>()
+            )
+        );
+
+        Assert.Contains(nameof(IActorPermissions), thrown.Message);
+    }
+
+    [Fact]
+    public async Task A_query_that_declares_a_permission_is_refused_to_an_actor_without_it_and_served_to_one_with_it()
+    {
+        var stub = Fixture.Gateway<StubModule>();
+
+        var refused = await stub.QueryAsync(
+            new ReadStampLedgerQuery(),
+            new OperationContext(Actor.Person("ada")),
+            TestContext.Current.CancellationToken
+        );
+        // The tests' own Actor is granted it (TestActorPermissions).
+        var served = await stub.QueryAsync(new ReadStampLedgerQuery(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(PermissionErrors.Denied, Assert.Single(refused.Errors));
+        Assert.Equal(ReadStampLedgerQuery.Ledger, served.Value);
     }
 
     [Fact]

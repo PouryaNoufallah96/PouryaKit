@@ -59,6 +59,21 @@ internal sealed class RefuseSomeStampsAuthorizer(OperationContext context, Stamp
     }
 }
 
+// A query that declares a permission: a read is protected the same way as a command.
+[RequiresPermission(ReadStampLedgerQuery.Permission)]
+internal sealed record ReadStampLedgerQuery : Query<string>
+{
+    public const string Permission = "stub.stamps.read";
+
+    public const string Ledger = "the stamp ledger";
+}
+
+internal sealed class ReadStampLedgerQueryHandler : QueryHandler<ReadStampLedgerQuery, string>
+{
+    public override Task<Result<string>> Handle(ReadStampLedgerQuery query, CancellationToken cancellationToken) =>
+        Task.FromResult<Result<string>>(ReadStampLedgerQuery.Ledger);
+}
+
 internal sealed record NoteToStampDomainEvent(string Text) : DomainEvent;
 
 internal sealed class StampNoteNotificationHandler(IDispatcher dispatcher) : INotificationHandler<NoteToStampDomainEvent>

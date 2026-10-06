@@ -35,6 +35,7 @@
     <Project Path="tests/PouryaKit.Cqrs.Tests.Module/PouryaKit.Cqrs.Tests.Module.csproj" />
     <Project Path="tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.csproj" />
     <Project Path="tests/PouryaKit.Domain.Tests/PouryaKit.Domain.Tests.csproj" />
+    <Project Path="tests/PouryaKit.Security.Tests/PouryaKit.Security.Tests.csproj" />
     <Project Path="tests/PouryaKit.Validation.Tests/PouryaKit.Validation.Tests.csproj" />
   </Folder>
 </Solution>
