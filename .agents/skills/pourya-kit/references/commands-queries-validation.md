@@ -54,12 +54,12 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 - Give each exactly one handler class deriving from `CommandHandler<,>`, `CommandHandler<>` or `QueryHandler<,>`. Keep both `internal`; the Kit finds them without `InternalsVisibleTo`. A command or query with no handler or several fails at startup.
 - Commands, queries, handlers and authorizers are never generic type definitions (no `EchoQuery<T>`): registration rejects them at startup.
 - A handler returns a Result and never saves, commits, begins a transaction or touches the Outbox: the Unit of Work does all of that once, for the whole Operation. This holds for every kind of handler, and a structure test rejects a Module whose code does any of it ([testing.md](testing.md#structure-tests)).
-- A query reads. Its handler is [code that only reads](#code-that-only-reads), and runs without a Unit of Work.
+- A query reads. Its handler is [code that only reads](#code-that-only-reads). It starts no Unit of Work of its own, but a query nested inside a command runs inside the command's active Unit of Work.
 - A Domain Event Handler (`IDomainEventHandler<TDomainEvent>`, also in `PouryaKit.Cqrs`) is the third kind of handler. The Unit of Work runs it, so it is taught in [persistence.md](persistence.md).
 
 ## The pipeline
 
-- Every command and query passes the same fixed steps: logging, the authorization hook, validation, then the handler; a command's handler runs inside the Unit of Work. Never register a pipeline step or a behaviour yourself.
+- Every command and query passes the same fixed steps: logging, the optional authorization hook, optional validation, then the handler; a command's handler runs inside the Unit of Work. Never register a pipeline step or a behaviour yourself.
 - Send from outside the Module through its Gateway, with an Operation Context (see [modules.md](modules.md)). Inside a handler, send a nested command with an injected `IDispatcher`: `await dispatcher.SendAsync(new ReserveStockCommand(id), ct)`. It joins the outer Unit of Work, so the Operation commits once, and it reads the same Operation Context.
 - A nested command that fails, in its handler, its validation or its authorization, or by throwing, rolls the whole Operation back, even if your handler ignores its Result. The Operation then fails with that nested command's Errors. Pass a failure on with `return result.Errors;` instead of ignoring it.
 - A failed nested query rolls nothing back; act on its Result as you need.

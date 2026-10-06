@@ -17,7 +17,8 @@ public static class NotificationHandlerServiceCollectionExtensions
         /// an application without Modules calls it on its own services with no Module. Throws here, at startup, when the
         /// assembly has no Notification Handler, when a handler handles several Domain Event types, an abstract or a
         /// generic one, or is generic itself, and when a wire name or a subscription name is missing, invalid, equal
-        /// ignoring case to another's, or, for a subscription, the name of a queue Wolverine keeps for itself. The Host
+        /// ignoring case to another's, or, for a subscription, the name of a queue Wolverine keeps for itself or the same
+        /// subscription declared for another Module. Repeating a declaration for the same Module adds nothing. The Host
         /// then fails to start unless an Outbox writes the Notifications (<see cref="INotificationOutbox"/>) and every
         /// subscription's queue, as Wolverine built it, is a durable application queue.
         /// </summary>

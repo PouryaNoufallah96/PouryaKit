@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -306,6 +307,37 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         // An authenticated caller of a public endpoint still runs as themselves.
         Assert.Equal("ada", adaContext.Actor.Id);
         Assert.Equal(ActorKind.Person, adaContext.Actor.Kind);
+    }
+
+    [Fact]
+    public async Task An_authenticated_caller_denied_authorization_answers_403_as_a_problem_response()
+    {
+        await using var host = AppFixture.ComposeHost(
+            "Production",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder =>
+                builder.Services.AddAuthorization(authorization =>
+                    authorization.DefaultPolicy = new AuthorizationPolicyBuilder()
+                        .RequireAuthenticatedUser()
+                        .RequireClaim(ClaimTypes.NameIdentifier, "grace")
+                        .Build()
+                )
+        );
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var allowed = AppFixture.ClientOf(host, "grace");
+        using var denied = AppFixture.ClientOf(host, "ada");
+        denied.DefaultRequestHeaders.Accept.ParseAdd("text/html");
+
+        Assert.Equal(
+            HttpStatusCode.OK,
+            (await allowed.GetAsync("/stub/context", TestContext.Current.CancellationToken)).StatusCode
+        );
+        var response = await denied.GetAsync("/stub/context", TestContext.Current.CancellationToken);
+
+        var problem = await ProblemAsync(response, HttpStatusCode.Forbidden);
+        Assert.Equal(403, problem.GetProperty("status").GetInt32());
+        Assert.False(problem.TryGetProperty("errors", out _));
     }
 
     [Fact]

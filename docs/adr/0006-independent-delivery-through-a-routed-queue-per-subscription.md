@@ -469,8 +469,9 @@ depend on, and the rules a consuming project must keep.
   `SnapshotTests.A_snapshot_declared_for_aggregates_of_two_mapped_hierarchies_fails_the_operation_that_would_publish_it`).
 - **"Strictly newer" is the Kit's.** Plan section D's sketch left the version check to the receiving Feature. The
   Kit's delivery step does it instead, after the Receipt and in the same transaction, with one conditional upsert that
-  replaces the stored version only with a greater one; the handler runs only when it did. A late, duplicated or
-  concurrent older Snapshot is never applied (`src/PouryaKit.Messaging.Wolverine/Deliver.cs`, `EfReceipts.cs`;
+  replaces the stored version only with a greater one; the handler runs only when it did. If the older concurrent
+  version commits first, both handlers can run in increasing version order; if the newer commits first, the older is
+  skipped. A Snapshot no newer than the committed version is never applied (`src/PouryaKit.Messaging.Wolverine/Deliver.cs`, `EfReceipts.cs`;
   `SnapshotTests.Snapshots_delivered_in_reverse_order_leave_the_newest`,
   `SnapshotTests.Two_versions_delivered_concurrently_leave_the_newer`,
   `SnapshotTests.A_live_snapshot_delivered_after_the_tombstone_does_not_bring_the_copy_back`).

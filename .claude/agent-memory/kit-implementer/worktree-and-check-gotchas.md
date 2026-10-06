@@ -12,7 +12,7 @@ The worktree base and the one-git-command rule are in the role file; these are w
 - The system-reminder's copy of `AGENTS.md` comes from the main checkout and can differ from the worktree's: read the worktree file before editing. A Write or Edit to the main checkout's path is refused; use the worktree path.
 - `gh issue view N --comments` printed nothing from a worktree; `gh issue view N --repo PouryaNoufallah96/PouryaKit` plus `gh api repos/PouryaNoufallah96/PouryaKit/issues/N/comments` works.
 - macOS BSD `sed -E` silently ignores `\b`; use `[[:<:]]word[[:>:]]`, then grep to confirm.
-- `check-ai-setup.py` parses frontmatter with a small YAML subset: a plain scalar containing `": "` or `" #"`, or ending in `:`, fails. It reads only each skill's `SKILL.md` frontmatter.
+- `check-ai-setup.py` parses frontmatter with a small YAML subset: a plain scalar containing `": "` or `" #"`, or ending in `:`, fails. It reads frontmatter in skills' `SKILL.md` files, output styles, Claude roles and rules.
 - The guard refuses `rm -r` outside system temp: delete files one by one, then `rmdir`. Mutation checks: copy the file to the scratchpad, mutate, run, copy back.
 - The Edit tool validates `.claude/settings.json` against the live schema and refuses an invalid enum, so mutation-test `check-ai-setup.py` in memory (load the module, swap `loaded[path]`).
 - No pyyaml or actionlint by default: `ruby -ryaml` parses YAML; `brew install actionlint` works.

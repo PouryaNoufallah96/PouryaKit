@@ -4,9 +4,9 @@ using PouryaKit.Domain;
 namespace PouryaKit.Messaging.Wolverine;
 
 /// <summary>
-/// Thrown by a delivery whose Notification Handler returned a failed Result, so the delivery is retried as if the
-/// handler had thrown: a failed Result is never acknowledged. Nothing the attempt changed was committed. Its message
-/// names each Error, so a dead letter tells why.
+/// Thrown when a Notification delivery's Operation fails, whether its handler returned a failed Result or nested work
+/// made it rollback-only, so the delivery is retried as if the handler had thrown: a failed Result is never acknowledged.
+/// Nothing the attempt changed was committed. Its message names each Error, so a dead letter tells why.
 /// </summary>
 public sealed class NotificationHandlerFailedException(string subscription, ImmutableArray<Error> errors)
     : Exception(

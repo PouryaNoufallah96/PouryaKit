@@ -75,6 +75,7 @@ internal sealed class Product : AggregateRoot<ProductId>
 - `Version` is 0 until the aggregate is saved, 1 after its first commit, and exactly one more for each later Operation that changes the aggregate or anything it owns. It is the concurrency token that turns a concurrent change into a conflict Error ([persistence.md](persistence.md#versions-and-conflicts)). Raising an event does not change the version.
 - Opt an aggregate or entity into audit with `IAuditable` and into soft delete with `ISoftDeletable`. Declare each of their properties with a private setter and never set it: the Unit of Work fills them before it saves ([persistence.md](persistence.md#audit-and-soft-delete)). Removing a soft-deletable aggregate raises no Domain Event of its own; when other aggregates care, give it a domain method that raises one, such as the Proving Sample's `Product.Remove()`.
 - Entities are equal when type and ID are equal; do not override equality.
+- Equality and hashing use the current ID. Do not change an entity's ID while it is in a hash-based collection using entity equality. For database-generated IDs, add the entity after its ID is assigned, or use `ReferenceEqualityComparer.Instance` when the collection tracks object instances across persistence. With reference equality, different instances remain distinct even when their IDs are equal.
 - Declare a value object as a record deriving from `ValueObject`. Its equality covers every member; a collection member compares by reference, so wrap it in a value object of its own.
 
 ## Domain Events

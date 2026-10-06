@@ -3,7 +3,7 @@ using PouryaKit.Domain;
 namespace PouryaKit.Cqrs;
 
 /// <summary>
-/// Runs a command or query through the fixed pipeline: logging, the optional authorization hook, validation, then
+/// Runs a command or query through the fixed pipeline: logging, the optional authorization hook, optional validation, then
 /// the handler, inside the Unit of Work for a command. A handler sends a nested command through it too; the nested
 /// command joins the Operation's Unit of Work.
 /// </summary>

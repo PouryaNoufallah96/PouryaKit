@@ -47,7 +47,7 @@ The Kit takes no dependency on a reciprocal or commercially licensed package (AD
 - `BSD-3-Clause`
 - `PostgreSQL`
 
-An expression passes when it is one of them, an `OR` choice that offers one, or an `AND` of listed ones only. A package with no expression (a licence file or URL only), or with anything else, fails the test by name; adding an identifier to the list is an owner decision. On 2026-10-06 the closures held only `MIT`, `Apache-2.0`, `BSD-3-Clause` and `PostgreSQL`.
+The parser splits on literal ` OR ` and then ` AND `, and an expression passes when any OR branch consists only of listed identifiers. It does not interpret parentheses or licence exceptions: `(MIT OR Apache-2.0)` fails, while `MIT OR (GPL-3.0-only)` passes through the `MIT` branch. A package with no expression (a licence file or URL only), or with no passing branch, fails the test by name; adding an identifier to the list is an owner decision. On 2026-10-06 the closures held only `MIT`, `Apache-2.0`, `BSD-3-Clause` and `PostgreSQL`.
 
 ## Notices
 

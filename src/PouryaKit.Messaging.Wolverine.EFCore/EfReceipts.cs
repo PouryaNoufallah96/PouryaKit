@@ -22,7 +22,7 @@ internal sealed class EfReceipts(IUnitOfWork unitOfWork) : IReceipts
         );
 
     // Under read committed, a conflicting row another transaction holds makes this one wait, then decide on the row
-    // that transaction committed: of two concurrent versions, the newer is applied whichever runs first.
+    // that transaction committed. Older first allows both in increasing order; newer first skips the older.
     public Task<bool> RecordVersionAsync(
         string subscription,
         string aggregateId,
@@ -54,7 +54,9 @@ internal sealed class EfReceipts(IUnitOfWork unitOfWork) : IReceipts
                 $"Receipts are kept in the EF Core Unit of Work's transaction, but the scope's Unit of Work is {unitOfWork.GetType().Name}."
             );
         // The table name comes from the Module's model, never from input; the values are parameters.
-        var table = dbContext.Model.GetDefaultSchema() is { } schema ? $"\"{schema}\".{name}" : name;
+        var table = dbContext.Model.GetDefaultSchema() is { } schema
+            ? $"\"{schema.Replace("\"", "\"\"", StringComparison.Ordinal)}\".{name}"
+            : name;
         var statement = sql(table);
         try
         {

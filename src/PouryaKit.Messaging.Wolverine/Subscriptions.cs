@@ -59,7 +59,7 @@ internal sealed class Subscriptions
     /// <summary>
     /// Adds every subscription, or none: throws, naming each problem, when a name is missing or invalid, or equal
     /// ignoring case to one another subscription or message type already has. Declaring the same handler again adds
-    /// nothing.
+    /// nothing when it belongs to the same Module.
     /// </summary>
     public void Add(IReadOnlyList<Subscription> subscriptions, List<string> problems)
     {
@@ -98,6 +98,12 @@ internal sealed class Subscriptions
                         $"{subscription.Handler.FullName} and {existing.Handler.FullName} have the subscription name {subscription.Name}, ignoring case; {(subscription.IsNotification ? "give one a SubscriptionName of its own" : "subscribe one under another name")}."
                     );
                 }
+                else if (existing.Module != subscription.Module)
+                {
+                    problems.Add(
+                        $"The subscription {subscription.Name} belongs to {existing.Module?.Name ?? "the application"} and to {subscription.Module?.Name ?? "the application"}; one Module owns its deliveries."
+                    );
+                }
 
                 continue;
             }
@@ -123,9 +129,9 @@ internal sealed class Subscriptions
 
     /// <summary>
     /// Records that <paramref name="module"/> publishes <paramref name="integrationEvent"/> under
-    /// <paramref name="wireName"/>. Throws when the type is a Domain Event, when the name is missing or invalid, or
-    /// equal ignoring case to another type's, and when the type is already published under another name or by another
-    /// Module. Declaring the same publication again adds nothing.
+    /// <paramref name="wireName"/>. Throws when the type is not a concrete class or is a Domain Event, when the name is
+    /// missing, invalid or equal ignoring case to another type's, and when the type is already published under another
+    /// name or by another Module. Declaring the same publication again adds nothing.
     /// </summary>
     public void Publish(Type integrationEvent, string wireName, Type? module) =>
         Publish(integrationEvent, wireName, module, snapshot: null);
@@ -146,6 +152,10 @@ internal sealed class Subscriptions
             problems.Add(
                 $"{integrationEvent.FullName} is a Domain Event; it reaches its own Module's Notification Handlers. Publish a record of the Module's Contracts for other Modules."
             );
+        }
+        else if (!integrationEvent.IsClass || integrationEvent.IsAbstract || integrationEvent.ContainsGenericParameters)
+        {
+            problems.Add($"{integrationEvent.FullName} is not a concrete class; publish the concrete Integration Event type.");
         }
         else if (Check(wireName, $"{integrationEvent.FullName}'s wire name", isQueue: false, problems))
         {
