@@ -1,5 +1,7 @@
 # PouryaKit
 
+<!-- Temporary issue #26 same-repository hosted validation proof. -->
+
 A reusable .NET 10 foundation for modular monoliths built from vertical slices.
 
 Status: Wave 1 is complete. Its thirteen packages, each usable on its own, make up eight Capabilities: domain primitives (`PouryaKit.Domain`); commands, queries and validation (`PouryaKit.Cqrs`, `PouryaKit.Validation`); Modules (`PouryaKit.Modularity`); persistence and the Unit of Work (`PouryaKit.Persistence`, `PouryaKit.Persistence.EFCore`, `PouryaKit.Persistence.Postgres`); Dapper reads (`PouryaKit.Persistence.Dapper`); messaging (`PouryaKit.Messaging`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Messaging.Wolverine.EFCore`); web (`PouryaKit.Web`); and testing (`PouryaKit.Testing`). The Proving Sample in `samples/ModularMonolith/`, a Host of three Modules, proves every guarantee against PostgreSQL, and architecture tests guard its boundaries and every package's dependencies.
