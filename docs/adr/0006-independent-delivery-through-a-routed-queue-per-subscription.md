@@ -280,7 +280,8 @@ These follow from Option C, not from preference:
   `DeliverAsync` (`Each_attempt_runs_in_a_new_scope`).
 - **`MessageIdentity`.** Routed fan-out gives each route its own envelope id, locally and over TCP. `IdAndDestination`
   changed only the primary key and nothing else that was observed. The case it exists for, one envelope id arriving on
-  several endpoints, was not tested; see Consequences on brokers.
+  several endpoints, was not tested; see Consequences on brokers. *Tested by ticket #50: required for one broker queue
+  per subscription, not for the topology chosen; see its amendment below.*
 - **What the TCP test does not show.** It runs sender and receiver in one process. It shows independent retry and the
   endpoint-to-subscription mapping over a non-local transport. It does not show that the sender's envelopes are written
   in the Unit of Work's commit; that was shown for local queues only (`AcknowledgmentTests`).
@@ -381,7 +382,9 @@ needs neither. The dead-letter triage question is dissolved too: the subscriptio
     which for TCP was `localhost`; a broker URI names the queue elsewhere.
   - With separate Hosts the broker, not the sender's routing, does the fan-out (an exchange bound to one queue per
     subscription). One envelope id arriving on several endpoints is then the expected case, not the exception, and
-    Wolverine's source recommends `MessageIdentity.IdAndDestination` for it. That case is untested.
+    Wolverine's source recommends `MessageIdentity.IdAndDestination` for it. That case is untested. *Answered by ticket
+    #50: the Kit takes one broker queue per Host, fanned out to these local queues, under `IdOnly`; see its amendment
+    below.*
 - The Kit's wire-name registry plugs into Wolverine as a process-global `IMessageTypeNaming`.
 - **Test run and `global.json`.** The worktree that ran the Spike has no `global.json`. `dotnet test` used the main
   checkout's root `global.json`, in a directory above it, which selects the Microsoft.Testing.Platform runner. The same
@@ -486,7 +489,8 @@ depend on, and the rules a consuming project must keep.
 - **No subscription, nothing written.** The Outbox writes no envelope for a Notification, Integration Event or Snapshot
   that no subscription in the Host receives: it has no route (`WolverineOutbox.cs`). This changes when brokers arrive in
   Wave 2: a subscriber may then live in another Host, so the publishing Host can no longer tell an unsubscribed type
-  from one subscribed elsewhere.
+  from one subscribed elsewhere. *Changed by ticket #50: a published Integration Event gets a broker route from its
+  publication; see its amendment below.*
 - **What a consuming project must keep.**
   - The key of an aggregate that publishes Snapshots is never used again after the aggregate is deleted outright:
     every receiver keeps its Tombstone's version and would turn away the new aggregate's lower ones. The Kit's Guid
@@ -495,3 +499,252 @@ depend on, and the rules a consuming project must keep.
     built, so the Operation that creates it fails
     (`SnapshotTests.A_snapshot_of_an_aggregate_whose_key_the_database_generates_fails_the_operation_that_creates_it`).
   - Nothing removes a Receipt or a Snapshot-version row, so both tables grow with the messages a Module receives.
+
+## Amendment (2026-10-07, ticket #50: RabbitMQ topology)
+
+The decision above stands, and the broker extends it. The Spike for ticket #50 compared two RabbitMQ topologies with a
+publishing Host and a subscribing Host in separate databases. The Kit takes **topology B, receive once and then route
+locally**. Each subscribing Host has one durable broker queue, named by its `WolverineOptions.ServiceName` and bound to
+the exchange of every wire name it subscribes to, with a durable Inbox. The Kit's pre-built handler publishes each
+envelope received there again inside the Host. From there it reaches one durable local queue per subscription, exactly
+as above.
+**Topology A, one broker queue per subscription,** is rejected.
+
+Both topologies kept every invariant the ticket asked for under a fair configuration, so these other observed
+differences decide:
+
+- **Inbox identity.** A needs `MessageIdentity.IdAndDestination`, because the broker copies one envelope id to every
+  subscription's queue. With the default `IdOnly`, the copy stored second is taken for a duplicate and acknowledged
+  without running. The setting is Host-wide and changes the primary key of Wolverine's incoming-envelope and dead-letter
+  tables. B keeps `IdOnly` and the Wave 1 store unchanged.
+- **Everything after the broker stays as built.** Under B the subscription is still read from the local queue, and
+  dead letters are still found at `local://{subscription}/`. The stored retry and the stale-time rule of the #17
+  amendment apply as they are. Under A the subscription comes from a broker queue address, and a dead letter's
+  `received_at` becomes `rabbitmq://queue/{subscription}`.
+
+Queue names do not decide between them. In the Spike, A's queue is named by the subscription alone
+(`Rmq.Kit/BrokerTopology.cs:63-64`), so two Hosts that declare the same subscription names split the messages
+(`QueueNamingTests`, case A). The #50 review re-ran that test on a copy of the Spike with A's queue named
+`{ServiceName}.{subscription}`, and each Host then received all 6 messages, as under B. B carries the same risk one
+level up: two different Hosts with the same `WolverineOptions.ServiceName` share one broker queue and would split its
+messages. That is inferred from the case-A observation and not tested for B. The Kit checks neither name across Hosts.
+
+B's cost is one more stored envelope per message and Host: three Inbox rows for two subscriptions, against two under
+A. B also has one non-atomic step, observed and covered by the Receipt: the local copies are stored before the
+broker envelope is marked handled. A subscribing Host killed between the two fans out again after it restarts, and
+the Receipts keep each effect to one. The Spike forced that gap open with an explicit
+`context.FlushOutgoingMessagesAsync()` followed by a test hook (`Rmq.Kit/SubscriptionDelivery.cs:75-79`). Without
+them, Wolverine flushes the copies after the handler returns and only then marks the envelope handled
+(`src/Wolverine/Runtime/MessageSucceededContinuation.cs:22-24` at `V6.46.0`; read, not tested). That is the order #51
+relies on. Nothing observed contradicts ADR 0001–0004 or section G.
+
+### Evidence
+
+The Spike code is in `spikes/rabbitmq-topology/` at commit `0c3ef9b2aef914ba30f040f07dd51c25ee6b3720`, reachable
+through tag `spike/rabbitmq-topology`. It is not merged. The tests were run on 2026-10-07 from the worktree root with
+`dotnet build spikes/rabbitmq-topology` (the folder's one entry is `RabbitMqTopology.slnx`) and
+`dotnet test --project spikes/rabbitmq-topology/Rmq.Tests/Rmq.Tests.csproj`. The run used .NET SDK 10.0.401, Microsoft
+Testing Platform from the root `global.json` and xunit.v3 4.0.1. It ran against `rabbitmq:4.3.6` and `postgres:18.6`
+(with `track_commit_timestamp=on`) in Testcontainers 4.15.0 on Docker 29.8.1. 19 of 19 tests passed, in 1 min 17 s.
+Each test gets two fresh databases and a RabbitMQ vhost of its own.
+
+- **Publishing Host (`catalog`).** Catalog publishes `ProductCreatedV1` (wire name `catalog.product-created.v1`, a
+  Contracts record) through the owned Unit of Work of ADR 0004. No subscription in its own Host receives it. The route
+  comes from the publication: one fanout exchange per wire name with a durable outbox.
+- **Subscribing Host (`inventory`).** Inventory subscribes two `internal` Integration Event Handlers to that wire name.
+  `inventory.reserve-stock` always succeeds. `inventory.audit-product` writes its effect and then returns a failed
+  Result for as many attempts as the test sets. Each delivery runs as in the Kit:
+  - one pre-built handler per message type, registered with `AddMessageHandler`, so no code is generated;
+  - a new scope and one transaction on the subscribing Host's database;
+  - the Receipt, keyed by (subscription, the `pouryakit-domain-event-id` header);
+  - the handler, then commit;
+  - a failed Result rolls back and throws, so the delivery is retried.
+
+  Every attempt's outcome is logged on a separate connection, because a Receipt masks a rerun.
+- **Shared settings.** Durability mode `Solo` with short polling timers. The Kit's stored retry
+  (`ScheduleRetry`, then `MoveToErrorQueue`), with `UnknownMessageBehavior.DeadLetterQueue` and
+  `UseDurableLocalQueues`. RabbitMQ is configured with `AutoProvision()` and `DisableDeadLetterQueueing()`, so dead
+  letters go to Wolverine's storage and not to a broker queue.
+- **A's fair configuration.** One durable queue per subscription, named by the subscription alone and bound to the wire
+  name's fanout exchange, each listened to with `UseDurableInbox()`. The endpoint map sends
+  `rabbitmq://queue/{subscription}` to its subscription. `MessageIdentity.IdAndDestination` is set, except in the
+  `IdOnly` control.
+- **B's configuration.** One durable queue per Host, named by its `WolverineOptions.ServiceName`, bound to each
+  subscribed wire name's exchange and listened to with `UseDurableInbox()`. One local route per subscription, as above.
+  `IdOnly`.
+
+| Point | Test (class.method, cases) | A, one queue per subscription | B, receive once then local queues |
+|---|---|---|---|
+| Remote-only publication | `RemoteOnlyPublicationTests.A_publication_with_no_subscriber_in_its_own_host_is_stored_in_the_commit_and_delivered_to_the_other_host` (A, B) | Before the flush there is one row in the publishing Host's `wolverine_outgoing_envelopes`, with the business row's `pg_xact_commit_timestamp`. Both subscriptions commit one Receipt and one effect, and the outgoing row is deleted once sent. | The same. |
+| Control: no broker route | `RemoteOnlyPublicationTests.Without_a_route_from_the_publication_to_the_broker_nothing_is_written_and_nothing_arrives` | No outgoing row is written. The business row commits, and nothing arrives within 3 s. This is today's Kit, which routes only to local subscriptions. | |
+| Independent retry, no rerun, no starvation | `IndependentRetryTests.A_failing_subscription_is_retried_on_its_own_and_never_reruns_or_starves_the_other` (A, B; 3 messages; audit fails twice; retries 1 s apart) | All three `reserve-stock` Receipts commit while `audit-product` has no Receipt and no effect. Then, per message, `reserve-stock` has attempts `[succeeded]` and `audit-product` has `[failed, failed, succeeded]`. Each has 1 effect and 1 Receipt, the Receipt with the effect's commit timestamp, and there is no dead letter. | The same. |
+| Exhausted retries | `DeadLetterTests.Exhausted_retries_set_aside_only_the_failing_subscriptions_delivery_in_wolverine_storage` (A, B) | One dead letter in `wolverine_dead_letters` at `rabbitmq://queue/inventory.audit-product`, with the wire name and `HandlerFailedException`. Audit has 3 failed attempts and no effect, `reserve-stock` applied once, and there is no broker dead-letter queue. | The same, at `local://inventory.audit-product/`. |
+| Durable Inbox across a kill and restart | `DurableInboxTests.A_delivery_waiting_for_its_retry_is_kept_by_the_inbox_across_a_consumer_kill_and_restart` (A, B; audit fails once; retry after 4 s) | The waiting delivery is a `Scheduled` row at `rabbitmq://queue/inventory.audit-product`, and both broker queues hold 0 messages. The subscribing Host stops with `StopMode.Quick`. A second publication waits in each broker queue (1 message). A new subscribing Host on the same database delivers both. Attempts are `reserve-stock` `[succeeded]` and audit `[failed, succeeded]`, with 1 effect each per product. | The same, with the waiting row at `local://inventory.audit-product/` and the second publication waiting in the queue `inventory`. |
+| Redelivery after handling | `RedeliveryTests.A_broker_envelope_handed_out_again_after_it_was_handled_applies_each_effect_once` (A, B) | Setting the handled broker rows back to `Incoming` with owner 0 hands both out again. Attempts are `[succeeded, duplicate]` per subscription, with 1 effect and 1 Receipt each. | The one broker row is handed out again and fans out again. There are 4 local rows, and the attempts, effects and Receipts are the same. |
+| B's non-atomic fan-out | `RedeliveryTests.Receive_once_killed_between_the_fan_out_and_marking_the_broker_envelope_handled_fans_out_again_and_applies_each_effect_once` (B) | | The test holds after the local copies are stored. Both Receipts commit, and the broker row is still `Incoming` with a non-zero owner. After the kill and a restart the row is recovered and fans out again. There are 4 local rows, and the broker row is `Handled`. Attempts are `[succeeded, duplicate]`, with 1 effect each. |
+| Fan-out identity, `IdOnly` (control) | `FanOutIdentityTests.Queue_per_subscription_with_IdOnly_keeps_one_copy_and_acknowledges_the_other_as_a_duplicate` | Both broker queues drain, but only 1 Receipt and 1 attempt exist in total, and the Inbox has 1 row. Wolverine logs `DuplicateIncomingEnvelopeException` for the other queue. One subscription silently never runs. | |
+| Fan-out identity | `FanOutIdentityTests.Queue_per_subscription_with_IdAndDestination_keeps_one_envelope_id_once_per_subscription_queue`; `FanOutIdentityTests.Receive_once_stores_the_broker_envelope_once_and_gives_each_local_copy_an_id_of_its_own` | 2 Inbox rows with **one** envelope id, at `rabbitmq://queue/inventory.audit-product` and `rabbitmq://queue/inventory.reserve-stock`, both with the Contracts wire name in `message_type`. | 3 Inbox rows with **three** ids: `rabbitmq://queue/inventory`, `local://inventory.audit-product/` and `local://inventory.reserve-stock/`, all with the wire name. Both Receipts carry the publishing Host's Domain Event id, so the header crossed the broker and the fan-out. |
+| Queue names across Hosts | `QueueNamingTests.Two_services_that_declare_the_same_subscription_names_each_receive_every_message_only_when_the_broker_queue_is_the_hosts` (A, B; two Hosts with `ServiceName` `inventory` and `warehouse`, each with its own database; 6 messages) | With A's queue named by the subscription alone, the two Hosts' `reserve-stock` Receipts add up to 6, and each Host has fewer than 6. With the queue named `{ServiceName}.{subscription}`, the #50 review observed 6 per Host on a copy of the Spike. | Each Host has 6. |
+| Before any subscribing Host declared its queues (limitation) | `RemoteOnlyPublicationTests.A_publication_before_the_subscribing_host_ever_declared_its_queues_is_dropped_by_the_broker` (A, B) | The publishing Host's exchange has no bound queue, so the broker accepts the message and the outbox deletes its row. A subscribing Host started afterwards receives nothing within 4 s, and its Inbox stays empty. | The same. |
+
+**The tests discriminate.** Each line below is a run with one behaviour switched off. The scratch runner copied the
+file, applied the change, ran the class and restored the file.
+
+- Under A with `IdOnly`, the remote-only test failed: the Receipt wait timed out after
+  `Duplicate incoming envelope ... at rabbitmq://queue/inventory.reserve-stock`.
+- With the Receipt's result ignored, all three `RedeliveryTests` cases failed with 2 effects instead of 1.
+- With `UseDurableInbox()` replaced by `BufferedInMemory()`, `DurableInboxTests` (A) failed: no `Scheduled` row was
+  left in the Inbox. Under B the same test still passed, because the waiting retry is in the durable local queue. The
+  broker listener's Inbox in B covers only the step from receipt to fan-out. The spec requires one on every
+  listener all the same.
+
+These points come from reading the source of `jasperfx/wolverine` at tag `V6.46.0` (commit
+`1f22835a2b3e32dbf4b75c7a5273622ee74a4929`). They are inferred and were not tested on their own:
+
+- **Duplicate handling.** `src/Wolverine/Runtime/WorkerQueues/DurableReceiver.cs:812-819` and the method at `:874`: a
+  received envelope whose Inbox insert hits the primary key is acknowledged and dropped. That explains the `IdOnly`
+  control. Under B, a broker redelivery or an outbox resend of the same envelope id is dropped the same way while its
+  handled row is kept (`KeepAfterMessageHandling`). After that, it is stored and fanned out again, and the Receipts
+  absorb it.
+- **Settlement order.** `:854-869`: the broker delivery is settled after the Inbox insert commits and before the
+  handler runs. That is why the broker queues read 0 while a retry waits.
+- **Identity changes the keys.** `src/Persistence/Wolverine.Postgresql/Schema/IncomingEnvelopeTable.cs:22-29` and
+  `DeadLettersTable.cs:19-26`: `IdAndDestination` adds `received_at` to the primary key of both tables.
+  `src/Wolverine/DurabilitySettings.cs:38-54` recommends it when "a single Wolverine process receive[s] the same message
+  from multiple external listeners".
+- **Broker dead-lettering.** `src/Transports/RabbitMQ/Wolverine.RabbitMQ/Internal/RabbitMqTransport.cs:379-392` and
+  `RabbitMqTransportExpression.cs:283-288`: without `DisableDeadLetterQueueing()`, Wolverine declares a native broker
+  dead-letter queue (`DeadLetterQueue.cs`, `Mode = Native` by default). Exhausted deliveries would then leave
+  Wolverine's storage.
+- **Recovery of a broker row.**
+  `src/Persistence/Wolverine.RDBMS/Durability/CheckRecoverableIncomingMessagesOperation.cs` resolves the listener
+  circuit from `received_at`. That is how a `Scheduled` or recovered row at `rabbitmq://queue/...` returns to its
+  listener.
+- **Queue addresses.** `src/Transports/RabbitMQ/Wolverine.RabbitMQ/RabbitMqEndpointUri.cs`: a queue listener's address
+  is `rabbitmq://queue/{name}`. Its `Host` is `queue`, so the Kit's lookup by `Destination.Host` cannot name a broker
+  subscription.
+
+### Packages and licences
+
+Versions and licences come from nuget.org and from the restored nuspecs, read on 2026-10-07.
+
+| Package | Version | Licence | Role |
+|---|---|---|---|
+| WolverineFx.RabbitMQ | 6.46.0 (current stable, same release as the Kit's WolverineFx; `net10.0` restore and run) | MIT | runtime, for #51's package |
+| RabbitMQ.Client | 7.2.2 (transitive) | `Apache-2.0 OR MPL-2.0`; the Kit takes it under Apache-2.0 | runtime |
+| WolverineFx.Newtonsoft | 6.46.0 (transitive) | MIT | runtime |
+| Newtonsoft.Json | 13.0.3 (transitive) | MIT | runtime |
+| System.Threading.RateLimiting | 8.0.0 (transitive, from RabbitMQ.Client) | MIT | runtime |
+| Testcontainers.RabbitMq | 4.15.0 (current stable, same release as Testcontainers.PostgreSql) | MIT | test only |
+
+None is reciprocal-only or commercial (ADR 0002). Testcontainers 4.15.0 marks its parameterless builders obsolete; use
+`new RabbitMqBuilder(image)`.
+
+### The rule #51 implements
+
+- **Publishing Host.** Each published wire name gets one route, from the publication and never from a subscription, to a
+  fanout exchange named by the wire name, with a durable outbox. The Unit of Work's Outbox then writes the envelope in
+  its commit whether or not a subscription in the Host receives it. The Wave 1 consequence "No subscription, nothing
+  written" holds only for a type with no broker route.
+- **Subscribing Host, endpoint to subscription.** One durable broker queue per Host, named by
+  `WolverineOptions.ServiceName`, bound to the exchange of each wire name the Host subscribes to and does not publish
+  itself, with `UseDurableInbox()`. The pre-built handler checks one thing first: an envelope received at that queue is
+  published again inside the Host, carrying every `pouryakit-` header. Every other envelope arrived on a local queue and
+  is delivered as it is today. The subscription is the local queue's name, and no broker address maps to a subscription.
+- **`ServiceName` is unique per kind of Host across the broker.** Instances of one Host share its queue as competing
+  receivers, which is intended. Two different Hosts with the same name would split the queue's messages, and the Kit
+  checks no name across Hosts. #51 documents the rule, and the risk if it is broken.
+- **Envelope identity.** The store keeps `MessageIdentity.IdOnly`; `IdAndDestination` is not required, because no
+  Host listens to one envelope on two endpoints. The broker envelope has one id. Each local copy has an id of its own.
+  The Receipt's identity is the Domain Event id header, or the Snapshot's derived identity, and never an envelope id.
+- **Dead letters.** `DisableDeadLetterQueueing()`, so that dead letters stay in Wolverine's storage (#17).
+- **Dead letters at the Host's broker queue (inferred, not tested).** A failure before or during the fan-out is
+  dead-lettered at `rabbitmq://queue/{ServiceName}`, which names no subscription. Examples are an unknown wire name, a
+  body that cannot be deserialized, or a store error while the copies are written. The reasons:
+  - the global failure policy (`Rmq.Kit/BrokerTopology.cs:92`) and `UnknownMessageBehavior.DeadLetterQueue` apply to
+    the broker listener too;
+  - a failure while the copies are flushed moves the envelope to the error queue
+    (`src/Wolverine/Runtime/MessageSucceededContinuation.cs:28-40` at `V6.46.0`).
+
+  #51's dead-letter triage, and `PouryaKit.Testing`'s lookup, must cover that address.
+
+Registration as it ran, abridged from `Rmq.Kit/BrokerTopology.cs` and `Rmq.Kit/SubscriptionDelivery.cs`:
+
+```csharp
+// Publishing Host: from each publication.
+wolverine.UseRabbitMq(broker).AutoProvision().DisableDeadLetterQueueing();
+wolverine.PublishMessage(type).ToRabbitExchange(wireName, e => e.ExchangeType = ExchangeType.Fanout).UseDurableOutbox();
+
+// Subscribing Host: one queue per Host, then ADR 0006's local routes.
+var rabbit = wolverine.UseRabbitMq(broker).AutoProvision().DisableDeadLetterQueueing();
+foreach (var wireName in subscribedWireNames) rabbit.BindExchange(wireName, ExchangeType.Fanout).ToQueue(serviceName);
+wolverine.ListenToRabbitQueue(serviceName).UseDurableInbox();
+foreach (var s in subscriptions) wolverine.PublishMessage(s.MessageType).ToLocalQueue(s.Name);
+foreach (var type in subscribedTypes) wolverine.AddMessageHandler(type, new SubscriptionDelivery(endpoints));
+
+// In SubscriptionDelivery.HandleAsync: an envelope from the Host's broker queue fans out.
+var options = new DeliveryOptions();
+foreach (var (name, value) in envelope.Headers)
+    if (name.StartsWith("pouryakit-", StringComparison.Ordinal)) options.Headers[name] = value;
+await context.PublishAsync(envelope.Message!, options);
+```
+
+After `PublishAsync`, the Spike also called `context.FlushOutgoingMessagesAsync()` and a test hook. They were there only
+to hold the gap open in `RedeliveryTests`, and #51 needs neither.
+
+These follow from reading the Kit's code at `0e48945`; the Spike used stand-ins and did not change it:
+
+- **Wire names for remote events.** `src/PouryaKit.Messaging.Wolverine/PouryaKitWolverineExtension.cs:16-25` refuses a
+  subscription whose Integration Event no Module of the Host publishes, because only a publication declares a wire name.
+  A Host that subscribes to a remote event needs a wire name declared without publishing it; the Spike passed it on
+  `Subscribe`. It must still be refused at startup when it is missing.
+- **The fan-out branch.** `src/PouryaKit.Messaging.Wolverine/SubscriptionDelivery.cs:22` reads the subscription from
+  `Destination.Host`. The branch for the Host's broker queue goes before that line.
+- **The startup check.** `src/PouryaKit.Messaging.Wolverine/StartupCheck.cs:29-42` checks only the local queues. It
+  should also require a durable Inbox on the broker listener.
+- **A wire name a Host both publishes and subscribes to** must not be bound to that Host's broker queue. Its local
+  routes already deliver it. Bound, it would come back from the broker and be delivered twice, and only the Receipt
+  would stop it. The fan-out's `PublishAsync` would also reach the exchange again, through the Host's own broker
+  route. This is inferred and was not tested.
+
+### Invariants for permanent tests
+
+All rows run against RabbitMQ and PostgreSQL in Testcontainers, with separate publishing and subscribing Hosts, as spec
+#33 asks.
+
+| Invariant | Seam | Owner |
+|---|---|---|
+| A publication whose only subscriptions are in another Host is written to the broker route in the Unit of Work's commit, and each remote subscription applies it once | Gateway | #51 |
+| A failing subscription is retried with the stored retry and dead-lettered at `local://{subscription}/`. Another subscription to the same wire name in that Host commits its effect and Receipt once, without waiting for it | Gateway | #51 |
+| A broker envelope handed out again, including after a kill between the fan-out and its handled mark, fans out again, and the Receipts keep each effect once | Gateway | #51 |
+| A delivery waiting for its retry survives a kill and restart of the subscribing Host, and a publication made while that Host is down is delivered after it starts | Gateway | #51 |
+| Two Hosts with different `WolverineOptions.ServiceName` values that subscribe to one wire name each receive every message | Gateway | #51 |
+| The store keeps `IdOnly`, and both Receipts of one message carry the Domain Event id across the broker and the fan-out | Gateway | #51 |
+| Every broker listener has a durable Inbox, and no broker dead-letter queue is declared | Gateway | #51 |
+
+### Considered option: A, one broker queue per subscription
+
+A was given its fair configuration: `IdAndDestination`, `DisableDeadLetterQueueing()`, a durable Inbox on every
+listener and an endpoint map from each subscription's queue. Under it, A kept every point above. It is rejected for
+two observed reasons:
+
+- it needs `IdAndDestination`, which changes the store's identity and keys. Under `IdOnly` it silently drops one
+  subscription's copy;
+- dead letters and the subscription lookup move to broker addresses, away from what Wave 1 built and tested.
+
+Queue naming is not a reason. With queues named `{ServiceName}.{subscription}`, A gives each Host every message, and B
+depends on a unique `ServiceName` in the same way.
+
+### Limitations
+
+- **A message published before any subscribing Host has declared its queue is lost** under either topology, because the
+  publishing Host only knows its exchange. A subscribing Host must be deployed, and its queue declared, before the first
+  publication it must receive. Another option would be for the publishing Host to publish with an alternate exchange, or
+  for queues to be provisioned outside the Hosts. Neither was tested. #51 decides which, and documents it.
+- **Same process, single node.** Both Hosts ran in one test process, each in Durability mode `Solo`. Several instances
+  of one Host sharing its broker queue and store (`Balanced`) were not run. The local queues behave as in Wave 1;
+  the broker queue would get competing receivers. Real separate processes are #51's proof.
+- **Not measured.** The cost of the extra stored envelope and the extra local hop was not measured. Operation Context
+  and Snapshot headers were copied by prefix but asserted only for the Domain Event id.
+- **Stand-ins.** The Spike's Receipt, Unit of Work and handler interfaces are stand-ins for the Kit's. Its Receipt step
+  matches `src/PouryaKit.Messaging.Wolverine/Deliver.cs`, but it has no Operation, dispatcher or nested commands.
