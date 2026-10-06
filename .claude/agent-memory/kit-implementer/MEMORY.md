@@ -23,3 +23,4 @@
 - [Shared JSON facts](shared-json-facts.md) — #34: getter-only ASP.NET JsonOptions, Wolverine STJ mutates options, reading a stored envelope body
 - [W3C propagation facts](w3c-propagation-facts.md) — #46: parent-id at publish, Wolverine span only when sampled, SampleUsingParentId trap, no retry link, spike layout
 - [Security and permission facts](security-permission-facts.md) — #38: fallback policy reaches unmatched paths, non-Module endpoint test, TestActor grant, rebase recount, validate.py timing
+- [Declared authorizer check facts](declared-authorizer-check-facts.md) — #56: why a Cqrs seam, build-time factory hook, keyed ImplementationType throws, Gateway proof
