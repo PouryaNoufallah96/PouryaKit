@@ -1,5 +1,6 @@
 {
   "packages": [
+    { "id": "PouryaKit.Core", "type": "PouryaKit.Core.ImplementingTypes" },
     { "id": "PouryaKit.Domain", "type": "PouryaKit.Domain.Result" },
     { "id": "PouryaKit.Cqrs", "type": "PouryaKit.Cqrs.IDispatcher" },
     { "id": "PouryaKit.Validation", "type": "PouryaKit.Validation.ValidationServiceCollectionExtensions" },

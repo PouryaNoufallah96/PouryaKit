@@ -231,8 +231,8 @@ Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its origi
 - `tests/` follows the three seams of spec #1's Testing Decisions, not one project per package:
   `ModularMonolith.Tests` (Gateway seam, the Proving Sample against PostgreSQL), `PouryaKit.Domain.Tests` (Domain seam)
   and `PouryaKit.ArchitectureTests` (Structure seam), plus `PouryaKit.Cqrs.Tests` (with its test Module
-  `PouryaKit.Cqrs.Tests.Module`) and `PouryaKit.Validation.Tests`, which run the dispatcher and the validation step
-  without a database.
+  `PouryaKit.Cqrs.Tests.Module`) and `PouryaKit.Validation.Tests`, which run the dispatcher and the validation step,
+  and `PouryaKit.Core.Tests`, which proves Core's three helpers (ticket #37), all without a database.
 - `PouryaKit.Persistence` (G.4), the thirteenth project, has no entry in the tree above and no row in the table
   below. It holds `IRepository` and `IUnitOfWorkConnection`, the seam through which a Module's plain-SQL write joins
   the Unit of Work (ticket #9), and references Domain and `Ardalis.Specification`. `PouryaKit.Persistence.EFCore`
@@ -243,6 +243,7 @@ Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its origi
 | Package | References | Third-party |
 |---|---|---|
 | Domain | — | none |
+| Core (I.3, ticket #37) | — | none; no Kit package references it |
 | Cqrs | Domain | `Microsoft.Extensions.DependencyInjection.Abstractions`, `Logging.Abstractions` |
 | Validation | Cqrs | FluentValidation |
 | Modularity | Cqrs | `Microsoft.Extensions.Hosting.Abstractions`, `Microsoft.Extensions.DependencyInjection` |
@@ -273,7 +274,7 @@ package may be referenced where a package needs it, and is added to this table i
 reference outside the table stays an owner decision.
 
 Checks against your rules: Dapper does not reference EF. Postgres does not reference Wolverine. Web
-does not reference Modularity. Nothing chooses an identity provider. There is no `Core`/`Utils`.
+does not reference Modularity. Nothing chooses an identity provider. `Core` exists since Wave 2 (#37) and is capped at three public types by an architecture test; there is no `Utils` (corrected 2026-10-07).
 Module `Contracts` projects reference nothing from the kit: public events are plain records.
 
 Notes on the choices:
