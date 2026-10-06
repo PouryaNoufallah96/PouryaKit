@@ -4,7 +4,7 @@
 
 model = "gpt-6-astra"
 model_reasoning_effort = "high"
-# Reviews stay on Astra even when a session is started on another model.
+# CLI review default; an explicit session model instruction overrides this routing choice.
 review_model = "gpt-6-astra"
 
 [agents]

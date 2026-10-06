@@ -2,7 +2,6 @@
 name: kit-implementer
 description: Bounded writer for one work package. Edits only the allowed files, implements then adds focused tests, runs the given verify commands and returns a report. Use for implementation, tests and fixes of accepted review findings.
 disallowedTools: Agent
-model: opus
 effort: high
 memory: project
 ---
