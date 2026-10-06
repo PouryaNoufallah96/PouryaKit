@@ -60,3 +60,17 @@ The third seam of the Testing Decisions is proven in `tests/PouryaKit.Architectu
 | Defects fail the shared path | Per-control logs show missing/extra artifacts, wrong version/commit, missing notices, forbidden references and invalid symbols rejected by the same package validator |
 
 This is package restore/build proof, alongside the existing PostgreSQL runtime suite above. It proves neither hosted publication nor private-feed recovery.
+
+## Phase 5 CI validation, ticket #26
+
+[CI guidance](ci.md) defines the read-only reusable workflow, preserved artifact contract and trusted-main handoff. The shared path replaces the former source-only build/test job and retains the AI configuration check.
+
+| Acceptance | Evidence and remaining gate |
+|---|---|
+| Build/test/pack/consumers share full-history Release output | Reusable workflow invokes the shared path with the actual `github.sha`; history tests prove credential-free checkout mode, shallow rejection and unchanged default tag fetching. Hosted history/version/runtime evidence is pending. |
+| Exact tested SHA and retained original artifacts | CI evidence tests exercise a real Git checkout, distinct PR head/base identity, successful receipts, SHA/checksum rejection and bounded packages/logs/assets without caches or configuration. |
+| Failed validation stays failed and preserves diagnostics | Workflow retains the shared command's failing step/job; the failure receipt test proves no successful version/manifest pointer. Deliberately failing hosted PR proof is pending. |
+| PR credentials and writes are isolated | Static YAML grants only `contents: read`, removes checkout credentials and forwards no secrets to the reusable job or shared command. Observed hosted effective permissions are pending. |
+| Same-repository and fork execution | Same-repository hosted success/failure/restored-success proof is pending. Real private fork execution remains unverified under the [owner exception](https://github.com/PouryaNoufallah96/PouryaKit/issues/26#issuecomment-6013184398); no access settings may change. |
+
+Local script tests and workflow lint are not hosted isolation proof. Publication must verify a successful trusted main run at the exact selected SHA; a PR receipt alone cannot authorize it.

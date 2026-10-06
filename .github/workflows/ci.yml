@@ -17,6 +17,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       # The check needs Python 3.11 or later (tomllib).
       - uses: actions/setup-python@v7
@@ -26,15 +28,6 @@ jobs:
       - run: python3 .agents/scripts/check-ai-setup.py
 
   build-and-test:
-    # ubuntu-latest ships Docker, which the Testcontainers tests of later tickets need.
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v7
-
-      # Installs the SDK band pinned in global.json.
-      - uses: actions/setup-dotnet@v6
-
-      - run: dotnet build PouryaKit.slnx
-
-      - run: dotnet test PouryaKit.slnx --no-build
+    permissions:
+      contents: read
+    uses: ./.github/workflows/package-validation.yml
