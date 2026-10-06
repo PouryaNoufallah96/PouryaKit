@@ -1,0 +1,25 @@
+.agents/skills/pourya-kit/references/publication.md
+  s_74540ce945d2e7::t_9ccca53512e0c4 13
+docs/acceptance.md
+  s_74540ce945d2e7::t_bf7f3e1aa63d9b 90
+docs/foundation-review.md
+  s_74540ce945d2e7::t_c4ccab8ce0df57 569
+docs/private-packages.md
+  s_74540ce945d2e7::t_694a1d737980c2 61,65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e93cae8165c408e1ae6ad7ac1036ce319fa42169",
+  "prompts": {},
+  "sessions": {
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
