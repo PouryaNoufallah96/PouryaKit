@@ -86,7 +86,7 @@ python3 .agents/skills/claudex-loop/scripts/runner.py inspect --host codex --bui
   --repo .claude/worktrees/kit-review-codex --plan /tmp/kit-ticket-42.md --base <base>
 ```
 
-**Step 4: fixes and re-scores.** Follow the review limits in `AGENTS.md`. Give accepted findings to `kit-implementer` as a new brief, then have `kit-reviewer` re-score them from fresh evidence.
+**Step 4: fixes and re-scores.** Follow the review limits and small-change exception in `AGENTS.md`; normal tickets use `kit-implementer` for fixes and `kit-reviewer` for re-scores from fresh evidence. Before fixing, fetch all currently available review threads, deduplicate and judge their findings, then give one combined brief and push the fixes together; handle material new findings when they arrive. One owner monitors required checks through completion; the main session judges that report instead of polling in parallel.
 
 Only after a high finding was fixed and committed, and only once per ticket, run `/kit-review` again with the same `base` and `ticket`, and `previous` set to the earlier result file:
 
