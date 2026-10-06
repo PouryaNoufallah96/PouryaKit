@@ -57,6 +57,7 @@ src/PouryaKit.Web/WebServiceCollectionExtensions.cs
   s_41c3eef9abbce4::t_ba393b9094f612 2
   s_41c3eef9abbce4::t_1687a1e1f2d3ba 44
   s_41c3eef9abbce4::t_4f5c3aba2cc6d3 42-43,45
+  s_41c3eef9abbce4::t_027c8e1886f119 20-24
 src/PouryaKit.Security/IActorPermissions.cs
   s_41c3eef9abbce4::t_0258df26bba813 1-14
 src/PouryaKit.Security/PermissionAuthorizer.cs
@@ -74,6 +75,7 @@ docs/foundation-review.md
   s_41c3eef9abbce4::t_2764f2f7d9fc63 243-244
   s_41c3eef9abbce4::t_2f08d48dbce078 171-172
   s_41c3eef9abbce4::t_6ed2dcd02e69f8 62,73-76
+  s_41c3eef9abbce4::t_2663085d36cb85 103
 samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs
   s_41c3eef9abbce4::t_d4b75823ea3073 17,33
 docs/architecture/README.md
@@ -84,6 +86,7 @@ docs/architecture/README.md
   s_41c3eef9abbce4::t_aeb2e5591a8349 226
   s_41c3eef9abbce4::t_f5489b5a490c94 243-255
   s_41c3eef9abbce4::t_00081e445fa6de 3,5,18-19
+  s_41c3eef9abbce4::t_2663085d36cb85 425
 docs/provenance/PouryaKit.Web.md
   s_41c3eef9abbce4::t_15b80422327c7b 53-67
 .agents/skills/pourya-kit/SKILL.md
