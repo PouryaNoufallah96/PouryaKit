@@ -1,0 +1,56 @@
+scripts/releases/preflight/sdk/ReferenceGuard.csproj
+  s_74540ce945d2e7::t_253a600b8c4616 1-12,16-20
+  s_74540ce945d2e7::t_78b1bfaa1808a1 13-15
+scripts/releases/preflight/sdk/Program.cs
+  s_74540ce945d2e7::t_253a600b8c4616 1-69
+scripts/releases/preflight/preflight.py
+  s_74540ce945d2e7::t_aaae03885bbdfd 193-194,234-235,290,309
+  s_74540ce945d2e7::t_253a600b8c4616 1-192,195-233,236-289,291-308,310-422
+tests/releases/preflight/test_preflight.py
+  s_74540ce945d2e7::t_aaae03885bbdfd 48,68,116,176-183,243-244
+  s_74540ce945d2e7::t_f7dec65c31b2aa 1-47,49-67,69-115,117-175,184-242,245-317
+docs/releases-preflight.md
+  s_74540ce945d2e7::t_c1fe31298fd45a 1-97
+tests/releases/preflight/red_once.py
+  s_74540ce945d2e7::t_c1fe31298fd45a 40-42,61-62
+  s_74540ce945d2e7::t_5c3ac19ce1709f 1-31,34-39,43-60
+  s_74540ce945d2e7::t_aaae03885bbdfd 32-33
+.agents/skills/pourya-kit/references/release-preflight.md
+  s_74540ce945d2e7::t_c1fe31298fd45a 1-11
+.agents/skills/pourya-kit/SKILL.md
+  s_267a74058ffe1f::t_130f711e6b7607 36
+scripts/releases/preflight/sdk/Compare.proj
+  s_5c8b5f01cb25bc::t_d64ffce03780e4 1-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c3cff62bcfb7e2e91ca76b2ccca57ff52219fa62",
+  "prompts": {},
+  "sessions": {
+    "s_267a74058ffe1f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a110a6-cd17-7423-8630-b5adc333e3ca",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_5c8b5f01cb25bc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a110a6-5af3-7d11-8b78-164d4e513726",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
