@@ -1,0 +1,71 @@
+Directory.Packages.props
+  s_41c3eef9abbce4::t_a6ea3a0f2e6d6d 20,27
+src/PouryaKit.Web/PouryaKitTrustedPeerOptions.cs
+  s_41c3eef9abbce4::t_713b14d2a0e3a7 1-17
+tests/ModularMonolith.Tests/OutgoingHttpTests.cs
+  s_41c3eef9abbce4::t_380f7aea8c2ca0 108-115,118-125,127-146
+  s_41c3eef9abbce4::t_f3488e0acf43b0 241-245,248
+  s_41c3eef9abbce4::t_f464ef9eba5df0 126
+  s_41c3eef9abbce4::t_19e8d5186872c5 1-2,4-107,147-240,246-247,249-261
+  s_41c3eef9abbce4::t_b90a0fa59e1e0b 116-117
+  s_41c3eef9abbce4::t_f9d87e83641f9b 3
+src/PouryaKit.Web/OperationContextHttpHeaders.cs
+  s_41c3eef9abbce4::t_9cac45af82a627 1-8,11-70
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_41c3eef9abbce4::t_a6ea3a0f2e6d6d 8
+tests/ModularMonolith.Tests/Stub/StubRelayEndpoint.cs
+  s_41c3eef9abbce4::t_0d5a9f177749e7 1-27
+docs/acceptance.md
+  s_41c3eef9abbce4::t_128cdee9450524 148,163-178
+tests/ModularMonolith.Tests/AppFixture.cs
+  s_41c3eef9abbce4::t_c6bab998d12507 51-56
+  s_41c3eef9abbce4::t_bfdf5ba1836e17 25-28,32-34
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_41c3eef9abbce4::t_e8cfd7d87ae307 66-67
+src/PouryaKit.Web/HttpReplay.cs
+  s_41c3eef9abbce4::t_86341ba236b713 1-17
+src/PouryaKit.Web/PouryaKit.Web.csproj
+  s_41c3eef9abbce4::t_a6ea3a0f2e6d6d 6-7
+  s_41c3eef9abbce4::t_ce01dfb8fd0df2 5
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_41c3eef9abbce4::t_e8cfd7d87ae307 53-55
+  s_41c3eef9abbce4::t_bf5825cf8a4347 52
+src/PouryaKit.Web/OperationContextHttpHandler.cs
+  s_41c3eef9abbce4::t_df38ec19bc6746 1-35
+tests/ModularMonolith.Tests/TrustedPeerTests.cs
+  s_41c3eef9abbce4::t_24f05c42ab8a50 1-108
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_1b5f64654e9187 60,141,432-433,440,442-443,487
+docs/adr/0007-operation-context-set-by-the-scope-opener.md
+  s_41c3eef9abbce4::t_c1cc08a952dc6e 124-126
+  s_41c3eef9abbce4::t_374394e4ece524 94-111,115-123
+src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs
+  s_41c3eef9abbce4::t_7a3305f7705de0 20-23,30,34,64,79,84-89,91,110-116
+  s_41c3eef9abbce4::t_6ba5a78fc3cbbc 117-118
+tests/ModularMonolith.Tests/SeenContext.cs
+  s_41c3eef9abbce4::t_e888b83b394e32 1-8
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_41c3eef9abbce4::t_0170653a183903 16-18,28-32
+  s_41c3eef9abbce4::t_dc1bb96a2fdd11 33-35
+.agents/skills/pourya-kit/references/web.md
+  s_41c3eef9abbce4::t_4785d396ba8bea 10,68-69,77-82,182,188-193,195,202,206-227,295
+  s_41c3eef9abbce4::t_c2874193ea45a0 194,196-201,203-205
+src/PouryaKit.Web/WebHttpClientBuilderExtensions.cs
+  s_41c3eef9abbce4::t_2cda75108ef23f 1-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f12499e447712ed20737c1139c17e41f80a35d6b",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
