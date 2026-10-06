@@ -1,0 +1,19 @@
+README.md
+  s_5c8b5f01cb25bc::t_3b55c0bb696978 3-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1adba0fc2f49ef5b8a1b164133ab84506e6a0cd7",
+  "prompts": {},
+  "sessions": {
+    "s_5c8b5f01cb25bc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a110a6-5af3-7d11-8b78-164d4e513726",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
