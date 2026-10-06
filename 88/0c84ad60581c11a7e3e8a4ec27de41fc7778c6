@@ -1,0 +1,35 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_74540ce945d2e7::t_fc9632429045df 37
+.agents/skills/pourya-kit/references/release-preflight.md
+  s_74540ce945d2e7::t_fb369e06947be4 1-11
+docs/releases-preflight.md
+  s_74540ce945d2e7::t_1382fa3063b9fc 1-97
+scripts/releases/preflight/preflight.py
+  s_74540ce945d2e7::t_8ea0e328a4cd06 1-443
+scripts/releases/preflight/sdk/Compare.proj
+  s_74540ce945d2e7::t_a0c57b1d7aedd8 1-20
+scripts/releases/preflight/sdk/Program.cs
+  s_74540ce945d2e7::t_d5c9694f6761df 1-69
+scripts/releases/preflight/sdk/ReferenceGuard.csproj
+  s_74540ce945d2e7::t_002454ee873383 1-20
+tests/releases/preflight/red_once.py
+  s_74540ce945d2e7::t_e16f1e2db17b5f 1-62
+tests/releases/preflight/test_preflight.py
+  s_74540ce945d2e7::t_14e0927d41e0c8 1-347
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "880c84ad60581c11a7e3e8a4ec27de41fc7778c6",
+  "prompts": {},
+  "sessions": {
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
