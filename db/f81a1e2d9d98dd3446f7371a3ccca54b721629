@@ -1,0 +1,44 @@
+docs/packages.md
+  s_74540ce945d2e7::t_001b85d8c57631 11-12
+scripts/ci/evidence.py
+  s_74540ce945d2e7::t_870b2ca64201eb 1-119
+docs/architecture/README.md
+  s_74540ce945d2e7::t_001b85d8c57631 15-16,21,24-25,32
+.github/workflows/ci.yml
+  s_74540ce945d2e7::t_870b2ca64201eb 20-21,31-33
+scripts/packaging/test_validation.py
+  s_74540ce945d2e7::t_6d990a6b35293a 6-8,10-14,33-50,53-56
+  s_74540ce945d2e7::t_d81a4bf2e334c2 51-52
+  s_74540ce945d2e7::t_64b3d7cc2c0673 15-32
+scripts/ci/test_evidence.py
+  s_74540ce945d2e7::t_6d990a6b35293a 1-117
+.agents/skills/pourya-kit/references/packages.md
+  s_74540ce945d2e7::t_001b85d8c57631 9-11
+docs/acceptance.md
+  s_74540ce945d2e7::t_001b85d8c57631 63-76
+.github/workflows/package-validation.yml
+  s_74540ce945d2e7::t_f24a37a5cc0cb6 52-56
+  s_74540ce945d2e7::t_870b2ca64201eb 1-51,57-90
+docs/ci.md
+  s_74540ce945d2e7::t_001b85d8c57631 1-43
+scripts/packaging/validate.py
+  s_74540ce945d2e7::t_2bc3befc2691c1 271-286,293,357,361
+README.md
+  s_74540ce945d2e7::t_001b85d8c57631 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dbf81a1e2d9d98dd3446f7371a3ccca54b721629",
+  "prompts": {},
+  "sessions": {
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
