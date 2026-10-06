@@ -1,0 +1,41 @@
+.agents/skills/pourya-kit/references/packages.md
+  s_74540ce945d2e7::t_6d5fb61b354687 9
+.claude/agents/kit-implementer.md
+  s_74540ce945d2e7::t_f2140f804e1d70 13,18-19
+.codex/agents/kit-implementer.toml
+  s_74540ce945d2e7::t_165e6282c297c6 11,16-17
+.github/workflows/ci.yml
+  s_74540ce945d2e7::t_8a9cf18c81ab64 5-6
+AGENTS.md
+  s_74540ce945d2e7::t_01bdc8aa05a363 26,31
+README.md
+  s_74540ce945d2e7::t_ca07f7efa2d9da 7
+docs/agents/ai-setup.md
+  s_74540ce945d2e7::t_36189c1441b637 47,49
+docs/agents/running-a-spec.md
+  s_74540ce945d2e7::t_9a0c2c5e2788d0 11
+docs/architecture/README.md
+  s_74540ce945d2e7::t_583b2cf8eb9f90 15,39
+docs/ci.md
+  s_74540ce945d2e7::t_1563925a9f0934 3-5
+docs/foundation-review.md
+  s_74540ce945d2e7::t_675f8d986d9a24 562
+docs/private-packages.md
+  s_74540ce945d2e7::t_1557827777b4a1 11,16-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5c1810523a8da970f659ccdaabeacf5361d32651",
+  "prompts": {},
+  "sessions": {
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
