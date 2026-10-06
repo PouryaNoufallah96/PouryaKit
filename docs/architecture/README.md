@@ -12,20 +12,24 @@ Thirteen packages and their references no longer read as one diagram, so the C4 
 C4Container
     title PouryaKit package validation, container level
     Person(maintainer, "Maintainer", "Validates one source commit")
-    System_Boundary(validation, "Local package validation") {
+    Container_Ext(ci, "CI validation", "GitHub Actions, read-only repository token", "Full-history push/PR checkout; token removed before the shared path")
+    System_Boundary(validation, "Shared package validation") {
         Container(path, "Shared validation path", "Python, .NET SDK and MinVer", "One Release build, existing tests, no-build pack and artifact checks")
         ContainerDb(artifacts, "Verified package set", "Thirteen nupkgs and checksum manifest", "One MinVer version and source commit, MIT, notices and SourceLink")
         Container(consumers, "Clean consumers", ".NET 10, isolated NuGet caches", "Thirteen individual packages, single Module and copied Proving Sample")
     }
+    ContainerDb_Ext(evidence, "Retained CI evidence", "GitHub Actions artifact", "Tested SHA/result, original packages/manifest, logs and consumer assets; no caches")
     ContainerDb_Ext(postgresql, "PostgreSQL", "Testcontainers", "Existing Proving Sample runtime proof")
     Rel(maintainer, path, "runs")
+    Rel(ci, path, "runs at the actual checked-out SHA without forwarding credentials")
+    Rel(ci, evidence, "retains bounded success/failure evidence for 90 days")
     Rel(path, postgresql, "tests the shared Release output against")
     Rel(path, artifacts, "packs and checks")
     Rel(consumers, artifacts, "restores Kit dependencies exclusively from")
     Rel(path, consumers, "builds and checks dependency closures of")
 ```
 
-The artifact and consumer checks reuse `PackageGraph` and the license policy of the Structure seam. This view describes local validation. Private publishing and named-release recovery are later Phase 5 work.
+The artifact and consumer checks reuse `PackageGraph` and the license policy of the Structure seam. [CI](../ci.md) invokes the same path and distinguishes a PR's tested merge revision from its head SHA. Hosted proof is pending, with real private fork execution explicitly unverified under the owner exception. Private publishing and named-release recovery are later Phase 5 work.
 
 ### Execution core
 

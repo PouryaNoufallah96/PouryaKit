@@ -268,17 +268,29 @@ def artifact_controls(evidence, output):
     print(f"PASS negative control forbidden-transitive: {result.splitlines()[0]}", flush=True)
 
 
-def validate(output):
+def prepare_history(output, *, fetch=True):
+    shallow = run(["git", "-C", ROOT, "rev-parse", "--is-shallow-repository"]).strip() == "true"
+    if not fetch and shallow:
+        raise ValueError("--no-fetch requires full history and tags from the authenticated checkout.")
+    if fetch:
+        if shallow:
+            run(["git", "-C", ROOT, "fetch", "--unshallow", "origin"], log=output / "history.log")
+        run(["git", "-C", ROOT, "fetch", "origin", "--tags"], log=output / "tags.log")
+    history = {"mode": "fetch" if fetch else "checkout", "shallow": False,
+               "commit": run(["git", "-C", ROOT, "rev-parse", "HEAD"]).strip(),
+               "tags": run(["git", "-C", ROOT, "tag", "--list"]).splitlines()}
+    (output / "history.json").write_text(json.dumps(history, indent=2) + "\n")
+    return history["commit"]
+
+
+def validate(output, *, fetch=True):
     output.mkdir(parents=True, exist_ok=True)
     print(f"Evidence directory: {output}", flush=True)
     if output.is_relative_to(ROOT):
         raise ValueError("Use an evidence directory outside the checkout, so consumers cannot inherit its build settings.")
     if run(["git", "-C", ROOT, "status", "--porcelain"]).strip():
         raise ValueError("Validate a clean committed checkout so artifacts identify the tested source commit.")
-    if run(["git", "-C", ROOT, "rev-parse", "--is-shallow-repository"]).strip() == "true":
-        run(["git", "-C", ROOT, "fetch", "--unshallow", "origin"], log=output / "history.log")
-    run(["git", "-C", ROOT, "fetch", "origin", "--tags"], log=output / "tags.log")
-    commit = run(["git", "-C", ROOT, "rev-parse", "HEAD"]).strip()
+    commit = prepare_history(output, fetch=fetch)
     inventory = json.loads((ROOT / "scripts/packaging/inventory.json").read_text())
     packages = inventory["packages"]
     ids = [package["id"] for package in packages]
@@ -342,10 +354,11 @@ def validate(output):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, help="New evidence directory outside the checkout. Default: system temp.")
+    parser.add_argument("--no-fetch", action="store_true", help="Use full history and tags already fetched by CI checkout; reject shallow history.")
     arguments = parser.parse_args()
     output = arguments.output.resolve() if arguments.output else Path(tempfile.mkdtemp(prefix="pouryakit-packages-"))
     try:
-        validate(output)
+        validate(output, fetch=not arguments.no_fetch)
     except (RuntimeError, ValueError, OSError, KeyError) as error:
         print(f"FAIL: {error}", flush=True)
         return 1

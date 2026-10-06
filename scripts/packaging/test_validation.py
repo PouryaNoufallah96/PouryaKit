@@ -3,8 +3,57 @@ import unittest
 from pathlib import Path
 import tempfile
 import os
+import json
+import subprocess
+from unittest.mock import patch
 
-from validate import check_inventory, check_cache_folders, check_consumer, isolated_env
+import validate
+from validate import check_inventory, check_cache_folders, check_consumer, isolated_env, prepare_history
+
+
+class HistoryTests(unittest.TestCase):
+    def test_default_mode_fetches_remote_tags(self):
+        with tempfile.TemporaryDirectory() as folder:
+            origin = Path(folder) / "origin"
+            root = Path(folder) / "repo"
+            output = Path(folder) / "evidence"
+            output.mkdir()
+            subprocess.run(["git", "init", "-q", str(origin)], check=True)
+            subprocess.run(["git", "-C", str(origin), "-c", "user.name=Proof", "-c", "user.email=proof@example.invalid",
+                            "commit", "-q", "--allow-empty", "-m", "fixture"], check=True)
+            subprocess.run(["git", "-c", "core.hooksPath=/dev/null", "clone", "-q", "--bare", str(origin), str(root)], check=True)
+            subprocess.run(["git", "-C", str(origin), "tag", "v0.1.0-rc.2"], check=True)
+            with patch.object(validate, "ROOT", root):
+                prepare_history(output)
+            document = json.loads((output / "history.json").read_text())
+            self.assertEqual("fetch", document["mode"])
+            self.assertEqual(["v0.1.0-rc.2"], document["tags"])
+            self.assertTrue((output / "tags.log").is_file())
+
+    def test_checkout_mode_uses_existing_history_and_tags_without_origin_credentials(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder) / "repo"
+            root.mkdir()
+            output = Path(folder) / "evidence"
+            output.mkdir()
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            subprocess.run(["git", "-C", str(root), "-c", "user.name=Proof", "-c", "user.email=proof@example.invalid",
+                            "commit", "-q", "--allow-empty", "-m", "fixture"], check=True)
+            subprocess.run(["git", "-C", str(root), "tag", "v0.1.0-rc.1"], check=True)
+            with patch.object(validate, "ROOT", root):
+                commit = prepare_history(output, fetch=False)
+            document = json.loads((output / "history.json").read_text())
+            self.assertEqual({"mode": "checkout", "shallow": False, "commit": commit, "tags": ["v0.1.0-rc.1"]}, document)
+
+    def test_checkout_mode_rejects_shallow_history(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder) / "repo"
+            subprocess.run(["git", "-c", "core.hooksPath=/dev/null", "clone", "-q", "--bare", "--depth=1",
+                            validate.ROOT.as_uri(), str(root)], check=True)
+            with patch.object(validate, "ROOT", root):
+                with self.assertRaisesRegex(ValueError, "requires full history"):
+                    prepare_history(Path(folder), fetch=False)
+            self.assertFalse((Path(folder) / "history.json").exists())
 
 
 class InventoryTests(unittest.TestCase):

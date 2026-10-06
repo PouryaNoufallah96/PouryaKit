@@ -8,6 +8,8 @@ python3 scripts/packaging/validate.py
 
 To preserve evidence at a chosen location, pass `--output /absolute/path/to/new-evidence-directory`. Use a fresh directory outside the checkout. The default is a new system temporary directory. The command fetches origin's tags, completes shallow history, evaluates packability, builds Release once with `ContinuousIntegrationBuild=true`, runs the existing tests with `--no-build`, and packs that output with `--no-build`. A failure stops the path before a manifest is written. The command never publishes packages or creates a tag in the Kit repository.
 
+CI passes `--no-fetch` after authenticated checkout has fetched full history and tags and removed its credentials. This option rejects shallow repositories and uses the checkout's history without network Git access. `history.json` records fetch mode, source SHA and available tags. Use it only when the caller has already fetched the complete history and tags; see [CI guidance](ci.md).
+
 ## The package set
 
 [`scripts/packaging/inventory.json`](../scripts/packaging/inventory.json) is the explicit inventory of all thirteen Wave 1 package IDs. The validator evaluates every source, test and sample project against it. Missing projects, extra packable projects, mismatched IDs, duplicate or empty inventory entries and disabled package validation fail. Tests and samples are non-packable by default; the Kit's thirteen source projects are packable.

@@ -1,0 +1,90 @@
+name: Package validation
+
+on:
+  workflow_call:
+    outputs:
+      tested_sha:
+        description: Actual checkout SHA validated by the shared package path
+        value: ${{ jobs.validate.outputs.tested_sha }}
+      version:
+        description: Shared MinVer package version
+        value: ${{ jobs.validate.outputs.version }}
+      validation_result:
+        description: Shared validation result; callers must also require job success
+        value: ${{ jobs.validate.outputs.validation_result }}
+      artifact_id:
+        description: Immutable artifact ID for this run attempt
+        value: ${{ jobs.validate.outputs.artifact_id }}
+      artifact_name:
+        description: Artifact name for this run attempt
+        value: ${{ jobs.validate.outputs.artifact_name }}
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    outputs:
+      tested_sha: ${{ steps.evidence.outputs.tested_sha }}
+      version: ${{ steps.evidence.outputs.version }}
+      validation_result: ${{ steps.evidence.outputs.validation_result }}
+      artifact_id: ${{ steps.artifact.outputs.artifact-id }}
+      artifact_name: package-validation-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      # Authenticate only checkout. The shared path receives no token and makes no network Git fetch.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-dotnet@v6
+
+      - name: Check CI evidence and history boundaries
+        run: |
+          python3 -m unittest discover -s scripts/ci -p 'test_*.py'
+          python3 -m unittest discover -s scripts/packaging -p 'test_*.py'
+
+      - name: Prepare evidence directory and record checkout
+        id: checkout
+        shell: bash
+        run: |
+          evidence_dir=$(mktemp -d "$RUNNER_TEMP/package-validation.XXXXXX")
+          echo "directory=$evidence_dir" >> "$GITHUB_OUTPUT"
+          python3 scripts/ci/evidence.py revision --output "$evidence_dir"
+
+      - name: Validate Release packages and consumers
+        id: packages
+        env:
+          EVIDENCE_DIR: ${{ steps.checkout.outputs.directory }}
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 scripts/packaging/validate.py --no-fetch --output "$EVIDENCE_DIR" 2>&1 | tee "$EVIDENCE_DIR/validation.log"
+
+      - name: Collect validation receipt and bounded artifacts
+        id: evidence
+        if: ${{ always() && steps.checkout.outcome == 'success' }}
+        env:
+          EVIDENCE_DIR: ${{ steps.checkout.outputs.directory }}
+          VALIDATION_RESULT: ${{ steps.packages.outcome }}
+        run: python3 scripts/ci/evidence.py collect --output "$EVIDENCE_DIR" --result "$VALIDATION_RESULT"
+
+      - name: Preserve packages and diagnostics
+        id: artifact
+        if: ${{ always() && steps.evidence.outcome == 'success' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: package-validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.checkout.outputs.directory }}/artifact/
+          if-no-files-found: error
+          retention-days: 90
