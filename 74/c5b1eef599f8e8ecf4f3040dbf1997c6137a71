@@ -16,6 +16,7 @@ src/PouryaKit.Security/PasswordHashingServiceCollectionExtensions.cs
 docs/acceptance.md
   s_41c3eef9abbce4::t_1ed5af2575a50a 137,148-153,161
   s_41c3eef9abbce4::t_aa609e216752f3 154-160
+  s_41c3eef9abbce4::t_3475f62fbddecf 147
 .agents/skills/pourya-kit/references/security.md
   s_41c3eef9abbce4::t_1c72dd7d28e692 140,174
   s_41c3eef9abbce4::t_3996d95462c3ca 3,10,104-115,117,124,126-127,129-138,141-173
@@ -25,6 +26,8 @@ src/PouryaKit.Security/Pbkdf2PasswordHasher.cs
   s_41c3eef9abbce4::t_0884af539c24d7 83
 src/PouryaKit.Security/PasswordHashingOptions.cs
   s_41c3eef9abbce4::t_2ab49a3f98dd5e 1-22
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_3475f62fbddecf 841
 ---
 {
   "schema_version": "authorship/3.0.0",
