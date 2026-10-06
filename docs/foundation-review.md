@@ -243,6 +243,7 @@ Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its origi
 | Package | References | Third-party |
 |---|---|---|
 | Domain | — | none |
+| Core (I.3, ticket #37) | — | none; no Kit package references it |
 | Cqrs | Domain | `Microsoft.Extensions.DependencyInjection.Abstractions`, `Logging.Abstractions` |
 | Validation | Cqrs | FluentValidation |
 | Modularity | Cqrs | `Microsoft.Extensions.Hosting.Abstractions`, `Microsoft.Extensions.DependencyInjection` |

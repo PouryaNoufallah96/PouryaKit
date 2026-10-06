@@ -15,6 +15,7 @@ internal static class PackageGraph
     // aggregates of Domain.
     private static readonly Dictionary<string, Allowed> Table = new()
     {
+        ["PouryaKit.Core"] = new([], []),
         ["PouryaKit.Domain"] = new([], []),
         ["PouryaKit.Cqrs"] = new(
             ["PouryaKit.Domain"],
@@ -62,8 +63,8 @@ internal static class PackageGraph
         ["PouryaKit.Messaging.Wolverine"] = ["Microsoft.EntityFrameworkCore", "Npgsql", "WolverineFx.RDBMS", "WolverineFx.Postgresql", "Weasel"],
     };
 
-    // Domain, and Messaging (Domain only), bring no package at all.
-    private static readonly HashSet<string> NoPackages = ["PouryaKit.Domain", "PouryaKit.Messaging"];
+    // Core and Domain, and Messaging (Domain only), bring no package at all.
+    private static readonly HashSet<string> NoPackages = ["PouryaKit.Core", "PouryaKit.Domain", "PouryaKit.Messaging"];
 
     public static IEnumerable<string> Violations(RestoredPackage package)
     {
