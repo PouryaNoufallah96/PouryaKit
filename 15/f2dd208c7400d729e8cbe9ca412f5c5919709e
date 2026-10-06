@@ -1,0 +1,41 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_74540ce945d2e7::t_6d3fe6c6f22d7d 37
+.agents/skills/pourya-kit/references/packages.md
+  s_74540ce945d2e7::t_98140c08fb6a8e 11
+.agents/skills/pourya-kit/references/publication.md
+  s_74540ce945d2e7::t_2a5bab4b1d673a 11
+.agents/skills/pourya-kit/references/release-preflight.md
+  s_74540ce945d2e7::t_e628dc8390f2c3 1,3
+README.md
+  s_74540ce945d2e7::t_afeba51cbcc893 7
+docs/acceptance.md
+  s_74540ce945d2e7::t_5bbff15b773834 87,90
+docs/architecture/README.md
+  s_74540ce945d2e7::t_4431e2ee97a984 39
+docs/ci.md
+  s_74540ce945d2e7::t_cb72f0ffa19da4 3,41-42
+docs/foundation-review.md
+  s_74540ce945d2e7::t_897bc235f427eb 554,582,584,819,982-983
+docs/packages.md
+  s_74540ce945d2e7::t_9e8ba9c2b8b3a1 19,45,49
+docs/private-packages.md
+  s_74540ce945d2e7::t_67595ffd2719d4 3,63-66
+docs/releases-preflight.md
+  s_74540ce945d2e7::t_129372bb23a41c 1,3,7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "15f2dd208c7400d729e8cbe9ca412f5c5919709e",
+  "prompts": {},
+  "sessions": {
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
