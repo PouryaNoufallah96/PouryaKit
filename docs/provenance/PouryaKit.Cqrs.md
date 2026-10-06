@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Cqrs`. Format and rules: [README](README.md).
 
-The dispatcher, its fixed pipeline, `Operation` and `IUnitOfWork` are new Kit code (plan section B.2, "Dispatcher + pipeline"; ADR 0002), and so are `OperationContext` and `Actor` (plan section B.2, "Background context"; ADR 0007), so they have no record here. So are the steps that only read (`Operation.OnlyReading`, ticket #18), which the Kit opens around a Snapshot mapper.
+The dispatcher, its fixed pipeline, `Operation` and `IUnitOfWork` are new Kit code (plan section B.2, "Dispatcher + pipeline"; ADR 0002), and so are `OperationContext` and `Actor` (plan section B.2, "Background context"; ADR 0007), so they have no record here. The steps that only read (`Operation.OnlyReading`, ticket #18) and their persistence seam (`IReadingStateGuard`) are new Kit code too.
 
 ## Package dependencies
 

@@ -8,6 +8,8 @@ Persistence preparation (`PersistencePreparation`, `PouryaKitModelConvention`) a
 
 The Outbox seam of the commit sequence's step 5 (`IUnitOfWorkOutbox`, called by `EfUnitOfWork`) and the accessor to the Unit of Work's DbContext for Kit packages (`EfUnitOfWorkExtensions`), ticket #15, are new Kit code too; `PouryaKit.Messaging.Wolverine.EFCore` implements the seam, and its record holds what was taken from Spike S1. Ticket #18 passes the aggregates the prepare step advanced through the same seam, so the Outbox builds their Snapshots, step 4, from that one set.
 
+The tracked-state comparison (`TrackedState`), shared by the EF Unit of Work's reading guard and `SnapshotStep`, is new Kit code too. It compares mapped values recursively through EF's value comparers.
+
 ## Package dependencies
 
 Checked on nuget.org on 2026-10-05; licence expressions from each package's nuspec. Neither is reciprocal or commercial (ADR 0002).

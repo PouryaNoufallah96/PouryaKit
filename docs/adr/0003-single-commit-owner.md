@@ -25,11 +25,20 @@ code now depend on.
   Database cascades may still delete unloaded dependents during the save
   (`PersistencePreparationTests.Removing_an_aggregate_resolves_its_cascades_before_the_save_so_the_save_changes_nothing_further`).
 - **Code that only reads.** `Operation.MayChangeState` is false in a query, an authorizer or a validator at any depth,
-  and inside a step opened with the public `Operation.OnlyReading(step)`, which the Kit opens around each Snapshot
-  mapper. There a nested command throws, and so do `IUnitOfWorkConnection.Join()` and the repository's `AddAsync` and
-  `Remove`: a write there would escape the Operation's outcome, since a failed query marks nothing
+  and inside an `Operation.OnlyReading` step. Each Snapshot mapper runs in such a step.
+  There a nested command throws, and so do `IUnitOfWorkConnection.Join()` and the repository's `AddAsync` and
+  `Remove`: a write there would escape the Operation's outcome, since a failed query Result alone marks nothing
   (`ReadingStepTests`, `DapperTests.A_query_cannot_join_the_unit_of_work_connection`,
   `RepositoryTests.A_query_sent_from_a_command_cannot_add_an_aggregate_through_the_repository`).
+  The EF Unit of Work also guards direct changes to tracked objects when a query, authorization and validation step,
+  or default `OnlyReading(step)` ends, including failed Results and exceptions. It compares against current pending
+  command state and captures newly loaded entities when they begin tracking. The shared comparer checks values,
+  states, tracked membership, complex collections, and pending
+  Domain Event identity and order. A difference marks the Operation rollback-only before throwing, so an outer handler
+  cannot catch the exception and commit the mutation (`ReadOnlyStateTests`). Snapshot mapper scopes keep the write
+  guards but defer tracked-state comparison to one check after the whole batch. A difference then throws during commit
+  and rolls back the transaction. Changes restored before the relevant boundary or batch ends are outside this
+  comparison's guarantee.
 - **The drain** is the public `DomainEventDrain` in `PouryaKit.Cqrs`, which any `IUnitOfWork` calls. It runs at most
   `DomainEventDrain.MaxDepth` (10) rounds and throws when Domain Events remain, since a cycle of reactions is a bug.
   The handlers of one Domain Event run one at a time in the ordinal order of their full type names, so renaming a

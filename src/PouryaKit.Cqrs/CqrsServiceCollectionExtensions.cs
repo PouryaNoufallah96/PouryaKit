@@ -29,7 +29,8 @@ public static class CqrsServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(featureAssemblies);
 
-            services.TryAddScoped<Operation>();
+            services.TryAddScoped(provider => new Operation(() => provider.GetService<IReadingStateGuard>()));
+            services.TryAddScoped<IReadingStateGuard>(provider => (provider.GetService<IUnitOfWork>() as IReadingStateGuard)!);
             services.TryAddScoped(OperationContextServiceProviderExtensions.Read);
             services.TryAddScoped<IDispatcher, Dispatcher>();
             services.TryAddSingleton(TimeProvider.System);

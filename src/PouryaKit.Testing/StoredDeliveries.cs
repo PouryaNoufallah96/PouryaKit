@@ -12,6 +12,7 @@ internal sealed class StoredDeliveries(
 )
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(25);
+    private readonly string quotedSchema = $"\"{schema.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
 
     /// <summary>The tables the message store creates for itself, as it names them.</summary>
     public IReadOnlyList<(string Schema, string Name)> StoreTables => storeTables;
@@ -20,7 +21,7 @@ internal sealed class StoredDeliveries(
         [
             .. (
                 await RowsAsync(
-                    $"select id from {schema}.wolverine_incoming_envelopes union select id from {schema}.wolverine_dead_letters",
+                    $"select id from {quotedSchema}.wolverine_incoming_envelopes union select id from {quotedSchema}.wolverine_dead_letters",
                     cancellationToken
                 )
             ).Select(row => (Guid)row[0]),
@@ -31,9 +32,9 @@ internal sealed class StoredDeliveries(
             .. (
                 await RowsAsync(
                     $"""
-                    select id, received_at, message_type, false from {schema}.wolverine_incoming_envelopes
+                    select id, received_at, message_type, false from {quotedSchema}.wolverine_incoming_envelopes
                     union all
-                    select id, received_at, message_type, true from {schema}.wolverine_dead_letters
+                    select id, received_at, message_type, true from {quotedSchema}.wolverine_dead_letters
                     order by 1
                     """,
                     cancellationToken
@@ -67,14 +68,14 @@ internal sealed class StoredDeliveries(
 
     public async Task DeleteAllAsync(CancellationToken cancellationToken) =>
         await RowsAsync(
-            $"delete from {schema}.wolverine_incoming_envelopes; delete from {schema}.wolverine_outgoing_envelopes; delete from {schema}.wolverine_dead_letters",
+            $"delete from {quotedSchema}.wolverine_incoming_envelopes; delete from {quotedSchema}.wolverine_outgoing_envelopes; delete from {quotedSchema}.wolverine_dead_letters",
             cancellationToken
         );
 
     private async Task<long> PendingAsync(CancellationToken cancellationToken) =>
         (long)(
             await RowsAsync(
-                $"select (select count(*) from {schema}.wolverine_incoming_envelopes where status <> 'Handled') + (select count(*) from {schema}.wolverine_outgoing_envelopes) + (select count(*) from {schema}.wolverine_dead_letters where replayable)",
+                $"select (select count(*) from {quotedSchema}.wolverine_incoming_envelopes where status <> 'Handled') + (select count(*) from {quotedSchema}.wolverine_outgoing_envelopes) + (select count(*) from {quotedSchema}.wolverine_dead_letters where replayable)",
                 cancellationToken
             )
         )[0][0];

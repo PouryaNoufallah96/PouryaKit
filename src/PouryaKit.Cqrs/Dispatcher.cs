@@ -68,7 +68,7 @@ internal sealed partial class Dispatcher(
 
     // Failure tracking wraps the whole pipeline, outside every step that can short-circuit, so a command that fails
     // anywhere (authorization, validation, its handler, or an exception) marks the Operation rollback-only even when
-    // the handler that sent it ignores the Result. A failed query marks nothing: it has no effect to undo.
+    // the handler that sent it ignores the Result. A failed query that left tracked state unchanged marks nothing.
     private async Task<TResult> Run<TCommandOrQuery, TResult>(
         TCommandOrQuery commandOrQuery,
         bool isCommand,
@@ -84,18 +84,19 @@ internal sealed partial class Dispatcher(
         try
         {
             var ownsUnitOfWork = false;
+            IDisposable? reading = null;
             if (isCommand)
             {
                 ownsUnitOfWork = operation.EnterCommand();
             }
             else
             {
-                operation.EnterQuery();
+                reading = operation.EnterQuery();
             }
 
             try
             {
-                var result = await Pipeline(commandOrQuery, ownsUnitOfWork, handle, fail, cancellationToken);
+                var result = await Pipeline(commandOrQuery, ownsUnitOfWork, reading, handle, fail, cancellationToken);
                 if (isCommand && result.IsFailure)
                 {
                     operation.MarkRollbackOnly(result.Errors);
@@ -111,7 +112,7 @@ internal sealed partial class Dispatcher(
                 }
                 else
                 {
-                    operation.ExitQuery();
+                    reading!.Dispose();
                 }
             }
         }
@@ -126,6 +127,7 @@ internal sealed partial class Dispatcher(
     private async Task<TResult> Pipeline<TCommandOrQuery, TResult>(
         TCommandOrQuery commandOrQuery,
         bool ownsUnitOfWork,
+        IDisposable? reading,
         Func<IServiceProvider, TCommandOrQuery, CancellationToken, Task<TResult>> handle,
         Func<ImmutableArray<Error>, TResult> fail,
         CancellationToken cancellationToken
@@ -141,7 +143,10 @@ internal sealed partial class Dispatcher(
         TResult result;
         try
         {
-            result = await Steps(commandOrQuery, ownsUnitOfWork, handle, fail, cancellationToken);
+            using (reading)
+            {
+                result = await Steps(commandOrQuery, ownsUnitOfWork, handle, fail, cancellationToken);
+            }
         }
         catch (Exception exception)
             when (!ReferenceEquals(exception, _loggedException)
@@ -175,8 +180,7 @@ internal sealed partial class Dispatcher(
         where TCommandOrQuery : notnull
         where TResult : Result
     {
-        operation.EnterChecks();
-        try
+        using (operation.EnterChecks())
         {
             foreach (var authorizer in services.GetServices<IAuthorizer<TCommandOrQuery>>())
             {
@@ -195,10 +199,6 @@ internal sealed partial class Dispatcher(
                     return fail(validated.Errors);
                 }
             }
-        }
-        finally
-        {
-            operation.ExitChecks();
         }
 
         // A query, or a command nested in another one: it joins the Operation's Unit of Work, if any.
