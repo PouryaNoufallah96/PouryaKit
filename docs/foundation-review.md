@@ -626,8 +626,11 @@ multi-subscriber failure anywhere.
 - How Lucky Penny §4.2.e.3 would be applied to your case is a legal question; the text is clear enough
   that I would not build on it.
 
-**Needs build / database / runtime verification:** everything in Phases 0–5. Nothing in this
-document has been compiled.
+**Verification boundary:** the original reference-project comparison in this section is historical
+static evidence. Current Kit build, database and runtime proof is recorded in the
+[acceptance map](acceptance.md) and the [completed active Phase 5 scope](#phase-5-packaging-and-releases).
+Remaining unverified work requires its own proof. The private-fork verification exception remains,
+and #28/#29 stay closed as not planned.
 
 **Decided by the owner (2026-10-04):**
 1. **One host container.** Modules keep their own composition root, gateway, operation scope,
