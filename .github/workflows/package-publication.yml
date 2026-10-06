@@ -1,0 +1,73 @@
+name: Package publication
+
+on:
+  workflow_call:
+    inputs:
+      run_id:
+        required: true
+        type: string
+      run_attempt:
+        required: true
+        type: string
+      artifact_id:
+        default: ''
+        type: string
+      source_sha:
+        required: true
+        type: string
+      proof:
+        default: none
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  packages: write
+
+jobs:
+  publish:
+    if: github.repository == 'PouryaNoufallah96/PouryaKit' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # Acquire the lock only here. A caller taking the same lock would deadlock its reusable child.
+    concurrency:
+      group: pouryakit-private-publication
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      actions: read
+      packages: write
+    steps:
+      # Execute publisher code from the trusted main workflow revision, never from the source artifact.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Recover and verify the original private package set
+        env:
+          PUBLICATION_TOKEN: ${{ inputs.proof != 'missing-credential' && github.token || '' }}
+          ORIGINAL_RUN: ${{ inputs.run_id }}
+          ORIGINAL_ATTEMPT: ${{ inputs.run_attempt }}
+          ORIGINAL_ARTIFACT: ${{ inputs.artifact_id }}
+          ORIGINAL_SHA: ${{ inputs.source_sha }}
+          PROOF: ${{ inputs.proof }}
+        shell: bash
+        run: |
+          python3 scripts/releases/publication/run.py \
+            --run-id "$ORIGINAL_RUN" --attempt "$ORIGINAL_ATTEMPT" \
+            --artifact-id "$ORIGINAL_ARTIFACT" --source-sha "$ORIGINAL_SHA" \
+            --proof "${PROOF/missing-credential/none}" --receipt "$RUNNER_TEMP/publication/receipt.json"
+
+      - name: Retain publication receipt on success or failure
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: private-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/publication/receipt.json
+          if-no-files-found: error
+          retention-days: 90

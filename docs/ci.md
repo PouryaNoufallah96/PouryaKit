@@ -1,6 +1,6 @@
 # CI package validation
 
-The `CI` workflow runs on pushes and `pull_request`, with no branch filter. `ai-setup` retains the existing AI configuration check. `build-and-test` calls [the reusable package workflow](../.github/workflows/package-validation.yml) from the caller's own revision. It runs the [shared Release validation path](packages.md), including the existing Domain, dispatcher, validation, Structure and PostgreSQL Proving Sample tests, all thirteen packages and fifteen clean consumers. Debug build/test commands are replaced by these same checks against Release output.
+The `CI` workflow runs on pushes and `pull_request`, with no branch filter. `ai-setup` retains the existing AI configuration check. `build-and-test` calls [the reusable package workflow](../.github/workflows/package-validation.yml) from the caller's own revision. It runs the [shared Release validation path](packages.md), including the existing Domain, dispatcher, validation, Structure and PostgreSQL Proving Sample tests, all thirteen packages and fifteen clean consumers. Debug build/test commands are replaced by these same checks against Release output. `publication-protocol` runs local HTTP fixtures and isolated red controls with read-only permissions and no feed credential input; it performs no real publication.
 
 ## Checkout and credentials
 
@@ -34,7 +34,7 @@ On success the collector checks that the manifest SHA equals the tested SHA and 
 
 The reusable workflow exposes `tested_sha`, `version`, `validation_result`, `artifact_name` and immutable `artifact_id`. A later publisher must require successful validation and AI jobs, check the actual hosted workflow/job conclusions, and require a trusted `push` run for this repository on `refs/heads/main` at the selected SHA. It must match the run ID/attempt, receipt and manifest, then verify the original package hashes. A successful PR receipt identifies its tested merge SHA and is not authorization to publish. Receipt content alone is not a trust anchor because PR code can change its own validation. Separate-run release selection must verify provenance through GitHub's run metadata and trusted workflow revision, not a contributor-supplied artifact or claimed green SHA.
 
-This ticket introduces no publisher. Future privileged jobs must keep their permissions and credentials separate from PR validation and gate on the trusted main result.
+The separate [private publication workflow](private-packages.md) consumes this exact original-artifact contract. It checks successful main AI/package/protocol jobs through GitHub metadata, restores the immutable artifact ID and keeps publication privileges outside PR validation and cancelable CI. Hosted package publication proof remains pending.
 
 ## Hosted proof boundary
 

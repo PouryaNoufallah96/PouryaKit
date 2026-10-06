@@ -31,3 +31,20 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/package-validation.yml
+
+  publication-protocol:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Check publication without feed credentials
+        run: |
+          python3 -m unittest discover -s tests/releases/publication -p 'test_*.py'
+          python3 tests/releases/publication/red_once.py

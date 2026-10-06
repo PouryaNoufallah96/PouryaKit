@@ -10,7 +10,7 @@ Thirteen packages and their references no longer read as one diagram, so the C4 
 
 ```mermaid
 C4Container
-    title PouryaKit package validation, container level
+    title PouryaKit package validation and private publication, container level
     Person(maintainer, "Maintainer", "Validates one source commit")
     Container_Ext(ci, "CI validation", "GitHub Actions, read-only repository token", "Full-history push/PR checkout; token removed before the shared path")
     System_Boundary(validation, "Shared package validation") {
@@ -19,10 +19,15 @@ C4Container
         Container(consumers, "Clean consumers", ".NET 10, isolated NuGet caches", "Thirteen individual packages, single Module and copied Proving Sample")
     }
     ContainerDb_Ext(evidence, "Retained CI evidence", "GitHub Actions artifact", "Tested SHA/result, original packages/manifest, logs and consumer assets; no caches")
+    Container_Ext(publisher, "Private publisher", "Separate main/recovery workflow, one noncanceling job group", "Trusted main run/attempt/artifact provenance; checks all existing bytes before missing-only uploads")
+    ContainerDb_Ext(privateFeed, "Private GitHub Packages", "Authenticated NuGet resources and package REST metadata", "Thirteen original hashes and source identities; actual private visibility required")
     ContainerDb_Ext(postgresql, "PostgreSQL", "Testcontainers", "Existing Proving Sample runtime proof")
     Rel(maintainer, path, "runs")
     Rel(ci, path, "runs at the actual checked-out SHA without forwarding credentials")
     Rel(ci, evidence, "retains bounded success/failure evidence for 90 days")
+    Rel(publisher, evidence, "recovers exact successful main originals, never rebuilds")
+    Rel(publisher, privateFeed, "checks existing contents, uploads missing originals and verifies the full private set")
+    Rel(publisher, evidence, "retains credential-free completion and failure receipts")
     Rel(path, postgresql, "tests the shared Release output against")
     Rel(path, artifacts, "packs and checks")
     Rel(consumers, artifacts, "restores Kit dependencies exclusively from")
