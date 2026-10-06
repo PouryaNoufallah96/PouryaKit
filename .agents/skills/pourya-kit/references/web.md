@@ -1,12 +1,13 @@
 # Web
 
-`PouryaKit.Web`: an endpoint beside each Feature, authenticated access by default, a Result as an HTTP response, one problem response for every failure, and the Operation Context built from the authenticated caller. Namespace `PouryaKit.Web`. It references `PouryaKit.Cqrs`, `PouryaKit.Core` and the ASP.NET Core shared framework only; a Module project that declares endpoints references it, and it brings ASP.NET Core with it.
+`PouryaKit.Web`: an endpoint beside each Feature, authenticated access by default, a Result as an HTTP response, one problem response for every failure, the Operation Context built from the authenticated caller or continued from a trusted peer Host, and outgoing HTTP that carries the Operation Context with the standard retry. Namespace `PouryaKit.Web`. It references `PouryaKit.Cqrs`, `PouryaKit.Core`, the ASP.NET Core shared framework and `Microsoft.Extensions.Http.Resilience`; a Module project that declares endpoints references it, and it brings ASP.NET Core with it.
 
 - [The Host](#the-host)
 - [Endpoints](#endpoints)
 - [From Result to response](#from-result-to-response)
 - [Problem responses](#problem-responses)
 - [The caller and the Actor](#the-caller-and-the-actor)
+- [Calls between Kit Hosts](#calls-between-kit-hosts)
 - [Testing over HTTP](#testing-over-http)
 
 The Proving Sample's `CreateProduct` endpoint, beside its command in `Products/Features/CreateProduct/`:
@@ -64,6 +65,8 @@ using PouryaKit.Web;
 
 public static class ModularMonolithHost
 {
+    public const string DownstreamClient = "downstream";
+
     public static WebApplicationBuilder CreateBuilder(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -71,6 +74,12 @@ public static class ModularMonolithHost
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
         builder.Services.AddAuthorization();
         builder.Services.AddPouryaKitWeb();   // also: authenticated access by default
+        // The peer Hosts that may continue an Operation of theirs here; none by default.
+        builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));
+        // Outgoing calls: the standard retry of safe methods, then the Operation Context on every attempt.
+        var downstream = builder.Services.AddHttpClient(DownstreamClient);
+        downstream.AddPouryaKitResilience();
+        downstream.AddPouryaKitOperationContext();
         // The permissions Catalog's RemoveProducts declares are the HTTP caller's permission claims (security.md).
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IActorPermissions, CallerPermissions>();
@@ -170,11 +179,51 @@ internal sealed class ListProductsEndpoint : IEndpoint
 - HTTP access is authenticated by default. `AddPouryaKitWeb` sets the authorization `FallbackPolicy` to require an authenticated user, once, while the Host is composed, so every endpoint that states nothing, a Module's or one the Host maps itself (a health check, a document), refuses an unauthenticated caller before it runs: 401 with JwtBearer, written as a problem response. A path no route matches has no endpoint, and the fallback policy applies to it too: an anonymous request answers 401, an authenticated one 404. A fallback policy the application set itself is kept. Never change `AuthorizationOptions` while the Host runs, such as from a policy provider that adds policies on demand.
 - Every Module's route group also requires an authenticated caller explicitly, through the default policy.
 - An endpoint the Host maps outside every Module opts out with the standard `.AllowAnonymous()`; it runs no Operation, so it names no Actor.
-- Before the endpoint binds its parameters, the Kit begins the request's Operation with an `OperationContext` built from the caller: `Actor.Person(id)` from the Actor claim, the tenant from the tenant claim when one is configured, and a new chain of work (correlated with its own `OperationId`, no causation; no incoming header sets them). The endpoint injects that context and passes it to the Gateway; it never builds one itself.
+- Before the endpoint binds its parameters, the Kit begins the request's Operation with an `OperationContext` built from the caller: `Actor.Person(id)` from the Actor claim, the tenant from the tenant claim when one is configured, and a new chain of work (correlated with its own `OperationId`, no causation). Only a trusted peer Host continues an Operation of its own instead ([Calls between Kit Hosts](#calls-between-kit-hosts)); every other caller's context headers are ignored. The endpoint injects that context and passes it to the Gateway; it never builds one itself.
 - `PouryaKitWebOptions` names the claims: `ActorClaim`, by default `ClaimTypes.NameIdentifier`, which JwtBearer maps a token's `sub` to (set `"sub"` when the scheme keeps the token's claim names), and `TenantClaim`, null by default for an application without tenants. Set them with `AddPouryaKitWeb(web => web.TenantClaim = "tenant")` or `Configure<PouryaKitWebOptions>`.
 - A caller whose identity lacks the tenant claim runs with a null tenant and is not refused. An authenticated caller without the Actor claim is a configuration bug: the request answers 500 and the log names the missing claim.
 - A public endpoint states the Actor its anonymous callers run as with `.AllowAnonymousAs(Actor.System("catalog.storefront"))`, as `ListProducts` does; an authenticated caller of it still runs as themselves. A plain `.AllowAnonymous()` on a Module's endpoint fails the Host when it starts, because no Operation runs as an unnamed Actor.
 - A permission a command or query requires is declared on it with `[RequiresPermission(name)]` and checked against the application's `IActorPermissions` ([security.md](security.md)); a caller without it gets 403 with `Permission.Denied`. Any other rule for one command or query beyond "authenticated" is an `IAuthorizer` ([commands-queries-validation.md](commands-queries-validation.md#authorization-hook)), which answers 403 with its `Forbidden` Error. Never add a role or claim policy per endpoint for either: the check belongs to the Operation, however it arrives.
+
+## Calls between Kit Hosts
+
+A Host calls another over HTTP through a named or typed `HttpClient` it registers with the two Kit handlers, as the Host above registers `downstream`:
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
+using PouryaKit.Web;
+
+// In the Host's composition: limits on the standard pipeline's builder, then the context handler.
+var stock = builder.Services.AddHttpClient<StockClient>(client => client.BaseAddress = new("https://inventory.example/"));
+stock.AddPouryaKitResilience().Configure(options => options.Retry.MaxRetryAttempts = 2);
+stock.AddPouryaKitOperationContext();
+```
+
+```csharp
+using PouryaKit.Cqrs;
+using PouryaKit.Web;
+
+// A typed client is resolved in the calling Operation's scope, so it injects that Operation's context.
+internal sealed class StockClient(HttpClient http, OperationContext context)
+{
+    public async Task<string> LevelAsync(Guid productId, CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"stock/{productId}").WithOperationContext(context);
+        using var response = await http.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync(cancellationToken);
+    }
+}
+```
+
+- `AddPouryaKitOperationContext()` sends the context a request was given with `request.WithOperationContext(context)` as the Kit's `pouryakit-*` headers, the names Messaging uses: the Actor and its kind, the tenant, the correlation, and the calling Operation's `OperationId` as the causation. A request without a context throws before it is sent. The handlers of an `HttpClient` are built in a scope of their own, never the Operation's, which is why the context travels on the request: give it the one the endpoint or handler injected, never one built for the call.
+- The incoming request's `Authorization` header and bearer token are never forwarded. A peer that authenticates this Host gets the Host's own credentials (a client-credentials token or a client certificate), added by the application.
+- `AddPouryaKitResilience()` is the standard .NET resilience handler (`AddStandardResilienceHandler`): attempt and total timeouts, a circuit breaker and retries of transient failures that stop when the call is cancelled. It needs no Aspire and no ServiceDefaults. Set limits on the builder it returns (`.Configure(o => o.Retry.MaxRetryAttempts = 2)` or `.Configure(configurationSection)`), and add the context handler after it, so every attempt carries the same context.
+- By default (`HttpReplay.SafeMethods`) only GET, HEAD, OPTIONS and TRACE are retried: POST, PUT, PATCH, DELETE and CONNECT are sent once, whether the attempt failed with a status or a broken connection, because a write that failed in transit may still have taken effect. Pass `AddPouryaKitResilience(HttpReplay.AllRequests)` only for a client whose downstream API makes every write replay-safe, such as with an idempotency key.
+- One pipeline per client: ServiceDefaults adds the standard handler to every client through `ConfigureHttpClientDefaults`. With ServiceDefaults, replace its `AddStandardResilienceHandler()` line with `AddPouryaKitResilience()`, or call `RemoveAllResilienceHandlers()` on a client before its own `AddPouryaKitResilience(...)`. Never stack a second retry handler on the first.
+- The receiving Host continues the Operation only for a caller it trusts as a peer. List the peers by the value of their authenticated identity's `ActorClaim` in `PouryaKitTrustedPeerOptions.Peers`, which the sample binds from `PouryaKit:TrustedPeers:Peers`; empty, the default, trusts no one. A trusted peer's request runs with the Actor, tenant and correlation its headers carry, caused by the peer's Operation, so a permission declared on the command is not checked again ([security.md](security.md)). A trusted peer without the headers runs as itself; one with incomplete or unreadable headers answers 400. Every other caller keeps its own identity and a new chain, whatever headers it sends.
+- A trusted peer speaks for any Actor. Use a peer identity no person can hold, such as a client-credentials token's subject or a client certificate's thumbprint, as the Host's authentication scheme issues it; never a header, which anyone can send.
 
 ## Testing over HTTP
 
@@ -243,3 +292,4 @@ public async Task Creating_a_product_with_a_name_in_use_answers_409_with_its_err
 - A second `AddAuthentication(scheme)` call after the Host's makes the test scheme the default, so the Host's own scheme needs no configuration in tests. Issue the claim the Host's `ActorClaim` names, a tenant claim when `TenantClaim` is set, and the permission claims the Host's `IActorPermissions` reads: the Proving Sample's scheme turns a `Test-Permissions` header into them ([security.md](security.md#testing-permissions)).
 - Prove the authenticated default on an endpoint outside every Module's route group, which has no authorization of its own: map one on a Host the test builds, and an anonymous request to it must answer 401.
 - A test that needs another composition, such as another environment or an endpoint the shared Host must not map, builds and starts a Host of its own from the same composition methods.
+- Test outgoing calls against a WireMock.Net server (test-only, Apache-2.0): its scenarios fail requests on cue (503, 503, then 200) and its request journal (`server.LogEntries`) shows the headers every attempt arrived with. Prove the receiving side, trusted and untrusted callers, on the real Host with headers named by `PouryaKit.Messaging.OperationContextHeaders`; a stub's configured response proves nothing about the receiver.

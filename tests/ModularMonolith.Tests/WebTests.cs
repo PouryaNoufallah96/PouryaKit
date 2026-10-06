@@ -420,14 +420,4 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         await host.StartAsync(TestContext.Current.CancellationToken);
         return host;
     }
-
-    private sealed record SeenContext(
-        Guid OperationId,
-        SeenActor Actor,
-        string? Tenant,
-        Guid CorrelationId,
-        Guid? CausationId
-    );
-
-    private sealed record SeenActor(string Id, ActorKind Kind);
 }

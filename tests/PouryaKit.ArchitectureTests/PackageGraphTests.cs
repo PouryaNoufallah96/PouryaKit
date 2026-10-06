@@ -50,6 +50,10 @@ public sealed class PackageGraphTests
             PackageGraph.Violations(web with { Projects = new HashSet<string>([.. web.Projects, "PouryaKit.Modularity"]) })
         );
         Assert.Equal(
+            ["PouryaKit.Web's closure holds Aspire.Hosting, which section C keeps out of it."],
+            PackageGraph.Violations(web with { Packages = [.. web.Packages, Arrived("Aspire.Hosting")] })
+        );
+        Assert.Equal(
             ["PouryaKit.Messaging's closure holds the packages [WolverineFx]; it must hold none."],
             PackageGraph.Violations(messaging with { Packages = [Arrived("WolverineFx")] })
         );

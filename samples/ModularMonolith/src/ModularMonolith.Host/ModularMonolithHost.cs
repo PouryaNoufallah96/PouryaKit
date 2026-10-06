@@ -13,6 +13,9 @@ namespace ModularMonolith.Host;
 /// <summary>The Host's composition, shared by <c>Program</c> and the tests that host the application.</summary>
 public static class ModularMonolithHost
 {
+    /// <summary>The named HTTP client for calls to another Host.</summary>
+    public const string DownstreamClient = "downstream";
+
     public static WebApplicationBuilder CreateBuilder(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +25,14 @@ public static class ModularMonolithHost
         builder.Services.AddAuthorization();
         // Authenticated by default: AddPouryaKitWeb sets the authorization fallback policy; a public endpoint says so.
         builder.Services.AddPouryaKitWeb();
+        // The peer Hosts, by their authenticated Actor claim, that may continue an Operation of theirs here
+        // (PouryaKit:TrustedPeers:Peers). None are configured: every caller starts a new chain of work.
+        builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));
+        // Outgoing calls retry transient failures of safe methods only and carry the Operation Context they are sent
+        // with, never the caller's bearer token. A peer that authenticates this Host gets the Host's own credentials.
+        var downstream = builder.Services.AddHttpClient(DownstreamClient);
+        downstream.AddPouryaKitResilience();
+        downstream.AddPouryaKitOperationContext();
         // The permissions a command or query declares (Catalog's RemoveProducts) are the HTTP caller's permission claims.
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IActorPermissions, CallerPermissions>();

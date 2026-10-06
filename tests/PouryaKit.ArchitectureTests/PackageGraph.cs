@@ -46,7 +46,11 @@ internal static class PackageGraph
             ["WolverineFx.EntityFrameworkCore", "WolverineFx.Postgresql"]
         ),
         ["PouryaKit.Security"] = new(["PouryaKit.Core", "PouryaKit.Cqrs"], []),
-        ["PouryaKit.Web"] = new(["PouryaKit.Core", "PouryaKit.Cqrs"], [], ["Microsoft.AspNetCore.App"]),
+        ["PouryaKit.Web"] = new(
+            ["PouryaKit.Core", "PouryaKit.Cqrs"],
+            ["Microsoft.Extensions.Http.Resilience"],
+            ["Microsoft.AspNetCore.App"]
+        ),
         ["PouryaKit.Testing"] = new(
             ["PouryaKit.Modularity", "PouryaKit.Persistence.Postgres", "PouryaKit.Messaging.Wolverine.EFCore"],
             ["Testcontainers.PostgreSql", "Respawn", "xunit.v3.extensibility.core", "Microsoft.Extensions.TimeProvider.Testing"]
@@ -59,7 +63,8 @@ internal static class PackageGraph
     {
         ["PouryaKit.Persistence.Dapper"] = ["Microsoft.EntityFrameworkCore"],
         ["PouryaKit.Persistence.Postgres"] = ["WolverineFx", "JasperFx", "PouryaKit.Messaging"],
-        ["PouryaKit.Web"] = ["PouryaKit.Modularity"],
+        // Outgoing HTTP resilience is the standard handler alone, usable without an AppHost or ServiceDefaults.
+        ["PouryaKit.Web"] = ["PouryaKit.Modularity", "Aspire"],
         // Transport- and database-neutral: no EF Core, no PostgreSQL driver, no message store.
         ["PouryaKit.Messaging.Wolverine"] = ["Microsoft.EntityFrameworkCore", "Npgsql", "WolverineFx.RDBMS", "WolverineFx.Postgresql", "Weasel"],
     };

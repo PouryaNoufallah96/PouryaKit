@@ -254,7 +254,7 @@ Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its origi
 | Messaging | Domain (handlers return `Result`) | none |
 | Messaging.Wolverine | Cqrs, Messaging, Core | WolverineFx |
 | Messaging.Wolverine.EFCore | Messaging.Wolverine, Persistence.EFCore | WolverineFx.EntityFrameworkCore, WolverineFx.Postgresql |
-| Web | Cqrs, Core | ASP.NET Core framework reference |
+| Web | Cqrs, Core | ASP.NET Core framework reference; `Microsoft.Extensions.Http.Resilience` (I.3, ticket #48: the standard outgoing retry, MIT; it brings Polly, BSD-3-Clause), no Aspire package |
 | Security (I.3, ticket #38) | Cqrs, Core | none; no ASP.NET Core framework reference: the authenticated HTTP fallback policy is set by Web |
 | Testing | Modularity, Persistence.Postgres, Messaging.Wolverine.EFCore | Testcontainers, Respawn, xUnit v3, `Microsoft.Extensions.TimeProvider.Testing` |
 

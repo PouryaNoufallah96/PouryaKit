@@ -91,3 +91,36 @@ on.
 - The explicit Actor an unauthenticated endpoint needs (Consequences, #14) is named with `AllowAnonymousAs(actor)`;
   plain `AllowAnonymous` on a Module's endpoint fails when the endpoint is built
   (`WebTests.A_module_endpoint_that_allows_anonymous_callers_without_naming_an_actor_fails_the_host_at_start`).
+
+## Amendment (2026-10-07, ticket #48: calls between Kit Hosts)
+
+The decision above stands, and so does "every request starts a new chain of work" for every caller but one: a
+configured, authenticated peer Host. Spec #33 (user stories 39 to 42) asked for HTTP continuations between Hosts; the
+Host's trust boundary (G.6) moves only as far as the application's own peer list.
+
+- **A trusted peer continues an Operation; nobody else does.** `PouryaKitTrustedPeerOptions.Peers` lists the peers by
+  the value an authenticated identity carries in `PouryaKitWebOptions.ActorClaim`; it is empty by default. Only when an
+  authenticated identity of the request names a listed peer does Web build the request's context from the Kit's
+  headers, as a delivery does from a message's: `new OperationContext(actor, tenant, correlationId, causationId)`, with
+  an `OperationId` of its own, in the same context creation as before, so no middleware is added. A peer's request
+  without the headers runs as the peer in a new chain; one with incomplete or unreadable headers is refused with 400.
+  Every other caller, authenticated or anonymous, keeps its claims-derived identity and a new chain, and its headers
+  are ignored: a header never identifies a peer, so a public caller cannot set an Actor, a tenant, a correlation or a
+  causation (`TrustedPeerTests`). A continuation is trusted as before (G.6), so the permission check stands aside for it
+  as for a delivered one; an authorizer the application registered still runs.
+- **The headers are Messaging's vocabulary.** The names and format are those of `PouryaKit.Messaging`'s
+  `OperationContextHeaders`. Web does not reference Messaging (plan section C), so it states the same names in the
+  internal `OperationContextHttpHeaders`, and the tests write and read them by Messaging's constants, which keeps one
+  vocabulary.
+- **Outgoing calls carry the context explicitly and never the bearer token.** `AddPouryaKitOperationContext()` writes
+  the context a request was given with `WithOperationContext(context)`: the Actor, tenant and correlation, and the
+  calling Operation's `OperationId` as the causation, on every attempt. `HttpClientFactory` builds its handlers in a
+  scope of its own, and reading the incoming request instead (`IHttpContextAccessor`, as
+  `cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.Security/Utilities/HttpClientAuthorizationDelegatingHandler.cs`
+  does) is the ambient read this ADR rejects; it would also leave a delivery or a scheduled job with no context. The
+  handler copies nothing from an incoming request, so the caller's `Authorization` header and bearer token are never
+  forwarded (G.6, plan I.3; `OutgoingHttpTests`); a peer authenticates the calling Host by the Host's own credentials.
+- **Retry never replays a write unless the client says it is safe.** The resilience handler is the standard
+  `AddStandardResilienceHandler()`, which needs no Aspire or ServiceDefaults, and it retries POST, PUT, PATCH, DELETE
+  and CONNECT only with `HttpReplay.AllRequests`, the explicit choice of a client whose downstream makes writes
+  replay-safe. A Host with ServiceDefaults keeps one resilience pipeline per client (#52).
