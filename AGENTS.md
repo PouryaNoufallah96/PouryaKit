@@ -23,7 +23,7 @@ The main session is judge and orchestrator. It scopes the ticket, writes the bri
 
 Match the process to the task:
 
-- **Clear and small** (a typo, a config value, a doc line, a few-line fix with an obvious check): do it directly. If the session requires delegation, use one bounded worker to edit, check, commit and push only within explicit authority; the main session judges the result. A separate reviewer is needed only when risk or ambiguity requires it.
+- **Clear and small** (a typo, a config value, a doc line, a few-line fix with an obvious check): do it directly. If the session requires delegation, one bounded worker owns the authorized edit, checks, commit, push and required CI observation through completion, without another handoff; the main session judges the result. A separate reviewer is needed only when risk or ambiguity requires it.
 - **A normal ticket**: one `kit-implementer`, then one review sized as in step 3.
 - **Unclear or stuck**: stop. Ask the owner, or send a `kit-scout` for the facts, and start only when the objective and its check are clear. Two failed attempts at the same thing is stuck.
 - Tickets with disjoint files run in parallel.
