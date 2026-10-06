@@ -18,7 +18,7 @@ internal static class PackageGraph
         ["PouryaKit.Core"] = new([], []),
         ["PouryaKit.Domain"] = new([], []),
         ["PouryaKit.Cqrs"] = new(
-            ["PouryaKit.Domain"],
+            ["PouryaKit.Core", "PouryaKit.Domain"],
             ["Microsoft.Extensions.DependencyInjection.Abstractions", "Microsoft.Extensions.Logging.Abstractions"]
         ),
         ["PouryaKit.Validation"] = new(["PouryaKit.Cqrs"], ["FluentValidation"]),
@@ -28,7 +28,7 @@ internal static class PackageGraph
         ),
         ["PouryaKit.Persistence"] = new(["PouryaKit.Domain"], ["Ardalis.Specification"]),
         ["PouryaKit.Persistence.EFCore"] = new(
-            ["PouryaKit.Cqrs", "PouryaKit.Persistence"],
+            ["PouryaKit.Core", "PouryaKit.Cqrs", "PouryaKit.Persistence"],
             ["Microsoft.EntityFrameworkCore.Relational", "Ardalis.Specification.EntityFrameworkCore"]
         ),
         ["PouryaKit.Persistence.Postgres"] = new(
@@ -36,17 +36,17 @@ internal static class PackageGraph
             ["Npgsql.EntityFrameworkCore.PostgreSQL", "EFCore.NamingConventions"]
         ),
         ["PouryaKit.Persistence.Dapper"] = new(
-            ["PouryaKit.Domain"],
+            ["PouryaKit.Core", "PouryaKit.Domain"],
             ["Dapper", "Npgsql", "Microsoft.Extensions.Configuration.Abstractions", "Microsoft.Extensions.DependencyInjection.Abstractions"]
         ),
         ["PouryaKit.Messaging"] = new(["PouryaKit.Domain"], []),
-        ["PouryaKit.Messaging.Wolverine"] = new(["PouryaKit.Cqrs", "PouryaKit.Messaging"], ["WolverineFx"]),
+        ["PouryaKit.Messaging.Wolverine"] = new(["PouryaKit.Core", "PouryaKit.Cqrs", "PouryaKit.Messaging"], ["WolverineFx"]),
         ["PouryaKit.Messaging.Wolverine.EFCore"] = new(
             ["PouryaKit.Messaging.Wolverine", "PouryaKit.Persistence.EFCore"],
             ["WolverineFx.EntityFrameworkCore", "WolverineFx.Postgresql"]
         ),
-        ["PouryaKit.Security"] = new(["PouryaKit.Cqrs"], []),
-        ["PouryaKit.Web"] = new(["PouryaKit.Cqrs"], [], ["Microsoft.AspNetCore.App"]),
+        ["PouryaKit.Security"] = new(["PouryaKit.Core", "PouryaKit.Cqrs"], []),
+        ["PouryaKit.Web"] = new(["PouryaKit.Core", "PouryaKit.Cqrs"], [], ["Microsoft.AspNetCore.App"]),
         ["PouryaKit.Testing"] = new(
             ["PouryaKit.Modularity", "PouryaKit.Persistence.Postgres", "PouryaKit.Messaging.Wolverine.EFCore"],
             ["Testcontainers.PostgreSql", "Respawn", "xunit.v3.extensibility.core", "Microsoft.Extensions.TimeProvider.Testing"]

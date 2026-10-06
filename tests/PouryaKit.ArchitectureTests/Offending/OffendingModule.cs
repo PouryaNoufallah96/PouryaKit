@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
@@ -168,6 +169,22 @@ public sealed class ExposedQueryHandler : QueryHandler<ExposedQuery, int>
 {
     public override Task<Result<int>> Handle(ExposedQuery query, CancellationToken cancellationToken) =>
         Task.FromResult<Result<int>>(1);
+}
+
+// Lists an assembly's types itself instead of asking PouryaKit.Core's ImplementingTypes.
+internal static class OwnTypeLookup
+{
+    public static IEnumerable<Type> All(Assembly assembly)
+    {
+        Func<Module, IEnumerable<Type>> inModule = module => module.GetTypes().Concat(module.FindTypes(null, null));
+        return assembly
+            .GetTypes()
+            .Concat(assembly.DefinedTypes)
+            .Concat(assembly.ExportedTypes)
+            .Concat(assembly.GetExportedTypes())
+            .Concat(assembly.Modules.SelectMany(inModule))
+            .Concat(assembly.GetModules().SelectMany(inModule));
+    }
 }
 
 [Migration("20261006000000_OffendingInitial")]

@@ -24,3 +24,4 @@
 - [W3C propagation facts](w3c-propagation-facts.md) — #46: parent-id at publish, Wolverine span only when sampled, SampleUsingParentId trap, no retry link, spike layout
 - [Security and permission facts](security-permission-facts.md) — #38: fallback policy reaches unmatched paths, non-Module endpoint test, TestActor grant, rebase recount, validate.py timing
 - [Declared authorizer check facts](declared-authorizer-check-facts.md) — #56: why a Cqrs seam, build-time factory hook, keyed ImplementationType throws, Gateway proof
+- [ImplementingTypes lookup facts](implementing-types-lookup-facts.md) — #55: Of vs Candidates, GetTypes order is MetadataToken order and a test pins it

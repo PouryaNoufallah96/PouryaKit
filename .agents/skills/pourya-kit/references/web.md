@@ -1,6 +1,6 @@
 # Web
 
-`PouryaKit.Web`: an endpoint beside each Feature, authenticated access by default, a Result as an HTTP response, one problem response for every failure, and the Operation Context built from the authenticated caller. Namespace `PouryaKit.Web`. It references `PouryaKit.Cqrs` and the ASP.NET Core shared framework only; a Module project that declares endpoints references it, and it brings ASP.NET Core with it.
+`PouryaKit.Web`: an endpoint beside each Feature, authenticated access by default, a Result as an HTTP response, one problem response for every failure, and the Operation Context built from the authenticated caller. Namespace `PouryaKit.Web`. It references `PouryaKit.Cqrs`, `PouryaKit.Core` and the ASP.NET Core shared framework only; a Module project that declares endpoints references it, and it brings ASP.NET Core with it.
 
 - [The Host](#the-host)
 - [Endpoints](#endpoints)

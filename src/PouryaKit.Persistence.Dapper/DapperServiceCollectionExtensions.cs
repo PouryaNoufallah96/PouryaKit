@@ -2,6 +2,7 @@ using System.Reflection;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PouryaKit.Core;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Persistence.Dapper;
@@ -54,7 +55,7 @@ public static class DapperServiceCollectionExtensions
     // the handler it replaces behaves identically and every Host keeps the same mapping.
     private static void AddTypedIdHandlers(Assembly[] assemblies)
     {
-        foreach (var type in assemblies.Distinct().SelectMany(assembly => assembly.GetTypes()))
+        foreach (var type in ImplementingTypes.Of(typeof(TypedId<>), assemblies))
         {
             if (TypedId.GetValueType(type) is { } valueType)
             {

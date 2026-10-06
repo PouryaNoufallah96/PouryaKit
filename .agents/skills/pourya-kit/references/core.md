@@ -1,6 +1,6 @@
 # Core helpers
 
-`PouryaKit.Core`: three helpers and nothing else. One namespace, `PouryaKit.Core`; no dependencies, and no other Kit package references it.
+`PouryaKit.Core`: three helpers and nothing else. One namespace, `PouryaKit.Core`; no dependencies. Cqrs, Web, Messaging.Wolverine, Persistence.Dapper, Persistence.EFCore and Security reference it, so a Module that references any of them already has it.
 
 - [Predicate composition](#predicate-composition)
 - [Implementing-type lookup](#implementing-type-lookup)
@@ -41,7 +41,7 @@ Pass the result to a specification's `Query.Where` or any `IQueryable`. Both pre
 
 ## Implementing-type lookup
 
-`ImplementingTypes.Of(contract, assemblies)` returns the concrete types of the given assemblies that a contract describes, each once, ordered by full name. It is the only reflection Core offers. The Kit's own registrations (handlers, validators, Notification Handlers, typed IDs, endpoints) find their types themselves; use it for the application's own contracts:
+`ImplementingTypes.Of(contract, assemblies)` returns the concrete types of the given assemblies that a contract describes, each once, ordered by full name. It is the only reflection Core offers, and the Kit's own registrations find their handlers, authorizers, Notification Handlers, typed IDs and endpoints through it too; use it for the application's own contracts:
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
@@ -77,6 +77,28 @@ The input contract:
 - **An open generic definition**, an interface or a class such as `typeof(IHandler<>)` or `typeof(Store<>)`, matches every concrete type that implements, or derives from, a closed form of it. Read each match's closed form from its interfaces or base types.
 - **Only concrete classes come back**: no interface, abstract or static class, struct or open generic class. Internal and nested classes are included, so a Module's internal implementations are found.
 - **A type that fails to load throws** `ReflectionTypeLoadException` rather than being skipped. A contract that is a generic parameter, or a generic type neither closed nor a definition, throws `ArgumentException`.
+
+`ImplementingTypes.Candidates(contract, assemblies)` reads the contract the same way and returns every class it describes, abstract classes, open generic definitions and the classes the compiler generated included; interfaces and structs stay out, and the order is the same. Use it when a registration must reject a declaration `Of` would skip silently, as the Kit's own registrations reject a generic handler or a permission on an abstract type:
+
+```csharp
+using PouryaKit.Core;
+
+internal static class ReportExporterChecks
+{
+    public static void ThrowIfAnyIsUnusable()
+    {
+        var unusable = ImplementingTypes
+            .Candidates(typeof(IReportExporter), typeof(IReportExporter).Assembly)
+            .Where(type => type.IsAbstract || type.IsGenericTypeDefinition)
+            .Select(type => $"{type.FullName} is an exporter that cannot be registered.")
+            .ToList();
+        if (unusable.Count > 0)
+        {
+            throw new InvalidOperationException(string.Join(Environment.NewLine, unusable));
+        }
+    }
+}
+```
 
 ## Synchronization-context scope
 

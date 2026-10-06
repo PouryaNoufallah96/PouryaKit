@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using PouryaKit.Core;
 
 namespace PouryaKit.Cqrs;
 
@@ -35,10 +36,12 @@ public static class CqrsServiceCollectionExtensions
             services.TryAddScoped<IDispatcher, Dispatcher>();
             services.TryAddSingleton(TimeProvider.System);
 
-            var classes = featureAssemblies
-                .Distinct()
-                .SelectMany(assembly => assembly.GetTypes())
-                .Where(type => type is { IsClass: true, IsAbstract: false })
+            // In declaration order, assembly by assembly, which is the order an operation's authorizers run in.
+            var classes = ImplementingTypes
+                .Candidates(typeof(object), featureAssemblies)
+                .Where(type => !type.IsAbstract)
+                .OrderBy(type => Array.IndexOf(featureAssemblies, type.Assembly))
+                .ThenBy(type => type.MetadataToken)
                 .ToList();
             var types = classes.Where(type => !type.IsGenericTypeDefinition).ToList();
 

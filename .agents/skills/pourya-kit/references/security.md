@@ -1,6 +1,6 @@
 # Security
 
-`PouryaKit.Security`: a permission declared on a command or query, checked through the pipeline's existing authorization hook against the application's source of an Actor's permissions, and never checked again for a trusted continuation. Namespace `PouryaKit.Security`. It references `PouryaKit.Cqrs` only, no ASP.NET Core, so a Module or a Host without HTTP uses it too. Authenticated HTTP access by default is `PouryaKit.Web`'s ([web.md](web.md#the-caller-and-the-actor)).
+`PouryaKit.Security`: a permission declared on a command or query, checked through the pipeline's existing authorization hook against the application's source of an Actor's permissions, and never checked again for a trusted continuation. Namespace `PouryaKit.Security`. It references `PouryaKit.Cqrs` and `PouryaKit.Core` only, no ASP.NET Core, so a Module or a Host without HTTP uses it too. Authenticated HTTP access by default is `PouryaKit.Web`'s ([web.md](web.md#the-caller-and-the-actor)).
 
 - [Declaring a permission](#declaring-a-permission)
 - [The Actor's permissions](#the-actors-permissions)

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using PouryaKit.Core;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Web;
@@ -68,12 +69,8 @@ public static class WebServiceCollectionExtensions
 
             List<IEndpoint> endpoints =
             [
-                .. endpointAssembly
-                    .GetTypes()
-                    .Where(type =>
-                        type is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false }
-                        && type.IsAssignableTo(typeof(IEndpoint))
-                    )
+                .. ImplementingTypes
+                    .Of(typeof(IEndpoint), endpointAssembly)
                     .Select(type => (IEndpoint)Activator.CreateInstance(type, nonPublic: true)!),
             ];
             if (endpoints.Count == 0)

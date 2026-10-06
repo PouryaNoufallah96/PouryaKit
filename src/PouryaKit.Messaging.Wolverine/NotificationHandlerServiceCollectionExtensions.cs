@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using PouryaKit.Core;
 
 namespace PouryaKit.Messaging.Wolverine;
 
@@ -29,17 +30,17 @@ public static class NotificationHandlerServiceCollectionExtensions
 
             List<string> problems = [];
             List<Subscription> subscriptions = [];
-            foreach (var type in handlerAssembly.GetTypes().Where(type => type is { IsClass: true, IsAbstract: false }))
+            // In declaration order: of two handlers whose names clash, the one declared first keeps its name.
+            var candidates = ImplementingTypes
+                .Candidates(typeof(INotificationHandler<>), handlerAssembly)
+                .Where(type => !type.IsAbstract)
+                .OrderBy(type => type.MetadataToken);
+            foreach (var type in candidates)
             {
                 var handled = type.GetInterfaces()
                     .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(INotificationHandler<>))
                     .Select(i => i.GenericTypeArguments[0])
                     .ToList();
-                if (handled.Count == 0)
-                {
-                    continue;
-                }
-
                 if (type.IsGenericTypeDefinition || handled.Count > 1 || handled[0].IsAbstract || handled[0].IsGenericType)
                 {
                     problems.Add(
