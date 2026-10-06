@@ -65,6 +65,7 @@ class Http:
         if raw_package and (method != "GET" or auth != "feed" or not urllib.parse.urlsplit(url).path.endswith(".nupkg")):
             raise PublicationError("Only a raw private package GET may opt into storage redirects.")
         follow = method == "GET" and ((auth == "api" and url.endswith("/zip")) or raw_package)
+        redirect_limit = MAX_REDIRECTS if raw_package else 1
         request_headers = {"User-Agent": "PouryaKit-publication", **(headers or {})}
         if auth == "api":
             request_headers.update({"Authorization": f"Bearer {self.token}",
@@ -103,7 +104,7 @@ class Http:
                             self.checked_url(target, "none")
                         except PublicationError as error:
                             raise PublicationError(f"{error} Redirect HTTP {status} to host {diagnostic['target_host']}.") from None
-                        if hops >= MAX_REDIRECTS or target in seen:
+                        if hops >= redirect_limit or target in seen:
                             raise PublicationError("Publication storage redirect chain exceeds the limit or cycles.")
                         diagnostic["result"] = "followed"
                         seen.add(target)

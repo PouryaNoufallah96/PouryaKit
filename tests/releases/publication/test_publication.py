@@ -603,6 +603,22 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(1, self.execute())
         self.assertIn("unsupported host", self.receipt_document()["error"])
 
+    def test_artifact_zip_accepts_one_storage_redirect_and_refuses_a_second(self):
+        self.protocol.redirect = "https://retained.blob.core.windows.net/storage/original.zip?signature=private-signed-query"
+        self.assertEqual(0, self.execute("probe"))
+        self.assertIn(("/storage/original.zip?signature=private-signed-query", None), self.protocol.auth)
+        self.protocol.requests.clear()
+        self.protocol.responses["/storage/original.zip"] = (
+            302, b"", {"Location": "https://assets.githubusercontent.com/storage/second.zip?signature=private-signed-query"})
+        self.protocol.responses["/storage/second.zip"] = (200, self.protocol.archive, {})
+        self.assertEqual(1, self.execute("probe"))
+        self.assertEqual(1, sum("/storage/" in url for _, url, _ in self.protocol.requests))
+        self.assertFalse(any("/storage/second.zip" in url for _, url, _ in self.protocol.requests))
+        result = self.receipt_document()
+        self.assertFalse(result["complete"])
+        self.assertEqual(["followed", "refused"], [row["result"] for row in result["redirects"]])
+        self.assertNotIn("private-signed-query", self.receipt.read_text())
+
     def test_raw_package_redirect_chain_preserves_hashes_and_drops_every_initial_header(self):
         for index in range(13):
             self.seed(index)
@@ -664,6 +680,12 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(4, len(self.receipt_document()["redirects"]))
         self.assertEqual("refused", self.receipt_document()["redirects"][-1]["result"])
         self.assertNotIn("private-signed-query", self.receipt.read_text())
+        package = self.manifest["packages"][0]
+        content = self.protocol.remote[package["id"].lower(), self.manifest["version"]]
+        self.protocol.responses["/storage/hop2.nupkg"] = (200, content, {})
+        self.assertEqual(0, self.execute("probe"))
+        self.assertEqual(3, len(self.receipt_document()["redirects"]))
+        self.assertEqual(package["sha256"], self.receipt_document()["verified"][0]["sha256"])
 
     def test_feed_index_api_and_put_redirects_remain_refused_and_storage_cannot_request_credentials(self):
         target = "https://retained.blob.core.windows.net/storage/final/package.nupkg?signature=private-signed-query"

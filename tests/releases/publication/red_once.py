@@ -9,6 +9,8 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[3]
 CONTROLS = [
+    ("transport.py", 'redirect_limit = MAX_REDIRECTS if raw_package else 1', 'redirect_limit = MAX_REDIRECTS',
+     "PublicationTests.test_artifact_zip_accepts_one_storage_redirect_and_refuses_a_second", "artifact ZIP single storage redirect"),
     ("publisher.py", 'if not (200 <= status < 300 or status == 409):', 'if status not in (201, 202, 409):',
      "PublicationTests.test_all_successful_upload_statuses_are_recorded_and_verified", "all successful 2xx upload responses"),
     ("transport.py", 'or raw_package)', 'or False)',

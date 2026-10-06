@@ -8,7 +8,7 @@ Use the fixed GitHub Packages feed and `pouryakit-private-publication` job group
 
 Completion is thirteen original raw-byte hashes plus observed private package metadata, recorded in the publication receipt. Check every existing member before uploading missing members. A conflict or unavailable original is a failure. Named cuts reuse `publisher.publish`; #29 supplies tagged-artifact provenance and its release gates before calling that core under the same lock. MinVer owns the version.
 
-Accept 2xx upload responses and 409 only with subsequent original-byte/private-linkage verification; record the numeric response before verification. Raw nupkg redirects opt into at most three checked HTTPS storage hops with no forwarded headers or credentials. Other API/feed-index/upload redirects remain refused. Retain only status and sanitized hostnames, never signed URLs. An empty owner REST listing alone does not prove private history is empty.
+Accept 2xx upload responses and 409 only with subsequent original-byte/private-linkage verification; record the numeric response before verification. Raw nupkg redirects opt into at most three checked HTTPS storage hops with no forwarded headers or credentials. Artifact ZIP downloads permit only one checked storage redirect. Other API/feed-index/upload redirects remain refused. Retain only status and sanitized hostnames, never signed URLs. An empty owner REST listing alone does not prove private history is empty.
 
 Use proof options only for an explicitly approved hosted experiment. Read-only `probe` is not completed publication. Local protocol tests do not establish real feed access, visibility, byte preservation or hosted serialization; retain that boundary until hosted receipts exist.
 
