@@ -96,7 +96,7 @@ public static class ModularMonolithHost
 // Program.cs: await ModularMonolithHost.Build(ModularMonolithHost.CreateBuilder(args)).RunAsync();
 ```
 
-- `builder.Services.AddPouryaKitWeb()` registers what every endpoint answers with: problem responses, the handler that turns an exception into one, the same answer to an unreadable request in every environment, a problem response for every failure answered with an empty body ([Problem responses](#problem-responses)), typed IDs written as their bare values in JSON, and `PouryaKitWebOptions`.
+- `builder.Services.AddPouryaKitWeb()` registers what every endpoint answers with: problem responses, the handler that turns an exception into one, the same answer to an unreadable request in every environment, a problem response for every failure answered with an empty body ([Problem responses](#problem-responses)), the Kit's one JSON representation (`UsePouryaKitJson`, typed IDs written as their bare values, the same as in messages; [domain-primitives.md](domain-primitives.md#typed-ids)), and `PouryaKitWebOptions`.
 - The application configures its own authentication and authorization; the Kit chooses no identity provider and issues no token.
 - `app.UseExceptionHandler()` comes first in the pipeline, and `UseRouting()`, `UseAuthentication()` and `UseAuthorization()` follow it, each called explicitly. Left out, `WebApplication` inserts those three ahead of everything the application adds, and an exception thrown in authentication escapes the handler.
 - `app.MapPouryaKitModuleEndpoints()` maps every Module's endpoints, each Module under its own route group.

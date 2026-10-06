@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -151,6 +152,13 @@ internal sealed class ClearingDomainEventHandler(IAggregateRoot aggregate) : IDo
         clear(aggregate);
         return Task.FromResult(Result.Success());
     }
+}
+
+// Writes its typed IDs in JSON of its own: snake_case names beside the Kit's camelCase.
+internal static class OwnJson
+{
+    public static JsonSerializerOptions Options() =>
+        new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, Converters = { new TypedIdJsonConverterFactory() } };
 }
 
 // Public, so other Modules could reach it; the generated migration beside it is public too, and that is no offence.
