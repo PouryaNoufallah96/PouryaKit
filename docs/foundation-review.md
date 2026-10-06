@@ -232,7 +232,8 @@ Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its origi
   `ModularMonolith.Tests` (Gateway seam, the Proving Sample against PostgreSQL), `PouryaKit.Domain.Tests` (Domain seam)
   and `PouryaKit.ArchitectureTests` (Structure seam), plus `PouryaKit.Cqrs.Tests` (with its test Module
   `PouryaKit.Cqrs.Tests.Module`) and `PouryaKit.Validation.Tests`, which run the dispatcher and the validation step,
-  and `PouryaKit.Core.Tests`, which proves Core's three helpers (ticket #37), all without a database.
+  `PouryaKit.Core.Tests`, which proves Core's three helpers (ticket #37), and `PouryaKit.Security.Tests`, which proves
+  the permission registration's checks (ticket #38), all without a database.
 - `PouryaKit.Persistence` (G.4), the thirteenth project, has no entry in the tree above and no row in the table
   below. It holds `IRepository` and `IUnitOfWorkConnection`, the seam through which a Module's plain-SQL write joins
   the Unit of Work (ticket #9), and references Domain and `Ardalis.Specification`. `PouryaKit.Persistence.EFCore`
@@ -254,6 +255,7 @@ Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its origi
 | Messaging.Wolverine | Cqrs, Messaging | WolverineFx |
 | Messaging.Wolverine.EFCore | Messaging.Wolverine, Persistence.EFCore | WolverineFx.EntityFrameworkCore, WolverineFx.Postgresql |
 | Web | Cqrs | ASP.NET Core framework reference |
+| Security (I.3, ticket #38) | Cqrs | none; no ASP.NET Core framework reference: the authenticated HTTP fallback policy is set by Web |
 | Testing | Modularity, Persistence.Postgres, Messaging.Wolverine.EFCore | Testcontainers, Respawn, xUnit v3, `Microsoft.Extensions.TimeProvider.Testing` |
 
 Amended on 2026-10-05, each addition MIT and already present in every Host:

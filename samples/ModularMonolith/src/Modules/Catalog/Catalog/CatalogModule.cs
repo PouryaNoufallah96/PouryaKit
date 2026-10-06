@@ -14,6 +14,7 @@ using PouryaKit.Modularity;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.EFCore;
 using PouryaKit.Persistence.Postgres;
+using PouryaKit.Security;
 using PouryaKit.Validation;
 using PouryaKit.Web;
 
@@ -29,6 +30,7 @@ public sealed class CatalogModule : IModuleDefinition
         module.AddPouryaKitDapper(connectionName: "app", typeof(CatalogModule).Assembly);
         module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);
         module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
+        module.AddPouryaKitPermissions(typeof(CatalogModule).Assembly);
         module.AddPouryaKitNotificationHandlers(typeof(CatalogModule).Assembly, typeof(CatalogModule));
         module.Publish<ProductCreatedV1>("catalog.product-created.v1", typeof(CatalogModule));
         module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1", typeof(CatalogModule));

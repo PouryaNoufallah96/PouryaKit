@@ -11,6 +11,7 @@ using ModularMonolith.Tests;
 using ModularMonolith.Tests.Stub;
 using Npgsql;
 using PouryaKit.Modularity;
+using PouryaKit.Security;
 using PouryaKit.Testing;
 using PouryaKit.Web;
 
@@ -21,8 +22,9 @@ namespace ModularMonolith.Tests;
 
 /// <summary>
 /// The Proving Sample's Host, with the test-only <see cref="StubModule"/> beside Catalog, served in memory,
-/// authenticating callers with <see cref="TestAuthentication"/>, whose tenant claim fills the tenant, delivering at test
-/// speed, and committing through the <see cref="CommitProbe"/>.
+/// authenticating callers with <see cref="TestAuthentication"/>, whose tenant claim fills the tenant, granting the tests'
+/// own Actor the permissions <see cref="TestActorPermissions"/> lists, delivering at test speed, and committing through
+/// the <see cref="CommitProbe"/>.
 /// </summary>
 public sealed class AppFixture : HostFixture
 {
@@ -53,6 +55,8 @@ public sealed class AppFixture : HostFixture
             .Services.AddAuthentication(TestAuthentication.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
         builder.Services.Configure<PouryaKitWebOptions>(web => web.TenantClaim = TestAuthentication.TenantClaim);
+        builder.Services.AddScoped<CallerPermissions>();
+        builder.Services.AddScoped<IActorPermissions, TestActorPermissions>();
         builder.Logging.AddProvider(logs);
         configure?.Invoke(builder);
         return ModularMonolithHost.Build(builder);
@@ -62,12 +66,14 @@ public sealed class AppFixture : HostFixture
     public RecordedLogs Logs { get; } = new();
 
     /// <summary>
-    /// A client of the Host's HTTP pipeline, authenticated as the person <paramref name="caller"/>, or anonymous.
+    /// A client of the Host's HTTP pipeline, authenticated as the person <paramref name="caller"/> holding
+    /// <paramref name="permissions"/>, or anonymous.
     /// </summary>
-    public HttpClient Client(string? caller = null, string? tenant = null) => ClientOf(Host, caller, tenant);
+    public HttpClient Client(string? caller = null, string? tenant = null, params string[] permissions) =>
+        ClientOf(Host, caller, tenant, permissions);
 
     /// <summary>A client of <paramref name="host"/>'s HTTP pipeline, as <see cref="Client"/> makes one.</summary>
-    public static HttpClient ClientOf(IHost host, string? caller = null, string? tenant = null)
+    public static HttpClient ClientOf(IHost host, string? caller = null, string? tenant = null, params string[] permissions)
     {
         var client = host.GetTestClient();
         if (caller is not null)
@@ -78,6 +84,11 @@ public sealed class AppFixture : HostFixture
         if (tenant is not null)
         {
             client.DefaultRequestHeaders.Add(TestAuthentication.TenantHeader, tenant);
+        }
+
+        if (permissions.Length > 0)
+        {
+            client.DefaultRequestHeaders.Add(TestAuthentication.PermissionsHeader, string.Join(',', permissions));
         }
 
         return client;

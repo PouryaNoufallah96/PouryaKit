@@ -1,6 +1,6 @@
 # Web
 
-`PouryaKit.Web`: an endpoint beside each Feature, a Result as an HTTP response, one problem response for every failure, and the Operation Context built from the authenticated caller. Namespace `PouryaKit.Web`. It references `PouryaKit.Cqrs` and the ASP.NET Core shared framework only; a Module project that declares endpoints references it, and it brings ASP.NET Core with it.
+`PouryaKit.Web`: an endpoint beside each Feature, authenticated access by default, a Result as an HTTP response, one problem response for every failure, and the Operation Context built from the authenticated caller. Namespace `PouryaKit.Web`. It references `PouryaKit.Cqrs` and the ASP.NET Core shared framework only; a Module project that declares endpoints references it, and it brings ASP.NET Core with it.
 
 - [The Host](#the-host)
 - [Endpoints](#endpoints)
@@ -59,6 +59,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
+using PouryaKit.Security;
 using PouryaKit.Web;
 
 public static class ModularMonolithHost
@@ -69,7 +70,10 @@ public static class ModularMonolithHost
         // The application authenticates its callers itself; JwtBearer reads Authentication:Schemes:Bearer.
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
         builder.Services.AddAuthorization();
-        builder.Services.AddPouryaKitWeb();
+        builder.Services.AddPouryaKitWeb();   // also: authenticated access by default
+        // The permissions Catalog's RemoveProducts declares are the HTTP caller's permission claims (security.md).
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<IActorPermissions, CallerPermissions>();
         builder.AddPouryaKitModules(modules =>
         {
             modules.Add<CatalogModule>();
@@ -96,7 +100,7 @@ public static class ModularMonolithHost
 // Program.cs: await ModularMonolithHost.Build(ModularMonolithHost.CreateBuilder(args)).RunAsync();
 ```
 
-- `builder.Services.AddPouryaKitWeb()` registers what every endpoint answers with: problem responses, the handler that turns an exception into one, the same answer to an unreadable request in every environment, a problem response for every failure answered with an empty body ([Problem responses](#problem-responses)), the Kit's one JSON representation (`UsePouryaKitJson`, typed IDs written as their bare values, the same as in messages; [domain-primitives.md](domain-primitives.md#typed-ids)), and `PouryaKitWebOptions`.
+- `builder.Services.AddPouryaKitWeb()` registers what every endpoint answers with: problem responses, the handler that turns an exception into one, the same answer to an unreadable request in every environment, a problem response for every failure answered with an empty body ([Problem responses](#problem-responses)), the Kit's one JSON representation (`UsePouryaKitJson`, typed IDs written as their bare values, the same as in messages; [domain-primitives.md](domain-primitives.md#typed-ids)), `PouryaKitWebOptions`, and authenticated access by default ([The caller and the Actor](#the-caller-and-the-actor)).
 - The application configures its own authentication and authorization; the Kit chooses no identity provider and issues no token.
 - `app.UseExceptionHandler()` comes first in the pipeline, and `UseRouting()`, `UseAuthentication()` and `UseAuthorization()` follow it, each called explicitly. Left out, `WebApplication` inserts those three ahead of everything the application adds, and an exception thrown in authentication escapes the handler.
 - `app.MapPouryaKitModuleEndpoints()` maps every Module's endpoints, each Module under its own route group.
@@ -163,12 +167,14 @@ internal sealed class ListProductsEndpoint : IEndpoint
 
 ## The caller and the Actor
 
-- Every Module's route group requires an authenticated caller. A request without one is refused by the application's authentication scheme before the endpoint runs (401 with JwtBearer, written as a problem response).
+- HTTP access is authenticated by default. `AddPouryaKitWeb` sets the authorization `FallbackPolicy` to require an authenticated user, once, while the Host is composed, so every endpoint that states nothing, a Module's or one the Host maps itself (a health check, a document), refuses an unauthenticated caller before it runs: 401 with JwtBearer, written as a problem response. A path no route matches has no endpoint, and the fallback policy applies to it too: an anonymous request answers 401, an authenticated one 404. A fallback policy the application set itself is kept. Never change `AuthorizationOptions` while the Host runs, such as from a policy provider that adds policies on demand.
+- Every Module's route group also requires an authenticated caller explicitly, through the default policy.
+- An endpoint the Host maps outside every Module opts out with the standard `.AllowAnonymous()`; it runs no Operation, so it names no Actor.
 - Before the endpoint binds its parameters, the Kit begins the request's Operation with an `OperationContext` built from the caller: `Actor.Person(id)` from the Actor claim, the tenant from the tenant claim when one is configured, and a new chain of work (correlated with its own `OperationId`, no causation; no incoming header sets them). The endpoint injects that context and passes it to the Gateway; it never builds one itself.
 - `PouryaKitWebOptions` names the claims: `ActorClaim`, by default `ClaimTypes.NameIdentifier`, which JwtBearer maps a token's `sub` to (set `"sub"` when the scheme keeps the token's claim names), and `TenantClaim`, null by default for an application without tenants. Set them with `AddPouryaKitWeb(web => web.TenantClaim = "tenant")` or `Configure<PouryaKitWebOptions>`.
 - A caller whose identity lacks the tenant claim runs with a null tenant and is not refused. An authenticated caller without the Actor claim is a configuration bug: the request answers 500 and the log names the missing claim.
 - A public endpoint states the Actor its anonymous callers run as with `.AllowAnonymousAs(Actor.System("catalog.storefront"))`, as `ListProducts` does; an authenticated caller of it still runs as themselves. A plain `.AllowAnonymous()` on a Module's endpoint fails the Host when it starts, because no Operation runs as an unnamed Actor.
-- A rule for one command or query beyond "authenticated" is an `IAuthorizer` ([commands-queries-validation.md](commands-queries-validation.md#authorization-hook)), which answers 403 with its `Forbidden` Error.
+- A permission a command or query requires is declared on it with `[RequiresPermission(name)]` and checked against the application's `IActorPermissions` ([security.md](security.md)); a caller without it gets 403 with `Permission.Denied`. Any other rule for one command or query beyond "authenticated" is an `IAuthorizer` ([commands-queries-validation.md](commands-queries-validation.md#authorization-hook)), which answers 403 with its `Forbidden` Error. Never add a role or claim policy per endpoint for either: the check belongs to the Operation, however it arrives.
 
 ## Testing over HTTP
 
@@ -234,5 +240,6 @@ public async Task Creating_a_product_with_a_name_in_use_answers_409_with_its_err
 ```
 
 - `Fixture.Host.GetTestClient()` (`Microsoft.AspNetCore.TestHost`) returns an `HttpClient` over the in-memory server; a client without the header is an anonymous caller.
-- A second `AddAuthentication(scheme)` call after the Host's makes the test scheme the default, so the Host's own scheme needs no configuration in tests. Issue the claim the Host's `ActorClaim` names, and a tenant claim when `TenantClaim` is set.
+- A second `AddAuthentication(scheme)` call after the Host's makes the test scheme the default, so the Host's own scheme needs no configuration in tests. Issue the claim the Host's `ActorClaim` names, a tenant claim when `TenantClaim` is set, and the permission claims the Host's `IActorPermissions` reads: the Proving Sample's scheme turns a `Test-Permissions` header into them ([security.md](security.md#testing-permissions)).
+- Prove the authenticated default on an endpoint outside every Module's route group, which has no authorization of its own: map one on a Host the test builds, and an anonymous request to it must answer 401.
 - A test that needs another composition, such as another environment or an endpoint the shared Host must not map, builds and starts a Host of its own from the same composition methods.

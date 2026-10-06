@@ -1,4 +1,5 @@
 using System.Reflection;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,8 +17,11 @@ public static class WebServiceCollectionExtensions
         /// exception into a 500 problem response without its message and a request that cannot be read into a 400
         /// problem response in every environment, status code pages that write any other failure answered with an
         /// empty body (such as routing's own 405 and 415) as a problem response, the Kit's JSON representation
-        /// (<c>UsePouryaKitJson</c>, typed IDs as their bare values) for request and response bodies, and the claims
-        /// that fill the <c>OperationContext</c>.
+        /// (<c>UsePouryaKitJson</c>, typed IDs as their bare values) for request and response bodies, the claims that
+        /// fill the <c>OperationContext</c>, and authenticated access by default: the authorization fallback policy
+        /// requires an authenticated caller wherever an endpoint states nothing, inside or outside a Module's route
+        /// group, unless the application set a fallback policy of its own. An endpoint opts out with
+        /// <c>AllowAnonymous</c>, on a Module's endpoint <c>AllowAnonymousAs(actor)</c>.
         /// </summary>
         /// <remarks>
         /// The handler sees only what runs after it, so <c>app.UseExceptionHandler()</c> comes first in the pipeline,
@@ -35,6 +39,10 @@ public static class WebServiceCollectionExtensions
             // exception handler, which answers the same problem response in every environment.
             services.PostConfigure<RouteHandlerOptions>(routeHandlers => routeHandlers.ThrowOnBadRequest = true);
             services.TryAddEnumerable(ServiceDescriptor.Transient<IStartupFilter, ProblemStatusCodePages>());
+            // Set once, while the Host is composed; nothing changes AuthorizationOptions after it starts.
+            services.Configure<AuthorizationOptions>(authorization =>
+                authorization.FallbackPolicy ??= new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()
+            );
             services.ConfigureHttpJsonOptions(json => json.SerializerOptions.UsePouryaKitJson());
             var options = services.AddOptions<PouryaKitWebOptions>();
             if (configure is not null)

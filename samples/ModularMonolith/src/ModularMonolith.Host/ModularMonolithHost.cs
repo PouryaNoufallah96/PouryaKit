@@ -5,6 +5,7 @@ using Inventory;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
+using PouryaKit.Security;
 using PouryaKit.Web;
 
 namespace ModularMonolith.Host;
@@ -19,7 +20,11 @@ public static class ModularMonolithHost
         // the configuration section Authentication:Schemes:Bearer; `dotnet user-jwts` fills it for development.
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
         builder.Services.AddAuthorization();
+        // Authenticated by default: AddPouryaKitWeb sets the authorization fallback policy; a public endpoint says so.
         builder.Services.AddPouryaKitWeb();
+        // The permissions a command or query declares (Catalog's RemoveProducts) are the HTTP caller's permission claims.
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<IActorPermissions, CallerPermissions>();
         builder.AddPouryaKitModules(modules =>
         {
             modules.Add<CatalogModule>();
