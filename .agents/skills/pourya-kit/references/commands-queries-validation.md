@@ -62,7 +62,7 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 - Every command and query passes the same fixed steps: logging, the optional authorization hook, optional validation, then the handler; a command's handler runs inside the Unit of Work. Never register a pipeline step or a behaviour yourself.
 - Send from outside the Module through its Gateway, with an Operation Context (see [modules.md](modules.md)). Inside a handler, send a nested command with an injected `IDispatcher`: `await dispatcher.SendAsync(new ReserveStockCommand(id), ct)`. It joins the outer Unit of Work, so the Operation commits once, and it reads the same Operation Context.
 - A nested command that fails, in its handler, its validation or its authorization, or by throwing, rolls the whole Operation back, even if your handler ignores its Result. The Operation then fails with that nested command's Errors. Pass a failure on with `return result.Errors;` instead of ignoring it.
-- A failed nested query rolls nothing back; act on its Result as you need.
+- A failed nested query that leaves tracked state unchanged rolls nothing back; act on its Result as you need.
 - One scope holds one Operation. Never send a second top-level command in a scope that already ran one, and never retry a failed command in the same scope: send it again through the Gateway, which opens a new scope for each call.
 
 ## Code that only reads
@@ -72,12 +72,16 @@ Some code runs inside an Operation but may change nothing, because its outcome c
 - a query's handler, and an authorizer or a validator, at any nesting depth, including those of a query or command nested in a command's handler;
 - a step of the Unit of Work that only reads, which the Kit opens around application code it runs after the last change: a Snapshot mapper ([messaging.md](messaging.md#writing-a-snapshot-mapper)).
 
-Such code may run queries. Every write is refused with an `InvalidOperationException` before it happens; left uncaught, the exception fails the Operation and nothing commits:
+Such code may run queries. The Kit refuses its write entry points with an `InvalidOperationException` before they write; left uncaught, the exception fails the Operation and nothing commits:
 
 - a command sent from it: `A query handler sent a command.`, `A command was sent from an authorizer or a validator.`, or `A command was sent from a Snapshot mapper, a step that only reads.`; a refused command still marks the Operation rollback-only;
 - the repository's `AddAsync` and `Remove` ([persistence.md](persistence.md#the-repository)), `IUnitOfWorkConnection.Join()` ([dapper-reads.md](dapper-reads.md#writing-with-plain-sql-in-the-unit-of-work)) and `IIntegrationEventPublisher.Publish` ([messaging.md](messaging.md#publishing-from-a-notification-handler)), each with a message that begins `Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, ...`.
 
 A command's handler, a Domain Event Handler, and a Notification or Integration Event Handler, whose delivery runs as a command, may change state.
+
+With EF persistence, the Operation also compares tracked state when the whole query, the authorization and validation step, or a default `OnlyReading(step)` ends, including after a failed Result or an exception. It captures the current values and entry states, so a command's legitimate pending changes are its baseline. New entities loaded by a query are captured when they begin tracking, so an innocent additional read is permitted. The comparison includes owned and child entities, mutable values through EF's value comparers, complex properties and collections recursively, and pending Domain Events by identity and order. A difference marks the Operation rollback-only before it throws. Catching that exception cannot permit the outer command to commit. An otherwise successful command fails with `Operation.ReadingChangedState`, unless an earlier failure already made the Operation rollback-only. Snapshot mapper scopes retain the write guards but share one tracked-state comparison after the whole batch, as described in [the mapper rules](messaging.md#the-rules-of-a-mapper-and-a-key).
+
+The comparison sees state at the boundary, so it cannot detect a transient change restored before the boundary ends. `IReadingStateGuard` and `TrackedState` are Kit seams, never Feature APIs. The DI registration attaches the current Module's Unit of Work guard lazily. A manually constructed `new Operation()` only guards the Kit's write entry points. Queries without a persistence package need no Unit of Work.
 
 ## Validation
 

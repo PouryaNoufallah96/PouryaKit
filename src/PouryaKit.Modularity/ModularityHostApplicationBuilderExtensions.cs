@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using PouryaKit.Cqrs;
 
@@ -23,9 +22,10 @@ public static class ModularityHostApplicationBuilderExtensions
 
             modules(new ModulesBuilder(builder.Services));
 
-            builder.Services.TryAddScoped<Operation>();
+            builder.Services.AddPouryaKitCqrs();
             // Added after every Composition Root, so it is the IUnitOfWork the dispatcher resolves.
             builder.Services.AddScoped(RouteUnitOfWork);
+            builder.Services.AddScoped<IReadingStateGuard>(services => (RouteUnitOfWork(services, required: false) as IReadingStateGuard)!);
             builder.ConfigureContainer(
                 new DefaultServiceProviderFactory(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true })
             );
@@ -33,16 +33,23 @@ public static class ModularityHostApplicationBuilderExtensions
         }
     }
 
-    private static IUnitOfWork RouteUnitOfWork(IServiceProvider services)
+    private static IUnitOfWork RouteUnitOfWork(IServiceProvider services) => RouteUnitOfWork(services, required: true)!;
+
+    private static IUnitOfWork? RouteUnitOfWork(IServiceProvider services, bool required)
     {
-        var module =
-            services.GetRequiredService<Operation>().Module
-            ?? throw new InvalidOperationException(
+        var module = services.GetRequiredService<Operation>().Module;
+        if (module is null)
+        {
+            return required ? throw new InvalidOperationException(
                 "The Unit of Work was needed in a scope whose Operation names no Module. Send the Operation through IGatewayProcessor<TModule>, or begin the scope's Operation with its Module."
-            );
-        return services.GetKeyedService<IUnitOfWork>(module)
-            ?? throw new InvalidOperationException(
+            ) : null;
+        }
+
+        var unitOfWork = services.GetKeyedService<IUnitOfWork>(module);
+        return unitOfWork is null && required
+            ? throw new InvalidOperationException(
                 $"{module.Name} registers no Unit of Work. Declare its data in its Composition Root, for example with UsePostgres."
-            );
+            )
+            : unitOfWork;
     }
 }

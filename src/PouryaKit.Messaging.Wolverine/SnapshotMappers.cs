@@ -68,9 +68,9 @@ internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation ope
                         declared =>
                             (Mapping)Activator.CreateInstance(typeof(Mapping<,>).MakeGenericType(declared.Aggregate, declared.Snapshot))!
                     );
-                    // A mapper only reads, from its construction on: a command it sends is refused, and so is every
-                    // write the Kit guards.
-                    using var reading = operation.OnlyReading("a Snapshot mapper");
+                    // SnapshotStep compares the prepared batch once; this scope guards each mapper's write entry
+                    // points from its construction on, without copying the whole tracker again for each aggregate.
+                    using var reading = operation.OnlyReading("a Snapshot mapper", compareTrackedState: false);
                     return mapping.Map(scope.GetRequiredService(snapshot.Mapper), aggregate, removed);
                 }),
         ];

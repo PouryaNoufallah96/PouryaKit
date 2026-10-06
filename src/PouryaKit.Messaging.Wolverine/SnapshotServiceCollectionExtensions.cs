@@ -18,8 +18,8 @@ public static class SnapshotServiceCollectionExtensions
         /// commits, and writes it to the Outbox in the same commit, once for each subscription; a rolled-back Operation
         /// publishes none. The mapper only reads, as a step of the Unit of Work that only reads: an Operation whose mapper
         /// sends a command, writes through a repository or the Unit of Work's connection, changes anything the Unit of
-        /// Work saves, except inside an EF Core complex collection, which is not seen, or raises a Domain Event, fails
-        /// with nothing committed. Other Modules subscribe to it with <c>Subscribe</c>, as to an Integration
+        /// Work saves, complex collections included, or changes pending Domain Events, fails with nothing committed.
+        /// Changes restored before the read boundary ends are not detected. Other Modules subscribe to it with <c>Subscribe</c>, as to an Integration
         /// Event, and their handler runs only for a version newer than every one it applied of that aggregate, so a late,
         /// duplicated or concurrent older Snapshot is never applied. The wire name is stable: keep it when the type is
         /// renamed. Three rules are checked when an Operation that changes such an aggregate commits, not at startup, and

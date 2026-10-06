@@ -24,6 +24,28 @@ namespace ModularMonolith.Tests.Stub.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.BinaryKey", b =>
+                {
+                    b.Property<byte[]>("Id")
+                        .HasColumnType("bytea")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("value");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_binary_keys");
+
+                    b.ToTable("binary_keys", "stub");
+                });
+
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Book", b =>
                 {
                     b.Property<Guid>("Id")
@@ -394,6 +416,28 @@ namespace ModularMonolith.Tests.Stub.Migrations
                         .HasDatabaseName("ix_stickers_folder_id");
 
                     b.ToTable("stickers", "stub");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.TimestampKey", b =>
+                {
+                    b.Property<DateTime>("Id")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("value");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_timestamp_keys");
+
+                    b.ToTable("timestamp_keys", "stub");
                 });
 
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Tray", b =>

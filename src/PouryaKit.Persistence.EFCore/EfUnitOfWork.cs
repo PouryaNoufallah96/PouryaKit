@@ -18,13 +18,26 @@ internal sealed class EfUnitOfWork(
     IUniqueConstraintReader? uniqueConstraints,
     IEnumerable<UniqueConstraintError> uniqueConstraintErrors,
     IUnitOfWorkOutbox? outbox
-) : IUnitOfWork
+) : IUnitOfWork, IReadingStateGuard
 {
     /// <summary>The DbContext the Operation's repositories track their changes in.</summary>
     public DbContext DbContext => dbContext;
 
     /// <summary>The Operation this Unit of Work belongs to.</summary>
     public Operation Operation => operation;
+
+    IDisposable IReadingStateGuard.OnlyReading(string step) => new ReadingState(TrackedState.Capture(dbContext, includeQueryLoads: true), step);
+
+    private sealed class ReadingState(TrackedState state, string step) : IDisposable
+    {
+        public void Dispose()
+        {
+            using (state)
+            {
+                state.ThrowIfChanged(char.ToUpperInvariant(step[0]) + step[1..]);
+            }
+        }
+    }
 
     public async Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken)
     {

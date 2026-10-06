@@ -76,6 +76,7 @@ internal sealed class KitStepCallingCommandHandler(
     DomainEventDrain drain,
     IServiceProvider services,
     Operation operation,
+    IReadingStateGuard readingState,
     OffendingDbContext dbContext
 ) : CommandHandler<OffendCommand>
 {
@@ -89,7 +90,10 @@ internal sealed class KitStepCallingCommandHandler(
         integrationEvents.Add(Guid.CreateVersion7(), command);
         await drain.RunAsync(() => [], cancellationToken);
         services.BeginOperation(new OperationContext(Actor.System("offending")));
-        using var reading = operation.OnlyReading("offending");
+        using var reading = operation.OnlyReading("offending", compareTrackedState: false);
+        using var guarded = readingState.OnlyReading("offending");
+        using var tracked = TrackedState.Capture(dbContext);
+        tracked.ThrowIfChanged("offending");
         return Result.Success();
     }
 }

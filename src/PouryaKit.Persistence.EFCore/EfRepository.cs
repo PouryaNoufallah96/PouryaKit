@@ -76,7 +76,7 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
     }
 
     // A query nested in a command runs inside the command's Unit of Work, so what it added would commit with the
-    // command, though a failed query marks nothing rollback-only.
+    // command, though a failed query Result alone marks nothing rollback-only.
     private void EnsureMayChangeState()
     {
         if (!_operation.MayChangeState)

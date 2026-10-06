@@ -9,6 +9,20 @@ namespace PouryaKit.Cqrs;
 /// </summary>
 public sealed class Operation
 {
+    private readonly Func<IReadingStateGuard?> _readingState;
+    private static readonly Error ReadingChangedState = Error.Unexpected(
+        "Operation.ReadingChangedState",
+        "Code that only reads changed tracked state, so the Operation was rolled back."
+    );
+
+    /// <summary>
+    /// Creates an Operation without a persistence state guard. The Kit's service registration attaches the current
+    /// Unit of Work's guard when one exists; a manually constructed Operation guards only the Kit's write entry points.
+    /// </summary>
+    public Operation() : this(() => null) { }
+
+    internal Operation(Func<IReadingStateGuard?> readingState) => _readingState = readingState;
+
     private int _runningCommands;
     private int _runningQueries;
     private bool _commandStarted;
@@ -18,14 +32,14 @@ public sealed class Operation
     private readonly List<ReadingStep> _readingSteps = [];
 
     /// <summary>
-    /// True once a command or a Domain Event Handler inside the Operation has failed, whether or not its caller read the
-    /// Result. The Unit of Work then rolls back; nothing clears it.
+    /// True once a command or a Domain Event Handler inside the Operation has failed, or code that only reads changed
+    /// tracked state, whether or not its caller handled the failure. The Unit of Work then rolls back; nothing clears it.
     /// </summary>
     public bool IsRollbackOnly => !RollbackErrors.IsEmpty;
 
     /// <summary>
-    /// The Errors of the first failed command or Domain Event Handler, which the rolled-back Operation fails with; empty
-    /// until then.
+    /// The Errors of the first failed command, Domain Event Handler or read-state check, which the rolled-back Operation
+    /// fails with; empty until then.
     /// </summary>
     public ImmutableArray<Error> RollbackErrors { get; private set; } = [];
 
@@ -38,10 +52,10 @@ public sealed class Operation
 
     /// <summary>
     /// False while a query, an authorizer or a validator runs in the Operation, at any depth, including those of a command
-    /// nested in another, and while a step opened with <see cref="OnlyReading"/> runs; true otherwise, as in a command's
+    /// nested in another, and while a step opened with <see cref="OnlyReading(string)"/> runs; true otherwise, as in a command's
     /// handler or a Domain Event Handler. Where it is false the Operation only reads: a command is refused there, and so
-    /// is any other write, because a failed query marks nothing rollback-only and a check runs before its command may
-    /// proceed.
+    /// is any other guarded write. A persistence guard also checks for changes to tracked objects at the end of the
+    /// read, whether it succeeded, failed or threw, and marks a change rollback-only.
     /// </summary>
     public bool MayChangeState => _runningQueries == 0 && _runningChecks == 0 && _readingSteps.Count == 0;
 
@@ -53,10 +67,17 @@ public sealed class Operation
     /// Steps nest; disposing one closes that step only, whatever else is open, and disposing it again does nothing.
     /// Feature code never opens one.
     /// </summary>
-    public IDisposable OnlyReading(string step)
+    public IDisposable OnlyReading(string step) => OnlyReading(step, compareTrackedState: true);
+
+    /// <summary>
+    /// Opens a step that only reads. The Kit may set <paramref name="compareTrackedState"/> to false only when its
+    /// caller owns a comparison over the whole batch, as the Snapshot step does. Write entry points stay guarded;
+    /// normal queries and checks still compare their own tracked state. Feature code never opens one.
+    /// </summary>
+    public IDisposable OnlyReading(string step, bool compareTrackedState)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(step);
-        var reading = new ReadingStep(this, step);
+        var reading = new ReadingStep(this, step, compareTrackedState ? _readingState()?.OnlyReading(step) : null);
         _readingSteps.Add(reading);
         return reading;
     }
@@ -135,19 +156,55 @@ public sealed class Operation
 
     internal void EndUnitOfWork() => _unitOfWorkActive = false;
 
-    internal void EnterChecks() => _runningChecks++;
+    internal IDisposable EnterChecks()
+    {
+        var reading = new ReadingBoundary(this, _readingState()?.OnlyReading("An authorizer or a validator"), () => _runningChecks--);
+        _runningChecks++;
+        return reading;
+    }
 
-    internal void ExitChecks() => _runningChecks--;
+    internal IDisposable EnterQuery()
+    {
+        var reading = new ReadingBoundary(this, _readingState()?.OnlyReading("A query"), () => _runningQueries--);
+        _runningQueries++;
+        return reading;
+    }
 
-    internal void EnterQuery() => _runningQueries++;
+    private sealed class ReadingBoundary(Operation operation, IDisposable? guard, Action close) : IDisposable
+    {
+        private bool _closed;
 
-    internal void ExitQuery() => _runningQueries--;
+        public void Dispose()
+        {
+            if (_closed)
+            {
+                return;
+            }
+
+            _closed = true;
+            try
+            {
+                guard?.Dispose();
+            }
+            catch
+            {
+                operation.MarkRollbackOnly([ReadingChangedState]);
+                throw;
+            }
+            finally
+            {
+                close();
+            }
+        }
+    }
 
     // Closes its own step, once; any other step stays as it is.
-    private sealed class ReadingStep(Operation operation, string name) : IDisposable
+    private sealed class ReadingStep(Operation operation, string name, IDisposable? guard) : IDisposable
     {
+        private ReadingBoundary? _boundary;
+
         public string Name { get; } = name;
 
-        public void Dispose() => operation._readingSteps.Remove(this);
+        public void Dispose() => (_boundary ??= new ReadingBoundary(operation, guard, () => operation._readingSteps.Remove(this))).Dispose();
     }
 }

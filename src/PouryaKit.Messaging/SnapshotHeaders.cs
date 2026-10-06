@@ -6,7 +6,11 @@ namespace PouryaKit.Messaging;
 /// </summary>
 public static class SnapshotHeaders
 {
-    /// <summary>The aggregate's key, as the publishing Module stores it.</summary>
+    /// <summary>
+    /// The aggregate's provider key, encoded without losing precision: Guid, int, long and string keep their formats,
+    /// byte arrays use uppercase hexadecimal, and losslessly mapped PostgreSQL timestamps use DateTime ticks without
+    /// Kind. Composite keys prefix each part with its invariant length and a colon. Null and other types are refused.
+    /// </summary>
     public const string AggregateId = "pouryakit-snapshot-aggregate-id";
 
     /// <summary>The aggregate's version the Snapshot was built at, the one committed with it.</summary>

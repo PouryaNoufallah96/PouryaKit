@@ -9,10 +9,14 @@ namespace PouryaKit.Messaging;
 /// <see cref="IAggregateRoot.Version"/> is the version being committed, which the Snapshot carries, so a receiver
 /// applies only a newer one. A mapper only reads: it runs as a step of the Unit of Work that only reads, so a command
 /// it sends, and a write through a repository or the Unit of Work's connection, is refused, and the Operation fails if it
-/// changes anything the Unit of Work saves, except a change inside an EF Core complex collection, which is not seen.
+/// leaves a change in anything the Unit of Work saves, including complex collection contents, or pending Domain Events.
+/// The comparison sees state at the read boundary; a transient change restored before it ends is not detected.
 /// It may be <c>internal</c>. A Module declares it in its Composition Root with <c>PublishSnapshot</c>. The key of an
 /// aggregate that publishes Snapshots is never used again after the aggregate is deleted outright: receivers keep its
 /// Tombstone's version and would turn away a new aggregate's lower ones.
+/// Its EF provider key must be a non-null Guid, int, long, string, byte array or DateTime. A DateTime key must use a
+/// PostgreSQL timestamp mapping of precision at most 6, with every value aligned to that precision so reload preserves
+/// its ticks; date mappings and values below the mapping's precision are refused before saving.
 /// </summary>
 public interface ISnapshotMapper<in TAggregate, out TSnapshot>
     where TAggregate : IAggregateRoot
