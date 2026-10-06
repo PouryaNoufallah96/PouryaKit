@@ -551,7 +551,7 @@ compilation.
 
 ### Phase 5 packaging and releases
 
-Needs Phase 4. Wave 1 is merged. On 2026-10-06 the owner narrowed the active scope to "packaging versioning and nuget packages in cleanest way and efficient if any sample references covers all follow them". Deliver the existing shared package validation and a standard private GitHub Packages publisher. This replaces the custom publication protocol and preflight machinery from this wave. #28/#29 compatibility automation, named cuts and content-verified recovery are deferred, and the current scope does not claim all original #24 acceptance criteria. Section G and the ADRs remain unchanged.
+Needs Phase 4. Wave 1 is merged. On 2026-10-06 the owner narrowed the active scope to "packaging versioning and nuget packages in cleanest way and efficient if any sample references covers all follow them". The existing shared package validation and standard private GitHub Packages publisher are delivered. This replaces the custom publication protocol and preflight machinery from this wave. #28/#29 compatibility automation, named cuts and content-verified recovery are closed as not planned and require a new scoped ticket, and the current scope does not claim all original #24 acceptance criteria. Section G and the ADRs remain unchanged.
 
 Keep central package management, MinVer as the only version engine, SourceLink, `EnablePackageValidation`, MIT and `THIRD-PARTY-NOTICES.md` in each nupkg. All thirteen shipped Kit packages share one version. Private GitHub Packages comes first. Nuget.org activation and stable `1.0` each require a later owner decision.
 
@@ -566,7 +566,7 @@ MinVer uses minimum major/minor `0.1`, tag prefix `v` and default prerelease ide
 
 The read-only authorization job requires successful CI and AI/package-validation jobs, the fixed private repository, exact main source SHA and attempt, and a producer event of `push` or `workflow_dispatch`. PR/tag-head artifacts cannot authorize publication. The publisher uses trusted main code, official artifact download, the original receipt/inventory/hash checks, standard `dotnet nuget push` and a clean all-thirteen private-feed restore. It never builds replacement packages. The existing literal concurrency group disables cancellation of an active publisher; GitHub's one pending slot is not a durable queue.
 
-`--skip-duplicate` skips HTTP 409. It does not verify matching remote contents or fulfill the original identical-content recovery guarantee. Preserve the Domain `0.1.0-preview.0.10` partial publication and its original main CI `37456433718`, attempt `1`, artifact `11408539884`, source `2de265641b8cd94a5ddc17980cdcad530f0a8f60`. Complete it only from those original bytes; do not delete, replace or repack it.
+`--skip-duplicate` skips HTTP 409. It does not verify matching remote contents or fulfill the original identical-content recovery guarantee. Successful [retry run 37465070135](https://github.com/PouryaNoufallah96/PouryaKit/actions/runs/37465070135) completed `0.1.0-preview.0.10` from original main CI `37456433718`, attempt `1`, artifact `11408539884`, source `2de265641b8cd94a5ddc17980cdcad530f0a8f60`, skipping Domain on HTTP 409, pushing twelve packages and restoring all thirteen with fresh caches. Preserve the original artifacts and retry record; never delete, replace or repack that version. This adds no remote raw-byte identity proof.
 
 **Verified reference sources.** These are static source checks, not successful upstream publication evidence:
 
@@ -579,9 +579,9 @@ The read-only authorization job requires successful CI and AI/package-validation
 2. CI remains read-only and preserves the tested SHA, MinVer version, package inventory, hashes and original artifacts. Successful main producer metadata authorizes a separate package-write job; failure or PR provenance cannot authorize it.
 3. Publish originals to the fixed private feed with the ephemeral job token, preserve the manifest, and restore all thirteen exact versions with fresh caches. Keep public publication and tag/Release writes disabled. Record actual hosted evidence in [#27](https://github.com/PouryaNoufallah96/PouryaKit/issues/27), with the existing fork-execution exception in #26.
 
-**Deferred original acceptance:** #28/#29 require packaged public API comparison, reviewed compatibility/progression and migration notes, approved immutable named cuts, tagged validation, tag/package/manifest version agreement, GitHub Release announcement only after complete publication, remote raw-byte/SHA conflict checks and partial-publish identical-content recovery from original artifacts. These remain the broader #24 plan, not guarantees of standard duplicate skipping. [Deferred release guidance](releases-preflight.md) records this boundary. Resuming that work needs a new scoped brief; MinVer remains the sole version engine.
+**Original acceptance closed as not planned:** #28/#29 described packaged public API comparison, reviewed compatibility/progression and migration notes, approved immutable named cuts, tagged validation, tag/package/manifest version agreement, GitHub Release announcement only after complete publication, remote raw-byte/SHA conflict checks and partial-publish identical-content recovery from original artifacts. These are historical requirements outside the completed active #24 scope, not guarantees of standard duplicate skipping. [Release scope guidance](releases-preflight.md) records this boundary. Resuming that work needs a new scoped brief; MinVer remains the sole version engine.
 
-The active scope's value is validated private packages with one version and a clean consumer restore. Its cost is the existing package validator plus standard Actions/CLI jobs and small provenance checks. Its impact is packaging and CI only; Kit runtime APIs, reference projects, credentials and access settings are unchanged. Completion requires the active checks, hosted publication/restore evidence, current docs and AI guidance through section H. The broader original #24 acceptance remains incomplete.
+The active scope's value is validated private packages with one version and a clean consumer restore. Its cost is the existing package validator plus standard Actions/CLI jobs and small provenance checks. Its impact is packaging and CI only; Kit runtime APIs, reference projects, credentials and access settings are unchanged. The active Phase 5 scope is complete: [CI run 37465576160](https://github.com/PouryaNoufallah96/PouryaKit/actions/runs/37465576160) and [publication run 37466084084](https://github.com/PouryaNoufallah96/PouryaKit/actions/runs/37466084084) succeeded at main SHA `b234f4f`, with 386 runtime tests passed, zero failures or skips, thirteen validated packages, fifteen clean consumers and the private-feed restore at MinVer `0.1.0-preview.0.13`. The broader original #24 acceptance was not delivered; #28/#29 are closed as not planned.
 
 **Phase 6 — template and second profile** (optional, after 5)
 - `dotnet new` template extracted from the proven sample; single-service profile with RabbitMQ.
@@ -626,8 +626,11 @@ multi-subscriber failure anywhere.
 - How Lucky Penny §4.2.e.3 would be applied to your case is a legal question; the text is clear enough
   that I would not build on it.
 
-**Needs build / database / runtime verification:** everything in Phases 0–5. Nothing in this
-document has been compiled.
+**Verification boundary:** the original reference-project comparison in this section is historical
+static evidence. Current Kit build, database and runtime proof is recorded in the
+[acceptance map](acceptance.md) and the [completed active Phase 5 scope](#phase-5-packaging-and-releases).
+Remaining unverified work requires its own proof. The private-fork verification exception remains,
+and #28/#29 stay closed as not planned.
 
 **Decided by the owner (2026-10-04):**
 1. **One host container.** Modules keep their own composition root, gateway, operation scope,
@@ -816,7 +819,7 @@ a call between Modules goes through the Gateway, never through YARP or gRPC loop
 
 Form: **P** = its own package · **R** = a registration method on an existing package · **T** =
 template recipe (native .NET; the Kit adds nothing) · **A** = application code · **–** = refused.
-Complete [Phase 5 packaging and releases](#phase-5-packaging-and-releases) before Wave 2 feature work.
+The active [Phase 5 packaging and releases](#phase-5-packaging-and-releases) scope is complete; Wave 2 feature work can follow.
 Wave 2 is the first follow-on Capability set after the merged Wave 1; Wave 3 needs Wave 2 pieces;
 Wave 4 is the sample agent and the template's third composition.
 
@@ -979,8 +982,8 @@ context into envelopes.
 
 ### I.7 Recommended plan after Wave 1
 
-Wave 1 is merged. First complete [Phase 5 packaging and releases](#phase-5-packaging-and-releases).
-Then one spec per wave: **Wave 2** — paging, one JSON setup, Web
+Wave 1 is merged and the active [Phase 5 packaging and releases](#phase-5-packaging-and-releases) scope is complete.
+Use one spec per wave: **Wave 2** — paging, one JSON setup, Web
 defaults, Web.OpenApi, Core, Security and JwtBearer, request idempotency, Caching, scheduling,
 Observability, the HttpClient handler, the versioning rule, the RabbitMQ transport after its spike,
 and the template's first two compositions; **Wave 3** — Marten after its spike, multi-tenancy, AI,
