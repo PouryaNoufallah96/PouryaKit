@@ -60,6 +60,34 @@ public sealed class ReadOnlyStateTests(AppFixture app) : HostTest<AppFixture>(ap
     }
 
     [Theory]
+    [InlineData(ReadingChange.AddChild)]
+    [InlineData(ReadingChange.RemoveChild)]
+    public async Task A_query_cannot_change_navigation_membership_when_automatic_change_detection_is_disabled(ReadingChange change)
+    {
+        var folder = await CreateFolderAsync();
+
+        var result = await SendAsync(new ReadFolderWithoutAutomaticDetectionCommand(folder, change));
+
+        Assert.Equal("Operation.ReadingChangedState", Assert.Single(result.Errors).Code);
+        await AssertUnchangedAsync();
+        Assert.Equal([["first page"], ["second page"]], await Fixture.RowsAsync("select text from stub.pages order by text"));
+    }
+
+    [Fact]
+    public async Task An_innocent_failed_query_accepts_pending_navigation_changes_and_new_reads_when_automatic_detection_is_disabled()
+    {
+        var folder = await CreateFolderAsync();
+        var additional = await CreateFolderAsync();
+
+        var result = await SendAsync(new ReadFolderWithoutAutomaticDetectionCommand(folder, ReadingChange.None, additional));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal([["first page"], ["legitimate pending page"], ["second page"]], await Fixture.RowsAsync($"select text from stub.pages where folder_id = '{folder}' order by text"));
+        Assert.Equal(2L, await Fixture.ScalarAsync<long>($"select version from stub.folders where id = '{folder}'"));
+        Assert.Equal(1L, await Fixture.ScalarAsync<long>($"select version from stub.folders where id = '{additional}'"));
+    }
+
+    [Theory]
     [InlineData(ReadingPoint.Authorizer)]
     [InlineData(ReadingPoint.Validator)]
     public async Task An_outer_command_check_uses_the_owning_modules_guard_before_its_transaction_starts(ReadingPoint point)

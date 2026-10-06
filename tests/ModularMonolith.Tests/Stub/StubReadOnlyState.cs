@@ -22,6 +22,7 @@ public enum ReadingChange
     Root,
     Child,
     AddChild,
+    RemoveChild,
     OwnedValue,
     DomainEvent,
 }
@@ -69,7 +70,7 @@ internal sealed class ReadFolderCommandHandler(
     }
 }
 
-internal sealed record ReadFolderQuery(Guid FolderId, Folder? Held, ReadingChange Change, bool Throws) : Query<bool>;
+internal sealed record ReadFolderQuery(Guid FolderId, Folder? Held, ReadingChange Change, bool Throws, Guid? ReadAlso = null) : Query<bool>;
 
 internal sealed class ReadFolderQueryHandler(IRepository<Folder, FolderId> folders) : QueryHandler<ReadFolderQuery, bool>
 {
@@ -79,6 +80,11 @@ internal sealed class ReadFolderQueryHandler(IRepository<Folder, FolderId> folde
     {
         var folder = query.Held ?? (await folders.FindAsync(new FolderId(query.FolderId), cancellationToken))!;
         ChangeFolderRead.Apply(folder, query.Change);
+        if (query.ReadAlso is { } readAlso)
+        {
+            _ = await folders.FindAsync(new FolderId(readAlso), cancellationToken);
+        }
+
         if (query.Throws)
         {
             throw new InvalidOperationException("The query threw after its read.");
@@ -103,6 +109,9 @@ internal static class ChangeFolderRead
             case ReadingChange.AddChild:
                 folder.AddPage("added in a read");
                 break;
+            case ReadingChange.RemoveChild:
+                folder.TearOutPage("first page");
+                break;
             case ReadingChange.OwnedValue:
                 folder.Relabel("changed in a read");
                 break;
@@ -110,6 +119,35 @@ internal static class ChangeFolderRead
                 folder.Rename(folder.Name);
                 break;
         }
+    }
+}
+
+internal sealed record ReadFolderWithoutAutomaticDetectionCommand(Guid FolderId, ReadingChange Change, Guid? ReadAlso = null) : Command;
+
+internal sealed class ReadFolderWithoutAutomaticDetectionCommandHandler(
+    IRepository<Folder, FolderId> folders,
+    IDispatcher dispatcher,
+    StubDbContext db
+) : CommandHandler<ReadFolderWithoutAutomaticDetectionCommand>
+{
+    public override async Task<Result> Handle(ReadFolderWithoutAutomaticDetectionCommand command, CancellationToken cancellationToken)
+    {
+        var folder = (await folders.FindAsync(new FolderId(command.FolderId), cancellationToken))!;
+        db.ChangeTracker.AutoDetectChangesEnabled = false;
+        folder.AddPage("legitimate pending page");
+        try
+        {
+            _ = await dispatcher.QueryAsync(new ReadFolderQuery(command.FolderId, folder, command.Change, false, command.ReadAlso), cancellationToken);
+        }
+        catch (InvalidOperationException) { }
+
+        if (db.ChangeTracker.AutoDetectChangesEnabled)
+        {
+            throw new InvalidOperationException("A read changed the automatic change detection setting.");
+        }
+
+        db.ChangeTracker.AutoDetectChangesEnabled = true;
+        return Result.Success();
     }
 }
 

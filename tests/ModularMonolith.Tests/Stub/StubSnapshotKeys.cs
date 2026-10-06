@@ -75,15 +75,18 @@ internal sealed class ChangeTimestampKeysCommandHandler(IRepository<TimestampKey
         foreach (var id in command.Keys)
         {
             var key = await keys.FindAsync(id, cancellationToken);
-            if (key is null)
+            if (command.Value is { } value)
             {
-                await keys.AddAsync(TimestampKey.Create(id, command.Value!), cancellationToken);
+                if (key is null)
+                {
+                    await keys.AddAsync(TimestampKey.Create(id, value), cancellationToken);
+                }
+                else
+                {
+                    key.Change(value);
+                }
             }
-            else if (command.Value is { } value)
-            {
-                key.Change(value);
-            }
-            else
+            else if (key is not null)
             {
                 keys.Remove(key);
             }
@@ -102,15 +105,18 @@ internal sealed class ChangeBinaryKeysCommandHandler(IRepository<BinaryKey, byte
         foreach (var id in command.Keys)
         {
             var key = await keys.FindAsync(id, cancellationToken);
-            if (key is null)
+            if (command.Value is { } value)
             {
-                await keys.AddAsync(BinaryKey.Create(id, command.Value!), cancellationToken);
+                if (key is null)
+                {
+                    await keys.AddAsync(BinaryKey.Create(id, value), cancellationToken);
+                }
+                else
+                {
+                    key.Change(value);
+                }
             }
-            else if (command.Value is { } value)
-            {
-                key.Change(value);
-            }
-            else
+            else if (key is not null)
             {
                 keys.Remove(key);
             }

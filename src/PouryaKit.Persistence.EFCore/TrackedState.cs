@@ -21,6 +21,11 @@ public sealed class TrackedState : IDisposable
     private TrackedState(DbContext dbContext, bool includeQueryLoads)
     {
         _dbContext = dbContext;
+        if (!dbContext.ChangeTracker.AutoDetectChangesEnabled)
+        {
+            dbContext.ChangeTracker.DetectChanges();
+        }
+
         _entries = [.. dbContext.ChangeTracker.Entries().Select(EntryState.Of)];
         _entities = new HashSet<object>(_entries.Select(entry => entry.Entry.Entity), ReferenceEqualityComparer.Instance);
         _includeQueryLoads = includeQueryLoads;
@@ -40,6 +45,11 @@ public sealed class TrackedState : IDisposable
     /// <summary>Throws when tracked state or pending Domain Events differ, naming the step that only reads.</summary>
     public void ThrowIfChanged(string step)
     {
+        if (!_dbContext.ChangeTracker.AutoDetectChangesEnabled)
+        {
+            _dbContext.ChangeTracker.DetectChanges();
+        }
+
         var tracked = _dbContext.ChangeTracker.Entries().ToList();
         var changed = _entries.FirstOrDefault(prepared => prepared.HasChanged());
         if (changed is not null || tracked.Count != _entries.Count || tracked.Any(entry => !_entities.Contains(entry.Entity)))

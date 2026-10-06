@@ -126,6 +126,12 @@ public sealed class SnapshotIdentityTests(AppFixture app) : HostTest<AppFixture>
     {
         var subscription = $"stub.{kind}-key-snapshots";
         var expectedKeys = keys.Order(StringComparer.Ordinal).ToArray();
+        var missing = await Fixture.AssertNothingSentAsync(() => change(null), TestContext.Current.CancellationToken);
+        Assert.True(missing.IsSuccess);
+        Assert.Empty(await CopiesAsync(kind));
+        Assert.Empty(await VersionsAsync(subscription));
+        Assert.Equal(0L, await ReceiptCountAsync(subscription));
+
         var (created, _) = await Fixture.WaitForDeliveriesAsync(() => change("first"), TestContext.Current.CancellationToken);
         Assert.True(created.IsSuccess);
         Assert.Equal(expectedKeys.Select(key => new object[] { key, "first", 1L }), await CopiesAsync(kind));
@@ -141,6 +147,12 @@ public sealed class SnapshotIdentityTests(AppFixture app) : HostTest<AppFixture>
 
         var (removed, _) = await Fixture.WaitForDeliveriesAsync(() => change(null), TestContext.Current.CancellationToken);
         Assert.True(removed.IsSuccess);
+        Assert.Empty(await CopiesAsync(kind));
+        Assert.Equal(expectedKeys.Select(key => new object[] { key, 3L }), await VersionsAsync(subscription));
+        Assert.Equal(6L, await ReceiptCountAsync(subscription));
+
+        var alreadyRemoved = await Fixture.AssertNothingSentAsync(() => change(null), TestContext.Current.CancellationToken);
+        Assert.True(alreadyRemoved.IsSuccess);
         Assert.Empty(await CopiesAsync(kind));
         Assert.Equal(expectedKeys.Select(key => new object[] { key, 3L }), await VersionsAsync(subscription));
         Assert.Equal(6L, await ReceiptCountAsync(subscription));
