@@ -1,0 +1,38 @@
+docs/releases-preflight.md
+  s_74540ce945d2e7::t_daec1041677528 18-20,99
+  s_74540ce945d2e7::t_fcdc1e8dfda4c2 90
+  s_74540ce945d2e7::t_3647a9d902871f 91
+scripts/releases/publication/publisher.py
+  s_74540ce945d2e7::t_384fb317e8ee7a 17,90-91,93-96,99
+scripts/releases/preflight/preflight.py
+  s_74540ce945d2e7::t_384fb317e8ee7a 13,19-22,118-127,132-137,140-141,143-146,148-151
+tests/releases/preflight/test_history.py
+  s_74540ce945d2e7::t_8709cb81f84a86 1-108,118-150,152-176,182-218,220-256
+  s_74540ce945d2e7::t_12ec5d8cf1f7f9 109-117,177-181,219
+  s_74540ce945d2e7::t_fcdc1e8dfda4c2 151
+tests/releases/preflight/red_once_history.py
+  s_74540ce945d2e7::t_12ec5d8cf1f7f9 1-64
+scripts/releases/publication/version_history.py
+  s_74540ce945d2e7::t_fcdc1e8dfda4c2 16-18
+  s_74540ce945d2e7::t_384fb317e8ee7a 1-15,19-54
+scripts/releases/publication/transport.py
+  s_74540ce945d2e7::t_384fb317e8ee7a 30,33-34,36,53,67-68,80
+.agents/skills/pourya-kit/references/release-preflight.md
+  s_74540ce945d2e7::t_daec1041677528 12-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9a3251c383139136440922dbf4a2744322c1e016",
+  "prompts": {},
+  "sessions": {
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
