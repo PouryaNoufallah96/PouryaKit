@@ -1,0 +1,21 @@
+scripts/releases/preflight/preflight.py
+  s_74540ce945d2e7::t_cf429daf3d0dfc 296-316,396
+tests/releases/preflight/test_preflight.py
+  s_74540ce945d2e7::t_cf429daf3d0dfc 197-226
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6c1ebcc25fc05e637920b644926fc22ca5090e9f",
+  "prompts": {},
+  "sessions": {
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
