@@ -18,3 +18,4 @@
 - [Workflow script facts](workflow-script-facts.md) — node --check rejects top-level return; scripts need agents for git/files; runner on a worktree; Codex failure reason
 - [Snapshot facts](snapshot-facts.md) — #18: step 4 in the Outbox write, version gate beside the Receipt, Receipt masks the gate in redelivery tests
 - [Code-style analyzer facts](code-style-analyzer-facts.md) — listing the SDK's real IDE IDs, which C# 14 idioms have one, 2 s rebuilds are real
+- [Shared JSON facts](shared-json-facts.md) — #34: getter-only ASP.NET JsonOptions, Wolverine STJ mutates options, reading a stored envelope body
