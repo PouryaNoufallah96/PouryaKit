@@ -1,0 +1,26 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_41c3eef9abbce4::t_a907a23d61c7c3 21
+.claude/agent-memory/kit-implementer/shared-json-facts.md
+  s_41c3eef9abbce4::t_85c3ee43b89144 1-15,18-20
+  s_41c3eef9abbce4::t_58211f429ad9a7 16-17
+.claude/agent-memory/kit-implementer/stj-and-record-facts.md
+  s_41c3eef9abbce4::t_795b91b39086b3 10,15
+.claude/agent-memory/kit-implementer/web-aspnetcore-facts.md
+  s_41c3eef9abbce4::t_a907a23d61c7c3 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c33a83fc68f1267e9e7557ee59aeac9337e1cfb4",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
