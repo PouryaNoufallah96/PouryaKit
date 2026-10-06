@@ -1,0 +1,30 @@
+{
+  "packages": [
+    { "id": "PouryaKit.Domain", "type": "PouryaKit.Domain.Result" },
+    { "id": "PouryaKit.Cqrs", "type": "PouryaKit.Cqrs.IDispatcher" },
+    { "id": "PouryaKit.Validation", "type": "PouryaKit.Validation.ValidationServiceCollectionExtensions" },
+    { "id": "PouryaKit.Modularity", "type": "PouryaKit.Modularity.IModuleDefinition" },
+    { "id": "PouryaKit.Persistence", "type": "PouryaKit.Persistence.IUnitOfWorkConnection" },
+    { "id": "PouryaKit.Persistence.EFCore", "type": "PouryaKit.Persistence.EFCore.PouryaKitDbContext" },
+    { "id": "PouryaKit.Persistence.Postgres", "type": "PouryaKit.Persistence.Postgres.PostgresServiceCollectionExtensions" },
+    { "id": "PouryaKit.Persistence.Dapper", "type": "PouryaKit.Persistence.Dapper.IReadConnectionFactory" },
+    { "id": "PouryaKit.Messaging", "type": "PouryaKit.Messaging.WireNameAttribute" },
+    { "id": "PouryaKit.Messaging.Wolverine", "type": "PouryaKit.Messaging.Wolverine.IReceipts" },
+    { "id": "PouryaKit.Messaging.Wolverine.EFCore", "type": "PouryaKit.Messaging.Wolverine.EFCore.ReceiptTable" },
+    { "id": "PouryaKit.Web", "type": "PouryaKit.Web.IEndpoint" },
+    { "id": "PouryaKit.Testing", "type": "PouryaKit.Testing.Delivery" }
+  ],
+  "compositions": [
+    {
+      "name": "single-module",
+      "packages": ["PouryaKit.Cqrs", "PouryaKit.Validation", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Web"],
+      "excluded": ["PouryaKit.Modularity", "PouryaKit.Messaging"]
+    },
+    {
+      "name": "modular-monolith",
+      "source": "samples/ModularMonolith/src",
+      "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Validation", "PouryaKit.Web"],
+      "excluded": []
+    }
+  ]
+}

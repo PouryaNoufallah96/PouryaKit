@@ -1,3 +1,5 @@
+using System.Xml.Linq;
+
 namespace PouryaKit.ArchitectureTests;
 
 // Story 84 and row 17 of plan B.1: every Kit package's restored closure, transitive arrivals included, against plan
@@ -64,6 +66,27 @@ public sealed class PackageGraphTests
             ],
             PackageGraph.Violations(cqrs with { DirectPackages = new HashSet<string>([.. cqrs.DirectPackages, "MediatR"]) })
         );
+    }
+
+    [Fact]
+    public void Produced_nuspecs_obey_the_same_reference_rules_as_source_projects()
+    {
+        var nuspec = XDocument.Parse("""
+            <package><metadata><id>PouryaKit.Persistence.Dapper</id><dependencies><group targetFramework="net10.0">
+              <dependency id="PouryaKit.Domain" version="0.1.0-preview.1" />
+              <dependency id="Dapper" version="2.1.89" />
+              <dependency id="Npgsql" version="10.0.3" />
+              <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="10.0.12" />
+              <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="10.0.12" />
+            </group></dependencies></metadata></package>
+            """);
+        Assert.Empty(PackageGraph.Violations(RestoredPackage.FromNuspec(nuspec)));
+
+        nuspec.Descendants().Single(element => element.Name.LocalName == "group")
+            .Add(new XElement("dependency", new XAttribute("id", "Microsoft.EntityFrameworkCore")));
+        Assert.Contains(PackageGraph.Violations(RestoredPackage.FromNuspec(nuspec)),
+            violation => violation.Contains("references the packages", StringComparison.Ordinal)
+                && violation.Contains("Microsoft.EntityFrameworkCore", StringComparison.Ordinal));
     }
 
     private static RestoredPackage Restored(string name) => Assert.Single(RestoredPackage.All, package => package.Name == name);

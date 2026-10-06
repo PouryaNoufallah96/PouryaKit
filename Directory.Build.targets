@@ -1,0 +1,21 @@
+<Project>
+  <PropertyGroup Condition="'$(IsKitPackage)' == 'true'">
+    <Authors>Pourya Nofallah</Authors>
+    <Description>PouryaKit $(MSBuildProjectName): a .NET 10 Capability for vertical slices and modular monoliths.</Description>
+    <PackageProjectUrl>https://github.com/PouryaNoufallah96/PouryaKit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/PouryaNoufallah96/PouryaKit</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <EnableSourceLink>true</EnableSourceLink>
+    <EnableSourceControlManagerQueries>true</EnableSourceControlManagerQueries>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(IsKitPackage)' == 'true'">
+    <PackageReference Include="MinVer" PrivateAssets="all" />
+    <None Include="$(MSBuildThisFileDirectory)LICENSE" Pack="true" PackagePath="/" />
+    <None Include="$(MSBuildThisFileDirectory)THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>

@@ -1,10 +1,31 @@
 # Architecture
 
-Wave 1 of PouryaKit as built: thirteen packages, each a project that ships as one NuGet package in Phase 5 and that a consuming Host references, and the Proving Sample, `samples/ModularMonolith/` with its tests in `tests/ModularMonolith.Tests/`, whose passing tests are the evidence that the Kit's guarantees hold. The references between the packages are those [plan section C](../foundation-review.md#c-package-structure) allows, as amended there and by G.4; `tests/PouryaKit.ArchitectureTests` asserts each package's references and full dependency closure against that table ([Structure tests](#structure-tests)). Which test proves each acceptance scenario of the spec is in [the acceptance map](../acceptance.md). How to use each Capability is the Kit's own skill, [`.agents/skills/pourya-kit/`](../../.agents/skills/pourya-kit/SKILL.md); the decisions behind the design are in [`docs/adr/`](../adr/).
+Wave 1 of PouryaKit as built: thirteen packages, each a project that ships as one NuGet package through the [shared package validation path](../packages.md) and that a consuming Host references, and the Proving Sample, `samples/ModularMonolith/` with its tests in `tests/ModularMonolith.Tests/`, whose passing tests are the evidence that the Kit's guarantees hold. The references between the packages are those [plan section C](../foundation-review.md#c-package-structure) allows, as amended there and by G.4; `tests/PouryaKit.ArchitectureTests` asserts each package's references and full dependency closure against that table ([Structure tests](#structure-tests)). Which test proves each acceptance scenario of the spec is in [the acceptance map](../acceptance.md). How to use each Capability is the Kit's own skill, [`.agents/skills/pourya-kit/`](../../.agents/skills/pourya-kit/SKILL.md); the decisions behind the design are in [`docs/adr/`](../adr/).
 
 Thirteen packages and their references no longer read as one diagram, so the C4 container level is split into three views: the execution core, messaging and delivery, and the Proving Sample. A package of another view that a view's packages reference appears in it as an external container.
 
 ## Views
+
+### Package delivery
+
+```mermaid
+C4Container
+    title PouryaKit package validation, container level
+    Person(maintainer, "Maintainer", "Validates one source commit")
+    System_Boundary(validation, "Local package validation") {
+        Container(path, "Shared validation path", "Python, .NET SDK and MinVer", "One Release build, existing tests, no-build pack and artifact checks")
+        ContainerDb(artifacts, "Verified package set", "Thirteen nupkgs and checksum manifest", "One MinVer version and source commit, MIT, notices and SourceLink")
+        Container(consumers, "Clean consumers", ".NET 10, isolated NuGet caches", "Thirteen individual packages, single Module and copied Proving Sample")
+    }
+    ContainerDb_Ext(postgresql, "PostgreSQL", "Testcontainers", "Existing Proving Sample runtime proof")
+    Rel(maintainer, path, "runs")
+    Rel(path, postgresql, "tests the shared Release output against")
+    Rel(path, artifacts, "packs and checks")
+    Rel(consumers, artifacts, "restores Kit dependencies exclusively from")
+    Rel(path, consumers, "builds and checks dependency closures of")
+```
+
+The artifact and consumer checks reuse `PackageGraph` and the license policy of the Structure seam. This view describes local validation. Private publishing and named-release recovery are later Phase 5 work.
 
 ### Execution core
 
@@ -404,5 +425,6 @@ Delivery assertions read the message store itself, through the internal `StoredD
 | `DapperWriteTests` | No SQL in a Module writes a table that an aggregate of any Module maps, its owned parts and child entities included, read from each Module's EF Core model as the Host composes it (story 45) |
 | `PackageGraphTests` | Each Kit package's direct project, package and framework references are exactly those of plan section C as amended (`PackageGraph`), and its restored closure keeps out what that table keeps out: no EF Core in Dapper, no Wolverine or Messaging in Postgres, no Modularity in Web, no EF Core, Npgsql or message store in `PouryaKit.Messaging.Wolverine`, no package at all in Domain or Messaging, and `WolverineFx.RuntimeCompilation` in none (story 84) |
 | `LicenceTests` | Every package in every Kit package's restored closure, analyzers included, declares a licence expression from the permissive list in [`docs/provenance/README.md`](../provenance/README.md#package-licences) (ADR 0002, story 85) |
+| `PackageArtifactTests` and the `--validate-packages` entrypoint | Expected package IDs/version, embedded MIT/notices, repository commit and SourceLink, produced nuspec references and restored consumer closures, using `PackageGraph` and `LicenceTests`; the shared Python path runs artifact controls and isolated consumer builds |
 
 Each Module rule is a function in `ModuleRules` from a compiled assembly, or a Module's EF Core model, to its violations, and its XML documentation states what it cannot see. The IL is read by `Il`, with the base class library only, and a project's restored closure by `RestoredPackage`, from its `obj/project.assets.json`. `Sample` finds the Proving Sample's Modules from the Host's references and builds each Module's model from the Host built but never started. Every rule judges the Proving Sample, then `tests/PouryaKit.ArchitectureTests/Offending`, a Module that breaks each rule inside async methods and lambdas, and asserts its exact violations, so a rule that reads nothing fails; `Offending.Contracts` does the same for Contracts. `docs/acceptance.md` maps each rule to its test class beside the Gateway-seam scenarios.
