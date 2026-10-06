@@ -1,0 +1,39 @@
+src/PouryaKit.Cqrs/IRequiresAuthorizer.cs
+  s_41c3eef9abbce4::t_f2ba8ce1e0c07e 1-16
+tests/ModularMonolith.Tests/SecurityTests.cs
+  s_41c3eef9abbce4::t_22ffb71aa0359e 16,75-107,114-130,257-277,288-292
+  s_41c3eef9abbce4::t_f09d6c09334461 108-113
+  s_41c3eef9abbce4::t_1d7ff1d5f113ba 293
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_03c4f55176918a 212,224,256,274
+src/PouryaKit.Modularity/HostModules.cs
+  s_41c3eef9abbce4::t_9b1b4cc24a37ba 122
+  s_41c3eef9abbce4::t_ad929cd634748a 102-121,123-138
+src/PouryaKit.Modularity/ModularServiceProviderFactory.cs
+  s_41c3eef9abbce4::t_cafba3e483be63 1-14,16-18
+  s_41c3eef9abbce4::t_ab79d5dc4f9a2f 15
+src/PouryaKit.Security/RequiresPermissionAttribute.cs
+  s_41c3eef9abbce4::t_eb2cfe223d326d 1-2,8-9,12,22-25
+src/PouryaKit.Modularity/ModularityHostApplicationBuilderExtensions.cs
+  s_41c3eef9abbce4::t_0595978ea8cea2 15-19,33
+docs/acceptance.md
+  s_41c3eef9abbce4::t_03c4f55176918a 137-146
+.agents/skills/pourya-kit/references/security.md
+  s_41c3eef9abbce4::t_03c4f55176918a 33-40,83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "898281b4ae5db58ef667a1b65c4ca6fa1162d5c4",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
