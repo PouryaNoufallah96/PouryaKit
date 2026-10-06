@@ -91,3 +91,32 @@ PK-001 and PK-002 confirmed resolved; no further material defects. Approval is b
 plan hash and covers the plan only: upstream source claims, package compatibility, licensing and
 Wolverine runtime behaviour were not independently verified by the reviewer, and the Phase 0 spikes
 and runtime acceptance checks remain outstanding.
+
+## Third loop — section I, the catalogue amendment (2026-10-06)
+
+Reviewer: Codex gpt-6-astra, effort high, fresh session, one round (a second only for a high finding).
+Scope of interest: section I only; sections A–H were reviewed in the earlier loops.
+
+### Round 1 — completed, REVISE, plan sha 8af09e94…
+
+| Id | Sev | Finding | Host disposition |
+|---|---|---|---|
+| I-001 | high | EF filter alone cannot isolate tenants: sample reads are Dapper and projection writes key on product id only | Accepted. Tenant parameter on every Dapper read/count (architecture test), tenant-keyed projections, tenant check in the prepare step, cross-tenant acceptance cases |
+| I-002 | high | Idempotency key excluded tenant | Accepted. Key is (tenant, Actor, command, request id) from the start; null tenant as sentinel |
+| I-003 | high | `EfReceipts` is global and throws for a non-EF Unit of Work, so a Stream Module's Notifications cannot be delivered | Accepted. `MartenReceipts` selected per receiving Module; spike extended with three delivery checks |
+| I-004 | medium | A query nested in a write Operation could cache uncommitted state | Accepted. Cache bypass inside an active write Unit of Work; invalidation after outermost commit |
+| I-005 | medium | `RemoveProducts` also changes `GetProduct` but was not in the invalidation contract | Accepted. Resource tags across Actor keys; every writer declares its tag |
+| I-006 | high | All scheduled work ran as a system Actor, contradicting G.6/ADR 0007 for delayed continuations | Accepted. Delayed continuation keeps its Operation Context; recurring work needs a named system Actor |
+| I-007 | medium | "Unchanged Module code" overstated: Composition Root and endpoints depend on Modularity | Accepted. Promise limited to business code; template generates the composition-specific adapters; monolith smoke test |
+
+High findings present → one second round, as the owner's brief allows.
+
+### Round 2 — completed, **APPROVED**, plan sha b33eed72…
+
+All seven findings confirmed resolved. Approval covers the plan; the Marten, RabbitMQ and tracing
+spikes and the three owner questions in I.6 remain prerequisites for the affected capabilities.
+
+Owner answers to I.6 (2026-10-06): saga yes (optional, Wave 3); Stream commit owner wording accepted,
+Marten optional subject to the spike; AI providers = Microsoft.Extensions.AI + OpenAI client for OpenAI
+and Azure v1, Microsoft Agent Framework for agents, no Azure.AI.OpenAI and no waiting condition.
+Recorded in section I after the approved round; the approval hash (b33eed72…) predates this edit.

@@ -111,9 +111,17 @@ _Avoid_: Message table, queue
 A Module's share of its Host's durable message store: the Integration Events and Snapshots the Module has received but not yet applied.
 _Avoid_: Queue, message table
 
+**Stream**:
+An aggregate whose stored state is the ordered events it has appended, loaded by folding them; the Kit's second write model.
+_Avoid_: Event-sourced entity, event stream aggregate
+
+**Page**:
+One bounded slice of a read result, with its position and the total count.
+_Avoid_: Paged list, list result, page list
+
 **Receipt**:
 A handler's record that it has already applied a specific Notification, Integration Event or Snapshot.
-The Module's Receipt table also holds its publication records, keyed `<wire name>#published`, one per Integration Event type and Domain Event; those are not Receipts (ADR 0006).
+The Module's Receipt store also holds its publication records, keyed `<wire name>#published`, one per Integration Event type and Domain Event; those are not Receipts (ADR 0006).
 _Avoid_: Inbox row, idempotency marker, processed flag
 
 ### Delivery of the Kit
