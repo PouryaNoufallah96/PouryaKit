@@ -115,3 +115,8 @@ High findings present → one second round, as the owner's brief allows.
 
 All seven findings confirmed resolved. Approval covers the plan; the Marten, RabbitMQ and tracing
 spikes and the three owner questions in I.6 remain prerequisites for the affected capabilities.
+
+Owner answers to I.6 (2026-10-06): saga yes (optional, Wave 3); Stream commit owner wording accepted,
+Marten optional subject to the spike; AI providers = Microsoft.Extensions.AI + OpenAI client for OpenAI
+and Azure v1, Microsoft Agent Framework for agents, no Azure.AI.OpenAI and no waiting condition.
+Recorded in section I after the approved round; the approval hash (b33eed72…) predates this edit.

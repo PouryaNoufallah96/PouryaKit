@@ -830,7 +830,7 @@ agent and the template's third composition.
 | Realtime | P | `PouryaKit.Realtime` → `Messaging`; `Microsoft.AspNetCore.SignalR.StackExchangeRedis` 10.0.12 | 3 | `cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.SignalR/Extensions/SignalRExtensions.cs:24-41` | SignalR with a Redis backplane and a channel prefix; detailed errors off outside Development (rejected `:29`); a Notification Handler pushes; no per-node connection sets (rejected `SignalRConnectionManager.cs:23`; Ultrabusiness SSE is per instance) | a Notification reaches a connected client after commit |
 | File storage | P | `PouryaKit.Storage` (contract) + `.S3` / `.AzureBlob` providers | 3 | `Ultrabusiness@a85eacd src/BuildingBlocks/BuildingBlocks.FileManagement/Contracts/IFileStorageProvider.cs:18-59` (contract shape); `cybernod@bae8ac3 … FileUpload/Extensions/AzureStorageExtensions.cs:22-40` | one contract, one provider per package (`AWSSDK.S3` Apache-2.0; `Azure.Storage.Blobs` 12.30.0 MIT) | upload/download/presigned URL per provider in a container test |
 | Email | P | `PouryaKit.Email` + `.MailKit` (`MailKit` 4.18.1 MIT) | 3 | `CloudNativeKit@e81d65e src/CloudNativeKit.Email/IEmailSender.cs`, `MailKitEmailSender.cs:29-34` | `CancellationToken` on every call; a client per registration, not per send (rejected: `SendGridEmailSender.cs:22`); sent from a Notification Handler | a Notification Handler sends through a test SMTP container |
-| Saga | P (optional) | `PouryaKit.Messaging.Wolverine.Sagas` | 3 | Wolverine sagas (`docs/guide/durability/sagas.md:11-20,556-604,617-630`) | native Wolverine `Saga` with PostgreSQL storage and `TimeoutMessage`; **owner question** (I.6): a saga is a Wolverine-discovered public handler and a fourth kind of reaction beside G.2 | deferred until I.6 is answered |
+| Saga | P (optional) | `PouryaKit.Messaging.Wolverine.Sagas` | 3 | Wolverine sagas (`docs/guide/durability/sagas.md:11-20,556-604,617-630`) | native Wolverine `Saga` with PostgreSQL storage and `TimeoutMessage`; approved 2026-10-06 as the one documented exception to ADR 0001/0006 (a public, Wolverine-discovered handler type) and a fourth, optional kind of reaction beside G.2 | a saga started by one Integration Event, advanced by a second, and timed out by `TimeoutMessage`, each step through the outbox |
 | Number sequences | R | `Persistence.Postgres` (optional, only a reusable sequence) | 3 | `Ultrabusiness@a85eacd src/BuildingBlocks/MainArchitecture/Infrastructure/MainArchitecture.Persistence/Numbering/NumberSequenceAllocator.cs:11-47` (runs on the current transaction) | PostgreSQL `SELECT … FOR UPDATE` on a sequence row inside the Unit of Work; gap-free per scope key; `23505` mapped to `Conflict` | two concurrent Operations get consecutive numbers; a rolled-back Operation leaves no gap |
 | Reporting job seam | R | `Messaging.Wolverine` scheduling + a `claim-and-run` aggregate pattern in the sample | 3 | `Ultrabusiness@a85eacd … MainArchitecture.Domain/Aggregates/ReportJobAggregate/Entities/ReportJob.cs:294-313,332-421,478-481` (`TryClaimForGeneration` fenced by attempt id) | the claim-and-settle seam as a documented pattern on an EF aggregate with the Kit's `Version`; report bodies stay in the application; no Quartz | a stale claim is taken over once; a late settle of a superseded attempt is refused |
 | Aspire resources | P | `PouryaKit.Aspire`, AppHost-only; `Aspire.Hosting.PostgreSQL`/`.Redis`/`.RabbitMQ` 13.6.0, `CommunityToolkit.Aspire.Hosting.Ollama` 13.6.0 (all MIT) | 3 | `CloudNativeKit@e81d65e src/CloudNativeKit.AspireIntegrations/Postgres/PostgresBuilderExtensions.cs:93-189` (pinned images, volumes) | PostgreSQL, Redis when caching is registered, RabbitMQ when that transport is registered, Ollama when an agent runs locally; pinned images; no Jaeger, Zipkin, Tempo, Loki, Kibana, Prometheus, Grafana, Elasticsearch or Swagger resource | AppHost starts the Proving Sample with each resource set |
@@ -905,15 +905,15 @@ configuration. Packages (verified 2026-10-06, all MIT unless stated): `Microsoft
 `ModelContextProtocol` 2.2.0 (Apache-2.0), `Microsoft.Extensions.VectorData.Abstractions` 10.10.0.
 Vector store: `PouryaKit.AI.Postgres` uses `CommunityToolkit.VectorData.PgVector` 1.0.1 (MIT; depends
 on Npgsql 10.0.3 and `Pgvector` 0.3.2, matching the Kit's pins; `Pgvector.EntityFrameworkCore` is
-net8-only and not used), in its own schema, so a Host without AI takes no pgvector. **Azure OpenAI:**
-`Azure.AI.OpenAI` has no stable release for .NET 10 (2.9.0-beta.1 pins `OpenAI` 2.9.1 against the
-2.14.0 the Microsoft packages need); the Azure provider therefore uses the `OpenAI` client against the
-Azure endpoint until a stable Azure package exists (to verify in the AI ticket's first spike). Excluded
+net8-only and not used), in its own schema, so a Host without AI takes no pgvector. **Providers (owner decision 2026-10-06):**
+`Microsoft.Extensions.AI` with the `OpenAI` client for both OpenAI and Azure OpenAI (through the
+Azure v1 endpoint); `Azure.AI.OpenAI` is not referenced. `OllamaSharp` for Ollama. Microsoft Agent
+Framework (`Microsoft.Agents.AI*`) supplies the optional agent capabilities. Excluded
 from the pattern: System One, SQL Server/SqlClient and its global vector type handler, Quartz jobs,
 prompt templates, the fluent `CreateContext` wrappers, the on-the-fly tool selector (a second way to
 choose tools). Scheduled agent work uses Wolverine scheduling under a system Actor.
 
-**Saga** (if approved in I.6): a Wolverine `Saga` type with PostgreSQL storage, timeouts through
+**Saga** (approved): a Wolverine `Saga` type with PostgreSQL storage, timeouts through
 `TimeoutMessage`, started and advanced by Integration Events through the Kit's routing; the saga's
 own messages go out through the same outbox.
 
@@ -948,18 +948,15 @@ Decided above and needing only an ADR amendment when built (no owner input):
   rules); the Security row's "also covers background commands" (contradicts G.6: continuations are
   trusted and not re-authorized; the hook is optional).
 
-Questions only the owner can answer (yes or no):
+Answered by the owner on 2026-10-06:
 
-1. **Saga as a fourth reaction.** A Wolverine saga is a Wolverine-discovered public handler type and a
-   long-lived process beside the three reactions of G.2. Add `PouryaKit.Messaging.Wolverine.Sagas`
-   as an optional package with that documented exception to ADR 0001/0006 and G.2? (Recommended:
-   yes, optional, Wave 3; the alternative is an application-written process aggregate driven by
-   Integration Events, which needs no new package.)
-2. **Stream commit owner wording.** Accept "a Marten Unit of Work inside the Kit, committing through
-   Wolverine's Marten outbox" as the meaning of "the stream's owner is Wolverine's Marten
-   integration"? (Recommended: yes; the evidence in I.2.2 shows no other path from the Kit's pipeline.)
-3. **Azure OpenAI through the OpenAI client** until `Azure.AI.OpenAI` ships a stable .NET 10 release?
-   (Recommended: yes.)
+1. **Saga:** yes — `PouryaKit.Messaging.Wolverine.Sagas`, optional, Wave 3, with the documented
+   exception to ADR 0001/0006 and G.2 recorded in its ADR when built.
+2. **Stream commit owner:** yes — Marten stays optional over PostgreSQL, with Kit-controlled commits
+   through Wolverine's Marten outbox, subject to the spike in I.4 passing.
+3. **AI providers:** `Microsoft.Extensions.AI` with the `OpenAI` client for OpenAI and Azure v1, and
+   Microsoft Agent Framework for the optional agent capabilities; no `Azure.AI.OpenAI` dependency and
+   no waiting condition.
 
 Spikes before building (no owner input, recorded as ADRs): the Marten two-store spike (I.4); the
 RabbitMQ topology spike under ADR 0006; a check whether Wolverine already propagates W3C trace
@@ -971,6 +968,5 @@ Open the pull request for Wave 1. Then one spec per wave: **Wave 2** — paging,
 defaults, Web.OpenApi, Core, Security and JwtBearer, request idempotency, Caching, scheduling,
 Observability, the HttpClient handler, the versioning rule, the RabbitMQ transport after its spike,
 and the template's first two compositions; **Wave 3** — Marten after its spike, multi-tenancy, AI,
-Gateway, Grpc, Realtime, Storage, Email, number sequences, the reporting seam, Aspire, the saga if
-approved; **Wave 4** — the template's service composition and the sample agent polished for the
+Gateway, Grpc, Realtime, Storage, Email, number sequences, the reporting seam, Aspire, the saga; **Wave 4** — the template's service composition and the sample agent polished for the
 skill. Every ticket follows section H. Wave 1 stays as built.
