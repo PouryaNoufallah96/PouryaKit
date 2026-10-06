@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
+using PouryaKit.Modularity;
 using PouryaKit.Security;
 using PouryaKit.Testing;
 using PouryaKit.Web;
@@ -69,6 +70,62 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         );
 
         Assert.Contains(nameof(IActorPermissions), thrown.Message);
+    }
+
+    [Fact]
+    public void A_command_or_query_that_declares_a_permission_whose_check_no_composition_root_registered_fails_the_host_when_built()
+    {
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            AppFixture.ComposeHost(
+                "Production",
+                Fixture.ConnectionString,
+                new RecordedLogs(),
+                // The Stub Module's application authorizer of StampNoteCommand stays: it is not the permission check.
+                builder => RemovePermissionChecks(builder.Services, typeof(StampNoteCommand), typeof(ReadStampLedgerQuery))
+            )
+        );
+
+        Assert.Equal(
+            [UncheckedPermission(typeof(ReadStampLedgerQuery)), UncheckedPermission(typeof(StampNoteCommand))],
+            thrown.Message.Split(Environment.NewLine).Order(StringComparer.Ordinal)
+        );
+    }
+
+    [Fact]
+    public async Task A_permission_declared_in_one_module_and_registered_by_another_modules_composition_root_builds()
+    {
+        await using var host = AppFixture.ComposeHost(
+            "Production",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder =>
+            {
+                RemovePermissionChecks(builder.Services, typeof(StampNoteCommand), typeof(ReadStampLedgerQuery));
+                builder.AddPouryaKitModules(modules => modules.Add<StubPermissionsModule>());
+            }
+        );
+
+        // The check registered elsewhere still runs in the Stub Module's Operation.
+        var refused = await host
+            .Services.GetRequiredService<IGatewayProcessor<StubModule>>()
+            .QueryAsync(new ReadStampLedgerQuery(), new OperationContext(Actor.Person("ada")), TestContext.Current.CancellationToken);
+
+        Assert.Equal(PermissionErrors.Denied, Assert.Single(refused.Errors));
+    }
+
+    [Fact]
+    public async Task A_host_whose_modules_declare_no_permission_builds_and_serves_without_any_permission_registration()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.AddPouryaKitModules(modules => modules.Add<QueryOnlyModule>());
+
+        using var host = builder.Build();
+        var served = await host
+            .Services.GetRequiredService<IGatewayProcessor<QueryOnlyModule>>()
+            .QueryAsync(new ReadOperationContextQuery(), new OperationContext(Actor.Person("ada")), TestContext.Current.CancellationToken);
+
+        Assert.Equal(Actor.Person("ada"), served.Value.Actor);
+        Assert.DoesNotContain(builder.Services, descriptor => descriptor.ServiceType == typeof(IActorPermissions));
     }
 
     [Fact]
@@ -197,6 +254,27 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
     private Task<long> StampsOfAsync(string text) =>
         Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = '{StampNoteCommand.Stamped(text)}'");
 
+    // Leaves every other authorizer of the operations registered.
+    private static void RemovePermissionChecks(IServiceCollection services, params Type[] operations)
+    {
+        var checks = operations.Select(operation => typeof(IAuthorizer<>).MakeGenericType(operation)).ToHashSet();
+        foreach (
+            var check in services
+                .Where(descriptor =>
+                    !descriptor.IsKeyedService
+                    && checks.Contains(descriptor.ServiceType)
+                    && descriptor.ImplementationType?.Assembly == typeof(RequiresPermissionAttribute).Assembly
+                )
+                .ToList()
+        )
+        {
+            services.Remove(check);
+        }
+    }
+
+    private static string UncheckedPermission(Type operation) =>
+        $"{operation.FullName} declares RequiresPermissionAttribute, but its check is not registered, so it would run unchecked. Call AddPouryaKitPermissions with the assembly ModularMonolith.Tests in the Composition Root of StubModule.";
+
     private static string Unique() => Guid.CreateVersion7().ToString("N");
 
     private static async Task<JsonElement> ProblemAsync(HttpResponseMessage response, HttpStatusCode status)
@@ -206,4 +284,10 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
         return problem.RootElement.Clone();
     }
+}
+
+// Registers the permission checks of the Stub Module's commands and queries from another Module's Composition Root.
+public sealed class StubPermissionsModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module) => module.AddPouryaKitPermissions(typeof(StubModule).Assembly);
 }

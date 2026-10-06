@@ -134,3 +134,13 @@ Spec #33, user stories 17 to 19. The JWT test issuer of the spec's acceptance be
 | A Host whose Modules declare permissions and that registers no `IActorPermissions` fails when built | `SecurityTests.A_host_whose_modules_declare_permissions_but_that_registers_no_permission_source_fails_when_built` | Container validation of `AddPouryaKitModules` |
 | A fallback policy the application set before `AddPouryaKitWeb` is kept | `SecurityTests.A_fallback_policy_the_application_set_before_the_kits_registration_is_kept` | |
 | `PouryaKit.Security` references Cqrs only, with no shared framework | `PackageGraphTests` | Its row in `PackageGraph` |
+
+## Wave 2 unregistered permission declarations fail fast, ticket #56
+
+Spec #33; owner decision of 2026-10-07 on the question #38 left open. No structure test: the check reads the handlers the Host registers, so a structure test over the Proving Sample would catch nothing it misses.
+
+| Scenario | Proven by | Notes |
+|---|---|---|
+| A command or query that declares a permission whose check no Composition Root registered fails the Host when built, naming each such operation, its assembly and its Module | `SecurityTests.A_command_or_query_that_declares_a_permission_whose_check_no_composition_root_registered_fails_the_host_when_built` | The Stub Module's command and query; goes red with the check switched off, and when any authorizer of the operation counts (the Stub's own authorizer of `StampNoteCommand` stays registered) |
+| A permission declared in one Module and registered by another Module's Composition Root builds, and the check runs | `SecurityTests.A_permission_declared_in_one_module_and_registered_by_another_modules_composition_root_builds` | Registered in a second `AddPouryaKitModules` call, after the declaring Module |
+| A Host whose Modules declare no permission builds and serves with no Security registration and no `IActorPermissions` | `SecurityTests.A_host_whose_modules_declare_no_permission_builds_and_serves_without_any_permission_registration` | |
