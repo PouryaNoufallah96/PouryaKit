@@ -1,0 +1,68 @@
+tests/PouryaKit.ArchitectureTests/LicenceTests.cs
+  s_74540ce945d2e7::t_775cfefa0cf1d6 45
+Directory.Packages.props
+  s_74540ce945d2e7::t_b1a53d012559e3 6
+scripts/packaging/test_validation.py
+  s_74540ce945d2e7::t_36fae2b155c893 1-26
+docs/packages.md
+  s_74540ce945d2e7::t_6943383ca1a58a 1-2,4-49
+  s_74540ce945d2e7::t_1a7ad864b39e86 3
+scripts/packaging/validate.py
+  s_74540ce945d2e7::t_1a7ad864b39e86 242-243,298-299
+  s_74540ce945d2e7::t_b19b100c8083c4 1-241,244-297,300-320
+docs/architecture/README.md
+  s_74540ce945d2e7::t_6943383ca1a58a 3,9-29,428
+.agents/skills/pourya-kit/SKILL.md
+  s_74540ce945d2e7::t_6943383ca1a58a 35
+tests/PouryaKit.ArchitectureTests/RestoredPackage.cs
+  s_74540ce945d2e7::t_775cfefa0cf1d6 20-21,24-25,55,66-67,71-118
+  s_74540ce945d2e7::t_76c15e98b581d4 119
+Directory.Build.props
+  s_74540ce945d2e7::t_b1a53d012559e3 9-14
+tests/PouryaKit.ArchitectureTests/PackageValidationProgram.cs
+  s_74540ce945d2e7::t_775cfefa0cf1d6 1-29
+README.md
+  s_74540ce945d2e7::t_6943383ca1a58a 7,16-22
+  s_74540ce945d2e7::t_44e45897358d09 23
+Directory.Build.targets
+  s_74540ce945d2e7::t_b1a53d012559e3 1-21
+.agents/skills/pourya-kit/references/packages.md
+  s_74540ce945d2e7::t_6943383ca1a58a 1-9
+tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs
+  s_74540ce945d2e7::t_96decbfe9fe814 31,34,97,105-124
+  s_74540ce945d2e7::t_775cfefa0cf1d6 1-30,32-33,35-50,54-70,73-74,76-96,98-104,125-144
+  s_74540ce945d2e7::t_70040d132599a8 51-53
+  s_74540ce945d2e7::t_36fae2b155c893 71-72,75
+tests/PouryaKit.ArchitectureTests/PackageArtifactTests.cs
+  s_74540ce945d2e7::t_36fae2b155c893 1-54,56-61
+  s_74540ce945d2e7::t_e64c0b8ac8994a 55
+docs/acceptance.md
+  s_74540ce945d2e7::t_6943383ca1a58a 48-62
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_74540ce945d2e7::t_b1a53d012559e3 5
+scripts/packaging/inventory.json
+  s_74540ce945d2e7::t_b19b100c8083c4 1-30
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_74540ce945d2e7::t_36fae2b155c893 1-2,71-89
+  s_74540ce945d2e7::t_5c76f164bf65b2 90-91
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_74540ce945d2e7::t_775cfefa0cf1d6 89,99,101
+LICENSE
+  s_74540ce945d2e7::t_b1a53d012559e3 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fa5cbbcaccc91d269b6f746cb3f4f8ab5a42b420",
+  "prompts": {},
+  "sessions": {
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
