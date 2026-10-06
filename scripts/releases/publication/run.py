@@ -26,6 +26,7 @@ def execute(arguments, *, client_factory=Http):
         temporary.replace(arguments.receipt)
 
     save()
+    client = None
     try:
         client = client_factory(os.environ.get("PUBLICATION_TOKEN", ""))
         with tempfile.TemporaryDirectory(prefix="pouryakit-original-") as folder:
@@ -59,6 +60,8 @@ def execute(arguments, *, client_factory=Http):
         print(f"FAIL: {receipt['error']}")
         return 1
     finally:
+        if client is not None:
+            receipt["redirects"] = client.redirects
         receipt["finished_at"] = datetime.now(timezone.utc).isoformat()
         save()
 

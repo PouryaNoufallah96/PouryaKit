@@ -14,6 +14,7 @@ OWNER = REPOSITORY.split("/")[0]
 API = "https://api.github.com"
 FEED = f"https://nuget.pkg.github.com/{OWNER}/index.json"
 MAX_BYTES = 100 * 1024 * 1024
+MAX_REDIRECTS = 3
 
 
 class PublicationError(ValueError):
@@ -31,9 +32,13 @@ class Http:
             raise PublicationError("Publication requires the hosted repository token.")
         self.token = token
         self.opener = urllib.request.build_opener(NoRedirect())
+        self.redirects = []
 
     def checked_url(self, url, auth):
-        parsed = urllib.parse.urlsplit(url)
+        try:
+            parsed = urllib.parse.urlsplit(url)
+        except ValueError:
+            raise PublicationError("Service returned an unsafe URL.") from None
         if parsed.scheme != "https" or parsed.username or parsed.password or parsed.fragment:
             raise PublicationError("Service returned an unsafe URL.")
         host = parsed.netloc.lower()
@@ -47,8 +52,20 @@ class Http:
         if auth == "feed" and parsed.query:
             raise PublicationError("Service resource contains an unsupported query.")
 
-    def request(self, method, url, *, auth="api", data=None, headers=None, missing=False):
+    @staticmethod
+    def hostname(url):
+        try:
+            host = urllib.parse.urlsplit(url).hostname or ""
+        except ValueError:
+            host = ""
+        return host.lower() if re.fullmatch(r"[A-Za-z0-9.-]+", host) else "[invalid]"
+
+    def request(self, method, url, *, auth="api", data=None, headers=None, missing=False, raw_package=False):
         self.checked_url(url, auth)
+        if raw_package and (method != "GET" or auth != "feed" or not urllib.parse.urlsplit(url).path.endswith(".nupkg")):
+            raise PublicationError("Only a raw private package GET may opt into storage redirects.")
+        follow = method == "GET" and ((auth == "api" and url.endswith("/zip")) or raw_package)
+        redirect_limit = MAX_REDIRECTS if raw_package else 1
         request_headers = {"User-Agent": "PouryaKit-publication", **(headers or {})}
         if auth == "api":
             request_headers.update({"Authorization": f"Bearer {self.token}",
@@ -57,38 +74,57 @@ class Http:
         elif auth == "feed":
             credential = base64.b64encode(f"{OWNER}:{self.token}".encode()).decode()
             request_headers["Authorization"] = f"Basic {credential}"
-        for attempt in range(3):
-            request = urllib.request.Request(url, data=data, method=method, headers=request_headers)
-            try:
-                response = self.opener.open(request, timeout=30)
-            except urllib.error.HTTPError as error:
-                response = error
-            except (urllib.error.URLError, TimeoutError, OSError):
-                if method != "GET" or attempt == 2:
-                    raise PublicationError("Publication network request failed.") from None
-                time.sleep(attempt + 1)
-                continue
-            with response:
-                status = response.code
-                response_headers = response.headers
-                if status in (301, 302, 303, 307, 308):
-                    # Artifact storage redirects carry their own short-lived authorization.
-                    if method != "GET" or auth != "api" or not url.endswith("/zip"):
-                        raise PublicationError("Unexpected authenticated redirect.")
-                    target = response_headers.get("Location", "")
-                    return self.request("GET", target, auth="none")
+        seen = {url}
+        hops = 0
+        while True:
+            for attempt in range(3):
+                request = urllib.request.Request(url, data=data, method=method, headers=request_headers)
                 try:
-                    body = response.read(MAX_BYTES + 1)
-                except (http.client.HTTPException, OSError):
-                    raise PublicationError("Publication response was interrupted.") from None
-            if len(body) > MAX_BYTES:
-                raise PublicationError("Publication response exceeds the size limit.")
-            if method == "GET" and status in (429, 500, 502, 503, 504) and attempt < 2:
-                time.sleep(attempt + 1)
-                continue
-            if 200 <= status < 300 or (missing and status == 404) or (method == "PUT" and status == 409):
-                return status, body, response_headers
-            raise PublicationError(f"Publication service rejected {method} with HTTP {status}.")
+                    response = self.opener.open(request, timeout=30)
+                except urllib.error.HTTPError as error:
+                    response = error
+                except (urllib.error.URLError, TimeoutError, OSError):
+                    if method != "GET" or attempt == 2:
+                        raise PublicationError("Publication network request failed.") from None
+                    time.sleep(attempt + 1)
+                    continue
+                with response:
+                    status = response.code
+                    response_headers = response.headers
+                    if status in (301, 302, 303, 307, 308):
+                        target = response_headers.get("Location", "")
+                        diagnostic = {"status": status, "source_host": self.hostname(url),
+                                      "target_host": self.hostname(target), "result": "refused"}
+                        if len(self.redirects) >= 200:
+                            raise PublicationError("Publication redirect diagnostics exceed the limit.")
+                        self.redirects.append(diagnostic)
+                        if not follow:
+                            raise PublicationError("Unexpected authenticated redirect.")
+                        try:
+                            self.checked_url(target, "none")
+                        except PublicationError as error:
+                            raise PublicationError(f"{error} Redirect HTTP {status} to host {diagnostic['target_host']}.") from None
+                        if hops >= redirect_limit or target in seen:
+                            raise PublicationError("Publication storage redirect chain exceeds the limit or cycles.")
+                        diagnostic["result"] = "followed"
+                        seen.add(target)
+                        hops += 1
+                        url, auth, data = target, "none", None
+                        # Signed storage URLs authorize themselves; forward no initial headers or credentials.
+                        request_headers = {"User-Agent": "PouryaKit-publication"}
+                        break
+                    try:
+                        body = response.read(MAX_BYTES + 1)
+                    except (http.client.HTTPException, OSError):
+                        raise PublicationError("Publication response was interrupted.") from None
+                if len(body) > MAX_BYTES:
+                    raise PublicationError("Publication response exceeds the size limit.")
+                if method == "GET" and status in (429, 500, 502, 503, 504) and attempt < 2:
+                    time.sleep(attempt + 1)
+                    continue
+                if 200 <= status < 300 or (missing and status == 404) or (method == "PUT" and status == 409):
+                    return status, body, response_headers
+                raise PublicationError(f"Publication service rejected {method} with HTTP {status}.")
 
     def document(self, url, *, auth="api", missing=False):
         status, body, headers = self.request("GET", url, auth=auth, missing=missing)

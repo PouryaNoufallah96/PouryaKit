@@ -136,7 +136,7 @@ class Feed:
     def content(self, package_id, version):
         package_id, version = package_id.lower(), version.lower()
         url = f"{self.base.rstrip('/')}/{package_id}/{version}/{package_id}.{version}.nupkg"
-        status, content, _ = self.client.request("GET", url, auth="feed", missing=True)
+        status, content, _ = self.client.request("GET", url, auth="feed", missing=True, raw_package=True)
         return None if status == 404 else content
 
     def upload(self, package, content):
@@ -146,7 +146,7 @@ class Feed:
         status, _, _ = self.client.request("PUT", self.push, auth="feed", data=body,
                                          headers={"Content-Type": f"multipart/form-data; boundary={boundary}",
                                                   "X-NuGet-ApiKey": self.client.token})
-        if status not in (201, 202, 409):
+        if not (200 <= status < 300 or status == 409):
             raise PublicationError("Private feed did not accept the upload.")
         return status
 
@@ -170,7 +170,7 @@ def verify_remote(feed, package, manifest, *, polling=False):
 def publish(directory, expected_sha, client, receipt, save, *, fail_after_one=False, probe=False):
     manifest, originals = load_candidate(directory, expected_sha)
     receipt.update({"source_sha": manifest["commit"], "version": manifest["version"],
-                    "expected": manifest["packages"], "uploaded": [], "confirmed": [], "verified": []})
+                    "expected": manifest["packages"], "uploaded": [], "upload_responses": [], "confirmed": [], "verified": []})
     save()
     feed = Feed(client)
     receipt["protocol"] = {"index": FEED, "package_base_address": feed.base, "package_publish": feed.push,
@@ -203,6 +203,7 @@ def publish(directory, expected_sha, client, receipt, save, *, fail_after_one=Fa
         return
     for package in missing:
         status = feed.upload(package, originals[package["id"]])
+        receipt["upload_responses"].append({"id": package["id"], "status": status})
         if status != 409:
             receipt["uploaded"].append(package["id"])
         save()
