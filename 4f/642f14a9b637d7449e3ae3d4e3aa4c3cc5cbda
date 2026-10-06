@@ -45,6 +45,7 @@ tests/ModularMonolith.Tests/PersistenceTests.cs
 docs/acceptance.md
   s_41c3eef9abbce4::t_74320f1d05775e 162,179-188
   s_41c3eef9abbce4::t_fdc592774c6981 189
+  s_41c3eef9abbce4::t_4b680ccb598a1c 178
 tests/ModularMonolith.Tests/NotificationTests.cs
   s_41c3eef9abbce4::t_40f15a720044ec 444,463
 tests/ModularMonolith.Tests/DeliveryProbes.cs
