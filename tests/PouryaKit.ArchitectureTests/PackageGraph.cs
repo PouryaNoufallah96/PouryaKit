@@ -45,6 +45,7 @@ internal static class PackageGraph
             ["PouryaKit.Messaging.Wolverine", "PouryaKit.Persistence.EFCore"],
             ["WolverineFx.EntityFrameworkCore", "WolverineFx.Postgresql"]
         ),
+        ["PouryaKit.Security"] = new(["PouryaKit.Cqrs"], []),
         ["PouryaKit.Web"] = new(["PouryaKit.Cqrs"], [], ["Microsoft.AspNetCore.App"]),
         ["PouryaKit.Testing"] = new(
             ["PouryaKit.Modularity", "PouryaKit.Persistence.Postgres", "PouryaKit.Messaging.Wolverine.EFCore"],

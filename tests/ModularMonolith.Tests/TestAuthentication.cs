@@ -3,12 +3,13 @@ using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ModularMonolith.Host;
 
 namespace ModularMonolith.Tests;
 
 // Stands in for the Host's JwtBearer: a request with "Authorization: Test <id>" is the authenticated person <id>, and
 // a request without it is anonymous. The claim it issues is the one JwtBearer maps a token's subject to; a
-// "Test-Tenant" header adds a tenant claim.
+// "Test-Tenant" header adds a tenant claim, and a "Test-Permissions" header, comma-separated, a permission claim each.
 internal sealed class TestAuthentication(
     IOptionsMonitor<AuthenticationSchemeOptions> options,
     ILoggerFactory logger,
@@ -20,6 +21,8 @@ internal sealed class TestAuthentication(
     public const string TenantClaim = "tenant";
 
     public const string TenantHeader = "Test-Tenant";
+
+    public const string PermissionsHeader = "Test-Permissions";
 
     /// <summary>A caller id that authenticates with no claim naming the person.</summary>
     public const string WithoutActorClaim = "(no actor claim)";
@@ -49,6 +52,13 @@ internal sealed class TestAuthentication(
         {
             claims.Add(new Claim(TenantClaim, tenant));
         }
+
+        claims.AddRange(
+            Request.Headers[PermissionsHeader]
+                .ToString()
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(permission => new Claim(CallerPermissions.ClaimType, permission))
+        );
 
         var identity = new ClaimsIdentity(claims, SchemeName);
         return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName)));

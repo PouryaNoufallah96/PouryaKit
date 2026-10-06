@@ -50,3 +50,18 @@ None shipped. `PouryaKit.Web` references `PouryaKit.Cqrs` and the ASP.NET Core s
   - An `IExceptionHandler` writes through ASP.NET Core's own `ProblemHttpResult`, as a failed Result is written, instead of replacing `IProblemDetailsService`, so failed Results and exceptions share one problem envelope; it falls back to `application/problem+json` when the caller's `Accept` rules out every writer.
   - The response never carries the exception's message, type or stack; upstream copies the message into `detail` and the type name into `title`. Every exception answers 500, except a request ASP.NET Core could not read (`BadHttpRequestException`), which answers its own status: an expected failure is a Result, not an exception (G.1), so there are no exception-to-status mappers. Binding failures throw in every environment, so they answer the same problem response everywhere.
   - The handler logs an unexpected exception at Error as the HTTP-level record of the failed request; the dispatcher logs one a handler throws as well, but an exception raised outside an Operation has only this entry, and the .NET 10 exception handler middleware no longer logs one a handler handled.
+
+## Authenticated access by default
+
+- **Kit files:** `src/PouryaKit.Web/WebServiceCollectionExtensions.cs`
+- **Upstream:** https://github.com/PouryaNoufallah96/cybernod
+- **Commit:** bae8ac3b7e46f09e9375647786d03391a500876a
+- **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.Security/Jwt/Extensions/AuthExtensions.cs`
+- **Licence:** MIT
+- **Adoption:** pattern
+- **Ticket:** #38
+- **Intentional differences:**
+  - The Kit sets the `FallbackPolicy`, not the `DefaultPolicy` (upstream `AuthExtensions.cs:53-59`), so an endpoint that states nothing at all, outside every Module's route group too, requires an authenticated caller; it keeps a fallback policy the application set itself.
+  - The policy names no authentication scheme, so it uses the application's default one; Web chooses no identity provider (plan section C).
+  - No claim or role policies are registered, and nothing adds a policy while the Host runs (plan I.3 rejects `FeaturePolicyProvider.cs:20-24`); a permission is checked on the dispatcher's authorization hook by `PouryaKit.Security` instead.
+  - It lives in `PouryaKit.Web`, which owns the HTTP boundary, rather than in `PouryaKit.Security` as plan I.3 places it, so Security needs no ASP.NET Core framework reference (ticket #38).

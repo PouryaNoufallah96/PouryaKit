@@ -254,6 +254,7 @@ Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its origi
 | Messaging.Wolverine | Cqrs, Messaging | WolverineFx |
 | Messaging.Wolverine.EFCore | Messaging.Wolverine, Persistence.EFCore | WolverineFx.EntityFrameworkCore, WolverineFx.Postgresql |
 | Web | Cqrs | ASP.NET Core framework reference |
+| Security (I.3, ticket #38) | Cqrs | none; no ASP.NET Core framework reference: the authenticated HTTP fallback policy is set by Web |
 | Testing | Modularity, Persistence.Postgres, Messaging.Wolverine.EFCore | Testcontainers, Respawn, xUnit v3, `Microsoft.Extensions.TimeProvider.Testing` |
 
 Amended on 2026-10-05, each addition MIT and already present in every Host:
