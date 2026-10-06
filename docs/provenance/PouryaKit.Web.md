@@ -6,7 +6,7 @@ The status code pages that answer a failure ASP.NET Core leaves with an empty bo
 
 ## Package dependencies
 
-None. `PouryaKit.Web` references `PouryaKit.Cqrs` and the ASP.NET Core shared framework (`FrameworkReference Microsoft.AspNetCore.App`), as plan section C lists; it takes no NuGet package and does not reference `PouryaKit.Modularity`.
+None shipped. `PouryaKit.Web` references `PouryaKit.Cqrs` and the ASP.NET Core shared framework (`FrameworkReference Microsoft.AspNetCore.App`), as plan section C lists; it has no third-party runtime NuGet dependency and does not reference `PouryaKit.Modularity`. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
 
 ## Endpoint convention
 

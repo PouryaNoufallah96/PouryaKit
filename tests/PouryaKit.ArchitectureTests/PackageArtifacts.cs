@@ -136,11 +136,38 @@ internal static class PackageArtifacts
         var mappings = json.RootElement.GetProperty("documents").EnumerateObject().ToArray();
         var expected = $"https://raw.githubusercontent.com/PouryaNoufallah96/PouryaKit/{commit}/";
         if (mappings.Length == 0 || mappings.Any(mapping => !mapping.Value.GetString()!.StartsWith(expected, StringComparison.Ordinal)))
+        {
             yield return $"{name}'s SourceLink map does not identify the source commit.";
+            yield break;
+        }
         var sources = metadata.Documents.Select(metadata.GetDocument).Select(document => metadata.GetString(document.Name))
             .Where(path => path.Contains($"/src/{name}/", StringComparison.Ordinal) && !path.Contains("/obj/", StringComparison.Ordinal)).ToArray();
-        if (sources.Length == 0 || sources.Any(path => !mappings.Any(mapping => path.StartsWith(mapping.Name.TrimEnd('*'), StringComparison.Ordinal))))
-            yield return $"{name}'s SourceLink map does not cover its source documents.";
+        foreach (var error in SourceLinkDocumentViolations(name, sources,
+            [.. mappings.Select(mapping => KeyValuePair.Create(mapping.Name, mapping.Value.GetString()!))], expected)) yield return error;
+    }
+
+    internal static IEnumerable<string> SourceLinkDocumentViolations(string name, string[] sources,
+        KeyValuePair<string, string>[] mappings, string expected)
+    {
+        if (mappings.Any(mapping => mapping.Key.Count(character => character == '*') > 1
+            || (mapping.Key.Contains('*') && !mapping.Key.EndsWith('*'))
+            || mapping.Value.Count(character => character == '*') != (mapping.Key.EndsWith('*') ? 1 : 0)))
+        {
+            yield return $"{name}'s SourceLink map has invalid wildcard syntax.";
+            yield break;
+        }
+        if (sources.Length == 0) yield return $"{name}'s SourceLink map does not cover its source documents.";
+        foreach (var source in sources)
+        {
+            var mapped = mappings.Where(mapping => string.Equals(mapping.Key, source, StringComparison.OrdinalIgnoreCase)
+                || (mapping.Key.EndsWith('*') && source.StartsWith(mapping.Key[..^1], StringComparison.OrdinalIgnoreCase)))
+                .OrderByDescending(mapping => !mapping.Key.EndsWith('*')).ThenByDescending(mapping => mapping.Key.Length).ToArray();
+            var marker = source.LastIndexOf($"/src/{name}/", StringComparison.Ordinal);
+            var url = mapped.Length > 0 ? mapped[0].Value.Replace("*", mapped[0].Key.EndsWith('*')
+                ? source[(mapped[0].Key.Length - 1)..].Replace('\\', '/') : "", StringComparison.Ordinal) : null;
+            if (marker < 0 || url != expected + source[(marker + 1)..])
+                yield return $"{name}'s SourceLink map sends {source} to the wrong repository-relative path.";
+        }
     }
 
     private static string Value(XDocument document, string name) => document.Descendants().Single(element => element.Name.LocalName == name).Value;

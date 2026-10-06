@@ -35,7 +35,11 @@ An idea that only shaped a design, with no code or test scenario taken, needs no
   - `pattern`: no upstream code is taken. The Kit reimplements the design or ports test scenarios. This is the only level allowed for a source that is `none`, `unconfirmed` or not permissively licensed (CC BY-SA, Stack Overflow answers, Ultrabusiness).
 - **Intentional differences** lists each deliberate change from upstream, so that an upstream fix can be judged against it. Write `none` when there are none.
 
-Every record also has one `## Package dependencies` section, before its adopted implementations: each third-party package the Kit package references directly, with the version `Directory.Packages.props` pins and the licence expression its nuspec declares, and the date it was checked; or `None.` when it references none. Code that is new to the Kit is named in a sentence under the title, so a reader knows it has no record rather than a missing one.
+Every record also has one `## Package dependencies` section, before its adopted implementations: each third-party package the Kit package ships as a direct dependency, with the version `Directory.Packages.props` pins and the licence expression its nuspec declares, and the date it was checked; or `None.` when it ships none. Shared private build tools are recorded once below and apply to every Kit source project. Code that is new to the Kit is named in a sentence under the title, so a reader knows it has no record rather than a missing one.
+
+## Shared private build tools
+
+- `MinVer` 8.0.0, `Apache-2.0`, checked against the restored nuspec on 2026-10-06, ticket #25. `Directory.Build.targets` references it with `PrivateAssets="all"` in every Kit source project and `Directory.Packages.props` pins it. It has no package dependencies and reaches no shipped nuspec or consumer closure. Upstream: https://github.com/adamralph/minver, commit `8bbc4fb0230bedfa6f7678749c7b5fe977d240eb`, as recorded by the package's repository metadata. SDK 10 supplies GitHub SourceLink support without another PackageReference.
 
 ## Package licences
 

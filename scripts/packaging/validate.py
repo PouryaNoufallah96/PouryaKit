@@ -97,10 +97,11 @@ def consumer_config(folder, packages):
 
 
 def isolated_env(folder):
-    return {**os.environ, "NUGET_PACKAGES": str(folder / "cache/packages"),
-            "NUGET_HTTP_CACHE_PATH": str(folder / "cache/http"),
-            "NUGET_PLUGINS_CACHE_PATH": str(folder / "cache/plugins"),
-            "NUGET_FALLBACK_PACKAGES": "", "DOTNET_CLI_HOME": str(folder / "cli")}
+    cache = folder.parent.parent / "caches" / folder.name
+    return {**os.environ, "NUGET_PACKAGES": str(cache / "packages"),
+            "NUGET_HTTP_CACHE_PATH": str(cache / "http"),
+            "NUGET_PLUGINS_CACHE_PATH": str(cache / "plugins"),
+            "NUGET_FALLBACK_PACKAGES": "", "DOTNET_CLI_HOME": str(cache / "cli")}
 
 
 def simple_consumer(folder, ids, types, version):
@@ -133,6 +134,11 @@ def sample_consumer(folder, source, version):
     return folder / "src/ModularMonolith.Host/ModularMonolith.Host.csproj"
 
 
+def check_cache_folders(folders, cache):
+    if len(folders) != 1 or Path(folders[0]).resolve() != Path(cache).resolve():
+        raise RuntimeError(f"Consumer used other package caches: {folders}")
+
+
 def check_consumer(folder, env, package_ids, version, excluded):
     assets = sorted(folder.glob("**/obj/project.assets.json"))
     if not assets:
@@ -141,8 +147,7 @@ def check_consumer(folder, env, package_ids, version, excluded):
     for asset in assets:
         document = json.loads(asset.read_text())
         folders = list(document["packageFolders"])
-        if folders != [str(Path(env["NUGET_PACKAGES"])) + os.sep]:
-            raise RuntimeError(f"Consumer used other package caches: {folders}")
+        check_cache_folders(folders, env["NUGET_PACKAGES"])
         for name, library in document["libraries"].items():
             name_id, resolved_version = name.split("/")
             if library["type"] == "project":
@@ -179,6 +184,10 @@ def version_proof(output):
     run(["git", "-C", folder, "add", "."])
     run(["git", "-C", folder, "-c", "user.name=Package proof", "-c", "user.email=proof@example.invalid", "commit", "-qm", "proof"])
     run(["dotnet", "restore", project], cwd=folder, log=output / "minver-restore.log")
+    root = properties(project, ["MinVerVersion", "PackageVersion"], cwd=folder, target="MinVer")
+    if root != {"MinVerVersion": "0.1.0-preview.0", "PackageVersion": "0.1.0-preview.0"}:
+        raise RuntimeError(f"Unexpected root MinVer output: {root}")
+    run(["git", "-C", folder, "-c", "user.name=Package proof", "-c", "user.email=proof@example.invalid", "commit", "--allow-empty", "-qm", "untagged descendant"])
     untagged = properties(project, ["MinVerVersion", "PackageVersion"], cwd=folder, target="MinVer")
     if untagged != {"MinVerVersion": "0.1.0-preview.0.1", "PackageVersion": "0.1.0-preview.0.1"}:
         raise RuntimeError(f"Unexpected untagged MinVer output: {untagged}")
@@ -190,7 +199,7 @@ def version_proof(output):
     after = properties(project, ["MinVerVersion", "PackageVersion"], cwd=folder, target="MinVer")
     if after != {"MinVerVersion": "0.2.0-rc.1.1", "PackageVersion": "0.2.0-rc.1.1"}:
         raise RuntimeError(f"Unexpected post-tag MinVer output: {after}")
-    (output / "minver.json").write_text(json.dumps({"untagged": untagged, "tagged": tagged, "after": after}, indent=2))
+    (output / "minver.json").write_text(json.dumps({"root": root, "untagged": untagged, "tagged": tagged, "after": after}, indent=2))
 
 
 def artifact_controls(evidence, output):

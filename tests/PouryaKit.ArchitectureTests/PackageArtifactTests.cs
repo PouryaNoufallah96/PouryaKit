@@ -1,4 +1,6 @@
 using System.IO.Compression;
+using System.Diagnostics;
+using System.Text.Json;
 using System.Xml.Linq;
 
 namespace PouryaKit.ArchitectureTests;
@@ -57,5 +59,69 @@ public sealed class PackageArtifactTests
         Assert.Empty(PackageArtifacts.SourceLinkViolations(archive, "PouryaKit.Domain", actual));
         Assert.Equal(["PouryaKit.Domain's SourceLink map does not identify the source commit."],
             PackageArtifacts.SourceLinkViolations(archive, "PouryaKit.Domain", new string('0', 40)));
+    }
+
+    [Fact]
+    public async Task An_embedded_source_link_map_with_the_right_commit_but_wrong_source_path_is_rejected()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), $"pouryakit-bad-sourcelink-{Guid.NewGuid():N}");
+        try
+        {
+            var source = Path.Combine(folder, "src", "PouryaKit.Domain");
+            Directory.CreateDirectory(source);
+            File.Copy(Path.Combine(Repository.Root, "global.json"), Path.Combine(folder, "global.json"));
+            var project = Path.Combine(source, "PouryaKit.Domain.csproj");
+            await File.WriteAllTextAsync(project, """
+                <Project Sdk="Microsoft.NET.Sdk"><PropertyGroup>
+                  <TargetFramework>net10.0</TargetFramework><DebugType>embedded</DebugType>
+                  <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries><EnableSourceLink>false</EnableSourceLink>
+                  <SourceLink>$(MSBuildProjectDirectory)/bad-map.json</SourceLink>
+                </PropertyGroup></Project>
+                """, TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(source, "Domain.cs"), "public class Domain { public int Value => 1; }",
+                TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(source, "bad-map.json"), JsonSerializer.Serialize(new
+            {
+                documents = new Dictionary<string, string>
+                {
+                    ["*"] = $"https://raw.githubusercontent.com/PouryaNoufallah96/PouryaKit/{Commit}/does-not-exist/*",
+                },
+            }), TestContext.Current.CancellationToken);
+            var start = new ProcessStartInfo("dotnet") { WorkingDirectory = folder, RedirectStandardOutput = true, RedirectStandardError = true };
+            foreach (var argument in new[] { "build", project, "-c", "Release", "-v:q" }) start.ArgumentList.Add(argument);
+            using var build = Process.Start(start)!;
+            var stdout = build.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+            var stderr = build.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+            await build.WaitForExitAsync(TestContext.Current.CancellationToken);
+            Assert.True(build.ExitCode == 0, await stdout + await stderr);
+
+            using var stream = new MemoryStream();
+            using var archive = new ZipArchive(stream, ZipArchiveMode.Update, leaveOpen: true);
+            using (var target = archive.CreateEntry("lib/net10.0/PouryaKit.Domain.dll").Open())
+            using (var input = File.OpenRead(Path.Combine(source, "bin", "Release", "net10.0", "PouryaKit.Domain.dll"))) input.CopyTo(target);
+            Assert.Contains(PackageArtifacts.SourceLinkViolations(archive, "PouryaKit.Domain", Commit),
+                violation => violation.Contains("wrong repository-relative path", StringComparison.Ordinal));
+        }
+        finally { Directory.Delete(folder, recursive: true); }
+    }
+
+    [Fact]
+    public void Source_link_expands_wildcards_and_prefers_exact_and_more_specific_mappings()
+    {
+        const string source = "/_/src/PouryaKit.Domain/Result.cs";
+        var expected = $"https://raw.githubusercontent.com/PouryaNoufallah96/PouryaKit/{Commit}/";
+        foreach (var mappings in new KeyValuePair<string, string>[][]
+        {
+            [KeyValuePair.Create("/_/*", expected + "*")],
+            [KeyValuePair.Create(source.ToUpperInvariant(), expected + "src/PouryaKit.Domain/Result.cs")],
+            [KeyValuePair.Create("/_/*", expected + "wrong/*"), KeyValuePair.Create("/_/src/PouryaKit.Domain/*", expected + "src/PouryaKit.Domain/*")],
+            [KeyValuePair.Create("/_/*", expected + "wrong/*"), KeyValuePair.Create(source, expected + "src/PouryaKit.Domain/Result.cs")],
+        })
+            Assert.Empty(PackageArtifacts.SourceLinkDocumentViolations("PouryaKit.Domain", [source], mappings, expected));
+        Assert.Contains(PackageArtifacts.SourceLinkDocumentViolations("PouryaKit.Domain", [source],
+            [KeyValuePair.Create("/_/*", expected + "wrong/*")], expected),
+            violation => violation.Contains("wrong repository-relative path", StringComparison.Ordinal));
+        Assert.Equal(["PouryaKit.Domain's SourceLink map has invalid wildcard syntax."],
+            PackageArtifacts.SourceLinkDocumentViolations("PouryaKit.Domain", [source], [KeyValuePair.Create("/_/*", expected + "constant")], expected));
     }
 }
