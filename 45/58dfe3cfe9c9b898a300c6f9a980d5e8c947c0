@@ -1,0 +1,37 @@
+.agents/skills/pourya-kit/references/core.md
+  s_41c3eef9abbce4::t_20746ef38ce607 81
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_20746ef38ce607 467
+tests/ModularMonolith.Tests/Misnamed/MisnamedNotifications.cs
+  s_41c3eef9abbce4::t_4736e379540cd9 90-126
+  s_41c3eef9abbce4::t_b927bb2f33a659 6
+docs/acceptance.md
+  s_41c3eef9abbce4::t_5ba82471331416 145,147
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_20746ef38ce607 840
+tests/ModularMonolith.Tests/Misnamed/ModularMonolith.Tests.Misnamed.csproj
+  s_41c3eef9abbce4::t_b927bb2f33a659 2
+tests/PouryaKit.Core.Tests/ImplementingTypesTests.cs
+  s_41c3eef9abbce4::t_a8c3a1a162abff 42,44
+src/PouryaKit.Core/ImplementingTypes.cs
+  s_41c3eef9abbce4::t_20746ef38ce607 57-59,74
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_41c3eef9abbce4::t_4736e379540cd9 395-416,608-609
+  s_41c3eef9abbce4::t_b4dd4e760e4fbb 610
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4558dfe3cfe9c9b898a300c6f9a980d5e8c947c0",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
