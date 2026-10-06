@@ -1,0 +1,19 @@
+docs/foundation-review.md
+  s_74540ce945d2e7::t_2df9f33f56dc48 330-333,752-754,832,841,847,853,858-859,862,956,984-1021,1030,1032-1033,1035-1036
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b6da8dfbf641d915ce09e7cee069a81552e5a88f",
+  "prompts": {},
+  "sessions": {
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
