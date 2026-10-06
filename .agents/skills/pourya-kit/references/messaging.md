@@ -250,6 +250,36 @@ internal sealed class OpenStockItemIntegrationEventHandler(IRepository<StockItem
 - Inject what a command handler may: the `OperationContext`, the Module's repositories, `IDispatcher`. Read when the fact happened from the Integration Event, as `StockItem.Open` takes `OccurredOn`; the Operation's own clock gives the time of the delivery.
 - Never save, commit, begin a transaction, record a Receipt, acknowledge or reference a Wolverine type, and never publish: an Integration Event is published only from a Notification Handler.
 
+### A new version of an Integration Event
+
+A wire name is one version of one contract type. A change receivers could not read, such as a new required field, is a new version: a new type under a new wire name, published beside the old one while subscribers move. Nothing converts one version into another, and there is no schema registry. In the Proving Sample, `ProductCreatedV2` adds the product's category:
+
+```csharp
+// Catalog.Contracts/Products/Events/V2/: a type of its own, never derived from V1
+public sealed record ProductCreatedV2(Guid Id, DateTimeOffset OccurredOn, Guid ProductId, string Name, Guid CategoryId);
+
+// Catalog's Composition Root: both versions, each under its own wire name
+//     module.Publish<ProductCreatedV1>("catalog.product-created.v1", typeof(CatalogModule));
+//     module.Publish<ProductCreatedV2>("catalog.product-created.v2", typeof(CatalogModule));
+
+// PublishProductCreatedNotificationHandler: both, with the one Domain Event's Id
+events.Publish(domainEvent.Id, new ProductCreatedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.ProductId.Value, domainEvent.Name));
+events.Publish(
+    domainEvent.Id,
+    new ProductCreatedV2(domainEvent.Id, domainEvent.OccurredOn, domainEvent.ProductId.Value, domainEvent.Name, domainEvent.CategoryId.Value)
+);
+
+// Inventory's Composition Root: a subscription to v2, beside its subscription to v1
+//     module.Subscribe<ProductCreatedV2, FileProductCategoryIntegrationEventHandler>("inventory.product-categories", typeof(InventoryModule));
+```
+
+- Add the new record under `Events/V2/`, named with its version, as a type of its own: copy the fields it keeps rather than deriving it from the old one.
+- Declare it with `Publish` under a new wire name with the new version (`catalog.product-created.v2`), and publish both versions from the same Notification Handler with the same Domain Event `Id`. One Domain Event yields one Integration Event of each type, so the two versions are allowed together, and each has a publication record of its own.
+- Each subscription receives only the version it subscribed to: v1 subscribers never see v2, and v2 subscribers never see v1. Both versions carry the one identity; each subscription keeps its own Receipt of it, so a Module may subscribe to both under two subscription names, and each applies once.
+- Move a subscriber by subscribing its new handler to v2 under a new subscription name, then removing its v1 subscription once that queue holds nothing. A stored v1 delivery to a subscription nothing declares any more is set aside as a dead letter, never run ([Names](#names)).
+- Retire v1 when no Module subscribes to it: remove its `Publish` call in the same release as its `events.Publish` line, and then the record. Until then, keep publishing it; a published type nothing in the Host subscribes to is not stored.
+- Declaring the same type under two wire names, two types under one wire name, or a wire name equal to another subscribed contract type's full name fails the Host ([Startup checks](#startup-checks)).
+
 ## Snapshots between Modules
 
 A Snapshot is the current state of one aggregate, published for other Modules, and it supersedes every earlier Snapshot of that aggregate. A Tombstone is the Snapshot that says the aggregate no longer exists. Choose between a Snapshot and an Integration Event by what the receiver needs (G.2, G.5):
@@ -414,6 +444,7 @@ An Integration Event is delivered the same way, sent after the commit, in a new 
 - **Applied once.** Its identity is the `Id` of the Domain Event it follows from, carried by every delivery of it in the `IntegrationEventHeaders.DomainEventId` header. The receiving handler's Receipt, the subscription name and that identity, commits together with its effect, so a redelivery after the commit, or a concurrent duplicate, applies it once.
 - **A continuation, two Operations on.** The receiving Operation continues the publishing Notification Handler's delivery: the same Actor, tenant and correlation as the Operation that made the change, the delivery's `OperationId` as its causation, a new `OperationId`. No HTTP request is involved.
 - **The same identity and time at both ends.** The Kit enforces the identity: `Publish` refuses any other. The time is the same when the Integration Event carries the Domain Event's `OccurredOn`, as `ProductCreatedV1` does.
+- **Each version to its own subscribers.** A subscription receives only the type it subscribed to, so during a transition v1 and v2 of one fact reach their own subscriptions only, each with its own Receipt.
 
 ## Receipts
 
@@ -449,6 +480,7 @@ Each Notification and Integration Event is stored under its wire name, and each 
 - **A Notification Handler's subscription name, by convention:** the wire name, a dot, and the handler's name without the `NotificationHandler` or `Handler` suffix, in kebab case: `catalog.product-created.announce-new-product`.
 - **Overrides:** `[WireName("...")]` on the Domain Event and `[SubscriptionName("...")]` on the Notification Handler (`PouryaKit.Messaging`) declare a stable name instead.
 - **An Integration Event's and a Snapshot's names are declared, never derived:** the wire name is the first argument of `Publish` (`catalog.product-created.v1`) or `PublishSnapshot` (`catalog.product-snapshot.v1`), and each Integration Event Handler's subscription name the first argument of `Subscribe` (`inventory.product-created`). Neither depends on a CLR name, so renaming or moving the record or the handler keeps them. Put the version in the wire name, and change it only with a new version of the type.
+- **One type per wire name, one wire name per type.** A Host refuses a second type under a wire name and a type under a second wire name, ignoring case; a new version is a new type under a new wire name ([A new version of an Integration Event](#a-new-version-of-an-integration-event)).
 - **One wire name per type in a process.** Wolverine keeps message names for the whole process, so a second Host in the same process, such as one a test starts, that publishes a type under another wire name fails to start.
 - **A rename is a breaking change.** A derived name changes when its Domain Event, its handler or its assembly is renamed, or the type moves to another assembly; a declared one changes when its declaration does. Deliveries already stored keep the old name: those under a wire name nothing declares any more no longer find their type, those under a subscription name nothing declares arrive on a queue no subscription declares, and either is set aside as a dead letter, never run and never treated as handled. Before renaming a type or handler that uses a derived name while deliveries may be in flight, declare the name it had:
 
@@ -555,7 +587,7 @@ A longer stale time has its price: a delivery committed but never sent waits tha
   - `Publish`, for a type that is not a concrete class or is a Domain Event; a wire name that is missing, invalid or colliding; and a type already published under another wire name or by another Module.
   - `PublishSnapshot`, for everything `Publish` refuses, and for a type already published as an Integration Event or as the Snapshot of another aggregate or with another mapper.
   - `Subscribe`, for a Domain Event; an abstract handler; a subscription name that is missing, invalid, reserved or colliding; and the same subscription declared for another Module. Repeating its declaration for the same Module adds nothing.
-- **When the Host starts**, it fails, naming each problem, for a subscription to an Integration Event or Snapshot that no Module of the Host publishes; for an Integration Event this process already sends under another wire name; and for an Integration Event that Wolverine had already named otherwise before the Host declared it, because Wolverine keeps the first name it gives a type and would send it under that name. Wire names are declared all or none.
+- **When the Host starts**, it fails, naming each problem, for a subscription to an Integration Event or Snapshot that no Module of the Host publishes; for a message type Wolverine would also route to another subscribed type's queues, because its wire name, its name or its full name equals that type's full name, ignoring case (a v2 published under the full name of its v1 would reach every v1 subscription); for an Integration Event this process already sends under another wire name; and for an Integration Event that Wolverine had already named otherwise before the Host declared it, because Wolverine keeps the first name it gives a type and would send it under that name. Wire names are declared all or none.
 - **After every hosted service started**, it fails when Notification Handlers, Integration Events or Snapshots are declared but nothing writes them to an Outbox: `UsePouryaKitWolverine()` without a connection name, from `PouryaKit.Messaging.Wolverine`, runs Wolverine with no database, for a Host that declares none of them. It also fails when Host configuration made a subscription's queue one that does not store what it receives, such as `LocalQueue(name).BufferedInMemory()`.
 - Not checked: that a Module whose Composition Root handles no command of its own, but declares Notification Handlers or subscriptions, has a Unit of Work (one that handles a command is checked when the Host is composed, [modules.md](modules.md#startup-checks)); and that a Module has the Receipt table and, for a Snapshot, the Snapshot version table ([Receipts](#receipts)). Not checked at startup either, but failing the Operation that commits: a Snapshot of an aggregate whose key the database generates, a Snapshot declaration without its Module in a Host of Modules, and one that covers independent aggregates ([The rules of a mapper and a key](#the-rules-of-a-mapper-and-a-key)).
 

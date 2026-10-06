@@ -22,6 +22,7 @@ internal sealed class PouryaKitWolverineExtension(
                 .Select(subscription =>
                     $"{subscription.Handler.FullName} subscribes to {subscription.Message.FullName} under {subscription.Name}, but no Module of this Host publishes it, so it has no wire name. Declare Publish<{subscription.Message.Name}>(wireName, module), or PublishSnapshot for a Snapshot, in the publishing Module's Composition Root."
                 ),
+            .. subscriptions.RoutingCollisions(),
         ];
         if (problems.Count == 0)
         {

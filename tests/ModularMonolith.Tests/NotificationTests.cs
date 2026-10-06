@@ -42,6 +42,7 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
                 new Delivery("catalog.product-created.announce-new-product", "catalog.product-created", false),
                 new Delivery("catalog.product-created.publish-product-created", "catalog.product-created", false),
                 new Delivery("inventory.catalog-products", "catalog.product-snapshot.v1", false),
+                new Delivery("inventory.product-categories", "catalog.product-created.v2", false),
                 new Delivery("inventory.product-created", "catalog.product-created.v1", false),
             ],
             deliveries.OrderBy(delivery => delivery.Subscription, StringComparer.Ordinal)

@@ -33,6 +33,7 @@ public sealed class CatalogModule : IModuleDefinition
         module.AddPouryaKitPermissions(typeof(CatalogModule).Assembly);
         module.AddPouryaKitNotificationHandlers(typeof(CatalogModule).Assembly, typeof(CatalogModule));
         module.Publish<ProductCreatedV1>("catalog.product-created.v1", typeof(CatalogModule));
+        module.Publish<Contracts.Products.Events.V2.ProductCreatedV2>("catalog.product-created.v2", typeof(CatalogModule));
         module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1", typeof(CatalogModule));
         module.AddScoped<IProductRepository, ProductRepository>();
         module.AddScoped<ICatalogProducts, CatalogProducts>();
