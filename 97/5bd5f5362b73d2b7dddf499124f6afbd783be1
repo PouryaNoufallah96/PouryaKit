@@ -1,0 +1,43 @@
+docs/packages.md
+  s_74540ce945d2e7::t_33b3a71d975e85 17
+  s_74540ce945d2e7::t_55eaeafde9da34 31
+docs/provenance/README.md
+  s_74540ce945d2e7::t_a354e272308f76 38-42
+docs/provenance/PouryaKit.Domain.md
+  s_74540ce945d2e7::t_a354e272308f76 7
+docs/provenance/PouryaKit.Messaging.md
+  s_74540ce945d2e7::t_a354e272308f76 13
+tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs
+  s_74540ce945d2e7::t_507796026bb8f6 145,147-151,159-161,165,168-170
+  s_74540ce945d2e7::t_5a9f34c0096fa1 146
+  s_74540ce945d2e7::t_a354e272308f76 139,141-142,152-158,162-164,166-167
+scripts/packaging/test_validation.py
+  s_74540ce945d2e7::t_55eaeafde9da34 7,29-36
+  s_74540ce945d2e7::t_a354e272308f76 3-5,28,37-55
+  s_74540ce945d2e7::t_f434e85d71e8fa 56-57
+docs/provenance/PouryaKit.Web.md
+  s_74540ce945d2e7::t_a354e272308f76 9
+scripts/packaging/validate.py
+  s_74540ce945d2e7::t_2c0bb6692ae86a 187-190,202
+  s_74540ce945d2e7::t_55eaeafde9da34 100-104
+  s_74540ce945d2e7::t_507796026bb8f6 137-141,150
+tests/PouryaKit.ArchitectureTests/PackageArtifactTests.cs
+  s_74540ce945d2e7::t_33b3a71d975e85 2-3,63-86,88-126
+  s_74540ce945d2e7::t_2d7c50d006951f 87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "975bd5f5362b73d2b7dddf499124f6afbd783be1",
+  "prompts": {},
+  "sessions": {
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
