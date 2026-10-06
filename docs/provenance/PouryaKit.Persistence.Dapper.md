@@ -38,7 +38,7 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
 - **Adoption:** adapted
 - **Ticket:** #9
 - **Intentional differences:**
-  - Generic over the typed ID's value type (Guid, long, int or string, G.3) instead of Guid only; a column of another type is converted to the value type.
+  - Generic over the typed ID's value type (Guid, long, int or string, G.3) instead of Guid only; a column of another type is converted to the value type only when `Convert.ChangeType` supports that conversion. It does not parse a string as a Guid.
   - Creates the ID through `TypedId.From`, a constructor looked up once per type, instead of `Activator.CreateInstance` on every row.
   - A null typed ID is passed as `DBNull`.
   - Dapper's type-handler registry is process-wide, and Dapper 2.1.89 serialises registration (`SqlMapper.AddTypeHandlerCore` takes a lock). A handler depends only on its type, so when several Modules or several Hosts in one process register the same typed ID, the replacement behaves identically.

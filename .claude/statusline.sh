@@ -10,7 +10,8 @@ command -v jq >/dev/null 2>&1 || exit 0
 user_command=$(jq -r '.statusLine | select(.type == "command") | .command // empty' \
   "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json" 2>/dev/null)
 if [ -n "$user_command" ]; then
-  printf '%s\n' "$payload" | POURYAKIT_STATUSLINE=1 sh -c "$user_command" 2>/dev/null || :
+  user_output=$(printf '%s\n' "$payload" | POURYAKIT_STATUSLINE=1 sh -c "$user_command" 2>/dev/null || :)
+  [ -z "$user_output" ] || printf '%s\n' "$user_output"
 fi
 
 field() { printf '%s' "$payload" | jq -r "$1 // empty" 2>/dev/null; }

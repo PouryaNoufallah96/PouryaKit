@@ -82,4 +82,26 @@ public class TypedIdTests
     {
         Assert.Throws<NotSupportedException>(() => new PriceId(1m));
     }
+
+    [Theory]
+    [InlineData(typeof(GenericId<>))]
+    [InlineData(typeof(FixedValueId<>))]
+    public void Open_generic_ids_are_not_concrete_ids(Type type)
+    {
+        Assert.Null(TypedId.GetValueType(type));
+    }
+
+    [Theory]
+    [InlineData(typeof(GenericId<Guid>), typeof(Guid))]
+    [InlineData(typeof(GenericId<long>), typeof(long))]
+    [InlineData(typeof(FixedValueId<string>), typeof(Guid))]
+    public void Closed_generic_ids_expose_their_value_type(Type type, Type valueType)
+    {
+        Assert.Equal(valueType, TypedId.GetValueType(type));
+    }
+
+    private sealed record GenericId<TValue>(TValue Value) : TypedId<TValue>(Value)
+        where TValue : notnull;
+
+    private sealed record FixedValueId<TTag>(Guid Value) : TypedId<Guid>(Value);
 }

@@ -30,8 +30,8 @@ internal sealed class EfUnitOfWork(
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        // Disposing a transaction that was neither committed nor rolled back rolls it back, so an exception from the
-        // command, a Domain Event Handler, the save or the commit leaves nothing committed.
+        // Disposing an uncommitted transaction rolls it back. A commit exception can instead mean the database
+        // committed but its acknowledgement was lost, leaving the outcome unknown to the caller (ADR 0004).
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         var result = await command(cancellationToken);
         if (result.IsSuccess && !operation.IsRollbackOnly)

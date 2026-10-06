@@ -8,7 +8,7 @@ metadata:
 These facts were found in Spike S1 (ticket #2, 2026-10-05). The authoritative record is `docs/adr/0004-*.md`; check it is still current before relying on this.
 
 - Wolverine 6 needs `WolverineFx.RuntimeCompilation`, or the Host fails at start (TypeLoadMode.Dynamic has no IAssemblyGenerator).
-- With handlers outside the entry assembly (always the case under a test runner), call `opts.Discovery.IncludeAssembly(...)`.
+- In a raw Wolverine Host using conventional discovery, call `opts.Discovery.IncludeAssembly(...)` for handlers outside the entry assembly. The Kit disables conventional discovery in `WolverineHostApplicationBuilderExtensions` and registers subscription handlers explicitly with `AddMessageHandler` in `PouryaKitWolverineExtension`.
 - To prove "same transaction", compare `pg_xact_commit_timestamp(xmin)`, not `xmin`. EF wraps `SaveChanges` inside a user transaction in a savepoint, so the rows get different xids. The container needs `-c track_commit_timestamp=on`.
 - A killed node's envelopes take about 75 s to recover with Balanced default timers. Tests should shorten the `Durability.*` timers or use Solo mode.
 - If a Notification is committed but not flushed while its Host stays alive, it is stuck until the Host stops. Recovery takes only rows with `owner_id = 0`. `InboxStaleTime` releases the stuck row, but it also re-dispatches rows whose handlers are still running and have been running longer than the stale time.

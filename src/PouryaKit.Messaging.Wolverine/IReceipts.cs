@@ -23,7 +23,8 @@ public interface IReceipts
     /// <paramref name="aggregateId"/>, in the active Unit of Work's transaction, only when it is newer than every
     /// version of that aggregate the subscription applied before; returns false, recording nothing, otherwise. A
     /// concurrent delivery of any version of the same aggregate waits until this one commits or rolls back, then
-    /// compares with what committed, so of two concurrent versions only the newer is applied.
+    /// compares with what committed. If the older version commits first, both handlers can run in increasing version
+    /// order; if the newer commits first, the older is skipped. The committed version only increases.
     /// </summary>
     Task<bool> RecordVersionAsync(string subscription, string aggregateId, long version, CancellationToken cancellationToken);
 }

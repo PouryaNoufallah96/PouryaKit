@@ -21,7 +21,8 @@ code now depend on.
   again; prepare persistence; write the Outbox, which builds the Snapshots, so the Snapshot step sits inside the Outbox
   write; check rollback-only once more, because a Snapshot mapper may have ignored a refused nested command; save;
   commit; send. Preparing persistence converts soft-deletable removals to marks, then resolves EF Core's cascades of
-  the removals that stay deletions, so the save changes nothing the Snapshots did not see
+  the removals that stay deletions for tracked entries, so the save changes no tracked state the Snapshots did not see.
+  Database cascades may still delete unloaded dependents during the save
   (`PersistencePreparationTests.Removing_an_aggregate_resolves_its_cascades_before_the_save_so_the_save_changes_nothing_further`).
 - **Code that only reads.** `Operation.MayChangeState` is false in a query, an authorizer or a validator at any depth,
   and inside a step opened with the public `Operation.OnlyReading(step)`, which the Kit opens around each Snapshot
@@ -40,8 +41,8 @@ code now depend on.
   `SnapshotTests.Removing_an_aggregate_deleted_outright_publishes_its_tombstone_with_a_newer_version`). Receivers
   compare these versions, so changing the rule changes what they apply.
 - **What changes a holder.** A changed child counts for the aggregate that holds it now and the one that held it when
-  loaded, so moving a child advances both. The holder must be loaded in the Operation: a changed part of an aggregate
-  the Operation did not load throws, because that aggregate's version could not advance and a concurrent change would
+  loaded, so moving a child advances both. The holder must be tracked in the Operation, loaded or added: a changed part
+  whose holder is not tracked throws, because that aggregate's version could not advance and a concurrent change would
   not conflict (`src/PouryaKit.Persistence.EFCore/PersistencePreparation.cs`;
   `PersistencePreparationTests.A_page_moved_to_another_folder_advances_and_stamps_both_folders_once`,
   `PersistencePreparationTests.Changing_a_part_of_an_aggregate_the_operation_did_not_load_throws_and_writes_nothing`).

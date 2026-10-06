@@ -44,7 +44,8 @@ public static class OperationContextHeaderExtensions
         var actor = Enum.Parse<ActorKind>(Header(OperationContextHeaders.ActorKind)) switch
         {
             ActorKind.Person => Actor.Person(Header(OperationContextHeaders.ActorId)),
-            _ => Actor.System(Header(OperationContextHeaders.ActorId)),
+            ActorKind.System => Actor.System(Header(OperationContextHeaders.ActorId)),
+            _ => throw new InvalidOperationException($"The message {envelope.Id} has an undefined ActorKind header."),
         };
         envelope.Headers.TryGetValue(OperationContextHeaders.Tenant, out var tenant);
         return new OperationContext(

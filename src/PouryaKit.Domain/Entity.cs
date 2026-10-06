@@ -3,6 +3,12 @@ using System.Runtime.CompilerServices;
 namespace PouryaKit.Domain;
 
 /// <summary>An object with an identity. Two entities are equal when their types and IDs are equal.</summary>
+/// <remarks>
+/// Equality and hashing use the current ID. Do not change an entity's ID while it is in a hash-based collection
+/// using entity equality. For database-generated IDs, add the entity after its ID is assigned, or use
+/// <see cref="ReferenceEqualityComparer.Instance"/> when the collection tracks object instances across persistence.
+/// With reference equality, different instances remain distinct even when their IDs are equal.
+/// </remarks>
 public abstract class Entity<TId>
     where TId : notnull
 {

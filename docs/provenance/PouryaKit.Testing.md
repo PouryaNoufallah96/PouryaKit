@@ -2,6 +2,8 @@
 
 Adopted implementations in `PouryaKit.Testing`. Format and rules: [README](README.md).
 
+`TestClock` and `GatewayTestExtensions` are new Kit code, so they have no adoption record here.
+
 ## Package dependencies
 
 Checked on nuget.org on 2026-10-05; licence expressions from each package's nuspec. None is reciprocal or commercial (ADR 0002).

@@ -58,7 +58,7 @@ public static class TypedId
     public static Type? GetValueType(Type type)
     {
         ArgumentNullException.ThrowIfNull(type);
-        if (type.IsAbstract)
+        if (type.IsAbstract || type.ContainsGenericParameters)
         {
             return null;
         }

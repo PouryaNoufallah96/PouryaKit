@@ -6,8 +6,9 @@ status: accepted
 
 `PouryaKit.Web` answers every failure with the same RFC 9457 problem response, written as `application/problem+json`
 whatever the caller's `Accept` says, so a client parses one shape. Ticket #14 fixed it for a failed `Result` and an
-exception, and ticket #19 extended it to the failures ASP.NET Core answers itself. A client reads the status and the
-`errors` member, so changing either breaks every consumer of the Kit's HTTP endpoints. No ADR owned the HTTP boundary,
+exception, and ticket #19 extended it to the failures ASP.NET Core answers itself. A client reads the status and, for a
+failed `Result`, the `errors` member; exception and empty-body responses omit `errors`. Changing that contract breaks
+consumers of the Kit's HTTP endpoints. No ADR owned the HTTP boundary,
 so these decisions are recorded here.
 
 - **The most severe Error kind decides the status.** Each kind has one status: validation 400, not found 404,
@@ -27,4 +28,5 @@ so these decisions are recorded here.
   (`src/PouryaKit.Web/ProblemStatusCodePages.cs`;
   `WebTests.A_request_routing_refuses_answers_its_status_as_a_problem_response_and_nothing_is_saved` for 405 and 415,
   `WebTests.A_module_endpoint_refuses_an_anonymous_caller_and_a_public_endpoint_runs_it_as_its_named_actor` for 401;
-  `WebTests.Each_modules_endpoints_are_mapped_under_its_own_route_group` for 404; 403 takes the same path untested).
+  `WebTests.Each_modules_endpoints_are_mapped_under_its_own_route_group` for 404;
+  `WebTests.An_authenticated_caller_denied_authorization_answers_403_as_a_problem_response` for 403).
