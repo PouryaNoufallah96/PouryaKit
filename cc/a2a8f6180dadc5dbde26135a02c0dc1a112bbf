@@ -1,0 +1,19 @@
+.claude/agent-memory/kit-implementer/implementing-types-lookup-facts.md
+  s_41c3eef9abbce4::t_7743ec569e11f3 10,13,17-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cca2a8f6180dadc5dbde26135a02c0dc1a112bbf",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
