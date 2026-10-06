@@ -1,0 +1,19 @@
+AGENTS.md
+  s_74540ce945d2e7::t_0dbb0e86047063 47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "89250cd6112527ebe8dffc518cc2e8e0662e2b36",
+  "prompts": {},
+  "sessions": {
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
