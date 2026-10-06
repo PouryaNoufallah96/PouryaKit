@@ -1,0 +1,26 @@
+docs/acceptance.md
+  s_41c3eef9abbce4::t_e26be5b6a7af2d 64-65
+  s_41c3eef9abbce4::t_6ee6af7a5f5535 57
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_0102503136248b 407
+tests/PouryaKit.Domain.Tests/TypedIdTests.cs
+  s_41c3eef9abbce4::t_6ee6af7a5f5535 1,70,73-74,77-81,84
+scripts/packaging/consumers/single-module.cs
+  s_41c3eef9abbce4::t_e08e7aa9c2361d 1,6,24-25,28-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0f4b4d2352d0520daca7f7937584ad86313480cd",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": null
+    }
+  }
+}
