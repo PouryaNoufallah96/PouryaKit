@@ -1,0 +1,31 @@
+spikes/w3c-propagation/Directory.Packages.props
+  s_41c3eef9abbce4::t_43ec6aee89112f 1-10
+spikes/w3c-propagation/Directory.Build.props
+  s_41c3eef9abbce4::t_1cfb09bd0c5645 1-11
+spikes/w3c-propagation/SpikeHost.cs
+  s_41c3eef9abbce4::t_60edf9dbf57b78 1-62
+spikes/w3c-propagation/TraceProbe.cs
+  s_41c3eef9abbce4::t_d84f4f97f69c07 1-214
+spikes/w3c-propagation/PropagationTests.cs
+  s_41c3eef9abbce4::t_1475d3f95e286c 116-117,120-122
+  s_41c3eef9abbce4::t_aee03db7153784 1-43,93,170-285
+  s_41c3eef9abbce4::t_776f3a3fc05fd0 44-92,94-115,118-119,123-169
+spikes/w3c-propagation/W3cPropagation.Tests.csproj
+  s_41c3eef9abbce4::t_5bb0a9b28c04b1 1-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c4cf2870993a8bd5bd22ecac895a869166cd0869",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
