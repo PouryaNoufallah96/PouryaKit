@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace PouryaKit.Domain.Tests;
@@ -66,14 +67,21 @@ public class TypedIdTests
     }
 
     [Fact]
-    public void The_kits_json_options_write_the_same_text_whatever_options_they_are_applied_to_and_however_often()
+    public void The_kits_json_options_write_the_same_text_from_default_web_or_snake_case_strict_options_and_when_applied_twice()
     {
         var order = new IdsOfEveryKind(TypedId.New<ProductId>(), new InvoiceNumber(42), new LineNumber(7), new Sku("Lampe <Café> & \"Ø\""));
-        // Wolverine and ASP.NET Core each hand over an instance with framework defaults of their own.
+        // Wolverine and ASP.NET Core each hand over an instance with framework defaults of their own; a third starts
+        // from another naming policy and the strict default encoder.
         var fromDefaults = new JsonSerializerOptions().UsePouryaKitJson();
         var fromWebDefaults = new JsonSerializerOptions(JsonSerializerDefaults.Web).UsePouryaKitJson().UsePouryaKitJson();
+        var fromSnakeCaseAndStrictEncoder = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            Encoder = JavaScriptEncoder.Default,
+        }.UsePouryaKitJson();
 
         Assert.Equal(JsonSerializer.Serialize(order, fromDefaults), JsonSerializer.Serialize(order, fromWebDefaults));
+        Assert.Equal(JsonSerializer.Serialize(order, fromDefaults), JsonSerializer.Serialize(order, fromSnakeCaseAndStrictEncoder));
         Assert.Contains("\"sku\":\"Lampe <Café> & \\\"Ø\\\"\"", JsonSerializer.Serialize(order, fromDefaults), StringComparison.Ordinal);
         Assert.Single(fromWebDefaults.Converters, converter => converter is TypedIdJsonConverterFactory);
     }
