@@ -1,0 +1,89 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_41c3eef9abbce4::t_33ac45f7a0d40e 35-37
+PouryaKit.slnx
+  s_41c3eef9abbce4::t_e4c66eafdfaabd 3,30,33
+README.md
+  s_41c3eef9abbce4::t_3536dc9fb31b80 5,7
+docs/acceptance.md
+  s_41c3eef9abbce4::t_ca2ff4dcf09ea0 1,91-102
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_bf759542b60b23 3,5,18-19,24,39,61,75,430-443,446,453-454,458
+scripts/packaging/inventory.json
+  s_41c3eef9abbce4::t_41162d0b94d14f 3
+src/PouryaKit.Core/ImplementingTypes.cs
+  s_41c3eef9abbce4::t_51e2b547844fe0 1-63
+src/PouryaKit.Core/PouryaKit.Core.csproj
+  s_41c3eef9abbce4::t_fd870eae37f48e 1-2
+src/PouryaKit.Core/PredicateBuilder.cs
+  s_41c3eef9abbce4::t_79c5895d965686 1-47
+src/PouryaKit.Core/SynchronizationContextScope.cs
+  s_41c3eef9abbce4::t_dac2c8591d5f08 1-43
+tests/PouryaKit.ArchitectureTests/Offending.Core/Offending.Core.csproj
+  s_41c3eef9abbce4::t_a095593291143f 1-11
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_41c3eef9abbce4::t_0a86ecdd298bc3 18,66-67
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_41c3eef9abbce4::t_df760252fc26aa 21
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_41c3eef9abbce4::t_569344380f2d01 14-15,19,23
+.agents/skills/pourya-kit/references/core.md
+  s_9484986f596be5::t_ff481d3f0a66a5 1-102
+docs/foundation-review.md
+  s_9484986f596be5::t_46152559861695 246
+docs/provenance/PouryaKit.Core.md
+  s_eb35345e0533c9::t_a70078de7edec9 1-37
+tests/PouryaKit.ArchitectureTests/CoreTests.cs
+  s_9484986f596be5::t_5b787fd8d800ae 1-46
+tests/PouryaKit.ArchitectureTests/Offending.Core/TextHelpers.cs
+  s_bca05795b0ef32::t_f9743fedf781a2 1-6
+tests/PouryaKit.Core.Tests/ImplementingTypesTests.cs
+  s_9484986f596be5::t_c5fadbbb2f27b8 1-33
+tests/PouryaKit.Core.Tests/Lookup.cs
+  s_9484986f596be5::t_82d4590d39bd0a 1-25
+tests/PouryaKit.Core.Tests/PouryaKit.Core.Tests.csproj
+  s_9484986f596be5::t_800c602c9b567a 1-15
+tests/PouryaKit.Core.Tests/PredicateBuilderTests.cs
+  s_9484986f596be5::t_5ef7d459a1449c 1-47
+tests/PouryaKit.Core.Tests/SynchronizationContextScopeTests.cs
+  s_9484986f596be5::t_bdcd52d25e35a7 1-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1ef8dd45fa5420d85819e640b6261295c849cc08",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_9484986f596be5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-ae32d171ef16d44da",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_bca05795b0ef32": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aef8228b5922dc656",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_eb35345e0533c9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a30e61a957b012f5c",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
