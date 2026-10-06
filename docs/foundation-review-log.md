@@ -110,3 +110,8 @@ Scope of interest: section I only; sections A–H were reviewed in the earlier l
 | I-007 | medium | "Unchanged Module code" overstated: Composition Root and endpoints depend on Modularity | Accepted. Promise limited to business code; template generates the composition-specific adapters; monolith smoke test |
 
 High findings present → one second round, as the owner's brief allows.
+
+### Round 2 — completed, **APPROVED**, plan sha b33eed72…
+
+All seven findings confirmed resolved. Approval covers the plan; the Marten, RabbitMQ and tracing
+spikes and the three owner questions in I.6 remain prerequisites for the affected capabilities.
