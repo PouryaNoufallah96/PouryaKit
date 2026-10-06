@@ -1,0 +1,31 @@
+scripts/releases/publication/publisher.py
+  s_74540ce945d2e7::t_08559a29fa23d7 8,19-20,53-57,59-60
+tests/releases/publication/test_publication.py
+  s_74540ce945d2e7::t_918c4eb65362a0 300,302
+  s_74540ce945d2e7::t_08559a29fa23d7 262-299,301,303-326
+tests/releases/publication/red_once.py
+  s_74540ce945d2e7::t_08559a29fa23d7 34
+  s_74540ce945d2e7::t_918c4eb65362a0 12-13
+docs/architecture/README.md
+  s_74540ce945d2e7::t_918c4eb65362a0 37
+docs/private-packages.md
+  s_74540ce945d2e7::t_08559a29fa23d7 59
+docs/acceptance.md
+  s_74540ce945d2e7::t_918c4eb65362a0 88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d3297e24d11ee6ccd3e2bab6731c49649b0b270a",
+  "prompts": {},
+  "sessions": {
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
