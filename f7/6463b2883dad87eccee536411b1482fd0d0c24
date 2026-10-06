@@ -1,0 +1,50 @@
+scripts/packaging/consumers/PouryaKit.Security.cs
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 1-10
+README.md
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 5
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 28
+.agents/skills/pourya-kit/references/security.md
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 3,10,104-174
+src/PouryaKit.Security/PasswordHashAlgorithm.cs
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 1-11
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 841
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 59,254,262,266
+  s_41c3eef9abbce4::t_af9fa87404fdb6 267
+src/PouryaKit.Security/IPasswordHasher.cs
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 1-22
+scripts/packaging/validate.py
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 323-325
+src/PouryaKit.Security/PasswordVerification.cs
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 1-17
+.claude/agent-memory/kit-implementer/password-hashing-facts.md
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 1-23
+src/PouryaKit.Security/Pbkdf2PasswordHasher.cs
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 1-189
+src/PouryaKit.Security/PasswordHashingOptions.cs
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 1-22
+src/PouryaKit.Security/PasswordHashingServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 1-25
+tests/PouryaKit.Security.Tests/PasswordHashingTests.cs
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 1-259
+docs/acceptance.md
+  s_41c3eef9abbce4::t_10c4b3a0b8e035 162-177
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f76463b2883dad87eccee536411b1482fd0d0c24",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
