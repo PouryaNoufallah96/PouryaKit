@@ -1,0 +1,23 @@
+docs/agents/issue-tracker.md
+  s_15cd1ac9e911cf::t_07d9bb65164f27 32-33,35-41
+  s_15cd1ac9e911cf::t_43708b652701dd 34
+AGENTS.md
+  s_15cd1ac9e911cf::t_07d9bb65164f27 86
+  s_15cd1ac9e911cf::t_43708b652701dd 85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4590e9e695b6bb183a2be0a310cefedf5dfc34aa",
+  "prompts": {},
+  "sessions": {
+    "s_15cd1ac9e911cf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11174-3636-72b3-be7e-def78627ec44",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
