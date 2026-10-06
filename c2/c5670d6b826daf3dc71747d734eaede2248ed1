@@ -1,0 +1,28 @@
+tests/releases/publication/red_once.py
+  s_74540ce945d2e7::t_77a23f3c9960e8 12-13
+.agents/skills/pourya-kit/references/publication.md
+  s_74540ce945d2e7::t_77a23f3c9960e8 11
+scripts/releases/publication/transport.py
+  s_74540ce945d2e7::t_77a23f3c9960e8 68,107
+docs/private-packages.md
+  s_74540ce945d2e7::t_77a23f3c9960e8 43
+tests/releases/publication/test_publication.py
+  s_74540ce945d2e7::t_9fc06fd71169c9 683-688
+  s_74540ce945d2e7::t_77a23f3c9960e8 606-621
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c2c5670d6b826daf3dc71747d734eaede2248ed1",
+  "prompts": {},
+  "sessions": {
+    "s_74540ce945d2e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11077-7b7c-7af2-b303-e1bc4cf9d439",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
