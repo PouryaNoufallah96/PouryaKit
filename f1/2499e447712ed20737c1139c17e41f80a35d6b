@@ -11,17 +11,20 @@ tests/ModularMonolith.Tests/OutgoingHttpTests.cs
   s_41c3eef9abbce4::t_f9d87e83641f9b 3
 src/PouryaKit.Web/OperationContextHttpHeaders.cs
   s_41c3eef9abbce4::t_9cac45af82a627 1-8,11-70
+  s_41c3eef9abbce4::t_39d97f3447f2e2 9-10
 tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
   s_41c3eef9abbce4::t_a6ea3a0f2e6d6d 8
 tests/ModularMonolith.Tests/Stub/StubRelayEndpoint.cs
   s_41c3eef9abbce4::t_0d5a9f177749e7 1-27
 docs/acceptance.md
   s_41c3eef9abbce4::t_128cdee9450524 148,163-178
+  s_41c3eef9abbce4::t_f935451d63d265 162
 tests/ModularMonolith.Tests/AppFixture.cs
   s_41c3eef9abbce4::t_c6bab998d12507 51-56
   s_41c3eef9abbce4::t_bfdf5ba1836e17 25-28,32-34
 tests/PouryaKit.ArchitectureTests/PackageGraph.cs
   s_41c3eef9abbce4::t_e8cfd7d87ae307 66-67
+  s_41c3eef9abbce4::t_73070ccb8e2543 49-53
 src/PouryaKit.Web/HttpReplay.cs
   s_41c3eef9abbce4::t_86341ba236b713 1-17
 src/PouryaKit.Web/PouryaKit.Web.csproj
@@ -36,9 +39,12 @@ tests/ModularMonolith.Tests/TrustedPeerTests.cs
   s_41c3eef9abbce4::t_24f05c42ab8a50 1-108
 docs/architecture/README.md
   s_41c3eef9abbce4::t_1b5f64654e9187 60,141,432-433,440,442-443,487
+  s_41c3eef9abbce4::t_f935451d63d265 426
+  s_41c3eef9abbce4::t_39d97f3447f2e2 441
 docs/adr/0007-operation-context-set-by-the-scope-opener.md
   s_41c3eef9abbce4::t_c1cc08a952dc6e 124-126
   s_41c3eef9abbce4::t_374394e4ece524 94-111,115-123
+  s_41c3eef9abbce4::t_39d97f3447f2e2 112-114
 src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs
   s_41c3eef9abbce4::t_7a3305f7705de0 20-23,30,34,64,79,84-89,91,110-116
   s_41c3eef9abbce4::t_6ba5a78fc3cbbc 117-118
@@ -50,8 +56,11 @@ samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
 .agents/skills/pourya-kit/references/web.md
   s_41c3eef9abbce4::t_4785d396ba8bea 10,68-69,77-82,182,188-193,195,202,206-227,295
   s_41c3eef9abbce4::t_c2874193ea45a0 194,196-201,203-205
+  s_41c3eef9abbce4::t_f935451d63d265 3
 src/PouryaKit.Web/WebHttpClientBuilderExtensions.cs
   s_41c3eef9abbce4::t_2cda75108ef23f 1-66
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_73070ccb8e2543 257
 ---
 {
   "schema_version": "authorship/3.0.0",
