@@ -82,6 +82,8 @@ Claude Code loads these rules by path on its own. Codex does not: read the rule 
 
 Issues and specs live as GitHub issues on `PouryaNoufallah96/PouryaKit`. See `docs/agents/issue-tracker.md`.
 
+For `/to-tickets`, follow that guide's "Spec tickets" rules. They override ambiguous vendored wording about parent modification and distinguish parent links from blocking dependencies.
+
 ### Triage labels
 
 The five default triage labels, each named after its role. See `docs/agents/triage-labels.md`.
