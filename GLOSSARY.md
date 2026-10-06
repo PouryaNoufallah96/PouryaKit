@@ -121,7 +121,7 @@ _Avoid_: Paged list, list result, page list
 
 **Receipt**:
 A handler's record that it has already applied a specific Notification, Integration Event or Snapshot.
-The Module's Receipt table also holds its publication records, keyed `<wire name>#published`, one per Integration Event type and Domain Event; those are not Receipts (ADR 0006).
+The Module's Receipt store also holds its publication records, keyed `<wire name>#published`, one per Integration Event type and Domain Event; those are not Receipts (ADR 0006).
 _Avoid_: Inbox row, idempotency marker, processed flag
 
 ### Delivery of the Kit
