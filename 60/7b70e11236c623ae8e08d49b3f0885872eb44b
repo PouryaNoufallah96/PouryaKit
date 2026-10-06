@@ -78,6 +78,7 @@ tests/ModularMonolith.Tests/Stub/StubDelayedCommands.cs
   s_41c3eef9abbce4::t_1e482b3463061b 8
 docs/acceptance.md
   s_41c3eef9abbce4::t_74320f1d05775e 162-172
+  s_41c3eef9abbce4::t_fdc592774c6981 173
 ---
 {
   "schema_version": "authorship/3.0.0",
