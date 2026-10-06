@@ -35,6 +35,27 @@ public class PredicateBuilderTests
         Assert.Equal(left ? 0 : 1, rightEvaluations);
     }
 
+    [Fact]
+    public void A_lambda_inside_the_right_predicate_that_binds_the_left_predicates_parameter_keeps_its_own_binding()
+    {
+        // q => new[] { 10 }.Any(p => p > q), where the inner lambda declares the very ParameterExpression the left
+        // predicate p => p > 0 takes. Putting the right body on the left parameter would turn p > q into p > p.
+        var p = Expression.Parameter(typeof(int), "p");
+        var q = Expression.Parameter(typeof(int), "q");
+        var left = Expression.Lambda<Func<int, bool>>(Expression.GreaterThan(p, Expression.Constant(0)), p);
+        var anyAboveQ = Expression.Call(
+            typeof(Enumerable),
+            nameof(Enumerable.Any),
+            [typeof(int)],
+            Expression.Constant(new[] { 10 }),
+            Expression.Lambda<Func<int, bool>>(Expression.GreaterThan(p, q), p)
+        );
+        var right = Expression.Lambda<Func<int, bool>>(anyAboveQ, q);
+
+        Assert.True(left.AndAlso(right).Compile()(5));
+        Assert.True(Expression.Lambda<Func<int, bool>>(Expression.LessThan(p, Expression.Constant(0)), p).OrElse(right).Compile()(5));
+    }
+
     private static Expression<Func<int, bool>> AboveTen() => number => number > 10;
 
     private Expression<Func<int, bool>> Even() => other => Counted(other % 2 == 0);

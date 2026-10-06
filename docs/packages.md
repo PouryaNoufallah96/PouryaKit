@@ -12,7 +12,7 @@ CI passes `--no-fetch` after authenticated checkout has fetched full history and
 
 ## The package set
 
-[`scripts/packaging/inventory.json`](../scripts/packaging/inventory.json) is the explicit inventory of all thirteen Wave 1 package IDs. The validator evaluates every source, test and sample project against it. Missing projects, extra packable projects, mismatched IDs, duplicate or empty inventory entries and disabled package validation fail. Tests and samples are non-packable by default; the Kit's thirteen source projects are packable.
+[`scripts/packaging/inventory.json`](../scripts/packaging/inventory.json) is the explicit inventory of every Kit package ID. The validator evaluates every source, test and sample project against it. Missing projects, extra packable projects, mismatched IDs, duplicate or empty inventory entries and disabled package validation fail. Tests and samples are non-packable by default; the Kit's source projects, one per inventory package, are packable.
 
 MinVer 8.0.0 is the only version engine, pinned centrally and private to the build. Its minimum major/minor is `0.1`, tag prefix is `v`, and default prerelease identifiers are `preview.0`. A temporary Git repository proves untagged, exact-tag and post-tag behaviour on each validation. The real package set must agree with MinVer's calculated package/build version. MinVer normalizes `AssemblyVersion` to `major.0.0.0` and `FileVersion` to `major.minor.patch.0`; prerelease identity lives in package and informational versions. See [MinVer's version rules](https://github.com/adamralph/minver/blob/9f485aabb9936efd8fb8b633ae09ae4d0659c94f/README.md#version-numbers).
 
@@ -24,7 +24,7 @@ The inventory also enumerates the two compositions already supported by Wave 1:
 
 | Consumer | What is built |
 |---|---|
-| Each of the thirteen package IDs | A separate application compiling a public type from that package, with one direct Kit package reference |
+| Each package ID in the inventory | A separate application compiling a public type from that package, with one direct Kit package reference |
 | Single Module | The registrations and explicit Operation scope of [the Modules guidance](../.agents/skills/pourya-kit/references/modules.md#an-application-of-one-module), using Cqrs, Validation, Postgres persistence, Dapper reads and Web without Modularity or Messaging |
 | Modular monolith | A copy of the Proving Sample's Host, Modules and Contracts, with every Kit ProjectReference replaced by a package reference |
 

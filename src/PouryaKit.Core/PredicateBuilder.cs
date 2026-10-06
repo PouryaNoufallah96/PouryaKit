@@ -6,9 +6,9 @@ namespace PouryaKit.Core;
 /// Composes two predicates over the same type into one, for a LINQ provider such as EF Core or for compiling.
 /// </summary>
 /// <remarks>
-/// Input contract: both predicates are non-null lambdas of one parameter each. The composed predicate takes the left
-/// predicate's parameter, and the right predicate's parameter is replaced by it, so a provider sees one lambda and no
-/// invocation. The two bodies are combined with <see cref="Expression.AndAlso(Expression, Expression)"/> or
+/// Input contract: both predicates are non-null lambdas of one parameter each. The composed predicate takes a new
+/// parameter, named as the left predicate's, which replaces the parameter of each body, so a provider sees one lambda
+/// and no invocation, and a lambda nested in either body keeps the bindings it declares. The two bodies are combined with <see cref="Expression.AndAlso(Expression, Expression)"/> or
 /// <see cref="Expression.OrElse(Expression, Expression)"/>, never the bitwise <c>And</c> or <c>Or</c>, so the right
 /// predicate runs only when the left one has not already decided the result.
 /// </remarks>
@@ -35,9 +35,12 @@ public static class PredicateBuilder
     {
         ArgumentNullException.ThrowIfNull(left);
         ArgumentNullException.ThrowIfNull(right);
-        var parameter = left.Parameters[0];
+        // A new parameter, never one of the two given: a lambda nested in either body may declare the other predicate's
+        // parameter instance, and replacing one given parameter by the other would rebind that lambda's uses.
+        var parameter = Expression.Parameter(typeof(T), left.Parameters[0].Name);
+        var leftBody = new ParameterReplacer(left.Parameters[0], parameter).Visit(left.Body);
         var rightBody = new ParameterReplacer(right.Parameters[0], parameter).Visit(right.Body);
-        return Expression.Lambda<Func<T, bool>>(combine(left.Body, rightBody), parameter);
+        return Expression.Lambda<Func<T, bool>>(combine(leftBody, rightBody), parameter);
     }
 
     private sealed class ParameterReplacer(ParameterExpression from, ParameterExpression to) : ExpressionVisitor

@@ -20,7 +20,7 @@ None shipped. `PouryaKit.Core` has no runtime package dependency and references 
 - **Intentional differences:**
   - The two predicates are combined with `Expression.AndAlso` and `Expression.OrElse`, which short-circuit, instead of the bitwise `Expression.And` and `Expression.Or` (upstream lines 25 and 40), which evaluate the right predicate even when the left one decided the result (plan I.3). The members are named `AndAlso` and `OrElse` to say so.
   - `Build`, which turns a property name, a comparison and a string value into a predicate, and its comparison helpers are left out: Core composes predicates and builds none from strings, and its `FilterComparison` belongs to upstream paging.
-  - The substitution visitor replaces exactly the right predicate's parameter, instead of holding a public dictionary of substitutions, and both predicates are checked for null.
+  - Both bodies are put on a new parameter, instead of the right body on the left predicate's parameter (upstream lines 21-23), so a lambda nested in the right predicate that declares the left predicate's parameter instance keeps its own binding. The visitor replaces one parameter, instead of holding a public dictionary of substitutions, and both predicates are checked for null.
 
 ## Synchronization-context scope
 

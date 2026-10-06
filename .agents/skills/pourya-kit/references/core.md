@@ -9,7 +9,7 @@
 
 ## Predicate composition
 
-`AndAlso` and `OrElse` are C# 14 extension members of `Expression<Func<T, bool>>`. They combine two predicates with `Expression.AndAlso` and `Expression.OrElse`, so the right predicate runs only when the left one has not decided the result, and they put the right predicate's body on the left one's parameter, so a LINQ provider such as EF Core sees one lambda with no invocation in it:
+`AndAlso` and `OrElse` are C# 14 extension members of `Expression<Func<T, bool>>`. They combine two predicates with `Expression.AndAlso` and `Expression.OrElse`, so the right predicate runs only when the left one has not decided the result, and they put both bodies on one new parameter, so a LINQ provider such as EF Core sees one lambda with no invocation in it, and a lambda nested in either predicate keeps the bindings it declares:
 
 ```csharp
 using System.Linq.Expressions;
@@ -37,7 +37,7 @@ internal static class ListedProductFilters
 }
 ```
 
-Pass the result to a specification's `Query.Where` or any `IQueryable`. Both predicates must be lambdas of one parameter; the composed one has the left predicate's parameter. A guard in the left predicate protects the right one, as `&&` does in C#: `product => product.Name != null` followed by `.AndAlso(product => product.Name.Length > 3)` never reads the length of a null name.
+Pass the result to a specification's `Query.Where` or any `IQueryable`. Both predicates must be lambdas of one parameter; the composed one has a new parameter named as the left predicate's. A guard in the left predicate protects the right one, as `&&` does in C#: `product => product.Name != null` followed by `.AndAlso(product => product.Name.Length > 3)` never reads the length of a null name.
 
 ## Implementing-type lookup
 

@@ -82,7 +82,7 @@ jobs:
           (cd "$PACKAGES_DIR" && sha256sum --check "$RUNNER_TEMP/package-checksums.txt")
           echo "Validated main SHA: $ORIGINAL_SHA. MinVer version: $version." >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Push original packages and restore all thirteen
+      - name: Push original packages and restore all inventory packages
         env:
           GITHUB_TOKEN: ${{ github.token }}
           NuGetPackageSourceCredentials_GitHub: Username=${{ github.actor }};Password=${{ github.token }};ValidAuthenticationTypes=Basic
@@ -118,4 +118,4 @@ jobs:
           NUGET_HTTP_CACHE_PATH="$consumer/http-cache" NUGET_PLUGINS_CACHE_PATH="$consumer/plugin-cache" \
             dotnet restore "$consumer/Consumer.csproj" --packages "$consumer/packages" \
               --configfile "$RUNNER_TEMP/publication.NuGet.Config"
-          echo 'NuGet push and clean thirteen-package restore completed. HTTP 409 duplicates are skipped; remote byte identity is not verified.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'NuGet push and clean restore of all inventory packages completed. HTTP 409 duplicates are skipped; remote byte identity is not verified.' >> "$GITHUB_STEP_SUMMARY"
