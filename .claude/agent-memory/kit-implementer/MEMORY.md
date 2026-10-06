@@ -23,4 +23,4 @@
 - [Shared JSON facts](shared-json-facts.md) — #34: getter-only ASP.NET JsonOptions, Wolverine STJ mutates options, reading a stored envelope body
 - [W3C propagation facts](w3c-propagation-facts.md) — #46: parent-id at publish, Wolverine span only when sampled, SampleUsingParentId trap, no retry link, spike layout
 - [Security and permission facts](security-permission-facts.md) — #38: fallback policy reaches unmatched paths, non-Module endpoint test, TestActor grant, rebase recount, validate.py timing
-- [ImplementingTypes lookup facts](implementing-types-lookup-facts.md) — #55: Of omits abstract and open generic types, so Cqrs/Security/Wolverine rejections cannot use it
+- [ImplementingTypes lookup facts](implementing-types-lookup-facts.md) — #55: Of vs Candidates, GetTypes order is MetadataToken order and a test pins it

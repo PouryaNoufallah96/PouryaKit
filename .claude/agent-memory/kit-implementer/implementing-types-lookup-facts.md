@@ -1,17 +1,18 @@
 ---
 name: implementing-types-lookup-facts
-description: Ticket #55 facts - which Kit assembly scans ImplementingTypes.Of can replace, and the rejection paths it cannot serve (abstract and open generic types)
+description: Ticket #55 facts - Of vs Candidates, GetTypes order is MetadataToken order and a pinned message depends on it, typeof(object) as every class, the type-listing structure rule
 metadata:
   type: project
 ---
 
-Found in ticket #55 (2026-10-07), first brief, blocked before any edit:
+Verified in ticket #55 (2026-10-07):
 
-- **`ImplementingTypes.Of` never returns an abstract class or an open generic definition**, whatever the contract. Three scans need exactly those types for their startup rejections, so they cannot move to `Of` plus a filter without dropping a check:
-  - Cqrs `AddPouryaKitCqrs`: "X is generic" problems over `classes` (generic definitions included); pinned by `PouryaKit.Cqrs.Tests/RegistrationTests.A_generic_query_handler_or_authorizer_fails_registration`.
-  - Security `AddPouryaKitPermissions`: every `[RequiresPermission]` type, then rejects abstract, generic and non-operation ones; pinned by `PouryaKit.Security.Tests/RegistrationTests` (asserts `AbstractCommand`, `GenericCommand<>`, `NotAnOperation`).
-  - Messaging.Wolverine `AddPouryaKitNotificationHandlers`: rejects a generic handler definition; only its XML doc pins it, no test.
-- **The other three map cleanly:** Web endpoints = `Of(typeof(IEndpoint), assembly)` (order becomes FullName-ordinal); Dapper and EFCore typed IDs = `Of(typeof(TypedId<>), ...)` filtered by `TypedId.GetValueType` (typed IDs are record classes; a type nested in a generic is itself a generic definition, so `ContainsGenericParameters` adds nothing). EFCore's `ApplyConfigurationsFromAssembly` is EF's own scan, not a Kit `GetTypes()` call.
+- **`ImplementingTypes.Of` never returns an abstract class or an open generic definition**, so a registration that rejects those (Cqrs's generic handlers, Security's permission on an abstract or generic type, Messaging.Wolverine's generic Notification Handler) cannot use it. The first brief stopped on that; the orchestrator added `ImplementingTypes.Candidates` (every class the contract describes, abstract and open generic included, compiler-generated, interfaces and structs out). `Of` and `Candidates` share private `ThrowIfNotAContract` and `Describes`.
+- **`Assembly.GetTypes()` order is `MetadataToken` order (declaration order), and tests depend on it:** `NotificationTests.Startup_fails_on_a_missing_an_invalid_or_a_duplicate_name` pins which of two clashing Domain Events is named first. Full-name order flipped it. Cqrs and Messaging.Wolverine re-sort `Candidates` by `MetadataToken` (Cqrs by assembly position first) to keep the old order; Web accepts full-name order.
+- **`Candidates(typeof(object), assemblies)` means every class**: Cqrs and Security use it, because Security must see the attribute on a type that is no Operation.
+- An iterator method gives a `[CompilerGenerated]` class implementing `IEnumerable<T>`: `Of` returns it and `Candidates` does not, which makes a cheap fixture.
+- `TypeLookupTests` reads the IL for `Assembly.GetTypes`, `get_DefinedTypes`, `get_ExportedTypes`, `GetExportedTypes`, `get_Modules`, `GetModules`, `Module.GetTypes` and `Module.FindTypes`; ordinal sort puts `GetX` before `get_X` in the expected list.
+- Adding a Kit project reference also changes `PackageGraphTests`' inline Dapper nuspec. A Host-killing test, `IntegrationEventTests...died_before_acknowledging_it_is_applied_once`, failed once in validate.py with a delivery turned away twice (the Solo recovery race); the rerun passed.
 
-**Why:** the brief assumed a filter on top of `Of` suffices everywhere; it does for registrations, not for the rejection paths.
-**How to apply:** when #55 is re-briefed, check which option the owner picked (a Core method that includes abstract and open generic classes, dropping the checks, or an exemption) before editing. Related: [[core-helpers-facts]], [[architecture-test-facts]].
+**Why:** each cost a stop or a run in #55.
+**How to apply:** when a Kit registration finds types, when a refactor changes the order types are enumerated in, or when adding a Kit project reference. Related: [[core-helpers-facts]], [[architecture-test-facts]], [[dead-letter-and-stale-time-facts]].
