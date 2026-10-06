@@ -168,7 +168,7 @@ Done when `/debug-config` lists the project layer and `/hooks` shows the guard a
 python3 .agents/scripts/check-ai-setup.py
 ```
 
-It needs Python 3.11 or later, prints one `FAIL` line per problem naming the file and the reason, and exits non-zero on any. A rule glob that matches no file yet is a `WARN`. Besides the AI setup it fails on a merge conflict marker in any tracked text file. The `ai-setup` job in CI runs it on every push and pull request.
+It needs Python 3.11 or later, prints one `FAIL` line per problem naming the file and the reason, and exits non-zero on any. A rule glob that matches no file yet is a `WARN`. Besides the AI setup it fails on a merge conflict marker in any tracked text file. The `ai-setup` job runs it on the [CI workflow's documented triggers](../ci.md).
 
 ## Verified against
 
