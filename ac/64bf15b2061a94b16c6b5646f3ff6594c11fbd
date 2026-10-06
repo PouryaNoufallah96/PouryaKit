@@ -22,6 +22,7 @@ src/PouryaKit.Persistence.EFCore/EfRepository.cs
   s_41c3eef9abbce4::t_ffed33ce1555c9 111
 docs/architecture/README.md
   s_41c3eef9abbce4::t_39f53f7b749785 3,52,56,58,60,86,222,240,311,327,347,356,442,450
+  s_41c3eef9abbce4::t_921ce21970de22 342
 samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQuery.cs
   s_41c3eef9abbce4::t_a6296d6e8baec8 5-17
 docs/acceptance.md
@@ -62,6 +63,7 @@ tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
   s_41c3eef9abbce4::t_82e0ecec237369 170
 tests/PouryaKit.ArchitectureTests/PackageGraph.cs
   s_41c3eef9abbce4::t_ceea41ab18ee4d 15-16
+  s_41c3eef9abbce4::t_bea8cc0fb5ea65 40
 src/PouryaKit.Cqrs/FilterOperator.cs
   s_41c3eef9abbce4::t_73e297a7c6d873 1-73
 samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryValidator.cs
