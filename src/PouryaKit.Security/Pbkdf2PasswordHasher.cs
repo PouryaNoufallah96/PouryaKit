@@ -10,6 +10,7 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
     private const string Prefix = "pbkdf2";
     private const string Version = "1";
     private const int MaxIterations = 10_000_000;
+    private const int MaxIterationsDigits = 8;
     private const int MinSaltSize = 16;
     private const int MaxSaltSize = 64;
 
@@ -131,11 +132,17 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
         return true;
     }
 
-    // Digits only, no sign, space or leading zero, from 1 to the ceiling, so a stored row cannot make Verify spin.
-    private static bool TryParseIterations(string text, out int iterations) =>
-        int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out iterations)
-        && text[0] != '0'
-        && iterations <= MaxIterations;
+    // ASCII digits only, no leading zero, from 1 to the ceiling, so a stored row cannot make Verify spin. The check comes
+    // before int.TryParse, which also accepts trailing NUL characters.
+    private static bool TryParseIterations(string text, out int iterations)
+    {
+        iterations = 0;
+        return text.Length is > 0 and <= MaxIterationsDigits
+            && text[0] != '0'
+            && !text.AsSpan().ContainsAnyExceptInRange('0', '9')
+            && int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out iterations)
+            && iterations <= MaxIterations;
+    }
 
     // Canonical padded base64 only: the decoder skips white space, so the bytes must encode back to the same text.
     private static bool TryDecodeBase64(string text, int minLength, int maxLength, out byte[] bytes)

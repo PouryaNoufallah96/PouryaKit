@@ -154,7 +154,7 @@ internal sealed class Account
 
 - `pbkdf2` and the format version `1`; another prefix or version is `Failed`.
 - The algorithm, `sha256` or `sha512`, lower case. SHA-1 and SHA-384 are refused.
-- The iterations in decimal digits, with no sign, space, separator or leading zero, from 1 to 10,000,000. A hash with fewer iterations than options now allow, from an older configuration, still verifies and needs an upgrade.
+- The iterations in ASCII decimal digits only, at most eight of them, with no sign, space, separator, NUL, other script's digits or leading zero, from 1 to 10,000,000. A hash with fewer iterations than options now allow, from an older configuration, still verifies and needs an upgrade.
 - Salt and key in standard padded base64 (RFC 4648), canonical only: text that decodes but does not encode back the same, such as one with white space or no padding, is `Failed`. A salt of 16 to 64 bytes; a key of 32 bytes to the algorithm's output. The lower key bound is what stops a stored key cut short from verifying, since PBKDF2's shorter output is a prefix of its longer one.
 
 `Verify` derives a key of the stored key's length with the stored algorithm, iterations and salt, using `Rfc2898DeriveBytes.Pbkdf2` (the password as UTF-8), and compares it with `CryptographicOperations.FixedTimeEquals`. The hash needs an upgrade when it used another algorithm than the configured one, or fewer iterations, or a shorter salt or key; a hash stronger than the configuration is left as it is.
@@ -171,4 +171,4 @@ Raise `Iterations` when the guidance does; existing hashes keep verifying and ar
 ### Testing password hashing
 
 - Test through `IPasswordHasher` from `AddPouryaKitPasswordHashing`, with no Host: the Kit's own tests take it from the service collection's descriptor.
-- The minimum iterations apply in tests too; at the defaults the Kit's 40-odd password tests run in about 4 s.
+- The minimum iterations apply in tests too; at the defaults the Kit's 57 password test cases run in about 4 s.
