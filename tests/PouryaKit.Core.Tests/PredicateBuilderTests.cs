@@ -6,7 +6,7 @@ public class PredicateBuilderTests
 {
     // The right predicate counts its evaluations, so an eager (bitwise) composition is seen to run it when the left
     // predicate has already decided the result. Both predicates read the parameter, so the composed lambda only compiles
-    // when the right predicate's parameter was replaced by the left one's.
+    // when each predicate's parameter was replaced by the composed lambda's parameter.
     private int rightEvaluations;
 
     [Theory]
