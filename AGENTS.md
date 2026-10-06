@@ -44,7 +44,7 @@ Not test-first. Implement, then write focused tests for behaviour that matters; 
 
 1. Implement from the ticket and brief.
 2. Focused tests.
-3. Review, sized to the ticket. A ticket that claims a Kit runtime guarantee or changes a public API of the Kit gets two independent reviews in parallel. Routine CI, config, docs and packaging tickets get one focused `kit-reviewer`; executing a workflow does not itself make a Kit runtime guarantee. Any other ticket gets one `kit-reviewer`.
+3. Review, sized to the ticket. A ticket that claims a Kit runtime guarantee or changes a public API of the Kit gets two independent reviews in parallel. Other tickets follow the Operating model: clear, small changes need no separate reviewer unless risk or ambiguity requires one; normal tickets get one focused `kit-reviewer`. Executing a workflow does not itself make a Kit runtime guarantee.
 4. One fix round for the accepted findings, then a re-score of those findings only. Run a new full review only after a high finding was fixed, and at most once: a ticket gets two full reviews, then re-scores only. For any medium or low finding still open, record a disposition and move on.
 5. Complete the runtime proof required by the ticket, including Kit guarantees and hosted publication where claimed.
 6. Update docs and C4 diagrams. The ticket's closing comment carries a value, cost and impact paragraph (the `archify-review` lens); `/archify-review` itself runs once per wave, at close-out.
