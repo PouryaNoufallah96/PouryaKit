@@ -1,0 +1,51 @@
+.agents/skills/pourya-kit/references/domain-primitives.md
+  s_41c3eef9abbce4::t_5205e183334da8 70
+.agents/skills/pourya-kit/references/messaging.md
+  s_41c3eef9abbce4::t_771645c6fb5c1b 81
+.agents/skills/pourya-kit/references/web.md
+  s_41c3eef9abbce4::t_36a68eda518c98 99
+docs/acceptance.md
+  s_41c3eef9abbce4::t_db0bac6d3ffeb5 41,50-63
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_1a41359c8e720b 180,188-189,365,407,438
+src/PouryaKit.Domain/JsonSerializerOptionsExtensions.cs
+  s_41c3eef9abbce4::t_44696bbb181e2c 1-32
+src/PouryaKit.Domain/TypedIdJsonConverterFactory.cs
+  s_41c3eef9abbce4::t_e5004a32855249 7
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_41c3eef9abbce4::t_dd04c312ba2d18 23-24,48
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_06f10862aed92e 18-20,38
+tests/ModularMonolith.Tests/SharedJsonTests.cs
+  s_41c3eef9abbce4::t_e4d5a819157d19 1-67
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_41c3eef9abbce4::t_b017b8d2fccacf 1,157-163
+tests/PouryaKit.Domain.Tests/TypedIdTests.cs
+  s_41c3eef9abbce4::t_ccec926a3a65a0 7,47,52-80,132-133
+tests/PouryaKit.ArchitectureTests/SharedJsonTests.cs
+  s_7be1c51e380e95::t_3f378af0547bb5 1-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "db1af8239e8aa264a089e92e0aa04178451b4c9a",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_7be1c51e380e95": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a4bc9bd8ec36208ca",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
