@@ -551,7 +551,7 @@ compilation.
 
 ### Phase 5 packaging and releases
 
-Needs Phase 4. Wave 1 is merged. On 2026-10-06 the owner narrowed the active scope to "packaging versioning and nuget packages in cleanest way and efficient if any sample references covers all follow them". Deliver the existing shared package validation and a standard private GitHub Packages publisher. This replaces the custom publication protocol and preflight machinery from this wave. #28/#29 compatibility automation, named cuts and content-verified recovery are deferred, and the current scope does not claim all original #24 acceptance criteria. Section G and the ADRs remain unchanged.
+Needs Phase 4. Wave 1 is merged. On 2026-10-06 the owner narrowed the active scope to "packaging versioning and nuget packages in cleanest way and efficient if any sample references covers all follow them". The existing shared package validation and standard private GitHub Packages publisher are delivered. This replaces the custom publication protocol and preflight machinery from this wave. #28/#29 compatibility automation, named cuts and content-verified recovery are closed as not planned and require a new scoped ticket, and the current scope does not claim all original #24 acceptance criteria. Section G and the ADRs remain unchanged.
 
 Keep central package management, MinVer as the only version engine, SourceLink, `EnablePackageValidation`, MIT and `THIRD-PARTY-NOTICES.md` in each nupkg. All thirteen shipped Kit packages share one version. Private GitHub Packages comes first. Nuget.org activation and stable `1.0` each require a later owner decision.
 
@@ -579,9 +579,9 @@ The read-only authorization job requires successful CI and AI/package-validation
 2. CI remains read-only and preserves the tested SHA, MinVer version, package inventory, hashes and original artifacts. Successful main producer metadata authorizes a separate package-write job; failure or PR provenance cannot authorize it.
 3. Publish originals to the fixed private feed with the ephemeral job token, preserve the manifest, and restore all thirteen exact versions with fresh caches. Keep public publication and tag/Release writes disabled. Record actual hosted evidence in [#27](https://github.com/PouryaNoufallah96/PouryaKit/issues/27), with the existing fork-execution exception in #26.
 
-**Deferred original acceptance:** #28/#29 require packaged public API comparison, reviewed compatibility/progression and migration notes, approved immutable named cuts, tagged validation, tag/package/manifest version agreement, GitHub Release announcement only after complete publication, remote raw-byte/SHA conflict checks and partial-publish identical-content recovery from original artifacts. These remain the broader #24 plan, not guarantees of standard duplicate skipping. [Deferred release guidance](releases-preflight.md) records this boundary. Resuming that work needs a new scoped brief; MinVer remains the sole version engine.
+**Original acceptance closed as not planned:** #28/#29 described packaged public API comparison, reviewed compatibility/progression and migration notes, approved immutable named cuts, tagged validation, tag/package/manifest version agreement, GitHub Release announcement only after complete publication, remote raw-byte/SHA conflict checks and partial-publish identical-content recovery from original artifacts. These are historical requirements outside the completed active #24 scope, not guarantees of standard duplicate skipping. [Release scope guidance](releases-preflight.md) records this boundary. Resuming that work needs a new scoped brief; MinVer remains the sole version engine.
 
-The active scope's value is validated private packages with one version and a clean consumer restore. Its cost is the existing package validator plus standard Actions/CLI jobs and small provenance checks. Its impact is packaging and CI only; Kit runtime APIs, reference projects, credentials and access settings are unchanged. Completion requires the active checks, hosted publication/restore evidence, current docs and AI guidance through section H. The broader original #24 acceptance remains incomplete.
+The active scope's value is validated private packages with one version and a clean consumer restore. Its cost is the existing package validator plus standard Actions/CLI jobs and small provenance checks. Its impact is packaging and CI only; Kit runtime APIs, reference projects, credentials and access settings are unchanged. The active Phase 5 scope is complete: [CI run 37465576160](https://github.com/PouryaNoufallah96/PouryaKit/actions/runs/37465576160) and [publication run 37466084084](https://github.com/PouryaNoufallah96/PouryaKit/actions/runs/37466084084) succeeded at main SHA `b234f4f`, with 386 runtime tests passed, zero failures or skips, thirteen validated packages, fifteen clean consumers and the private-feed restore at MinVer `0.1.0-preview.0.13`. The broader original #24 acceptance was not delivered; #28/#29 are closed as not planned.
 
 **Phase 6 — template and second profile** (optional, after 5)
 - `dotnet new` template extracted from the proven sample; single-service profile with RabbitMQ.
@@ -816,7 +816,7 @@ a call between Modules goes through the Gateway, never through YARP or gRPC loop
 
 Form: **P** = its own package · **R** = a registration method on an existing package · **T** =
 template recipe (native .NET; the Kit adds nothing) · **A** = application code · **–** = refused.
-Complete [Phase 5 packaging and releases](#phase-5-packaging-and-releases) before Wave 2 feature work.
+The active [Phase 5 packaging and releases](#phase-5-packaging-and-releases) scope is complete; Wave 2 feature work can follow.
 Wave 2 is the first follow-on Capability set after the merged Wave 1; Wave 3 needs Wave 2 pieces;
 Wave 4 is the sample agent and the template's third composition.
 
@@ -979,8 +979,8 @@ context into envelopes.
 
 ### I.7 Recommended plan after Wave 1
 
-Wave 1 is merged. First complete [Phase 5 packaging and releases](#phase-5-packaging-and-releases).
-Then one spec per wave: **Wave 2** — paging, one JSON setup, Web
+Wave 1 is merged and the active [Phase 5 packaging and releases](#phase-5-packaging-and-releases) scope is complete.
+Use one spec per wave: **Wave 2** — paging, one JSON setup, Web
 defaults, Web.OpenApi, Core, Security and JwtBearer, request idempotency, Caching, scheduling,
 Observability, the HttpClient handler, the versioning rule, the RabbitMQ transport after its spike,
 and the template's first two compositions; **Wave 3** — Marten after its spike, multi-tenancy, AI,

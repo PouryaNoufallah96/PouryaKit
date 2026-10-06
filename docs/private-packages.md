@@ -1,6 +1,6 @@
 # Private packages
 
-The owner narrowed Phase 5 on 2026-10-06 to clean packaging, MinVer versioning and private NuGet publication, following the reference projects where they fit. The workflow uses the existing [Release package validation](packages.md), official artifact actions and `dotnet nuget push`. Named-cut automation, compatibility policy and content-verified recovery from #28/#29 are deferred. This scope does not claim all original #24 acceptance criteria.
+The owner narrowed Phase 5 on 2026-10-06 to clean packaging, MinVer versioning and private NuGet publication, following the reference projects where they fit. The workflow uses the existing [Release package validation](packages.md), official artifact actions and `dotnet nuget push`. Named-cut automation, compatibility policy and content-verified recovery from #28/#29 are closed as not planned and require a new scoped ticket. This scope does not claim all original #24 acceptance criteria.
 
 ## Versions and triggers
 
@@ -59,6 +59,10 @@ gh workflow run private-publication.yml --ref main \
 ```
 
 The first hosted attempt left Domain `0.1.0-preview.0.10` visible in the feed. Preserve original main CI run `37456433718`, attempt `1`, artifact `11408539884`, source `2de265641b8cd94a5ddc17980cdcad530f0a8f60` and its original manifest/packages. Complete it only with those original bytes through the standard retry path; do not delete, replace or repack that version. A skipped duplicate still provides no raw-byte identity proof. Hosted run, upload and consumer evidence belongs in [ticket #27](https://github.com/PouryaNoufallah96/PouryaKit/issues/27).
+
+## Hosted completion
+
+The active Phase 5 scope completed on 2026-10-06 at main commit `b234f4f6c3ac113cf3fd8d874b88d20571480cef`. [CI run 37465576160](https://github.com/PouryaNoufallah96/PouryaKit/actions/runs/37465576160) passed 386 runtime tests with zero failures or skips, validated thirteen packages and built fifteen clean consumers at MinVer `0.1.0-preview.0.13`. [publication run 37466084084](https://github.com/PouryaNoufallah96/PouryaKit/actions/runs/37466084084) published those original packages and completed the clean thirteen-package private-feed restore. This proves publication and feed availability for that version, with the byte-identity and fork-execution limits above and in [CI guidance](ci.md#hosted-proof-boundary).
 
 ## Consume one complete version
 
