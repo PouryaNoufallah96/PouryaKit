@@ -120,3 +120,22 @@ Owner answers to I.6 (2026-10-06): saga yes (optional, Wave 3); Stream commit ow
 Marten optional subject to the spike; AI providers = Microsoft.Extensions.AI + OpenAI client for OpenAI
 and Azure v1, Microsoft Agent Framework for agents, no Azure.AI.OpenAI and no waiting condition.
 Recorded in section I after the approved round; the approval hash (b33eed72…) predates this edit.
+
+## Release planning amendment (2026-10-06)
+
+The owner requested versioning, releases, tags and main automation in the plan, with the strongest
+verified CNK/Woo behaviour considered per concern against the Kit's requirements. Section F's
+adoption rule now covers design, runtime correctness/failures, relevant performance, tests, docs,
+security/operations and delivery. Phase 5 is the authoritative release plan, before Wave 2 feature
+work; I.3, I.7 and README link to it. Wave 1 is already merged.
+
+The plan retains MinVer, private GitHub Packages first, SourceLink, package validation and MIT/notices.
+It distinguishes main snapshots from owner-approved named releases and requires package-only
+consumer proof, compatibility review and verified recovery of partial publishing. Phase 5 records
+pinned upstream repo/commit/path evidence and adopt/adapt/reject dispositions. These source checks
+do not prove successful upstream workflows. No workflow or publishing automation was implemented;
+the earlier review approvals do not cover this amendment.
+
+Independent review of this three-file amendment: GPT-6 Astra, high, PASS with no findings.
+The review covers the plan only; workflow execution, package publication, consumer validation and
+retry recovery remain implementation acceptance gates. `git diff --check` passed.
