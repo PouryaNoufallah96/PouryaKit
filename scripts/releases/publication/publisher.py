@@ -5,6 +5,7 @@ import io
 import json
 from pathlib import Path
 import re
+import sys
 import time
 import urllib.parse
 import uuid
@@ -15,6 +16,8 @@ from artifacts import read_json, sha
 from transport import API, FEED, MAX_BYTES, OWNER, REPOSITORY, PublicationError
 
 ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "scripts/releases/preflight"))
+from preflight import parse_version
 
 
 def package_identity(content, package_id, version, commit):
@@ -47,9 +50,14 @@ def load_candidate(directory, expected_sha):
     if manifest.get("commit") != expected_sha:
         raise PublicationError("Manifest differs from the externally verified source SHA.")
     version = manifest.get("version", "")
-    # This is an input guard only; MinVer remains the sole version engine.
-    if not re.fullmatch(r"0\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-(preview|rc)\.[0-9]+(?:\.[0-9]+)*", version):
+    try:
+        parsed = parse_version(version)
+    except (ValueError, TypeError):
+        raise PublicationError("Preserved package version must be strict SemVer.") from None
+    if parsed["major"] != "0" or parsed["channel"] not in ("preview", "rc"):
         raise PublicationError("Private publication accepts only preserved 0.x preview or rc prereleases.")
+    if parsed["metadata"]:
+        raise PublicationError("Preserved PackageVersion excludes build metadata, as MinVer does.")
     inventory = read_json(ROOT / "scripts/packaging/inventory.json")["packages"]
     expected = {item["id"] for item in inventory}
     packages = manifest.get("packages", [])

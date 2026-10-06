@@ -34,7 +34,7 @@ C4Container
     Rel(path, consumers, "builds and checks dependency closures of")
 ```
 
-The artifact and consumer checks reuse `PackageGraph` and the license policy of the Structure seam. [CI](../ci.md) invokes the same path and distinguishes a PR's tested merge revision from its head SHA. Hosted same-repository success/failure, retained packages and read-only permissions are proven by PR #30; real private fork execution remains explicitly unverified under the owner exception. Private publishing and named-release recovery are later Phase 5 work.
+The artifact and consumer checks reuse `PackageGraph` and the license policy of the Structure seam. [CI](../ci.md) invokes the same path and distinguishes a PR's tested merge revision from its head SHA. Hosted same-repository success/failure, retained packages and read-only permissions are proven by PR #30; real private fork execution remains explicitly unverified under the owner exception. The [private publisher and original-artifact recovery](../private-packages.md) are implemented with local protocol proof; actual hosted/private-feed proof remains pending. Named-release recovery remains later Phase 5 work.
 
 ### Execution core
 

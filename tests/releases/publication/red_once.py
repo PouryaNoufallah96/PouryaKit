@@ -9,6 +9,8 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[3]
 CONTROLS = [
+    ("publisher.py", "parsed = parse_version(version)", 'parsed = {"major": "0", "channel": "preview", "metadata": ""}',
+     "PublicationTests.test_candidate_reuses_strict_semver_and_minver_package_identity_policy", "shared strict SemVer and package version policy"),
     ("artifacts.py", 'or run.get("event") != "push"', "or False",
      "PublicationTests.test_original_main_provenance_and_successful_jobs_are_required", "trusted push provenance"),
     ("publisher.py", 'if hashlib.sha256(content).hexdigest() != package["sha256"]:', "if False:",
@@ -29,7 +31,7 @@ def main():
     for filename, before, after, test, behaviour in CONTROLS:
         with tempfile.TemporaryDirectory(prefix="pouryakit-publication-red-") as folder:
             root = Path(folder)
-            for source in ("scripts/releases/publication", "tests/releases/publication", ".github/workflows"):
+            for source in ("scripts/releases/publication", "scripts/releases/preflight", "tests/releases/publication", ".github/workflows"):
                 shutil.copytree(ROOT / source, root / source, ignore=shutil.ignore_patterns("__pycache__"))
             (root / "scripts/packaging").mkdir()
             shutil.copyfile(ROOT / "scripts/packaging/inventory.json", root / "scripts/packaging/inventory.json")

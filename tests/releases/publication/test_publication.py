@@ -259,6 +259,71 @@ class PublicationTests(unittest.TestCase):
         content = (self.candidate / "packages" / package["file"]).read_bytes()
         self.protocol.remote[package["id"].lower(), self.manifest["version"]] = content
 
+    def versioned_candidate(self, version):
+        directory = self.root / "versioned"
+        if directory.exists():
+            shutil.rmtree(directory)
+        (directory / "packages").mkdir(parents=True)
+        manifest = copy.deepcopy(self.manifest)
+        manifest["version"] = version
+        # Repacked copies are protocol fixtures only, never recovery or releasable artifacts.
+        for package in manifest["packages"]:
+            source = self.candidate / "packages" / package["file"]
+            package["file"] = f"{package['id']}.{version}.nupkg"
+            file = directory / "packages" / package["file"]
+            with zipfile.ZipFile(source) as original, zipfile.ZipFile(file, "w") as archive:
+                for entry in original.infolist():
+                    content = original.read(entry)
+                    if entry.filename.endswith(".nuspec"):
+                        content = content.replace(f"<version>{self.manifest['version']}</version>".encode(),
+                                                  f"<version>{version}</version>".encode())
+                    archive.writestr(entry, content)
+            package["sha256"] = hashlib.sha256(file.read_bytes()).hexdigest()
+        (directory / "manifest.json").write_bytes(encoded(manifest))
+        return directory
+
+    def test_named_bare_and_alphabetic_versions_match_exact_manifest_filenames_and_nuspecs(self):
+        for version in ("0.2.0-preview", "0.2.0-rc", "0.2.0-preview.any.2.x-y", "0.2.0-rc.Alpha.2"):
+            with self.subTest(version=version):
+                directory = self.versioned_candidate(version)
+                manifest, originals = publisher.load_candidate(directory, self.sha)
+                self.assertEqual(version, manifest["version"])
+                self.assertEqual(13, len(originals))
+                for package in manifest["packages"]:
+                    self.assertEqual(f"{package['id']}.{version}.nupkg", package["file"])
+                    self.assertEqual((package["id"].lower(), version.lower()), identity(originals[package["id"]]))
+
+    def test_candidate_reuses_strict_semver_and_minver_package_identity_policy(self):
+        for version in ("0.2.0-preview.01", "0.2.0-preview..1", "00.2.0-preview", "0.2.0-preview.☃",
+                        "0.2.0", "1.0.0-preview", "0.2.0-beta.1", "0.2.0-preview+build"):
+            with self.subTest(version=version):
+                directory = self.versioned_candidate(version)
+                with self.assertRaises(PublicationError):
+                    publisher.load_candidate(directory, self.sha)
+
+    def test_nuspec_version_and_filename_are_exact_for_a_named_candidate(self):
+        directory = self.versioned_candidate("0.2.0-preview.any.2.x-y")
+        manifest = json.loads((directory / "manifest.json").read_text())
+        manifest["version"] = "0.2.0-preview.any.2.x-z"
+        (directory / "manifest.json").write_bytes(encoded(manifest))
+        with self.assertRaisesRegex(PublicationError, "paths"):
+            publisher.load_candidate(directory, self.sha)
+        manifest["version"] = "0.2.0-preview.any.2.x-y"
+        package = manifest["packages"][0]
+        file = directory / "packages" / package["file"]
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(file) as original, zipfile.ZipFile(buffer, "w") as archive:
+            for entry in original.infolist():
+                content = original.read(entry)
+                if entry.filename.endswith(".nuspec"):
+                    content = content.replace(b"<version>0.2.0-preview.any.2.x-y</version>", b"<version>0.2.0-preview</version>")
+                archive.writestr(entry, content)
+        file.write_bytes(buffer.getvalue())
+        package["sha256"] = hashlib.sha256(file.read_bytes()).hexdigest()
+        (directory / "manifest.json").write_bytes(encoded(manifest))
+        with self.assertRaisesRegex(PublicationError, "version"):
+            publisher.load_candidate(directory, self.sha)
+
     def test_empty_feed_publishes_exact_raw_bytes_and_identical_retry_uploads_nothing(self):
         self.assertEqual(0, self.execute())
         result = self.receipt_document()
