@@ -6,5 +6,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <_KitSourceRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', 'src'))</_KitSourceRoot>
+    <IsKitPackage Condition="$(MSBuildProjectDirectory.StartsWith('$(_KitSourceRoot)'))">true</IsKitPackage>
+    <IsPackable Condition="'$(IsKitPackage)' != 'true'">false</IsPackable>
+    <DebugType Condition="'$(IsKitPackage)' == 'true'">embedded</DebugType>
+    <MinVerMinimumMajorMinor>0.1</MinVerMinimumMajorMinor>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
   </PropertyGroup>
 </Project>

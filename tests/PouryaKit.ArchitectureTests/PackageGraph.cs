@@ -86,7 +86,7 @@ internal static class PackageGraph
             }
         }
 
-        var closure = package.Packages.Select(arrived => arrived.Id).Concat(package.Projects).Distinct();
+        var closure = package.RuntimePackages.Select(arrived => arrived.Id).Concat(package.Projects).Distinct();
         foreach (var arrived in closure.Order(StringComparer.Ordinal))
         {
             var keptOut = KeptOut.GetValueOrDefault(package.Name, []).Append("WolverineFx.RuntimeCompilation");
@@ -96,9 +96,9 @@ internal static class PackageGraph
             }
         }
 
-        if (NoPackages.Contains(package.Name) && package.Packages.Count > 0)
+        if (NoPackages.Contains(package.Name) && package.RuntimePackages.Any())
         {
-            yield return $"{package.Name}'s closure holds the packages [{Listed(package.Packages.Select(arrived => arrived.Id))}]; it must hold none.";
+            yield return $"{package.Name}'s closure holds the packages [{Listed(package.RuntimePackages.Select(arrived => arrived.Id))}]; it must hold none.";
         }
     }
 

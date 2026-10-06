@@ -4,7 +4,7 @@ Adopted implementations in `PouryaKit.Domain`. Format and rules: [README](README
 
 ## Package dependencies
 
-None. `PouryaKit.Domain` references no package and no other Kit package, as plan section C lists.
+None shipped. `PouryaKit.Domain` has no runtime package dependency and references no other Kit package, as plan section C lists. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
 
 ## Result and Error
 

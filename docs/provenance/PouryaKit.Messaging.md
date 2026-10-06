@@ -10,4 +10,4 @@ Adopted implementations in `PouryaKit.Messaging`. Format and rules: [README](REA
 
 ## Package dependencies
 
-None. `PouryaKit.Messaging` references `PouryaKit.Domain` only, as plan section C lists, so a Notification Handler written against it names no transport and no database type.
+None shipped. `PouryaKit.Messaging` depends on `PouryaKit.Domain` only, as plan section C lists, so a Notification Handler written against it names no transport and no database type. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).

@@ -42,7 +42,7 @@ public sealed class LicenceTests
 
     // An expression passes when it is one listed licence, a choice ("OR") that offers one, or a conjunction ("AND") of
     // listed licences only. Anything else, parentheses and exceptions included, needs a person to read it.
-    private static IEnumerable<string> Violations(IEnumerable<PackageLicence> packages) =>
+    internal static IEnumerable<string> Violations(IEnumerable<PackageLicence> packages) =>
         from package in packages
         let expression = package.Expression
         where expression is null || !IsPermissive(expression)

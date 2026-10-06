@@ -45,3 +45,18 @@ The third seam of the Testing Decisions is proven in `tests/PouryaKit.Architectu
 ## Stored-delivery schema regression
 
 `StoredDeliveriesSchemaTests.Message_store_queries_use_the_exact_schema_name` exercises IDs, delivery enumeration, pending counts and deletion against PostgreSQL with `review-store` and `review-store"quoted`. These tests provision the message tables directly. They prove the reader quotes identifiers correctly; Wolverine 6.46.0 itself fails Host startup with these names in both Solo and Balanced mode, so this is not a Gateway or custom-schema Host-startup guarantee.
+
+## Phase 5 package proof, ticket #25
+
+[`python3 scripts/packaging/validate.py`](../scripts/packaging/validate.py) runs the existing suite against one Release build, then packs with `--no-build`. Its evidence directory records runtime results separately from package and consumer results. [Package guidance](packages.md) gives the command, artifact contract and evidence limits.
+
+| Acceptance | Proof |
+|---|---|
+| MinVer is shared, with minimum 0.1, v prefix and preview.0 default | Real package/build versions agree; `minver.json` records an isolated Git repository's untagged, tagged and post-tag outputs |
+| Exactly thirteen shipped packages; tests and samples excluded | Every project is evaluated against `inventory.json`; `InventoryTests.test_inventory_is_nonempty_and_exact` and `inventory-controls.log` reject empty/missing/extra/mismatched entries and accidental packability |
+| MIT/notices, repository/source commit and SourceLink in each artifact | `PackageArtifactTests.Invalid_release_metadata_is_rejected`, `Embedded_source_link_identifies_the_commit_and_rejects_a_different_commit`, and the package validator inspect archive bytes and embedded PDBs |
+| Existing graph and license restrictions survive shipping | `PackageGraphTests.Produced_nuspecs_obey_the_same_reference_rules_as_source_projects`, artifact graph checks and `consumer-closures.log` reuse `PackageGraph` and `LicenceTests` |
+| Every package and supported composition restores/builds independently of Kit source | Thirteen package-only applications, the single-Module set without Modularity/Messaging, and the copied modular monolith build with isolated caches, source mapping, exact versions and nupkg SHA-256 checks |
+| Defects fail the shared path | Per-control logs show missing/extra artifacts, wrong version/commit, missing notices, forbidden references and invalid symbols rejected by the same package validator |
+
+This is package restore/build proof, alongside the existing PostgreSQL runtime suite above. It proves neither hosted publication nor private-feed recovery.
