@@ -1,0 +1,89 @@
+name: Private main publication
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Original trusted main CI run ID
+        required: true
+        type: string
+      run_attempt:
+        description: Original successful validation attempt
+        required: true
+        type: string
+      artifact_id:
+        description: Immutable original package-validation artifact ID
+        required: true
+        type: string
+      source_sha:
+        description: Exact original main source SHA
+        required: true
+        type: string
+      proof:
+        description: Bounded hosted proof, changes only recovered local copies
+        default: none
+        type: choice
+        options: [none, probe, fail-after-one, hold, negative-content, negative-sha, missing-credential]
+
+permissions:
+  contents: read
+
+jobs:
+  authorize:
+    if: >-
+      github.repository == 'PouryaNoufallah96/PouryaKit' && github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Require successful trusted main validation jobs
+        env:
+          PUBLICATION_TOKEN: ${{ github.token }}
+          ORIGINAL_RUN: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.id) || inputs.run_id }}
+          ORIGINAL_ATTEMPT: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.run_attempt) || inputs.run_attempt }}
+          ORIGINAL_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.source_sha }}
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 scripts/releases/publication/authorize.py --run-id "$ORIGINAL_RUN" \
+            --attempt "$ORIGINAL_ATTEMPT" --source-sha "$ORIGINAL_SHA" \
+            2>&1 | tee "$RUNNER_TEMP/publication-authorization.log"
+      - name: Retain bounded authorization diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: private-publication-authorization-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/publication-authorization.log
+          if-no-files-found: error
+          retention-days: 90
+
+  publish:
+    needs: authorize
+    permissions:
+      contents: read
+      actions: read
+      packages: write
+    uses: ./.github/workflows/package-publication.yml
+    with:
+      run_id: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.id) || inputs.run_id }}
+      run_attempt: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.run_attempt) || inputs.run_attempt }}
+      artifact_id: ${{ inputs.artifact_id || '' }}
+      source_sha: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.source_sha }}
+      proof: ${{ inputs.proof || 'none' }}

@@ -74,3 +74,17 @@ This is package restore/build proof, alongside the existing PostgreSQL runtime s
 | Same-repository and fork execution | [Proof PR #30](https://github.com/PouryaNoufallah96/PouryaKit/pull/30) observed green/failure/repaired green and closed without merging. Real private fork execution remains unverified under the [owner exception](https://github.com/PouryaNoufallah96/PouryaKit/issues/26#issuecomment-6013184398); same-repository execution and static settings do not prove fork execution. |
 
 The [CI evidence table](ci.md#hosted-proof-boundary) records all run identities and observed boundaries. Local script tests and workflow lint complement this hosted evidence. Publication remains outside this ticket and must verify a successful trusted main run at the exact selected SHA; a PR receipt alone cannot authorize it.
+
+## Phase 5 private publication, ticket #27
+
+[Private publication guidance](private-packages.md) records the workflow, preserved artifact contract, private-feed consumption and concrete hosted proof plan. The production core is shared with future named cuts; this ticket creates no version tag or GitHub Release.
+
+| Acceptance | Local proof and hosted boundary |
+|---|---|
+| Exact successful trusted-main originals | Real HTTP artifact/run/job fixtures reject PR/fork/wrong branch/SHA/attempt and failed AI/package/protocol jobs; accept successful jobs when overall source run failed or is in progress. Archive digest, expiration, manifest, full history/tags, nuspec identity and original hashes are checked. |
+| Existing contents checked before missing uploads | A conflict in the last package rejects before any PUT. Actual raw nupkg bytes and nuspec source SHA are checked; a feed that rewrites bytes fails after one upload. |
+| Partial recovery and identical retry | Fault seam fails after one confirmed upload. The same original artifact completes twelve missing members; an identical retry uploads zero. A final pass catches an earlier member changed after the last upload. |
+| Private/authenticated enumeration and diagnostics | HTTP fixtures distinguish empty results from 401/403 and page through more than 100 jobs, artifacts and packages; intermediate failure rejects. Public visibility, unsafe resource/redirect host, missing credentials/artifacts and changed copies fail with bounded credential-free receipts. |
+| Shared version policy, one publisher and serialization | Real candidate ZIP/nuspec fixtures accept bare preview/rc and alphabetic suffixes through preflight's strict parser, rejecting invalid syntax and mismatched filename/nuspec versions. Workflow checks and actionlint validate the separate main/recovery caller and single literal job group with cancellation disabled. Seven isolated red controls prove the major guarantees' tests fail when switched off. Actual hosted serialization remains pending. |
+
+The publication suite can use the saved real thirteen-package fixture through `POURYAKIT_PUBLICATION_FIXTURE`; absent that optional local fixture it creates thirteen real ZIP/nuspec protocol fixtures. This is local HTTP protocol proof, not actual GitHub Packages evidence. Automatic main publication, failing-main publisher suppression, actual private visibility/token access, exact remote byte preservation, original-artifact recovery and two serialized hosted attempts remain unverified. #27 must remain open until those hosted gates pass.

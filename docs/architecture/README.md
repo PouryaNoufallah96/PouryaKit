@@ -10,7 +10,7 @@ Thirteen packages and their references no longer read as one diagram, so the C4 
 
 ```mermaid
 C4Container
-    title PouryaKit package validation, container level
+    title PouryaKit package validation and private publication, container level
     Person(maintainer, "Maintainer", "Validates one source commit")
     Container_Ext(ci, "CI validation", "GitHub Actions, read-only repository token", "Full-history push/PR checkout; token removed before the shared path")
     System_Boundary(validation, "Shared package validation") {
@@ -19,17 +19,22 @@ C4Container
         Container(consumers, "Clean consumers", ".NET 10, isolated NuGet caches", "Thirteen individual packages, single Module and copied Proving Sample")
     }
     ContainerDb_Ext(evidence, "Retained CI evidence", "GitHub Actions artifact", "Tested SHA/result, original packages/manifest, logs and consumer assets; no caches")
+    Container_Ext(publisher, "Private publisher", "Separate main/recovery workflow, one noncanceling job group", "Trusted main run/attempt/artifact provenance; checks all existing bytes before missing-only uploads")
+    ContainerDb_Ext(privateFeed, "Private GitHub Packages", "Authenticated NuGet resources and package REST metadata", "Thirteen original hashes and source identities; actual private visibility required")
     ContainerDb_Ext(postgresql, "PostgreSQL", "Testcontainers", "Existing Proving Sample runtime proof")
     Rel(maintainer, path, "runs")
     Rel(ci, path, "runs at the actual checked-out SHA without forwarding credentials")
     Rel(ci, evidence, "retains bounded success/failure evidence for 90 days")
+    Rel(publisher, evidence, "recovers exact successful main originals, never rebuilds")
+    Rel(publisher, privateFeed, "checks existing contents, uploads missing originals and verifies the full private set")
+    Rel(publisher, evidence, "retains credential-free completion and failure receipts")
     Rel(path, postgresql, "tests the shared Release output against")
     Rel(path, artifacts, "packs and checks")
     Rel(consumers, artifacts, "restores Kit dependencies exclusively from")
     Rel(path, consumers, "builds and checks dependency closures of")
 ```
 
-The artifact and consumer checks reuse `PackageGraph` and the license policy of the Structure seam. [CI](../ci.md) invokes the same path and distinguishes a PR's tested merge revision from its head SHA. Hosted same-repository success/failure, retained packages and read-only permissions are proven by PR #30; real private fork execution remains explicitly unverified under the owner exception. Private publishing and named-release recovery are later Phase 5 work.
+The artifact and consumer checks reuse `PackageGraph` and the license policy of the Structure seam. [CI](../ci.md) invokes the same path and distinguishes a PR's tested merge revision from its head SHA. Hosted same-repository success/failure, retained packages and read-only permissions are proven by PR #30; real private fork execution remains explicitly unverified under the owner exception. The [private publisher and original-artifact recovery](../private-packages.md) are implemented with local protocol proof; actual hosted/private-feed proof remains pending. Named-release recovery remains later Phase 5 work.
 
 ### Execution core
 
