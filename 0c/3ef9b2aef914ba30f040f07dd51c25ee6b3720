@@ -1,0 +1,79 @@
+spikes/rabbitmq-topology/Rmq.Tests/RemoteOnlyPublicationTests.cs
+  s_41c3eef9abbce4::t_f086ea9af1fbb3 1-116
+spikes/rabbitmq-topology/Rmq.Contracts/ProductCreatedV1.cs
+  s_41c3eef9abbce4::t_1127c5246b8b1b 1-7
+spikes/rabbitmq-topology/Rmq.Kit/SubscriptionDelivery.cs
+  s_41c3eef9abbce4::t_55d3e192376ff7 1-123
+spikes/rabbitmq-topology/Rmq.Contracts/Rmq.Contracts.csproj
+  s_41c3eef9abbce4::t_6623c16a3f420c 1-5
+spikes/rabbitmq-topology/Rmq.Catalog/CatalogModule.cs
+  s_41c3eef9abbce4::t_acbed4a86ec5a0 1-62
+spikes/rabbitmq-topology/Rmq.Tests/IndependentRetryTests.cs
+  s_41c3eef9abbce4::t_f82f33a61f7d1b 1-74
+spikes/rabbitmq-topology/Rmq.Tests/RedeliveryTests.cs
+  s_41c3eef9abbce4::t_6594613290352b 45,108
+  s_41c3eef9abbce4::t_b5006c38330805 1-44,46-107,109-120
+spikes/rabbitmq-topology/Rmq.Inventory/InventoryModule.cs
+  s_41c3eef9abbce4::t_7a6d03e8d28246 1-56
+spikes/rabbitmq-topology/Rmq.Kit/KitMessaging.cs
+  s_41c3eef9abbce4::t_ae1b53870cc482 1-68
+spikes/rabbitmq-topology/Rmq.Tests/DurableInboxTests.cs
+  s_41c3eef9abbce4::t_6d00863caa8316 21
+  s_41c3eef9abbce4::t_f401989a6c2831 1-20,22-79
+spikes/rabbitmq-topology/Rmq.Tests/Hosts.cs
+  s_41c3eef9abbce4::t_7ff559e2f8ea10 1-18,20,23,35-68,71-76,78-84,86-158
+  s_41c3eef9abbce4::t_11208600d7e831 19,26-34
+  s_41c3eef9abbce4::t_6d00863caa8316 21-22,24-25,77,85
+  s_41c3eef9abbce4::t_bc639924a45bc2 69-70
+spikes/rabbitmq-topology/Rmq.Tests/DeadLetterTests.cs
+  s_41c3eef9abbce4::t_76b7c826a798d4 33
+  s_41c3eef9abbce4::t_de74852167445e 1-32,34-48
+spikes/rabbitmq-topology/Rmq.Tests/FanOutIdentityTests.cs
+  s_41c3eef9abbce4::t_67651ab6119ac6 1-123
+spikes/rabbitmq-topology/Rmq.Tests/QueueNamingTests.cs
+  s_41c3eef9abbce4::t_dc5a8102edac8b 1-61
+spikes/rabbitmq-topology/Directory.Build.props
+  s_41c3eef9abbce4::t_2640178184e7d1 1-11
+spikes/rabbitmq-topology/Directory.Packages.props
+  s_41c3eef9abbce4::t_532e4024f46e25 1-19
+spikes/rabbitmq-topology/Rmq.Kit/Rmq.Kit.csproj
+  s_41c3eef9abbce4::t_366d67a952b3ee 1-13
+spikes/rabbitmq-topology/Rmq.Kit/Basics.cs
+  s_41c3eef9abbce4::t_04e5426caa79b7 1-61
+spikes/rabbitmq-topology/Rmq.Catalog/Rmq.Catalog.csproj
+  s_41c3eef9abbce4::t_3d56d62b978fc8 1-9
+spikes/rabbitmq-topology/RabbitMqTopology.slnx
+  s_41c3eef9abbce4::t_1381351822ca32 1-7
+spikes/rabbitmq-topology/Rmq.Tests/Rmq.Tests.csproj
+  s_41c3eef9abbce4::t_0dd0f9349dec40 1-24
+spikes/rabbitmq-topology/Rmq.Kit/ModuleTransaction.cs
+  s_41c3eef9abbce4::t_6d00863caa8316 113,115
+  s_41c3eef9abbce4::t_c140ab32717054 1-112,114,116-125
+spikes/rabbitmq-topology/Rmq.Kit/UnitOfWork.cs
+  s_41c3eef9abbce4::t_053e3b7bb7a49b 1-48
+spikes/rabbitmq-topology/Rmq.Kit/BrokerTopology.cs
+  s_41c3eef9abbce4::t_6601d9f88554fd 1-94
+spikes/rabbitmq-topology/Rmq.Inventory/Rmq.Inventory.csproj
+  s_41c3eef9abbce4::t_442c2aa4b76e0f 1-9
+spikes/rabbitmq-topology/Rmq.Tests/Infrastructure.cs
+  s_41c3eef9abbce4::t_b867d2ce25e9f8 1-19,22-23,25-47,56-256
+  s_41c3eef9abbce4::t_8fc8c0fe7f71a3 48-55
+  s_41c3eef9abbce4::t_bc639924a45bc2 21
+  s_41c3eef9abbce4::t_569fe4858e69ad 20,24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0c3ef9b2aef914ba30f040f07dd51c25ee6b3720",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
