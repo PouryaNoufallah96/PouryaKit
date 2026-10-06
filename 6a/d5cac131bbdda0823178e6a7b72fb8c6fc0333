@@ -1,0 +1,97 @@
+src/PouryaKit.Messaging.Wolverine.EFCore/ScheduledDelayedCommands.cs
+  s_41c3eef9abbce4::t_d2728d76f15533 1-18
+tests/ModularMonolith.Tests/DeliveryProbes.cs
+  s_41c3eef9abbce4::t_2a1bea20324464 15-16,22,36-39,93-96,182,186
+samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Errors/QuoteErrors.cs
+  s_41c3eef9abbce4::t_fe9e9a4642a49e 1-10
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_41c3eef9abbce4::t_118a1e74f5e02e 34
+tests/ModularMonolith.Tests/IntegrationEventWiringTests.cs
+  s_41c3eef9abbce4::t_40f15a720044ec 87
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs
+  s_41c3eef9abbce4::t_f6575cb265c040 48-49
+  s_41c3eef9abbce4::t_6c9173bc2f6b62 22-23
+src/PouryaKit.Messaging.Wolverine/DelayedCommandExtension.cs
+  s_41c3eef9abbce4::t_c446db0f045f54 1-33
+samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/ValueObjects/QuoteId.cs
+  s_41c3eef9abbce4::t_3b822d685e45e7 1-5
+samples/ModularMonolith/src/Modules/Billing/Billing/Infrastructure/Data/Migrations/20261006233545_Quotes.Designer.cs
+  s_41c3eef9abbce4::t_1aeb7b474d95ab 1-127
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_649b58028612f6 105-106,116,138,156,169,371-372,374-375,383,392,395-396,408
+  s_41c3eef9abbce4::t_5497a6ef669fee 412
+samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Data/Configurations/QuoteConfiguration.cs
+  s_41c3eef9abbce4::t_4b8e9f7b07bf33 1-14
+src/PouryaKit.Messaging.Wolverine/DelayedCommandFailedException.cs
+  s_41c3eef9abbce4::t_78371618b8c774 1-19
+tests/ModularMonolith.Tests/DelayedCommandTests.cs
+  s_41c3eef9abbce4::t_a2a4e969ef1c40 1-109,111-112,115-189
+  s_41c3eef9abbce4::t_158c87dcd759c3 110,113-114
+src/PouryaKit.Messaging.Wolverine/DelayedCommandDelivery.cs
+  s_41c3eef9abbce4::t_c45f785e29b436 1-52
+samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Features/OpenQuote/OpenQuoteCommand.cs
+  s_41c3eef9abbce4::t_24006bed9abd2c 1-5
+src/PouryaKit.Messaging.Wolverine/DelayedCommandDeclarations.cs
+  s_41c3eef9abbce4::t_b5e0e2255c8af3 1-84
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_41c3eef9abbce4::t_1ddefa6f4fb04a 22-24
+  s_41c3eef9abbce4::t_c0fc565b862752 44-46,48
+samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Entities/Quote.cs
+  s_41c3eef9abbce4::t_7b956e29c17461 1-49
+tests/ModularMonolith.Tests/Stub/StubModule.cs
+  s_41c3eef9abbce4::t_4df2697ebf526e 59
+samples/ModularMonolith/src/Modules/Billing/Billing/BillingModule.cs
+  s_41c3eef9abbce4::t_9e42a0c0fc2423 3
+  s_41c3eef9abbce4::t_cb631ffee0b9c4 23
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_41c3eef9abbce4::t_40f15a720044ec 423,442
+src/PouryaKit.Messaging.Wolverine/IDelayedCommands.cs
+  s_41c3eef9abbce4::t_184eb19de834df 1-24
+src/PouryaKit.Messaging.Wolverine/IDelayedCommandOutbox.cs
+  s_41c3eef9abbce4::t_45cc79d4bfbf64 1-17
+samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Features/ExpireQuote/ExpireQuoteCommand.cs
+  s_41c3eef9abbce4::t_bf9f8e32d68186 1-5
+samples/ModularMonolith/src/Modules/Billing/Billing/Infrastructure/Data/Migrations/BillingDbContextModelSnapshot.cs
+  s_41c3eef9abbce4::t_1aeb7b474d95ab 76-120
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs
+  s_41c3eef9abbce4::t_ea00d2dae5d363 18-19,24,45,47,54-55,70-71,74-76,89,96
+samples/ModularMonolith/src/Modules/Billing/Billing/Infrastructure/Data/Migrations/20261006233545_Quotes.cs
+  s_41c3eef9abbce4::t_1aeb7b474d95ab 1-42
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_41c3eef9abbce4::t_727d6f6e8e9a6a 751-768,770-776
+  s_41c3eef9abbce4::t_be7e8cad695298 769
+src/PouryaKit.Messaging.Wolverine/DelayedCommandServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_b57046be0fb76c 1-34
+samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Features/ExpireQuote/ExpireQuoteCommandHandler.cs
+  s_41c3eef9abbce4::t_b27a9973ff82fa 1-18
+.agents/skills/pourya-kit/references/messaging.md
+  s_41c3eef9abbce4::t_3f30cff362312e 3,20,402-441,463,599-601
+src/PouryaKit.Messaging.Wolverine/StartupCheck.cs
+  s_41c3eef9abbce4::t_345b487c507ff3 10-12,17-18,26,34-36
+  s_41c3eef9abbce4::t_04ed49d2b41515 46
+src/PouryaKit.Messaging.Wolverine/DelayedCommands.cs
+  s_41c3eef9abbce4::t_755876ad271c42 1-36
+samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Features/OpenQuote/OpenQuoteCommandHandler.cs
+  s_41c3eef9abbce4::t_8898afdc130540 1-23
+tests/ModularMonolith.Tests/Stub/StubDelayedCommands.cs
+  s_41c3eef9abbce4::t_748cbb8c557c38 1-7,9-56
+  s_41c3eef9abbce4::t_1e482b3463061b 8
+docs/acceptance.md
+  s_41c3eef9abbce4::t_74320f1d05775e 137-148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6ad5cac131bbdda0823178e6a7b72fb8c6fc0333",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
