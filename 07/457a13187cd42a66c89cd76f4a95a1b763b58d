@@ -1,0 +1,21 @@
+.claude/agent-memory/kit-implementer/w3c-propagation-facts.md
+  s_41c3eef9abbce4::t_b07efeea21da63 1-18
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_41c3eef9abbce4::t_2a52da83d183d1 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "07457a13187cd42a66c89cd76f4a95a1b763b58d",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": null
+    }
+  }
+}
