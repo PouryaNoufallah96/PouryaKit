@@ -7,13 +7,15 @@ using Wolverine.Runtime;
 namespace PouryaKit.Messaging.Wolverine;
 
 // Runs once every hosted service has started, Wolverine included, so it sees the queues as Wolverine built them. A
-// Notification, an Integration Event or a Snapshot is durable only when an Outbox writes it in the Unit of Work's commit and its
-// subscription's queue stores it; otherwise the business change would commit with nothing behind it, so the Host does not start.
+// Notification, an Integration Event, a Snapshot or a delayed command is durable only when an Outbox writes it in the Unit of
+// Work's commit and its queue stores it; otherwise the business change would commit with nothing behind it, so the Host does
+// not start.
 internal sealed class StartupCheck(Subscriptions subscriptions, IServiceProvider services) : IHostedLifecycleService
 {
     public Task StartedAsync(CancellationToken cancellationToken)
     {
-        if (!subscriptions.All.Any() && subscriptions.Publications.Count == 0)
+        var delayedCommands = services.GetService<DelayedCommandDeclarations>()?.All ?? [];
+        if (!subscriptions.All.Any() && subscriptions.Publications.Count == 0 && !delayedCommands.Any())
         {
             return Task.CompletedTask;
         }
@@ -21,7 +23,7 @@ internal sealed class StartupCheck(Subscriptions subscriptions, IServiceProvider
         if (!services.GetRequiredService<IServiceProviderIsService>().IsService(typeof(INotificationOutbox)))
         {
             throw new InvalidOperationException(
-                "Notification Handlers, Integration Events or Snapshots are declared, but nothing writes them to an Outbox, so every Operation would commit and none would be delivered. Call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore on the Host."
+                "Notification Handlers, Integration Events, Snapshots or delayed commands are declared, but nothing writes them to an Outbox, so every Operation would commit and none would be delivered. Call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore on the Host."
             );
         }
 
@@ -29,7 +31,9 @@ internal sealed class StartupCheck(Subscriptions subscriptions, IServiceProvider
         List<string> notDurable =
         [
             .. subscriptions
-                .All.Select(subscription => new Uri($"local://{subscription.Name}"))
+                .All.Select(subscription => subscription.Name)
+                .Concat(delayedCommands.Select(delayed => delayed.Name))
+                .Select(name => new Uri($"local://{name}"))
                 .Select(address => (Address: address, Queue: transports.TryGetEndpoint(address)))
                 .Where(queue =>
                     queue.Queue is not { Role: EndpointRole.Application, Mode: EndpointMode.Durable }
@@ -39,7 +43,7 @@ internal sealed class StartupCheck(Subscriptions subscriptions, IServiceProvider
         return notDurable.Count == 0
             ? Task.CompletedTask
             : throw new InvalidOperationException(
-                $"The queues of these subscriptions do not store what they receive, so their Notifications would not survive a restart: {string.Join(", ", notDurable)}. A subscription's queue is a durable application queue; rename the subscription or remove the configuration that changed its queue."
+                $"The queues of these subscriptions or delayed commands do not store what they receive, so their deliveries would not survive a restart: {string.Join(", ", notDurable)}. Each such queue is a durable application queue; rename the subscription or delayed command, or remove the configuration that changed its queue."
             );
     }
 

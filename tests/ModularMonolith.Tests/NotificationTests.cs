@@ -442,7 +442,7 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
 
         Assert.StartsWith(
-            $"The queues of these subscriptions do not store what they receive, so their Notifications would not survive a restart: local://{subscription}/ (Application, BufferedInMemory).",
+            $"The queues of these subscriptions or delayed commands do not store what they receive, so their deliveries would not survive a restart: local://{subscription}/ (Application, BufferedInMemory).",
             thrown.Message
         );
     }
@@ -461,7 +461,7 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
         await host.StopAsync(TestContext.Current.CancellationToken);
 
-        Assert.StartsWith("Notification Handlers, Integration Events or Snapshots are declared, but nothing writes them to an Outbox", thrown.Message);
+        Assert.StartsWith("Notification Handlers, Integration Events, Snapshots or delayed commands are declared, but nothing writes them to an Outbox", thrown.Message);
     }
 
     [Fact]

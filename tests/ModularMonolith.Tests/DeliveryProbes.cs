@@ -12,13 +12,14 @@ namespace ModularMonolith.Tests;
 /// Stop points inside the Kit's delivery, for Integration Event tests: what an Operation of the test's own flow writes
 /// to the Outbox; a hold on the first delivery of one subscription right after its Receipt, or its Snapshot's version,
 /// is recorded, inside its still open transaction; a hold on the first Operation of one Module right after it committed, before anything
-/// acknowledges it; a count of deliveries a committed Receipt turned away; and every delivery attempt. Every other
+/// acknowledges it; a count of deliveries a committed Receipt turned away; and every delivery attempt, with the Operation Context it
+/// ran with. Every other
 /// Operation and delivery runs as usual.
 /// </summary>
 internal static class DeliveryProbes
 {
     private static readonly AsyncLocal<List<object>?> Written = new();
-    private static readonly ConcurrentQueue<(string Subscription, Guid MessageId, DateTimeOffset At)> Attempts = [];
+    private static readonly ConcurrentQueue<(string Subscription, Guid MessageId, DateTimeOffset At, OperationContext Context)> Attempts = [];
     private static readonly ConcurrentDictionary<string, int> TurnedAway = new(StringComparer.OrdinalIgnoreCase);
     private static Hold? _receiptHold;
     private static Hold? _commitHold;
@@ -31,6 +32,10 @@ internal static class DeliveryProbes
     /// </summary>
     public static IReadOnlyList<DateTimeOffset> AttemptsOf(string subscription, Guid messageId) =>
         [.. Attempts.Where(attempt => attempt.Subscription == subscription && attempt.MessageId == messageId).Select(attempt => attempt.At)];
+
+    /// <summary>The Operation Context each delivery <see cref="AttemptsOf"/> counts ran with, in the same order.</summary>
+    public static IReadOnlyList<OperationContext> ContextsOf(string subscription, Guid messageId) =>
+        [.. Attempts.Where(attempt => attempt.Subscription == subscription && attempt.MessageId == messageId).Select(attempt => attempt.Context)];
 
     /// <summary>Adds every message the commits of this flow write to the Outbox to <paramref name="written"/>, until disposed.</summary>
     public static IDisposable RecordWritten(List<object> written)
@@ -85,7 +90,10 @@ internal static class DeliveryProbes
             services,
             (provider, outbox) => new RecordedOutbox(outbox, provider.GetRequiredService<Operation>(), provider.GetRequiredService<DeliveredSubscription>())
         );
-        Decorate<IReceipts>(services, (provider, receipts) => new HeldReceipts(receipts, provider.GetRequiredService<DeliveredSubscription>()));
+        Decorate<IReceipts>(
+            services,
+            (provider, receipts) => new HeldReceipts(receipts, provider.GetRequiredService<DeliveredSubscription>(), provider.GetRequiredService<OperationContext>)
+        );
     }
 
     private static void Decorate<TService>(IServiceCollection services, Func<IServiceProvider, TService, TService> decorate)
@@ -171,11 +179,11 @@ internal static class DeliveryProbes
         }
     }
 
-    private sealed class HeldReceipts(IReceipts receipts, DeliveredSubscription delivered) : IReceipts
+    private sealed class HeldReceipts(IReceipts receipts, DeliveredSubscription delivered, Func<OperationContext> context) : IReceipts
     {
         public async Task<bool> RecordAsync(string subscription, Guid messageId, CancellationToken cancellationToken)
         {
-            Attempts.Enqueue((subscription, messageId, DateTimeOffset.UtcNow));
+            Attempts.Enqueue((subscription, messageId, DateTimeOffset.UtcNow, context()));
             delivered.Name ??= subscription;
             var recorded = await receipts.RecordAsync(subscription, messageId, cancellationToken);
             if (!recorded)

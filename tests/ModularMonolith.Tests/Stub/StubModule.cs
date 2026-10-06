@@ -56,6 +56,7 @@ public sealed class StubModule : IModuleDefinition
         module.Publish<NoteCirculatedV1>("stub.note-circulated.v1", typeof(StubModule));
         module.Subscribe<NoteCirculatedV1, LedgerCirculatedNoteIntegrationEventHandler>(Circulation.Ledger, typeof(StubModule));
         module.Subscribe<NoteCirculatedV1, ArchiveCirculatedNoteIntegrationEventHandler>(Circulation.Archive, typeof(StubModule));
+        module.AddPouryaKitDelayedCommand<WriteDelayedNoteCommand>("stub.delayed-note", typeof(StubModule));
         module.AddSingleton<IntegrationEventLog>();
         module.AddScoped<ReactionLog>();
         module.AddSingleton<DeliveryLog>();
