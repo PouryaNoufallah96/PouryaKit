@@ -1,0 +1,25 @@
+tests/PouryaKit.Domain.Tests/TypedIdTests.cs
+  s_41c3eef9abbce4::t_6ee6af7a5f5535 1,70,73-74,77-81,84
+scripts/packaging/consumers/single-module.cs
+  s_41c3eef9abbce4::t_e08e7aa9c2361d 1,6,24-25,28-29
+docs/acceptance.md
+  s_41c3eef9abbce4::t_6ee6af7a5f5535 57
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_0102503136248b 407
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cf7d2580f809fd8a762519b87af3d2f8e274c776",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
