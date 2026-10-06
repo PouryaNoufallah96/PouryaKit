@@ -293,6 +293,27 @@ def finding_record(package_id, direction, detail, candidate, baseline):
     return identity
 
 
+def validate_review(review):
+    if not isinstance(review, dict):
+        raise ValueError("Review must be a JSON object.")
+    if "candidate" in review and not isinstance(review["candidate"], dict):
+        raise ValueError("Review candidate must be a JSON object.")
+    if "baseline" in review and review["baseline"] is not None and not isinstance(review["baseline"], dict):
+        raise ValueError("Review baseline must be a JSON object or null.")
+    if "migration_notes" in review and not isinstance(review["migration_notes"], str):
+        raise ValueError("Review migration_notes must be a string.")
+    rows = review.get("dispositions", [])
+    if not isinstance(rows, list):
+        raise ValueError("Review dispositions must be a JSON array.")
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            raise ValueError(f"Review dispositions[{index}] must be a JSON object.")
+        for field in ("key", "decision", "reviewer", "rationale"):
+            if not isinstance(row.get(field), str):
+                raise ValueError(f"Review dispositions[{index}].{field} must be a string.")
+    return review
+
+
 def dispositions(findings, review, candidate, baseline, candidate_version, baseline_version):
     rows = [] if review is None else review.get("dispositions", [])
     indexed = {row["key"]: row for row in rows}
@@ -372,7 +393,7 @@ def execute(args, output, result):
                     raise ValueError(f"Package itself fails SDK validation: {detail}")
                 findings.append(finding_record(package_id, direction, detail, candidate, baseline))
             result["comparisons"].append({"package": package_id, "direction": direction, **evidence})
-    review = read_json(args.review) if args.review else None
+    review = validate_review(read_json(args.review)) if args.review else None
     dispositions(findings, review, candidate, baseline, candidate_version, baseline_version)
     result["review"] = review
     result["status"] = "passed"

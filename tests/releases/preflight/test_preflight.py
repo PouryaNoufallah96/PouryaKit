@@ -194,6 +194,36 @@ class PreflightTests(unittest.TestCase):
         mismatch, _ = self.invoke("compatible", version="0.1.1-preview.3")
         self.assertIn("does not equal the requested version", mismatch["error"])
 
+    def test_malformed_review_keeps_structured_cli_refusal(self):
+        discovered, _ = self.invoke("additive")
+        review = self.review_for(discovered)
+        review["dispositions"][0]["reviewer"] = None
+        refused, output = self.invoke("additive", review=review)
+        self.assertEqual(refused["status"], "failed")
+        self.assertIn("dispositions[0].reviewer must be a string", refused["error"])
+        cli_log = (self.output / f"case-{self.counter:02d}.log").read_text()
+        self.assertIn(str((output / "result.json").resolve()), cli_log)
+        self.assertNotIn("Traceback", cli_log)
+
+    def test_malformed_review_shapes_are_descriptive(self):
+        cases = [(None, "Review must be a JSON object"), ([], "Review must be a JSON object"),
+                 ({"candidate": []}, "Review candidate must be a JSON object"),
+                 ({"baseline": 3}, "Review baseline must be a JSON object or null"),
+                 ({"dispositions": None}, "Review dispositions must be a JSON array"),
+                 ({"dispositions": {}}, "Review dispositions must be a JSON array"),
+                 ({"dispositions": [None]}, "Review dispositions[0] must be a JSON object")]
+        valid_row = {"key": "finding", "decision": "compatible-addition", "reviewer": "Reviewer", "rationale": "Reviewed"}
+        for field in ("key", "decision", "reviewer", "rationale"):
+            for invalid in (2, []):
+                cases.append(({"dispositions": [{**valid_row, field: invalid}]}, f"dispositions[0].{field} must be a string"))
+        for invalid in (None, 2, []):
+            cases.append(({"migration_notes": invalid}, "Review migration_notes must be a string"))
+        for review, expected in cases:
+            with self.subTest(review=review):
+                with self.assertRaises(ValueError) as error:
+                    preflight.validate_review(review)
+                self.assertIn(expected, str(error.exception))
+
     def test_real_minver_refuses_metadata_and_competing_tag(self):
         copied = self.output / "metadata"
         shutil.copytree(self.artifacts["compatible"], copied)
