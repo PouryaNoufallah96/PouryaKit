@@ -20,7 +20,8 @@ public static class WolverineHostApplicationBuilderExtensions
         /// <see cref="PouryaKitMessagingOptions.RetryDelays"/>, then that subscription's delivery alone is set aside as a
         /// dead letter in Wolverine's dead-letter storage, received at <c>local://{subscription}/</c>, to inspect and
         /// replay there. A stored delivery whose type or subscription no longer exists is set aside the same way. None of
-        /// them is ever treated as handled. Wolverine discovers no handlers of its own.
+        /// them is ever treated as handled. Wolverine discovers no handlers of its own. Messages are stored and delivered
+        /// in the Kit's JSON representation (<c>UsePouryaKitJson</c>), the one <c>AddPouryaKitWeb</c> gives HTTP bodies.
         /// Nothing this overload registers writes an Outbox (<see cref="INotificationOutbox"/>), so a Host that declares
         /// Notification Handlers, Integration Event Handlers or published Integration Events calls the overload of
         /// <c>PouryaKit.Messaging.Wolverine.EFCore</c> instead, or fails when it starts; so does a Host whose
@@ -44,7 +45,7 @@ public static class WolverineHostApplicationBuilderExtensions
                 wolverine.Discovery.DisableConventionalDiscovery();
                 wolverine.UnknownMessageBehavior = UnknownMessageBehavior.DeadLetterQueue;
                 wolverine.Policies.UseDurableLocalQueues();
-                wolverine.UseSystemTextJsonForSerialization(json => json.Converters.Add(new TypedIdJsonConverterFactory()));
+                wolverine.UseSystemTextJsonForSerialization(json => json.UsePouryaKitJson());
                 configure?.Invoke(wolverine);
             });
             return builder;

@@ -15,8 +15,9 @@ public static class WebServiceCollectionExtensions
         /// Registers what every endpoint answers with: problem responses, the handler that turns an unexpected
         /// exception into a 500 problem response without its message and a request that cannot be read into a 400
         /// problem response in every environment, status code pages that write any other failure answered with an
-        /// empty body (such as routing's own 405 and 415) as a problem response, typed IDs written as their bare
-        /// values in JSON, and the claims that fill the <c>OperationContext</c>.
+        /// empty body (such as routing's own 405 and 415) as a problem response, the Kit's JSON representation
+        /// (<c>UsePouryaKitJson</c>, typed IDs as their bare values) for request and response bodies, and the claims
+        /// that fill the <c>OperationContext</c>.
         /// </summary>
         /// <remarks>
         /// The handler sees only what runs after it, so <c>app.UseExceptionHandler()</c> comes first in the pipeline,
@@ -34,9 +35,7 @@ public static class WebServiceCollectionExtensions
             // exception handler, which answers the same problem response in every environment.
             services.PostConfigure<RouteHandlerOptions>(routeHandlers => routeHandlers.ThrowOnBadRequest = true);
             services.TryAddEnumerable(ServiceDescriptor.Transient<IStartupFilter, ProblemStatusCodePages>());
-            services.ConfigureHttpJsonOptions(json =>
-                json.SerializerOptions.Converters.Add(new TypedIdJsonConverterFactory())
-            );
+            services.ConfigureHttpJsonOptions(json => json.SerializerOptions.UsePouryaKitJson());
             var options = services.AddOptions<PouryaKitWebOptions>();
             if (configure is not null)
             {

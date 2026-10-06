@@ -38,6 +38,7 @@ The third seam of the Testing Decisions is proven in `tests/PouryaKit.Architectu
 | Feature code never saves, commits, writes in bulk or calls a step only the Kit runs | `FeatureCodeTests` |
 | No transport type in Feature code; no envelope storage in a Module's DbContext | `FeatureCodeTests` |
 | Only the Kit's drain clears Domain Events | `FeatureCodeTests` |
+| Only Domain sets up JSON options; Web and Messaging.Wolverine apply `UsePouryaKitJson` | `SharedJsonTests` (ticket #34) |
 | No Dapper write to an aggregate's table | `DapperWriteTests` |
 | Every Kit package's dependency closure matches plan section C | `PackageGraphTests` |
 | No package with a licence outside the permissive list | `LicenceTests` |
@@ -45,6 +46,20 @@ The third seam of the Testing Decisions is proven in `tests/PouryaKit.Architectu
 ## Stored-delivery schema regression
 
 `StoredDeliveriesSchemaTests.Message_store_queries_use_the_exact_schema_name` exercises IDs, delivery enumeration, pending counts and deletion against PostgreSQL with `review-store` and `review-store"quoted`. These tests provision the message tables directly. They prove the reader quotes identifiers correctly; Wolverine 6.46.0 itself fails Host startup with these names in both Solo and Balanced mode, so this is not a Gateway or custom-schema Host-startup guarantee.
+
+## Wave 2 shared JSON, ticket #34
+
+Spec #33, user story 8: one JSON configuration for typed IDs, HTTP and message envelopes. `UsePouryaKitJson` in Domain is the configuration; Web and Messaging.Wolverine apply it.
+
+| Acceptance | Proven by |
+|---|---|
+| A typed ID over Guid, long, int or string is written as its bare value and read back | `PouryaKit.Domain.Tests` `TypedIdTests.Ids_round_trip_through_json_as_their_bare_value`; `TypedIdTests.Ids_inside_an_object_are_written_as_their_bare_values_under_camel_case_names` |
+| The configuration writes the same text whatever options it is applied to, and applying it twice changes nothing | `PouryaKit.Domain.Tests` `TypedIdTests.The_kits_json_options_write_the_same_text_whatever_options_they_are_applied_to_and_however_often` |
+| A typed ID has the same JSON in an HTTP response and in its delivered envelope, which reads back to the same ID | `SharedJsonTests.A_typed_id_is_written_the_same_in_an_http_response_and_in_its_delivered_envelope` |
+| Guid typed IDs stay version 7 | `PouryaKit.Domain.Tests` `TypedIdTests.New_guid_ids_are_time_ordered` |
+| One registration, in Domain; package references unchanged | `PouryaKit.ArchitectureTests` `SharedJsonTests`; `PackageGraphTests` |
+
+The HTTP and envelope test compares `GET /catalog/products` (`ProductId` and `CategoryId`) with the stored envelopes of `ProductCreatedDomainEvent`, one per subscription, read from PostgreSQL in Testcontainers after delivery, and reads each back with the Host's own Wolverine serializer. With Wolverine's default options in place of `UsePouryaKitJson`, the envelope holds `{"value":"<guid>"}` and the test fails.
 
 ## Phase 5 package proof, ticket #25
 

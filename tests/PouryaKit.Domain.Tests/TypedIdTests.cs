@@ -4,7 +4,7 @@ namespace PouryaKit.Domain.Tests;
 
 public class TypedIdTests
 {
-    private static readonly JsonSerializerOptions Json = new() { Converters = { new TypedIdJsonConverterFactory() } };
+    private static readonly JsonSerializerOptions Json = new JsonSerializerOptions().UsePouryaKitJson();
 
     public static TheoryData<object, string> IdsAndTheirJson =>
         new()
@@ -44,9 +44,38 @@ public class TypedIdTests
     [Fact]
     public void A_numeric_id_follows_the_options_number_handling_like_its_raw_value()
     {
-        var web = new JsonSerializerOptions(JsonSerializerDefaults.Web) { Converters = { new TypedIdJsonConverterFactory() } };
+        var web = new JsonSerializerOptions(JsonSerializerDefaults.Web).UsePouryaKitJson();
 
         Assert.Equal(new InvoiceNumber(42), JsonSerializer.Deserialize<InvoiceNumber>("\"42\"", web));
+    }
+
+    [Fact]
+    public void Ids_inside_an_object_are_written_as_their_bare_values_under_camel_case_names()
+    {
+        var order = new IdsOfEveryKind(
+            new ProductId(Guid.Parse("0199b2a4-6f1e-7c3a-9d2b-5e8f4a1c7b30")),
+            new InvoiceNumber(9_000_000_001),
+            new LineNumber(7),
+            new Sku("LAMP-01")
+        );
+        const string json =
+            """{"product":"0199b2a4-6f1e-7c3a-9d2b-5e8f4a1c7b30","invoice":9000000001,"line":7,"sku":"LAMP-01"}""";
+
+        Assert.Equal(json, JsonSerializer.Serialize(order, Json));
+        Assert.Equal(order, JsonSerializer.Deserialize<IdsOfEveryKind>(json, Json));
+    }
+
+    [Fact]
+    public void The_kits_json_options_write_the_same_text_whatever_options_they_are_applied_to_and_however_often()
+    {
+        var order = new IdsOfEveryKind(TypedId.New<ProductId>(), new InvoiceNumber(42), new LineNumber(7), new Sku("Lampe <Café> & \"Ø\""));
+        // Wolverine and ASP.NET Core each hand over an instance with framework defaults of their own.
+        var fromDefaults = new JsonSerializerOptions().UsePouryaKitJson();
+        var fromWebDefaults = new JsonSerializerOptions(JsonSerializerDefaults.Web).UsePouryaKitJson().UsePouryaKitJson();
+
+        Assert.Equal(JsonSerializer.Serialize(order, fromDefaults), JsonSerializer.Serialize(order, fromWebDefaults));
+        Assert.Contains("\"sku\":\"Lampe <Café> & \\\"Ø\\\"\"", JsonSerializer.Serialize(order, fromDefaults), StringComparison.Ordinal);
+        Assert.Single(fromWebDefaults.Converters, converter => converter is TypedIdJsonConverterFactory);
     }
 
     [Fact]
@@ -99,6 +128,8 @@ public class TypedIdTests
     {
         Assert.Equal(valueType, TypedId.GetValueType(type));
     }
+
+    private sealed record IdsOfEveryKind(ProductId Product, InvoiceNumber Invoice, LineNumber Line, Sku Sku);
 
     private sealed record GenericId<TValue>(TValue Value) : TypedId<TValue>(Value)
         where TValue : notnull;
