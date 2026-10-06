@@ -43,8 +43,11 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal($$"""{"id":"{{product}}"}""", await BodyAsync(productCreated));
         Assert.Equal(HttpStatusCode.OK, found.StatusCode);
         Assert.Equal($$"""{"id":"{{product}}","categoryId":"{{category}}","name":"Desk lamp"}""", await BodyAsync(found));
-        // The list's ids are typed IDs, written as their bare values.
-        Assert.Equal($$"""[{"id":"{{product}}","categoryId":"{{category}}","name":"Desk lamp"}]""", await BodyAsync(listed));
+        // The list is a Page; its ids are typed IDs, written as their bare values.
+        Assert.Equal(
+            $$"""{"items":[{"id":"{{product}}","categoryId":"{{category}}","name":"Desk lamp"}],"number":1,"size":20,"total":1,"totalPages":1,"hasNext":false,"hasPrevious":false}""",
+            await BodyAsync(listed)
+        );
     }
 
     [Fact]

@@ -5,6 +5,7 @@
 - [The Host](#the-host)
 - [Endpoints](#endpoints)
 - [From Result to response](#from-result-to-response)
+- [A Page over HTTP](#a-page-over-http)
 - [Problem responses](#problem-responses)
 - [The caller and the Actor](#the-caller-and-the-actor)
 - [Testing over HTTP](#testing-over-http)
@@ -143,8 +144,12 @@ internal sealed class ListProductsEndpoint : IEndpoint
         routes
             .MapGet(
                 "/products",
-                async (OperationContext context, IGatewayProcessor<CatalogModule> catalog, CancellationToken cancellationToken) =>
-                    (await catalog.QueryAsync(new ListProductsQuery(), context, cancellationToken)).ToHttpResult()
+                async (
+                    HttpPageRequest page,              // ?page=2&size=20&sort=name&direction=desc&filter[name][contains]=lamp
+                    OperationContext context,
+                    IGatewayProcessor<CatalogModule> catalog,
+                    CancellationToken cancellationToken
+                ) => (await catalog.QueryAsync(new ListProductsQuery(page.Request), context, cancellationToken)).ToHttpResult()
             )
             .AllowAnonymousAs(Actor.System("catalog.storefront"));
 }
@@ -155,6 +160,13 @@ internal sealed class ListProductsEndpoint : IEndpoint
 - `ToHttpResult()` is the one place a Result becomes a response. On a `Result` without a value, success answers 204 No Content. On a `Result<T>`, success answers 200 OK with the value as the JSON body.
 - `ToHttpResult(value => ...)` answers another success shape, such as 201 Created with a location: `.ToHttpResult(id => TypedResults.Created($"/catalog/products/{id}", new { id }))`.
 - A failure answers a problem response, whatever overload the endpoint used.
+
+## A Page over HTTP
+
+- An endpoint of a query that answers a Page takes an `HttpPageRequest` parameter, as `ListProducts` does above, and passes its `Request` to the query. ASP.NET Core binds it from the query string: `page` (default 1), `size` (default 20), `sort`, `direction` (`asc` or `desc`) and any number of `filter[field][operator]=value`, the operator by its short name (`eq`, `ne`, `contains`, `startswith`, `gt`, `gte`, `lt`, `lte`).
+- The success body is the Page: `{"items":[…],"number":2,"size":20,"total":42,"totalPages":3,"hasNext":true,"hasPrevious":true}`, from `ToHttpResult()` of the query's `Page<T>`.
+- A query string that cannot be read at all, a page or size that is not a whole number, another direction, an unknown operator, a malformed filter key or a part given twice, answers 400 as a problem response without `errors`. Everything else reaches the query's validator, so a size above the declared maximum, an undeclared sort key or field, an operator the field does not support or a value that does not parse answers 400 with each validation Error's `code` and `target` (`Page.SortUnknown`, `Sort`).
+- Declare and validate the query's paging as [commands-queries-validation.md](commands-queries-validation.md#paging) shows; never read paging parameters by hand.
 
 ## Problem responses
 

@@ -4,6 +4,7 @@
 
 - [Registration](#registration)
 - [Reading](#reading)
+- [Reading a Page](#reading-a-page)
 - [Typed IDs](#typed-ids)
 - [Writing with plain SQL in the Unit of Work](#writing-with-plain-sql-in-the-unit-of-work)
 
@@ -34,22 +35,34 @@ internal sealed class GetProductQueryHandler(IReadConnectionFactory connections)
     }
 }
 
-// Products/Features/ListProducts/: typed IDs as results
+// Products/Features/ListProducts/: typed IDs as results, one Page at a time
 internal sealed record ProductListItemDto(ProductId Id, CategoryId CategoryId, string Name);
 
 internal sealed class ListProductsQueryHandler(IReadConnectionFactory connections)
-    : QueryHandler<ListProductsQuery, List<ProductListItemDto>>
+    : QueryHandler<ListProductsQuery, Page<ProductListItemDto>>
 {
-    public override async Task<Result<List<ProductListItemDto>>> Handle(ListProductsQuery query, CancellationToken cancellationToken)
+    // The Feature writes its WHERE; each declared filter arrives as @{field}_{operator}, null when not asked for.
+    private const string From = """
+        from catalog.products p
+        where not p.is_deleted
+          and (@name_eq is null or p.name = @name_eq)
+          and (@name_contains is null or strpos(p.name, @name_contains) > 0)
+          and (@category_eq is null or p.category_id = @category_eq)
+        """;
+
+    private static readonly PageSql Sql = new PageSql(
+        ListProductsQuery.Paging,
+        select: $"select p.id, p.category_id as categoryid, p.name {From}",
+        count: $"select count(*) {From}"
+    )
+        .OrderBy("name", "p.name")
+        .OrderBy("created", "p.created_at")
+        .ThenBy("p.id");
+
+    public override async Task<Result<Page<ProductListItemDto>>> Handle(ListProductsQuery query, CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        var products = await connection.QueryAsync<ProductListItemDto>(
-            new CommandDefinition(
-                "select id, category_id as categoryid, name from catalog.products where is_deleted = false order by name, id",
-                cancellationToken: cancellationToken
-            )
-        );
-        return products.AsList();
+        return await connection.QueryPageAsync<ProductListItemDto>(Sql, query.Page, cancellationToken: cancellationToken);
     }
 }
 ```
@@ -66,8 +79,19 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
 - Pass the cancellation token through `new CommandDefinition(sql, parameters, cancellationToken: cancellationToken)`; Dapper's overloads that take the SQL and parameters directly take no token.
 - Name each table with its Module's schema (`catalog.products`): the read connection is the Host's, not the Module's. Read only your own Module's schema; another Module's data comes through its Contracts (see [modules.md](modules.md)).
 - Columns are in snake_case (see [persistence.md](persistence.md)); alias each to its member name (`category_id as categoryid`). Dapper matches names without regard to case.
-- Dapper runs exactly the SQL you write; no EF Core query filter reaches it. A removed soft-deletable aggregate keeps its row, marked `is_deleted = true` (see [persistence.md](persistence.md#audit-and-soft-delete)), so every read of a soft-deletable table states `is_deleted = false` itself, as both reads above do. A read that leaves it out returns removed aggregates. State every other predicate the read needs in the SQL too.
+- Dapper runs exactly the SQL you write; no EF Core query filter reaches it. A removed soft-deletable aggregate keeps its row, marked `is_deleted = true` (see [persistence.md](persistence.md#audit-and-soft-delete)), so every read of a soft-deletable table states `is_deleted = false` (or `not is_deleted`) itself, as both reads above do. A read that leaves it out returns removed aggregates. State every other predicate the read needs in the SQL too.
 - Read into an `internal` DTO record declared in the Feature, as above, and return a missing row as the Business Area's `NotFound` Error.
+
+## Reading a Page
+
+`ListProducts` above reads one Page of a list. Its query carries a `PageRequest`, declares what a caller may sort and filter by in a `PageDeclaration`, and checks the request in its validator ([commands-queries-validation.md](commands-queries-validation.md#paging)).
+
+- Write the read's SQL whole, once, in a static `PageSql`: the `SELECT` of the items and the `COUNT` of the same selection, sharing one `FROM` and `WHERE`, as `From` above. End the `SELECT` without `order by`, `limit` or a semicolon; the helper appends them.
+- Map every sort key the declaration declares to your own column with `OrderBy(sortKey, column)`, and name a unique column with `ThenBy`, usually the id, so rows with equal sort values keep one order from Page to Page. The direction applies to both. A sort key the declaration does not declare is never SQL: validation refuses it, and the helper throws before any SQL runs if a request reaches it unvalidated.
+- Each declared filter field and operator is the parameter `@{field}_{operator}`, the operator by its short name: `@name_eq`, `@name_contains`, `@category_eq`. Every one is always bound, to the filter's value as its declared type or to a typed null when the request does not filter on it, so test each in your `WHERE` with `(@x is null or …)`. Use them in both the `SELECT` and the `COUNT`: the `PageSql` constructor throws when either leaves one out, so the total always counts what the items select. A value is only ever a parameter, so SQL in it matches nothing.
+- Write each operator's meaning yourself, and keep it the same as an EF Core read of the same declaration: `strpos(p.name, @name_contains) > 0` is a case-sensitive contains with no `LIKE` wildcards, as EF Core's `Contains` is.
+- Read with `connection.QueryPageAsync<T>(sql, query.Page, parameters, cancellationToken)` on your lease. Pass the read's own parameters, such as a tenant, in `parameters`; `page_size`, `page_offset` and the filter names are the helper's. It runs the `COUNT`, then the `SELECT`, and answers `Page<T>`; a Page beyond the last has no items and the true total. The two run as separate statements, so a change committed between them can make the total differ from the items by that change.
+- Never build SQL from a `PageRequest` yourself: no sort key, field name or value a caller sends belongs in your SQL text.
 
 ## Typed IDs
 

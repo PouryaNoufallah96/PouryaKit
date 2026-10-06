@@ -90,6 +90,54 @@ The comparison sees state at the boundary, so it cannot detect a transient chang
 - Validate input shape here. A business rule that depends on state belongs in the aggregate, through `CheckRule`.
 - Without `PouryaKit.Validation`, the validation step does nothing.
 
+## Paging
+
+A query that reads a list answers one Page of it. It carries a `PageRequest` and answers `Page<T>`; a static `PageDeclaration` beside it says what a caller may sort and filter by, and its validator checks the request against it. The Proving Sample's `ListProducts`:
+
+```csharp
+using FluentValidation;
+using FluentValidation.Results;
+using PouryaKit.Cqrs;
+
+// Products/Features/ListProducts/
+internal sealed record ListProductsQuery(PageRequest Page) : Query<Page<ProductListItemDto>>
+{
+    public static readonly PageDeclaration Paging = new(
+        sorts: ["name", "created"],                // the first is the default
+        filters:
+        [
+            FilterField.Of<string>("name", FilterOperator.Equal, FilterOperator.Contains),
+            FilterField.Of<Guid>("category", FilterOperator.Equal),
+        ],
+        maxSize: 50
+    );
+}
+
+internal sealed class ListProductsQueryValidator : AbstractValidator<ListProductsQuery>
+{
+    public ListProductsQueryValidator() =>
+        RuleFor(query => query.Page)
+            .Cascade(CascadeMode.Stop)
+            .NotNull()
+            .Custom(
+                (page, context) =>
+                {
+                    foreach (var error in ListProductsQuery.Paging.Validate(page).Errors)
+                    {
+                        context.AddFailure(new ValidationFailure(error.Target, error.Message) { ErrorCode = error.Code });
+                    }
+                }
+            );
+}
+```
+
+- `PageRequest` has a 1-based `Number` (default 1), a `Size` (default 20), an optional `Sort` key (null sorts by the declaration's first), a `Direction` (`SortDirection.Ascending` by default) and `Filters`, each a `PageFilter(field, FilterOperator, value)`. A value is of the field's declared type, or text that parses to it, as HTTP sends it.
+- `Page<T>` has `Items`, `Number`, `Size`, the `Total` of the whole filtered selection, and `TotalPages`, `HasNext` and `HasPrevious`. A Page beyond the last has no items and the true total.
+- Declare sort keys and filter fields by name only: a letter followed by letters and digits. A field's value type is string, Guid, int, long, decimal, bool or DateTimeOffset (text without an offset is UTC). `contains` and `startswith` take text only; `gt`, `gte`, `lt` and `lte` take neither text, Guid nor bool. The declaration throws for anything else when the query's type is first used.
+- Check the request in the query's validator with `Validate`, as above, so it runs in the pipeline's one validation step and its Errors come back with the others. Its Error codes are `Page.NumberOutOfRange`, `Page.SizeOutOfRange` (1 to `maxSize`, default 100), `Page.SortUnknown`, `Page.DirectionUnknown`, `Page.FilterUnknown`, `Page.FilterOperatorUnsupported`, `Page.FilterValueInvalid` and `Page.FilterRepeated` (one field and operator given twice), with the targets `Number`, `Size`, `Sort`, `Direction` and `Filters[i]`. No message repeats what the caller sent.
+- The handler reads the Page through Dapper ([dapper-reads.md](dapper-reads.md#reading-a-page)) or an EF Core repository ([persistence.md](persistence.md#reading-a-page)). Both map the declared names to the Feature's own columns or expressions, so no text a caller sends becomes SQL, and both throw before any SQL runs for a request that fails `Validate`: a forgotten validator is a bug that fails loudly, not an open door.
+- An endpoint binds the request from the query string with `HttpPageRequest` ([web.md](web.md#a-page-over-http)).
+
 ## Authorization hook
 
 - The Actor is authenticated and authorized at the external entry point. Add a per-operation rule only when one command or query needs it: an `internal` class implementing `IAuthorizer<TOperation>` for that one concrete command or query, returning `Result.Success()` or a `Forbidden` Error. It runs before validation. Without one, the step does nothing. An authorizer for a base type, a marker interface or an open type fails at startup, because it would never run.

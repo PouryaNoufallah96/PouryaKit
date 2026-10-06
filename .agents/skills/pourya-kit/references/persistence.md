@@ -181,6 +181,39 @@ internal sealed class ProductRepository(IUnitOfWork unitOfWork)
 - Register it in the Module's Composition Root: `module.AddScoped<IProductRepository, ProductRepository>()`. It tracks in the same Unit of Work as the generic repository, so a Feature may use both.
 - The base class gives it no query, no DbSet and no DbContext, so it has no way to save and no way to write around the Unit of Work. Never add one: the Unit of Work saves what the repositories track.
 
+### Reading a Page
+
+A read normally goes through Dapper ([dapper-reads.md](dapper-reads.md#reading-a-page)). When a Feature reads its Page through EF Core instead, a specific repository builds the member on the protected `PageAsync<TResult>`, with `PageExpressions<TAggregate>` mapping each name its query's `PageDeclaration` declares ([commands-queries-validation.md](commands-queries-validation.md#paging)). The Proving Sample reads `ListProducts`'s Page this way in its tests, to prove both helpers answer the same Page:
+
+```csharp
+using Ardalis.Specification;
+using PouryaKit.Cqrs;
+using PouryaKit.Persistence.EFCore;
+
+internal sealed class ProductPages(IUnitOfWork unitOfWork) : EfRepository<Product, ProductId>(unitOfWork)
+{
+    private static readonly PageExpressions<Product> Paging = new PageExpressions<Product>(ListProductsQuery.Paging)
+        .OrderBy("name", product => product.Name)
+        .OrderBy("created", product => product.CreatedAt)
+        .ThenBy(product => product.Id)                                   // unique: equal names keep one order
+        .Filter<string>("name", FilterOperator.Equal, name => product => product.Name == name)
+        .Filter<string>("name", FilterOperator.Contains, name => product => product.Name.Contains(name))
+        .Filter<Guid>("category", FilterOperator.Equal, id => product => product.CategoryId == new CategoryId(id));
+
+    public Task<Page<ProductListItemDto>> PageAsync(PageRequest request, CancellationToken ct) =>
+        PageAsync(new ListItems(), Paging, request, ct);
+
+    private sealed class ListItems : Specification<Product, ProductListItemDto>
+    {
+        public ListItems() => Query.Select(product => new ProductListItemDto(product.Id, product.CategoryId, product.Name));
+    }
+}
+```
+
+- Map every declared sort key with `OrderBy`, every declared field and operator with `Filter`, whose value type must be the field's, and name a unique `ThenBy` key. Each call returns a copy; keep the result in a static field. A request whose sort key or filter is undeclared, or expressions that miss part of the declaration, throw `InvalidOperationException` before any query runs.
+- `PageAsync` applies the specification's criteria and the request's filters, counts that selection, orders it, skips and takes the Page and projects it with the specification's `Select`. Give the specification criteria and a `Select` only: one with ordering, `Skip` or `Take` throws. The global query filters apply, so removed soft-deletable rows stay out.
+- A filter value reaches the database as a parameter of your predicate. `Contains` on PostgreSQL is case-sensitive, as `strpos` is in SQL.
+
 ## The Unit of Work
 
 - Each command Operation runs in one transaction that the Unit of Work begins and owns, and commits in a fixed sequence:

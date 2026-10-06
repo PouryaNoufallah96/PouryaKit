@@ -42,7 +42,7 @@ public sealed class SharedJsonTests(AppFixture app) : HostTest<AppFixture>(app)
         using var listed = JsonDocument.Parse(
             await client.GetStringAsync("/catalog/products", TestContext.Current.CancellationToken)
         );
-        var http = Assert.Single(listed.RootElement.EnumerateArray());
+        var http = Assert.Single(listed.RootElement.GetProperty("items").EnumerateArray());
         // Every subscription to ProductCreatedDomainEvent has an envelope of its own, written by the Host's serializer.
         var bodies = await Fixture.RowsAsync(
             $"select body from wolverine.wolverine_incoming_envelopes where message_type = '{typeof(ProductCreatedDomainEvent).ToMessageTypeName()}' and status = 'Handled'"

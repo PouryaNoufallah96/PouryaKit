@@ -84,7 +84,7 @@ public sealed class PersistencePreparationTests(AppFixture app) : HostTest<AppFi
         );
         Assert.Equal(
             [desk],
-            (await catalog.QueryAsync(new ListProductsQuery(), TestContext.Current.CancellationToken)).Value.Select(
+            (await catalog.QueryAsync(new ListProductsQuery(new PageRequest()), TestContext.Current.CancellationToken)).Value.Items.Select(
                 product => product.Id.Value
             )
         );
