@@ -30,7 +30,14 @@ internal sealed record RemoveProductsCommand(IReadOnlyList<string> Names) : Comm
 ```
 
 - Put `[RequiresPermission(name)]` on the command or query record, one permission each. Name it `<module>.<resource>.<action>` and keep the name in a constant on the record, so tests and grants name it without repeating the string.
-- `module.AddPouryaKitPermissions(assembly)` in the Module's Composition Root registers the check for every command and query of the assembly that declares one, internal ones included, and for nothing else. A Module that declares a permission and never calls it checks nothing, so call it in every Composition Root whose Features declare one.
+- `module.AddPouryaKitPermissions(assembly)` in the Module's Composition Root registers the check for every command and query of the assembly that declares one, internal ones included, and for nothing else. Call it in every Composition Root whose Features declare one.
+- A declared permission whose check no Composition Root registered fails the Host when it is built, so it never runs unchecked. `Build()` throws `InvalidOperationException`, one line per command or query:
+
+  ```text
+  Catalog.Products.Features.RemoveProducts.RemoveProductsCommand declares RequiresPermissionAttribute, but its check is not registered, so it would run unchecked. Call AddPouryaKitPermissions with the assembly Catalog in the Composition Root of CatalogModule.
+  ```
+
+  Fix it by adding `module.AddPouryaKitPermissions(typeof(CatalogModule).Assembly)` to that Composition Root. Any Composition Root may register it, so a check registered from another Module passes, and a Host whose Modules declare no permission needs no Security registration at all. Only the permission check counts: an `IAuthorizer<T>` of the Module's own for the same command does not stand in for it. `AddPouryaKitModules` runs this check; a Host that replaces its service provider factory with `ConfigureContainer`, or an application without Modularity, loses it.
 - The attribute on a type that is not one concrete command or query fails the Host while it is composed: the dispatcher would never check it.
 - The check runs in the pipeline's authorization step, before validation and the Unit of Work, with any other authorizer of the same command or query.
 
@@ -73,7 +80,7 @@ public sealed class CallerPermissions(IHttpContextAccessor http, IOptions<Pourya
 - `HasPermissionAsync(context, permission, ct)` receives the Operation's `OperationContext`, so the answer can depend on the Actor and the tenant. It is asked only for an Operation that is not a continuation.
 - Match the claims to the context's Actor, as `CallerPermissions` does: code inside a request may run an Operation as another Actor, which the caller's claims say nothing about.
 - Independent system work, such as a hosted job running as `Actor.System("catalog.reconciler")`, holds only the permissions the application's source grants that named Actor. Nothing holds a permission by default.
-- A Host whose Modules declare permissions and that registers no `IActorPermissions` fails at start: `AddPouryaKitModules` validates the container.
+- A Host whose Modules declare permissions and that registers no `IActorPermissions` fails when it is built: `AddPouryaKitModules` validates the container.
 
 ## Denial
 
