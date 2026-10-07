@@ -7,6 +7,7 @@ using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
 using PouryaKit.Observability;
+using PouryaKit.Persistence.EFCore;
 using PouryaKit.Security;
 using PouryaKit.Security.JwtBearer;
 using PouryaKit.Web;
@@ -61,6 +62,9 @@ public static class ModularMonolithHost
         // Module retires (PouryaKit:OpenApi:Sunsets).
         builder.Services.AddPouryaKitOpenApi();
         builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
+        // How long an idempotent request's key is kept, and how its expired keys are removed (PouryaKit:Idempotency).
+        // Nothing is configured: 24 hours, cleaned up every hour in batches of 1000.
+        builder.Services.Configure<PouryaKitIdempotencyOptions>(builder.Configuration.GetSection("PouryaKit:Idempotency"));
         // Outgoing calls retry transient failures of safe methods only and carry the Operation Context they are sent
         // with, never the caller's bearer token. A peer that authenticates this Host gets the Host's own credentials.
         var downstream = builder.Services.AddHttpClient(DownstreamClient);
