@@ -1,0 +1,63 @@
+src/PouryaKit.Web.OpenApi/WebOpenApiServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_c3e48ee9620e87 7,102
+  s_bdf0617f846b2b::t_f2a86a532ac948 81-83
+src/PouryaKit.Web/UnmappedEndpointsCheck.cs
+  s_bdf0617f846b2b::t_9a72397e6d8656 16
+  s_bdf0617f846b2b::t_704357e238f7f9 1-15,17-45
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_bdf0617f846b2b::t_000e3dcffe012a 52
+  s_bdf0617f846b2b::t_525251dc066e5f 36-39
+src/PouryaKit.Web.OpenApi/VersionedModuleRouteGroups.cs
+  s_bdf0617f846b2b::t_c3e48ee9620e87 6,55-57,59-64
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_b4c6e57947f0f4 30-34
+  s_bdf0617f846b2b::t_046f38e5aea72b 42-45
+  s_bdf0617f846b2b::t_cbf1bb34e01409 66-67
+src/PouryaKit.Messaging.Wolverine/SnapshotServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_e7aaa0c70ee112 65,79
+src/PouryaKit.Messaging.Wolverine/StartupCheck.cs
+  s_bdf0617f846b2b::t_e7aaa0c70ee112 2,4,12-16,19-25
+src/PouryaKit.Messaging.Wolverine/DelayedCommandServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_e7aaa0c70ee112 85,102
+src/PouryaKit.Messaging.Wolverine/NotificationHandlerServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_e7aaa0c70ee112 94
+tests/ModularMonolith.Tests/IntegrationEventWiringTests.cs
+  s_bdf0617f846b2b::t_2678261a32d1ea 122
+  s_bdf0617f846b2b::t_a24638c8d3b198 8
+src/PouryaKit.Messaging.Wolverine/IntegrationEventServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_e7aaa0c70ee112 56,94,127
+src/PouryaKit.Web/ActorRateLimiting.cs
+  s_bdf0617f846b2b::t_c7aca85cb0d34a 84-87,90-96
+  s_bdf0617f846b2b::t_aa4aa989662751 2
+src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs
+  s_bdf0617f846b2b::t_60e80b87ef479f 74-77
+  s_bdf0617f846b2b::t_863821c9c31d6a 98-101,103-108
+  s_bdf0617f846b2b::t_6a90f4dccb777a 102,121-122
+  s_bdf0617f846b2b::t_a9c75866565295 32,42
+  s_bdf0617f846b2b::t_1620ec40426ae5 123
+src/PouryaKit.Messaging.Wolverine/OutboxCheck.cs
+  s_bdf0617f846b2b::t_6a45e7524f0baf 1-22
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_bdf0617f846b2b::t_dfa2df7b2e7ea7 333
+src/PouryaKit.Messaging.Wolverine/UnregisteredNotificationHandlersCheck.cs
+  s_bdf0617f846b2b::t_40e26b0fe7ae93 1-32
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_bdf0617f846b2b::t_fe2459737eb34c 458-459
+  s_bdf0617f846b2b::t_c827ffe3a76a66 462
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "df7d458460f4280718a6ab0bc22a2aeaf8d98914",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
