@@ -14,12 +14,15 @@ internal sealed class WireNaming : IMessageTypeNaming
     private static readonly Lock Declaring = new();
 
     /// <summary>
-    /// Records the wire name of every Integration Event and Snapshot in <paramref name="wireNames"/> for this process,
-    /// all or none, and returns a problem for each one this process already knows under another name, or that Wolverine
-    /// named before it was declared: Wolverine keeps the first name it gives a type, and its envelopes would carry that one.
+    /// Records the wire name of every Integration Event and Snapshot in <paramref name="wireNames"/>, published by the
+    /// Host or, for the types in <paramref name="received"/>, received from another Host, for this process, all or none,
+    /// and returns a problem for each one this process already knows under another name, or that Wolverine named before it
+    /// was declared: Wolverine keeps the first name it gives a type, and its envelopes would carry that one.
     /// </summary>
-    public static List<string> Declare(IReadOnlyDictionary<Type, string> wireNames)
+    public static List<string> Declare(IReadOnlyDictionary<Type, string> wireNames, IReadOnlySet<Type> received)
     {
+        string As(Type type, string wireName) => $"{type.FullName} is {(received.Contains(type) ? "received" : "published")} as {wireName}";
+
         lock (Declaring)
         {
             List<string> problems =
@@ -27,7 +30,7 @@ internal sealed class WireNaming : IMessageTypeNaming
                 .. wireNames
                     .Where(named => Declared.TryGetValue(named.Key, out var name) && name != named.Value)
                     .Select(named =>
-                        $"{named.Key.FullName} is published as {named.Value}, but this process already sends it as {Declared[named.Key]}; a type keeps one wire name in a process."
+                        $"{As(named.Key, named.Value)}, but this process already sends it as {Declared[named.Key]}; a type keeps one wire name in a process."
                     ),
             ];
             if (problems.Count > 0)
@@ -46,7 +49,7 @@ internal sealed class WireNaming : IMessageTypeNaming
                     .Select(named => (named.Key, Declared: named.Value, Sent: named.Key.ToMessageTypeName()))
                     .Where(named => named.Sent != named.Declared)
                     .Select(named =>
-                        $"{named.Key.FullName} is published as {named.Declared}, but Wolverine named it {named.Sent} before it was declared and would send it under that name. Declare it before anything in the process sends or names it."
+                        $"{As(named.Key, named.Declared)}, but Wolverine named it {named.Sent} before it was declared and would send it under that name. Declare it before anything in the process sends or names it."
                     ),
             ];
         }

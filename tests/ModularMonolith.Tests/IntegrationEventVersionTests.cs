@@ -94,6 +94,24 @@ public sealed class IntegrationEventVersionTests(AppFixture app) : HostTest<AppF
     }
 
     [Fact]
+    public async Task Startup_fails_when_wolverine_would_send_one_message_type_wherever_another_published_type_goes()
+    {
+        // A Host that publishes both and subscribes to neither: a broker between Hosts routes every publication.
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.UsePouryaKitWolverine();
+        builder.Services.Publish<ProducedV1>("tests.produced.v1");
+        builder.Services.Publish<MisproducedV2>(typeof(ProducedV1).FullName!);
+        using var host = builder.Build();
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(
+            $"{typeof(MisproducedV2).FullName}, under the wire name {typeof(ProducedV1).FullName}, would also be sent wherever {typeof(ProducedV1).FullName} is published to, such as its exchange on a broker: Wolverine routes a published type to every message whose wire name, name or full name equals the type's full name, ignoring case. Give it a wire name and a name of its own.",
+            thrown.Message
+        );
+    }
+
+    [Fact]
     public async Task Startup_fails_when_wolverine_would_route_one_message_type_to_the_subscriptions_of_another()
     {
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
@@ -115,6 +133,10 @@ public sealed class IntegrationEventVersionTests(AppFixture app) : HostTest<AppF
 
 // Named for the process by one test only, which refuses them before they are declared.
 internal sealed record RoutedV1(Guid Id);
+
+internal sealed record ProducedV1(Guid Id);
+
+internal sealed record MisproducedV2(Guid Id, string Note);
 
 internal sealed record MisroutedV2(Guid Id, string Note);
 

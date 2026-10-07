@@ -774,6 +774,28 @@ row of the invariants table against RabbitMQ 4.3.6 and PostgreSQL 18.6, one test
 - **The startup check** reads Wolverine's own description of each broker listener (`IBrokerEndpoint`, `EndpointMode`,
   `Endpoint.DeadLetterStorage`), so it names no RabbitMQ type.
 
+The #51 review then found two gaps, fixed in the same ticket:
+
+- **The fan-out never sends a copy round again.** It sends each copy with `EndpointFor` to the local queue of each
+  subscription to the type, never through the type's routes, which include the type's exchange when the Host publishes
+  it. An envelope that reached the queue through a binding the Kit never makes, such as one left by an earlier
+  deployment that received a wire name the Host now publishes, then reaches the subscriptions once more and their
+  Receipts stop it; routed, it would go back to its exchange and round the broker for ever, each time as a new envelope
+  no Receipt recognises
+  (`RabbitMqDeliveryTests.A_publication_that_comes_back_through_a_binding_the_kit_never_makes_is_applied_once_and_never_sent_round_again`).
+  S2's rejection of `EndpointFor` above does not apply here. There, an EF Core outbox stored its envelope `Outgoing`,
+  owner 0, which recovery never hands out. Here the copy is sent from the handler's own context and its durable local
+  queue stores it as an incoming delivery owned by the node (`DurableLocalQueue.StoreAndForwardAsync`, which calls
+  `PrepareForIncomingPersistence`, at `V6.46.0`). A copy in flight when its Host died is handed out again after the
+  restart (`RabbitMqDeliveryTests.A_copy_its_host_was_delivering_when_it_was_killed_is_delivered_after_it_restarts`,
+  red when local queues keep what they receive in memory only).
+- **The Kit never removes a binding.** A deployment that stops receiving a wire name removes its binding from the
+  Host's queue by hand. Left in place, a message of a wire name the Host no longer knows is dead-lettered at the queue,
+  and one the Host now publishes itself is stopped by its subscriptions' Receipts.
+- **Routing collisions include published types,** which a broker routes to their exchanges: a v2 published under its
+  v1's full name is refused at start in a Host that only publishes them
+  (`IntegrationEventVersionTests.Startup_fails_when_wolverine_would_send_one_message_type_wherever_another_published_type_goes`).
+
 ## Amendment (2026-10-07, ticket #49: Integration Event versions)
 
 The decision above stands. One wire name is one version of one contract type, and a new version is a new type under a
