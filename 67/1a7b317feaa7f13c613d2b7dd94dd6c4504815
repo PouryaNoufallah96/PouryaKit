@@ -1,0 +1,86 @@
+tests/ModularMonolith.Tests/RabbitMqDeliveryTests.cs
+  s_5db987750027ae::t_b32466f8464f73 11,372,841-842
+.claude/agent-memory/kit-implementer/cross-process-tracing-and-recipes-facts.md
+  s_5db987750027ae::t_d523c7ffed1341 1-21
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_5db987750027ae::t_3a3b4f7d30fd4d 58
+  s_5db987750027ae::t_378fcaf220d703 77
+  s_5db987750027ae::t_8c2c735dded5f8 1-57,59-76,78-101
+scripts/packaging/inventory.json
+  s_5db987750027ae::t_ac47146e89eb8d 33
+tests/ModularMonolith.Tests/HostRecipeTests.cs
+  s_5db987750027ae::t_bfd8b64e902976 1-330
+docs/foundation-review.md
+  s_5db987750027ae::t_6447d047b728f5 851-852
+samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj
+  s_5db987750027ae::t_a2a4fa3c5cc53e 9-11,19,23
+  s_5db987750027ae::t_5c94bf21edfc8d 8
+scripts/packaging/validate.py
+  s_5db987750027ae::t_ac47146e89eb8d 120,134,322,338-341
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_5db987750027ae::t_cdbbfbc17e6a44 42
+.agents/skills/pourya-kit/references/observability.md
+  s_5db987750027ae::t_0a0caacd9c8ef5 3,67-79,83,109
+samples/ModularMonolith/src/Inventory.Host/Program.cs
+  s_5db987750027ae::t_fb58dbed60dcae 4-7
+Directory.Packages.props
+  s_5db987750027ae::t_33338ee2cce176 28,32-36,39-41
+README.md
+  s_5db987750027ae::t_773a18388d523d 5
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_5db987750027ae::t_e63180acff5be5 20,52,58-59,64,67-68,74-75,102,108,131
+tests/ModularMonolith.Tests/CrossProcessTracingTests.cs
+  s_5db987750027ae::t_85b546b488e67f 6,14-16,19-20,23-25,29,32,36,38-39,41-45,51-84,86-91,93,96-99,101-102
+  s_5db987750027ae::t_72396a81338aaf 1-5,7-13,17-18,21-22,26-28,30-31,33-35,37,40,46-50,85,92,94-95,100,103
+docs/architecture/README.md
+  s_5db987750027ae::t_8561b40c941bf0 163-164,183,192-194,319-321,553
+src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs
+  s_5db987750027ae::t_9507b9da21cd1c 58
+  s_5db987750027ae::t_bdb4c79c776d86 37-39
+  s_5db987750027ae::t_c784de80c2187f 57
+PouryaKit.slnx
+  s_5db987750027ae::t_f368f4d4055829 28
+tests/ModularMonolith.Tests/BrokerFixture.cs
+  s_5db987750027ae::t_2fe691c8fbe7dd 9,117-118,123,140,142,152
+docs/provenance/ModularMonolith.md
+  s_5db987750027ae::t_dfa4186f5e5975 16
+  s_5db987750027ae::t_ee913e33df07dc 17
+samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs
+  s_5db987750027ae::t_802e2555ffb989 1-66,68-152
+  s_5db987750027ae::t_033bca0d491ee3 67
+src/PouryaKit.Messaging.Wolverine/SubscriptionDelivery.cs
+  s_5db987750027ae::t_67b3714487a12f 70-71,80-82
+  s_5db987750027ae::t_77dd08c1fc9ff9 83-84
+samples/ModularMonolith/src/Inventory.Host/InventoryHost.cs
+  s_5db987750027ae::t_2c62c6b1183d46 4,10,16-17,32,34-37,43-44,49-55
+  s_5db987750027ae::t_20838403a6d350 56
+.agents/skills/pourya-kit/references/web.md
+  s_5db987750027ae::t_9b2640273a8e6c 302
+.agents/skills/pourya-kit/SKILL.md
+  s_5db987750027ae::t_51a87226056f90 3,39-40
+docs/acceptance.md
+  s_5db987750027ae::t_823d41f432851e 444-462
+samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj
+  s_5db987750027ae::t_a5780e45fb6031 1-25
+src/PouryaKit.Messaging/OperationContextHeaders.cs
+  s_5db987750027ae::t_baea6f54d64a57 28-35
+docs/adr/0009-w3c-trace-context-through-the-outbox.md
+  s_5db987750027ae::t_944aedb82f5a68 229-291
+  s_5db987750027ae::t_2580f7e33051e1 195-196
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "671a7b317feaa7f13c613d2b7dd94dd6c4504815",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
