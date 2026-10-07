@@ -47,6 +47,30 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Theory]
+    [InlineData("acme")]
+    [InlineData(null)]
+    public async Task The_token_s_own_actor_and_tenant_claims_never_stand_in_for_the_configured_ones(string? tenant)
+    {
+        Dictionary<string, object> claims = new()
+        {
+            ["sub"] = "ada",
+            [ClaimTypes.NameIdentifier] = "mallory",
+            [PouryaKitClaimTypes.Tenant] = "globex",
+        };
+        if (tenant is not null)
+        {
+            claims[ModularMonolithHost.TenantClaim] = tenant;
+        }
+
+        await using var host = await StartHostAsync();
+        using var client = ClientOf(host, TestIssuer.Token(claims));
+
+        var seen = await ContextAsync(client);
+
+        Assert.Equal((new SeenActor("ada", ActorKind.Person), tenant), (seen.Actor, seen.Tenant));
+    }
+
+    [Theory]
     [InlineData("a wrong signature")]
     [InlineData("a wrong issuer")]
     [InlineData("a wrong audience")]
@@ -166,6 +190,33 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
         var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
 
         Assert.Contains(failure, Assert.Single(thrown.Failures));
+    }
+
+    [Fact]
+    public async Task A_host_that_resolves_its_signing_keys_from_the_configuration_resolver_alone_verifies_signatures()
+    {
+        await using var host = await StartHostAsync(builder =>
+            builder.Services.Configure<JwtBearerOptions>(
+                JwtBearerDefaults.AuthenticationScheme,
+                bearer =>
+                {
+                    var token = bearer.TokenValidationParameters;
+                    (token.IssuerSigningKey, token.IssuerSigningKeys) = (null, []);
+                    token.IssuerSigningKeyResolverUsingConfiguration = (_, _, _, _, _) => [TestIssuer.SigningKey];
+                }
+            )
+        );
+        using var trusted = ClientOf(host, TestIssuer.Token(new() { ["sub"] = "ada" }));
+        using var untrusted = ClientOf(
+            host,
+            TestIssuer.Token(new() { ["sub"] = "ada" }, descriptor => descriptor.SigningCredentials = TestIssuer.Untrusted())
+        );
+
+        var seen = await ContextAsync(trusted);
+        var refused = await untrusted.GetAsync("/stub/context", TestContext.Current.CancellationToken);
+
+        Assert.Equal(new SeenActor("ada", ActorKind.Person), seen.Actor);
+        Assert.Equal(HttpStatusCode.Unauthorized, refused.StatusCode);
     }
 
     [Fact]
