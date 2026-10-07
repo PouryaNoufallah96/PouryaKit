@@ -1,0 +1,32 @@
+tests/ModularMonolith.Tests/Unversioned/ModularMonolith.Tests.Unversioned.csproj
+  s_bdf0617f846b2b::t_fa8096bcb267df 2-5,11
+tests/ModularMonolith.Tests/Unversioned/SeparateCommandHandler.cs
+  s_bdf0617f846b2b::t_fa8096bcb267df 1-15
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_bdf0617f846b2b::t_3f9fac8856cb34 10,132-148,191-205
+  s_bdf0617f846b2b::t_11b2810188baf1 206
+src/PouryaKit.Messaging.Wolverine/ModuleOwnershipCheck.cs
+  s_bdf0617f846b2b::t_97520e8a2f6569 7-10,23-26,33-35
+  s_bdf0617f846b2b::t_20468c490ce4af 36
+tests/ModularMonolith.Tests/SnapshotTests.cs
+  s_bdf0617f846b2b::t_9d49c1085220b3 414
+src/PouryaKit.Cqrs/UnitOfWorkCheck.cs
+  s_bdf0617f846b2b::t_35c83294b4a7f4 8-12
+  s_bdf0617f846b2b::t_bbf6cb49940ad5 6-7,20-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5006fddf7cfb75d0f30131b65d6a43113da55316",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
