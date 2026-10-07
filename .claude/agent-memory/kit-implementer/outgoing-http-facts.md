@@ -1,6 +1,6 @@
 ---
 name: outgoing-http-facts
-description: Ticket #48 facts - HttpClientFactory handler scope, standard resilience handler API and unsafe-method rule, WireMock.Net 2.18 traps, testing a reset connection
+description: Ticket #48 facts - HttpClientFactory handler scope, resilience PostConfigure, allow-list vs DisableForUnsafeHttpMethods, header value injection, WireMock.Net traps, mutation-script cwd
 metadata:
   type: project
 ---
@@ -11,8 +11,13 @@ Verified in ticket #48 (2026-10-07), Microsoft.Extensions.Http.Resilience 10.10.
 - `AddStandardResilienceHandler()` returns `IHttpStandardResiliencePipelineBuilder`, which does not chain back to `IHttpClientBuilder`; its `.Configure(Action)` needs `using Microsoft.Extensions.Http.Resilience;`. Its options are named by `pipeline.PipelineName`, so `services.PostConfigure<HttpStandardResilienceOptions>(pipeline.PipelineName, o => o.Retry.DisableForUnsafeHttpMethods())` runs after every application `Configure`.
 - The default standard retry retries POST. `DisableForUnsafeHttpMethods()` also stops a retry after a reset connection (an exception outcome, no response), proved with a raw `TcpListener` that resets each socket (`LingerState = new(true, 0)`): POST 1 connection, GET 4.
 - WireMock.Net 2.18 `WithFault(FaultType.EMPTY_RESPONSE / MALFORMED_RESPONSE_CHUNK)` answered 200 in a probe: it cannot stand in for a broken connection. Scenarios: a mapping with no `WhenStateIs` matches only the start state; `ResetScenario(name)` and `ResetLogEntries()` exist on `IWireMockServer`. The full `WireMock.Net` package brings Roslyn 4.8 (ProtoBuf part) and GraphQL; it restored and ran beside `WolverineFx.RuntimeCompilation` with no conflict.
+- **`DisableForUnsafeHttpMethods()` is an exclude-list** (POST, PUT, PATCH, DELETE, CONNECT): an extension write such as PROPPATCH is still retried. The Kit wraps `Retry.ShouldHandle` with an allow-list of GET/HEAD/OPTIONS/TRACE read from `arguments.Context.GetRequestMessage()` (namespace `Polly`, from the resilience package); an undefined enum value must throw, not fall into "everything else". (#48 fix round, F3/F4.)
+- **`TryAddWithoutValidation` takes CR/LF** from a claims-derived value; check every context header value before writing any (the Kit's rule: 1-256 visible ASCII, no edge space) and apply the same rule when reading a trusted peer's headers (TestServer passes raw header strings through, so `TryAddWithoutValidation` in the test reaches the server unchanged).
+- The `WireMock.Net` test closure holds `XPath2` 1.1.5 (MS-PL) and several packages with only a licence URL; `LicenceTests` reads `RestoredPackage.All`, the `src/` packages only, so it never sees test closures. Recorded in `docs/provenance/ModularMonolith.md`.
+- A mutation script that runs `dotnet test --filter-class` must use the worktree as cwd: from the scratchpad there is no `global.json` with the MTP runner, so VSTest mode answers `MSB1001: Unknown switch` (exit 1, no tests).
+- In a fix round, do not rebase the reviewed commits onto a moved integration branch: the reviewers' base (here `f76463b`) must stay; report the move instead.
 - The worktree guard refused a `python3 - <<'EOF'` edit of `AppFixture.cs` (cause unclear; the same shape passed for other files); the Edit tool worked.
-- Files the #48 brief left out that its change made stale: `.agents/skills/pourya-kit/references/security.md` ("An HTTP request always starts a new chain"), the Web row of `SKILL.md`, and `scripts/packaging/` consumers (no Web HTTP-client use).
+- A ticket that changes what a Capability does also touches its `SKILL.md` row, sentences in other skill references (security.md said every HTTP request starts a new chain), `README.md` line 5, `docs/provenance/<package>.md` and `scripts/packaging/consumers/<package>.cs`; ask for them in `allowed_files` up front.
 
 **Why:** each decided the #48 design or would cost a round on #52/#53.
 **How to apply:** for #52 (ServiceDefaults recipes, one resilience pipeline), #53, and any outgoing HTTP or trusted-peer work. Related: [[web-aspnetcore-facts]], [[security-permission-facts]], [[worktree-and-check-gotchas]].
