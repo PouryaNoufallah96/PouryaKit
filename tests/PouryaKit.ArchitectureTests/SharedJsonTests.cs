@@ -6,9 +6,9 @@ using PouryaKit.Domain;
 namespace PouryaKit.ArchitectureTests;
 
 // Spec #33, user story 8: one JSON representation, owned by Domain. Web and Messaging.Wolverine apply Domain's
-// UsePouryaKitJson to the options their framework hands them, Cqrs to the options it records an idempotent
-// command's response with (#42), and Caching to the options it stores a cached query's answer with (#43); no other code
-// sets JSON options up its own way.
+// UsePouryaKitJson to the options their framework hands them, Messaging.Wolverine as UsePouryaKitWireJson, the same
+// representation read strictly (#60), Cqrs to the options it records an idempotent command's response with (#42), and
+// Caching to the options it stores a cached query's answer with (#43); no other code sets JSON options up its own way.
 public sealed class SharedJsonTests
 {
     private static readonly Assembly Domain = typeof(TypedId).Assembly;
@@ -24,10 +24,26 @@ public sealed class SharedJsonTests
                 "PouryaKit.Messaging.Wolverine.WolverineHostApplicationBuilderExtensions",
                 "PouryaKit.Web.WebServiceCollectionExtensions",
             ],
-            Sample.KitPackages.SelectMany(Il.CallsIn).Where(AppliesKitJson).Select(call => call.Owner.FullName).Distinct().Order(StringComparer.Ordinal)
+            Sample.KitPackages.Where(package => package != Domain).SelectMany(Il.CallsIn).Where(AppliesKitJson).Select(call => call.Owner.FullName).Distinct().Order(StringComparer.Ordinal)
         );
         // Domain itself is where the options are set up, and the rule sees it.
         Assert.Contains("PouryaKit.Domain.JsonSerializerOptionsExtensions creates TypedIdJsonConverterFactory.", OwnJsonSetups(Domain));
+    }
+
+    // A body of another shape is never handled with defaults where it crosses between Hosts or waits in the store, while
+    // an HTTP client, a cached answer and a recorded response are read as before.
+    [Fact]
+    public void Only_messaging_wolverine_reads_strictly_and_web_cqrs_and_caching_keep_the_lenient_reading()
+    {
+        var calls = Sample.KitPackages.Where(package => package != Domain).SelectMany(Il.CallsIn).Where(AppliesKitJson).ToList();
+        string[] Callers(string method) =>
+            [.. calls.Where(call => call.Callee.Name == method).Select(call => call.Owner.FullName!).Distinct().Order(StringComparer.Ordinal)];
+
+        Assert.Equal(["PouryaKit.Messaging.Wolverine.WolverineHostApplicationBuilderExtensions"], Callers(nameof(JsonSerializerOptionsExtensions.UsePouryaKitWireJson)));
+        Assert.Equal(
+            ["PouryaKit.Caching.HybridQueryCache", "PouryaKit.Cqrs.Dispatcher", "PouryaKit.Web.WebServiceCollectionExtensions"],
+            Callers(nameof(JsonSerializerOptionsExtensions.UsePouryaKitJson))
+        );
     }
 
     [Fact]
@@ -43,8 +59,8 @@ public sealed class SharedJsonTests
         );
     }
 
-    // A method may create options only to apply UsePouryaKitJson to them; nothing else sets an option or adds the
-    // typed-ID converter itself.
+    // A method may create options only to apply UsePouryaKitJson or UsePouryaKitWireJson to them; nothing else sets an
+    // option or adds the typed-ID converter itself.
     private static IEnumerable<string> OwnJsonSetups(Assembly assembly)
     {
         var calls = Il.CallsIn(assembly).ToList();
@@ -68,5 +84,5 @@ public sealed class SharedJsonTests
 
     private static bool AppliesKitJson(Il.Call call) =>
         call.Callee.DeclaringType == typeof(JsonSerializerOptionsExtensions)
-        && call.Callee.Name == nameof(JsonSerializerOptionsExtensions.UsePouryaKitJson);
+        && call.Callee.Name is nameof(JsonSerializerOptionsExtensions.UsePouryaKitJson) or nameof(JsonSerializerOptionsExtensions.UsePouryaKitWireJson);
 }

@@ -36,7 +36,7 @@ public static class RabbitMqHostApplicationBuilderExtensions
             if (!MessageNames.IsValid(serviceName))
             {
                 throw new ArgumentException(
-                    $"The service name {serviceName} names the Host's queue on the broker; use letters and digits in segments joined by single dots or hyphens.",
+                    $"The service name {serviceName} names the Host's queue on the broker; use letters and digits in segments joined by single dots or hyphens, not beginning with amq., which RabbitMQ reserves.",
                     nameof(serviceName)
                 );
             }

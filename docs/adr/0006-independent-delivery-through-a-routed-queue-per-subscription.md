@@ -655,14 +655,20 @@ None is reciprocal-only or commercial (ADR 0002). Testcontainers 4.15.0 marks it
   is delivered as it is today. The subscription is the local queue's name, and no broker address maps to a subscription.
 - **`ServiceName` is unique per kind of Host across the broker.** Instances of one Host share its queue as competing
   receivers, which is intended. Two different Hosts with the same name would split the queue's messages, and the Kit
-  checks no name across Hosts. #51 documents the rule, and the risk if it is broken.
+  checks no name across Hosts. #51 documents the rule, and the risk if it is broken. It is a deployment rule because no
+  check is possible (ticket #60): on the broker a replica and a foreign Host are indistinguishable. Every instance of a
+  Host consumes under the same consumer tag, each Host has its own database, so Wolverine's node registry never sees
+  another Host's nodes, and the broker compares only its own queue arguments when a queue is declared again.
 - **Envelope identity.** The store keeps `MessageIdentity.IdOnly`; `IdAndDestination` is not required, because no
   Host listens to one envelope on two endpoints. The broker envelope has one id. Each local copy has an id of its own.
   The Receipt's identity is the Domain Event id header, or the Snapshot's derived identity, and never an envelope id.
 - **Dead letters.** `DisableDeadLetterQueueing()`, so that dead letters stay in Wolverine's storage (#17).
 - **Dead letters at the Host's broker queue (inferred, not tested).** A failure before or during the fan-out is
   dead-lettered at `rabbitmq://queue/{ServiceName}`, which names no subscription. Examples are an unknown wire name, a
-  body that cannot be deserialized, or a store error while the copies are written. The reasons:
+  body that cannot be read into the contract type, or a store error while the copies are written. Until ticket #60 a
+  body of another shape was read, with default values, and only a malformed body or a token of the wrong JSON type
+  failed; since then a body that lacks a member the contract requires, or carries null for a non-nullable one, fails
+  too (the #60 amendment below). The reasons:
   - the global failure policy (`Rmq.Kit/BrokerTopology.cs:92`) and `UnknownMessageBehavior.DeadLetterQueue` apply to
     the broker listener too;
   - a failure while the copies are flushed moves the envelope to the error queue
@@ -910,6 +916,63 @@ effect of the one before it.
   `RecurringCommandTests.A_second_chain_a_starting_host_stores_while_an_occurrence_runs_applies_nothing_and_ends`).
   The guarantee is one database effect per declaration and occurrence time; the Kit claims no exactly-once run and
   nothing for an effect outside the database.
+
+## Amendment (2026-10-07, ticket #60: strict wire reading and reserved names)
+
+The decision above stands. Wolverine read every envelope body with the Kit's lenient JSON (`UsePouryaKitJson`), so a
+body of another shape under a wire name, such as one a publishing Host writes from a contract of its own, was read into
+the receiving contract type with default values and the handler ran. Ticket #60 closes that gap where messages are
+read, and moves two broker rules to registration or to deployment.
+
+- **Envelopes are read strictly.** `UsePouryaKitWolverine` gives Wolverine's System.Text.Json serializer
+  `UsePouryaKitWireJson()`: the Kit's one representation with .NET 10's `RespectRequiredConstructorParameters` and
+  `RespectNullableAnnotations` on. One factory, one stack (spec #33): HTTP bodies, cached answers and recorded responses
+  keep the lenient reading, pinned by `SharedJsonTests.Only_messaging_wolverine_reads_strictly_and_web_cqrs_and_caching_keep_the_lenient_reading`
+  and `WebTests.A_body_without_a_member_binds_it_as_its_default_and_validation_answers_400_for_it`.
+- **The rule.** A body is read only when it carries every member the contract requires, each constructor parameter
+  without a default value and each `required` member, and none of them is null where the contract's nullable annotations
+  forbid it. System.Text.Json sees the annotations of properties and constructor parameters compiled with nullable
+  reference types enabled, not of collection elements or generic arguments, and a contract whose members are settable or
+  `init` properties without `required` requires none. The guarantee therefore holds for the positional records with
+  nullable reference types the Kit's Contracts use. The same options write: a null in a non-nullable member throws when
+  the Unit of Work writes the message to the Outbox, because Wolverine's EF Core outbox serializes an envelope as it adds
+  it to the transaction (`EfCoreEnvelopeTransaction.PersistOutgoingAsync`, `OutgoingMessage`, read decompiled from
+  WolverineFx.EntityFrameworkCore 6.46.0), so the publishing delivery fails and nothing commits. That side is inferred
+  and not pinned by a test.
+- **Where the failure lands** (decompiled from WolverineFx 6.46.0 and WolverineFx.RDBMS 6.46.0):
+  `HandlerPipeline.TryDeserializeEnvelope` catches the `JsonException` thrown by `SystemTextJsonSerializer.ReadFromData`
+  and returns `MoveToErrorQueue`, so the failure policy's retries never apply. `MessageContext.MoveToDeadLetterQueueAsync`
+  finds no native dead-letter queue (`DisableDeadLetterQueueing()`) and calls `IMessageInbox.MoveToDeadLetterStorageAsync`,
+  which deletes the incoming row and writes a `wolverine_dead_letters` row with the exception's type and message
+  (`DatabasePersistence.ConfigureDeadLetterCommands`). Across a broker the body is read at the Host's queue, before the
+  fan-out, so the dead letter is received at `rabbitmq://queue/{ServiceName}` and no subscription receives a copy:
+  `StrictWireReadingTests.A_body_without_a_member_its_contract_requires_or_with_null_for_one_is_dead_lettered_at_the_host_queue_with_the_error_and_never_handled`,
+  two Hosts on RabbitMQ, red with the lenient reader, under which the handler ran with a null name. Inside one Host the
+  first attempt of a local delivery is handed the published instance; a stored retry, a recovered delivery and a replay
+  are read strictly, so a Domain Event or delayed command stored by a build whose type has since gained a required member
+  is dead-lettered instead of run with a default.
+- **Unknown members are skipped,** the owner's lean, decided on this evidence. A member the body carries and the
+  contract lacks is ignored (`JsonUnmappedMemberHandling.Skip`, set explicitly). The versioning rule (#49) makes "a change
+  receivers could not read" a new version, which presumes changes they can read; skipping is what makes adding a member
+  one of them, so a publisher can add one while receiving Hosts, or a stored delivery's next build, run without it during
+  a rollout. System.Text.Json, Wolverine and the tolerant readers of messaging platforms skip too. An unknown member never
+  leaves a default in the receiver, since every member the receiver reads is checked: the required and nullable rules
+  alone close the silent-default class. The trade-off: a member a publisher adds stays invisible to a receiver until its
+  contract has it, and a body of another shape that happens to carry every member the receiving contract requires is
+  read. `JsonUnmappedMemberHandling.Disallow` would refuse it, and would dead-letter every message of a rollout that adds
+  a member. Pinned by `StrictWireReadingTests.A_body_with_a_member_its_contract_lacks_is_handled_with_the_members_it_has`,
+  red with `Disallow`.
+- **Reserved broker names are refused at registration.** RabbitMQ 4.3.6 refuses to declare a queue or exchange whose name
+  begins with `amq.` (403 `ACCESS_REFUSED`, "contains reserved prefix 'amq.*'", observed with a probe in this ticket), so
+  such a wire name or service name failed late, when the Host started, at the broker. `MessageNames.IsValid` now refuses
+  the prefix for every name it checks: wire names in `Publish`, `PublishSnapshot`, `Receive` and `ReceiveSnapshot`,
+  subscription and delayed command names, and the service name of `UsePouryaKitRabbitMq`, each with the rule in the
+  message. The broker refuses only the lower-case prefix; the Kit refuses it in any case, because it compares names
+  ignoring case and Wolverine's own exchange check lower-cases the name (`RabbitMqExchange.CheckAsync`, WolverineFx.RabbitMQ
+  6.46.0). Pinned by `IntegrationEventWiringTests.A_composition_root_fails_on` and
+  `IntegrationEventWiringTests.A_service_name_rabbitmq_reserves_is_refused_when_the_host_joins_the_broker`.
+- **Service-name uniqueness is a deployment rule,** with no check, for the reasons in the `ServiceName` bullet of the
+  #50 amendment.
 
 ## Amendment (2026-10-07, ticket #61: a declaration's Module comes from the builder it is made on)
 

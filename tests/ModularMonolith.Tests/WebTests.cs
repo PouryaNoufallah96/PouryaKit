@@ -82,6 +82,30 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
     }
 
+    // HTTP bodies keep the lenient reading; only envelopes are read strictly (#60). A member the body lacks binds as its
+    // default and reaches the validator, where a strict read would refuse the body before any validation.
+    [Fact]
+    public async Task A_body_without_a_member_binds_it_as_its_default_and_validation_answers_400_for_it()
+    {
+        using var client = Fixture.Client("ada");
+
+        var response = await client.PostAsJsonAsync(
+            "/catalog/products",
+            new { productId = Guid.CreateVersion7(), categoryId = Guid.CreateVersion7() },
+            IdempotentRequests.NewKey(),
+            TestContext.Current.CancellationToken
+        );
+
+        var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
+        Assert.Equal(
+            [("NotEmptyValidator", "Name")],
+            problem
+                .GetProperty("errors")
+                .EnumerateArray()
+                .Select(error => (error.GetProperty("code").GetString(), error.GetProperty("target").GetString()))
+        );
+    }
+
     [Fact]
     public async Task A_missing_product_answers_404_with_its_error()
     {
