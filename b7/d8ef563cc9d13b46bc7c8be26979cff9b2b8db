@@ -1,0 +1,26 @@
+.agents/skills/pourya-kit/references/templates.md
+  s_0d5a1b290c2d36::t_12b5bd220c49a0 92
+docs/architecture/README.md
+  s_0d5a1b290c2d36::t_12b5bd220c49a0 622
+.claude/agent-memory/kit-implementer/template-package-facts.md
+  s_0d5a1b290c2d36::t_c2295da10c9a3c 11-12
+docs/acceptance.md
+  s_0d5a1b290c2d36::t_dbd0934948aa29 525-526
+  s_0d5a1b290c2d36::t_12b5bd220c49a0 522
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b7d8ef563cc9d13b46bc7c8be26979cff9b2b8db",
+  "prompts": {},
+  "sessions": {
+    "s_0d5a1b290c2d36": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5bdb6a50-6bfa-4dc6-9059-d46d18b45597",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
