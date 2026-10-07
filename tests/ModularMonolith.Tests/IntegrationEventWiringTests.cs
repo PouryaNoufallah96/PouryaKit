@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
+using Wolverine.Util;
 
 namespace ModularMonolith.Tests;
 
@@ -101,6 +102,23 @@ public sealed class IntegrationEventWiringTests
     }
 
     [Fact]
+    public async Task Startup_fails_on_a_received_integration_event_wolverine_named_before_it_was_declared_and_says_it_is_received()
+    {
+        var named = typeof(EarlyReceivedV1).ToMessageTypeName();
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.UsePouryaKitWolverine();
+        builder.Services.Receive<EarlyReceivedV1>("tests.early-received.v1");
+        using var host = builder.Build();
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(
+            $"{typeof(EarlyReceivedV1).FullName} is received as tests.early-received.v1, but Wolverine named it {named} before it was declared and would send it under that name. Declare it before anything in the process sends or names it.",
+            thrown.Message
+        );
+    }
+
+    [Fact]
     public void Inventory_and_billing_know_catalog_only_through_its_contracts_and_no_contract_or_module_references_a_transport()
     {
         var inventory = ReferencedBy(typeof(InventoryModule).Assembly);
@@ -125,3 +143,6 @@ public sealed class IntegrationEventWiringTests
 
     private static List<string> ReferencedBy(Assembly assembly) => [.. assembly.GetReferencedAssemblies().Select(name => name.Name!)];
 }
+
+// Named for the process by one test only, before it is declared.
+internal sealed record EarlyReceivedV1(Guid Id);

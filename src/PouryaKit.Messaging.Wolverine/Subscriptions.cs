@@ -43,6 +43,9 @@ internal sealed class Subscriptions : IWireNames
 
     public bool IsSnapshot(Type message) => _snapshots.ContainsKey(message) || _received.GetValueOrDefault(message).IsSnapshot;
 
+    /// <summary>Every Integration Event and Snapshot this Host receives from another Host.</summary>
+    public IReadOnlySet<Type> ReceivedTypes => _received.Keys.ToHashSet();
+
     /// <summary>The wire name of every Integration Event and Snapshot that has one in this Host: published or received.</summary>
     public IReadOnlyDictionary<Type, string> WireNames =>
         _publications
@@ -273,10 +276,11 @@ internal sealed class Subscriptions : IWireNames
     }
 
     /// <summary>
-    /// A problem for each message type of the Host that Wolverine would also route to the subscriptions of another
-    /// subscribed type: Wolverine 6.46.0 routes a type to every message whose wire name, name or full name equals that
-    /// type's full name, ignoring case (<c>Subscription.Matches</c>, <c>RoutingScope.Type</c>). A v2 published under
-    /// the full name of its v1 would reach every v1 subscription.
+    /// A problem for each message type of the Host that Wolverine would also route where another type is routed: to the
+    /// subscriptions of a subscribed type, and to wherever a transport between Hosts sends a published type, such as its
+    /// exchange on a broker. Wolverine 6.46.0 routes a type to every message whose wire name, name or full name equals
+    /// that type's full name, ignoring case (<c>Subscription.Matches</c>, <c>RoutingScope.Type</c>). A v2 published under
+    /// the full name of its v1 would reach every v1 subscription, and every Host that receives v1.
     /// </summary>
     public List<string> RoutingCollisions()
     {
@@ -287,16 +291,19 @@ internal sealed class Subscriptions : IWireNames
                 .Where(type => type.IsAssignableTo(typeof(DomainEvent)))
                 .Select(type => (type, MessageNames.WireNameOf(type))),
         ];
+        HashSet<Type> subscribed = [.. MessageTypes];
         return
         [
-            .. from routed in MessageTypes
+            .. from routed in subscribed.Union(_publications.Keys)
             from message in named
             where message.Type != routed
                 && new[] { message.WireName, message.Type.Name, message.Type.FullName }.Contains(
                     routed.FullName,
                     StringComparer.OrdinalIgnoreCase
                 )
-            select $"{message.Type.FullName}, under the wire name {message.WireName}, would also reach every subscription of {routed.FullName}: Wolverine routes a subscribed type to every message whose wire name, name or full name equals the type's full name, ignoring case. Give it a wire name and a name of its own.",
+            select subscribed.Contains(routed)
+                ? $"{message.Type.FullName}, under the wire name {message.WireName}, would also reach every subscription of {routed.FullName}: Wolverine routes a subscribed type to every message whose wire name, name or full name equals the type's full name, ignoring case. Give it a wire name and a name of its own."
+                : $"{message.Type.FullName}, under the wire name {message.WireName}, would also be sent wherever {routed.FullName} is published to, such as its exchange on a broker: Wolverine routes a published type to every message whose wire name, name or full name equals the type's full name, ignoring case. Give it a wire name and a name of its own.",
         ];
     }
 

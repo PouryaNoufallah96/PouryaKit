@@ -26,7 +26,7 @@ internal sealed class PouryaKitWolverineExtension(
         ];
         if (problems.Count == 0)
         {
-            problems.AddRange(WireNaming.Declare(subscriptions.WireNames));
+            problems.AddRange(WireNaming.Declare(subscriptions.WireNames, subscriptions.ReceivedTypes));
         }
 
         if (problems.Count > 0)

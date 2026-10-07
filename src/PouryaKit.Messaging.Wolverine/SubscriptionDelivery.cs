@@ -21,18 +21,9 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
     public override async Task HandleAsync(MessageContext context, CancellationToken cancellation)
     {
         var envelope = context.Envelope!;
-        // An envelope from another Host arrives once, at this Host's queue on a broker (ADR 0006, ticket #50 amendment),
-        // and is published again here with the Kit's headers: one copy per subscription on its local queue, stored before
-        // this envelope is marked handled, so a crash in between fans it out again and each copy finds its Receipt.
         if (envelope.Destination!.Scheme != TransportConstants.Local)
         {
-            DeliveryOptions copies = new();
-            foreach (var (name, value) in envelope.Headers.Where(header => header.Key.StartsWith(KitHeaders, StringComparison.Ordinal)))
-            {
-                copies.Headers[name] = value;
-            }
-
-            await context.PublishAsync(envelope.Message!, copies);
+            await FanOutAsync(context, envelope);
             return;
         }
 
@@ -56,6 +47,33 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
         {
             throw subscription.Failed(result.Errors);
         }
+    }
+
+    // An envelope from another Host arrives once, at this Host's queue on a broker (ADR 0006, ticket #50 amendment), and
+    // is sent again to the local queue of each subscription to its type, and nowhere else: through the type's routes it
+    // would also reach any broker route the type has, and an envelope that came through a binding the Kit never made would
+    // go round that broker for ever, each time under a new id. Each copy is stored as an incoming delivery of its queue
+    // before this envelope is marked handled, so recovery hands out a copy whose Host died, and a crash in between fans
+    // the envelope out again, where each copy finds its Receipt.
+    private async Task FanOutAsync(MessageContext context, Envelope envelope)
+    {
+        var message = envelope.Message!;
+        foreach (var subscription in subscriptions.All.Where(subscription => subscription.Message == message.GetType()))
+        {
+            await context.EndpointFor(new Uri($"local://{subscription.Name}")).SendAsync(message, CopiesOf(envelope));
+        }
+    }
+
+    // Every copy carries the Kit's headers of the envelope it was fanned out from, and no other.
+    private static DeliveryOptions CopiesOf(Envelope envelope)
+    {
+        DeliveryOptions copies = new();
+        foreach (var (name, value) in envelope.Headers.Where(header => header.Key.StartsWith(KitHeaders, StringComparison.Ordinal)))
+        {
+            copies.Headers[name] = value;
+        }
+
+        return copies;
     }
 
     private static Guid IntegrationEventIdentity(Envelope envelope) =>
