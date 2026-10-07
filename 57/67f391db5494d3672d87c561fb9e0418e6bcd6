@@ -1,0 +1,43 @@
+docs/architecture/README.md
+  s_6c3c3736ba14ff::t_5d23445e4513db 460
+tests/ModularMonolith.Tests/WebDefaultsTests.cs
+  s_6c3c3736ba14ff::t_6f524a976fb987 7-8,148,155-159,163-187,258-265
+  s_6c3c3736ba14ff::t_cdd4fe3ea33ff2 266-268
+.claude/agent-memory/kit-implementer/web-defaults-facts.md
+  s_6c3c3736ba14ff::t_4ccd7ce9dbf250 17
+src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs
+  s_6c3c3736ba14ff::t_510a328e3dcbfd 65
+  s_6c3c3736ba14ff::t_42e3cbbaa58783 77-79,84-86,88-90
+docs/provenance/PouryaKit.Web.md
+  s_6c3c3736ba14ff::t_5d23445e4513db 127
+docs/foundation-review.md
+  s_6c3c3736ba14ff::t_5d23445e4513db 836
+src/PouryaKit.Web/ActorRateLimiting.cs
+  s_6c3c3736ba14ff::t_5d23445e4513db 11-12,18,25-26,34-35,38,83-96
+  s_6c3c3736ba14ff::t_6f524a976fb987 16-17
+.agents/skills/pourya-kit/references/web.md
+  s_6c3c3736ba14ff::t_5d23445e4513db 280
+src/PouryaKit.Web/PouryaKitRateLimitOptions.cs
+  s_6c3c3736ba14ff::t_5d23445e4513db 4-7,9
+  s_6c3c3736ba14ff::t_6f524a976fb987 8
+src/PouryaKit.Web/HttpCallerContext.cs
+  s_6c3c3736ba14ff::t_8329f5f588b66f 1-51
+docs/acceptance.md
+  s_6c3c3736ba14ff::t_6f524a976fb987 273-274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5767f391db5494d3672d87c561fb9e0418e6bcd6",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
