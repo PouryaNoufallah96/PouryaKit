@@ -59,7 +59,7 @@ internal sealed class RecurringCommandStart(DelayedCommandDeclarations declarati
             ?? throw new InvalidOperationException(
                 $"The recurring command {declared.Name} runs, but nothing writes delayed commands to an Outbox. Call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore on the Host."
             )
-        ).Add(occurrence, at);
+        ).AddOccurrence(occurrence, at);
     }
 
     public Task StartingAsync(CancellationToken cancellationToken) => Task.CompletedTask;

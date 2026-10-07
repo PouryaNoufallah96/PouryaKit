@@ -44,6 +44,31 @@ internal sealed class ScheduleNoteThenFailCommandHandler(
     }
 }
 
+// Schedules a note for two seconds later under the name stub.kind-changed, which only a test's own Host declares: as a
+// delayed command in the Host that schedules it, and as a recurring command in the Host that finds it stored.
+internal sealed record ScheduleKindChangedNoteCommand(string Text) : Command;
+
+internal sealed class ScheduleKindChangedNoteCommandHandler(IDelayedCommands later, TimeProvider time)
+    : CommandHandler<ScheduleKindChangedNoteCommand>
+{
+    public override Task<Result> Handle(ScheduleKindChangedNoteCommand command, CancellationToken cancellationToken)
+    {
+        later.Schedule(new WriteKindChangedNoteCommand(command.Text), time.GetUtcNow().AddSeconds(2));
+        return Task.FromResult(Result.Success());
+    }
+}
+
+internal sealed record WriteKindChangedNoteCommand(string Text) : Command;
+
+internal sealed class WriteKindChangedNoteCommandHandler(IRepository<Note, NoteId> notes) : CommandHandler<WriteKindChangedNoteCommand>
+{
+    public override async Task<Result> Handle(WriteKindChangedNoteCommand command, CancellationToken cancellationToken)
+    {
+        await notes.AddAsync(Note.Write(command.Text), cancellationToken);
+        return Result.Success();
+    }
+}
+
 internal sealed record WriteDelayedNoteCommand(string Text) : Command;
 
 internal sealed class WriteDelayedNoteCommandHandler(IRepository<Note, NoteId> notes) : CommandHandler<WriteDelayedNoteCommand>
