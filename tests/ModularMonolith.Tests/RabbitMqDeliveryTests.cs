@@ -8,6 +8,7 @@ using Catalog.Products.Features.RemoveProducts;
 using Catalog.Products.Features.RenameProduct;
 using Inventory;
 using Inventory.Host;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ModularMonolith.Host;
@@ -368,7 +369,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
     public async Task A_retry_waiting_in_the_other_host_survives_its_kill_and_a_publication_made_while_it_is_down_arrives_after_it_starts()
     {
         var environment = await broker.CreateEnvironmentAsync();
-        Action<HostApplicationBuilder> slowRetry = builder =>
+        Action<WebApplicationBuilder> slowRetry = builder =>
             builder.Services.Configure<PouryaKitMessagingOptions>(messaging => messaging.RetryDelays = [TimeSpan.FromSeconds(4)]);
         var inventory = await environment.StartInventoryHostAsync(configure: slowRetry);
         await using var catalog = await environment.StartCatalogHostAsync();
@@ -837,6 +838,8 @@ internal sealed class InventoryProcess : IDisposable
                 ["DOTNET_ENVIRONMENT"] = "Development",
                 ["ConnectionStrings__app"] = environment.Inventory,
                 [$"ConnectionStrings__{InventoryHost.BrokerConnection}"] = environment.Broker.ToString(),
+                // Its health endpoints on a port of the system's choosing, so no other process's port is in the way.
+                ["ASPNETCORE_URLS"] = "http://127.0.0.1:0",
             },
         };
         var process = new InventoryProcess(Process.Start(start) ?? throw new InvalidOperationException("dotnet did not start."));

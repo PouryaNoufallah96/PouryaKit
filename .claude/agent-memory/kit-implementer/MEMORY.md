@@ -39,3 +39,4 @@
 - [Idempotency facts](idempotency-facts.md) — #42: request id on OperationContext (Gateway scope), on conflict do nothing vs 23505, lock-wait proof, EF1002, endpoint opt-in ripple
 - [RabbitMQ transport facts](rabbitmq-transport-facts.md) — #51: stub://replies listener, IBrokerEndpoint/DeadLetterStorage checks, Catalog IVT decides test placement
 - [Caching facts](caching-facts.md) — #43: HybridCache drops the caller's ExecutionContext, factory throw stores nothing, StampedeJoin proof, Redis write lag
+- [Cross-process tracing and recipe facts](cross-process-tracing-and-recipes-facts.md) — #52: copies lose parent-id at fan-out, defaults pipeline name, OTel providers as global listeners, health/Serilog proofs

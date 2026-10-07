@@ -34,7 +34,9 @@ public static class OperationContextHeaderExtensions
     // The context of the Operation a delivery runs: a trusted continuation of the one that published the message, with
     // the same Actor, tenant and correlation, caused by it, and an OperationId of its own. Trusted because the Kit's
     // Outbox wrote these headers when that authorized Operation committed. Beside it, the trace context of the activity
-    // current at publish: Wolverine's parent-id with the Kit's tracestate, default when the envelope names no parent.
+    // current at publish: Wolverine's parent-id with the Kit's tracestate, default when the envelope names no parent. A
+    // copy fanned out from another Host's message has no parent-id of its own unless Wolverine's span was current at the
+    // fan-out; the Kit's traceparent header then names the publishing Operation.
     internal static (OperationContext Context, ActivityContext TraceParent) ContinuedOperationContext(Envelope envelope)
     {
         string Header(string name) =>
@@ -52,7 +54,8 @@ public static class OperationContextHeaderExtensions
         };
         envelope.Headers.TryGetValue(OperationContextHeaders.Tenant, out var tenant);
         envelope.Headers.TryGetValue(OperationContextHeaders.TraceState, out var traceState);
-        ActivityContext.TryParse(envelope.ParentId, traceState, isRemote: true, out var traceParent);
+        var parent = envelope.ParentId ?? envelope.Headers.GetValueOrDefault(OperationContextHeaders.TraceParent);
+        ActivityContext.TryParse(parent, traceState, isRemote: true, out var traceParent);
         return (
             OperationContext.RestoreTrusted(
                 actor,

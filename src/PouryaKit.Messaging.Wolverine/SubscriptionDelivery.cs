@@ -67,13 +67,19 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
         }
     }
 
-    // Every copy carries the Kit's headers of the envelope it was fanned out from, and no other.
+    // Every copy carries the Kit's headers of the envelope it was fanned out from, and no other, and that envelope's
+    // parent: Wolverine replaces each copy's own with the activity current here.
     private static DeliveryOptions CopiesOf(Envelope envelope)
     {
         DeliveryOptions copies = new();
         foreach (var (name, value) in envelope.Headers.Where(header => header.Key.StartsWith(KitHeaders, StringComparison.Ordinal)))
         {
             copies.Headers[name] = value;
+        }
+
+        if (envelope.ParentId is { } parent)
+        {
+            copies.Headers[OperationContextHeaders.TraceParent] = parent;
         }
 
         return copies;

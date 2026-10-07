@@ -1,0 +1,21 @@
+---
+name: cross-process-tracing-and-recipes-facts
+description: Ticket #52 facts - why fan-out copies lose parent-id, two Wolverine spans across the broker, ConfigureHttpClientDefaults ordering and shared pipeline name, in-process OTel providers as global listeners, health and Serilog test techniques
+metadata:
+  type: project
+---
+
+Verified in ticket #52 (2026-10-07), WolverineFx 6.46.0, Microsoft.Extensions.Http(.Resilience) 10.0.12/10.10.0, OpenTelemetry 1.19, Serilog.AspNetCore 10.0.0. Check the merged code first:
+
+- **Fan-out copies lose the parent inside the receiving Host, not on the broker.** `parent-id` and every `pouryakit-` header cross RabbitMQ. `DestinationEndpoint.SendAsync` applies `DeliveryOptions.Override` and then `TrackEnvelopeCorrelation(envelope, Activity.Current)`, which overwrites `ParentId` (no DeliveryOptions field can set it). Fix: `pouryakit-traceparent` written in `CopiesOf`, read as fallback in `ContinuedOperationContext`. With `Wolverine` sampled there are two Wolverine spans (broker envelope, then copy) between the publishing Operation and the delivery.
+- **`ConfigureHttpClientDefaults` builder has `Name == null`**: `AddStandardResilienceHandler` there names its options and pipeline `-standard`, one pipeline (and circuit breaker) for every client keeping it. Its `IConfigureOptions<HttpClientFactoryOptions>` are inserted before any named client's (`DefaultHttpClientBuilderServiceCollection` + tracker), so a named client's `RemoveAllResilienceHandlers()` always removes the default handler, whatever the registration order.
+- **503 with `Retry-After: 0`** makes the standard pipeline retry immediately: the default limit (3 retries, 4 requests) is testable in milliseconds.
+- **A Host's OpenTelemetry TracerProvider/MeterProvider is a process-wide listener.** In a test process every started recipe Host samples its sources for all Hosts. Never add `Wolverine` to the recipe, or the "Wolverine not listened" proof becomes impossible in-process. Filter exported data by trace id or `pouryakit.module`. Test exporter: `ConfigureOpenTelemetryTracerProvider(t => t.AddProcessor(new SimpleActivityExportProcessor(exp)))`, `ConfigureOpenTelemetryMeterProvider(m => m.AddReader(new BaseExportingMetricReader(exp)))`, then `MeterProvider.ForceFlush()`.
+- **Readiness proof per test database:** `alter database X with allow_connections false` + `pg_terminate_backend` from the `postgres` database, then `true` again. Npgsql EF's `CanConnectAsync` runs `SELECT 1`, so a dead pooled connector cannot fake health. A Module's DbContext is internal: enumerate `GetServices<DbContextOptions>()` and resolve `ContextType`. WolverineFx 6.46 has an internal `WolverineTransportHealthCheckAdapter` but registers no health check.
+- **Serilog `AddSerilog` replaces the logger factory**: every `builder.Logging` provider (RecordedLogs, the OTel logging provider) receives nothing. `ReadFrom.Services(services)` picks up `ILogEventSink` registrations, which is how a test observes. Keep the opt-in out of a composition the broker fixture shares.
+- **Web Host without Sdk.Web:** `Microsoft.NET.Sdk` + `FrameworkReference Microsoft.AspNetCore.App` avoids Sdk.Web copying `appsettings.json` into a referencing test bin. A test-composed WebApplication needs `UseTestServer()` (two Inventory Hosts would fight over Kestrel's 5000); a child process gets `ASPNETCORE_URLS=http://127.0.0.1:0`.
+- **Smoke containers:** `rabbitmq` refuses `guest` through a host port mapping; set `RABBITMQ_DEFAULT_USER/PASS`. `docker stop` of the PostgreSQL container gave `/alive` 200 and `/health` 503 at once.
+- **Mutation script regex:** a Theory case name contains spaces; parse `^failed (.*) \(\d[^)]*\)$`, not `\S+`.
+
+**Why:** each decided the #52 design or would cost a run on #53 (templates carry the recipe) or #54.
+**How to apply:** for #53's ServiceDefaults in templates, any telemetry test with a recipe Host alive, and any outgoing HTTP composition with defaults. Related: [[w3c-propagation-facts]], [[observability-facts]], [[outgoing-http-facts]], [[rabbitmq-transport-facts]].

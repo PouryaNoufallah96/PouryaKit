@@ -6,6 +6,7 @@ using Catalog.Products.Features.CreateProduct;
 using Inventory;
 using Inventory.Host;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -113,12 +114,13 @@ public sealed class BrokerEnvironment(BrokerFixture fixture, string catalog, str
 
     /// <summary>
     /// Builds <c>Inventory.Host</c> on <paramref name="database"/>, <see cref="Inventory"/> unless given, with the
-    /// test's delivery speed, <see cref="DeliveryProbes"/> and <see cref="AuditSubscription"/>; not started.
+    /// test's delivery speed, <see cref="DeliveryProbes"/> and <see cref="AuditSubscription"/>, served in memory; not
+    /// started.
     /// </summary>
     public IHost ComposeInventoryHost(
         string serviceName = InventoryHost.ServiceName,
         string? database = null,
-        Action<HostApplicationBuilder>? configure = null
+        Action<WebApplicationBuilder>? configure = null
     )
     {
         var builder = InventoryHost.CreateBuilder(
@@ -135,8 +137,9 @@ public sealed class BrokerEnvironment(BrokerFixture fixture, string catalog, str
         builder.Services.UsePouryaKitTestDelivery();
         DeliveryProbes.Install(builder.Services);
         builder.Services.Subscribe<ProductCreatedV1, AuditProductIntegrationEventHandler>(AuditSubscription, typeof(InventoryModule));
+        builder.WebHost.UseTestServer();
         configure?.Invoke(builder);
-        return builder.Build();
+        return InventoryHost.Build(builder);
     }
 
     /// <summary>
@@ -146,7 +149,7 @@ public sealed class BrokerEnvironment(BrokerFixture fixture, string catalog, str
     public async Task<IHost> StartInventoryHostAsync(
         string serviceName = InventoryHost.ServiceName,
         string? database = null,
-        Action<HostApplicationBuilder>? configure = null
+        Action<WebApplicationBuilder>? configure = null
     )
     {
         await RowsAsync(
