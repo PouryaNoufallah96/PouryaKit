@@ -1,0 +1,19 @@
+src/PouryaKit.Security/RequiresPermissionAttribute.cs
+  s_bdf0617f846b2b::t_21f1f9080fb05b 7-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b269a780ae41788f5c18a514157808261f066b8d",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
