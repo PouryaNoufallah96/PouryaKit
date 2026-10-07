@@ -455,9 +455,11 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
     public async Task A_host_that_declares_notification_handlers_but_writes_no_outbox_fails_at_start()
     {
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
-        builder.Services.AddPouryaKitNotificationHandlers(typeof(StubModule).Assembly);
+        // A handler with no dependency: the composition checks' container is validated when it is built.
+        builder.Services.AddPouryaKitNotificationHandlers(typeof(Unowned.UnownedNotificationHandler).Assembly);
         // The transport-neutral overload: Wolverine runs, but no Unit of Work writes an Outbox.
         builder.UsePouryaKitWolverine();
+        builder.AddPouryaKitCompositionChecks();
         using var host = builder.Build();
 
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>

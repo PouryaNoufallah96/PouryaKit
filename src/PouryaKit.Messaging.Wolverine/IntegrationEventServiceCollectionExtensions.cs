@@ -53,7 +53,7 @@ public static class IntegrationEventServiceCollectionExtensions
         {
             ArgumentNullException.ThrowIfNull(services);
             Subscriptions.In(services).Receive(typeof(TIntegrationEvent), wireName, isSnapshot: false);
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+            StartupCheck.AddTo(services);
             return services;
         }
 
@@ -91,7 +91,7 @@ public static class IntegrationEventServiceCollectionExtensions
     private static IServiceCollection DeclarePublication(IServiceCollection services, Type integrationEvent, string wireName, Type? module)
     {
         Subscriptions.In(services).Publish(integrationEvent, wireName, module);
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+        StartupCheck.AddTo(services);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
         return services;
     }
@@ -124,7 +124,7 @@ public static class IntegrationEventServiceCollectionExtensions
                 problems
             );
         services.TryAddScoped<THandler>();
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+        StartupCheck.AddTo(services);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
         return services;
     }

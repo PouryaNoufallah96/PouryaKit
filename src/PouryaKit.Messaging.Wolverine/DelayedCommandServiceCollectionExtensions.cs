@@ -82,7 +82,7 @@ public static class DelayedCommandServiceCollectionExtensions
     private static IServiceCollection DeclareDelayedCommand(IServiceCollection services, string name, Type command, Type? module)
     {
         DelayedCommandDeclarations.In(services).Add(name, command, module);
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+        StartupCheck.AddTo(services);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
         return services;
     }
@@ -99,7 +99,7 @@ public static class DelayedCommandServiceCollectionExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(systemActor);
         ArgumentNullException.ThrowIfNull(occurrence);
         DelayedCommandDeclarations.In(services).Add(name, typeof(TCommand), module, new Recurrence(systemActor, occurrence));
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+        StartupCheck.AddTo(services);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, RecurringCommandStart>());
         return services

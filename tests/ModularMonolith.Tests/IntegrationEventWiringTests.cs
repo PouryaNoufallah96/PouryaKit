@@ -5,6 +5,7 @@ using Catalog.Contracts.Products.Events.V1;
 using Inventory;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
@@ -118,6 +119,7 @@ public sealed class IntegrationEventWiringTests
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.UsePouryaKitWolverine();
         builder.Services.Publish<TwinV1>("tests.twin.v1");
+        builder.AddPouryaKitCompositionChecks();
         using var host = builder.Build();
 
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));

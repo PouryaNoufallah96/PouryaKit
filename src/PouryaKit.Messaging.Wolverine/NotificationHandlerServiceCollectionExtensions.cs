@@ -91,7 +91,7 @@ public static class NotificationHandlerServiceCollectionExtensions
             services.TryAddScoped(subscription.Handler);
         }
 
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+        StartupCheck.AddTo(services);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
         return services;
     }
