@@ -289,3 +289,6 @@ does; that path was not run separately. Sampling, id format and the ASP.NET Core
 say. The proof Host's exporters are the service defaults recipe of `ModularMonolith.ServiceDefaults`, template content
 that adds the `PouryaKit` source and meter and not `Wolverine` (spec #33's template decision; plan I.3, "Health,
 resilience, service discovery, Serilog"): the trace holds either way.
+
+*Implemented in #52 at `671a7b3`: `OperationContextHeaders.TraceParent`, written by `SubscriptionDelivery.CopiesOf` and read
+by `ContinuedOperationContext`; `CrossProcessTracingTests` pins both listener modes.*
