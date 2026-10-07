@@ -1,0 +1,31 @@
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_5db987750027ae::t_717251697fad0e 92-93,106
+.claude/agent-memory/kit-implementer/rabbitmq-transport-facts.md
+  s_5db987750027ae::t_f4265074a859ff 3,35-45
+docs/acceptance.md
+  s_5db987750027ae::t_d1306c1a59e5f8 393-394,417-418
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_5db987750027ae::t_21853b70e5f7b2 799-812
+docs/architecture/README.md
+  s_5db987750027ae::t_32900c5ed557b1 485
+src/PouryaKit.Messaging.Wolverine/SubscriptionDelivery.cs
+  s_5db987750027ae::t_39b16b5b25334e 56-59,63,66
+tests/ModularMonolith.Tests/RabbitMqDeliveryTests.cs
+  s_5db987750027ae::t_55971568864944 289-366
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8b7ab9610eca43c9fa8c9b606f1a17ed4ce59909",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
