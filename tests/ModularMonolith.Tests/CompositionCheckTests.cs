@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using ModularMonolith.Tests.Stub;
 using ModularMonolith.Tests.Unowned;
+using ModularMonolith.Tests.Unversioned;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
@@ -128,6 +129,23 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         );
     }
 
+    // A scanned handler of a command from an assembly nothing scans, as a Contracts assembly's, counts (#61 review
+    // finding F7).
+    [Fact]
+    public void A_scanned_handler_of_a_command_from_another_assembly_in_a_host_without_a_unit_of_work_fails_the_host_when_built()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.Services.AddPouryaKitCqrs(typeof(SeparateCommandHandler).Assembly);
+        builder.AddPouryaKitCompositionChecks();
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            $"The Host handles the command {typeof(UnownedCommand).FullName} but registers no Unit of Work, so the command would fail when it runs. Register the Unit of Work of a persistence package, for example with UsePostgres.",
+            thrown.Message
+        );
+    }
+
     // The Kit's own delivery commands, which UsePouryaKitWolverine registers, run only for a declaration: a Host that
     // declares none needs no Unit of Work (#61 review finding F3).
     [Fact]
@@ -166,6 +184,22 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
 
         Assert.Equal(
             $"The Integration Event {typeof(UnownedV1).FullName} is declared for BillingModule, which this Host does not compose, so it runs in no Module of the Host and publishing it would fail once the Host serves. Add BillingModule with AddPouryaKitModules, or name a Module the Host composes.",
+            thrown.Message
+        );
+    }
+
+    // In a Host without Modules the line also offers the application's form, without a Module (#61 review finding F9).
+    [Fact]
+    public void A_declaration_naming_a_module_in_a_host_without_modules_fails_the_host_when_built_offering_the_form_without_one()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.Services.Publish<UnownedV1>("tests.unowned.v1", typeof(BillingModule));
+        builder.AddPouryaKitCompositionChecks();
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            $"The Integration Event {typeof(UnownedV1).FullName} is declared for BillingModule, which this Host does not compose, so it runs in no Module of the Host and publishing it would fail once the Host serves. Add BillingModule with AddPouryaKitModules, or declare it for the application, without a Module, with Publish<UnownedV1>(wireName).",
             thrown.Message
         );
     }

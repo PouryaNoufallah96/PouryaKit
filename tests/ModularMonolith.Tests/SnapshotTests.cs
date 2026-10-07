@@ -411,6 +411,7 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from stub.leaflets where id = '{leaflet}'"));
     }
 
+    // The Host installs no composition checks, which would fail its build: this is the backstop at commit.
     [Fact]
     public async Task A_snapshot_declared_with_a_module_in_an_application_without_modules_fails_the_operation_that_would_publish_it()
     {

@@ -1,10 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- An endpoint that declares no API version, for a Host of PouryaKit.Web alone. It needs an assembly apart from the
-       Stub Module's, whose endpoints need Modules; ModularMonolith.Tests leaves this folder out of its own sources. -->
+  <!-- An endpoint that declares no API version, for a Host of PouryaKit.Web alone, and a command handler whose command
+       lives in the Unowned assembly, for the Unit of Work check. They need an assembly apart from the Stub Module's,
+       whose endpoints need Modules and which the fixture's Host scans; ModularMonolith.Tests leaves this folder out of
+       its own sources. -->
   <PropertyGroup>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\PouryaKit.Web\PouryaKit.Web.csproj" />
+    <ProjectReference Include="..\Unowned\ModularMonolith.Tests.Unowned.csproj" />
   </ItemGroup>
 </Project>
