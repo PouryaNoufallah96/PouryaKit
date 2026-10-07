@@ -17,8 +17,9 @@ public sealed class PouryaKitWebOptions
 
     /// <summary>
     /// The claim whose value is the Operation's tenant; null, the default, when the application has none. A caller
-    /// whose identity lacks the claim runs with a null tenant and is not refused: some callers legitimately have no
-    /// tenant, and what a null tenant may see is the tenant filter's business, not the HTTP boundary's.
+    /// whose identity lacks the claim, or carries it blank, runs with a null tenant and is not refused: some callers
+    /// legitimately have no tenant, and what a null tenant may see is the tenant filter's business, not the HTTP
+    /// boundary's.
     /// </summary>
     public string? TenantClaim { get; set; }
 }

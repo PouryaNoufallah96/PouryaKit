@@ -15,8 +15,9 @@ public static class IdempotencyTable
     public const string Name = "pouryakit_idempotency_keys";
 
     /// <summary>
-    /// The tenant column of an Operation without a tenant: the empty string, which no tenant the Kit carries between
-    /// Hosts can be, so a Host without tenants keeps one stable key per Actor, command and request id.
+    /// The tenant column of an Operation without a tenant: the empty string, which no tenant can be, since an
+    /// <c>OperationContext</c> refuses a blank one. A Host without tenants keeps one stable key per Actor, command and
+    /// request id.
     /// </summary>
     public const string NoTenant = "";
 

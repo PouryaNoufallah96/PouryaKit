@@ -40,10 +40,9 @@ internal static class HttpCallerContext
             return continued;
         }
 
-        return new OperationContext(
-            Actor.Person(id),
-            options.TenantClaim is { } tenantClaim ? caller.FindFirstValue(tenantClaim) : null
-        );
+        // A blank tenant claim is no tenant, as the JWT bearer scheme already drops a blank claim.
+        var tenant = options.TenantClaim is { } tenantClaim ? caller.FindFirstValue(tenantClaim) : null;
+        return new OperationContext(Actor.Person(id), string.IsNullOrWhiteSpace(tenant) ? null : tenant);
     }
 }
 

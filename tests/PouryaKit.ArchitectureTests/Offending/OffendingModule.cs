@@ -68,7 +68,8 @@ internal sealed class OffendingRow
 }
 
 // Calls the steps only the Kit runs: the Unit of Work and its DbContext, the Outbox write, a Receipt, a Snapshot mapping, an Integration Event and a delayed
-// command added to the Outbox, the Domain Event drain, a new Operation begun in its own scope, and a reading step.
+// command added to the Outbox, an idempotency key reserved and its success recorded, the Domain Event drain, a new Operation begun in its own scope, and a
+// reading step.
 internal sealed class KitStepCallingCommandHandler(
     IUnitOfWork unitOfWork,
     IUnitOfWorkOutbox outbox,
@@ -76,6 +77,7 @@ internal sealed class KitStepCallingCommandHandler(
     ISnapshotMappers snapshots,
     IIntegrationEventOutbox integrationEvents,
     IDelayedCommandOutbox delayedCommands,
+    IIdempotencyStore idempotency,
     DomainEventDrain drain,
     IServiceProvider services,
     Operation operation,
@@ -92,6 +94,9 @@ internal sealed class KitStepCallingCommandHandler(
         _ = snapshots.Map(command, removed: false);
         integrationEvents.Add(Guid.CreateVersion7(), command);
         delayedCommands.Add(command, DateTimeOffset.UnixEpoch);
+        var key = new IdempotencyKey(null, Actor.System("offending"), nameof(OffendCommand), "offending");
+        _ = await idempotency.ReserveAsync(key, cancellationToken);
+        await idempotency.RecordAsync(key, "{}", cancellationToken);
         await drain.RunAsync(() => [], cancellationToken);
         services.BeginOperation(new OperationContext(Actor.System("offending")));
         using var reading = operation.OnlyReading("offending", compareTrackedState: false);

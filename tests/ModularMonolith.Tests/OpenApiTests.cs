@@ -185,6 +185,30 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
     }
 
     [Fact]
+    public async Task An_operation_whose_endpoint_requires_an_idempotency_key_declares_the_required_header_in_every_version()
+    {
+        using var client = Unversioned(Fixture.Client());
+
+        var v1 = await DocumentAsync(client, "v1");
+        var v2 = await DocumentAsync(client, "v2");
+
+        // Creating a product requires one; no other Catalog operation, creating a category included, does.
+        Assert.Equal(
+            ["/catalog/products post", "/catalog/v1/products post"],
+            CatalogOperations(v1).Where(operation => IdempotencyKeyOf(operation.Body) is not null).Select(operation => operation.Name)
+        );
+        Assert.Equal(
+            ["/catalog/products post", "/catalog/v2/products post"],
+            CatalogOperations(v2).Where(operation => IdempotencyKeyOf(operation.Body) is not null).Select(operation => operation.Name)
+        );
+        var header = IdempotencyKeyOf(v2.GetProperty("paths").GetProperty("/catalog/v2/products").GetProperty("post"))!.Value;
+        Assert.Equal("header", header.GetProperty("in").GetString());
+        Assert.True(header.GetProperty("required").GetBoolean());
+        Assert.Equal("string", header.GetProperty("schema").GetProperty("type").GetString());
+        Assert.Contains("1 to 256 visible ASCII characters, with spaces only between them", header.GetProperty("description").GetString());
+    }
+
+    [Fact]
     public async Task An_operation_protected_by_a_scheme_the_document_cannot_state_carries_no_requirement()
     {
         using var client = Unversioned(Fixture.Client());
@@ -390,6 +414,11 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
 
     private static List<(string Name, JsonElement Body)> CatalogOperations(JsonElement document) =>
         [.. Operations(document).Where(operation => operation.Name.StartsWith("/catalog/", StringComparison.Ordinal))];
+
+    private static JsonElement? IdempotencyKeyOf(JsonElement operation) =>
+        operation.TryGetProperty("parameters", out var parameters)
+            ? parameters.EnumerateArray().Where(parameter => parameter.GetProperty("name").GetString() == IdempotencyKeyRequirement.Header).Cast<JsonElement?>().SingleOrDefault()
+            : null;
 
     private static bool RequiresBearer(JsonElement operation) =>
         operation.TryGetProperty("security", out var security)

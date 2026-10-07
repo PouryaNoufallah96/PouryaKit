@@ -22,6 +22,9 @@ internal sealed class TestAuthentication(
 
     public const string TenantHeader = "Test-Tenant";
 
+    /// <summary>A <see cref="TenantHeader"/> value that issues the tenant claim with an empty value.</summary>
+    public const string BlankTenant = "(blank)";
+
     public const string PermissionsHeader = "Test-Permissions";
 
     /// <summary>A caller id that authenticates with no claim naming the person.</summary>
@@ -50,7 +53,7 @@ internal sealed class TestAuthentication(
             caller == WithoutActorClaim ? [new Claim(ClaimTypes.Name, caller)] : [new Claim(ClaimTypes.NameIdentifier, caller)];
         if (Request.Headers[TenantHeader].ToString() is { Length: > 0 } tenant)
         {
-            claims.Add(new Claim(PouryaKitClaimTypes.Tenant, tenant));
+            claims.Add(new Claim(PouryaKitClaimTypes.Tenant, tenant == BlankTenant ? "" : tenant));
         }
 
         claims.AddRange(

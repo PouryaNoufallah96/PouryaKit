@@ -40,6 +40,8 @@ public sealed class FeatureCodeTests
                 "Offending.KitStepCallingCommandHandler calls DomainEventDrain.RunAsync.",
                 "Offending.KitStepCallingCommandHandler calls EfUnitOfWorkExtensions.get_DbContext.",
                 "Offending.KitStepCallingCommandHandler calls IDelayedCommandOutbox.Add.",
+                "Offending.KitStepCallingCommandHandler calls IIdempotencyStore.RecordAsync.",
+                "Offending.KitStepCallingCommandHandler calls IIdempotencyStore.ReserveAsync.",
                 "Offending.KitStepCallingCommandHandler calls IIntegrationEventOutbox.Add.",
                 "Offending.KitStepCallingCommandHandler calls IReadingStateGuard.OnlyReading.",
                 "Offending.KitStepCallingCommandHandler calls IReceipts.RecordAsync.",

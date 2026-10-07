@@ -69,6 +69,13 @@ public sealed class IdempotencyTests
         Assert.DoesNotContain(Trace(scope), step => step.StartsWith("reserve", StringComparison.Ordinal));
     }
 
+    // The key stores an Operation without a tenant as the empty string, so no tenant may be blank.
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void A_blank_tenant_is_refused_so_no_tenant_shares_the_key_of_an_operation_without_one(string tenant) =>
+        Assert.Throws<ArgumentException>(() => new OperationContext(Actor.Person("ada"), tenant));
+
     [Fact]
     public void Work_an_operation_causes_carries_no_request_id()
     {
