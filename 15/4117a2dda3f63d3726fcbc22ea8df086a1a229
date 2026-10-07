@@ -1,0 +1,21 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_5db987750027ae::t_2cbaf82bd38aa7 41
+.claude/agent-memory/kit-implementer/caching-facts.md
+  s_5db987750027ae::t_fe5971a556a88a 1-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "154117a2dda3f63d3726fcbc22ea8df086a1a229",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
