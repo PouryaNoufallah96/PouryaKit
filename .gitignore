@@ -15,5 +15,6 @@ artifacts/
 CLAUDE.local.md
 .claude/agent-memory-local/
 .claude/worktrees/
+.claude/reviews/
 __pycache__/
 .claude-plugin/types/

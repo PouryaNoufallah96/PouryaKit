@@ -218,6 +218,10 @@ const head = prepared.head
 const baseCommit = prepared.base
 const specFile = `${run}/spec.md`
 const resultFile = `${run}/result.json`
+// The run directory is in system temp, which a later session cannot rely on, so the result is also kept, gitignored,
+// under the repository root: one file per ticket or spec and reviewed commit.
+const reviewDir = `${top}/.claude/reviews`
+const reviewFile = `${reviewDir}/${ticket || spec.split('/').pop().replace(/\.[^.]+$/, '') || 'spec'}-${head.slice(0, 7)}.json`
 const previous = list(prepared.previous)
 // A re-review that lost earlier findings on the way would pass them unseen, so the list must match what the
 // extraction counted, and the ids asked for. The worktree exists by now, so the finish step below still removes it.
@@ -462,9 +466,9 @@ ${JSON.stringify(raised, null, 2)}
   full = { workflow: 'kit-review', complete: false, verdict: 'unknown', base: baseCommit, head, error: String(error?.message ?? error) }
 } finally {
   // Runs on success and on failure, so the review worktree never outlives the run. Writing the full result rides on
-  // this agent call, which removing the worktree needs anyway. A quoted heredoc copies the text unchanged, and the file
-  // counts as saved when the verdict parsed back from it is the one written; one retry when it is not. Non-ASCII is
-  // escaped, so the length is the byte count, kept as information.
+  // this agent call, which removing the worktree needs anyway. A quoted heredoc copies the text unchanged into the run
+  // directory, and the result counts as saved when the verdict parsed back from its copy under .claude/reviews is the
+  // one written; one retry when it is not. Non-ASCII is escaped, so the length is the byte count, kept as information.
   phase('Finish')
   const written = full ?? fail('the review stopped early')
   const content = `${JSON.stringify(written, null, 2)}\n`
@@ -475,7 +479,8 @@ ${JSON.stringify(raised, null, 2)}
 \`\`\`bash
 cat > '${resultFile}' <<'KIT_REVIEW_RESULT'
 ${content}KIT_REVIEW_RESULT
-python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(d['verdict'])" '${resultFile}'; wc -c < '${resultFile}'; git -C '${top}' worktree remove --force '${worktree}'; test -e '${worktree}' && echo kept || echo removed
+mkdir -p '${reviewDir}' && cp '${resultFile}' '${reviewFile}'
+python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(d['verdict'])" '${reviewFile}'; wc -c < '${reviewFile}'; git -C '${top}' worktree remove --force '${worktree}'; test -e '${worktree}' && echo kept || echo removed
 \`\`\`
 2. Return verdict (the line python printed; an empty string when it printed an error instead), bytes (the number wc printed), removed (true when the last line is "removed") and error (any error line the command printed, verbatim; omit it when there is none).`
   for (let attempt = 1; attempt <= 2 && !saved; attempt++) {
@@ -510,11 +515,12 @@ const header = {
   workflow: 'kit-review',
   complete: full.complete,
   verdict: full.verdict,
-  result: saved ? resultFile : null,
+  result: saved ? reviewFile : null,
+  run,
   ...(cleanup ? { cleanup } : {}),
   ...(full.error ? { error: oneLine(full.error, 300) } : {}),
   note: saved
-    ? `Full result (evidence, fix and verification per finding; each leg's limitations) in ${resultFile}. Re-review after a high fix: previous = that file. "unknown" is never a pass.`
+    ? `Full result (evidence, fix and verification per finding; each leg's limitations) in ${reviewFile}. Re-review after a high fix: previous = that file. "unknown" is never a pass.`
     : 'The result file was not written; the full result is under `full` at the end. "unknown" is never a pass.',
   base: full.base,
   head: full.head,
