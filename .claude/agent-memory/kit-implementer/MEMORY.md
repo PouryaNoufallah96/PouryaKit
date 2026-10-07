@@ -42,3 +42,4 @@
 - [Caching facts](caching-facts.md) — #43: no token to HybridCache, outermost-query-only slot, serialize then end the read, factory throw stores nothing, StampedeJoin proof, Redis lag
 - [Cross-process tracing and recipe facts](cross-process-tracing-and-recipes-facts.md) — #52: copies lose parent-id at fan-out, defaults pipeline name, OTel providers as global listeners, health/Serilog proofs
 - [Merge and CI tooling facts](merge-and-ci-tooling-facts.md) — union merge drops a shared blank line, scratch-clone merge proof, gh job-log download quirks and speed, MTP failure shape
+- [Template package facts](template-package-facts.md) — #53: engine traps, pack-time version step, WebApplicationFactory, NuGet PrivateAssets graph gap, cache pollution
