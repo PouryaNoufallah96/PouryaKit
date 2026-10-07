@@ -1,0 +1,67 @@
+docs/foundation-review.md
+  s_bdf0617f846b2b::t_65eae6570ceb0d 252,262
+docs/adr/0002-no-mediator-dependency.md
+  s_bdf0617f846b2b::t_0393d6ca78a979 287-301
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_d909c6cfae8503 286,349,351,425,437,506,560,563,566,579
+docs/provenance/PouryaKit.Security.JwtBearer.md
+  s_bdf0617f846b2b::t_548a252f06f8a2 5
+.agents/skills/pourya-kit/references/templates.md
+  s_bdf0617f846b2b::t_8fe6b453d3fda3 85
+docs/provenance/PouryaKit.Persistence.Dapper.md
+  s_bdf0617f846b2b::t_548a252f06f8a2 5-6
+README.md
+  s_bdf0617f846b2b::t_65eae6570ceb0d 9
+docs/acceptance.md
+  s_bdf0617f846b2b::t_5435f6c5ee9a76 612-632
+.claude/agent-memory/kit-implementer/misconfigured-host-facts.md
+  s_bdf0617f846b2b::t_1889c32ed544ac 1-19
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_bdf0617f846b2b::t_455046ad766771 49
+docs/provenance/PouryaKit.Persistence.Postgres.md
+  s_bdf0617f846b2b::t_548a252f06f8a2 5
+docs/provenance/PouryaKit.Cqrs.md
+  s_bdf0617f846b2b::t_548a252f06f8a2 19-21
+docs/provenance/PouryaKit.Messaging.Wolverine.md
+  s_bdf0617f846b2b::t_548a252f06f8a2 5
+docs/provenance/PouryaKit.Web.md
+  s_bdf0617f846b2b::t_548a252f06f8a2 5
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_bdf0617f846b2b::t_5c91b0c294f0fb 74
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_bdf0617f846b2b::t_c5ccd537b2d7ac 78
+.agents/skills/pourya-kit/references/messaging.md
+  s_bdf0617f846b2b::t_276f00f6154d76 698,700
+.agents/skills/pourya-kit/references/modules.md
+  s_bdf0617f846b2b::t_635e33f98c1473 41,124,132-134
+.agents/skills/pourya-kit/references/openapi.md
+  s_bdf0617f846b2b::t_c1f96dac81083d 58
+.agents/skills/pourya-kit/references/persistence.md
+  s_bdf0617f846b2b::t_51efa42c19fb2b 97
+.agents/skills/pourya-kit/references/security.md
+  s_bdf0617f846b2b::t_7cbd373ec11842 192,211
+.agents/skills/pourya-kit/references/web.md
+  s_bdf0617f846b2b::t_5e1bccee04ee69 85,138-139,239,260,302,404
+samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs
+  s_bdf0617f846b2b::t_aff269487d9435 38-40
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/Program.cs
+  s_bdf0617f846b2b::t_52ab5db1c74449 43-44
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/Program.cs
+  s_bdf0617f846b2b::t_1068b6c66001f2 41-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bf83fe3e704a190e93eb62e7d70e4474ff7cc2b4",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
