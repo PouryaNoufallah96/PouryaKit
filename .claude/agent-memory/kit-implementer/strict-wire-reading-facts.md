@@ -31,6 +31,9 @@ Verified in ticket #60 (2026-10-07), .NET 10.0.12 STJ, WolverineFx 6.46.0, Rabbi
 - **RabbitMQ 4.3.6 `amq.`:** queue and exchange declares under `amq.` fail 403 ACCESS_REFUSED "contains reserved prefix
   'amq.*'"; `AMQ.` declares fine (case-sensitive). Wolverine's `RabbitMqExchange.CheckAsync` lower-cases the name. The Kit
   refuses any case (decision recorded in ADR 0006's #60 amendment; flagged as a design choice).
+- **validate.py flake (2026-10-08):** `CachingTests.With_redis_a_second_host_reads_the_entry_the_first_stored_without_running_its_handler`
+  once failed in the Release runtime suite with `RedisConnectionException` from the test's own `ConnectionMultiplexer`
+  (its container refused the connection); an unchanged rerun passed. Rerun once and record both runs in acceptance.md.
 - Full ModularMonolith suite with strict wire reading on: no existing test broke (Domain Events, delayed commands,
   Snapshots all round-trip), about 2 min 10 s.
 
