@@ -31,3 +31,4 @@
 - [Paging facts](paging-facts.md) — #35: page validation in the Feature validator, Npgsql typed nulls, EF Contains as LIKE, rebase onto moved wave branch
 - [Outgoing HTTP facts](outgoing-http-facts.md) — #48: handler scope, PostConfigure survives handler removal, safe-method allow-list, header injection, WireMock traps, test cwd
 - [Delayed command facts](delayed-command-facts.md) — #44: scheduled envelope via EF outbox, system clock, own-database restart proof, retry rows vs not-yet-due
+- [Web defaults facts](web-defaults-facts.md) — #36: RequireCors answers no preflight, compression cannot be inert, no 429 problem type, limiter seams
