@@ -28,7 +28,7 @@ public static class WolverineHostApplicationBuilderExtensions
         /// Nothing this overload registers writes an Outbox (<see cref="INotificationOutbox"/>), so a Host that declares
         /// Notification Handlers, Integration Event Handlers or published Integration Events calls the overload of
         /// <c>PouryaKit.Messaging.Wolverine.EFCore</c> instead, or fails when it starts; so does a Host whose
-        /// subscription's Integration Event no Module publishes. <paramref name="configure"/> adds Host-specific
+        /// subscription's Integration Event no Module publishes and no <c>Receive</c> declares. <paramref name="configure"/> adds Host-specific
         /// Wolverine configuration.
         /// </summary>
         public IHostApplicationBuilder UsePouryaKitWolverine(Action<WolverineOptions>? configure = null)

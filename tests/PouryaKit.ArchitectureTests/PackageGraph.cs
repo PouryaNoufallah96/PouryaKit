@@ -46,6 +46,7 @@ internal static class PackageGraph
             ["PouryaKit.Messaging.Wolverine", "PouryaKit.Persistence.EFCore"],
             ["WolverineFx.EntityFrameworkCore", "WolverineFx.Postgresql"]
         ),
+        ["PouryaKit.Messaging.Wolverine.RabbitMq"] = new(["PouryaKit.Messaging.Wolverine"], ["WolverineFx.RabbitMQ"]),
         ["PouryaKit.Observability"] = new(["PouryaKit.Cqrs"], []),
         ["PouryaKit.Security"] = new(["PouryaKit.Core", "PouryaKit.Cqrs"], []),
         ["PouryaKit.Security.JwtBearer"] = new(["PouryaKit.Security"], ["Microsoft.AspNetCore.Authentication.JwtBearer"]),
@@ -80,6 +81,8 @@ internal static class PackageGraph
         ["PouryaKit.Web.OpenApi"] = ["PouryaKit.Modularity", "Aspire", "Swashbuckle", "NSwag"],
         // Transport- and database-neutral: no EF Core, no PostgreSQL driver, no message store.
         ["PouryaKit.Messaging.Wolverine"] = ["Microsoft.EntityFrameworkCore", "Npgsql", "WolverineFx.RDBMS", "WolverineFx.Postgresql", "Weasel"],
+        // A transport between Hosts, neutral to the database as well: its envelopes go through the Host's own store.
+        ["PouryaKit.Messaging.Wolverine.RabbitMq"] = ["Microsoft.EntityFrameworkCore", "Npgsql", "WolverineFx.RDBMS", "WolverineFx.Postgresql", "Weasel"],
         // It emits through System.Diagnostics alone: exporters and logging are the Host's (I.3 Observability, #47).
         ["PouryaKit.Observability"] = ["OpenTelemetry", "Serilog", "WolverineFx", "PouryaKit.Messaging"],
     };

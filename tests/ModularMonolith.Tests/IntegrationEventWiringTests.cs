@@ -59,6 +59,19 @@ public sealed class IntegrationEventWiringTests
             s => s.Subscribe<NoteToShareDomainEvent, NoteToShareIntegrationEventHandler>("tests.note-shared"),
             "subscribes to the Domain Event"
         ),
+        ["a received type the Host publishes"] = (
+            s => s.Publish<TwinV1>("tests.twin.v1").Receive<TwinV1>("tests.twin.v1"),
+            $"{typeof(TwinV1).FullName} is published by the application in this Host and declared as received from another Host"
+        ),
+        ["a published type the Host receives"] = (
+            s => s.Receive<TwinV1>("tests.twin.v1").Publish<TwinV1>("tests.twin.v1"),
+            $"{typeof(TwinV1).FullName} is published by the application in this Host and declared as received from another Host"
+        ),
+        ["one received type as a Snapshot and an Integration Event"] = (
+            s => s.Receive<TwinV1>("tests.twin.v1").ReceiveSnapshot<TwinV1>("tests.twin.v1"),
+            $"{typeof(TwinV1).FullName} is received as the Integration Event tests.twin.v1 and as the Snapshot tests.twin.v1"
+        ),
+        ["a received Domain Event"] = (s => s.Receive<NoteToShareDomainEvent>("tests.note-shared"), "is a Domain Event"),
     };
 
     public static TheoryData<string> DeclarationMistakes() => [.. Mistakes.Keys];

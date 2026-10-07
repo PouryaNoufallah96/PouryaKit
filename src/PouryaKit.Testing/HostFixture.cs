@@ -137,7 +137,7 @@ public abstract class HostFixture : IAsyncLifetime
         [
             .. found.Envelopes.Select(deadLetter => new DeadLetter(
                 deadLetter.Id,
-                new Uri(deadLetter.ReceivedAt).Host,
+                StoredDeliveries.SubscriptionAt(deadLetter.ReceivedAt),
                 deadLetter.MessageType,
                 deadLetter.ExceptionType,
                 deadLetter.ExceptionMessage

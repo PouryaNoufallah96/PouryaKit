@@ -17,16 +17,16 @@ internal sealed class PouryaKitWolverineExtension(
         [
             .. subscriptions
                 .All.Where(subscription =>
-                    !subscription.IsNotification && !subscriptions.Publications.ContainsKey(subscription.Message)
+                    !subscription.IsNotification && !subscriptions.WireNames.ContainsKey(subscription.Message)
                 )
                 .Select(subscription =>
-                    $"{subscription.Handler.FullName} subscribes to {subscription.Message.FullName} under {subscription.Name}, but no Module of this Host publishes it, so it has no wire name. Declare Publish<{subscription.Message.Name}>(wireName, module), or PublishSnapshot for a Snapshot, in the publishing Module's Composition Root."
+                    $"{subscription.Handler.FullName} subscribes to {subscription.Message.FullName} under {subscription.Name}, but no Module of this Host publishes it, so it has no wire name. Declare Publish<{subscription.Message.Name}>(wireName, module), or PublishSnapshot for a Snapshot, in the publishing Module's Composition Root; when another Host publishes it, declare Receive<{subscription.Message.Name}>(wireName), or ReceiveSnapshot for a Snapshot, in this Host's composition."
                 ),
             .. subscriptions.RoutingCollisions(),
         ];
         if (problems.Count == 0)
         {
-            problems.AddRange(WireNaming.Declare(subscriptions.Publications));
+            problems.AddRange(WireNaming.Declare(subscriptions.WireNames));
         }
 
         if (problems.Count > 0)
