@@ -2,7 +2,7 @@ using ModularMonolith.Tests.Unowned;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 
-namespace ModularMonolith.Tests.Unversioned;
+namespace ModularMonolith.Tests.Misnamed;
 
 /// <summary>
 /// The one command handler of its assembly, for a command of another assembly, as a Contracts assembly holds a Feature's

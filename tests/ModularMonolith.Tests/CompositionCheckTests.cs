@@ -5,9 +5,9 @@ using Inventory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using ModularMonolith.Tests.Misnamed;
 using ModularMonolith.Tests.Stub;
 using ModularMonolith.Tests.Unowned;
-using ModularMonolith.Tests.Unversioned;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
@@ -200,9 +200,10 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
-        Assert.Equal(
+        // Beside the Outbox the Host lacks (#62), one line per problem.
+        Assert.Contains(
             $"The Integration Event {typeof(UnownedV1).FullName} is declared for BillingModule, which this Host does not compose, so it runs in no Module of the Host and publishing it would fail once the Host serves. Add BillingModule with AddPouryaKitModules, or declare it for the application, without a Module, with Publish<UnownedV1>(wireName).",
-            thrown.Message
+            thrown.Message.Split(Environment.NewLine)
         );
     }
 
