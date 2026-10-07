@@ -64,6 +64,7 @@ using PouryaKit.Modularity;
 using PouryaKit.Security;
 using PouryaKit.Security.JwtBearer;
 using PouryaKit.Web;
+using PouryaKit.Web.OpenApi;
 
 public static class ModularMonolithHost
 {
@@ -86,6 +87,9 @@ public static class ModularMonolithHost
         builder.Services.Configure<PouryaKitCorsOptions>(builder.Configuration.GetSection("PouryaKit:Web:Cors"));
         builder.Services.Configure<PouryaKitCompressionOptions>(builder.Configuration.GetSection("PouryaKit:Web:Compression"));
         builder.Services.Configure<PouryaKitRateLimitOptions>(builder.Configuration.GetSection("PouryaKit:Web:RateLimit"));
+        // The API versions the Modules declare, one OpenAPI document each, and the configured sunsets (openapi.md).
+        builder.Services.AddPouryaKitOpenApi();
+        builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
         // Outgoing calls: the standard retry of safe methods, then the Operation Context on every attempt.
         var downstream = builder.Services.AddHttpClient(DownstreamClient);
         downstream.AddPouryaKitResilience();
@@ -114,6 +118,11 @@ public static class ModularMonolithHost
         app.UseAuthorization();
         app.UseRateLimiter();         // after authorization: it partitions by the authenticated Actor
         app.MapPouryaKitModuleEndpoints();
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapPouryaKitOpenApi().AllowAnonymous();   // the documents and Scalar, public in Development
+        }
+
         return app;
     }
 }
@@ -125,7 +134,7 @@ public static class ModularMonolithHost
 - The application configures its own authentication and authorization; the Kit chooses no identity provider and issues no token.
 - `app.UseExceptionHandler()` comes first in the pipeline, and `UseRouting()`, `UseAuthentication()` and `UseAuthorization()` follow it, each called explicitly. Left out, `WebApplication` inserts those three ahead of everything the application adds, and an exception thrown in authentication escapes the handler.
 - Compose the rest in this order: `UseExceptionHandler()`, `UseRouting()`, `UseCors(policyName)`, `UseAuthentication()`, `UseAuthorization()`, `UseRateLimiter()`, then the endpoints. CORS answers a preflight before authentication would refuse it; the rate limiter runs after authorization, because it partitions by the authenticated Actor and an unauthenticated caller of a protected endpoint is refused before it counts. Compression needs no call: when enabled, `AddPouryaKitWeb` adds it outermost, before anything that writes a response.
-- `app.MapPouryaKitModuleEndpoints()` maps every Module's endpoints, each Module under its own route group.
+- `app.MapPouryaKitModuleEndpoints()` maps every Module's endpoints, each Module under its own route group. A Module that declares API versions has them served inside that group, by URL segment and by header, through the `IModuleRouteGroups` that the optional `PouryaKit.Web.OpenApi` registers ([openapi.md](openapi.md)); without it, or for a Module that declares none, the endpoints are mapped on the group itself.
 
 ## Endpoints
 
@@ -322,6 +331,7 @@ public async Task Creating_a_product_with_a_name_in_use_answers_409_with_its_err
 {
     using var client = Fixture.Host.GetTestClient();
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(TestAuthentication.SchemeName, "ada");
+    client.DefaultRequestHeaders.Add("api-version", "2.0");   // Catalog's paths name their API version (openapi.md)
     var category = Guid.CreateVersion7();
     await client.PostAsJsonAsync("/catalog/categories", new { categoryId = category, name = "Lamps" }, TestContext.Current.CancellationToken);
     await client.PostAsJsonAsync(

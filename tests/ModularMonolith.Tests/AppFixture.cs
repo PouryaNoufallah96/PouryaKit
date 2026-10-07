@@ -13,6 +13,7 @@ using Npgsql;
 using PouryaKit.Modularity;
 using PouryaKit.Security;
 using PouryaKit.Testing;
+using PouryaKit.Web.OpenApi;
 
 [assembly: AssemblyFixture(typeof(AppFixture))]
 [assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
@@ -70,12 +71,16 @@ public sealed class AppFixture : HostFixture
         return ModularMonolithHost.Build(builder);
     }
 
+    /// <summary>The API version the tests' clients name in the <c>api-version</c> header: Catalog's current one.</summary>
+    public const string ApiVersion = "2.0";
+
     /// <summary>Every log entry the Host has written.</summary>
     public RecordedLogs Logs { get; } = new();
 
     /// <summary>
     /// A client of the Host's HTTP pipeline, authenticated as the person <paramref name="caller"/> holding
-    /// <paramref name="permissions"/>, or anonymous.
+    /// <paramref name="permissions"/>, or anonymous, that calls API version <see cref="ApiVersion"/> on a versioned
+    /// Module's unversioned paths, such as <c>/catalog/products</c>.
     /// </summary>
     public HttpClient Client(string? caller = null, string? tenant = null, params string[] permissions) =>
         ClientOf(Host, caller, tenant, permissions);
@@ -84,6 +89,7 @@ public sealed class AppFixture : HostFixture
     public static HttpClient ClientOf(IHost host, string? caller = null, string? tenant = null, params string[] permissions)
     {
         var client = host.GetTestClient();
+        client.DefaultRequestHeaders.Add(WebOpenApiServiceCollectionExtensions.ApiVersionHeader, ApiVersion);
         if (caller is not null)
         {
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(TestAuthentication.SchemeName, caller);

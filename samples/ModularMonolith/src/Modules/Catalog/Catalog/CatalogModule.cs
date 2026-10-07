@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Catalog.Contracts.Products;
 using Catalog.Contracts.Products.Events.V1;
 using Catalog.Infrastructure.Data.Context;
@@ -17,6 +18,7 @@ using PouryaKit.Persistence.Postgres;
 using PouryaKit.Security;
 using PouryaKit.Validation;
 using PouryaKit.Web;
+using PouryaKit.Web.OpenApi;
 
 namespace Catalog;
 
@@ -38,5 +40,10 @@ public sealed class CatalogModule : IModuleDefinition
         module.AddScoped<IProductRepository, ProductRepository>();
         module.AddScoped<ICatalogProducts, CatalogProducts>();
         module.AddPouryaKitEndpoints("/catalog", typeof(CatalogModule).Assembly);
+        // v2 adds renaming a product; v1 is deprecated, and the Host configures its sunset.
+        module.AddPouryaKitApiVersions(
+            "/catalog",
+            versions => versions.HasDeprecatedApiVersion(new ApiVersion(1, 0)).HasApiVersion(new ApiVersion(2, 0))
+        );
     }
 }

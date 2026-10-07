@@ -8,6 +8,7 @@ using PouryaKit.Observability;
 using PouryaKit.Security;
 using PouryaKit.Security.JwtBearer;
 using PouryaKit.Web;
+using PouryaKit.Web.OpenApi;
 
 namespace ModularMonolith.Host;
 
@@ -45,6 +46,10 @@ public static class ModularMonolithHost
         builder.Services.Configure<PouryaKitCorsOptions>(builder.Configuration.GetSection("PouryaKit:Web:Cors"));
         builder.Services.Configure<PouryaKitCompressionOptions>(builder.Configuration.GetSection("PouryaKit:Web:Compression"));
         builder.Services.Configure<PouryaKitRateLimitOptions>(builder.Configuration.GetSection("PouryaKit:Web:RateLimit"));
+        // The API versions the Modules declare, one OpenAPI document each, and the configured sunset of each version a
+        // Module retires (PouryaKit:OpenApi:Sunsets).
+        builder.Services.AddPouryaKitOpenApi();
+        builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
         // Outgoing calls retry transient failures of safe methods only and carry the Operation Context they are sent
         // with, never the caller's bearer token. A peer that authenticates this Host gets the Host's own credentials.
         var downstream = builder.Services.AddHttpClient(DownstreamClient);
@@ -81,6 +86,12 @@ public static class ModularMonolithHost
         // After authorization: it partitions by the authenticated Actor.
         app.UseRateLimiter();
         app.MapPouryaKitModuleEndpoints();
+        // The documents and their Scalar reference are for developers, and public there.
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapPouryaKitOpenApi().AllowAnonymous();
+        }
+
         return app;
     }
 }

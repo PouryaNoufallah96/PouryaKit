@@ -16,5 +16,6 @@
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Security\PouryaKit.Security.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Security.JwtBearer\PouryaKit.Security.JwtBearer.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Web\PouryaKit.Web.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.Web.OpenApi\PouryaKit.Web.OpenApi.csproj" />
   </ItemGroup>
 </Project>

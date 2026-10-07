@@ -54,6 +54,11 @@ internal static class PackageGraph
             ["Microsoft.Extensions.Http.Resilience"],
             ["Microsoft.AspNetCore.App"]
         ),
+        ["PouryaKit.Web.OpenApi"] = new(
+            ["PouryaKit.Web"],
+            ["Asp.Versioning.Http", "Asp.Versioning.OpenApi", "Microsoft.AspNetCore.OpenApi", "Scalar.AspNetCore"],
+            ["Microsoft.AspNetCore.App"]
+        ),
         ["PouryaKit.Testing"] = new(
             ["PouryaKit.Modularity", "PouryaKit.Persistence.Postgres", "PouryaKit.Messaging.Wolverine.EFCore"],
             ["Testcontainers.PostgreSql", "Respawn", "xunit.v3.extensibility.core", "Microsoft.Extensions.TimeProvider.Testing"]
@@ -67,9 +72,12 @@ internal static class PackageGraph
         ["PouryaKit.Persistence.Dapper"] = ["Microsoft.EntityFrameworkCore"],
         ["PouryaKit.Persistence.Postgres"] = ["WolverineFx", "JasperFx", "PouryaKit.Messaging"],
         // Outgoing HTTP resilience is the standard handler alone, usable without an AppHost or ServiceDefaults.
-        ["PouryaKit.Web"] = ["PouryaKit.Modularity", "Aspire"],
+        // API versioning and OpenAPI are the optional Web.OpenApi's, so a Host without them takes none of it.
+        ["PouryaKit.Web"] = ["PouryaKit.Modularity", "Aspire", "Asp.Versioning", "Microsoft.AspNetCore.OpenApi", "Microsoft.OpenApi", "Scalar"],
         // The token's claims reach Web as claims; the bearer scheme knows nothing of the HTTP endpoints that read them.
         ["PouryaKit.Security.JwtBearer"] = ["PouryaKit.Web"],
+        // The native OpenAPI documents and Scalar are the one OpenAPI stack: no Swagger generator beside them.
+        ["PouryaKit.Web.OpenApi"] = ["PouryaKit.Modularity", "Aspire", "Swashbuckle", "NSwag"],
         // Transport- and database-neutral: no EF Core, no PostgreSQL driver, no message store.
         ["PouryaKit.Messaging.Wolverine"] = ["Microsoft.EntityFrameworkCore", "Npgsql", "WolverineFx.RDBMS", "WolverineFx.Postgresql", "Weasel"],
         // It emits through System.Diagnostics alone: exporters and logging are the Host's (I.3 Observability, #47).
