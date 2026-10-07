@@ -1,0 +1,32 @@
+README.md
+  s_5db987750027ae::t_36d15b8c8b79e4 5-24
+.claude/rules/kit-code.md
+  s_5db987750027ae::t_51a4a61ce5ba3e 21
+docs/agents/ai-setup.md
+  s_5db987750027ae::t_c35bfe978c0faa 27
+docs/agents/brief-template.md
+  s_5db987750027ae::t_2ab771ce1fe7d3 1-92
+docs/agents/running-a-spec.md
+  s_5db987750027ae::t_623fb26830068c 29
+  s_5db987750027ae::t_d39cc7eecb103a 33
+  s_5db987750027ae::t_300022c8b32fc2 34
+.claude/output-styles/kit-orchestrator.md
+  s_5db987750027ae::t_a301a6a187a5ed 27
+  s_5db987750027ae::t_5852199f9240e5 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4bb86c009b785af9cceaff166ca866c1ff5a1a2f",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
