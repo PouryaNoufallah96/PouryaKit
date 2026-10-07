@@ -584,6 +584,8 @@ Spec #33 and the owner's decisions of 2026-10-07 on RabbitMQ naming and routing:
 
 `python3 scripts/packaging/validate.py --no-fetch` on the ticket's source (commit `9b5922a`, before this paragraph was added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof` at version `0.1.0-preview.0.91`, with the Release runtime suite at 732 passed, 0 failed, 0 skipped. A first run on the same commit failed one runtime test, `CachingTests.With_redis_a_second_host_reads_the_entry_the_first_stored_without_running_its_handler`, whose own connection to its Redis container was refused (`RedisConnectionException` in `WaitUntilStoredAsync`); the rerun passed it unchanged, and it passed in both full Debug runs of the ticket.
 
+On the merge of `feat/wave-2` at `29cf516` (#61) into the ticket's branch, `python3 scripts/packaging/validate.py --no-fetch` on the merge commit (`6528359`, before this paragraph was added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof` at version `0.1.0-preview.0.93`, with the Release runtime suite at 742 passed, 0 failed, 0 skipped. The merged tree's full suites passed first: ModularMonolith.Tests 484 passed, ArchitectureTests 96 passed, `RabbitMqDeliveryTests` 19 passed.
+
 ## Wave 2 Module seam and composition checks, ticket #61
 
 Spec #33, the owner's decisions of 2026-10-07 (A: a Module's Features live in its definition's assembly, inferred, with
