@@ -48,6 +48,7 @@ internal static class PackageGraph
         ),
         ["PouryaKit.Observability"] = new(["PouryaKit.Cqrs"], []),
         ["PouryaKit.Security"] = new(["PouryaKit.Core", "PouryaKit.Cqrs"], []),
+        ["PouryaKit.Security.JwtBearer"] = new(["PouryaKit.Security"], ["Microsoft.AspNetCore.Authentication.JwtBearer"]),
         ["PouryaKit.Web"] = new(
             ["PouryaKit.Core", "PouryaKit.Cqrs"],
             ["Microsoft.Extensions.Http.Resilience"],
@@ -67,6 +68,8 @@ internal static class PackageGraph
         ["PouryaKit.Persistence.Postgres"] = ["WolverineFx", "JasperFx", "PouryaKit.Messaging"],
         // Outgoing HTTP resilience is the standard handler alone, usable without an AppHost or ServiceDefaults.
         ["PouryaKit.Web"] = ["PouryaKit.Modularity", "Aspire"],
+        // The token's claims reach Web as claims; the bearer scheme knows nothing of the HTTP endpoints that read them.
+        ["PouryaKit.Security.JwtBearer"] = ["PouryaKit.Web"],
         // Transport- and database-neutral: no EF Core, no PostgreSQL driver, no message store.
         ["PouryaKit.Messaging.Wolverine"] = ["Microsoft.EntityFrameworkCore", "Npgsql", "WolverineFx.RDBMS", "WolverineFx.Postgresql", "Weasel"],
         // It emits through System.Diagnostics alone: exporters and logging are the Host's (I.3 Observability, #47).

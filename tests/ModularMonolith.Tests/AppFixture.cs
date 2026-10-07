@@ -13,7 +13,6 @@ using Npgsql;
 using PouryaKit.Modularity;
 using PouryaKit.Security;
 using PouryaKit.Testing;
-using PouryaKit.Web;
 
 [assembly: AssemblyFixture(typeof(AppFixture))]
 [assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
@@ -22,8 +21,8 @@ namespace ModularMonolith.Tests;
 
 /// <summary>
 /// The Proving Sample's Host, with the test-only <see cref="StubModule"/> beside Catalog, served in memory,
-/// authenticating callers with <see cref="TestAuthentication"/>, whose tenant claim fills the tenant, trusting the
-/// caller <see cref="TrustedPeer"/> as a peer Host, granting the tests' own Actor the permissions
+/// authenticating callers with <see cref="TestAuthentication"/> (its bearer scheme trusts <see cref="TestIssuer"/>),
+/// trusting the caller <see cref="TrustedPeer"/> as a peer Host, granting the tests' own Actor the permissions
 /// <see cref="TestActorPermissions"/> lists, delivering at test speed, and committing through the
 /// <see cref="CommitProbe"/>.
 /// </summary>
@@ -53,6 +52,7 @@ public sealed class AppFixture : HostFixture
                 environment,
                 $"--ConnectionStrings:app={connectionString}",
                 $"--PouryaKit:TrustedPeers:Peers:0={TrustedPeer}",
+                .. TestIssuer.HostArguments,
             ]
         );
         builder.AddPouryaKitModules(modules => modules.Add<StubModule>());
@@ -63,7 +63,6 @@ public sealed class AppFixture : HostFixture
         builder
             .Services.AddAuthentication(TestAuthentication.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
-        builder.Services.Configure<PouryaKitWebOptions>(web => web.TenantClaim = TestAuthentication.TenantClaim);
         builder.Services.AddScoped<CallerPermissions>();
         builder.Services.AddScoped<IActorPermissions, TestActorPermissions>();
         builder.Logging.AddProvider(logs);

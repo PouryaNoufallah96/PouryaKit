@@ -4,12 +4,14 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ModularMonolith.Host;
+using PouryaKit.Security;
 
 namespace ModularMonolith.Tests;
 
-// Stands in for the Host's JwtBearer: a request with "Authorization: Test <id>" is the authenticated person <id>, and
-// a request without it is anonymous. The claim it issues is the one JwtBearer maps a token's subject to; a
-// "Test-Tenant" header adds a tenant claim, and a "Test-Permissions" header, comma-separated, a permission claim each.
+// Stands in for the Host's bearer scheme: a request with "Authorization: Test <id>" is the authenticated person <id>,
+// and a request without it is anonymous. It issues the claims the Kit's bearer scheme normalizes a verified token into:
+// the Actor's, a tenant's from a "Test-Tenant" header, and a permission claim each from a "Test-Permissions" header,
+// comma-separated.
 internal sealed class TestAuthentication(
     IOptionsMonitor<AuthenticationSchemeOptions> options,
     ILoggerFactory logger,
@@ -17,8 +19,6 @@ internal sealed class TestAuthentication(
 ) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     public const string SchemeName = "Test";
-
-    public const string TenantClaim = "tenant";
 
     public const string TenantHeader = "Test-Tenant";
 
@@ -50,7 +50,7 @@ internal sealed class TestAuthentication(
             caller == WithoutActorClaim ? [new Claim(ClaimTypes.Name, caller)] : [new Claim(ClaimTypes.NameIdentifier, caller)];
         if (Request.Headers[TenantHeader].ToString() is { Length: > 0 } tenant)
         {
-            claims.Add(new Claim(TenantClaim, tenant));
+            claims.Add(new Claim(PouryaKitClaimTypes.Tenant, tenant));
         }
 
         claims.AddRange(

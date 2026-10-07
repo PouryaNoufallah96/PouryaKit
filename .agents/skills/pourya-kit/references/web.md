@@ -57,12 +57,12 @@ using Billing;
 using Catalog;
 using Catalog.Products.Events.Notifications;
 using Inventory;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
 using PouryaKit.Security;
+using PouryaKit.Security.JwtBearer;
 using PouryaKit.Web;
 
 public static class ModularMonolithHost
@@ -70,14 +70,16 @@ public static class ModularMonolithHost
     public const string DownstreamClient = "downstream";
 
     public const string BrowserPolicy = "browser";   // the CORS policy the pipeline answers with
+    public const string TenantClaim = "tenant";
 
     public static WebApplicationBuilder CreateBuilder(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        // The application authenticates its callers itself; JwtBearer reads Authentication:Schemes:Bearer.
-        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+        // Bearer tokens, verified against Authentication:Schemes:Bearer (security.md); "sub" is the Actor.
+        builder.Services.AddPouryaKitJwtBearer(claims => claims.TenantClaim = TenantClaim);
         builder.Services.AddAuthorization();
-        builder.Services.AddPouryaKitWeb();   // also: authenticated access by default
+        // Also: authenticated access by default. The tenant is the one the bearer scheme verified.
+        builder.Services.AddPouryaKitWeb(web => web.TenantClaim = PouryaKitClaimTypes.Tenant);
         // The peer Hosts that may continue an Operation of theirs here; none by default.
         builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));
         // Named CORS policies, response compression and the rate limit per Actor; each is off until configured.
@@ -198,11 +200,11 @@ internal sealed class ListProductsEndpoint : IEndpoint
 
 ## The caller and the Actor
 
-- HTTP access is authenticated by default. `AddPouryaKitWeb` sets the authorization `FallbackPolicy` to require an authenticated user, once, while the Host is composed, so every endpoint that states nothing, a Module's or one the Host maps itself (a health check, a document), refuses an unauthenticated caller before it runs: 401 with JwtBearer, written as a problem response. A path no route matches has no endpoint, and the fallback policy applies to it too: an anonymous request answers 401, an authenticated one 404. A fallback policy the application set itself is kept. Never change `AuthorizationOptions` while the Host runs, such as from a policy provider that adds policies on demand.
+- HTTP access is authenticated by default. `AddPouryaKitWeb` sets the authorization `FallbackPolicy` to require an authenticated user, once, while the Host is composed, so every endpoint that states nothing, a Module's or one the Host maps itself (a health check, a document), refuses an unauthenticated caller before it runs: 401, written as a problem response. A path no route matches has no endpoint, and the fallback policy applies to it too: an anonymous request answers 401, an authenticated one 404. A fallback policy the application set itself is kept. Never change `AuthorizationOptions` while the Host runs, such as from a policy provider that adds policies on demand.
 - Every Module's route group also requires an authenticated caller explicitly, through the default policy.
 - An endpoint the Host maps outside every Module opts out with the standard `.AllowAnonymous()`; it runs no Operation, so it names no Actor.
 - Before the endpoint binds its parameters, the Kit begins the request's Operation with an `OperationContext` built from the caller: `Actor.Person(id)` from the Actor claim, the tenant from the tenant claim when one is configured, and a new chain of work (correlated with its own `OperationId`, no causation). Only a trusted peer Host continues an Operation of its own instead ([Calls between Kit Hosts](#calls-between-kit-hosts)); every other caller's context headers are ignored. The endpoint injects that context and passes it to the Gateway; it never builds one itself.
-- `PouryaKitWebOptions` names the claims: `ActorClaim`, by default `ClaimTypes.NameIdentifier`, which JwtBearer maps a token's `sub` to (set `"sub"` when the scheme keeps the token's claim names), and `TenantClaim`, null by default for an application without tenants. Set them with `AddPouryaKitWeb(web => web.TenantClaim = "tenant")` or `Configure<PouryaKitWebOptions>`.
+- `PouryaKitWebOptions` names the claims: `ActorClaim`, by default `ClaimTypes.NameIdentifier`, and `TenantClaim`, null by default for an application without tenants. With the Kit's bearer scheme (`AddPouryaKitJwtBearer`, [security.md](security.md#jwt-bearer-authentication)) the Actor arrives under `ClaimTypes.NameIdentifier` already and the tenant under `PouryaKitClaimTypes.Tenant`, so set `AddPouryaKitWeb(web => web.TenantClaim = PouryaKitClaimTypes.Tenant)`; the token's own claim names are configured once, in the bearer scheme. With a scheme of the application's own, name the claims it issues, with `AddPouryaKitWeb(...)` or `Configure<PouryaKitWebOptions>`.
 - A caller whose identity lacks the tenant claim runs with a null tenant and is not refused. An authenticated caller without the Actor claim is a configuration bug: the request answers 500 and the log names the missing claim.
 - A public endpoint states the Actor its anonymous callers run as with `.AllowAnonymousAs(Actor.System("catalog.storefront"))`, as `ListProducts` does; an authenticated caller of it still runs as themselves. A plain `.AllowAnonymous()` on a Module's endpoint fails the Host when it starts, because no Operation runs as an unnamed Actor.
 - A permission a command or query requires is declared on it with `[RequiresPermission(name)]` and checked against the application's `IActorPermissions` ([security.md](security.md)); a caller without it gets 403 with `Permission.Denied`. Any other rule for one command or query beyond "authenticated" is an `IAuthorizer` ([commands-queries-validation.md](commands-queries-validation.md#authorization-hook)), which answers 403 with its `Forbidden` Error. Never add a role or claim policy per endpoint for either: the check belongs to the Operation, however it arrives.
@@ -345,7 +347,7 @@ public async Task Creating_a_product_with_a_name_in_use_answers_409_with_its_err
 ```
 
 - `Fixture.Host.GetTestClient()` (`Microsoft.AspNetCore.TestHost`) returns an `HttpClient` over the in-memory server; a client without the header is an anonymous caller.
-- A second `AddAuthentication(scheme)` call after the Host's makes the test scheme the default, so the Host's own scheme needs no configuration in tests. Issue the claim the Host's `ActorClaim` names, a tenant claim when `TenantClaim` is set, and the permission claims the Host's `IActorPermissions` reads: the Proving Sample's scheme turns a `Test-Permissions` header into them ([security.md](security.md#testing-permissions)).
+- A second `AddAuthentication(scheme)` call after the Host's makes the test scheme the default. The Host's own scheme is still registered and still checked when the Host starts, so give it its configuration in tests too: the Proving Sample's `AppFixture` passes the bearer section of its `TestIssuer` ([security.md](security.md#testing-jwt-bearer-authentication)). Issue the claim the Host's `ActorClaim` names, a tenant claim when `TenantClaim` is set, and the permission claims the Host's `IActorPermissions` reads: the Proving Sample's scheme turns a `Test-Permissions` header into them ([security.md](security.md#testing-permissions)).
 - Prove the authenticated default on an endpoint outside every Module's route group, which has no authorization of its own: map one on a Host the test builds, and an anonymous request to it must answer 401.
 - A test that needs another composition, such as another environment or an endpoint the shared Host must not map, builds and starts a Host of its own from the same composition methods.
 - Test outgoing calls against a WireMock.Net server (test-only, Apache-2.0): its scenarios fail requests on cue (503, 503, then 200) and its request journal (`server.LogEntries`) shows the headers every attempt arrived with. Prove the receiving side, trusted and untrusted callers, on the real Host with headers named by `PouryaKit.Messaging.OperationContextHeaders`; a stub's configured response proves nothing about the receiver.

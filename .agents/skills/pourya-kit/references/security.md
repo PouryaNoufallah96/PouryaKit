@@ -2,14 +2,17 @@
 
 `PouryaKit.Security`: a permission declared on a command or query, checked through the pipeline's existing authorization hook against the application's source of an Actor's permissions, and never checked again for a trusted continuation; and optional PBKDF2 password hashing for an application that stores passwords. Namespace `PouryaKit.Security`. It references `PouryaKit.Cqrs` and `PouryaKit.Core` only, no ASP.NET Core, so a Module or a Host without HTTP uses it too. Authenticated HTTP access by default is `PouryaKit.Web`'s ([web.md](web.md#the-caller-and-the-actor)).
 
+`PouryaKit.Security.JwtBearer`, optional: the Host's standard ASP.NET Core JWT bearer authentication, with issuer, audience, signature and lifetime always validated, and each verified token's configured claims normalized into the Actor and tenant. Namespace `PouryaKit.Security.JwtBearer`. It references `PouryaKit.Security` and `Microsoft.AspNetCore.Authentication.JwtBearer`, not `PouryaKit.Web`.
+
 - [Declaring a permission](#declaring-a-permission)
 - [The Actor's permissions](#the-actors-permissions)
 - [Denial](#denial)
 - [Continuations](#continuations)
 - [Testing permissions](#testing-permissions)
 - [Password hashing](#password-hashing)
+- [JWT bearer authentication](#jwt-bearer-authentication)
 
-The Kit has no role system, policy framework, identity store or admin bypass, and issues no token. A rule that is not "this Actor holds this permission", such as one that reads the command's data, is an `IAuthorizer<T>` of the Module's own ([commands-queries-validation.md](commands-queries-validation.md#authorization-hook)).
+The Kit has no role system, policy framework, identity store or admin bypass, and issues no token: no token endpoint, provider SDK, API key or PKCE flow. A rule that is not "this Actor holds this permission", such as one that reads the command's data, is an `IAuthorizer<T>` of the Module's own ([commands-queries-validation.md](commands-queries-validation.md#authorization-hook)).
 
 ## Declaring a permission
 
@@ -174,3 +177,46 @@ Raise `Iterations` when the guidance does; existing hashes keep verifying and ar
 
 - Test through `IPasswordHasher` from `AddPouryaKitPasswordHashing`, with no Host: the Kit's own tests take it from the service collection's descriptor.
 - The minimum iterations apply in tests too; at the defaults the Kit's 57 password test cases run in about 4 s.
+
+## JWT bearer authentication
+
+For a Host whose callers present bearer tokens from an identity provider. The Kit verifies and normalizes them; it issues none.
+
+```csharp
+using PouryaKit.Security;
+using PouryaKit.Security.JwtBearer;
+using PouryaKit.Web;
+
+// In the Host, instead of AddAuthentication(...).AddJwtBearer(...):
+builder.Services.AddPouryaKitJwtBearer(claims => claims.TenantClaim = "tenant");   // "sub" is the Actor by default
+builder.Services.AddAuthorization();
+builder.Services.AddPouryaKitWeb(web => web.TenantClaim = PouryaKitClaimTypes.Tenant);
+```
+
+```json
+{
+  "Authentication": {
+    "Schemes": {
+      "Bearer": {
+        "ValidIssuer": "https://login.example.com/",
+        "ValidAudiences": [ "catalog-api" ],
+        "Authority": "https://login.example.com/"
+      }
+    }
+  }
+}
+```
+
+- `AddPouryaKitJwtBearer` registers standard JWT bearer authentication as the default scheme, `Bearer`. Its issuer, audiences and signing keys are the framework's own `JwtBearerOptions`, bound from `Authentication:Schemes:Bearer`: an `Authority` (or `MetadataAddress`) whose discovery document supplies the issuer and keys, or `ValidIssuer` and `SigningKeys`, as `dotnet user-jwts` writes them for development. Set anything else on the same options with `Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, ...)`; never call `AddJwtBearer` again.
+- The Host fails when it starts, with an `OptionsValidationException` naming every problem, unless the scheme validates the audience against a configured audience, the issuer against a configured issuer or authority, the signature against a signing key or authority, and the token's lifetime and expiration time. Nothing in the Kit's options turns one off, and setting `ValidateAudience = false`, leaving out every audience, or doing the same to the issuer fails the start, never the first request. The check reads the options as they end, after the configuration and every `Configure` and `PostConfigure`.
+- The token keeps its own claim names (`MapInboundClaims` stays false). For each verified token the Kit writes the value of `PouryaKitJwtBearerOptions.ActorClaim`, `"sub"` by default, as the identity's `ClaimTypes.NameIdentifier`, which `PouryaKit.Web` reads as `Actor.Person(id)`, and the value of `TenantClaim` as `PouryaKitClaimTypes.Tenant`. A claim the token itself carries under either of those two types is dropped first. Every other claim, such as the `permission` claims the Proving Sample's `CallerPermissions` reads, keeps its name.
+- A token without the tenant claim runs with a null tenant and is not refused, as with any scheme ([web.md](web.md#the-caller-and-the-actor)). An application in which every caller must have a tenant enforces it itself, in an `IAuthorizer<T>` or its own `OnTokenValidated`.
+- A token whose signature, issuer, audience or lifetime fails, or that carries no Actor claim, or more than one Actor or tenant value, is refused: the request is anonymous, and an endpoint that requires authentication answers 401 as a problem response, with the scheme's `WWW-Authenticate: Bearer` header.
+- An `OnTokenValidated` of the application's own on `Events` still runs, after the normalization and only for a token the Kit kept. Setting `EventsType` instead would bypass the normalization, so it fails the start.
+
+### Testing JWT bearer authentication
+
+- Test with real tokens and the real middleware. The Proving Sample's `TestIssuer` signs tokens with an HMAC key generated for the test run and gives every Host the tests compose its `Authentication:Schemes:Bearer` section on the command line (`ValidIssuer`, `ValidAudiences`, `SigningKeys`), so the shared Host's bearer scheme passes its start check even while `TestAuthentication` is the default. `Microsoft.IdentityModel.JsonWebTokens`' `JsonWebTokenHandler` creates the tokens; it arrives with the bearer package.
+- A test of the bearer scheme builds its own Host with `AppFixture.ComposeHost(..., configure: builder => builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme))`, which makes `Bearer` the default again, and starts it.
+- Prove each refusal with a token that differs in one thing: another signing key, issuer or audience, a lifetime that ended beyond the handler's five minutes of clock skew, no `sub`. Prove the start check with one weakened option per case on the composed Host, and that `StartAsync` throws.
+- A second started Host shares the message store's queues. Wait for the fixture's deliveries (`Fixture.WaitUntilDeliveredAsync`) before starting it and before it is disposed, or it can take a delivery and die holding it, and the next test's reset times out.

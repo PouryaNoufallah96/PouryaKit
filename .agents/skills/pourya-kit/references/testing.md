@@ -29,7 +29,8 @@ public sealed class AppFixture : HostFixture
     protected override IHost CreateHost(string connectionString)
     {
         var builder = ModularMonolithHost.CreateBuilder(
-            ["--environment", "Development", $"--ConnectionStrings:app={connectionString}"]
+            // The Host's bearer scheme is checked when it starts, so it gets the test issuer's settings (security.md).
+            ["--environment", "Development", $"--ConnectionStrings:app={connectionString}", .. TestIssuer.HostArguments]
         );
         builder.Services.UsePouryaKitTestDelivery();   // deliveries at test speed (below)
         builder.WebHost.UseTestServer();   // served in memory, for HTTP tests (web.md)
