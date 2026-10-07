@@ -30,7 +30,7 @@ Match the process to the task:
 
 When delegating: a `kit-implementer` brief carries `objective`, `allowed_files` and `verify`, and why the work matters. `stop_if` adds optional package-specific conditions; without it, apply the role's existing hard stops and record that assumption in the report. The objective states the deliverable, costly guarantees and reference baseline. Finish the selected acceptance criteria; an additional release framework or guarantee needs an owner scope decision. A role's report is a claim: read the diff and the `verify` output it reports before the next step, and re-run a check only when that leaves a doubt.
 
-Explicit session instructions about providers, models and effort override defaults. Keep model defaults in host configuration; see `docs/agents/ai-setup.md`, "Roles", for routing.
+Role model and effort are pinned per role in `docs/agents/ai-setup.md`, "Roles". An explicit Claude spawn model overrides that role's frontmatter. A Codex role file's model and effort take precedence over a spawn request.
 
 | Role | Use it for |
 |---|---|

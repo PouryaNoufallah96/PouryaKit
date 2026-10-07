@@ -27,7 +27,7 @@ One home per concern. Anything both tools use lives in `.agents/` or at the root
 
 ## Roles
 
-Each role is one pair with the same `name`, `description` and instructions. The contract is in the role file; models stay unpinned.
+Each role is one pair with the same `name`, `description` and instructions. The contract is in the role file. Each role pins its own model and effort.
 
 | Role | Access |
 |---|---|
@@ -37,7 +37,15 @@ Each role is one pair with the same `name`, `description` and instructions. The 
 
 `kit-reviewer` has no memory on purpose: an independent reviewer carries no conclusions from one diff into the next.
 
-Routing follows the session instruction in `AGENTS.md`. With no explicit override, Claude Code roles use `CLAUDE_CODE_SUBAGENT_MODEL` in `.claude/settings.json`; Codex roles use the `[agents]` defaults in `.codex/config.toml`. Pass an explicit session model at spawn; the Agent tool has no effort parameter, so a Claude role's effort is its frontmatter default and a lower target is stated in the brief. Role files carry no model pin that can defeat that choice. Main-session and CLI review defaults remain in host configuration.
+Routing:
+
+| Role | Claude Code | Codex |
+|---|---|---|
+| `kit-implementer` | `claude-opus-5-5`, effort `xhigh` | `gpt-6.1-sol`, effort `xhigh` |
+| `kit-reviewer` | `claude-fable-5-1`, effort `high` | `gpt-6-astra`, effort `high` |
+| `kit-scout` | `claude-opus-5-5`, effort `medium` | `gpt-6.1-sol`, effort `medium` |
+
+Claude reads `model` and `effort` from the role's frontmatter. Codex reads `model` and `model_reasoning_effort` from the role's `.toml`. A Claude spawn that passes a model uses that model instead. A Codex role file's model and effort take precedence over a spawn override. `CLAUDE_CODE_SUBAGENT_MODEL` (`opus`) and the `[agents]` defaults cover a subagent that is not one of these roles. `/kit-review`'s Claude review leg spawns `kit-reviewer`. Its Codex leg is `codex exec` with no `--model` unless `codexModel` is passed, so it uses `model` and `model_reasoning_effort` in `.codex/config.toml`, which are `gpt-6-astra` and `high`. The prepare, verify and finish agents in that workflow stay on the host default.
 
 ## The ticket loop
 
@@ -55,7 +63,7 @@ Run /kit-review with base <base commit> and ticket 42
 
 The workflow takes its arguments as a JSON object or as the word form above (`key value` pairs: `base`, `ticket`, `spec`, `head`, `previous`, `rescore`, `evidence`, `codexModel`, `codexEffort`; `scope` is JSON-only). `base` is the `base` the implementer's report names. `evidence` is the path of a file the session writes with the recorded execution evidence (the verify commands and their totals, the package validation PASS line, the red-once list): the prepare stage appends it to `spec.md`, together with the parent spec's body named by the ticket's "Parent" link, so the Codex leg has the spec it cannot fetch and the record it cannot run. A record that names the revision, commands, outcomes and environment counts as the execution record; BLOCKED remains the right verdict when required evidence cannot be inspected at all.
 
-For an explicit Codex model instruction, pass it through, for example `codexModel gpt-6.1-sol`. The workflow's Claude agents use host defaults. If the session restricts all agents to one provider, run two independent reviewer agents in that host with the required model instead of invoking this cross-provider workflow. Apply the same review criteria and limits from `AGENTS.md`.
+For an explicit Codex model instruction, pass it through, for example `codexModel gpt-6.1-sol`. The Claude review leg uses `kit-reviewer`'s model and effort. The prepare, verify and finish agents use host defaults. If the session restricts all agents to one provider, run two independent reviewer agents in that host with the required model instead of invoking this cross-provider workflow. Apply the same review criteria and limits from `AGENTS.md`.
 
 The work to review must be committed: the review reads one commit, never uncommitted changes. Pass `spec` (a file path, absolute or relative to the repository root) instead of `ticket` only for work with no ticket; exactly one of the two. Optional arguments: `head` (the commit to review; by default the commit your checkout is on when the run starts), `scope` (one line of plain text), `codexModel` (an explicit Codex model; omitted uses its host configuration), `codexEffort` (explicit `high` or `xhigh`; omitted uses host configuration), and `previous` with `rescore` for a re-review (step 4). A wrong combination fails at once and says what to pass.
 
@@ -114,7 +122,7 @@ The digest's `rescored` map gives each of them one state: `resolved`, `partial` 
 
 **Subagent worktrees.** Claude Code creates each subagent worktree itself under the gitignored `.claude/worktrees/`, on a new branch, and removes it the usual way: at once if the agent changed nothing, otherwise by its periodic sweep. `"worktree": {"baseRef": "head"}` in `.claude/settings.json` bases it on the commit the session's checkout is on at spawn, instead of the remote's default branch; uncommitted changes do not carry over. The check script fails without it. To turn it off for yourself, put `{"worktree": {"baseRef": "fresh"}}` in `.claude/settings.local.json`. Codex creates no per-subagent worktree.
 
-**Subagent rows.** `subagentStatusLine` is an inline `jq` command that renders each row of the agent panel as `kit-implementer · opus-5-5 · high · 24% ctx`, leaving out a field the task does not report. Without `jq` the default rows show.
+**Subagent rows.** `subagentStatusLine` is an inline `jq` command that renders each row of the agent panel as `kit-implementer · opus-5-5 · xhigh · 24% ctx`, leaving out a field the task does not report. Without `jq` the default rows show.
 
 **The `kit-cockpit` mod.** A mod is a plugin whose handlers run inside Claude Code. This one does two things:
 

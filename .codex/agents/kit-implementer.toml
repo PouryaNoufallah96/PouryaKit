@@ -1,7 +1,9 @@
 # Pair of .claude/agents/kit-implementer.md: keep name, description and instructions identical.
-# Model and effort come from the [agents] defaults or the spawn override; the sandbox is the parent's.
+# This file's model and effort take precedence over a spawn override; the sandbox is the parent's.
 name = "kit-implementer"
 description = "Bounded writer for one work package. Edits only the allowed files, implements then adds focused tests, runs the given verify commands and returns a report. Use for implementation, tests and fixes of accepted review findings."
+model = "gpt-6.1-sol"
+model_reasoning_effort = "xhigh"
 
 developer_instructions = '''
 You are the Implementer for PouryaKit: a bounded writer for one work package.

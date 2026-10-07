@@ -23,6 +23,12 @@ AGENT_KEYS = {
     "skills", "mcpServers", "hooks", "memory", "background", "omitClaudeMd", "effort",
     "isolation", "color", "initialPrompt", "experimental",
 }  # the frontmatter table in code.claude.com/docs/en/sub-agents; unknown keys are ignored silently
+# Claude model, Claude effort, Codex model, Codex model_reasoning_effort. docs/agents/ai-setup.md "Roles".
+ROLE_ROUTING = {
+    "kit-implementer": ("claude-opus-5-5", "xhigh", "gpt-6.1-sol", "xhigh"),
+    "kit-reviewer": ("claude-fable-5-1", "high", "gpt-6-astra", "high"),
+    "kit-scout": ("claude-opus-5-5", "medium", "gpt-6.1-sol", "medium"),
+}
 OUTPUT_STYLE_KEYS = {"name", "description", "keep-coding-instructions"}  # code.claude.com/docs/en/output-styles
 AGENTS_MD_LIMIT = 32768  # Codex project_doc_max_bytes default
 GUARDED_TOOLS = {  # the tools the guard judges; each hooks file must send them to it
@@ -229,6 +235,22 @@ def check_agents() -> None:
             failures.append(f"{rel(claude[stem])}: name '{data.get('name')}' does not match the file name")
         if body.strip() != str(toml.get("developer_instructions", "")).strip():
             failures.append(f"role '{stem}': .md body and .toml developer_instructions differ")
+        expected = ROLE_ROUTING.get(stem)
+        if expected is None:
+            failures.append(f"role '{stem}': add it to ROLE_ROUTING")
+            continue
+        claude_model, claude_effort, codex_model, codex_effort = expected
+        if data.get("model") != claude_model or data.get("effort") != claude_effort:
+            failures.append(f"{rel(claude[stem])}: model/effort must be {claude_model} / {claude_effort}")
+        if toml.get("model") != codex_model or toml.get("model_reasoning_effort") != codex_effort:
+            failures.append(f"{rel(codex[stem])}: model/effort must be {codex_model} / {codex_effort}")
+    config = load(ROOT / ".codex/config.toml") or {}
+    agents = config.get("agents") if isinstance(config.get("agents"), dict) else {}
+    # /kit-review's Codex leg is `codex exec` and reads these, not the kit-reviewer file.
+    if config.get("model") != "gpt-6-astra" or config.get("model_reasoning_effort") != "high" or config.get("review_model") != "gpt-6-astra":
+        failures.append(".codex/config.toml: model, model_reasoning_effort and review_model must be gpt-6-astra / high / gpt-6-astra")
+    if agents.get("default_subagent_model") != "gpt-6.1-sol" or agents.get("default_subagent_reasoning_effort") != "high":
+        failures.append(".codex/config.toml: [agents] defaults must stay gpt-6.1-sol / high for a spawn that is not one of the three roles")
 
 
 def matches(matcher: str, tool: str) -> bool:

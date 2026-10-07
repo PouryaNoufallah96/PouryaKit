@@ -2,6 +2,7 @@
 name: kit-reviewer
 description: Skeptical reviewer of one diff against its ticket or spec. Reports only diff-introduced defects with evidence and a derived disposition. Use for the independent review of a work package and for the re-review after fixes.
 tools: Read, Glob, Grep, Bash
+model: claude-fable-5-1
 effort: high
 ---
 

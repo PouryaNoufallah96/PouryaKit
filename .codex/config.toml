@@ -4,9 +4,10 @@
 
 model = "gpt-6-astra"
 model_reasoning_effort = "high"
-# CLI review default; an explicit session model instruction overrides this routing choice.
+# `codex review` uses review_model. `codex exec`, including /kit-review when codexModel is omitted, uses model and model_reasoning_effort above.
 review_model = "gpt-6-astra"
 
 [agents]
+# Fallback for a spawned agent that is not one of the three roles. Those pin model and effort in .codex/agents.
 default_subagent_model = "gpt-6.1-sol"
 default_subagent_reasoning_effort = "high"
