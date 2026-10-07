@@ -1,0 +1,35 @@
+tests/ModularMonolith.Tests/JwtBearerTests.cs
+  s_6c3c3736ba14ff::t_b282ef69c93cf8 142-144
+  s_6c3c3736ba14ff::t_40437b86feb5e7 4,14-15,55,74-76,122-124,130-141,152-163,171-256,262-267
+docs/architecture/README.md
+  s_6c3c3736ba14ff::t_a4e740ab4f09c6 283
+src/PouryaKit.Security.JwtBearer/JwtBearerServiceCollectionExtensions.cs
+  s_6c3c3736ba14ff::t_56dc6c204e3d5b 26-31
+.agents/skills/pourya-kit/references/security.md
+  s_6c3c3736ba14ff::t_a4e740ab4f09c6 211,215,221
+src/PouryaKit.Security.JwtBearer/JwtBearerValidation.cs
+  s_6c3c3736ba14ff::t_d2bea196b03d66 3,22,25,62-64,66-70,73,80-89
+  s_6c3c3736ba14ff::t_696ba5fe2d1bf5 60,65
+  s_6c3c3736ba14ff::t_47204891522133 61,90
+docs/acceptance.md
+  s_6c3c3736ba14ff::t_a4e740ab4f09c6 270,273
+  s_6c3c3736ba14ff::t_cadaffa568c35b 272
+src/PouryaKit.Security.JwtBearer/VerifiedClaims.cs
+  s_6c3c3736ba14ff::t_814879513c0add 8-9,14-23,25-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a6edd9a4370c58d77b93b82070654667f906d9d3",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
