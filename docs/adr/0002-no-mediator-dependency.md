@@ -284,3 +284,18 @@ silent, which supersedes the #43 amendment's "Optional, at the cost of a null ch
   a built Host runs Operations through its Gateways before it starts, so no check waits for the start.
 - Proven by `CompositionCheckTests.A_cacheable_query_in_a_host_without_caching_fails_the_host_when_built_naming_the_call`,
   red with the check switched off, against PostgreSQL.
+
+## Amendment (2026-10-08, ticket #62: an Idempotency-Key on a read is refused when its endpoint is built)
+
+The decision above stands, and so does the #42 amendment's "throws `InvalidOperationException` at dispatch" for a
+request id on a command that does not opt in.
+
+- **`RequireIdempotencyKey()` on an endpoint mapped for GET, HEAD, OPTIONS or TRACE throws when the endpoint is built**,
+  in the Module route group's `Finally` hook where `AllowAnonymous` without an Actor is refused, which fails the Host's
+  start. Such an endpoint sends a query, and the slot never reserves a key for a query, so the header would be required
+  and change nothing. An endpoint mapped for every method, with no method metadata, is not refused.
+- **Whether the command opts in stays a dispatch check.** The endpoint's delegate builds the command it sends, so the
+  endpoint cannot know its type when it is built; the dispatcher's refusal of a request id on a command without
+  `[Idempotent]` is the one check of it, and the ticket's planned build-time command check is dropped.
+- Proven by `MisconfiguredHostTests.An_endpoint_that_requires_an_idempotency_key_on_a_get_fails_the_host_at_start`, red
+  with the refusal switched off, against PostgreSQL.

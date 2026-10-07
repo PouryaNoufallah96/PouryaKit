@@ -152,7 +152,8 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
-        Assert.Equal(Unowned["Publish"].Problem, thrown.Message);
+        // Beside the Outbox the Host lacks (#62), one line per problem.
+        Assert.Contains(Unowned["Publish"].Problem, thrown.Message.Split(Environment.NewLine));
     }
 
     [Fact]
@@ -164,9 +165,10 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
-        Assert.Equal(
+        // Beside the Outbox the Host lacks (#62), one line per problem.
+        Assert.Contains(
             $"The Integration Event {typeof(UnownedV1).FullName} is declared for BillingModule, which this Host does not compose, so it runs in no Module of the Host and publishing it would fail once the Host serves. Add BillingModule with AddPouryaKitModules, or name a Module the Host composes.",
-            thrown.Message
+            thrown.Message.Split(Environment.NewLine)
         );
     }
 

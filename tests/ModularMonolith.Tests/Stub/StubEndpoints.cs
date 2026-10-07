@@ -69,6 +69,22 @@ internal sealed class PlainAnonymousEndpoint : IEndpoint
     }
 }
 
+/// <summary>Registered only by a test that builds a Host of its own, to map <see cref="KeyedReadEndpoint"/>.</summary>
+internal sealed class KeyedReadRoute;
+
+// A read that requires an Idempotency-Key, which the Host must refuse: its query ignores the key. It is mapped only in a
+// Host that registers KeyedReadRoute, so the shared Host still starts.
+internal sealed class KeyedReadEndpoint : IEndpoint
+{
+    public void Map(IEndpointRouteBuilder routes)
+    {
+        if (routes.ServiceProvider.GetService<KeyedReadRoute>() is not null)
+        {
+            routes.MapGet("/keyed-read", () => "read").RequireIdempotencyKey();
+        }
+    }
+}
+
 internal sealed class MixedErrorsEndpoint : IEndpoint
 {
     public static readonly ImmutableArray<Error> Errors =

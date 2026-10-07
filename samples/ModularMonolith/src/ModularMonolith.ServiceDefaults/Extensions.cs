@@ -35,8 +35,9 @@ public static class Extensions
             builder.Services.AddServiceDiscovery();
             // One resilience pipeline for every client, the Kit's standard handler that retries safe methods only. A
             // client that needs other limits, or replays writes, replaces it: RemoveAllResilienceHandlers(), then
-            // AddPouryaKitResilience(...). Registered on top of this one it would stack a second pipeline. Such a client
-            // has a name: the Kit refuses the unnamed client, whose pipeline would be this one.
+            // AddPouryaKitResilience(...). Registered on top of this one it would stack a second pipeline, which the Kit
+            // refuses when the client is created. Such a client has a name: the Kit refuses the unnamed client, whose
+            // pipeline would be this one.
             builder.Services.ConfigureHttpClientDefaults(http =>
             {
                 http.AddPouryaKitResilience();

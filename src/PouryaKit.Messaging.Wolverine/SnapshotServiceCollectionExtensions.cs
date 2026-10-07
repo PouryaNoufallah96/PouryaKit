@@ -62,7 +62,7 @@ public static class SnapshotServiceCollectionExtensions
         {
             ArgumentNullException.ThrowIfNull(services);
             Subscriptions.In(services).Receive(typeof(TSnapshot), wireName, isSnapshot: true);
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+            DurableQueuesCheck.AddTo(services);
             return services;
         }
     }
@@ -76,7 +76,7 @@ public static class SnapshotServiceCollectionExtensions
             .In(services)
             .PublishSnapshot(new SnapshotPublication(typeof(TAggregate), typeof(TSnapshot), typeof(TMapper)), wireName, module);
         services.TryAddScoped<TMapper>();
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+        DurableQueuesCheck.AddTo(services);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
         return services;
     }

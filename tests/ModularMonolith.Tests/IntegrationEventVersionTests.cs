@@ -2,6 +2,7 @@ using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Events.DomainEvents;
 using Catalog.Products.Features.CreateProduct;
+using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
@@ -99,6 +100,8 @@ public sealed class IntegrationEventVersionTests(AppFixture app) : HostTest<AppF
         // A Host that publishes both and subscribes to neither: a broker between Hosts routes every publication.
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.UsePouryaKitWolverine();
+        // An Outbox, as a Host that publishes registers one, so the Host builds and Wolverine's own refusal is what fails.
+        builder.Services.AddSingleton<INotificationOutbox, StandInOutbox>();
         builder.Services.Publish<ProducedV1>("tests.produced.v1");
         builder.Services.Publish<MisproducedV2>(typeof(ProducedV1).FullName!);
         using var host = builder.Build();
@@ -116,6 +119,8 @@ public sealed class IntegrationEventVersionTests(AppFixture app) : HostTest<AppF
     {
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.UsePouryaKitWolverine();
+        // An Outbox, as a Host that publishes registers one, so the Host builds and Wolverine's own refusal is what fails.
+        builder.Services.AddSingleton<INotificationOutbox, StandInOutbox>();
         builder.Services.Publish<RoutedV1>("tests.routed.v1");
         builder.Services.Subscribe<RoutedV1, RoutedIntegrationEventHandler>("tests.routed");
         // A v2 published under the v1 contract's full name, a valid wire name of its own.
@@ -133,6 +138,9 @@ public sealed class IntegrationEventVersionTests(AppFixture app) : HostTest<AppF
 
 // Named for the process by one test only, which refuses them before they are declared.
 internal sealed record RoutedV1(Guid Id);
+
+// Marks a Host as one whose Unit of Work writes an Outbox; nothing here commits.
+internal sealed class StandInOutbox : INotificationOutbox;
 
 internal sealed record ProducedV1(Guid Id);
 

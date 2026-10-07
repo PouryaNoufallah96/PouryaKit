@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Security.JwtBearer`. Format and rules: [README](README.md).
 
-`PouryaKitJwtBearerOptions`, the start check of the bearer options (`JwtBearerValidation`) and `PouryaKitClaimTypes` in `PouryaKit.Security` are new Kit code, so they have no record here.
+`PouryaKitJwtBearerOptions`, the start check of the bearer options (`JwtBearerValidation`) and `PouryaKitClaimTypes`, in `PouryaKit.Security` until ticket #62 moved it to `PouryaKit.Cqrs`, are new Kit code, so they have no record here.
 
 ## Package dependencies
 

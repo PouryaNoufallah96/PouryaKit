@@ -9,7 +9,7 @@ using Wolverine.Util;
 
 namespace PouryaKit.Messaging.Wolverine;
 
-// Runs once every hosted service has started, Wolverine and StartupCheck included: stores the first occurrence of each
+// Runs once every hosted service has started, Wolverine and DurableQueuesCheck included: stores the first occurrence of each
 // recurring command that has none waiting in the message store, as an Operation of its system Actor, in its Module, so
 // its Unit of Work writes it to the Outbox as it writes every other. Two Hosts that start together may both store one;
 // the Receipt of the occurrence they then share makes one of them apply nothing and end.

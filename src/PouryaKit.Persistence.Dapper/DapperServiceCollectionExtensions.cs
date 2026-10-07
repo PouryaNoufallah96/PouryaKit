@@ -2,6 +2,7 @@ using System.Reflection;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using PouryaKit.Core;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
@@ -19,7 +20,8 @@ public static class DapperServiceCollectionExtensions
         /// Module's builder (<see cref="IModuleServices"/>), it takes the typed IDs of the assembly of the Module's
         /// definition; named assemblies replace it. The Host holds one <see cref="IReadConnectionFactory"/> and one
         /// connection pool, shared by every Module that names the same connection; naming a different connection in the
-        /// same Host throws here.
+        /// same Host throws here. With the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>), a connection
+        /// string the Host's configuration does not set, or sets blank, fails the Host's build, before any read.
         /// </summary>
         public IServiceCollection AddPouryaKitDapper(string connectionName, params Assembly[] typedIdAssemblies)
         {
@@ -43,6 +45,7 @@ public static class DapperServiceCollectionExtensions
             }
 
             services.AddSingleton(new ReadConnection(connectionName));
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ReadConnectionCheck>());
             services.AddSingleton<IReadConnectionFactory>(provider => new ReadConnectionFactory(
                 provider.GetRequiredService<IConfiguration>().GetConnectionString(connectionName)
                     ?? throw new InvalidOperationException(
@@ -67,7 +70,7 @@ public static class DapperServiceCollectionExtensions
             }
         }
     }
-
-    // Marks the connection the Host's Dapper reads use.
-    private sealed record ReadConnection(string Name);
 }
+
+/// <summary>The connection the Host's Dapper reads use.</summary>
+internal sealed record ReadConnection(string Name);

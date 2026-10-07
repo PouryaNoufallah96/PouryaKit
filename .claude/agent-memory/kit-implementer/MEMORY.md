@@ -46,3 +46,4 @@
 - [Code generation for production facts](codegen-production-facts.md) — #58: Kit-called Wolverine picks the Kit as application assembly, codegen write needs no Roslyn, Debug-restore trap, WAF AutoStartHost
 - [Strict wire reading facts](strict-wire-reading-facts.md) — #60: STJ strict options probed, Wolverine read-failure dead-letter path, two contracts under one wire name, amq. on RabbitMQ
 - [Module seam and composition check facts](module-seam-and-composition-check-facts.md) — #61: checks at container build, StartAsync order, Kit delivery commands vs UoW check, zero-arg scan of a test assembly
+- [Misconfigured Host facts](misconfigured-host-facts.md) — #62: build vs start checks, Wolverine modes after start, IAuthenticationFeature, handler filter, plain test Hosts validated

@@ -27,7 +27,11 @@ public static class WebServiceCollectionExtensions
         /// defaults, each off until the Host configures it: the named CORS policies of <see cref="PouryaKitCorsOptions"/>,
         /// response compression over HTTP and HTTPS when <see cref="PouryaKitCompressionOptions"/> enables it, and the
         /// rate limit per Actor of <see cref="PouryaKitRateLimitOptions"/>, whose rejection answers 429 as a problem
-        /// response. Their options are validated when the Host starts.
+        /// response. Their options are validated when the Host starts. With the Kit's checks
+        /// (<c>AddPouryaKitCompositionChecks</c>, which <c>AddPouryaKitModules</c> calls), the Host's start fails, naming
+        /// the call, when an <see cref="IEndpoint"/> in the Feature assemblies of a Module it composed, or of its own
+        /// services, is not declared with <c>AddPouryaKitEndpoints</c> or not mapped by
+        /// <c>MapPouryaKitModuleEndpoints</c>: a startup check, since the application maps its routes after the build.
         /// </summary>
         /// <remarks>
         /// The handler sees only what runs after it, so <c>app.UseExceptionHandler()</c> comes first in the pipeline,
@@ -35,9 +39,10 @@ public static class WebServiceCollectionExtensions
         /// explicitly: left to <c>WebApplication</c>, those three are inserted ahead of everything the application
         /// adds, and an exception thrown in authentication escapes the handler. <c>app.UseCors(name)</c> comes after
         /// <c>UseRouting()</c> and before <c>UseAuthentication()</c>, so a preflight request is answered without
-        /// credentials; <c>app.UseRateLimiter()</c> comes after <c>UseAuthorization()</c>,
-        /// since it partitions by the authenticated Actor. Compression needs no call: when enabled, it is added
-        /// outermost, before anything that writes a response.
+        /// credentials; <c>app.UseRateLimiter()</c> comes after <c>UseAuthorization()</c>, since it partitions by the
+        /// authenticated Actor: an enabled rate limit throws at a request that reaches it before authentication ran,
+        /// naming the order, rather than put every caller in one partition. Compression needs no call: when enabled, it
+        /// is added outermost, before anything that writes a response.
         /// </remarks>
         public IServiceCollection AddPouryaKitWeb(Action<PouryaKitWebOptions>? configure = null)
         {
@@ -58,6 +63,8 @@ public static class WebServiceCollectionExtensions
                 authorization.FallbackPolicy ??= new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()
             );
             services.ConfigureHttpJsonOptions(json => json.SerializerOptions.UsePouryaKitJson());
+            services.TryAddSingleton<MappedEndpoints>();
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupCheck, UnmappedEndpointsCheck>());
             var options = services.AddOptions<PouryaKitWebOptions>();
             if (configure is not null)
             {

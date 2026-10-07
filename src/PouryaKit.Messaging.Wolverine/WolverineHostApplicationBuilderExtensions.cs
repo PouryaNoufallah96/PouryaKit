@@ -30,10 +30,14 @@ public static class WolverineHostApplicationBuilderExtensions
         /// in the Kit's JSON representation, the one <c>AddPouryaKitWeb</c> gives HTTP bodies, read strictly
         /// (<c>UsePouryaKitWireJson</c>): a body that lacks a member its type requires, or carries null where the type
         /// forbids it, fails to read and is set aside as a dead letter with the error, never handled.
-        /// Nothing this overload registers writes an Outbox (<see cref="INotificationOutbox"/>), so a Host that declares
-        /// Notification Handlers, Integration Event Handlers or published Integration Events calls the overload of
-        /// <c>PouryaKit.Messaging.Wolverine.EFCore</c> instead, or fails when it starts; so does a Host whose
-        /// subscription's Integration Event no Module publishes and no <c>Receive</c> declares. Wolverine generates its handler
+        /// It installs the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>), so a Host with Wolverine has
+        /// them with or without Modules. Nothing this overload registers writes an Outbox
+        /// (<see cref="INotificationOutbox"/>), so a Host that declares Notification Handlers, Integration Event Handlers
+        /// or published Integration Events calls the overload of <c>PouryaKit.Messaging.Wolverine.EFCore</c> instead, or
+        /// fails when it is built; so does a Host with a Notification Handler in the Feature assemblies of a Module it
+        /// composed, or of its own services, that no <c>AddPouryaKitNotificationHandlers</c> declares, naming that call.
+        /// A Host whose subscription's Integration Event no Module publishes and no <c>Receive</c> declares fails when it
+        /// starts. Wolverine generates its handler
         /// code at run time in Development and, in every other environment, loads it from the Host's own assembly, where
         /// <c>dotnet run -- codegen write</c> wrote it before the build (<see cref="TypeLoadMode.Static"/>): a Host there needs no
         /// runtime compiler, and one whose handler chain has no generated type fails when it starts.
@@ -43,9 +47,11 @@ public static class WolverineHostApplicationBuilderExtensions
         {
             ArgumentNullException.ThrowIfNull(builder);
 
+            builder.AddPouryaKitCompositionChecks();
             WolverineMessageNaming.InsertFirst<WireNaming>();
             Subscriptions.In(builder.Services);
             builder.Services.AddOptions<PouryaKitMessagingOptions>();
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, UnregisteredNotificationHandlersCheck>());
             builder.Services.TryAddScoped<CommandHandler<Deliver>, DeliverHandler>();
             builder.Services.TryAddScoped<IntegrationEventPublisher>();
             builder.Services.TryAddScoped<IIntegrationEventPublisher>(scope => scope.GetRequiredService<IntegrationEventPublisher>());

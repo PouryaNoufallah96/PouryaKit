@@ -94,7 +94,7 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
 
 ## PostgreSQL
 
-- `UsePostgres<TDbContext>(connectionName, schema)` on the Module's builder reads the connection string `ConnectionStrings:{connectionName}` from the Host's configuration, gives the Module its own schema with its own `__EFMigrationsHistory`, names tables and columns in snake_case, and makes the DbContext the Module's Unit of Work. Modules may share one connection string; each keeps its own schema.
+- `UsePostgres<TDbContext>(connectionName, schema)` on the Module's builder reads the connection string `ConnectionStrings:{connectionName}` from the Host's configuration, gives the Module its own schema with its own `__EFMigrationsHistory`, names tables and columns in snake_case, and makes the DbContext the Module's Unit of Work. Modules may share one connection string; each keeps its own schema. A connection string the Host's final configuration does not set, or sets blank, fails the Host when it is built, among the composition checks, one line per connection naming its DbContexts and its key, `ConnectionStrings:{connectionName}`; nothing connects ([modules.md](modules.md#startup-checks)).
 - It also lets the Unit of Work read which unique index a refused save violated, for the Errors a Module maps with `MapUniqueConstraint` ([Unique values](#unique-values)).
 
 ## The repository
