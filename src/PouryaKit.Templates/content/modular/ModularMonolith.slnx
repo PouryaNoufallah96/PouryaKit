@@ -1,7 +1,7 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/ModularMonolith.Host/ModularMonolith.Host.csproj" />
-    <Project Path="src/ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj" />
+    <Project Path="src/PouryaKitAppName.Host/PouryaKitAppName.Host.csproj" />
+    <Project Path="src/PouryaKitAppName.ServiceDefaults/PouryaKitAppName.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/src/Modules/">
     <Project Path="src/Modules/Billing/Billing/Billing.csproj" />
@@ -10,6 +10,6 @@
     <Project Path="src/Modules/Inventory/Inventory/Inventory.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj" />
+    <Project Path="tests/PouryaKitAppName.Tests/PouryaKitAppName.Tests.csproj" />
   </Folder>
 </Solution>

@@ -219,14 +219,81 @@ internal static class TemplateRules
     }
 
     /// <summary>
-    /// The token <paramref name="template"/>'s <c>serviceName</c> symbol replaces with a queue name it derives from the
-    /// project's name, and the symbol and the forms it uses, as written.
+    /// The token <paramref name="template"/>'s derived <paramref name="symbol"/> replaces with a value it derives from the
+    /// project's name, and the symbol and the forms it uses, as written: <c>serviceName</c> a queue name, <c>projectName</c>
+    /// the name as typed.
     /// </summary>
-    public static (string Token, string Derivation) ServiceNameSymbol(string template)
+    public static (string Token, string Derivation) DerivedSymbol(string template, string symbol)
     {
         using var configuration = JsonDocument.Parse(File.ReadAllText(Path.Combine(Content, template, ".template.config", "template.json")));
-        var symbol = configuration.RootElement.GetProperty("symbols").GetProperty("serviceName");
-        return (symbol.GetProperty("replaces").GetString()!, symbol.GetRawText() + configuration.RootElement.GetProperty("forms").GetRawText());
+        var derived = configuration.RootElement.GetProperty("symbols").GetProperty(symbol);
+        return (derived.GetProperty("replaces").GetString()!, derived.GetRawText() + configuration.RootElement.GetProperty("forms").GetRawText());
+    }
+
+    /// <summary>The name <paramref name="template"/>'s files carry, which the engine replaces with the project's name.</summary>
+    public static string SourceName(string template)
+    {
+        using var configuration = JsonDocument.Parse(File.ReadAllText(Path.Combine(Content, template, ".template.config", "template.json")));
+        return configuration.RootElement.GetProperty("sourceName").GetString()!;
+    }
+
+    /// <summary>
+    /// A template's solution, project and launch settings files name a project's path through <paramref name="token"/>,
+    /// which the template's <c>projectName</c> symbol replaces with the name as typed, the name the engine gives the files
+    /// and folders; never through <paramref name="sourceName"/>, which the engine writes in content as the name a
+    /// namespace can hold, so <c>-n acme-shop</c> would name <c>acme_shop.Host</c> beside the folder <c>acme-shop.Host</c>.
+    /// Each path in the solution or a project reference names a project the template generates, the token read as the
+    /// <paramref name="sourceName"/> the files carry.
+    /// </summary>
+    public static IEnumerable<string> ProjectPathDefects(IReadOnlyList<TextFile> generated, string sourceName, string token)
+    {
+        var projects = generated.Select(file => file.Path).Where(path => path.EndsWith(".csproj", StringComparison.Ordinal)).ToHashSet();
+        foreach (var file in generated.Where(file => Path.GetExtension(file.Path) is ".slnx" or ".csproj" || file.Path.EndsWith("/launchSettings.json", StringComparison.Ordinal)))
+        {
+            if (file.Text.Contains(sourceName, StringComparison.Ordinal))
+            {
+                yield return $"{file.Path} spells the sourceName {sourceName}, which the engine writes as the name a namespace can hold (acme_shop for -n acme-shop), not as it names the files; name a project's path through {token}.";
+            }
+
+            if (file.Path.EndsWith(".json", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var paths = XDocument
+                .Parse(file.Text)
+                .Descendants()
+                .Select(element => element.Name.LocalName switch
+                {
+                    "Project" => element.Attribute("Path")?.Value,
+                    "ProjectReference" => element.Attribute("Include")?.Value,
+                    _ => null,
+                })
+                .OfType<string>();
+            foreach (var path in paths.Where(path => !projects.Contains(Resolved(Path.GetDirectoryName(file.Path)!, path.Replace(token, sourceName, StringComparison.Ordinal)))))
+            {
+                yield return $"{file.Path} names {path}, which is no project the template generates.";
+            }
+        }
+    }
+
+    // A relative path from a generated file's folder, as a generated path with forward slashes.
+    private static string Resolved(string folder, string relative)
+    {
+        List<string> parts = [];
+        foreach (var part in $"{folder}/{relative}".Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (part == "..")
+            {
+                parts.RemoveAt(parts.Count - 1);
+            }
+            else if (part != ".")
+            {
+                parts.Add(part);
+            }
+        }
+
+        return string.Join('/', parts);
     }
 
     /// <summary>
