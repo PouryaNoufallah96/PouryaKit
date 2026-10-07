@@ -1,0 +1,121 @@
+src/PouryaKit.Cqrs/IdempotentAttribute.cs
+  s_5db987750027ae::t_1465e75eb13610 1-14
+tests/ModularMonolith.Tests/Stub/StubNestedFailures.cs
+  s_5db987750027ae::t_aa503e584d2026 17-19
+tests/PouryaKit.Cqrs.Tests.Module/Things.cs
+  s_5db987750027ae::t_af7112effa462a 48-49
+  s_5db987750027ae::t_a285cdc10e3bb5 243-268
+tests/ModularMonolith.Tests/Stub/Migrations/20261007120000_IdempotencyKeys.cs
+  s_5db987750027ae::t_5c7b46397d337c 1-15
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ImportProducts/ImportProductsCommand.cs
+  s_5db987750027ae::t_2e343973228223 7-8,10
+scripts/packaging/consumers/PouryaKit.Web.cs
+  s_5db987750027ae::t_71070835980187 1-3,10
+  s_5db987750027ae::t_9dd89212931525 40-46
+scripts/packaging/consumers/PouryaKit.Cqrs.cs
+  s_5db987750027ae::t_f12b6947775151 1-22
+src/PouryaKit.Cqrs/OperationContext.cs
+  s_5db987750027ae::t_aa6b4ccf6928ee 55-68
+  s_5db987750027ae::t_3a71fb9a7cba0a 54
+src/PouryaKit.Cqrs/Dispatcher.cs
+  s_5db987750027ae::t_5ee2ca30255534 154
+  s_5db987750027ae::t_8c40e2c506e3ef 29-31
+  s_5db987750027ae::t_c8b6da843a61d1 336-363
+  s_5db987750027ae::t_77ac1864759827 377-380,392,401-413,425
+  s_5db987750027ae::t_acb48390871ceb 445
+  s_5db987750027ae::t_5fa929927f31ff 104
+  s_5db987750027ae::t_1df8865ee8a7ef 227-230,239-244,247-251
+  s_5db987750027ae::t_cba1d35a9022de 4
+  s_5db987750027ae::t_97778de9bb6216 184
+  s_5db987750027ae::t_df494dafbdf5ed 138
+  s_5db987750027ae::t_85842f4e0487ba 81
+  s_5db987750027ae::t_c52f191d4d8dac 283-301,303-311
+  s_5db987750027ae::t_e441cb3350f15e 302
+src/PouryaKit.Web/IdempotencyKeyHeader.cs
+  s_5db987750027ae::t_63462fcb0c7189 1-20
+src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs
+  s_5db987750027ae::t_2ceb00ab1664aa 94,96-98
+  s_5db987750027ae::t_77cf1e8b76f50e 21-23
+  s_5db987750027ae::t_da1a630f4911e5 77-78
+  s_5db987750027ae::t_a4a816a4d639fc 64-73
+  s_5db987750027ae::t_6f3de428e76c13 91
+tests/ModularMonolith.Tests/WebTests.cs
+  s_5db987750027ae::t_00c0589607a67e 34
+  s_5db987750027ae::t_6cbf03f7c01211 219-220
+  s_5db987750027ae::t_54dcbf64e90dd9 129,136
+  s_5db987750027ae::t_08d63f41527e20 62
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_5db987750027ae::t_46c0086ec3168f 351-352,361-363
+  s_5db987750027ae::t_a0dcbc39acdd02 208,210
+  s_5db987750027ae::t_0bb19ce9b9b3ad 364-365
+src/PouryaKit.Persistence.EFCore/EfIdempotencyStore.cs
+  s_5db987750027ae::t_8326a23df81b68 47-48
+  s_5db987750027ae::t_45b9e2406dc79c 16,35-37,39,58,60,68-70,73-74
+  s_5db987750027ae::t_d8149addd085cb 61
+  s_5db987750027ae::t_72a3c94533d578 79,82
+  s_5db987750027ae::t_b45d1e0af36022 22,32-33
+  s_5db987750027ae::t_c339d21ee76ba4 1-2,4-15,17-21,25-31,34,38,40-46,49-56,62-67,71-72,75-78,80-81,83-92
+  s_5db987750027ae::t_e4177914aab54f 3
+  s_5db987750027ae::t_44b5d04aacc243 23-24,57,59
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_5db987750027ae::t_5faaaf06232a83 60
+  s_5db987750027ae::t_4bae8b7b0aafc4 77
+  s_5db987750027ae::t_5ab430e8657823 37
+  s_5db987750027ae::t_ac17215cc20412 87
+tests/PouryaKit.Cqrs.Tests/StandIns.cs
+  s_5db987750027ae::t_b62d0cdd315ebc 13,25-29,34-47
+  s_5db987750027ae::t_664d1bbc0145e4 48-49
+src/PouryaKit.Persistence.EFCore/EfCoreServiceCollectionExtensions.cs
+  s_5db987750027ae::t_626cdfb0c4e542 37
+  s_5db987750027ae::t_9597a7593885dd 14-17
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommand.cs
+  s_5db987750027ae::t_2f5a4d21f756d8 5-9
+tests/ModularMonolith.Tests/Stub/StubIdempotency.cs
+  s_5db987750027ae::t_5e9de8e84322ab 1-46
+src/PouryaKit.Cqrs/IIdempotencyStore.cs
+  s_5db987750027ae::t_bb5665ec50f3c0 1-32
+tests/ModularMonolith.Tests/IdempotencyTests.cs
+  s_5db987750027ae::t_862d233ab8144e 193-194,197
+  s_5db987750027ae::t_0a2784dea5e355 9
+  s_5db987750027ae::t_7615583f673871 107
+  s_5db987750027ae::t_011064430aae3b 1-8,11-106,108-192,195-196,198-234
+  s_5db987750027ae::t_7f80d58ccd9b71 10
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductEndpoint.cs
+  s_5db987750027ae::t_a76bf3bd537988 13-14
+  s_5db987750027ae::t_ecf113b27186f3 48-49
+tests/PouryaKit.Cqrs.Tests/IdempotencyTests.cs
+  s_5db987750027ae::t_e9f29003c9e035 1-91
+tests/ModularMonolith.Tests/Stub/StubModule.cs
+  s_5db987750027ae::t_2dd6140837685f 64
+tests/ModularMonolith.Tests/SharedJsonTests.cs
+  s_5db987750027ae::t_2d36f8dcd027d3 35
+tests/PouryaKit.ArchitectureTests/SharedJsonTests.cs
+  s_5db987750027ae::t_26e9cc311f6991 9-10,16,20-24
+scripts/packaging/consumers/PouryaKit.Persistence.EFCore.cs
+  s_5db987750027ae::t_c2a9476318cb53 2,7-8,10-17
+tests/ModularMonolith.Tests/IdempotentRequests.cs
+  s_5db987750027ae::t_3b61b96bc15a23 1-23
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261007120000_IdempotencyKeys.cs
+  s_5db987750027ae::t_24b7be68ebfc66 1-16
+src/PouryaKit.Persistence.EFCore/IdempotencyTable.cs
+  s_5db987750027ae::t_82e7446ae53620 1-55
+src/PouryaKit.Web/OperationContextHttpHeaders.cs
+  s_5db987750027ae::t_79a09610e32b1b 81-84
+  s_5db987750027ae::t_ba045d86999d2b 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "829e7adbcc327321063bb8743be060a82a0fc6e4",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
