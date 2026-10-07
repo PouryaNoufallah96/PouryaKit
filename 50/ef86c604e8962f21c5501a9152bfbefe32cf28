@@ -1,0 +1,36 @@
+src/PouryaKit.Security.JwtBearer/JwtBearerServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_01f19ad0f3806b 6
+src/PouryaKit.Web/PouryaKitWebOptions.cs
+  s_bdf0617f846b2b::t_511ffb070061d1 2
+  s_bdf0617f846b2b::t_71c9d3379aa402 20-24,26
+scripts/packaging/consumers/PouryaKit.Security.JwtBearer.cs
+  s_bdf0617f846b2b::t_c04526086c1fda 6
+src/PouryaKit.Security.JwtBearer/VerifiedClaims.cs
+  s_bdf0617f846b2b::t_01f19ad0f3806b 3
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/Program.cs
+  s_bdf0617f846b2b::t_74a5e57963f5b1 30
+src/PouryaKit.Cqrs/PouryaKitClaimTypes.cs
+  s_bdf0617f846b2b::t_8a206e708927fd 1-12
+tests/ModularMonolith.Tests/TestAuthentication.cs
+  s_bdf0617f846b2b::t_c04526086c1fda 7
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_bdf0617f846b2b::t_74a5e57963f5b1 52
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/Program.cs
+  s_bdf0617f846b2b::t_74a5e57963f5b1 28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "50ef86c604e8962f21c5501a9152bfbefe32cf28",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
