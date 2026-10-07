@@ -7,20 +7,16 @@ namespace PouryaKit.Cqrs;
 
 public static class CqrsServiceCollectionExtensions
 {
-    private static readonly Type[] HandlerDefinitions =
-    [
-        typeof(CommandHandler<>),
-        typeof(CommandHandler<,>),
-        typeof(QueryHandler<,>),
-    ];
-
     extension(IServiceCollection services)
     {
         /// <summary>
         /// Registers the dispatcher and every command handler, query handler, authorizer and Domain Event Handler in
         /// <paramref name="featureAssemblies"/>, internal types included, and the system <see cref="TimeProvider"/>
         /// unless one is registered: the dispatcher binds it as each Operation's <c>DomainClock</c>, so register a
-        /// different one to change the time Operations see. Throws here, at startup, when a command or
+        /// different one to change the time Operations see. Named with no assembly on a Module's builder
+        /// (<see cref="IModuleServices"/>), it scans the assembly of the Module's definition, where a Module's Features
+        /// live; named assemblies replace it, in their order. On the Host's own services with no assembly, it registers the
+        /// dispatcher alone. Throws here, at startup, when a command or
         /// query has no handler or several, when an authorizer is not for one concrete command or query, when a Domain
         /// Event Handler handles several Domain Event types or an abstract one, or when a command, query, handler or
         /// authorizer is a generic type definition.
@@ -30,17 +26,14 @@ public static class CqrsServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(featureAssemblies);
 
-            services.TryAddScoped(provider => new Operation(() => provider.GetService<IReadingStateGuard>()));
-            services.TryAddScoped<IReadingStateGuard>(provider => (provider.GetService<IUnitOfWork>() as IReadingStateGuard)!);
-            services.TryAddScoped(OperationContextServiceProviderExtensions.Read);
-            services.TryAddScoped<IDispatcher, Dispatcher>();
-            services.TryAddSingleton(TimeProvider.System);
+            var assemblies = IModuleServices.FeatureAssembliesOf(services, featureAssemblies);
+            AddDispatcher(services);
 
             // In declaration order, assembly by assembly, which is the order an operation's authorizers run in.
             var classes = ImplementingTypes
-                .Candidates(typeof(object), featureAssemblies)
+                .Candidates(typeof(object), assemblies)
                 .Where(type => !type.IsAbstract)
-                .OrderBy(type => Array.IndexOf(featureAssemblies, type.Assembly))
+                .OrderBy(type => Array.IndexOf(assemblies, type.Assembly))
                 .ThenBy(type => type.MetadataToken)
                 .ToList();
             var types = classes.Where(type => !type.IsGenericTypeDefinition).ToList();
@@ -59,14 +52,14 @@ public static class CqrsServiceCollectionExtensions
                 .ToList();
 
             var handlersByOperation = handlers.ToLookup(handler => handler.Service!.GenericTypeArguments[0]);
-            var operations = types.Where(IsOperation).Concat(handlersByOperation.Select(group => group.Key)).Distinct();
+            var operations = types.Where(OperationTypes.IsOperation).Concat(handlersByOperation.Select(group => group.Key)).Distinct();
             List<string> problems =
             [
                 .. classes
                     .Where(type =>
                         type.IsGenericTypeDefinition
                         && (
-                            IsOperation(type)
+                            OperationTypes.IsOperation(type)
                             || HandlerBase(type) is not null
                             || AuthorizerInterfaces(type).Any()
                             || DomainEventHandlerInterfaces(type).Any()
@@ -122,48 +115,21 @@ public static class CqrsServiceCollectionExtensions
 
             return services;
         }
+    }
 
-        /// <summary>
-        /// Throws when a command or query whose handler is registered declares, with an <see cref="IRequiresAuthorizer"/>
-        /// attribute such as Security's <c>[RequiresPermission]</c>, an authorizer of the Kit that is not registered for
-        /// it, one line per operation: its check would never run. Another authorizer of the same operation does not count.
-        /// It reads the registrations as they are, so call it on the Host's final ones, when the container is built:
-        /// <c>AddPouryaKitModules</c> does, and a Host without Modules passes it to <c>ConfigureContainer</c>.
-        /// </summary>
-        public void EnsurePouryaKitDeclaredAuthorizers()
-        {
-            ArgumentNullException.ThrowIfNull(services);
-
-            // ImplementationType throws on a keyed descriptor, and the dispatcher resolves handlers and authorizers unkeyed.
-            var unkeyed = services.Where(descriptor => !descriptor.IsKeyedService).ToList();
-            var registered = unkeyed
-                .Where(descriptor => descriptor.ImplementationType is not null)
-                .Select(descriptor => (descriptor.ServiceType, descriptor.ImplementationType!))
-                .ToHashSet();
-            List<string> problems =
-            [
-                .. unkeyed
-                    .Select(descriptor => descriptor.ServiceType)
-                    .Where(service => service.IsConstructedGenericType && HandlerDefinitions.Contains(service.GetGenericTypeDefinition()))
-                    .Select(service => service.GenericTypeArguments[0])
-                    .Distinct()
-                    .SelectMany(operation =>
-                        operation
-                            .GetCustomAttributes(inherit: false)
-                            .OfType<IRequiresAuthorizer>()
-                            .Where(declared =>
-                                !registered.Contains((typeof(IAuthorizer<>).MakeGenericType(operation), declared.AuthorizerOf(operation)))
-                            )
-                            .Select(declared =>
-                                $"{operation.FullName} declares {declared.GetType().Name}, but its check is not registered, so it would run unchecked. Call {declared.Registration} with the assembly {operation.Assembly.GetName().Name} in the Composition Root that registers its handler."
-                            )
-                    ),
-            ];
-            if (problems.Count > 0)
-            {
-                throw new InvalidOperationException(string.Join(Environment.NewLine, problems));
-            }
-        }
+    // The dispatcher and what each Operation's scope needs, registered once whatever calls it: AddPouryaKitCqrs, with or
+    // without Feature assemblies, and the Host's AddPouryaKitCompositionChecks.
+    internal static void AddDispatcher(IServiceCollection services)
+    {
+        services.TryAddScoped(provider => new Operation(() => provider.GetService<IReadingStateGuard>()));
+        services.TryAddScoped<IReadingStateGuard>(provider => (provider.GetService<IUnitOfWork>() as IReadingStateGuard)!);
+        services.TryAddScoped(OperationContextServiceProviderExtensions.Read);
+        services.TryAddScoped<IDispatcher, Dispatcher>();
+        services.TryAddSingleton(TimeProvider.System);
+        // Run by the Host's AddPouryaKitCompositionChecks when it starts.
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, DeclaredAuthorizersCheck>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, QueryCacheCheck>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, UnitOfWorkCheck>());
     }
 
     // A second call with the same assembly adds nothing; a different handler for an operation already handled is a
@@ -194,7 +160,7 @@ public static class CqrsServiceCollectionExtensions
     {
         for (var current = type.BaseType; current is not null; current = current.BaseType)
         {
-            if (current.IsGenericType && HandlerDefinitions.Contains(current.GetGenericTypeDefinition()))
+            if (OperationTypes.HandledBy(current) is not null)
             {
                 return current;
             }
@@ -206,25 +172,5 @@ public static class CqrsServiceCollectionExtensions
     // The dispatcher resolves an authorizer by the exact runtime type, so one for an open type parameter, a base type
     // or a marker interface would register and never run.
     private static bool IsConcreteOperation(Type type) =>
-        !type.IsGenericParameter && !type.ContainsGenericParameters && !type.IsAbstract && IsOperation(type);
-
-    private static bool IsOperation(Type type)
-    {
-        for (var current = type.BaseType; current is not null; current = current.BaseType)
-        {
-            if (
-                current == typeof(Command)
-                || (
-                    current.IsGenericType
-                    && current.GetGenericTypeDefinition() is var definition
-                    && (definition == typeof(Command<>) || definition == typeof(Query<>))
-                )
-            )
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
+        !type.IsGenericParameter && !type.ContainsGenericParameters && !type.IsAbstract && OperationTypes.IsOperation(type);
 }

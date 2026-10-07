@@ -19,15 +19,19 @@ internal static class PackageGraph
         ["PouryaKit.Caching"] = new(["PouryaKit.Cqrs"], ["Microsoft.Extensions.Caching.Hybrid"]),
         ["PouryaKit.Core"] = new([], []),
         ["PouryaKit.Domain"] = new([], []),
+        // Cqrs builds the Host's validated container and runs its composition checks as it starts (#61, 2026-10-07),
+        // which takes the container's implementation and the Hosting abstractions from Modularity.
         ["PouryaKit.Cqrs"] = new(
             ["PouryaKit.Core", "PouryaKit.Domain"],
-            ["Microsoft.Extensions.DependencyInjection.Abstractions", "Microsoft.Extensions.Logging.Abstractions"]
+            [
+                "Microsoft.Extensions.DependencyInjection",
+                "Microsoft.Extensions.DependencyInjection.Abstractions",
+                "Microsoft.Extensions.Hosting.Abstractions",
+                "Microsoft.Extensions.Logging.Abstractions",
+            ]
         ),
         ["PouryaKit.Validation"] = new(["PouryaKit.Cqrs"], ["FluentValidation"]),
-        ["PouryaKit.Modularity"] = new(
-            ["PouryaKit.Cqrs"],
-            ["Microsoft.Extensions.Hosting.Abstractions", "Microsoft.Extensions.DependencyInjection"]
-        ),
+        ["PouryaKit.Modularity"] = new(["PouryaKit.Cqrs"], ["Microsoft.Extensions.Hosting.Abstractions"]),
         ["PouryaKit.Persistence"] = new(["PouryaKit.Domain"], ["Ardalis.Specification"]),
         ["PouryaKit.Persistence.EFCore"] = new(
             ["PouryaKit.Core", "PouryaKit.Cqrs", "PouryaKit.Persistence"],

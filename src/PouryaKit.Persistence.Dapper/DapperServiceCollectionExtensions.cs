@@ -3,6 +3,7 @@ using Dapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Core;
+using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Persistence.Dapper;
@@ -14,9 +15,11 @@ public static class DapperServiceCollectionExtensions
         /// <summary>
         /// Adds Dapper reads over the connection string named <paramref name="connectionName"/> in the Host's
         /// configuration, and makes every typed ID in <paramref name="typedIdAssemblies"/> usable as a Dapper parameter
-        /// and result. Call it from each Module's Composition Root that reads with Dapper, usually with the Module's own
-        /// assembly. The Host holds one <see cref="IReadConnectionFactory"/> and one connection pool, shared by every
-        /// Module that names the same connection; naming a different connection in the same Host throws here.
+        /// and result. Call it from each Module's Composition Root that reads with Dapper: named with no assembly on a
+        /// Module's builder (<see cref="IModuleServices"/>), it takes the typed IDs of the assembly of the Module's
+        /// definition; named assemblies replace it. The Host holds one <see cref="IReadConnectionFactory"/> and one
+        /// connection pool, shared by every Module that names the same connection; naming a different connection in the
+        /// same Host throws here.
         /// </summary>
         public IServiceCollection AddPouryaKitDapper(string connectionName, params Assembly[] typedIdAssemblies)
         {
@@ -24,7 +27,7 @@ public static class DapperServiceCollectionExtensions
             ArgumentException.ThrowIfNullOrWhiteSpace(connectionName);
             ArgumentNullException.ThrowIfNull(typedIdAssemblies);
 
-            AddTypedIdHandlers(typedIdAssemblies);
+            AddTypedIdHandlers(IModuleServices.FeatureAssembliesOf(services, typedIdAssemblies));
 
             var registered = services
                 .Select(descriptor => descriptor.ImplementationInstance)

@@ -25,7 +25,7 @@ if (builder.Configuration.GetConnectionString("cache") is { } redis)
 ```
 
 - `AddPouryaKitCaching` fills the dispatcher's query cache slot (ADR 0002) and registers `HybridCache` unless one is registered. A second call adds nothing. It registers no pipeline step an application could add to.
-- A Host without it runs every query, cacheable or not, as before: the slot costs one null check.
+- A Host whose registered queries include a cacheable one calls it, or stops when it starts, before it serves, naming the call (`The Host registers no query cache, so every cacheable query would run uncached: … Call AddPouryaKitCaching() on the Host's services.`): a cacheable query never runs uncached without a word (owner decision of 2026-10-07, ADR 0002). It is a composition check of `AddPouryaKitCompositionChecks`, which `AddPouryaKitModules` calls ([modules.md](modules.md#startup-checks)). `HybridCache` needs no distributed cache, so the call is the whole fix. A Host with no cacheable query runs every query without one.
 - Without a distributed cache, entries live in each Host's memory. With one, `HybridCache` writes each entry there too, and another Host reads it.
 
 ## A cacheable query

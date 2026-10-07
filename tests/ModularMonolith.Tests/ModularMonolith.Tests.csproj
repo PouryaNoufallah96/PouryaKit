@@ -18,6 +18,8 @@
     <None Remove="Misnamed\**" />
     <Compile Remove="Unversioned\**" />
     <None Remove="Unversioned\**" />
+    <Compile Remove="Unowned\**" />
+    <None Remove="Unowned\**" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\samples\ModularMonolith\src\Inventory.Host\Inventory.Host.csproj" />
@@ -25,5 +27,6 @@
     <ProjectReference Include="..\..\src\PouryaKit.Testing\PouryaKit.Testing.csproj" />
     <ProjectReference Include="Misnamed\ModularMonolith.Tests.Misnamed.csproj" />
     <ProjectReference Include="Unversioned\ModularMonolith.Tests.Unversioned.csproj" />
+    <ProjectReference Include="Unowned\ModularMonolith.Tests.Unowned.csproj" />
   </ItemGroup>
 </Project>

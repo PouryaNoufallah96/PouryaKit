@@ -34,20 +34,19 @@ dotnet new pouryakit-modular-monolith -n Acme.Shop
 | Composition Root | `CatalogModule`, a static class whose `services.AddCatalog()` is a plain registration on the Host's services | Each Module's `IModuleDefinition`, added with `AddPouryaKitModules` |
 | Endpoint adapters | Each Feature's endpoint sends through `IDispatcher` | Each Feature's endpoint sends through `IGatewayProcessor<CatalogModule>` |
 | Kit packages | Every Wave 2 Capability that applies, without `PouryaKit.Modularity` | Every Wave 2 Capability, with `PouryaKit.Modularity` |
-| Start checks | Container validation and the declared-authorizer check through `ConfigureContainer` | Both from `AddPouryaKitModules` |
+| Start checks | Container validation and the composition checks from `AddPouryaKitCompositionChecks` | Both from `AddPouryaKitModules`, which calls it |
 
 - **The same business code.** Aggregates, commands, queries, handlers, validators, the repository, Dapper reads and every event handler are the sample's own files in both. Only the Composition Root and the endpoint adapters differ, and in the modular monolith they are the sample's own too.
 - **The monolith is one Module in all but name** (plan I.1). A persistence package adds its `IUnitOfWork` with `Add`, and only Modularity's `ModuleBuilder` keys each Module's own, so a Host without Modularity holds one Unit of Work: one Module's data. The monolith therefore takes Catalog alone; Billing and Inventory stay in the modular monolith. Its Operation names no Module, its Unit of Work is the Host's, and Catalog publishes with no Module, so its Integration Events still reach another Host over RabbitMQ when a broker is configured.
 - **The Host composition**, in `Program.cs`, is the same in both: JWT bearer authentication from `Authentication:Schemes:Bearer`, authenticated-by-default HTTP, trusted peers, CORS, compression and the rate limit per Actor, the API versions and OpenAPI, idempotency key retention, the `downstream` HTTP client with the Operation Context, permissions from the caller's `permission` claims (`CallerPermissions`), Observability, Caching with Redis when `ConnectionStrings:cache` is set, Wolverine over EF Core on `ConnectionStrings:app`, RabbitMQ when `ConnectionStrings:broker` is set, and the service defaults recipes ([host-recipes.md](host-recipes.md)): `AddServiceDefaults()`, `AddSerilogDefaults()` and `MapDefaultEndpoints()`. The modular monolith's Inventory reconciles stock at `Inventory:ReconcileStock:Every`.
 - **Calls between Modules stay in-process**: Integration Events and Snapshots through the Host's Outbox, a question through the owning Module's Contracts. Never HTTP between Modules of one Host.
-- **A declared permission without its check stops the Host in both.** The monolith calls `ConfigureContainer` with a validating `DefaultServiceProviderFactory` and `services => services.EnsurePouryaKitDeclaredAuthorizers()`, the same check `AddPouryaKitModules` runs ([security.md](security.md#declaring-a-permission)):
+- **The same start checks in both.** The monolith calls Cqrs's Host entry, the one `AddPouryaKitModules` calls, so a declared permission without its check, a cacheable query without caching or a command without a Unit of Work stops the Host before it serves, and its container is validated in every environment ([modules.md](modules.md#startup-checks)):
 
 ```csharp
-((IHostApplicationBuilder)builder).ConfigureContainer(
-    new DefaultServiceProviderFactory(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true }),
-    services => services.EnsurePouryaKitDeclaredAuthorizers()
-);
+builder.AddPouryaKitCompositionChecks();
 ```
+
+- **The monolith names its assembly; the modular monolith infers it.** The monolith's `AddCatalog()` runs on the Host's own services, which are no Module's builder, so its registrations name `typeof(CatalogModule).Assembly` and its declarations belong to the application. Each modular Composition Root registers on its Module's builder with no assembly and no Module ([modules.md](modules.md#the-composition-root)).
 
 ## Running the generated Host
 

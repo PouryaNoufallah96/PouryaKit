@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ModularMonolith.Tests.Stub;
 using Npgsql;
+using PouryaKit.Caching;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
@@ -47,6 +48,7 @@ public sealed class SharedStoreSchemaTests
             );
             builder.Services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
             builder.Services.AddPouryaKitCqrs(typeof(StubDbContext).Assembly);
+            builder.Services.AddPouryaKitCaching();
             builder.Services.AddPouryaKitNotificationHandlers(typeof(StubDbContext).Assembly);
             builder.UsePouryaKitWolverine(connectionName: "app", schema: "stub");
             builder.Services.UsePouryaKitTestDelivery();

@@ -404,6 +404,8 @@ The decision above stands. Implementing it departed from one consequence and set
   calls on a Module's builder, and plan section C gives `PouryaKit.Messaging` no dependency-injection reference.
   `PouryaKit.Messaging` keeps the handler and publisher interfaces, the name rules and the header names. Neither
   package references `PouryaKit.Modularity`, so each declaration takes the Module's definition type as an argument.
+  *Changed by ticket #61 (2026-10-07): the declarations read the Module from Cqrs's `IModuleServices`, which a Module's
+  builder implements, and take no Module argument; see the amendment of that date.*
 - **The names used.** `AddPouryaKitNotificationHandlers(assembly, module)` replaces `SubscribeNotification`: it
   subscribes every Notification Handler of an assembly, under a derived subscription name unless the handler declares
   one (owner decision 2). `Publish<TIntegrationEvent>(wireName, module)` declares an Integration Event's wire name and
@@ -908,3 +910,25 @@ effect of the one before it.
   `RecurringCommandTests.A_second_chain_a_starting_host_stores_while_an_occurrence_runs_applies_nothing_and_ends`).
   The guarantee is one database effect per declaration and occurrence time; the Kit claims no exactly-once run and
   nothing for an effect outside the database.
+
+## Amendment (2026-10-07, ticket #61: a declaration's Module comes from the builder it is made on)
+
+The decision above stands. The plan sketched the declarations without a Module argument (plan section D:
+`module.Publish<ProductRenamedV1>("…")`); the Wave 1 amendment above added one because neither Messaging package may
+reference Modularity. Ticket #61 returns to the sketch through a seam both may reference.
+
+- **The Module is the builder's.** `Publish`, `Subscribe`, `PublishSnapshot`, `AddPouryaKitNotificationHandlers`,
+  `AddPouryaKitDelayedCommand` and `AddPouryaKitRecurringCommand` lost their `Type? module = null` parameter. Made on a
+  Module's builder, which implements Cqrs's `IModuleServices`, a declaration belongs to that Module; made on the Host's
+  own services, to the application, as in an application without Modules. `AddPouryaKitNotificationHandlers` takes
+  `params Assembly[]` like its siblings and, with none, scans the Module's assembly (ADR 0001 amendment of this date).
+- **One explicit form, for the Host's composition.** Each declaration keeps an overload with a required `Type module`,
+  for a declaration the Host makes on a Module's behalf, such as a test's extra subscription; made on another Module's
+  builder it throws while the Host is composed. Both forms share one implementation. `Receive` and `ReceiveSnapshot`
+  stay the Host's.
+- **None by omission.** A declaration that belongs to no Module in a Host that composed Modules would have failed only
+  at its first use: the first publish, commit, delivery or scheduling. A composition check now fails the Host's start,
+  before it serves, one line per declaration, naming its form on the Module's builder and its form that names the
+  Module. The commit-time refusal of a Snapshot declared with a Module in an application without Modules stays.
+- Proven by `CompositionCheckTests.A_module_declaration_made_without_its_module_in_a_host_of_modules_stops_the_host_at_start`,
+  one case per declaration, each red with the check switched off, against PostgreSQL.

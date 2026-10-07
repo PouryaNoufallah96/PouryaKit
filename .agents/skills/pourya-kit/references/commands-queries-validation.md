@@ -169,11 +169,11 @@ internal sealed class ListProductsQueryValidator : AbstractValidator<ListProduct
 ## Registration
 
 ```csharp
-module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);        // handlers, authorizers, Domain Event Handlers
-module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);  // validators
+module.AddPouryaKitCqrs();        // handlers, authorizers, Domain Event Handlers
+module.AddPouryaKitValidation();  // validators
 ```
 
-Make both calls on the Module's builder in its Composition Root (see [modules.md](modules.md)). The Unit of Work comes from the Module's persistence package, and logging from the Host.
+Make both calls on the Module's builder in its Composition Root (see [modules.md](modules.md#the-composition-root)): with no assembly, each scans the assembly of the Module's definition, where its Features live; name assemblies to scan others instead, in the order an Operation's authorizers run in. An application without Modules calls them on its own services and names the assembly; there `AddPouryaKitCqrs()` with none registers the dispatcher alone. The Unit of Work comes from the Module's persistence package, and logging from the Host.
 
 ## Testing
 

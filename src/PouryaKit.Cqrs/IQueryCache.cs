@@ -7,7 +7,8 @@ namespace PouryaKit.Cqrs;
 /// it here only when it is its Operation's outermost query and the Operation has not failed; a query inside a command,
 /// an authorizer, a validator or another query may read a change they made, so it always runs. It also asks which cache
 /// tags each command declares, and once the Operation's Unit of Work has committed, evicts what its commands declared; a
-/// rollback evicts nothing. <c>PouryaKit.Caching</c> registers it, as a singleton; a Host without one runs every query.
+/// rollback evicts nothing. <c>PouryaKit.Caching</c> registers it, as a singleton. A Host without one runs every query,
+/// and fails when it starts if it registers a query that asks for the cache (<see cref="IRequiresQueryCache"/>).
 /// Feature code never calls it.
 /// </summary>
 public interface IQueryCache
