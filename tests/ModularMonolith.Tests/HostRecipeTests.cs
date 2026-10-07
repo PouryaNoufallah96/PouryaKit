@@ -136,7 +136,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
     [InlineData("POST", 1)]
     public async Task A_client_that_keeps_the_service_defaults_retries_a_read_through_one_pipeline_and_sends_a_write_once(string method, int attempts)
     {
-        RespondUnavailable(retryAfter: true);
+        RespondUnavailable(retryAfter: "0");
         await using var host = await StartWebHostAsync(client => client.AddPouryaKitOperationContext());
 
         using var response = await SendAsync(host, new HttpMethod(method));
@@ -175,27 +175,61 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
         );
     }
 
+    // The unnamed client's pipeline would be the defaults' own ("-standard"), so its replay policy would become that of
+    // every client that keeps the defaults.
     [Fact]
-    public async Task Cancelling_a_call_through_the_service_defaults_stops_further_attempts()
+    public async Task An_unnamed_client_cannot_make_the_service_defaults_pipeline_replay_writes()
     {
-        RespondUnavailable();
-        await using var host = await StartWebHostAsync(client => OwnPipeline(client, TimeSpan.FromSeconds(1)));
+        RespondUnavailable(retryAfter: "0");
+        Exception? refused = null;
+        await using var host = await StartWebHostAsync(client =>
+        {
+            client.AddPouryaKitOperationContext();
+            var unnamed = client.Services.AddHttpClient(string.Empty);
+#pragma warning disable EXTEXP0001 // RemoveAllResilienceHandlers is experimental in Microsoft.Extensions.Http.Resilience.
+            unnamed.RemoveAllResilienceHandlers();
+#pragma warning restore EXTEXP0001
+            refused = Record.Exception(() => unnamed.AddPouryaKitResilience(HttpReplay.AllRequests));
+        });
+
+        using var response = await SendAsync(host, HttpMethod.Post);
+
+        Assert.Equal((typeof(ArgumentException), 1), (refused?.GetType(), downstream.LogEntries.Count()));
+    }
+
+    // The downstream asks for a retry after one second; the call is cancelled once the first attempt arrived, not on a
+    // timer, which a slow first request could outrun.
+    [Fact]
+    public async Task Cancelling_a_call_through_the_service_defaults_pipeline_stops_further_attempts()
+    {
+        RespondUnavailable(retryAfter: "1");
+        await using var host = await StartWebHostAsync(client => client.AddPouryaKitOperationContext());
         using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        cancellation.CancelAfter(TimeSpan.FromMilliseconds(300));
+        var call = SendAsync(host, HttpMethod.Get, cancellation.Token);
+        while (!downstream.LogEntries.Any() && !call.IsCompleted)
+        {
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => SendAsync(host, HttpMethod.Get, cancellation.Token));
-        // Long enough for the retries a call that ignored the cancellation would still make.
-        await Task.Delay(TimeSpan.FromSeconds(3.5), TestContext.Current.CancellationToken);
+        await cancellation.CancelAsync();
 
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => call);
+        // Past the first retry a call that ignored the cancellation would make.
+        await Task.Delay(TimeSpan.FromSeconds(1.5), TestContext.Current.CancellationToken);
         Assert.Single(downstream.LogEntries);
     }
 
-    private static Task StockedAsync(BrokerEnvironment environment, Guid product) =>
-        BrokerEnvironment.WaitUntilAsync(
+    // The rows commit before the delivery's Operation ends, logs and records its duration: wait for Wolverine to mark
+    // the envelope handled, which it does once the handler returned.
+    private static async Task StockedAsync(BrokerEnvironment environment, Guid product)
+    {
+        await BrokerEnvironment.WaitUntilAsync(
             environment.Inventory,
             $"exists (select from inventory.pouryakit_receipts r join inventory.stock_items s on s.product_id = '{product}' where r.subscription = '{StockItems}')",
             "Inventory.Host never stocked the product."
         );
+        await BrokerEnvironment.WaitUntilSettledAsync(environment.Inventory);
+    }
 
     private static async Task<(HttpStatusCode Alive, HttpStatusCode Health)> HealthAsync(HttpClient client)
     {
@@ -234,10 +268,10 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
         client.AddPouryaKitOperationContext();
     }
 
-    private void RespondUnavailable(bool retryAfter = false)
+    private void RespondUnavailable(string? retryAfter = null)
     {
         var response = Response.Create().WithStatusCode(HttpStatusCode.ServiceUnavailable);
-        downstream.Given(Request.Create().WithPath("/downstream")).RespondWith(retryAfter ? response.WithHeader("Retry-After", "0") : response);
+        downstream.Given(Request.Create().WithPath("/downstream")).RespondWith(retryAfter is null ? response : response.WithHeader("Retry-After", retryAfter));
     }
 
     private async Task<HttpResponseMessage> SendAsync(WebApplication host, HttpMethod method, CancellationToken? cancellationToken = null)

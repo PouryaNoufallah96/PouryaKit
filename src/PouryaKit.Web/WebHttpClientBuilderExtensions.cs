@@ -32,14 +32,27 @@ public static class WebHttpClientBuilderExtensions
         /// pipeline: it calls this in place of that line, or removes it for the client with
         /// <c>RemoveAllResilienceHandlers()</c> first. The replay policy of the last call for a client is the one its
         /// pipeline uses, so a client registered again after <c>RemoveAllResilienceHandlers()</c> keeps no earlier policy.
+        /// The client registered with an empty name is refused: its pipeline would be the one the defaults of every
+        /// client (<c>ConfigureHttpClientDefaults</c>) register, with their options and replay policy.
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="replay"/> is not a defined value.</exception>
+        /// <exception cref="ArgumentException">The client was registered with an empty name.</exception>
         public IHttpStandardResiliencePipelineBuilder AddPouryaKitResilience(HttpReplay replay = HttpReplay.SafeMethods)
         {
             ArgumentNullException.ThrowIfNull(builder);
             if (!Enum.IsDefined(replay))
             {
                 throw new ArgumentOutOfRangeException(nameof(replay), replay, "HttpReplay has no such value.");
+            }
+
+            // The standard pipeline is named after the client: "-standard" for the defaults' builder, whose name is null,
+            // and for the client named "" alike. One options name holds one replay policy, so they cannot be kept apart.
+            if (builder.Name is "")
+            {
+                throw new ArgumentException(
+                    "The client with the empty name would share the resilience pipeline the defaults of every client register (ConfigureHttpClientDefaults), and its replay policy. Give the client a name.",
+                    nameof(builder)
+                );
             }
 
             var pipeline = builder.AddStandardResilienceHandler();
