@@ -1,0 +1,66 @@
+.agents/skills/pourya-kit/references/security.md
+  s_bdf0617f846b2b::t_154aa7005df69f 33,37-38,44
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/Program.cs
+  s_bdf0617f846b2b::t_1b998c565a31c2 48-49
+  s_bdf0617f846b2b::t_9c816bc60bd612 21
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_bdf0617f846b2b::t_154aa7005df69f 172-173,176
+README.md
+  s_bdf0617f846b2b::t_c17a62d1211a66 9
+docs/provenance/PouryaKit.Cqrs.md
+  s_bdf0617f846b2b::t_df1a5932f111e2 13-22
+docs/acceptance.md
+  s_bdf0617f846b2b::t_5876ced34defe1 145,510,571-591
+.agents/skills/pourya-kit/references/messaging.md
+  s_bdf0617f846b2b::t_a5c0b46d689fd2 60,81,164-165,167,172-173,175,178-180,263-264,274,338,341,431,462,465,509,516,697,700
+.agents/skills/pourya-kit/SKILL.md
+  s_bdf0617f846b2b::t_9a36fdaf96f507 30
+docs/adr/0001-one-host-container.md
+  s_bdf0617f846b2b::t_07808ff43f14b5 32-53
+.agents/skills/pourya-kit/references/caching.md
+  s_bdf0617f846b2b::t_154aa7005df69f 28
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_bdf0617f846b2b::t_154aa7005df69f 73
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_bdf0617f846b2b::t_a5a285cbaf7e43 407-408,913-934
+docs/foundation-review.md
+  s_bdf0617f846b2b::t_94fc19c1482ec9 248,250
+docs/packages.md
+  s_bdf0617f846b2b::t_94fc19c1482ec9 28
+.agents/skills/pourya-kit/references/modules.md
+  s_bdf0617f846b2b::t_52c442112d995f 23-28,31,52-54,124-132,199,207-208
+.agents/skills/pourya-kit/references/openapi.md
+  s_bdf0617f846b2b::t_154aa7005df69f 28
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_1e97c17c81f923 270,336
+  s_bdf0617f846b2b::t_dcf553d3566498 53,55,92,94,244,253-256,273,284-287,355,367,370,486-490,492-493,630
+.agents/skills/pourya-kit/references/web.md
+  s_bdf0617f846b2b::t_154aa7005df69f 48
+docs/adr/0002-no-mediator-dependency.md
+  s_bdf0617f846b2b::t_b6cf377312daeb 249-250,268-286
+.agents/skills/pourya-kit/references/templates.md
+  s_bdf0617f846b2b::t_154aa7005df69f 37,43,46,49
+  s_bdf0617f846b2b::t_26cea182c4fcfa 50
+GLOSSARY.md
+  s_bdf0617f846b2b::t_3135f5d5848edc 42-45
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/Program.cs
+  s_bdf0617f846b2b::t_9c816bc60bd612 19
+docs/provenance/PouryaKit.Modularity.md
+  s_bdf0617f846b2b::t_df1a5932f111e2 9,23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5944f3f91d0146fbcfc604e7e07a206831d0f857",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
