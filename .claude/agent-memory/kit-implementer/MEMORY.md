@@ -44,3 +44,4 @@
 - [Merge and CI tooling facts](merge-and-ci-tooling-facts.md) — union merge drops a shared blank line, scratch-clone merge proof, gh job-log download quirks and speed, MTP failure shape
 - [Template package facts](template-package-facts.md) — #53/#59: engine traps, path token for raw names, pack-time version step, WebApplicationFactory, NuGet PrivateAssets graph gap, cache pollution
 - [Code generation for production facts](codegen-production-facts.md) — #58: Kit-called Wolverine picks the Kit as application assembly, codegen write needs no Roslyn, Debug-restore trap, WAF AutoStartHost
+- [Module seam and composition check facts](module-seam-and-composition-check-facts.md) — #61: StartAsync order vs StartingAsync, JasperFx start failure via WAF, zero-arg scan of a test assembly, Unowned fixture
