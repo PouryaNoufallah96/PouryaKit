@@ -53,7 +53,8 @@ internal sealed record GetProductQuery(Guid ProductId) : Query<ProductDto>, ICac
 - `CacheKey` names only what the query asks. The Kit adds the query's full type name, the Operation's tenant (an Operation without one as `OperationContext.NoTenant`) and its Actor, by kind and id, so an entry answers only the Actor and tenant that stored it.
 - `CacheTags` name the resources the answer reads. A tag spans Actors and tenants: one eviction reaches every Actor's entry.
 - The response is stored as JSON in the Kit's representation (`UsePouryaKitJson`), so it must round-trip through it; every answer, the first included, is read back from that JSON.
-- The handler is written as for any query. It runs inside its Operation as usual, whichever thread `HybridCache` runs it on: a `Continue()` it calls is a trusted continuation.
+- The handler is written as for any query, and runs inside its Operation as usual: a `Continue()` it calls is a trusted continuation.
+- Once started, the handler runs to completion: other callers of the same query may be waiting on it, so it receives no cancellation, and every caller, the one that started it included, waits for it. A caller's cancellation counts only until the run starts or is joined. Keep a cacheable query's handler short.
 
 ## A command that invalidates
 
@@ -79,6 +80,7 @@ internal sealed record RemoveProductsCommand(IReadOnlyList<string> Names) : Comm
 
 - **One `HybridCache.GetOrCreateAsync` per cacheable query.** Concurrent misses of one key in one Host share one handler run, `HybridCache`'s own single flight.
 - **Never a failed Result.** A failure is returned to every caller that shared the run and stored nowhere, in memory or in the distributed cache: the next query runs again.
+- **Nothing a query changed.** A handler that changes tracked state and returns a success fails the Operation's read-only check before its answer can be stored: every caller that shared the run receives the `InvalidOperationException`, and nothing is stored.
 - **After the checks.** The authorization hook and validation run before the cache is read, so a stored answer never skips them.
 - **Never inside a write Unit of Work.** A query sent from a command's handler, a nested command's checks or a Domain Event Handler may see uncommitted state, so it neither reads nor stores an entry. A query in the outermost command's own checks runs before the Unit of Work starts and uses the cache.
 - **Eviction after the outermost commit only.** A rolled-back Operation evicts nothing, so a valid entry survives a failed command. A command that rolls back after a nested query leaves no entry from it.

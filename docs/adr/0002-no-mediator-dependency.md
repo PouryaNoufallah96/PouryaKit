@@ -207,8 +207,10 @@ The caching slot (ticket #43):
   nested command's checks or a Domain Event Handler, never reaches the slot: it may see uncommitted state, so it neither
   reads nor stores an entry. A query in the outermost command's own checks runs before the Unit of Work starts, so it
   may be answered from the cache.
-- **Filled by `PouryaKit.Caching` only.** `IQueryCache` is a Cqrs seam, as `IIdempotencyStore` is; `PouryaKit.Caching`
-  registers its one implementation over `HybridCache`, and `PouryaKit.Cqrs` never references Caching. A query opts in
+- **The Kit's Caching package supplies the one implementation.** `IQueryCache` is a Cqrs seam that exists for the
+  Kit, as `IIdempotencyStore` exists for persistence packages; `PouryaKit.Caching` registers its implementation over
+  `HybridCache`, and `PouryaKit.Cqrs` never references Caching. The dispatcher takes whatever `IQueryCache` is
+  registered, so a Host registration that replaces it is possible, but outside what this ADR supports. A query opts in
   with Caching's `ICacheableQuery` (key, duration, tags). Its implementation makes one `HybridCache.GetOrCreateAsync`
   call, so concurrent misses in one Host share a handler run; another Host runs its own. The effective key adds the
   query's full type name, the tenant (a null tenant as `OperationContext.NoTenant`, the empty string #42's key table
@@ -216,6 +218,15 @@ The caching slot (ticket #43):
 - **Never a failed Result.** The factory throws a private exception that carries a failure, so `HybridCache` stores
   nothing, in memory or in a distributed cache, and every caller that joined the run receives the failure. The
   get-then-set shape that stores whatever the handler returned is the one the plan rejected (I.3 Caching).
+- **Nothing a query changed.** A query's tracked-state check otherwise runs when its reading boundary closes, after its
+  answer would already be stored; on the cached path the dispatcher closes the boundary as soon as the handler returns a
+  success, inside the shared run. A change then throws, marks the Operation rollback-only, and is stored nowhere: every
+  caller that joined the run receives the exception, and the next query runs the handler again.
+- **A shared run is nobody's to cancel.** Other callers may be waiting on a handler, so it runs to completion once
+  started: the slot calls `GetOrCreateAsync` with no cancellation, which makes `HybridCache` run the handler on the call
+  that started the run, and that call, with its scope, Operation and authorized context, waits for it. A caller's
+  cancellation is observed only before the run starts or is joined. A run the starting caller could leave would go on
+  for its joiners on a disposed scope, without its Operation's trust.
 - **Eviction after the outermost commit only.** A command declares tags with Caching's `IInvalidatesCache`. The
   dispatcher asks the seam for the tags of every command that passes its checks, outermost and nested, collects them on
   the Operation, and evicts them only when `IUnitOfWork.RunAsync` returned the command's own success, after the
@@ -230,7 +241,9 @@ The caching slot (ticket #43):
 Proven against PostgreSQL by `CachingTests` in `tests/ModularMonolith.Tests`, among them
 `An_entry_answers_only_its_own_actor_and_tenant`, `A_failed_result_is_never_stored`,
 `A_query_nested_in_a_write_unit_of_work_that_rolls_back_leaves_no_entry` and
-`A_rolled_back_rename_evicts_nothing_so_the_valid_entry_survives`, against a real Redis shared by two Hosts by
+`A_rolled_back_rename_evicts_nothing_so_the_valid_entry_survives`,
+`A_caller_that_leaves_the_run_it_started_keeps_its_operation_so_a_joiner_gets_a_trusted_success_of_one_run` and
+`A_query_that_changes_tracked_state_stores_nothing_and_its_joiner_receives_the_failure`, against a real Redis shared by two Hosts by
 `With_redis_a_second_host_reads_the_entry_the_first_stored_without_running_its_handler`, and by
 `PouryaKit.Cqrs.Tests.QueryCacheTests`. Neither single flight across Hosts nor eviction of another Host's in-memory
 copies is claimed.
