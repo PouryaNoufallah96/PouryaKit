@@ -1,0 +1,61 @@
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_5db987750027ae::t_23f001a200cf6e 34
+tests/ModularMonolith.Tests/IdempotencyRetentionTests.cs
+  s_5db987750027ae::t_5a8bac0ff1ceb1 67,123,125
+  s_5db987750027ae::t_0bf031f97cc1a7 1-66,68-122,124,126-209
+.agents/skills/pourya-kit/SKILL.md
+  s_5db987750027ae::t_c9b0b4437393a5 31
+src/PouryaKit.Persistence.EFCore/EfIdempotencyStore.cs
+  s_5db987750027ae::t_5fb03190c24def 12,23-24,38,75
+docs/adr/0007-operation-context-set-by-the-scope-opener.md
+  s_5db987750027ae::t_be4dcf31338db7 165-167
+  s_5db987750027ae::t_219acf8b1d3c9c 155-164
+docs/adr/0002-no-mediator-dependency.md
+  s_5db987750027ae::t_ebe869e139cd47 175-177
+docs/foundation-review.md
+  s_5db987750027ae::t_a31c1243938349 251,848
+docs/architecture/README.md
+  s_5db987750027ae::t_c508c4685874c1 56,262,375,384,387,393-394
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_5db987750027ae::t_1494103ef9979e 87
+docs/provenance/PouryaKit.Persistence.EFCore.md
+  s_5db987750027ae::t_3cc753511d0c76 13
+  s_5db987750027ae::t_9a1b5837cbaaeb 17,20
+src/PouryaKit.Persistence.EFCore/PouryaKitIdempotencyOptions.cs
+  s_5db987750027ae::t_1691834a801480 1-28
+scripts/packaging/consumers/PouryaKit.Persistence.EFCore.cs
+  s_5db987750027ae::t_e912c45a4fefd4 8,10-11
+.agents/skills/pourya-kit/references/persistence.md
+  s_5db987750027ae::t_aad246b3403267 14,318-330
+src/PouryaKit.Persistence.EFCore/EfCoreServiceCollectionExtensions.cs
+  s_5db987750027ae::t_6e6bb4446849b3 18-20
+  s_5db987750027ae::t_3f65ff14961c22 3,41-46
+src/PouryaKit.Persistence.EFCore/IdempotencyTable.cs
+  s_5db987750027ae::t_0a104cc73a9ac1 1,3,13-14,20-21,25-30,42,57-58,62-67
+README.md
+  s_5db987750027ae::t_7f3b08c8129f58 5
+src/PouryaKit.Persistence.EFCore/PouryaKit.Persistence.EFCore.csproj
+  s_5db987750027ae::t_f726183eb557c9 5
+docs/acceptance.md
+  s_5db987750027ae::t_df45a7ed2f37ac 441-456
+src/PouryaKit.Persistence.EFCore/IdempotencyKeyCleanup.cs
+  s_5db987750027ae::t_29759e44e69150 67-70
+  s_5db987750027ae::t_3b95c1d6e9bb7c 1-66,71-100,102-138
+  s_5db987750027ae::t_5a8bac0ff1ceb1 101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "28600b261d4f3226493a7c4bd8fbb9e66e6f0694",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
