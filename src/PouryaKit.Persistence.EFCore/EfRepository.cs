@@ -75,6 +75,50 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
         return SpecificationEvaluator.Default.GetQuery(_aggregates, specification).ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// One Page of what the projection <paramref name="specification"/> selects: its criteria and the request's filters
+    /// from <paramref name="expressions"/> select the rows, which are counted, then ordered by the request's sort key
+    /// and the <c>ThenBy</c> key, skipped and taken to the Page, and projected. A Page beyond the last has no items and
+    /// the true total. The specification brings criteria and its <c>Select</c> only; paging owns ordering, so one with
+    /// ordering, <c>Skip</c> or <c>Take</c> throws, as does a request that fails its declaration.
+    /// </summary>
+    protected async Task<Page<TResult>> PageAsync<TResult>(
+        ISpecification<TAggregate, TResult> specification,
+        PageExpressions<TAggregate> expressions,
+        PageRequest request,
+        CancellationToken cancellationToken = default
+    )
+    {
+        ArgumentNullException.ThrowIfNull(specification);
+        ArgumentNullException.ThrowIfNull(expressions);
+        expressions.EnsureReads(request);
+        // Ardalis marks a Skip or Take that was never set with -1; any other value, 0 included, is the specification's own.
+        if (
+            specification.Selector is not { } selector
+            || specification.OrderExpressions.Any()
+            || specification is not { Skip: -1, Take: -1 }
+        )
+        {
+            throw new ArgumentException(
+                "A Page read's specification has criteria and a Select only; the Page orders, skips and takes.",
+                nameof(specification)
+            );
+        }
+
+        var selection = expressions.Filtered(
+            SpecificationEvaluator.Default.GetQuery(_aggregates, (ISpecification<TAggregate>)specification, evaluateCriteriaOnly: true),
+            request
+        );
+        var total = await selection.LongCountAsync(cancellationToken);
+        var items = await expressions
+            .Ordered(selection, request)
+            .Skip((request.Number - 1) * request.Size)
+            .Take(request.Size)
+            .Select(selector)
+            .ToListAsync(cancellationToken);
+        return new Page<TResult>(items, request.Number, request.Size, total);
+    }
+
     // A query nested in a command runs inside the command's Unit of Work, so what it added would commit with the
     // command, though a failed query Result alone marks nothing rollback-only.
     private void EnsureMayChangeState()

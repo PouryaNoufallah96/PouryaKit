@@ -42,7 +42,7 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
         await gateway.SendAsync(new CreateProductCommand(desk, furniture, "Desk"), TestContext.Current.CancellationToken);
 
         var found = await gateway.QueryAsync(new GetProductQuery(lamp), TestContext.Current.CancellationToken);
-        var listed = await gateway.QueryAsync(new ListProductsQuery(), TestContext.Current.CancellationToken);
+        var listed = await gateway.QueryAsync(new ListProductsQuery(new PageRequest()), TestContext.Current.CancellationToken);
         var missing = await gateway.QueryAsync(
             new GetProductQuery(Guid.CreateVersion7()),
             TestContext.Current.CancellationToken
@@ -51,7 +51,7 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(new ProductDto(lamp, furniture, "Lamp"), found.Value);
         Assert.Equal(
             [(desk, furniture, "Desk"), (lamp, furniture, "Lamp")],
-            listed.Value.Select(product => (product.Id.Value, product.CategoryId.Value, product.Name))
+            listed.Value.Items.Select(product => (product.Id.Value, product.CategoryId.Value, product.Name))
         );
         Assert.Equal(ProductErrors.NotFound, Assert.Single(missing.Errors));
     }

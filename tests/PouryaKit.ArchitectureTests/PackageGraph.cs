@@ -12,7 +12,8 @@ internal static class PackageGraph
     // Microsoft.EntityFrameworkCore.Relational, "Npgsql EF provider" Npgsql.EntityFrameworkCore.PostgreSQL, "xUnit v3"
     // xunit.v3.extensibility.core (the package for libraries) and "ASP.NET Core framework reference" the framework
     // Microsoft.AspNetCore.App. PouryaKit.Persistence has no row of its own: G.4 gives it Ardalis.Specification, over the
-    // aggregates of Domain.
+    // aggregates of Domain. Persistence.Dapper references Cqrs, not Domain, since its Page helper reads a Cqrs
+    // PageRequest into a Page (I.3 Paging, ticket #35).
     private static readonly Dictionary<string, Allowed> Table = new()
     {
         ["PouryaKit.Core"] = new([], []),
@@ -36,7 +37,7 @@ internal static class PackageGraph
             ["Npgsql.EntityFrameworkCore.PostgreSQL", "EFCore.NamingConventions"]
         ),
         ["PouryaKit.Persistence.Dapper"] = new(
-            ["PouryaKit.Core", "PouryaKit.Domain"],
+            ["PouryaKit.Core", "PouryaKit.Cqrs"],
             ["Dapper", "Npgsql", "Microsoft.Extensions.Configuration.Abstractions", "Microsoft.Extensions.DependencyInjection.Abstractions"]
         ),
         ["PouryaKit.Messaging"] = new(["PouryaKit.Domain"], []),

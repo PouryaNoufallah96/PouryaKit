@@ -74,7 +74,7 @@ public sealed class PackageGraphTests
         var nuspec = XDocument.Parse("""
             <package><metadata><id>PouryaKit.Persistence.Dapper</id><dependencies><group targetFramework="net10.0">
               <dependency id="PouryaKit.Core" version="0.1.0-preview.1" />
-              <dependency id="PouryaKit.Domain" version="0.1.0-preview.1" />
+              <dependency id="PouryaKit.Cqrs" version="0.1.0-preview.1" />
               <dependency id="Dapper" version="2.1.89" />
               <dependency id="Npgsql" version="10.0.3" />
               <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="10.0.12" />

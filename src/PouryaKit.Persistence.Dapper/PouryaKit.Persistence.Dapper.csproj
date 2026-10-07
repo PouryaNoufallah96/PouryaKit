@@ -7,6 +7,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PouryaKit.Core\PouryaKit.Core.csproj" />
-    <ProjectReference Include="..\PouryaKit.Domain\PouryaKit.Domain.csproj" />
+    <ProjectReference Include="..\PouryaKit.Cqrs\PouryaKit.Cqrs.csproj" />
   </ItemGroup>
 </Project>
