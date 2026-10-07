@@ -152,6 +152,20 @@ def check_production_publish(host, published):
     return sorted(path.relative_to(host).as_posix() for path in (host / "Internal/Generated").rglob("*") if path.is_file())
 
 
+def production_publish(host, published, configfile, env, log):
+    """A Host's production step (ADR 0004), on a consumer's copy: `codegen write`, which compiles nothing, so the Release
+    build serves, then a publish restored for Release, where the Host does not reference the runtime compiler."""
+    started = time.monotonic()
+    run(["dotnet", "run", "--project", host, "-c", "Release", "--no-build", "--no-launch-profile", "--", "codegen", "write"],
+        cwd=host, env=env, log=f"{log}-codegen.log")
+    run(["dotnet", "restore", host, "-p:Configuration=Release", "--configfile", configfile, "--no-http-cache", "-p:RestoreFallbackFolders="],
+        cwd=host, env=env, log=f"{log}-publish-restore.log")
+    run(["dotnet", "publish", host, "-c", "Release", "--no-restore", "-o", published], cwd=host, env=env, log=f"{log}-publish.log")
+    generated = check_production_publish(host, published)
+    return (f"codegen write wrote {', '.join(generated)}, and the Release publish holds the Host built with it and neither "
+            f"{' nor '.join(RUNTIME_COMPILER)} ({time.monotonic() - started:.0f} s)")
+
+
 def sample_consumer(folder, source, entries, version):
     shutil.copytree(ROOT / source, folder / "src", ignore=shutil.ignore_patterns("bin", "obj"))
     for project in (folder / "src").rglob("*.csproj"):
@@ -376,25 +390,13 @@ def validate(output, *, fetch=True):
             failed = re.search(r"failed: (\d+)", result)
             if not passed or not failed or failed.group(1) != "0" or passed.group(1) == "0":
                 raise RuntimeError(f"The smoke tests of {name} did not pass: {result}")
-            # The Host's production step: `codegen write`, which compiles nothing, so the Release build serves, then a
-            # publish restored for Release, where the Host does not reference the runtime compiler.
-            published_at = time.monotonic()
-            host = solution.parent / "src" / f"{GENERATED}.Host"
-            run(["dotnet", "run", "--project", host, "-c", "Release", "--no-build", "--no-launch-profile", "--", "codegen", "write"],
-                cwd=host, env=env, log=output / f"consumer-{name}-codegen.log")
-            run(["dotnet", "restore", host, "-p:Configuration=Release", "--configfile", folder / "NuGet.Config", "--no-http-cache",
-                 "-p:RestoreFallbackFolders="], cwd=solution.parent, env=env, log=output / f"consumer-{name}-publish-restore.log")
-            published = folder / "publish"
-            run(["dotnet", "publish", host, "-c", "Release", "--no-restore", "-o", published],
-                cwd=solution.parent, env=env, log=output / f"consumer-{name}-publish.log")
-            generated = check_production_publish(host, published)
+            production = production_publish(solution.parent / "src" / f"{GENERATED}.Host", folder / "publish", folder / "NuGet.Config",
+                                            env, output / f"consumer-{name}")
             assets = check_consumer(folder, env, ids, evidence["Version"], consumer["excluded"])
             evidence["Consumers"].append({"Name": name, "Packages": consumer["packages"], "Assets": assets})
             smoke_tests.append(f"{name} {passed.group(1)}")
             print(f"PASS template consumer {name}: generated, restored and built from the produced packages; "
-                  f"{passed.group(1)} smoke tests passed; codegen write wrote {', '.join(generated)}, and the Release publish "
-                  f"holds the Host built with it and neither {' nor '.join(RUNTIME_COMPILER)} "
-                  f"({time.monotonic() - published_at:.0f} s of {time.monotonic() - started:.0f} s)", flush=True)
+                  f"{passed.group(1)} smoke tests passed; {production}; {time.monotonic() - started:.0f} s in all", flush=True)
             continue
         consumer_config(folder, package_output)
         projects = sample_consumer(folder, consumer["source"], consumer["entries"], evidence["Version"]) if "source" in consumer else [simple_consumer(folder, consumer["packages"], types, evidence["Version"])]
@@ -417,9 +419,15 @@ def validate(output, *, fetch=True):
             log = name if len(projects) == 1 else f"{name}-{project.stem}"
             run(["dotnet", "restore", project, "--configfile", folder / "NuGet.Config", "--no-http-cache", "-p:RestoreFallbackFolders="], cwd=folder, env=env, log=output / f"consumer-{log}-restore.log")
             run(["dotnet", "build", project, "-c", "Release", "--no-restore"], cwd=folder, env=env, log=output / f"consumer-{log}-build.log")
+        # The copied Proving Sample's entries are its Hosts: each takes a generated Host's production step, on the copy.
+        productions = [(project.stem, production_publish(project.parent, folder / "publish" / project.stem, folder / "NuGet.Config",
+                                                         env, output / f"consumer-{name}-{project.stem}"))
+                       for project in projects] if "source" in consumer else []
         assets = check_consumer(folder, env, ids, evidence["Version"], consumer["excluded"])
         evidence["Consumers"].append({"Name": name, "Packages": consumer["packages"], "Assets": assets})
         print(f"PASS package-only consumer {name}", flush=True)
+        for host, production in productions:
+            print(f"PASS Host {host} of consumer {name}: {production}", flush=True)
     evidence_file.write_text(json.dumps(evidence, indent=2))
     run(["dotnet", ARCHITECTURE, "--validate-packages", evidence_file], log=output / "consumer-closures.log")
     artifact_controls(evidence, output)
