@@ -1,0 +1,21 @@
+.claude/agent-memory/kit-implementer/module-seam-and-composition-check-facts.md
+  s_bdf0617f846b2b::t_a0836545b642b5 10,14
+.claude/agent-memory/kit-implementer/worktree-and-check-gotchas.md
+  s_bdf0617f846b2b::t_1151b214f10ba7 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bbd3b967963334c2190be6b5afa6dccd94c0e446",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
