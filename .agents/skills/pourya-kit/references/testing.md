@@ -98,7 +98,7 @@ public async Task The_context_a_caller_passes_to_a_gateway_is_the_context_the_ha
 
 ## Deliveries
 
-A test of the deliveries one Operation causes, after the Proving Sample, whose Catalog announces each new product and publishes `ProductCreatedV1`, which Inventory and Billing each handle:
+A test of the deliveries one Operation causes, after the Proving Sample, whose Catalog announces each new product and publishes `ProductCreatedV1`, which Inventory and Billing each handle, and `ProductCreatedV2`, which a second Inventory subscription handles:
 
 ```csharp
 [Fact]
@@ -129,7 +129,7 @@ public async Task A_new_product_is_announced_by_the_host_after_it_is_committed()
 }
 ```
 
-The two `catalog.` deliveries are the Notification's, stored in the product's commit; the other two are the Integration Event's, one per subscription, stored in the commit of `publish-product-created`'s delivery. The wait includes deliveries that deliveries caused, and their order is not fixed, so the test sorts them. It keeps only these two wire names: the product's commit also stores its Snapshot for Inventory's copy, a fifth delivery, `inventory.catalog-products` under `catalog.product-snapshot.v1` ([messaging.md](messaging.md#snapshots-between-modules)).
+The two `catalog.` deliveries are the Notification's, stored in the product's commit; the other two are the Integration Event's, one per subscription, stored in the commit of `publish-product-created`'s delivery. The wait includes deliveries that deliveries caused, and their order is not fixed, so the test sorts them. It keeps only these two wire names, so two deliveries are left out: the v2 Integration Event's, `inventory.product-categories` under `catalog.product-created.v2`, stored in the same commit as v1's ([messaging.md](messaging.md#a-new-version-of-an-integration-event)), and the product's Snapshot for Inventory's copy, `inventory.catalog-products` under `catalog.product-snapshot.v1`, stored in the product's commit ([messaging.md](messaging.md#snapshots-between-modules)).
 
 - In `CreateHost`, call `builder.Services.UsePouryaKitTestDelivery()` after `UsePouryaKitWolverine`, which the application's builder method calls, as the fixture above does. Deliveries then run at test speed: Solo durability, so a stopped Host's deliveries are recovered at once; a failed delivery retried twice, 100 ms apart (`TestDeliveryServiceCollectionExtensions.RetryDelays`), so three attempts, and then set aside as a dead letter; and the message store polled every 100 ms (`PollingTime`). Count attempts from the setting, `1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count`, rather than a literal.
 - `Fixture.WaitForDeliveriesAsync(operation, ct)` runs the Operation, typically a Gateway call, waits until every delivery it caused is handled or set aside as a dead letter, including deliveries those deliveries caused, and returns the Operation's outcome with one `Delivery(Subscription, WireName, DeadLettered)` per delivery, in no particular order. A failing delivery stays pending through every retry, so the wait ends only once it is set aside, and it comes back with `DeadLettered` true. It fails with a `DeliveryAssertionException` when the Operation stored no delivery at all, so a test that waits never passes on nothing, and with a `TimeoutException` when deliveries are still pending after 30 seconds.

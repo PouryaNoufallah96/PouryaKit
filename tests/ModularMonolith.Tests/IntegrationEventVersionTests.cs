@@ -82,7 +82,15 @@ public sealed class IntegrationEventVersionTests(AppFixture app) : HostTest<AppF
                 """
             )
         );
-        Assert.Equal([[product]], await Fixture.RowsAsync("select product_id from billing.price_lists"));
+        Assert.Equal(
+            [[product, "ada", PriceLists, created]],
+            await Fixture.RowsAsync(
+                $"""
+                select p.product_id, p.created_by, r.subscription, r.message_id from billing.price_lists p
+                join billing.pouryakit_receipts r on r.subscription = '{PriceLists}' and pg_xact_commit_timestamp(r.xmin) = pg_xact_commit_timestamp(p.xmin)
+                """
+            )
+        );
     }
 
     [Fact]

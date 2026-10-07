@@ -15,7 +15,7 @@ public static class IntegrationEventServiceCollectionExtensions
         /// delivery of it and resolves its type when the delivery is read back, so it is stable: keep it when the type is
         /// renamed. One wire name is one version of one contract type: a new version is a new type under a new wire
         /// name, such as <c>ProductCreatedV2</c> under <c>catalog.product-created.v2</c>, published beside the old one
-        /// while subscribers move, and each subscription receives only the type it subscribed to; nothing converts one
+        /// while subscriptions move to it, and each subscription receives only the type it subscribed to; nothing converts one
         /// version into another. A Module's Composition Root calls it on its builder; an application without Modules calls it on its
         /// own services with no Module. Throws here, at startup, when the type is not a concrete class or is a Domain
         /// Event, when the wire name is missing, invalid or equal ignoring case to another's, and when the type is already

@@ -7,7 +7,7 @@ using PouryaKit.Messaging;
 namespace Catalog.Products.Events.Notifications;
 
 // Tells other Modules about the new product once it is committed. The Integration Events carry the Domain Event's
-// identity and time, so every receiver recognises a redelivery. Both versions are published while subscribers move
+// identity and time, so every receiver recognises a redelivery. Both versions are published while subscriptions move
 // from v1 to v2; retiring v1 is removing it here and its Publish declaration once no Module subscribes to it.
 internal sealed class PublishProductCreatedNotificationHandler(IIntegrationEventPublisher events)
     : INotificationHandler<ProductCreatedDomainEvent>

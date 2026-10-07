@@ -252,7 +252,7 @@ internal sealed class OpenStockItemIntegrationEventHandler(IRepository<StockItem
 
 ### A new version of an Integration Event
 
-A wire name is one version of one contract type. A change receivers could not read, such as a new required field, is a new version: a new type under a new wire name, published beside the old one while subscribers move. Nothing converts one version into another, and there is no schema registry. In the Proving Sample, `ProductCreatedV2` adds the product's category:
+A wire name is one version of one contract type. A change receivers could not read, such as a new required field, is a new version: a new type under a new wire name, published beside the old one while subscriptions move to it. Nothing converts one version into another, and there is no schema registry. In the Proving Sample, `ProductCreatedV2` adds the product's category:
 
 ```csharp
 // Catalog.Contracts/Products/Events/V2/: a type of its own, never derived from V1
@@ -275,9 +275,10 @@ events.Publish(
 
 - Add the new record under `Events/V2/`, named with its version, as a type of its own: copy the fields it keeps rather than deriving it from the old one.
 - Declare it with `Publish` under a new wire name with the new version (`catalog.product-created.v2`), and publish both versions from the same Notification Handler with the same Domain Event `Id`. One Domain Event yields one Integration Event of each type, so the two versions are allowed together, and each has a publication record of its own.
-- Each subscription receives only the version it subscribed to: v1 subscribers never see v2, and v2 subscribers never see v1. Both versions carry the one identity; each subscription keeps its own Receipt of it, so a Module may subscribe to both under two subscription names, and each applies once.
-- Move a subscriber by subscribing its new handler to v2 under a new subscription name, then removing its v1 subscription once that queue holds nothing. A stored v1 delivery to a subscription nothing declares any more is set aside as a dead letter, never run ([Names](#names)).
-- Retire v1 when no Module subscribes to it: remove its `Publish` call in the same release as its `events.Publish` line, and then the record. Until then, keep publishing it; a published type nothing in the Host subscribes to is not stored.
+- Each subscription receives only the version it subscribed to: a v1 subscription never receives v2, and a v2 subscription never receives v1. Both versions carry the one identity, and each subscription keeps its own Receipt of it, keyed by its subscription name. Receipts never deduplicate across subscription names: a v1 and a v2 subscription that apply the same effect both apply it, once each.
+- **A new, independent effect** goes in a new subscription to v2, beside the v1 subscriptions, which keep theirs. This is what the sample does: `inventory.product-categories` files the product under its category, which no v1 subscription does.
+- **Replacing a v1 subscription** with a v2 one that applies the same effect is a coordinated cutover: never let both apply it while both versions are published, or every product gets the effect twice, such as two stock items. Make it in the release that stops publishing v1, together with every other v1 subscription still live, since none receives anything once v1 stops: remove the `events.Publish` line of v1, subscribe each v2 handler under its new name, and keep each v1 subscription, and v1's `Publish` declaration, so its queue drains what was published before the release. Each product then has a v1 or a v2 delivery, never both. Remove the v1 subscriptions in a later release, once their queues hold nothing: a stored v1 delivery to a subscription nothing declares any more is set aside as a dead letter, never run ([Names](#names)). Never remove a v1 subscription before its v2 replacement is live: a version published while no subscription of it exists is not stored, so that effect is lost. An effect that must move to v2 while v1 is still published needs a v2 handler that itself recognises an effect already applied, such as by the product's id.
+- Retire v1 once no Module subscribes to it: remove its `Publish` declaration, then the record. While a v1 subscription is declared, keep the declaration, which gives v1 its wire name, or the Host fails to start. A published type nothing in the Host subscribes to is not stored.
 - Declaring the same type under two wire names, two types under one wire name, or a wire name equal to another subscribed contract type's full name fails the Host ([Startup checks](#startup-checks)).
 
 ## Snapshots between Modules
@@ -444,7 +445,7 @@ An Integration Event is delivered the same way, sent after the commit, in a new 
 - **Applied once.** Its identity is the `Id` of the Domain Event it follows from, carried by every delivery of it in the `IntegrationEventHeaders.DomainEventId` header. The receiving handler's Receipt, the subscription name and that identity, commits together with its effect, so a redelivery after the commit, or a concurrent duplicate, applies it once.
 - **A continuation, two Operations on.** The receiving Operation continues the publishing Notification Handler's delivery: the same Actor, tenant and correlation as the Operation that made the change, the delivery's `OperationId` as its causation, a new `OperationId`. No HTTP request is involved.
 - **The same identity and time at both ends.** The Kit enforces the identity: `Publish` refuses any other. The time is the same when the Integration Event carries the Domain Event's `OccurredOn`, as `ProductCreatedV1` does.
-- **Each version to its own subscribers.** A subscription receives only the type it subscribed to, so during a transition v1 and v2 of one fact reach their own subscriptions only, each with its own Receipt.
+- **Each version to its own subscriptions.** A subscription receives only the type it subscribed to, so during a transition v1 and v2 of one fact reach their own subscriptions only, each with its own Receipt.
 
 ## Receipts
 
