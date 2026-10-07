@@ -47,6 +47,7 @@ Your only finishing states are a `done` report and a `blocked` report. When the 
   "status": "done | blocked",
   "summary": "<at most 120 words>",
   "branch": "<your branch>",
+  "base": "<the integration-branch commit your work starts from, after any fast-forward or rebase: the review base>",
   "head": "<git rev-parse HEAD at the end>",
   "commands": [
     { "command": "<as run>", "outcome": "passed | failed | not_run", "detail": "<the lines that matter>" }
