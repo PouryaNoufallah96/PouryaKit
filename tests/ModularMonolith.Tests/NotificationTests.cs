@@ -298,7 +298,10 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
                 // A bounded wait for something that must not happen: the fixture's Host, alive throughout, polls the
                 // store several times and leaves the dead Host's delivery where it is.
                 await Task.Delay(TestDeliveryServiceCollectionExtensions.PollingTime * 5, TestContext.Current.CancellationToken);
-                afterDeath = await Fixture.RowsAsync("select status, owner_id <> 0 from wolverine.wolverine_incoming_envelopes");
+                // Beside the first occurrence of Inventory's recurring ReconcileStock, which the dying Host stored as it started.
+                afterDeath = await Fixture.RowsAsync(
+                    "select status, owner_id <> 0 from wolverine.wolverine_incoming_envelopes where received_at <> 'local://inventory.reconcile-stock/'"
+                );
 
                 await HostFixture.StartHostAsync(starting, TestContext.Current.CancellationToken);
                 return result;

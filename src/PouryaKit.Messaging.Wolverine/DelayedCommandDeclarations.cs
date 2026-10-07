@@ -4,11 +4,26 @@ using PouryaKit.Cqrs;
 namespace PouryaKit.Messaging.Wolverine;
 
 /// <summary>
-/// A command type a Module may schedule with <see cref="IDelayedCommands"/>. Its lower-cased <see cref="Name"/> is its
-/// durable queue and half of its Receipts' key; <see cref="Module"/> is the Module that schedules it and that its
+/// A command type a Module may schedule with <see cref="IDelayedCommands"/>, or, with a <see cref="Recurring"/>
+/// declaration, one the Kit schedules itself, at every occurrence of a cadence. Its lower-cased <see cref="Name"/> is
+/// its durable queue and half of its Receipts' key; <see cref="Module"/> is the Module that schedules it and that its
 /// deliveries run in, null in an application without Modules.
 /// </summary>
-internal sealed record DelayedCommand(string Name, Type Command, Type? Module);
+internal sealed record DelayedCommand(string Name, Type Command, Type? Module, Recurrence? Recurring = null);
+
+/// <summary>
+/// Recurring work: each occurrence runs as an Operation of the system Actor named <see cref="SystemActor"/>, with the
+/// command <see cref="Occurrence"/> builds for the occurrence's time.
+/// </summary>
+internal sealed record Recurrence(string SystemActor, Func<DateTimeOffset, Command> Occurrence)
+{
+    /// <summary>
+    /// The first occurrence after <paramref name="after"/>: occurrences fall on whole multiples of
+    /// <paramref name="every"/> counted from the Unix epoch, so every Host computes the same ones.
+    /// </summary>
+    public static DateTimeOffset After(DateTimeOffset after, TimeSpan every) =>
+        DateTimeOffset.UnixEpoch.AddTicks(((after.UtcTicks - DateTimeOffset.UnixEpoch.UtcTicks) / every.Ticks + 1) * every.Ticks);
+}
 
 /// <summary>
 /// Every delayed command one Host declares. It lives in the Host's service collection, as the subscriptions do, so
@@ -43,7 +58,7 @@ internal sealed class DelayedCommandDeclarations
     /// invalid, a queue Wolverine keeps for itself or another declaration's, ignoring case, or the type is already
     /// declared under another name or for another Module. Declaring the same again adds nothing.
     /// </summary>
-    public void Add(string name, Type command, Type? module)
+    public void Add(string name, Type command, Type? module, Recurrence? recurring = null)
     {
         List<string> problems = [];
         if (command.IsAbstract || command.ContainsGenericParameters || !command.IsAssignableTo(typeof(Command)))
@@ -53,7 +68,7 @@ internal sealed class DelayedCommandDeclarations
 
         if (Subscriptions.Check(name, $"{command.FullName}'s delayed command name", isQueue: true, problems))
         {
-            var declared = new DelayedCommand(name.ToLowerInvariant(), command, module);
+            var declared = new DelayedCommand(name.ToLowerInvariant(), command, module, recurring);
             if (_byCommand.TryGetValue(command, out var existing))
             {
                 if (existing != declared)

@@ -47,6 +47,10 @@ internal static class DeliveryProbes
     public static IReadOnlyList<Activity?> ActivitiesOf(string subscription) =>
         [.. Attempts.Where(attempt => attempt.Subscription == subscription).Select(attempt => attempt.Activity)];
 
+    /// <summary>The Operation Context of every delivery to <paramref name="subscription"/> that began recording its Receipt.</summary>
+    public static IReadOnlyList<OperationContext> ContextsOf(string subscription) =>
+        [.. Attempts.Where(attempt => attempt.Subscription == subscription).Select(attempt => attempt.Context)];
+
     /// <summary>Adds every message the commits of this flow write to the Outbox to <paramref name="written"/>, until disposed.</summary>
     public static IDisposable RecordWritten(List<object> written)
     {

@@ -33,7 +33,7 @@ public sealed class DapperWriteTests
         Assert.Empty(Sample.Modules.SelectMany(module => ModuleRules.WritesToAggregateTables(module, AggregateTables)));
         var inventory = Assert.Single(Sample.Modules, module => module.GetName().Name == "Inventory");
         Assert.Equal(
-            ["inventory.catalog_products", "inventory.catalog_products", "inventory.product_categories"],
+            ["inventory.catalog_products", "inventory.catalog_products", "inventory.product_categories", "inventory.stock_reconciliations"],
             Il.LiteralsIn(inventory).SelectMany(literal => ModuleRules.TablesWrittenBy(literal.Text)).Order(StringComparer.Ordinal)
         );
     }

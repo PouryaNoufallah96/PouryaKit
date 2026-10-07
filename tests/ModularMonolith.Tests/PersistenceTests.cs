@@ -42,6 +42,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["inventory", "pouryakit_snapshot_versions"],
                 ["inventory", "product_categories"],
                 ["inventory", "stock_items"],
+                ["inventory", "stock_reconciliations"],
                 ["stub", "__EFMigrationsHistory"],
                 ["stub", "binary_keys"],
                 ["stub", "books"],

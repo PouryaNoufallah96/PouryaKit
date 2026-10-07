@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using PouryaKit.Cqrs;
 
 namespace PouryaKit.Messaging.Wolverine;
@@ -30,6 +31,47 @@ public static class DelayedCommandServiceCollectionExtensions
             DelayedCommandDeclarations.In(services).Add(name, typeof(TCommand), module);
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
             return services;
+        }
+
+        /// <summary>
+        /// Declares that <paramref name="module"/>, the Module's definition type, runs <typeparamref name="TCommand"/>,
+        /// one of its own commands, as recurring work: at every occurrence of the cadence that
+        /// <see cref="PouryaKitRecurringCommandOptions.Every"/> sets, configured through the returned builder, as an
+        /// Operation of its own for the system Actor named <paramref name="systemActor"/>, with a new correlation, and
+        /// with the command <paramref name="occurrence"/> builds for the occurrence's time. Occurrences fall on whole
+        /// multiples of the cadence counted from the Unix epoch, on the system clock. <paramref name="name"/> is its
+        /// durable queue and half of its Receipts' key, as a delayed command's is. The Kit keeps one occurrence stored
+        /// at a time: a Host that starts stores the first one after now unless one is already stored, and each
+        /// occurrence stores the next one in its own commit, so a stopped Host leaves it for the next Host to run. An
+        /// occurrence whose Receipt is already recorded, whichever stored delivery carries it, applies nothing and stores
+        /// no next occurrence, so two Hosts that each stored one end with one. Occurrences missed while no Host ran are
+        /// not made up: the one stored runs late, then the next one after now. An occurrence that fails is retried, then
+        /// set aside as a dead letter, and the next one is stored only when it is replayed or a Host starts. Feature code
+        /// never schedules it with <see cref="IDelayedCommands"/>. Throws here as
+        /// <see cref="AddPouryaKitDelayedCommand"/> does; the Host fails to start, as for a delayed command, and when the
+        /// cadence is not longer than zero.
+        /// </summary>
+        public OptionsBuilder<PouryaKitRecurringCommandOptions> AddPouryaKitRecurringCommand<TCommand>(
+            string name,
+            string systemActor,
+            Func<DateTimeOffset, TCommand> occurrence,
+            Type? module = null
+        )
+            where TCommand : Command
+        {
+            ArgumentNullException.ThrowIfNull(services);
+            ArgumentException.ThrowIfNullOrWhiteSpace(systemActor);
+            ArgumentNullException.ThrowIfNull(occurrence);
+            DelayedCommandDeclarations.In(services).Add(name, typeof(TCommand), module, new Recurrence(systemActor, at => occurrence(at)));
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, RecurringCommandStart>());
+            return services
+                .AddOptions<PouryaKitRecurringCommandOptions>(name.ToLowerInvariant())
+                .Validate(
+                    options => options.Every > TimeSpan.Zero,
+                    $"The recurring command {name} has no cadence: set PouryaKitRecurringCommandOptions.Every, named {name.ToLowerInvariant()}, longer than zero, as its declaration's options builder binds it."
+                )
+                .ValidateOnStart();
         }
     }
 }

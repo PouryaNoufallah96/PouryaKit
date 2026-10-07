@@ -1,6 +1,11 @@
+using System.Buffers.Binary;
+using System.Diagnostics;
+using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using Wolverine;
 using Wolverine.Runtime;
 using Wolverine.Runtime.Handlers;
 
@@ -8,9 +13,9 @@ namespace PouryaKit.Messaging.Wolverine;
 
 // The pre-built handler of a delayed command type, run once the message store finds it due. The queue it was stored on
 // names its declaration, as a subscription's does, so one stored under a name nothing declares any more is set aside
-// rather than run under another name's Receipts. Each attempt runs in a scope of its own, begun as a continuation of the
-// Operation that scheduled it, in its Module; the envelope's id is the same in every delivery of one scheduled command,
-// retries, recovery and replay included, so it keys the Receipt.
+// rather than run under another name's Receipts. Each attempt runs in a scope of its own, in its Module: a delayed
+// command's begun as a continuation of the Operation that scheduled it, a recurring command's as a new Operation of its
+// declared system Actor, since no Operation caused it.
 internal sealed class DelayedCommandDelivery(DelayedCommandDeclarations declarations) : MessageHandler
 {
     public override async Task HandleAsync(MessageContext context, CancellationToken cancellation)
@@ -23,35 +28,74 @@ internal sealed class DelayedCommandDelivery(DelayedCommandDeclarations declarat
             declarations.Named(name) is { } named && named.Command == command.GetType()
                 ? named
                 : throw new UnknownDelayedCommandException(name, command.GetType());
-        var (operationContext, traceParent) = OperationContextHeaderExtensions.ContinuedOperationContext(envelope);
+        // A recurring occurrence continues no Operation, so it starts a trace of its own too.
+        var (operationContext, traceParent) = declared.Recurring is { } recurring
+            ? (new OperationContext(Actor.System(recurring.SystemActor)), default(ActivityContext))
+            : OperationContextHeaderExtensions.ContinuedOperationContext(envelope);
 
         await using var scope = context.Runtime.Services.CreateAsyncScope();
         scope.ServiceProvider.BeginOperation(operationContext, declared.Module, traceParent);
         var result = await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
-            .SendAsync(new RunDelayedCommand(declared, command, envelope.Id), cancellation);
+            .SendAsync(new RunDelayedCommand(declared, command, envelope.Id, DueAt(envelope, declared)), cancellation);
         if (result.IsFailure)
         {
             throw new DelayedCommandFailedException(declared.Name, result.Errors);
         }
     }
+
+    private static DateTimeOffset? DueAt(Envelope envelope, DelayedCommand declared) =>
+        declared.Recurring is null ? null
+        : envelope.Headers.TryGetValue(DelayedCommandHeaders.DueAt, out var dueAt) && dueAt is not null
+            ? DateTimeOffset.Parse(dueAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+        : throw new InvalidOperationException(
+            $"The occurrence {envelope.Id} of the recurring command {declared.Name} has no {DelayedCommandHeaders.DueAt} header, so it names no occurrence to record its Receipt for. Only the Unit of Work's Outbox stores recurring commands."
+        );
 }
 
 // One delivery attempt of a delayed command, as the Operation of the scope the delivery opened: the command runs nested
 // in it, so it joins the Unit of Work that records the Receipt, and goes through the whole pipeline, its authorizers
-// and validator included.
-internal sealed record RunDelayedCommand(DelayedCommand Declared, Command Command, Guid MessageId) : Command;
+// and validator included. A recurring command's attempt carries the occurrence it runs.
+internal sealed record RunDelayedCommand(DelayedCommand Declared, Command Command, Guid MessageId, DateTimeOffset? Occurrence = null)
+    : Command;
 
-internal sealed class RunDelayedCommandHandler(IDispatcher dispatcher, IReceipts? receipts = null) : CommandHandler<RunDelayedCommand>
+internal sealed class RunDelayedCommandHandler(
+    IDispatcher dispatcher,
+    IServiceProvider scope,
+    IOptionsMonitor<PouryaKitRecurringCommandOptions> recurringOptions,
+    IReceipts? receipts = null
+) : CommandHandler<RunDelayedCommand>
 {
     public override async Task<Result> Handle(RunDelayedCommand command, CancellationToken cancellationToken)
     {
-        // Recorded before the command runs, in the same transaction, as a subscription's Receipt is.
-        if (receipts is not null && !await receipts.RecordAsync(command.Declared.Name, command.MessageId, cancellationToken))
+        // Recorded before the command runs, in the same transaction, as a subscription's Receipt is. A delayed command's
+        // Receipt is its message's; a recurring command's is its occurrence's, whichever stored delivery carries it.
+        var receipt = command.Occurrence is { } occurrence ? ReceiptOf(occurrence) : command.MessageId;
+        if (receipts is not null && !await receipts.RecordAsync(command.Declared.Name, receipt, cancellationToken))
         {
+            // A recurring occurrence already applied stores no next one: the delivery that applied it did.
             return Result.Success();
+        }
+
+        if (command.Declared.Recurring is { } recurring)
+        {
+            // The store fires on the system clock, so the next occurrence is compared with it, not with the Operation's
+            // clock. One that is already past is skipped, never made up.
+            var every = recurringOptions.Get(command.Declared.Name).Every;
+            var next = Recurrence.After(Max(command.Occurrence!.Value, TimeProvider.System.GetUtcNow()), every);
+            RecurringCommandStart.Store(scope, command.Declared, recurring.Occurrence(next), next);
         }
 
         return await dispatcher.SendAsync(command.Command, cancellationToken);
     }
+
+    // The Receipt key of an occurrence: its time, in UTC ticks, in the key's first eight bytes.
+    private static Guid ReceiptOf(DateTimeOffset occurrence)
+    {
+        Span<byte> bytes = stackalloc byte[16];
+        BinaryPrimitives.WriteInt64BigEndian(bytes, occurrence.UtcTicks);
+        return new Guid(bytes, bigEndian: true);
+    }
+
+    private static DateTimeOffset Max(DateTimeOffset left, DateTimeOffset right) => left > right ? left : right;
 }

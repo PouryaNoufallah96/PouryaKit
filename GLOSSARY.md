@@ -107,8 +107,12 @@ _Avoid_: Consumer, subscriber, listener
 A command an Operation schedules to run later in its own Module, committed with the Operation and run once due as its continuation, with its Actor, tenant and correlation.
 _Avoid_: Scheduled job, timer, deferred command
 
+**Recurring command**:
+A command a Module declares to run at every occurrence of a cadence, each occurrence an Operation of its own for the system Actor the declaration names, continuing nothing.
+_Avoid_: Cron job, scheduled job, background job, timer
+
 **Outbox**:
-A Module's share of its Host's durable message store: the Notifications, Integration Events, Snapshots and delayed commands the Module has committed but not yet finished delivering.
+A Module's share of its Host's durable message store: the Notifications, Integration Events, Snapshots, delayed commands and recurring commands' next occurrences the Module has committed but not yet finished delivering.
 _Avoid_: Message table, queue
 
 **Inbox**:
@@ -124,7 +128,7 @@ One bounded slice of a read result, with its position and the total count.
 _Avoid_: Paged list, list result, page list
 
 **Receipt**:
-A handler's record that it has already applied a specific Notification, Integration Event or Snapshot, or a Module's record that it has run a specific delayed command.
+A handler's record that it has already applied a specific Notification, Integration Event or Snapshot, or a Module's record that it has run a specific delayed command or occurrence of a recurring command.
 The Module's Receipt store also holds its publication records, keyed `<wire name>#published`, one per Integration Event type and Domain Event; those are not Receipts (ADR 0006).
 _Avoid_: Inbox row, idempotency marker, processed flag
 
