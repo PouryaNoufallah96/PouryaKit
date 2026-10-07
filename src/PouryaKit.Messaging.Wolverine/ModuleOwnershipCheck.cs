@@ -4,9 +4,10 @@ using PouryaKit.Cqrs;
 namespace PouryaKit.Messaging.Wolverine;
 
 // A declaration of a Module's messages that belongs to no Module in a Host that composed Modules, or that names a Module
-// the Host never composed: publishing it, delivering it or scheduling it would run in no Module of the Host and fail
-// only at its first use, once the Host serves. A Composition Root declares on its builder; the Host's composition names
-// a Module it composes. Receive and ReceiveSnapshot belong to the Host and are not checked.
+// the Host never composed, a Host without Modules included: publishing it, delivering it or scheduling it would run in no
+// Module of the Host and fail only at its first use, once the Host serves. A Composition Root declares on its builder;
+// the Host's composition names a Module it composes, and an application without Modules declares with no Module.
+// Receive and ReceiveSnapshot belong to the Host and are not checked.
 internal sealed class ModuleOwnershipCheck : ICompositionCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
@@ -19,12 +20,19 @@ internal sealed class ModuleOwnershipCheck : ICompositionCheck
             }
             else if (module is not null && !composition.Modules.Contains(module))
             {
-                yield return $"{declaration} is declared for {module.Name}, which this Host does not compose, so it runs in no Module of the Host and {failure} once the Host serves. Add {module.Name} with AddPouryaKitModules, or name a Module the Host composes.";
+                var otherwise = composition.Modules.Count > 0
+                    ? "name a Module the Host composes"
+                    : $"declare it for the application, without a Module, with {call}({Application(arguments)})";
+                yield return $"{declaration} is declared for {module.Name}, which this Host does not compose, so it runs in no Module of the Host and {failure} once the Host serves. Add {module.Name} with AddPouryaKitModules, or {otherwise}.";
             }
         }
     }
 
     private static string Named(string arguments) => arguments is "" ? "" : arguments + ", ";
+
+    // Only a Module's builder infers the Feature assemblies, so the application's AddPouryaKitNotificationHandlers, the one
+    // declaration whose Module form takes no argument, names them.
+    private static string Application(string arguments) => arguments is "" ? "featureAssemblies" : arguments;
 
     // Each declaration with its Module, how to name it in a sentence, what would fail, and the call that declares it.
     private static IEnumerable<(Type? Module, string Declaration, string Failure, string Call, string Arguments)> Declarations(IServiceProvider services)
