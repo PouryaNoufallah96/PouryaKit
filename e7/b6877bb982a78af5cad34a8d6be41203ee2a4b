@@ -1,0 +1,148 @@
+tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs
+  s_0d5a1b290c2d36::t_6fb21b5151cab2 34-36,175-176
+  s_0d5a1b290c2d36::t_73f76a59231613 177
+src/PouryaKit.Templates/content/monolith/.template.config/dotnetcli.host.json
+  s_0d5a1b290c2d36::t_5f6d724eb3c0fa 1-9
+docs/packages.md
+  s_0d5a1b290c2d36::t_5d174060b0373f 15,19,23,27,30-31,33,51,53
+.agents/skills/pourya-kit/references/modules.md
+  s_0d5a1b290c2d36::t_57ccf8baf7feaf 124,200-201
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/Program.cs
+  s_0d5a1b290c2d36::t_faa3fe439f5170 1-2,4-13,15-63,65-88
+  s_0d5a1b290c2d36::t_bca95c8ca69495 3,14
+  s_0d5a1b290c2d36::t_7772391a1b6bd6 64
+docs/acceptance.md
+  s_0d5a1b290c2d36::t_ac7914443ea5ba 497-517
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_0d5a1b290c2d36::t_6fb21b5151cab2 64-65,95-96
+src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/HostTests.cs
+  s_0d5a1b290c2d36::t_03c00b561205ea 116-121
+  s_0d5a1b290c2d36::t_dd05dfc07affc3 1-115,122-184
+.agents/skills/pourya-kit/references/templates.md
+  s_0d5a1b290c2d36::t_cb4b4318a84c1a 1-97
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/Program.cs
+  s_0d5a1b290c2d36::t_047450ebe55ca0 1-91
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/Categories/Features/CreateCategory/CreateCategoryEndpoint.cs
+  s_0d5a1b290c2d36::t_114b1d05b172d8 1-19
+src/PouryaKit.Templates/content/shared/src/ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj
+  s_0d5a1b290c2d36::t_ca66ca6ebcab42 1-20
+src/PouryaKit.Templates/content/shared/src/ModularMonolith.Host/Properties/launchSettings.json
+  s_0d5a1b290c2d36::t_8d45f3f077813d 1-12
+src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_0d5a1b290c2d36::t_19ef44d8459103 1-16
+docs/architecture/README.md
+  s_0d5a1b290c2d36::t_c00034f8038cd3 3,19,25,37,253,270,363,608-624,639-640
+docs/provenance/PouryaKit.Templates.md
+  s_0d5a1b290c2d36::t_3d377e20a15b74 1-41
+src/PouryaKit.Templates/content/modular/.template.config/dotnetcli.host.json
+  s_0d5a1b290c2d36::t_625b1d5fc85a7c 1-9
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_0d5a1b290c2d36::t_70db24204666b2 4,8-10,12-37
+  s_0d5a1b290c2d36::t_b890db07d155ab 1-3,5-7,11,38-39
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/Products/Features/GetProduct/GetProductEndpoint.cs
+  s_0d5a1b290c2d36::t_029a5ffab3b635 1-22
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsEndpoint.cs
+  s_0d5a1b290c2d36::t_585eb839f3184d 1-20
+src/PouryaKit.Templates/content/modular/tests/ModularMonolith.Tests/CrossModuleTests.cs
+  s_0d5a1b290c2d36::t_9abdf658a34bf1 1-34,38,40,43-44
+  s_0d5a1b290c2d36::t_95275d567bf542 35-37,39,41-42
+src/PouryaKit.Templates/PouryaKit.Templates.csproj
+  s_0d5a1b290c2d36::t_9e9faf2f8575dd 27,29
+  s_0d5a1b290c2d36::t_1e170f26ddc12e 1-26,28,30-46
+src/PouryaKit.Templates/content/modular/.template.config/template.json
+  s_0d5a1b290c2d36::t_3c8110cb5b14f7 1-57
+GLOSSARY.md
+  s_0d5a1b290c2d36::t_a544a3b99efd4c 156-159
+.agents/skills/pourya-kit/SKILL.md
+  s_0d5a1b290c2d36::t_57ccf8baf7feaf 3,40-41
+src/PouryaKit.Security/RequiresPermissionAttribute.cs
+  s_0d5a1b290c2d36::t_e42d85147008df 8-10
+src/PouryaKit.Templates/content/shared/Directory.Build.props
+  s_0d5a1b290c2d36::t_754e53fb5c4ae3 1-10
+scripts/packaging/inventory.json
+  s_0d5a1b290c2d36::t_6d5c7e8878c977 22-23,37-48
+src/PouryaKit.Templates/content/monolith/ModularMonolith.slnx
+  s_0d5a1b290c2d36::t_3e06841d3122d4 1-3,12-13
+  s_0d5a1b290c2d36::t_e217b20dc2cd8f 4-11
+src/PouryaKit.Templates/content/modular/src/Modules/Inventory/Inventory/Inventory.csproj
+  s_0d5a1b290c2d36::t_b487ce2708e8a9 1-12
+tests/PouryaKit.ArchitectureTests/Sample.cs
+  s_0d5a1b290c2d36::t_6fb21b5151cab2 88,94
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_0d5a1b290c2d36::t_f4ebd760710ba2 1-23
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_0d5a1b290c2d36::t_c604bf531a4b74 1-5,7-16
+  s_0d5a1b290c2d36::t_7772391a1b6bd6 6
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/CatalogModule.cs
+  s_0d5a1b290c2d36::t_d140d52c8db73b 1-55
+PouryaKit.slnx
+  s_0d5a1b290c2d36::t_fc9da5baa5c216 19
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_0d5a1b290c2d36::t_57ccf8baf7feaf 3,40
+src/PouryaKit.Templates/content/shared/src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj
+  s_0d5a1b290c2d36::t_a4c65293d4ae7e 1
+scripts/packaging/validate.py
+  s_0d5a1b290c2d36::t_0c12422dab255e 9,13,19-22,92-96,131-136,314,316-317,333-334,336-341,346-366,400-401
+README.md
+  s_0d5a1b290c2d36::t_5d174060b0373f 22,27
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_0d5a1b290c2d36::t_8f37e16a83bf02 1-49,51-141
+  s_0d5a1b290c2d36::t_a7039f0d2e835e 50
+docs/foundation-review.md
+  s_0d5a1b290c2d36::t_d550848f08faa9 265,867
+src/PouryaKit.Templates/content/modular/src/Modules/Billing/Billing/Billing.csproj
+  s_0d5a1b290c2d36::t_c77ee84beeeab5 1-11
+Directory.Packages.props
+  s_0d5a1b290c2d36::t_87c6fe9d973793 15-16
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_0d5a1b290c2d36::t_2d8a873d5792d4 4,8-16,18-36
+  s_0d5a1b290c2d36::t_ceec68792e3c55 1-3,5-7,17,37-38
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_0d5a1b290c2d36::t_9ebfde2ecd6219 1-2,14,20-21
+  s_0d5a1b290c2d36::t_571aa4239c1933 3-13,15-19
+src/PouryaKit.Modularity/ModularServiceProviderFactory.cs
+  s_0d5a1b290c2d36::t_d761b93193b978 2,7-9,18
+tests/PouryaKit.ArchitectureTests/TemplateRules.cs
+  s_0d5a1b290c2d36::t_a33c2fa9f9599e 1-17,19-121,123-226
+  s_0d5a1b290c2d36::t_7772391a1b6bd6 18
+  s_0d5a1b290c2d36::t_87c6fe9d973793 122
+src/PouryaKit.Templates/content/modular/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_0d5a1b290c2d36::t_bbf0ac35c89cc1 1-16
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/appsettings.json
+  s_0d5a1b290c2d36::t_ad33985499e67d 1-15
+.agents/skills/pourya-kit/references/security.md
+  s_0d5a1b290c2d36::t_57ccf8baf7feaf 41,44
+src/PouryaKit.Templates/content/modular/ModularMonolith.slnx
+  s_0d5a1b290c2d36::t_dec410cadc13e4 1-15
+tests/ModularMonolith.Tests/SecurityTests.cs
+  s_0d5a1b290c2d36::t_f5fc0785fe4bf6 340
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductEndpoint.cs
+  s_0d5a1b290c2d36::t_3c840e319bb2f0 1-22
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/appsettings.json
+  s_0d5a1b290c2d36::t_2cb24bfd795f99 1-20
+src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs
+  s_0d5a1b290c2d36::t_36cc488c93b46e 125-136,138-166
+  s_0d5a1b290c2d36::t_947af8d9603d85 137
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductEndpoint.cs
+  s_0d5a1b290c2d36::t_99fcf033b4fe75 1-46
+src/PouryaKit.Templates/content/monolith/.template.config/template.json
+  s_0d5a1b290c2d36::t_abe5bdd8035505 1-59
+src/PouryaKit.Cqrs/IRequiresAuthorizer.cs
+  s_0d5a1b290c2d36::t_bd15f743d26db6 5-8,11-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e7b6877bb982a78af5cad34a8d6be41203ee2a4b",
+  "prompts": {},
+  "sessions": {
+    "s_0d5a1b290c2d36": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5bdb6a50-6bfa-4dc6-9059-d46d18b45597",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
