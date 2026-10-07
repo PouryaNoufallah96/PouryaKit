@@ -27,3 +27,4 @@
 - [ImplementingTypes lookup facts](implementing-types-lookup-facts.md) — #55: Of vs Candidates, GetTypes order is MetadataToken order and a test pins it
 - [Password hashing facts](password-hashing-facts.md) — #40: PBKDF2 key floor, TryParse takes trailing NUL, strict base64, consumers/<name>.cs, OWASP pin, IL check
 - [Versioning facts](versioning-facts.md) — #49: Wolverine type routes match by name, ilspycmd decompile, asking main to widen allowed_files, Receipt mutation scope
+- [Delayed command facts](delayed-command-facts.md) — #44: scheduled envelope via EF outbox, system clock, own-database restart proof, retry rows vs not-yet-due
