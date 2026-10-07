@@ -183,14 +183,13 @@ Raise `Iterations` when the guidance does; existing hashes keep verifying and ar
 For a Host whose callers present bearer tokens from an identity provider. The Kit verifies and normalizes them; it issues none.
 
 ```csharp
-using PouryaKit.Security;
 using PouryaKit.Security.JwtBearer;
 using PouryaKit.Web;
 
 // In the Host, instead of AddAuthentication(...).AddJwtBearer(...):
 builder.Services.AddPouryaKitJwtBearer(claims => claims.TenantClaim = "tenant");   // "sub" is the Actor by default
 builder.Services.AddAuthorization();
-builder.Services.AddPouryaKitWeb(web => web.TenantClaim = PouryaKitClaimTypes.Tenant);
+builder.Services.AddPouryaKitWeb();   // reads the tenant under PouryaKitClaimTypes.Tenant by default
 ```
 
 ```json
@@ -209,7 +208,7 @@ builder.Services.AddPouryaKitWeb(web => web.TenantClaim = PouryaKitClaimTypes.Te
 
 - `AddPouryaKitJwtBearer` registers standard JWT bearer authentication as the default scheme, `Bearer`. Its issuer, audiences and signing keys are the framework's own `JwtBearerOptions`, bound from `Authentication:Schemes:Bearer`: an `Authority` (or `MetadataAddress`) whose discovery document supplies the issuer and keys, or `ValidIssuer` and `SigningKeys`, as `dotnet user-jwts` writes them for development. Set anything else on the same options with `Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, ...)`; never call `AddJwtBearer` again.
 - The Host fails when it starts, with an `OptionsValidationException` naming every problem, unless the scheme requires the audience (`RequireAudience`) and validates it against a configured audience, validates the issuer against a configured issuer or authority, the signature against a signing key or authority, and the token's lifetime and expiration time. Nothing in the Kit's options turns one off, and setting `ValidateAudience = false` or `RequireAudience = false`, leaving out every audience, or doing the same to the issuer fails the start, never the first request. A custom validator delegate that runs instead of one of these checks is refused by the Kit's scheme: setting `AudienceValidator`, `IssuerValidator`, `IssuerValidatorUsingConfiguration`, `LifetimeValidator`, `SignatureValidator` or `SignatureValidatorUsingConfiguration` fails the start with a failure naming it. The check reads the options as they end, after the configuration and every `Configure` and `PostConfigure`.
-- The token keeps its own claim names (`MapInboundClaims` stays false). For each verified token the Kit writes the value of `PouryaKitJwtBearerOptions.ActorClaim`, `"sub"` by default, as the identity's `ClaimTypes.NameIdentifier`, which `PouryaKit.Web` reads as `Actor.Person(id)`, and the value of `TenantClaim` as `PouryaKitClaimTypes.Tenant`. A claim the token itself carries under either of those two types is dropped first. Every other claim, such as the `permission` claims the Proving Sample's `CallerPermissions` reads, keeps its name.
+- The token keeps its own claim names (`MapInboundClaims` stays false). For each verified token the Kit writes the value of `PouryaKitJwtBearerOptions.ActorClaim`, `"sub"` by default, as the identity's `ClaimTypes.NameIdentifier`, which `PouryaKit.Web` reads as `Actor.Person(id)`, and the value of `TenantClaim` as `PouryaKitClaimTypes.Tenant` (`PouryaKit.Cqrs`), the claim `PouryaKit.Web` reads the Operation's tenant from by default, so the Host names the token's tenant claim once, here. A claim the token itself carries under either of those two types is dropped first. Every other claim, such as the `permission` claims the Proving Sample's `CallerPermissions` reads, keeps its name.
 - A token without the tenant claim runs with a null tenant and is not refused, as with any scheme ([web.md](web.md#the-caller-and-the-actor)). An application in which every caller must have a tenant enforces it itself, in an `IAuthorizer<T>` or its own `OnTokenValidated`.
 - A token whose signature, issuer, audience or lifetime fails, or that carries no Actor claim, or more than one Actor or tenant value, is refused: the request is anonymous, and an endpoint that requires authentication answers 401 as a problem response, with the scheme's `WWW-Authenticate: Bearer` header.
 - An `OnTokenValidated` of the application's own still runs, after the normalization and only for a token the Kit kept: set it, and any other event delegate, on the existing `Events` with `Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, ...)`. The start check verifies that the normalization is the scheme's `OnTokenValidated`, so replacing `Events` in a `PostConfigure`, assigning a `JwtBearerEvents` subclass, or setting `EventsType` fails the start: each would let the normalization be skipped.

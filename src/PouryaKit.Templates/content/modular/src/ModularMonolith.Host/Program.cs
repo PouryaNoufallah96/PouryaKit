@@ -40,7 +40,8 @@ builder.Services.AddPouryaKitOpenApi();
 builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
 builder.Services.Configure<PouryaKitIdempotencyOptions>(builder.Configuration.GetSection("PouryaKit:Idempotency"));
 // Calls to another Host carry the Operation Context they are sent with, never the caller's bearer token. The service
-// defaults already give the client its one resilience pipeline: adding AddPouryaKitResilience here would stack a second.
+// defaults already give the client its one resilience pipeline: AddPouryaKitResilience here would stack a second, which
+// the Kit refuses when the client is created.
 builder.Services.AddHttpClient("downstream").AddPouryaKitOperationContext();
 // The permissions a command or query declares (Catalog's RemoveProducts) are the HTTP caller's permission claims.
 builder.Services.AddHttpContextAccessor();

@@ -38,7 +38,7 @@ public static WebApplicationBuilder CreateBuilder(string[] args)
     var builder = WebApplication.CreateBuilder(args);
     builder.Services.AddPouryaKitJwtBearer(claims => claims.TenantClaim = "tenant");   // see security.md
     builder.Services.AddAuthorization();
-    builder.Services.AddPouryaKitWeb(web => web.TenantClaim = PouryaKitClaimTypes.Tenant);
+    builder.Services.AddPouryaKitWeb();   // reads the tenant the bearer scheme verified; see web.md
     builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>().Add<InventoryModule>().Add<BillingModule>());
     builder.UsePouryaKitWolverine(connectionName: "app");   // the Modules' deliveries; see messaging.md
     return builder;
@@ -121,7 +121,7 @@ Setting it:
 
 ## Startup checks
 
-Three moments, each failing before the Host serves:
+Three moments, each failing before the Host serves, and two checks of what only the running Host shows: Wolverine's queues as it built them, after it started ([messaging.md](messaging.md#startup-checks)), and an endpoint or HTTP client as it is built ([web.md](web.md)):
 
 - **While the Host is composed**, in `AddPouryaKitModules`: a Module added twice, in one call or across calls, throws naming it. A Module whose Composition Root registers the handler of a command but no Unit of Work throws, naming the Module and the command (`… handles the command … but registers no Unit of Work. Declare its data in its Composition Root, for example with UsePostgres.`); a Module that only answers queries needs none. A declaration that names another Module on a Module's builder throws (`The Composition Root of … declares for …`).
 - **When the Host is built**: `AddPouryaKitModules` composes the Host's checks with `AddPouryaKitCompositionChecks` (`PouryaKit.Cqrs`), whose container is validated in every environment: every registration must be constructible and no singleton may depend on a scoped service, or `Build()` throws an `AggregateException` naming the problem. A service that needs the Gateway of a Module the Host never added fails here, naming that Gateway.
@@ -129,6 +129,9 @@ Three moments, each failing before the Host serves:
   - a command or query whose handler is registered and that declares an authorizer the Kit must register, such as a `[RequiresPermission]`, when no Composition Root registered it; another authorizer of the same command or query does not count (`… declares RequiresPermissionAttribute, but its check is not registered, so it would run unchecked. Call AddPouryaKitPermissions with the assembly … in the Composition Root that registers its handler.`). Fix it with `module.AddPouryaKitPermissions()` in that Module's Composition Root ([security.md](security.md#declaring-a-permission));
   - a cacheable query whose handler is registered in a Host without `AddPouryaKitCaching()` ([caching.md](caching.md));
   - a publication, Snapshot, subscription, Notification Handler, delayed or recurring command declared without a Module in a Host of Modules: made on `builder.Services`, it would run in no Module and fail at its first use. The line names the form on the Module's builder and the form that names the Module ([messaging.md](messaging.md#startup-checks));
+  - Notification Handlers, Integration Events, Snapshots or delayed commands declared in a Host whose Unit of Work writes no Outbox, and a Notification Handler in the Feature assemblies of a composed Module, or of the application, that no `AddPouryaKitNotificationHandlers` declares, so it would never run ([messaging.md](messaging.md#startup-checks));
+  - an `IEndpoint` in those Feature assemblies that no `AddPouryaKitEndpoints` declares, or that no `MapPouryaKitModuleEndpoints` mapped, so it would never answer, and API versions declared for a route prefix no Module's endpoints are mapped under ([web.md](web.md), [openapi.md](openapi.md));
+  - a connection string that `UsePostgres` or `AddPouryaKitDapper` names and the Host's final configuration does not set, or sets blank: the line names the connection and its key, `ConnectionStrings:{name}`; nothing connects ([persistence.md](persistence.md), [dapper-reads.md](dapper-reads.md)). A Host-builder API that has the configuration in hand, such as `UsePouryaKitWolverine(connectionName)` and `UsePouryaKitRabbitMq`, checks its own connection string while the Host is composed: a missing connection string fails at composition where the builder is in hand, at start otherwise, never at first use;
   - a `ConfigureContainer` call after `AddPouryaKitModules`, which replaces the Kit's container: the Host fails naming the call, what it lost and the fix, and no other check runs. Leave `ConfigureContainer` out of a Host of Modules.
 
 ## Asking another Module a question

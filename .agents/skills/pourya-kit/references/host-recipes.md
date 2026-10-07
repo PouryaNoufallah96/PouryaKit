@@ -75,7 +75,7 @@ downstream.AddPouryaKitResilience().Configure(options => options.Retry.MaxRetryA
 downstream.AddPouryaKitOperationContext();
 ```
 
-- Never call `AddPouryaKitResilience()` on a client of a Host with these defaults without removing theirs first: the second pipeline stacks on the first, silently, and each outer attempt makes every inner one.
+- `AddPouryaKitResilience()` on a client of a Host with these defaults, without removing theirs first, would stack a second pipeline on the first, each outer attempt making every inner one. The Kit refuses it: once the client's handler chain is built, after every configuration callback and `RemoveAllResilienceHandlers()` ran, a chain with two resilience handlers throws an `InvalidOperationException` naming `RemoveAllResilienceHandlers()`, each time the client is created (`MisconfiguredHostTests`).
 - A client that replaces the default pipeline has a name. The default pipeline is one for all clients that keep it: `ConfigureHttpClientDefaults` registers it under one name, `-standard`, since its builder has no client name, and the client registered with an empty name (`AddHttpClient(string.Empty)`) gets the same name. Its own pipeline would be the default one, options and replay policy included, so `HttpReplay.AllRequests` there would make every client that keeps the defaults replay writes. `AddPouryaKitResilience` refuses that client with an `ArgumentException` that says to name it (`HostRecipeTests`).
 - One pipeline name also means one circuit breaker, which counts the failures of every client that keeps the defaults; this follows from the shared name and is not tested. A client whose downstream must not trip the others' breaker replaces the pipeline as above.
 

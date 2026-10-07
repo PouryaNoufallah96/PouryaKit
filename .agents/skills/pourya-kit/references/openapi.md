@@ -55,7 +55,7 @@ internal sealed class RenameProductEndpoint : IEndpoint
 internal sealed record RenameProductBody(string Name);
 ```
 
-- `module.AddPouryaKitApiVersions(routePrefix, declare)` names the same prefix as the Module's `AddPouryaKitEndpoints`. `declare` states the versions on the Module's API version set, Asp.Versioning's own `ApiVersionSetBuilder`: `HasApiVersion` for a supported version, `HasDeprecatedApiVersion` for a deprecated one. A second declaration for one prefix throws, and a declaration whose prefix no Module's endpoints are mapped under fails the Host's start:
+- `module.AddPouryaKitApiVersions(routePrefix, declare)` names the same prefix as the Module's `AddPouryaKitEndpoints`. `declare` states the versions on the Module's API version set, Asp.Versioning's own `ApiVersionSetBuilder`: `HasApiVersion` for a supported version, `HasDeprecatedApiVersion` for a deprecated one. A second declaration for one prefix throws, and a declaration whose prefix no Module's endpoints are mapped under fails the Host's start, among the composition checks ([modules.md](modules.md#startup-checks)):
 
   ```text
   API versions are declared for the route group /catlog, but no Module's endpoints are mapped under it. Declare them with the prefix the Module's AddPouryaKitEndpoints names, and map the Modules with MapPouryaKitModuleEndpoints.
