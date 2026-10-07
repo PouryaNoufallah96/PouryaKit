@@ -1,0 +1,67 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_41c3eef9abbce4::t_255dad2dcd1f58 33
+.agents/skills/pourya-kit/references/messaging.md
+  s_41c3eef9abbce4::t_01d0d4135269b3 465,467
+.agents/skills/pourya-kit/references/testing.md
+  s_41c3eef9abbce4::t_d154c4e0711b10 138-139
+GLOSSARY.md
+  s_41c3eef9abbce4::t_26202a83bc13e2 106-109,111,127
+docs/acceptance.md
+  s_41c3eef9abbce4::t_810b8de4b8c6e1 200-203
+docs/adr/0005-operation-scoped-clock.md
+  s_41c3eef9abbce4::t_a174e374235cab 47-56
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_41c3eef9abbce4::t_b3978b2677e998 797,799-803
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_7daf04e7679e71 387,395,404,461
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_bd85ccabf3c4f1 845
+src/PouryaKit.Messaging.Wolverine/DelayedCommandDeclarations.cs
+  s_41c3eef9abbce4::t_ab449ddf22c070 37-40,43-44,54
+src/PouryaKit.Messaging.Wolverine/DelayedCommandDelivery.cs
+  s_41c3eef9abbce4::t_e41abaab5660da 9-13,20-21,23-25
+src/PouryaKit.Messaging.Wolverine/DelayedCommandServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_312113db5fd165 13-24
+src/PouryaKit.Testing/HostFixture.cs
+  s_41c3eef9abbce4::t_9685ccfc94418f 55-56,91-92,119-120
+src/PouryaKit.Testing/StoredDeliveries.cs
+  s_41c3eef9abbce4::t_deaa412c5516f7 6-8,49-50,66,80
+tests/ModularMonolith.Tests/DelayedCommandTests.cs
+  s_41c3eef9abbce4::t_8709c6e12b4c19 2,4,9,98-99,156-230
+tests/ModularMonolith.Tests/StoredDeliveriesSchemaTests.cs
+  s_41c3eef9abbce4::t_f75b34fa206e5d 36
+tests/PouryaKit.ArchitectureTests/FeatureCodeTests.cs
+  s_41c3eef9abbce4::t_af1d8ee84ab0ca 42
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_41c3eef9abbce4::t_44739748070439 70,244
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_41c3eef9abbce4::t_d44972935b0cc3 70-71,78,94
+src/PouryaKit.Messaging.Wolverine/Subscriptions.cs
+  s_d4c7872399904b::t_4e4e7913999931 239-243
+src/PouryaKit.Messaging.Wolverine/UnknownDelayedCommandException.cs
+  s_d4c7872399904b::t_66cd16698836be 1-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fd8fe1eb0c797ca5f43c722979ce7bd151472e5f",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_d4c7872399904b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-ab8c5699db4093c41",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
