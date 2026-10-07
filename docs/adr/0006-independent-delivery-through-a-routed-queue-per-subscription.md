@@ -748,3 +748,18 @@ depends on a unique `ServiceName` in the same way.
   and Snapshot headers were copied by prefix but asserted only for the Domain Event id.
 - **Stand-ins.** The Spike's Receipt, Unit of Work and handler interfaces are stand-ins for the Kit's. Its Receipt step
   matches `src/PouryaKit.Messaging.Wolverine/Deliver.cs`, but it has no Operation, dispatcher or nested commands.
+
+## Amendment (2026-10-07, ticket #49: Integration Event versions)
+
+The decision above stands. One wire name is one version of one contract type, and a new version is a new type under a
+new wire name, published beside the old one during a transition.
+
+- **Wolverine's type route matches by name.** In WolverineFx 6.46.0, `PublishMessage(type)` routes every message whose
+  wire name, name or full name equals the routed type's full name, ignoring case (`Subscription.Matches`,
+  `RoutingScope.Type`; read from the decompiled assembly). A v2 published under its v1's full name would reach every v1
+  subscription; with the Kit's check removed, a probe routed it to the v1 subscription's queue, `local://tests.routed/`.
+  The Host refuses such a collision at start (`Subscriptions.RoutingCollisions`, run by the extension before wire names
+  are declared), pinned by
+  `IntegrationEventVersionTests.Startup_fails_when_wolverine_would_route_one_message_type_to_the_subscriptions_of_another`.
+  Each version otherwise reaches only its own subscriptions, each with its own Receipt of the shared identity
+  (`IntegrationEventVersionTests.One_operation_publishes_both_versions_and_each_subscription_applies_only_its_own_with_its_receipt_in_one_commit`).

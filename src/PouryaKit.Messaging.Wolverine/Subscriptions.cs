@@ -164,7 +164,7 @@ internal sealed class Subscriptions
                 if (published != new Publication(wireName, module))
                 {
                     problems.Add(
-                        $"{integrationEvent.FullName} is published as {published.WireName} by {published.Module?.Name ?? "the application"} and as {wireName} by {module?.Name ?? "the application"}; one Module publishes it, under one wire name."
+                        $"{integrationEvent.FullName} is published as {published.WireName} by {published.Module?.Name ?? "the application"} and as {wireName} by {module?.Name ?? "the application"}; one Module publishes it, under one wire name, and a new version is a new type under a new wire name."
                     );
                 }
                 else if (_snapshots.GetValueOrDefault(integrationEvent) != snapshot)
@@ -181,7 +181,7 @@ internal sealed class Subscriptions
             if (_typeByWireName.TryGetValue(wireName, out var named))
             {
                 problems.Add(
-                    $"{integrationEvent.FullName} and {named.FullName} have the wire name {wireName}, ignoring case; publish one under another name."
+                    $"{integrationEvent.FullName} and {named.FullName} have the wire name {wireName}, ignoring case; publish one under another name: a new version is a new type under a new wire name."
                 );
             }
         }
@@ -193,6 +193,34 @@ internal sealed class Subscriptions
         {
             _snapshots.Add(integrationEvent, snapshot);
         }
+    }
+
+    /// <summary>
+    /// A problem for each message type of the Host that Wolverine would also route to the subscriptions of another
+    /// subscribed type: Wolverine 6.46.0 routes a type to every message whose wire name, name or full name equals that
+    /// type's full name, ignoring case (<c>Subscription.Matches</c>, <c>RoutingScope.Type</c>). A v2 published under
+    /// the full name of its v1 would reach every v1 subscription.
+    /// </summary>
+    public List<string> RoutingCollisions()
+    {
+        List<(Type Type, string WireName)> named =
+        [
+            .. _publications.Select(publication => (publication.Key, publication.Value.WireName)),
+            .. MessageTypes
+                .Where(type => type.IsAssignableTo(typeof(DomainEvent)))
+                .Select(type => (type, MessageNames.WireNameOf(type))),
+        ];
+        return
+        [
+            .. from routed in MessageTypes
+            from message in named
+            where message.Type != routed
+                && new[] { message.WireName, message.Type.Name, message.Type.FullName }.Contains(
+                    routed.FullName,
+                    StringComparer.OrdinalIgnoreCase
+                )
+            select $"{message.Type.FullName}, under the wire name {message.WireName}, would also reach every subscription of {routed.FullName}: Wolverine routes a subscribed type to every message whose wire name, name or full name equals the type's full name, ignoring case. Give it a wire name and a name of its own.",
+        ];
     }
 
     private static string Describe(SnapshotPublication? snapshot) =>

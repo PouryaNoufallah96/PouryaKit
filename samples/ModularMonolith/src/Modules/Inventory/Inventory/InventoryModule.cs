@@ -1,5 +1,7 @@
 using Catalog.Contracts.Products.Events.V1;
+using Catalog.Contracts.Products.Events.V2;
 using Inventory.CatalogProducts.Features.CopyProduct;
+using Inventory.CatalogProducts.Features.FileProductCategory;
 using Inventory.Infrastructure.Data.Context;
 using Inventory.StockItems.Features.OpenStockItem;
 using PouryaKit.Cqrs;
@@ -18,6 +20,10 @@ public sealed class InventoryModule : IModuleDefinition
         module.AddPouryaKitCqrs(typeof(InventoryModule).Assembly);
         module.Subscribe<ProductCreatedV1, OpenStockItemIntegrationEventHandler>(
             "inventory.product-created",
+            typeof(InventoryModule)
+        );
+        module.Subscribe<ProductCreatedV2, FileProductCategoryIntegrationEventHandler>(
+            "inventory.product-categories",
             typeof(InventoryModule)
         );
         module.Subscribe<ProductSnapshotV1, CopyProductIntegrationEventHandler>(
