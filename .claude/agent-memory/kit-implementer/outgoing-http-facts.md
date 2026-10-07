@@ -1,6 +1,6 @@
 ---
 name: outgoing-http-facts
-description: Ticket #48 facts - HttpClientFactory handler scope, resilience PostConfigure, allow-list vs DisableForUnsafeHttpMethods, header value injection, WireMock.Net traps, mutation-script cwd
+description: Ticket #48 facts - HttpClientFactory handler scope, resilience PostConfigure that RemoveAllResilienceHandlers leaves (F9), allow-list vs DisableForUnsafeHttpMethods, header value injection, WireMock.Net traps, mutation-script cwd
 metadata:
   type: project
 ---
@@ -18,6 +18,8 @@ Verified in ticket #48 (2026-10-07), Microsoft.Extensions.Http.Resilience 10.10.
 - In a fix round, do not rebase the reviewed commits onto a moved integration branch: the reviewers' base (here `f76463b`) must stay; report the move instead.
 - The worktree guard refused a `python3 - <<'EOF'` edit of `AppFixture.cs` (cause unclear; the same shape passed for other files); the Edit tool worked.
 - A ticket that changes what a Capability does also touches its `SKILL.md` row, sentences in other skill references (security.md said every HTTP request starts a new chain), `README.md` line 5, `docs/provenance/<package>.md` and `scripts/packaging/consumers/<package>.cs`; ask for them in `allowed_files` up front.
+- **`RemoveAllResilienceHandlers()` (EXTEXP0001) only drops `ResilienceHandler`s from the handler list** through `ConfigureAdditionalHttpMessageHandlers`; it leaves every `Configure`/`PostConfigure` of the `{client}-standard` options name and the Polly registry entry. A second `AddStandardResilienceHandler()` on a client stacks a second handler over the same options name (no throw). So a Kit choice expressed as options state is read from a found-or-added `ImplementationInstance` (`HttpReplayPolicies`, keyed by `pipeline.PipelineName`) by one `PostConfigure` per name at options-build time: last call wins. Tests need `#pragma warning disable EXTEXP0001`. (#48 re-review F9.)
+- The worktree guard refuses a Bash heredoc whose text contains the word "git" anywhere (a python edit script naming `git diff`, or prose saying "git"); write the script to the scratchpad and run it with the worktree path as an argument, or use the Edit tool.
 
 **Why:** each decided the #48 design or would cost a round on #52/#53.
 **How to apply:** for #52 (ServiceDefaults recipes, one resilience pipeline), #53, and any outgoing HTTP or trusted-peer work. Related: [[web-aspnetcore-facts]], [[security-permission-facts]], [[worktree-and-check-gotchas]].

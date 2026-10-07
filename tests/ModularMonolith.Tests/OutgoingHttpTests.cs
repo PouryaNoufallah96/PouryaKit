@@ -108,6 +108,27 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
         Assert.Equal(2, Journal().Count);
     }
 
+    // A client whose standard handler is replaced, as a Host with ServiceDefaults replaces it, keeps only the policy of
+    // its last registration, either way round.
+    [Theory]
+    [InlineData(HttpReplay.SafeMethods, HttpReplay.AllRequests, HttpStatusCode.OK, 2)]
+    [InlineData(HttpReplay.AllRequests, HttpReplay.SafeMethods, HttpStatusCode.ServiceUnavailable, 1)]
+    public async Task The_replay_policy_of_a_clients_last_registration_decides_whether_a_write_is_retried(
+        HttpReplay first,
+        HttpReplay last,
+        HttpStatusCode status,
+        int attempts
+    )
+    {
+        RespondInTurn("POST", 503, 200);
+        using var services = Clients(first, replacedBy: last);
+
+        using var response = await SendAsync(services, HttpMethod.Post);
+
+        Assert.Equal(status, response.StatusCode);
+        Assert.Equal(attempts, Journal().Count);
+    }
+
     [Fact]
     public void A_replay_policy_that_is_not_defined_fails_the_registration()
     {
@@ -265,24 +286,38 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
         }
     }
 
-    // A client composed as the sample Host composes its downstream client, at test speed.
+    // A client composed as the sample Host composes its downstream client, at test speed. With replacedBy, its first
+    // resilience handler is removed and registered again with that policy.
     private static ServiceProvider Clients(
         HttpReplay replay = HttpReplay.SafeMethods,
         int maxRetryAttempts = 3,
-        TimeSpan? retryDelay = null
+        TimeSpan? retryDelay = null,
+        HttpReplay? replacedBy = null
     )
     {
         var services = new ServiceCollection();
         var client = services.AddHttpClient(Client);
-        client
-            .AddPouryaKitResilience(replay)
-            .Configure(options =>
-            {
-                options.Retry.MaxRetryAttempts = maxRetryAttempts;
-                options.Retry.Delay = retryDelay ?? TimeSpan.FromMilliseconds(10);
-                options.Retry.BackoffType = DelayBackoffType.Constant;
-                options.Retry.UseJitter = false;
-            });
+
+        void AddResilience(HttpReplay policy) =>
+            client
+                .AddPouryaKitResilience(policy)
+                .Configure(options =>
+                {
+                    options.Retry.MaxRetryAttempts = maxRetryAttempts;
+                    options.Retry.Delay = retryDelay ?? TimeSpan.FromMilliseconds(10);
+                    options.Retry.BackoffType = DelayBackoffType.Constant;
+                    options.Retry.UseJitter = false;
+                });
+
+        AddResilience(replay);
+        if (replacedBy is { } last)
+        {
+#pragma warning disable EXTEXP0001 // RemoveAllResilienceHandlers is experimental in Microsoft.Extensions.Http.Resilience.
+            client.RemoveAllResilienceHandlers();
+#pragma warning restore EXTEXP0001
+            AddResilience(last);
+        }
+
         client.AddPouryaKitOperationContext();
         return services.BuildServiceProvider();
     }

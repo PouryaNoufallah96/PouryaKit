@@ -29,5 +29,5 @@
 - [Continuation trust facts](continuation-trust-facts.md) — #57: the one Cqrs IVT, Continue() trusted only in its running authorized Operation, ambient-check test tricks
 - [Versioning facts](versioning-facts.md) — #49: Wolverine type routes match by name, ilspycmd decompile, asking main to widen allowed_files, Receipt mutation scope
 - [Paging facts](paging-facts.md) — #35: page validation in the Feature validator, Npgsql typed nulls, EF Contains as LIKE, rebase onto moved wave branch
-- [Outgoing HTTP facts](outgoing-http-facts.md) — #48: handler scope, resilience PostConfigure, safe-method allow-list, header injection, WireMock traps, test cwd
+- [Outgoing HTTP facts](outgoing-http-facts.md) — #48: handler scope, PostConfigure survives handler removal, safe-method allow-list, header injection, WireMock traps, test cwd
 - [Delayed command facts](delayed-command-facts.md) — #44: scheduled envelope via EF outbox, system clock, own-database restart proof, retry rows vs not-yet-due
