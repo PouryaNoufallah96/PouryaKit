@@ -495,3 +495,5 @@ Spec #33, its observability, outgoing-retry and template decisions, and [ADR 000
 | Out of scope | | A `PouryaKit.Aspire` package or a third template; a RabbitMQ health check (WolverineFx 6.46 registers none); the `Wolverine` source in the recipe's tracing; head sampling |
 
 `python3 scripts/packaging/validate.py --no-fetch` on the ticket's source (commit `671a7b3`, before this paragraph was added) printed `PASS 20 packages, 22 clean consumers, negative controls and MinVer proof` at version `0.1.0-preview.0.68`, with the Release runtime suite at 696 passed, 0 failed, 0 skipped. The `modular-monolith` composition restored and built both of its entry projects from the packed packages, `ModularMonolith.Host` and `Inventory.Host` with `ModularMonolith.ServiceDefaults`.
+
+After the review's fix round (findings F1 to F3 of `b532fef`), `python3 scripts/packaging/validate.py --no-fetch` on commit `dd1a86a` (before this paragraph was added) printed `PASS 20 packages, 22 clean consumers, negative controls and MinVer proof` at version `0.1.0-preview.0.79`, with the Release runtime suite at 713 passed, 0 failed, 0 skipped.
