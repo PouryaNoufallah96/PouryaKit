@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using PouryaKit.Cqrs;
 
 namespace PouryaKit.Security.JwtBearer;
 

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ModularMonolith.Host;
-using PouryaKit.Security;
+using PouryaKit.Cqrs;
 
 namespace ModularMonolith.Tests;
 

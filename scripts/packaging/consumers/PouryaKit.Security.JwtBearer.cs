@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using PouryaKit.Security;
+using PouryaKit.Cqrs;
 using PouryaKit.Security.JwtBearer;
 
 System.Type[] types = [typeof(PouryaKitJwtBearerOptions)];

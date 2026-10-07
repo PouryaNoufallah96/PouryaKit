@@ -27,7 +27,7 @@ builder.AddSerilogDefaults();
 builder.Services.AddPouryaKitJwtBearer(claims => claims.TenantClaim = "tenant");
 builder.Services.AddAuthorization();
 // Authenticated by default: AddPouryaKitWeb sets the authorization fallback policy; a public endpoint says so.
-builder.Services.AddPouryaKitWeb(web => web.TenantClaim = PouryaKitClaimTypes.Tenant);
+builder.Services.AddPouryaKitWeb();
 // The peer Hosts that may continue an Operation of theirs here, CORS policies, response compression and the rate limit
 // per Actor, the configured sunset of each API version, and how long idempotency keys are kept. None is configured but
 // the sunset: every caller starts a new chain of work, and the Host answers no cross-origin request, compresses nothing
