@@ -13,6 +13,6 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ModularMonolith.Host\ModularMonolith.Host.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKitAppName.Host\PouryaKitAppName.Host.csproj" />
   </ItemGroup>
 </Project>

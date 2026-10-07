@@ -371,7 +371,8 @@ the pinned version (`JasperFx/wolverine` commit `dc63f46`, `docs/guide/codegen.m
   templates document the step, and a generated solution commits its own, as the guide's sample does.
 - **Message storage is still built at startup.** The guide's sample also sets `Production.ResourceAutoCreate` to
   `AutoCreate.None`; the Kit does not, since nothing else creates Wolverine's tables for a Kit Host.
-- **Proof.** `scripts/packaging/validate.py` runs `codegen write` on each generated Host, publishes it in Release and
-  checks the publish (`check_production_publish`). The Proving Sample's child-process test runs `Inventory.Host` in
-  Production, Static, from the tests' build. A published generated Host was started once by hand in Production against
-  PostgreSQL (`docs/acceptance.md`).
+- **Proof.** `scripts/packaging/validate.py` runs `codegen write` on each Host, the two generated ones and the Proving
+  Sample's two in its copied sample, publishes it in Release and checks the publish (`check_production_publish`), all on
+  the consumers' copies, so the checkout gets no generated file. The Proving Sample's child-process test runs
+  `Inventory.Host` in Production, Static, from the tests' build. Each published generated Host was started once by hand
+  in Production against PostgreSQL (`docs/acceptance.md`).
