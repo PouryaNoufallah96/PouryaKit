@@ -80,12 +80,15 @@ Both react to a Domain Event the Module raised. Choose by when the reaction may 
 
 - In each Module's Composition Root, call `module.AddPouryaKitNotificationHandlers(typeof(CatalogModule).Assembly, typeof(CatalogModule))` (`PouryaKit.Messaging.Wolverine`). It finds every Notification Handler in the assembly, internal ones included, subscribes each one to its Domain Event under its subscription name ([Names](#names)), and runs its deliveries in the Module named by the second argument, the Module's definition type, so they reach that Module's Unit of Work. It throws when the assembly has no Notification Handler. An application without Modules calls it on its own services and leaves the Module out.
 - That Module needs its own Unit of Work (`UsePostgres`, [persistence.md](persistence.md#postgresql)) and the Receipt table ([Receipts](#receipts)).
-- In the Host, call `builder.UsePouryaKitWolverine(connectionName: "app")` (`PouryaKit.Messaging.Wolverine.EFCore`) once; Modules added after it still get their subscriptions. It runs the Host's deliveries, of Notification Handlers and Integration Event Handlers alike, on Wolverine with its message store in the database of that connection string, which must be the one the Modules' DbContexts use: the Outbox is written in their transactions. Wolverine creates its tables in the store schema when the Host starts. Wolverine discovers no handlers of its own. Messages are stored and delivered in the Kit's one JSON representation (`UsePouryaKitJson`), the one HTTP bodies use, so a typed ID inside a Domain Event reads the same in its envelope as in a response ([domain-primitives.md](domain-primitives.md#typed-ids)).
-- The Host project, not the Kit, references `WolverineFx.RuntimeCompilation`: Wolverine 6 compiles its runtime code with it, and no Kit package references it (ADR 0004).
+- In the Host, call `builder.UsePouryaKitWolverine(connectionName: "app")` (`PouryaKit.Messaging.Wolverine.EFCore`) once; Modules added after it still get their subscriptions. It runs the Host's deliveries, of Notification Handlers and Integration Event Handlers alike, on Wolverine with its message store in the database of that connection string, which must be the one the Modules' DbContexts use: the Outbox is written in their transactions. Wolverine creates its tables in the store schema when the Host starts. Wolverine discovers no handlers of its own. Messages are stored and delivered in the Kit's one JSON representation (`UsePouryaKitJson`), the one HTTP bodies use, so a typed ID inside a Domain Event reads the same in its envelope as in a response ([domain-primitives.md](domain-primitives.md#typed-ids)). Its optional `configure` parameter adds Host-specific Wolverine configuration after the Kit's, so it may override any of it.
+- Wolverine generates its handler code at run time in Development and, in every other environment, loads it from the Host's assembly (`TypeLoadMode.Static`), where `dotnet run -- codegen write` wrote it before the Release build ([templates.md](templates.md#pre-generating-wolverines-code-for-production)). The Kit's own deliveries need no generated code; a Wolverine handler a Host adds through `configure` does, and a Host without it does not start outside Development.
+- The Host project, not the Kit, references `WolverineFx.RuntimeCompilation`, in Debug builds only, so a Release publish carries no runtime compiler. `PouryaKit.Testing` references it for test Hosts, which run in Development from any build; no other Kit package does (ADR 0004).
 
 ```xml
-<!-- ModularMonolith.Host.csproj: Wolverine 6 compiles its runtime code with Roslyn from this package -->
-<PackageReference Include="WolverineFx.RuntimeCompilation" />
+<!-- ModularMonolith.Host.csproj: Roslyn for Wolverine's run-time code generation, in Debug builds only -->
+<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+  <PackageReference Include="WolverineFx.RuntimeCompilation" />
+</ItemGroup>
 ```
 
 The Host implements the port and registers it, beside the deliveries:
@@ -664,7 +667,7 @@ public sealed class DeadLetterTriage(IWolverineRuntime runtime)
 - `PouryaKitMessageStoreOptions` (`PouryaKit.Messaging.Wolverine.EFCore`) holds the store's settings:
   - `Durability`: `DurabilityMode.Balanced`, the default, is safe with any number of Host instances on one store. `DurabilityMode.Solo` assumes a single instance and recovers a stopped instance's deliveries at once; the tests use it.
   - `InboxStaleTime`, 5 minutes by default: how long after a delivery was stored the store hands it out again when an instance still holds it. It is what delivers a Notification or Integration Event committed but never sent while its Host lives on, so such a delivery waits that long. Set it by [the stale-time rule](#the-stale-time-rule).
-- The store's schema is the second argument of `UsePouryaKitWolverine(connectionName, schema)`, `wolverine` by default.
+- The store's schema is the second argument of `UsePouryaKitWolverine(connectionName, schema, configure)`, `wolverine` by default.
 - Change the settings anywhere in the Host's composition, before it is built, as in [the stale-time rule](#the-stale-time-rule).
 
 ## The stale-time rule

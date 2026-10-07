@@ -8,7 +8,7 @@ import subprocess
 from unittest.mock import patch
 
 import validate
-from validate import check_inventory, check_cache_folders, check_consumer, isolated_env, prepare_history
+from validate import check_inventory, check_cache_folders, check_consumer, check_production_publish, isolated_env, prepare_history
 
 
 class HistoryTests(unittest.TestCase):
@@ -102,6 +102,30 @@ class ConsumerCacheTests(unittest.TestCase):
             cache = consumer / "cache/packages"
             assets.write_text(json.dumps({"packageFolders": {str(cache): {}}, "libraries": {}}))
             self.assertEqual([str(assets)], check_consumer(consumer, {"NUGET_PACKAGES": str(cache)}, [], "unused", []))
+
+
+class ProductionPublishTests(unittest.TestCase):
+    def test_a_publish_with_the_generated_code_and_no_runtime_compiler_passes_and_any_other_fails(self):
+        with tempfile.TemporaryDirectory() as folder:
+            host = Path(folder) / "Acme.Shop.Host"
+            published = Path(folder) / "publish"
+            (host / validate.GENERATED_REGISTRY).parent.mkdir(parents=True)
+            (host / validate.GENERATED_REGISTRY).write_text("// generated")
+            published.mkdir()
+            (published / "Acme.Shop.Host.dll").write_bytes(b"MZ GeneratedHandlerRegistry")
+            self.assertEqual([validate.GENERATED_REGISTRY], check_production_publish(host, published))
+
+            for compiler in validate.RUNTIME_COMPILER:
+                (published / compiler).write_bytes(b"MZ")
+                with self.subTest(compiler=compiler), self.assertRaisesRegex(RuntimeError, "carries the runtime compiler"):
+                    check_production_publish(host, published)
+                (published / compiler).unlink()
+            (published / "Acme.Shop.Host.dll").write_bytes(b"MZ")
+            with self.assertRaisesRegex(RuntimeError, "built with the generated code"):
+                check_production_publish(host, published)
+            (host / validate.GENERATED_REGISTRY).unlink()
+            with self.assertRaisesRegex(RuntimeError, "codegen write wrote no"):
+                check_production_publish(host, published)
 
 
 if __name__ == "__main__":

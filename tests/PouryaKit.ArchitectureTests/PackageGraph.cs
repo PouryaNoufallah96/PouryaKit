@@ -65,12 +65,13 @@ internal static class PackageGraph
         ["PouryaKit.Templates"] = new([], []),
         ["PouryaKit.Testing"] = new(
             ["PouryaKit.Modularity", "PouryaKit.Persistence.Postgres", "PouryaKit.Messaging.Wolverine.EFCore"],
-            ["Testcontainers.PostgreSql", "Respawn", "xunit.v3.extensibility.core", "Microsoft.Extensions.TimeProvider.Testing"]
+            ["Testcontainers.PostgreSql", "Respawn", "xunit.v3.extensibility.core", "Microsoft.Extensions.TimeProvider.Testing", "WolverineFx.RuntimeCompilation"]
         ),
     };
 
-    // What must never arrive in a package's closure, by package id prefix or project name. Every package also keeps
-    // WolverineFx.RuntimeCompilation out: Roslyn at run time is the Host's choice (ADR 0004).
+    // What must never arrive in a package's closure, by package id prefix or project name. Every package but Testing also
+    // keeps WolverineFx.RuntimeCompilation out: Roslyn at run time is the Host's choice in Development, and a test Host's
+    // (ADR 0004).
     private static readonly Dictionary<string, string[]> KeptOut = new()
     {
         ["PouryaKit.Persistence.Dapper"] = ["Microsoft.EntityFrameworkCore"],
@@ -119,7 +120,7 @@ internal static class PackageGraph
         var closure = package.RuntimePackages.Select(arrived => arrived.Id).Concat(package.Projects).Distinct();
         foreach (var arrived in closure.Order(StringComparer.Ordinal))
         {
-            var keptOut = KeptOut.GetValueOrDefault(package.Name, []).Append("WolverineFx.RuntimeCompilation");
+            var keptOut = KeptOut.GetValueOrDefault(package.Name, []).Concat(package.Name == "PouryaKit.Testing" ? [] : ["WolverineFx.RuntimeCompilation"]);
             if (keptOut.Any(prefix => arrived.StartsWith(prefix, StringComparison.Ordinal)))
             {
                 yield return $"{package.Name}'s closure holds {arrived}, which section C keeps out of it.";

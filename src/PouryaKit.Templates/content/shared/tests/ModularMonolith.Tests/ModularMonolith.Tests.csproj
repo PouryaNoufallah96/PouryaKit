@@ -5,6 +5,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Testcontainers.PostgreSql" />
+    <!-- The Host runs in Development here, where Wolverine compiles its handler code at run time, from any build. -->
+    <PackageReference Include="WolverineFx.RuntimeCompilation" />
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
   <ItemGroup>

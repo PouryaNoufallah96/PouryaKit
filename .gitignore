@@ -18,3 +18,5 @@ CLAUDE.local.md
 .claude/reviews/
 __pycache__/
 .claude-plugin/types/
+# Wolverine code `codegen write` generates in a Proving Sample Host; the Kit commits none (ADR 0004).
+samples/ModularMonolith/src/*/Internal/Generated/

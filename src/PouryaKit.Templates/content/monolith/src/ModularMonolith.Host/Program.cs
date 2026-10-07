@@ -1,5 +1,6 @@
 using Catalog;
 using Catalog.Products.Events.Notifications;
+using JasperFx;
 using ModularMonolith.Host;
 using PouryaKit.Caching;
 using PouryaKit.Cqrs;
@@ -85,4 +86,6 @@ if (app.Environment.IsDevelopment())
     app.MapPouryaKitOpenApi().AllowAnonymous();
 }
 
-await app.RunAsync();
+// Runs the Host, or a JasperFx command such as `codegen write`, which writes Wolverine's generated code before a release
+// build (Wolverine's code generation guide).
+return await app.RunJasperFxCommands(args);

@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text.Json;
+using JasperFx.CommandLine;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -144,6 +145,9 @@ public sealed class App : WebApplicationFactory<Program>, IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         await _postgres.StartAsync();
+        // Program hands its command line to JasperFx, which reads the factory's settings as no command it knows; this makes
+        // JasperFx start the Host first (Wolverine's integration testing guide).
+        JasperFxEnvironment.AutoStartHost = true;
         _ = Services;
     }
 

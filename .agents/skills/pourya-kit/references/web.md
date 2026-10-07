@@ -129,7 +129,7 @@ public static class ModularMonolithHost
     }
 }
 
-// Program.cs: await ModularMonolithHost.Build(ModularMonolithHost.CreateBuilder(args)).RunAsync();
+// Program.cs: return await ModularMonolithHost.Build(ModularMonolithHost.CreateBuilder(args)).RunJasperFxCommands(args);
 ```
 
 - `builder.Services.AddPouryaKitWeb()` registers what every endpoint answers with: problem responses, the handler that turns an exception into one, the same answer to an unreadable request in every environment, a problem response for every failure answered with an empty body ([Problem responses](#problem-responses)), the Kit's one JSON representation (`UsePouryaKitJson`, typed IDs written as their bare values, the same as in messages; [domain-primitives.md](domain-primitives.md#typed-ids)), `PouryaKitWebOptions`, authenticated access by default ([The caller and the Actor](#the-caller-and-the-actor)), and the configured CORS policies, response compression and rate limit, each off until the Host configures it ([CORS, compression and rate limits](#cors-compression-and-rate-limits)).

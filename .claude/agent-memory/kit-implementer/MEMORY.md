@@ -43,3 +43,4 @@
 - [Cross-process tracing and recipe facts](cross-process-tracing-and-recipes-facts.md) — #52: copies lose parent-id at fan-out, defaults pipeline name, OTel providers as global listeners, health/Serilog proofs
 - [Merge and CI tooling facts](merge-and-ci-tooling-facts.md) — union merge drops a shared blank line, scratch-clone merge proof, gh job-log download quirks and speed, MTP failure shape
 - [Template package facts](template-package-facts.md) — #53: engine traps, pack-time version step, WebApplicationFactory, NuGet PrivateAssets graph gap, cache pollution
+- [Code generation for production facts](codegen-production-facts.md) — #58: Kit-called Wolverine picks the Kit as application assembly, codegen write needs no Roslyn, Debug-restore trap, WAF AutoStartHost

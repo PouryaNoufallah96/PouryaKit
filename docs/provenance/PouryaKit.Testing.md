@@ -13,6 +13,7 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
 - `Microsoft.Extensions.TimeProvider.Testing` 10.10.0, `MIT`, with no dependencies on `net10.0`. It supplies `FakeTimeProvider` for `TestClock` (ADR 0005).
 - `xunit.v3.extensibility.core` 4.0.1, `Apache-2.0`, with `xunit.v3.common` 4.0.1, `Apache-2.0`. It is the library form of xUnit v3; the test runner packages stay in test projects.
 - `PouryaKit.Messaging.Wolverine.EFCore`, as plan section C lists (ticket #15). With it the package's restored closure is 101 packages: 90 `MIT`, 5 `Apache-2.0`, 3 `BSD-3-Clause` and 3 `PostgreSQL`, all recorded with the packages that bring them.
+- `WolverineFx.RuntimeCompilation` 6.46.0, `MIT`, checked on 2026-10-07 (ticket #58): the version of every Wolverine package the Kit pins, on which it depends exactly (nuget.org's latest stable is 6.47.0). ADR 0004 lets the Testing package reference it, so every test Host runs Development, where Wolverine compiles its handler code at run time, from any build, while the Hosts reference it in Debug builds only. It brings `JasperFx.RuntimeCompiler` 5.0.0 and the `Microsoft.CodeAnalysis` scripting and Visual Basic packages, all `MIT`. The package's restored closure is now 110 packages: 98 `MIT`, 6 `Apache-2.0`, 3 `BSD-3-Clause` and 3 `PostgreSQL`.
 
 ## PostgreSQL test fixture
 

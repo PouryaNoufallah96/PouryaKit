@@ -325,3 +325,53 @@ The decision above stands. Ticket #15 met its one-instance invariant by another 
   envelopes after `InboxStaleTime`.
 - `DurabilitySettings.MessageIdentity` (Notes for S2) is still open; it belongs with brokers in Wave 2 (ADR 0006,
   Consequences).
+
+## Amendment (2026-10-07, ticket #58: code generation for production)
+
+The decision above stands. Ticket #58 built "Defaults chosen", 2, as Wolverine's code generation guide recommends for
+the pinned version (`JasperFx/wolverine` commit `dc63f46`, `docs/guide/codegen.md:188-211,235-260`; its sample
+`JasperFx/CritterStackSamples` commit `76ce8e2`, `CqrsMinimalApi/`).
+
+- **The mode is the Kit's default, set once.** `UsePouryaKitWolverine` of `PouryaKit.Messaging.Wolverine` sets the
+  guide's production profile with `CritterStackDefaults`: `TypeLoadMode.Dynamic` in Development, `TypeLoadMode.Static`
+  with `AssertAllPreGeneratedTypesExist` in every other environment. The Host's `configure` hook can override it; the
+  EF Core overload gained the same optional `configure` parameter, applied after the Kit's store settings. `Auto` is not
+  used. In Static mode Wolverine attaches every handler chain's generated type as it starts and throws
+  `MissingPreBuiltTypesException` for a missing one (`HandlerGraph.AssertPreBuiltTypesExist`,
+  `src/Wolverine/Runtime/Handlers/HandlerGraph.PreBuiltTypes.cs` at tag `V6.46.0`, commit
+  `1f22835a2b3e32dbf4b75c7a5273622ee74a4929`;
+  `CodeGenerationTests.A_host_outside_development_whose_handler_chain_has_no_generated_type_does_not_start`). The
+  profile's assertion is JasperFx's environment check: `dotnet run -- check-env` also fails on a missing handler
+  registry, which the start only warns about (observed on the sample Host).
+- **The application assembly is the Host's.** Wolverine and JasperFx 2.80.2 take the first assembly on the stack
+  outside their own as the application assembly, and Static mode loads generated types from it alone. Called through the
+  Kit, that was `PouryaKit.Messaging.Wolverine` (`dotnet run -- describe` on the sample Host), never the Host into which
+  `codegen write` writes. `UsePouryaKitWolverine` therefore sets `WolverineOptions.ApplicationAssembly` to the entry
+  assembly: the Host in `codegen write`, in a published Host and in the Proving Sample's child process; the test
+  assembly, which holds no generated code, in a test process.
+- **Every Host owns the command line.** The Proving Sample's two Hosts and both template Hosts end with
+  `return await app.RunJasperFxCommands(args);`, so `dotnet run -- codegen write` writes the Host's generated code into
+  its `Internal/Generated` and `codegen preview` prints it. `write` builds the Host without starting it and compiles
+  nothing, so it needs neither a database nor the runtime compiler. The Host's arguments are JasperFx commands; its
+  configuration comes from settings files, user secrets or the environment. A test that hosts `Program` through
+  `WebApplicationFactory` sets `JasperFxEnvironment.AutoStartHost` (Wolverine's integration testing guide).
+- **The compiler is a Debug reference.** Each Host references `WolverineFx.RuntimeCompilation` in an
+  `<ItemGroup Condition="'$(Configuration)' == 'Debug'">`, the guide's form, so a Release publish carries neither
+  `Wolverine.RuntimeCompilation.dll` nor `JasperFx.RuntimeCompiler.dll`. A restore that evaluated Debug still lists it,
+  so a publish restores for Release. Roslyn itself stays in a Host with the EF Core outbox, through
+  `Microsoft.EntityFrameworkCore.Design`, as "Pinned versions and licences" says; the sample's ban of
+  `Microsoft.CodeAnalysis` in the publish is not copied.
+- **The Testing package takes the exception this record allows.** `PouryaKit.Testing` references the package, so every
+  test Host runs Development from any build, Release included; a generated solution's test project, which does not
+  reference `PouryaKit.Testing`, references it directly. No other Kit package references it (`PackageGraphTests`).
+- **What `codegen write` writes for a Kit Host.** The Kit's deliveries are `AddMessageHandler` handlers, which have no
+  generated code, so a Kit Host gets `Internal/Generated/WolverineHandlers/GeneratedHandlerRegistry.cs` alone, an empty
+  handler registry; without it, Static mode logs that it falls back to a scan and starts. A handler chain the
+  application adds through the `configure` hook is what needs the step. The Kit commits no generated code; the
+  templates document the step, and a generated solution commits its own, as the guide's sample does.
+- **Message storage is still built at startup.** The guide's sample also sets `Production.ResourceAutoCreate` to
+  `AutoCreate.None`; the Kit does not, since nothing else creates Wolverine's tables for a Kit Host.
+- **Proof.** `scripts/packaging/validate.py` runs `codegen write` on each generated Host, publishes it in Release and
+  checks the publish (`check_production_publish`). The Proving Sample's child-process test runs `Inventory.Host` in
+  Production, Static, from the tests' build. A published generated Host was started once by hand in Production against
+  PostgreSQL (`docs/acceptance.md`).
