@@ -23,8 +23,12 @@ public static class JwtBearerServiceCollectionExtensions
         /// </summary>
         /// <remarks>
         /// The Host fails when it starts, naming every problem, unless its bearer options validate the issuer against
-        /// a configured issuer or authority, the audience against a configured audience, the signature against a
-        /// signing key or authority, and the token's lifetime; the Kit offers no way to turn one of them off.
+        /// a configured issuer or authority, require the audience and validate it against a configured audience, and
+        /// validate the signature against a signing key or authority and the token's lifetime; the Kit offers no way to
+        /// turn one of them off. A custom validator delegate that replaces one of these checks is refused, and so are
+        /// events that would skip the normalization: set the application's event delegates on <c>Events</c> with
+        /// <c>Configure&lt;JwtBearerOptions&gt;("Bearer", ...)</c>, never replace <c>Events</c> in a PostConfigure,
+        /// subclass <see cref="JwtBearerEvents"/> or set <c>EventsType</c>.
         /// </remarks>
         public AuthenticationBuilder AddPouryaKitJwtBearer(Action<PouryaKitJwtBearerOptions>? configure = null)
         {
