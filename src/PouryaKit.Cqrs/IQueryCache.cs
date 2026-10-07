@@ -4,23 +4,27 @@ namespace PouryaKit.Cqrs;
 
 /// <summary>
 /// The query cache of the fixed pipeline's second optional slot (ADR 0002). After a query's checks, the dispatcher sends
-/// it here when no write Unit of Work is active in its Operation; inside one, the query may see uncommitted state, so it
-/// always runs. It also asks which cache tags each command declares, and once the Operation's Unit of Work has committed,
-/// evicts what its commands declared; a rollback evicts nothing. <c>PouryaKit.Caching</c> registers it, as a singleton;
-/// a Host without one runs every query. Feature code never calls it.
+/// it here only when it is its Operation's outermost query and the Operation has not failed; a query inside a command,
+/// an authorizer, a validator or another query may read a change they made, so it always runs. It also asks which cache
+/// tags each command declares, and once the Operation's Unit of Work has committed, evicts what its commands declared; a
+/// rollback evicts nothing. <c>PouryaKit.Caching</c> registers it, as a singleton; a Host without one runs every query.
+/// Feature code never calls it.
 /// </summary>
 public interface IQueryCache
 {
     /// <summary>
     /// The Result of <paramref name="query"/>, run with <paramref name="context"/>: a stored success of the same query for
     /// the same Actor and tenant, or the Result of <paramref name="handle"/>, which is stored only when it is a success.
-    /// <paramref name="cancellationToken"/> is observed until the query's run starts or is joined; a run others may share
-    /// is not one caller's to cancel, so <paramref name="handle"/> may receive no cancellation.
+    /// Before it stores or shares a success, the cache serializes it and then calls <paramref name="endRead"/>, which
+    /// closes the query's read and throws when its handler, or serializing its answer, changed tracked state; nothing is
+    /// then stored. <paramref name="cancellationToken"/> is observed until the query's run starts or is joined; a run
+    /// others may share is not one caller's to cancel, so <paramref name="handle"/> may receive no cancellation.
     /// </summary>
     Task<Result<TResponse>> QueryAsync<TResponse>(
         Query<TResponse> query,
         OperationContext context,
         Func<CancellationToken, Task<Result<TResponse>>> handle,
+        Action endRead,
         CancellationToken cancellationToken
     )
         where TResponse : notnull;

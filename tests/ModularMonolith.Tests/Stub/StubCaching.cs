@@ -173,3 +173,100 @@ internal sealed class RenameFolderInQueryQueryHandler(IRepository<Folder, Folder
         return folder.Name;
     }
 }
+
+// Answers a folder's label colour through the Module's repository, so it reads the colour its Operation tracks, changed
+// or not.
+internal sealed record FolderColourQuery(Guid FolderId) : Query<string>, ICacheableQuery
+{
+    public string CacheKey => FolderId.ToString();
+
+    public TimeSpan CacheDuration => TimeSpan.FromMinutes(5);
+
+    public IReadOnlyCollection<string> CacheTags => [$"folder:{FolderId}"];
+}
+
+internal sealed class FolderColourQueryHandler(IRepository<Folder, FolderId> folders, CachedQueryRuns runs)
+    : QueryHandler<FolderColourQuery, string>
+{
+    public override async Task<Result<string>> Handle(FolderColourQuery query, CancellationToken cancellationToken)
+    {
+        var folder = (await folders.FindAsync(new FolderId(query.FolderId), cancellationToken))!;
+        runs.Add(query.FolderId.ToString(), 1);
+        return folder.Label.Colour;
+    }
+}
+
+// An uncached query that relabels the folder it reads, when told to, then reads its colour with the cacheable query
+// nested.
+internal sealed record RelabelThenReadColourQuery(Guid FolderId, bool Relabel) : Query<string>;
+
+internal sealed class RelabelThenReadColourQueryHandler(IRepository<Folder, FolderId> folders, IDispatcher dispatcher)
+    : QueryHandler<RelabelThenReadColourQuery, string>
+{
+    public override async Task<Result<string>> Handle(RelabelThenReadColourQuery query, CancellationToken cancellationToken)
+    {
+        if (query.Relabel)
+        {
+            (await folders.FindAsync(new FolderId(query.FolderId), cancellationToken))!.Relabel("relabelled in a read");
+        }
+
+        return await dispatcher.QueryAsync(new FolderColourQuery(query.FolderId), cancellationToken);
+    }
+}
+
+// Its authorizer relabels the folder, then reads its colour with the cacheable query, before the Unit of Work starts.
+internal sealed record RelabelInAuthorizationCommand(Guid FolderId) : Command;
+
+internal sealed class RelabelInAuthorizationCommandAuthorizer(IRepository<Folder, FolderId> folders, IDispatcher dispatcher)
+    : IAuthorizer<RelabelInAuthorizationCommand>
+{
+    public async Task<Result> AuthorizeAsync(RelabelInAuthorizationCommand command, CancellationToken cancellationToken)
+    {
+        (await folders.FindAsync(new FolderId(command.FolderId), cancellationToken))!.Relabel("relabelled in authorization");
+        var colour = await dispatcher.QueryAsync(new FolderColourQuery(command.FolderId), cancellationToken);
+        return colour.IsSuccess ? Result.Success() : colour.Errors;
+    }
+}
+
+internal sealed class RelabelInAuthorizationCommandHandler : CommandHandler<RelabelInAuthorizationCommand>
+{
+    public override Task<Result> Handle(RelabelInAuthorizationCommand command, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success());
+}
+
+/// <summary>What <see cref="FolderNamesQuery"/> answers: names enumerated only when the answer is serialized.</summary>
+internal sealed record FolderNames(IEnumerable<string> Names);
+
+// Answers a deferred enumerable that renames the folder it read when enumerated, which serializing the answer does after
+// the handler has returned. With a Hold, its handler reports that it runs, then waits to be let go before it answers.
+internal sealed record FolderNamesQuery(Guid FolderId, Hold? Hold = null) : Query<FolderNames>, ICacheableQuery
+{
+    public string CacheKey => FolderId.ToString();
+
+    public TimeSpan CacheDuration => TimeSpan.FromMinutes(5);
+
+    public IReadOnlyCollection<string> CacheTags => [$"folder:{FolderId}"];
+}
+
+internal sealed class FolderNamesQueryHandler(IRepository<Folder, FolderId> folders, CachedQueryRuns runs)
+    : QueryHandler<FolderNamesQuery, FolderNames>
+{
+    public override async Task<Result<FolderNames>> Handle(FolderNamesQuery query, CancellationToken cancellationToken)
+    {
+        var folder = (await folders.FindAsync(new FolderId(query.FolderId), cancellationToken))!;
+        runs.Add(query.FolderId.ToString(), 1);
+        if (query.Hold is { } hold)
+        {
+            hold.Changed.TrySetResult();
+            await hold.Released.Task.WaitAsync(cancellationToken);
+        }
+
+        return new FolderNames(RenamedWhenEnumerated(folder));
+    }
+
+    private static IEnumerable<string> RenamedWhenEnumerated(Folder folder)
+    {
+        folder.Rename("renamed while serialized");
+        yield return folder.Name;
+    }
+}

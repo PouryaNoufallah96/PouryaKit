@@ -217,30 +217,23 @@ internal sealed partial class Dispatcher(
         // From here the Operation is authorized: Continue() on its context is a trusted continuation.
         using var running = AuthorizedOperation.Running(operation.Context);
 
-        // The second of the fixed pipeline's two optional slots (ADR 0002): query caching, after the checks. A query
-        // outside a write Unit of Work goes through the query cache, keyed by its Operation's Actor and tenant; inside
-        // one it may see uncommitted state, so it neither reads nor stores an entry. A command's declared tags are
-        // evicted once the Operation commits.
+        // The second of the fixed pipeline's two optional slots (ADR 0002): query caching, after the checks. Only the
+        // Operation's outermost query goes through the query cache, keyed by its Operation's Actor and tenant, and only
+        // while the Operation has not failed. A query inside a command, a check or another query may read a change they
+        // made, which its own reading boundary began from, and a failed Operation may still track what it rolled back:
+        // such a query neither reads nor stores an entry. A command's declared tags are evicted once the Operation commits.
         if (cached is not null)
         {
-            return queryCache is not null && !operation.IsUnitOfWorkActive && operation.Context is { } context
+            return queryCache is not null && operation.IsOutermostQuery && !operation.IsRollbackOnly && operation.Context is { } context
                 ? await cached(
                     queryCache,
                     commandOrQuery,
                     context,
-                    async ct =>
-                    {
-                        var answered = await handle(services, commandOrQuery, ct);
-                        // A stored answer outlives this Operation, so the query's reading boundary closes here, before
-                        // the answer can be stored: a tracked-state change then throws and nothing is stored. Its
-                        // second close, when the pipeline ends, does nothing.
-                        if (answered.IsSuccess)
-                        {
-                            reading!.Dispose();
-                        }
-
-                        return answered;
-                    },
+                    ct => handle(services, commandOrQuery, ct),
+                    // A stored answer outlives this Operation, so the cache closes the query's reading boundary once it
+                    // has serialized a success, before storing it: a change then throws and nothing is stored. Its
+                    // second close, when the pipeline ends, does nothing.
+                    reading!.Dispose,
                     cancellationToken
                 )
                 : await handle(services, commandOrQuery, cancellationToken);
@@ -412,6 +405,7 @@ internal sealed partial class Dispatcher(
         TQuery query,
         OperationContext context,
         Func<CancellationToken, Task<TResult>> handle,
+        Action endRead,
         CancellationToken cancellationToken
     )
         where TResult : Result;
@@ -488,8 +482,8 @@ internal sealed partial class Dispatcher(
         where TQuery : Query<TResponse>
         where TResponse : notnull
     {
-        private static readonly CachedQuery<TQuery, Result<TResponse>> Cached = static (cache, query, context, handle, ct) =>
-            cache.QueryAsync(query, context, handle, ct);
+        private static readonly CachedQuery<TQuery, Result<TResponse>> Cached = static (cache, query, context, handle, endRead, ct) =>
+            cache.QueryAsync(query, context, handle, endRead, ct);
 
         public override Task<Result<TResponse>> Invoke(
             Dispatcher dispatcher,

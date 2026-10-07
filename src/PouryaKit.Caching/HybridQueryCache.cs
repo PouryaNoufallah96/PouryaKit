@@ -18,6 +18,7 @@ internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<Hybrid
         Query<TResponse> query,
         OperationContext context,
         Func<CancellationToken, Task<Result<TResponse>>> handle,
+        Action endRead,
         CancellationToken cancellationToken
     )
         where TResponse : notnull
@@ -25,6 +26,7 @@ internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<Hybrid
         ArgumentNullException.ThrowIfNull(query);
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(handle);
+        ArgumentNullException.ThrowIfNull(endRead);
         if (query is not ICacheableQuery cacheable)
         {
             return await handle(cancellationToken);
@@ -39,11 +41,20 @@ internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<Hybrid
             // and Operation stay alive until the run ends; every other caller waits for it too.
             stored = await cache.GetOrCreateAsync(
                 Key(context, query.GetType(), cacheable.CacheKey),
-                handle,
-                static async (handle, ct) =>
+                (handle, endRead),
+                static async (run, ct) =>
                 {
-                    var result = await handle(ct);
-                    return result.IsSuccess ? JsonSerializer.Serialize(result.Value, Json) : throw new NotStored(result.Errors);
+                    var result = await run.handle(ct);
+                    if (result.IsFailure)
+                    {
+                        throw new NotStored(result.Errors);
+                    }
+
+                    // Serialized before the read ends, so its check also sees a change that serializing made, such as
+                    // a deferred enumerable's.
+                    var serialized = JsonSerializer.Serialize(result.Value, Json);
+                    run.endRead();
+                    return serialized;
                 },
                 new HybridCacheEntryOptions { Expiration = cacheable.CacheDuration, LocalCacheExpiration = cacheable.CacheDuration },
                 cacheable.CacheTags,
