@@ -1,0 +1,39 @@
+.vscode/spellright.dict
+  s_6c3c3736ba14ff::t_19f862d23e10e9 1-2
+.vscode/tasks.json
+  s_6c3c3736ba14ff::t_19f862d23e10e9 1-33
+public/fonts/fa-solid-900.svg
+  s_6c3c3736ba14ff::t_19f862d23e10e9 1-4938
+public/fonts/README.md
+  s_6c3c3736ba14ff::t_19f862d23e10e9 1-24
+.vscode/launch.json
+  s_6c3c3736ba14ff::t_19f862d23e10e9 1-50
+public/fonts/fa-brands-400.svg
+  s_6c3c3736ba14ff::t_19f862d23e10e9 1-3570
+public/fonts/fa-solid-600.eot
+  s_6c3c3736ba14ff::t_19f862d23e10e9 1
+.vscode/extensions.json
+  s_6c3c3736ba14ff::t_19f862d23e10e9 1-7
+.vscode/settings.json
+  s_6c3c3736ba14ff::t_19f862d23e10e9 1-23
+public/fonts/fa-regular-400.svg
+  s_6c3c3736ba14ff::t_19f862d23e10e9 1-803
+.gitignore
+  s_6c3c3736ba14ff::t_7f3fcdd6a0e985 10,21-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "139c8cbd7d61d33b43784bb4c423c6a017c1aa4c",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
