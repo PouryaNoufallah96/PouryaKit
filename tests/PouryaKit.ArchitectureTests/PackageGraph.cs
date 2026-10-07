@@ -16,6 +16,7 @@ internal static class PackageGraph
     // PageRequest into a Page (I.3 Paging, ticket #35).
     private static readonly Dictionary<string, Allowed> Table = new()
     {
+        ["PouryaKit.Caching"] = new(["PouryaKit.Cqrs"], ["Microsoft.Extensions.Caching.Hybrid"]),
         ["PouryaKit.Core"] = new([], []),
         ["PouryaKit.Domain"] = new([], []),
         ["PouryaKit.Cqrs"] = new(
@@ -85,6 +86,8 @@ internal static class PackageGraph
         ["PouryaKit.Messaging.Wolverine.RabbitMq"] = ["Microsoft.EntityFrameworkCore", "Npgsql", "WolverineFx.RDBMS", "WolverineFx.Postgresql", "Weasel"],
         // It emits through System.Diagnostics alone: exporters and logging are the Host's (I.3 Observability, #47).
         ["PouryaKit.Observability"] = ["OpenTelemetry", "Serilog", "WolverineFx", "PouryaKit.Messaging"],
+        // Redis is the application's own distributed cache for HybridCache, never the Kit's (I.3 Caching, #43).
+        ["PouryaKit.Caching"] = ["StackExchange.Redis", "Microsoft.Extensions.Caching.StackExchangeRedis"],
     };
 
     // Core and Domain, and Messaging (Domain only), bring no package at all.

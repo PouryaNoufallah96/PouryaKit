@@ -68,7 +68,7 @@ internal static partial class ModuleRules
     /// transaction, or an EF Core transaction; a new <c>TransactionScope</c> or <c>CommittableTransaction</c>;</item>
     /// <item>the Kit's own steps: <c>IUnitOfWork</c>, the Unit of Work's DbContext (<c>EfUnitOfWorkExtensions</c>),
     /// <c>IUnitOfWorkOutbox</c>, <c>IReceipts</c>, <c>IIntegrationEventOutbox</c>, <c>IDelayedCommandOutbox</c>, <c>IIdempotencyStore</c>, <c>ISnapshotMappers</c>,
-    /// <c>DomainEventDrain</c>, <c>IReadingStateGuard</c>, <c>TrackedState</c>, opening a reading step (<c>Operation.OnlyReading</c>), and beginning an Operation
+    /// <c>DomainEventDrain</c>, <c>IReadingStateGuard</c>, <c>TrackedState</c>, the query cache (<c>IQueryCache</c>), whose eviction follows the commit, opening a reading step (<c>Operation.OnlyReading</c>), and beginning an Operation
     /// (<c>BeginOperation</c>). The Gateway, the Web boundary and the Kit's delivery step begin Operations; so does an
     /// application of one Module that opens its own scopes, in its own assembly, which this rule would reject if that
     /// assembly were judged as a Module.</item>
@@ -247,6 +247,7 @@ internal static partial class ModuleRules
         typeof(DomainEventDrain),
         typeof(IReadingStateGuard),
         typeof(TrackedState),
+        typeof(IQueryCache),
     ];
 
     private static bool IsKitStep(MethodBase callee) =>

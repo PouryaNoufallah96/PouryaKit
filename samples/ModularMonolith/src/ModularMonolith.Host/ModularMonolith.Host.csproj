@@ -4,6 +4,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <!-- The application's optional distributed cache for HybridCache; a Kit package never references Redis. -->
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
     <!-- Wolverine 6 compiles its runtime code with Roslyn from this package; a Kit package never references it. -->
     <PackageReference Include="WolverineFx.RuntimeCompilation" />
   </ItemGroup>
@@ -11,6 +13,7 @@
     <ProjectReference Include="..\Modules\Billing\Billing\Billing.csproj" />
     <ProjectReference Include="..\Modules\Catalog\Catalog\Catalog.csproj" />
     <ProjectReference Include="..\Modules\Inventory\Inventory\Inventory.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.Caching\PouryaKit.Caching.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Messaging.Wolverine.EFCore\PouryaKit.Messaging.Wolverine.EFCore.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Messaging.Wolverine.RabbitMq\PouryaKit.Messaging.Wolverine.RabbitMq.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Observability\PouryaKit.Observability.csproj" />

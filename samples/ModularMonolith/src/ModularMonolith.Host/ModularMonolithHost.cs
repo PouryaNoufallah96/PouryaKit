@@ -2,6 +2,7 @@ using Billing;
 using Catalog;
 using Catalog.Products.Events.Notifications;
 using Inventory;
+using PouryaKit.Caching;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
@@ -83,6 +84,14 @@ public static class ModularMonolithHost
         // An activity and a duration for every command and query, around the dispatcher the Modules registered. The
         // Host's exporter, when it has one, listens to OperationTelemetry.SourceName; the Kit exports nothing.
         builder.Services.AddPouryaKitObservability();
+        // Cacheable queries, such as Catalog's GetProduct, answer from HybridCache in this Host's memory, and also from
+        // Redis when ConnectionStrings:cache names one, so that every Host of the application reads what one stored.
+        builder.Services.AddPouryaKitCaching();
+        if (builder.Configuration.GetConnectionString("cache") is { } redis)
+        {
+            builder.Services.AddStackExchangeRedisCache(options => options.Configuration = redis);
+        }
+
         builder.UsePouryaKitWolverine(connectionName: "app");
         if (broker)
         {

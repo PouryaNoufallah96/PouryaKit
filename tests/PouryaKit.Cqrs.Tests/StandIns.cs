@@ -10,7 +10,12 @@ internal static class TestHost
     private static readonly ServiceProviderOptions Strict = new() { ValidateOnBuild = true, ValidateScopes = true };
 
     /// <summary>The Host wiring for the test Module: one call with its assembly, plus the stand-ins.</summary>
-    public static ServiceProvider Build(bool withValidationStep = true, Type? unitOfWork = null, bool withIdempotencyStore = false)
+    public static ServiceProvider Build(
+        bool withValidationStep = true,
+        Type? unitOfWork = null,
+        bool withIdempotencyStore = false,
+        bool withQueryCache = false
+    )
     {
         var services = new ServiceCollection()
             .AddPouryaKitCqrs(typeof(ThingsGateway).Assembly)
@@ -25,6 +30,11 @@ internal static class TestHost
         if (withIdempotencyStore)
         {
             services.AddScoped<IIdempotencyStore, IdempotencyStoreStandIn>();
+        }
+
+        if (withQueryCache)
+        {
+            services.AddScoped<IQueryCache, QueryCacheStandIn>();
         }
 
         return services.BuildServiceProvider(Strict);
@@ -43,6 +53,33 @@ internal sealed class IdempotencyStoreStandIn(OperationTrace trace) : IIdempoten
     public Task RecordAsync(IdempotencyKey key, string response, CancellationToken cancellationToken)
     {
         trace.Add($"record {key.Command} {response}");
+        return Task.CompletedTask;
+    }
+}
+
+/// <summary>
+/// Records each query it is asked and each eviction, runs every query, and reports a command's type name as the tag it
+/// invalidates.
+/// </summary>
+internal sealed class QueryCacheStandIn(OperationTrace trace) : IQueryCache
+{
+    public async Task<Result<TResponse>> QueryAsync<TResponse>(
+        Query<TResponse> query,
+        OperationContext context,
+        Func<CancellationToken, Task<Result<TResponse>>> handle,
+        CancellationToken cancellationToken
+    )
+        where TResponse : notnull
+    {
+        trace.Add($"cache {query.GetType().Name}");
+        return await handle(cancellationToken);
+    }
+
+    public IEnumerable<string> TagsInvalidatedBy(object command) => [command.GetType().Name];
+
+    public Task EvictAsync(IReadOnlyCollection<string> tags)
+    {
+        trace.Add($"evict {string.Join(' ', tags)}");
         return Task.CompletedTask;
     }
 }

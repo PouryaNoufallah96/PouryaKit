@@ -7,6 +7,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Catalog.Contracts\Catalog.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Caching\PouryaKit.Caching.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Messaging.Wolverine.EFCore\PouryaKit.Messaging.Wolverine.EFCore.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Modularity\PouryaKit.Modularity.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Persistence.Dapper\PouryaKit.Persistence.Dapper.csproj" />

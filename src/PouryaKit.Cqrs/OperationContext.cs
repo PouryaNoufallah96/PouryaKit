@@ -37,6 +37,13 @@ public sealed record OperationContext
     /// <summary>The tenant or company the Operation runs for; null where the application has none. Never blank.</summary>
     public string? Tenant { get; }
 
+    /// <summary>
+    /// The tenant the keys the Kit keeps, an idempotent request's and a cached query's, name for an Operation without
+    /// one: the empty string, which no tenant can be, since the constructor refuses a blank one, so a Host without
+    /// tenants keeps one stable key.
+    /// </summary>
+    public const string NoTenant = "";
+
     /// <summary>Shared by every Operation in one chain of work, from the Operation that started it.</summary>
     public Guid CorrelationId { get; }
 
