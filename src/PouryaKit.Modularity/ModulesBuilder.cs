@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using PouryaKit.Cqrs;
 
 namespace PouryaKit.Modularity;
 
@@ -23,7 +24,10 @@ public sealed class ModulesBuilder
         where TModule : IModuleDefinition, new()
     {
         _modules.Add(typeof(TModule));
-        new TModule().Configure(new ModuleBuilder(typeof(TModule), _services, _modules));
+        var module = new ModuleBuilder(typeof(TModule), _services, _modules);
+        // Recorded as composed whatever its Composition Root registers, for the composition checks (HostComposition).
+        IModuleServices.ModuleOf(module);
+        new TModule().Configure(module);
         _modules.EnsureUnitOfWorkForCommands(typeof(TModule), _services);
         _services.AddSingleton<IGatewayProcessor<TModule>, GatewayProcessor<TModule>>();
         return this;
