@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace PouryaKit.Security.JwtBearer;
 
@@ -18,10 +19,10 @@ internal sealed class JwtBearerValidation : IValidateOptions<JwtBearerOptions>
         var token = options.TokenValidationParameters;
         var discovered = options.ConfigurationManager is not null;
         List<string> failures = [];
-        if (!token.ValidateAudience || !Named(token.ValidAudience, token.ValidAudiences))
+        if (!token.ValidateAudience || !token.RequireAudience || !Named(token.ValidAudience, token.ValidAudiences))
         {
             failures.Add(
-                "The bearer scheme must validate the audience against a configured audience: set ValidAudience or ValidAudiences in Authentication:Schemes:Bearer."
+                "The bearer scheme must require the audience and validate it against a configured audience: set ValidAudience or ValidAudiences in Authentication:Schemes:Bearer."
             );
         }
 
@@ -56,15 +57,36 @@ internal sealed class JwtBearerValidation : IValidateOptions<JwtBearerOptions>
             );
         }
 
-        if (options.EventsType is not null)
+        foreach (var (check, validator) in ReplacedChecks(token))
+        {
+            if (validator is not null)
+            {
+                failures.Add(
+                    $"The bearer scheme sets TokenValidationParameters.{check}, which replaces a check the Kit requires; the Kit's scheme refuses custom validator delegates."
+                );
+            }
+        }
+
+        if (options.EventsType is not null || !VerifiedClaims.IsInstalledIn(options.Events))
         {
             failures.Add(
-                "The bearer scheme resolves its events from EventsType, which bypasses the Kit's claim normalization; set Events instead."
+                "The bearer scheme's events bypass the Kit's claim normalization: set the application's event delegates on Events with Configure<JwtBearerOptions>(\"Bearer\", ...), not in a PostConfigure; never replace Events, subclass JwtBearerEvents or set EventsType."
             );
         }
 
         return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
     }
+
+    // Each of these, when set, runs instead of IdentityModel's own check (IssuerValidatorAsync is internal there).
+    private static (string Name, Delegate? Validator)[] ReplacedChecks(TokenValidationParameters token) =>
+        [
+            (nameof(token.AudienceValidator), token.AudienceValidator),
+            (nameof(token.IssuerValidator), token.IssuerValidator),
+            (nameof(token.IssuerValidatorUsingConfiguration), token.IssuerValidatorUsingConfiguration),
+            (nameof(token.LifetimeValidator), token.LifetimeValidator),
+            (nameof(token.SignatureValidator), token.SignatureValidator),
+            (nameof(token.SignatureValidatorUsingConfiguration), token.SignatureValidatorUsingConfiguration),
+        ];
 
     private static bool Named(string? one, IEnumerable<string>? many) =>
         !string.IsNullOrWhiteSpace(one) || many?.Any(value => !string.IsNullOrWhiteSpace(value)) == true;

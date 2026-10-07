@@ -5,23 +5,28 @@ namespace PouryaKit.Security.JwtBearer;
 
 // Runs on each token the handler has verified, before the application's own OnTokenValidated, which it keeps. The Kit's
 // claims are written only from the configured names: one the token itself carries under a Kit type is dropped first,
-// so no issued claim stands in for the configured one.
-internal static class VerifiedClaims
+// so no issued claim stands in for the configured one. The start check finds it installed by the delegate's target.
+internal sealed class VerifiedClaims(PouryaKitJwtBearerOptions names, Func<TokenValidatedContext, Task> next)
 {
     public static void NormalizeIn(JwtBearerOptions bearer, PouryaKitJwtBearerOptions names)
     {
         var events = bearer.Events ??= new JwtBearerEvents();
-        var next = events.OnTokenValidated;
-        events.OnTokenValidated = context =>
-        {
-            if (Normalize(context.Principal?.Identity as ClaimsIdentity, names) is { } refusal)
-            {
-                context.Fail(refusal);
-                return Task.CompletedTask;
-            }
+        events.OnTokenValidated = new VerifiedClaims(names, events.OnTokenValidated).OnTokenValidated;
+    }
 
-            return next(context);
-        };
+    // Exactly JwtBearerEvents: a subclass may override TokenValidated and never call OnTokenValidated.
+    public static bool IsInstalledIn(JwtBearerEvents? events) =>
+        events?.GetType() == typeof(JwtBearerEvents) && events.OnTokenValidated?.Target is VerifiedClaims;
+
+    private Task OnTokenValidated(TokenValidatedContext context)
+    {
+        if (Normalize(context.Principal?.Identity as ClaimsIdentity, names) is { } refusal)
+        {
+            context.Fail(refusal);
+            return Task.CompletedTask;
+        }
+
+        return next(context);
     }
 
     private static string? Normalize(ClaimsIdentity? identity, PouryaKitJwtBearerOptions names)

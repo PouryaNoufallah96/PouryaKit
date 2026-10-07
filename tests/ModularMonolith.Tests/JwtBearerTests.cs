@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text.Json;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
@@ -10,6 +11,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
 using ModularMonolith.Host;
 using PouryaKit.Cqrs;
 using PouryaKit.Security;
@@ -49,6 +52,7 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
     [InlineData("a wrong audience")]
     [InlineData("an expired lifetime")]
     [InlineData("no subject")]
+    [InlineData("no audience")]
     public async Task A_token_with_a_flaw_is_refused_with_a_401_problem_response(string flaw)
     {
         Dictionary<string, object> claims = flaw == "no subject" ? new() { ["name"] = "ada" } : new() { ["sub"] = "ada" };
@@ -66,6 +70,9 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
                         break;
                     case "a wrong audience":
                         descriptor.Audience = "another-api";
+                        break;
+                    case "no audience":
+                        descriptor.Audience = null;
                         break;
                     case "an expired lifetime":
                         // Beyond the five minutes of clock skew the handler allows.
@@ -112,14 +119,29 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Theory]
-    [InlineData("audience validation off", "validate the audience")]
-    [InlineData("no audience", "validate the audience")]
+    [InlineData("audience validation off", "validate it against a configured audience")]
+    [InlineData("audience not required", "validate it against a configured audience")]
+    [InlineData("no audience", "validate it against a configured audience")]
     [InlineData("issuer validation off", "validate the issuer")]
     [InlineData("no issuer", "validate the issuer")]
     [InlineData("no signing key", "validate the signature")]
     [InlineData("lifetime validation off", "validate the token's lifetime")]
     [InlineData("inbound claims mapped", "maps inbound claims")]
-    [InlineData("events resolved by type", "bypasses the Kit's claim normalization")]
+    [InlineData(nameof(TokenValidationParameters.AudienceValidator), "TokenValidationParameters.AudienceValidator")]
+    [InlineData(nameof(TokenValidationParameters.IssuerValidator), "TokenValidationParameters.IssuerValidator,")]
+    [InlineData(
+        nameof(TokenValidationParameters.IssuerValidatorUsingConfiguration),
+        "TokenValidationParameters.IssuerValidatorUsingConfiguration"
+    )]
+    [InlineData(nameof(TokenValidationParameters.LifetimeValidator), "TokenValidationParameters.LifetimeValidator")]
+    [InlineData(nameof(TokenValidationParameters.SignatureValidator), "TokenValidationParameters.SignatureValidator,")]
+    [InlineData(
+        nameof(TokenValidationParameters.SignatureValidatorUsingConfiguration),
+        "TokenValidationParameters.SignatureValidatorUsingConfiguration"
+    )]
+    [InlineData("events resolved by type", "bypass the Kit's claim normalization")]
+    [InlineData("events replaced after the kit's registration", "bypass the Kit's claim normalization")]
+    [InlineData("events subclassed", "bypass the Kit's claim normalization")]
     public async Task A_host_whose_bearer_scheme_would_weaken_verification_fails_when_it_starts(string weakness, string failure)
     {
         await using var host = AppFixture.ComposeHost(
@@ -127,40 +149,18 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
             Fixture.ConnectionString,
             new RecordedLogs(),
             builder =>
-                builder.Services.Configure<JwtBearerOptions>(
-                    JwtBearerDefaults.AuthenticationScheme,
-                    bearer =>
-                    {
-                        var token = bearer.TokenValidationParameters;
-                        switch (weakness)
-                        {
-                            case "audience validation off":
-                                token.ValidateAudience = false;
-                                break;
-                            case "no audience":
-                                (token.ValidAudience, token.ValidAudiences) = (null, []);
-                                break;
-                            case "issuer validation off":
-                                token.ValidateIssuer = false;
-                                break;
-                            case "no issuer":
-                                (token.ValidIssuer, token.ValidIssuers) = (null, []);
-                                break;
-                            case "no signing key":
-                                token.IssuerSigningKeys = [];
-                                break;
-                            case "lifetime validation off":
-                                token.ValidateLifetime = false;
-                                break;
-                            case "inbound claims mapped":
-                                bearer.MapInboundClaims = true;
-                                break;
-                            case "events resolved by type":
-                                bearer.EventsType = typeof(JwtBearerEvents);
-                                break;
-                        }
-                    }
-                )
+            {
+                if (weakness == "events replaced after the kit's registration")
+                {
+                    builder.Services.PostConfigure<JwtBearerOptions>(
+                        JwtBearerDefaults.AuthenticationScheme,
+                        bearer => bearer.Events = new JwtBearerEvents()
+                    );
+                    return;
+                }
+
+                builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, bearer => Weaken(bearer, weakness));
+            }
         );
 
         var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
@@ -168,14 +168,103 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Contains(failure, Assert.Single(thrown.Failures));
     }
 
-    private async Task<WebApplication> StartHostAsync()
+    [Fact]
+    public async Task An_application_token_validated_handler_still_runs_after_the_normalization()
+    {
+        List<string?> seenActors = [];
+        await using var host = await StartHostAsync(builder =>
+            builder.Services.Configure<JwtBearerOptions>(
+                JwtBearerDefaults.AuthenticationScheme,
+                bearer =>
+                    bearer.Events.OnTokenValidated = context =>
+                    {
+                        seenActors.Add(context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier));
+                        return Task.CompletedTask;
+                    }
+            )
+        );
+        using var client = ClientOf(host, TestIssuer.Token(new() { ["sub"] = "ada" }));
+
+        var seen = await ContextAsync(client);
+
+        Assert.Equal(["ada"], seenActors);
+        Assert.Equal(new SeenActor("ada", ActorKind.Person), seen.Actor);
+    }
+
+    private static void Weaken(JwtBearerOptions bearer, string weakness)
+    {
+        var token = bearer.TokenValidationParameters;
+        switch (weakness)
+        {
+            case "audience validation off":
+                token.ValidateAudience = false;
+                break;
+            case "audience not required":
+                token.RequireAudience = false;
+                break;
+            case "no audience":
+                (token.ValidAudience, token.ValidAudiences) = (null, []);
+                break;
+            case "issuer validation off":
+                token.ValidateIssuer = false;
+                break;
+            case "no issuer":
+                (token.ValidIssuer, token.ValidIssuers) = (null, []);
+                break;
+            case "no signing key":
+                token.IssuerSigningKeys = [];
+                break;
+            case "lifetime validation off":
+                token.ValidateLifetime = false;
+                break;
+            case "inbound claims mapped":
+                bearer.MapInboundClaims = true;
+                break;
+            case nameof(TokenValidationParameters.AudienceValidator):
+                token.AudienceValidator = (_, _, _) => true;
+                break;
+            case nameof(TokenValidationParameters.IssuerValidator):
+                token.IssuerValidator = (issuer, _, _) => issuer;
+                break;
+            case nameof(TokenValidationParameters.IssuerValidatorUsingConfiguration):
+                token.IssuerValidatorUsingConfiguration = (issuer, _, _, _) => issuer;
+                break;
+            case nameof(TokenValidationParameters.LifetimeValidator):
+                token.LifetimeValidator = (_, _, _, _) => true;
+                break;
+            case nameof(TokenValidationParameters.SignatureValidator):
+                token.SignatureValidator = (jwt, _) => new JsonWebToken(jwt);
+                break;
+            case nameof(TokenValidationParameters.SignatureValidatorUsingConfiguration):
+                token.SignatureValidatorUsingConfiguration = (jwt, _, _) => new JsonWebToken(jwt);
+                break;
+            case "events resolved by type":
+                bearer.EventsType = typeof(JwtBearerEvents);
+                break;
+            case "events subclassed":
+                bearer.Events = new SkippingEvents();
+                break;
+        }
+    }
+
+    // Overrides TokenValidated without calling OnTokenValidated, so the Kit's normalization would never run.
+    private sealed class SkippingEvents : JwtBearerEvents
+    {
+        public override Task TokenValidated(TokenValidatedContext context) => Task.CompletedTask;
+    }
+
+    private async Task<WebApplication> StartHostAsync(Action<WebApplicationBuilder>? configure = null)
     {
         var host = AppFixture.ComposeHost(
             "Production",
             Fixture.ConnectionString,
             new RecordedLogs(),
-            // After AppFixture's TestAuthentication, so the bearer scheme is the default again.
-            builder => builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            builder =>
+            {
+                // After AppFixture's TestAuthentication, so the bearer scheme is the default again.
+                builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
+                configure?.Invoke(builder);
+            }
         );
         await host.StartAsync(TestContext.Current.CancellationToken);
         return host;
