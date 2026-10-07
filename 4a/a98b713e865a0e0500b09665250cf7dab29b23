@@ -11,9 +11,11 @@ src/PouryaKit.Caching/HybridQueryCache.cs
   s_5db987750027ae::t_a628962b9a63af 49
 scripts/packaging/inventory.json
   s_5db987750027ae::t_a3e32448268a98 14
+  s_5db987750027ae::t_f60fcdbf4007a9 33
 tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
   s_5db987750027ae::t_28c568bdcbe77b 107
   s_5db987750027ae::t_d548fb6de3b75d 85
+  s_5db987750027ae::t_1316a0f13cb581 71-72
 samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RemoveProducts/RemoveProductsCommand.cs
   s_5db987750027ae::t_9207df851ffcb0 1-2,10,13-14
   s_5db987750027ae::t_c90c6672314f03 15
@@ -45,6 +47,7 @@ src/PouryaKit.Cqrs/IQueryCache.cs
 src/PouryaKit.Cqrs/OperationContext.cs
   s_5db987750027ae::t_a7dbead0330404 41
   s_5db987750027ae::t_34b498902591dd 40,44-46
+  s_5db987750027ae::t_1316a0f13cb581 42-43
 src/PouryaKit.Caching/CachingServiceCollectionExtensions.cs
   s_5db987750027ae::t_d6f1490be9f873 1-15,19-28
   s_5db987750027ae::t_dc513db6296ec9 16-18
