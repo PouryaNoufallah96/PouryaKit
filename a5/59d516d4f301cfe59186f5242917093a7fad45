@@ -1,0 +1,25 @@
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_5db987750027ae::t_4111791e3b7e73 66
+README.md
+  s_5db987750027ae::t_8c4e2fb512b9ef 5
+docs/architecture/README.md
+  s_5db987750027ae::t_47899cd3ca3168 326
+docs/foundation-review.md
+  s_5db987750027ae::t_5c67b435ebcba7 849
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a559d516d4f301cfe59186f5242917093a7fad45",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
