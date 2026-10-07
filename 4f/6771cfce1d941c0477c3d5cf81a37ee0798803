@@ -1,0 +1,21 @@
+.claude/agent-memory/kit-implementer/worktree-and-check-gotchas.md
+  s_bdf0617f846b2b::t_66e3fc8b92b2b6 18
+docs/acceptance.md
+  s_bdf0617f846b2b::t_d6573758f4babd 560-570
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4f6771cfce1d941c0477c3d5cf81a37ee0798803",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
