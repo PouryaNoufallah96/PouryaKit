@@ -1,8 +1,8 @@
 # Architecture
 
-PouryaKit as built: eighteen packages, the thirteen of Wave 1 and Wave 2's `PouryaKit.Core`, `PouryaKit.Security`, `PouryaKit.Security.JwtBearer`, `PouryaKit.Observability` and `PouryaKit.Web.OpenApi`, each a project that ships as one NuGet package through the [shared package validation path](../packages.md) and that a consuming Host references, and the Proving Sample, `samples/ModularMonolith/` with its tests in `tests/ModularMonolith.Tests/`, whose passing tests are the evidence that the Kit's guarantees hold. The references between the packages are those [plan section C](../foundation-review.md#c-package-structure) allows, as amended there, by G.4 and by I.3's Paging row (`PouryaKit.Persistence.Dapper` references `PouryaKit.Cqrs` for the Page types, ticket #35); `tests/PouryaKit.ArchitectureTests` asserts each package's references and full dependency closure against that table ([Structure tests](#structure-tests)). Which test proves each acceptance scenario of the spec is in [the acceptance map](../acceptance.md). How to use each Capability is the Kit's own skill, [`.agents/skills/pourya-kit/`](../../.agents/skills/pourya-kit/SKILL.md); the decisions behind the design are in [`docs/adr/`](../adr/).
+PouryaKit as built: every package in `scripts/packaging/inventory.json`, the thirteen of Wave 1 and Wave 2's `PouryaKit.Core`, `PouryaKit.Security`, `PouryaKit.Security.JwtBearer`, `PouryaKit.Observability` and `PouryaKit.Web.OpenApi`, each a project that ships as one NuGet package through the [shared package validation path](../packages.md) and that a consuming Host references, and the Proving Sample, `samples/ModularMonolith/` with its tests in `tests/ModularMonolith.Tests/`, whose passing tests are the evidence that the Kit's guarantees hold. The references between the packages are those [plan section C](../foundation-review.md#c-package-structure) allows, as amended there, by G.4 and by I.3's Paging row (`PouryaKit.Persistence.Dapper` references `PouryaKit.Cqrs` for the Page types, ticket #35); `tests/PouryaKit.ArchitectureTests` asserts each package's references and full dependency closure against that table ([Structure tests](#structure-tests)). Which test proves each acceptance scenario of the spec is in [the acceptance map](../acceptance.md). How to use each Capability is the Kit's own skill, [`.agents/skills/pourya-kit/`](../../.agents/skills/pourya-kit/SKILL.md); the decisions behind the design are in [`docs/adr/`](../adr/).
 
-Eighteen packages and their references no longer read as one diagram, so the C4 container level is split into three views: the execution core, messaging and delivery, and the Proving Sample. A package of another view that a view's packages reference appears in it as an external container.
+The inventory's packages and their references no longer read as one diagram, so the C4 container level is split into three views: the execution core, messaging and delivery, and the Proving Sample. A package of another view that a view's packages reference appears in it as an external container.
 
 ## Views
 
@@ -15,8 +15,8 @@ C4Container
     Container_Ext(ci, "CI validation", "GitHub Actions, read-only repository token", "Full-history CI checkout; token removed before the shared path")
     System_Boundary(validation, "Shared package validation") {
         Container(path, "Shared validation path", "Python, .NET SDK and MinVer", "One Release build, existing tests, no-build pack and artifact checks")
-        ContainerDb(artifacts, "Verified package set", "Eighteen nupkgs and checksum manifest", "One MinVer version and source commit, MIT, notices and SourceLink")
-        Container(consumers, "Clean consumers", ".NET 10, isolated NuGet caches", "Eighteen individual packages, single Module and copied Proving Sample")
+        ContainerDb(artifacts, "Verified package set", "One nupkg per inventory package and the checksum manifest", "One MinVer version and source commit, MIT, notices and SourceLink")
+        Container(consumers, "Clean consumers", ".NET 10, isolated NuGet caches", "Each inventory package alone, single Module and copied Proving Sample")
     }
     ContainerDb_Ext(evidence, "Retained CI evidence", "GitHub Actions artifact", "Tested SHA/result, original packages/manifest, logs and consumer assets; no caches")
     Container_Ext(publisher, "Private publisher", "Separate main workflow, one job group with cancellation disabled", "Successful main run/attempt/SHA; official artifact download and local provenance/hash checks")
@@ -501,7 +501,7 @@ Seams later packages build on:
 
 ## PouryaKit.Web.OpenApi
 
-Optional API versions, OpenAPI documents and the Scalar reference (plan I.3, ticket #41). It references `PouryaKit.Web`, the ASP.NET Core shared framework and four packages, all MIT: `Asp.Versioning.Http` and `Asp.Versioning.OpenApi` 10.2.3 (which bring `Asp.Versioning.Mvc.ApiExplorer` and `Asp.Versioning.Mvc` 10.2.1), `Microsoft.AspNetCore.OpenApi` 10.0.12 (which brings `Microsoft.OpenApi` 2.x) and `Scalar.AspNetCore` 2.17.14. No Swagger generator is in its closure.
+Optional API versions, OpenAPI documents and the Scalar reference (plan I.3, ticket #41). It references `PouryaKit.Web`, the ASP.NET Core shared framework and these MIT packages: `Asp.Versioning.Http` and `Asp.Versioning.OpenApi` 10.2.3 (which bring `Asp.Versioning.Mvc.ApiExplorer` and `Asp.Versioning.Mvc` 10.2.1), `Microsoft.AspNetCore.OpenApi` 10.0.12 (which brings `Microsoft.OpenApi` 2.x) and `Scalar.AspNetCore` 2.17.14. No Swagger generator is in its closure.
 
 | Concern | Types |
 |---|---|

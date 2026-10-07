@@ -14,6 +14,9 @@ The worktree base and the one-git-command rule are in the role file; these are w
 - macOS BSD `sed -E` silently ignores `\b`; use `[[:<:]]word[[:>:]]`, then grep to confirm.
 - `check-ai-setup.py` parses frontmatter with a small YAML subset: a plain scalar containing `": "` or `" #"`, or ending in `:`, fails. It reads frontmatter in skills' `SKILL.md` files, output styles, Claude roles and rules.
 - The guard refuses `rm -r` outside system temp: delete files one by one, then `rmdir`. Mutation checks: copy the file to the scratchpad, mutate, run, copy back.
+- `git rm -r -q -- <dir> <dir>` passes the isolation check (it is git in the worktree), so removing tracked trees needs no file-by-file delete. A heredoc of any kind is refused when the same command also names git; `cd <worktree> && <cmd> | python3 ...` with git on either side is refused, while the bare `git ls-files | python3 ...` from the default cwd passes.
+- `core.hooksPath` is the main checkout's absolute `.githooks`, so a worktree commit runs the main checkout's hooks, not the branch's: test a changed hook by running the worktree's hook file directly, and in a scratch repository for the refusing case.
+- Harness commit attribution: briefs carry no trailer, but the system-reminder's `Co-Authored-By`/`Claude-Session` lines are the harness's own and every commit on the integration branch has them; add them.
 - The Edit tool validates `.claude/settings.json` against the live schema and refuses an invalid enum, so mutation-test `check-ai-setup.py` in memory (load the module, swap `loaded[path]`).
 - No pyyaml or actionlint by default: `ruby -ryaml` parses YAML; `brew install actionlint` works.
 - An `AsyncLocal` write inside an awaited async method never flows back to the caller, so asserting `DomainClock.Current` after awaiting the dispatcher cannot fail; test binding restore synchronously (`tests/ModularMonolith.Tests/TestClockTests.cs`).

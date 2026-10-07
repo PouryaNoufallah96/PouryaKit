@@ -95,8 +95,8 @@ const VERIFIED = {
 }
 const FINISHED = {
   type: 'object',
-  required: ['bytes', 'removed'],
-  properties: { bytes: { type: 'integer' }, removed: { type: 'boolean' }, error: { type: 'string' } },
+  required: ['verdict', 'bytes', 'removed'],
+  properties: { verdict: { type: 'string' }, bytes: { type: 'integer' }, removed: { type: 'boolean' }, error: { type: 'string' } },
 }
 
 // `args` is a JSON object, or the word form the docs show: `base X ticket N`, optionally joined by `with`, `and` or commas.
@@ -236,6 +236,7 @@ const source = ticket ? `ticket #${ticket}` : `spec ${spec}`
 
 let full = null
 let finished = null
+let saved = false
 try {
   if (lostPrevious) throw new Error(`Re-review stopped before reviewing: ${lostPrevious}. Run it again.`)
   const reviewerPrompt = `Review commit ${head} against base ${baseCommit} for ${source}; its text is in ${specFile}.
@@ -461,26 +462,33 @@ ${JSON.stringify(raised, null, 2)}
   full = { workflow: 'kit-review', complete: false, verdict: 'unknown', base: baseCommit, head, error: String(error?.message ?? error) }
 } finally {
   // Runs on success and on failure, so the review worktree never outlives the run. Writing the full result rides on
-  // this agent call, which removing the worktree needs anyway. Non-ASCII is escaped, so the length is the byte count.
+  // this agent call, which removing the worktree needs anyway. A quoted heredoc copies the text unchanged, and the file
+  // counts as saved when the verdict parsed back from it is the one written; one retry when it is not. Non-ASCII is
+  // escaped, so the length is the byte count, kept as information.
   phase('Finish')
-  const content = `${JSON.stringify(full ?? fail('the review stopped early'), null, 2)}\n`
+  const written = full ?? fail('the review stopped early')
+  const content = `${JSON.stringify(written, null, 2)}\n`
     .replace(/[\u007f-\uffff]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)
   const finishPrompt = `You save a review result and remove a git worktree. You do not review or change anything else.
 
-1. Use the Write tool to create ${resultFile} with exactly the text between the two marker lines below, byte for byte: no marker lines, nothing added, nothing reformatted.
------BEGIN RESULT-----
-${content}-----END RESULT-----
-2. Run exactly this command with the Bash tool, in the foreground. Add no flags, pipes or redirects:
+1. Run exactly this command with the Bash tool, in the foreground, as one command: every line between the two fence lines, byte for byte. Add no flags, pipes or redirects, and reformat nothing.
 \`\`\`bash
-wc -c < '${resultFile}'; git -C '${top}' worktree remove --force '${worktree}'; test -e '${worktree}' && echo kept || echo removed
+cat > '${resultFile}' <<'KIT_REVIEW_RESULT'
+${content}KIT_REVIEW_RESULT
+python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(d['verdict'])" '${resultFile}'; wc -c < '${resultFile}'; git -C '${top}' worktree remove --force '${worktree}'; test -e '${worktree}' && echo kept || echo removed
 \`\`\`
-3. Return bytes (the number wc printed), removed (true when the last line is "removed") and error (any error line the command printed, verbatim; omit it when there is none).`
-  try {
-    finished = await agent(finishPrompt, { label: 'finish', phase: 'Finish', effort: 'low', schema: FINISHED })
-  } catch (error) {
-    log(`Finish failed: ${error?.message ?? error}`)
+2. Return verdict (the line python printed; an empty string when it printed an error instead), bytes (the number wc printed), removed (true when the last line is "removed") and error (any error line the command printed, verbatim; omit it when there is none).`
+  for (let attempt = 1; attempt <= 2 && !saved; attempt++) {
+    try {
+      const got = await agent(finishPrompt, { label: attempt === 1 ? 'finish' : 'finish-retry', phase: 'Finish', effort: 'low', schema: FINISHED })
+      finished = { ...got, removed: !!got.removed || !!finished?.removed }
+      saved = String(got.verdict ?? '').trim() === written.verdict
+    } catch (error) {
+      log(`Finish failed: ${error?.message ?? error}`)
+    }
+    if (!saved && attempt === 1) log('The result file did not read back with the verdict written; running the finish step once more.')
   }
-  full = { ...full, size: content.length }
+  full = { ...written, size: content.length }
 }
 
 // The digest is what reaches the main session, so it stays well under the task notification's limit (about 9.8 KB)
@@ -488,10 +496,9 @@ wc -c < '${resultFile}'; git -C '${top}' worktree remove --force '${worktree}'; 
 // per finding, standing ones first and most severe first. Claims shrink, then the list is cut with a count of the
 // rest, which the result file holds.
 const DIGEST_LIMIT = 5500
-const saved = !!finished && Math.abs(finished.bytes - full.size) <= 1
 const cleanup = finished?.removed ? null : `The review worktree was not removed; run \`git worktree remove --force ${worktree}\`.`
 if (cleanup) log(cleanup)
-if (!saved) log(`The full result file was not written as expected (${finished ? `${finished.bytes} of ${full.size} bytes` : 'the finish agent did not return'}); the full result is in this return value.`)
+if (!saved) log(`The full result file was not written as expected (${finished ? `it read back verdict ${JSON.stringify(finished.verdict)}, ${finished.bytes} of ${full.size} bytes` : 'the finish agent did not return'}); the full result is in this return value.`)
 const oneLine = (value, max) => {
   const flat = String(value ?? '').replace(/\s+/g, ' ').trim()
   return flat.length > max ? `${flat.slice(0, max - 1)}…` : flat
