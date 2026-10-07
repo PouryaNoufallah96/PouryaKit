@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Wolverine;
 using Wolverine.Configuration;
 using Wolverine.Runtime;
+using Wolverine.Transports;
 
 namespace PouryaKit.Messaging.Wolverine;
 
@@ -40,10 +41,29 @@ internal sealed class StartupCheck(Subscriptions subscriptions, IServiceProvider
                 )
                 .Select(queue => $"{queue.Address} ({queue.Queue?.Role}, {queue.Queue?.Mode})"),
         ];
-        return notDurable.Count == 0
+        if (notDurable.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"The queues of these subscriptions or delayed commands do not store what they receive, so their deliveries would not survive a restart: {string.Join(", ", notDurable)}. Each such queue is a durable application queue; rename the subscription or delayed command, or remove the configuration that changed its queue."
+            );
+        }
+
+        // What arrives from another Host, at the Host's own queue on a broker, is stored before it is acknowledged, and a
+        // delivery that fails there is set aside in the message store, as every subscription's is.
+        List<string> brokerListeners =
+        [
+            .. transports
+                .AllEndpoints()
+                .Where(endpoint =>
+                    endpoint is { IsListener: true, Role: EndpointRole.Application } and IBrokerEndpoint
+                    && (endpoint.Mode != EndpointMode.Durable || endpoint.DeadLetterStorage != DeadLetterStorageMode.Durable)
+                )
+                .Select(endpoint => $"{endpoint.Uri} ({endpoint.Mode}, dead letters {endpoint.DeadLetterStorage})"),
+        ];
+        return brokerListeners.Count == 0
             ? Task.CompletedTask
             : throw new InvalidOperationException(
-                $"The queues of these subscriptions or delayed commands do not store what they receive, so their deliveries would not survive a restart: {string.Join(", ", notDurable)}. Each such queue is a durable application queue; rename the subscription or delayed command, or remove the configuration that changed its queue."
+                $"These broker listeners receive from other Hosts but do not store what they receive in a durable Inbox, or set dead letters aside outside the message store: {string.Join(", ", brokerListeners)}. Each is Durable with dead letters Durable; remove the configuration that changed it, such as BufferedInMemory() or a broker dead-letter queue."
             );
     }
 

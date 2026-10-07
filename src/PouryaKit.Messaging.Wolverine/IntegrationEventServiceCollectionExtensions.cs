@@ -33,6 +33,24 @@ public static class IntegrationEventServiceCollectionExtensions
         }
 
         /// <summary>
+        /// Declares that another Host publishes <typeparamref name="TIntegrationEvent"/> under <paramref name="wireName"/>,
+        /// so this Host's subscriptions to it receive it from there, through a transport between Hosts such as
+        /// <c>UsePouryaKitRabbitMq</c>. The Host's composition calls it, not a Module's Composition Root: whether the
+        /// publishing Module runs in this Host is the Host's choice. The wire name is the one the publishing Module declares.
+        /// Throws here, at startup, when the type is not a concrete class or is a Domain Event, when the wire name is
+        /// missing, invalid or equal ignoring case to another's, when the type is already received under another name or as
+        /// a Snapshot, and when a Module of this Host publishes it. Declaring it again adds nothing.
+        /// </summary>
+        public IServiceCollection Receive<TIntegrationEvent>(string wireName)
+            where TIntegrationEvent : class
+        {
+            ArgumentNullException.ThrowIfNull(services);
+            Subscriptions.In(services).Receive(typeof(TIntegrationEvent), wireName, isSnapshot: false);
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+            return services;
+        }
+
+        /// <summary>
         /// Subscribes the Integration Event Handler <typeparamref name="THandler"/> of <paramref name="module"/>, the
         /// Module's definition type, to <typeparamref name="TIntegrationEvent"/> under
         /// <paramref name="subscriptionName"/>: its own durable queue and half of its Receipts' key, so it is stable;
@@ -41,7 +59,8 @@ public static class IntegrationEventServiceCollectionExtensions
         /// when the handler is abstract, and when the name is missing, invalid, equal ignoring case to another
         /// subscription's, or the name of a queue Wolverine keeps for itself, or the same subscription belongs to another
         /// Module. Declaring the same subscription again in the same Module adds nothing. The name is kept lower-cased.
-        /// The Host then fails to start when no Module of the Host publishes the type, when no Outbox writes Integration Events, or
+        /// The Host then fails to start when no Module of the Host publishes the type and no <c>Receive</c> declares it, when no
+        /// Outbox writes Integration Events, or
         /// when the subscription's queue, as Wolverine built it, is not a durable application queue.
         /// </summary>
         public IServiceCollection Subscribe<TIntegrationEvent, THandler>(string subscriptionName, Type? module = null)

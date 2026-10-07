@@ -3,6 +3,7 @@ using Catalog;
 using Catalog.Products.Events.Notifications;
 using Inventory;
 using PouryaKit.Messaging.Wolverine.EFCore;
+using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
 using PouryaKit.Observability;
 using PouryaKit.Security;
@@ -26,6 +27,15 @@ public static class ModularMonolithHost
 
     /// <summary>The claim of a caller's bearer token that names its tenant.</summary>
     public const string TenantClaim = "tenant";
+
+    /// <summary>
+    /// The connection string of the RabbitMQ broker. Configured, the Host sends what Catalog publishes to other Hosts
+    /// over it, and Inventory runs in its own Host, <c>Inventory.Host</c>; absent, every delivery stays in this Host.
+    /// </summary>
+    public const string BrokerConnection = "broker";
+
+    /// <summary>The Host's name on the broker: its queue, unique to this kind of Host.</summary>
+    public const string ServiceName = "modular-monolith";
 
     public static WebApplicationBuilder CreateBuilder(string[] args)
     {
@@ -58,16 +68,27 @@ public static class ModularMonolithHost
         // The permissions a command or query declares (Catalog's RemoveProducts) are the HTTP caller's permission claims.
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IActorPermissions, CallerPermissions>();
+        var broker = builder.Configuration.GetConnectionString(BrokerConnection) is not null;
         builder.AddPouryaKitModules(modules =>
         {
             modules.Add<CatalogModule>();
-            modules.Add<InventoryModule>();
+            // With a broker, Inventory is its own Host, which receives what Catalog publishes here.
+            if (!broker)
+            {
+                modules.Add<InventoryModule>();
+            }
+
             modules.Add<BillingModule>();
         });
         // An activity and a duration for every command and query, around the dispatcher the Modules registered. The
         // Host's exporter, when it has one, listens to OperationTelemetry.SourceName; the Kit exports nothing.
         builder.Services.AddPouryaKitObservability();
         builder.UsePouryaKitWolverine(connectionName: "app");
+        if (broker)
+        {
+            builder.UsePouryaKitRabbitMq(BrokerConnection, ServiceName);
+        }
+
         builder.Services.AddSingleton<INewProductAnnouncer, LoggedNewProductAnnouncer>();
         return builder;
     }

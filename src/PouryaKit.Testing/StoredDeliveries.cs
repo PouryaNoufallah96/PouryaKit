@@ -40,10 +40,19 @@ internal sealed class StoredDeliveries(
                     """,
                     cancellationToken
                 )
-            ).Select(row =>
-                ((Guid)row[0], new Delivery(new Uri((string)row[1]).Host, (string)row[2], (bool)row[3]))
-            ),
+            ).Select(row => ((Guid)row[0], new Delivery(SubscriptionAt((string)row[1]), (string)row[2], (bool)row[3]))),
         ];
+
+    /// <summary>
+    /// The subscription a delivery received at <paramref name="receivedAt"/> was for: the name of its local queue,
+    /// <c>local://{subscription}/</c>. A delivery received at a broker queue, such as <c>rabbitmq://queue/{ServiceName}</c>,
+    /// was for no subscription yet, so it is named by that address.
+    /// </summary>
+    public static string SubscriptionAt(string receivedAt)
+    {
+        var address = new Uri(receivedAt);
+        return address.Scheme == "local" ? address.Host : receivedAt;
+    }
 
     /// <summary>
     /// Waits until no delivery is pending: every stored envelope is handled, dead-lettered or a delayed command not yet due, and no

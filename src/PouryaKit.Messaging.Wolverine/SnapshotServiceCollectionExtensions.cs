@@ -45,5 +45,20 @@ public static class SnapshotServiceCollectionExtensions
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
             return services;
         }
+
+        /// <summary>
+        /// Declares that another Host publishes the Snapshot <typeparamref name="TSnapshot"/> under
+        /// <paramref name="wireName"/>, so this Host's subscriptions to it receive it from there, each only when it is
+        /// newer than every version of its aggregate the subscription applied, as from a Module of this Host. The Host's
+        /// composition calls it, as it calls <c>Receive</c>, with the checks <c>Receive</c> makes.
+        /// </summary>
+        public IServiceCollection ReceiveSnapshot<TSnapshot>(string wireName)
+            where TSnapshot : class
+        {
+            ArgumentNullException.ThrowIfNull(services);
+            Subscriptions.In(services).Receive(typeof(TSnapshot), wireName, isSnapshot: true);
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+            return services;
+        }
     }
 }

@@ -7,6 +7,7 @@ using PouryaKit.Domain;
 using Wolverine;
 using Wolverine.Runtime;
 using Wolverine.Runtime.Handlers;
+using Wolverine.Transports;
 
 namespace PouryaKit.Messaging.Wolverine;
 
@@ -15,9 +16,26 @@ namespace PouryaKit.Messaging.Wolverine;
 // acknowledged on its own. It generates no code, so the message and its handlers may be internal.
 internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : MessageHandler
 {
+    private const string KitHeaders = "pouryakit-";
+
     public override async Task HandleAsync(MessageContext context, CancellationToken cancellation)
     {
         var envelope = context.Envelope!;
+        // An envelope from another Host arrives once, at this Host's queue on a broker (ADR 0006, ticket #50 amendment),
+        // and is published again here with the Kit's headers: one copy per subscription on its local queue, stored before
+        // this envelope is marked handled, so a crash in between fans it out again and each copy finds its Receipt.
+        if (envelope.Destination!.Scheme != TransportConstants.Local)
+        {
+            DeliveryOptions copies = new();
+            foreach (var (name, value) in envelope.Headers.Where(header => header.Key.StartsWith(KitHeaders, StringComparison.Ordinal)))
+            {
+                copies.Headers[name] = value;
+            }
+
+            await context.PublishAsync(envelope.Message!, copies);
+            return;
+        }
+
         // A local queue's address is local://{subscription, lower-cased}/.
         var subscription = subscriptions.Named(envelope.Destination!.Host);
         var (operationContext, traceParent) = OperationContextHeaderExtensions.ContinuedOperationContext(envelope);

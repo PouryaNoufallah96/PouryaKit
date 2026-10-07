@@ -37,14 +37,16 @@ public sealed class AppFixture : HostFixture
 
     /// <summary>
     /// The application as the tests host it, in <paramref name="environment"/>, built but not started;
-    /// <paramref name="configure"/> may change its composition first. Starting it starts Wolverine on the database's
-    /// message store, so a test that starts it stops or disposes it before it ends.
+    /// <paramref name="configure"/> may change its composition first, and <paramref name="arguments"/> add to the
+    /// configuration it is composed from. Starting it starts Wolverine on the database's message store, so a test that
+    /// starts it stops or disposes it before it ends.
     /// </summary>
     public static WebApplication ComposeHost(
         string environment,
         string connectionString,
         RecordedLogs logs,
-        Action<WebApplicationBuilder>? configure = null
+        Action<WebApplicationBuilder>? configure = null,
+        params string[] arguments
     )
     {
         var builder = ModularMonolithHost.CreateBuilder(
@@ -54,6 +56,7 @@ public sealed class AppFixture : HostFixture
                 $"--ConnectionStrings:app={connectionString}",
                 $"--PouryaKit:TrustedPeers:Peers:0={TrustedPeer}",
                 .. TestIssuer.HostArguments,
+                .. arguments,
             ]
         );
         builder.AddPouryaKitModules(modules => modules.Add<StubModule>());

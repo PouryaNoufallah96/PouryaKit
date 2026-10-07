@@ -103,4 +103,45 @@ public sealed class StoredDeliveriesSchemaTests(AppFixture app) : HostTest<AppFi
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
     }
+
+    [Fact]
+    public async Task A_delivery_received_at_a_broker_queue_before_it_reached_a_subscription_is_named_by_that_address()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var connection = new NpgsqlConnection(Fixture.ConnectionString);
+        await connection.OpenAsync(cancellationToken);
+        Guid received = Guid.CreateVersion7(), copy = Guid.CreateVersion7(), deadLetter = Guid.CreateVersion7();
+        try
+        {
+            await using (var setup = new NpgsqlCommand(
+                $"""
+                create schema "review-broker";
+                create table "review-broker".wolverine_incoming_envelopes (id uuid, received_at text, message_type text);
+                create table "review-broker".wolverine_dead_letters (id uuid, received_at text, message_type text);
+                insert into "review-broker".wolverine_incoming_envelopes values
+                    ('{received}', 'rabbitmq://queue/inventory', 'tests.incoming.v1'),
+                    ('{copy}', 'local://tests.handled/', 'tests.incoming.v1');
+                insert into "review-broker".wolverine_dead_letters values ('{deadLetter}', 'rabbitmq://queue/inventory', 'tests.retired.v1');
+                """,
+                connection
+            ))
+            {
+                await setup.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            var type = typeof(HostFixture).Assembly.GetType("PouryaKit.Testing.StoredDeliveries", throwOnError: true)!;
+            var stored = Activator.CreateInstance(type, Fixture.ConnectionString, "review-broker", Array.Empty<(string, string)>())!;
+            var all = await (Task<List<(Guid Id, Delivery Delivery)>>)type.GetMethod("AllAsync")!.Invoke(stored, [cancellationToken])!;
+
+            Assert.Equal(3, all.Count);
+            Assert.Contains((received, new Delivery("rabbitmq://queue/inventory", "tests.incoming.v1", false)), all);
+            Assert.Contains((copy, new Delivery("tests.handled", "tests.incoming.v1", false)), all);
+            Assert.Contains((deadLetter, new Delivery("rabbitmq://queue/inventory", "tests.retired.v1", true)), all);
+        }
+        finally
+        {
+            await using var cleanup = new NpgsqlCommand("drop schema if exists \"review-broker\" cascade", connection);
+            await cleanup.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+    }
 }

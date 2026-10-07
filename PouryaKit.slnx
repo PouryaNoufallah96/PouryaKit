@@ -4,6 +4,7 @@
     <Project Path="src/PouryaKit.Cqrs/PouryaKit.Cqrs.csproj" />
     <Project Path="src/PouryaKit.Domain/PouryaKit.Domain.csproj" />
     <Project Path="src/PouryaKit.Messaging/PouryaKit.Messaging.csproj" />
+    <Project Path="src/PouryaKit.Messaging.Wolverine.RabbitMq/PouryaKit.Messaging.Wolverine.RabbitMq.csproj" />
     <Project Path="src/PouryaKit.Messaging.Wolverine/PouryaKit.Messaging.Wolverine.csproj" />
     <Project Path="src/PouryaKit.Messaging.Wolverine.EFCore/PouryaKit.Messaging.Wolverine.EFCore.csproj" />
     <Project Path="src/PouryaKit.Modularity/PouryaKit.Modularity.csproj" />
@@ -21,6 +22,7 @@
   </Folder>
   <Folder Name="/samples/" />
   <Folder Name="/samples/ModularMonolith/">
+    <Project Path="samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj" />
     <Project Path="samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj" />
     <Project Path="samples/ModularMonolith/src/Modules/Billing/Billing/Billing.csproj" />
     <Project Path="samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj" />
