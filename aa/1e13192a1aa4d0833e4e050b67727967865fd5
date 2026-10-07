@@ -1,0 +1,36 @@
+.githooks/staged-conflict-markers
+  s_41c3eef9abbce4::t_8544ad57238857 1-13
+docs/agents/ai-setup.md
+  s_41c3eef9abbce4::t_1e1e604ce66c63 25,40,56-57,62,146
+README.md
+  s_41c3eef9abbce4::t_1e1e604ce66c63 5
+.githooks/pre-commit
+  s_41c3eef9abbce4::t_8544ad57238857 1-2
+.codex/agents/kit-implementer.toml
+  s_41c3eef9abbce4::t_1e1e604ce66c63 50
+.githooks/pre-merge-commit
+  s_41c3eef9abbce4::t_8544ad57238857 1-2
+.claude/agents/kit-implementer.md
+  s_41c3eef9abbce4::t_1e1e604ce66c63 52
+.claude/workflows/kit-review.js
+  s_41c3eef9abbce4::t_1e1e604ce66c63 102-105,107-113,115,126,134,136,147,180-185
+  s_41c3eef9abbce4::t_c4b338dbd91176 106
+docs/agents/running-a-spec.md
+  s_41c3eef9abbce4::t_1e1e604ce66c63 22,27,30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aa1e13192a1aa4d0833e4e050b67727967865fd5",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
