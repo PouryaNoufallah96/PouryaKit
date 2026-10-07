@@ -45,3 +45,4 @@
 - [Template package facts](template-package-facts.md) — #53/#59: engine traps, path token for raw names, pack-time version step, WebApplicationFactory, NuGet PrivateAssets graph gap, cache pollution
 - [Code generation for production facts](codegen-production-facts.md) — #58: Kit-called Wolverine picks the Kit as application assembly, codegen write needs no Roslyn, Debug-restore trap, WAF AutoStartHost
 - [Strict wire reading facts](strict-wire-reading-facts.md) — #60: STJ strict options probed, Wolverine read-failure dead-letter path, two contracts under one wire name, amq. on RabbitMQ
+- [Module seam and composition check facts](module-seam-and-composition-check-facts.md) — #61: StartAsync order vs StartingAsync, JasperFx start failure via WAF, zero-arg scan of a test assembly, Unowned fixture

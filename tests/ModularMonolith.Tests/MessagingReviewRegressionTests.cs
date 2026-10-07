@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ModularMonolith.Tests.Stub;
 using Npgsql;
+using PouryaKit.Caching;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
@@ -97,6 +98,7 @@ public sealed class MessagingReviewRegressionTests(AppFixture app) : HostTest<Ap
         );
         builder.Services.UsePostgres<QuotedSchemaDbContext>("app", schema);
         builder.Services.AddPouryaKitCqrs(typeof(StubModule).Assembly);
+        builder.Services.AddPouryaKitCaching();
         builder.Services.AddScoped(
             typeof(IReceipts),
             typeof(ReceiptTable).Assembly.GetType("PouryaKit.Messaging.Wolverine.EFCore.EfReceipts", throwOnError: true)!

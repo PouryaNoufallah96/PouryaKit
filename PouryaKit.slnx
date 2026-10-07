@@ -36,6 +36,7 @@
     <Project Path="tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj" />
     <Project Path="tests/ModularMonolith.Tests/Misnamed/ModularMonolith.Tests.Misnamed.csproj" />
     <Project Path="tests/ModularMonolith.Tests/Unversioned/ModularMonolith.Tests.Unversioned.csproj" />
+    <Project Path="tests/ModularMonolith.Tests/Unowned/ModularMonolith.Tests.Unowned.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Contracts/Offending.Contracts.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Core/Offending.Core.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending/Offending.csproj" />

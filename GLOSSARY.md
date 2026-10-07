@@ -39,6 +39,10 @@ _Avoid_: Shared kernel, common, API
 The one place where a Module declares everything it needs and everything it offers.
 _Avoid_: Module registration, startup, installer
 
+**Composition check**:
+A check of a Host's whole composition that the Kit runs when the Host starts, before it serves, such as a Module's declaration made without its Module.
+_Avoid_: Health check, startup filter
+
 **Gateway**:
 The only entry point through which anything outside a Module asks it to run a command or query.
 _Avoid_: Module facade, mediator, bus

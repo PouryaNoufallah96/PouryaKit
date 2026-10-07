@@ -8,7 +8,9 @@ var recorded = await store.ReserveAsync(
     new IdempotencyKey(context.Tenant, context.Actor, typeof(PlaceOrderCommand).FullName!, context.RequestId!),
     CancellationToken.None
 );
-Console.WriteLine(recorded is null && context.Continue().RequestId is null ? 1 : 0);
+// The packed composition seam a Kit package's registration and its composition check use.
+System.Type[] seam = [typeof(IModuleServices), typeof(ICompositionCheck), typeof(HostComposition), typeof(IRequiresQueryCache)];
+Console.WriteLine(recorded is null && context.Continue().RequestId is null && OperationTypes.IsCommand(typeof(PlaceOrderCommand)) ? seam.Length : 0);
 
 [Idempotent]
 internal sealed record PlaceOrderCommand(Guid OrderId) : Command<Guid>;

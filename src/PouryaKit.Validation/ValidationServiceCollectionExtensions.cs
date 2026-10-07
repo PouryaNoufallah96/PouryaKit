@@ -12,7 +12,8 @@ public static class ValidationServiceCollectionExtensions
     {
         /// <summary>
         /// Fills the pipeline's validation step with FluentValidation and registers every validator in
-        /// <paramref name="featureAssemblies"/>, internal types included.
+        /// <paramref name="featureAssemblies"/>, internal types included. Named with no assembly on a Module's builder
+        /// (<see cref="IModuleServices"/>), it scans the assembly of the Module's definition; named assemblies replace it.
         /// </summary>
         public IServiceCollection AddPouryaKitValidation(params Assembly[] featureAssemblies)
         {
@@ -21,7 +22,7 @@ public static class ValidationServiceCollectionExtensions
 
             services.TryAdd(ServiceDescriptor.Scoped(typeof(IValidationStep<>), typeof(FluentValidationStep<>)));
 
-            foreach (var assembly in featureAssemblies.Distinct())
+            foreach (var assembly in IModuleServices.FeatureAssembliesOf(services, featureAssemblies).Distinct())
             {
                 foreach (var validator in AssemblyScanner.FindValidatorsInAssembly(assembly, includeInternalTypes: true))
                 {

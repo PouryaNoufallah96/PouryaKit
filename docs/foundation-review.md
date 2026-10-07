@@ -245,9 +245,9 @@ Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its origi
 |---|---|---|
 | Domain | — | none |
 | Core (I.3, ticket #37) | — | none; referenced by Cqrs, Web, Messaging.Wolverine, Persistence.Dapper, Persistence.EFCore and Security since #55 (2026-10-07), whose registrations find their types through its `ImplementingTypes` |
-| Cqrs | Domain, Core | `Microsoft.Extensions.DependencyInjection.Abstractions`, `Logging.Abstractions` |
+| Cqrs | Domain, Core | `Microsoft.Extensions.DependencyInjection.Abstractions`, `Logging.Abstractions`; `Microsoft.Extensions.DependencyInjection` and `Microsoft.Extensions.Hosting.Abstractions` (ticket #61, 2026-10-07: the Host's validated container and its composition checks moved here from Modularity, so a Host without Modules installs them through Cqrs's `AddPouryaKitCompositionChecks`; MIT, under the standing rule below) |
 | Validation | Cqrs | FluentValidation |
-| Modularity | Cqrs | `Microsoft.Extensions.Hosting.Abstractions`, `Microsoft.Extensions.DependencyInjection` |
+| Modularity | Cqrs | `Microsoft.Extensions.Hosting.Abstractions` (`Microsoft.Extensions.DependencyInjection` until ticket #61, 2026-10-07, which moved the validating factory that needed it to Cqrs) |
 | Persistence.EFCore | Cqrs, Core | EF Core Relational; `Microsoft.Extensions.Hosting.Abstractions` (#42 follow-up, 2026-10-07: the idempotency key cleanup is a `BackgroundService`; MIT, under the standing rule below) |
 | Persistence.Postgres | Persistence.EFCore | Npgsql EF provider, EFCore.NamingConventions |
 | Persistence.Dapper | Cqrs, Core (#35, 2026-10-07: Cqrs for the Page types; Domain comes through Cqrs) | Dapper, Npgsql (ADO.NET driver only, no EF), `Microsoft.Extensions.Configuration.Abstractions`, `Microsoft.Extensions.DependencyInjection.Abstractions` |

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using PouryaKit.Core;
+using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Web;
@@ -67,28 +68,32 @@ public static class WebServiceCollectionExtensions
         }
 
         /// <summary>
-        /// Declares the endpoints of one Module: every <see cref="IEndpoint"/> in <paramref name="endpointAssembly"/>,
+        /// Declares the endpoints of one Module: every <see cref="IEndpoint"/> in <paramref name="featureAssemblies"/>,
         /// internal types included, mapped by <c>MapPouryaKitModuleEndpoints</c> under the route group
-        /// <paramref name="routePrefix"/>. A Module's Composition Root calls it on its builder; an application without
-        /// Modules calls it on its own services. Throws when the assembly has no endpoint, or an endpoint has no
-        /// parameterless constructor.
+        /// <paramref name="routePrefix"/>. A Module's Composition Root calls it on its builder, where, named with no
+        /// assembly, it scans the assembly of the Module's definition (<see cref="IModuleServices"/>); named assemblies
+        /// replace it. An application without Modules calls it on its own services, naming the assembly. Throws when the
+        /// assemblies have no endpoint, or an endpoint has no parameterless constructor.
         /// </summary>
-        public IServiceCollection AddPouryaKitEndpoints(string routePrefix, Assembly endpointAssembly)
+        public IServiceCollection AddPouryaKitEndpoints(string routePrefix, params Assembly[] featureAssemblies)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentException.ThrowIfNullOrWhiteSpace(routePrefix);
-            ArgumentNullException.ThrowIfNull(endpointAssembly);
+            ArgumentNullException.ThrowIfNull(featureAssemblies);
 
+            var assemblies = IModuleServices.FeatureAssembliesOf(services, featureAssemblies);
             List<IEndpoint> endpoints =
             [
                 .. ImplementingTypes
-                    .Of(typeof(IEndpoint), endpointAssembly)
+                    .Of(typeof(IEndpoint), assemblies)
                     .Select(type => (IEndpoint)Activator.CreateInstance(type, nonPublic: true)!),
             ];
             if (endpoints.Count == 0)
             {
                 throw new InvalidOperationException(
-                    $"{endpointAssembly.GetName().Name} has no IEndpoint for the route group {routePrefix}."
+                    assemblies is []
+                        ? $"AddPouryaKitEndpoints names no assembly for the route group {routePrefix}, and on the Host's own services it infers none. Name the assembly of the endpoints."
+                        : $"{string.Join(", ", assemblies.Select(assembly => assembly.GetName().Name))} has no IEndpoint for the route group {routePrefix}."
                 );
             }
 

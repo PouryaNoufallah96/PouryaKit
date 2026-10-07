@@ -10,6 +10,16 @@ Checked against the NuGet cache on 2026-10-06; licence expressions from each pac
 
 - `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.12, `MIT`.
 - `Microsoft.Extensions.Logging.Abstractions` 10.0.12, `MIT`.
+- `Microsoft.Extensions.DependencyInjection` 10.0.12, `MIT`, and `Microsoft.Extensions.Hosting.Abstractions` 10.0.12,
+  `MIT` (ticket #61, checked 2026-10-07 in the NuGet cache's nuspecs; already in every Host). The validating
+  `DefaultServiceProviderFactory` of `AddPouryaKitCompositionChecks` needs the first, which moved here from Modularity;
+  its `IHostApplicationBuilder` and the check runner, an `IHostedLifecycleService`, need the second.
+
+The Module seam (`IModuleServices`), the composition checks (`AddPouryaKitCompositionChecks`, `ICompositionCheck`,
+`HostComposition`, `IRequiresQueryCache`) and `OperationTypes` are new Kit code (ticket #61). The convention that a
+Module's Features live in its definition's assembly follows Cybernod's lookup of a Module by its definition's assembly
+(`cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.Web/Modules/ModuleRegistry.cs:38-41`); no code was taken, and its
+static registry was rejected: the Kit records Modules in the Host's service collection.
 
 ## Commands, queries and their handlers
 

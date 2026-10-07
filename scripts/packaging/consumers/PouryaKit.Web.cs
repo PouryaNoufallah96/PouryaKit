@@ -16,6 +16,8 @@ client.AddPouryaKitResilience(HttpReplay.SafeMethods).Configure(options => optio
 client.AddPouryaKitOperationContext();
 // The configured defaults, set as a Host binds them from its PouryaKit:Web section.
 services.AddPouryaKitWeb();
+// The application's endpoints, from the assembly it names on its own services.
+services.AddPouryaKitEndpoints("/orders", typeof(PlaceOrderEndpoint).Assembly);
 services.Configure<PouryaKitCorsOptions>(cors =>
 {
     var browser = new PouryaKitCorsPolicy { PreflightMaxAge = TimeSpan.FromMinutes(10) };

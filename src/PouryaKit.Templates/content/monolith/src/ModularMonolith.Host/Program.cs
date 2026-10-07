@@ -16,7 +16,7 @@ using PouryaKit.Web.OpenApi;
 var builder = WebApplication.CreateBuilder(args);
 // OpenTelemetry that exports the Kit's activities and metrics, liveness and readiness checks, service discovery and one
 // standard resilience pipeline for every HttpClient; then Serilog in place of the logging providers. Each recipe is
-// optional and lives in ModularMonolith.ServiceDefaults, which this application owns.
+// optional and lives in the application's own ServiceDefaults project.
 builder.AddServiceDefaults();
 builder.AddSerilogDefaults();
 // The Host authenticates its callers with bearer tokens. The issuer, audiences and signing keys come from the
@@ -61,12 +61,10 @@ if (builder.Configuration.GetConnectionString("broker") is not null)
 }
 
 builder.Services.AddSingleton<INewProductAnnouncer, LoggedNewProductAnnouncer>();
-// The container is validated when it is built, in every environment, and a command or query that declares a permission
-// whose check is not registered stops the Host there, as in a Host of Modules.
-((IHostApplicationBuilder)builder).ConfigureContainer(
-    new DefaultServiceProviderFactory(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true }),
-    services => services.EnsurePouryaKitDeclaredAuthorizers()
-);
+// The container is validated when it is built, in every environment, and the Kit's composition checks stop the Host
+// before it serves, as in a Host of Modules: a command or query that declares a permission whose check is not
+// registered, a cacheable query without caching, a command without a Unit of Work.
+builder.AddPouryaKitCompositionChecks();
 
 var app = builder.Build();
 // First, so an exception in routing or authentication still answers a problem response.

@@ -11,31 +11,35 @@ public static class DelayedCommandServiceCollectionExtensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Declares that <paramref name="module"/>, the Module's definition type, schedules <typeparamref
-        /// name="TCommand"/>, one of its own commands, to run later with <see cref="IDelayedCommands"/>, under
-        /// <paramref name="name"/>: its durable queue and half of its Receipts' key, so it is stable; keep it when the
-        /// type is renamed. The stored command names its type and is stored on the queue of its name, so renaming
-        /// either strands the deliveries stored before it as dead letters. Its deliveries run in <paramref
-        /// name="module"/>, so they reach its Unit of Work and its Receipts. A Module's Composition Root calls it on
-        /// its builder; an application without Modules calls it on its own services with no Module. Throws here, at
-        /// startup, when the type is abstract or generic, when the name is missing, invalid, a queue Wolverine keeps
-        /// for itself or another delayed command's, ignoring case, and when the type is already declared under another
-        /// name or for another Module. The Host then fails to start when a subscription has the same name, when no
-        /// Outbox writes delayed commands (<see cref="INotificationOutbox"/>), or when its queue, as Wolverine built
-        /// it, is not a durable application queue.
+        /// Declares that the Module whose Composition Root calls it on its builder (<see cref="IModuleServices"/>), or the
+        /// application on its own services, schedules <typeparamref name="TCommand"/>, one of its own commands, to run
+        /// later with <see cref="IDelayedCommands"/>, under <paramref name="name"/>: its durable queue and half of its
+        /// Receipts' key, so it is stable; keep it when the type is renamed. The stored command names its type and is
+        /// stored on the queue of its name, so renaming either strands the deliveries stored before it as dead letters.
+        /// Its deliveries run in that Module, so they reach its Unit of Work and its Receipts. Throws here, at startup,
+        /// when the type is abstract or generic, when the name is missing, invalid, a queue Wolverine keeps for itself or
+        /// another delayed command's, ignoring case, and when the type is already declared under another name or for
+        /// another Module. The Host then fails to start when the declaration belongs to no Module in a Host of Modules,
+        /// when a subscription has the same name, when no Outbox writes delayed commands
+        /// (<see cref="INotificationOutbox"/>), or when its queue, as Wolverine built it, is not a durable application
+        /// queue.
         /// </summary>
-        public IServiceCollection AddPouryaKitDelayedCommand<TCommand>(string name, Type? module = null)
-            where TCommand : Command
-        {
-            ArgumentNullException.ThrowIfNull(services);
-            DelayedCommandDeclarations.In(services).Add(name, typeof(TCommand), module);
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
-            return services;
-        }
+        public IServiceCollection AddPouryaKitDelayedCommand<TCommand>(string name)
+            where TCommand : Command => DeclareDelayedCommand(services, name, typeof(TCommand), IModuleServices.ModuleOf(services));
 
         /// <summary>
-        /// Declares that <paramref name="module"/>, the Module's definition type, runs <typeparamref name="TCommand"/>,
-        /// one of its own commands, as recurring work: at every occurrence of the cadence that
+        /// Declares, in the Host's composition, that <paramref name="module"/>, a Module's definition type, schedules
+        /// <typeparamref name="TCommand"/>, as <see cref="AddPouryaKitDelayedCommand{TCommand}(string)"/> on that Module's
+        /// builder does. Throws, besides, when called on the builder of another Module.
+        /// </summary>
+        public IServiceCollection AddPouryaKitDelayedCommand<TCommand>(string name, Type module)
+            where TCommand : Command =>
+            DeclareDelayedCommand(services, name, typeof(TCommand), IModuleServices.ModuleOf(services, module));
+
+        /// <summary>
+        /// Declares that the Module whose Composition Root calls it on its builder (<see cref="IModuleServices"/>), or the
+        /// application on its own services, runs <typeparamref name="TCommand"/>, one of its own commands, as recurring
+        /// work: at every occurrence of the cadence that
         /// <see cref="PouryaKitRecurringCommandOptions.Every"/> sets, configured through the returned builder, as an
         /// Operation of its own for the system Actor named <paramref name="systemActor"/>, with a new correlation, and
         /// with the command <paramref name="occurrence"/> builds for the occurrence's time. Occurrences fall on whole
@@ -49,30 +53,61 @@ public static class DelayedCommandServiceCollectionExtensions
         /// set aside as a dead letter, and the next one is stored only when it is replayed or a Host starts. Feature code
         /// never schedules it with <see cref="IDelayedCommands"/>. Declare it once: declaring it again with another system Actor
         /// or occurrence factory, or as a delayed command too, throws, naming the declaration it already has. Throws here as
-        /// <see cref="AddPouryaKitDelayedCommand"/> does; the Host fails to start, as for a delayed command, and when the
-        /// cadence is not longer than zero.
+        /// <see cref="AddPouryaKitDelayedCommand{TCommand}(string)"/> does; the Host fails to start, as for a delayed
+        /// command, and when the cadence is not longer than zero.
+        /// </summary>
+        public OptionsBuilder<PouryaKitRecurringCommandOptions> AddPouryaKitRecurringCommand<TCommand>(
+            string name,
+            string systemActor,
+            Func<DateTimeOffset, TCommand> occurrence
+        )
+            where TCommand : Command => DeclareRecurringCommand(services, name, systemActor, occurrence, IModuleServices.ModuleOf(services));
+
+        /// <summary>
+        /// Declares, in the Host's composition, that <paramref name="module"/>, a Module's definition type, runs
+        /// <typeparamref name="TCommand"/> as recurring work, as
+        /// <see cref="AddPouryaKitRecurringCommand{TCommand}(string, string, Func{DateTimeOffset, TCommand})"/> on that
+        /// Module's builder does. Throws, besides, when called on the builder of another Module.
         /// </summary>
         public OptionsBuilder<PouryaKitRecurringCommandOptions> AddPouryaKitRecurringCommand<TCommand>(
             string name,
             string systemActor,
             Func<DateTimeOffset, TCommand> occurrence,
-            Type? module = null
+            Type module
         )
-            where TCommand : Command
-        {
-            ArgumentNullException.ThrowIfNull(services);
-            ArgumentException.ThrowIfNullOrWhiteSpace(systemActor);
-            ArgumentNullException.ThrowIfNull(occurrence);
-            DelayedCommandDeclarations.In(services).Add(name, typeof(TCommand), module, new Recurrence(systemActor, occurrence));
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, RecurringCommandStart>());
-            return services
-                .AddOptions<PouryaKitRecurringCommandOptions>(name.ToLowerInvariant())
-                .Validate(
-                    options => options.Every > TimeSpan.Zero,
-                    $"The recurring command {name} has no cadence: set PouryaKitRecurringCommandOptions.Every, named {name.ToLowerInvariant()}, longer than zero, as its declaration's options builder binds it."
-                )
-                .ValidateOnStart();
-        }
+            where TCommand : Command =>
+            DeclareRecurringCommand(services, name, systemActor, occurrence, IModuleServices.ModuleOf(services, module));
+    }
+
+    private static IServiceCollection DeclareDelayedCommand(IServiceCollection services, string name, Type command, Type? module)
+    {
+        DelayedCommandDeclarations.In(services).Add(name, command, module);
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
+        return services;
+    }
+
+    private static OptionsBuilder<PouryaKitRecurringCommandOptions> DeclareRecurringCommand<TCommand>(
+        IServiceCollection services,
+        string name,
+        string systemActor,
+        Func<DateTimeOffset, TCommand> occurrence,
+        Type? module
+    )
+        where TCommand : Command
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(systemActor);
+        ArgumentNullException.ThrowIfNull(occurrence);
+        DelayedCommandDeclarations.In(services).Add(name, typeof(TCommand), module, new Recurrence(systemActor, occurrence));
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, RecurringCommandStart>());
+        return services
+            .AddOptions<PouryaKitRecurringCommandOptions>(name.ToLowerInvariant())
+            .Validate(
+                options => options.Every > TimeSpan.Zero,
+                $"The recurring command {name} has no cadence: set PouryaKitRecurringCommandOptions.Every, named {name.ToLowerInvariant()}, longer than zero, as its declaration's options builder binds it."
+            )
+            .ValidateOnStart();
     }
 }

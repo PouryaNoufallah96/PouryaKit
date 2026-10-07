@@ -18,7 +18,7 @@ using PouryaKit.Web.OpenApi;
 var builder = WebApplication.CreateBuilder(args);
 // OpenTelemetry that exports the Kit's activities and metrics, liveness and readiness checks, service discovery and one
 // standard resilience pipeline for every HttpClient; then Serilog in place of the logging providers. Each recipe is
-// optional and lives in ModularMonolith.ServiceDefaults, which this application owns.
+// optional and lives in the application's own ServiceDefaults project.
 builder.AddServiceDefaults();
 builder.AddSerilogDefaults();
 // The Host authenticates its callers with bearer tokens. The issuer, audiences and signing keys come from the
@@ -45,7 +45,8 @@ builder.Services.AddHttpClient("downstream").AddPouryaKitOperationContext();
 // The permissions a command or query declares (Catalog's RemoveProducts) are the HTTP caller's permission claims.
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IActorPermissions, CallerPermissions>();
-// Each Module through its Composition Root, in the Host's one container, which is validated when it is built.
+// Each Module through its Composition Root, in the Host's one container, which is validated when it is built; the
+// Kit's composition checks stop the Host before it serves.
 builder.AddPouryaKitModules(modules =>
 {
     modules.Add<CatalogModule>();

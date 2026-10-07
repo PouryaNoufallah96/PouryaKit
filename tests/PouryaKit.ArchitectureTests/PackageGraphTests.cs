@@ -82,7 +82,7 @@ public sealed class PackageGraphTests
 
         Assert.Equal(
             [
-                "PouryaKit.Cqrs references the packages [MediatR, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Logging.Abstractions]; section C allows [Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Logging.Abstractions].",
+                "PouryaKit.Cqrs references the packages [MediatR, Microsoft.Extensions.DependencyInjection, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Hosting.Abstractions, Microsoft.Extensions.Logging.Abstractions]; section C allows [Microsoft.Extensions.DependencyInjection, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Hosting.Abstractions, Microsoft.Extensions.Logging.Abstractions].",
             ],
             PackageGraph.Violations(cqrs with { DirectPackages = new HashSet<string>([.. cqrs.DirectPackages, "MediatR"]) })
         );

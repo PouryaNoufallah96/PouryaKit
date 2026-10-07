@@ -25,7 +25,7 @@ using PouryaKit.Web;
 using PouryaKit.Web.OpenApi;
 
 // In the Composition Root:
-// module.AddPouryaKitEndpoints("/catalog", typeof(CatalogModule).Assembly);
+// module.AddPouryaKitEndpoints("/catalog");
 // module.AddPouryaKitApiVersions(
 //     "/catalog",
 //     versions => versions.HasDeprecatedApiVersion(new ApiVersion(1, 0)).HasApiVersion(new ApiVersion(2, 0))

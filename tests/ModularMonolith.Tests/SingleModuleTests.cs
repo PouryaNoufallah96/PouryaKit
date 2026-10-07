@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Caching;
 using PouryaKit.Cqrs;
 using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
@@ -76,6 +77,7 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
         );
         services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
         services.AddPouryaKitCqrs(typeof(StubDbContext).Assembly);
+        services.AddPouryaKitCaching();
         services.AddPouryaKitValidation(typeof(StubDbContext).Assembly);
         return services.BuildServiceProvider();
     }

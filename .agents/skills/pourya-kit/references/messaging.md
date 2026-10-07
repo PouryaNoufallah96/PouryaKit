@@ -57,7 +57,7 @@ public interface INewProductAnnouncer
 
 public sealed record NewProductAnnouncement(Guid ProductId, string Name);
 
-// In the Composition Root: module.AddPouryaKitNotificationHandlers(typeof(CatalogModule).Assembly, typeof(CatalogModule));
+// In the Composition Root: module.AddPouryaKitNotificationHandlers();
 ```
 
 ## Notification Handler or Domain Event Handler
@@ -78,7 +78,7 @@ Both react to a Domain Event the Module raised. Choose by when the reaction may 
 
 ## Declaring handlers and running deliveries
 
-- In each Module's Composition Root, call `module.AddPouryaKitNotificationHandlers(typeof(CatalogModule).Assembly, typeof(CatalogModule))` (`PouryaKit.Messaging.Wolverine`). It finds every Notification Handler in the assembly, internal ones included, subscribes each one to its Domain Event under its subscription name ([Names](#names)), and runs its deliveries in the Module named by the second argument, the Module's definition type, so they reach that Module's Unit of Work. It throws when the assembly has no Notification Handler. An application without Modules calls it on its own services and leaves the Module out.
+- In each Module's Composition Root, call `module.AddPouryaKitNotificationHandlers()` (`PouryaKit.Messaging.Wolverine`). It finds every Notification Handler in the assembly of the Module's definition, internal ones included, subscribes each one to its Domain Event under its subscription name ([Names](#names)), and runs its deliveries in the Module whose builder it is called on, so they reach that Module's Unit of Work ([modules.md](modules.md#the-composition-root)). Handlers that live in other assemblies are named instead, `AddPouryaKitNotificationHandlers(assembly, ...)`. It throws when the assemblies have no Notification Handler. An application without Modules calls it on its own services, naming the assembly; the deliveries then run in no Module. Called on `builder.Services` in a Host of Modules, it fails the Host's start ([Startup checks](#startup-checks)); a Host's composition that declares a Module's handlers on its behalf names it, `AddPouryaKitNotificationHandlers(typeof(CatalogModule))`.
 - That Module needs its own Unit of Work (`UsePostgres`, [persistence.md](persistence.md#postgresql)) and the Receipt table ([Receipts](#receipts)).
 - In the Host, call `builder.UsePouryaKitWolverine(connectionName: "app")` (`PouryaKit.Messaging.Wolverine.EFCore`) once; Modules added after it still get their subscriptions. It runs the Host's deliveries, of Notification Handlers and Integration Event Handlers alike, on Wolverine with its message store in the database of that connection string, which must be the one the Modules' DbContexts use: the Outbox is written in their transactions. Wolverine creates its tables in the store schema when the Host starts. Wolverine discovers no handlers of its own. Messages are stored and delivered in the Kit's one JSON representation, the one HTTP bodies use, so a typed ID inside a Domain Event reads the same in its envelope as in a response ([domain-primitives.md](domain-primitives.md#typed-ids)), and read back strictly (`UsePouryaKitWireJson`): a body that lacks a member its type requires, or carries null where the type forbids it, is set aside as a dead letter, never handled with a default ([Dead letters](#dead-letters)). Its optional `configure` parameter adds Host-specific Wolverine configuration after the Kit's, so it may override any of it.
 - Wolverine generates its handler code at run time in Development and, in every other environment, loads it from the Host's assembly (`TypeLoadMode.Static`), where `dotnet run -- codegen write` wrote it before the Release build ([templates.md](templates.md#pre-generating-wolverines-code-for-production)). The Kit's own deliveries need no generated code; a Wolverine handler a Host adds through `configure` does, and a Host without it does not start outside Development.
@@ -161,28 +161,23 @@ public sealed class InventoryModule : IModuleDefinition
     public void Configure(ModuleBuilder module)
     {
         module.UsePostgres<InventoryDbContext>(connectionName: "app", schema: "inventory");
-        module.AddPouryaKitCqrs(typeof(InventoryModule).Assembly);
-        module.Subscribe<ProductCreatedV1, OpenStockItemIntegrationEventHandler>(
-            "inventory.product-created",
-            typeof(InventoryModule)
-        );
+        module.AddPouryaKitCqrs();
+        module.Subscribe<ProductCreatedV1, OpenStockItemIntegrationEventHandler>("inventory.product-created");
         // Catalog's Snapshot of each product, for Inventory's copy (Snapshots between Modules, below).
-        module.Subscribe<ProductSnapshotV1, CopyProductIntegrationEventHandler>(
-            "inventory.catalog-products",
-            typeof(InventoryModule)
-        );
+        module.Subscribe<ProductSnapshotV1, CopyProductIntegrationEventHandler>("inventory.catalog-products");
     }
 }
 
 // In Catalog's Composition Root, the publishing side (modules.md):
-//     module.Publish<ProductCreatedV1>("catalog.product-created.v1", typeof(CatalogModule));
-//     module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1", typeof(CatalogModule));
+//     module.Publish<ProductCreatedV1>("catalog.product-created.v1");
+//     module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1");
 // In Billing's Composition Root, a second subscription to the same Integration Event, under its own name:
-//     module.Subscribe<ProductCreatedV1, OpenPriceListIntegrationEventHandler>("billing.product-created", typeof(BillingModule));
+//     module.Subscribe<ProductCreatedV1, OpenPriceListIntegrationEventHandler>("billing.product-created");
 ```
 
-- The publishing Module declares each Integration Event it publishes with `module.Publish<TIntegrationEvent>(wireName, typeof(CatalogModule))` (`PouryaKit.Messaging.Wolverine`). One Module publishes a type, under one wire name.
-- The receiving Module subscribes each Integration Event Handler with `module.Subscribe<TIntegrationEvent, THandler>(subscriptionName, typeof(InventoryModule))`. The subscription name is declared, not derived, and the handler's deliveries run in the Module the last argument names, so they reach its Unit of Work. `Subscribe` registers the handler, which may be `internal`.
+- The publishing Module declares each Integration Event it publishes with `module.Publish<TIntegrationEvent>(wireName)` (`PouryaKit.Messaging.Wolverine`) on its builder, which names the Module ([modules.md](modules.md#the-composition-root)). One Module publishes a type, under one wire name.
+- The receiving Module subscribes each Integration Event Handler with `module.Subscribe<TIntegrationEvent, THandler>(subscriptionName)`. The subscription name is declared, not derived, and the handler's deliveries run in the Module whose builder declares it, so they reach its Unit of Work. `Subscribe` registers the handler, which may be `internal`.
+- A Host's composition that declares for a Module, such as a test's extra subscription, names it: `builder.Services.Subscribe<TIntegrationEvent, THandler>(subscriptionName, typeof(InventoryModule))`; every Module-aware declaration has that form. Made on `builder.Services` without the Module, in a Host of Modules, a declaration belongs to no Module and fails the Host's start ([Startup checks](#startup-checks)).
 - Several Modules may subscribe to one Integration Event, each with its own `Subscribe` and subscription name, as Inventory and Billing do to `ProductCreatedV1`. The publisher changes nothing for a new subscription: each gets its own delivery, and one that fails never makes another run again ([What the Kit guarantees](#what-the-kit-guarantees)).
 - The receiving Module needs its own Unit of Work (`UsePostgres`) and the Receipt table in its schema ([Receipts](#receipts)).
 - The receiving Module's project references the publishing Module's Contracts project and never the publishing Module: Inventory references `Catalog.Contracts` only. Neither Module references a Wolverine type.
@@ -265,8 +260,8 @@ A wire name is one version of one contract type. A change receivers could not re
 public sealed record ProductCreatedV2(Guid Id, DateTimeOffset OccurredOn, Guid ProductId, string Name, Guid CategoryId);
 
 // Catalog's Composition Root: both versions, each under its own wire name
-//     module.Publish<ProductCreatedV1>("catalog.product-created.v1", typeof(CatalogModule));
-//     module.Publish<ProductCreatedV2>("catalog.product-created.v2", typeof(CatalogModule));
+//     module.Publish<ProductCreatedV1>("catalog.product-created.v1");
+//     module.Publish<ProductCreatedV2>("catalog.product-created.v2");
 
 // PublishProductCreatedNotificationHandler: both, with the one Domain Event's Id
 events.Publish(domainEvent.Id, new ProductCreatedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.ProductId.Value, domainEvent.Name));
@@ -276,7 +271,7 @@ events.Publish(
 );
 
 // Inventory's Composition Root: a subscription to v2, beside its subscription to v1
-//     module.Subscribe<ProductCreatedV2, FileProductCategoryIntegrationEventHandler>("inventory.product-categories", typeof(InventoryModule));
+//     module.Subscribe<ProductCreatedV2, FileProductCategoryIntegrationEventHandler>("inventory.product-categories");
 ```
 
 - Add the new record under `Events/V2/`, named with its version, as a type of its own: copy the fields it keeps rather than deriving it from the old one.
@@ -340,10 +335,10 @@ internal sealed class ProductSnapshotMapper : ISnapshotMapper<Product, ProductSn
 
 ### Declaring a Snapshot
 
-- The publishing Module declares each Snapshot in its Composition Root: `module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1", typeof(CatalogModule))` (`PouryaKit.Messaging.Wolverine`). It names the aggregate, the Snapshot type and the mapper, then the wire name and the Module whose Operations publish it ([modules.md](modules.md#the-composition-root)). One aggregate may have several Snapshot types, each with its own declaration, wire name and mapper.
+- The publishing Module declares each Snapshot in its Composition Root: `module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1")` (`PouryaKit.Messaging.Wolverine`). It names the aggregate, the Snapshot type and the mapper, then the wire name; the Module whose Operations publish it is the one whose builder declares it ([modules.md](modules.md#the-composition-root)). One aggregate may have several Snapshot types, each with its own declaration, wire name and mapper.
 - The receiving Module subscribes an ordinary `IIntegrationEventHandler<TSnapshot>` with `Subscribe`, as Inventory does above ([Declaring what a Module publishes and subscribes](#declaring-what-a-module-publishes-and-subscribes)). Several Modules may subscribe, each under its own subscription name.
 - A Snapshot's wire name and its subscriptions' names are declared, never derived, and follow [Names](#names) like an Integration Event's.
-- An application without Modules calls `PublishSnapshot` on its own services and leaves the Module out.
+- An application without Modules calls `PublishSnapshot` on its own services, where it belongs to the application.
 
 ### Keeping a copy
 
@@ -433,7 +428,7 @@ A feature author keeps these rules, or the copies in other Modules go wrong:
 - **The provider key has a lossless encoding.** After EF's value converter, each key part must be a non-null `Guid`, `int`, `long`, `string`, `byte[]` or `DateTime`. Guid, int, long and string keep their existing invariant formats; bytes use uppercase hexadecimal. A DateTime uses its ticks without Kind, so PostgreSQL's timestamp without time zone can reload it with Unspecified Kind without changing its identity. Its mapping must be a PostgreSQL timestamp with precision from 0 to 6, and every value must align to that precision. The Kit refuses date mappings, submicrosecond values and any other value that the mapping would round or truncate. Composite keys prefix each encoded part with its invariant length and a colon. Null and other provider types fail the Operation before saving. A converter to another supported provider type must preserve the key across reloads.
 - **Old colliding identities need a deliberate recovery.** Earlier byte-array keys all encoded as `System.Byte[]`, and DateTime formatting lost fractions of a second. Existing Receipts and applied-version rows cannot be migrated losslessly because those identities do not identify the original key. If such keys were deployed, drain their old deliveries and deliberately rebuild their projections, Receipts and applied-version state from the publishing data before using the corrected encoding. Guid, int, long and string identities are unchanged.
 - **The key of an aggregate that publishes Snapshots is never used again after the aggregate is deleted outright.** Every receiver keeps its Tombstone's version and would turn away a new aggregate's lower versions under the same key until they passed it. The Kit's Guid version 7 keys are never used again. A soft-deleted aggregate keeps its key and its version, and the repository never returns it again; a key a person chooses, such as a code, is the one to watch.
-- **A declaration names its Module and covers one aggregate.** Snapshots are built only in Operations of the Module the declaration names, so in a Host of Modules pass it the Module, and in an application without Modules leave it out. A declaration without its Module in a Host of Modules, or with one in an application without Modules, would never publish: it fails the Operation that changes its aggregate with an `InvalidOperationException` instead, and nothing commits. A declaration of one Module never publishes for another Module's aggregates. Declare it for one aggregate, or for a type of one mapped inheritance hierarchy, never for a base type that independent aggregates share: their keys are their own, so their Snapshots would share identities and versions, and a receiver would turn one aggregate's away for another's. Such a declaration is refused the same way, by the first Operation of the Module that commits a change to any aggregate the Module declares a Snapshot for.
+- **A declaration belongs to its Module and covers one aggregate.** Snapshots are built only in Operations of the Module the declaration belongs to: in a Host of Modules declare it on the Module's builder, and in an application without Modules on its own services. A declaration without a Module in a Host of Modules fails the Host's start ([Startup checks](#startup-checks)); one that names a Module in an application without Modules would never publish, so it fails the Operation that changes its aggregate with an `InvalidOperationException` instead, and nothing commits. A declaration of one Module never publishes for another Module's aggregates. Declare it for one aggregate, or for a type of one mapped inheritance hierarchy, never for a base type that independent aggregates share: their keys are their own, so their Snapshots would share identities and versions, and a receiver would turn one aggregate's away for another's. Such a declaration is refused the same way, by the first Operation of the Module that commits a change to any aggregate the Module declares a Snapshot for.
 
 ## Delayed commands
 
@@ -464,10 +459,10 @@ internal sealed class OpenQuoteCommandHandler(IRepository<Quote, QuoteId> quotes
 internal sealed record ExpireQuoteCommand(Guid QuoteId) : Command;
 
 // In the Composition Root:
-//     module.AddPouryaKitDelayedCommand<ExpireQuoteCommand>("billing.expire-quote", typeof(BillingModule));
+//     module.AddPouryaKitDelayedCommand<ExpireQuoteCommand>("billing.expire-quote");
 ```
 
-- **Declare each delayed command** in its Module's Composition Root with `AddPouryaKitDelayedCommand<TCommand>(name, module)`. The name is its durable queue and half of its Receipts' key, so keep it when the command is renamed; it follows the rules of a subscription name ([Names](#names)) and may not be a subscription's. The stored command names its CLR type and waits on the queue of its name, so renaming or moving the type, or renaming the declaration, strands the commands stored before it: they are set aside as dead letters, the renamed declaration's with an `UnknownDelayedCommandException`, never run under the new name's Receipts. A Module schedules only commands it declared: `Schedule` throws for any other, and in code that only reads.
+- **Declare each delayed command** in its Module's Composition Root with `module.AddPouryaKitDelayedCommand<TCommand>(name)`; the Module is the builder's. The name is its durable queue and half of its Receipts' key, so keep it when the command is renamed; it follows the rules of a subscription name ([Names](#names)) and may not be a subscription's. The stored command names its CLR type and waits on the queue of its name, so renaming or moving the type, or renaming the declaration, strands the commands stored before it: they are set aside as dead letters, the renamed declaration's with an `UnknownDelayedCommandException`, never run under the new name's Receipts. A Module schedules only commands it declared: `Schedule` throws for any other, and in code that only reads.
 - **Nothing schedules before the commit.** `Schedule` only records the command. A failed Result, a nested command that failed, a refused save or an exception leaves no delayed command, as it leaves no Notification.
 - **When it runs.** The message store runs it once it is due, on whichever Host instance is running then: a restart, or the death of the Host that scheduled it, loses nothing, and a time already past when the Operation commits runs it at once. The store compares the time with the system clock, not with the Host's `TimeProvider`, and finds it on its scheduled-job poll, so it runs up to one poll after it is due. A test that needs it to run uses a short real delay, not a fake clock; the test fixture does not wait for a delayed command not yet due ([testing.md](testing.md#deliveries)). A delayed command due later than `InboxStaleTime` after it was scheduled is stale from its first attempt ([The stale-time rule](#the-stale-time-rule)).
 - **On whose authority.** It runs as a continuation of the Operation that scheduled it: the same Actor, tenant and correlation, that Operation's `OperationId` as its causation, a new `OperationId`, never a system Actor. It goes through the dispatcher in the declared Module, with its authorizers and validator; a declared permission is not checked again for a continuation ([security.md](security.md#continuations)). Write its handler for the state it finds then, which may have changed since it was scheduled.
@@ -511,15 +506,14 @@ internal sealed class ReconcileStockCommandHandler(IUnitOfWorkConnection unitOfW
 //         .AddPouryaKitRecurringCommand(
 //             "inventory.reconcile-stock",
 //             systemActor: "inventory.stock-reconciler",
-//             occurrence => new ReconcileStockCommand(occurrence),
-//             typeof(InventoryModule)
+//             occurrence => new ReconcileStockCommand(occurrence)
 //         )
 //         .BindConfiguration("Inventory:ReconcileStock");
 // In the Host's appsettings.json:
 //     "Inventory": { "ReconcileStock": { "Every": "01:00:00" } }
 ```
 
-- **Declare it** in its Module's Composition Root with `AddPouryaKitRecurringCommand<TCommand>(name, systemActor, occurrence, module)`. The name follows a delayed command's rules: its durable queue and half of its Receipts' key, so keep it; never a subscription's or another delayed command's. `systemActor` is required and names the Actor every occurrence runs as, `Actor.System(systemActor)`: nothing defaults to a system Actor. `occurrence` builds the command for each occurrence's time and must return the declared type. A command is declared once, delayed or recurring, never both.
+- **Declare it** in its Module's Composition Root with `module.AddPouryaKitRecurringCommand<TCommand>(name, systemActor, occurrence)`; the Module is the builder's. The name follows a delayed command's rules: its durable queue and half of its Receipts' key, so keep it; never a subscription's or another delayed command's. `systemActor` is required and names the Actor every occurrence runs as, `Actor.System(systemActor)`: nothing defaults to a system Actor. `occurrence` builds the command for each occurrence's time and must return the declared type. A command is declared once, delayed or recurring, never both.
 - **Configure its cadence.** The declaration returns the options builder of `PouryaKitRecurringCommandOptions`, named by the declaration's name, lower-cased: bind its `Every` from configuration (`BindConfiguration(section)`), or set it with `Configure`. The Host fails to start with an `OptionsValidationException` when `Every` is not longer than zero, so a missing configuration never runs it at a default. A changed cadence applies from the next occurrence stored.
 - **When it runs.** Occurrences fall on whole multiples of `Every` counted from the Unix epoch, in UTC: an hourly one runs at the top of each hour, a daily one at midnight UTC. The message store compares them with the system clock, not with the Host's `TimeProvider`, and finds one due on its scheduled-job poll (`ScheduledJobPollingTime`, 5 s by default), so a cadence shorter than the poll is not kept. A Host that starts runs the first occurrence after now.
 - **On whose authority.** Each attempt is a new Operation of the declared system Actor, in the declared Module, with no tenant, a new correlation and no causation, never a trusted continuation: it inherits nothing from the Operation that stored it, and nothing from any HTTP caller. Its trace parent is not restored either ([observability.md](observability.md)). It goes through the dispatcher with its authorizers and validator; a permission the command declares is checked for the system Actor as for any Actor, so the application grants it ([security.md](security.md#the-actors-permissions)).
@@ -701,8 +695,9 @@ A delayed command cannot keep the rule when it is due later than the stale time:
   - `Receive` and `ReceiveSnapshot`, as [rabbitmq.md](rabbitmq.md#a-host-that-receives) lists.
   - `AddPouryaKitDelayedCommand`, for an abstract or generic command; a name that is missing, invalid, reserved or another delayed command's; and the same command declared under another name or for another Module. Repeating it adds nothing.
   - `AddPouryaKitRecurringCommand`, for everything `AddPouryaKitDelayedCommand` refuses, a missing system Actor or occurrence, and a command already declared as a delayed command.
+- **When the Host starts, before any hosted service starts**, the composition checks fail it, one line per declaration, for a publication, Snapshot, subscription, Notification Handler, delayed or recurring command declared without a Module in a Host of Modules: made on `builder.Services` without naming the Module, it belongs to no Module, so its first publish, commit, delivery or scheduling would fail once the Host serves. Each line names the declaration, its form on the Module's builder and its form that names the Module ([modules.md](modules.md#startup-checks)). `Receive` and `ReceiveSnapshot` belong to the Host and are not checked.
 - **When the Host starts**, it fails, naming each problem, for a subscription to an Integration Event or Snapshot that no Module of the Host publishes and no `Receive` or `ReceiveSnapshot` declares; for a message type Wolverine would also route to another subscribed type's queues, or wherever another published type is sent, such as its exchange on a broker, because its wire name, its name or its full name equals that type's full name, ignoring case (a v2 published under the full name of its v1 would reach every v1 subscription, and every Host that receives v1); for an Integration Event this process already sends under another wire name; and for an Integration Event that Wolverine had already named otherwise before the Host declared it, because Wolverine keeps the first name it gives a type and would send it under that name. Wire names are declared all or none. It also fails for a delayed or recurring command whose name a subscription has, and with an `OptionsValidationException` for a recurring command whose cadence is not longer than zero.
 - **After every hosted service started**, it fails when Notification Handlers, Integration Events, Snapshots or delayed commands are declared but nothing writes them to an Outbox: `UsePouryaKitWolverine()` without a connection name, from `PouryaKit.Messaging.Wolverine`, runs Wolverine with no database, for a Host that declares none of them. It also fails when Host configuration made a subscription's or a delayed command's queue one that does not store what it receives, such as `LocalQueue(name).BufferedInMemory()`, and when it made a broker listener one that does not, or whose dead letters go to a broker queue ([rabbitmq.md](rabbitmq.md#startup-checks)).
-- Not checked: that a Module whose Composition Root handles no command of its own, but declares Notification Handlers or subscriptions, has a Unit of Work (one that handles a command is checked when the Host is composed, [modules.md](modules.md#startup-checks)); and that a Module has the Receipt table and, for a Snapshot, the Snapshot version table ([Receipts](#receipts)). Not checked at startup either, but failing the Operation that commits: a Snapshot of an aggregate whose key the database generates, a Snapshot declaration without its Module in a Host of Modules, and one that covers independent aggregates ([The rules of a mapper and a key](#the-rules-of-a-mapper-and-a-key)).
+- Not checked: that a Module whose Composition Root handles no command of its own, but declares Notification Handlers or subscriptions, has a Unit of Work (one that handles a command is checked when the Host is composed, [modules.md](modules.md#startup-checks)); and that a Module has the Receipt table and, for a Snapshot, the Snapshot version table ([Receipts](#receipts)). Not checked at startup either, but failing the Operation that commits: a Snapshot of an aggregate whose key the database generates, a Snapshot declaration that names a Module in an application without Modules, and one that covers independent aggregates ([The rules of a mapper and a key](#the-rules-of-a-mapper-and-a-key)).
 
 Testing deliveries: [testing.md](testing.md#deliveries).

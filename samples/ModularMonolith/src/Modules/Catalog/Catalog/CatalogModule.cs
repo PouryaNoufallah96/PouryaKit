@@ -29,17 +29,17 @@ public sealed class CatalogModule : IModuleDefinition
     {
         module.UsePostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
         module.MapUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
-        module.AddPouryaKitDapper(connectionName: "app", typeof(CatalogModule).Assembly);
-        module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);
-        module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
-        module.AddPouryaKitPermissions(typeof(CatalogModule).Assembly);
-        module.AddPouryaKitNotificationHandlers(typeof(CatalogModule).Assembly, typeof(CatalogModule));
-        module.Publish<ProductCreatedV1>("catalog.product-created.v1", typeof(CatalogModule));
-        module.Publish<Contracts.Products.Events.V2.ProductCreatedV2>("catalog.product-created.v2", typeof(CatalogModule));
-        module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1", typeof(CatalogModule));
+        module.AddPouryaKitDapper(connectionName: "app");
+        module.AddPouryaKitCqrs();
+        module.AddPouryaKitValidation();
+        module.AddPouryaKitPermissions();
+        module.AddPouryaKitNotificationHandlers();
+        module.Publish<ProductCreatedV1>("catalog.product-created.v1");
+        module.Publish<Contracts.Products.Events.V2.ProductCreatedV2>("catalog.product-created.v2");
+        module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1");
         module.AddScoped<IProductRepository, ProductRepository>();
         module.AddScoped<ICatalogProducts, CatalogProducts>();
-        module.AddPouryaKitEndpoints("/catalog", typeof(CatalogModule).Assembly);
+        module.AddPouryaKitEndpoints("/catalog");
         // v2 adds renaming a product; v1 is deprecated, and the Host configures its sunset.
         module.AddPouryaKitApiVersions(
             "/catalog",

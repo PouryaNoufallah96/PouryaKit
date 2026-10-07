@@ -5,6 +5,7 @@ using Catalog.Products.Features.CreateProduct;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Misnamed;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Caching;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
@@ -477,6 +478,7 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
         builder.Services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
         builder.Services.AddPouryaKitCqrs(typeof(StubDbContext).Assembly);
+        builder.Services.AddPouryaKitCaching();
         builder.Services.AddPouryaKitNotificationHandlers(typeof(StubDbContext).Assembly);
         builder.UsePouryaKitWolverine(connectionName: "app");
         builder.Services.UsePouryaKitTestDelivery();
@@ -624,5 +626,5 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
 public sealed class MisnamedModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module) =>
-        module.AddPouryaKitNotificationHandlers(typeof(MisnamedNotifications).Assembly, typeof(MisnamedModule));
+        module.AddPouryaKitNotificationHandlers(typeof(MisnamedNotifications).Assembly);
 }
