@@ -37,7 +37,8 @@ internal sealed class JwtBearerValidation : IValidateOptions<JwtBearerOptions>
             discovered
             || token.IssuerSigningKey is not null
             || token.IssuerSigningKeys?.Any() == true
-            || token.IssuerSigningKeyResolver is not null;
+            || token.IssuerSigningKeyResolver is not null
+            || token.IssuerSigningKeyResolverUsingConfiguration is not null;
         if (!token.RequireSignedTokens || !keyed)
         {
             failures.Add(

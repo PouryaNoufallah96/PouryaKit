@@ -17,6 +17,9 @@ internal static class TestIssuer
 
     private static readonly SymmetricSecurityKey Key = new(RandomNumberGenerator.GetBytes(32));
 
+    /// <summary>The key this issuer signs with, for a Host that resolves its signing keys itself.</summary>
+    public static SecurityKey SigningKey => Key;
+
     /// <summary>The command-line configuration that makes a Host trust this issuer.</summary>
     public static string[] HostArguments { get; } =
     [
