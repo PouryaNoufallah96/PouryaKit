@@ -15,18 +15,19 @@
     { "id": "PouryaKit.Messaging.Wolverine", "type": "PouryaKit.Messaging.Wolverine.IReceipts" },
     { "id": "PouryaKit.Messaging.Wolverine.EFCore", "type": "PouryaKit.Messaging.Wolverine.EFCore.ReceiptTable" },
     { "id": "PouryaKit.Web", "type": "PouryaKit.Web.IEndpoint" },
+    { "id": "PouryaKit.Web.OpenApi", "type": "PouryaKit.Web.OpenApi.PouryaKitOpenApiOptions" },
     { "id": "PouryaKit.Testing", "type": "PouryaKit.Testing.Delivery" }
   ],
   "compositions": [
     {
       "name": "single-module",
       "packages": ["PouryaKit.Cqrs", "PouryaKit.Validation", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Web"],
-      "excluded": ["PouryaKit.Modularity", "PouryaKit.Messaging"]
+      "excluded": ["PouryaKit.Modularity", "PouryaKit.Messaging", "PouryaKit.Web.OpenApi"]
     },
     {
       "name": "modular-monolith",
       "source": "samples/ModularMonolith/src",
-      "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Observability", "PouryaKit.Security", "PouryaKit.Validation", "PouryaKit.Web"],
+      "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Observability", "PouryaKit.Security", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
       "excluded": []
     }
   ]

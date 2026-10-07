@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- An endpoint that declares no API version, for a Host of PouryaKit.Web alone. It needs an assembly apart from the
+       Stub Module's, whose endpoints need Modules; ModularMonolith.Tests leaves this folder out of its own sources. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\PouryaKit.Web\PouryaKit.Web.csproj" />
+  </ItemGroup>
+</Project>

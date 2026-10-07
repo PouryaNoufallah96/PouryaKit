@@ -28,13 +28,17 @@ public static class WebEndpointRouteBuilderExtensions
 
             var options = routes.ServiceProvider.GetRequiredService<IOptions<PouryaKitWebOptions>>().Value;
             var peers = routes.ServiceProvider.GetRequiredService<IOptions<PouryaKitTrustedPeerOptions>>().Value.Peers;
+            var moduleRouteGroups = routes.ServiceProvider.GetService<IModuleRouteGroups>();
             foreach (var module in routes.ServiceProvider.GetServices<ModuleEndpoints>())
             {
                 var group = routes.MapGroup(module.RoutePrefix).RequireAuthorization();
                 ((IEndpointConventionBuilder)group).Finally(endpoint => BeginOperationFirst(endpoint, options, peers));
-                foreach (var endpoint in module.Endpoints)
+                foreach (var target in moduleRouteGroups?.Map(module.RoutePrefix, group) ?? [group])
                 {
-                    endpoint.Map(group);
+                    foreach (var endpoint in module.Endpoints)
+                    {
+                        endpoint.Map(target);
+                    }
                 }
             }
 

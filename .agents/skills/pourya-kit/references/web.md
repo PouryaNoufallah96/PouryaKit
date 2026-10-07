@@ -63,6 +63,7 @@ using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
 using PouryaKit.Security;
 using PouryaKit.Web;
+using PouryaKit.Web.OpenApi;
 
 public static class ModularMonolithHost
 {
@@ -77,6 +78,9 @@ public static class ModularMonolithHost
         builder.Services.AddPouryaKitWeb();   // also: authenticated access by default
         // The peer Hosts that may continue an Operation of theirs here; none by default.
         builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));
+        // The API versions the Modules declare, one OpenAPI document each, and the configured sunsets (openapi.md).
+        builder.Services.AddPouryaKitOpenApi();
+        builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
         // Outgoing calls: the standard retry of safe methods, then the Operation Context on every attempt.
         var downstream = builder.Services.AddHttpClient(DownstreamClient);
         downstream.AddPouryaKitResilience();
@@ -103,6 +107,11 @@ public static class ModularMonolithHost
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapPouryaKitModuleEndpoints();
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapPouryaKitOpenApi().AllowAnonymous();   // the documents and Scalar, public in Development
+        }
+
         return app;
     }
 }
@@ -113,7 +122,7 @@ public static class ModularMonolithHost
 - `builder.Services.AddPouryaKitWeb()` registers what every endpoint answers with: problem responses, the handler that turns an exception into one, the same answer to an unreadable request in every environment, a problem response for every failure answered with an empty body ([Problem responses](#problem-responses)), the Kit's one JSON representation (`UsePouryaKitJson`, typed IDs written as their bare values, the same as in messages; [domain-primitives.md](domain-primitives.md#typed-ids)), `PouryaKitWebOptions`, and authenticated access by default ([The caller and the Actor](#the-caller-and-the-actor)).
 - The application configures its own authentication and authorization; the Kit chooses no identity provider and issues no token.
 - `app.UseExceptionHandler()` comes first in the pipeline, and `UseRouting()`, `UseAuthentication()` and `UseAuthorization()` follow it, each called explicitly. Left out, `WebApplication` inserts those three ahead of everything the application adds, and an exception thrown in authentication escapes the handler.
-- `app.MapPouryaKitModuleEndpoints()` maps every Module's endpoints, each Module under its own route group.
+- `app.MapPouryaKitModuleEndpoints()` maps every Module's endpoints, each Module under its own route group. A Module that declares API versions has them served inside that group, by URL segment and by header, through the `IModuleRouteGroups` that the optional `PouryaKit.Web.OpenApi` registers ([openapi.md](openapi.md)); without it, or for a Module that declares none, the endpoints are mapped on the group itself.
 
 ## Endpoints
 
@@ -277,6 +286,7 @@ public async Task Creating_a_product_with_a_name_in_use_answers_409_with_its_err
 {
     using var client = Fixture.Host.GetTestClient();
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(TestAuthentication.SchemeName, "ada");
+    client.DefaultRequestHeaders.Add("api-version", "2.0");   // Catalog's paths name their API version (openapi.md)
     var category = Guid.CreateVersion7();
     await client.PostAsJsonAsync("/catalog/categories", new { categoryId = category, name = "Lamps" }, TestContext.Current.CancellationToken);
     await client.PostAsJsonAsync(

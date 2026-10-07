@@ -18,7 +18,7 @@ public sealed class PackageGraphTests
     [Fact]
     public void Every_kit_package_is_checked_and_closures_are_read_transitively()
     {
-        Assert.Equal(16, RestoredPackage.All.Count);
+        Assert.Equal(17, RestoredPackage.All.Count);
         // EF Core arrives in Postgres only through its provider, and Domain in Web only through Cqrs.
         Assert.Contains(Restored("PouryaKit.Persistence.Postgres").Packages, arrived => arrived.Id == "Microsoft.EntityFrameworkCore");
         Assert.Contains("PouryaKit.Domain", Restored("PouryaKit.Web").Projects);
@@ -30,6 +30,7 @@ public sealed class PackageGraphTests
         var dapper = Restored("PouryaKit.Persistence.Dapper");
         var wolverine = Restored("PouryaKit.Messaging.Wolverine");
         var web = Restored("PouryaKit.Web");
+        var openApi = Restored("PouryaKit.Web.OpenApi");
         var messaging = Restored("PouryaKit.Messaging");
 
         Assert.Equal(
@@ -52,6 +53,14 @@ public sealed class PackageGraphTests
         Assert.Equal(
             ["PouryaKit.Web's closure holds Aspire.Hosting, which section C keeps out of it."],
             PackageGraph.Violations(web with { Packages = [.. web.Packages, Arrived("Aspire.Hosting")] })
+        );
+        Assert.Equal(
+            ["PouryaKit.Web's closure holds Asp.Versioning.Http, which section C keeps out of it."],
+            PackageGraph.Violations(web with { Packages = [.. web.Packages, Arrived("Asp.Versioning.Http")] })
+        );
+        Assert.Equal(
+            ["PouryaKit.Web.OpenApi's closure holds Swashbuckle.AspNetCore.SwaggerGen, which section C keeps out of it."],
+            PackageGraph.Violations(openApi with { Packages = [.. openApi.Packages, Arrived("Swashbuckle.AspNetCore.SwaggerGen")] })
         );
         Assert.Equal(
             ["PouryaKit.Messaging's closure holds the packages [WolverineFx]; it must hold none."],
