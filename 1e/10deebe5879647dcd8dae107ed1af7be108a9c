@@ -1,0 +1,47 @@
+src/PouryaKit.Security/PermissionAuthorizer.cs
+  s_41c3eef9abbce4::t_134d02f433774b 17-20
+src/PouryaKit.Cqrs/IRequiresAuthorizer.cs
+  s_41c3eef9abbce4::t_134d02f433774b 13-14
+src/PouryaKit.Cqrs/OperationContext.cs
+  s_41c3eef9abbce4::t_dcf51f226a81f8 13-14,37-41,44-52,55-56,59-64
+tests/PouryaKit.ArchitectureTests/TrustedRestoreTests.cs
+  s_41c3eef9abbce4::t_5149d5cd453149 1-54
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_41c3eef9abbce4::t_5fdb14467a0660 96
+tests/ModularMonolith.Tests/OperationContextTests.cs
+  s_41c3eef9abbce4::t_f8b346f331d821 83-84
+src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs
+  s_41c3eef9abbce4::t_134d02f433774b 33-35,52
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_5fdb14467a0660 235,264,285,401
+  s_41c3eef9abbce4::t_1fed84f8d71214 231
+tests/ModularMonolith.Tests/SecurityTests.cs
+  s_41c3eef9abbce4::t_f8b346f331d821 240,245-276,279-282,284-287
+  s_41c3eef9abbce4::t_4dbabfd18ae7e6 16,277-278,283
+  s_41c3eef9abbce4::t_edcde4b148a389 288
+docs/acceptance.md
+  s_41c3eef9abbce4::t_e4c487867414fa 149-159
+src/PouryaKit.Cqrs/PouryaKit.Cqrs.csproj
+  s_41c3eef9abbce4::t_134d02f433774b 7-11
+  s_41c3eef9abbce4::t_9d20d1c8fe37f1 6
+.agents/skills/pourya-kit/references/security.md
+  s_41c3eef9abbce4::t_5fdb14467a0660 81,93-95,104
+docs/adr/0007-operation-context-set-by-the-scope-opener.md
+  s_41c3eef9abbce4::t_e4c487867414fa 94-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1e10deebe5879647dcd8dae107ed1af7be108a9c",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
