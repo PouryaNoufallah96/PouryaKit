@@ -30,27 +30,24 @@ internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<Hybrid
             return await handle(cancellationToken);
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         string stored;
         try
         {
+            // The shared run is not any one caller's to cancel, since others may be waiting on it. Without a token,
+            // HybridCache runs the handler on the call that starts the run, which waits for it, so that caller's scope
+            // and Operation stay alive until the run ends; every other caller waits for it too.
             stored = await cache.GetOrCreateAsync(
                 Key(context, query.GetType(), cacheable.CacheKey),
-                (Handle: handle, Caller: ExecutionContext.Capture()),
-                static async (state, ct) =>
+                handle,
+                static async (handle, ct) =>
                 {
-                    // HybridCache may run this on a thread pool thread without the caller's ExecutionContext; restored,
-                    // the handler runs inside its Operation all the same: its trust, clock, activity and logging scope.
-                    if (state.Caller is { } caller)
-                    {
-                        ExecutionContext.Restore(caller);
-                    }
-
-                    var result = await state.Handle(ct);
+                    var result = await handle(ct);
                     return result.IsSuccess ? JsonSerializer.Serialize(result.Value, Json) : throw new NotStored(result.Errors);
                 },
                 new HybridCacheEntryOptions { Expiration = cacheable.CacheDuration, LocalCacheExpiration = cacheable.CacheDuration },
                 cacheable.CacheTags,
-                cancellationToken
+                CancellationToken.None
             );
         }
         catch (NotStored failed)

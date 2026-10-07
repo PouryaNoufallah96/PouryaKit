@@ -154,7 +154,7 @@ internal sealed partial class Dispatcher(
         {
             using (reading)
             {
-                result = await Steps(commandOrQuery, ownsUnitOfWork, handle, fail, idempotent, cached, cancellationToken);
+                result = await Steps(commandOrQuery, ownsUnitOfWork, reading, handle, fail, idempotent, cached, cancellationToken);
             }
         }
         catch (Exception exception)
@@ -182,6 +182,7 @@ internal sealed partial class Dispatcher(
     private async Task<TResult> Steps<TCommandOrQuery, TResult>(
         TCommandOrQuery commandOrQuery,
         bool ownsUnitOfWork,
+        IDisposable? reading,
         Func<IServiceProvider, TCommandOrQuery, CancellationToken, Task<TResult>> handle,
         Func<ImmutableArray<Error>, TResult> fail,
         IdempotentResponses<TResult>? idempotent,
@@ -223,7 +224,25 @@ internal sealed partial class Dispatcher(
         if (cached is not null)
         {
             return queryCache is not null && !operation.IsUnitOfWorkActive && operation.Context is { } context
-                ? await cached(queryCache, commandOrQuery, context, ct => handle(services, commandOrQuery, ct), cancellationToken)
+                ? await cached(
+                    queryCache,
+                    commandOrQuery,
+                    context,
+                    async ct =>
+                    {
+                        var answered = await handle(services, commandOrQuery, ct);
+                        // A stored answer outlives this Operation, so the query's reading boundary closes here, before
+                        // the answer can be stored: a tracked-state change then throws and nothing is stored. Its
+                        // second close, when the pipeline ends, does nothing.
+                        if (answered.IsSuccess)
+                        {
+                            reading!.Dispose();
+                        }
+
+                        return answered;
+                    },
+                    cancellationToken
+                )
                 : await handle(services, commandOrQuery, cancellationToken);
         }
 
