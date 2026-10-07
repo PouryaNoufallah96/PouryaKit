@@ -1,0 +1,24 @@
+src/PouryaKit.Web/SingleResilienceHandler.cs
+  s_bdf0617f846b2b::t_3d513e61d18efa 1-16,19-20,22-25
+  s_bdf0617f846b2b::t_88ecee89d45248 17-18,21
+src/PouryaKit.Web/WebHttpClientBuilderExtensions.cs
+  s_bdf0617f846b2b::t_1def5608b6eda4 35-39
+  s_bdf0617f846b2b::t_4159e68167ba73 2-3
+  s_bdf0617f846b2b::t_bd7d7ac50161e2 64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d1634a30d3f3c3e03e864b3f23f50bb610483410",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
