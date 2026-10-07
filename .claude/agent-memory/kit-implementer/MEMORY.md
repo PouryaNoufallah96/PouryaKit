@@ -36,3 +36,4 @@
 - [JWT bearer facts](jwt-bearer-facts.md) — #39: config binder replaces TVP, ValidateOnStart hits every composed Host, second Host steals deliveries
 - [OpenAPI and versioning facts](openapi-versioning-facts.md) — #41: Asp.Versioning.OpenApi wiring, clock-reading notices, URL vs header groups, Scalar auth, Web-only test Host
 - [Recurring command facts](recurring-command-facts.md) — #45: Wolverine Schedules not used, ScheduledTime cleared, ScheduledMessages query, epoch grid, fixture interference
+- [RabbitMQ transport facts](rabbitmq-transport-facts.md) — #51: stub://replies listener, IBrokerEndpoint/DeadLetterStorage checks, Catalog IVT decides test placement
