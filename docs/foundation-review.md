@@ -1001,5 +1001,6 @@ Use one spec per wave: **Wave 2** — paging, one JSON setup, Web
 defaults, Web.OpenApi, Core, Security and JwtBearer, request idempotency, Caching, scheduling,
 Observability, the HttpClient handler, the versioning rule, the RabbitMQ transport after its spike,
 and the template's first two compositions; **Wave 3** — Marten after its spike, multi-tenancy, AI,
-Gateway, Grpc, Realtime, Storage, Email, number sequences, the reporting seam, Aspire, the saga; **Wave 4** — the template's service composition and the sample agent polished for the
+Gateway, Grpc, Realtime, Storage, Email, number sequences, the reporting seam, Aspire, the saga, a reusable
+FluentValidation page rule in `PouryaKit.Validation` (owner decision of 2026-10-07 on #35); **Wave 4** — the template's service composition and the sample agent polished for the
 skill. Every ticket follows section H. Wave 1 stays as built.
