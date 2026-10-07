@@ -1,0 +1,45 @@
+src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_e12ce48002bdbb 16-19,29-30,34,36,161-169
+  s_bdf0617f846b2b::t_45c9190cff7c1d 170-171
+tests/ModularMonolith.Tests/ReadOnlyStateTests.cs
+  s_bdf0617f846b2b::t_c31402a7bb3b8e 272-273
+src/PouryaKit.Cqrs/ComposedFeatures.cs
+  s_bdf0617f846b2b::t_689d1f728049a5 1-10,12,14-29,38-39
+  s_bdf0617f846b2b::t_ee6a088bc7f0e9 11,13,30
+  s_bdf0617f846b2b::t_ab4b52548387e8 31-37
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_df6b5234f75f51 8
+  s_bdf0617f846b2b::t_15fe9c36c7e2b6 71,73-76,78,82,84,88,94-96
+src/PouryaKit.Security/SecurityServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_e12ce48002bdbb 19-22,30
+src/PouryaKit.Cqrs/IModuleServices.cs
+  s_bdf0617f846b2b::t_1d88f19d95a1fa 1-75
+src/PouryaKit.Modularity/ModuleBuilder.cs
+  s_bdf0617f846b2b::t_76b5424e73ce23 24,30,99,106,114
+  s_bdf0617f846b2b::t_1a4abfeb3607cf 41,54,72,80,91
+  s_bdf0617f846b2b::t_e12ce48002bdbb 8-15,17,29
+  s_bdf0617f846b2b::t_159c679d6cf9f5 31
+src/PouryaKit.Validation/ValidationServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_e12ce48002bdbb 15-16,25
+src/PouryaKit.Persistence.Dapper/DapperServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_e12ce48002bdbb 6,18-22,30
+src/PouryaKit.Cqrs/HostComposition.cs
+  s_bdf0617f846b2b::t_f8bc2ee24cdb4e 1-15,18-25,37-51
+  s_bdf0617f846b2b::t_3f63ea0ec6d392 16-17,26-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "902191cbb9e0dba858c2133f742d4daf1bf89a99",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
