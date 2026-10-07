@@ -1,0 +1,22 @@
+tests/ModularMonolith.Tests/Stub/StubEndpoints.cs
+  s_bdf0617f846b2b::t_f531449dcdf477 72-87
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_bdf0617f846b2b::t_fc2ac6a5837f7c 1-96,99-106,108-171
+  s_bdf0617f846b2b::t_ae65880b94f1e6 97-98,107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fb91a97f5425437620d7ecc3bb8a8e7604733959",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
