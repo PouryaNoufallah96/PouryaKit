@@ -13,7 +13,10 @@ public static class CqrsServiceCollectionExtensions
         /// Registers the dispatcher and every command handler, query handler, authorizer and Domain Event Handler in
         /// <paramref name="featureAssemblies"/>, internal types included, and the system <see cref="TimeProvider"/>
         /// unless one is registered: the dispatcher binds it as each Operation's <c>DomainClock</c>, so register a
-        /// different one to change the time Operations see. Throws here, at startup, when a command or
+        /// different one to change the time Operations see. Named with no assembly on a Module's builder
+        /// (<see cref="IModuleServices"/>), it scans the assembly of the Module's definition, where a Module's Features
+        /// live; named assemblies replace it, in their order. On the Host's own services with no assembly, it registers the
+        /// dispatcher alone. Throws here, at startup, when a command or
         /// query has no handler or several, when an authorizer is not for one concrete command or query, when a Domain
         /// Event Handler handles several Domain Event types or an abstract one, or when a command, query, handler or
         /// authorizer is a generic type definition.
@@ -23,17 +26,14 @@ public static class CqrsServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(featureAssemblies);
 
-            services.TryAddScoped(provider => new Operation(() => provider.GetService<IReadingStateGuard>()));
-            services.TryAddScoped<IReadingStateGuard>(provider => (provider.GetService<IUnitOfWork>() as IReadingStateGuard)!);
-            services.TryAddScoped(OperationContextServiceProviderExtensions.Read);
-            services.TryAddScoped<IDispatcher, Dispatcher>();
-            services.TryAddSingleton(TimeProvider.System);
+            var assemblies = IModuleServices.FeatureAssembliesOf(services, featureAssemblies);
+            AddDispatcher(services);
 
             // In declaration order, assembly by assembly, which is the order an operation's authorizers run in.
             var classes = ImplementingTypes
-                .Candidates(typeof(object), featureAssemblies)
+                .Candidates(typeof(object), assemblies)
                 .Where(type => !type.IsAbstract)
-                .OrderBy(type => Array.IndexOf(featureAssemblies, type.Assembly))
+                .OrderBy(type => Array.IndexOf(assemblies, type.Assembly))
                 .ThenBy(type => type.MetadataToken)
                 .ToList();
             var types = classes.Where(type => !type.IsGenericTypeDefinition).ToList();
@@ -156,6 +156,17 @@ public static class CqrsServiceCollectionExtensions
                 throw new InvalidOperationException(string.Join(Environment.NewLine, problems));
             }
         }
+    }
+
+    // The dispatcher and what each Operation's scope needs, registered once whatever calls it: AddPouryaKitCqrs, with or
+    // without Feature assemblies, and the Host's AddPouryaKitCompositionChecks.
+    internal static void AddDispatcher(IServiceCollection services)
+    {
+        services.TryAddScoped(provider => new Operation(() => provider.GetService<IReadingStateGuard>()));
+        services.TryAddScoped<IReadingStateGuard>(provider => (provider.GetService<IUnitOfWork>() as IReadingStateGuard)!);
+        services.TryAddScoped(OperationContextServiceProviderExtensions.Read);
+        services.TryAddScoped<IDispatcher, Dispatcher>();
+        services.TryAddSingleton(TimeProvider.System);
     }
 
     // A second call with the same assembly adds nothing; a different handler for an operation already handled is a

@@ -16,8 +16,10 @@ public static class SecurityServiceCollectionExtensions
         /// <see cref="RequiresPermissionAttribute"/>; nothing else is checked. The check stops an Operation with
         /// <see cref="PermissionErrors.Denied"/> when the application's <see cref="IActorPermissions"/>, which the
         /// application registers, says its Actor lacks the permission. A continuation, an Operation whose context has a
-        /// causation, is not checked again; every other authorizer registered for the command or query still runs.
-        /// Throws when the attribute is on a type that is not one concrete command or query.
+        /// causation, is not checked again; every other authorizer registered for the command or query still runs. Named
+        /// with no assembly on a Module's builder (<see cref="IModuleServices"/>), it scans the assembly of the Module's
+        /// definition; named assemblies replace it. Throws when the attribute is on a type that is not one concrete
+        /// command or query.
         /// </summary>
         public IServiceCollection AddPouryaKitPermissions(params Assembly[] featureAssemblies)
         {
@@ -25,7 +27,7 @@ public static class SecurityServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(featureAssemblies);
 
             var declared = ImplementingTypes
-                .Candidates(typeof(object), featureAssemblies)
+                .Candidates(typeof(object), IModuleServices.FeatureAssembliesOf(services, featureAssemblies))
                 .Where(type => type.IsDefined(typeof(RequiresPermissionAttribute), inherit: false))
                 .ToList();
             List<string> problems =
