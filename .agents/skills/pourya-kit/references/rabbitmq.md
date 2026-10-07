@@ -7,6 +7,7 @@
 - [A Host that receives](#a-host-that-receives)
 - [The service name](#the-service-name)
 - [What the Kit guarantees across the broker](#what-the-kit-guarantees-across-the-broker)
+- [A body the contract cannot read](#a-body-the-contract-cannot-read)
 - [Dead letters at the broker queue](#dead-letters-at-the-broker-queue)
 - [Deploying a Host that receives](#deploying-a-host-that-receives)
 - [Startup checks](#startup-checks)
@@ -44,7 +45,7 @@ if (broker)
 }
 ```
 
-- `UsePouryaKitRabbitMq(connectionName, serviceName)` comes after `UsePouryaKitWolverine(connectionName)` of `PouryaKit.Messaging.Wolverine.EFCore`, whose store the broker's envelopes go through. It throws when the configuration has no such connection string, and when the service name is missing or not a valid name.
+- `UsePouryaKitRabbitMq(connectionName, serviceName)` comes after `UsePouryaKitWolverine(connectionName)` of `PouryaKit.Messaging.Wolverine.EFCore`, whose store the broker's envelopes go through. It throws when the configuration has no such connection string, and when the service name is missing or not a valid name, such as one beginning with `amq.`, in any case, which RabbitMQ reserves for its own queues and exchanges.
 - Nothing in a publishing Module changes: `Publish` and `PublishSnapshot` in its Composition Root ([messaging.md](messaging.md#declaring-what-a-module-publishes-and-subscribes)) already declare every wire name the Host sends.
 
 ## A Host that receives
@@ -87,7 +88,7 @@ builder.UsePouryaKitRabbitMq(connectionName: "broker", serviceName: "inventory")
 The service name is the Host's queue on the broker and Wolverine's `ServiceName`. It is required, so it is always the Host's own choice and never a default derived from an assembly.
 
 - **Unique per kind of Host on the broker.** Instances of one Host, such as two replicas of `Inventory.Host`, share its queue as competing receivers, which is intended: each message is received once by the Host and delivered to each of its subscriptions.
-- **Two different Hosts must not share one.** They would share one queue and split its messages between them, each receiving only some of them, and each subscription of either would miss the rest. Nothing checks the name across Hosts. Name each kind of Host after what it is, such as `inventory`, and keep it when the Host is renamed or moved: its queue, and what waits in it, stay under the old name.
+- **Two different Hosts must not share one.** They would share one queue and split its messages between them, each receiving only some of them, and each subscription of either would miss the rest. This is a deployment rule, and no check is possible: on the broker a replica and a foreign Host are indistinguishable. Every instance of a Host consumes under the same consumer tag, each Host has its own database, so Wolverine's node registry never sees another Host's nodes, and the broker compares only its own queue arguments when a queue is declared again. Name each kind of Host after what it is, such as `inventory`, and keep it when the Host is renamed or moved: its queue, and what waits in it, stay under the old name.
 
 ## What the Kit guarantees across the broker
 
@@ -103,14 +104,25 @@ Every guarantee of [messaging.md](messaging.md#what-the-kit-guarantees) for an I
 - **Identity and Operation Context cross intact.** The store keeps envelope ids alone (`MessageIdentity.IdOnly`): the broker envelope and each copy have an id of their own, and each Receipt is of the Domain Event's identity, or the Snapshot's, never of an envelope. The receiving delivery continues the publishing Operation, with its Actor, tenant and correlation and the publishing delivery as its causation, a trusted continuation.
 - **Each version to its own subscriptions,** across the broker as inside one Host.
 - **Snapshots stay ordered.** Redelivered across the broker in reverse order or concurrently, an older Snapshot never replaces a newer one, and a live Snapshot never brings back a copy its Tombstone removed.
-- **The Kit's JSON.** Envelopes cross the broker in the Kit's JSON representation (`UsePouryaKitJson`), the same as stored and HTTP bodies, never in Newtonsoft.Json's, which the transport package brings along.
+- **The Kit's JSON.** Envelopes cross the broker in the Kit's JSON representation, the same as stored and HTTP bodies, never in Newtonsoft.Json's, which the transport package brings along, and are read strictly (`UsePouryaKitWireJson`, [A body the contract cannot read](#a-body-the-contract-cannot-read)).
 
 Not proven here: several instances of one receiving Host sharing its queue under `DurabilityMode.Balanced`.
+
+## A body the contract cannot read
+
+Only the wire name crosses the broker, never a type, so two Hosts whose contract types under one wire name differ cannot be told apart when they start. The receiving Host reads each body strictly instead, with the Kit's one JSON representation and .NET 10's `RespectRequiredConstructorParameters` and `RespectNullableAnnotations`; HTTP bodies keep the lenient reading, so an HTTP client may still leave a member out (ADR 0006, ticket #60 amendment).
+
+- **The rule.** A body is read only when it carries every member the receiving contract requires, each constructor parameter without a default value and each `required` member, and none of them is null where the contract's nullable annotations forbid it. Annotations count on properties and constructor parameters compiled with nullable reference types enabled, not on collection elements or generic arguments, and a contract of settable or `init` properties without `required` requires nothing: write Contracts as positional records, as the Integration Events of [messaging.md](messaging.md#the-integration-event) are.
+- **What happens to one that fails.** It is never handled. Wolverine sets it aside at once, without retries, as a dead letter received at the Host's queue, `rabbitmq://queue/{serviceName}`, before the fan-out, so no subscription receives a copy, and the dead letter keeps the `System.Text.Json.JsonException` and its message, which names the member, such as `JSON deserialization for type 'Catalog.Contracts.Products.Events.V1.ProductCreatedV1' was missing required properties including: 'name'.`
+- **Unknown members are skipped.** A member the body carries and the receiving contract does not have is ignored, so adding a member to a contract is a change receivers can read: a publishing Host may send it while receiving Hosts still run the build without it. A member a receiver needs from every message, such as a new constructor parameter without a default, is a new version under a new wire name ([messaging.md](messaging.md#a-new-version-of-an-integration-event)). The trade-off: a body of another shape that happens to carry every member the receiving contract requires is still read.
+- **Writing follows the same rule.** A null in a non-nullable member of a published contract fails when the Unit of Work writes the message to the Outbox, so the publishing delivery fails and nothing it did commits, instead of the null reaching a receiver.
+
+`StrictWireReadingTests` in the Proving Sample's tests proves each case with two Hosts on RabbitMQ: the Catalog Host publishes contracts of other shapes under the wire name `Inventory.Host` receives.
 
 ## Dead letters at the broker queue
 
 - A subscription's delivery is dead-lettered as in one Host, received at `local://{subscription}/` ([messaging.md](messaging.md#dead-letters)), never on the broker: no broker dead-letter queue is declared, so every dead letter is in the receiving Host's message store.
-- A delivery that fails before it reaches any subscription is dead-lettered received at the Host's queue, `rabbitmq://queue/{serviceName}`, which names no subscription: a wire name the Host no longer receives, such as one whose last subscription a release removed while messages waited in the queue, a body that cannot be read, or a store error while a copy is written (the fan-out waits for each copy's write, so the error fails the envelope instead of dropping the copy). Find them with `DeadLetterEnvelopeQuery { ReceivedAt = "rabbitmq://queue/inventory" }`, and replay one, once the cause is fixed, to hand it to the queue's fan-out again.
+- A delivery that fails before it reaches any subscription is dead-lettered received at the Host's queue, `rabbitmq://queue/{serviceName}`, which names no subscription: a wire name the Host no longer receives, such as one whose last subscription a release removed while messages waited in the queue, a body its contract cannot read ([A body the contract cannot read](#a-body-the-contract-cannot-read)), or a store error while a copy is written (the fan-out waits for each copy's write, so the error fails the envelope instead of dropping the copy). Find them with `DeadLetterEnvelopeQuery { ReceivedAt = "rabbitmq://queue/inventory" }`, and replay one, once the cause is fixed, to hand it to the queue's fan-out again.
 - `PouryaKit.Testing` names such a delivery or dead letter by that address, where it names others by subscription ([testing.md](testing.md#dead-letters)).
 
 ## Deploying a Host that receives

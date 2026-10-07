@@ -51,12 +51,14 @@ public static partial class MessageNames
     /// <summary>
     /// True when <paramref name="name"/> can serve as a wire name or a subscription name, which is also a queue name:
     /// letters and digits in segments joined by single dots or hyphens, and nothing else, that come back unchanged, but
-    /// for case, as the host of a queue's address. Names are compared ignoring case, because transports such as local
-    /// queues lower-case them.
+    /// for case, as the host of a queue's address, and that do not begin with <c>amq.</c>, the prefix RabbitMQ reserves
+    /// for its own exchanges and queues. Names are compared ignoring case, because transports such as local queues
+    /// lower-case them, so the prefix is refused in any case too.
     /// </summary>
     public static bool IsValid(string? name) =>
         name is not null
         && ValidName().IsMatch(name)
+        && !name.StartsWith("amq.", StringComparison.OrdinalIgnoreCase)
         && Uri.TryCreate($"queue://{name}/", UriKind.Absolute, out var address)
         && address.Host == name.ToLowerInvariant();
 

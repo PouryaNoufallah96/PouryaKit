@@ -335,7 +335,7 @@ internal sealed class Subscriptions : IWireNames
         if (!MessageNames.IsValid(name))
         {
             problems.Add(
-                $"{what} {name} is not a valid name: use letters and digits in segments joined by single dots or hyphens."
+                $"{what} {name} is not a valid name: use letters and digits in segments joined by single dots or hyphens, not beginning with amq., which RabbitMQ reserves."
             );
             return false;
         }

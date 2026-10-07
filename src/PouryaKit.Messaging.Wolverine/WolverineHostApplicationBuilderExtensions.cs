@@ -27,7 +27,9 @@ public static class WolverineHostApplicationBuilderExtensions
         /// (<c>AddPouryaKitRecurringCommand</c>). A stored delivery whose type or subscription no longer exists is set aside
         /// the same way. None of
         /// them is ever treated as handled. Wolverine discovers no handlers of its own. Messages are stored and delivered
-        /// in the Kit's JSON representation (<c>UsePouryaKitJson</c>), the one <c>AddPouryaKitWeb</c> gives HTTP bodies.
+        /// in the Kit's JSON representation, the one <c>AddPouryaKitWeb</c> gives HTTP bodies, read strictly
+        /// (<c>UsePouryaKitWireJson</c>): a body that lacks a member its type requires, or carries null where the type
+        /// forbids it, fails to read and is set aside as a dead letter with the error, never handled.
         /// Nothing this overload registers writes an Outbox (<see cref="INotificationOutbox"/>), so a Host that declares
         /// Notification Handlers, Integration Event Handlers or published Integration Events calls the overload of
         /// <c>PouryaKit.Messaging.Wolverine.EFCore</c> instead, or fails when it starts; so does a Host whose
@@ -71,7 +73,7 @@ public static class WolverineHostApplicationBuilderExtensions
                 wolverine.Discovery.DisableConventionalDiscovery();
                 wolverine.UnknownMessageBehavior = UnknownMessageBehavior.DeadLetterQueue;
                 wolverine.Policies.UseDurableLocalQueues();
-                wolverine.UseSystemTextJsonForSerialization(json => json.UsePouryaKitJson());
+                wolverine.UseSystemTextJsonForSerialization(json => json.UsePouryaKitWireJson());
                 configure?.Invoke(wolverine);
             });
             return builder;
