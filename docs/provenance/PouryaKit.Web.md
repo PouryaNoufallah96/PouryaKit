@@ -124,7 +124,7 @@ Checked on nuget.org on 2026-10-07 (ticket #48); licence expressions from each p
 - **Ticket:** #36
 - **Intentional differences:**
   - Kept: a fixed-window global limiter of ASP.NET Core's rate limiting with a limit, a window and a queue from configuration (`:49-65`), and a 429 rejection in the problem-response shape (`:33-47`).
-  - The partition is the Actor, the authenticated caller's `ActorClaim` value, and every unauthenticated caller shares one partition: upstream partitions by `X-Forwarded-For`, then the connection's address (`:51`, `:107-113`), or by the identity's name, then the `Host` header (`:71-72`), each of which a caller can choose.
+  - The partition is the Actor the request's Operation runs as, resolved by the same code that begins the Operation: upstream partitions by `X-Forwarded-For`, then the connection's address (`:51`, `:107-113`), or by the identity's name, then the `Host` header (`:71-72`), each of which a caller can choose.
   - `QueueLimit` is its own setting: upstream's global limiter sets it to the permit limit (`:61`).
   - The rejection writes nothing itself: it sets 429 and the Kit's status code pages write the same problem response as every other empty-body failure, where upstream writes its own through `IProblemDetailsService` with a title from Humanizer (`:33-47`).
   - One limiter, off unless configured and validated when the Host starts; upstream registers a second, named policy beside the global limiter (`:67-81`).

@@ -1,10 +1,12 @@
 namespace PouryaKit.Web;
 
 /// <summary>
-/// The Host's rate limit, a fixed window per Actor applied to every request: each authenticated caller, by the value of
-/// <see cref="PouryaKitWebOptions.ActorClaim"/>, gets <see cref="PermitLimit"/> requests in each <see cref="Window"/>,
-/// and every unauthenticated caller shares one partition of the same size. No header, such as <c>Host</c> or
-/// <c>X-Forwarded-For</c>, chooses a partition. A request beyond the limit waits in its partition's queue of
+/// The Host's rate limit, a fixed window per Actor applied to every request: each partition gets
+/// <see cref="PermitLimit"/> requests in each <see cref="Window"/>. The partition is the Operation's Actor as the HTTP
+/// boundary establishes it: the person the <see cref="PouryaKitWebOptions.ActorClaim"/> names, the Actor an endpoint's
+/// <c>AllowAnonymousAs(actor)</c> names for its unauthenticated callers, and for a trusted peer's call the Actor it
+/// continues. A request no Actor resolves for, such as an anonymous call to an endpoint outside every Module, shares one partition. No header but a
+/// trusted peer's context headers, and never <c>Host</c> or <c>X-Forwarded-For</c>, chooses a partition. A request beyond the limit waits in its partition's queue of
 /// <see cref="QueueLimit"/> requests, oldest first, until the next window, or answers 429 as a problem response when
 /// the queue is full. The limits are counted in each Host process. Off by default.
 /// </summary>

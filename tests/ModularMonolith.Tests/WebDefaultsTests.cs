@@ -4,6 +4,8 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using PouryaKit.Cqrs;
+using PouryaKit.Messaging;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -143,21 +145,46 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Fact]
-    public async Task Every_anonymous_caller_shares_one_partition_whatever_host_and_forwarded_for_headers_it_sends()
+    public async Task Anonymous_callers_share_the_partition_of_the_actor_their_endpoint_names_whatever_host_and_forwarded_for_headers_they_send()
     {
         await using var host = Compose(RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0));
-        host.MapGet("/public", () => "served").AllowAnonymous();
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var anonymous = AppFixture.ClientOf(host);
         using var ada = AppFixture.ClientOf(host, "ada");
 
-        var first = await anonymous.SendAsync(Spoofed("/public", "198.51.100.1"), TestContext.Current.CancellationToken);
-        var second = await anonymous.SendAsync(Spoofed("/public", "198.51.100.2"), TestContext.Current.CancellationToken);
-        var actor = await ada.GetAsync("/public", TestContext.Current.CancellationToken);
+        // The storefront's visitors run as catalog.storefront, the Stub's as stub.visitor.
+        var first = await anonymous.SendAsync(Spoofed("/catalog/products", "198.51.100.1"), TestContext.Current.CancellationToken);
+        var second = await anonymous.SendAsync(Spoofed("/catalog/products", "198.51.100.2"), TestContext.Current.CancellationToken);
+        var otherActor = await anonymous.GetAsync("/stub/public/context", TestContext.Current.CancellationToken);
+        var person = await ada.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         await ProblemAsync(second, HttpStatusCode.TooManyRequests);
-        Assert.Equal(HttpStatusCode.OK, actor.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, otherActor.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, person.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_trusted_peers_call_shares_the_partition_of_the_actor_it_continues_and_an_untrusted_callers_context_headers_move_nothing()
+    {
+        await using var host = Compose(RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0));
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var ada = AppFixture.ClientOf(host, "ada");
+        using var peer = AppFixture.ClientOf(host, AppFixture.TrustedPeer);
+        using var mallory = AppFixture.ClientOf(host, "mallory");
+
+        var direct = await ada.GetAsync("/stub/context", TestContext.Current.CancellationToken);
+        var continuingAda = await peer.SendAsync(Continuing("ada"), TestContext.Current.CancellationToken);
+        var continuingBob = await peer.SendAsync(Continuing("bob"), TestContext.Current.CancellationToken);
+        var untrusted = await mallory.GetAsync("/stub/context", TestContext.Current.CancellationToken);
+        var untrustedWithHeaders = await mallory.SendAsync(Continuing("carol"), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, direct.StatusCode);
+        await ProblemAsync(continuingAda, HttpStatusCode.TooManyRequests);
+        Assert.Equal(HttpStatusCode.OK, continuingBob.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, untrusted.StatusCode);
+        // An untrusted caller's context headers are ignored: it stays in its own, exhausted partition.
+        await ProblemAsync(untrustedWithHeaders, HttpStatusCode.TooManyRequests);
     }
 
     [Fact]
@@ -225,6 +252,17 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, path);
         request.Headers.AcceptEncoding.ParseAdd("gzip");
+        return request;
+    }
+
+    // A call that continues an Operation of the person actorId, as a peer Host sends it.
+    private static HttpRequestMessage Continuing(string actorId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "/stub/context");
+        request.Headers.Add(OperationContextHeaders.ActorId, actorId);
+        request.Headers.Add(OperationContextHeaders.ActorKind, nameof(ActorKind.Person));
+        request.Headers.Add(OperationContextHeaders.CorrelationId, Guid.CreateVersion7().ToString());
+        request.Headers.Add(OperationContextHeaders.CausationId, Guid.CreateVersion7().ToString());
         return request;
     }
 

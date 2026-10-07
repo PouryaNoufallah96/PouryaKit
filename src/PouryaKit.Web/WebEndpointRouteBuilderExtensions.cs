@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -67,8 +66,7 @@ public static class WebEndpointRouteBuilderExtensions
     // is where it resolves the OperationContext; an endpoint filter would run after that binding.
     private static void BeginOperationFirst(EndpointBuilder endpoint, PouryaKitWebOptions options, ISet<string> peers)
     {
-        var anonymousActor = endpoint.Metadata.OfType<AnonymousActor>().LastOrDefault()?.Actor;
-        if (anonymousActor is null && endpoint.Metadata.OfType<IAllowAnonymous>().Any())
+        if (!endpoint.Metadata.OfType<AnonymousActor>().Any() && endpoint.Metadata.OfType<IAllowAnonymous>().Any())
         {
             throw new InvalidOperationException(
                 $"{endpoint.DisplayName} allows anonymous callers but names no Actor for them. State it with AllowAnonymousAs(actor)."
@@ -80,51 +78,19 @@ public static class WebEndpointRouteBuilderExtensions
             ?? throw new InvalidOperationException($"{endpoint.DisplayName} has no request delegate to run.");
         endpoint.RequestDelegate = httpContext =>
         {
-            httpContext.RequestServices.BeginOperation(CallerContext(httpContext, anonymousActor, options, peers));
+            httpContext.RequestServices.BeginOperation(
+                HttpCallerContext.Resolve(httpContext, options, peers) ?? throw Unresolved(httpContext, options)
+            );
             return run(httpContext);
         };
     }
 
-    private static OperationContext CallerContext(
-        HttpContext httpContext,
-        Actor? anonymousActor,
-        PouryaKitWebOptions options,
-        ISet<string> peers
-    )
-    {
-        var caller = httpContext.User;
-        if (caller.Identity?.IsAuthenticated != true)
-        {
-            return new OperationContext(
-                anonymousActor
-                    ?? throw new InvalidOperationException(
-                        "An unauthenticated request reached an endpoint that is not public. Add authorization to the pipeline."
-                    )
-            );
-        }
-
-        var id = caller.FindFirstValue(options.ActorClaim);
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            throw new InvalidOperationException(
+    private static InvalidOperationException Unresolved(HttpContext httpContext, PouryaKitWebOptions options) =>
+        httpContext.User.Identity?.IsAuthenticated == true
+            ? new InvalidOperationException(
                 $"The authenticated caller has no {options.ActorClaim} claim to identify the Actor. Set PouryaKitWebOptions.ActorClaim to the claim the authentication scheme issues."
+            )
+            : new InvalidOperationException(
+                "An unauthenticated request reached an endpoint that is not public. Add authorization to the pipeline."
             );
-        }
-
-        // The peer's identity comes from an identity that authenticated, never from a header or an unauthenticated one.
-        var trustedPeer = caller.Identities.Any(identity =>
-            identity.IsAuthenticated && identity.FindFirst(options.ActorClaim)?.Value is { } peer && peers.Contains(peer)
-        );
-        if (trustedPeer && OperationContextHttpHeaders.Continued(httpContext.Request.Headers) is { } continued)
-        {
-            return continued;
-        }
-
-        return new OperationContext(
-            Actor.Person(id),
-            options.TenantClaim is { } tenantClaim ? caller.FindFirstValue(tenantClaim) : null
-        );
-    }
-
-    private sealed record AnonymousActor(Actor Actor);
 }
