@@ -134,7 +134,14 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
             },
             written.Tags
         );
-        Assert.Contains(telemetry.Durations, duration => (string?)duration.Tags[OperationTelemetry.OutcomeTag] == OperationTelemetry.Threw);
+        // The thrown WriteNoteThenFailCommand's own measurement, not any delivery that threw elsewhere in the process.
+        Assert.Single(
+            telemetry.Durations,
+            duration =>
+                (string?)duration.Tags[OperationTelemetry.OperationTag] == nameof(WriteNoteThenFailCommand)
+                && (string?)duration.Tags[OperationTelemetry.ModuleTag] == nameof(StubModule)
+                && (string?)duration.Tags[OperationTelemetry.OutcomeTag] == OperationTelemetry.Threw
+        );
     }
 
     // The category is created first, outside the trace; CreateProduct runs inside an upstream activity standing in for a
