@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -9,22 +8,22 @@ using Microsoft.Extensions.Options;
 
 namespace PouryaKit.Web;
 
-// The global limiter of ASP.NET Core's rate limiting, partitioned by the Actor the Kit reads from the authenticated
-// caller's claims. A rejection sets 429 and writes nothing, so the status code pages AddPouryaKitWeb adds answer it as
+// The global limiter of ASP.NET Core's rate limiting, partitioned by the Actor the request's Operation runs as, which
+// HttpCallerContext resolves for both. A rejection sets 429 and writes nothing, so the status code pages AddPouryaKitWeb adds answer it as
 // the same problem response as every other failure.
 internal sealed class ActorRateLimiting : IValidateOptions<PouryaKitRateLimitOptions>
 {
-    // Every unauthenticated caller, and an authenticated one without the Actor claim, which the endpoint refuses; an
-    // Actor id is never empty, so no Actor shares this partition.
-    private const string Anonymous = "";
+    // A request no Actor resolves for: an unauthenticated caller of an endpoint that names no anonymous Actor, or a caller
+    // without the Actor claim, which a Module's endpoint refuses. Every Actor's key names its kind, so none is empty.
+    private const string Unresolved = "";
 
     public static void Add(IServiceCollection services)
     {
         services.AddRateLimiter(_ => { });
         services
             .AddOptions<RateLimiterOptions>()
-            .Configure<IOptions<PouryaKitRateLimitOptions>, IOptions<PouryaKitWebOptions>>(
-                (limiter, configured, web) =>
+            .Configure<IOptions<PouryaKitRateLimitOptions>, IOptions<PouryaKitWebOptions>, IOptions<PouryaKitTrustedPeerOptions>>(
+                (limiter, configured, web, trusted) =>
                 {
                     var limits = configured.Value;
                     if (!limits.Enabled)
@@ -32,10 +31,11 @@ internal sealed class ActorRateLimiting : IValidateOptions<PouryaKitRateLimitOpt
                         return;
                     }
 
-                    var actorClaim = web.Value.ActorClaim;
+                    var options = web.Value;
+                    var peers = trusted.Value.Peers;
                     limiter.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
                         RateLimitPartition.GetFixedWindowLimiter(
-                            Partition(httpContext.User, actorClaim),
+                            Partition(httpContext, options, peers),
                             _ => new FixedWindowRateLimiterOptions
                             {
                                 PermitLimit = limits.PermitLimit,
@@ -80,8 +80,18 @@ internal sealed class ActorRateLimiting : IValidateOptions<PouryaKitRateLimitOpt
         return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
     }
 
-    private static string Partition(ClaimsPrincipal caller, string actorClaim) =>
-        caller.Identity?.IsAuthenticated == true && caller.FindFirstValue(actorClaim) is { } id && !string.IsNullOrWhiteSpace(id)
-            ? id
-            : Anonymous;
+    private static string Partition(HttpContext httpContext, PouryaKitWebOptions options, ISet<string> peers)
+    {
+        try
+        {
+            return HttpCallerContext.Resolve(httpContext, options, peers)?.Actor is { } actor
+                ? $"{actor.Kind}:{actor.Id}"
+                : Unresolved;
+        }
+        catch (BadHttpRequestException)
+        {
+            // A trusted peer's unreadable context headers: its endpoint answers 400.
+            return Unresolved;
+        }
+    }
 }
