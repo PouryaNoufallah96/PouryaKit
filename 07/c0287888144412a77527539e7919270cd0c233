@@ -1,0 +1,25 @@
+.agents/skills/pourya-kit/references/caching.md
+  s_5db987750027ae::t_055d2d3f76c4d6 56-57,83
+docs/architecture/README.md
+  s_5db987750027ae::t_b8d0daae4c1443 262,326
+docs/adr/0002-no-mediator-dependency.md
+  s_5db987750027ae::t_f75b7bbe1b9afb 210-213,221-229,244-246
+docs/acceptance.md
+  s_5db987750027ae::t_ab342fe785a0a6 423-425
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "07c0287888144412a77527539e7919270cd0c233",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
