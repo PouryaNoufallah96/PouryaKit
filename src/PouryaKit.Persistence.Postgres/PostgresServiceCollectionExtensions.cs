@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using PouryaKit.Cqrs;
 using PouryaKit.Persistence.EFCore;
 
 namespace PouryaKit.Persistence.Postgres;
@@ -16,7 +17,9 @@ public static class PostgresServiceCollectionExtensions
         /// <paramref name="connectionName"/> in the Host's configuration. The DbContext becomes the Module's Unit of
         /// Work. No retrying execution strategy is configured: the Unit of Work owns its transaction, and a retry needs
         /// a new scope. A unique violation (SQLSTATE 23505) of a constraint mapped with <c>MapUniqueConstraint</c>
-        /// fails the Operation with the mapped Error.
+        /// fails the Operation with the mapped Error. With the Kit's composition checks
+        /// (<c>AddPouryaKitCompositionChecks</c>), a connection string the Host's configuration does not set, or sets
+        /// blank, fails the Host's start, before any Operation.
         /// </summary>
         public IServiceCollection UsePostgres<TDbContext>(string connectionName, string schema)
             where TDbContext : PouryaKitDbContext
@@ -34,6 +37,8 @@ public static class PostgresServiceCollectionExtensions
                     .UseSnakeCaseNamingConvention()
             );
             services.TryAddSingleton<IUniqueConstraintReader, PostgresUniqueConstraintReader>();
+            services.AddSingleton(new PostgresConnection(connectionName, typeof(TDbContext)));
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, PostgresConnectionsCheck>());
             return services.AddPouryaKitEfCore<TDbContext>();
         }
     }
