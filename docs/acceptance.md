@@ -273,6 +273,7 @@ Spec #33, its observability decision, and [ADR 0009](adr/0009-w3c-trace-context-
 | Packages | No third-party package added or bumped | `PouryaKit.Observability` is new, and is listed in `inventory.json` and in the modular-monolith composition |
 
 `python3 scripts/packaging/validate.py --no-fetch` on the ticket's source (commit `49bc97e`, before this paragraph was added) printed `PASS 16 packages, 18 clean consumers, negative controls and MinVer proof` at version `0.1.0-preview.0.43`, with the Release runtime suite at 564 passed, 0 failed, 0 skipped. The package-only consumer of Observability built from `consumers/PouryaKit.Observability.cs`, and the copied Proving Sample restored `PouryaKit.Observability` as a package.
+
 ## Wave 2 configured Web defaults, ticket #36
 
 Spec #33, user stories 9 to 12. Each scenario runs on a Host composed from the Proving Sample's own composition with the configuration it needs (`PouryaKit:Web:Cors`, `:Compression`, `:RateLimit`), through the whole HTTP pipeline; the shared test Host configures none of them.
