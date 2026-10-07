@@ -218,6 +218,29 @@ internal static class TemplateRules
         }
     }
 
+    /// <summary>
+    /// The token <paramref name="template"/>'s <c>serviceName</c> symbol replaces with a queue name it derives from the
+    /// project's name, and the symbol and the forms it uses, as written.
+    /// </summary>
+    public static (string Token, string Derivation) ServiceNameSymbol(string template)
+    {
+        using var configuration = JsonDocument.Parse(File.ReadAllText(Path.Combine(Content, template, ".template.config", "template.json")));
+        var symbol = configuration.RootElement.GetProperty("symbols").GetProperty("serviceName");
+        return (symbol.GetProperty("replaces").GetString()!, symbol.GetRawText() + configuration.RootElement.GetProperty("forms").GetRawText());
+    }
+
+    /// <summary>
+    /// A generated Host's queue on a broker is the template's derived <c>serviceName</c>, <paramref name="token"/> in the
+    /// content, never another literal: the <c>sourceName</c> becomes the project's name as the engine writes it in code,
+    /// such as <c>acme_shop</c>, which is no valid queue name, and a Host given one fails as it is composed.
+    /// </summary>
+    public static IEnumerable<string> UnderivedServiceNames(IEnumerable<TextFile> generated, string token) =>
+        from file in generated
+        where file.Path.EndsWith(".cs", StringComparison.Ordinal)
+        from match in Regex.Matches(file.Text, "serviceName: \"([^\"]*)\"")
+        where match.Groups[1].Value != token
+        select $"{file.Path} passes the service name {match.Groups[1].Value}; pass {token}, which the template's serviceName symbol derives into a valid queue name from any project name.";
+
     private static Dictionary<string, string> PackageVersions(string props) =>
         XDocument
             .Parse(props)
