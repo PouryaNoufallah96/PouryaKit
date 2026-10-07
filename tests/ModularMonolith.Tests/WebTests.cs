@@ -31,6 +31,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         var productCreated = await client.PostAsJsonAsync(
             "/catalog/products",
             new { productId = product, categoryId = category, name = "Desk lamp" },
+            IdempotentRequests.NewKey(),
             TestContext.Current.CancellationToken
         );
         var found = await client.GetAsync(productCreated.Headers.Location, TestContext.Current.CancellationToken);
@@ -58,6 +59,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         var response = await client.PostAsJsonAsync(
             "/catalog/products",
             new { productId = Guid.Empty, categoryId = Guid.CreateVersion7(), name = "" },
+            IdempotentRequests.NewKey(),
             TestContext.Current.CancellationToken
         );
 
@@ -124,12 +126,14 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         await client.PostAsJsonAsync(
             "/catalog/products",
             new { productId = lamp, categoryId = category, name = "Desk lamp" },
+            IdempotentRequests.NewKey(),
             TestContext.Current.CancellationToken
         );
 
         var response = await client.PostAsJsonAsync(
             "/catalog/products",
             new { productId = Guid.CreateVersion7(), categoryId = category, name = "Desk lamp" },
+            IdempotentRequests.NewKey(),
             TestContext.Current.CancellationToken
         );
 
@@ -212,6 +216,8 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         {
             Content = json is null ? null : new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
         };
+        // Creating a product requires one, so it is the body that cannot be read; reading a product ignores it.
+        request.Headers.Add(IdempotentRequests.Header, IdempotentRequests.NewKey());
 
         var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 

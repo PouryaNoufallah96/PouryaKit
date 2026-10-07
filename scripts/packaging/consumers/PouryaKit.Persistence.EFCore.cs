@@ -1,11 +1,20 @@
 using Ardalis.Specification;
+using Microsoft.EntityFrameworkCore.Migrations;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Persistence.EFCore;
 
-// The packed EF Core paging API, declared and mapped as a Feature's repository would; no database is needed to build it.
+// The packed EF Core paging API, declared and mapped as a Feature's repository would, and the migration of a Module
+// with an idempotent command; no database is needed to build it.
 var page = new Page<NoteListItem>([], 1, NoteRepository.Paging.Declaration.MaxSize, 0);
-Console.WriteLine(page.TotalPages + NoteRepository.Paging.Declaration.Sorts.Count);
+Console.WriteLine(page.TotalPages + NoteRepository.Paging.Declaration.Sorts.Count + IdempotencyTable.Name.Length);
+
+internal sealed class IdempotencyKeys : Migration
+{
+    protected override void Up(MigrationBuilder migrationBuilder) => migrationBuilder.CreateIdempotencyTable("notes");
+
+    protected override void Down(MigrationBuilder migrationBuilder) => migrationBuilder.DropIdempotencyTable("notes");
+}
 
 internal sealed record NoteId(Guid Value) : TypedId<Guid>(Value);
 

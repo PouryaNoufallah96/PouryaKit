@@ -34,6 +34,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["billing", "quotes"],
                 ["catalog", "__EFMigrationsHistory"],
                 ["catalog", "categories"],
+                ["catalog", "pouryakit_idempotency_keys"],
                 ["catalog", "pouryakit_receipts"],
                 ["catalog", "products"],
                 ["inventory", "__EFMigrationsHistory"],
@@ -56,6 +57,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["stub", "pages"],
                 ["stub", "pencils"],
                 ["stub", "pins"],
+                ["stub", "pouryakit_idempotency_keys"],
                 ["stub", "pouryakit_receipts"],
                 ["stub", "pouryakit_snapshot_versions"],
                 ["stub", "shelves"],
@@ -72,6 +74,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 "catalog AddCategories",
                 "catalog PersistencePreparation",
                 "catalog Receipts",
+                "catalog IdempotencyKeys",
                 "stub Initial",
                 "stub NoteTallies",
                 "stub Folders",
@@ -81,6 +84,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 "stub SnapshotVersions",
                 "stub SnapshotGuards",
                 "stub SnapshotKeys",
+                "stub IdempotencyKeys",
             ],
             history.Select(row => $"{row[0]} {((string)row[1]).Split('_', 2)[1]}")
         );

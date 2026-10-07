@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using PouryaKit.Cqrs;
 using PouryaKit.Web;
 
-System.Type[] types = [typeof(IEndpoint)];
+System.Type[] types = [typeof(IEndpoint), typeof(PlaceOrderEndpoint)];
 
 // The packed Web's outgoing HTTP, registered and called as a Host would: the standard retry, then the Operation Context.
 var services = new ServiceCollection();
@@ -34,3 +37,10 @@ using var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost/sto
 var http = provider.GetRequiredService<IHttpClientFactory>().CreateClient("downstream");
 var queueLimit = provider.GetRequiredService<IOptions<PouryaKitRateLimitOptions>>().Value.QueueLimit;
 Console.WriteLine(types.Length + (http is not null && request.Options.Any() && queueLimit == 2 ? 1 : 0));
+
+// An endpoint whose command opts in to idempotency requires the Idempotency-Key header.
+internal sealed class PlaceOrderEndpoint : IEndpoint
+{
+    public void Map(IEndpointRouteBuilder routes) =>
+        routes.MapPost("/orders", () => TypedResults.NoContent()).RequireIdempotencyKey();
+}

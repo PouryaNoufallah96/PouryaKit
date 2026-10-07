@@ -32,6 +32,7 @@ public sealed class SharedJsonTests(AppFixture app) : HostTest<AppFixture>(app)
                 await client.PostAsJsonAsync(
                     "/catalog/products",
                     new { productId = product, categoryId = category, name = "Desk lamp" },
+                    IdempotentRequests.NewKey(),
                     TestContext.Current.CancellationToken
                 )
             ).StatusCode

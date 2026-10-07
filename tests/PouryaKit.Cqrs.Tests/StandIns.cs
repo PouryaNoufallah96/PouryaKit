@@ -10,7 +10,7 @@ internal static class TestHost
     private static readonly ServiceProviderOptions Strict = new() { ValidateOnBuild = true, ValidateScopes = true };
 
     /// <summary>The Host wiring for the test Module: one call with its assembly, plus the stand-ins.</summary>
-    public static ServiceProvider Build(bool withValidationStep = true, Type? unitOfWork = null)
+    public static ServiceProvider Build(bool withValidationStep = true, Type? unitOfWork = null, bool withIdempotencyStore = false)
     {
         var services = new ServiceCollection()
             .AddPouryaKitCqrs(typeof(ThingsGateway).Assembly)
@@ -22,7 +22,28 @@ internal static class TestHost
             services.AddScoped(typeof(IValidationStep<>), typeof(ValidationStepStandIn<>));
         }
 
+        if (withIdempotencyStore)
+        {
+            services.AddScoped<IIdempotencyStore, IdempotencyStoreStandIn>();
+        }
+
         return services.BuildServiceProvider(Strict);
+    }
+}
+
+/// <summary>Records each key it reserves and each response it records, and holds no key a committed Operation recorded.</summary>
+internal sealed class IdempotencyStoreStandIn(OperationTrace trace) : IIdempotencyStore
+{
+    public Task<RecordedSuccess?> ReserveAsync(IdempotencyKey key, CancellationToken cancellationToken)
+    {
+        trace.Add($"reserve {key.Command} {key.RequestId}");
+        return Task.FromResult<RecordedSuccess?>(null);
+    }
+
+    public Task RecordAsync(IdempotencyKey key, string response, CancellationToken cancellationToken)
+    {
+        trace.Add($"record {key.Command} {response}");
+        return Task.CompletedTask;
     }
 }
 

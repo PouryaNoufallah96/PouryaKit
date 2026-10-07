@@ -6,17 +6,22 @@ using PouryaKit.Domain;
 namespace PouryaKit.ArchitectureTests;
 
 // Spec #33, user story 8: one JSON representation, owned by Domain. Web and Messaging.Wolverine apply Domain's
-// UsePouryaKitJson to the options their framework hands them; no other code sets JSON options up its own way.
+// UsePouryaKitJson to the options their framework hands them, and Cqrs to the options it records an idempotent
+// command's response with (#42); no other code sets JSON options up its own way.
 public sealed class SharedJsonTests
 {
     private static readonly Assembly Domain = typeof(TypedId).Assembly;
 
     [Fact]
-    public void Web_and_messaging_wolverine_apply_domains_json_options_and_nothing_else_sets_up_its_own()
+    public void Web_messaging_wolverine_and_cqrs_apply_domains_json_options_and_nothing_else_sets_up_its_own()
     {
         Assert.Empty(Sample.KitPackages.Where(package => package != Domain).Concat(Sample.Modules).SelectMany(OwnJsonSetups));
         Assert.Equal(
-            ["PouryaKit.Messaging.Wolverine.WolverineHostApplicationBuilderExtensions", "PouryaKit.Web.WebServiceCollectionExtensions"],
+            [
+                "PouryaKit.Cqrs.Dispatcher",
+                "PouryaKit.Messaging.Wolverine.WolverineHostApplicationBuilderExtensions",
+                "PouryaKit.Web.WebServiceCollectionExtensions",
+            ],
             Sample.KitPackages.SelectMany(Il.CallsIn).Where(AppliesKitJson).Select(call => call.Owner.FullName).Distinct().Order(StringComparer.Ordinal)
         );
         // Domain itself is where the options are set up, and the rule sees it.

@@ -205,9 +205,9 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         var byUrl = Guid.CreateVersion7();
         var byHeader = Guid.CreateVersion7();
 
-        var createdByUrl = await SendAsync(client, HttpMethod.Post, "/catalog/v2/products", null, JsonContent.Create(new { productId = byUrl, categoryId = category, name = "Desk lamp" }));
+        var createdByUrl = await SendAsync(client, HttpMethod.Post, "/catalog/v2/products", null, JsonContent.Create(new { productId = byUrl, categoryId = category, name = "Desk lamp" }), IdempotentRequests.NewKey());
         var readByUrl = await SendAsync(client, HttpMethod.Get, createdByUrl.Headers.Location!.OriginalString, null);
-        var createdByHeader = await SendAsync(client, HttpMethod.Post, "/catalog/products", "1.0", JsonContent.Create(new { productId = byHeader, categoryId = category, name = "Floor lamp" }));
+        var createdByHeader = await SendAsync(client, HttpMethod.Post, "/catalog/products", "1.0", JsonContent.Create(new { productId = byHeader, categoryId = category, name = "Floor lamp" }), IdempotentRequests.NewKey());
         var readByHeader = await SendAsync(client, HttpMethod.Get, createdByHeader.Headers.Location!.OriginalString, "1.0");
 
         Assert.Equal(HttpStatusCode.Created, createdByUrl.StatusCode);
@@ -348,13 +348,19 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         HttpMethod method,
         string path,
         string? version,
-        HttpContent? content = null
+        HttpContent? content = null,
+        string? idempotencyKey = null
     )
     {
         using var request = new HttpRequestMessage(method, path) { Content = content };
         if (version is not null)
         {
             request.Headers.Add(WebOpenApiServiceCollectionExtensions.ApiVersionHeader, version);
+        }
+
+        if (idempotencyKey is not null)
+        {
+            request.Headers.Add(IdempotentRequests.Header, idempotencyKey);
         }
 
         return await client.SendAsync(request, TestContext.Current.CancellationToken);
