@@ -1,6 +1,6 @@
 ---
 name: idempotency-retention-facts
-description: #42 follow-up facts - .NET 10 BackgroundService runs ExecuteAsync on Task.Run, PeriodicTimer on FakeTimeProvider, a tick failure stops the Host, enumerating DbContexts, to_regclass skip, invariant log formatting, mutation compile traps
+description: Ticket #42 follow-up facts - .NET 10 BackgroundService runs ExecuteAsync on Task.Run, PeriodicTimer on FakeTimeProvider, a tick failure stops the Host, enumerating DbContexts, to_regclass skip, invariant log formatting, mutation compile traps
 metadata:
   type: project
 ---
