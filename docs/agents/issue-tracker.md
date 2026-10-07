@@ -34,6 +34,7 @@ Create a GitHub issue.
 When `/to-tickets` starts from an existing spec issue, attach every published ticket to that spec as a native GitHub sub-issue. Add native blocking dependencies separately according to the approved graph; a parent link does not mean the spec blocks its tickets.
 
 - **Attach to the spec**: `gh api --method POST repos/<owner>/<repo>/issues/<spec>/sub_issues -F sub_issue_id=<ticket-db-id>`. Get the ticket's numeric database id with `gh api repos/<owner>/<repo>/issues/<ticket> --jq .id`.
+- **Block**: `gh api --method POST repos/<owner>/<repo>/issues/<ticket>/dependencies/blocked_by -F issue_id=<blocker-db-id>`, one call per blocker. Both endpoints want integer ids: `-F` sends a number, `-f` sends a string and is refused with 422; `--input -` with `{"issue_id": <id>}` works the same. In zsh, split a `"<ticket> <blocker>"` pair with `${pair% *}` and `${pair#* }` (an unquoted `$pair` does not word-split there).
 - **Preserve the spec**: keep its title, body and open/closed state unchanged. Attaching approved children is authorized by ticket publication and is not prohibited by the vendored skill's parent-modification restriction.
 - **Verify publication**: read back `issues/<spec>/sub_issues`, each ticket's labels and `issues/<ticket>/dependencies/blocked_by`. Every approved ticket must appear under the intended spec, carry the required triage label and have exactly its approved blockers. Preserve existing unrelated children. Textual parent references and blocker lists alone do not prove native relationships.
 

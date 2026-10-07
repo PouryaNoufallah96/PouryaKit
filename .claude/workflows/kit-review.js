@@ -1,10 +1,10 @@
 export const meta = {
   name: 'kit-review',
-  description: 'Per-ticket dual review: kit-reviewer and a Codex inspection in parallel on a worktree of one commit, then every finding checked against the code',
+  description: 'Per-ticket dual review: a Codex inspection, then kit-reviewer, on a worktree of one commit, then every finding checked against the code',
   whenToUse: 'The dual review in AGENTS.md workflow step 3, for a ticket that claims a Kit runtime guarantee or changes a public API of the Kit. Pass { base, ticket } (or { base, spec } for work with no ticket); add previous (the earlier result file) only to re-review after a high finding was fixed. Read-only; returns a short digest and names the file with the full result; the main session judges it.',
   phases: [
     { title: 'Prepare', detail: 'resolve the commits, fetch the ticket, check out a detached review worktree' },
-    { title: 'Review', detail: 'kit-reviewer and Codex (claudex-loop runner, inspect mode) review the same commit independently' },
+    { title: 'Review', detail: 'Codex (claudex-loop runner, inspect mode), then kit-reviewer, review the same commit independently' },
     { title: 'Verify', detail: 'merge duplicate findings and check each one against the code' },
     { title: 'Finish', detail: 'write the full result file and remove the review worktree' },
   ],
@@ -308,10 +308,15 @@ ${runnerCommand}
 3. If there is no such line (for example the tool call timed out), return available false, verdict NONE, empty findings, unread and limitations, read_count 0, and error quoting what the shell reported.`
 
   phase('Review')
-  const [claudeRaw, codexRaw] = await parallel([
-    () => agent(reviewerPrompt, { label: 'review:kit-reviewer', phase: 'Review', agentType: 'kit-reviewer', schema: CLAUDE_REVIEW }),
+  // One leg at a time, Codex first: the runner has a 570 s budget inside a foreground shell, and kit-reviewer's builds
+  // and test runs in the same worktree starved it twice (2026-10-07, #52 and #53: 570 s inside the workflow, about
+  // 250 s alone). Sequential costs a few minutes of wall-clock and removes the hand rerun.
+  const codexRaw = await parallel([
     () => agent(relayPrompt, { label: 'review:codex', phase: 'Review', effort: 'low', schema: CODEX_REVIEW }),
-  ])
+  ]).then((legs) => legs[0])
+  const claudeRaw = await parallel([
+    () => agent(reviewerPrompt, { label: 'review:kit-reviewer', phase: 'Review', agentType: 'kit-reviewer', schema: CLAUDE_REVIEW }),
+  ]).then((legs) => legs[0])
   const missing = (note) => ({ available: false, verdict: null, findings: [], read_count: 0, unread: [], limitations: [], note })
   const claude = claudeRaw ?? missing('kit-reviewer did not return')
   const codex = codexRaw ?? missing('the Codex relay did not return')

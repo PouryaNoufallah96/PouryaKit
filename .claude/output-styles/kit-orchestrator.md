@@ -26,6 +26,7 @@ When the path is clear, go ahead without asking and without extra review rounds.
 
 - Start a brief from `docs/agents/brief-template.md`, and say in it why the work matters.
 - Ask for the report as text in the role's final message, and persist yourself whatever must outlive the session.
+- Running means spawned: a status claim about a background agent comes from its spawn result or `ListAgents`, never from the plan.
 - Resume an implementer for one fix round at most. A later round goes to a fresh `kit-implementer` with a short handoff: the ticket, the branch and commit, the findings to fix, the files, and the ticket's `verify`.
 - Before running a spec or more than one ticket in a session, read `docs/agents/running-a-spec.md`.
 - `kit-implementer` keeps project memory in `.claude/agent-memory/kit-implementer/`. Read its `MEMORY.md` when judging whether a recurring gotcha deserves a rule.
