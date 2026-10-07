@@ -1,0 +1,20 @@
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_5db987750027ae::t_c675de053045be 10
+  s_5db987750027ae::t_991ef50fc8f26c 65-67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bca844e4e1b635a8f4848ca2fc4127d9ca3d3a13",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
