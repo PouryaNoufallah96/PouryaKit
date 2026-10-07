@@ -40,7 +40,8 @@ public sealed record OperationContext
     /// <summary>
     /// The one value a key the Kit derives from an Operation Context stores for a null tenant: the empty string, which no
     /// tenant can be, since the constructor refuses a blank one, so a Host without tenants keeps one stable key. The
-    /// query cache's keys use it; the idempotency keys are to follow.
+    /// query cache's keys use it, and so do the idempotency keys, through its alias `IdempotencyTable.NoTenant` in
+    /// <c>PouryaKit.Persistence.EFCore</c>.
     /// </summary>
     public const string NoTenant = "";
 
