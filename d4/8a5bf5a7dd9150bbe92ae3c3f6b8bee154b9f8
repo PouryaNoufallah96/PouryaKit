@@ -1,0 +1,19 @@
+.claude/rules/kit-code.md
+  s_0d5a1b290c2d36::t_b83a0d7c0dbfeb 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d48a5bf5a7dd9150bbe92ae3c3f6b8bee154b9f8",
+  "prompts": {},
+  "sessions": {
+    "s_0d5a1b290c2d36": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5bdb6a50-6bfa-4dc6-9059-d46d18b45597",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
