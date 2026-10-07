@@ -6,14 +6,20 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
+import time
 import xml.etree.ElementTree as ET
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 ARCHITECTURE = ROOT / "tests/PouryaKit.ArchitectureTests/bin/Release/net10.0/PouryaKit.ArchitectureTests.dll"
+# The projects a template generates: package content, not projects of this repository.
+TEMPLATE_CONTENT = ROOT / "src/PouryaKit.Templates/content"
+# The name every template consumer generates its solution under.
+GENERATED = "Acme.Shop"
 
 
 def run(command, *, cwd=ROOT, env=None, log=None, expect_failure=False):
@@ -83,6 +89,11 @@ def consumer_config(folder, packages):
         '<TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup></Project>\n')
     (folder / "Directory.Build.targets").write_text("<Project />\n")
     (folder / "Directory.Packages.props").write_text((ROOT / "Directory.Packages.props").read_text())
+    consumer_feed(folder, packages)
+
+
+def consumer_feed(folder, packages):
+    """The consumer's NuGet.Config: Kit packages from the produced feed only, every other package from nuget.org."""
     config = ET.Element("configuration")
     sources = ET.SubElement(config, "packageSources")
     ET.SubElement(sources, "clear")
@@ -115,6 +126,12 @@ def simple_consumer(folder, ids, types, version):
     anchors = ", ".join(f"typeof({types[name]})" for name in ids)
     (folder / "Program.cs").write_text(f"System.Type[] types = [{anchors}];\nSystem.Console.WriteLine(types.Length);\n")
     return folder / "Consumer.csproj"
+
+
+def template_consumer(folder, template, hive):
+    """Generates the solution of `template`, installed from the produced package, with nothing of this repository's."""
+    run(["dotnet", "new", template, "-n", GENERATED, "-o", folder / GENERATED, "--no-restore", "--debug:custom-hive", hive], cwd=folder)
+    return folder / GENERATED / f"{GENERATED}.slnx"
 
 
 def sample_consumer(folder, source, entries, version):
@@ -294,9 +311,10 @@ def validate(output, *, fetch=True):
     inventory = json.loads((ROOT / "scripts/packaging/inventory.json").read_text())
     packages = inventory["packages"]
     ids = [package["id"] for package in packages]
-    types = {package["id"]: package["type"] for package in packages}
+    types = {package["id"]: package["type"] for package in packages if "type" in package}
     evaluated = {str(project.relative_to(ROOT)): properties(project, ["IsPackable", "PackageId", "EnablePackageValidation"])
-                 for tree in ("src", "tests", "samples") for project in sorted((ROOT / tree).rglob("*.csproj"))}
+                 for tree in ("src", "tests", "samples") for project in sorted((ROOT / tree).rglob("*.csproj"))
+                 if not project.is_relative_to(TEMPLATE_CONTENT)}
     check_inventory(packages, evaluated)
     (output / "evaluated-projects.json").write_text(json.dumps(evaluated, indent=2))
     inventory_controls(packages, evaluated, output / "inventory-controls.log")
@@ -312,12 +330,40 @@ def validate(output, *, fetch=True):
     evidence_file = output / "package-evidence.json"
     evidence_file.write_text(json.dumps(evidence, indent=2))
     run(["dotnet", ARCHITECTURE, "--validate-packages", evidence_file], log=output / "artifacts.log")
-    consumers = [{"name": package["id"], "packages": [package["id"]], "excluded": []} for package in packages]
+    # A library package gets a consumer that names its type; a template package gets the template consumers.
+    consumers = [{"name": package["id"], "packages": [package["id"]], "excluded": []} for package in packages if "type" in package]
     consumers += inventory["compositions"]
+    hive = output / "template-hive"
+    for package in packages:
+        if package.get("kind") == "template":
+            run(["dotnet", "new", "install", package_output / f"{package['id']}.{evidence['Version']}.nupkg", "--debug:custom-hive", hive],
+                log=output / "template-install.log")
+    smoke_tests = []
     for consumer in consumers:
         name = consumer["name"]
         folder = output / "consumers" / name
         folder.mkdir(parents=True)
+        if "template" in consumer:
+            started = time.monotonic()
+            # The generated solution brings its own SDK pin, build settings and central versions; only the feed is given.
+            consumer_feed(folder, package_output)
+            solution = template_consumer(folder, consumer["template"], hive)
+            env = isolated_env(folder)
+            run(["dotnet", "restore", solution, "--configfile", folder / "NuGet.Config", "--no-http-cache", "-p:RestoreFallbackFolders="],
+                cwd=solution.parent, env=env, log=output / f"consumer-{name}-restore.log")
+            run(["dotnet", "build", solution, "-c", "Release", "--no-restore"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-build.log")
+            tests = solution.parent / "tests" / f"{GENERATED}.Tests" / f"{GENERATED}.Tests.csproj"
+            result = run(["dotnet", "test", "--project", tests, "-c", "Release", "--no-build"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-test.log")
+            passed = re.search(r"succeeded: (\d+)", result)
+            failed = re.search(r"failed: (\d+)", result)
+            if not passed or not failed or failed.group(1) != "0" or passed.group(1) == "0":
+                raise RuntimeError(f"The smoke tests of {name} did not pass: {result}")
+            assets = check_consumer(folder, env, ids, evidence["Version"], consumer["excluded"])
+            evidence["Consumers"].append({"Name": name, "Packages": consumer["packages"], "Assets": assets})
+            smoke_tests.append(f"{name} {passed.group(1)}")
+            print(f"PASS template consumer {name}: generated, restored and built from the produced packages; "
+                  f"{passed.group(1)} smoke tests passed ({time.monotonic() - started:.0f} s)", flush=True)
+            continue
         consumer_config(folder, package_output)
         projects = sample_consumer(folder, consumer["source"], consumer["entries"], evidence["Version"]) if "source" in consumer else [simple_consumer(folder, consumer["packages"], types, evidence["Version"])]
         # A consumer with its own source under consumers/ exercises the packed API instead of only naming its types.
@@ -351,7 +397,8 @@ def validate(output, *, fetch=True):
     artifacts = [{"id": name, "file": f"{name}.{evidence['Version']}.nupkg",
                   "sha256": hashlib.sha256((package_output / f"{name}.{evidence['Version']}.nupkg").read_bytes()).hexdigest()} for name in ids]
     (output / "manifest.json").write_text(json.dumps({"commit": commit, "version": evidence["Version"], "packages": artifacts}, indent=2) + "\n")
-    print(f"PASS {len(ids)} packages, {len(consumers)} clean consumers, negative controls and MinVer proof. Manifest: {output / 'manifest.json'}", flush=True)
+    print(f"PASS {len(ids)} packages, {len(consumers)} clean consumers ({len(smoke_tests)} generated from templates, "
+          f"smoke tests passed: {', '.join(smoke_tests)}), negative controls and MinVer proof. Manifest: {output / 'manifest.json'}", flush=True)
 
 
 def main():

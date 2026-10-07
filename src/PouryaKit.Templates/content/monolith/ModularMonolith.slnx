@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ModularMonolith.Host/ModularMonolith.Host.csproj" />
+    <Project Path="src/ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/">
+    <Project Path="src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj" />
+    <Project Path="src/Modules/Catalog/Catalog/Catalog.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj" />
+  </Folder>
+</Solution>

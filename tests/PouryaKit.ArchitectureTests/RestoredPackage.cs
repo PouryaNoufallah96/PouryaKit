@@ -102,7 +102,10 @@ internal sealed record RestoredPackage(
         while (next.TryDequeue(out var id))
         {
             if (!seen.Add(id)) continue;
-            var library = resolved[id];
+            // A dependency the consumer's graph left out did not arrive: a project the consumer references takes the
+            // same package itself with PrivateAssets="all", as a Host takes Microsoft.EntityFrameworkCore.Design, and
+            // NuGet then leaves it out of the referencing project's graph, the test project's of a generated solution.
+            if (!resolved.TryGetValue(id, out var library)) continue;
             if (libraries.GetProperty(library.Name).GetProperty("type").GetString() != "package")
                 throw new InvalidOperationException($"{id} resolved through a project reference.");
             if (IsKit(id))

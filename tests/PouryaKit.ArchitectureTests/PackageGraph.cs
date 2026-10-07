@@ -61,6 +61,8 @@ internal static class PackageGraph
             ["Asp.Versioning.Http", "Asp.Versioning.OpenApi", "Microsoft.AspNetCore.OpenApi", "Scalar.AspNetCore"],
             ["Microsoft.AspNetCore.App"]
         ),
+        // dotnet new templates, content only: the projects they generate reference the Kit's packages, the package none.
+        ["PouryaKit.Templates"] = new([], []),
         ["PouryaKit.Testing"] = new(
             ["PouryaKit.Modularity", "PouryaKit.Persistence.Postgres", "PouryaKit.Messaging.Wolverine.EFCore"],
             ["Testcontainers.PostgreSql", "Respawn", "xunit.v3.extensibility.core", "Microsoft.Extensions.TimeProvider.Testing"]
@@ -90,8 +92,8 @@ internal static class PackageGraph
         ["PouryaKit.Caching"] = ["StackExchange.Redis", "Microsoft.Extensions.Caching.StackExchangeRedis"],
     };
 
-    // Core and Domain, and Messaging (Domain only), bring no package at all.
-    private static readonly HashSet<string> NoPackages = ["PouryaKit.Core", "PouryaKit.Domain", "PouryaKit.Messaging"];
+    // Core and Domain, and Messaging (Domain only), bring no package at all; nor do the templates.
+    private static readonly HashSet<string> NoPackages = ["PouryaKit.Core", "PouryaKit.Domain", "PouryaKit.Messaging", "PouryaKit.Templates"];
 
     public static IEnumerable<string> Violations(RestoredPackage package)
     {

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <!-- The application's optional distributed cache for HybridCache; a Kit package never references Redis. -->
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+    <!-- Wolverine 6 compiles its runtime code with Roslyn from this package; a Kit package never references it. -->
+    <PackageReference Include="WolverineFx.RuntimeCompilation" />
+    <PackageReference Include="PouryaKit.Caching" />
+    <PackageReference Include="PouryaKit.Messaging.Wolverine.EFCore" />
+    <PackageReference Include="PouryaKit.Messaging.Wolverine.RabbitMq" />
+    <PackageReference Include="PouryaKit.Observability" />
+    <PackageReference Include="PouryaKit.Security" />
+    <PackageReference Include="PouryaKit.Security.JwtBearer" />
+    <PackageReference Include="PouryaKit.Web" />
+    <PackageReference Include="PouryaKit.Web.OpenApi" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Modules\Catalog\Catalog\Catalog.csproj" />
+    <ProjectReference Include="..\ModularMonolith.ServiceDefaults\ModularMonolith.ServiceDefaults.csproj" />
+  </ItemGroup>
+</Project>

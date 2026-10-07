@@ -16,6 +16,7 @@
     <Project Path="src/PouryaKit.Observability/PouryaKit.Observability.csproj" />
     <Project Path="src/PouryaKit.Security/PouryaKit.Security.csproj" />
     <Project Path="src/PouryaKit.Security.JwtBearer/PouryaKit.Security.JwtBearer.csproj" />
+    <Project Path="src/PouryaKit.Templates/PouryaKit.Templates.csproj" />
     <Project Path="src/PouryaKit.Testing/PouryaKit.Testing.csproj" />
     <Project Path="src/PouryaKit.Validation/PouryaKit.Validation.csproj" />
     <Project Path="src/PouryaKit.Web/PouryaKit.Web.csproj" />
