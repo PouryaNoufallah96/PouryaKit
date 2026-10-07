@@ -1,0 +1,54 @@
+docs/ci.md
+  s_6c3c3736ba14ff::t_9c9a4128064d27 5
+  s_6c3c3736ba14ff::t_9faf36ad481ea4 3
+.agents/scripts/check-tree.py
+  s_6c3c3736ba14ff::t_5ddd61565859e1 1-20,22-27,35-45
+  s_6c3c3736ba14ff::t_6436e58ed796fc 28-34
+.github/workflows/ci.yml
+  s_6c3c3736ba14ff::t_b2b52a0bea8854 5
+docs/agents/running-a-spec.md
+  s_6c3c3736ba14ff::t_ca9c7e4112446a 23,30-31
+.agents/scripts/check-ai-setup.py
+  s_6c3c3736ba14ff::t_2af58b5558237f 489-509,512-513
+.claude/agents/kit-implementer.md
+  s_6c3c3736ba14ff::t_43526785aa896e 33,60
+.codex/agents/kit-implementer.toml
+  s_6c3c3736ba14ff::t_43526785aa896e 31,58
+.agents/skills/pourya-kit/references/observability.md
+  s_6c3c3736ba14ff::t_1ab895e465fb9e 30
+.claude/workflows/kit-review.js
+  s_6c3c3736ba14ff::t_a940b786a4b84e 98-99,239,465-467,469-470,474,476-478,480-489,491,501
+docs/architecture/README.md
+  s_6c3c3736ba14ff::t_4a2936f29482b2 504
+  s_6c3c3736ba14ff::t_dee041c4e32a86 3,5,18-19
+.agents/skills/pourya-kit/SKILL.md
+  s_6c3c3736ba14ff::t_dee041c4e32a86 40-41
+.githooks/pre-commit
+  s_6c3c3736ba14ff::t_5a4e39b9525e7c 2-4
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_6c3c3736ba14ff::t_27c65e58f6c040 23
+  s_6c3c3736ba14ff::t_7242885ee8eac5 1,22
+README.md
+  s_6c3c3736ba14ff::t_dee041c4e32a86 7
+docs/agents/ai-setup.md
+  s_6c3c3736ba14ff::t_ca9c7e4112446a 23,25,50,146,174
+  s_6c3c3736ba14ff::t_dedc4aff58004b 94,205
+docs/private-packages.md
+  s_6c3c3736ba14ff::t_9faf36ad481ea4 11,16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8b83974945794870af02a877be0923f3b2c0525a",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
