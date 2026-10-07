@@ -286,6 +286,84 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
         Assert.Equal(turnedAway + 1, DeliveryProbes.TurnedAwayFrom(StockItems));
     }
 
+    [Fact(Timeout = 120_000)]
+    public async Task A_copy_the_store_refuses_leaves_the_broker_envelope_unhandled_dead_lettered_at_the_host_queue_and_its_replay_applies_each_effect_once()
+    {
+        var environment = await broker.CreateEnvironmentAsync();
+        using var inventory = await environment.StartInventoryHostAsync();
+        await using var catalog = await environment.StartCatalogHostAsync();
+        var product = Guid.CreateVersion7();
+
+        // The store refuses the audit's copy of every envelope, and nothing else.
+        await BrokerEnvironment.RowsAsync(
+            environment.Inventory,
+            $"""
+            create function public.refuse_audit_copy() returns trigger language plpgsql as $$
+            begin
+                if new.received_at = 'local://{Audit}/' then
+                    raise exception 'The store refuses the audit''s copy.';
+                end if;
+                return new;
+            end $$;
+            create trigger refuse_audit_copy before insert on wolverine.wolverine_incoming_envelopes
+                for each row execute function public.refuse_audit_copy();
+            """
+        );
+        await BrokerEnvironment.CreateProductAsync(catalog, product, "Lamp");
+        var created = await environment.CreatedEventOfAsync(product);
+        await BrokerEnvironment.WaitUntilAsync(
+            environment.Inventory,
+            $"exists (select from wolverine.wolverine_dead_letters) or exists (select from wolverine.wolverine_incoming_envelopes where received_at = '{HostQueue}' and message_type = 'catalog.product-created.v1' and status = 'Handled')",
+            "ProductCreatedV1's broker envelope was neither dead-lettered nor marked handled."
+        );
+        await BrokerEnvironment.WaitUntilSettledAsync(environment.Inventory);
+
+        // Never marked handled: after its retries the broker envelope is a dead letter at the Host's queue, the store's
+        // refusal its cause, and the only record of the audit's delivery.
+        Assert.Equal(
+            [[HostQueue, "catalog.product-created.v1", "Npgsql.PostgresException"]],
+            await BrokerEnvironment.RowsAsync(environment.Inventory, "select received_at, message_type, exception_type from wolverine.wolverine_dead_letters")
+        );
+        Assert.Equal(
+            (0L, 0L),
+            (
+                await BrokerEnvironment.ScalarAsync<long>(
+                    environment.Inventory,
+                    $"select count(*) from wolverine.wolverine_incoming_envelopes where received_at in ('{HostQueue}', 'local://{Audit}/') and message_type = 'catalog.product-created.v1'"
+                ),
+                await ReceiptsAsync(environment, Audit)
+            )
+        );
+
+        // With the store healed, the replay fans the envelope out again, and each subscription applies it once.
+        await BrokerEnvironment.RowsAsync(
+            environment.Inventory,
+            "drop trigger refuse_audit_copy on wolverine.wolverine_incoming_envelopes; drop function public.refuse_audit_copy();"
+        );
+        var deadLetters = inventory.Services.GetRequiredService<IWolverineRuntime>().Storage.DeadLetters;
+        var deadLetter = Assert.Single(
+            (await deadLetters.QueryAsync(new DeadLetterEnvelopeQuery { PageSize = 0 }, TestContext.Current.CancellationToken)).Envelopes
+        );
+        await deadLetters.ReplayAsync(new DeadLetterEnvelopeQuery([deadLetter.Id]), TestContext.Current.CancellationToken);
+        await BrokerEnvironment.WaitUntilAsync(
+            environment.Inventory,
+            $"exists (select from inventory.pouryakit_receipts where subscription = '{Audit}')",
+            "The replayed broker envelope never reached the audit."
+        );
+        await BrokerEnvironment.WaitUntilSettledAsync(environment.Inventory);
+
+        Assert.Equal(
+            [[$"local://{Audit}/", "Handled"], [HostQueue, "Handled"]],
+            await BrokerEnvironment.RowsAsync(
+                environment.Inventory,
+                $"select received_at, status from wolverine.wolverine_incoming_envelopes where received_at in ('{HostQueue}', 'local://{Audit}/') and message_type = 'catalog.product-created.v1' order by 1"
+            )
+        );
+        Assert.Equal([[product]], await AuditsWithTheirReceiptAsync(environment));
+        Assert.Single(DeliveryProbes.AttemptsOf(Audit, created));
+        Assert.Equal((1L, 1L), (await ReceiptsAsync(environment, StockItems), await StockItemsAsync(environment, product)));
+    }
+
     [Fact]
     public async Task A_retry_waiting_in_the_other_host_survives_its_kill_and_a_publication_made_while_it_is_down_arrives_after_it_starts()
     {

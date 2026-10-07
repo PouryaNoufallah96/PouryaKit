@@ -796,6 +796,20 @@ The #51 review then found two gaps, fixed in the same ticket:
   v1's full name is refused at start in a Host that only publishes them
   (`IntegrationEventVersionTests.Startup_fails_when_wolverine_would_send_one_message_type_wherever_another_published_type_goes`).
 
+The re-review found what the #50 amendment inferred wrongly (finding F6): a store error while the copies are written
+never reached the error queue. A copy sent from the handler's own context only joins that context's outgoing
+envelopes. `MessageContext.FlushOutgoingMessagesAsync`, which `MessageSucceededContinuation` runs before it marks the
+envelope handled, catches each envelope's failure, logs that the envelope was discarded and does not rethrow, so the
+continuation's catch covers only the handled mark (`src/Wolverine/Runtime/MessageContext.cs` at `V6.46.0`, read
+decompiled). A copy the store refused was dropped, and the broker envelope marked handled all the same. What holds
+now: the fan-out sends the copies through a `MessageBus` of its own, enlisted in no transaction, so each `SendAsync`
+returns only once its durable local queue stored the copy, owned by the node as before
+(`DurableLocalQueue.StoreAndForwardAsync`, the write retried a few times by Wolverine), and a store error throws. The
+broker envelope is then retried, dead-lettered at `rabbitmq://queue/{ServiceName}`, and its replay fans it out again
+(`RabbitMqDeliveryTests.A_copy_the_store_refuses_leaves_the_broker_envelope_unhandled_dead_lettered_at_the_host_queue_and_its_replay_applies_each_effect_once`,
+red with the copies sent from the handler's context). The fan-out bullet above, which sends the copy from the handler's
+own context, records the first fix round; the two kill tests named above pass unchanged.
+
 ## Amendment (2026-10-07, ticket #49: Integration Event versions)
 
 The decision above stands. One wire name is one version of one contract type, and a new version is a new type under a
