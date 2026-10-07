@@ -132,6 +132,96 @@ public sealed class CachingTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Fact]
+    public async Task A_query_whose_answer_changes_tracked_state_when_serialized_stores_nothing_and_its_joiner_receives_the_failure()
+    {
+        var folder = Guid.CreateVersion7();
+        await Stub.SendAsync(new CreateFolderCommand(folder), TestContext.Current.CancellationToken);
+        using var joins = new StampedeJoins();
+        var hold = new Hold();
+
+        var first = Stub.QueryAsync(new FolderNamesQuery(folder, hold), As("ada"), TestContext.Current.CancellationToken);
+        await hold.Changed.Task.WaitAsync(TestContext.Current.CancellationToken);
+        var second = Stub.QueryAsync(new FolderNamesQuery(folder), As("ada"), TestContext.Current.CancellationToken);
+        await joins.Joined.WaitAsync(TestContext.Current.CancellationToken);
+        hold.Released.SetResult();
+
+        var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => first);
+        var joinerRefused = await Assert.ThrowsAsync<InvalidOperationException>(() => second);
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => Stub.QueryAsync(new FolderNamesQuery(folder), As("ada"), TestContext.Current.CancellationToken)
+        );
+        Assert.StartsWith("A query changed a Folder", refused.Message, StringComparison.Ordinal);
+        Assert.Same(refused, joinerRefused);
+        // The later read ran the handler again: no entry was stored.
+        Assert.Equal([1, 1], Runs.Of(folder.ToString()));
+    }
+
+    [Fact]
+    public async Task A_query_nested_in_one_that_changed_tracked_state_stores_nothing_so_a_later_read_answers_the_committed_value()
+    {
+        var folder = Guid.CreateVersion7();
+        await Stub.SendAsync(new CreateFolderCommand(folder), TestContext.Current.CancellationToken);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => Stub.QueryAsync(new RelabelThenReadColourQuery(folder, Relabel: true), TestContext.Current.CancellationToken)
+        );
+
+        Assert.Equal("grey", (await Stub.QueryAsync(new FolderColourQuery(folder), TestContext.Current.CancellationToken)).Value);
+    }
+
+    [Fact]
+    public async Task A_query_sent_by_an_authorizer_that_changed_tracked_state_stores_nothing_so_a_later_read_answers_the_committed_value()
+    {
+        var folder = Guid.CreateVersion7();
+        await Stub.SendAsync(new CreateFolderCommand(folder), TestContext.Current.CancellationToken);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => Stub.SendAsync(new RelabelInAuthorizationCommand(folder), TestContext.Current.CancellationToken)
+        );
+
+        Assert.Equal("grey", (await Stub.QueryAsync(new FolderColourQuery(folder), TestContext.Current.CancellationToken)).Value);
+    }
+
+    [Fact]
+    public async Task A_query_nested_in_another_is_answered_but_never_cached()
+    {
+        var folder = Guid.CreateVersion7();
+        await Stub.SendAsync(new CreateFolderCommand(folder), TestContext.Current.CancellationToken);
+
+        var nested = await Stub.QueryAsync(new RelabelThenReadColourQuery(folder, Relabel: false), TestContext.Current.CancellationToken);
+        var first = await Stub.QueryAsync(new FolderColourQuery(folder), TestContext.Current.CancellationToken);
+        var second = await Stub.QueryAsync(new FolderColourQuery(folder), TestContext.Current.CancellationToken);
+
+        Assert.Equal(["grey", "grey", "grey"], [nested.Value, first.Value, second.Value]);
+        // The first outermost read ran the handler again, so the nested read stored nothing; the second read was stored.
+        Assert.Equal([1, 1], Runs.Of(folder.ToString()));
+    }
+
+    [Fact]
+    public async Task A_query_in_an_operation_that_already_failed_stores_nothing_so_a_later_read_answers_the_committed_value()
+    {
+        var folder = Guid.CreateVersion7();
+        await Stub.SendAsync(new CreateFolderCommand(folder), TestContext.Current.CancellationToken);
+
+        await using (var scope = Fixture.Host.Services.CreateAsyncScope())
+        {
+            scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(StubModule));
+            var dispatcher = scope.ServiceProvider.GetRequiredService<IDispatcher>();
+            var refused = await dispatcher.SendAsync(
+                new EditFolderCommand(folder, FolderEdit.RelabelThenRefuse, "relabelled then refused"),
+                TestContext.Current.CancellationToken
+            );
+            var read = await dispatcher.QueryAsync(new FolderColourQuery(folder), TestContext.Current.CancellationToken);
+
+            Assert.Equal(EditFolderCommandHandler.Refused, Assert.Single(refused.Errors));
+            // The rolled-back Operation still tracks the colour its command changed.
+            Assert.Equal("relabelled then refused", read.Value);
+        }
+
+        Assert.Equal("grey", (await Stub.QueryAsync(new FolderColourQuery(folder), TestContext.Current.CancellationToken)).Value);
+    }
+
+    [Fact]
     public async Task A_committed_rename_evicts_every_actors_entry_and_a_warm_read_answers_the_new_name()
     {
         var lamp = await CreateProductAsync("Lamp");

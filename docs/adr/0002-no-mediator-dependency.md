@@ -205,10 +205,17 @@ The caching slot (ticket #43):
 
 - **Position.** The slot belongs to a query, after logging, the authorization hook and validation, around its handler,
   so a stored answer never skips a check. The dispatcher sends the query to the `IQueryCache` seam with its Operation's
-  context and a delegate that runs the handler. A query inside an active write Unit of Work, from a command's handler, a
-  nested command's checks or a Domain Event Handler, never reaches the slot: it may see uncommitted state, so it neither
-  reads nor stores an entry. A query in the outermost command's own checks runs before the Unit of Work starts, so it
-  may be answered from the cache.
+  context, a delegate that runs the handler and one that ends its read.
+- **Only the outermost query of an Operation that has not failed** (fix of #43 re-review F5 at commit `9dfa861`). The
+  slot takes a query only when it is its Operation's outermost step, with no command, authorizer, validator, other
+  query or step that only reads open around it (`Operation.IsOutermostQuery`), and only while the Operation is not
+  rollback-only. A nested query's reading boundary begins from the tracked state the enclosing steps left, so a change
+  they made passes its check, and the enclosing boundary that refuses the change closes only after the answer would be
+  stored. So a query from a command's handler or a Domain Event Handler, inside the write Unit of Work where it may see
+  uncommitted state, from any authorizer or validator, the outermost command's included, or from another query's
+  handler runs as any query, neither read from nor stored in the cache. An Operation that has already failed, such as
+  one whose command was refused before a query in the same scope, may still track what it rolled back, so its queries
+  run uncached too. The trade-off: nested reads, such as a permission lookup in an authorizer, are never cached.
 - **The Kit's Caching package supplies the one implementation.** `IQueryCache` is a Cqrs seam that exists for the
   Kit, as `IIdempotencyStore` exists for persistence packages; `PouryaKit.Caching` registers its implementation over
   `HybridCache`, and `PouryaKit.Cqrs` never references Caching. The dispatcher takes whatever `IQueryCache` is
@@ -221,9 +228,12 @@ The caching slot (ticket #43):
   nothing, in memory or in a distributed cache, and every caller that joined the run receives the failure. The
   get-then-set shape that stores whatever the handler returned is the one the plan rejected (I.3 Caching).
 - **Nothing a query changed.** A query's tracked-state check otherwise runs when its reading boundary closes, after its
-  answer would already be stored; on the cached path the dispatcher closes the boundary as soon as the handler returns a
-  success, inside the shared run. A change then throws, marks the Operation rollback-only, and is stored nowhere: every
-  caller that joined the run receives the exception, and the next query runs the handler again.
+  answer would already be stored. On the cached path the shared run handles, serializes, checks, then publishes: the
+  cache serializes a success, calls the dispatcher's delegate that closes the boundary, and only then returns the
+  serialized answer to `HybridCache` (fix of #43 re-review F6 at commit `9dfa861`), so the check also sees a change
+  that serializing made, such as a deferred enumerable's. A change then throws, marks the Operation rollback-only, and
+  is stored nowhere: every caller that joined the run receives the exception, and the next query runs the handler again.
+  The serialization stays in Caching and the check in Cqrs, which never references Caching.
 - **A shared run is nobody's to cancel.** Other callers may be waiting on a handler, so it runs to completion once
   started: the slot calls `GetOrCreateAsync` with no cancellation, which makes `HybridCache` run the handler on the call
   that started the run, and that call, with its scope, Operation and authorized context, waits for it. A caller's
@@ -244,8 +254,13 @@ Proven against PostgreSQL by `CachingTests` in `tests/ModularMonolith.Tests`, am
 `An_entry_answers_only_its_own_actor_and_tenant`, `A_failed_result_is_never_stored`,
 `A_query_nested_in_a_write_unit_of_work_that_rolls_back_leaves_no_entry` and
 `A_rolled_back_rename_evicts_nothing_so_the_valid_entry_survives`,
-`A_caller_that_leaves_the_run_it_started_keeps_its_operation_so_a_joiner_gets_a_trusted_success_of_one_run` and
-`A_query_that_changes_tracked_state_stores_nothing_and_its_joiner_receives_the_failure`, against a real Redis shared by two Hosts by
+`A_caller_that_leaves_the_run_it_started_keeps_its_operation_so_a_joiner_gets_a_trusted_success_of_one_run`,
+`A_query_that_changes_tracked_state_stores_nothing_and_its_joiner_receives_the_failure`,
+`A_query_whose_answer_changes_tracked_state_when_serialized_stores_nothing_and_its_joiner_receives_the_failure`,
+`A_query_nested_in_one_that_changed_tracked_state_stores_nothing_so_a_later_read_answers_the_committed_value`,
+`A_query_sent_by_an_authorizer_that_changed_tracked_state_stores_nothing_so_a_later_read_answers_the_committed_value`,
+`A_query_nested_in_another_is_answered_but_never_cached` and
+`A_query_in_an_operation_that_already_failed_stores_nothing_so_a_later_read_answers_the_committed_value`, against a real Redis shared by two Hosts by
 `With_redis_a_second_host_reads_the_entry_the_first_stored_without_running_its_handler`, and by
 `PouryaKit.Cqrs.Tests.QueryCacheTests`. Neither single flight across Hosts nor eviction of another Host's in-memory
 copies is claimed.

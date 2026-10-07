@@ -58,8 +58,8 @@ internal sealed class IdempotencyStoreStandIn(OperationTrace trace) : IIdempoten
 }
 
 /// <summary>
-/// Records each query it is asked and each eviction, runs every query, and reports a command's type name as the tag it
-/// invalidates.
+/// Records each query it is asked and each eviction, runs every query, ending a success's read as a cache that stores it
+/// does, and reports a command's type name as the tag it invalidates.
 /// </summary>
 internal sealed class QueryCacheStandIn(OperationTrace trace) : IQueryCache
 {
@@ -67,12 +67,19 @@ internal sealed class QueryCacheStandIn(OperationTrace trace) : IQueryCache
         Query<TResponse> query,
         OperationContext context,
         Func<CancellationToken, Task<Result<TResponse>>> handle,
+        Action endRead,
         CancellationToken cancellationToken
     )
         where TResponse : notnull
     {
         trace.Add($"cache {query.GetType().Name}");
-        return await handle(cancellationToken);
+        var result = await handle(cancellationToken);
+        if (result.IsSuccess)
+        {
+            endRead();
+        }
+
+        return result;
     }
 
     public IEnumerable<string> TagsInvalidatedBy(object command) => [command.GetType().Name];

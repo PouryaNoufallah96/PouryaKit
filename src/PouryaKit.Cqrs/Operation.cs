@@ -169,6 +169,14 @@ public sealed class Operation
     /// <summary>True while the Operation's write Unit of Work runs, where a query may see uncommitted state.</summary>
     internal bool IsUnitOfWorkActive { get; private set; }
 
+    /// <summary>
+    /// True while the running query is the Operation's outermost step: no command, authorizer, validator, other query
+    /// or step that only reads is open around it, so none of them can have changed the tracked state it reads. The
+    /// query counts itself, since it is entered before its steps run.
+    /// </summary>
+    internal bool IsOutermostQuery =>
+        _runningQueries == 1 && _runningCommands == 0 && _runningChecks == 0 && _readingSteps.Count == 0;
+
     /// <summary>The cache tags the Operation's commands declared, outermost and nested, evicted only once it commits.</summary>
     internal IReadOnlyCollection<string> TagsToEvict => (IReadOnlyCollection<string>?)_tagsToEvict ?? [];
 

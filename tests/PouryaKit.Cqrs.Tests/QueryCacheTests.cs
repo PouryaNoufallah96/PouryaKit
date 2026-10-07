@@ -8,7 +8,7 @@ namespace PouryaKit.Cqrs.Tests;
 public sealed class QueryCacheTests
 {
     [Fact]
-    public async Task A_query_reaches_the_cache_after_its_checks_and_never_inside_a_write_unit_of_work()
+    public async Task A_query_reaches_the_cache_after_its_checks_and_never_from_a_command_or_its_checks()
     {
         await using var host = TestHost.Build(withQueryCache: true);
         using var outside = Begun(host);
@@ -32,8 +32,9 @@ public sealed class QueryCacheTests
         );
         Assert.Contains("handle GetThingQuery", Trace(inside));
         Assert.DoesNotContain(Trace(inside), step => step.StartsWith("cache", StringComparison.Ordinal));
-        // A query in the outermost command's own checks runs before its Unit of Work starts.
-        Assert.Equal(["cache GetThingQuery", "uow:begin"], Trace(beforeIt).Where(step => step is "cache GetThingQuery" or "uow:begin"));
+        // Before its Unit of Work starts, the outermost command's authorizer may still have changed what the query reads.
+        Assert.Equal(["handle GetThingQuery", "uow:begin"], Trace(beforeIt).Where(step => step is "handle GetThingQuery" or "uow:begin"));
+        Assert.DoesNotContain(Trace(beforeIt), step => step.StartsWith("cache", StringComparison.Ordinal));
     }
 
     [Fact]

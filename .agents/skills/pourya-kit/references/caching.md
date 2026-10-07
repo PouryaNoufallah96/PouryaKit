@@ -54,6 +54,7 @@ internal sealed record GetProductQuery(Guid ProductId) : Query<ProductDto>, ICac
 - `CacheTags` name the resources the answer reads. A tag spans Actors and tenants: one eviction reaches every Actor's entry.
 - The response is stored as JSON in the Kit's representation (`UsePouryaKitJson`), so it must round-trip through it; every answer, the first included, is read back from that JSON.
 - The handler is written as for any query, and runs inside its Operation as usual: a `Continue()` it calls is a trusted continuation.
+- Only an Operation's outermost query uses the cache. Sent from another query's handler, an authorizer, a validator, a command's handler or a Domain Event Handler, the same query runs and answers as any query, but is neither read from nor stored in the cache; so is a query in an Operation that has already failed. Send a query you want cached from the Gateway or the endpoint, not from inside another step.
 - Once started, the handler runs to completion: other callers of the same query may be waiting on it, so it receives no cancellation, and every caller, the one that started it included, waits for it. A caller's cancellation counts only until the run starts or is joined. Keep a cacheable query's handler short.
 
 ## A command that invalidates
@@ -80,9 +81,9 @@ internal sealed record RemoveProductsCommand(IReadOnlyList<string> Names) : Comm
 
 - **One `HybridCache.GetOrCreateAsync` per cacheable query.** Concurrent misses of one key in one Host share one handler run, `HybridCache`'s own single flight.
 - **Never a failed Result.** A failure is returned to every caller that shared the run and stored nowhere, in memory or in the distributed cache: the next query runs again.
-- **Nothing a query changed.** A handler that changes tracked state and returns a success fails the Operation's read-only check before its answer can be stored: every caller that shared the run receives the `InvalidOperationException`, and nothing is stored.
+- **Nothing a query changed.** The cache serializes a success, and only then runs the Operation's read-only check, before it stores the answer: a handler that changes tracked state, or an answer whose serialization does, such as a deferred enumerable, fails the check. Every caller that shared the run receives the `InvalidOperationException`, and nothing is stored.
 - **After the checks.** The authorization hook and validation run before the cache is read, so a stored answer never skips them.
-- **Never inside a write Unit of Work.** A query sent from a command's handler, a nested command's checks or a Domain Event Handler may see uncommitted state, so it neither reads nor stores an entry. A query in the outermost command's own checks runs before the Unit of Work starts and uses the cache.
+- **Only the outermost query of an Operation that has not failed.** A query nested in a command, a check or another query may read a change they made before it started, which its own read-only check takes as its starting point, so it neither reads nor stores an entry. That covers a command's handler, a Domain Event Handler, any command's or query's authorizers and validators, the outermost command's included, and another query's handler. A query in an Operation that has already failed, such as one sent after a refused command in the same scope, runs uncached too, since the Operation may still track what was rolled back.
 - **Eviction after the outermost commit only.** A rolled-back Operation evicts nothing, so a valid entry survives a failed command. A command that rolls back after a nested query leaves no entry from it.
 - **A failed eviction cannot fail a committed Operation.** When the distributed cache refuses it, the Kit logs `EvictionFailed` at Error level and returns the command's success; this Host's own copy is still evicted.
 
@@ -91,6 +92,7 @@ internal sealed record RemoveProductsCommand(IReadOnlyList<string> Names) : Comm
 - Single flight is per Host. Two Hosts that miss the same key both run the handler.
 - An eviction is certain only in the Host whose Operation committed. Another Host may return its own in-memory copy until it expires; choose `CacheDuration` with that in mind.
 - A query that read before a concurrent command committed may store the answer it read, which `HybridCache` keeps until it expires.
+- Nested reads are never cached: a cacheable query an authorizer sends, such as a permission lookup, runs its handler every time.
 - The Kit caches query answers only. An Integration Event Handler or anything else that changes a cached resource without a command declares nothing; such data needs a short duration or no caching.
 
 ## Testing
