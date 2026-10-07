@@ -26,3 +26,19 @@ Checked on nuget.org on 2026-10-05 (ticket #15); licence expressions from each p
   - The stored retry `ScheduleRetry`, then the dead-letter queue, instead of the in-memory `RetryWithCooldown`, which `InboxStaleTime` can make run a handler again after it succeeded (ADR 0006). Its default delays (1 s, 10 s, 1 min) end well within the default inbox stale time, which counts from when a delivery was stored (ticket #17).
   - No outbox stale time: the Kit's Notifications go to local queues and are stored as incoming envelopes (ADR 0004).
   - `UnknownMessageBehavior.DeadLetterQueue`, so a stored delivery whose type lost every subscription is never treated as handled (ADR 0006).
+
+## Code generation for production
+
+- **Kit files:** `src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs`, `samples/ModularMonolith/src/ModularMonolith.Host/Program.cs`, `samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj`, `samples/ModularMonolith/src/Inventory.Host/Program.cs`, `samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj`, `src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/Program.cs`, `src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/Program.cs`, `src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj`, `src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/ModularMonolith.Host.csproj`
+- **Upstream:** https://github.com/JasperFx/CritterStackSamples
+- **Commit:** 76ce8e2917ee3d22b17219f4029422c6c6c409ac
+- **Upstream paths:** `CqrsMinimalApi/Program.cs`, `CqrsMinimalApi/CqrsMinimalApi.csproj`, `CqrsMinimalApi/Dockerfile`, following Wolverine's guide (https://github.com/JasperFx/wolverine, commit `dc63f46fc8437cffa95576c34d9d4301dbf6f3dd`, `docs/guide/codegen.md`)
+- **Licence:** MIT
+- **Adoption:** pattern
+- **Ticket:** #58
+- **Intentional differences:**
+  - The production profile (`CritterStackDefaults`, `TypeLoadMode.Static` with `AssertAllPreGeneratedTypesExist`) is set once in the Kit's registration, not in each `Program.cs`; a Host overrides it through the `configure` hook.
+  - The Kit also sets `WolverineOptions.ApplicationAssembly` to the entry assembly: called through the Kit, Wolverine would load generated types from the Kit's package, never from the Host that `codegen write` writes into (ADR 0004).
+  - `Production.ResourceAutoCreate` keeps its default, so Wolverine still builds its message storage at startup; upstream sets `AutoCreate.None`.
+  - No check that the publish holds no `Microsoft.CodeAnalysis`: `Microsoft.EntityFrameworkCore.Design`, which the EF Core outbox brings, keeps Roslyn in the closure (ADR 0004). The package validation checks that `Wolverine.RuntimeCompilation.dll` and `JasperFx.RuntimeCompiler.dll` are absent instead.
+  - No Dockerfile: the templates document the two commands, and `scripts/packaging/validate.py` runs them.

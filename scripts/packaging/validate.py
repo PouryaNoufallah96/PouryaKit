@@ -134,6 +134,24 @@ def template_consumer(folder, template, hive):
     return folder / GENERATED / f"{GENERATED}.slnx"
 
 
+# What `codegen write` writes for a Kit Host, the only code Wolverine generates for one, and the runtime compiler's
+# assemblies, which a Release publish must not carry (ADR 0004).
+GENERATED_REGISTRY = "Internal/Generated/WolverineHandlers/GeneratedHandlerRegistry.cs"
+RUNTIME_COMPILER = ("Wolverine.RuntimeCompilation.dll", "JasperFx.RuntimeCompiler.dll")
+
+
+def check_production_publish(host, published):
+    """The Host's Release publish holds the Host with the code `codegen write` generated, and no runtime compiler."""
+    if not (host / GENERATED_REGISTRY).is_file():
+        raise RuntimeError(f"codegen write wrote no {GENERATED_REGISTRY} in {host}.")
+    assembly = published / f"{host.name}.dll"
+    if not assembly.is_file() or b"GeneratedHandlerRegistry" not in assembly.read_bytes():
+        raise RuntimeError(f"The publish in {published} holds no {assembly.name} built with the generated code.")
+    if carried := [name for name in RUNTIME_COMPILER if (published / name).exists()]:
+        raise RuntimeError(f"The Release publish in {published} carries the runtime compiler: {', '.join(carried)}.")
+    return sorted(path.relative_to(host).as_posix() for path in (host / "Internal/Generated").rglob("*") if path.is_file())
+
+
 def sample_consumer(folder, source, entries, version):
     shutil.copytree(ROOT / source, folder / "src", ignore=shutil.ignore_patterns("bin", "obj"))
     for project in (folder / "src").rglob("*.csproj"):
@@ -358,11 +376,25 @@ def validate(output, *, fetch=True):
             failed = re.search(r"failed: (\d+)", result)
             if not passed or not failed or failed.group(1) != "0" or passed.group(1) == "0":
                 raise RuntimeError(f"The smoke tests of {name} did not pass: {result}")
+            # The Host's production step: `codegen write`, which compiles nothing, so the Release build serves, then a
+            # publish restored for Release, where the Host does not reference the runtime compiler.
+            published_at = time.monotonic()
+            host = solution.parent / "src" / f"{GENERATED}.Host"
+            run(["dotnet", "run", "--project", host, "-c", "Release", "--no-build", "--no-launch-profile", "--", "codegen", "write"],
+                cwd=host, env=env, log=output / f"consumer-{name}-codegen.log")
+            run(["dotnet", "restore", host, "-p:Configuration=Release", "--configfile", folder / "NuGet.Config", "--no-http-cache",
+                 "-p:RestoreFallbackFolders="], cwd=solution.parent, env=env, log=output / f"consumer-{name}-publish-restore.log")
+            published = folder / "publish"
+            run(["dotnet", "publish", host, "-c", "Release", "--no-restore", "-o", published],
+                cwd=solution.parent, env=env, log=output / f"consumer-{name}-publish.log")
+            generated = check_production_publish(host, published)
             assets = check_consumer(folder, env, ids, evidence["Version"], consumer["excluded"])
             evidence["Consumers"].append({"Name": name, "Packages": consumer["packages"], "Assets": assets})
             smoke_tests.append(f"{name} {passed.group(1)}")
             print(f"PASS template consumer {name}: generated, restored and built from the produced packages; "
-                  f"{passed.group(1)} smoke tests passed ({time.monotonic() - started:.0f} s)", flush=True)
+                  f"{passed.group(1)} smoke tests passed; codegen write wrote {', '.join(generated)}, and the Release publish "
+                  f"holds the Host built with it and neither {' nor '.join(RUNTIME_COMPILER)} "
+                  f"({time.monotonic() - published_at:.0f} s of {time.monotonic() - started:.0f} s)", flush=True)
             continue
         consumer_config(folder, package_output)
         projects = sample_consumer(folder, consumer["source"], consumer["entries"], evidence["Version"]) if "source" in consumer else [simple_consumer(folder, consumer["packages"], types, evidence["Version"])]

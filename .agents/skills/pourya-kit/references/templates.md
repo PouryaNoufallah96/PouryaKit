@@ -70,6 +70,7 @@ dotnet run --project src/Acme.Shop.Host
 `tests/Acme.Shop.Tests` hosts the generated `Program` with `WebApplicationFactory<Program>` over PostgreSQL in Testcontainers (Docker must run), applies every DbContext's migrations in a hosted service the Host starts before Wolverine, and calls it with bearer tokens of a test issuer configured through `Authentication:Schemes:Bearer`. It does not use `PouryaKit.Testing`, which references Modularity.
 
 - A category and a product created over HTTP, the product with an `Idempotency-Key`: 201 with its id and versioned location; the same key again answers the same status, body and location, and the filtered, sorted list still has one product.
+- `Program` hands its command line to JasperFx, which reads the factory's settings as no command it knows, so the fixture sets `JasperFxEnvironment.AutoStartHost`: JasperFx then starts the Host first (Wolverine's integration testing guide).
 - `/alive` answers 200 through the service defaults. That it asks nothing outside the process, so it stays healthy while the database is down, is the recipe's own proof (`HostRecipeTests` in the Proving Sample, #52).
 - Composed with a `ConnectionStrings:broker` value, the Host joins the broker under its derived service name (below). The test builds it with no hosted service running, so no broker is needed.
 - With the permission checks removed from the registrations, the Host does not build: `RemoveProductsCommand declares RequiresPermissionAttribute, but its check is not registered`.
@@ -89,11 +90,25 @@ dotnet test --project tests/Acme.Shop.Tests/Acme.Shop.Tests.csproj
 
 ## Pre-generating Wolverine's code for production
 
-The generated Hosts reference `WolverineFx.RuntimeCompilation`, as ADR 0004 requires of a Host: Wolverine compiles its runtime code with Roslyn when the Host starts, which is what development wants. Pre-generating that code for production is the Host's responsibility, following Wolverine's code generation guide (`jasperfx/wolverine`, `docs/guide/codegen.md`): run the Host through `RunJasperFxCommands(args)` instead of `RunAsync()`, write the code with `dotnet run -- codegen write`, and set `CodeGeneration.TypeLoadMode` to `TypeLoadMode.Static` in production through `builder.Services.ConfigureWolverine(...)`. The package reference stays: a Host with the EF Core outbox has Roslyn in its closure either way.
+Outside Development, Wolverine loads its generated handler code from the Host's assembly instead of compiling it when the Host starts: `UsePouryaKitWolverine` sets `TypeLoadMode.Static` there ([messaging.md](messaging.md#declaring-handlers-and-running-deliveries)). The generated Host follows Wolverine's code generation guide (`JasperFx/wolverine`, `docs/guide/codegen.md`) and ADR 0004:
+
+- `Program.cs` ends with `return await app.RunJasperFxCommands(args);`, so the Host's command line is JasperFx's: `dotnet run` runs the Host, `dotnet run -- codegen write` writes Wolverine's generated code into `src/Acme.Shop.Host/Internal/Generated`, `codegen preview` prints it, `check-env` runs the environment checks and `help` lists the rest. Configure the Host through settings files, user secrets or the environment: an argument that is no JasperFx command, such as `--ConnectionStrings:app=...`, stops it with "Invalid usage".
+- The Host references `WolverineFx.RuntimeCompilation` in Debug builds only (`<ItemGroup Condition="'$(Configuration)' == 'Debug'">`): Development compiles at run time, and a Release publish carries neither `Wolverine.RuntimeCompilation.dll` nor `JasperFx.RuntimeCompiler.dll`. Roslyn itself stays in the publish through `Microsoft.EntityFrameworkCore.Design`, which the EF Core outbox brings. The test project references the package itself, since it hosts `Program` in Development from any build.
+- The step before a release, `codegen write`, builds the Host and never starts it, so it needs no database and no runtime compiler; then publish:
+
+```bash
+dotnet run --project src/Acme.Shop.Host -- codegen write
+dotnet publish src/Acme.Shop.Host -c Release -o publish
+```
+
+- Publish with its own restore, or after `dotnet restore -p:Configuration=Release`. A restore that evaluated Debug, such as a plain `dotnet restore`, lists the compiler, and a Release build with `--no-restore` after it carries it again.
+- For a Kit Host today the step writes one file, `Internal/Generated/WolverineHandlers/GeneratedHandlerRegistry.cs`, an empty handler registry: the Kit's deliveries need no generated code. Without it the Host still starts in Production, and Wolverine logs that it falls back to a scan; `check-env` fails on it. The step matters once the application adds Wolverine handlers of its own through the `configure` hook of `UsePouryaKitWolverine`: each handler chain then has a generated type, and a Host published without it does not start (`MissingPreBuiltTypesException`).
+- Commit `Internal/Generated`, as Wolverine's guide does, and write it again whenever a Wolverine handler changes; or run the step in the build, before the publish.
+- Wolverine still creates its message storage when the Host starts, in every environment.
 
 ## How the package is built
 
 - `src/PouryaKit.Templates` packs the templates' own files, the Hosts, project files, solution, central versions and smoke test, and packs the business code from `samples/ModularMonolith/src` when the package is built, so no copy of a sample file is kept. The package's version, the Kit's MinVer version, is written into each template's `Directory.Packages.props` as it is packed.
 - The monolith's `template.json` excludes the sample's `*Module.cs`, `*Endpoint.cs` and `CatalogProducts.cs` and supplies its own Composition Root and endpoints at the same paths. A new Gateway endpoint in the sample fails `TemplateTests` until the monolith has its own.
 - `TemplateTests` (`tests/PouryaKit.ArchitectureTests`) asserts that the template content holds no copy of a sample file, that nothing the monolith generates names Modularity, that each excluded file is replaced, that each template project references what the sample's project at its place does, that the central versions are the Kit's, and that each Host passes the derived `serviceName`, the same symbol in both templates.
-- `scripts/packaging/validate.py` installs the produced package into a hive of its own, generates both templates, restores and builds them from the produced packages only, refuses `PouryaKit.Modularity` in the monolith's closure and `PouryaKit.Testing` in both, and runs each generated smoke test ([packages.md](packages.md)).
+- `scripts/packaging/validate.py` installs the produced package into a hive of its own, generates both templates, restores and builds them from the produced packages only, refuses `PouryaKit.Modularity` in the monolith's closure and `PouryaKit.Testing` in both, runs each generated smoke test, then runs `codegen write` on each generated Host and checks its Release publish: the Host built with the generated code, without the runtime compiler ([packages.md](packages.md)).

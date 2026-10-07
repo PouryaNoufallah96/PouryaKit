@@ -26,9 +26,9 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
         /// which every Module's DbContext must also use, in the schema <paramref name="schema"/>; Wolverine creates its
         /// tables there when the Host starts. <see cref="PouryaKitMessageStoreOptions"/> holds the durability mode and
         /// the inbox stale time. Everything <c>UsePouryaKitWolverine()</c> of <c>PouryaKit.Messaging.Wolverine</c> does
-        /// applies too.
+        /// applies too; <paramref name="configure"/> adds Host-specific Wolverine configuration, as it does there.
         /// </summary>
-        public IHostApplicationBuilder UsePouryaKitWolverine(string connectionName, string schema = "wolverine")
+        public IHostApplicationBuilder UsePouryaKitWolverine(string connectionName, string schema = "wolverine", Action<WolverineOptions>? configure = null)
         {
             ArgumentNullException.ThrowIfNull(builder);
             ArgumentException.ThrowIfNullOrWhiteSpace(connectionName);
@@ -54,6 +54,7 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
                 // Eager is the mode in which Wolverine's own EF Core middleware commits a handler's effect and its
                 // inbox mark together; the Kit's Unit of Work owns its transaction either way.
                 wolverine.UseEntityFrameworkCoreTransactions(TransactionMiddlewareMode.Eager);
+                configure?.Invoke(wolverine);
             });
         }
     }

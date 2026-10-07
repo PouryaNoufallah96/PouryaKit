@@ -1,3 +1,6 @@
+using System.Reflection;
+using JasperFx;
+using JasperFx.CodeGeneration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -28,8 +31,11 @@ public static class WolverineHostApplicationBuilderExtensions
         /// Nothing this overload registers writes an Outbox (<see cref="INotificationOutbox"/>), so a Host that declares
         /// Notification Handlers, Integration Event Handlers or published Integration Events calls the overload of
         /// <c>PouryaKit.Messaging.Wolverine.EFCore</c> instead, or fails when it starts; so does a Host whose
-        /// subscription's Integration Event no Module publishes and no <c>Receive</c> declares. <paramref name="configure"/> adds Host-specific
-        /// Wolverine configuration.
+        /// subscription's Integration Event no Module publishes and no <c>Receive</c> declares. Wolverine generates its handler
+        /// code at run time in Development and, in every other environment, loads it from the Host's own assembly, where
+        /// <c>dotnet run -- codegen write</c> wrote it before the build (<see cref="TypeLoadMode.Static"/>): a Host there needs no
+        /// runtime compiler, and one whose handler chain has no generated type fails when it starts.
+        /// <paramref name="configure"/> adds Host-specific Wolverine configuration and may override any of this.
         /// </summary>
         public IHostApplicationBuilder UsePouryaKitWolverine(Action<WolverineOptions>? configure = null)
         {
@@ -48,8 +54,20 @@ public static class WolverineHostApplicationBuilderExtensions
             builder.Services.TryAddScoped<CommandHandler<StartRecurringCommand>, StartRecurringCommandHandler>();
             builder.Services.AddSingleton<IWolverineExtension, PouryaKitWolverineExtension>();
             builder.Services.AddSingleton<IWolverineExtension, DelayedCommandExtension>();
+            builder.Services.CritterStackDefaults(critterStack =>
+            {
+                critterStack.Production.GeneratedCodeMode = TypeLoadMode.Static;
+                critterStack.Production.AssertAllPreGeneratedTypesExist = true;
+            });
             builder.UseWolverine(wolverine =>
             {
+                // Wolverine would take the first assembly on the stack outside its own, this Kit package, and load the
+                // generated code from there; codegen write puts it in the Host's.
+                if (Assembly.GetEntryAssembly() is { } host)
+                {
+                    wolverine.ApplicationAssembly = host;
+                }
+
                 wolverine.Discovery.DisableConventionalDiscovery();
                 wolverine.UnknownMessageBehavior = UnknownMessageBehavior.DeadLetterQueue;
                 wolverine.Policies.UseDurableLocalQueues();

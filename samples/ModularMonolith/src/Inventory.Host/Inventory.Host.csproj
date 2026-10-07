@@ -11,7 +11,10 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
-    <!-- Wolverine 6 compiles its runtime code with Roslyn from this package; a Kit package never references it. -->
+  </ItemGroup>
+  <!-- Development compiles Wolverine's handler code at run time with Roslyn from this package; a Release build loads what
+       the codegen write command generated, so its publish carries no runtime compiler (ADR 0004). -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
     <PackageReference Include="WolverineFx.RuntimeCompilation" />
   </ItemGroup>
   <ItemGroup>

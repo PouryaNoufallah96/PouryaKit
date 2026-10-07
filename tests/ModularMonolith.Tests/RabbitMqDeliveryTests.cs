@@ -803,7 +803,8 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
 }
 
 // Inventory.Host run as its own OS process with `dotnet run`, configured through its environment, as a deployment
-// configures it; its output is kept for a failing test's message.
+// configures it; its output is kept for a failing test's message. It runs in Production, where Wolverine loads its handler
+// code instead of compiling it, as a Release build without the runtime compiler must: the Kit's handlers need none.
 internal sealed class InventoryProcess : IDisposable
 {
     private readonly Process _process;
@@ -835,10 +836,10 @@ internal sealed class InventoryProcess : IDisposable
             UseShellExecute = false,
             Environment =
             {
-                ["DOTNET_ENVIRONMENT"] = "Development",
+                ["DOTNET_ENVIRONMENT"] = "Production",
                 ["ConnectionStrings__app"] = environment.Inventory,
                 [$"ConnectionStrings__{InventoryHost.BrokerConnection}"] = environment.Broker.ToString(),
-                // Its health endpoints on a port of the system's choosing, so no other process's port is in the way.
+                // Its HTTP server on a port of the system's choosing, so no other process's port is in the way.
                 ["ASPNETCORE_URLS"] = "http://127.0.0.1:0",
             },
         };

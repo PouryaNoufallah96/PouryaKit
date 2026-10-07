@@ -15,6 +15,7 @@ The Proving Sample's `Inventory.Host` is a minimal web Host only so that it can 
 
 ```csharp
 using Inventory;
+using JasperFx;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
 using PouryaKit.Messaging.Wolverine.EFCore;
@@ -32,7 +33,8 @@ builder.AddSerilogDefaults();
 
 var app = builder.Build();
 app.MapDefaultEndpoints();
-await app.RunAsync();
+// The JasperFx command line runs the Host, or a command such as codegen write (templates.md).
+return await app.RunJasperFxCommands(args);
 ```
 
 - `AddServiceDefaults()` and `AddSerilogDefaults()` extend any `IHostApplicationBuilder`, in the namespace `Microsoft.Extensions.Hosting` as Aspire's do; `MapDefaultEndpoints()` extends `WebApplication`.
