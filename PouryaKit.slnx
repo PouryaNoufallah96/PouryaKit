@@ -11,6 +11,7 @@
     <Project Path="src/PouryaKit.Persistence.Dapper/PouryaKit.Persistence.Dapper.csproj" />
     <Project Path="src/PouryaKit.Persistence.EFCore/PouryaKit.Persistence.EFCore.csproj" />
     <Project Path="src/PouryaKit.Persistence.Postgres/PouryaKit.Persistence.Postgres.csproj" />
+    <Project Path="src/PouryaKit.Observability/PouryaKit.Observability.csproj" />
     <Project Path="src/PouryaKit.Security/PouryaKit.Security.csproj" />
     <Project Path="src/PouryaKit.Testing/PouryaKit.Testing.csproj" />
     <Project Path="src/PouryaKit.Validation/PouryaKit.Validation.csproj" />

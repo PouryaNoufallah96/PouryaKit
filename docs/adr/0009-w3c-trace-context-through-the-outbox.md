@@ -140,6 +140,9 @@ these results. These points are inferred from source, not observed:
 
    No other propagation behaviour is needed for the local path.
 
+   *Implemented in #47 at `49bc97e`: the header is `OperationContextHeaders.TraceState` (`pouryakit-tracestate`), and the
+   parsed context reaches the activity as `Operation.TraceParent`; `ObservabilityTests` pins the invariants below.*
+
 The snippet below is mostly untested design for #47. Only one part ran in the Spike. `PropagationTests.cs:84-92`, in
 every `First_attempt` case, parsed a stored `parent-id` together with a tracestate the test supplied directly, using
 `ActivityContext.TryParse(parentId, traceState, isRemote: true, out var parent)`, then started

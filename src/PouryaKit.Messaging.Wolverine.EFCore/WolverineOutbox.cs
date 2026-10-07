@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -86,6 +87,8 @@ internal sealed partial class WolverineOutbox(
         var outbox = new DbContextOutbox(runtime, []);
         outbox.Enroll(dbContext);
         var context = scope.GetRequiredService<OperationContext>();
+        // Wolverine writes the current activity's id as each envelope's parent-id, but no tracestate (ADR 0009).
+        var traceState = Activity.Current?.TraceStateString;
         foreach (var (message, domainEventId, headers, at) in published)
         {
             if (domainEventId is { } publishedFor)
@@ -94,6 +97,11 @@ internal sealed partial class WolverineOutbox(
             }
 
             var options = new DeliveryOptions { ScheduledTime = at }.WithOperationContext(context);
+            if (traceState is { Length: > 0 })
+            {
+                options.Headers[OperationContextHeaders.TraceState] = traceState;
+            }
+
             foreach (var (name, value) in headers)
             {
                 options.Headers[name] = value;

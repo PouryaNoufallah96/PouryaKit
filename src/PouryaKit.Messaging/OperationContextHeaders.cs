@@ -19,4 +19,10 @@ public static class OperationContextHeaders
 
     /// <summary>The <c>OperationId</c> of the Operation that published the message.</summary>
     public const string CausationId = "pouryakit-causation-id";
+
+    /// <summary>
+    /// The W3C <c>tracestate</c> of the activity current when the Operation published the message; absent when it had
+    /// none. The transport carries the <c>traceparent</c> itself (ADR 0009).
+    /// </summary>
+    public const string TraceState = "pouryakit-tracestate";
 }

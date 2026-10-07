@@ -23,10 +23,10 @@ internal sealed class DelayedCommandDelivery(DelayedCommandDeclarations declarat
             declarations.Named(name) is { } named && named.Command == command.GetType()
                 ? named
                 : throw new UnknownDelayedCommandException(name, command.GetType());
-        var operationContext = OperationContextHeaderExtensions.ContinuedOperationContext(envelope);
+        var (operationContext, traceParent) = OperationContextHeaderExtensions.ContinuedOperationContext(envelope);
 
         await using var scope = context.Runtime.Services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(operationContext, declared.Module);
+        scope.ServiceProvider.BeginOperation(operationContext, declared.Module, traceParent);
         var result = await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
             .SendAsync(new RunDelayedCommand(declared, command, envelope.Id), cancellation);

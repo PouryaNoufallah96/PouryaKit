@@ -76,7 +76,7 @@ public sealed class MessagingReviewRegressionTests(AppFixture app) : HostTest<Ap
             "ContinuedOperationContext",
             BindingFlags.Static | BindingFlags.NonPublic
         )!;
-        var continued = Assert.IsType<OperationContext>(read.Invoke(null, [envelope]));
+        var continued = Assert.IsType<(OperationContext Context, System.Diagnostics.ActivityContext TraceParent)>(read.Invoke(null, [envelope])).Context;
         Assert.Equal(context.Actor, continued.Actor);
         envelope.Headers[OperationContextHeaders.ActorKind] = "999";
 
