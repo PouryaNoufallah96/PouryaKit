@@ -82,6 +82,56 @@ public sealed class CachingTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Fact]
+    public async Task A_caller_that_leaves_the_run_it_started_keeps_its_operation_so_a_joiner_gets_a_trusted_success_of_one_run()
+    {
+        var text = $"tally {Guid.CreateVersion7()}";
+        await Stub.SendAsync(new WriteTalliedNoteCommand(text, Reject: false), TestContext.Current.CancellationToken);
+        await Stub.SendAsync(new WriteTalliedNoteCommand(text, Reject: false), TestContext.Current.CancellationToken);
+        using var joins = new StampedeJoins();
+        using var creatorLeaves = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        var hold = new Hold();
+
+        var first = Stub.QueryAsync(new HeldTallyQuery(text, hold), As("ada"), creatorLeaves.Token);
+        await hold.Changed.Task.WaitAsync(TestContext.Current.CancellationToken);
+        var second = Stub.QueryAsync(new HeldTallyQuery(text), As("ada"), TestContext.Current.CancellationToken);
+        await joins.Joined.WaitAsync(TestContext.Current.CancellationToken);
+        creatorLeaves.Cancel();
+        // Time for the creator to leave and close its scope, were the run its own to cancel.
+        await Task.WhenAny(first, Task.Delay(500, TestContext.Current.CancellationToken));
+        hold.Released.SetResult();
+
+        var joined = await second;
+        Assert.Equal(new HeldTally(2, Trusted: true), joined.Value);
+        Assert.Equal(joined.Value, (await first).Value);
+        Assert.Equal([2], Runs.Of(text));
+    }
+
+    [Fact]
+    public async Task A_query_that_changes_tracked_state_stores_nothing_and_its_joiner_receives_the_failure()
+    {
+        var folder = Guid.CreateVersion7();
+        await Stub.SendAsync(new CreateFolderCommand(folder), TestContext.Current.CancellationToken);
+        using var joins = new StampedeJoins();
+        var hold = new Hold();
+
+        var first = Stub.QueryAsync(new RenameFolderInQueryQuery(folder, hold), As("ada"), TestContext.Current.CancellationToken);
+        await hold.Changed.Task.WaitAsync(TestContext.Current.CancellationToken);
+        var second = Stub.QueryAsync(new RenameFolderInQueryQuery(folder), As("ada"), TestContext.Current.CancellationToken);
+        await joins.Joined.WaitAsync(TestContext.Current.CancellationToken);
+        hold.Released.SetResult();
+
+        var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => first);
+        var joinerRefused = await Assert.ThrowsAsync<InvalidOperationException>(() => second);
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => Stub.QueryAsync(new RenameFolderInQueryQuery(folder), As("ada"), TestContext.Current.CancellationToken)
+        );
+        Assert.StartsWith("A query changed a Folder", refused.Message, StringComparison.Ordinal);
+        Assert.Same(refused, joinerRefused);
+        // The later read ran the handler again: no entry was stored.
+        Assert.Equal([1, 1], Runs.Of(folder.ToString()));
+    }
+
+    [Fact]
     public async Task A_committed_rename_evicts_every_actors_entry_and_a_warm_read_answers_the_new_name()
     {
         var lamp = await CreateProductAsync("Lamp");

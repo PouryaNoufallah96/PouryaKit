@@ -14,6 +14,8 @@ public interface IQueryCache
     /// <summary>
     /// The Result of <paramref name="query"/>, run with <paramref name="context"/>: a stored success of the same query for
     /// the same Actor and tenant, or the Result of <paramref name="handle"/>, which is stored only when it is a success.
+    /// <paramref name="cancellationToken"/> is observed until the query's run starts or is joined; a run others may share
+    /// is not one caller's to cancel, so <paramref name="handle"/> may receive no cancellation.
     /// </summary>
     Task<Result<TResponse>> QueryAsync<TResponse>(
         Query<TResponse> query,

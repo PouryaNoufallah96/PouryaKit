@@ -38,9 +38,9 @@ public sealed record OperationContext
     public string? Tenant { get; }
 
     /// <summary>
-    /// The tenant the keys the Kit keeps, an idempotent request's and a cached query's, name for an Operation without
-    /// one: the empty string, which no tenant can be, since the constructor refuses a blank one, so a Host without
-    /// tenants keeps one stable key.
+    /// The one value a key the Kit derives from an Operation Context stores for a null tenant: the empty string, which no
+    /// tenant can be, since the constructor refuses a blank one, so a Host without tenants keeps one stable key. The
+    /// query cache's keys use it; the idempotency keys are to follow.
     /// </summary>
     public const string NoTenant = "";
 
