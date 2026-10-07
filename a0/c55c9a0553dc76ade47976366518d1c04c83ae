@@ -1,0 +1,25 @@
+docs/acceptance.md
+  s_bdf0617f846b2b::t_d6eb9512d99048 582
+tests/PouryaKit.Domain.Tests/WireJsonTests.cs
+  s_bdf0617f846b2b::t_3f6f3e34c5918b 1-18
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_bdf0617f846b2b::t_d6eb9512d99048 937-943
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_bdf0617f846b2b::t_d6eb9512d99048 118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a0c55c9a0553dc76ade47976366518d1c04c83ae",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
