@@ -1,0 +1,50 @@
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_6c3c3736ba14ff::t_f61a09373a6906 820,829-839,846-847
+src/PouryaKit.Messaging.Wolverine/DelayedCommandDeclarations.cs
+  s_6c3c3736ba14ff::t_710fe5922a7580 74-80
+src/PouryaKit.Messaging.Wolverine/UnknownDelayedCommandException.cs
+  s_6c3c3736ba14ff::t_710fe5922a7580 5-8,10,12-24
+src/PouryaKit.Messaging.Wolverine/DelayedCommandHeaders.cs
+  s_6c3c3736ba14ff::t_710fe5922a7580 3,7-11,13
+docs/acceptance.md
+  s_6c3c3736ba14ff::t_f61a09373a6906 315-317,319-320,323
+tests/ModularMonolith.Tests/Stub/StubDelayedCommands.cs
+  s_6c3c3736ba14ff::t_2da371d934c867 47-71
+src/PouryaKit.Messaging.Wolverine/RecurringCommandStart.cs
+  s_6c3c3736ba14ff::t_710fe5922a7580 62
+.claude/agent-memory/kit-implementer/recurring-command-facts.md
+  s_6c3c3736ba14ff::t_9a18ace3cf31ed 11,19-20
+src/PouryaKit.Messaging.Wolverine.EFCore/ScheduledDelayedCommands.cs
+  s_6c3c3736ba14ff::t_710fe5922a7580 8,10,12-14,16
+tests/ModularMonolith.Tests/RecurringCommandTests.cs
+  s_6c3c3736ba14ff::t_459472519e1e90 1-2,6,9-10,20-22,28,31,34-35,37-39,42-56,63-70,73-90,106-135,140-143,146-164,171,174,184-190,195,198-200,222-226,240-314,330-331,333-341,346-350
+.agents/skills/pourya-kit/references/messaging.md
+  s_6c3c3736ba14ff::t_f61a09373a6906 522,525
+src/PouryaKit.Messaging.Wolverine/DelayedCommandDelivery.cs
+  s_6c3c3736ba14ff::t_710fe5922a7580 31-38,48,55-58
+src/PouryaKit.Messaging.Wolverine/IDelayedCommandOutbox.cs
+  s_6c3c3736ba14ff::t_710fe5922a7580 17-23
+src/PouryaKit.Messaging.Wolverine/DelayedCommandServiceCollectionExtensions.cs
+  s_6c3c3736ba14ff::t_75d8138e6baa9f 50-51
+  s_6c3c3736ba14ff::t_710fe5922a7580 66
+docs/architecture/README.md
+  s_6c3c3736ba14ff::t_f61a09373a6906 444,448,464
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs
+  s_6c3c3736ba14ff::t_710fe5922a7580 20-21,82-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4edddb6ccb04b2cd50b6a107dd5c72d9c6ba3918",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
