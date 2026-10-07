@@ -183,6 +183,30 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(1L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
     }
 
+    // A blank tenant claim is no tenant at the HTTP boundary, so its request and one without the claim are the same
+    // caller's, with one key, and neither is a tenant that collides with the empty string the key stores for no tenant.
+    [Fact]
+    public async Task A_blank_tenant_claim_runs_without_a_tenant_and_shares_the_key_of_a_caller_without_one()
+    {
+        using var blank = Fixture.Client("ada", tenant: TestAuthentication.BlankTenant);
+        using var noTenant = Fixture.Client("ada");
+        var category = Guid.CreateVersion7();
+        await Fixture.Gateway<CatalogModule>().SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
+        var body = new { productId = Guid.CreateVersion7(), categoryId = category, name = "Desk lamp" };
+        var key = IdempotentRequests.NewKey();
+
+        var seen = await blank.GetFromJsonAsync<SeenContext>("/stub/context", TestContext.Current.CancellationToken);
+        var first = await blank.PostAsJsonAsync("/catalog/products", body, key, TestContext.Current.CancellationToken);
+        var repeat = await noTenant.PostAsJsonAsync("/catalog/products", body, key, TestContext.Current.CancellationToken);
+
+        Assert.Null(seen!.Tenant);
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, repeat.StatusCode);
+        Assert.Equal(first.Headers.Location, repeat.Headers.Location);
+        Assert.Equal([[IdempotencyTable.NoTenant]], await Fixture.RowsAsync("select tenant from catalog.pouryakit_idempotency_keys"));
+        Assert.Equal(1L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]

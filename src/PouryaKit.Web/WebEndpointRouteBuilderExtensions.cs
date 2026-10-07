@@ -68,9 +68,10 @@ public static class WebEndpointRouteBuilderExtensions
         /// <see cref="OperationContext.RequestId"/>, so a repeat by the same Actor and tenant answers what the first
         /// request answered, through the same Result and the same <c>ToHttpResult</c> mapping, without running the
         /// command again. A request without a single header of 1 to 256 visible ASCII characters, with spaces only
-        /// between them, is answered 400 as a problem response before its body is read.
+        /// between them, is answered 400 as a problem response before its body is read. The requirement is the
+        /// endpoint's <see cref="IdempotencyKeyRequirement"/> metadata, which the endpoint's OpenAPI operation states.
         /// </summary>
-        public TBuilder RequireIdempotencyKey() => builder.WithMetadata(new IdempotencyKeyRequired());
+        public TBuilder RequireIdempotencyKey() => builder.WithMetadata(new IdempotencyKeyRequirement());
     }
 
     // Runs as the endpoint's own first step, after authorization and before the endpoint binds its parameters, which
@@ -88,7 +89,7 @@ public static class WebEndpointRouteBuilderExtensions
         var run =
             endpoint.RequestDelegate
             ?? throw new InvalidOperationException($"{endpoint.DisplayName} has no request delegate to run.");
-        var requiresIdempotencyKey = endpoint.Metadata.OfType<IdempotencyKeyRequired>().Any();
+        var requiresIdempotencyKey = endpoint.Metadata.OfType<IdempotencyKeyRequirement>().Any();
         endpoint.RequestDelegate = httpContext =>
         {
             var context = HttpCallerContext.Resolve(httpContext, options, peers) ?? throw Unresolved(httpContext, options);

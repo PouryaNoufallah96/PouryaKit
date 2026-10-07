@@ -67,7 +67,7 @@ internal static partial class ModuleRules
     /// <item>beginning, committing, rolling back or releasing a transaction or savepoint on an ADO.NET connection or
     /// transaction, or an EF Core transaction; a new <c>TransactionScope</c> or <c>CommittableTransaction</c>;</item>
     /// <item>the Kit's own steps: <c>IUnitOfWork</c>, the Unit of Work's DbContext (<c>EfUnitOfWorkExtensions</c>),
-    /// <c>IUnitOfWorkOutbox</c>, <c>IReceipts</c>, <c>IIntegrationEventOutbox</c>, <c>IDelayedCommandOutbox</c>, <c>ISnapshotMappers</c>,
+    /// <c>IUnitOfWorkOutbox</c>, <c>IReceipts</c>, <c>IIntegrationEventOutbox</c>, <c>IDelayedCommandOutbox</c>, <c>IIdempotencyStore</c>, <c>ISnapshotMappers</c>,
     /// <c>DomainEventDrain</c>, <c>IReadingStateGuard</c>, <c>TrackedState</c>, opening a reading step (<c>Operation.OnlyReading</c>), and beginning an Operation
     /// (<c>BeginOperation</c>). The Gateway, the Web boundary and the Kit's delivery step begin Operations; so does an
     /// application of one Module that opens its own scopes, in its own assembly, which this rule would reject if that
@@ -242,6 +242,7 @@ internal static partial class ModuleRules
         typeof(IReceipts),
         typeof(IIntegrationEventOutbox),
         typeof(IDelayedCommandOutbox),
+        typeof(IIdempotencyStore),
         typeof(ISnapshotMappers),
         typeof(DomainEventDrain),
         typeof(IReadingStateGuard),

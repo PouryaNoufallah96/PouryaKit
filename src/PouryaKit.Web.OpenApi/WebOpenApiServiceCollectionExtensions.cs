@@ -25,8 +25,8 @@ public static class WebOpenApiServiceCollectionExtensions
         /// <c>AddPouryaKitApiVersions</c>; in each, an operation that requires an authenticated caller requires the
         /// authentication schemes its policy names, or else the Host's default one, as far as each is a JWT bearer
         /// scheme, which the document states as HTTP bearer; a scheme of any other handler is left out, and an operation
-        /// that allows anonymous callers requires none. <c>MapPouryaKitOpenApi</c>
-        /// serves them.
+        /// that allows anonymous callers requires none. An operation whose endpoint calls <c>RequireIdempotencyKey()</c>
+        /// declares the required <c>Idempotency-Key</c> header. <c>MapPouryaKitOpenApi</c> serves them.
         /// </summary>
         public IServiceCollection AddPouryaKitOpenApi(Action<PouryaKitOpenApiOptions>? configure = null)
         {
@@ -55,6 +55,7 @@ public static class WebOpenApiServiceCollectionExtensions
                 .AddOpenApi(document =>
                 {
                     document.Document.AddOperationTransformer<BearerSecurity>();
+                    document.Document.AddOperationTransformer<IdempotencyKeyParameter>();
                     // The library's own notices say "was" or "will be" by comparing the date with the current time.
                     document.DocumentDescription.DeprecationNotice = _ => "This API version is deprecated.";
                     document.DocumentDescription.SunsetNotice = sunset =>

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 using PouryaKit.Cqrs;
 using PouryaKit.Web;
 
-System.Type[] types = [typeof(IEndpoint), typeof(PlaceOrderEndpoint)];
+System.Type[] types = [typeof(IEndpoint), typeof(PlaceOrderEndpoint), typeof(IdempotencyKeyRequirement)];
 
 // The packed Web's outgoing HTTP, registered and called as a Host would: the standard retry, then the Operation Context.
 var services = new ServiceCollection();

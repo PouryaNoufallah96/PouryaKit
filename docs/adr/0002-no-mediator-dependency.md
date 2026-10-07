@@ -172,9 +172,10 @@ caching slot is #43's.
   `insert … on conflict do nothing`, so a concurrent repeat waits on the uncommitted key and then replays the committed
   success, or runs when the first transaction rolled back.
 - **When it runs.** A command opts in with `[Idempotent]`. The slot runs when such a command is outermost and its
-  `OperationContext.RequestId` is set; the key is the tenant (a null tenant stored as one fixed sentinel), the Actor,
-  the command's full type name and the request id. A nested command never reserves, a query never does, and an
-  opted-in command without a request id runs as any other. A request id on an outermost command that does not opt in,
+  `OperationContext.RequestId` is set; the key is the tenant (a null tenant stored as one fixed sentinel, the empty
+  string, which no tenant can equal because `OperationContext` refuses a blank one), the Actor, the command's full
+  type name and the request id. A nested command never reserves, a query never does, and an opted-in command without
+  a request id runs as any other. A request id on an outermost command that does not opt in,
   or in a Host with no `IIdempotencyStore`, throws `InvalidOperationException` at dispatch, so the promised guarantee is
   never silently dropped.
 - **The stored outcome is the Result, not a response.** A `Result<T>` success is kept as its value in the Kit's one JSON

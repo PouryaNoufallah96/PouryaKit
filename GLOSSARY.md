@@ -57,6 +57,10 @@ _Avoid_: User accessor, request context, execution context
 The person or system on whose authority an Operation runs.
 _Avoid_: User, principal, caller
 
+**Request id**:
+The id a caller gives one request, carried on the Operation Context. With the tenant, the Actor and the command it names the key an outermost idempotent command reserves in its Unit of Work, and a repeat of the request replays that command's first success from it.
+_Avoid_: Idempotency token, dedup key, idempotency marker
+
 **Unit of Work**:
 The single owner of an Operation's outcome: everything it changed is kept together or discarded together.
 _Avoid_: Transaction behaviour, save pipeline, writer
@@ -130,7 +134,7 @@ _Avoid_: Paged list, list result, page list
 **Receipt**:
 A handler's record that it has already applied a specific Notification, Integration Event or Snapshot, or a Module's record that it has run a specific delayed command or occurrence of a recurring command.
 The Module's Receipt store also holds its publication records, keyed `<wire name>#published`, one per Integration Event type and Domain Event; those are not Receipts (ADR 0006).
-_Avoid_: Inbox row, idempotency marker, processed flag
+_Avoid_: Inbox row, processed flag, idempotency marker (a repeated request is recognised by its Request id, not by a Receipt)
 
 ### Delivery of the Kit
 

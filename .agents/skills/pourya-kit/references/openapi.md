@@ -85,7 +85,7 @@ if (app.Environment.IsDevelopment())
 }
 ```
 
-- `AddPouryaKitOpenApi()` registers Asp.Versioning with its URL segment reader and its `api-version` header reader, reports each Module's supported and deprecated versions in every response, applies the configured sunsets, and registers one OpenAPI document per supported version with the Kit's notices and security requirements.
+- `AddPouryaKitOpenApi()` registers Asp.Versioning with its URL segment reader and its `api-version` header reader, reports each Module's supported and deprecated versions in every response, applies the configured sunsets, and registers one OpenAPI document per supported version with the Kit's notices, security requirements and required `Idempotency-Key` headers.
 - `MapPouryaKitOpenApi()` serves `/openapi/v1.json`, `/openapi/v2.json` and so on, and the Scalar reference at `/scalar/`. Like every endpoint they require an authenticated caller unless the returned builder says otherwise; the Proving Sample serves them in Development only, to anyone.
 
 ## What a caller sees
@@ -137,10 +137,11 @@ if (app.Environment.IsDevelopment())
 - The documents are the versions the Modules declared, as `IApiVersionDescriptionProvider` enumerates them, never a list in the Host. A document holds the operations its version serves, on both paths; the unversioned one lists its `api-version` header parameter. An endpoint of a Module that declares no version appears in every document.
 - An operation carries a security requirement exactly when the authorization middleware would challenge an anonymous caller: it allows no anonymous caller, and its authorization data or the authenticated default `AddPouryaKitWeb` sets give it a policy. The requirement names the authentication schemes that policy names, or else the Host's default authenticate scheme, one requirement per scheme, since any of them satisfies it. An `AllowAnonymous` or `AllowAnonymousAs(actor)` operation carries no `security`.
 - Only a JWT bearer scheme (its handler is `JwtBearerHandler` or derives from it) is stated, as `components.securitySchemes.<scheme name>` with `type: http`, `scheme: bearer`; the Proving Sample's is `Bearer`. A scheme of any other handler (a cookie, an API key, a test scheme) is left out of the document, so an operation protected only by such a scheme carries no requirement although it refuses anonymous callers. The fixture's Host, whose default scheme is its test scheme, documents none.
+- An operation whose endpoint calls `RequireIdempotencyKey()` ([web.md](web.md#a-repeatable-write)) lists a required header parameter `Idempotency-Key` of type string, whose description states the rule its value follows; no other operation lists it. The Proving Sample's `POST /catalog/products` carries it in every version, on both paths.
 - The Scalar page at `/scalar/` lists every version's document by its group name (`v1`, `v2`), each read from `/openapi/{name}.json`.
 
 ## Testing versions and documents
 
 - The Proving Sample's fixture clients name `api-version: 2.0` (`AppFixture.ApiVersion`), so tests of other Capabilities call the unversioned paths as a v2 caller. A test of versioning removes that header and names its own version per request.
-- `OpenApiTests` proves selection by URL and by header, the refusals, the configured sunset in responses and documents, each document's operations, the security requirements against what the pipeline answers, Scalar's document list, and a Host of `PouryaKit.Web` alone serving an unversioned route group without any versioning service.
+- `OpenApiTests` proves selection by URL and by header, the refusals, the configured sunset in responses and documents, each document's operations, the security requirements against what the pipeline answers, the required `Idempotency-Key` header, Scalar's document list, and a Host of `PouryaKit.Web` alone serving an unversioned route group without any versioning service.
 - Read a document over HTTP (`/openapi/v2.json`) and assert its JSON; assert a security requirement against the status an anonymous request gets, so the document cannot drift from the pipeline. A requirement follows the Host's schemes, so a test of the bearer requirement composes the Host with its own default scheme (`AddAuthentication(JwtBearerDefaults.AuthenticationScheme)` after the fixture's).

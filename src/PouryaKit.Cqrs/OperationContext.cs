@@ -11,11 +11,17 @@ public sealed record OperationContext
     /// <summary>
     /// The context of a new Operation run by <paramref name="actor"/>. With no <paramref name="correlationId"/> the
     /// Operation starts a new chain of work, and its correlation is its own <see cref="OperationId"/>. A
-    /// <paramref name="causationId"/> is recorded as given, but the context is never a trusted continuation.
+    /// <paramref name="causationId"/> is recorded as given, but the context is never a trusted continuation. A
+    /// <paramref name="tenant"/> is never blank: null is the Operation without one.
     /// </summary>
     public OperationContext(Actor actor, string? tenant = null, Guid? correlationId = null, Guid? causationId = null)
     {
         ArgumentNullException.ThrowIfNull(actor);
+        if (tenant is not null && string.IsNullOrWhiteSpace(tenant))
+        {
+            throw new ArgumentException("A tenant is not blank; an Operation without one has a null tenant.", nameof(tenant));
+        }
+
         OperationId = Guid.CreateVersion7();
         Actor = actor;
         Tenant = tenant;
@@ -28,7 +34,7 @@ public sealed record OperationContext
 
     public Actor Actor { get; }
 
-    /// <summary>The tenant or company the Operation runs for; null where the application has none.</summary>
+    /// <summary>The tenant or company the Operation runs for; null where the application has none. Never blank.</summary>
     public string? Tenant { get; }
 
     /// <summary>Shared by every Operation in one chain of work, from the Operation that started it.</summary>
