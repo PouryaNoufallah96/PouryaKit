@@ -17,7 +17,8 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 // changed, that has a subscription as one durable envelope per subscription, on the Unit of Work's own connection and
 // transaction (ADR 0004), carrying the Operation Context, an Integration Event its identity too, and a Snapshot its
 // aggregate and version, and sends them after the commit. Each command the Operation scheduled is written the same way,
-// with the time it is due, also as a header, and the message store holds it until then.
+// with the time it is due, and the message store holds it until then; a recurring command's occurrence also carries that
+// time in its own header, which marks it as one.
 internal sealed partial class WolverineOutbox(
     IWolverineRuntime runtime,
     IServiceProvider scope,
@@ -78,10 +79,12 @@ internal sealed partial class WolverineOutbox(
                     (
                         (object)scheduled.Command,
                         (Guid?)null,
-                        new Dictionary<string, string>
-                        {
-                            [DelayedCommandHeaders.DueAt] = scheduled.At.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
-                        },
+                        scheduled.IsOccurrence
+                            ? new Dictionary<string, string>
+                            {
+                                [DelayedCommandHeaders.Occurrence] = scheduled.At.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
+                            }
+                            : [],
                         (DateTimeOffset?)scheduled.At
                     )
                 ),

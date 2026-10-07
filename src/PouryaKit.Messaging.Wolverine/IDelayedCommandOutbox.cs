@@ -14,4 +14,11 @@ public interface IDelayedCommandOutbox
     /// Outbox when it commits.
     /// </summary>
     void Add(Command command, DateTimeOffset at);
+
+    /// <summary>
+    /// Adds <paramref name="command"/>, the occurrence of a recurring command at <paramref name="occurrence"/>, due then,
+    /// to what the active Unit of Work writes to the Outbox when it commits, marked with the
+    /// <see cref="DelayedCommandHeaders.Occurrence"/> header. The Kit's recurring commands call it; nothing else does.
+    /// </summary>
+    void AddOccurrence(Command command, DateTimeOffset occurrence);
 }

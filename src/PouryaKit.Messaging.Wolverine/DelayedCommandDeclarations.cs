@@ -71,7 +71,13 @@ internal sealed class DelayedCommandDeclarations
             var declared = new DelayedCommand(name.ToLowerInvariant(), command, module, recurring);
             if (_byCommand.TryGetValue(command, out var existing))
             {
-                if (existing != declared)
+                if (existing != declared && existing.Name == declared.Name && existing.Module == declared.Module)
+                {
+                    problems.Add(
+                        $"{command.FullName} is already declared as the {(existing.Recurring is null ? "delayed" : "recurring")} command {existing.Name} of {existing.Module?.Name ?? "the application"}; a command is declared once, as a delayed or a recurring command, and a recurring one with one system Actor and one occurrence factory."
+                    );
+                }
+                else if (existing != declared)
                 {
                     problems.Add(
                         $"{command.FullName} is declared as the delayed command {existing.Name} of {existing.Module?.Name ?? "the application"} and as {declared.Name} of {module?.Name ?? "the application"}; declare it once."

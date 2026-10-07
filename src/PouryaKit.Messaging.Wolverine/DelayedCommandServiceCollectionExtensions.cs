@@ -47,7 +47,8 @@ public static class DelayedCommandServiceCollectionExtensions
         /// no next occurrence, so two Hosts that each stored one end with one. Occurrences missed while no Host ran are
         /// not made up: the one stored runs late, then the next one after now. An occurrence that fails is retried, then
         /// set aside as a dead letter, and the next one is stored only when it is replayed or a Host starts. Feature code
-        /// never schedules it with <see cref="IDelayedCommands"/>. Throws here as
+        /// never schedules it with <see cref="IDelayedCommands"/>. Declare it once: declaring it again with another system Actor
+        /// or occurrence factory, or as a delayed command too, throws, naming the declaration it already has. Throws here as
         /// <see cref="AddPouryaKitDelayedCommand"/> does; the Host fails to start, as for a delayed command, and when the
         /// cadence is not longer than zero.
         /// </summary>
@@ -62,7 +63,7 @@ public static class DelayedCommandServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(services);
             ArgumentException.ThrowIfNullOrWhiteSpace(systemActor);
             ArgumentNullException.ThrowIfNull(occurrence);
-            DelayedCommandDeclarations.In(services).Add(name, typeof(TCommand), module, new Recurrence(systemActor, at => occurrence(at)));
+            DelayedCommandDeclarations.In(services).Add(name, typeof(TCommand), module, new Recurrence(systemActor, occurrence));
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, RecurringCommandStart>());
             return services

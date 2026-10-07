@@ -28,6 +28,14 @@ internal sealed class DelayedCommandDelivery(DelayedCommandDeclarations declarat
             declarations.Named(name) is { } named && named.Command == command.GetType()
                 ? named
                 : throw new UnknownDelayedCommandException(name, command.GetType());
+        // Checked before anything chooses the authority or the Receipt: a delivery stored as the other kind of the same
+        // name, before its declaration changed, never runs under this one's.
+        var occurrence = OccurrenceOf(envelope);
+        if ((occurrence is not null) != (declared.Recurring is not null))
+        {
+            throw new UnknownDelayedCommandException(name, command.GetType(), storedAsOccurrence: occurrence is not null);
+        }
+
         // A recurring occurrence continues no Operation, so it starts a trace of its own too.
         var (operationContext, traceParent) = declared.Recurring is { } recurring
             ? (new OperationContext(Actor.System(recurring.SystemActor)), default(ActivityContext))
@@ -37,20 +45,17 @@ internal sealed class DelayedCommandDelivery(DelayedCommandDeclarations declarat
         scope.ServiceProvider.BeginOperation(operationContext, declared.Module, traceParent);
         var result = await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
-            .SendAsync(new RunDelayedCommand(declared, command, envelope.Id, DueAt(envelope, declared)), cancellation);
+            .SendAsync(new RunDelayedCommand(declared, command, envelope.Id, occurrence), cancellation);
         if (result.IsFailure)
         {
             throw new DelayedCommandFailedException(declared.Name, result.Errors);
         }
     }
 
-    private static DateTimeOffset? DueAt(Envelope envelope, DelayedCommand declared) =>
-        declared.Recurring is null ? null
-        : envelope.Headers.TryGetValue(DelayedCommandHeaders.DueAt, out var dueAt) && dueAt is not null
-            ? DateTimeOffset.Parse(dueAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
-        : throw new InvalidOperationException(
-            $"The occurrence {envelope.Id} of the recurring command {declared.Name} has no {DelayedCommandHeaders.DueAt} header, so it names no occurrence to record its Receipt for. Only the Unit of Work's Outbox stores recurring commands."
-        );
+    private static DateTimeOffset? OccurrenceOf(Envelope envelope) =>
+        envelope.Headers.TryGetValue(DelayedCommandHeaders.Occurrence, out var occurrence) && occurrence is not null
+            ? DateTimeOffset.Parse(occurrence, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+            : null;
 }
 
 // One delivery attempt of a delayed command, as the Operation of the scope the delivery opened: the command runs nested
