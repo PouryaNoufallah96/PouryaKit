@@ -200,6 +200,48 @@ internal sealed class ListProductsEndpoint : IEndpoint
 - A query string that cannot be read at all, a page or size that is not a whole number, another direction, an unknown operator, a malformed filter key or a part given twice, answers 400 as a problem response without `errors`. Everything else reaches the query's validator, so a size above the declared maximum, an undeclared sort key or field, an operator the field does not support or a value that does not parse answers 400 with each validation Error's `code` and `target` (`Page.SortUnknown`, `Sort`).
 - Declare and validate the query's paging as [commands-queries-validation.md](commands-queries-validation.md#paging) shows; never read paging parameters by hand.
 
+## A repeatable write
+
+The Proving Sample's `CreateProduct` endpoint, whose command opts in with `[Idempotent]` ([commands-queries-validation.md](commands-queries-validation.md#request-idempotency)):
+
+```csharp
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using PouryaKit.Cqrs;
+using PouryaKit.Modularity;
+using PouryaKit.Web;
+
+internal sealed class CreateProductEndpoint : IEndpoint
+{
+    public void Map(IEndpointRouteBuilder routes) =>
+        routes
+            .MapPost(
+                "/products",
+                async (
+                    CreateProductBody body,
+                    OperationContext context,
+                    IGatewayProcessor<CatalogModule> catalog,
+                    CancellationToken cancellationToken
+                ) =>
+                    (
+                        await catalog.SendAsync(
+                            new CreateProductCommand(body.ProductId, body.CategoryId, body.Name),
+                            context,
+                            cancellationToken
+                        )
+                    ).ToHttpResult(id => TypedResults.Created($"/catalog/products/{id}", new { id }))
+            )
+            .RequireIdempotencyKey();
+}
+```
+
+- `RequireIdempotencyKey()` on a Module's POST, PUT or DELETE endpoint whose command opts in requires an `Idempotency-Key` header on every request. Its value becomes the request's `OperationContext.RequestId`, so a repeat by the same Actor and tenant answers what the first request answered, without running the command again.
+- The header is one value of 1 to 256 visible ASCII characters, with spaces only between them, the rule of the Kit's context headers, taken as sent: a quoted value keeps its quotes. A request without one, with two, or with a value the rule refuses answers 400 as a problem response without `errors`, before its body is read. Otherwise the endpoint answers as any other, its validation failures and Errors included.
+- A repeat answers the same status, location and body, because the replayed Result goes through the same `ToHttpResult` mapping: a second `POST /catalog/products` with one key answers 201 with the first location and `{"id":…}`, and creates and sends nothing. A first request that failed recorded nothing, so its repeat runs again.
+- A client sends a new key with each new request and the same key only to repeat one.
+- Only a Module's endpoints read the header, in the step that begins the request's Operation; an endpoint that does not require it ignores it. The method is not checked, so on a GET the header is required and a query never uses it. The OpenAPI document does not list the header.
+
 ## Problem responses
 
 - Every failure answers an RFC 9457 problem response, written as `application/problem+json` even when the caller's `Accept` asks for something else. It carries ASP.NET Core's `title` and `status`, its `type` where ASP.NET Core defines one for the status (it defines none for 429), and, for a failed Result, an `errors` array listing every Error in order with its `code`, its `message`, and its `target` when a validation Error names one.

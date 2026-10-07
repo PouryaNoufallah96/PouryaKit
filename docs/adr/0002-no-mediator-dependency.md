@@ -151,3 +151,47 @@ on (`src/PouryaKit.Cqrs/Dispatcher.cs`, `src/PouryaKit.Cqrs/Operation.cs`):
   authorization hook; the hook covers queries too, and this was reported to the owner when ticket #7 closed. G.6 is
   unchanged. Narrowing the hook to commands would leave every query authorizer an application registered silently
   unrun.
+
+## Amendment (2026-10-07, ticket #42: the optional idempotency slot)
+
+The decision above stands. Plan I.6 decided that the fixed pipeline has two optional slots, idempotency before the
+Unit of Work and caching around a query, filled only by the Kit, and that applications still register no steps.
+Ticket #42 implemented the idempotency slot at commit `829e7ad` (`src/PouryaKit.Cqrs/Dispatcher.cs`, `Steps`); the
+caching slot is #43's.
+
+- **Position.** The slot belongs to the outermost command of an Operation only, after logging, the authorization hook
+  and validation, and around its handler inside the Unit of Work: once `IUnitOfWork.RunAsync` has begun the
+  transaction, the slot reserves the command's key before the handler runs, and records the handler's success in the
+  same transaction after it returns. The Domain Event drain, the Outbox write, the save and the commit then follow as
+  before. A Domain Event Handler cannot change the recorded success, but its failure rolls it back with everything else.
+  A replay returns the recorded Result in place of the handler's, so the Unit of Work then has nothing to drain, write,
+  save or send.
+- **The Unit of Work owns the writes (ADR 0003).** The key and the success are written by an `IIdempotencyStore` in the
+  Unit of Work's own transaction, and committed or rolled back with the command's effect. The dispatcher and Feature
+  code never save or commit. `PouryaKit.Persistence.EFCore` implements the store with a table in each Module's schema,
+  `insert … on conflict do nothing`, so a concurrent repeat waits on the uncommitted key and then replays the committed
+  success, or runs when the first transaction rolled back.
+- **When it runs.** A command opts in with `[Idempotent]`. The slot runs when such a command is outermost and its
+  `OperationContext.RequestId` is set; the key is the tenant (a null tenant stored as one fixed sentinel), the Actor,
+  the command's full type name and the request id. A nested command never reserves, a query never does, and an
+  opted-in command without a request id runs as any other. A request id on an outermost command that does not opt in,
+  or in a Host with no `IIdempotencyStore`, throws `InvalidOperationException` at dispatch, so the promised guarantee is
+  never silently dropped.
+- **The stored outcome is the Result, not a response.** A `Result<T>` success is kept as its value in the Kit's one JSON
+  representation (`UsePouryaKitJson`), a `Result` success as the key itself. A replay returns an equal Result, never a
+  default success; HTTP answers it through the same `ToHttpResult` mapping, so the status and body repeat. A failed
+  Result, a failed nested command or Domain Event Handler, an exception or a refused save leaves no key, so a repeat
+  runs again.
+- **The request id is Operation Context data (ADR 0007).** A Gateway opens the Operation's own scope and receives only
+  the context, so the request id rides on it: `PouryaKit.Web` sets it from the `Idempotency-Key` header of an endpoint
+  that calls `RequireIdempotencyKey()`, and a Gateway's other callers set it with an object initializer. `Continue()`
+  leaves it out and no message header carries it, so a Notification, an Integration Event or a delayed command is
+  never taken for a repeat.
+- **Applications still register no steps.** The slot is written out in the dispatcher like every other step;
+  `[Idempotent]` and a request id switch it on, and the store is a persistence package's seam, not a step.
+
+Proven against PostgreSQL by `IdempotencyTests` in `tests/ModularMonolith.Tests`, among them
+`A_repeated_request_id_replays_the_first_success_without_running_writing_or_sending_anything`,
+`A_concurrent_repeat_waits_for_the_first_operation_then_replays_its_committed_success` and
+`A_concurrent_repeat_waits_for_the_first_operation_then_runs_when_it_rolled_back`, and by
+`PouryaKit.Cqrs.Tests.IdempotencyTests.Only_an_outermost_command_with_a_request_id_reserves_its_key_inside_the_unit_of_work_before_its_handler`.

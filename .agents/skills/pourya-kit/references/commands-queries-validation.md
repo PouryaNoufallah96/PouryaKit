@@ -65,6 +65,25 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 - A failed nested query that leaves tracked state unchanged rolls nothing back; act on its Result as you need.
 - One scope holds one Operation. Never send a second top-level command in a scope that already ran one, and never retry a failed command in the same scope: send it again through the Gateway, which opens a new scope for each call.
 
+## Request idempotency
+
+A command a client may send again, after a response it never received, opts in with `[Idempotent]`, as the Proving Sample's `CreateProduct` and `ImportProducts` do:
+
+```csharp
+using PouryaKit.Cqrs;
+
+[Idempotent]
+internal sealed record CreateProductCommand(Guid ProductId, Guid CategoryId, string Name) : Command<Guid>;
+```
+
+- It takes effect when the command is the outermost of an Operation whose `OperationContext.RequestId` is set: over HTTP from the `Idempotency-Key` header of an endpoint that requires one ([web.md](web.md#a-repeatable-write)), from any other Gateway caller with `new OperationContext(actor, tenant) { RequestId = requestId }`. Without a request id the command runs as any other. `Continue()` leaves the request id out, so work the Operation causes never replays.
+- Inside its Unit of Work, before the handler runs, the Kit reserves the key: the tenant, the Actor, the command's full type name and the request id. A repeat with the same key replays the first success, an equal Result with the same value, without running the handler, so nothing is written, saved or published again. A concurrent repeat waits until the first Operation ends, then replays its success, or runs when it rolled back.
+- Only a success is kept. A failed Result, a nested command or Domain Event Handler that fails, an exception or a refused save rolls the key back with everything else, so a repeat runs again.
+- The authorization hook and validation run before the replay: a repeat that now fails them answers that failure, not the first success.
+- The value is kept as JSON in the Kit's representation and read back as the command's response type, which must round-trip through it. Renaming the command's type starts new keys.
+- A nested command never reserves, even one that opts in: it joins the outer Operation. A request id reaching an outermost command that does not opt in, or a Host whose persistence keeps no keys, throws `InvalidOperationException` at dispatch.
+- The keys live in a table of the Module's own schema, which a migration creates ([persistence.md](persistence.md#migrations)). The Kit never removes a row.
+
 ## Code that only reads
 
 Some code runs inside an Operation but may change nothing, because its outcome cannot roll the Operation back or because it runs after the Operation's last change:
