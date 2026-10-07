@@ -1,6 +1,6 @@
 # Host recipes
 
-The service defaults of a Host built on PouryaKit: OpenTelemetry that exports the Kit's activities and metrics, liveness and readiness endpoints, service discovery, one standard resilience pipeline for every outgoing client, and Serilog when the Host wants it. They live in the Proving Sample's `ModularMonolith.ServiceDefaults` project, shaped like .NET Aspire's `ServiceDefaults` template. They are template content, not a Kit package and not an Aspire package: the project templates (#53) carry the project, and an application owns and changes its copy. Each recipe is optional, and none is needed for the Kit to work.
+The service defaults of a Host built on PouryaKit: OpenTelemetry that exports the Kit's activities and metrics, liveness and readiness endpoints, service discovery, one standard resilience pipeline for every outgoing client, and Serilog when the Host wants it. They live in the Proving Sample's `ModularMonolith.ServiceDefaults` project, shaped like .NET Aspire's `ServiceDefaults` template. They are template content, not a Kit package and not an Aspire package: the project templates generate the project as `<Name>.ServiceDefaults` and compose all three recipes in their Hosts ([templates.md](templates.md)), and an application owns and changes its copy. Each recipe is optional, and none is needed for the Kit to work.
 
 - [Composing a Host with them](#composing-a-host-with-them)
 - [What each recipe does](#what-each-recipe-does)
@@ -37,7 +37,7 @@ await app.RunAsync();
 
 - `AddServiceDefaults()` and `AddSerilogDefaults()` extend any `IHostApplicationBuilder`, in the namespace `Microsoft.Extensions.Hosting` as Aspire's do; `MapDefaultEndpoints()` extends `WebApplication`.
 - The recipe exports; the Kit emits. A Host without `AddPouryaKitObservability()` exports no Operation of the Kit, whatever its exporters listen to ([observability.md](observability.md#registering)).
-- `ModularMonolith.Host` does not use the recipes, so the Kit's outgoing HTTP stays proven without them (`OutgoingHttpTests`).
+- `ModularMonolith.Host` does not use the recipes, so the Kit's outgoing HTTP stays proven without them (`OutgoingHttpTests`). The Hosts the project templates generate do, with `AddServiceDefaults()`, `AddSerilogDefaults()` and `MapDefaultEndpoints()`, and their `downstream` client adds only `AddPouryaKitOperationContext()`.
 
 ## What each recipe does
 

@@ -19,7 +19,8 @@
     { "id": "PouryaKit.Messaging.Wolverine.RabbitMq", "type": "PouryaKit.Messaging.Wolverine.RabbitMq.RabbitMqHostApplicationBuilderExtensions" },
     { "id": "PouryaKit.Web", "type": "PouryaKit.Web.IEndpoint" },
     { "id": "PouryaKit.Web.OpenApi", "type": "PouryaKit.Web.OpenApi.PouryaKitOpenApiOptions" },
-    { "id": "PouryaKit.Testing", "type": "PouryaKit.Testing.Delivery" }
+    { "id": "PouryaKit.Testing", "type": "PouryaKit.Testing.Delivery" },
+    { "id": "PouryaKit.Templates", "kind": "template" }
   ],
   "compositions": [
     {
@@ -33,6 +34,18 @@
       "entries": ["ModularMonolith.Host/ModularMonolith.Host.csproj", "Inventory.Host/Inventory.Host.csproj"],
       "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Observability", "PouryaKit.Caching", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
       "excluded": []
+    },
+    {
+      "name": "template-monolith",
+      "template": "pouryakit-monolith",
+      "packages": ["PouryaKit.Caching", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
+      "excluded": ["PouryaKit.Modularity", "PouryaKit.Testing"]
+    },
+    {
+      "name": "template-modular-monolith",
+      "template": "pouryakit-modular-monolith",
+      "packages": ["PouryaKit.Modularity", "PouryaKit.Caching", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
+      "excluded": ["PouryaKit.Testing"]
     }
   ]
 }

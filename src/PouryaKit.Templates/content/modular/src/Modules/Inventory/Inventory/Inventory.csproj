@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <!-- Catalog's Contracts, never Catalog: Inventory knows only what Catalog publishes. -->
+    <ProjectReference Include="..\..\Catalog\Catalog.Contracts\Catalog.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PouryaKit.Messaging.Wolverine.EFCore" />
+    <PackageReference Include="PouryaKit.Modularity" />
+    <PackageReference Include="PouryaKit.Persistence.Dapper" />
+    <PackageReference Include="PouryaKit.Persistence.Postgres" />
+  </ItemGroup>
+</Project>

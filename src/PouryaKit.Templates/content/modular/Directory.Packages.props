@@ -1,0 +1,39 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- The PouryaKit version the solution was generated with: every Kit package has the same one. -->
+    <PouryaKitVersion>0.0.0-pouryakit</PouryaKitVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="PouryaKit.Caching" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Messaging.Wolverine.EFCore" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Messaging.Wolverine.RabbitMq" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Modularity" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Observability" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Persistence.Dapper" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Persistence.Postgres" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Security" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Security.JwtBearer" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Validation" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Web" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Web.OpenApi" Version="$(PouryaKitVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.10.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.19.1" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.19.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.19.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.19.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.19.0" />
+    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageVersion Include="Serilog.Sinks.OpenTelemetry" Version="4.2.0" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.15.0" />
+    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.46.0" />
+    <PackageVersion Include="xunit.v3" Version="4.0.1" />
+  </ItemGroup>
+</Project>

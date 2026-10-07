@@ -99,43 +99,6 @@ internal sealed class HostModules
         );
     }
 
-    // Called when the Host's container is built, on its final registrations: a Composition Root added later, in this
-    // AddPouryaKitModules call or another, may register the authorizer a command or query of another Module declares.
-    public void EnsureDeclaredAuthorizers(IServiceCollection services)
-    {
-        var registered = services
-            .Where(descriptor => !descriptor.IsKeyedService && descriptor.ImplementationType is not null)
-            .Select(descriptor => (descriptor.ServiceType, descriptor.ImplementationType!))
-            .ToHashSet();
-        List<string> problems =
-        [
-            .. services
-                .Select(OperationOf)
-                .OfType<Type>()
-                .Distinct()
-                .SelectMany(operation =>
-                    operation
-                        .GetCustomAttributes(inherit: false)
-                        .OfType<IRequiresAuthorizer>()
-                        .Where(declared =>
-                            !registered.Contains(
-                                (typeof(IAuthorizer<>).MakeGenericType(operation), declared.AuthorizerOf(operation))
-                            )
-                        )
-                        .Select(declared =>
-                            $"{operation.FullName} declares {declared.GetType().Name}, but its check is not registered, so it would run unchecked. Call {declared.Registration} with the assembly {operation.Assembly.GetName().Name} in the Composition Root of {OwnerName(operation)}."
-                        )
-                ),
-        ];
-        if (problems.Count > 0)
-        {
-            throw new InvalidOperationException(string.Join(Environment.NewLine, problems));
-        }
-    }
-
-    private string OwnerName(Type operation) =>
-        _ownerByOperation.TryGetValue(operation, out var owner) ? owner.Name : "the Module that handles it";
-
     private static bool IsCommand(Type operation)
     {
         for (var type = operation.BaseType; type is not null; type = type.BaseType)

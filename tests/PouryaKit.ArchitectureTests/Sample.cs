@@ -85,12 +85,13 @@ internal static class Sample
             );
     }
 
-    /// <summary>The Kit's packages, one per folder under <c>src/</c>.</summary>
+    /// <summary>The Kit's packages of code, one per folder under <c>src/</c>: every package but the templates, which has none.</summary>
     public static readonly IReadOnlyList<Assembly> KitPackages =
     [
         .. Directory
             .GetDirectories(Path.Combine(Repository.Root, "src"))
             .Select(Path.GetFileName)
+            .Where(name => name != "PouryaKit.Templates")
             .Order(StringComparer.Ordinal)
             .Select(name => Assembly.Load(name!)),
     ];

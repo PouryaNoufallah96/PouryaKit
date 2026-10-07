@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Catalog.Contracts\Catalog.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- What the Proving Sample's Catalog references but Modularity: in a monolith, the Host is its one Module. -->
+    <PackageReference Include="PouryaKit.Caching" />
+    <PackageReference Include="PouryaKit.Messaging.Wolverine.EFCore" />
+    <PackageReference Include="PouryaKit.Persistence.Dapper" />
+    <PackageReference Include="PouryaKit.Persistence.Postgres" />
+    <PackageReference Include="PouryaKit.Security" />
+    <PackageReference Include="PouryaKit.Validation" />
+    <PackageReference Include="PouryaKit.Web" />
+    <PackageReference Include="PouryaKit.Web.OpenApi" />
+  </ItemGroup>
+</Project>

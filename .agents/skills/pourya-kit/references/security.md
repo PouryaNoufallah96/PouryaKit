@@ -38,10 +38,10 @@ internal sealed record RemoveProductsCommand(IReadOnlyList<string> Names) : Comm
 - A declared permission whose check no Composition Root registered fails the Host when it is built, so it never runs unchecked. `Build()` throws `InvalidOperationException`, one line per command or query:
 
   ```text
-  Catalog.Products.Features.RemoveProducts.RemoveProductsCommand declares RequiresPermissionAttribute, but its check is not registered, so it would run unchecked. Call AddPouryaKitPermissions with the assembly Catalog in the Composition Root of CatalogModule.
+  Catalog.Products.Features.RemoveProducts.RemoveProductsCommand declares RequiresPermissionAttribute, but its check is not registered, so it would run unchecked. Call AddPouryaKitPermissions with the assembly Catalog in the Composition Root that registers its handler.
   ```
 
-  Fix it by adding `module.AddPouryaKitPermissions(typeof(CatalogModule).Assembly)` to that Composition Root. Any Composition Root may register it, so a check registered from another Module passes, and a Host whose Modules declare no permission needs no Security registration at all. Only the permission check counts: an `IAuthorizer<T>` of the Module's own for the same command does not stand in for it. `AddPouryaKitModules` runs this check; a Host that replaces its service provider factory with `ConfigureContainer`, or an application without Modularity, loses it.
+  Fix it by adding `module.AddPouryaKitPermissions(typeof(CatalogModule).Assembly)` to that Composition Root. Any Composition Root may register it, so a check registered from another Module passes, and a Host whose Modules declare no permission needs no Security registration at all. Only the permission check counts: an `IAuthorizer<T>` of the Module's own for the same command does not stand in for it. The check is Cqrs's `EnsurePouryaKitDeclaredAuthorizers()`, run on the Host's final registrations as its container is built: `AddPouryaKitModules` runs it, and a Host without Modularity passes it to `ConfigureContainer`, as the monolith template's Host does ([templates.md](templates.md#what-each-composition-composes)). A Host that replaces either service provider factory with one of its own loses it unless its factory calls it too.
 - The attribute on a type that is not one concrete command or query fails the Host while it is composed: the dispatcher would never check it.
 - The check runs in the pipeline's authorization step, before validation and the Unit of Work, with any other authorizer of the same command or query.
 

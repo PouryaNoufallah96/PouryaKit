@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json.schemastore.org/template",
+  "author": "Pourya Nofallah",
+  "classifications": ["Web", "API", "Monolith", "PouryaKit"],
+  "identity": "PouryaKit.Templates.Monolith",
+  "name": "PouryaKit monolith",
+  "description": "A Host on PouryaKit with the Proving Sample's Catalog as its one Module in all but name: a plain registration and IDispatcher endpoints, no Modularity, with the service defaults and an HTTP smoke test.",
+  "shortName": "pouryakit-monolith",
+  "sourceName": "ModularMonolith",
+  "defaultName": "Shop",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
+  "symbols": {
+    "skipRestore": {
+      "type": "parameter",
+      "datatype": "bool",
+      "description": "If specified, skips the automatic restore of the solution on create.",
+      "defaultValue": "false"
+    }
+  },
+  "sources": [
+    {
+      "source": "./",
+      "target": "./"
+    },
+    {
+      "source": "../shared/",
+      "target": "./"
+    },
+    {
+      "source": "../sample/",
+      "target": "src/",
+      "include": ["Modules/Catalog/**/*", "ModularMonolith.Host/**/*", "ModularMonolith.ServiceDefaults/**/*"],
+      "exclude": ["**/*Module.cs", "**/*Endpoint.cs", "**/CatalogProducts.cs"]
+    }
+  ],
+  "primaryOutputs": [
+    {
+      "path": "ModularMonolith.slnx"
+    }
+  ],
+  "postActions": [
+    {
+      "id": "restore",
+      "condition": "(!skipRestore)",
+      "description": "Restore NuGet packages required by this solution.",
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet restore'"
+        }
+      ],
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true
+    }
+  ]
+}

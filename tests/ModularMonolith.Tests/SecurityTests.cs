@@ -337,7 +337,7 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     private static string UncheckedPermission(Type operation) =>
-        $"{operation.FullName} declares RequiresPermissionAttribute, but its check is not registered, so it would run unchecked. Call AddPouryaKitPermissions with the assembly ModularMonolith.Tests in the Composition Root of StubModule.";
+        $"{operation.FullName} declares RequiresPermissionAttribute, but its check is not registered, so it would run unchecked. Call AddPouryaKitPermissions with the assembly ModularMonolith.Tests in the Composition Root that registers its handler.";
 
     private static string Unique() => Guid.CreateVersion7().ToString("N");
 
