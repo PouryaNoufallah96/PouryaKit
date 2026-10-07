@@ -1,0 +1,61 @@
+docs/provenance/ModularMonolith.md
+  s_41c3eef9abbce4::t_835510092c1fcc 14
+docs/provenance/PouryaKit.Web.md
+  s_41c3eef9abbce4::t_835510092c1fcc 5,9,12-13,72-86
+  s_41c3eef9abbce4::t_2904f67bd2a1b5 11
+  s_41c3eef9abbce4::t_cf8018c847b24a 10
+tests/ModularMonolith.Tests/TrustedPeerTests.cs
+  s_41c3eef9abbce4::t_d081f816493c93 74-75,85-86
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_835510092c1fcc 848
+README.md
+  s_41c3eef9abbce4::t_835510092c1fcc 5
+docs/acceptance.md
+  s_41c3eef9abbce4::t_296f267884580b 188-190,195
+scripts/packaging/consumers/PouryaKit.Web.cs
+  s_41c3eef9abbce4::t_739b224da40431 1-18
+.agents/skills/pourya-kit/references/security.md
+  s_41c3eef9abbce4::t_835510092c1fcc 95
+src/PouryaKit.Web/OperationContextHttpHeaders.cs
+  s_41c3eef9abbce4::t_ec71fa5d99d341 23-24
+  s_41c3eef9abbce4::t_be77786909722b 13
+  s_41c3eef9abbce4::t_0cd4f641648511 29-30,32-38,40,68,81-82,84-87
+  s_41c3eef9abbce4::t_e132b6501b4fc8 14,25-26,31,39,41-43,49,51,66,83
+  s_41c3eef9abbce4::t_21b3ce0735c786 88
+.agents/skills/pourya-kit/references/web.md
+  s_41c3eef9abbce4::t_835510092c1fcc 221
+  s_41c3eef9abbce4::t_f66e101353ea78 224
+tests/ModularMonolith.Tests/OutgoingHttpTests.cs
+  s_41c3eef9abbce4::t_d081f816493c93 91-95,97,101-102,104,111-152,154-155
+  s_41c3eef9abbce4::t_0d1df053f593f3 153
+  s_41c3eef9abbce4::t_f00621deefc945 156
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_f66e101353ea78 445
+.agents/skills/pourya-kit/SKILL.md
+  s_41c3eef9abbce4::t_835510092c1fcc 35
+docs/adr/0007-operation-context-set-by-the-scope-opener.md
+  s_41c3eef9abbce4::t_f66e101353ea78 124-132
+src/PouryaKit.Web/HttpReplay.cs
+  s_41c3eef9abbce4::t_f66e101353ea78 7-9
+src/PouryaKit.Web/WebHttpClientBuilderExtensions.cs
+  s_41c3eef9abbce4::t_be77786909722b 3,39-44,46,49,57-64,66
+  s_41c3eef9abbce4::t_76c9e8922705ec 56,65
+  s_41c3eef9abbce4::t_296f267884580b 35
+  s_41c3eef9abbce4::t_36d9e1b9cd67bb 67-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "732b97f3f737ff4874c8eaadf0a91106226047b0",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
