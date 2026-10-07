@@ -29,6 +29,7 @@ public static class WebEndpointRouteBuilderExtensions
             var options = routes.ServiceProvider.GetRequiredService<IOptions<PouryaKitWebOptions>>().Value;
             var peers = routes.ServiceProvider.GetRequiredService<IOptions<PouryaKitTrustedPeerOptions>>().Value.Peers;
             var moduleRouteGroups = routes.ServiceProvider.GetService<IModuleRouteGroups>();
+            var mapped = routes.ServiceProvider.GetService<MappedEndpoints>();
             foreach (var module in routes.ServiceProvider.GetServices<ModuleEndpoints>())
             {
                 var group = routes.MapGroup(module.RoutePrefix).RequireAuthorization();
@@ -38,6 +39,7 @@ public static class WebEndpointRouteBuilderExtensions
                     foreach (var endpoint in module.Endpoints)
                     {
                         endpoint.Map(target);
+                        mapped?.Add(endpoint.GetType());
                     }
                 }
             }
@@ -69,7 +71,10 @@ public static class WebEndpointRouteBuilderExtensions
         /// request answered, through the same Result and the same <c>ToHttpResult</c> mapping, without running the
         /// command again. A request without a single header of 1 to 256 visible ASCII characters, with spaces only
         /// between them, is answered 400 as a problem response before its body is read. The requirement is the
-        /// endpoint's <see cref="IdempotencyKeyRequirement"/> metadata, which the endpoint's OpenAPI operation states.
+        /// endpoint's <see cref="IdempotencyKeyRequirement"/> metadata, which the endpoint's OpenAPI operation states. On a
+        /// Module's endpoint mapped for GET, HEAD, OPTIONS or TRACE, whose query ignores the key, it throws when the
+        /// endpoint is built, which fails the Host's start; a command that does not opt in is refused when it is
+        /// dispatched, since only then is it known.
         /// </summary>
         public TBuilder RequireIdempotencyKey() => builder.WithMetadata(new IdempotencyKeyRequirement());
     }
@@ -90,6 +95,17 @@ public static class WebEndpointRouteBuilderExtensions
             endpoint.RequestDelegate
             ?? throw new InvalidOperationException($"{endpoint.DisplayName} has no request delegate to run.");
         var requiresIdempotencyKey = endpoint.Metadata.OfType<IdempotencyKeyRequirement>().Any();
+        // A safe method sends a query, which ignores the request id, so the key would be required and change nothing.
+        // Whether the endpoint's command opts in with [Idempotent] is known only when it is dispatched (ADR 0002).
+        if (
+            requiresIdempotencyKey
+            && endpoint.Metadata.OfType<IHttpMethodMetadata>().LastOrDefault()?.HttpMethods.FirstOrDefault(IsSafe) is { } safe
+        )
+        {
+            throw new InvalidOperationException(
+                $"{endpoint.DisplayName} requires an Idempotency-Key on {safe}, a method that only reads, and a query ignores the key. Remove RequireIdempotencyKey(), or map the command on POST, PUT, PATCH or DELETE."
+            );
+        }
         endpoint.RequestDelegate = httpContext =>
         {
             var context = HttpCallerContext.Resolve(httpContext, options, peers) ?? throw Unresolved(httpContext, options);
@@ -101,6 +117,9 @@ public static class WebEndpointRouteBuilderExtensions
             return run(httpContext);
         };
     }
+
+    private static bool IsSafe(string method) =>
+        HttpMethods.IsGet(method) || HttpMethods.IsHead(method) || HttpMethods.IsOptions(method) || HttpMethods.IsTrace(method);
 
     private static InvalidOperationException Unresolved(HttpContext httpContext, PouryaKitWebOptions options) =>
         httpContext.User.Identity?.IsAuthenticated == true

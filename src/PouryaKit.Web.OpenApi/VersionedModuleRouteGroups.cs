@@ -1,9 +1,9 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using PouryaKit.Cqrs;
 
 namespace PouryaKit.Web.OpenApi;
 
@@ -52,20 +52,14 @@ internal sealed class VersionedModuleRouteGroups(
         declarations.Select(declaration => declaration.RoutePrefix).Where(prefix => !_mapped.Contains(prefix));
 }
 
-// Fails the Host's start when a Composition Root declared API versions for a route prefix no Module's endpoints are
-// mapped under, which would otherwise leave that Module unversioned; it runs after the application mapped its routes.
-internal sealed class UnmappedApiVersionsCheck(IModuleRouteGroups routeGroups) : IStartupFilter
+// A Composition Root declared API versions for a route prefix no Module's endpoints are mapped under, which would otherwise
+// leave that Module unversioned. A startup check: the application maps its routes after the Host's container is built.
+internal sealed class UnmappedApiVersionsCheck : IStartupCheck
 {
-    public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) =>
-        app =>
-        {
-            if (routeGroups is VersionedModuleRouteGroups versioned && versioned.Unmapped().ToList() is [_, ..] unmapped)
-            {
-                throw new InvalidOperationException(
-                    $"API versions are declared for the route group {string.Join(", ", unmapped)}, but no Module's endpoints are mapped under it. Declare them with the prefix the Module's AddPouryaKitEndpoints names, and map the Modules with MapPouryaKitModuleEndpoints."
-                );
-            }
-
-            next(app);
-        };
+    public IEnumerable<string> Check(HostComposition composition, IServiceProvider services) =>
+        services.GetService<IModuleRouteGroups>() is VersionedModuleRouteGroups versioned && versioned.Unmapped().ToList() is [_, ..] unmapped
+            ? [
+                $"API versions are declared for the route group {string.Join(", ", unmapped)}, but no Module's endpoints are mapped under it. Declare them with the prefix the Module's AddPouryaKitEndpoints names, and map the Modules with MapPouryaKitModuleEndpoints.",
+            ]
+            : [];
 }

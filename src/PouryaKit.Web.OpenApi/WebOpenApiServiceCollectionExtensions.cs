@@ -1,10 +1,10 @@
 using System.Globalization;
 using Asp.Versioning;
 using Asp.Versioning.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using PouryaKit.Cqrs;
 
 namespace PouryaKit.Web.OpenApi;
 
@@ -78,8 +78,9 @@ public static class WebOpenApiServiceCollectionExtensions
         /// <see cref="WebOpenApiServiceCollectionExtensions.ApiVersionHeader"/> header, unless it maps itself to some
         /// with <c>MapToApiVersion</c>. A Module's Composition Root calls it; the Host registers
         /// <c>AddPouryaKitOpenApi</c>, or mapping the Module's endpoints throws, and a prefix no Module's endpoints are
-        /// mapped under fails the Host's start. An endpoint's name (<c>WithName</c>) stays on its versioned path only.
-        /// A Module that declares no version keeps its unversioned paths.
+        /// mapped under fails the Host's start, among the Kit's startup checks (<c>AddPouryaKitCompositionChecks</c>).
+        /// An endpoint's name (<c>WithName</c>) stays on its versioned path only. A Module that declares no version keeps
+        /// its unversioned paths.
         /// </summary>
         public IServiceCollection AddPouryaKitApiVersions(string routePrefix, Action<ApiVersionSetBuilder> declare)
         {
@@ -98,7 +99,7 @@ public static class WebOpenApiServiceCollectionExtensions
 
             services.AddSingleton(new ModuleApiVersions(routePrefix, declare));
             services.TryAddSingleton<IModuleRouteGroups, VersionedModuleRouteGroups>();
-            services.TryAddEnumerable(ServiceDescriptor.Transient<IStartupFilter, UnmappedApiVersionsCheck>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupCheck, UnmappedApiVersionsCheck>());
             return services;
         }
     }

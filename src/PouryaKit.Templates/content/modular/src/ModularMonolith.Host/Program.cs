@@ -27,7 +27,7 @@ builder.AddSerilogDefaults();
 builder.Services.AddPouryaKitJwtBearer(claims => claims.TenantClaim = "tenant");
 builder.Services.AddAuthorization();
 // Authenticated by default: AddPouryaKitWeb sets the authorization fallback policy; a public endpoint says so.
-builder.Services.AddPouryaKitWeb(web => web.TenantClaim = PouryaKitClaimTypes.Tenant);
+builder.Services.AddPouryaKitWeb();
 // The peer Hosts that may continue an Operation of theirs here, CORS policies, response compression and the rate limit
 // per Actor, the configured sunset of each API version, and how long idempotency keys are kept. None is configured but
 // the sunset: every caller starts a new chain of work, and the Host answers no cross-origin request, compresses nothing
@@ -40,7 +40,8 @@ builder.Services.AddPouryaKitOpenApi();
 builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
 builder.Services.Configure<PouryaKitIdempotencyOptions>(builder.Configuration.GetSection("PouryaKit:Idempotency"));
 // Calls to another Host carry the Operation Context they are sent with, never the caller's bearer token. The service
-// defaults already give the client its one resilience pipeline: adding AddPouryaKitResilience here would stack a second.
+// defaults already give the client its one resilience pipeline: AddPouryaKitResilience here would stack a second, which
+// the Kit refuses when the client is created.
 builder.Services.AddHttpClient("downstream").AddPouryaKitOperationContext();
 // The permissions a command or query declares (Catalog's RemoveProducts) are the HTTP caller's permission claims.
 builder.Services.AddHttpContextAccessor();

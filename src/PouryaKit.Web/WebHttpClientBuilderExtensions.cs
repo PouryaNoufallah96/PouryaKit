@@ -1,4 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
 using PouryaKit.Cqrs;
@@ -30,8 +32,11 @@ public static class WebHttpClientBuilderExtensions
         /// on the builder it returns, such as <c>.Configure(o => o.Retry.MaxRetryAttempts = 2)</c>. It needs no Aspire
         /// or ServiceDefaults; a Host whose ServiceDefaults already add the standard handler to every client keeps one
         /// pipeline: it calls this in place of that line, or removes it for the client with
-        /// <c>RemoveAllResilienceHandlers()</c> first. The replay policy of the last call for a client is the one its
-        /// pipeline uses, so a client registered again after <c>RemoveAllResilienceHandlers()</c> keeps no earlier policy.
+        /// <c>RemoveAllResilienceHandlers()</c> first. In a Host that calls it, a client whose handler chain, once built,
+        /// holds two resilience handlers throws <see cref="InvalidOperationException"/> whenever it is created, naming that
+        /// call, instead of retrying each attempt of the other. The replay policy of the last call for a client is the
+        /// one its pipeline uses, so a client registered again after <c>RemoveAllResilienceHandlers()</c> keeps no earlier
+        /// policy.
         /// The client registered with an empty name is refused: its pipeline would be the one the defaults of every
         /// client (<c>ConfigureHttpClientDefaults</c>) register, with their options and replay policy.
         /// </summary>
@@ -56,6 +61,7 @@ public static class WebHttpClientBuilderExtensions
             }
 
             var pipeline = builder.AddStandardResilienceHandler();
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, SingleResilienceHandler>());
             var policies = HttpReplayPolicies.In(builder.Services);
             if (policies.Set(pipeline.PipelineName, replay))
             {

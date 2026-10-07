@@ -330,6 +330,7 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         builder.Services.AddPouryaKitWeb();
         builder.Services.AddPouryaKitEndpoints("/plain", typeof(UnversionedEndpoints).Assembly);
         configure?.Invoke(builder.Services);
+        builder.AddPouryaKitCompositionChecks();
         var app = builder.Build();
         app.UseRouting();
         app.UseAuthentication();

@@ -49,7 +49,7 @@ public static class ModularMonolithHost
         builder.Services.AddAuthorization();
         // Authenticated by default: AddPouryaKitWeb sets the authorization fallback policy; a public endpoint says so.
         // The Operation's tenant is the one the bearer scheme verified.
-        builder.Services.AddPouryaKitWeb(web => web.TenantClaim = PouryaKitClaimTypes.Tenant);
+        builder.Services.AddPouryaKitWeb();
         // The peer Hosts, by their authenticated Actor claim, that may continue an Operation of theirs here
         // (PouryaKit:TrustedPeers:Peers). None are configured: every caller starts a new chain of work.
         builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));

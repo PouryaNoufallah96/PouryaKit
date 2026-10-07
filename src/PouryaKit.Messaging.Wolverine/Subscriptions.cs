@@ -12,7 +12,7 @@ namespace PouryaKit.Messaging.Wolverine;
 internal sealed class Subscriptions : IWireNames
 {
     // The local queues Wolverine 6.46.0 creates for itself (LocalTransport, TransportConstants): "agents" is held in
-    // memory, and none of them is a subscription's durable queue. StartupCheck verifies the queues Wolverine built, so a
+    // memory, and none of them is a subscription's durable queue. DurableQueuesCheck verifies the queues Wolverine built, so a
     // name a later Wolverine reserves fails the Host's start too.
     private static readonly HashSet<string> ReservedQueues = new(StringComparer.OrdinalIgnoreCase)
     {

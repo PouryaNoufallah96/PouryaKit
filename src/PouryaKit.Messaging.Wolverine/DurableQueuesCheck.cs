@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using PouryaKit.Cqrs;
 using Wolverine;
 using Wolverine.Configuration;
 using Wolverine.Runtime;
@@ -7,25 +9,27 @@ using Wolverine.Transports;
 
 namespace PouryaKit.Messaging.Wolverine;
 
-// Runs once every hosted service has started, Wolverine included, so it sees the queues as Wolverine built them. A
-// Notification, an Integration Event, a Snapshot or a delayed command is durable only when an Outbox writes it in the Unit of
-// Work's commit and its queue stores it; otherwise the business change would commit with nothing behind it, so the Host does
-// not start.
-internal sealed class StartupCheck(Subscriptions subscriptions, IServiceProvider services) : IHostedLifecycleService
+// The one check at Wolverine's own moment: it runs once every hosted service has started, Wolverine included, so it sees
+// the queues as Wolverine built them. Wolverine compiles its endpoints only as it starts (Endpoint.Compile applies its
+// endpoint policies, such as UseDurableLocalQueues, then a Host's own queue configuration), so a composition check at
+// the build, or a startup check before any hosted service starts, would read every queue's default. A Notification, an
+// Integration Event, a Snapshot or a delayed command is durable only when its queue stores it (and an Outbox writes it,
+// OutboxCheck); otherwise the business change would commit with nothing behind it, so the Host does not start.
+internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServiceProvider services) : IHostedLifecycleService
 {
+    // Every declaration registers both.
+    public static void AddTo(IServiceCollection services)
+    {
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, OutboxCheck>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, DurableQueuesCheck>());
+    }
+
     public Task StartedAsync(CancellationToken cancellationToken)
     {
         var delayedCommands = services.GetService<DelayedCommandDeclarations>()?.All ?? [];
         if (!subscriptions.All.Any() && subscriptions.Publications.Count == 0 && !delayedCommands.Any())
         {
             return Task.CompletedTask;
-        }
-
-        if (!services.GetRequiredService<IServiceProviderIsService>().IsService(typeof(INotificationOutbox)))
-        {
-            throw new InvalidOperationException(
-                "Notification Handlers, Integration Events, Snapshots or delayed commands are declared, but nothing writes them to an Outbox, so every Operation would commit and none would be delivered. Call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore on the Host."
-            );
         }
 
         var transports = services.GetRequiredService<IWolverineRuntime>().Options.Transports;

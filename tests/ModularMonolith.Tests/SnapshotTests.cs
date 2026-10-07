@@ -5,13 +5,10 @@ using Catalog.Products.Features.RemoveProducts;
 using Catalog.Products.Features.RenameProduct;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
-using PouryaKit.Caching;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
-using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
-using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -409,42 +406,6 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.StartsWith("Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write", thrown.Message);
         Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from stub.leaflets where id = '{leaflet}'"));
-    }
-
-    // The Host installs no composition checks, which would fail its build: this is the backstop at commit.
-    [Fact]
-    public async Task A_snapshot_declared_with_a_module_in_an_application_without_modules_fails_the_operation_that_would_publish_it()
-    {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]);
-        builder.UsePouryaKitWolverine(connectionName: "app");
-        builder.Services.UsePouryaKitTestDelivery();
-        builder.Services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
-        builder.Services.AddPouryaKitCqrs(typeof(StubDbContext).Assembly);
-        builder.Services.AddPouryaKitCaching();
-        builder.Services.PublishSnapshot<Stub.Shelf, MislaidShelfSnapshotV1, MislaidShelfSnapshotMapper>("tests.mislaid-shelf.v1", typeof(StubModule));
-        using var host = builder.Build();
-        await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
-        InvalidOperationException thrown;
-        try
-        {
-            await using var scope = host.Services.CreateAsyncScope();
-            scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("single-module")));
-            thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                scope
-                    .ServiceProvider.GetRequiredService<IDispatcher>()
-                    .SendAsync(new PutShelvesCommand([["A1", "B1"]]), TestContext.Current.CancellationToken)
-            );
-        }
-        finally
-        {
-            await host.StopAsync(TestContext.Current.CancellationToken);
-        }
-
-        Assert.Equal(
-            $"The Snapshot {typeof(MislaidShelfSnapshotV1).FullName} of {typeof(Stub.Shelf).FullName} is declared by the Module StubModule, but Shelf changed in an application without Modules. Declare it with PublishSnapshot(wireName) and no Module.",
-            thrown.Message
-        );
-        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.shelves"));
     }
 
     [Fact]

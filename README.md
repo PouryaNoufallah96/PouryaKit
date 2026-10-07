@@ -6,7 +6,7 @@ Status: Wave 1 is complete, and Wave 2 is under way. The Kit's packages (every e
 
 - domain primitives (`PouryaKit.Domain`)
 - commands, queries and validation (`PouryaKit.Cqrs`, `PouryaKit.Validation`)
-- Modules (`PouryaKit.Modularity`), whose Composition Roots name neither their Module nor their assembly from Wave 2, with the Host's composition checks (`PouryaKit.Cqrs`), which stop a Host when it is built, before anything runs, on a mistake the Kit can see: a Module's declaration made without its Module, a declared permission without its check, a cacheable query without caching; a replaced container stops it when it starts
+- Modules (`PouryaKit.Modularity`), whose Composition Roots name neither their Module nor their assembly from Wave 2, with the Host's composition checks (`PouryaKit.Cqrs`), which stop a Host when it is built, before anything runs, on a mistake the Kit can see: a Module's declaration made without its Module, a declared permission without its check, a cacheable query without caching, a Notification Handler no registration declares, a connection string the configuration lacks; a replaced container, or an endpoint no registration declares or maps, stops it when it starts
 - persistence and the Unit of Work (`PouryaKit.Persistence`, `PouryaKit.Persistence.EFCore`, `PouryaKit.Persistence.Postgres`)
 - Dapper reads (`PouryaKit.Persistence.Dapper`)
 - messaging (`PouryaKit.Messaging`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Messaging.Wolverine.EFCore`), with, from Wave 2, delayed commands that continue the Operation that scheduled them and recurring commands declared under a named system Actor, both durable through a restart

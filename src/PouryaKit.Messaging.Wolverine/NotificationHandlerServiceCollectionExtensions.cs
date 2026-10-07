@@ -23,9 +23,9 @@ public static class NotificationHandlerServiceCollectionExtensions
         /// invalid, equal ignoring case to another's, or, for a subscription, the name of a queue Wolverine keeps for
         /// itself or the same subscription declared for another Module. Repeating a declaration for the same Module adds
         /// nothing. The Host then fails when it is built if the declaration belongs to no Module in a Host of Modules or to
-        /// a Module the Host does not compose, and fails to start unless an Outbox writes the Notifications
-        /// (<see cref="INotificationOutbox"/>) and every subscription's queue, as Wolverine built it, is a durable
-        /// application queue.
+        /// a Module the Host does not compose, or unless an Outbox writes the Notifications
+        /// (<see cref="INotificationOutbox"/>), and fails to start unless every subscription's queue, as Wolverine built
+        /// it, is a durable application queue.
         /// </summary>
         public IServiceCollection AddPouryaKitNotificationHandlers(params Assembly[] featureAssemblies) =>
             DeclareNotificationHandlers(
@@ -88,7 +88,7 @@ public static class NotificationHandlerServiceCollectionExtensions
             services.TryAddScoped(subscription.Handler);
         }
 
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+        DurableQueuesCheck.AddTo(services);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
         return services;
     }

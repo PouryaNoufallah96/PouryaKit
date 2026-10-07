@@ -21,9 +21,9 @@ public static class IntegrationEventServiceCollectionExtensions
         /// version into another. Throws here, at startup, when the type is not a concrete class or is a Domain
         /// Event, when the wire name is missing, invalid or equal ignoring case to another's, and when the type is already
         /// published under another name or by another Module. The Host then fails when it is built if the declaration
-        /// belongs to no Module in a Host of Modules or to a Module the Host does not compose, and fails to start unless an
-        /// Outbox writes Integration Events
-        /// (<see cref="INotificationOutbox"/>), and when Wolverine would route another of its message types to this
+        /// belongs to no Module in a Host of Modules or to a Module the Host does not compose, or unless an Outbox writes
+        /// Integration Events (<see cref="INotificationOutbox"/>), and fails to start when Wolverine would route another
+        /// of its message types to this
         /// type's subscriptions, because that type's wire name, name or full name equals this type's full name, ignoring case.
         /// </summary>
         public IServiceCollection Publish<TIntegrationEvent>(string wireName)
@@ -54,7 +54,7 @@ public static class IntegrationEventServiceCollectionExtensions
         {
             ArgumentNullException.ThrowIfNull(services);
             Subscriptions.In(services).Receive(typeof(TIntegrationEvent), wireName, isSnapshot: false);
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+            DurableQueuesCheck.AddTo(services);
             return services;
         }
 
@@ -92,7 +92,7 @@ public static class IntegrationEventServiceCollectionExtensions
     private static IServiceCollection DeclarePublication(IServiceCollection services, Type integrationEvent, string wireName, Type? module)
     {
         Subscriptions.In(services).Publish(integrationEvent, wireName, module);
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+        DurableQueuesCheck.AddTo(services);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
         return services;
     }
@@ -125,7 +125,7 @@ public static class IntegrationEventServiceCollectionExtensions
                 problems
             );
         services.TryAddScoped<THandler>();
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+        DurableQueuesCheck.AddTo(services);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
         return services;
     }

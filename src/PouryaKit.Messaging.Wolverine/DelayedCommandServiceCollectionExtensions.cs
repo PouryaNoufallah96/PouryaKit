@@ -20,10 +20,9 @@ public static class DelayedCommandServiceCollectionExtensions
         /// when the type is abstract or generic, when the name is missing, invalid, a queue Wolverine keeps for itself or
         /// another delayed command's, ignoring case, and when the type is already declared under another name or for
         /// another Module. The Host then fails when it is built if the declaration belongs to no Module in a Host of
-        /// Modules or to a Module the Host does not compose, and fails to start when a subscription has the same name,
-        /// when no Outbox writes delayed commands
-        /// (<see cref="INotificationOutbox"/>), or when its queue, as Wolverine built it, is not a durable application
-        /// queue.
+        /// Modules or to a Module the Host does not compose, or when no Outbox writes delayed commands
+        /// (<see cref="INotificationOutbox"/>), and fails to start when a subscription has the same name, or when its
+        /// queue, as Wolverine built it, is not a durable application queue.
         /// </summary>
         public IServiceCollection AddPouryaKitDelayedCommand<TCommand>(string name)
             where TCommand : Command => DeclareDelayedCommand(services, name, typeof(TCommand), IModuleServices.ModuleOf(services));
@@ -83,7 +82,7 @@ public static class DelayedCommandServiceCollectionExtensions
     private static IServiceCollection DeclareDelayedCommand(IServiceCollection services, string name, Type command, Type? module)
     {
         DelayedCommandDeclarations.In(services).Add(name, command, module);
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+        DurableQueuesCheck.AddTo(services);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
         return services;
     }
@@ -100,7 +99,7 @@ public static class DelayedCommandServiceCollectionExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(systemActor);
         ArgumentNullException.ThrowIfNull(occurrence);
         DelayedCommandDeclarations.In(services).Add(name, typeof(TCommand), module, new Recurrence(systemActor, occurrence));
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+        DurableQueuesCheck.AddTo(services);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, RecurringCommandStart>());
         return services

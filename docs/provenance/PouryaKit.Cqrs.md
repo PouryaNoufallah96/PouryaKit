@@ -16,7 +16,9 @@ Checked against the NuGet cache on 2026-10-06; licence expressions from each pac
   its `IHostApplicationBuilder` and the check runner, an `IHostedLifecycleService`, need the second.
 
 The Module seam (`IModuleServices`), the composition checks (`AddPouryaKitCompositionChecks`, `ICompositionCheck`,
-`HostComposition`, `IRequiresQueryCache`) and `OperationTypes` are new Kit code (ticket #61). The convention that a
+`HostComposition`, `IRequiresQueryCache`) and `OperationTypes` are new Kit code (ticket #61), and so is
+`PouryaKitClaimTypes`, which ticket #62 moved here from `PouryaKit.Security` so that Web reads the tenant claim the
+Kit's bearer scheme writes by default. The convention that a
 Module's Features live in its definition's assembly follows Cybernod's lookup of a Module by its definition's assembly
 (`cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.Web/Modules/ModuleRegistry.cs:38-41`); no code was taken, and its
 static registry was rejected: the Kit records Modules in the Host's service collection.
