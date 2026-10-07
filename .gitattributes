@@ -1,0 +1,4 @@
+# Append-only files: a merge keeps both sides' new lines without a conflict. A line both branches changed is kept
+# twice, so read the merged file.
+docs/acceptance.md merge=union
+.claude/agent-memory/kit-implementer/MEMORY.md merge=union
