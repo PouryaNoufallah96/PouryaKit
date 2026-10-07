@@ -1,0 +1,62 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_41c3eef9abbce4::t_082475ccb8873e 29
+samples/ModularMonolith/src/Modules/Inventory/Inventory/Infrastructure/Data/Migrations/20261007120000_ProductCategories.cs
+  s_41c3eef9abbce4::t_082475ccb8873e 1-20
+.agents/skills/pourya-kit/SKILL.md
+  s_41c3eef9abbce4::t_082475ccb8873e 33
+.agents/skills/pourya-kit/references/messaging.md
+  s_41c3eef9abbce4::t_082475ccb8873e 253-283,448,484,591
+tests/ModularMonolith.Tests/IntegrationEventVersionTests.cs
+  s_41c3eef9abbce4::t_082475ccb8873e 1-124
+samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/Events/V2/ProductCreatedV2.cs
+  s_41c3eef9abbce4::t_082475ccb8873e 1-10
+samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs
+  s_41c3eef9abbce4::t_082475ccb8873e 2,4,25-26
+  s_41c3eef9abbce4::t_b7b2494f2b7768 27-28
+src/PouryaKit.Messaging.Wolverine/PouryaKitWolverineExtension.cs
+  s_41c3eef9abbce4::t_082475ccb8873e 25
+.agents/skills/pourya-kit/references/testing.md
+  s_41c3eef9abbce4::t_082475ccb8873e 101,132
+src/PouryaKit.Messaging.Wolverine/IntegrationEventServiceCollectionExtensions.cs
+  s_41c3eef9abbce4::t_082475ccb8873e 16-19,23-24
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_082475ccb8873e 143-144,157,163,391,399,404
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_41c3eef9abbce4::t_082475ccb8873e 751-765
+tests/PouryaKit.ArchitectureTests/DapperWriteTests.cs
+  s_41c3eef9abbce4::t_082475ccb8873e 36-37
+samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs
+  s_41c3eef9abbce4::t_082475ccb8873e 36
+docs/acceptance.md
+  s_41c3eef9abbce4::t_082475ccb8873e 178-189
+src/PouryaKit.Messaging.Wolverine/Subscriptions.cs
+  s_41c3eef9abbce4::t_082475ccb8873e 167,184,198-223
+  s_41c3eef9abbce4::t_a3a77b2e471121 224-225
+.claude/agent-memory/kit-implementer/versioning-facts.md
+  s_41c3eef9abbce4::t_082475ccb8873e 1-20
+samples/ModularMonolith/src/Modules/Inventory/Inventory/CatalogProducts/Features/FileProductCategory/FileProductCategoryIntegrationEventHandler.cs
+  s_41c3eef9abbce4::t_082475ccb8873e 1-30
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_41c3eef9abbce4::t_082475ccb8873e 45
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/Notifications/PublishProductCreatedNotificationHandler.cs
+  s_41c3eef9abbce4::t_082475ccb8873e 2,9-11,21-29
+  s_41c3eef9abbce4::t_c8bf1d7419b515 30
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_41c3eef9abbce4::t_082475ccb8873e 42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "65a9366983770daaa6c3a5d39a0a5c8f4df46595",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
