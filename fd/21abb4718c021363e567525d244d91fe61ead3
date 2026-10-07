@@ -1,0 +1,23 @@
+README.md
+  s_6c3c3736ba14ff::t_76dfc15773663b 5
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_6c3c3736ba14ff::t_76dfc15773663b 251-260
+.agents/skills/pourya-kit/references/openapi.md
+  s_6c3c3736ba14ff::t_76dfc15773663b 59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fd21abb4718c021363e567525d244d91fe61ead3",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
