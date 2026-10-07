@@ -749,6 +749,31 @@ depends on a unique `ServiceName` in the same way.
 - **Stand-ins.** The Spike's Receipt, Unit of Work and handler interfaces are stand-ins for the Kit's. Its Receipt step
   matches `src/PouryaKit.Messaging.Wolverine/Deliver.cs`, but it has no Operation, dispatcher or nested commands.
 
+### Implemented (ticket #51)
+
+Implemented in #51 at `408b6e0`, as the rule above states, in `PouryaKit.Messaging.Wolverine.RabbitMq`
+(`UsePouryaKitRabbitMq(connectionName, serviceName)`, the service name required). `RabbitMqDeliveryTests` proves each
+row of the invariants table against RabbitMQ 4.3.6 and PostgreSQL 18.6, one test with the Proving Sample's
+`Inventory.Host` as an OS process. What the Spike left to #51:
+
+- **The lost first publication: a deployment rule.** A Host that receives a wire name is started, so its queue is
+  declared and bound, before the first publication it must receive: on its first deployment, and on the deployment
+  that adds its first subscription to that wire name. The Kit adds nothing for it. An alternate exchange still needs a
+  queue someone declares and drains, and queues declared by the publishing Host would make it know its subscribers.
+- **Remote wire names.** A receiving Host's composition declares them with `Receive<T>(wireName)` and
+  `ReceiveSnapshot<T>(wireName)`; a received Snapshot goes through the version gate. A subscription with neither a
+  publication nor such a declaration still fails the start.
+- **Tested where the amendment inferred.** A failure before the fan-out is dead-lettered at
+  `rabbitmq://queue/{ServiceName}`
+  (`RabbitMqDeliveryTests.A_message_the_host_cannot_fan_out_is_dead_lettered_in_its_store_at_its_broker_queue`).
+  Wolverine stores the copies before it marks the broker envelope handled, and a Host killed between the two fans it out
+  again with each effect once; the test holds the handled mark on a database lock
+  (`RabbitMqDeliveryTests.A_host_killed_between_storing_the_copies_and_marking_the_broker_envelope_handled_fans_out_again_and_applies_each_effect_once`).
+  A wire name a Host both publishes and subscribes to is not bound to its own queue
+  (`RabbitMqDeliveryTests.A_publication_whose_only_subscription_is_in_another_host_is_written_in_its_commit_and_applied_there_once`).
+- **The startup check** reads Wolverine's own description of each broker listener (`IBrokerEndpoint`, `EndpointMode`,
+  `Endpoint.DeadLetterStorage`), so it names no RabbitMQ type.
+
 ## Amendment (2026-10-07, ticket #49: Integration Event versions)
 
 The decision above stands. One wire name is one version of one contract type, and a new version is a new type under a
