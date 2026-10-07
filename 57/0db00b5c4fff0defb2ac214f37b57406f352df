@@ -1,0 +1,86 @@
+src/PouryaKit.Messaging.Wolverine/DelayedCommandServiceCollectionExtensions.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 4,35-74
+  s_6c3c3736ba14ff::t_f285c7913babb9 75
+src/PouryaKit.Messaging.Wolverine/DelayedCommands.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 29-35
+.agents/skills/pourya-kit/references/messaging.md
+  s_6c3c3736ba14ff::t_119de9c2e6e544 3,21,436,474-533,556,696-697
+docs/architecture/README.md
+  s_6c3c3736ba14ff::t_119de9c2e6e544 119-120,131,172,424,427,437,447,467
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/ReconcileStock/ReconcileStockCommandHandler.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 1-27
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 20,77-87
+.agents/skills/pourya-kit/references/testing.md
+  s_6c3c3736ba14ff::t_119de9c2e6e544 139
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 23-24,48
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 301-304
+samples/ModularMonolith/src/ModularMonolith.Host/appsettings.json
+  s_6c3c3736ba14ff::t_119de9c2e6e544 15-17
+  s_6c3c3736ba14ff::t_6cf37b8ab6ade4 14,18
+samples/ModularMonolith/src/Modules/Inventory/Inventory/Infrastructure/Data/Migrations/20261007150000_StockReconciliations.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 1-20
+samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 7-8,35-44
+scripts/packaging/consumers/PouryaKit.Messaging.Wolverine.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 1-15
+src/PouryaKit.Messaging.Wolverine/DelayedCommandHeaders.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 1-11
+.claude/agent-memory/kit-implementer/recurring-command-facts.md
+  s_6c3c3736ba14ff::t_119de9c2e6e544 1-22
+tests/PouryaKit.ArchitectureTests/DapperWriteTests.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 36
+src/PouryaKit.Messaging.Wolverine/DelayedCommandDeclarations.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 7-9,12-26,61,71
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_6c3c3736ba14ff::t_119de9c2e6e544 804-841
+docs/acceptance.md
+  s_6c3c3736ba14ff::t_119de9c2e6e544 328-341
+  s_6c3c3736ba14ff::t_b0d7cc0995633f 327
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/ReconcileStock/ReconcileStockCommand.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 1-6
+tests/ModularMonolith.Tests/DeliveryProbes.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 50-53
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 45
+docs/adr/0005-operation-scoped-clock.md
+  s_6c3c3736ba14ff::t_119de9c2e6e544 57-64
+docs/foundation-review.md
+  s_6c3c3736ba14ff::t_119de9c2e6e544 848
+src/PouryaKit.Messaging.Wolverine/DelayedCommandDelivery.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 1-3,5,8,16-18,31-34,40,46-53,58-60,62-67,71-74,76,80-88,91-100
+src/PouryaKit.Messaging.Wolverine/PouryaKitRecurringCommandOptions.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 1-14
+.agents/skills/pourya-kit/SKILL.md
+  s_6c3c3736ba14ff::t_119de9c2e6e544 33
+.agents/skills/pourya-kit/references/observability.md
+  s_6c3c3736ba14ff::t_119de9c2e6e544 47,64
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_6c3c3736ba14ff::t_119de9c2e6e544 38
+src/PouryaKit.Messaging.Wolverine/RecurringCommandStart.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 1-90
+GLOSSARY.md
+  s_6c3c3736ba14ff::t_119de9c2e6e544 110-113,115,131
+tests/ModularMonolith.Tests/RecurringCommandTests.cs
+  s_6c3c3736ba14ff::t_119de9c2e6e544 1-222
+README.md
+  s_6c3c3736ba14ff::t_6eeedfeb95f221 5,7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "570db00b5c4fff0defb2ac214f37b57406f352df",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
