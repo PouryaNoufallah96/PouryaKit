@@ -29,4 +29,7 @@ so these decisions are recorded here.
   `WebTests.A_request_routing_refuses_answers_its_status_as_a_problem_response_and_nothing_is_saved` for 405 and 415,
   `WebTests.A_module_endpoint_refuses_an_anonymous_caller_and_a_public_endpoint_runs_it_as_its_named_actor` for 401;
   `WebTests.Each_modules_endpoints_are_mapped_under_its_own_route_group` for 404;
-  `WebTests.An_authenticated_caller_denied_authorization_answers_403_as_a_problem_response` for 403).
+  `WebTests.An_authenticated_caller_denied_authorization_answers_403_as_a_problem_response` for 403). Since #36
+  (2026-10-07) the rate limiter's 429 is answered the same way; it carries `title` and `status` but no `type`, which
+  ASP.NET Core defines for no 429
+  (`WebDefaultsTests.Each_actor_has_its_own_partition_which_spoofed_host_and_forwarded_for_headers_cannot_move_and_its_exhaustion_answers_429_as_a_problem_response`).
