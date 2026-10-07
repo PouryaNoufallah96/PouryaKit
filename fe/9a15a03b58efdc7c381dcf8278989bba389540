@@ -1,0 +1,66 @@
+src/PouryaKit.Cqrs/Page.cs
+  s_41c3eef9abbce4::t_85b91c8b34b7ed 30
+src/PouryaKit.Persistence.Dapper/PageSql.cs
+  s_41c3eef9abbce4::t_376d0e9f1448e5 144
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryHandler.cs
+  s_41c3eef9abbce4::t_88de5abbf66aad 17
+tests/ModularMonolith.Tests/Stub/ProductPagesProbe.cs
+  s_41c3eef9abbce4::t_d2f0c3467f6794 39-42,45-57
+  s_41c3eef9abbce4::t_88de5abbf66aad 33-34
+src/PouryaKit.Cqrs/PageDeclaration.cs
+  s_41c3eef9abbce4::t_376d0e9f1448e5 293
+  s_41c3eef9abbce4::t_0ee707a52c60ee 30-34,165-166
+  s_41c3eef9abbce4::t_a2bfc1791ad03c 282,284-291,294
+  s_41c3eef9abbce4::t_85b91c8b34b7ed 38
+scripts/packaging/consumers/PouryaKit.Persistence.Dapper.cs
+  s_41c3eef9abbce4::t_db86e8adde41cc 1-12,14-15
+  s_41c3eef9abbce4::t_1beccf935bba42 13
+tests/ModularMonolith.Tests/PagingTests.cs
+  s_41c3eef9abbce4::t_88de5abbf66aad 142-143,206-207
+  s_41c3eef9abbce4::t_38c8e08006a87c 161-199
+  s_41c3eef9abbce4::t_360ceb6b68e323 160
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_41c3eef9abbce4::t_88de5abbf66aad 51
+  s_41c3eef9abbce4::t_cf80f934e30fa0 92
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_41c3eef9abbce4::t_cf80f934e30fa0 138
+  s_41c3eef9abbce4::t_88de5abbf66aad 111,137
+tests/PouryaKit.Cqrs.Tests/PageTests.cs
+  s_41c3eef9abbce4::t_3b796ace071d92 17,52-53,55,57-61,73-75
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_cf80f934e30fa0 240,327,356
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_cf80f934e30fa0 253,834
+scripts/packaging/consumers/PouryaKit.Persistence.EFCore.cs
+  s_41c3eef9abbce4::t_09a083cfd37e92 1-35
+docs/acceptance.md
+  s_41c3eef9abbce4::t_9aefc939fd1a75 194-197
+.agents/skills/pourya-kit/references/persistence.md
+  s_41c3eef9abbce4::t_88de5abbf66aad 201-202
+  s_41c3eef9abbce4::t_cf80f934e30fa0 215
+src/PouryaKit.Persistence.EFCore/EfRepository.cs
+  s_41c3eef9abbce4::t_85b91c8b34b7ed 99
+  s_41c3eef9abbce4::t_7810a8ef1bff49 95
+.agents/skills/pourya-kit/SKILL.md
+  s_41c3eef9abbce4::t_cf80f934e30fa0 29,31-32,35
+README.md
+  s_41c3eef9abbce4::t_cf80f934e30fa0 5
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQuery.cs
+  s_41c3eef9abbce4::t_88de5abbf66aad 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fe9a15a03b58efdc7c381dcf8278989bba389540",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
