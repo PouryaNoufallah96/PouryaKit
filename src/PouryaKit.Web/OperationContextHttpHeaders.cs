@@ -10,6 +10,8 @@ namespace PouryaKit.Web;
 // states the names again; the tests write and read them by Messaging's constants.
 internal static class OperationContextHttpHeaders
 {
+    private const int MaxValueLength = 256;
+
     private const string ActorId = "pouryakit-actor-id";
     private const string ActorKindName = "pouryakit-actor-kind";
     private const string Tenant = "pouryakit-tenant";
@@ -18,23 +20,36 @@ internal static class OperationContextHttpHeaders
 
     private static readonly string[] Names = [ActorId, ActorKindName, Tenant, CorrelationId, CausationId];
 
-    // Replaces rather than appends, so a request sent again carries the same single value of each.
+    private static readonly string Rule = $"1 to {MaxValueLength} visible ASCII characters, with spaces only between them";
+
+    // Every value is checked before any header is written, so a request with a value the rule refuses is never sent,
+    // not even in part. Values replace rather than append, so a request sent again carries the same single value of each.
     public static void Write(HttpRequestHeaders headers, OperationContext context)
     {
+        List<(string Name, string Value)> values = [(ActorId, context.Actor.Id), (ActorKindName, context.Actor.Kind.ToString())];
+        if (context.Tenant is not null)
+        {
+            values.Add((Tenant, context.Tenant));
+        }
+
+        values.Add((CorrelationId, context.CorrelationId.ToString()));
+        values.Add((CausationId, context.OperationId.ToString()));
+        if (values.FirstOrDefault(header => !IsHeaderValue(header.Value)).Name is { } refused)
+        {
+            throw new InvalidOperationException(
+                $"The Operation Context's {refused} header value is not {Rule}, so the request is not sent."
+            );
+        }
+
         foreach (var name in Names)
         {
             headers.Remove(name);
         }
 
-        headers.TryAddWithoutValidation(ActorId, context.Actor.Id);
-        headers.TryAddWithoutValidation(ActorKindName, context.Actor.Kind.ToString());
-        if (context.Tenant is not null)
+        foreach (var (name, value) in values)
         {
-            headers.TryAddWithoutValidation(Tenant, context.Tenant);
+            headers.TryAddWithoutValidation(name, value);
         }
-
-        headers.TryAddWithoutValidation(CorrelationId, context.CorrelationId.ToString());
-        headers.TryAddWithoutValidation(CausationId, context.OperationId.ToString());
     }
 
     // The continuation a trusted peer's request asks for: the same Actor, tenant and correlation, caused by the peer's
@@ -48,9 +63,9 @@ internal static class OperationContextHttpHeaders
         }
 
         string Single(string name) =>
-            headers.TryGetValue(name, out var values) && values is [{ Length: > 0 } value]
+            headers.TryGetValue(name, out var values) && values is [{ } value] && IsHeaderValue(value)
                 ? value
-                : throw new BadHttpRequestException($"The request continues an Operation but has no single {name} header.");
+                : throw new BadHttpRequestException($"The request continues an Operation but has no single {name} header that is {Rule}.");
 
         var actorId = Single(ActorId);
         var actor = Single(ActorKindName) switch
@@ -62,6 +77,14 @@ internal static class OperationContextHttpHeaders
         string? tenant = headers.ContainsKey(Tenant) ? Single(Tenant) : null;
         return new OperationContext(actor, tenant, Id(Single(CorrelationId), CorrelationId), Id(Single(CausationId), CausationId));
     }
+
+    // The Kit's rule for a context header value, on both sides of a call: no control character can end a header line or
+    // start another, nothing outside ASCII depends on an encoding, and no edge space is trimmed away in transit.
+    private static bool IsHeaderValue(string value) =>
+        value.Length is > 0 and <= MaxValueLength
+        && value[0] != ' '
+        && value[^1] != ' '
+        && value.All(character => character is >= ' ' and <= '~');
 
     private static Guid Id(string value, string name) =>
         Guid.TryParse(value, CultureInfo.InvariantCulture, out var id)

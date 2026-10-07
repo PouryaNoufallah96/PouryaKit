@@ -2,11 +2,15 @@
 
 Adopted implementations in `PouryaKit.Web`. Format and rules: [README](README.md).
 
-The status code pages that answer a failure ASP.NET Core leaves with an empty body, such as routing's 405 and 415, as a problem response (`ProblemStatusCodePages`, ticket #19) are new Kit code over ASP.NET Core's own `UseStatusCodePages`, so they have no record here.
+The status code pages that answer a failure ASP.NET Core leaves with an empty body, such as routing's 405 and 415, as a problem response (`ProblemStatusCodePages`, ticket #19) are new Kit code over ASP.NET Core's own `UseStatusCodePages`, so they have no record here. The outgoing resilience registration (`AddPouryaKitResilience`, `HttpReplay`), the context header rule and the trusted-peer continuation (`PouryaKitTrustedPeerOptions`, `OperationContextHttpHeaders`, ticket #48) are new Kit code over the standard resilience handler and ASP.NET Core's own authentication, so they have no record either.
 
 ## Package dependencies
 
-None shipped. `PouryaKit.Web` references `PouryaKit.Cqrs` and the ASP.NET Core shared framework (`FrameworkReference Microsoft.AspNetCore.App`), as plan section C lists; it has no third-party runtime NuGet dependency and does not reference `PouryaKit.Modularity`. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
+Checked on nuget.org on 2026-10-07 (ticket #48); licence expressions from each package's nuspec. None is reciprocal or commercial (ADR 0002).
+
+- `Microsoft.Extensions.Http.Resilience` 10.10.0, `MIT`. The standard .NET HTTP resilience handler behind `AddPouryaKitResilience`, used without Aspire or ServiceDefaults. Its restored closure adds eight `Microsoft.Extensions.*` 10.10.0 packages (`Resilience`, `Http.Diagnostics`, `Telemetry`, `Telemetry.Abstractions`, `Compliance.Abstractions`, `AmbientMetadata.Application`, `DependencyInjection.AutoActivation`, `Diagnostics.ExceptionSummarization`), all `MIT`, and `Polly.Core`, `Polly.Extensions` and `Polly.RateLimiting` 8.4.2, `BSD-3-Clause`; `LicenceTests` checks the whole closure, and `PackageGraphTests` keeps every Aspire package out of it.
+
+`PouryaKit.Web` also references `PouryaKit.Cqrs`, `PouryaKit.Core` and the ASP.NET Core shared framework (`FrameworkReference Microsoft.AspNetCore.App`), as plan section C lists, and does not reference `PouryaKit.Modularity`. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
 
 ## Endpoint convention
 
@@ -65,3 +69,18 @@ None shipped. `PouryaKit.Web` references `PouryaKit.Cqrs` and the ASP.NET Core s
   - The policy names no authentication scheme, so it uses the application's default one; Web chooses no identity provider (plan section C).
   - No claim or role policies are registered, and nothing adds a policy while the Host runs (plan I.3 rejects `FeaturePolicyProvider.cs:20-24`); a permission is checked on the dispatcher's authorization hook by `PouryaKit.Security` instead.
   - It lives in `PouryaKit.Web`, which owns the HTTP boundary, rather than in `PouryaKit.Security` as plan I.3 places it, so Security needs no ASP.NET Core framework reference (ticket #38).
+
+## Outgoing Operation Context handler
+
+- **Kit files:** `src/PouryaKit.Web/OperationContextHttpHandler.cs`, `src/PouryaKit.Web/WebHttpClientBuilderExtensions.cs`
+- **Upstream:** https://github.com/PouryaNoufallah96/cybernod
+- **Commit:** bae8ac3b7e46f09e9375647786d03391a500876a
+- **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.Security/Utilities/HttpClientAuthorizationDelegatingHandler.cs`
+- **Licence:** MIT
+- **Adoption:** pattern
+- **Ticket:** #48
+- **Intentional differences:**
+  - Kept: a `DelegatingHandler` added to a client through `HttpClientFactory` writes the calling side's identity onto every outgoing request.
+  - It writes the Operation Context as the Kit's `pouryakit-*` headers (Messaging's names), never the incoming `Authorization` header: upstream copies the caller's bearer token (`:23-30`), which plan I.3 and G.6 reject.
+  - It reads no `IHttpContextAccessor`: the context travels on the request (`WithOperationContext`), because the factory builds handlers in a scope of its own and ADR 0007 rejects ambient reads; so a delivery or a job can call out too. A request without a context throws before it is sent.
+  - Every value is checked against the Kit's header rule before any header is written, so a claims-derived value cannot add a header line.

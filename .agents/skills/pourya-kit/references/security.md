@@ -92,7 +92,7 @@ public sealed class CallerPermissions(IHttpContextAccessor http, IOptions<Pourya
 
 - An Operation whose `OperationContext` has a `CausationId` is a continuation of the authorized Operation that caused it (ADR 0007): a Notification Handler's or Integration Event Handler's delivery, a synchronous question through another Module's Contracts, or a Gateway call made with `context.Continue()`. The permission check lets it run without asking `IActorPermissions` again, so durable work never depends on what its Actor may do by the time it runs (G.6).
 - Only the permission check stands aside. Every other `IAuthorizer<T>` registered for the continued command or query still runs, with the original Actor, and can refuse it; recognise a continuation there by `context.CausationId`.
-- An HTTP request always starts a new chain of work, with no causation, so a caller can never present its request as a continuation.
+- An HTTP request starts a new chain of work, with no causation, so a caller cannot present its request as a continuation. The one exception is a caller the Host authenticates as one of its configured trusted peer Hosts, whose request continues the Operation its context headers name ([web.md](web.md#calls-between-kit-hosts)); a header never identifies a peer.
 - Never create a context with a causation to get past a check: a continuation is work an authorized Operation caused, passed on with `Continue()` or restored by a delivery.
 
 ## Testing permissions

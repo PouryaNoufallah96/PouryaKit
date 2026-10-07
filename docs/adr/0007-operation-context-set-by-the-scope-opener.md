@@ -121,6 +121,12 @@ Host's trust boundary (G.6) moves only as far as the application's own peer list
   handler copies nothing from an incoming request, so the caller's `Authorization` header and bearer token are never
   forwarded (G.6, plan I.3; `OutgoingHttpTests`); a peer authenticates the calling Host by the Host's own credentials.
 - **Retry never replays a write unless the client says it is safe.** The resilience handler is the standard
-  `AddStandardResilienceHandler()`, which needs no Aspire or ServiceDefaults, and it retries POST, PUT, PATCH, DELETE
-  and CONNECT only with `HttpReplay.AllRequests`, the explicit choice of a client whose downstream makes writes
-  replay-safe. A Host with ServiceDefaults keeps one resilience pipeline per client (#52).
+  `AddStandardResilienceHandler()`, which needs no Aspire or ServiceDefaults. By default it retries only GET, HEAD,
+  OPTIONS and TRACE, an allow-list, so an extension write such as PROPPATCH is sent once too; every method is retried
+  only with `HttpReplay.AllRequests`, the explicit choice of a client whose downstream makes writes replay-safe, and any
+  other `HttpReplay` value fails the registration. A Host with ServiceDefaults keeps one resilience pipeline per client
+  (#52).
+- **A context value that could break a header is never sent.** An Actor id or tenant is sent only when it is 1 to 256
+  visible ASCII characters with spaces only between them; any other value, a CR or LF that would start another header
+  included, fails the call before anything is sent, naming the header. The receiving Host applies the same rule to a
+  trusted peer's headers and answers 400 (`OutgoingHttpTests`, `TrustedPeerTests`).

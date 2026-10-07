@@ -88,21 +88,70 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
         Assert.Single(Journal());
     }
 
-    [Fact]
-    public async Task An_unsafe_write_is_sent_once_by_default_and_retried_only_by_a_replay_safe_client()
+    // PROPPATCH, a WebDAV write, is on no list of unsafe methods: only an allow-list of safe ones keeps it from a replay.
+    [Theory]
+    [InlineData("POST")]
+    [InlineData("PROPPATCH")]
+    public async Task An_unsafe_write_is_sent_once_by_default_and_retried_only_by_a_replay_safe_client(string method)
     {
-        RespondInTurn("POST", 503, 200);
+        RespondInTurn(method, 503, 200);
         using var safeMethods = Clients();
         using var replaySafe = Clients(HttpReplay.AllRequests);
 
-        using var once = await SendAsync(safeMethods, HttpMethod.Post);
-        downstream.ResetScenario("POST");
+        using var once = await SendAsync(safeMethods, new HttpMethod(method));
+        downstream.ResetScenario(method);
         downstream.ResetLogEntries();
-        using var replayed = await SendAsync(replaySafe, HttpMethod.Post);
+        using var replayed = await SendAsync(replaySafe, new HttpMethod(method));
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, once.StatusCode);
         Assert.Equal(HttpStatusCode.OK, replayed.StatusCode);
         Assert.Equal(2, Journal().Count);
+    }
+
+    [Fact]
+    public void A_replay_policy_that_is_not_defined_fails_the_registration()
+    {
+        var client = new ServiceCollection().AddHttpClient(Client);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => client.AddPouryaKitResilience((HttpReplay)2));
+    }
+
+    // A claims-derived value that could end a header line, or that HTTP cannot carry as it is, fails the call before
+    // anything is sent, and never reaches the downstream as an extra header.
+    public static TheoryData<string, string?, string> UnsafeContextValues() =>
+        new()
+        {
+            { "ada", "acme\r\nX-Injected: 1", OperationContextHeaders.Tenant },
+            { "ada\nX-Injected: 1", null, OperationContextHeaders.ActorId },
+            { "ädä", null, OperationContextHeaders.ActorId },
+            { "ada", "acme ", OperationContextHeaders.Tenant },
+            { "ada", new string('t', 257), OperationContextHeaders.Tenant },
+        };
+
+    [Theory]
+    [MemberData(nameof(UnsafeContextValues))]
+    public async Task A_context_value_that_is_not_a_safe_header_value_fails_the_call_before_it_is_sent(
+        string actor,
+        string? tenant,
+        string refusedHeader
+    )
+    {
+        RespondInTurn("GET", 200);
+        using var services = Clients();
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{downstream.Url}/downstream").WithOperationContext(
+            new OperationContext(Actor.Person(actor), tenant)
+        );
+
+        var refused = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            services
+                .GetRequiredService<IHttpClientFactory>()
+                .CreateClient(Client)
+                .SendAsync(request, TestContext.Current.CancellationToken)
+        );
+
+        Assert.Contains(refusedHeader, refused.Message);
+        Assert.DoesNotContain(Journal(), received => Headers(received).ContainsKey("x-injected"));
+        Assert.Empty(Journal());
     }
 
     // A write whose connection broke may still have taken effect, so it is the case that most needs no replay. WireMock

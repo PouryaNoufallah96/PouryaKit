@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
+using Polly;
 using PouryaKit.Cqrs;
 
 namespace PouryaKit.Web;
@@ -31,21 +32,38 @@ public static class WebHttpClientBuilderExtensions
         /// pipeline: it calls this in place of that line, or removes it for the client with
         /// <c>RemoveAllResilienceHandlers()</c> first.
         /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="replay"/> is not a defined value.</exception>
         public IHttpStandardResiliencePipelineBuilder AddPouryaKitResilience(HttpReplay replay = HttpReplay.SafeMethods)
         {
             ArgumentNullException.ThrowIfNull(builder);
+            var safeMethodsOnly = replay switch
+            {
+                HttpReplay.SafeMethods => true,
+                HttpReplay.AllRequests => false,
+                _ => throw new ArgumentOutOfRangeException(nameof(replay), replay, "HttpReplay has no such value."),
+            };
             var pipeline = builder.AddStandardResilienceHandler();
-            if (replay == HttpReplay.SafeMethods)
+            if (safeMethodsOnly)
             {
                 // After every Configure, so a retry condition the application sets is narrowed too, not replaced.
-                builder.Services.PostConfigure<HttpStandardResilienceOptions>(
-                    pipeline.PipelineName,
-                    options => options.Retry.DisableForUnsafeHttpMethods()
-                );
+                builder.Services.PostConfigure<HttpStandardResilienceOptions>(pipeline.PipelineName, RetrySafeMethodsOnly);
             }
 
             return pipeline;
         }
+    }
+
+    private static readonly HttpMethod[] SafeHttpMethods = [HttpMethod.Get, HttpMethod.Head, HttpMethod.Options, HttpMethod.Trace];
+
+    // An allow-list: a method the Kit does not know to be safe, such as WebDAV's PROPPATCH, is a write and is sent once.
+    // A request the pipeline cannot name is not retried either.
+    private static void RetrySafeMethodsOnly(HttpStandardResilienceOptions options)
+    {
+        var shouldHandle = options.Retry.ShouldHandle;
+        options.Retry.ShouldHandle = async arguments =>
+            arguments.Context.GetRequestMessage() is { } request
+            && SafeHttpMethods.Contains(request.Method)
+            && await shouldHandle(arguments);
     }
 
     extension(HttpRequestMessage request)

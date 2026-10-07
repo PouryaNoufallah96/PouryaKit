@@ -71,6 +71,8 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
     [InlineData(OperationContextHeaders.CausationId, null)]
     [InlineData(OperationContextHeaders.CorrelationId, "not-a-guid")]
     [InlineData(OperationContextHeaders.ActorKind, "Robot")]
+    [InlineData(OperationContextHeaders.ActorId, "ada\u0007")]
+    [InlineData(OperationContextHeaders.Tenant, "acmé")]
     public async Task A_trusted_peer_whose_context_headers_are_incomplete_or_unreadable_is_refused_with_400(
         string header,
         string? value
@@ -80,7 +82,8 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
         peer.DefaultRequestHeaders.Remove(header);
         if (value is not null)
         {
-            peer.DefaultRequestHeaders.Add(header, value);
+            // Unvalidated, as a raw peer could send it; the in-memory server passes it on as it is.
+            peer.DefaultRequestHeaders.TryAddWithoutValidation(header, value);
         }
 
         var response = await peer.GetAsync("/stub/context", TestContext.Current.CancellationToken);

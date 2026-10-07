@@ -4,8 +4,9 @@ namespace PouryaKit.Web;
 public enum HttpReplay
 {
     /// <summary>
-    /// Only requests whose method changes nothing, such as GET and HEAD. POST, PUT, PATCH, DELETE and CONNECT are sent
-    /// once: a write that failed in transit may still have taken effect.
+    /// Only GET, HEAD, OPTIONS and TRACE, the methods that change nothing. Every other method, POST, PUT, PATCH, DELETE
+    /// and an extension method such as PROPPATCH alike, is sent once: a write that failed in transit may still have taken
+    /// effect.
     /// </summary>
     SafeMethods,
 
