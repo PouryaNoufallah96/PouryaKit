@@ -1,0 +1,19 @@
+tests/ModularMonolith.Tests/DapperTests.cs
+  s_0d5a1b290c2d36::t_0b891703ab62b4 76-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7d89d14b8f878d88879a0b1f8f4ce19dd4e79c9e",
+  "prompts": {},
+  "sessions": {
+    "s_0d5a1b290c2d36": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5bdb6a50-6bfa-4dc6-9059-d46d18b45597",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
