@@ -17,6 +17,7 @@ Verified in ticket #42 (2026-10-07), EF Core 10.0.12, Npgsql 10, PostgreSQL 18.6
 - A missing-header test must post a valid body (existing category), or a mutation that drops the check answers 404, not 201.
 - Mutation trap: after `if (x is null) return null;`, a later `if (x is null && …)` makes `x` maybe-null again and the build fails CS8604; mutate without naming `x`. An own-connection mutation can use `((ICloneable)database.GetDbConnection()).Clone()`.
 - Runner: `scratchpad/mutate42.py` (one `dotnet test --filter-method` per mutation, file restored in `finally`, files backed up first). 15 mutations took about 8 minutes.
+- validate.py at #42: 643 runtime tests, `PASS 18 packages, 20 clean consumers`; a new `consumers/<package>.cs` source for an existing package adds no consumer to the count.
 
 **Why:** these decided the #42 shape or cost a run.
 **How to apply:** for #43 (the caching slot in the same `Steps`), any Kit table written in the Unit of Work's transaction, any race test, and any endpoint opt-in. Related: [[persistence-preparation-facts]], [[shared-json-facts]], [[web-aspnetcore-facts]], [[continuation-trust-facts]].
