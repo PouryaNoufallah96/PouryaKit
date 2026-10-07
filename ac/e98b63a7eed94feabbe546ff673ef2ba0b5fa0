@@ -1,0 +1,45 @@
+.agents/skills/pourya-kit/references/templates.md
+  s_0d5a1b290c2d36::t_ea44f90db0e9c0 23,70,73-74,87,92
+  s_0d5a1b290c2d36::t_8892b1c34f1a92 98
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/Program.cs
+  s_0d5a1b290c2d36::t_40d73c6488758c 59
+src/PouryaKit.Templates/content/monolith/.template.config/template.json
+  s_0d5a1b290c2d36::t_40d73c6488758c 17-23,31-47
+  s_0d5a1b290c2d36::t_2261af94441b13 48-49
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_0d5a1b290c2d36::t_a679d16667da35 115-136
+  s_0d5a1b290c2d36::t_20ecc95160c73a 114
+docs/architecture/README.md
+  s_0d5a1b290c2d36::t_ea44f90db0e9c0 622-624
+  s_0d5a1b290c2d36::t_8892b1c34f1a92 641
+src/PouryaKit.Templates/content/modular/.template.config/template.json
+  s_0d5a1b290c2d36::t_40d73c6488758c 17-23,31-47
+  s_0d5a1b290c2d36::t_3b8b9f38058525 48-49
+src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/HostTests.cs
+  s_0d5a1b290c2d36::t_abbdf28c0b4bb3 19,65-66,68,105,111,113,119-126
+  s_0d5a1b290c2d36::t_032286dbe1de22 106,112
+  s_0d5a1b290c2d36::t_1de44cfe55a131 11,107-110,114-118,194-196,199-201,203,205,208,212
+  s_0d5a1b290c2d36::t_0c5af0d2a9358d 127
+tests/PouryaKit.ArchitectureTests/TemplateRules.cs
+  s_0d5a1b290c2d36::t_a679d16667da35 221-243
+docs/acceptance.md
+  s_0d5a1b290c2d36::t_d7bfd9540caed4 508-509,522
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/Program.cs
+  s_0d5a1b290c2d36::t_40d73c6488758c 68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ace98b63a7eed94feabbe546ff673ef2ba0b5fa0",
+  "prompts": {},
+  "sessions": {
+    "s_0d5a1b290c2d36": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5bdb6a50-6bfa-4dc6-9059-d46d18b45597",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
