@@ -17,7 +17,9 @@ public sealed class PouryaKitIdempotencyOptions
 {
     /// <summary>
     /// How long a key is kept after it was reserved: 24 hours by default. A key is removed by the first cleanup after
-    /// its retention ends. <see cref="Timeout.InfiniteTimeSpan"/> keeps every key, and no cleanup runs.
+    /// its retention ends. <see cref="Timeout.InfiniteTimeSpan"/> keeps every key, and no cleanup runs. The time is
+    /// taken when the reservation starts, before any wait on a concurrent holder of the same key, so keep the retention
+    /// well above the longest request: a retention shorter than a request transaction is not supported.
     /// </summary>
     public TimeSpan Retention { get; set; } = TimeSpan.FromHours(24);
 
