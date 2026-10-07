@@ -5,6 +5,7 @@ using Inventory;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
+using PouryaKit.Observability;
 using PouryaKit.Security;
 using PouryaKit.Web;
 
@@ -42,6 +43,9 @@ public static class ModularMonolithHost
             modules.Add<InventoryModule>();
             modules.Add<BillingModule>();
         });
+        // An activity and a duration for every command and query, around the dispatcher the Modules registered. The
+        // Host's exporter, when it has one, listens to OperationTelemetry.SourceName; the Kit exports nothing.
+        builder.Services.AddPouryaKitObservability();
         builder.UsePouryaKitWolverine(connectionName: "app");
         builder.Services.AddSingleton<INewProductAnnouncer, LoggedNewProductAnnouncer>();
         return builder;

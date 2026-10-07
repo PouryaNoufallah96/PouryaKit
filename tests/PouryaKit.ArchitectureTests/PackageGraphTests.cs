@@ -18,7 +18,7 @@ public sealed class PackageGraphTests
     [Fact]
     public void Every_kit_package_is_checked_and_closures_are_read_transitively()
     {
-        Assert.Equal(15, RestoredPackage.All.Count);
+        Assert.Equal(16, RestoredPackage.All.Count);
         // EF Core arrives in Postgres only through its provider, and Domain in Web only through Cqrs.
         Assert.Contains(Restored("PouryaKit.Persistence.Postgres").Packages, arrived => arrived.Id == "Microsoft.EntityFrameworkCore");
         Assert.Contains("PouryaKit.Domain", Restored("PouryaKit.Web").Projects);

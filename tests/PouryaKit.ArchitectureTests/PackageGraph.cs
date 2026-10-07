@@ -46,6 +46,7 @@ internal static class PackageGraph
             ["PouryaKit.Messaging.Wolverine", "PouryaKit.Persistence.EFCore"],
             ["WolverineFx.EntityFrameworkCore", "WolverineFx.Postgresql"]
         ),
+        ["PouryaKit.Observability"] = new(["PouryaKit.Cqrs"], []),
         ["PouryaKit.Security"] = new(["PouryaKit.Core", "PouryaKit.Cqrs"], []),
         ["PouryaKit.Web"] = new(
             ["PouryaKit.Core", "PouryaKit.Cqrs"],
@@ -68,6 +69,8 @@ internal static class PackageGraph
         ["PouryaKit.Web"] = ["PouryaKit.Modularity", "Aspire"],
         // Transport- and database-neutral: no EF Core, no PostgreSQL driver, no message store.
         ["PouryaKit.Messaging.Wolverine"] = ["Microsoft.EntityFrameworkCore", "Npgsql", "WolverineFx.RDBMS", "WolverineFx.Postgresql", "Weasel"],
+        // It emits through System.Diagnostics alone: exporters and logging are the Host's (I.3 Observability, #47).
+        ["PouryaKit.Observability"] = ["OpenTelemetry", "Serilog", "WolverineFx", "PouryaKit.Messaging"],
     };
 
     // Core and Domain, and Messaging (Domain only), bring no package at all.

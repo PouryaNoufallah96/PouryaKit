@@ -20,7 +20,7 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
         var envelope = context.Envelope!;
         // A local queue's address is local://{subscription, lower-cased}/.
         var subscription = subscriptions.Named(envelope.Destination!.Host);
-        var operationContext = OperationContextHeaderExtensions.ContinuedOperationContext(envelope);
+        var (operationContext, traceParent) = OperationContextHeaderExtensions.ContinuedOperationContext(envelope);
         var message = envelope.Message!;
         // Not the envelope's id: every subscription's envelope of one message has an id of its own.
         var deliver = message switch
@@ -32,7 +32,7 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
 
         // Each attempt runs in a scope of its own: nothing from a failed attempt reaches the next.
         await using var scope = context.Runtime.Services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(operationContext, subscription.Module);
+        scope.ServiceProvider.BeginOperation(operationContext, subscription.Module, traceParent);
         var result = await scope.ServiceProvider.GetRequiredService<IDispatcher>().SendAsync(deliver, cancellation);
         if (result.IsFailure)
         {

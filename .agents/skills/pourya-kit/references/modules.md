@@ -107,7 +107,7 @@ internal sealed class RemoveProductsCommandAuthorizer(OperationContext context) 
 
 Setting it:
 
-- Whoever opens an Operation's scope begins it once, before anything in the scope runs, with `scope.ServiceProvider.BeginOperation(context, module)` (`PouryaKit.Cqrs`). The Gateway does this for every call, so Feature code never calls it; only an application of one Module calls it itself (below). Beginning a scope's Operation twice throws.
+- Whoever opens an Operation's scope begins it once, before anything in the scope runs, with `scope.ServiceProvider.BeginOperation(context, module)` (`PouryaKit.Cqrs`). The Gateway does this for every call, so Feature code never calls it; only an application of one Module calls it itself (below). Beginning a scope's Operation twice throws. A message delivery also passes the trace parent it restored from the message, as its third argument ([observability.md](observability.md#the-trace-through-delivery)); nothing else passes one.
 - At the HTTP boundary, the Web Capability begins each request's Operation with a context built from the authenticated caller, and the endpoint passes that context to the Gateway ([web.md](web.md#the-caller-and-the-actor)). The delivery of a Notification begins its scope with a continuation of the raising Operation's context and the subscribing Module, and the delivery of an Integration Event with a continuation of the publishing Notification Handler's delivery and the receiving Module ([messaging.md](messaging.md#what-the-kit-guarantees)).
 
 ## Which Module an Operation belongs to

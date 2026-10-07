@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace PouryaKit.Cqrs;
@@ -10,13 +11,14 @@ public static class OperationContextServiceProviderExtensions
         /// Begins the Operation of the scope this provider belongs to, once, before anything in the scope runs: sets
         /// its <see cref="OperationContext"/> and, in a Host of Modules, the <paramref name="module"/> it runs in, which
         /// routes it to that Module's Unit of Work. Whoever opens an Operation's scope calls it: a Module's Gateway, the
-        /// HTTP boundary, or a message delivery.
+        /// HTTP boundary, or a message delivery. A delivery also passes the <paramref name="traceParent"/> it restored
+        /// from the message, the trace context of the Operation that published it (<see cref="Operation.TraceParent"/>).
         /// </summary>
-        public void BeginOperation(OperationContext context, Type? module = null)
+        public void BeginOperation(OperationContext context, Type? module = null, ActivityContext traceParent = default)
         {
             ArgumentNullException.ThrowIfNull(scope);
             ArgumentNullException.ThrowIfNull(context);
-            scope.GetRequiredService<Operation>().Begin(context, module);
+            scope.GetRequiredService<Operation>().Begin(context, module, traceParent);
         }
     }
 

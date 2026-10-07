@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Cqrs;
@@ -82,9 +83,17 @@ public sealed class Operation
         return reading;
     }
 
-    internal OperationContext? Context { get; private set; }
+    /// <summary>The Operation Context the scope's opener began the Operation with; null until it begins.</summary>
+    public OperationContext? Context { get; private set; }
 
-    internal void Begin(OperationContext context, Type? module)
+    /// <summary>
+    /// The trace context of the work that caused this Operation, as a message delivery restored it from the message it
+    /// runs; default when the scope's opener restored none. The Operation's activity starts with it as its parent when
+    /// no activity of that trace is current (ADR 0009).
+    /// </summary>
+    public ActivityContext TraceParent { get; private set; }
+
+    internal void Begin(OperationContext context, Type? module, ActivityContext traceParent)
     {
         if (Context is not null)
         {
@@ -95,6 +104,7 @@ public sealed class Operation
 
         Context = context;
         Module = module;
+        TraceParent = traceParent;
     }
 
     internal void MarkRollbackOnly(ImmutableArray<Error> errors)
