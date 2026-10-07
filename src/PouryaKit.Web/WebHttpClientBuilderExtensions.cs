@@ -30,23 +30,34 @@ public static class WebHttpClientBuilderExtensions
         /// on the builder it returns, such as <c>.Configure(o => o.Retry.MaxRetryAttempts = 2)</c>. It needs no Aspire
         /// or ServiceDefaults; a Host whose ServiceDefaults already add the standard handler to every client keeps one
         /// pipeline: it calls this in place of that line, or removes it for the client with
-        /// <c>RemoveAllResilienceHandlers()</c> first.
+        /// <c>RemoveAllResilienceHandlers()</c> first. The replay policy of the last call for a client is the one its
+        /// pipeline uses, so a client registered again after <c>RemoveAllResilienceHandlers()</c> keeps no earlier policy.
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="replay"/> is not a defined value.</exception>
         public IHttpStandardResiliencePipelineBuilder AddPouryaKitResilience(HttpReplay replay = HttpReplay.SafeMethods)
         {
             ArgumentNullException.ThrowIfNull(builder);
-            var safeMethodsOnly = replay switch
+            if (!Enum.IsDefined(replay))
             {
-                HttpReplay.SafeMethods => true,
-                HttpReplay.AllRequests => false,
-                _ => throw new ArgumentOutOfRangeException(nameof(replay), replay, "HttpReplay has no such value."),
-            };
+                throw new ArgumentOutOfRangeException(nameof(replay), replay, "HttpReplay has no such value.");
+            }
+
             var pipeline = builder.AddStandardResilienceHandler();
-            if (safeMethodsOnly)
+            var policies = HttpReplayPolicies.In(builder.Services);
+            if (policies.Set(pipeline.PipelineName, replay))
             {
-                // After every Configure, so a retry condition the application sets is narrowed too, not replaced.
-                builder.Services.PostConfigure<HttpStandardResilienceOptions>(pipeline.PipelineName, RetrySafeMethodsOnly);
+                // After every Configure, so a retry condition the application sets is narrowed too, not replaced. It
+                // reads the policy when the options are built, so the last call for the client decides it.
+                builder.Services.PostConfigure<HttpStandardResilienceOptions>(
+                    pipeline.PipelineName,
+                    options =>
+                    {
+                        if (policies.For(pipeline.PipelineName) is HttpReplay.SafeMethods)
+                        {
+                            RetrySafeMethodsOnly(options);
+                        }
+                    }
+                );
             }
 
             return pipeline;
