@@ -1,0 +1,23 @@
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_bdf0617f846b2b::t_5d5d90c15d2cff 118
+docs/acceptance.md
+  s_bdf0617f846b2b::t_5d5d90c15d2cff 585
+.claude/agent-memory/kit-implementer/strict-wire-reading-facts.md
+  s_bdf0617f846b2b::t_4b25863483a51e 34-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "da05571c885156b78f0bf166a8112e601fc95f18",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
