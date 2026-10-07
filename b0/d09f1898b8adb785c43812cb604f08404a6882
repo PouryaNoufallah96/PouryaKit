@@ -1,0 +1,19 @@
+tests/PouryaKit.Cqrs.Tests/QueryCacheTests.cs
+  s_5db987750027ae::t_3e4aeca4d75d4b 16,20,35-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b0d09f1898b8adb785c43812cb604f08404a6882",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
