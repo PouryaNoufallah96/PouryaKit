@@ -5,12 +5,12 @@ using Catalog.Products.Features.CreateProduct;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Misnamed;
 using ModularMonolith.Tests.Stub;
-using PouryaKit.Caching;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
+using PouryaKit.Persistence.Dapper;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
@@ -452,20 +452,16 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
     }
 
     [Fact]
-    public async Task A_host_that_declares_notification_handlers_but_writes_no_outbox_fails_at_start()
+    public void A_host_that_declares_notification_handlers_but_writes_no_outbox_fails_when_built()
     {
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         // A handler with no dependency: the composition checks' container is validated when it is built.
         builder.Services.AddPouryaKitNotificationHandlers(typeof(Unowned.UnownedNotificationHandler).Assembly);
-        // The transport-neutral overload: Wolverine runs, but no Unit of Work writes an Outbox.
+        // The transport-neutral overload, which installs the composition checks: Wolverine runs, but no Unit of Work
+        // writes an Outbox.
         builder.UsePouryaKitWolverine();
-        builder.AddPouryaKitCompositionChecks();
-        using var host = builder.Build();
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            host.StartAsync(TestContext.Current.CancellationToken)
-        );
-        await host.StopAsync(TestContext.Current.CancellationToken);
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.StartsWith("Notification Handlers, Integration Events, Snapshots or delayed commands are declared, but nothing writes them to an Outbox", thrown.Message);
     }
@@ -479,8 +475,11 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
             ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
         );
         builder.Services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
-        builder.Services.AddPouryaKitCqrs(typeof(StubDbContext).Assembly);
-        builder.Services.AddPouryaKitCaching();
+        // The one command it sends, by hand, and what the Stub's Notification Handlers need: its other Features need
+        // the Stub Module's services, and the Kit's container is validated when it is built.
+        builder.Services.AddScoped<CommandHandler<WriteNoteRaisingCommand>, WriteNoteRaisingCommandHandler>();
+        builder.Services.AddSingleton<DeliveryLog>();
+        builder.Services.AddPouryaKitDapper(connectionName: "app");
         builder.Services.AddPouryaKitNotificationHandlers(typeof(StubDbContext).Assembly);
         builder.UsePouryaKitWolverine(connectionName: "app");
         builder.Services.UsePouryaKitTestDelivery();

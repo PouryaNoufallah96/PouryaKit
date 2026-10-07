@@ -19,7 +19,7 @@ public static class PostgresServiceCollectionExtensions
         /// a new scope. A unique violation (SQLSTATE 23505) of a constraint mapped with <c>MapUniqueConstraint</c>
         /// fails the Operation with the mapped Error. With the Kit's composition checks
         /// (<c>AddPouryaKitCompositionChecks</c>), a connection string the Host's configuration does not set, or sets
-        /// blank, fails the Host's start, before any Operation.
+        /// blank, fails the Host's build, before any Operation.
         /// </summary>
         public IServiceCollection UsePostgres<TDbContext>(string connectionName, string schema)
             where TDbContext : PouryaKitDbContext

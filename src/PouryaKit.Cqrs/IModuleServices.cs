@@ -20,7 +20,8 @@ public interface IModuleServices : IServiceCollection
     /// <summary>
     /// The Module a Kit declaration made on <paramref name="services"/> without naming one belongs to: on a Module's
     /// builder its Module, which is recorded among the Host's <see cref="HostComposition.Modules"/>, and on the Host's own
-    /// services null, the application. For a Kit package's registration.
+    /// services null, the application. <c>AddPouryaKitModules</c> calls it on each Module's builder as it adds the
+    /// Module. For a Kit package's registration.
     /// </summary>
     static Type? ModuleOf(IServiceCollection services)
     {
@@ -30,14 +31,15 @@ public interface IModuleServices : IServiceCollection
             return null;
         }
 
-        ComposedFeatures.In(services).Add(module.Module, []);
+        ComposedFeatures.In(services).Compose(module.Module);
         return module.Module;
     }
 
     /// <summary>
     /// <paramref name="module"/>, the Module a declaration names when the Host's composition makes it on the Module's
-    /// behalf, on the Host's own services. Throws when <paramref name="services"/> is the builder of another Module: a
-    /// Composition Root declares only for its own Module, without naming it. For a Kit package's registration.
+    /// behalf, on the Host's own services; naming it composes nothing, so a Module the Host never adds fails the Host's
+    /// build. Throws when <paramref name="services"/> is the builder of another Module: a Composition Root declares only
+    /// for its own Module, without naming it. For a Kit package's registration.
     /// </summary>
     static Type ModuleOf(IServiceCollection services, Type module)
     {
@@ -55,19 +57,20 @@ public interface IModuleServices : IServiceCollection
 
     /// <summary>
     /// The Feature assemblies a Kit registration on <paramref name="services"/> scans, recorded for the Host's
-    /// <see cref="HostComposition"/>: <paramref name="featureAssemblies"/>, in their order, when it names any; otherwise,
-    /// on a Module's builder, the assembly of its Module's definition, where a Module's Features live (ADR 0001); and
-    /// otherwise none. For a Kit package's registration.
+    /// <see cref="HostComposition"/>: <paramref name="featureAssemblies"/>, in their order, when it names any; otherwise
+    /// the assembly of the Module's definition, where a Module's Features live (ADR 0001), on a Module's builder or for
+    /// <paramref name="module"/>, the Module a declaration of the Host's composition names (as
+    /// <see cref="ModuleOf(IServiceCollection, Type)"/>, which it checks); and otherwise none. For a Kit package's
+    /// registration.
     /// </summary>
-    static Assembly[] FeatureAssembliesOf(IServiceCollection services, Assembly[] featureAssemblies)
+    static Assembly[] FeatureAssembliesOf(IServiceCollection services, Assembly[] featureAssemblies, Type? module = null)
     {
-        ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(featureAssemblies);
-        var module = (services as IModuleServices)?.Module;
-        Assembly[] scanned = featureAssemblies is [] && module is not null ? [module.Assembly] : [.. featureAssemblies];
-        if (module is not null || scanned.Length > 0)
+        var owner = module is null ? ModuleOf(services) : ModuleOf(services, module);
+        Assembly[] scanned = featureAssemblies is [] && owner is not null ? [owner.Assembly] : [.. featureAssemblies];
+        if (owner is not null || scanned.Length > 0)
         {
-            ComposedFeatures.In(services).Add(module, scanned);
+            ComposedFeatures.In(services).Add(owner, scanned);
         }
 
         return scanned;

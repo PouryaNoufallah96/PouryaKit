@@ -13,13 +13,14 @@ using PouryaKit.Modularity;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
+using PouryaKit.Validation;
 using PouryaKit.Web;
 
 namespace ModularMonolith.Tests;
 
 // A Host composed wrongly in a way that would otherwise run degraded and say nothing fails where the mistake shows, with a
-// message naming the fix (ticket #62): at start, when its endpoint is built, when its client is first created, or at the
-// first request.
+// message naming the fix (ticket #62): when it is built, at start, when its endpoint is built, when its client is first
+// created, or at the first request.
 public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     // WebApplication adds UseAuthentication ahead of the application's own middleware unless the application calls it,
@@ -90,7 +91,7 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
 
     // Nothing connects: the Host has no database to reach.
     [Fact]
-    public async Task A_connection_string_the_configuration_lacks_or_leaves_blank_stops_the_host_at_start_naming_its_key()
+    public void A_connection_string_the_configuration_lacks_or_leaves_blank_fails_the_host_when_built_naming_its_key()
     {
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.Configuration.AddInMemoryCollection([new("ConnectionStrings:reports", " ")]);
@@ -98,9 +99,8 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         builder.Services.UsePostgres<StubDbContext>(connectionName: "ledger", schema: "stub");
         builder.Services.AddPouryaKitDapper(connectionName: "reports");
         builder.AddPouryaKitCompositionChecks();
-        using var host = builder.Build();
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
             [
@@ -112,23 +112,39 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     }
 
     [Fact]
-    public async Task A_module_whose_endpoints_and_notification_handlers_no_registration_declares_stops_the_host_at_start_naming_both_calls()
+    public void A_module_whose_notification_handlers_no_registration_declares_fails_the_host_when_built_naming_the_call()
+    {
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            AppFixture.ComposeHost(
+                "Development",
+                Fixture.ConnectionString,
+                new RecordedLogs(),
+                builder => builder.AddPouryaKitModules(modules => modules.Add<HandlerForgettingModule>())
+            )
+        );
+
+        Assert.Equal(
+            $"The Notification Handlers {typeof(UnownedNotificationHandler).FullName} of HandlerForgettingModule are declared by no AddPouryaKitNotificationHandlers, so they never run. Call AddPouryaKitNotificationHandlers() in its Composition Root.",
+            thrown.Message
+        );
+    }
+
+    // A startup check: the application maps its routes after the Host is built.
+    [Fact]
+    public async Task A_module_whose_endpoints_no_registration_declares_stops_the_host_at_start_naming_the_call()
     {
         await using var host = AppFixture.ComposeHost(
             "Development",
             Fixture.ConnectionString,
             new RecordedLogs(),
-            builder => builder.AddPouryaKitModules(modules => modules.Add<ForgetfulModule>())
+            builder => builder.AddPouryaKitModules(modules => modules.Add<EndpointForgettingModule>())
         );
 
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
 
         Assert.Equal(
-            [
-                $"The endpoints {typeof(UnversionedEndpoints).Namespace}.ReadActorEndpoint of ForgetfulModule are declared by no AddPouryaKitEndpoints, so they never answer. Call AddPouryaKitEndpoints(routePrefix) in its Composition Root.",
-                $"The Notification Handlers {typeof(UnownedNotificationHandler).FullName} of ForgetfulModule are declared by no AddPouryaKitNotificationHandlers, so they never run. Call AddPouryaKitNotificationHandlers() in its Composition Root.",
-            ],
-            thrown.Message.Split(Environment.NewLine)
+            $"The endpoints {typeof(UnversionedEndpoints).Namespace}.ReadActorEndpoint of EndpointForgettingModule are declared by no AddPouryaKitEndpoints, so they never answer. Call AddPouryaKitEndpoints(routePrefix) in its Composition Root.",
+            thrown.Message
         );
     }
 
@@ -162,10 +178,14 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     }
 }
 
-// Registers the Features of two assemblies, one with an endpoint and one with a Notification Handler, but declares
-// neither.
-public sealed class ForgetfulModule : IModuleDefinition
+// Registers the Features of an assembly with an endpoint, but declares no endpoint.
+public sealed class EndpointForgettingModule : IModuleDefinition
 {
-    public void Configure(ModuleBuilder module) =>
-        module.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly, typeof(UnownedNotificationHandler).Assembly);
+    public void Configure(ModuleBuilder module) => module.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly);
+}
+
+// Registers the validators of an assembly with a Notification Handler, but declares no Notification Handler.
+public sealed class HandlerForgettingModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module) => module.AddPouryaKitValidation(typeof(UnownedNotificationHandler).Assembly);
 }

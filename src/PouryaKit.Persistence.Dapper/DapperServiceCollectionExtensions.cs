@@ -21,7 +21,7 @@ public static class DapperServiceCollectionExtensions
         /// definition; named assemblies replace it. The Host holds one <see cref="IReadConnectionFactory"/> and one
         /// connection pool, shared by every Module that names the same connection; naming a different connection in the
         /// same Host throws here. With the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>), a connection
-        /// string the Host's configuration does not set, or sets blank, fails the Host's start, before any read.
+        /// string the Host's configuration does not set, or sets blank, fails the Host's build, before any read.
         /// </summary>
         public IServiceCollection AddPouryaKitDapper(string connectionName, params Assembly[] typedIdAssemblies)
         {

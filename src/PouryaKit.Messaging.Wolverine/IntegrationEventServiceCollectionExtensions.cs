@@ -20,9 +20,10 @@ public static class IntegrationEventServiceCollectionExtensions
         /// while subscriptions move to it, and each subscription receives only the type it subscribed to; nothing converts one
         /// version into another. Throws here, at startup, when the type is not a concrete class or is a Domain
         /// Event, when the wire name is missing, invalid or equal ignoring case to another's, and when the type is already
-        /// published under another name or by another Module. The Host then fails to start when the declaration belongs
-        /// to no Module in a Host of Modules, unless an Outbox writes Integration Events
-        /// (<see cref="INotificationOutbox"/>), and when Wolverine would route another of its message types to this
+        /// published under another name or by another Module. The Host then fails when it is built if the declaration
+        /// belongs to no Module in a Host of Modules or to a Module the Host does not compose, or unless an Outbox writes
+        /// Integration Events (<see cref="INotificationOutbox"/>), and fails to start when Wolverine would route another
+        /// of its message types to this
         /// type's subscriptions, because that type's wire name, name or full name equals this type's full name, ignoring case.
         /// </summary>
         public IServiceCollection Publish<TIntegrationEvent>(string wireName)
@@ -53,7 +54,7 @@ public static class IntegrationEventServiceCollectionExtensions
         {
             ArgumentNullException.ThrowIfNull(services);
             Subscriptions.In(services).Receive(typeof(TIntegrationEvent), wireName, isSnapshot: false);
-            StartupCheck.AddTo(services);
+            DurableQueuesCheck.AddTo(services);
             return services;
         }
 
@@ -66,10 +67,10 @@ public static class IntegrationEventServiceCollectionExtensions
         /// when the type is a Domain Event, when the handler is abstract, and when the name is missing, invalid, equal
         /// ignoring case to another subscription's, or the name of a queue Wolverine keeps for itself, or the same
         /// subscription belongs to another Module. Declaring the same subscription again in the same Module adds nothing.
-        /// The name is kept lower-cased. The Host then fails to start when the declaration belongs to no Module in a Host
-        /// of Modules, when no Module of the Host publishes the type and no <c>Receive</c> declares it, when no Outbox
-        /// writes Integration Events, or when the subscription's queue, as Wolverine built it, is not a durable
-        /// application queue.
+        /// The name is kept lower-cased. The Host then fails when it is built if the declaration belongs to no Module in a
+        /// Host of Modules or to a Module the Host does not compose, and fails to start when no Module of the Host
+        /// publishes the type and no <c>Receive</c> declares it, when no Outbox writes Integration Events, or when the
+        /// subscription's queue, as Wolverine built it, is not a durable application queue.
         /// </summary>
         public IServiceCollection Subscribe<TIntegrationEvent, THandler>(string subscriptionName)
             where TIntegrationEvent : class
@@ -91,7 +92,7 @@ public static class IntegrationEventServiceCollectionExtensions
     private static IServiceCollection DeclarePublication(IServiceCollection services, Type integrationEvent, string wireName, Type? module)
     {
         Subscriptions.In(services).Publish(integrationEvent, wireName, module);
-        StartupCheck.AddTo(services);
+        DurableQueuesCheck.AddTo(services);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
         return services;
     }
@@ -124,7 +125,7 @@ public static class IntegrationEventServiceCollectionExtensions
                 problems
             );
         services.TryAddScoped<THandler>();
-        StartupCheck.AddTo(services);
+        DurableQueuesCheck.AddTo(services);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
         return services;
     }

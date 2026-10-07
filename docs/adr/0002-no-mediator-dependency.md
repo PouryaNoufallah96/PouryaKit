@@ -271,18 +271,18 @@ copies is claimed.
 The decision above stands. The owner decided on 2026-10-07 (decision B of the Kit API review) that caching is never
 silent, which supersedes the #43 amendment's "Optional, at the cost of a null check".
 
-- **A Host that registers a cacheable query calls `AddPouryaKitCaching()`, or does not start.** Caching's
-  `ICacheableQuery` inherits Cqrs's marker `IRequiresQueryCache`, and one of Cqrs's composition checks fails the Host's
-  start, before it serves, when a query whose handler is registered carries it and no `IQueryCache` is registered,
-  naming the queries and the call. Cqrs still never references Caching, as `IRequiresAuthorizer` keeps it from Security.
+- **A Host that registers a cacheable query calls `AddPouryaKitCaching()`, or is not built.** Caching's
+  `ICacheableQuery` inherits Cqrs's marker `IRequiresQueryCache`, and one of Cqrs's composition checks fails the Host
+  when its container is built, before anything runs, when a query whose handler is registered carries it and no
+  `IQueryCache` is registered, naming the queries and the call. Cqrs still never references Caching, as `IRequiresAuthorizer` keeps it from Security.
 - **No opt-out.** `HybridCache` runs in this Host's memory without a distributed cache, so the one call is the whole fix;
   an opt-out would only bring back the silent case. A Host with no cacheable query needs no cache, and the dispatcher's
   slot keeps its null check for it.
-- **Applications still register no steps.** The checks run once, when the Host starts, from Cqrs's
+- **Applications still register no steps.** The checks run once, when the container is built, from Cqrs's
   `AddPouryaKitCompositionChecks`, which `AddPouryaKitModules` calls and a Host without Modules calls itself; they add
-  nothing to the pipeline. The declared-authorizer check (#56) moved there from the container build, so it now stops
-  the Host when it starts instead of when it is built.
-- Proven by `CompositionCheckTests.A_cacheable_query_in_a_host_without_caching_stops_the_host_at_start_naming_the_call`,
+  nothing to the pipeline. The declared-authorizer check (#56) is one of them and still stops the Host when it is built:
+  a built Host runs Operations through its Gateways before it starts, so no check waits for the start.
+- Proven by `CompositionCheckTests.A_cacheable_query_in_a_host_without_caching_fails_the_host_when_built_naming_the_call`,
   red with the check switched off, against PostgreSQL.
 
 ## Amendment (2026-10-08, ticket #62: an Idempotency-Key on a read is refused when its endpoint is built)

@@ -9,18 +9,19 @@ using Wolverine.Transports;
 
 namespace PouryaKit.Messaging.Wolverine;
 
-// Runs once every hosted service has started, Wolverine included, so it sees the queues as Wolverine built them: Wolverine
-// applies its endpoint policies, such as UseDurableLocalQueues, and a Host's own queue configuration only when it starts,
-// so a composition check, which runs before, would read every queue's default. A Notification, an Integration Event, a
-// Snapshot or a delayed command is durable only when its queue stores it (and an Outbox writes it, OutboxCheck);
-// otherwise the business change would commit with nothing behind it, so the Host does not start.
-internal sealed class StartupCheck(Subscriptions subscriptions, IServiceProvider services) : IHostedLifecycleService
+// The one check at Wolverine's own moment: it runs once every hosted service has started, Wolverine included, so it sees
+// the queues as Wolverine built them. Wolverine compiles its endpoints only as it starts (Endpoint.Compile applies its
+// endpoint policies, such as UseDurableLocalQueues, then a Host's own queue configuration), so a composition check at
+// the build, or a startup check before any hosted service starts, would read every queue's default. A Notification, an
+// Integration Event, a Snapshot or a delayed command is durable only when its queue stores it (and an Outbox writes it,
+// OutboxCheck); otherwise the business change would commit with nothing behind it, so the Host does not start.
+internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServiceProvider services) : IHostedLifecycleService
 {
     // Every declaration registers both.
     public static void AddTo(IServiceCollection services)
     {
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, OutboxCheck>());
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupCheck>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, DurableQueuesCheck>());
     }
 
     public Task StartedAsync(CancellationToken cancellationToken)

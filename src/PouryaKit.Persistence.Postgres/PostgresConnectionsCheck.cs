@@ -4,8 +4,9 @@ using PouryaKit.Cqrs;
 
 namespace PouryaKit.Persistence.Postgres;
 
-// The connection strings the Modules' DbContexts name, read from the Host's final configuration when it starts: a missing
-// or blank one would fail the first Operation that opens its DbContext, once the Host serves. Nothing connects.
+// The connection strings the Modules' DbContexts name, read from the Host's final configuration when its container is
+// built: a missing or blank one would fail the first Operation that opens its DbContext, once the Host serves. Nothing
+// connects.
 internal sealed class PostgresConnectionsCheck : ICompositionCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)

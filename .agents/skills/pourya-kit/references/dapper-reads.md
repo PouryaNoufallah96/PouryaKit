@@ -71,7 +71,7 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
 ## Registration
 
 - Call `module.AddPouryaKitDapper(connectionName: "app")` in the Composition Root of each Module that reads with Dapper. It reads the connection string `ConnectionStrings:{connectionName}` from the Host's configuration, and makes every typed ID in the assembly of the Module's definition usable with Dapper, or in the assemblies it names instead. An application without Modules names the assembly.
-- The Host holds one `IReadConnectionFactory` and one connection pool, shared by every Module that reads with Dapper. Every Module names the same connection; naming a different one in the same Host throws at startup. A connection string the Host's final configuration does not set, or sets blank, fails the Host's start among the composition checks, naming the connection and its key (`Dapper reads use the connection string app, which the Host's configuration does not set (ConnectionStrings:app), …`); nothing connects. In a Host without the composition checks it throws when `IReadConnectionFactory` is first resolved.
+- The Host holds one `IReadConnectionFactory` and one connection pool, shared by every Module that reads with Dapper. Every Module names the same connection; naming a different one in the same Host throws at startup. A connection string the Host's final configuration does not set, or sets blank, fails the Host when it is built, among the composition checks, naming the connection and its key (`Dapper reads use the connection string app, which the Host's configuration does not set (ConnectionStrings:app), …`); nothing connects. In a Host without the composition checks it throws when `IReadConnectionFactory` is first resolved.
 
 ## Reading
 

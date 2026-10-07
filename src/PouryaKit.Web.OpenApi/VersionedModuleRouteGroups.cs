@@ -53,8 +53,8 @@ internal sealed class VersionedModuleRouteGroups(
 }
 
 // A Composition Root declared API versions for a route prefix no Module's endpoints are mapped under, which would otherwise
-// leave that Module unversioned. It runs when the Host starts, after the application mapped its routes.
-internal sealed class UnmappedApiVersionsCheck : ICompositionCheck
+// leave that Module unversioned. A startup check: the application maps its routes after the Host's container is built.
+internal sealed class UnmappedApiVersionsCheck : IStartupCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services) =>
         services.GetService<IModuleRouteGroups>() is VersionedModuleRouteGroups versioned && versioned.Unmapped().ToList() is [_, ..] unmapped

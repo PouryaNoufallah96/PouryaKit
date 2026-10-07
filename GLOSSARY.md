@@ -40,8 +40,12 @@ The one place where a Module declares everything it needs and everything it offe
 _Avoid_: Module registration, startup, installer
 
 **Composition check**:
-A check of a Host's whole composition that the Kit runs when the Host starts, before it serves, such as a Module's declaration made without its Module.
+A check of a Host's whole composition that the Kit runs when the Host's container is built, before anything runs, such as a Module's declaration made without its Module.
 _Avoid_: Health check, startup filter
+
+**Startup check**:
+A check of a Host that only the built application can answer, such as an endpoint it never mapped, which the Kit runs when the Host starts, before any hosted service starts.
+_Avoid_: Health check, startup filter, composition check
 
 **Gateway**:
 The only entry point through which anything outside a Module asks it to run a command or query.

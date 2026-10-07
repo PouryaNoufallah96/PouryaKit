@@ -9,7 +9,7 @@ var recorded = await store.ReserveAsync(
     CancellationToken.None
 );
 // The packed composition seam a Kit package's registration and its composition check use.
-System.Type[] seam = [typeof(IModuleServices), typeof(ICompositionCheck), typeof(HostComposition), typeof(IRequiresQueryCache)];
+System.Type[] seam = [typeof(IModuleServices), typeof(ICompositionCheck), typeof(IStartupCheck), typeof(HostComposition), typeof(IRequiresQueryCache)];
 Console.WriteLine(recorded is null && context.Continue().RequestId is null && OperationTypes.IsCommand(typeof(PlaceOrderCommand)) ? seam.Length : 0);
 
 [Idempotent]

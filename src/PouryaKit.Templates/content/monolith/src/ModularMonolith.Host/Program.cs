@@ -64,7 +64,9 @@ if (builder.Configuration.GetConnectionString("broker") is not null)
 builder.Services.AddSingleton<INewProductAnnouncer, LoggedNewProductAnnouncer>();
 // The container is validated when it is built, in every environment, and the Kit's composition checks stop the Host
 // before it serves, as in a Host of Modules: a command or query that declares a permission whose check is not
-// registered, a cacheable query without caching, a command without a Unit of Work.
+// registered, a cacheable query without caching, a command without a Unit of Work, an endpoint never mapped.
+// UsePouryaKitWolverine installs them too; called last, after any ConfigureContainer of the Host's own, they stay
+// installed.
 builder.AddPouryaKitCompositionChecks();
 
 var app = builder.Build();

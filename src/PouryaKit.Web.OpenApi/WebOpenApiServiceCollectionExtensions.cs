@@ -78,7 +78,7 @@ public static class WebOpenApiServiceCollectionExtensions
         /// <see cref="WebOpenApiServiceCollectionExtensions.ApiVersionHeader"/> header, unless it maps itself to some
         /// with <c>MapToApiVersion</c>. A Module's Composition Root calls it; the Host registers
         /// <c>AddPouryaKitOpenApi</c>, or mapping the Module's endpoints throws, and a prefix no Module's endpoints are
-        /// mapped under fails the Host's start, among the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>).
+        /// mapped under fails the Host's start, among the Kit's startup checks (<c>AddPouryaKitCompositionChecks</c>).
         /// An endpoint's name (<c>WithName</c>) stays on its versioned path only. A Module that declares no version keeps
         /// its unversioned paths.
         /// </summary>
@@ -99,7 +99,7 @@ public static class WebOpenApiServiceCollectionExtensions
 
             services.AddSingleton(new ModuleApiVersions(routePrefix, declare));
             services.TryAddSingleton<IModuleRouteGroups, VersionedModuleRouteGroups>();
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, UnmappedApiVersionsCheck>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupCheck, UnmappedApiVersionsCheck>());
             return services;
         }
     }

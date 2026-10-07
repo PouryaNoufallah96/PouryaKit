@@ -6,8 +6,8 @@ namespace PouryaKit.Web;
 
 // An endpoint in the Feature assemblies of a Module the Host composed, or of the application's own services, that no
 // MapPouryaKitModuleEndpoints mapped: it would never answer, and every request to its route would be a 404. With API
-// versions declared or not, it runs when the Host starts, after the application mapped its routes.
-internal sealed class UnmappedEndpointsCheck : ICompositionCheck
+// versions declared or not, it is a startup check: the application maps its routes after the Host's container is built.
+internal sealed class UnmappedEndpointsCheck : IStartupCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {

@@ -76,9 +76,9 @@ public sealed class HostTests(App app)
         Assert.Equal("Healthy", await alive.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
     }
 
-    // Catalog's RemoveProducts declares a permission; without its check registered the Host stops when it starts.
+    // Catalog's RemoveProducts declares a permission; without its check registered the Host never builds.
     [Fact]
-    public void The_host_does_not_start_when_a_declared_permission_has_no_registered_check()
+    public void The_host_does_not_build_when_a_declared_permission_has_no_registered_check()
     {
         using var withoutChecks = app.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services =>

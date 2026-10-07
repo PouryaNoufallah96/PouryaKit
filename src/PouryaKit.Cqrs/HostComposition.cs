@@ -7,13 +7,12 @@ namespace PouryaKit.Cqrs;
 /// A Host's final composition, as the Kit's container was built from it: every registration, the Modules it composed and
 /// the Feature assemblies the Kit's registrations scanned for each of them and for the application's own services, named
 /// or inferred (<see cref="IModuleServices"/>). The container registers it when <c>AddPouryaKitCompositionChecks</c>
-/// installed it, and every <see cref="ICompositionCheck"/> reads it when the Host starts. A Module is among
-/// <see cref="Modules"/> once a Kit registration is made on its builder, as every Composition Root that registers its
-/// Features or declares messages does.
+/// installed it, and every <see cref="ICompositionCheck"/> reads it when the container is built. Every Module that
+/// <c>AddPouryaKitModules</c> added is among <see cref="Modules"/>.
 /// </summary>
 public sealed class HostComposition
 {
-    private readonly OrderedDictionary<Type, IReadOnlyList<Assembly>> _modules = [];
+    private readonly Dictionary<Type, IReadOnlyList<Assembly>> _moduleAssemblies = [];
     private readonly IReadOnlyList<Assembly> _application = [];
 
     internal HostComposition(IEnumerable<ServiceDescriptor> registrations)
@@ -25,12 +24,14 @@ public sealed class HostComposition
             .FirstOrDefault();
         if (features is null)
         {
+            Modules = [];
             return;
         }
 
-        foreach (var (module, assemblies) in features.Modules)
+        Modules = [.. features.Modules];
+        foreach (var (module, assemblies) in features.ModuleAssemblies)
         {
-            _modules.Add(module, [.. assemblies]);
+            _moduleAssemblies.Add(module, [.. assemblies]);
         }
 
         _application = [.. features.Application];
@@ -39,13 +40,14 @@ public sealed class HostComposition
     /// <summary>Every registration of the Host, in the order the container was built from them.</summary>
     public IReadOnlyList<ServiceDescriptor> Registrations { get; }
 
-    /// <summary>The definition type of every Module the Host composed, in the order a Kit registration first named it.</summary>
-    public IReadOnlyCollection<Type> Modules => [.. _modules.Keys];
+    /// <summary>The definition type of every Module the Host composed, in the order <c>AddPouryaKitModules</c> added it.</summary>
+    public IReadOnlyList<Type> Modules { get; }
 
     /// <summary>
-    /// The Feature assemblies the Kit's registrations scanned for <paramref name="module"/>, or for the application's own
-    /// services when it is null, in the order first scanned; none when no registration scanned any.
+    /// The Feature assemblies the Kit's registrations scanned for <paramref name="module"/>, on its builder or for a
+    /// declaration the Host's composition named it in, or for the application's own services when it is null, in the
+    /// order first scanned; none when no registration scanned any.
     /// </summary>
     public IReadOnlyList<Assembly> FeatureAssembliesOf(Type? module) =>
-        module is null ? _application : _modules.GetValueOrDefault(module) ?? [];
+        module is null ? _application : _moduleAssemblies.GetValueOrDefault(module) ?? [];
 }

@@ -2,8 +2,8 @@ namespace PouryaKit.Cqrs;
 
 /// <summary>
 /// Implemented by a Kit attribute that, on a command or query, requires an authorizer of the Kit to be registered for
-/// it, as Security's <c>RequiresPermissionAttribute</c> does; applications do not implement it. A Host fails when it
-/// starts if a command or query whose handler it registers carries one and that authorizer is not registered, so a
+/// it, as Security's <c>RequiresPermissionAttribute</c> does; applications do not implement it. A Host fails when it is
+/// built if a command or query whose handler it registers carries one and that authorizer is not registered, so a
 /// declared check never silently stays off: it is one of the composition checks of
 /// <c>AddPouryaKitCompositionChecks</c>, which <c>AddPouryaKitModules</c> calls and a Host without Modules calls itself.
 /// </summary>

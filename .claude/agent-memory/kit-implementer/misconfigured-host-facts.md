@@ -1,6 +1,6 @@
 ---
 name: misconfigured-host-facts
-description: Ticket #62 facts - Wolverine queue modes final only after start, IAuthenticationFeature as the authentication-ran signal, handler builder filter sees the completed chain, test bin appsettings sets ConnectionStrings app
+description: Ticket #62 facts - two check moments (build, start) plus Wolverine StartedAsync, Wolverine queue modes final only after start, IAuthenticationFeature signal, handler builder filter, plain test Hosts under ValidateOnBuild
 metadata:
   type: project
 ---
@@ -14,6 +14,10 @@ Verified in ticket #62 (2026-10-08), ASP.NET Core 10.0.12, Microsoft.Extensions.
 - A test Host without Modules that now needs the runner (`AddPouryaKitCompositionChecks`) also gets `ValidateOnBuild`: registering the whole Stub assembly's Notification Handlers then fails at `Build` on their dependencies; use the `Unowned` assembly. `UnitOfWorkCheck` also flags the Kit's own `CommandHandler<Deliver>` in a Wolverine Host with no Unit of Work (a second line, after the first problem).
 - Group's `Finally` refusals (AllowAnonymous, RequireIdempotencyKey on GET) surface at `host.StartAsync` in the AppFixture Host.
 - `git add -p` is unavailable: when two items share a file, plan the commit split before editing, or commit the items together and say so.
+- **Two moments since the #62 merge round (orchestrator decision 2026-10-08):** `ICompositionCheck` runs inside `ValidatingServiceProviderFactory` at `Build()`; `IStartupCheck` runs in `CompositionCheckRunner.StartingAsync` after the replaced-factory sentinel, for what needs the built app (routes mapped after `Build()`). `DurableQueuesCheck` (was `StartupCheck`) keeps Wolverine's `StartedAsync`. A test asserting a composition check uses `Assert.Throws(() => builder.Build())`; `AppFixture.ComposeHost` itself throws then.
+- **`UsePouryaKitWolverine` installs `AddPouryaKitCompositionChecks`**, so every plain-services test Host with Wolverine gets `ValidateOnBuild`: scanning the whole Stub assembly there fails (its handlers need Catalog, Dapper and Gateway services); register the one handler by hand plus `DeliveryLog` and `AddPouryaKitDapper`. Wolverine-refusal tests on the transport-neutral overload need a stand-in `INotificationOutbox` (a public marker) or the Outbox check fails the build first; the EF Core overload needs a Unit of Work (`EfReceipts` needs `IUnitOfWork`).
+- A bare Host with a declaration and no Wolverine reports `OutboxCheck` beside the ownership line: assert the line is among `Message.Split(NewLine)`.
+- Merging an appended acceptance section beside a paragraph the other side edited duplicated that paragraph and put the other side's tail after mine: compare with `git diff <tip> -- docs/acceptance.md | grep '^-'` and reorder.
 
 **Why:** each decided a #62 design point or cost a run.
 **How to apply:** for any later start-time check, HTTP pipeline order check, outgoing-client rule or Wolverine endpoint inspection. Related: [[module-seam-and-composition-check-facts]], [[outgoing-http-facts]], [[web-defaults-facts]], [[messaging-delivery-facts]].

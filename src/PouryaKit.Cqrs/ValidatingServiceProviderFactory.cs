@@ -2,9 +2,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace PouryaKit.Cqrs;
 
-// Builds the Host's container validated in every environment, and registers in it the HostComposition the composition
-// checks read: the Host's final registrations, which only the container build sees. A later ConfigureContainer replaces
-// this factory, which removes no registration, so the check runner finds no HostComposition and names the call.
+// Builds the Host's container validated in every environment, then runs every composition check on the Host's final
+// registrations, which only the container build sees, before Build returns: a built Host that is never started can
+// still run Operations through a Gateway, so no check may wait for the start. The checks run on the built provider, so a
+// check may resolve singletons. A later ConfigureContainer replaces this factory, which removes no registration, so the
+// HostComposition it registers is missing and the start fails, naming the call (CompositionCheckRunner).
 internal sealed class ValidatingServiceProviderFactory : IServiceProviderFactory<IServiceCollection>
 {
     private readonly DefaultServiceProviderFactory _container = new(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
@@ -13,7 +15,16 @@ internal sealed class ValidatingServiceProviderFactory : IServiceProviderFactory
 
     public IServiceProvider CreateServiceProvider(IServiceCollection containerBuilder)
     {
-        containerBuilder.AddSingleton(new HostComposition(containerBuilder));
-        return _container.CreateServiceProvider(containerBuilder);
+        var composition = new HostComposition(containerBuilder);
+        containerBuilder.AddSingleton(composition);
+        var provider = _container.CreateServiceProvider(containerBuilder);
+        List<string> problems = [.. provider.GetServices<ICompositionCheck>().SelectMany(check => check.Check(composition, provider))];
+        if (problems.Count == 0)
+        {
+            return provider;
+        }
+
+        (provider as IDisposable)?.Dispose();
+        throw new InvalidOperationException(string.Join(Environment.NewLine, problems));
     }
 }

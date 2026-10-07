@@ -341,7 +341,7 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
             "Development",
             Fixture.ConnectionString,
             Fixture.Logs,
-            builder => builder.Services.Subscribe<TwinV1, TwinIntegrationEventHandler>("tests.unpublished-twin")
+            builder => builder.Services.Subscribe<TwinV1, TwinIntegrationEventHandler>("tests.unpublished-twin", typeof(StubModule))
         );
 
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
@@ -390,6 +390,8 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
         var named = typeof(EarlyNamedV1).ToMessageTypeName();
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.UsePouryaKitWolverine();
+        // An Outbox, as a Host that publishes registers one, so the Host builds and Wolverine's own refusal is what fails.
+        builder.Services.AddSingleton<INotificationOutbox, StandInOutbox>();
         builder.Services.Publish<EarlyNamedV1>("tests.early-named.v1");
         using var host = builder.Build();
 

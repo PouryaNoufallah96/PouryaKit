@@ -5,7 +5,6 @@ using Catalog.Contracts.Products.Events.V1;
 using Inventory;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
-using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
@@ -114,15 +113,13 @@ public sealed class IntegrationEventWiringTests
     }
 
     [Fact]
-    public async Task Startup_fails_when_modules_publish_integration_events_and_the_host_has_no_outbox()
+    public void Building_fails_when_modules_publish_integration_events_and_the_host_has_no_outbox()
     {
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.UsePouryaKitWolverine();
         builder.Services.Publish<TwinV1>("tests.twin.v1");
-        builder.AddPouryaKitCompositionChecks();
-        using var host = builder.Build();
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.StartsWith("Notification Handlers, Integration Events, Snapshots or delayed commands are declared, but nothing writes them to an Outbox", thrown.Message);
     }
