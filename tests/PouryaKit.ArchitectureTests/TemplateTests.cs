@@ -114,9 +114,9 @@ public sealed class TemplateTests
     [Fact]
     public void Each_generated_host_joins_a_broker_under_the_service_name_its_template_derives_the_same_way_in_both()
     {
-        var (token, derivation) = ServiceNameSymbol(Monolith);
+        var (token, derivation) = DerivedSymbol(Monolith, "serviceName");
 
-        Assert.Equal(derivation, ServiceNameSymbol(Modular).Derivation);
+        Assert.Equal(derivation, DerivedSymbol(Modular, "serviceName").Derivation);
         Assert.All(
             [Monolith, Modular],
             template =>
@@ -129,6 +129,45 @@ public sealed class TemplateTests
             ["src/ModularMonolith.Host/Program.cs passes the service name ModularMonolith; pass modular-monolith, which the template's serviceName symbol derives into a valid queue name from any project name."],
             UnderivedServiceNames(
                 [new("src/ModularMonolith.Host/Program.cs", """builder.UsePouryaKitRabbitMq(connectionName: "broker", serviceName: "ModularMonolith");""")],
+                token
+            )
+        );
+    }
+
+    // Ticket #59: -n acme-shop names the folders acme-shop.Host, so the solution and the project references must too.
+    [Fact]
+    public void Each_template_names_its_projects_paths_through_the_name_as_typed_the_same_way_in_both()
+    {
+        var (token, derivation) = DerivedSymbol(Monolith, "projectName");
+        var sourceName = SourceName(Monolith);
+
+        Assert.Equal(derivation, DerivedSymbol(Modular, "projectName").Derivation);
+        Assert.Equal(sourceName, SourceName(Modular));
+        // The engine replaces every form of the sourceName in content, each a casing of it, so a token holding one breaks.
+        Assert.DoesNotContain(sourceName, token, StringComparison.OrdinalIgnoreCase);
+        Assert.All(
+            [Monolith, Modular],
+            template =>
+            {
+                Assert.Empty(ProjectPathDefects(Generated(template), sourceName, token));
+                Assert.Contains(Generated(template), file => file.Path.EndsWith(".slnx", StringComparison.Ordinal) && file.Text.Contains(token, StringComparison.Ordinal));
+            }
+        );
+        var generated = Generated(Modular);
+        var solution = generated.Single(file => file.Path == "ModularMonolith.slnx");
+        var host = generated.Single(file => file.Path == "src/ModularMonolith.Host/ModularMonolith.Host.csproj");
+        Assert.Equal(
+            [
+                "ModularMonolith.slnx spells the sourceName ModularMonolith, which the engine writes as the name a namespace can hold (acme_shop for -n acme-shop), not as it names the files; name a project's path through PouryaKitAppName.",
+                @"src/ModularMonolith.Host/ModularMonolith.Host.csproj names ..\PouryaKitAppName.Defaults\PouryaKitAppName.Defaults.csproj, which is no project the template generates.",
+            ],
+            ProjectPathDefects(
+                [
+                    .. generated.Except([solution, host]),
+                    solution with { Text = solution.Text.Replace($"src/{token}.Host/{token}.Host.csproj", "src/ModularMonolith.Host/ModularMonolith.Host.csproj", StringComparison.Ordinal) },
+                    host with { Text = host.Text.Replace($@"..\{token}.ServiceDefaults\{token}.ServiceDefaults.csproj", @"..\PouryaKitAppName.Defaults\PouryaKitAppName.Defaults.csproj", StringComparison.Ordinal) },
+                ],
+                sourceName,
                 token
             )
         );

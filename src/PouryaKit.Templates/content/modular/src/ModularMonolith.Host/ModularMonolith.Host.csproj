@@ -21,6 +21,6 @@
     <ProjectReference Include="..\Modules\Billing\Billing\Billing.csproj" />
     <ProjectReference Include="..\Modules\Catalog\Catalog\Catalog.csproj" />
     <ProjectReference Include="..\Modules\Inventory\Inventory\Inventory.csproj" />
-    <ProjectReference Include="..\ModularMonolith.ServiceDefaults\ModularMonolith.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\PouryaKitAppName.ServiceDefaults\PouryaKitAppName.ServiceDefaults.csproj" />
   </ItemGroup>
 </Project>

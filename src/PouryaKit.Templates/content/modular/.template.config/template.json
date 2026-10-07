@@ -21,6 +21,13 @@
       "replaces": "modular-monolith",
       "description": "The Host's queue on a RabbitMQ broker: the name, lower-cased, each run of other characters a hyphen."
     },
+    "projectName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "identity",
+      "replaces": "PouryaKitAppName",
+      "description": "The name as typed, in the solution's and the project references' paths: the engine names files and folders with it, but writes the sourceName in content as the name a namespace can hold."
+    },
     "skipRestore": {
       "type": "parameter",
       "datatype": "bool",
