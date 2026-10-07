@@ -1,0 +1,37 @@
+.claude/agent-memory/kit-implementer/idempotency-retention-facts.md
+  s_5db987750027ae::t_842958ae144e69 18
+docs/architecture/README.md
+  s_5db987750027ae::t_a0d203f88d9565 393
+  s_5db987750027ae::t_99593a57b37f65 394
+.agents/skills/pourya-kit/references/persistence.md
+  s_5db987750027ae::t_a0d203f88d9565 316,328-329
+docs/acceptance.md
+  s_5db987750027ae::t_ef5d7c09081d0f 452-454
+src/PouryaKit.Persistence.EFCore/PouryaKitIdempotencyOptions.cs
+  s_5db987750027ae::t_72aabeefbd2fe0 12-14
+src/PouryaKit.Persistence.EFCore/IdempotencyKeyCleanup.cs
+  s_5db987750027ae::t_f7576e48332ce7 9-11,19-23,25,29,33-42,46,58-68,78,83-87,89-90,92-99,101-103,127,130,134,136-138
+src/PouryaKit.Persistence.EFCore/EfIdempotencyStore.cs
+  s_5db987750027ae::t_0e89a7f3de67a5 11-12,17-20,26,28-45,48-49,99-101,104
+  s_5db987750027ae::t_2d0f9fd027145f 102
+  s_5db987750027ae::t_856fad117abcb2 103,105
+tests/ModularMonolith.Tests/IdempotencyRetentionTests.cs
+  s_5db987750027ae::t_d46e39ab0a43f4 1,3-4,123-124,126-220,228-230,236,239-244,253,260-261,264,288-313
+  s_5db987750027ae::t_ac1936eb25cc3e 314
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9fdee477d7e04f6ed3d0ccb15f693429c16cc511",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
