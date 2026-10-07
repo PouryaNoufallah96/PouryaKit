@@ -9,8 +9,9 @@ namespace PouryaKit.Web;
 public sealed class PouryaKitWebOptions
 {
     /// <summary>
-    /// The claim whose value is the <c>Actor.Person</c> id. JwtBearer maps a token's <c>sub</c> to this claim type by
-    /// default; set <c>"sub"</c> when the scheme keeps the token's claim names.
+    /// The claim whose value is the <c>Actor.Person</c> id. The Kit's bearer scheme (<c>AddPouryaKitJwtBearer</c>)
+    /// writes the configured Actor claim's value under <see cref="ClaimTypes.NameIdentifier"/>, so the default fits
+    /// it; an application that authenticates another way names the claim its scheme issues.
     /// </summary>
     public string ActorClaim { get; set; } = ClaimTypes.NameIdentifier;
 

@@ -309,8 +309,8 @@ Notes on the choices:
   shows the risk of doing more: subscription claims and an admin bypass are baked into shared code
   (`CustomClaims.cs:26-66`, `FeatureAuthorizationHandler.cs:11-18`). *Corrected 2026-10-07 (#38): Wave 2 adds
   `PouryaKit.Security` → `Cqrs` with permission contracts and an optional `IAuthorizer` implementation only; the
-  authenticated `FallbackPolicy` stays in `PouryaKit.Web`, which owns the HTTP boundary, and the application still
-  configures JwtBearer (until #39).*
+  authenticated `FallbackPolicy` stays in `PouryaKit.Web`, which owns the HTTP boundary, and
+  `PouryaKit.Security.JwtBearer` configures JwtBearer since #39 (2026-10-07).*
 
 ### Full target catalogue
 
