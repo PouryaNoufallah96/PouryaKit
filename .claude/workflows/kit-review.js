@@ -99,8 +99,20 @@ const FINISHED = {
   properties: { bytes: { type: 'integer' }, removed: { type: 'boolean' }, error: { type: 'string' } },
 }
 
+// `args` is a JSON object, or the word form the docs show: `base X ticket N`, optionally joined by `with`, `and` or commas.
+const WORD_KEYS = ['base', 'ticket', 'spec', 'head', 'previous', 'rescore', 'evidence', 'codexModel', 'codexEffort']
+const parseWords = (text) => {
+  const out = {}
+  const words = text.trim().split(/\s+/).map((w) => w.replace(/,$/, '')).filter((w) => w && !['with', 'and'].includes(w))
+  for (let i = 0; i < words.length; i += 2) {
+    const key = words[i].replace(/^--/, '')
+    if (!WORD_KEYS.includes(key) || i + 1 >= words.length) return null
+    out[key] = words[i + 1]
+  }
+  return Object.keys(out).length ? out : null
+}
 const input = typeof args === 'string'
-  ? (() => { try { return JSON.parse(args) } catch { return {} } })()
+  ? (() => { try { return JSON.parse(args) } catch { return parseWords(args) ?? {} } })()
   : (args ?? {})
 const str = (value) => String(value ?? '').trim()
 const base = str(input.base)
@@ -111,6 +123,7 @@ const scope = str(input.scope)
 const codexModel = str(input.codexModel)
 const codexEffort = str(input.codexEffort)
 const previousFile = str(input.previous)
+const evidenceFile = str(input.evidence)
 const rescoreIds = (Array.isArray(input.rescore) ? input.rescore : str(input.rescore).split(',')).map(str).filter(Boolean)
 const list = (value) => (Array.isArray(value) ? value : [])
 
@@ -118,9 +131,9 @@ const list = (value) => (Array.isArray(value) ? value : [])
 const fail = (error) => ({ workflow: 'kit-review', complete: false, verdict: 'unknown', error })
 const REF = /^[A-Za-z0-9][A-Za-z0-9._\/~^-]{0,199}$/
 const PATH = /^[A-Za-z0-9_.\/~][A-Za-z0-9_.\/@+-]{0,399}$/
-const USAGE = 'Pass { base, ticket } for a ticket, or { base, spec } for work with no ticket; optional head, scope, codexModel, codexEffort, and for a re-review previous (the earlier result file) with optional rescore ids.'
+const USAGE = 'Pass { base, ticket } for a ticket, or { base, spec } for work with no ticket; optional head, scope, evidence (a file of recorded execution evidence), codexModel, codexEffort, and for a re-review previous (the earlier result file) with optional rescore ids. JSON or the word form `base X ticket N`.'
 for (const key of Object.keys(input)) {
-  if (!['base', 'ticket', 'spec', 'head', 'scope', 'codexModel', 'codexEffort', 'previous', 'rescore'].includes(key)) return fail(`Unknown argument \`${key}\`. ${USAGE}`)
+  if (!['base', 'ticket', 'spec', 'head', 'scope', 'codexModel', 'codexEffort', 'previous', 'rescore', 'evidence'].includes(key)) return fail(`Unknown argument \`${key}\`. ${USAGE}`)
 }
 if (!REF.test(base) || base.includes('..')) return fail(`\`base\` must be the pre-change commit or ref, using only letters, digits and . _ / ~ ^ -. ${USAGE}`)
 if (!!ticket === !!spec) return fail(`Pass exactly one of \`ticket\` (an issue number) and \`spec\` (a file path). ${USAGE}`)
@@ -131,6 +144,7 @@ if (codexModel && !/^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(codexModel)) return 
 if (codexEffort && !['high', 'xhigh'].includes(codexEffort)) return fail('`codexEffort` must be "high" or "xhigh".')
 if (scope.length > 1000 || /[\u0000-\u001f\u007f]/.test(scope)) return fail('`scope` must be one plain-text line of at most 1000 characters.')
 if (previousFile && (!PATH.test(previousFile) || previousFile.includes('..'))) return fail('`previous` must be the path of an earlier kit-review result file.')
+if (evidenceFile && (!PATH.test(evidenceFile) || evidenceFile.includes('..'))) return fail('`evidence` must be the path of a text file holding the recorded execution evidence.')
 if (rescoreIds.length && !previousFile) return fail('`rescore` needs `previous`, the earlier kit-review result file that holds those findings.')
 if (rescoreIds.some((id) => !/^[A-Za-z0-9_-]{1,20}$/.test(id))) return fail('`rescore` must list finding ids such as F1, F3.')
 
@@ -163,7 +177,12 @@ ${ticket
     ? `gh issue view ${ticket} --json title,body --jq '"# " + .title + "\\n\\n" + .body' > "$run/spec.md"`
     : `cp '${spec}' "$run/spec.md"`}
 test -s "$run/spec.md" || { echo "kit-review: the spec is empty" >&2; exit 2; }
-${previousFile ? `python3 - '${previousFile}' '${rescoreIds.join(',')}' > "$run/previous.json" <<'PY'
+${ticket ? `parent=$(grep -A 3 '^## Parent' "$run/spec.md" | grep -oE 'issues/[0-9]+' | head -1 | grep -oE '[0-9]+' || true)
+if [ -n "$parent" ]; then printf '\\n\\n## Parent specification #%s (its body, for a reviewer that cannot fetch it)\\n\\n' "$parent" >> "$run/spec.md"; gh issue view "$parent" --json body --jq .body >> "$run/spec.md"; fi
+` : ''}${evidenceFile ? `test -s '${evidenceFile}' || { echo "kit-review: the evidence file is empty" >&2; exit 2; }
+printf '\\n\\n## Recorded execution evidence for the reviewed commit (supplied by the session)\\n\\nA record below that names the revision, the commands, their outcomes and the environment is the execution record of this commit; treat it as evidence, not as a claim to reproduce. BLOCKED stays the verdict only for required evidence that cannot be inspected at all.\\n\\n' >> "$run/spec.md"
+cat '${evidenceFile}' >> "$run/spec.md"
+` : ''}${previousFile ? `python3 - '${previousFile}' '${rescoreIds.join(',')}' > "$run/previous.json" <<'PY'
 ${extractPrevious}
 PY
 ` : 'echo "{}" > "$run/previous.json"'}
