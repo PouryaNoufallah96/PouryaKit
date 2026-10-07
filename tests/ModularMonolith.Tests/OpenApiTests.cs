@@ -248,7 +248,16 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         app.UseRouting();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapPouryaKitModuleEndpoints();
+        try
+        {
+            app.MapPouryaKitModuleEndpoints();
+        }
+        catch
+        {
+            ((IDisposable)app).Dispose();
+            throw;
+        }
+
         return app;
     }
 

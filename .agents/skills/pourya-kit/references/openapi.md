@@ -56,7 +56,7 @@ internal sealed record RenameProductBody(string Name);
 ```
 
 - `module.AddPouryaKitApiVersions(routePrefix, declare)` names the same prefix as the Module's `AddPouryaKitEndpoints`. `declare` states the versions on the Module's API version set, Asp.Versioning's own `ApiVersionSetBuilder`: `HasApiVersion` for a supported version, `HasDeprecatedApiVersion` for a deprecated one. A second declaration for one prefix throws.
-- Every endpoint of the Module serves every declared version. An endpoint that exists in some versions only says so with `MapToApiVersion(version)`; an endpoint changed in a version is a second `IEndpoint` mapped to that version, beside the first mapped to the others.
+- Every endpoint of the Module serves every declared version. An endpoint that exists in some versions only says so with `MapToApiVersion(version)`; an endpoint whose contract changes in a version can be a second `IEndpoint` mapped to that version, beside the first mapped to the others (the Proving Sample has none).
 - A version is the Module's: the Host lists none. Versions of different Modules that share a number share one document.
 - Each endpoint is mapped twice, on the versioned and on the unversioned path ([What a caller sees](#what-a-caller-sees)), so an endpoint of a versioned Module takes no `WithName`: ASP.NET Core's endpoint names are unique.
 - A Module that declares versions in a Host that does not register them fails when its endpoints are mapped:
