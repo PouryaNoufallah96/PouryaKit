@@ -1,0 +1,60 @@
+docs/foundation-review.md
+  s_6c3c3736ba14ff::t_c8f51064b02bb0 257,836
+scripts/packaging/consumers/PouryaKit.Web.cs
+  s_6c3c3736ba14ff::t_f4522f3601a8f0 3,14-29,35-36
+src/PouryaKit.Web/PouryaKitCompressionOptions.cs
+  s_6c3c3736ba14ff::t_bd7f81194c541e 1-15
+docs/architecture/README.md
+  s_6c3c3736ba14ff::t_934bf7730635f0 60,141,445,460-461
+.agents/skills/pourya-kit/SKILL.md
+  s_6c3c3736ba14ff::t_934bf7730635f0 35
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_6c3c3736ba14ff::t_f571c208937dbb 37-41,72-73
+  s_6c3c3736ba14ff::t_f4add629571436 19-24,68-69
+docs/acceptance.md
+  s_6c3c3736ba14ff::t_16b7ed5bee334e 261-275
+.agents/skills/pourya-kit/references/web.md
+  s_6c3c3736ba14ff::t_dd6edda334bf0a 3,12,72-73,83-86,110,113,122,125,197,251-282
+  s_6c3c3736ba14ff::t_86de336d0a500e 283
+src/PouryaKit.Web/ActorRateLimiting.cs
+  s_6c3c3736ba14ff::t_8c2cc1f16cd835 1-2,4-87
+  s_6c3c3736ba14ff::t_d20457d9f71610 3
+tests/ModularMonolith.Tests/WebDefaultsTests.cs
+  s_6c3c3736ba14ff::t_1cf77c4c11975c 179-180,183-185
+  s_6c3c3736ba14ff::t_8152f251dd5cf3 1-17,19-26,28-31,41-43,46,48,61-137,140-178,181-182,186-206,209,211-216,218,220-242,252-260
+  s_6c3c3736ba14ff::t_e06526c8edaf45 138-139
+  s_6c3c3736ba14ff::t_cbb705f6439150 18,27,32-40,44-45,47,49-60,207-208,210,217,219,243-251
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_6c3c3736ba14ff::t_ae85b45a146c8d 50
+  s_6c3c3736ba14ff::t_31df4288f8bd5a 25-29,38-39,51,53-54
+  s_6c3c3736ba14ff::t_62c6d6521959eb 35-37
+README.md
+  s_6c3c3736ba14ff::t_934bf7730635f0 5
+src/PouryaKit.Web/ConfiguredCompression.cs
+  s_6c3c3736ba14ff::t_38e7ff9a203fba 1-36
+src/PouryaKit.Web/ConfiguredCors.cs
+  s_6c3c3736ba14ff::t_1750ec27dc0bb1 1-83
+src/PouryaKit.Web/PouryaKitRateLimitOptions.cs
+  s_6c3c3736ba14ff::t_1f02ce6d27ccd7 1-27
+src/PouryaKit.Web/PouryaKitCorsOptions.cs
+  s_6c3c3736ba14ff::t_62c6d6521959eb 4-8
+  s_6c3c3736ba14ff::t_513d5d042952e3 1-3,9-40
+docs/provenance/PouryaKit.Web.md
+  s_6c3c3736ba14ff::t_c8f51064b02bb0 5,87-130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "88193cd1f1b3859e4065d844c5a48c091cd0393c",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
