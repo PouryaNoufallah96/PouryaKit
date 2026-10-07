@@ -1,0 +1,96 @@
+PouryaKit.slnx
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 20,33
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 11,49-52,89-94
+.agents/skills/pourya-kit/references/openapi.md
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-133
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 17
+src/PouryaKit.Web/IModuleRouteGroups.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-19
+src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 31,36,38-41
+src/PouryaKit.Web.OpenApi/WebOpenApiEndpointRouteBuilderExtensions.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-38
+tests/ModularMonolith.Tests/Unversioned/UnversionedEndpoints.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-14
+docs/architecture/README.md
+  s_6c3c3736ba14ff::t_93d066db49f1fc 5,18-19
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 63,81-82,151,477,489-490,500-514
+  s_6c3c3736ba14ff::t_a97e8cd8797b0d 3,150,556
+  s_6c3c3736ba14ff::t_c74a1f26c301de 515
+src/PouryaKit.Web.OpenApi/WebOpenApiServiceCollectionExtensions.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-127
+.claude/agent-memory/kit-implementer/openapi-versioning-facts.md
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-23
+docs/acceptance.md
+  s_6c3c3736ba14ff::t_daca512480589f 74,77,120,308
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 309-325
+Directory.Packages.props
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 8-9,15,29
+docs/provenance/PouryaKit.Web.OpenApi.md
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-32
+scripts/packaging/consumers/PouryaKit.Web.OpenApi.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-22
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 19
+samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1,21,43-47
+.agents/skills/pourya-kit/SKILL.md
+  s_6c3c3736ba14ff::t_45843329da4f05 40-41
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 3,36
+samples/ModularMonolith/src/ModularMonolith.Host/appsettings.json
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 4-13
+src/PouryaKit.Web.OpenApi/ApiVersionSunset.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-11
+src/PouryaKit.Web.OpenApi/BearerSecurity.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-58
+src/PouryaKit.Web.OpenApi/VersionedModuleRouteGroups.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-39
+tests/ModularMonolith.Tests/Unversioned/ModularMonolith.Tests.Unversioned.csproj
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-10
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 57-61,75-76,79-80
+docs/foundation-review.md
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 261,840
+README.md
+  s_6c3c3736ba14ff::t_9625623a88d568 5,7
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-332
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 33,57-64
+  s_6c3c3736ba14ff::t_45843329da4f05 21
+src/PouryaKit.Web.OpenApi/PouryaKit.Web.OpenApi.csproj
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-14
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductEndpoint.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-31
+scripts/packaging/inventory.json
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 19,26
+  s_6c3c3736ba14ff::t_2790db05181c8d 31
+.agents/skills/pourya-kit/references/web.md
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 67,90-92,121-125,137,334
+tests/ModularMonolith.Tests/AppFixture.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 16,74-76,82-83,92
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 37
+src/PouryaKit.Web.OpenApi/PouryaKitOpenApiOptions.cs
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 1-15
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_6c3c3736ba14ff::t_cc9f229ae55cd0 17-18,24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b2ec18ad0674733f794c4d8c690ef124da88d1b4",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
