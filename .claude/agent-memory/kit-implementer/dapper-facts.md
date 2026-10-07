@@ -19,6 +19,7 @@ Verified in ticket #9 (2026-10-05), Dapper 2.1.89, Npgsql 10.0.3:
 - `ModuleBuilder` re-keys only `IUnitOfWork`; any other per-Module service registered with Add is last-wins Host-wide. Shared services (repository, `IUnitOfWorkConnection`) take the unkeyed `IUnitOfWork` (the router) with TryAdd.
 - `PersistenceTests.Each_module_has_its_own_schema...` asserts the exact table list and migration names: any new table or migration edits it (merge-conflict hotspot with parallel tickets).
 - A SQL-only EF migration (attributes `[DbContext]` + `[Migration]` on an internal class, no Designer) applies fine and leaves the snapshot unchanged.
+- Never assert which pooled server connection (`pg_backend_pid()`) the next lease gets: the shared Host's background work (Wolverine durability agent, other test classes) takes pooled connections too; #54 removed such an assertion after a CI flake (run 37614975892).
 - The worktree guard refused `curl ... $(curl ... | grep)` (it saw "git" inside a URL); run the two curls separately.
 
 **Why:** each cost a run or a wrong claim in a provenance record.
