@@ -246,7 +246,8 @@ The caching slot (ticket #43):
   then, so a distributed cache that refuses an eviction is logged and never fails the command.
 - **Optional, at the cost of a null check.** A Host without `AddPouryaKitCaching()` has no `IQueryCache`, and every
   query runs as before. Unlike a request id, a cacheable query in such a Host promises nothing the Host then breaks, so
-  nothing throws.
+  nothing throws. *Superseded on 2026-10-07 by the owner's decision B (ticket #61): a cacheable query is never silent.
+  See the amendment below.*
 - **Applications still register no steps.** The slot is written out in the dispatcher; the cache is a seam the Kit
   fills, not a step.
 
@@ -264,3 +265,22 @@ Proven against PostgreSQL by `CachingTests` in `tests/ModularMonolith.Tests`, am
 `With_redis_a_second_host_reads_the_entry_the_first_stored_without_running_its_handler`, and by
 `PouryaKit.Cqrs.Tests.QueryCacheTests`. Neither single flight across Hosts nor eviction of another Host's in-memory
 copies is claimed.
+
+## Amendment (2026-10-07, ticket #61: a cacheable query never runs uncached without a word)
+
+The decision above stands. The owner decided on 2026-10-07 (decision B of the Kit API review) that caching is never
+silent, which supersedes the #43 amendment's "Optional, at the cost of a null check".
+
+- **A Host that registers a cacheable query calls `AddPouryaKitCaching()`, or does not start.** Caching's
+  `ICacheableQuery` inherits Cqrs's marker `IRequiresQueryCache`, and one of Cqrs's composition checks fails the Host's
+  start, before it serves, when a query whose handler is registered carries it and no `IQueryCache` is registered,
+  naming the queries and the call. Cqrs still never references Caching, as `IRequiresAuthorizer` keeps it from Security.
+- **No opt-out.** `HybridCache` runs in this Host's memory without a distributed cache, so the one call is the whole fix;
+  an opt-out would only bring back the silent case. A Host with no cacheable query needs no cache, and the dispatcher's
+  slot keeps its null check for it.
+- **Applications still register no steps.** The checks run once, when the Host starts, from Cqrs's
+  `AddPouryaKitCompositionChecks`, which `AddPouryaKitModules` calls and a Host without Modules calls itself; they add
+  nothing to the pipeline. The declared-authorizer check (#56) moved there from the container build, so it now stops
+  the Host when it starts instead of when it is built.
+- Proven by `CompositionCheckTests.A_cacheable_query_in_a_host_without_caching_stops_the_host_at_start_naming_the_call`,
+  red with the check switched off, against PostgreSQL.

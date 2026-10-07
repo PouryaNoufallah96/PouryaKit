@@ -16,7 +16,7 @@ using PouryaKit.Web.OpenApi;
 var builder = WebApplication.CreateBuilder(args);
 // OpenTelemetry that exports the Kit's activities and metrics, liveness and readiness checks, service discovery and one
 // standard resilience pipeline for every HttpClient; then Serilog in place of the logging providers. Each recipe is
-// optional and lives in ModularMonolith.ServiceDefaults, which this application owns.
+// optional and lives in the application's own ServiceDefaults project.
 builder.AddServiceDefaults();
 builder.AddSerilogDefaults();
 // The Host authenticates its callers with bearer tokens. The issuer, audiences and signing keys come from the

@@ -20,15 +20,15 @@ public sealed class CatalogModule : IModuleDefinition
     {
         module.UsePostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
         module.MapUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);   // see persistence.md
-        module.AddPouryaKitDapper(connectionName: "app", typeof(CatalogModule).Assembly);   // see dapper-reads.md
-        module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly);
-        module.AddPouryaKitValidation(typeof(CatalogModule).Assembly);
-        module.AddPouryaKitNotificationHandlers(typeof(CatalogModule).Assembly, typeof(CatalogModule));   // see messaging.md
-        module.Publish<ProductCreatedV1>("catalog.product-created.v1", typeof(CatalogModule));   // for other Modules; see messaging.md
-        module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1", typeof(CatalogModule));   // likewise
+        module.AddPouryaKitDapper(connectionName: "app");   // see dapper-reads.md
+        module.AddPouryaKitCqrs();
+        module.AddPouryaKitValidation();
+        module.AddPouryaKitNotificationHandlers();   // see messaging.md
+        module.Publish<ProductCreatedV1>("catalog.product-created.v1");   // for other Modules; see messaging.md
+        module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1");   // likewise
         module.AddScoped<IProductRepository, ProductRepository>();   // see persistence.md, The repository
         module.AddScoped<ICatalogProducts, CatalogProducts>();       // see Asking another Module a question
-        module.AddPouryaKitEndpoints("/catalog", typeof(CatalogModule).Assembly);   // see web.md
+        module.AddPouryaKitEndpoints("/catalog");   // see web.md
     }
 }
 
@@ -49,6 +49,9 @@ public static WebApplicationBuilder CreateBuilder(string[] args)
 
 - Implement `IModuleDefinition` once per Module, as a public sealed class with a parameterless constructor. Everything else in the Module stays `internal`, except the ports its Host implements for it with the records they carry ([messaging.md](messaging.md#writing-a-notification-handler)) and the migrations `dotnet-ef` writes; a structure test rejects any other public type ([testing.md](testing.md#structure-tests)).
 - `Configure(ModuleBuilder module)` declares everything the Module needs and offers: its data (`UsePostgres`, `MapUniqueConstraint`, `AddPouryaKitDapper`), its Features (`AddPouryaKitCqrs`, `AddPouryaKitValidation`), its Notification Handlers (`AddPouryaKitNotificationHandlers`), the Integration Events and Snapshots it publishes and the Integration Event Handlers it subscribes (`Publish`, `PublishSnapshot`, `Subscribe`), its endpoints (`AddPouryaKitEndpoints`) and its own services. `ModuleBuilder` is an `IServiceCollection` over the Host's one container, so every registration extension works on it.
+- A Composition Root never names its own Module or its own assembly. `ModuleBuilder` is the Module seam, `IModuleServices` (`PouryaKit.Cqrs`), which gives every Kit registration made on it the Module's definition type, and the Kit finds it at run time, so a helper of yours typed as `IServiceCollection` keeps it:
+  - **Its Features live in its definition's assembly** (ADR 0001). `AddPouryaKitCqrs()`, `AddPouryaKitValidation()`, `AddPouryaKitPermissions()`, `AddPouryaKitDapper(connectionName)`, `AddPouryaKitNotificationHandlers()` and `AddPouryaKitEndpoints(prefix)` with no assembly scan the assembly of the class that implements `IModuleDefinition`. Features that live elsewhere are named instead, `module.AddPouryaKitCqrs(typeof(CatalogModule).Assembly, typeof(SharedFeatures).Assembly)`: named assemblies replace the inferred one, in their order.
+  - **Its declarations belong to it.** `Publish`, `Subscribe`, `PublishSnapshot`, `AddPouryaKitNotificationHandlers`, `AddPouryaKitDelayedCommand` and `AddPouryaKitRecurringCommand` on its builder run in the Module: its Unit of Work, its Receipts. Each has a second form that names the Module, `builder.Services.Subscribe<ProductCreatedV1, AuditHandler>("inventory.audit", typeof(InventoryModule))`, for the Host's composition when it declares on a Module's behalf; named on another Module's builder it throws while the Host is composed.
 - The Unit of Work registered on a Module's builder becomes that Module's own; every other registration goes into the Host's container as it is.
 - The Host adds each Module once: `builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>().Add<InventoryModule>().Add<BillingModule>())`. That runs each Composition Root and registers the Module's Gateway.
 
@@ -118,11 +121,15 @@ Setting it:
 
 ## Startup checks
 
-- A Module added twice, in one `AddPouryaKitModules` call or across calls, throws naming it.
-- A Module whose Composition Root registers the handler of a command but no Unit of Work throws while the Host is composed, naming the Module and the command (`… handles the command … but registers no Unit of Work. Declare its data in its Composition Root, for example with UsePostgres.`). A Module that only answers queries needs no Unit of Work.
-- `AddPouryaKitModules` validates the container when the Host is built, in every environment: every registration must be constructible and no singleton may depend on a scoped service, or `Build()` throws an `AggregateException` naming the problem. A Host that later calls `ConfigureContainer` with another service provider factory replaces it, and with it both that validation and the declared-authorizer check below.
-- When the Host is built, every command or query whose handler is registered and that declares an authorizer the Kit must register, such as a `[RequiresPermission]`, must have that authorizer registered by some Composition Root; another authorizer of the same command or query does not count. Otherwise `Build()` throws an `InvalidOperationException`, one line per command or query (`… declares RequiresPermissionAttribute, but its check is not registered, so it would run unchecked. Call AddPouryaKitPermissions with the assembly … in the Composition Root that registers its handler.`). Fix it by calling `module.AddPouryaKitPermissions(assembly)` in that Module's Composition Root ([security.md](security.md#declaring-a-permission)).
-- A service that needs the Gateway of a Module the Host never added fails `Build()`, naming that Gateway.
+Three moments, each failing before the Host serves:
+
+- **While the Host is composed**, in `AddPouryaKitModules`: a Module added twice, in one call or across calls, throws naming it. A Module whose Composition Root registers the handler of a command but no Unit of Work throws, naming the Module and the command (`… handles the command … but registers no Unit of Work. Declare its data in its Composition Root, for example with UsePostgres.`); a Module that only answers queries needs none. A declaration that names another Module on a Module's builder throws (`The Composition Root of … declares for …`).
+- **When the Host is built**: `AddPouryaKitModules` composes the Host's checks with `AddPouryaKitCompositionChecks` (`PouryaKit.Cqrs`), whose container is validated in every environment: every registration must be constructible and no singleton may depend on a scoped service, or `Build()` throws an `AggregateException` naming the problem. A service that needs the Gateway of a Module the Host never added fails here, naming that Gateway.
+- **When the Host starts**, before any hosted service starts, Wolverine and the web server included, the Kit's composition checks run and `StartAsync` throws one `InvalidOperationException`, one line per problem, each naming its fix:
+  - a command or query whose handler is registered and that declares an authorizer the Kit must register, such as a `[RequiresPermission]`, when no Composition Root registered it; another authorizer of the same command or query does not count (`… declares RequiresPermissionAttribute, but its check is not registered, so it would run unchecked. Call AddPouryaKitPermissions with the assembly … in the Composition Root that registers its handler.`). Fix it with `module.AddPouryaKitPermissions()` in that Module's Composition Root ([security.md](security.md#declaring-a-permission));
+  - a cacheable query whose handler is registered in a Host without `AddPouryaKitCaching()` ([caching.md](caching.md));
+  - a publication, Snapshot, subscription, Notification Handler, delayed or recurring command declared without a Module in a Host of Modules: made on `builder.Services`, it would run in no Module and fail at its first use. The line names the form on the Module's builder and the form that names the Module ([messaging.md](messaging.md#startup-checks));
+  - a `ConfigureContainer` call after `AddPouryaKitModules`, which replaces the Kit's container: the Host fails naming the call, what it lost and the fix, and no other check runs. Leave `ConfigureContainer` out of a Host of Modules.
 
 ## Asking another Module a question
 
@@ -189,6 +196,7 @@ A Host with a single Module may leave out `PouryaKit.Modularity`: it registers t
 builder.Services.UsePostgres<NotesDbContext>(connectionName: "app", schema: "notes");
 builder.Services.AddPouryaKitCqrs(typeof(NotesDbContext).Assembly);
 builder.Services.AddPouryaKitValidation(typeof(NotesDbContext).Assembly);
+builder.AddPouryaKitCompositionChecks();   // the validated container and the composition checks, as in a Host of Modules
 
 // Each Operation: a new scope, begun with its context and no Module, then the dispatcher
 await using var scope = services.CreateAsyncScope();
@@ -196,6 +204,6 @@ scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("nightly-
 var written = await scope.ServiceProvider.GetRequiredService<IDispatcher>().SendAsync(new WriteNoteCommand("solo"), ct);
 ```
 
-- The one Unit of Work is the application's own, so `Operation.Module` stays null and nothing routes.
-- Everything else holds as in a Host of Modules: one scope per Operation, the same pipeline, the same commit. There is no Gateway and no ownership check, and nothing turns on container validation or the declared-authorizer check for it: `HostApplicationBuilder` validates only in the Development environment. A Host turns both on with `ConfigureContainer`, a validating `DefaultServiceProviderFactory` and `services => services.EnsurePouryaKitDeclaredAuthorizers()`, as the monolith template's does ([templates.md](templates.md#what-each-composition-composes)).
+- The one Unit of Work is the application's own, so `Operation.Module` stays null and nothing routes. Its registrations name their assembly: the application's own services are no Module's builder, so nothing is inferred, and `AddPouryaKitCqrs()` with no assembly registers the dispatcher alone. Its declarations (`Publish`, `Subscribe`) belong to the application.
+- Everything else holds as in a Host of Modules: one scope per Operation, the same pipeline, the same commit. There is no Gateway and no ownership check. `builder.AddPouryaKitCompositionChecks()` turns on what `AddPouryaKitModules` turns on for a Host of Modules: the container validated in every environment (`HostApplicationBuilder` alone validates only in Development) and the composition checks at start, among them a command handler with no Unit of Work. Call it after any `ConfigureContainer` of the Host's own; the monolith template does ([templates.md](templates.md#what-each-composition-composes)).
 - `dotnet new pouryakit-monolith` generates such an application: the Proving Sample's Catalog with a plain registration and `IDispatcher` endpoints behind the Kit's HTTP pipeline ([templates.md](templates.md)).

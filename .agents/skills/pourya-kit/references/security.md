@@ -30,18 +30,18 @@ internal sealed record RemoveProductsCommand(IReadOnlyList<string> Names) : Comm
 }
 
 // In the Composition Root, beside AddPouryaKitCqrs and AddPouryaKitValidation:
-// module.AddPouryaKitPermissions(typeof(CatalogModule).Assembly);
+// module.AddPouryaKitPermissions();
 ```
 
 - Put `[RequiresPermission(name)]` on the command or query record, one permission each. Name it `<module>.<resource>.<action>` and keep the name in a constant on the record, so tests and grants name it without repeating the string.
-- `module.AddPouryaKitPermissions(assembly)` in the Module's Composition Root registers the check for every command and query of the assembly that declares one, internal ones included, and for nothing else. Call it in every Composition Root whose Features declare one.
-- A declared permission whose check no Composition Root registered fails the Host when it is built, so it never runs unchecked. `Build()` throws `InvalidOperationException`, one line per command or query:
+- `module.AddPouryaKitPermissions()` in the Module's Composition Root registers the check for every command and query of the assembly of the Module's definition that declares one, internal ones included, and for nothing else; it scans the assemblies it names instead, as an application without Modules does. Call it in every Composition Root whose Features declare one.
+- A declared permission whose check no Composition Root registered stops the Host when it starts, before it serves, so it never runs unchecked. `StartAsync` throws `InvalidOperationException`, one line per command or query:
 
   ```text
   Catalog.Products.Features.RemoveProducts.RemoveProductsCommand declares RequiresPermissionAttribute, but its check is not registered, so it would run unchecked. Call AddPouryaKitPermissions with the assembly Catalog in the Composition Root that registers its handler.
   ```
 
-  Fix it by adding `module.AddPouryaKitPermissions(typeof(CatalogModule).Assembly)` to that Composition Root. Any Composition Root may register it, so a check registered from another Module passes, and a Host whose Modules declare no permission needs no Security registration at all. Only the permission check counts: an `IAuthorizer<T>` of the Module's own for the same command does not stand in for it. The check is Cqrs's `EnsurePouryaKitDeclaredAuthorizers()`, run on the Host's final registrations as its container is built: `AddPouryaKitModules` runs it, and a Host without Modularity passes it to `ConfigureContainer`, as the monolith template's Host does ([templates.md](templates.md#what-each-composition-composes)). A Host that replaces either service provider factory with one of its own loses it unless its factory calls it too.
+  Fix it by adding `module.AddPouryaKitPermissions()` to that Composition Root. Any Composition Root may register it, so a check registered from another Module passes, and a Host whose Modules declare no permission needs no Security registration at all. Only the permission check counts: an `IAuthorizer<T>` of the Module's own for the same command does not stand in for it. It is one of Cqrs's composition checks, run on the Host's final registrations when it starts: `AddPouryaKitModules` installs them, and a Host without Modularity calls `builder.AddPouryaKitCompositionChecks()`, as the monolith template's Host does ([templates.md](templates.md#what-each-composition-composes)). A later `ConfigureContainer` stops the Host at start instead, naming the call ([modules.md](modules.md#startup-checks)).
 - The attribute on a type that is not one concrete command or query fails the Host while it is composed: the dispatcher would never check it.
 - The check runs in the pipeline's authorization step, before validation and the Unit of Work, with any other authorizer of the same command or query.
 

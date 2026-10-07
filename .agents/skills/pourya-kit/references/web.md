@@ -45,7 +45,7 @@ internal sealed class CreateProductEndpoint : IEndpoint
 
 internal sealed record CreateProductBody(Guid ProductId, Guid CategoryId, string Name);
 
-// In the Composition Root: module.AddPouryaKitEndpoints("/catalog", typeof(CatalogModule).Assembly);
+// In the Composition Root: module.AddPouryaKitEndpoints("/catalog");
 // The Proving Sample's Catalog declares API versions, so its CreateProduct generates the location with LinkGenerator
 // in the requested version instead (openapi.md).
 ```
