@@ -112,6 +112,29 @@ public sealed class TemplateTests
     }
 
     [Fact]
+    public void Each_generated_host_joins_a_broker_under_the_service_name_its_template_derives_the_same_way_in_both()
+    {
+        var (token, derivation) = ServiceNameSymbol(Monolith);
+
+        Assert.Equal(derivation, ServiceNameSymbol(Modular).Derivation);
+        Assert.All(
+            [Monolith, Modular],
+            template =>
+            {
+                Assert.Empty(UnderivedServiceNames(Generated(template), token));
+                Assert.Contains(Generated(template), file => file.Text.Contains($"serviceName: \"{token}\"", StringComparison.Ordinal));
+            }
+        );
+        Assert.Equal(
+            ["src/ModularMonolith.Host/Program.cs passes the service name ModularMonolith; pass modular-monolith, which the template's serviceName symbol derives into a valid queue name from any project name."],
+            UnderivedServiceNames(
+                [new("src/ModularMonolith.Host/Program.cs", """builder.UsePouryaKitRabbitMq(connectionName: "broker", serviceName: "ModularMonolith");""")],
+                token
+            )
+        );
+    }
+
+    [Fact]
     public void Each_template_pins_the_kits_third_party_versions_and_one_kit_version_that_packing_writes()
     {
         var kit = File.ReadAllText(Path.Combine(Repository.Root, "Directory.Packages.props"));

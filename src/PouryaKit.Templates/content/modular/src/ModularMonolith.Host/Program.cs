@@ -65,7 +65,7 @@ builder.UsePouryaKitWolverine(connectionName: "app");
 // Inventory and Billing still receive it here.
 if (builder.Configuration.GetConnectionString("broker") is not null)
 {
-    builder.UsePouryaKitRabbitMq(connectionName: "broker", serviceName: "ModularMonolith");
+    builder.UsePouryaKitRabbitMq(connectionName: "broker", serviceName: "modular-monolith");
 }
 
 builder.Services.AddSingleton<INewProductAnnouncer, LoggedNewProductAnnouncer>();

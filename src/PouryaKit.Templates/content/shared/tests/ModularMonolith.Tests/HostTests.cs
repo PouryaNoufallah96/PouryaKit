@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -15,6 +16,7 @@ using ModularMonolith.Tests;
 using PouryaKit.Cqrs;
 using PouryaKit.Security;
 using Testcontainers.PostgreSql;
+using Wolverine;
 
 [assembly: AssemblyFixture(typeof(App))]
 
@@ -60,8 +62,10 @@ public sealed class HostTests(App app)
         Assert.Equal(product, Assert.Single(page.GetProperty("items").EnumerateArray()).GetProperty("id").GetGuid());
     }
 
+    // The service defaults' liveness endpoint is mapped. That it asks nothing outside the process, so it stays healthy while
+    // the database is down, is the recipe's own proof (HostRecipeTests in the Kit's Proving Sample, #52).
     [Fact]
-    public async Task The_host_is_alive_without_asking_its_database()
+    public async Task The_host_answers_alive_through_the_service_defaults()
     {
         using var client = app.ClientAs();
 
@@ -97,6 +101,29 @@ public sealed class HostTests(App app)
         var thrown = Assert.Throws<InvalidOperationException>(() => withoutChecks.Services);
 
         Assert.Contains("RemoveProductsCommand declares RequiresPermissionAttribute, but its check is not registered", thrown.Message);
+    }
+
+    // With ConnectionStrings:broker the Host joins RabbitMQ under its service name, its queue on the broker, which it
+    // checks as it is composed. The template derives that name from the project's name, lower-cased with a hyphen for each
+    // run of other characters, so that every name gives a valid one, and writes it here and in Program.cs. No hosted
+    // service runs, Wolverine's among them, so nothing reaches the broker; Wolverine applies the Kit's extensions to its
+    // options only when it starts, so the test applies them.
+    [Fact]
+    public void The_host_joins_a_configured_broker_under_its_derived_service_name()
+    {
+        using var withBroker = app.WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("ConnectionStrings:broker", "amqp://guest:guest@localhost:5672/");
+            builder.ConfigureTestServices(services => services.RemoveAll<IHostedService>());
+        });
+
+        var options = withBroker.Services.GetRequiredService<WolverineOptions>();
+        foreach (var extension in withBroker.Services.GetServices<IWolverineExtension>())
+        {
+            extension.Configure(options);
+        }
+
+        Assert.Equal("modular-monolith", options.ServiceName);
     }
 }
 
@@ -164,21 +191,24 @@ public sealed class App : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Authentication:Schemes:Bearer:ValidAudiences:0", Audience);
         builder.UseSetting("Authentication:Schemes:Bearer:SigningKeys:0:Issuer", Issuer);
         builder.UseSetting("Authentication:Schemes:Bearer:SigningKeys:0:Value", Convert.ToBase64String(SigningKey.Key));
+        // The first hosted service, so the Host starts it, and waits for it, before Wolverine. Program starts the Host
+        // itself as soon as it is built, so a migration after the build would run beside the start.
+        builder.ConfigureTestServices(services => services.Insert(0, ServiceDescriptor.Singleton<IHostedService, Migrations>()));
     }
 
-    // Each Module's migrations, before the Host starts and Wolverine with it.
-    protected override IHost CreateHost(IHostBuilder builder)
+    // Applies each Module's migrations: a Module's DbContext is internal to it, so each is found through the
+    // DbContextOptions its registration adds.
+    private sealed class Migrations(IServiceScopeFactory scopes) : IHostedService
     {
-        var host = builder.Build();
-        using (var scope = host.Services.CreateScope())
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
+            await using var scope = scopes.CreateAsyncScope();
             foreach (var options in scope.ServiceProvider.GetServices<DbContextOptions>())
             {
-                ((DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType)).Database.Migrate();
+                await ((DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType)).Database.MigrateAsync(cancellationToken);
             }
         }
 
-        host.Start();
-        return host;
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }

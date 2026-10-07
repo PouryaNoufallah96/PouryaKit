@@ -20,6 +20,7 @@ dotnet new pouryakit-monolith -n Acme.Shop
 dotnet new pouryakit-modular-monolith -n Acme.Shop
 ```
 
+- `-n` takes a name that is also a C# namespace, such as `Acme.Shop` or `acme_shop`. The engine writes it into the project files' names as given and into the solution, the project references and the code as a namespace, so a name a namespace cannot hold, such as `acme-shop`, generates references to project files under another name.
 - Each template generates a solution in a folder named after `-n`: `Acme.Shop.slnx`, `src/Acme.Shop.Host`, `src/Acme.Shop.ServiceDefaults`, the Modules under `src/Modules/` with their sample names, and `tests/Acme.Shop.Tests`. Without `-n` it takes the output folder's name.
 - `dotnet new` restores the solution once it is generated; `--no-restore` skips that. The restore needs a NuGet source with the Kit's packages.
 - `Directory.Packages.props` pins every Kit package at `$(PouryaKitVersion)`, the version the template package was packed with, and every third-party package at the version the Kit builds and tests with. Upgrade the Kit by changing `PouryaKitVersion`.
@@ -66,10 +67,11 @@ dotnet run --project src/Acme.Shop.Host
 
 ## The smoke test
 
-`tests/Acme.Shop.Tests` hosts the generated `Program` with `WebApplicationFactory<Program>` over PostgreSQL in Testcontainers (Docker must run), applies every DbContext's migrations before the Host starts, and calls it with bearer tokens of a test issuer configured through `Authentication:Schemes:Bearer`. It does not use `PouryaKit.Testing`, which references Modularity.
+`tests/Acme.Shop.Tests` hosts the generated `Program` with `WebApplicationFactory<Program>` over PostgreSQL in Testcontainers (Docker must run), applies every DbContext's migrations in a hosted service the Host starts before Wolverine, and calls it with bearer tokens of a test issuer configured through `Authentication:Schemes:Bearer`. It does not use `PouryaKit.Testing`, which references Modularity.
 
 - A category and a product created over HTTP, the product with an `Idempotency-Key`: 201 with its id and versioned location; the same key again answers the same status, body and location, and the filtered, sorted list still has one product.
-- `/alive` answers 200.
+- `/alive` answers 200 through the service defaults. That it asks nothing outside the process, so it stays healthy while the database is down, is the recipe's own proof (`HostRecipeTests` in the Proving Sample, #52).
+- Composed with a `ConnectionStrings:broker` value, the Host joins the broker under its derived service name (below). The test builds it with no hosted service running, so no broker is needed.
 - With the permission checks removed from the registrations, the Host does not build: `RemoveProductsCommand declares RequiresPermissionAttribute, but its check is not registered`.
 - The modular monolith adds one cross-Module effect: a product Catalog creates opens its stock item in Inventory's schema.
 
@@ -82,7 +84,7 @@ dotnet test --project tests/Acme.Shop.Tests/Acme.Shop.Tests.csproj
 - `src/Acme.Shop.ServiceDefaults` is the application's own copy of the service defaults recipes: OpenTelemetry with OTLP export when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, liveness and readiness, service discovery, one resilience pipeline for every `HttpClient`, and Serilog. Change or drop any of them there ([host-recipes.md](host-recipes.md)).
 - The `downstream` client takes its resilience from the defaults and adds only `AddPouryaKitOperationContext()`. A client that needs other limits removes the default pipeline first, as [host-recipes.md](host-recipes.md#one-resilience-pipeline) shows; adding `AddPouryaKitResilience()` on top would stack a second pipeline.
 - `/alive` asks nothing outside the process; `/health` also asks each database.
-- Redis (`ConnectionStrings:cache`) and RabbitMQ (`ConnectionStrings:broker`) are off until configured. With a broker, the Host's queue is named after the application; another Host that receives Catalog's events declares them as [rabbitmq.md](rabbitmq.md#a-host-that-receives) shows.
+- Redis (`ConnectionStrings:cache`) and RabbitMQ (`ConnectionStrings:broker`) are off until configured. With a broker, the Host's queue, its service name on the broker, is the project's name lower-cased, each run of characters other than letters and digits a hyphen: `-n Acme.Shop` gives `acme-shop`. The template's `serviceName` symbol derives it, because a queue name takes only letters and digits in segments joined by single dots or hyphens, and the Host refuses any other name as it is composed (`UsePouryaKitRabbitMq`). A name with no letter or digit gives none, and another kind of Host on the same broker needs a name of its own; another Host that receives Catalog's events declares them as [rabbitmq.md](rabbitmq.md#a-host-that-receives) shows.
 - CORS policies (`PouryaKit:Web:Cors`), compression (`PouryaKit:Web:Compression`), the rate limit (`PouryaKit:Web:RateLimit`), trusted peers (`PouryaKit:TrustedPeers`) and idempotency key retention (`PouryaKit:Idempotency`) are read from configuration; none is set.
 
 ## Pre-generating Wolverine's code for production
@@ -93,5 +95,5 @@ The generated Hosts reference `WolverineFx.RuntimeCompilation`, as ADR 0004 requ
 
 - `src/PouryaKit.Templates` packs the templates' own files, the Hosts, project files, solution, central versions and smoke test, and packs the business code from `samples/ModularMonolith/src` when the package is built, so no copy of a sample file is kept. The package's version, the Kit's MinVer version, is written into each template's `Directory.Packages.props` as it is packed.
 - The monolith's `template.json` excludes the sample's `*Module.cs`, `*Endpoint.cs` and `CatalogProducts.cs` and supplies its own Composition Root and endpoints at the same paths. A new Gateway endpoint in the sample fails `TemplateTests` until the monolith has its own.
-- `TemplateTests` (`tests/PouryaKit.ArchitectureTests`) asserts that the template content holds no copy of a sample file, that nothing the monolith generates names Modularity, that each excluded file is replaced, that each template project references what the sample's project at its place does, and that the central versions are the Kit's.
+- `TemplateTests` (`tests/PouryaKit.ArchitectureTests`) asserts that the template content holds no copy of a sample file, that nothing the monolith generates names Modularity, that each excluded file is replaced, that each template project references what the sample's project at its place does, that the central versions are the Kit's, and that each Host passes the derived `serviceName`, the same symbol in both templates.
 - `scripts/packaging/validate.py` installs the produced package into a hive of its own, generates both templates, restores and builds them from the produced packages only, refuses `PouryaKit.Modularity` in the monolith's closure and `PouryaKit.Testing` in both, and runs each generated smoke test ([packages.md](packages.md)).

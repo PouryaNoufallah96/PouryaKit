@@ -14,11 +14,37 @@
     "type": "solution"
   },
   "symbols": {
+    "serviceName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "queueName",
+      "replaces": "modular-monolith",
+      "description": "The Host's queue on a RabbitMQ broker: the name, lower-cased, each run of other characters a hyphen."
+    },
     "skipRestore": {
       "type": "parameter",
       "datatype": "bool",
       "description": "If specified, skips the automatic restore of the solution on create.",
       "defaultValue": "false"
+    }
+  },
+  "forms": {
+    "queueName": {
+      "identifier": "chain",
+      "steps": ["lowerCaseInvariant", "hyphensForOthers", "noOuterHyphens"]
+    },
+    "lowerCaseInvariant": {
+      "identifier": "lowerCaseInvariant"
+    },
+    "hyphensForOthers": {
+      "identifier": "replace",
+      "pattern": "[^a-z0-9]+",
+      "replacement": "-"
+    },
+    "noOuterHyphens": {
+      "identifier": "replace",
+      "pattern": "^-+|-+$",
+      "replacement": ""
     }
   },
   "sources": [

@@ -56,7 +56,7 @@ builder.UsePouryaKitWolverine(connectionName: "app");
 // With ConnectionStrings:broker, what Catalog publishes also reaches other Hosts over RabbitMQ, from this Host's queue.
 if (builder.Configuration.GetConnectionString("broker") is not null)
 {
-    builder.UsePouryaKitRabbitMq(connectionName: "broker", serviceName: "ModularMonolith");
+    builder.UsePouryaKitRabbitMq(connectionName: "broker", serviceName: "modular-monolith");
 }
 
 builder.Services.AddSingleton<INewProductAnnouncer, LoggedNewProductAnnouncer>();
