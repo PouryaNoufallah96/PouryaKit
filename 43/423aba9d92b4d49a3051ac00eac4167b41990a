@@ -1,0 +1,36 @@
+docs/acceptance.md
+  s_0d5a1b290c2d36::t_27ca5c758c845b 484,489-490
+  s_0d5a1b290c2d36::t_45a2658f667026 499-500
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_0d5a1b290c2d36::t_3c414b40f95e6f 77-78,102-103
+.agents/skills/pourya-kit/references/web.md
+  s_0d5a1b290c2d36::t_1c40c2744d52fc 302
+.claude/agent-memory/kit-implementer/cross-process-tracing-and-recipes-facts.md
+  s_0d5a1b290c2d36::t_6f60c8d4fb365b 13-15
+docs/agents/ai-setup.md
+  s_0d5a1b290c2d36::t_0344e4da8aa534 213
+docs/architecture/README.md
+  s_0d5a1b290c2d36::t_6d16c853411eba 555
+samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs
+  s_0d5a1b290c2d36::t_89ac0c75ef5c57 38-39
+src/PouryaKit.Web/WebHttpClientBuilderExtensions.cs
+  s_0d5a1b290c2d36::t_1e0fd4b3bc570d 35-36,39,48-57
+tests/ModularMonolith.Tests/HostRecipeTests.cs
+  s_0d5a1b290c2d36::t_62e44fdafc800a 139,178-179,181,183-206,208-212,214,216-218,222-226,231-232,271,274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "43423aba9d92b4d49a3051ac00eac4167b41990a",
+  "prompts": {},
+  "sessions": {
+    "s_0d5a1b290c2d36": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5bdb6a50-6bfa-4dc6-9059-d46d18b45597",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
