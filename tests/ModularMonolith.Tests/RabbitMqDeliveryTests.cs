@@ -685,7 +685,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
             builder.Services.Receive<ProbedV1>(ProbedV1.WireName);
             builder.Services.Subscribe<ProbedV1, ProbedIntegrationEventHandler>("inventory.probed", typeof(InventoryModule));
         });
-        await using var catalog = await environment.StartCatalogHostAsync(builder => builder.Services.Publish<ProbedV1>(ProbedV1.WireName));
+        await using var catalog = await environment.StartCatalogHostAsync(builder => builder.Services.Publish<ProbedV1>(ProbedV1.WireName, typeof(CatalogModule)));
         var sent = new ProbedV1(Guid.CreateVersion7(), new ProbeId(Guid.CreateVersion7()));
 
         // Straight through Wolverine, with the headers the Kit's Outbox writes: no Module of the sample publishes a typed ID.

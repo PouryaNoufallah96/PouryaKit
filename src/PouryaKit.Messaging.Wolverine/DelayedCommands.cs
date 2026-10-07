@@ -22,7 +22,7 @@ internal sealed class DelayedCommands(DelayedCommandDeclarations declarations, O
         if (declarations.Of(type) is not { } declared || declared.Module != operation.Module)
         {
             throw new InvalidOperationException(
-                $"{operation.Module?.Name ?? "The application"} does not declare that it schedules {type.FullName}. Declare it, with its name, in the Composition Root with AddPouryaKitDelayedCommand<{type.Name}>(name, module)."
+                $"{operation.Module?.Name ?? "The application"} does not declare that it schedules {type.FullName}. Declare it, with its name, in the Composition Root with AddPouryaKitDelayedCommand<{type.Name}>(name)."
             );
         }
 

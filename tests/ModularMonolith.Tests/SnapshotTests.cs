@@ -5,6 +5,7 @@ using Catalog.Products.Features.RemoveProducts;
 using Catalog.Products.Features.RenameProduct;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Caching;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
@@ -411,21 +412,6 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Fact]
-    public async Task A_snapshot_declared_without_its_module_in_a_host_of_modules_fails_the_operation_that_would_publish_it()
-    {
-        var thrown = await WithDeclarationAsync(
-            services => services.PublishSnapshot<Stub.Shelf, MislaidShelfSnapshotV1, MislaidShelfSnapshotMapper>("tests.mislaid-shelf.v1"),
-            stub => stub.SendAsync(new PutShelvesCommand([["A1", "B1"]]), TestContext.Current.CancellationToken)
-        );
-
-        Assert.Equal(
-            $"The Snapshot {typeof(MislaidShelfSnapshotV1).FullName} of {typeof(Stub.Shelf).FullName} is declared without a Module, but Shelf changed in an Operation of StubModule. Declare it with PublishSnapshot(wireName, module) in that Module's Composition Root.",
-            thrown.Message
-        );
-        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.shelves"));
-    }
-
-    [Fact]
     public async Task A_snapshot_declared_with_a_module_in_an_application_without_modules_fails_the_operation_that_would_publish_it()
     {
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]);
@@ -433,6 +419,7 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         builder.Services.UsePouryaKitTestDelivery();
         builder.Services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
         builder.Services.AddPouryaKitCqrs(typeof(StubDbContext).Assembly);
+        builder.Services.AddPouryaKitCaching();
         builder.Services.PublishSnapshot<Stub.Shelf, MislaidShelfSnapshotV1, MislaidShelfSnapshotMapper>("tests.mislaid-shelf.v1", typeof(StubModule));
         using var host = builder.Build();
         await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);

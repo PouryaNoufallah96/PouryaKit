@@ -347,7 +347,7 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
 
         Assert.Equal(
-            $"{typeof(TwinIntegrationEventHandler).FullName} subscribes to {typeof(TwinV1).FullName} under tests.unpublished-twin, but no Module of this Host publishes it, so it has no wire name. Declare Publish<TwinV1>(wireName, module), or PublishSnapshot for a Snapshot, in the publishing Module's Composition Root; when another Host publishes it, declare Receive<TwinV1>(wireName), or ReceiveSnapshot for a Snapshot, in this Host's composition.",
+            $"{typeof(TwinIntegrationEventHandler).FullName} subscribes to {typeof(TwinV1).FullName} under tests.unpublished-twin, but no Module of this Host publishes it, so it has no wire name. Declare Publish<TwinV1>(wireName), or PublishSnapshot for a Snapshot, in the publishing Module's Composition Root; when another Host publishes it, declare Receive<TwinV1>(wireName), or ReceiveSnapshot for a Snapshot, in this Host's composition.",
             thrown.Message
         );
     }
@@ -360,7 +360,7 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
                 "Development",
                 Fixture.ConnectionString,
                 Fixture.Logs,
-                builder => builder.Services.Publish<ProcessNamedV1>("tests.process-named.v1")
+                builder => builder.Services.Publish<ProcessNamedV1>("tests.process-named.v1", typeof(StubModule))
             )
         )
         {
@@ -372,7 +372,7 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
             "Development",
             Fixture.ConnectionString,
             Fixture.Logs,
-            builder => builder.Services.Publish<ProcessNamedV1>("tests.process-named.v2")
+            builder => builder.Services.Publish<ProcessNamedV1>("tests.process-named.v2", typeof(StubModule))
         );
 
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => second.StartAsync(TestContext.Current.CancellationToken));

@@ -28,7 +28,7 @@ internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation ope
         {
             throw new InvalidOperationException(
                 operation.Module is { } module
-                    ? $"The Snapshot {misdeclared.Snapshot.FullName} of {misdeclared.Aggregate.FullName} is declared without a Module, but {aggregateType.Name} changed in an Operation of {module.Name}. Declare it with PublishSnapshot(wireName, module) in that Module's Composition Root."
+                    ? $"The Snapshot {misdeclared.Snapshot.FullName} of {misdeclared.Aggregate.FullName} is declared without a Module, but {aggregateType.Name} changed in an Operation of {module.Name}. Declare it with PublishSnapshot(wireName) in that Module's Composition Root."
                     : $"The Snapshot {misdeclared.Snapshot.FullName} of {misdeclared.Aggregate.FullName} is declared by the Module {subscriptions.Publications[misdeclared.Snapshot].Module!.Name}, but {aggregateType.Name} changed in an application without Modules. Declare it with PublishSnapshot(wireName) and no Module."
             );
         }
