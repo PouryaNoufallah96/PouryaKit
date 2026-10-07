@@ -9,8 +9,9 @@ namespace PouryaKit.Persistence.EFCore;
 /// example from a configuration section.
 /// </summary>
 /// <remarks>
-/// The Host fails when it starts unless <see cref="Retention"/> is positive or <see cref="Timeout.InfiniteTimeSpan"/>,
-/// <see cref="CleanupInterval"/> is positive and <see cref="BatchSize"/> is at least 1.
+/// The Host fails when it starts unless <see cref="Retention"/> is positive and at most 36500 days, or
+/// <see cref="Timeout.InfiniteTimeSpan"/>, <see cref="CleanupInterval"/> is from 1 ms to about 49.7 days (the range of
+/// <see cref="PeriodicTimer"/>), and <see cref="BatchSize"/> is at least 1.
 /// </remarks>
 public sealed class PouryaKitIdempotencyOptions
 {

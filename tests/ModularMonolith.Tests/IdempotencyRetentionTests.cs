@@ -1,4 +1,7 @@
+using System.Data.Common;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -117,8 +120,104 @@ public sealed class IdempotencyRetentionTests(AppFixture app) : HostTest<AppFixt
         Assert.Equal(1L, await Fixture.ScalarAsync<long>("select count(*) from stub.pouryakit_idempotency_keys"));
     }
 
+    // A repeat's insert finds the key held and locks nothing, so the cleanup can remove the expired key before the
+    // store reads the recorded success. The interceptor runs that cleanup at exactly that point.
     [Fact]
-    public async Task A_host_whose_retention_interval_or_batch_size_is_out_of_range_fails_to_start_naming_each()
+    public async Task A_repeat_whose_expired_key_a_cleanup_removes_between_its_reservation_and_its_read_runs_as_a_new_request()
+    {
+        using var clock = new TestClock(Monday);
+        var cleanedBetween = new AfterHeldKey(async () =>
+        {
+            clock.Time.Advance(TimeSpan.FromHours(25));
+            await Fixture.WaitUntilAsync(
+                "not exists (select 1 from stub.pouryakit_idempotency_keys)",
+                "No cleanup removed the held key before the repeat read it."
+            );
+        });
+        var host = await StartHostAsync(
+            clock,
+            new RecordedLogs(),
+            services: services => services.ConfigureDbContext<StubDbContext>(options => options.AddInterceptors(cleanedBetween))
+        );
+        Assert.Equal(1, await CountAsync(host, "r1"));
+
+        var repeat = await CountAsync(host, "r1");
+        await StopAsync(host);
+
+        Assert.True(cleanedBetween.Ran);
+        Assert.Equal(2, repeat);
+        Assert.Equal(
+            [["r1", Monday.AddHours(25).UtcDateTime]],
+            await Fixture.RowsAsync("select request_id, reserved_at from stub.pouryakit_idempotency_keys")
+        );
+    }
+
+    // A database migrated before CreateIdempotencyTable added reserved_at, during Wave 2, has a table without it.
+    [Fact]
+    public async Task A_key_table_without_reserved_at_fails_the_operation_naming_the_column_and_its_fix()
+    {
+        await Fixture.RowsAsync("alter table stub.pouryakit_idempotency_keys rename column reserved_at to reserved");
+        InvalidOperationException thrown;
+        try
+        {
+            thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => CountAsync(Fixture.Host, "r1"));
+        }
+        finally
+        {
+            await Fixture.RowsAsync("alter table stub.pouryakit_idempotency_keys rename column reserved to reserved_at");
+        }
+
+        Assert.StartsWith(
+            "\"stub\".pouryakit_idempotency_keys of StubDbContext has no reserved_at column: it was created before CreateIdempotencyTable added it.",
+            thrown.Message,
+            StringComparison.Ordinal
+        );
+        Assert.Contains(
+            "alter table \"stub\".pouryakit_idempotency_keys add column reserved_at timestamp with time zone not null",
+            thrown.Message,
+            StringComparison.Ordinal
+        );
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.notes"));
+    }
+
+    public static TheoryData<TimeSpan, TimeSpan, int, string[]> OutOfRange() =>
+        new()
+        {
+            {
+                TimeSpan.Zero,
+                TimeSpan.FromHours(-1),
+                0,
+                [
+                    "The idempotency key Retention is 00:00:00; it must be positive and at most 36500.00:00:00, or Timeout.InfiniteTimeSpan to keep every key.",
+                    "The idempotency key CleanupInterval is -01:00:00; it must be from 00:00:00.0010000 to 49.17:02:47.2940000.",
+                    "The idempotency key BatchSize is 0; it must be at least 1.",
+                ]
+            },
+            {
+                TimeSpan.FromDays(36501),
+                TimeSpan.FromMilliseconds(0.1),
+                1000,
+                [
+                    "The idempotency key Retention is 36501.00:00:00; it must be positive and at most 36500.00:00:00, or Timeout.InfiniteTimeSpan to keep every key.",
+                    "The idempotency key CleanupInterval is 00:00:00.0001000; it must be from 00:00:00.0010000 to 49.17:02:47.2940000.",
+                ]
+            },
+            {
+                TimeSpan.FromHours(24),
+                TimeSpan.FromDays(50),
+                1000,
+                ["The idempotency key CleanupInterval is 50.00:00:00; it must be from 00:00:00.0010000 to 49.17:02:47.2940000."]
+            },
+        };
+
+    [Theory]
+    [MemberData(nameof(OutOfRange))]
+    public async Task A_host_whose_retention_interval_or_batch_size_is_out_of_range_fails_to_start_naming_each(
+        TimeSpan retention,
+        TimeSpan cleanupInterval,
+        int batchSize,
+        string[] failures
+    )
     {
         using var clock = new TestClock(Monday);
         await using var host = Compose(
@@ -126,25 +225,23 @@ public sealed class IdempotencyRetentionTests(AppFixture app) : HostTest<AppFixt
             new RecordedLogs(),
             options =>
             {
-                options.Retention = TimeSpan.Zero;
-                options.CleanupInterval = TimeSpan.FromHours(-1);
-                options.BatchSize = 0;
+                options.Retention = retention;
+                options.CleanupInterval = cleanupInterval;
+                options.BatchSize = batchSize;
             }
         );
 
         var failure = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
 
-        Assert.Equal(
-            [
-                "The idempotency key Retention is 00:00:00; it must be positive, or Timeout.InfiniteTimeSpan to keep every key.",
-                "The idempotency key CleanupInterval is -01:00:00; it must be positive.",
-                "The idempotency key BatchSize is 0; it must be at least 1.",
-            ],
-            failure.Failures
-        );
+        Assert.Equal(failures, failure.Failures);
     }
 
-    private WebApplication Compose(TestClock clock, RecordedLogs logs, Action<PouryaKitIdempotencyOptions>? configure = null) =>
+    private WebApplication Compose(
+        TestClock clock,
+        RecordedLogs logs,
+        Action<PouryaKitIdempotencyOptions>? configure = null,
+        Action<IServiceCollection>? services = null
+    ) =>
         AppFixture.ComposeHost(
             "Development",
             Fixture.ConnectionString,
@@ -153,16 +250,18 @@ public sealed class IdempotencyRetentionTests(AppFixture app) : HostTest<AppFixt
             {
                 builder.Services.AddSingleton<TimeProvider>(clock.Time);
                 builder.Services.Configure(configure ?? (_ => { }));
+                services?.Invoke(builder.Services);
             }
         );
 
     private async Task<WebApplication> StartHostAsync(
         TestClock clock,
         RecordedLogs logs,
-        Action<PouryaKitIdempotencyOptions>? configure = null
+        Action<PouryaKitIdempotencyOptions>? configure = null,
+        Action<IServiceCollection>? services = null
     )
     {
-        var host = Compose(clock, logs, configure);
+        var host = Compose(clock, logs, configure, services);
         await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
         return host;
     }
@@ -185,6 +284,33 @@ public sealed class IdempotencyRetentionTests(AppFixture app) : HostTest<AppFixt
                     TestContext.Current.CancellationToken
                 )
         ).Value.Number;
+
+    // Runs its action once, right after an insert of a Stub key that found the key held, before the store reads it.
+    private sealed class AfterHeldKey(Func<Task> action) : DbCommandInterceptor
+    {
+        private int _ran;
+
+        public bool Ran => _ran == 1;
+
+        public override async ValueTask<int> NonQueryExecutedAsync(
+            DbCommand command,
+            CommandExecutedEventData eventData,
+            int result,
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (
+                result == 0
+                && command.CommandText.StartsWith("insert into \"stub\".pouryakit_idempotency_keys", StringComparison.Ordinal)
+                && Interlocked.Exchange(ref _ran, 1) == 0
+            )
+            {
+                await action();
+            }
+
+            return result;
+        }
+    }
 
     private static async Task<string> WaitForLogAsync(RecordedLogs logs, LogLevel level, string prefix)
     {

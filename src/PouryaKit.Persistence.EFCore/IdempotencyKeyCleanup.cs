@@ -6,9 +6,9 @@ using Microsoft.Extensions.Options;
 
 namespace PouryaKit.Persistence.EFCore;
 
-// Removes the expired idempotency keys of every Module in the Host, in a scope of its own, outside every request and
-// Unit of Work. Each batch is one statement committed on its own, so a cleanup never holds many row locks; a key whose
-// Operation has not committed is invisible to it. A Module whose cleanup fails is logged, and the next tick runs.
+// Removes the expired idempotency keys of every Module in the Host, each in a scope of its own, outside every request
+// and Unit of Work. Each batch is one statement committed on its own, so a cleanup never holds many row locks; a key
+// whose Operation has not committed is invisible to it. A Module whose cleanup fails is logged, and the next tick runs.
 internal sealed partial class IdempotencyKeyCleanup(
     IServiceScopeFactory scopes,
     IOptions<PouryaKitIdempotencyOptions> options,
@@ -16,18 +16,34 @@ internal sealed partial class IdempotencyKeyCleanup(
     ILogger<IdempotencyKeyCleanup> logger
 ) : BackgroundService
 {
+    // What PeriodicTimer accepts, and a retention whose cutoff stays far from DateTimeOffset.MinValue.
+    internal static readonly TimeSpan MinCleanupInterval = TimeSpan.FromMilliseconds(1);
+    internal static readonly TimeSpan MaxCleanupInterval = TimeSpan.FromMilliseconds(uint.MaxValue - 1);
+    internal static readonly TimeSpan MaxRetention = TimeSpan.FromDays(36500);
+
     private PeriodicTimer? _timer;
+    private Type[] _dbContexts = [];
 
     // The timer starts with the Host, not in ExecuteAsync, which .NET 10 runs on the thread pool: a tick due after the
     // Host started is never missed.
-    public override Task StartAsync(CancellationToken cancellationToken)
+    public override async Task StartAsync(CancellationToken cancellationToken)
     {
         if (options.Value.Retention != Timeout.InfiniteTimeSpan)
         {
+            // Every DbContext registered with AddDbContext is also registered as one non-generic DbContextOptions.
+            await using var scope = scopes.CreateAsyncScope();
+            _dbContexts =
+            [
+                .. scope
+                    .ServiceProvider.GetServices<DbContextOptions>()
+                    .Select(registered => registered.ContextType)
+                    .Where(type => type.IsAssignableTo(typeof(PouryaKitDbContext)))
+                    .Distinct(),
+            ];
             _timer = new PeriodicTimer(options.Value.CleanupInterval, timeProvider);
         }
 
-        return base.StartAsync(cancellationToken);
+        await base.StartAsync(cancellationToken);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -39,7 +55,17 @@ internal sealed partial class IdempotencyKeyCleanup(
 
         while (await _timer.WaitForNextTickAsync(stoppingToken))
         {
-            await RemoveExpiredAsync(stoppingToken);
+            foreach (var dbContextType in _dbContexts)
+            {
+                try
+                {
+                    await RemoveExpiredAsync(dbContextType, stoppingToken);
+                }
+                catch (Exception exception) when (!stoppingToken.IsCancellationRequested)
+                {
+                    LogFailed(logger, exception, dbContextType.Name);
+                }
+            }
         }
     }
 
@@ -49,49 +75,32 @@ internal sealed partial class IdempotencyKeyCleanup(
         base.Dispose();
     }
 
-    private async Task RemoveExpiredAsync(CancellationToken stoppingToken)
+    private async Task RemoveExpiredAsync(Type dbContextType, CancellationToken stoppingToken)
     {
         var batchSize = options.Value.BatchSize;
         var cutoff = timeProvider.GetUtcNow() - options.Value.Retention;
         await using var scope = scopes.CreateAsyncScope();
-        // Every DbContext registered with AddDbContext is also registered as one non-generic DbContextOptions.
-        var dbContexts = scope
-            .ServiceProvider.GetServices<DbContextOptions>()
-            .Select(registered => registered.ContextType)
-            .Where(type => type.IsAssignableTo(typeof(PouryaKitDbContext)))
-            .Distinct();
-        foreach (var dbContextType in dbContexts)
+        var dbContext = (DbContext)scope.ServiceProvider.GetRequiredService(dbContextType);
+        var database = dbContext.Database;
+        var table = IdempotencyTable.In(dbContext);
+        // A Module with no [Idempotent] command has no table; looked up first, so no failed statement is logged.
+        if (!await database.SqlQueryRaw<bool>("select to_regclass({0}) is not null as \"Value\"", table).SingleAsync(stoppingToken))
         {
-            try
-            {
-                var dbContext = (DbContext)scope.ServiceProvider.GetRequiredService(dbContextType);
-                var database = dbContext.Database;
-                var table = IdempotencyTable.In(dbContext);
-                // A Module with no [Idempotent] command has no table; looked up first, so no failed statement is logged.
-                if (!await database.SqlQueryRaw<bool>("select to_regclass({0}) is not null as \"Value\"", table).SingleAsync(stoppingToken))
-                {
-                    continue;
-                }
+            return;
+        }
 
-                var delete =
-                    $"delete from {table} where ctid in (select ctid from {table} where reserved_at < {{0}} limit {{1}})";
-                var (removed, batches, batch) = (0, 0, 0);
-                do
-                {
-                    batch = await database.ExecuteSqlRawAsync(delete, [cutoff, batchSize], stoppingToken);
-                    removed += batch;
-                    batches++;
-                } while (batch == batchSize);
+        var delete = $"delete from {table} where ctid in (select ctid from {table} where reserved_at < {{0}} limit {{1}})";
+        var (removed, batches, batch) = (0, 0, 0);
+        do
+        {
+            batch = await database.ExecuteSqlRawAsync(delete, [cutoff, batchSize], stoppingToken);
+            removed += batch;
+            batches++;
+        } while (batch == batchSize);
 
-                if (removed > 0)
-                {
-                    LogRemoved(logger, removed, table, cutoff, batches);
-                }
-            }
-            catch (Exception exception) when (!stoppingToken.IsCancellationRequested)
-            {
-                LogFailed(logger, exception, dbContextType.Name);
-            }
+        if (removed > 0)
+        {
+            LogRemoved(logger, removed, table, cutoff, batches);
         }
     }
 
@@ -115,16 +124,18 @@ internal sealed partial class IdempotencyKeyCleanup(
         public ValidateOptionsResult Validate(string? name, PouryaKitIdempotencyOptions options)
         {
             List<string> failures = [];
-            if (options.Retention <= TimeSpan.Zero && options.Retention != Timeout.InfiniteTimeSpan)
+            if ((options.Retention <= TimeSpan.Zero || options.Retention > MaxRetention) && options.Retention != Timeout.InfiniteTimeSpan)
             {
                 failures.Add(
-                    $"The idempotency key Retention is {options.Retention}; it must be positive, or Timeout.InfiniteTimeSpan to keep every key."
+                    $"The idempotency key Retention is {options.Retention}; it must be positive and at most {MaxRetention}, or Timeout.InfiniteTimeSpan to keep every key."
                 );
             }
 
-            if (options.CleanupInterval <= TimeSpan.Zero)
+            if (options.CleanupInterval < MinCleanupInterval || options.CleanupInterval > MaxCleanupInterval)
             {
-                failures.Add($"The idempotency key CleanupInterval is {options.CleanupInterval}; it must be positive.");
+                failures.Add(
+                    $"The idempotency key CleanupInterval is {options.CleanupInterval}; it must be from {MinCleanupInterval} to {MaxCleanupInterval}."
+                );
             }
 
             if (options.BatchSize < 1)
