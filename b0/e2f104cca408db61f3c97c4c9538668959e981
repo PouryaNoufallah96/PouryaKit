@@ -1,0 +1,30 @@
+.agents/skills/pourya-kit/references/templates.md
+  s_bdf0617f846b2b::t_5f4253845a8dd4 114
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_bdf0617f846b2b::t_446cc82b2209be 375-378
+  s_bdf0617f846b2b::t_5f4253845a8dd4 374
+docs/acceptance.md
+  s_bdf0617f846b2b::t_5f4253845a8dd4 537
+scripts/packaging/validate.py
+  s_bdf0617f846b2b::t_8038955972871b 155-168,393-394,399,422-425,429-430
+docs/packages.md
+  s_bdf0617f846b2b::t_5f4253845a8dd4 29
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_19968161ef6715 624
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b0e2f104cca408db61f3c97c4c9538668959e981",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
