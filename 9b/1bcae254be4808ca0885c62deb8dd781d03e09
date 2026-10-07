@@ -1,0 +1,47 @@
+.claude/agents/kit-scout.md
+  s_bccfa831433375::t_84673bb78cbb8a 5
+.claude/rules/ai-setup.md
+  s_bccfa831433375::t_b7b173cb604697 25
+.agents/scripts/check-ai-setup.py
+  s_bccfa831433375::t_e4d171826b1654 238-242,247-253
+  s_bccfa831433375::t_940dfe7d63bdc7 26-31
+  s_bccfa831433375::t_d66d6cdffaf4d2 243-246
+.codex/agents/kit-scout.toml
+  s_bccfa831433375::t_c36bead0b656d9 2,5-6
+docs/agents/ai-setup.md
+  s_bccfa831433375::t_e8a7bd0bffbf10 40-41
+  s_bccfa831433375::t_0f522da77e33cb 66
+  s_bccfa831433375::t_a029b299685e1d 30
+  s_bccfa831433375::t_72cf3856db8494 42-48
+  s_bccfa831433375::t_6c2ed21e4f1b07 125
+.codex/agents/kit-implementer.toml
+  s_bccfa831433375::t_f0df7ab141e4cd 2,5-6
+.claude/agents/kit-implementer.md
+  s_bccfa831433375::t_81556d341defd7 5
+  s_bccfa831433375::t_c9e03a3cc979dd 6
+AGENTS.md
+  s_bccfa831433375::t_9b1336f30c7ac5 33
+.codex/config.toml
+  s_bccfa831433375::t_56f5fe07e5102c 11
+  s_bccfa831433375::t_5e28d3cbed1dfe 7
+.claude/agents/kit-reviewer.md
+  s_bccfa831433375::t_ee83dbe63f2030 5
+.codex/agents/kit-reviewer.toml
+  s_bccfa831433375::t_bbbd42ee750658 2,5-6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9b1bcae254be4808ca0885c62deb8dd781d03e09",
+  "prompts": {},
+  "sessions": {
+    "s_bccfa831433375": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "6f77c3ee-3205-4f95-89bc-8ef584c87187",
+        "model": "grok-4.7"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
