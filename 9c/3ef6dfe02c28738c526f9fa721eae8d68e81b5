@@ -1,0 +1,21 @@
+.claude/agent-memory/kit-implementer/jwt-bearer-facts.md
+  s_6c3c3736ba14ff::t_74bcda7e01b9ca 1-18
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_6c3c3736ba14ff::t_cd5a616ffcfc8a 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9c3ef6dfe02c28738c526f9fa721eae8d68e81b5",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
