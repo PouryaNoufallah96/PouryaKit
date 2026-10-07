@@ -1,0 +1,25 @@
+src/PouryaKit.Persistence.Dapper/DapperServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_713457b585ce1a 5,23-24,48,74-76
+src/PouryaKit.Persistence.Dapper/ReadConnectionCheck.cs
+  s_bdf0617f846b2b::t_713457b585ce1a 1-18
+src/PouryaKit.Persistence.Postgres/PostgresServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_713457b585ce1a 5,20-22,40-41
+src/PouryaKit.Persistence.Postgres/PostgresConnectionsCheck.cs
+  s_bdf0617f846b2b::t_713457b585ce1a 1-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c8ff229e1d08359fa775d184ee3c422dcecb18bf",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
