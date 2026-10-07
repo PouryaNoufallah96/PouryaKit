@@ -4,6 +4,12 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
   <ItemGroup>
+    <!-- For OperationContext.RestoreTrusted only (#57, ADR 0007): Kit code that restores a context from material the
+         Kit wrote. A structure test keeps the list to these two. -->
+    <InternalsVisibleTo Include="PouryaKit.Messaging.Wolverine" />
+    <InternalsVisibleTo Include="PouryaKit.Web" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\PouryaKit.Core\PouryaKit.Core.csproj" />
     <ProjectReference Include="..\PouryaKit.Domain\PouryaKit.Domain.csproj" />
   </ItemGroup>

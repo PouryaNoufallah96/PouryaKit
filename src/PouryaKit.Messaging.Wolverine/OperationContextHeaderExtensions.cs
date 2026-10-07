@@ -30,8 +30,9 @@ public static class OperationContextHeaderExtensions
         }
     }
 
-    // The context of the Operation a delivery runs: a continuation of the one that published the message, with the same
-    // Actor, tenant and correlation, caused by it, and an OperationId of its own.
+    // The context of the Operation a delivery runs: a trusted continuation of the one that published the message, with
+    // the same Actor, tenant and correlation, caused by it, and an OperationId of its own. Trusted because the Kit's
+    // Outbox wrote these headers when that authorized Operation committed.
     internal static OperationContext ContinuedOperationContext(Envelope envelope)
     {
         string Header(string name) =>
@@ -48,7 +49,7 @@ public static class OperationContextHeaderExtensions
             _ => throw new InvalidOperationException($"The message {envelope.Id} has an undefined ActorKind header."),
         };
         envelope.Headers.TryGetValue(OperationContextHeaders.Tenant, out var tenant);
-        return new OperationContext(
+        return OperationContext.RestoreTrusted(
             actor,
             tenant,
             Guid.Parse(Header(OperationContextHeaders.CorrelationId), CultureInfo.InvariantCulture),

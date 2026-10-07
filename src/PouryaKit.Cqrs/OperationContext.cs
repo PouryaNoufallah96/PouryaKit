@@ -10,7 +10,8 @@ public sealed record OperationContext
 {
     /// <summary>
     /// The context of a new Operation run by <paramref name="actor"/>. With no <paramref name="correlationId"/> the
-    /// Operation starts a new chain of work, and its correlation is its own <see cref="OperationId"/>.
+    /// Operation starts a new chain of work, and its correlation is its own <see cref="OperationId"/>. A
+    /// <paramref name="causationId"/> is recorded as given, but the context is never a trusted continuation.
     /// </summary>
     public OperationContext(Actor actor, string? tenant = null, Guid? correlationId = null, Guid? causationId = null)
     {
@@ -33,14 +34,37 @@ public sealed record OperationContext
     /// <summary>Shared by every Operation in one chain of work, from the Operation that started it.</summary>
     public Guid CorrelationId { get; }
 
-    /// <summary>The Operation, or message, that caused this one; null for the Operation that started the chain.</summary>
+    /// <summary>
+    /// The Operation, or message, that caused this one; null for the Operation that started the chain. It is
+    /// informational: <see cref="IsTrustedContinuation"/>, not a causation, marks work that runs on another
+    /// Operation's authority.
+    /// </summary>
     public Guid? CausationId { get; }
 
     /// <summary>
-    /// The context of a new Operation this one causes: the same Actor, tenant and correlation, caused by this Operation.
-    /// It is a trusted continuation (G.6): the Kit adds no authorization of its own for it. An authorizer registered for
-    /// the continued operation still runs, with the original Actor, and can recognise a continuation by its
-    /// <see cref="CausationId"/>.
+    /// True only for work an authorized Operation caused, as the Kit establishes it: a context the Kit restored from
+    /// material it wrote itself, such as a message delivery restored from the headers its Outbox wrote when the causing
+    /// Operation committed, or one <see cref="Continue"/> gave inside the running Operation it continues. Such work
+    /// runs on the authority of the Operation that caused it (G.6), so a permission check does not authorize its Actor
+    /// again; an authorizer of the application still runs, with the original Actor, and recognises it by this flag.
+    /// The constructor never sets it.
     /// </summary>
-    public OperationContext Continue() => new(Actor, Tenant, CorrelationId, OperationId);
+    public bool IsTrustedContinuation { get; private init; }
+
+    /// <summary>
+    /// The context of a new Operation this one causes: the same Actor, tenant and correlation, caused by this Operation.
+    /// It is a trusted continuation only when called on this exact context while the dispatcher runs its Operation,
+    /// past its authorization checks, from inside that Operation, as a handler asking another Module does. Called on a
+    /// context that never ran, whose Operation has ended, or from an authorizer or a validator, it records the
+    /// causation and is not trusted.
+    /// </summary>
+    public OperationContext Continue() =>
+        new(Actor, Tenant, CorrelationId, OperationId) { IsTrustedContinuation = AuthorizedOperation.Runs(this) };
+
+    // The one way to establish trust outside a running Operation, for Kit code that restores a context from material the
+    // Kit wrote: delivery in PouryaKit.Messaging.Wolverine, and the trusted-peer binding of PouryaKit.Web, the two
+    // assemblies this one's InternalsVisibleTo names. No public entry point could be callable by them and not by an
+    // application.
+    internal static OperationContext RestoreTrusted(Actor actor, string? tenant, Guid correlationId, Guid causationId) =>
+        new(actor, tenant, correlationId, causationId) { IsTrustedContinuation = true };
 }

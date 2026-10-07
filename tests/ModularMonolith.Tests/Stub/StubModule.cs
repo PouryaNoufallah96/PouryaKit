@@ -24,6 +24,7 @@ public sealed class StubModule : IModuleDefinition
         module.AddPouryaKitValidation(typeof(StubModule).Assembly);
         module.AddPouryaKitPermissions(typeof(StubModule).Assembly);
         module.AddSingleton<StampAuthorizations>();
+        module.AddSingleton<ContinuationProbes>();
         module.AddPouryaKitNotificationHandlers(typeof(StubModule).Assembly, typeof(StubModule));
         module.Publish<NoteSharedV1>("stub.note-shared.v1", typeof(StubModule));
         module.Publish<NoteCopyRequestedV1>("stub.note-copy-requested.v1", typeof(StubModule));

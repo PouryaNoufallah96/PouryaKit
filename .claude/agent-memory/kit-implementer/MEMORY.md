@@ -26,5 +26,6 @@
 - [Declared authorizer check facts](declared-authorizer-check-facts.md) — #56: why a Cqrs seam, build-time factory hook, keyed ImplementationType throws, Gateway proof
 - [ImplementingTypes lookup facts](implementing-types-lookup-facts.md) — #55: Of vs Candidates, GetTypes order is MetadataToken order and a test pins it
 - [Password hashing facts](password-hashing-facts.md) — #40: PBKDF2 key floor, TryParse takes trailing NUL, strict base64, consumers/<name>.cs, OWASP pin, IL check
+- [Continuation trust facts](continuation-trust-facts.md) — #57: the one Cqrs IVT, Continue() trusted only in its running authorized Operation, ambient-check test tricks
 - [Versioning facts](versioning-facts.md) — #49: Wolverine type routes match by name, ilspycmd decompile, asking main to widen allowed_files, Receipt mutation scope
 - [Paging facts](paging-facts.md) — #35: page validation in the Feature validator, Npgsql typed nulls, EF Contains as LIKE, rebase onto moved wave branch
