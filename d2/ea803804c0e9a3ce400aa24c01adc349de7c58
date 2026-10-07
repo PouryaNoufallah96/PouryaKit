@@ -1,0 +1,52 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_bdf0617f846b2b::t_3e938784f01552 45
+tests/PouryaKit.ArchitectureTests/TemplateRules.cs
+  s_bdf0617f846b2b::t_2b18526536a303 222-224,226,229-296
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_bdf0617f846b2b::t_92797171e4e3e5 117,119
+  s_bdf0617f846b2b::t_14fdd753ddc53a 137-175
+scripts/packaging/validate.py
+  s_bdf0617f846b2b::t_fe9df66a2e2fee 21-22
+  s_bdf0617f846b2b::t_d0fbe92353c731 23,134-136,385,390,396,400-401
+src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_bdf0617f846b2b::t_fc9769d00cff6b 16
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_bdf0617f846b2b::t_fc9769d00cff6b 24
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_bdf0617f846b2b::t_fc9769d00cff6b 22
+src/PouryaKit.Templates/content/monolith/.template.config/template.json
+  s_bdf0617f846b2b::t_1e7aa1871a2d0d 24-30
+.agents/skills/pourya-kit/references/templates.md
+  s_bdf0617f846b2b::t_b296fa4b8f42ba 23,112,114-115
+src/PouryaKit.Templates/content/monolith/ModularMonolith.slnx
+  s_bdf0617f846b2b::t_fc9769d00cff6b 3-4,11
+src/PouryaKit.Templates/content/modular/.template.config/template.json
+  s_bdf0617f846b2b::t_1e7aa1871a2d0d 24-30
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_e4d401799ab80b 618,625,642
+docs/acceptance.md
+  s_bdf0617f846b2b::t_9039640d28e52d 549-559
+src/PouryaKit.Templates/content/modular/ModularMonolith.slnx
+  s_bdf0617f846b2b::t_fc9769d00cff6b 3-4,13
+docs/packages.md
+  s_bdf0617f846b2b::t_e4d401799ab80b 31
+.claude/agent-memory/kit-implementer/template-package-facts.md
+  s_bdf0617f846b2b::t_9555ca9332de87 3
+  s_bdf0617f846b2b::t_eafc7bae22d0a7 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d2ea803804c0e9a3ce400aa24c01adc349de7c58",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
