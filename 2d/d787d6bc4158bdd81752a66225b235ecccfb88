@@ -1,0 +1,21 @@
+tests/PouryaKit.ArchitectureTests/RestoredPackage.cs
+  s_0d5a1b290c2d36::t_72383bc2ebf4d5 105-108
+tests/PouryaKit.ArchitectureTests/PackageArtifactTests.cs
+  s_0d5a1b290c2d36::t_fead0183a5dd09 127-170
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2dd787d6bc4158bdd81752a66225b235ecccfb88",
+  "prompts": {},
+  "sessions": {
+    "s_0d5a1b290c2d36": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5bdb6a50-6bfa-4dc6-9059-d46d18b45597",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
