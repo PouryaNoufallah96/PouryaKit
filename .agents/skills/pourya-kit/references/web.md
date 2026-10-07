@@ -46,6 +46,8 @@ internal sealed class CreateProductEndpoint : IEndpoint
 internal sealed record CreateProductBody(Guid ProductId, Guid CategoryId, string Name);
 
 // In the Composition Root: module.AddPouryaKitEndpoints("/catalog", typeof(CatalogModule).Assembly);
+// The Proving Sample's Catalog declares API versions, so its CreateProduct generates the location with LinkGenerator
+// in the requested version instead (openapi.md).
 ```
 
 ## The Host
@@ -188,7 +190,7 @@ internal sealed class ListProductsEndpoint : IEndpoint
 ## From Result to response
 
 - `ToHttpResult()` is the one place a Result becomes a response. On a `Result` without a value, success answers 204 No Content. On a `Result<T>`, success answers 200 OK with the value as the JSON body.
-- `ToHttpResult(value => ...)` answers another success shape, such as 201 Created with a location: `.ToHttpResult(id => TypedResults.Created($"/catalog/products/{id}", new { id }))`.
+- `ToHttpResult(value => ...)` answers another success shape, such as 201 Created with a location: `.ToHttpResult(id => TypedResults.Created($"/catalog/products/{id}", new { id }))`. In a Module that declares API versions, generate the location with `LinkGenerator` instead, so it names the requested version ([openapi.md](openapi.md#what-a-caller-sees)).
 - A failure answers a problem response, whatever overload the endpoint used.
 
 ## A Page over HTTP

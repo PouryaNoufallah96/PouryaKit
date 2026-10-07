@@ -8,6 +8,7 @@ using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -146,7 +147,15 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
     public async Task Each_operation_requires_the_bearer_scheme_unless_it_allows_anonymous_callers()
     {
         var lamp = await CreateLampAsync();
-        using var anonymous = Unversioned(Fixture.Client());
+        // The Host's own composition, whose default scheme is JwtBearer's, not the fixture's test scheme.
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder => builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        );
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var anonymous = Unversioned(AppFixture.ClientOf(host));
 
         var v2 = await DocumentAsync(anonymous, "v2");
         var listed = await SendAsync(anonymous, HttpMethod.Get, "/catalog/v2/products", null);
@@ -173,6 +182,59 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         // The document says what the pipeline does: the list is public, reading one product is not.
         Assert.Equal(HttpStatusCode.OK, listed.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, read.StatusCode);
+    }
+
+    [Fact]
+    public async Task An_operation_protected_by_a_scheme_the_document_cannot_state_carries_no_requirement()
+    {
+        using var client = Unversioned(Fixture.Client());
+
+        // The fixture's default scheme is its test scheme, not a JWT bearer one.
+        var v2 = await DocumentAsync(client, "v2");
+
+        Assert.All(Operations(v2), operation => Assert.False(operation.Body.TryGetProperty("security", out _), operation.Name));
+        Assert.False(v2.TryGetProperty("components", out var components) && components.TryGetProperty("securitySchemes", out _));
+    }
+
+    [Fact]
+    public async Task A_created_products_location_names_the_version_the_request_selected_and_is_followed_as_it_is()
+    {
+        var category = Guid.CreateVersion7();
+        await Fixture.Gateway<CatalogModule>().SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
+        using var client = Unversioned(Fixture.Client("ada"));
+        var byUrl = Guid.CreateVersion7();
+        var byHeader = Guid.CreateVersion7();
+
+        var createdByUrl = await SendAsync(client, HttpMethod.Post, "/catalog/v2/products", null, JsonContent.Create(new { productId = byUrl, categoryId = category, name = "Desk lamp" }));
+        var readByUrl = await SendAsync(client, HttpMethod.Get, createdByUrl.Headers.Location!.OriginalString, null);
+        var createdByHeader = await SendAsync(client, HttpMethod.Post, "/catalog/products", "1.0", JsonContent.Create(new { productId = byHeader, categoryId = category, name = "Floor lamp" }));
+        var readByHeader = await SendAsync(client, HttpMethod.Get, createdByHeader.Headers.Location!.OriginalString, "1.0");
+
+        Assert.Equal(HttpStatusCode.Created, createdByUrl.StatusCode);
+        Assert.Equal($"/catalog/v2/products/{byUrl}", createdByUrl.Headers.Location.OriginalString);
+        Assert.Equal(HttpStatusCode.OK, readByUrl.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, createdByHeader.StatusCode);
+        Assert.Equal($"/catalog/v1/products/{byHeader}", createdByHeader.Headers.Location.OriginalString);
+        Assert.Equal(HttpStatusCode.OK, readByHeader.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_declaration_for_a_route_group_no_module_maps_fails_the_host_at_start()
+    {
+        await using var host = PlainHost(services =>
+        {
+            services.AddPouryaKitOpenApi();
+            services.AddPouryaKitApiVersions("/plians", versions => versions.HasApiVersion(new ApiVersion(1, 0)));
+        });
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
+
+        Assert.StartsWith(
+            "API versions are declared for the route group /plians, but no Module's endpoints are mapped under it.",
+            thrown.Message
+        );
     }
 
     [Fact]

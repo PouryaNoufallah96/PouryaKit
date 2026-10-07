@@ -1,5 +1,7 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +14,8 @@ internal sealed class VersionedModuleRouteGroups(
     IServiceProvider services
 ) : IModuleRouteGroups
 {
+    private readonly HashSet<string> _mapped = [];
+
     public IReadOnlyList<IEndpointRouteBuilder> Map(string routePrefix, RouteGroupBuilder moduleGroup)
     {
         var declared = declarations.SingleOrDefault(declaration => declaration.RoutePrefix == routePrefix);
@@ -27,13 +31,41 @@ internal sealed class VersionedModuleRouteGroups(
             );
         }
 
+        _mapped.Add(routePrefix);
         var versions = moduleGroup.NewApiVersionSet(routePrefix.Trim('/'));
         declared.Declare(versions);
         var versionSet = versions.Build();
-        return
-        [
-            moduleGroup.MapGroup("/v{version:apiVersion}").WithApiVersionSet(versionSet),
-            moduleGroup.MapGroup("").WithApiVersionSet(versionSet),
-        ];
+        var unversioned = moduleGroup.MapGroup("").WithApiVersionSet(versionSet);
+        // An endpoint name is unique in the Host, so it belongs to the versioned path; its unversioned copy has none.
+        ((IEndpointConventionBuilder)unversioned).Finally(endpoint =>
+        {
+            foreach (var name in endpoint.Metadata.Where(metadata => metadata is IEndpointNameMetadata or IRouteNameMetadata).ToList())
+            {
+                endpoint.Metadata.Remove(name);
+            }
+        });
+        return [moduleGroup.MapGroup("/v{version:apiVersion}").WithApiVersionSet(versionSet), unversioned];
     }
+
+    /// <summary>The declared route prefixes no Module's endpoints were mapped under.</summary>
+    public IEnumerable<string> Unmapped() =>
+        declarations.Select(declaration => declaration.RoutePrefix).Where(prefix => !_mapped.Contains(prefix));
+}
+
+// Fails the Host's start when a Composition Root declared API versions for a route prefix no Module's endpoints are
+// mapped under, which would otherwise leave that Module unversioned; it runs after the application mapped its routes.
+internal sealed class UnmappedApiVersionsCheck(IModuleRouteGroups routeGroups) : IStartupFilter
+{
+    public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) =>
+        app =>
+        {
+            if (routeGroups is VersionedModuleRouteGroups versioned && versioned.Unmapped().ToList() is [_, ..] unmapped)
+            {
+                throw new InvalidOperationException(
+                    $"API versions are declared for the route group {string.Join(", ", unmapped)}, but no Module's endpoints are mapped under it. Declare them with the prefix the Module's AddPouryaKitEndpoints names, and map the Modules with MapPouryaKitModuleEndpoints."
+                );
+            }
+
+            next(app);
+        };
 }

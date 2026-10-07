@@ -1,6 +1,7 @@
 using System.Globalization;
 using Asp.Versioning;
 using Asp.Versioning.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -22,7 +23,9 @@ public static class WebOpenApiServiceCollectionExtensions
         /// Module supports and deprecates, and a version with a sunset in <see cref="PouryaKitOpenApiOptions"/> reports
         /// that date and its policy link. The documents are the versions the Modules declared with
         /// <c>AddPouryaKitApiVersions</c>; in each, an operation that requires an authenticated caller requires the
-        /// HTTP bearer scheme, and an operation that allows anonymous callers requires none. <c>MapPouryaKitOpenApi</c>
+        /// authentication schemes its policy names, or else the Host's default one, as far as each is a JWT bearer
+        /// scheme, which the document states as HTTP bearer; a scheme of any other handler is left out, and an operation
+        /// that allows anonymous callers requires none. <c>MapPouryaKitOpenApi</c>
         /// serves them.
         /// </summary>
         public IServiceCollection AddPouryaKitOpenApi(Action<PouryaKitOpenApiOptions>? configure = null)
@@ -51,7 +54,6 @@ public static class WebOpenApiServiceCollectionExtensions
                 })
                 .AddOpenApi(document =>
                 {
-                    document.Document.AddDocumentTransformer<BearerSecurity>();
                     document.Document.AddOperationTransformer<BearerSecurity>();
                     // The library's own notices say "was" or "will be" by comparing the date with the current time.
                     document.DocumentDescription.DeprecationNotice = _ => "This API version is deprecated.";
@@ -74,8 +76,9 @@ public static class WebOpenApiServiceCollectionExtensions
         /// <c>{routePrefix}/v{version}</c> and under <paramref name="routePrefix"/> with the version in the
         /// <see cref="WebOpenApiServiceCollectionExtensions.ApiVersionHeader"/> header, unless it maps itself to some
         /// with <c>MapToApiVersion</c>. A Module's Composition Root calls it; the Host registers
-        /// <c>AddPouryaKitOpenApi</c>, or mapping the Module's endpoints throws. A Module that declares no version
-        /// keeps its unversioned paths.
+        /// <c>AddPouryaKitOpenApi</c>, or mapping the Module's endpoints throws, and a prefix no Module's endpoints are
+        /// mapped under fails the Host's start. An endpoint's name (<c>WithName</c>) stays on its versioned path only.
+        /// A Module that declares no version keeps its unversioned paths.
         /// </summary>
         public IServiceCollection AddPouryaKitApiVersions(string routePrefix, Action<ApiVersionSetBuilder> declare)
         {
@@ -94,6 +97,7 @@ public static class WebOpenApiServiceCollectionExtensions
 
             services.AddSingleton(new ModuleApiVersions(routePrefix, declare));
             services.TryAddSingleton<IModuleRouteGroups, VersionedModuleRouteGroups>();
+            services.TryAddEnumerable(ServiceDescriptor.Transient<IStartupFilter, UnmappedApiVersionsCheck>());
             return services;
         }
     }

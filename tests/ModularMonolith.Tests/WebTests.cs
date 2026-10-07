@@ -39,7 +39,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(HttpStatusCode.OK, categoryCreated.StatusCode);
         Assert.Equal($"\"{category}\"", await BodyAsync(categoryCreated));
         Assert.Equal(HttpStatusCode.Created, productCreated.StatusCode);
-        Assert.Equal($"/catalog/products/{product}", productCreated.Headers.Location?.OriginalString);
+        Assert.Equal($"/catalog/v2/products/{product}", productCreated.Headers.Location?.OriginalString);
         Assert.Equal($$"""{"id":"{{product}}"}""", await BodyAsync(productCreated));
         Assert.Equal(HttpStatusCode.OK, found.StatusCode);
         Assert.Equal($$"""{"id":"{{product}}","categoryId":"{{category}}","name":"Desk lamp"}""", await BodyAsync(found));
