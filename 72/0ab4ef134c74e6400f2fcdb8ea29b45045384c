@@ -1,0 +1,80 @@
+src/PouryaKit.Security.JwtBearer/PouryaKitJwtBearerOptions.cs
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 1-17
+src/PouryaKit.Security.JwtBearer/JwtBearerServiceCollectionExtensions.cs
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 1-64
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 51,71-72
+src/PouryaKit.Security.JwtBearer/PouryaKit.Security.JwtBearer.csproj
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 1-8
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 36
+.claude/agent-memory/kit-implementer/jwt-bearer-facts.md
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 1-18
+.agents/skills/pourya-kit/references/web.md
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 65,73,78-79,81-82,203,207,350
+tests/ModularMonolith.Tests/JwtBearerTests.cs
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 1-218
+tests/ModularMonolith.Tests/TestIssuer.cs
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 1-54
+.agents/skills/pourya-kit/references/security.md
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 5-6,13,15,180-222
+.agents/skills/pourya-kit/references/testing.md
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 32-33
+src/PouryaKit.Security.JwtBearer/VerifiedClaims.cs
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 1-65
+tests/ModularMonolith.Tests/TestAuthentication.cs
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 7,11-14,53
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 9,26-28,32-35,38-39
+src/PouryaKit.Security.JwtBearer/JwtBearerValidation.cs
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 1-71
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 17
+PouryaKit.slnx
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 16
+README.md
+  s_6c3c3736ba14ff::t_c79f6e430443bb 5,7
+scripts/packaging/inventory.json
+  s_6c3c3736ba14ff::t_989a433546fe6c 30
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 14
+tests/ModularMonolith.Tests/AppFixture.cs
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 24-25,55
+src/PouryaKit.Security/PouryaKitClaimTypes.cs
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 1-11
+docs/provenance/PouryaKit.Security.JwtBearer.md
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 1-27
+.agents/skills/pourya-kit/SKILL.md
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 34
+  s_6c3c3736ba14ff::t_f6e93153fdef1e 39-40
+docs/architecture/README.md
+  s_6c3c3736ba14ff::t_c79f6e430443bb 3,5,18-19,60,147,535
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 78,86,290-301
+scripts/packaging/consumers/PouryaKit.Security.JwtBearer.cs
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 1-25
+.agents/skills/pourya-kit/references/modules.md
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 39,41
+docs/acceptance.md
+  s_6c3c3736ba14ff::t_589481f8e8dbc5 120
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 123,293-303,305-306
+  s_6c3c3736ba14ff::t_c79f6e430443bb 74,77,292,304
+docs/foundation-review.md
+  s_6c3c3736ba14ff::t_0e7db3e975fca8 260,844
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_6c3c3736ba14ff::t_ad974fde3d912b 21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "720ab4ef134c74e6400f2fcdb8ea29b45045384c",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
