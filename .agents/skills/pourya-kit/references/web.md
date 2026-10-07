@@ -1,6 +1,6 @@
 # Web
 
-`PouryaKit.Web`: an endpoint beside each Feature, authenticated access by default, a Result as an HTTP response, one problem response for every failure, the Operation Context built from the authenticated caller or continued from a trusted peer Host, and outgoing HTTP that carries the Operation Context with the standard retry. Namespace `PouryaKit.Web`. It references `PouryaKit.Cqrs`, `PouryaKit.Core`, the ASP.NET Core shared framework and `Microsoft.Extensions.Http.Resilience`; a Module project that declares endpoints references it, and it brings ASP.NET Core with it.
+`PouryaKit.Web`: an endpoint beside each Feature, authenticated access by default, a Result as an HTTP response, one problem response for every failure, the Operation Context built from the authenticated caller or continued from a trusted peer Host, outgoing HTTP that carries the Operation Context with the standard retry, and configured CORS policies, response compression and a rate limit per Actor. Namespace `PouryaKit.Web`. It references `PouryaKit.Cqrs`, `PouryaKit.Core`, the ASP.NET Core shared framework and `Microsoft.Extensions.Http.Resilience`; a Module project that declares endpoints references it, and it brings ASP.NET Core with it.
 
 - [The Host](#the-host)
 - [Endpoints](#endpoints)
@@ -9,6 +9,7 @@
 - [Problem responses](#problem-responses)
 - [The caller and the Actor](#the-caller-and-the-actor)
 - [Calls between Kit Hosts](#calls-between-kit-hosts)
+- [CORS, compression and rate limits](#cors-compression-and-rate-limits)
 - [Testing over HTTP](#testing-over-http)
 
 The Proving Sample's `CreateProduct` endpoint, beside its command in `Products/Features/CreateProduct/`:
@@ -68,6 +69,8 @@ public static class ModularMonolithHost
 {
     public const string DownstreamClient = "downstream";
 
+    public const string BrowserPolicy = "browser";   // the CORS policy the pipeline answers with
+
     public static WebApplicationBuilder CreateBuilder(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -77,6 +80,10 @@ public static class ModularMonolithHost
         builder.Services.AddPouryaKitWeb();   // also: authenticated access by default
         // The peer Hosts that may continue an Operation of theirs here; none by default.
         builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));
+        // Named CORS policies, response compression and the rate limit per Actor; each is off until configured.
+        builder.Services.Configure<PouryaKitCorsOptions>(builder.Configuration.GetSection("PouryaKit:Web:Cors"));
+        builder.Services.Configure<PouryaKitCompressionOptions>(builder.Configuration.GetSection("PouryaKit:Web:Compression"));
+        builder.Services.Configure<PouryaKitRateLimitOptions>(builder.Configuration.GetSection("PouryaKit:Web:RateLimit"));
         // Outgoing calls: the standard retry of safe methods, then the Operation Context on every attempt.
         var downstream = builder.Services.AddHttpClient(DownstreamClient);
         downstream.AddPouryaKitResilience();
@@ -100,8 +107,10 @@ public static class ModularMonolithHost
         var app = builder.Build();
         app.UseExceptionHandler();   // first, so an exception in routing or authentication still answers a problem response
         app.UseRouting();
+        app.UseCors(BrowserPolicy);   // before authentication, so a preflight is answered without credentials
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseRateLimiter();         // after authorization: it partitions by the authenticated Actor
         app.MapPouryaKitModuleEndpoints();
         return app;
     }
@@ -110,9 +119,10 @@ public static class ModularMonolithHost
 // Program.cs: await ModularMonolithHost.Build(ModularMonolithHost.CreateBuilder(args)).RunAsync();
 ```
 
-- `builder.Services.AddPouryaKitWeb()` registers what every endpoint answers with: problem responses, the handler that turns an exception into one, the same answer to an unreadable request in every environment, a problem response for every failure answered with an empty body ([Problem responses](#problem-responses)), the Kit's one JSON representation (`UsePouryaKitJson`, typed IDs written as their bare values, the same as in messages; [domain-primitives.md](domain-primitives.md#typed-ids)), `PouryaKitWebOptions`, and authenticated access by default ([The caller and the Actor](#the-caller-and-the-actor)).
+- `builder.Services.AddPouryaKitWeb()` registers what every endpoint answers with: problem responses, the handler that turns an exception into one, the same answer to an unreadable request in every environment, a problem response for every failure answered with an empty body ([Problem responses](#problem-responses)), the Kit's one JSON representation (`UsePouryaKitJson`, typed IDs written as their bare values, the same as in messages; [domain-primitives.md](domain-primitives.md#typed-ids)), `PouryaKitWebOptions`, authenticated access by default ([The caller and the Actor](#the-caller-and-the-actor)), and the configured CORS policies, response compression and rate limit, each off until the Host configures it ([CORS, compression and rate limits](#cors-compression-and-rate-limits)).
 - The application configures its own authentication and authorization; the Kit chooses no identity provider and issues no token.
 - `app.UseExceptionHandler()` comes first in the pipeline, and `UseRouting()`, `UseAuthentication()` and `UseAuthorization()` follow it, each called explicitly. Left out, `WebApplication` inserts those three ahead of everything the application adds, and an exception thrown in authentication escapes the handler.
+- Compose the rest in this order: `UseExceptionHandler()`, `UseRouting()`, `UseCors(policyName)`, `UseAuthentication()`, `UseAuthorization()`, `UseRateLimiter()`, then the endpoints. CORS answers a preflight before authentication would refuse it; the rate limiter runs after authorization, because it partitions by the authenticated Actor and an unauthenticated caller of a protected endpoint is refused before it counts. Compression needs no call: when enabled, `AddPouryaKitWeb` adds it outermost, before anything that writes a response.
 - `app.MapPouryaKitModuleEndpoints()` maps every Module's endpoints, each Module under its own route group.
 
 ## Endpoints
@@ -184,7 +194,7 @@ internal sealed class ListProductsEndpoint : IEndpoint
 - Validation failures from the pipeline answer 400 with each failure's code and target. The Unit of Work's Errors answer by their kinds as well: a concurrent change (`UnitOfWork.ConcurrencyConflict`) 409, and a unique index the Module mapped the status of its Error, 409 for `Product.NameInUse` ([persistence.md](persistence.md#unique-values)).
 - An exception, from a handler, the database, authentication or an endpoint, answers 500 with no message, type or stack in the body. The Kit logs it at Error level.
 - A request ASP.NET Core cannot read, such as malformed JSON or a route value that does not parse, answers 400 as a problem response in every environment, with no `detail` and no `errors`, and is logged only at Debug level.
-- A failure that ASP.NET Core answers itself with an empty body, before any endpoint or exception handler runs, is written as the same problem response, with its status and no `errors`: routing's 405 for a method the route does not serve and 415 for a body of a content type the endpoint does not accept, and the 401, 403 or 404 that authentication, authorization or routing answers. `AddPouryaKitWeb` adds this through a startup filter, outermost in the pipeline, so the Host adds nothing for it. A response that already has a body is left as it is.
+- A failure that ASP.NET Core answers itself with an empty body, before any endpoint or exception handler runs, is written as the same problem response, with its status and no `errors`: routing's 405 for a method the route does not serve and 415 for a body of a content type the endpoint does not accept, the 401, 403 or 404 that authentication, authorization or routing answers, and the rate limiter's 429. `AddPouryaKitWeb` adds this through a startup filter, outermost in the pipeline, so the Host adds nothing for it. A response that already has a body is left as it is.
 
 ## The caller and the Actor
 
@@ -237,6 +247,39 @@ internal sealed class StockClient(HttpClient http, OperationContext context)
 - One pipeline per client: ServiceDefaults adds the standard handler to every client through `ConfigureHttpClientDefaults`. With ServiceDefaults, replace its `AddStandardResilienceHandler()` line with `AddPouryaKitResilience()`, or call `RemoveAllResilienceHandlers()` on a client before its own `AddPouryaKitResilience(...)`. Never stack a second retry handler on the first. The last `AddPouryaKitResilience(...)` call for a client decides its replay policy: a client registered again, after `RemoveAllResilienceHandlers()` or not, keeps no earlier one.
 - The receiving Host continues the Operation only for a caller it trusts as a peer. List the peers by the value of their authenticated identity's `ActorClaim` in `PouryaKitTrustedPeerOptions.Peers`, which the sample binds from `PouryaKit:TrustedPeers:Peers`; empty, the default, trusts no one. A trusted peer's request runs with the Actor, tenant and correlation its headers carry, caused by the peer's Operation, so a permission declared on the command is not checked again ([security.md](security.md)). A trusted peer without the headers runs as itself; one with incomplete or unreadable headers answers 400. Every other caller keeps its own identity and a new chain, whatever headers it sends.
 - A trusted peer speaks for any Actor. Use a peer identity no person can hold, such as a client-credentials token's subject or a client certificate's thumbprint, as the Host's authentication scheme issues it; never a header, which anyone can send.
+
+## CORS, compression and rate limits
+
+The Host binds three options from configuration, as the Host above does, and `AddPouryaKitWeb` registers ASP.NET Core's own CORS, response compression and rate limiting with them; there is no package to add. A Host that configures none of them answers no cross-origin request, compresses nothing and limits no one. Their options are validated when the Host starts, so a misconfiguration fails `StartAsync` with an `OptionsValidationException`, never a request.
+
+```json
+{
+  "PouryaKit": {
+    "Web": {
+      "Cors": {
+        "Policies": {
+          "browser": {
+            "Origins": [ "https://app.example" ],
+            "Methods": [ "GET", "POST" ],
+            "Headers": [ "Content-Type", "Authorization" ],
+            "ExposedHeaders": [ "Location" ],
+            "AllowCredentials": false,
+            "PreflightMaxAge": "00:10:00"
+          }
+        }
+      },
+      "Compression": { "Enabled": true },
+      "RateLimit": { "Enabled": true, "PermitLimit": 100, "Window": "00:01:00", "QueueLimit": 10 }
+    }
+  }
+}
+```
+
+- **CORS.** Each entry of `PouryaKitCorsOptions.Policies` is a named policy of ASP.NET Core's CORS services, allowing exactly the origins, methods, headers and exposed headers it lists, with credentials and a preflight cache time when set. Apply one to the pipeline with `app.UseCors(name)`, which also answers preflight requests; `RequireCors(name)` on a minimal API endpoint does not answer them. A policy with no origins allows no origin, and a name nobody configured allows nothing: missing configuration never opens the Host. There is no `AllowAnyOrigin`: an origin is `scheme://host[:port]` as a browser sends it (`https://app.example`, no path or trailing slash), and a wildcard (`*`) anywhere, a malformed origin or a negative `PreflightMaxAge` fails the Host when it starts. A disallowed origin gets no `Access-Control-*` header at all; the browser then refuses the response.
+- **Compression.** `PouryaKitCompressionOptions.Enabled` turns on ASP.NET Core's response compression, Brotli or gzip as the caller's `Accept-Encoding` asks, for its default content types (JSON included, problem responses not), over HTTPS as well as HTTP (`EnableForHttps`). Compressing a response that reflects what the caller sent beside a secret of another party, such as an anti-forgery token, can leak that secret through its length (BREACH); enable it for an API whose responses do not mix the two.
+- **Rate limit.** `PouryaKitRateLimitOptions` is ASP.NET Core's global limiter, a fixed window per partition: `PermitLimit` requests in each `Window`, then up to `QueueLimit` more wait, oldest first, for the next window, and one beyond the queue is refused. `QueueLimit` is its own setting, 0 by default (refuse at once). The partition is the Actor: the value of `PouryaKitWebOptions.ActorClaim` of an authenticated caller. Every unauthenticated caller, such as the storefront's anonymous visitors, shares one partition, whatever it sends; no header, `Host` and `X-Forwarded-For` included, chooses a partition. A trusted peer Host counts as itself, not as the Actor its headers carry. The limits are counted in each Host process. Enabled, it fails the Host when it starts unless `PermitLimit` is at least 1, `Window` is positive and `QueueLimit` is not negative.
+- A refused request answers 429 as the same problem response as every other failure, `{"title":"Too Many Requests","status":429,...}` without `errors`: the limiter sets the status and writes nothing, and the Kit's status code pages write the body ([Problem responses](#problem-responses)).
+- Test them on a Host composed with the configuration the test needs (`builder.Configuration.AddInMemoryCollection(...)` before `Build`, as `WebDefaultsTests` does): a preflight is an `OPTIONS` request with `Origin` and `Access-Control-Request-Method`; send to an `https://` base address for HTTPS, and read `Content-Encoding` on the raw response, which the test client does not decompress.
 
 ## Testing over HTTP
 

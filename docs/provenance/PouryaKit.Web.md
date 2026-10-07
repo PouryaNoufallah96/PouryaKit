@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Web`. Format and rules: [README](README.md).
 
-The status code pages that answer a failure ASP.NET Core leaves with an empty body, such as routing's 405 and 415, as a problem response (`ProblemStatusCodePages`, ticket #19) are new Kit code over ASP.NET Core's own `UseStatusCodePages`, so they have no record here. The outgoing resilience registration (`AddPouryaKitResilience`, `HttpReplay`), the context header rule and the trusted-peer continuation (`PouryaKitTrustedPeerOptions`, `OperationContextHttpHeaders`, ticket #48) are new Kit code over the standard resilience handler and ASP.NET Core's own authentication, so they have no record either.
+The status code pages that answer a failure ASP.NET Core leaves with an empty body, such as routing's 405 and 415, as a problem response (`ProblemStatusCodePages`, ticket #19) are new Kit code over ASP.NET Core's own `UseStatusCodePages`, so they have no record here. The outgoing resilience registration (`AddPouryaKitResilience`, `HttpReplay`), the context header rule and the trusted-peer continuation (`PouryaKitTrustedPeerOptions`, `OperationContextHttpHeaders`, ticket #48) are new Kit code over the standard resilience handler and ASP.NET Core's own authentication, so they have no record either. The configured CORS policies, response compression and rate limit per Actor (ticket #36) use ASP.NET Core's shared framework and add no package; their records follow.
 
 ## Package dependencies
 
@@ -84,3 +84,47 @@ Checked on nuget.org on 2026-10-07 (ticket #48); licence expressions from each p
   - It writes the Operation Context as the Kit's `pouryakit-*` headers (Messaging's names), never the incoming `Authorization` header: upstream copies the caller's bearer token (`:23-30`), which plan I.3 and G.6 reject.
   - It reads no `IHttpContextAccessor`: the context travels on the request (`WithOperationContext`), because the factory builds handlers in a scope of its own and ADR 0007 rejects ambient reads; so a delivery or a job can call out too. A request without a context throws before it is sent.
   - Every value is checked against the Kit's header rule before any header is written, so a claims-derived value cannot add a header line.
+
+## Configured CORS policies
+
+- **Kit files:** `src/PouryaKit.Web/PouryaKitCorsOptions.cs`, `src/PouryaKit.Web/ConfiguredCors.cs`
+- **Upstream:** https://github.com/mehdihadeli/CloudNativeKit
+- **Commit:** e81d65e6376008cb001fdbd886086dc6e84790c6
+- **Upstream paths:** `src/CloudNativeKit.Web/Cors/DependencyInjectionExtensions.cs`
+- **Licence:** MIT
+- **Adoption:** pattern
+- **Ticket:** #36
+- **Intentional differences:**
+  - Kept: a named policy whose origins come from configuration, applied with `UseCors(name)` (`:34-40`, `:59`).
+  - No `AllowAnyOrigin` anywhere: upstream allows every origin, method and header outside configuration in Development and Test (`:16-27`), and every method and header in its configured policy (`:40`). The Kit lists exactly what each policy allows, the same in every environment, and the Host fails when it starts on a `*` or an origin that is not `scheme://host[:port]`.
+  - Any number of named policies, bound by the Host as options rather than read in the registration call, and validated at start.
+
+## Response compression
+
+- **Kit files:** `src/PouryaKit.Web/PouryaKitCompressionOptions.cs`, `src/PouryaKit.Web/ConfiguredCompression.cs`
+- **Upstream:** https://github.com/PouryaNoufallah96/cybernod
+- **Commit:** bae8ac3b7e46f09e9375647786d03391a500876a
+- **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.Web/Extensions/CompressionExtensions.cs`
+- **Licence:** MIT
+- **Adoption:** pattern
+- **Ticket:** #36
+- **Intentional differences:**
+  - Kept: ASP.NET Core's response compression with `EnableForHttps` (`:21-24`).
+  - Off unless configured (`PouryaKitCompressionOptions.Enabled`), and the middleware is added only then, outermost, by a startup filter: upstream turns it on wherever it is registered and leaves the pipeline call to the Host.
+  - The framework's default levels are kept rather than set again (`:26-34` set `Fastest`, which is already the default of both providers).
+
+## Rate limiting per Actor
+
+- **Kit files:** `src/PouryaKit.Web/PouryaKitRateLimitOptions.cs`, `src/PouryaKit.Web/ActorRateLimiting.cs`
+- **Upstream:** https://github.com/PouryaNoufallah96/cybernod
+- **Commit:** bae8ac3b7e46f09e9375647786d03391a500876a
+- **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.Web/RateLimit/RateLimiterExtensions.cs`
+- **Licence:** MIT
+- **Adoption:** pattern
+- **Ticket:** #36
+- **Intentional differences:**
+  - Kept: a fixed-window global limiter of ASP.NET Core's rate limiting with a limit, a window and a queue from configuration (`:49-65`), and a 429 rejection in the problem-response shape (`:33-47`).
+  - The partition is the Actor, the authenticated caller's `ActorClaim` value, and every unauthenticated caller shares one partition: upstream partitions by `X-Forwarded-For`, then the connection's address (`:51`, `:107-113`), or by the identity's name, then the `Host` header (`:71-72`), each of which a caller can choose.
+  - `QueueLimit` is its own setting: upstream's global limiter sets it to the permit limit (`:61`).
+  - The rejection writes nothing itself: it sets 429 and the Kit's status code pages write the same problem response as every other empty-body failure, where upstream writes its own through `IProblemDetailsService` with a title from Humanizer (`:33-47`).
+  - One limiter, off unless configured and validated when the Host starts; upstream registers a second, named policy beside the global limiter (`:67-81`).
