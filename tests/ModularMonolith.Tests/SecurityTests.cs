@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
+using PouryaKit.Domain;
 using PouryaKit.Modularity;
 using PouryaKit.Security;
 using PouryaKit.Testing;
@@ -236,9 +237,53 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
             context =>
                 Assert.Equal(
                     (raising.Actor, raising.Tenant, raising.CorrelationId, true),
-                    (context.Actor, context.Tenant, context.CorrelationId, context.CausationId is not null)
+                    (context.Actor, context.Tenant, context.CorrelationId, context.IsTrustedContinuation)
                 )
         );
+    }
+
+    [Fact]
+    public async Task A_context_application_code_builds_with_a_causation_is_not_trusted_and_its_actor_is_checked()
+    {
+        var text = Unique();
+        var ada = Actor.Person("ada");
+        var stub = Fixture.Gateway<StubModule>();
+
+        var command = await stub.SendAsync(
+            new StampNoteCommand(text),
+            new OperationContext(ada, causationId: Guid.CreateVersion7()),
+            TestContext.Current.CancellationToken
+        );
+        var query = await stub.QueryAsync(
+            new ReadStampLedgerQuery(),
+            new OperationContext(ada, correlationId: Guid.CreateVersion7(), causationId: Guid.CreateVersion7()),
+            TestContext.Current.CancellationToken
+        );
+
+        Assert.Equal(PermissionErrors.Denied, Assert.Single(command.Errors));
+        Assert.Equal(PermissionErrors.Denied, Assert.Single(query.Errors));
+        Assert.Equal(0L, await StampsOfAsync(text));
+    }
+
+    [Fact]
+    public async Task A_continued_context_is_not_trusted_whether_or_not_the_kit_ran_the_context_it_continues()
+    {
+        var text = Unique();
+        var stub = Fixture.Gateway<StubModule>();
+        var neverRun = new OperationContext(Actor.Person("ada"));
+        var ran = new OperationContext(Actor.Person("ada"));
+        Assert.True((await stub.QueryAsync(new ReadOperationContextQuery(), ran, TestContext.Current.CancellationToken)).IsSuccess);
+
+        Result[] refused =
+        [
+            await stub.SendAsync(new StampNoteCommand(text), neverRun.Continue(), TestContext.Current.CancellationToken),
+            await stub.QueryAsync(new ReadStampLedgerQuery(), neverRun.Continue(), TestContext.Current.CancellationToken),
+            await stub.SendAsync(new StampNoteCommand(text), ran.Continue(), TestContext.Current.CancellationToken),
+            await stub.QueryAsync(new ReadStampLedgerQuery(), ran.Continue(), TestContext.Current.CancellationToken),
+        ];
+
+        Assert.All(refused, result => Assert.Equal(PermissionErrors.Denied, Assert.Single(result.Errors)));
+        Assert.Equal(0L, await StampsOfAsync(text));
     }
 
     private async Task<Guid> CreateLampAsync()

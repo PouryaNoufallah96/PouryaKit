@@ -14,9 +14,10 @@ internal sealed class PermissionAuthorizer<TOperation>(OperationContext context,
 
     public async Task<Result> AuthorizeAsync(TOperation operation, CancellationToken cancellationToken)
     {
-        // A continuation runs on the authority of the authorized Operation that caused it (G.6, ADR 0007): its Actor is
-        // not authorized again, so durable work never depends on what that Actor may do by the time it runs.
-        if (context.CausationId is not null)
+        // A continuation the Kit restored runs on the authority of the authorized Operation that caused it (G.6, ADR
+        // 0007): its Actor is not authorized again, so durable work never depends on what that Actor may do by the time
+        // it runs. A causation alone proves nothing: application code can give any.
+        if (context.IsTrustedContinuation)
         {
             return Result.Success();
         }

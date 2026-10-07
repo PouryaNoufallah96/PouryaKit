@@ -80,6 +80,8 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
         Assert.Equal(asking.CorrelationId, answering.CorrelationId);
         Assert.Equal(asking.OperationId, answering.CausationId);
         Assert.NotEqual(asking.OperationId, answering.OperationId);
+        // Continued in process, inside the asking Operation: authorized as a nested command is, not trusted.
+        Assert.False(answering.IsTrustedContinuation);
     }
 
     private async Task<Guid> CreateLampAsync()

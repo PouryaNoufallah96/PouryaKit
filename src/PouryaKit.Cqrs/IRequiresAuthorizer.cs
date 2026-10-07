@@ -10,8 +10,8 @@ namespace PouryaKit.Cqrs;
 /// It is a public Cqrs type because nothing else reaches every Host. The failure it catches is a Module whose
 /// Composition Root never called the attribute's registration, so that registration cannot carry the check, and the
 /// Host's permission source is a plain registration that runs no Kit code. Modularity is the only Kit code that runs
-/// after every Composition Root, and it may reference Cqrs only, not the attribute's package; the Kit has no
-/// <c>InternalsVisibleTo</c> between packages.
+/// after every Composition Root, and it may reference Cqrs only, not the attribute's package; the Kit's one
+/// <c>InternalsVisibleTo</c> between packages opens Cqrs to delivery and Web for restoring a trusted continuation only.
 /// </remarks>
 public interface IRequiresAuthorizer
 {

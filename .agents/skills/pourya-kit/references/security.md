@@ -78,7 +78,7 @@ public sealed class CallerPermissions(IHttpContextAccessor http, IOptions<Pourya
 // builder.Services.AddScoped<IActorPermissions, CallerPermissions>();
 ```
 
-- `HasPermissionAsync(context, permission, ct)` receives the Operation's `OperationContext`, so the answer can depend on the Actor and the tenant. It is asked only for an Operation that is not a continuation.
+- `HasPermissionAsync(context, permission, ct)` receives the Operation's `OperationContext`, so the answer can depend on the Actor and the tenant. It is asked for every Operation but a trusted continuation.
 - Match the claims to the context's Actor, as `CallerPermissions` does: code inside a request may run an Operation as another Actor, which the caller's claims say nothing about.
 - Independent system work, such as a hosted job running as `Actor.System("catalog.reconciler")`, holds only the permissions the application's source grants that named Actor. Nothing holds a permission by default.
 - A Host whose Modules declare permissions and that registers no `IActorPermissions` fails when it is built: `AddPouryaKitModules` validates the container.
@@ -90,10 +90,10 @@ public sealed class CallerPermissions(IHttpContextAccessor http, IOptions<Pourya
 
 ## Continuations
 
-- An Operation whose `OperationContext` has a `CausationId` is a continuation of the authorized Operation that caused it (ADR 0007): a Notification Handler's or Integration Event Handler's delivery, a synchronous question through another Module's Contracts, or a Gateway call made with `context.Continue()`. The permission check lets it run without asking `IActorPermissions` again, so durable work never depends on what its Actor may do by the time it runs (G.6).
-- Only the permission check stands aside. Every other `IAuthorizer<T>` registered for the continued command or query still runs, with the original Actor, and can refuse it; recognise a continuation there by `context.CausationId`.
+- A trusted continuation is an Operation whose `OperationContext.IsTrustedContinuation` is true (ADR 0007): a Notification Handler's or Integration Event Handler's delivery, whose context the Kit restored from the headers its Outbox wrote when the causing Operation committed. The permission check lets it run without asking `IActorPermissions` again, so durable work never depends on what its Actor may do by the time it runs (G.6).
+- Only Kit code sets the mark. A context your code creates is never trusted, whatever `causationId` you give it, and neither is one from `context.Continue()`, even inside a running Operation: a synchronous question through another Module's Contracts, or any Gateway call made with `Continue()`, is checked against the Actor's permissions, as a nested command is. `CausationId` only records the chain.
+- Only the permission check stands aside. Every other `IAuthorizer<T>` registered for the continued command or query still runs, with the original Actor, and can refuse it; recognise a trusted continuation there by `context.IsTrustedContinuation`, never by `CausationId`.
 - An HTTP request always starts a new chain of work, with no causation, so a caller can never present its request as a continuation.
-- Never create a context with a causation to get past a check: a continuation is work an authorized Operation caused, passed on with `Continue()` or restored by a delivery.
 
 ## Testing permissions
 
@@ -101,6 +101,7 @@ public sealed class CallerPermissions(IHttpContextAccessor http, IOptions<Pourya
 - Gateway tests run as `GatewayTestExtensions.TestActor`, independent work with no HTTP caller. Grant it, in the test Host only, the permissions those tests need, by name, as a named system Actor of the Host would be granted them; delegate every other Actor to the Host's own source. The Proving Sample's `TestActorPermissions` does this and is registered after the Host's composition. Never grant every permission or every Actor.
 - Prove a declared permission over HTTP both ways, the effect committed for a caller holding it and a 403 with nothing committed for one without it, and read the rows back from the database.
 - Prove a continuation through a real delivery: an Actor who holds no permission raises a Domain Event whose Notification Handler sends the protected command, and the effect commits; the same Actor sending the command directly is refused.
+- Prove the other side at the Gateway: the same Actor sending the protected command or query with a context built with a causation, or with `Continue()`, is refused with `PermissionErrors.Denied`.
 
 ## Password hashing
 
