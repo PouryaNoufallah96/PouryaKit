@@ -1,6 +1,6 @@
 # Observability
 
-`PouryaKit.Observability`: one activity and one duration measurement for every command and query the dispatcher runs, and a trace that continues from an Operation through the Outbox into the deliveries it causes. Namespace `PouryaKit.Observability`. It references `PouryaKit.Cqrs` only and emits through `System.Diagnostics`: the Kit has no OpenTelemetry package, no exporter and no Serilog. Exporting is the Host's job, done with the standard OpenTelemetry or Aspire setup that the project templates (#53) carry.
+`PouryaKit.Observability`: one activity and one duration measurement for every command and query the dispatcher runs, and a trace that continues from an Operation through the Outbox into the deliveries it causes. Namespace `PouryaKit.Observability`. It references `PouryaKit.Cqrs` only and emits through `System.Diagnostics`: the Kit has no OpenTelemetry package, no exporter and no Serilog. Exporting is the Host's job, done with the standard OpenTelemetry setup of the service defaults recipe ([host-recipes.md](host-recipes.md)) that the project templates (#53) carry.
 
 - [Registering](#registering)
 - [What is emitted](#what-is-emitted)
@@ -64,11 +64,23 @@ request (ASP.NET Core)                  tracestate=vendor=1
 - Each delivery restores both into `Operation.TraceParent` when it begins the Operation. The delivery's activity is a child of Wolverine's span of the envelope when the Host samples the `Wolverine` source, and of the publishing Operation when it does not. Either way it carries the publishing tracestate. Without this step every hop would start a new trace.
 - An occurrence of a recurring command continues no Operation, so its delivery restores no parent: its Operation's activity is a child of Wolverine's span of the envelope when the Host samples the `Wolverine` source, and the root of a trace of its own when it does not ([messaging.md](messaging.md#recurring-commands)).
 - A retry is read back from the message store and stays in the trace, as a sibling of the attempt that failed. A delivery recovered on another Host keeps the parent too (proven in Spike #46).
-- This is proven for durable local delivery in one process. Propagation over RabbitMQ between processes is #52's, so do not claim it before that ticket.
+
+Across RabbitMQ, into a subscription of another Host ([rabbitmq.md](rabbitmq.md)), the trace continues the same way (ADR 0009, #52 amendment):
+
+```text
+Catalog Host                                     Inventory.Host
+pouryakit.operation Deliver  ── broker ──▶  [Wolverine span of the envelope the broker delivered]
+  publishes ProductCreatedV1                  └ [Wolverine span of the subscription's copy]
+                                                └ pouryakit.operation Deliver   Inventory    tracestate=vendor=1
+```
+
+- `parent-id` and `pouryakit-tracestate` cross the broker as they are. The receiving Host's fan-out sends each subscription its own copy, which Wolverine parents on the activity current there, none when nothing samples `Wolverine`; so the fan-out also writes the envelope's `parent-id` into each copy's header `OperationContextHeaders.TraceParent` (`pouryakit-traceparent`), and a delivery reads it when its copy names no parent of its own.
+- Without the `Wolverine` source sampled, the delivery's activity is a child of the publishing Operation in the other Host. With it, there are two Wolverine spans between them: that of the envelope the broker delivered, then that of the copy.
+- Every Host whose Operations belong in the trace calls `AddPouryaKitObservability()`, the receiving Host included: without it, its deliveries have no activity. Each Host exports its own spans; the backend joins them by trace id.
 
 ## Exporting
 
-The Host adds an exporter for the source and the meter named `PouryaKit`, and for `Wolverine` if it wants Wolverine's spans as well, with the standard OpenTelemetry SDK or Aspire's service defaults. Logs, Serilog included, are configured on the Host too. None of it belongs in a Module or in the Kit.
+The Host adds an exporter for the source and the meter named `PouryaKit`, and for `Wolverine` if it wants Wolverine's spans as well, with the standard OpenTelemetry SDK. The service defaults recipe does it for both, and exports over OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured ([host-recipes.md](host-recipes.md#what-each-recipe-does)). Logs, Serilog included, are configured on the Host too. None of it belongs in a Module or in the Kit.
 
 ## Testing telemetry
 
@@ -94,3 +106,4 @@ ActivitySource.AddActivityListener(listener);
 - Assert on tags, `Status`, `ParentSpanId` and `TraceStateString`, not on timings. To assert a duration, use a `MeterListener` for the instrument `pouryakit.operation.duration` of the meter `PouryaKit`: a sub-second Operation has a value above zero with a fraction.
 - A test's tracestate reaches a first delivery attempt from the envelope held in memory. Only a retry reads the header back from the store, so test a retry when the header itself is the claim.
 - `ObservabilityTests` in the Proving Sample's tests does all of this for the Catalog-to-Inventory chain. Its `RecordedTelemetry` holds the listeners, and `DeliveryProbes.ActivitiesOf(subscription)` gives the activity each delivery attempt ran in.
+- `CrossProcessTracingTests` does it across RabbitMQ, with the Catalog Host and `Inventory.Host` of `BrokerFixture` both in the test process: a listener sees its own process only. `HostRecipeTests` shows the Kit's activities and durations reaching an exporter the test adds to the service defaults' own providers.

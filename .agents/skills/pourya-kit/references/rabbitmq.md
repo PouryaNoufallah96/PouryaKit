@@ -17,7 +17,7 @@ The topology is ADR 0006's #50 amendment, topology B. There is no service discov
 ## The topology
 
 - **Publishing.** Each Integration Event and Snapshot a Module of the Host publishes is sent to a fanout exchange named by its wire name, such as `catalog.product-created.v1`. The route comes from the publication, never from a subscription, so the Unit of Work's Outbox writes it in the same commit as the change whether or not a subscription of this Host receives it. Each version is an exchange of its own.
-- **Receiving.** The Host has one durable queue, named by its service name, with a durable Inbox. It is bound to the exchange of each wire name the Host declares as received from another Host and a subscription of it subscribes to. Each envelope received there is stored, then sent again, with every `pouryakit-` header it carries, to the local queue of each subscription to it, and nowhere else. From there each subscription's copy is delivered exactly as a delivery from a Module of the Host is: its own retries, Receipt and dead letter.
+- **Receiving.** The Host has one durable queue, named by its service name, with a durable Inbox. It is bound to the exchange of each wire name the Host declares as received from another Host and a subscription of it subscribes to. Each envelope received there is stored, then sent again, with every `pouryakit-` header it carries and its `parent-id` as `pouryakit-traceparent`, to the local queue of each subscription to it, and nowhere else. From there each subscription's copy is delivered exactly as a delivery from a Module of the Host is: its own retries, Receipt and dead letter.
 - **Never twice.** A wire name the Host publishes itself is never bound to its queue: its subscriptions in this Host receive it from the publication, and bound, it would also come back from the broker.
 - **Never round again.** The fan-out sends each copy to the local queue of each subscription to its type and nowhere else, never through the type's routes, which include its exchange when the Host publishes it. An envelope that came through a binding the Kit never makes, such as one an earlier deployment left for a wire name the Host now publishes, reaches the Host's subscriptions once more, where their Receipts stop it; sent back to its exchange it would go round the broker for ever, each time as a new envelope no Receipt recognises.
 
@@ -49,24 +49,30 @@ if (broker)
 
 ## A Host that receives
 
-A Host that subscribes to an Integration Event or Snapshot no Module of it publishes declares, in its own composition, that another Host publishes it, under the wire name the publishing Module declares. The Proving Sample's `Inventory.Host` composes the unchanged Inventory Module:
+A Host that subscribes to an Integration Event or Snapshot no Module of it publishes declares, in its own composition, that another Host publishes it, under the wire name the publishing Module declares. The Proving Sample's `Inventory.Host` composes the unchanged Inventory Module, as a web Host only to serve the health endpoints of the service defaults recipe ([host-recipes.md](host-recipes.md)):
 
 ```csharp
 using Catalog.Contracts.Products.Events.V1;
 using Catalog.Contracts.Products.Events.V2;
 using Inventory;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Hosting;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
+using PouryaKit.Observability;
 
 // Inventory.Host/InventoryHost.cs
-var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults();
 builder.AddPouryaKitModules(modules => modules.Add<InventoryModule>());
 // Catalog runs in another Host: its wire names, as its Composition Root publishes them.
 builder.Services.Receive<ProductCreatedV1>("catalog.product-created.v1");
 builder.Services.Receive<ProductCreatedV2>("catalog.product-created.v2");
 builder.Services.ReceiveSnapshot<ProductSnapshotV1>("catalog.product-snapshot.v1");
+// Its deliveries continue the trace of the Operation that published them in the Catalog Host.
+builder.Services.AddPouryaKitObservability();
 builder.UsePouryaKitWolverine(connectionName: "app");
 builder.UsePouryaKitRabbitMq(connectionName: "broker", serviceName: "inventory");
 ```
@@ -93,12 +99,13 @@ Every guarantee of [messaging.md](messaging.md#what-the-kit-guarantees) for an I
 - **A copy the store cannot write is never lost.** The store error fails the broker envelope, which is not marked handled: it is retried, then dead-lettered at the Host's queue, and its replay fans it out again, where each subscription applies it once.
 - **A restart loses nothing.** A delivery waiting for its retry survives a kill and restart of its Host, so does a copy that was being delivered when the Host died, and a message published while the Host is down waits in its queue and is delivered after it starts.
 - **Every kind of Host receives every message.** Two Hosts with different service names that subscribe to one wire name each receive all of it.
+- **The trace continues across the broker.** A receiving delivery's Operation is in the publishing Operation's trace with its tracestate, the child of that Operation, or of Wolverine's spans when the Host samples the `Wolverine` source ([observability.md](observability.md#the-trace-through-delivery)); each Host calls `AddPouryaKitObservability()` (`CrossProcessTracingTests`).
 - **Identity and Operation Context cross intact.** The store keeps envelope ids alone (`MessageIdentity.IdOnly`): the broker envelope and each copy have an id of their own, and each Receipt is of the Domain Event's identity, or the Snapshot's, never of an envelope. The receiving delivery continues the publishing Operation, with its Actor, tenant and correlation and the publishing delivery as its causation, a trusted continuation.
 - **Each version to its own subscriptions,** across the broker as inside one Host.
 - **Snapshots stay ordered.** Redelivered across the broker in reverse order or concurrently, an older Snapshot never replaces a newer one, and a live Snapshot never brings back a copy its Tombstone removed.
 - **The Kit's JSON.** Envelopes cross the broker in the Kit's JSON representation (`UsePouryaKitJson`), the same as stored and HTTP bodies, never in Newtonsoft.Json's, which the transport package brings along.
 
-Not proven here: several instances of one receiving Host sharing its queue under `DurabilityMode.Balanced`, and a trace that continues across the broker. The `pouryakit-tracestate` header crosses with the other `pouryakit-` headers and Wolverine's own `parent-id` is left as Wolverine sends it; a trace completed across processes is ticket #52's proof.
+Not proven here: several instances of one receiving Host sharing its queue under `DurabilityMode.Balanced`.
 
 ## Dead letters at the broker queue
 
@@ -121,4 +128,4 @@ A message published before a receiving Host's queue exists, or before its queue 
 
 ## Testing across Hosts
 
-The Proving Sample's `RabbitMqDeliveryTests` (`tests/ModularMonolith.Tests`) are the pattern: a `BrokerFixture` with a RabbitMQ container (`Testcontainers.RabbitMq`, image `rabbitmq:4.3.6`) and a PostgreSQL container of its own, and for each test a vhost and a database per Host, each Host a real `IHost` from the sample's own composition. One test runs `Inventory.Host` as an OS process with `dotnet run`, configured through its environment. Read the receiving Host's store and database directly: `HostFixture` hosts one Host, and a publication whose only subscriptions are in another Host leaves no delivery in the publishing Host's store once it is sent, so `WaitForDeliveriesAsync` of the publishing Host's fixture has nothing to wait for.
+The Proving Sample's `RabbitMqDeliveryTests` (`tests/ModularMonolith.Tests`) are the pattern: a `BrokerFixture` with a RabbitMQ container (`Testcontainers.RabbitMq`, image `rabbitmq:4.3.6`) and a PostgreSQL container of its own, and for each test a vhost and a database per Host, each Host a real `IHost` from the sample's own composition. `BrokerFixture` serves `Inventory.Host` in memory with `UseTestServer()`, so a test reaches its health endpoints with `GetTestClient()`. One test runs `Inventory.Host` as an OS process with `dotnet run`, configured through its environment. `CrossProcessTracingTests` runs both Hosts in the test process for the trace, since an `ActivityListener` sees its own process only. Read the receiving Host's store and database directly: `HostFixture` hosts one Host, and a publication whose only subscriptions are in another Host leaves no delivery in the publishing Host's store once it is sent, so `WaitForDeliveriesAsync` of the publishing Host's fixture has nothing to wait for.

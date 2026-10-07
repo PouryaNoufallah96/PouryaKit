@@ -117,7 +117,7 @@ def simple_consumer(folder, ids, types, version):
     return folder / "Consumer.csproj"
 
 
-def sample_consumer(folder, source, version):
+def sample_consumer(folder, source, entries, version):
     shutil.copytree(ROOT / source, folder / "src", ignore=shutil.ignore_patterns("bin", "obj"))
     for project in (folder / "src").rglob("*.csproj"):
         document = ET.parse(project)
@@ -131,7 +131,7 @@ def sample_consumer(folder, source, version):
                 else:
                     reference.set("Include", include)
         document.write(project, encoding="unicode")
-    return folder / "src/ModularMonolith.Host/ModularMonolith.Host.csproj"
+    return [folder / "src" / entry for entry in entries]
 
 
 def check_cache_folders(folders, cache):
@@ -319,7 +319,7 @@ def validate(output, *, fetch=True):
         folder = output / "consumers" / name
         folder.mkdir(parents=True)
         consumer_config(folder, package_output)
-        project = sample_consumer(folder, consumer["source"], evidence["Version"]) if "source" in consumer else simple_consumer(folder, consumer["packages"], types, evidence["Version"])
+        projects = sample_consumer(folder, consumer["source"], consumer["entries"], evidence["Version"]) if "source" in consumer else [simple_consumer(folder, consumer["packages"], types, evidence["Version"])]
         # A consumer with its own source under consumers/ exercises the packed API instead of only naming its types.
         if (source := ROOT / "scripts/packaging/consumers" / f"{name}.cs").exists():
             shutil.copy(source, folder / "Program.cs")
@@ -335,8 +335,10 @@ def validate(output, *, fetch=True):
                     reference.attrib.pop("Version", None)
             document.write(file, encoding="unicode")
         env = isolated_env(folder)
-        run(["dotnet", "restore", project, "--configfile", folder / "NuGet.Config", "--no-http-cache", "-p:RestoreFallbackFolders="], cwd=folder, env=env, log=output / f"consumer-{name}-restore.log")
-        run(["dotnet", "build", project, "-c", "Release", "--no-restore"], cwd=folder, env=env, log=output / f"consumer-{name}-build.log")
+        for project in projects:
+            log = name if len(projects) == 1 else f"{name}-{project.stem}"
+            run(["dotnet", "restore", project, "--configfile", folder / "NuGet.Config", "--no-http-cache", "-p:RestoreFallbackFolders="], cwd=folder, env=env, log=output / f"consumer-{log}-restore.log")
+            run(["dotnet", "build", project, "-c", "Release", "--no-restore"], cwd=folder, env=env, log=output / f"consumer-{log}-build.log")
         assets = check_consumer(folder, env, ids, evidence["Version"], consumer["excluded"])
         evidence["Consumers"].append({"Name": name, "Packages": consumer["packages"], "Assets": assets})
         print(f"PASS package-only consumer {name}", flush=True)

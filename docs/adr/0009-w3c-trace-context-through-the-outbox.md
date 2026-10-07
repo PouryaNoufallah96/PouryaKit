@@ -192,7 +192,8 @@ MIT; `Microsoft.AspNetCore.TestHost` 10.0.12, MIT, test-only).
 
 - **Local delivery only.** Every observation is from durable local queues in one process. The RabbitMQ path, including
   whether `parent-id` and the Kit's tracestate header survive the broker's envelope mapping, was not examined. #52 must
-  probe and prove it before cross-process propagation is claimed.
+  probe and prove it before cross-process propagation is claimed. *Answered by the #52 amendment below: both survive
+  the broker, and the receiving Host's fan-out needs one header to keep the parent.*
 - **Sampling.** Every listened source sampled everything. The Spike did not examine head sampling, such as a
   parent-based ratio sampler, or the sampled flag in `parent-id`. It also did not examine a Host that disables
   Wolverine's telemetry per endpoint (`TelemetryEnabled = false`). Like an unlistened source, that leaves no span
@@ -225,3 +226,69 @@ MIT; `Microsoft.AspNetCore.TestHost` 10.0.12, MIT, test-only).
   Context's correlation and causation (ADR 0007) stay separate from trace context and are unchanged.
 - The wording in I.4, "delivery activities link to the publishing Operation", reads as "are children of the publishing
   Operation's trace" under this record. Plan sections I.4 and I.6 carry an inline note pointing here.
+
+## Amendment (2026-10-07, ticket #52: the trace across RabbitMQ)
+
+The decision above stands: the relationship is parent, not link, and the Kit relies on Wolverine's `parent-id` wherever
+Wolverine keeps it. Ticket #52 probed the broker path of ADR 0006's #50 amendment before changing any code, and adds one
+header for the one hop where Wolverine loses the parent.
+
+**The probe.** `ModularMonolith.Host` with a broker (Catalog and Billing) and `Inventory.Host`, each a real Host on a
+database of its own and joined only by RabbitMQ (`rabbitmq:4.3.6`) in Testcontainers, both in the test process, with
+`AddPouryaKitObservability()` on both and the listeners of `RecordedTelemetry`. An `ActivityListener` sees its own
+process only, which is why the pair runs in one process; #51's child-process run proves the delivery, not the trace. The
+chain is the local proof's: `CreateProduct` inside an upstream activity with tracestate `kit=52,other=v1`, the delivery
+Operation of its Notification `catalog.product-created.publish-product-created` publishing `ProductCreatedV1`, and
+Inventory's `inventory.product-created` delivery in `Inventory.Host`. Observed at `8b7ab96`, before any change:
+
+| Point | Wolverine's source not listened | Wolverine's source listened |
+|---|---|---|
+| The broker envelope, stored at `rabbitmq://queue/inventory` | `parent-id` is the publishing Notification delivery Operation's W3C id; every `pouryakit-` header arrived, `pouryakit-tracestate` included | the same |
+| Each copy the fan-out stores at `local://{subscription}/` | no `parent-id`; every `pouryakit-` header | `parent-id` is Wolverine's execution span of the broker envelope, the fan-out |
+| Inventory's delivery Operation | the root of a new trace, with no tracestate | in the upstream trace: its parent is Wolverine's span of the copy, whose parent is Wolverine's span of the broker envelope, whose parent is the publishing Operation; tracestate `kit=52,other=v1` |
+
+So both values cross the broker: WolverineFx.RabbitMQ maps `Envelope.ParentId` to the AMQP header `parent-id` and
+carries every other header. The parent is lost inside the receiving Host. The fan-out (`SubscriptionDelivery.FanOutAsync`,
+#51) sends each copy with `EndpointFor(local://{subscription}).SendAsync`, and Wolverine's `DestinationEndpoint.SendAsync`
+applies the delivery options and then `TrackEnvelopeCorrelation(envelope, Activity.Current)`, which sets the copy's
+`ParentId` to `Activity.Current?.Id` (read from the `V6.46.0` package with ilspycmd; inferred, not separated by a test).
+With no listener sampling Wolverine nothing is current there, so the copy names no parent, and the delivery's parse of
+an absent `parent-id` drops the tracestate with it. The copies' Wolverine `ConversationId` is each copy's own id and
+their Wolverine `TenantId` is null; the Kit reads neither, since tenant and correlation travel in its own headers.
+
+**The addition.**
+
+- **`OperationContextHeaders.TraceParent` (`pouryakit-traceparent`).** `CopiesOf`, the one place the copies' headers are
+  set, writes the broker envelope's `parent-id` there when it has one, after the `pouryakit-` headers it copies.
+- **The copy's own parent first.** `OperationContextHeaderExtensions.ContinuedOperationContext` parses the envelope's
+  `parent-id` when it has one, and this header otherwise, with `pouryakit-tracestate`, into `Operation.TraceParent`, as
+  before. `PouryaKit.Observability` is unchanged: a delivery's activity takes `Operation.TraceParent` as its parent only
+  when no activity of that trace is current. Messaging.Wolverine starts no activity and does not reference
+  Observability.
+- **Not the rejected Kit traceparent header.** That option wrote the current activity's id beside Wolverine's
+  `parent-id` on every envelope, a second mechanism for what Wolverine writes, stores and restores. This header carries
+  Wolverine's own stored value across the one hop where Wolverine replaces it, on the copies only.
+
+**Observed after the addition** (`CrossProcessTracingTests`, both listener modes):
+
+- Without Wolverine's source listened, the parent of Inventory's delivery Operation is the publishing Operation in the
+  Catalog Host, as inside one Host.
+- With it listened, the copy's own `parent-id` wins, and the chain is two Wolverine spans deep: the publishing
+  Operation, Wolverine's span of the broker envelope in `Inventory.Host`, Wolverine's span of the copy, then the
+  delivery Operation. Inside one Host there is one. Across the broker, decision 1's "Wolverine's execution span of that
+  envelope" is the copy's span.
+- In both modes the delivery Operation has the upstream trace id and tracestate, on the first attempt, which runs from
+  the copy the fan-out handed over in memory, and on a stored retry, which reads the copy back from the store; the two
+  attempts are siblings under the same parent. Nothing creates a link.
+- Red once: without the header write, or without the fallback read, the unlistened mode starts a new trace again, while
+  the listened mode stays in the trace by design; without `pouryakit-tracestate` among the copied headers both modes
+  lose the tracestate; without `AddPouryaKitObservability()` in `Inventory.Host` neither has a delivery activity.
+
+**Limitations.** A copy recovered after its Host restarts reads the header from the stored copy, as the stored retry
+does; that path was not run separately. Sampling, id format and the ASP.NET Core ingress stay as the Limitations above
+say. The proof Host's exporters are the service defaults recipe of `ModularMonolith.ServiceDefaults`, template content
+that adds the `PouryaKit` source and meter and not `Wolverine` (spec #33's template decision; plan I.3, "Health,
+resilience, service discovery, Serilog"): the trace holds either way.
+
+*Implemented in #52 at `671a7b3`: `OperationContextHeaders.TraceParent`, written by `SubscriptionDelivery.CopiesOf` and read
+by `ContinuedOperationContext`; `CrossProcessTracingTests` pins both listener modes.*

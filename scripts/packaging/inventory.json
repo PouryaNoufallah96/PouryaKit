@@ -30,6 +30,7 @@
     {
       "name": "modular-monolith",
       "source": "samples/ModularMonolith/src",
+      "entries": ["ModularMonolith.Host/ModularMonolith.Host.csproj", "Inventory.Host/Inventory.Host.csproj"],
       "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Observability", "PouryaKit.Caching", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
       "excluded": []
     }

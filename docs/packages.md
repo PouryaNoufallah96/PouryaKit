@@ -26,7 +26,7 @@ The inventory also enumerates the two compositions already supported by Wave 1:
 |---|---|
 | Each package ID in the inventory | A separate application compiling a public type from that package, with one direct Kit package reference |
 | Single Module | The registrations and explicit Operation scope of [the Modules guidance](../.agents/skills/pourya-kit/references/modules.md#an-application-of-one-module), using Cqrs, Validation, Postgres persistence, Dapper reads and Web without Modularity or Messaging |
-| Modular monolith | A copy of the Proving Sample's Host, Modules and Contracts, with every Kit ProjectReference replaced by a package reference |
+| Modular monolith | A copy of the Proving Sample's two Hosts (`ModularMonolith.Host` and `Inventory.Host`), its `ModularMonolith.ServiceDefaults` recipe project, Modules and Contracts, with every Kit ProjectReference replaced by a package reference |
 
 The Service composition depends on the future RabbitMQ transport and is outside Wave 1. This validation adds no service profile or template.
 

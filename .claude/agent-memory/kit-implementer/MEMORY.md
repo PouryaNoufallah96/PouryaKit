@@ -40,3 +40,5 @@
 - [RabbitMQ transport facts](rabbitmq-transport-facts.md) — #51: stub://replies listener, IBrokerEndpoint/DeadLetterStorage checks, Catalog IVT decides test placement
 - [Idempotency retention facts](idempotency-retention-facts.md) — #42 follow-up: .NET 10 ExecuteAsync on Task.Run, tick failure stops the Host, DbContextOptions enumeration, to_regclass, log culture
 - [Caching facts](caching-facts.md) — #43: no token to HybridCache, outermost-query-only slot, serialize then end the read, StampedeJoin proof, Redis lag
+- [Caching facts](caching-facts.md) — #43: HybridCache drops the caller's ExecutionContext, factory throw stores nothing, StampedeJoin proof, Redis write lag
+- [Cross-process tracing and recipe facts](cross-process-tracing-and-recipes-facts.md) — #52: copies lose parent-id at fan-out, defaults pipeline name, OTel providers as global listeners, health/Serilog proofs
