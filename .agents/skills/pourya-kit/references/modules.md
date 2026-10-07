@@ -36,9 +36,9 @@ public sealed class CatalogModule : IModuleDefinition
 public static WebApplicationBuilder CreateBuilder(string[] args)
 {
     var builder = WebApplication.CreateBuilder(args);
-    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+    builder.Services.AddPouryaKitJwtBearer(claims => claims.TenantClaim = "tenant");   // see security.md
     builder.Services.AddAuthorization();
-    builder.Services.AddPouryaKitWeb();
+    builder.Services.AddPouryaKitWeb(web => web.TenantClaim = PouryaKitClaimTypes.Tenant);
     builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>().Add<InventoryModule>().Add<BillingModule>());
     builder.UsePouryaKitWolverine(connectionName: "app");   // the Modules' deliveries; see messaging.md
     return builder;

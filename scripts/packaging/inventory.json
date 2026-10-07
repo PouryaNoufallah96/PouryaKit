@@ -10,6 +10,7 @@
     { "id": "PouryaKit.Persistence.Postgres", "type": "PouryaKit.Persistence.Postgres.PostgresServiceCollectionExtensions" },
     { "id": "PouryaKit.Persistence.Dapper", "type": "PouryaKit.Persistence.Dapper.IReadConnectionFactory" },
     { "id": "PouryaKit.Security", "type": "PouryaKit.Security.IActorPermissions" },
+    { "id": "PouryaKit.Security.JwtBearer", "type": "PouryaKit.Security.JwtBearer.PouryaKitJwtBearerOptions" },
     { "id": "PouryaKit.Messaging", "type": "PouryaKit.Messaging.WireNameAttribute" },
     { "id": "PouryaKit.Messaging.Wolverine", "type": "PouryaKit.Messaging.Wolverine.IReceipts" },
     { "id": "PouryaKit.Messaging.Wolverine.EFCore", "type": "PouryaKit.Messaging.Wolverine.EFCore.ReceiptTable" },
@@ -25,7 +26,7 @@
     {
       "name": "modular-monolith",
       "source": "samples/ModularMonolith/src",
-      "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Security", "PouryaKit.Validation", "PouryaKit.Web"],
+      "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web"],
       "excluded": []
     }
   ]
