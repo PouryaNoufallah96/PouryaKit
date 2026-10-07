@@ -9,16 +9,23 @@ docs/foundation-review.md
   s_5db987750027ae::t_32d42b50a3b95c 261,849
 docs/acceptance.md
   s_5db987750027ae::t_4833c35d7ffc0f 409-432
+  s_5db987750027ae::t_c8469443bedb35 74,77,120
 docs/adr/0002-no-mediator-dependency.md
   s_5db987750027ae::t_f33be63e755948 155,159-160,201-235
+  s_5db987750027ae::t_cc23cf7e7c3e8f 162
 docs/provenance/PouryaKit.Cqrs.md
   s_5db987750027ae::t_8df5d360869504 5
 .agents/skills/pourya-kit/SKILL.md
   s_5db987750027ae::t_25c25139ee8a3c 40
+  s_5db987750027ae::t_c8469443bedb35 3
 docs/architecture/README.md
   s_5db987750027ae::t_da78128f9ba34e 52,62,80,91,159,168,184,209-210,252,262,317-327,607
+  s_5db987750027ae::t_c8469443bedb35 3,158,609
 docs/provenance/PouryaKit.Caching.md
   s_5db987750027ae::t_9e705e108242f4 1-30
+README.md
+  s_5db987750027ae::t_04ed595a6e534f 5
+  s_5db987750027ae::t_c8469443bedb35 7
 ---
 {
   "schema_version": "authorship/3.0.0",
