@@ -1,0 +1,22 @@
+.claude/agent-memory/kit-implementer/rabbitmq-transport-facts.md
+  s_5db987750027ae::t_1d5bea60fad0c2 1-23,38-40
+  s_5db987750027ae::t_c967cf6e897dcb 24-37
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_5db987750027ae::t_8228eb6f7ce2a7 39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "021c68e698ebfec9e18830ffae621d872d194936",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
