@@ -1,0 +1,47 @@
+tests/ModularMonolith.Tests/SecurityTests.cs
+  s_bdf0617f846b2b::t_cc17b3e1bfe320 77,79-86
+tests/ModularMonolith.Tests/IntegrationEventTests.cs
+  s_bdf0617f846b2b::t_949abb348379d7 344
+src/PouryaKit.Cqrs/IQueryCache.cs
+  s_bdf0617f846b2b::t_cc17b3e1bfe320 11
+src/PouryaKit.Caching/ICacheableQuery.cs
+  s_bdf0617f846b2b::t_cc17b3e1bfe320 7
+src/PouryaKit.Cqrs/IRequiresQueryCache.cs
+  s_bdf0617f846b2b::t_cc17b3e1bfe320 6
+src/PouryaKit.Cqrs/CqrsHostApplicationBuilderExtensions.cs
+  s_bdf0617f846b2b::t_cc17b3e1bfe320 12-23
+src/PouryaKit.Cqrs/CompositionCheckRunner.cs
+  s_bdf0617f846b2b::t_d77e0ad73d4a56 6-9,12-16
+src/PouryaKit.Messaging.Wolverine/DelayedCommandServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_cc17b3e1bfe320 22-24
+src/PouryaKit.Messaging.Wolverine/IntegrationEventServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_cc17b3e1bfe320 23-25,70-73
+src/PouryaKit.Cqrs/ICompositionCheck.cs
+  s_bdf0617f846b2b::t_fb93b36ed9c34b 6-9
+src/PouryaKit.Cqrs/ValidatingServiceProviderFactory.cs
+  s_bdf0617f846b2b::t_11717dd3c88205 5-9,18-28
+src/PouryaKit.Modularity/ModularityHostApplicationBuilderExtensions.cs
+  s_bdf0617f846b2b::t_cc17b3e1bfe320 14-18
+src/PouryaKit.Messaging.Wolverine/SnapshotServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_cc17b3e1bfe320 29
+src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/HostTests.cs
+  s_bdf0617f846b2b::t_cc17b3e1bfe320 79,81
+src/PouryaKit.Cqrs/IRequiresAuthorizer.cs
+  s_bdf0617f846b2b::t_cc17b3e1bfe320 5-6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "91033dd324ba82eadd795fa2f96bec2e1679a104",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
