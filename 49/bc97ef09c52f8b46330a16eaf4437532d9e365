@@ -1,0 +1,81 @@
+tests/ModularMonolith.Tests/ObservabilityTests.cs
+  s_6c3c3736ba14ff::t_c39b066a1badf9 43-44
+  s_6c3c3736ba14ff::t_bb6fd947d67e23 1-42,45-184
+docs/provenance/PouryaKit.Observability.md
+  s_6c3c3736ba14ff::t_4ed2972fd8275b 1-25
+docs/acceptance.md
+  s_6c3c3736ba14ff::t_1dbc2c59aac47f 74,77,261-273
+docs/foundation-review.md
+  s_6c3c3736ba14ff::t_da01daa2be9eea 259,847
+src/PouryaKit.Observability/OperationTelemetry.cs
+  s_6c3c3736ba14ff::t_eb1eae0640ce4e 1-40
+tests/ModularMonolith.Tests/MessagingReviewRegressionTests.cs
+  s_6c3c3736ba14ff::t_812a8c07bac210 79
+scripts/packaging/inventory.json
+  s_6c3c3736ba14ff::t_abd6f511603170 13,29
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_6c3c3736ba14ff::t_abd6f511603170 21
+tests/ModularMonolith.Tests/RecordedTelemetry.cs
+  s_6c3c3736ba14ff::t_cfda88d86b7d58 1-15,17,21-30,32-73
+  s_6c3c3736ba14ff::t_1ce8f8d74c2874 16,18-20,31
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_6c3c3736ba14ff::t_abd6f511603170 49,72-73
+src/PouryaKit.Messaging.Wolverine/SubscriptionDelivery.cs
+  s_6c3c3736ba14ff::t_e3c8c486f0f8b3 23,35
+src/PouryaKit.Messaging.Wolverine/DelayedCommandDelivery.cs
+  s_6c3c3736ba14ff::t_e3c8c486f0f8b3 26,29
+docs/architecture/README.md
+  s_6c3c3736ba14ff::t_b6cf4fad20eba8 3,5,18-19,60,76,83,112-114,144,223,241,274-285
+  s_6c3c3736ba14ff::t_c0f77ee56b2638 518
+  s_6c3c3736ba14ff::t_a8264db39d222c 286
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_6c3c3736ba14ff::t_84ceeee1e5d03c 8,46-48
+scripts/packaging/consumers/PouryaKit.Observability.cs
+  s_6c3c3736ba14ff::t_0e29547229d56e 1-11
+src/PouryaKit.Cqrs/OperationContextServiceProviderExtensions.cs
+  s_6c3c3736ba14ff::t_5e349bdca354d3 1,14-15,17,21
+src/PouryaKit.Observability/ObservabilityServiceCollectionExtensions.cs
+  s_6c3c3736ba14ff::t_f8aa290268cf14 1-46
+README.md
+  s_6c3c3736ba14ff::t_7bad10a8d74d06 5,7
+PouryaKit.slnx
+  s_6c3c3736ba14ff::t_84ceeee1e5d03c 14
+src/PouryaKit.Observability/PouryaKit.Observability.csproj
+  s_6c3c3736ba14ff::t_41966b3415344c 1-5
+.agents/skills/pourya-kit/references/modules.md
+  s_6c3c3736ba14ff::t_5634961b019102 110
+.agents/skills/pourya-kit/SKILL.md
+  s_6c3c3736ba14ff::t_7bad10a8d74d06 37,39-40
+src/PouryaKit.Cqrs/Operation.cs
+  s_6c3c3736ba14ff::t_5e349bdca354d3 2,86-87,89-96,107
+src/PouryaKit.Messaging/OperationContextHeaders.cs
+  s_6c3c3736ba14ff::t_1dbf14716f2b01 22-27
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs
+  s_6c3c3736ba14ff::t_e3c8c486f0f8b3 1,90-91,100-104
+src/PouryaKit.Observability/ObservedDispatcher.cs
+  s_6c3c3736ba14ff::t_117c3dc4c59bf2 1-101
+.agents/skills/pourya-kit/references/observability.md
+  s_6c3c3736ba14ff::t_37d16a9678602a 1-94
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_6c3c3736ba14ff::t_84ceeee1e5d03c 16
+tests/ModularMonolith.Tests/DeliveryProbes.cs
+  s_6c3c3736ba14ff::t_615c6393f930e0 2,17,23,29,42-49,92-101,206,218-224
+src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs
+  s_6c3c3736ba14ff::t_e3c8c486f0f8b3 1,36-38,54-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "49bc97ef09c52f8b46330a16eaf4437532d9e365",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
