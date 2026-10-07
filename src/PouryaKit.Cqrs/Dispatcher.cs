@@ -12,7 +12,8 @@ internal sealed partial class Dispatcher(
     IServiceProvider services,
     Operation operation,
     TimeProvider timeProvider,
-    ILogger<Dispatcher> logger
+    ILogger<Dispatcher> logger,
+    IQueryCache? queryCache = null
 ) : IDispatcher
 {
     private static readonly ConcurrentDictionary<Type, object> Invokers = new();
@@ -79,6 +80,7 @@ internal sealed partial class Dispatcher(
         Func<IServiceProvider, TCommandOrQuery, CancellationToken, Task<TResult>> handle,
         Func<ImmutableArray<Error>, TResult> fail,
         IdempotentResponses<TResult>? idempotent,
+        CachedQuery<TCommandOrQuery, TResult>? cached,
         CancellationToken cancellationToken
     )
         where TCommandOrQuery : notnull
@@ -101,7 +103,7 @@ internal sealed partial class Dispatcher(
 
             try
             {
-                var result = await Pipeline(commandOrQuery, ownsUnitOfWork, reading, handle, fail, idempotent, cancellationToken);
+                var result = await Pipeline(commandOrQuery, ownsUnitOfWork, reading, handle, fail, idempotent, cached, cancellationToken);
                 if (isCommand && result.IsFailure)
                 {
                     operation.MarkRollbackOnly(result.Errors);
@@ -136,6 +138,7 @@ internal sealed partial class Dispatcher(
         Func<IServiceProvider, TCommandOrQuery, CancellationToken, Task<TResult>> handle,
         Func<ImmutableArray<Error>, TResult> fail,
         IdempotentResponses<TResult>? idempotent,
+        CachedQuery<TCommandOrQuery, TResult>? cached,
         CancellationToken cancellationToken
     )
         where TCommandOrQuery : notnull
@@ -151,7 +154,7 @@ internal sealed partial class Dispatcher(
         {
             using (reading)
             {
-                result = await Steps(commandOrQuery, ownsUnitOfWork, handle, fail, idempotent, cancellationToken);
+                result = await Steps(commandOrQuery, ownsUnitOfWork, handle, fail, idempotent, cached, cancellationToken);
             }
         }
         catch (Exception exception)
@@ -182,6 +185,7 @@ internal sealed partial class Dispatcher(
         Func<IServiceProvider, TCommandOrQuery, CancellationToken, Task<TResult>> handle,
         Func<ImmutableArray<Error>, TResult> fail,
         IdempotentResponses<TResult>? idempotent,
+        CachedQuery<TCommandOrQuery, TResult>? cached,
         CancellationToken cancellationToken
     )
         where TCommandOrQuery : notnull
@@ -212,7 +216,23 @@ internal sealed partial class Dispatcher(
         // From here the Operation is authorized: Continue() on its context is a trusted continuation.
         using var running = AuthorizedOperation.Running(operation.Context);
 
-        // A query, or a command nested in another one: it joins the Operation's Unit of Work, if any.
+        // The second of the fixed pipeline's two optional slots (ADR 0002): query caching, after the checks. A query
+        // outside a write Unit of Work goes through the query cache, keyed by its Operation's Actor and tenant; inside
+        // one it may see uncommitted state, so it neither reads nor stores an entry. A command's declared tags are
+        // evicted once the Operation commits.
+        if (cached is not null)
+        {
+            return queryCache is not null && !operation.IsUnitOfWorkActive && operation.Context is { } context
+                ? await cached(queryCache, commandOrQuery, context, ct => handle(services, commandOrQuery, ct), cancellationToken)
+                : await handle(services, commandOrQuery, cancellationToken);
+        }
+
+        if (queryCache is not null)
+        {
+            operation.EvictAfterCommit(queryCache.TagsInvalidatedBy(commandOrQuery));
+        }
+
+        // A command nested in another one: it joins the Operation's Unit of Work.
         if (!ownsUnitOfWork)
         {
             return await handle(services, commandOrQuery, cancellationToken);
@@ -270,6 +290,12 @@ internal sealed partial class Dispatcher(
 
         if (ReferenceEquals(outcome, returned))
         {
+            // After the commit only: a rolled-back Operation evicts nothing, so a valid entry survives it.
+            if (outcome.IsSuccess && queryCache is not null && operation.TagsToEvict is { Count: > 0 } tags)
+            {
+                await queryCache.EvictAsync(tags);
+            }
+
             return returned!;
         }
 
@@ -361,6 +387,16 @@ internal sealed partial class Dispatcher(
 
     private static bool IsIdempotent(Type command) => command.IsDefined(typeof(IdempotentAttribute), inherit: false);
 
+    // How a query's Result goes through the query cache: its invoker knows the TResponse the steps do not.
+    private delegate Task<TResult> CachedQuery<in TQuery, TResult>(
+        IQueryCache cache,
+        TQuery query,
+        OperationContext context,
+        Func<CancellationToken, Task<TResult>> handle,
+        CancellationToken cancellationToken
+    )
+        where TResult : Result;
+
     private abstract class Invoker<TResult>
         where TResult : Result
     {
@@ -390,6 +426,7 @@ internal sealed partial class Dispatcher(
                     services.GetRequiredService<CommandHandler<TCommand>>().Handle(command, ct),
                 static errors => errors,
                 Idempotent,
+                cached: null,
                 cancellationToken
             );
     }
@@ -423,6 +460,7 @@ internal sealed partial class Dispatcher(
                     services.GetRequiredService<CommandHandler<TCommand, TResponse>>().Handle(command, ct),
                 static errors => errors,
                 Idempotent,
+                cached: null,
                 cancellationToken
             );
     }
@@ -431,6 +469,9 @@ internal sealed partial class Dispatcher(
         where TQuery : Query<TResponse>
         where TResponse : notnull
     {
+        private static readonly CachedQuery<TQuery, Result<TResponse>> Cached = static (cache, query, context, handle, ct) =>
+            cache.QueryAsync(query, context, handle, ct);
+
         public override Task<Result<TResponse>> Invoke(
             Dispatcher dispatcher,
             object commandOrQuery,
@@ -443,6 +484,7 @@ internal sealed partial class Dispatcher(
                     services.GetRequiredService<QueryHandler<TQuery, TResponse>>().Handle(query, ct),
                 static errors => errors,
                 idempotent: null,
+                Cached,
                 cancellationToken
             );
     }

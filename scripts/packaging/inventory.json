@@ -11,6 +11,7 @@
     { "id": "PouryaKit.Persistence.Dapper", "type": "PouryaKit.Persistence.Dapper.IReadConnectionFactory" },
     { "id": "PouryaKit.Security", "type": "PouryaKit.Security.IActorPermissions" },
     { "id": "PouryaKit.Observability", "type": "PouryaKit.Observability.OperationTelemetry" },
+    { "id": "PouryaKit.Caching", "type": "PouryaKit.Caching.ICacheableQuery" },
     { "id": "PouryaKit.Security.JwtBearer", "type": "PouryaKit.Security.JwtBearer.PouryaKitJwtBearerOptions" },
     { "id": "PouryaKit.Messaging", "type": "PouryaKit.Messaging.WireNameAttribute" },
     { "id": "PouryaKit.Messaging.Wolverine", "type": "PouryaKit.Messaging.Wolverine.IReceipts" },
@@ -29,7 +30,7 @@
     {
       "name": "modular-monolith",
       "source": "samples/ModularMonolith/src",
-      "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Observability", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
+      "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Observability", "PouryaKit.Caching", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
       "excluded": []
     }
   ]

@@ -47,6 +47,9 @@ public static class ThingsGateway
         dispatcher.SendAsync(new RunOuterUncaughtCommand());
 
     public static Task<Result<string>> SealThing(IDispatcher dispatcher) => dispatcher.SendAsync(new SealThingCommand());
+
+    public static Task<Result<string>> ReadThingInsideTheUnitOfWork(IDispatcher dispatcher) =>
+        dispatcher.SendAsync(new ReadThingCommand());
 }
 
 internal sealed record GuardedByCommandCommand : Command;
@@ -264,5 +267,17 @@ internal sealed class SealPartHandler(OperationTrace trace) : CommandHandler<Sea
     {
         trace.Add("handle SealPartCommand");
         return Task.FromResult(Result.Success());
+    }
+}
+
+internal sealed record ReadThingCommand : Command<string>;
+
+// Runs a query nested in its own Unit of Work.
+internal sealed class ReadThingHandler(IDispatcher dispatcher, OperationTrace trace) : CommandHandler<ReadThingCommand, string>
+{
+    public override async Task<Result<string>> Handle(ReadThingCommand command, CancellationToken cancellationToken)
+    {
+        trace.Add("handle ReadThingCommand");
+        return await dispatcher.QueryAsync(new GetThingQuery(Guid.CreateVersion7()), cancellationToken);
     }
 }

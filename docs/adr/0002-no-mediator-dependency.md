@@ -152,12 +152,14 @@ on (`src/PouryaKit.Cqrs/Dispatcher.cs`, `src/PouryaKit.Cqrs/Operation.cs`):
   unchanged. Narrowing the hook to commands would leave every query authorizer an application registered silently
   unrun.
 
-## Amendment (2026-10-07, ticket #42: the optional idempotency slot)
+## Amendment (2026-10-07, tickets #42 and #43: the optional idempotency and caching slots)
 
 The decision above stands. Plan I.6 decided that the fixed pipeline has two optional slots, idempotency before the
 Unit of Work and caching around a query, filled only by the Kit, and that applications still register no steps.
-Ticket #42 implemented the idempotency slot at commit `829e7ad` (`src/PouryaKit.Cqrs/Dispatcher.cs`, `Steps`); the
-caching slot is #43's.
+Ticket #42 implemented the idempotency slot at commit `829e7ad` (`src/PouryaKit.Cqrs/Dispatcher.cs`, `Steps`), and
+ticket #43 the caching slot, in the same method, at commit `4aa98b7`.
+
+The idempotency slot (ticket #42):
 
 - **Position.** The slot belongs to the outermost command of an Operation only, after logging, the authorization hook
   and validation, and around its handler inside the Unit of Work: once `IUnitOfWork.RunAsync` has begun the
@@ -196,3 +198,39 @@ Proven against PostgreSQL by `IdempotencyTests` in `tests/ModularMonolith.Tests`
 `A_concurrent_repeat_waits_for_the_first_operation_then_replays_its_committed_success` and
 `A_concurrent_repeat_waits_for_the_first_operation_then_runs_when_it_rolled_back`, and by
 `PouryaKit.Cqrs.Tests.IdempotencyTests.Only_an_outermost_command_with_a_request_id_reserves_its_key_inside_the_unit_of_work_before_its_handler`.
+
+The caching slot (ticket #43):
+
+- **Position.** The slot belongs to a query, after logging, the authorization hook and validation, around its handler,
+  so a stored answer never skips a check. The dispatcher sends the query to the `IQueryCache` seam with its Operation's
+  context and a delegate that runs the handler. A query inside an active write Unit of Work, from a command's handler, a
+  nested command's checks or a Domain Event Handler, never reaches the slot: it may see uncommitted state, so it neither
+  reads nor stores an entry. A query in the outermost command's own checks runs before the Unit of Work starts, so it
+  may be answered from the cache.
+- **Filled by `PouryaKit.Caching` only.** `IQueryCache` is a Cqrs seam, as `IIdempotencyStore` is; `PouryaKit.Caching`
+  registers its one implementation over `HybridCache`, and `PouryaKit.Cqrs` never references Caching. A query opts in
+  with Caching's `ICacheableQuery` (key, duration, tags). Its implementation makes one `HybridCache.GetOrCreateAsync`
+  call, so concurrent misses in one Host share a handler run; another Host runs its own. The effective key adds the
+  query's full type name, the tenant (a null tenant as `OperationContext.NoTenant`, the empty string #42's key table
+  stores too) and the Actor's kind and id to the declared key, while tags name resources and span Actors.
+- **Never a failed Result.** The factory throws a private exception that carries a failure, so `HybridCache` stores
+  nothing, in memory or in a distributed cache, and every caller that joined the run receives the failure. The
+  get-then-set shape that stores whatever the handler returned is the one the plan rejected (I.3 Caching).
+- **Eviction after the outermost commit only.** A command declares tags with Caching's `IInvalidatesCache`. The
+  dispatcher asks the seam for the tags of every command that passes its checks, outermost and nested, collects them on
+  the Operation, and evicts them only when `IUnitOfWork.RunAsync` returned the command's own success, after the
+  rollback-only check. A rollback evicts nothing, so a valid entry survives a failed command. The commit has happened by
+  then, so a distributed cache that refuses an eviction is logged and never fails the command.
+- **Optional, at the cost of a null check.** A Host without `AddPouryaKitCaching()` has no `IQueryCache`, and every
+  query runs as before. Unlike a request id, a cacheable query in such a Host promises nothing the Host then breaks, so
+  nothing throws.
+- **Applications still register no steps.** The slot is written out in the dispatcher; the cache is a seam the Kit
+  fills, not a step.
+
+Proven against PostgreSQL by `CachingTests` in `tests/ModularMonolith.Tests`, among them
+`An_entry_answers_only_its_own_actor_and_tenant`, `A_failed_result_is_never_stored`,
+`A_query_nested_in_a_write_unit_of_work_that_rolls_back_leaves_no_entry` and
+`A_rolled_back_rename_evicts_nothing_so_the_valid_entry_survives`, against a real Redis shared by two Hosts by
+`With_redis_a_second_host_reads_the_entry_the_first_stored_without_running_its_handler`, and by
+`PouryaKit.Cqrs.Tests.QueryCacheTests`. Neither single flight across Hosts nor eviction of another Host's in-memory
+copies is claimed.

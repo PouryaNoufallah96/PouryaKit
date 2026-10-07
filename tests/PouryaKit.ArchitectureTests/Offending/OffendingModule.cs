@@ -68,8 +68,8 @@ internal sealed class OffendingRow
 }
 
 // Calls the steps only the Kit runs: the Unit of Work and its DbContext, the Outbox write, a Receipt, a Snapshot mapping, an Integration Event and a delayed
-// command added to the Outbox, an idempotency key reserved and its success recorded, the Domain Event drain, a new Operation begun in its own scope, and a
-// reading step.
+// command added to the Outbox, an idempotency key reserved and its success recorded, the Domain Event drain, a new Operation begun in its own scope, a
+// reading step, and a query cache eviction.
 internal sealed class KitStepCallingCommandHandler(
     IUnitOfWork unitOfWork,
     IUnitOfWorkOutbox outbox,
@@ -82,6 +82,7 @@ internal sealed class KitStepCallingCommandHandler(
     IServiceProvider services,
     Operation operation,
     IReadingStateGuard readingState,
+    IQueryCache queryCache,
     OffendingDbContext dbContext
 ) : CommandHandler<OffendCommand>
 {
@@ -103,6 +104,7 @@ internal sealed class KitStepCallingCommandHandler(
         using var guarded = readingState.OnlyReading("offending");
         using var tracked = TrackedState.Capture(dbContext);
         tracked.ThrowIfChanged("offending");
+        await queryCache.EvictAsync(["offending"]);
         return Result.Success();
     }
 }

@@ -63,6 +63,7 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 - Send from outside the Module through its Gateway, with an Operation Context (see [modules.md](modules.md)). Inside a handler, send a nested command with an injected `IDispatcher`: `await dispatcher.SendAsync(new ReserveStockCommand(id), ct)`. It joins the outer Unit of Work, so the Operation commits once, and it reads the same Operation Context.
 - A nested command that fails, in its handler, its validation or its authorization, or by throwing, rolls the whole Operation back, even if your handler ignores its Result. The Operation then fails with that nested command's Errors. Pass a failure on with `return result.Errors;` instead of ignoring it.
 - A failed nested query that leaves tracked state unchanged rolls nothing back; act on its Result as you need.
+- A query that implements `ICacheableQuery` may be answered from the query cache after its checks, in a Host that calls `AddPouryaKitCaching`; a command declares the cache tags it invalidates with `IInvalidatesCache`, evicted once its Operation commits ([caching.md](caching.md)).
 - One scope holds one Operation. Never send a second top-level command in a scope that already ran one, and never retry a failed command in the same scope: send it again through the Gateway, which opens a new scope for each call.
 
 ## Request idempotency

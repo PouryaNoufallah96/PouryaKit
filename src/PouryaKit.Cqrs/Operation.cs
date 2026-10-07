@@ -27,7 +27,7 @@ public sealed class Operation
     private int _runningCommands;
     private int _runningQueries;
     private bool _commandStarted;
-    private bool _unitOfWorkActive;
+    private HashSet<string>? _tagsToEvict;
     private int _runningChecks;
     // The open steps that only read, in the order opened.
     private readonly List<ReadingStep> _readingSteps = [];
@@ -149,7 +149,7 @@ public sealed class Operation
         }
 
         // A nested command joins the active Unit of Work; with none active, its handler would run with no owner.
-        if (_runningCommands > 0 && !_unitOfWorkActive)
+        if (_runningCommands > 0 && !IsUnitOfWorkActive)
         {
             throw new InvalidOperationException(
                 "A command was sent before the Operation's Unit of Work started. Only a handler may send a nested command."
@@ -162,9 +162,23 @@ public sealed class Operation
 
     internal void ExitCommand() => _runningCommands--;
 
-    internal void StartUnitOfWork() => _unitOfWorkActive = true;
+    internal void StartUnitOfWork() => IsUnitOfWorkActive = true;
 
-    internal void EndUnitOfWork() => _unitOfWorkActive = false;
+    internal void EndUnitOfWork() => IsUnitOfWorkActive = false;
+
+    /// <summary>True while the Operation's write Unit of Work runs, where a query may see uncommitted state.</summary>
+    internal bool IsUnitOfWorkActive { get; private set; }
+
+    /// <summary>The cache tags the Operation's commands declared, outermost and nested, evicted only once it commits.</summary>
+    internal IReadOnlyCollection<string> TagsToEvict => (IReadOnlyCollection<string>?)_tagsToEvict ?? [];
+
+    internal void EvictAfterCommit(IEnumerable<string> tags)
+    {
+        foreach (var tag in tags)
+        {
+            (_tagsToEvict ??= []).Add(tag);
+        }
+    }
 
     internal IDisposable EnterChecks()
     {

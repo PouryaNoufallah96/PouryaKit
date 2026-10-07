@@ -68,6 +68,11 @@ public sealed class PackageGraphTests
             ["PouryaKit.Messaging's closure holds the packages [WolverineFx]; it must hold none."],
             PackageGraph.Violations(messaging with { Packages = [Arrived("WolverineFx")] })
         );
+        var caching = Restored("PouryaKit.Caching");
+        Assert.Equal(
+            ["PouryaKit.Caching's closure holds StackExchange.Redis, which section C keeps out of it."],
+            PackageGraph.Violations(caching with { Packages = [.. caching.Packages, Arrived("StackExchange.Redis")] })
+        );
     }
 
     [Fact]
