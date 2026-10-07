@@ -341,7 +341,7 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
             "Development",
             Fixture.ConnectionString,
             Fixture.Logs,
-            builder => builder.Services.Subscribe<TwinV1, TwinIntegrationEventHandler>("tests.unpublished-twin")
+            builder => builder.Services.Subscribe<TwinV1, TwinIntegrationEventHandler>("tests.unpublished-twin", typeof(StubModule))
         );
 
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));

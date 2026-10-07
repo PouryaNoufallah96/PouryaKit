@@ -107,7 +107,6 @@ public static class CqrsServiceCollectionExtensions
                 services.TryAddEnumerable(ServiceDescriptor.Scoped(service, implementation));
             }
 
-            services.TryAddScoped(provider => new DomainEventDrain(provider, provider.GetRequiredService<Operation>()));
             foreach (var (implementation, service) in domainEventHandlers)
             {
                 services.TryAddEnumerable(ServiceDescriptor.Scoped(service, implementation));
@@ -125,8 +124,11 @@ public static class CqrsServiceCollectionExtensions
         services.TryAddScoped<IReadingStateGuard>(provider => (provider.GetService<IUnitOfWork>() as IReadingStateGuard)!);
         services.TryAddScoped(OperationContextServiceProviderExtensions.Read);
         services.TryAddScoped<IDispatcher, Dispatcher>();
+        // A Unit of Work resolves it in a factory, which container validation cannot see, so it comes with the dispatcher
+        // even when no Composition Root calls AddPouryaKitCqrs.
+        services.TryAddScoped(provider => new DomainEventDrain(provider, provider.GetRequiredService<Operation>()));
         services.TryAddSingleton(TimeProvider.System);
-        // Run by the Host's AddPouryaKitCompositionChecks when it starts.
+        // Run by the Host's AddPouryaKitCompositionChecks when its container is built.
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, DeclaredAuthorizersCheck>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, QueryCacheCheck>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, UnitOfWorkCheck>());

@@ -22,9 +22,10 @@ public static class NotificationHandlerServiceCollectionExtensions
         /// an abstract or a generic one, or is generic itself, and when a wire name or a subscription name is missing,
         /// invalid, equal ignoring case to another's, or, for a subscription, the name of a queue Wolverine keeps for
         /// itself or the same subscription declared for another Module. Repeating a declaration for the same Module adds
-        /// nothing. The Host then fails to start when the declaration belongs to no Module in a Host of Modules, unless
-        /// an Outbox writes the Notifications (<see cref="INotificationOutbox"/>), and unless every subscription's queue,
-        /// as Wolverine built it, is a durable application queue.
+        /// nothing. The Host then fails when it is built if the declaration belongs to no Module in a Host of Modules or to
+        /// a Module the Host does not compose, and fails to start unless an Outbox writes the Notifications
+        /// (<see cref="INotificationOutbox"/>) and every subscription's queue, as Wolverine built it, is a durable
+        /// application queue.
         /// </summary>
         public IServiceCollection AddPouryaKitNotificationHandlers(params Assembly[] featureAssemblies) =>
             DeclareNotificationHandlers(
@@ -39,12 +40,8 @@ public static class NotificationHandlerServiceCollectionExtensions
         /// those in <paramref name="featureAssemblies"/>, or in the assembly of the Module's definition when it names
         /// none. Throws, besides, when called on the builder of another Module.
         /// </summary>
-        public IServiceCollection AddPouryaKitNotificationHandlers(Type module, params Assembly[] featureAssemblies)
-        {
-            ArgumentNullException.ThrowIfNull(featureAssemblies);
-            var owner = IModuleServices.ModuleOf(services, module);
-            return DeclareNotificationHandlers(services, featureAssemblies is [] ? [owner.Assembly] : featureAssemblies, owner);
-        }
+        public IServiceCollection AddPouryaKitNotificationHandlers(Type module, params Assembly[] featureAssemblies) =>
+            DeclareNotificationHandlers(services, IModuleServices.FeatureAssembliesOf(services, featureAssemblies, module), module);
     }
 
     private static IServiceCollection DeclareNotificationHandlers(IServiceCollection services, Assembly[] assemblies, Type? module)
