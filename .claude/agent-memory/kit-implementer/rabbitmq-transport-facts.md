@@ -32,6 +32,12 @@ Verified in ticket #51 (2026-10-07), WolverineFx.RabbitMQ 6.46.0, RabbitMQ 4.3.6
   with cwd at the repository root and config through env vars (`ConnectionStrings__app`) starts in about 2 s.
   Readiness: the broker queue's `ConsumerCount` > 0 (passive declare). `-- --help` means nothing to a generic Host: it
   starts and fails on its absent database.
+- **`EndpointFor` is recoverable from a handler's context.** The fan-out sends copies with
+  `context.EndpointFor(local://{subscription}).SendAsync`; the flush goes through `DurableLocalQueue.StoreAndForwardAsync`
+  (`PrepareForIncomingPersistence`, owner = node), so a copy in flight at a kill is handed out again (a mutation run
+  confirmed it, against my first reading of the S2 note). The S2 `Outgoing`/owner 0 hole is only through an EF
+  `DbContextOutbox`. `PublishAsync` from the fan-out would also hit the type's exchange route and loop forever through
+  a stale binding.
 - **Mutation trap:** `!await X | flag` parses as `(!await X) | flag`; write `!(flag | await X)` to make a gate accept
   everything. Three Guid v7 made in one millisecond do not sort in creation order (assert membership, not order).
 

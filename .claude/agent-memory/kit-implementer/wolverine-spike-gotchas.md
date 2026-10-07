@@ -8,7 +8,7 @@ metadata:
 Observed in Spike S2 (ticket #5, ADR 0006), WolverineFx 6.46.0, TypeLoadMode.Dynamic:
 
 - Wolverine-generated handler code is compiled into an assembly with a random name (JasperFx.RuntimeCompiler 5.0.0 `AssemblyName ?? Path.GetRandomFileName()`), so a Wolverine handler type that names an `internal` type (even as a generic argument) fails with CS0122 at the first message, not at startup, and the message is dead-lettered. `InternalsVisibleTo("Internal.Generated")` does not help.
-- `IMessageBus.EndpointFor(name).SendAsync` through an EF outbox to a durable local queue stores the row in `wolverine_incoming_envelopes` as `Outgoing`, owner 0; recovery only picks `Incoming`/owner 0, so it is lost after a kill. Use `PublishAsync` with a routing rule instead.
+- `IMessageBus.EndpointFor(name).SendAsync` through an EF outbox to a durable local queue stores the row in `wolverine_incoming_envelopes` as `Outgoing`, owner 0; recovery only picks `Incoming`/owner 0, so it is lost after a kill. Use `PublishAsync` with a routing rule instead. **Only under an EF outbox:** from a handler's own `MessageContext` the durable local queue's `StoreAndForwardAsync` stores it `Incoming`, owned by the node, and it is recovered ([[rabbitmq-transport-facts]], #51).
 - `body` in the envelope tables is Wolverine's binary envelope, not UTF-8 JSON: `convert_from(body,'UTF8')` throws 22021; use `encode(body,'escape')` to regex it.
 - `RetryWithCooldown` retries in memory; `attempts` stays 0 in the row, so counting restarts after a crash.
 - Separated mode only separates when a message type has more than one handler; a lone handler goes to the message-type queue unless routed explicitly.
