@@ -24,7 +24,7 @@ One home per concern. Anything both tools use lives in `.agents/` or at the root
 | CI failure reader | `.agents/scripts/ci-failures.py` | Run by hand on a failed CI run (`docs/agents/running-a-spec.md`) |
 | Role memory | `.claude/agent-memory/kit-implementer/` | Claude Code, for `kit-implementer` only; created on first use, committed |
 | Git hooks | `.githooks/` | Git, once a clone runs `git config core.hooksPath .githooks`: `pre-commit` and `pre-merge-commit` refuse staged merge conflict markers, and `pre-commit` a staged path outside the tree's top-level entries ("The guard") |
-| Process docs | `docs/agents/running-a-spec.md`, `docs/agents/spikes.md` | The main session, through the output style and step 6 below. `spikes.md` reaches a Spike's implementer and its record's reviewer through their briefs, as `running-a-spec.md` says; the "Spikes" line of `.claude/rules/kit-code.md` also names it for work under `src/`, `tests/` and `samples/` |
+| Process docs | `docs/agents/running-a-spec.md`, `docs/agents/spikes.md`, `docs/agents/brief-template.md` | The main session, through the output style and step 6 below. `spikes.md` reaches a Spike's implementer and its record's reviewer through their briefs, as `running-a-spec.md` says; the "Spikes" line of `.claude/rules/kit-code.md` also names it for work under `src/`, `tests/` and `samples/` |
 
 ## Roles
 

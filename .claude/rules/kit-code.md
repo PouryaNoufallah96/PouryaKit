@@ -18,6 +18,7 @@ paths:
 - **Also settled.** Typed IDs (G.3), repositories and specifications (G.4), authorization at trust boundaries (G.6), explicit mapping with no mapper (G.7), validation as one pipeline step (G.8).
 - **Adopted code.** Extend the existing seam. Code adopted from a reference project follows plan section E, "Provenance and licensing".
 - **Current idioms.** .NET 10 only and the latest C# (plan section F, item 6): write the C# 14 and .NET 10 form where one exists. The build enforces collection expressions, primary constructors, auto properties with the `field` keyword and `System.Threading.Lock` (`.editorconfig`); review judges the rest, such as extension members, `TimeProvider` and `Guid.CreateVersion7`, and an older idiom there is a finding.
+- **Boundaries.** A step that stores, locks, flushes or shares a run across callers states in its comment what happens when the other party commits, rolls back, dies, cancels or expires between its statements, and the ticket's tests show each case its guarantee depends on: a concurrent duplicate, a crash between the store and the acknowledgement, a caller that leaves a shared run, a row that expires mid-step.
 - **Smallest design that fits the ticket.** A comment earns its line only by stating a non-obvious constraint that names and types cannot carry.
 
 ## Tests
