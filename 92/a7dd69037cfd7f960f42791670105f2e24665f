@@ -1,0 +1,40 @@
+docs/acceptance.md
+  s_6c3c3736ba14ff::t_c366df0ad57883 288-289
+tests/ModularMonolith.Tests/WebDefaultsTests.cs
+  s_6c3c3736ba14ff::t_c366df0ad57883 7-8,148,155-159,163-187,258-265
+  s_6c3c3736ba14ff::t_2d9256605f3f36 266-268
+src/PouryaKit.Web/ActorRateLimiting.cs
+  s_6c3c3736ba14ff::t_c366df0ad57883 11-12,16-18,25-26,34-35,38,83-96
+docs/foundation-review.md
+  s_6c3c3736ba14ff::t_c366df0ad57883 839
+docs/provenance/PouryaKit.Web.md
+  s_6c3c3736ba14ff::t_c366df0ad57883 127
+.agents/skills/pourya-kit/references/web.md
+  s_6c3c3736ba14ff::t_c366df0ad57883 291
+docs/architecture/README.md
+  s_6c3c3736ba14ff::t_c366df0ad57883 497
+.claude/agent-memory/kit-implementer/web-defaults-facts.md
+  s_6c3c3736ba14ff::t_c366df0ad57883 17
+src/PouryaKit.Web/HttpCallerContext.cs
+  s_6c3c3736ba14ff::t_c366df0ad57883 1-51
+src/PouryaKit.Web/PouryaKitRateLimitOptions.cs
+  s_6c3c3736ba14ff::t_c366df0ad57883 4-9
+src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs
+  s_6c3c3736ba14ff::t_c366df0ad57883 69,81-83,88-90,92-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "92a7dd69037cfd7f960f42791670105f2e24665f",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
