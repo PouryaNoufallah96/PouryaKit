@@ -1,0 +1,31 @@
+.agents/skills/pourya-kit/references/caching.md
+  s_5db987750027ae::t_9e9763bf4a3163 57,84,86,95
+.claude/agent-memory/kit-implementer/caching-facts.md
+  s_5db987750027ae::t_ff80790781f396 3
+  s_5db987750027ae::t_789751c5d7a1d3 20-22
+docs/architecture/README.md
+  s_5db987750027ae::t_ade6908b76ccb5 262
+docs/adr/0002-no-mediator-dependency.md
+  s_5db987750027ae::t_396120172df470 257
+  s_5db987750027ae::t_b63d6c39202e17 208-218,231-236,258-263
+docs/acceptance.md
+  s_5db987750027ae::t_0f0554de66f2f8 435-439,442
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_5db987750027ae::t_ff80790781f396 42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0ab8196ace8bf33f435674879482905da334c0be",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
