@@ -1,0 +1,42 @@
+src/PouryaKit.Cqrs/Dispatcher.cs
+  s_5db987750027ae::t_831a0245272eee 220-224,232-236
+  s_5db987750027ae::t_3d751289323ce9 408,485-486
+  s_5db987750027ae::t_a45900d6b2bf7d 227
+tests/PouryaKit.Cqrs.Tests/StandIns.cs
+  s_5db987750027ae::t_e880562363f6b9 61-62,70,76-82
+src/PouryaKit.Cqrs/IQueryCache.cs
+  s_5db987750027ae::t_c5156e974a93ae 7-11,18-21,27
+tests/ModularMonolith.Tests/Stub/StubCaching.cs
+  s_5db987750027ae::t_8fdabe7c7b6b2a 176-272
+src/PouryaKit.Caching/ICacheableQuery.cs
+  s_5db987750027ae::t_6a30f077986019 10-13
+  s_5db987750027ae::t_528cfc1eb1647f 8-9
+src/PouryaKit.Caching/CachingServiceCollectionExtensions.cs
+  s_5db987750027ae::t_528cfc1eb1647f 13
+src/PouryaKit.Caching/HybridQueryCache.cs
+  s_5db987750027ae::t_98f23b9bbc49fe 21,29,44-45,47-54,57
+  s_5db987750027ae::t_017eae6c6c689b 56
+  s_5db987750027ae::t_a45900d6b2bf7d 55
+src/PouryaKit.Cqrs/Operation.cs
+  s_5db987750027ae::t_ce7e07981aadd5 172-179
+tests/ModularMonolith.Tests/CachingTests.cs
+  s_5db987750027ae::t_b55ca6f7936b50 134-223
+tests/PouryaKit.Cqrs.Tests/QueryCacheTests.cs
+  s_5db987750027ae::t_e880562363f6b9 11,35-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9dfa861e0d619e12e49e97a67b45fd3a7c408986",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
