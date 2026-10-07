@@ -38,7 +38,7 @@ The third seam of the Testing Decisions is proven in `tests/PouryaKit.Architectu
 | Feature code never saves, commits, writes in bulk or calls a step only the Kit runs | `FeatureCodeTests` |
 | No transport type in Feature code; no envelope storage in a Module's DbContext | `FeatureCodeTests` |
 | Only the Kit's drain clears Domain Events | `FeatureCodeTests` |
-| Only Domain sets up JSON options; Web and Messaging.Wolverine apply `UsePouryaKitJson` | `SharedJsonTests` (ticket #34) |
+| Only Domain sets up JSON options; Web, Cqrs and Caching apply `UsePouryaKitJson`, and Messaging.Wolverine alone its strict variant `UsePouryaKitWireJson` | `SharedJsonTests` (tickets #34, #60) |
 | No Dapper write to an aggregate's table | `DapperWriteTests` |
 | Only Core lists the types of an assembly; every other Kit package asks `ImplementingTypes` | `TypeLookupTests` (ticket #55) |
 | Every Kit package's dependency closure matches plan section C | `PackageGraphTests` |
@@ -568,6 +568,23 @@ The four-name probe ran on that run's produced packages: `PouryaKit.Templates.0.
 | `Acme.Shop` | `Acme.Shop.slnx`, `src/Acme.Shop.Host/Acme.Shop.Host.csproj` | `Acme.Shop.Host`, `Acme.Shop.Tests` | `acme-shop` |
 | `acme_shop` | `acme_shop.slnx`, `src/acme_shop.Host/acme_shop.Host.csproj` | `acme_shop.Host`, `acme_shop.Tests` | `acme-shop` |
 | `My Shop` | `My Shop.slnx`, `src/My Shop.Host/My Shop.Host.csproj` | `My_Shop.Host`, `My_Shop.Tests` | `my-shop` |
+
+## Wave 2 strict wire reading, reserved broker names and messaging terms, ticket #60
+
+Spec #33 and the owner's decisions of 2026-10-07 on RabbitMQ naming and routing: the verified topology stays, wire payloads are read strictly (option (a)), unknown members are decided with evidence, the `amq.` prefix is refused, service-name uniqueness is a deployment rule, and three messaging terms join the Glossary. The reference baseline is .NET 10 System.Text.Json's own options (`RespectRequiredConstructorParameters`, `RespectNullableAnnotations`, `JsonUnmappedMemberHandling`) through Wolverine 6.46.0's `UseSystemTextJsonForSerialization`; ADR 0006's #60 amendment records the decisions, the decompiled dead-letter path and the trade-off.
+
+| Scenario | Proven by | Notes |
+|---|---|---|
+| A received envelope whose body lacks a member its contract requires, or carries null for a non-nullable one, is never handled: it is dead-lettered at the receiving Host's broker queue with the `JsonException` naming the member, and no subscription receives a copy | `StrictWireReadingTests.A_body_without_a_member_its_contract_requires_or_with_null_for_one_is_dead_lettered_at_the_host_queue_with_the_error_and_never_handled`, two cases, two Hosts on RabbitMQ 4.3.6 and PostgreSQL 18.6: the Catalog Host publishes a contract of another shape under the wire name `Inventory.Host` receives | Red once with Wolverine reading through `UsePouryaKitJson`: both cases ran the handler with a null name. |
+| A member the body carries and the receiving contract lacks is skipped, and the handler gets the members it has (the decision: skip, not `Disallow`) | `StrictWireReadingTests.A_body_with_a_member_its_contract_lacks_is_handled_with_the_members_it_has` | Red once with `JsonUnmappedMemberHandling.Disallow`: the envelope was dead-lettered and never applied. |
+| HTTP bodies keep the lenient reading: a member a request body lacks binds as its default and the validator answers it | `WebTests.A_body_without_a_member_binds_it_as_its_default_and_validation_answers_400_for_it`; `PouryaKit.ArchitectureTests` `SharedJsonTests.Only_messaging_wolverine_reads_strictly_and_web_cqrs_and_caching_keep_the_lenient_reading` | Red once with Web applying `UsePouryaKitWireJson`: binding refused the body, a 400 without the validator's errors, and the structure test listed Web as a strict reader. No earlier Web test sent a body the strict reading would refuse. |
+| A wire name, subscription name or service name beginning with `amq.`, in any case, is refused at registration with the rule in the message: `Publish`, `Receive`, `Subscribe` and `UsePouryaKitRabbitMq` | `IntegrationEventWiringTests.A_composition_root_fails_on` (three cases); `IntegrationEventWiringTests.A_service_name_rabbitmq_reserves_is_refused_when_the_host_joins_the_broker` | Red once with the prefix allowed (four failed) and with a case-sensitive check (the capitals case failed). A probe against RabbitMQ 4.3.6 refused the queue `amq.inventory` and the exchange `amq.product-created.v1` with 403 `ACCESS_REFUSED` ("contains reserved prefix 'amq.*'") and declared `AMQ.inventory`; the Kit refuses every case because it compares names ignoring case. No sample, template or test name begins with it. |
+| Terms | `GLOSSARY.md`: Wire name, Subscription, Service name; the Kit skill's terms line | |
+| Out of scope | | The verified topology, the `serviceName` parameter, a contract-identity header and a schema registry (option (b), not recommended). Service-name uniqueness has no check: a replica and a foreign Host are indistinguishable on the broker. |
+
+`python3 scripts/packaging/validate.py --no-fetch` on the ticket's source (commit `9b5922a`, before this paragraph was added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof` at version `0.1.0-preview.0.91`, with the Release runtime suite at 732 passed, 0 failed, 0 skipped. A first run on the same commit failed one runtime test, `CachingTests.With_redis_a_second_host_reads_the_entry_the_first_stored_without_running_its_handler`, whose own connection to its Redis container was refused (`RedisConnectionException` in `WaitUntilStoredAsync`); the rerun passed it unchanged, and it passed in both full Debug runs of the ticket.
+
+On the merge of `feat/wave-2` at `29cf516` (#61) into the ticket's branch, `python3 scripts/packaging/validate.py --no-fetch` on the merge commit (`6528359`, before this paragraph was added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof` at version `0.1.0-preview.0.93`, with the Release runtime suite at 742 passed, 0 failed, 0 skipped. The merged tree's full suites passed first: ModularMonolith.Tests 484 passed, ArchitectureTests 96 passed, `RabbitMqDeliveryTests` 19 passed.
 
 ## Wave 2 Module seam and composition checks, ticket #61
 

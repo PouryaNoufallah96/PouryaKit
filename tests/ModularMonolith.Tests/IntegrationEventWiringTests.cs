@@ -7,16 +7,27 @@ using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Messaging.Wolverine.RabbitMq;
 using Wolverine.Util;
 
 namespace ModularMonolith.Tests;
 
 public sealed class IntegrationEventWiringTests
 {
+    private const string ReservedRule =
+        "is not a valid name: use letters and digits in segments joined by single dots or hyphens, not beginning with amq., which RabbitMQ reserves.";
+
     private static readonly Dictionary<string, (Action<IServiceCollection> Declare, string Problem)> Mistakes = new()
     {
         ["no wire name"] = (s => s.Publish<TwinV1>(""), $"{typeof(TwinV1).FullName}'s wire name is missing"),
         ["an invalid wire name"] = (s => s.Publish<TwinV1>("tests.twin v1"), "wire name tests.twin v1 is not a valid name"),
+        // RabbitMQ refuses to declare an exchange or queue under the prefix: the Kit refuses it here instead.
+        ["a wire name RabbitMQ reserves"] = (s => s.Publish<TwinV1>("amq.twin.v1"), $"wire name amq.twin.v1 {ReservedRule}"),
+        ["a received wire name RabbitMQ reserves, in capitals"] = (s => s.Receive<TwinV1>("AMQ.Twin.V1"), $"wire name AMQ.Twin.V1 {ReservedRule}"),
+        ["a subscription name RabbitMQ reserves"] = (
+            s => s.Subscribe<TwinV1, TwinIntegrationEventHandler>("amq.twin"),
+            $"subscription name amq.twin {ReservedRule}"
+        ),
         ["a wire name twice"] = (
             s => s.Publish<TwinV1>("tests.twin.v1").Publish<OtherTwinV1>("Tests.Twin.V1"),
             "have the wire name Tests.Twin.V1, ignoring case"
@@ -86,6 +97,19 @@ public sealed class IntegrationEventWiringTests
         var thrown = Assert.Throws<InvalidOperationException>(() => declare(new ServiceCollection()));
 
         Assert.Contains(problem, thrown.Message);
+    }
+
+    [Fact]
+    public void A_service_name_rabbitmq_reserves_is_refused_when_the_host_joins_the_broker()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--ConnectionStrings:broker=amqp://localhost/"]);
+
+        var thrown = Assert.Throws<ArgumentException>(() => builder.UsePouryaKitRabbitMq("broker", "amq.inventory"));
+
+        Assert.StartsWith(
+            "The service name amq.inventory names the Host's queue on the broker; use letters and digits in segments joined by single dots or hyphens, not beginning with amq., which RabbitMQ reserves.",
+            thrown.Message
+        );
     }
 
     [Fact]

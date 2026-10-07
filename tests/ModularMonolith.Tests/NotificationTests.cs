@@ -389,12 +389,12 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
 
         Assert.Equal(
             [
-                "ModularMonolith.Tests.Misnamed.BadlyNamedDomainEvent's wire name misnamed.bad name is not a valid name: use letters and digits in segments joined by single dots or hyphens.",
+                "ModularMonolith.Tests.Misnamed.BadlyNamedDomainEvent's wire name misnamed.bad name is not a valid name: use letters and digits in segments joined by single dots or hyphens, not beginning with amq., which RabbitMQ reserves.",
                 "ModularMonolith.Tests.Misnamed.BlankNotificationHandler's subscription name is missing; declare one or remove the empty name.",
                 "ModularMonolith.Tests.Misnamed.ReservedNotificationHandler's subscription name agents is a queue Wolverine keeps for itself; choose another.",
                 "ModularMonolith.Tests.Misnamed.SecondTwinNotificationHandler and ModularMonolith.Tests.Misnamed.FirstTwinNotificationHandler have the subscription name misnamed.twin, ignoring case; give one a SubscriptionName of its own.",
                 "ModularMonolith.Tests.Misnamed.Shelved and ModularMonolith.Tests.Misnamed.ShelvedDomainEvent have the wire name modular-monolith.tests.misnamed.shelved, ignoring case; give one a WireName of its own.",
-                "ModularMonolith.Tests.Misnamed.SpacedNotificationHandler's subscription name misnamed.has space is not a valid name: use letters and digits in segments joined by single dots or hyphens.",
+                "ModularMonolith.Tests.Misnamed.SpacedNotificationHandler's subscription name misnamed.has space is not a valid name: use letters and digits in segments joined by single dots or hyphens, not beginning with amq., which RabbitMQ reserves.",
                 "ModularMonolith.Tests.Misnamed.UnnamedDomainEvent's wire name is missing; declare one or remove the empty name.",
             ],
             thrown.Message.Split(Environment.NewLine).Where(line => !line.Contains(MisshapenMark, StringComparison.Ordinal)).Order(StringComparer.Ordinal)

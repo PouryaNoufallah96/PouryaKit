@@ -111,6 +111,18 @@ _Avoid_: Consumer, outbox processor, side-effect handler
 A Module's reaction to an Integration Event or Snapshot published by another Module.
 _Avoid_: Consumer, subscriber, listener
 
+**Wire name**:
+The stable name a Notification, Integration Event or Snapshot is stored, routed and sent between Hosts under, and by which a delivery read back finds its type; one wire name is one version of one contract type.
+_Avoid_: Message type name, topic, routing key, alias
+
+**Subscription**:
+One Notification Handler or Integration Event Handler subscribed to one message type under a stable name, which names its own durable queue and keys its Receipts, so its deliveries are retried and set aside as dead letters on their own.
+_Avoid_: Subscriber, listener, consumer group
+
+**Service name**:
+Wolverine's name for a Host on the broker: the Host's queue there is named by it, every instance of one kind of Host shares it, and two kinds of Host never do. The `serviceName` parameter keeps Wolverine's term.
+_Avoid_: Host name, application name, queue name
+
 **Delayed command**:
 A command an Operation schedules to run later in its own Module, committed with the Operation and run once due as its continuation, with its Actor, tenant and correlation.
 _Avoid_: Scheduled job, timer, deferred command
