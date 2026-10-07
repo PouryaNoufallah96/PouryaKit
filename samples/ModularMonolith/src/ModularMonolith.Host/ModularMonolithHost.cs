@@ -17,6 +17,12 @@ public static class ModularMonolithHost
     /// <summary>The named HTTP client for calls to another Host.</summary>
     public const string DownstreamClient = "downstream";
 
+    /// <summary>
+    /// The CORS policy the pipeline answers cross-origin requests with, configured at
+    /// <c>PouryaKit:Web:Cors:Policies:browser</c>; unconfigured, it allows no origin.
+    /// </summary>
+    public const string BrowserPolicy = "browser";
+
     public static WebApplicationBuilder CreateBuilder(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +35,11 @@ public static class ModularMonolithHost
         // The peer Hosts, by their authenticated Actor claim, that may continue an Operation of theirs here
         // (PouryaKit:TrustedPeers:Peers). None are configured: every caller starts a new chain of work.
         builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));
+        // Named CORS policies, response compression and the rate limit per Actor (PouryaKit:Web). None is configured:
+        // the Host answers no cross-origin request, compresses nothing and limits no one.
+        builder.Services.Configure<PouryaKitCorsOptions>(builder.Configuration.GetSection("PouryaKit:Web:Cors"));
+        builder.Services.Configure<PouryaKitCompressionOptions>(builder.Configuration.GetSection("PouryaKit:Web:Compression"));
+        builder.Services.Configure<PouryaKitRateLimitOptions>(builder.Configuration.GetSection("PouryaKit:Web:RateLimit"));
         // Outgoing calls retry transient failures of safe methods only and carry the Operation Context they are sent
         // with, never the caller's bearer token. A peer that authenticates this Host gets the Host's own credentials.
         var downstream = builder.Services.AddHttpClient(DownstreamClient);
@@ -58,8 +69,12 @@ public static class ModularMonolithHost
         // First, so an exception in routing or authentication still answers a problem response.
         app.UseExceptionHandler();
         app.UseRouting();
+        // Before authentication, so a preflight is answered without credentials.
+        app.UseCors(BrowserPolicy);
         app.UseAuthentication();
         app.UseAuthorization();
+        // After authorization: it partitions by the authenticated Actor.
+        app.UseRateLimiter();
         app.MapPouryaKitModuleEndpoints();
         return app;
     }
