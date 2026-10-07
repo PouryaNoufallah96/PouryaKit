@@ -1,0 +1,27 @@
+docs/acceptance.md
+  s_0d5a1b290c2d36::t_15280b59ee5530 519,522
+  s_0d5a1b290c2d36::t_67c9c540a2c1d2 523
+.claude/agent-memory/kit-implementer/template-package-facts.md
+  s_0d5a1b290c2d36::t_e5b3b9977d14ae 1-20
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_0d5a1b290c2d36::t_3104566f817d4e 45
+.claude/agent-memory/kit-implementer/declared-authorizer-check-facts.md
+  s_0d5a1b290c2d36::t_885d3327c4afe9 10
+  s_0d5a1b290c2d36::t_3104566f817d4e 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d748f81626a88fefffe3a370c5e457fed8e0a3ff",
+  "prompts": {},
+  "sessions": {
+    "s_0d5a1b290c2d36": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5bdb6a50-6bfa-4dc6-9059-d46d18b45597",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
