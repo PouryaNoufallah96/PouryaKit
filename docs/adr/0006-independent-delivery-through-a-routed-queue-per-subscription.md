@@ -991,9 +991,13 @@ reference Modularity. Ticket #61 returns to the sketch through a seam both may r
   for a declaration the Host makes on a Module's behalf, such as a test's extra subscription; made on another Module's
   builder it throws while the Host is composed. Both forms share one implementation. `Receive` and `ReceiveSnapshot`
   stay the Host's.
-- **None by omission.** A declaration that belongs to no Module in a Host that composed Modules would have failed only
-  at its first use: the first publish, commit, delivery or scheduling. A composition check now fails the Host's start,
-  before it serves, one line per declaration, naming its form on the Module's builder and its form that names the
-  Module. The commit-time refusal of a Snapshot declared with a Module in an application without Modules stays.
-- Proven by `CompositionCheckTests.A_module_declaration_made_without_its_module_in_a_host_of_modules_stops_the_host_at_start`,
-  one case per declaration, each red with the check switched off, against PostgreSQL.
+- **None by omission.** A declaration that belongs to no Module in a Host that composed Modules, or that names a Module
+  the Host never composed, would have failed only at its first use: the first publish, commit, delivery or scheduling.
+  A composition check now fails the Host when its container is built, one line per declaration, naming its form on the
+  Module's builder and its form that names the Module. Every Module `AddPouryaKitModules` adds counts as composed. The
+  commit-time refusal of a Snapshot declared with a Module in an application without Modules stays.
+- Proven by `CompositionCheckTests.A_module_declaration_made_without_its_module_in_a_host_of_modules_fails_the_host_when_built`,
+  one case per declaration, each red with the check switched off, by
+  `CompositionCheckTests.A_declaration_without_its_module_fails_the_build_of_a_host_whose_modules_make_no_kit_registration`
+  and by `CompositionCheckTests.A_declaration_for_a_module_the_host_never_composed_fails_the_host_when_built`, against
+  PostgreSQL.

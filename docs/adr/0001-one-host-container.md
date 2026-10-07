@@ -48,6 +48,7 @@ assembly is also the convention the Kit infers from, so a Composition Root no lo
   type; its assembly is derived from that type, never stored apart. Packages detect it at run time
   (`services is IModuleServices`), so a helper typed as `IServiceCollection` keeps the Module, and every package resolves
   the Module and the assemblies through the seam's one helper. Each Module and the Feature assemblies its registrations
-  scanned are recorded Host-locally and read through `HostComposition` when the Host starts.
+  scanned are recorded Host-locally and read through `HostComposition` when the Host's container is built; every Module
+  `AddPouryaKitModules` adds counts as composed, whatever its Composition Root registers.
 - Proven by the Proving Sample, whose three Composition Roots name neither their Module nor their assembly, and by
   `CompositionCheckTests.The_host_composition_names_each_module_with_the_feature_assembly_its_builder_inferred`.
