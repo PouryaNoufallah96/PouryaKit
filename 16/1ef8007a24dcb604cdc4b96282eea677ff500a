@@ -1,0 +1,19 @@
+docs/adr/0008-one-problem-response-for-every-http-failure.md
+  s_6c3c3736ba14ff::t_66bb45b6ed1b5a 32-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "161ef8007a24dcb604cdc4b96282eea677ff500a",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
