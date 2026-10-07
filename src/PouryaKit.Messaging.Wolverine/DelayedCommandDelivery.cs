@@ -6,18 +6,23 @@ using Wolverine.Runtime.Handlers;
 
 namespace PouryaKit.Messaging.Wolverine;
 
-// The pre-built handler of every delayed command type, run once the message store finds it due. Each attempt runs in a
-// scope of its own, begun as a continuation of the Operation that scheduled it, in its Module; the envelope's id is the
-// same in every delivery of one scheduled command, retries, recovery and replay included, so it keys the Receipt.
+// The pre-built handler of a delayed command type, run once the message store finds it due. The queue it was stored on
+// names its declaration, as a subscription's does, so one stored under a name nothing declares any more is set aside
+// rather than run under another name's Receipts. Each attempt runs in a scope of its own, begun as a continuation of the
+// Operation that scheduled it, in its Module; the envelope's id is the same in every delivery of one scheduled command,
+// retries, recovery and replay included, so it keys the Receipt.
 internal sealed class DelayedCommandDelivery(DelayedCommandDeclarations declarations) : MessageHandler
 {
     public override async Task HandleAsync(MessageContext context, CancellationToken cancellation)
     {
         var envelope = context.Envelope!;
         var command = (Command)envelope.Message!;
+        // A local queue's address is local://{name, lower-cased}/.
+        var name = envelope.Destination!.Host;
         var declared =
-            declarations.Of(command.GetType())
-            ?? throw new InvalidOperationException($"{command.GetType().FullName} is not a delayed command of this Host.");
+            declarations.Named(name) is { } named && named.Command == command.GetType()
+                ? named
+                : throw new UnknownDelayedCommandException(name, command.GetType());
         var operationContext = OperationContextHeaderExtensions.ContinuedOperationContext(envelope);
 
         await using var scope = context.Runtime.Services.CreateAsyncScope();

@@ -1,9 +1,12 @@
 using Billing;
+using Billing.Quotes.Features.ExpireQuote;
 using Billing.Quotes.Features.OpenQuote;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using Npgsql;
 using PouryaKit.Cqrs;
+using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
 using PouryaKit.Testing;
 using Wolverine;
@@ -92,10 +95,8 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
     {
         var quote = Guid.CreateVersion7();
         var billing = Fixture.Gateway<BillingModule>();
-        await Fixture.WaitForDeliveriesAsync(
-            () => billing.SendAsync(new OpenQuoteCommand(quote, TimeSpan.FromMilliseconds(300)), TestContext.Current.CancellationToken),
-            TestContext.Current.CancellationToken
-        );
+        await billing.SendAsync(new OpenQuoteCommand(quote, TimeSpan.FromMilliseconds(300)), TestContext.Current.CancellationToken);
+        await Fixture.WaitUntilAsync(Handled(ExpireQuote), "the expiry ran");
         var expired = await Fixture.RowsAsync($"select state, version, last_changed_at from billing.quotes where id = '{quote}'");
         var turnedAway = DeliveryProbes.TurnedAwayFrom(ExpireQuote);
 
@@ -151,6 +152,81 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = '{text}'"));
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from wolverine.wolverine_incoming_envelopes"));
     }
+
+    // The quote's second opening is refused at the save, after the Outbox step wrote its expiry in the transaction.
+    [Fact]
+    public async Task A_scheduling_operation_whose_save_is_refused_after_the_outbox_was_written_leaves_no_delayed_command()
+    {
+        var quote = Guid.CreateVersion7();
+        var billing = Fixture.Gateway<BillingModule>();
+        Assert.True((await billing.SendAsync(new OpenQuoteCommand(quote, TimeSpan.FromHours(1)), TestContext.Current.CancellationToken)).IsSuccess);
+
+        await Assert.ThrowsAsync<DbUpdateException>(() =>
+            billing.SendAsync(new OpenQuoteCommand(quote, TimeSpan.FromHours(2)), TestContext.Current.CancellationToken)
+        );
+
+        // Only the first opening's expiry, due in an hour, is stored.
+        Assert.Equal(
+            [["Scheduled", true]],
+            await Fixture.RowsAsync(
+                $"select e.status, e.execution_time = q.expires_on from wolverine.wolverine_incoming_envelopes e, billing.quotes q where e.received_at = 'local://{ExpireQuote}/' and q.id = '{quote}'"
+            )
+        );
+    }
+
+    [Fact]
+    public async Task A_delayed_command_not_yet_due_is_not_waited_for_and_the_reset_removes_it()
+    {
+        var quote = Guid.CreateVersion7();
+
+        var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
+            () => Fixture.Gateway<BillingModule>().SendAsync(new OpenQuoteCommand(quote, TimeSpan.FromHours(1)), TestContext.Current.CancellationToken),
+            TestContext.Current.CancellationToken
+        );
+        var stored = await Fixture.RowsAsync($"select status from wolverine.wolverine_incoming_envelopes where received_at = 'local://{ExpireQuote}/'");
+        await Fixture.ResetAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal([new Delivery(ExpireQuote, typeof(ExpireQuoteCommand).FullName!, false)], deliveries);
+        Assert.Equal([["Scheduled"]], stored);
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from wolverine.wolverine_incoming_envelopes"));
+    }
+
+    // As after a release that renamed the declaration while the expiry waited: stored under a name nothing declares.
+    [Fact]
+    public async Task A_delayed_command_stored_under_a_name_no_longer_declared_is_dead_lettered_and_never_run()
+    {
+        var quote = Guid.CreateVersion7();
+        await Fixture.Gateway<BillingModule>().SendAsync(new OpenQuoteCommand(quote, TimeSpan.FromSeconds(2)), TestContext.Current.CancellationToken);
+        Assert.Single(
+            await Fixture.RowsAsync(
+                $"update wolverine.wolverine_incoming_envelopes set received_at = 'local://billing.expire-quote-retired/' where received_at = 'local://{ExpireQuote}/' and status = 'Scheduled' returning id"
+            )
+        );
+
+        await Fixture.WaitUntilAsync("exists (select from wolverine.wolverine_dead_letters)", "the retired expiry was set aside");
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+
+        var deadLetter = Assert.Single(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(("billing.expire-quote-retired", typeof(UnknownDelayedCommandException).FullName), (deadLetter.Subscription, deadLetter.ExceptionType));
+        Assert.Equal("Open", await Fixture.ScalarAsync<string>($"select state from billing.quotes where id = '{quote}'"));
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from billing.pouryakit_receipts"));
+    }
+
+    [Fact]
+    public void A_delayed_command_named_after_a_queue_wolverine_keeps_for_itself_is_refused()
+    {
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            new ServiceCollection().AddPouryaKitDelayedCommand<WriteDelayedNoteCommand>("scheduled")
+        );
+
+        Assert.Equal(
+            $"{typeof(WriteDelayedNoteCommand).FullName}'s delayed command name scheduled is a queue Wolverine keeps for itself; choose another.",
+            thrown.Message
+        );
+    }
+
+    private static string Handled(string name) =>
+        $"exists (select from wolverine.wolverine_incoming_envelopes where received_at = 'local://{name}/' and status = 'Handled')";
 
     private async Task<string> NewDatabaseAsync()
     {

@@ -34,10 +34,14 @@ internal sealed class DelayedCommandDeclarations
 
     public DelayedCommand? Of(Type command) => _byCommand.GetValueOrDefault(command);
 
+    /// <summary>The declaration named <paramref name="name"/>, ignoring case; null when none has it.</summary>
+    public DelayedCommand? Named(string name) =>
+        _byCommand.Values.FirstOrDefault(declared => string.Equals(declared.Name, name, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>
     /// Adds the declaration, or throws naming each problem: the command type is abstract or generic, the name is missing,
-    /// invalid or another declaration's, ignoring case, or the type is already declared under another name or for another
-    /// Module. Declaring the same again adds nothing.
+    /// invalid, a queue Wolverine keeps for itself or another declaration's, ignoring case, or the type is already
+    /// declared under another name or for another Module. Declaring the same again adds nothing.
     /// </summary>
     public void Add(string name, Type command, Type? module)
     {
@@ -47,13 +51,7 @@ internal sealed class DelayedCommandDeclarations
             problems.Add($"{command.FullName} is not a concrete command without a response; only such a command can run later.");
         }
 
-        if (string.IsNullOrWhiteSpace(name) || !MessageNames.IsValid(name))
-        {
-            problems.Add(
-                $"{command.FullName}'s delayed command name {name} is not a valid name: use letters and digits in segments joined by single dots or hyphens."
-            );
-        }
-        else
+        if (Subscriptions.Check(name, $"{command.FullName}'s delayed command name", isQueue: true, problems))
         {
             var declared = new DelayedCommand(name.ToLowerInvariant(), command, module);
             if (_byCommand.TryGetValue(command, out var existing))

@@ -67,14 +67,15 @@ internal sealed class OffendingRow
     public string Name { get; set; } = "";
 }
 
-// Calls the steps only the Kit runs: the Unit of Work and its DbContext, the Outbox write, a Receipt, a Snapshot mapping, an Integration Event added to the
-// Outbox, the Domain Event drain, a new Operation begun in its own scope, and a reading step.
+// Calls the steps only the Kit runs: the Unit of Work and its DbContext, the Outbox write, a Receipt, a Snapshot mapping, an Integration Event and a delayed
+// command added to the Outbox, the Domain Event drain, a new Operation begun in its own scope, and a reading step.
 internal sealed class KitStepCallingCommandHandler(
     IUnitOfWork unitOfWork,
     IUnitOfWorkOutbox outbox,
     IReceipts receipts,
     ISnapshotMappers snapshots,
     IIntegrationEventOutbox integrationEvents,
+    IDelayedCommandOutbox delayedCommands,
     DomainEventDrain drain,
     IServiceProvider services,
     Operation operation,
@@ -90,6 +91,7 @@ internal sealed class KitStepCallingCommandHandler(
         await receipts.RecordAsync("offending", Guid.CreateVersion7(), cancellationToken);
         _ = snapshots.Map(command, removed: false);
         integrationEvents.Add(Guid.CreateVersion7(), command);
+        delayedCommands.Add(command, DateTimeOffset.UnixEpoch);
         await drain.RunAsync(() => [], cancellationToken);
         services.BeginOperation(new OperationContext(Actor.System("offending")));
         using var reading = operation.OnlyReading("offending", compareTrackedState: false);

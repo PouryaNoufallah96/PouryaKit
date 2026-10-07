@@ -794,6 +794,10 @@ commit sequence is unchanged: the Unit of Work writes the command in its Outbox 
   at a recovery poll is handed out again, concurrently, as ticket #17's amendment describes for a late retry; its
   Receipt keeps the database effect to one. No test pins this for delayed commands: the tests' delays are shorter than
   the stale time.
-- **Its stored name.** `WireNaming` names no command, so Wolverine names it by its full CLR name. Renaming or moving the
+- **Its stored names.** `WireNaming` names no command, so Wolverine names it by its full CLR name. Renaming or moving the
   type strands the commands stored before it, which are dead-lettered as unknown messages, as a removed subscription's
-  type is.
+  type is. The delivery reads the declaration from the queue the envelope was stored on, as `SubscriptionDelivery`
+  reads a subscription, so one stored under a name no longer declared fails with `UnknownDelayedCommandException`
+  and is dead-lettered rather than run again under the new name's Receipt key
+  (`DelayedCommandTests.A_delayed_command_stored_under_a_name_no_longer_declared_is_dead_lettered_and_never_run`).
+  The name follows the subscription name's rule, reserved queues included.
