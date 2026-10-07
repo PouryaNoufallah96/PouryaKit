@@ -1,0 +1,33 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_bdf0617f846b2b::t_b47f815123ee75 30
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_bdf0617f846b2b::t_b47f815123ee75 998-999
+src/PouryaKit.Messaging.Wolverine/SnapshotServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_278c8c1486ca7b 26-31
+.claude/agent-memory/kit-implementer/module-seam-and-composition-check-facts.md
+  s_bdf0617f846b2b::t_9d49c1085220b3 3,11,14,17,19
+docs/acceptance.md
+  s_bdf0617f846b2b::t_889f8d0d50bfec 606-607
+.claude/agent-memory/kit-implementer/declared-authorizer-check-facts.md
+  s_bdf0617f846b2b::t_9d49c1085220b3 15
+.agents/skills/pourya-kit/references/messaging.md
+  s_bdf0617f846b2b::t_d37e6963b2de42 431,698,701
+.agents/skills/pourya-kit/references/modules.md
+  s_bdf0617f846b2b::t_d37e6963b2de42 207
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8ac1d5324751ed9f2570a550c05d9218daf5bc69",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
