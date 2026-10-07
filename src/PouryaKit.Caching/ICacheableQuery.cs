@@ -4,7 +4,7 @@ namespace PouryaKit.Caching;
 
 /// <summary>
 /// Opts a query into the query cache. A Host that registers its handler calls <c>AddPouryaKitCaching()</c>, or fails
-/// when it starts, naming the call (<see cref="IRequiresQueryCache"/>): its success is stored for
+/// when it is built, naming the call (<see cref="IRequiresQueryCache"/>): its success is stored for
 /// <see cref="CacheDuration"/> under <see cref="CacheKey"/> and returned to a repeat of the same query, without running
 /// its handler. Its response is stored as JSON in the Kit's one representation, so it round-trips through it. An entry
 /// belongs to one Actor and tenant: the Kit adds the Operation's Actor, tenant and the query's type to the key, so the

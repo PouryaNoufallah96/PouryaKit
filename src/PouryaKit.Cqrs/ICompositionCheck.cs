@@ -3,10 +3,10 @@ namespace PouryaKit.Cqrs;
 /// <summary>
 /// One check of a Host's final composition that no single registration can make, such as a declared check whose
 /// registration no Composition Root made. A Kit package implements it and registers it on the services its registration
-/// receives, as a singleton with <c>TryAddEnumerable</c>, so it needs no Hosting reference. When a Host composed with
-/// <c>AddPouryaKitCompositionChecks</c>, which <c>AddPouryaKitModules</c> calls, starts, the Kit runs every registered
-/// check, in registration order, before any hosted service starts, and fails the start with one exception that names
-/// every problem.
+/// receives, as a singleton with <c>TryAddEnumerable</c>, so it needs no Hosting reference. When the container of a
+/// Host composed with <c>AddPouryaKitCompositionChecks</c>, which <c>AddPouryaKitModules</c> calls, is built, the Kit
+/// runs every registered check, in registration order, on the built container and before <c>Build</c> returns, so a
+/// Host whose composition fails one never runs an Operation; <c>Build</c> throws one exception that names every problem.
 /// </summary>
 public interface ICompositionCheck
 {

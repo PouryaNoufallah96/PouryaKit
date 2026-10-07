@@ -19,8 +19,9 @@ public static class DelayedCommandServiceCollectionExtensions
         /// Its deliveries run in that Module, so they reach its Unit of Work and its Receipts. Throws here, at startup,
         /// when the type is abstract or generic, when the name is missing, invalid, a queue Wolverine keeps for itself or
         /// another delayed command's, ignoring case, and when the type is already declared under another name or for
-        /// another Module. The Host then fails to start when the declaration belongs to no Module in a Host of Modules,
-        /// when a subscription has the same name, when no Outbox writes delayed commands
+        /// another Module. The Host then fails when it is built if the declaration belongs to no Module in a Host of
+        /// Modules or to a Module the Host does not compose, and fails to start when a subscription has the same name,
+        /// when no Outbox writes delayed commands
         /// (<see cref="INotificationOutbox"/>), or when its queue, as Wolverine built it, is not a durable application
         /// queue.
         /// </summary>

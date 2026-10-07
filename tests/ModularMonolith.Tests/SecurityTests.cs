@@ -74,17 +74,17 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Fact]
-    public async Task A_command_or_query_that_declares_a_permission_whose_check_no_composition_root_registered_stops_the_host_at_start()
+    public void A_command_or_query_that_declares_a_permission_whose_check_no_composition_root_registered_fails_the_host_when_built()
     {
-        await using var host = AppFixture.ComposeHost(
-            "Production",
-            Fixture.ConnectionString,
-            new RecordedLogs(),
-            // The Stub Module's application authorizer of StampNoteCommand stays: it is not the permission check.
-            builder => RemovePermissionChecks(builder.Services, typeof(StampNoteCommand), typeof(ReadStampLedgerQuery))
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            AppFixture.ComposeHost(
+                "Production",
+                Fixture.ConnectionString,
+                new RecordedLogs(),
+                // The Stub Module's application authorizer of StampNoteCommand stays: it is not the permission check.
+                builder => RemovePermissionChecks(builder.Services, typeof(StampNoteCommand), typeof(ReadStampLedgerQuery))
+            )
         );
-
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
 
         Assert.Equal(
             [UncheckedPermission(typeof(ReadStampLedgerQuery)), UncheckedPermission(typeof(StampNoteCommand))],

@@ -11,12 +11,11 @@ public static class ModularityHostApplicationBuilderExtensions
         /// <summary>
         /// Adds the Host's Modules, all in the Host's one container. Each Module's Composition Root runs once, and each
         /// Module is reached through its <see cref="IGatewayProcessor{TModule}"/>. It composes the Host's checks with
-        /// <see cref="CqrsHostApplicationBuilderExtensions.AddPouryaKitCompositionChecks"/>: the container is validated
-        /// when the Host is built, in every environment, and the Kit's composition checks stop the Host when it starts,
-        /// such as on a <c>[RequiresPermission]</c> whose Module's Composition Root never called
-        /// <c>AddPouryaKitPermissions</c>, or a declaration of a Module's messages made without its Module. A Host that
-        /// later calls <c>ConfigureContainer</c> replaces the container the checks install, and fails when it starts,
-        /// naming the call.
+        /// <see cref="CqrsHostApplicationBuilderExtensions.AddPouryaKitCompositionChecks"/>: when the Host is built, in
+        /// every environment, the container is validated and the Kit's composition checks stop it, such as on a
+        /// <c>[RequiresPermission]</c> whose Module's Composition Root never called <c>AddPouryaKitPermissions</c>, or a
+        /// declaration of a Module's messages made without its Module. A Host that later calls <c>ConfigureContainer</c>
+        /// replaces the container the checks install, and fails when it starts, naming the call.
         /// </summary>
         public IHostApplicationBuilder AddPouryaKitModules(Action<ModulesBuilder> modules)
         {
