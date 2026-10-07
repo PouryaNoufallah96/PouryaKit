@@ -1,0 +1,27 @@
+tests/ModularMonolith.Tests/JwtBearerTests.cs
+  s_6c3c3736ba14ff::t_b6e8c48a4a677b 50-72,195-220
+  s_6c3c3736ba14ff::t_15403cc912e0a6 49,221
+src/PouryaKit.Security.JwtBearer/JwtBearerValidation.cs
+  s_6c3c3736ba14ff::t_b6e8c48a4a677b 40
+  s_6c3c3736ba14ff::t_e966b202df3936 41
+tests/ModularMonolith.Tests/TestIssuer.cs
+  s_6c3c3736ba14ff::t_b6e8c48a4a677b 20-22
+docs/acceptance.md
+  s_6c3c3736ba14ff::t_b5bdd233891ab4 308
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "28cb2eb9c10936fd19547f964b32e934a7a043ba",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
