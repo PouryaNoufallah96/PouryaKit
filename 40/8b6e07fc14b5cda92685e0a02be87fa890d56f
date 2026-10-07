@@ -1,0 +1,136 @@
+src/PouryaKit.Messaging.Wolverine/PouryaKitWolverineExtension.cs
+  s_5db987750027ae::t_b8f898dd356d22 20,23,29
+src/PouryaKit.Testing/HostFixture.cs
+  s_5db987750027ae::t_7558dfc0a71fb2 140
+src/PouryaKit.Testing/StoredDeliveries.cs
+  s_5db987750027ae::t_7558dfc0a71fb2 43,46-55
+  s_5db987750027ae::t_beb6c82b2f10b1 56
+docs/provenance/ModularMonolith.md
+  s_5db987750027ae::t_381f1bdcb692b1 14
+src/PouryaKit.Messaging.Wolverine/Subscriptions.cs
+  s_5db987750027ae::t_8b5955767610b7 7-10,12,33-34,46-56,68,163-219,254-258
+  s_5db987750027ae::t_5222b0b542bac5 285
+  s_5db987750027ae::t_1cf8b8dd60dc12 44-45,57
+samples/ModularMonolith/src/Inventory.Host/Program.cs
+  s_5db987750027ae::t_ea06b16512fcaf 2
+  s_5db987750027ae::t_79ef1078391d04 1,3-4
+.agents/skills/pourya-kit/references/messaging.md
+  s_5db987750027ae::t_4990601eb252fd 187,628,697,700-701
+samples/ModularMonolith/src/Inventory.Host/appsettings.json
+  s_5db987750027ae::t_79ef1078391d04 1-11
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_5db987750027ae::t_ded69b4be92831 8,22
+tests/ModularMonolith.Tests/StoredDeliveriesSchemaTests.cs
+  s_5db987750027ae::t_a3e2b3a38c3edf 106-135,140-146
+  s_5db987750027ae::t_5222b0b542bac5 136-139
+Directory.Packages.props
+  s_5db987750027ae::t_f94cbbe67753e5 32,37
+  s_5db987750027ae::t_381f1bdcb692b1 22
+src/PouryaKit.Messaging.Wolverine/SubscriptionDelivery.cs
+  s_5db987750027ae::t_acd9171b371513 19-20,27-38
+  s_5db987750027ae::t_291a46a6418713 24-26
+  s_5db987750027ae::t_3814fb6f0771a3 10
+src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqHostApplicationBuilderExtensions.cs
+  s_5db987750027ae::t_3e443861656ece 1-54
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_5db987750027ae::t_2968928e29fb0b 6,31-39,71,75-80,87-91
+docs/acceptance.md
+  s_5db987750027ae::t_58971b82b25955 74,77,120,355-378
+.agents/skills/pourya-kit/SKILL.md
+  s_5db987750027ae::t_4990601eb252fd 34
+.agents/skills/pourya-kit/references/testing.md
+  s_5db987750027ae::t_d02d7ff58d3ba9 179-180
+README.md
+  s_5db987750027ae::t_20d5bc9c355035 5,7
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_5db987750027ae::t_291a46a6418713 31
+samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj
+  s_5db987750027ae::t_381f1bdcb692b1 10
+  s_5db987750027ae::t_1547d63af40cce 5-6
+  s_5db987750027ae::t_9191a55e6937ae 1-4,7-9,11-20
+src/PouryaKit.Messaging.Wolverine/SnapshotServiceCollectionExtensions.cs
+  s_5db987750027ae::t_915b4639dbc1cb 48-62
+src/PouryaKit.Messaging.Wolverine.RabbitMq/PouryaKit.Messaging.Wolverine.RabbitMq.csproj
+  s_5db987750027ae::t_1366cc33e5c2f8 1-8
+tests/ModularMonolith.Tests/RabbitMqDeliveryTests.cs
+  s_5db987750027ae::t_8133d706e5fb45 511-540,542-543,547,687-707
+  s_5db987750027ae::t_53f6763cf30064 184
+  s_5db987750027ae::t_b3ad03f6afc233 5,10-11,14,24-27,31-32,40,42-46,48,65,67-68,71,78-79,81-82,510,708
+  s_5db987750027ae::t_09d45630f641be 325-327
+  s_5db987750027ae::t_d4612028c8b3c9 1,9,13,15-16,18,20
+  s_5db987750027ae::t_3d12c2a0e1ea08 190
+  s_5db987750027ae::t_b479b51d26a50d 2-4,6-8,12,17,19,21-23,28-30,33-39,41,47,49-64,66,69-70,72-77,80,83-183,185-189,191-200,202-324,328-355,357-458,460-509,541,544-546,548-686
+  s_5db987750027ae::t_ff11d86ec5cd27 201,356,459
+src/PouryaKit.Testing/DeadLetter.cs
+  s_5db987750027ae::t_7558dfc0a71fb2 6-8
+PouryaKit.slnx
+  s_5db987750027ae::t_4f8db001049e64 7
+  s_5db987750027ae::t_79ef1078391d04 25
+src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqExtension.cs
+  s_5db987750027ae::t_d77203ece12bcb 1-28,30-31,33-34
+  s_5db987750027ae::t_e1d33ece3436d3 29
+  s_5db987750027ae::t_38a0e47b226c6e 32
+src/PouryaKit.Testing/Delivery.cs
+  s_5db987750027ae::t_7558dfc0a71fb2 5-7
+docs/architecture/README.md
+  s_5db987750027ae::t_fa0d802b1790a9 465
+  s_5db987750027ae::t_49a52b7b61da2d 584
+  s_5db987750027ae::t_e8ff63e23dfebc 3,121,130,143-145,155,160,163-164,176-179,185-186,441-442,460,466,489-498,557
+src/PouryaKit.Messaging.Wolverine/IWireNames.cs
+  s_5db987750027ae::t_5a12c3ddfaca5e 1-22
+tests/ModularMonolith.Tests/AppFixture.cs
+  s_5db987750027ae::t_1986ede100b1ef 40-42,48-49,59
+docs/foundation-review.md
+  s_5db987750027ae::t_abd072c7745c22 257,854
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_5db987750027ae::t_2968928e29fb0b 15
+samples/ModularMonolith/src/Inventory.Host/InventoryHost.cs
+  s_5db987750027ae::t_8a198442bbaf27 1-42
+tests/ModularMonolith.Tests/IntegrationEventTests.cs
+  s_5db987750027ae::t_9653f3b8bdc8b5 350
+tests/ModularMonolith.Tests/IntegrationEventWiringTests.cs
+  s_5db987750027ae::t_9653f3b8bdc8b5 62-74
+src/PouryaKit.Messaging.Wolverine/StartupCheck.cs
+  s_5db987750027ae::t_9bfa0820e398c6 51-52,66
+  s_5db987750027ae::t_92e1d43fb569ad 44-50,53-57,59-63
+  s_5db987750027ae::t_2585b8719cba58 58
+  s_5db987750027ae::t_37d69a568619e4 6
+src/PouryaKit.Messaging.Wolverine/IntegrationEventServiceCollectionExtensions.cs
+  s_5db987750027ae::t_1b8e1d58d9ceed 36-52
+  s_5db987750027ae::t_291a46a6418713 62-63
+  s_5db987750027ae::t_1c9a8daa3cc0de 35
+scripts/packaging/consumers/PouryaKit.Messaging.Wolverine.RabbitMq.cs
+  s_5db987750027ae::t_7fc41fe20b44d7 1-15
+tests/ModularMonolith.Tests/BrokerFixture.cs
+  s_5db987750027ae::t_56a2adf461b260 177-180
+  s_5db987750027ae::t_d984c8f5e6a1f3 154-155,169-176,194-204
+  s_5db987750027ae::t_85aebb68995bce 234-259
+  s_5db987750027ae::t_dd9835e77e0a76 1-153,156-168,181-193,205-233,260-275
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_5db987750027ae::t_7fc41fe20b44d7 49,84-85
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_5db987750027ae::t_0831cf9792e8b5 29,49,107
+  s_5db987750027ae::t_1964839102dbb7 1-28,30-48,50-106,108-120
+docs/provenance/PouryaKit.Messaging.Wolverine.RabbitMq.md
+  s_5db987750027ae::t_099d84e40db611 1-16
+scripts/packaging/inventory.json
+  s_5db987750027ae::t_7fc41fe20b44d7 18,32
+src/PouryaKit.Messaging.Wolverine/WireNaming.cs
+  s_5db987750027ae::t_b8f898dd356d22 8-10,17-19,21,27-30,38,40,45-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "408b6e07fc14b5cda92685e0a02be87fa890d56f",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
