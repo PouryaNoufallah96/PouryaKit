@@ -14,7 +14,9 @@ public enum NestedFailure
 }
 
 // Posts a note whose Domain Event a Notification Handler subscribes to, so the Operation stores a Notification when it
-// commits; then sends a nested command that fails as asked, ignores its Result, and returns success.
+// commits; then sends a nested command that fails as asked, ignores its Result, and returns success. It opts in to
+// idempotency, which a request id turns on; sent without one, it runs every time.
+[Idempotent]
 internal sealed record PostNoteThenNestCommand(string Text, NestedFailure Failure) : Command;
 
 internal sealed class PostNoteThenNestCommandHandler(IRepository<Note, NoteId> notes, IDispatcher dispatcher)

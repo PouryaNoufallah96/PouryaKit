@@ -45,6 +45,8 @@ public static class ThingsGateway
 
     public static Task<Result<string>> RunOuterLettingANestedExceptionThrough(IDispatcher dispatcher) =>
         dispatcher.SendAsync(new RunOuterUncaughtCommand());
+
+    public static Task<Result<string>> SealThing(IDispatcher dispatcher) => dispatcher.SendAsync(new SealThingCommand());
 }
 
 internal sealed record GuardedByCommandCommand : Command;
@@ -236,5 +238,31 @@ internal sealed class SendCommandHandler(IDispatcher dispatcher) : QueryHandler<
     {
         await dispatcher.SendAsync(new PingCommand(), cancellationToken);
         return "sent";
+    }
+}
+
+[Idempotent]
+internal sealed record SealThingCommand : Command<string>;
+
+// Sends a nested command that opts in too: only the outermost one reserves a key.
+internal sealed class SealThingHandler(IDispatcher dispatcher, OperationTrace trace) : CommandHandler<SealThingCommand, string>
+{
+    public override async Task<Result<string>> Handle(SealThingCommand command, CancellationToken cancellationToken)
+    {
+        trace.Add("handle SealThingCommand");
+        var part = await dispatcher.SendAsync(new SealPartCommand(), cancellationToken);
+        return part.IsSuccess ? "sealed" : part.Errors;
+    }
+}
+
+[Idempotent]
+internal sealed record SealPartCommand : Command;
+
+internal sealed class SealPartHandler(OperationTrace trace) : CommandHandler<SealPartCommand>
+{
+    public override Task<Result> Handle(SealPartCommand command, CancellationToken cancellationToken)
+    {
+        trace.Add("handle SealPartCommand");
+        return Task.FromResult(Result.Success());
     }
 }

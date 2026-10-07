@@ -61,6 +61,7 @@ public sealed class StubModule : IModuleDefinition
         module.AddSingleton<IntegrationEventLog>();
         module.AddScoped<ReactionLog>();
         module.AddSingleton<DeliveryLog>();
+        module.AddSingleton<NoteRuns>();
         module.AddSingleton<CatalogQuestionContexts>();
         module.AddPouryaKitEndpoints("/stub", typeof(StubModule).Assembly);
     }

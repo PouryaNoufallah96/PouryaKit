@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PouryaKit.Domain;
@@ -24,6 +25,9 @@ internal sealed partial class Dispatcher(
         "Operation.CommandThrew",
         "A command failed with an exception, so the Operation was rolled back."
     );
+
+    // An idempotent command's recorded response, in the one JSON representation the Kit writes everywhere.
+    private static readonly JsonSerializerOptions ResponseJson = new JsonSerializerOptions().UsePouryaKitJson();
 
     // The exception last logged in this scope: one that leaves several nested pipelines is logged once, where it began.
     private Exception? _loggedException;
@@ -74,6 +78,7 @@ internal sealed partial class Dispatcher(
         bool isCommand,
         Func<IServiceProvider, TCommandOrQuery, CancellationToken, Task<TResult>> handle,
         Func<ImmutableArray<Error>, TResult> fail,
+        IdempotentResponses<TResult>? idempotent,
         CancellationToken cancellationToken
     )
         where TCommandOrQuery : notnull
@@ -96,7 +101,7 @@ internal sealed partial class Dispatcher(
 
             try
             {
-                var result = await Pipeline(commandOrQuery, ownsUnitOfWork, reading, handle, fail, cancellationToken);
+                var result = await Pipeline(commandOrQuery, ownsUnitOfWork, reading, handle, fail, idempotent, cancellationToken);
                 if (isCommand && result.IsFailure)
                 {
                     operation.MarkRollbackOnly(result.Errors);
@@ -130,6 +135,7 @@ internal sealed partial class Dispatcher(
         IDisposable? reading,
         Func<IServiceProvider, TCommandOrQuery, CancellationToken, Task<TResult>> handle,
         Func<ImmutableArray<Error>, TResult> fail,
+        IdempotentResponses<TResult>? idempotent,
         CancellationToken cancellationToken
     )
         where TCommandOrQuery : notnull
@@ -145,7 +151,7 @@ internal sealed partial class Dispatcher(
         {
             using (reading)
             {
-                result = await Steps(commandOrQuery, ownsUnitOfWork, handle, fail, cancellationToken);
+                result = await Steps(commandOrQuery, ownsUnitOfWork, handle, fail, idempotent, cancellationToken);
             }
         }
         catch (Exception exception)
@@ -175,6 +181,7 @@ internal sealed partial class Dispatcher(
         bool ownsUnitOfWork,
         Func<IServiceProvider, TCommandOrQuery, CancellationToken, Task<TResult>> handle,
         Func<ImmutableArray<Error>, TResult> fail,
+        IdempotentResponses<TResult>? idempotent,
         CancellationToken cancellationToken
     )
         where TCommandOrQuery : notnull
@@ -217,6 +224,10 @@ internal sealed partial class Dispatcher(
                 "No IUnitOfWork is registered, so a command cannot run. Register the Unit of Work of a persistence package."
             );
 
+        // The first of the fixed pipeline's two optional slots (ADR 0002): request idempotency, whose key and recorded
+        // success are written in the Unit of Work's own transaction.
+        var reservation = Reserving<TCommandOrQuery, TResult>(idempotent);
+
         TResult? returned = null;
         Result outcome;
         operation.StartUnitOfWork();
@@ -225,8 +236,19 @@ internal sealed partial class Dispatcher(
             outcome = await unitOfWork.RunAsync(
                 async ct =>
                 {
+                    if (reservation is not null && await reservation.ReplayAsync(ct) is { } replayed)
+                    {
+                        returned = replayed;
+                        return returned;
+                    }
+
                     var handled = await handle(services, commandOrQuery, ct);
                     returned = handled.IsSuccess && operation.IsRollbackOnly ? fail(operation.RollbackErrors) : handled;
+                    if (reservation is not null)
+                    {
+                        await reservation.RecordAsync(returned, ct);
+                    }
+
                     return returned;
                 },
                 cancellationToken
@@ -258,6 +280,35 @@ internal sealed partial class Dispatcher(
             );
     }
 
+    // The outermost command's reservation: null when its Operation carries no request id, and an exception when the
+    // request id cannot be honoured, since running the command anyway would silently drop the promised guarantee.
+    private Reservation<TResult>? Reserving<TCommand, TResult>(IdempotentResponses<TResult>? idempotent)
+        where TResult : Result
+    {
+        if (operation.Context is not { RequestId: { } requestId } context)
+        {
+            return null;
+        }
+
+        if (idempotent is null)
+        {
+            throw new InvalidOperationException(
+                $"{typeof(TCommand).Name} runs with a request id but does not opt in with [Idempotent], so a repeat would run it again. Opt the command in, or send it with a context that has no request id."
+            );
+        }
+
+        var store =
+            services.GetService<IIdempotencyStore>()
+            ?? throw new InvalidOperationException(
+                $"{typeof(TCommand).Name} opts in with [Idempotent] and runs with a request id, but no IIdempotencyStore is registered to keep its key. Register a Unit of Work that keeps keys, such as PouryaKit.Persistence.EFCore's."
+            );
+        return new Reservation<TResult>(
+            store,
+            new IdempotencyKey(context.Tenant, context.Actor, typeof(TCommand).FullName!, requestId),
+            idempotent
+        );
+    }
+
     [LoggerMessage(EventName = "Running", Level = LogLevel.Debug, Message = "Running {Operation}")]
     private static partial void LogRunning(ILogger logger, string operation);
 
@@ -282,6 +333,34 @@ internal sealed partial class Dispatcher(
     )]
     private static partial void LogThrew(ILogger logger, Exception exception, string operation, double elapsedMilliseconds);
 
+    // How an [Idempotent] command's success is recorded and replayed: its value as JSON, or no response for a command
+    // without a value.
+    private sealed record IdempotentResponses<TResult>(Func<TResult, string?> Record, Func<string?, TResult> Replay)
+        where TResult : Result;
+
+    private sealed class Reservation<TResult>(
+        IIdempotencyStore store,
+        IdempotencyKey key,
+        IdempotentResponses<TResult> responses
+    )
+        where TResult : Result
+    {
+        // Null once this Operation holds the key; otherwise the success the committed holder recorded.
+        public async Task<TResult?> ReplayAsync(CancellationToken cancellationToken) =>
+            await store.ReserveAsync(key, cancellationToken) is { } recorded ? responses.Replay(recorded.Response) : null;
+
+        // A failure records nothing: the Unit of Work rolls back, and the key with it.
+        public async Task RecordAsync(TResult result, CancellationToken cancellationToken)
+        {
+            if (result.IsSuccess && responses.Record(result) is { } response)
+            {
+                await store.RecordAsync(key, response, cancellationToken);
+            }
+        }
+    }
+
+    private static bool IsIdempotent(Type command) => command.IsDefined(typeof(IdempotentAttribute), inherit: false);
+
     private abstract class Invoker<TResult>
         where TResult : Result
     {
@@ -295,6 +374,10 @@ internal sealed partial class Dispatcher(
     private sealed class CommandInvoker<TCommand> : Invoker<Result>
         where TCommand : Command
     {
+        private static readonly IdempotentResponses<Result>? Idempotent = IsIdempotent(typeof(TCommand))
+            ? new(static _ => null, static _ => Result.Success())
+            : null;
+
         public override Task<Result> Invoke(
             Dispatcher dispatcher,
             object commandOrQuery,
@@ -306,6 +389,7 @@ internal sealed partial class Dispatcher(
                 static (services, command, ct) =>
                     services.GetRequiredService<CommandHandler<TCommand>>().Handle(command, ct),
                 static errors => errors,
+                Idempotent,
                 cancellationToken
             );
     }
@@ -314,6 +398,19 @@ internal sealed partial class Dispatcher(
         where TCommand : Command<TResponse>
         where TResponse : notnull
     {
+        // A recorded success always has a value: replaying a default in its place is what this slot exists to prevent.
+        private static readonly IdempotentResponses<Result<TResponse>>? Idempotent = IsIdempotent(typeof(TCommand))
+            ? new(
+                static result => JsonSerializer.Serialize(result.Value, ResponseJson),
+                static response =>
+                    response is not null && JsonSerializer.Deserialize<TResponse>(response, ResponseJson) is { } value
+                        ? value
+                        : throw new InvalidOperationException(
+                            $"The success recorded for this request id of {typeof(TCommand).Name} has no value to replay."
+                        )
+            )
+            : null;
+
         public override Task<Result<TResponse>> Invoke(
             Dispatcher dispatcher,
             object commandOrQuery,
@@ -325,6 +422,7 @@ internal sealed partial class Dispatcher(
                 static (services, command, ct) =>
                     services.GetRequiredService<CommandHandler<TCommand, TResponse>>().Handle(command, ct),
                 static errors => errors,
+                Idempotent,
                 cancellationToken
             );
     }
@@ -344,6 +442,7 @@ internal sealed partial class Dispatcher(
                 static (services, query, ct) =>
                     services.GetRequiredService<QueryHandler<TQuery, TResponse>>().Handle(query, ct),
                 static errors => errors,
+                idempotent: null,
                 cancellationToken
             );
     }

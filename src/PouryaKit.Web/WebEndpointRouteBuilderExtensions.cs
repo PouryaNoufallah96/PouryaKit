@@ -18,8 +18,9 @@ public static class WebEndpointRouteBuilderExtensions
         /// caller: the Actor is the person the <see cref="PouryaKitWebOptions.ActorClaim"/> names, and the Operation
         /// starts a new chain of work. Only a caller authenticated as a peer in
         /// <see cref="PouryaKitTrustedPeerOptions.Peers"/> continues an Operation of its own instead, from the Kit's
-        /// headers; every other caller's headers are ignored. The endpoint injects that <see cref="OperationContext"/>
-        /// and passes it to its Module's Gateway.
+        /// headers; every other caller's headers are ignored. An endpoint that requires an <c>Idempotency-Key</c>
+        /// (<c>RequireIdempotencyKey</c>) adds the header's value as the context's request id. The endpoint injects that
+        /// <see cref="OperationContext"/> and passes it to its Module's Gateway.
         /// </summary>
         public IEndpointRouteBuilder MapPouryaKitModuleEndpoints()
         {
@@ -60,10 +61,21 @@ public static class WebEndpointRouteBuilderExtensions
             ArgumentNullException.ThrowIfNull(actor);
             return builder.AllowAnonymous().WithMetadata(new AnonymousActor(actor));
         }
+
+        /// <summary>
+        /// Requires an <c>Idempotency-Key</c> header on every request to a POST, PUT or DELETE endpoint whose command opts
+        /// in with <see cref="IdempotentAttribute"/>. The header's value becomes the request's
+        /// <see cref="OperationContext.RequestId"/>, so a repeat by the same Actor and tenant answers what the first
+        /// request answered, through the same Result and the same <c>ToHttpResult</c> mapping, without running the
+        /// command again. A request without a single header of 1 to 256 visible ASCII characters, with spaces only
+        /// between them, is answered 400 as a problem response before its body is read.
+        /// </summary>
+        public TBuilder RequireIdempotencyKey() => builder.WithMetadata(new IdempotencyKeyRequired());
     }
 
     // Runs as the endpoint's own first step, after authorization and before the endpoint binds its parameters, which
-    // is where it resolves the OperationContext; an endpoint filter would run after that binding.
+    // is where it resolves the OperationContext; an endpoint filter would run after that binding. The request id is part
+    // of that context, so the Idempotency-Key header is read here too.
     private static void BeginOperationFirst(EndpointBuilder endpoint, PouryaKitWebOptions options, ISet<string> peers)
     {
         if (!endpoint.Metadata.OfType<AnonymousActor>().Any() && endpoint.Metadata.OfType<IAllowAnonymous>().Any())
@@ -76,10 +88,14 @@ public static class WebEndpointRouteBuilderExtensions
         var run =
             endpoint.RequestDelegate
             ?? throw new InvalidOperationException($"{endpoint.DisplayName} has no request delegate to run.");
+        var requiresIdempotencyKey = endpoint.Metadata.OfType<IdempotencyKeyRequired>().Any();
         endpoint.RequestDelegate = httpContext =>
         {
+            var context = HttpCallerContext.Resolve(httpContext, options, peers) ?? throw Unresolved(httpContext, options);
             httpContext.RequestServices.BeginOperation(
-                HttpCallerContext.Resolve(httpContext, options, peers) ?? throw Unresolved(httpContext, options)
+                requiresIdempotencyKey
+                    ? context with { RequestId = IdempotencyKeyHeader.Read(httpContext.Request.Headers) }
+                    : context
             );
             return run(httpContext);
         };

@@ -10,6 +10,8 @@ The Outbox seam of the commit sequence's step 5 (`IUnitOfWorkOutbox`, called by 
 
 The tracked-state comparison (`TrackedState`), shared by the EF Unit of Work's reading guard and `SnapshotStep`, is new Kit code too. It compares mapped values recursively through EF's value comparers.
 
+The idempotency key store (`EfIdempotencyStore`, `IdempotencyTable`, ticket #42) is new Kit code too, on the pattern of the Kit's own Receipts in `PouryaKit.Messaging.Wolverine.EFCore`: a table outside the Module's model, written with `insert … on conflict do nothing` on the Unit of Work's transaction. Its [PouryaKit.Cqrs](PouryaKit.Cqrs.md) record names the reference implementations it replaces.
+
 ## Package dependencies
 
 Checked on nuget.org on 2026-10-05; licence expressions from each package's nuspec. Neither is reciprocal or commercial (ADR 0002).

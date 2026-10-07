@@ -11,8 +11,10 @@ public static class EfCoreServiceCollectionExtensions
     {
         /// <summary>
         /// Makes <typeparamref name="TDbContext"/>, already registered, the Unit of Work of the commands that run in this
-        /// container, or in this Module when called on a Module's builder. It adds the generic repository over it, and the
-        /// <see cref="IUnitOfWorkConnection"/> through which a plain SQL write joins the active Unit of Work's transaction.
+        /// container, or in this Module when called on a Module's builder. It adds the generic repository over it, the
+        /// <see cref="IUnitOfWorkConnection"/> through which a plain SQL write joins the active Unit of Work's transaction,
+        /// and the <see cref="IIdempotencyStore"/> that keeps the keys of <c>[Idempotent]</c> commands in that
+        /// transaction, in the Module's <see cref="IdempotencyTable"/>.
         /// When a messaging package registered an <see cref="IUnitOfWorkOutbox"/>, the Unit of Work commits through it.
         /// A database package such as <c>PouryaKit.Persistence.Postgres</c> calls it; Feature code never does.
         /// </summary>
@@ -32,6 +34,7 @@ public static class EfCoreServiceCollectionExtensions
             ));
             services.TryAddScoped(typeof(IRepository<,>), typeof(EfRepository<,>));
             services.TryAddScoped<IUnitOfWorkConnection, EfUnitOfWorkConnection>();
+            services.TryAddScoped<IIdempotencyStore, EfIdempotencyStore>();
             return services;
         }
 

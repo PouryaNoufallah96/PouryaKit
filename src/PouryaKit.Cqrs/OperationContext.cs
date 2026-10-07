@@ -52,6 +52,21 @@ public sealed record OperationContext
     public bool IsTrustedContinuation { get; private init; }
 
     /// <summary>
+    /// The id the caller gave the request this Operation serves, which makes an outermost command that opts in with
+    /// <see cref="IdempotentAttribute"/> idempotent; null otherwise. Whoever creates the context sets it: the HTTP
+    /// boundary from the <c>Idempotency-Key</c> header of an endpoint that requires one, any other caller of a Gateway
+    /// with an object initializer. <see cref="Continue"/> leaves it out and no message carries it, so work this
+    /// Operation causes is never taken for a repeat of it. Never blank.
+    /// </summary>
+    public string? RequestId
+    {
+        get;
+        init => field = value is null || !string.IsNullOrWhiteSpace(value)
+            ? value
+            : throw new ArgumentException("A request id is not blank.", nameof(RequestId));
+    }
+
+    /// <summary>
     /// The context of a new Operation this one causes: the same Actor, tenant and correlation, caused by this Operation.
     /// It is a trusted continuation only when called on this exact context while the dispatcher runs its Operation,
     /// past its authorization checks, from inside that Operation, as a handler asking another Module does. Called on a

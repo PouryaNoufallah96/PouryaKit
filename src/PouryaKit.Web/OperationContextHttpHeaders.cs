@@ -20,7 +20,7 @@ internal static class OperationContextHttpHeaders
 
     private static readonly string[] Names = [ActorId, ActorKindName, Tenant, CorrelationId, CausationId];
 
-    private static readonly string Rule = $"1 to {MaxValueLength} visible ASCII characters, with spaces only between them";
+    internal static readonly string Rule = $"1 to {MaxValueLength} visible ASCII characters, with spaces only between them";
 
     // Every value is checked before any header is written, so a request with a value the rule refuses is never sent,
     // not even in part. Values replace rather than append, so a request sent again carries the same single value of each.
@@ -78,9 +78,10 @@ internal static class OperationContextHttpHeaders
         return new OperationContext(actor, tenant, Id(Single(CorrelationId), CorrelationId), Id(Single(CausationId), CausationId));
     }
 
-    // The Kit's rule for a context header value, on both sides of a call: no control character can end a header line or
-    // start another, nothing outside ASCII depends on an encoding, and no edge space is trimmed away in transit.
-    private static bool IsHeaderValue(string value) =>
+    // The Kit's rule for a context header value, on both sides of a call, and for an Idempotency-Key: no control
+    // character can end a header line or start another, nothing outside ASCII depends on an encoding, and no edge space
+    // is trimmed away in transit.
+    internal static bool IsHeaderValue(string value) =>
         value.Length is > 0 and <= MaxValueLength
         && value[0] != ' '
         && value[^1] != ' '
