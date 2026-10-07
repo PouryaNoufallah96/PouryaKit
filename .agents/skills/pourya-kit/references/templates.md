@@ -89,7 +89,7 @@ dotnet test --project tests/Acme.Shop.Tests/Acme.Shop.Tests.csproj
 
 ## Pre-generating Wolverine's code for production
 
-The generated Hosts reference `WolverineFx.RuntimeCompilation`, as ADR 0004 requires of a Host: Wolverine compiles its runtime code with Roslyn when the Host starts, as the Proving Sample's Host does. Pre-generation for production, which ADR 0004 places with the project template, is not built in #53: it is deferred to a follow-up with an owner decision. Until then a Host that wants it follows Wolverine's code generation guide (`jasperfx/wolverine`, `docs/guide/codegen.md`): run the Host through `RunJasperFxCommands(args)` instead of `RunAsync()`, write the code with `dotnet run -- codegen write`, and set `CodeGeneration.TypeLoadMode` to `TypeLoadMode.Static` in production through `builder.Services.ConfigureWolverine(...)`. The package reference stays: a Host with the EF Core outbox has Roslyn in its closure either way.
+The generated Hosts reference `WolverineFx.RuntimeCompilation`, as ADR 0004 requires of a Host: Wolverine compiles its runtime code with Roslyn when the Host starts, which is what development wants. Pre-generating that code for production is the Host's responsibility, following Wolverine's code generation guide (`jasperfx/wolverine`, `docs/guide/codegen.md`): run the Host through `RunJasperFxCommands(args)` instead of `RunAsync()`, write the code with `dotnet run -- codegen write`, and set `CodeGeneration.TypeLoadMode` to `TypeLoadMode.Static` in production through `builder.Services.ConfigureWolverine(...)`. The package reference stays: a Host with the EF Core outbox has Roslyn in its closure either way.
 
 ## How the package is built
 
