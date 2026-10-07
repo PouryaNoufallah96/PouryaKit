@@ -1,0 +1,63 @@
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_5db987750027ae::t_7ecbed661547ca 777-778,792,795-798
+  s_5db987750027ae::t_00e76f714478a6 779-791,793-794
+src/PouryaKit.Messaging.Wolverine/Subscriptions.cs
+  s_5db987750027ae::t_9f75bf3e4989d1 46-48
+  s_5db987750027ae::t_02a89f406d2c0a 279-283,294,297,304-306
+src/PouryaKit.Testing/Delivery.cs
+  s_5db987750027ae::t_054d63069e5686 6
+tests/ModularMonolith.Tests/BrokerFixture.cs
+  s_5db987750027ae::t_f268a7097bb311 1,13,20,142-145,152-155,287-289,291-319
+  s_5db987750027ae::t_d7dac71ad74d7e 244-251
+tests/ModularMonolith.Tests/IntegrationEventVersionTests.cs
+  s_5db987750027ae::t_b6e7600315ff47 97-113,137-139
+  s_5db987750027ae::t_359f79828548e7 96,140
+.agents/skills/pourya-kit/references/messaging.md
+  s_5db987750027ae::t_c305b53a9207ab 700
+src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqHostApplicationBuilderExtensions.cs
+  s_5db987750027ae::t_054d63069e5686 20
+  s_5db987750027ae::t_0cc4ff7ed14fe2 28-30
+src/PouryaKit.Messaging.Wolverine/SubscriptionDelivery.cs
+  s_5db987750027ae::t_dbf485bbc21c17 71
+  s_5db987750027ae::t_dfad0f22f3903b 52,59-60,62,64-70,72-77
+  s_5db987750027ae::t_9ddfbf9dcd2d30 53-58,63
+  s_5db987750027ae::t_829c81f3b20807 26,61,78
+tests/ModularMonolith.Tests/RabbitMqDeliveryTests.cs
+  s_5db987750027ae::t_d7dac71ad74d7e 13,93,100-101,120,124-125,127,140,142-193,195-198,200-201,203-205,211-213,215-216,219,221,695-703
+  s_5db987750027ae::t_bc2e0a2a463992 194,199,202,206-210,214,217-218,220,222-226
+  s_5db987750027ae::t_722ba80e4bcc46 704
+src/PouryaKit.Messaging.Wolverine/WireNaming.cs
+  s_5db987750027ae::t_9f75bf3e4989d1 17-20,22,25,33,52
+  s_5db987750027ae::t_9da3ff9ce24df6 24
+src/PouryaKit.Messaging.Wolverine/PouryaKitWolverineExtension.cs
+  s_5db987750027ae::t_9f75bf3e4989d1 29
+tests/ModularMonolith.Tests/IntegrationEventWiringTests.cs
+  s_5db987750027ae::t_b6e7600315ff47 10,104-120,146-148
+docs/architecture/README.md
+  s_5db987750027ae::t_054d63069e5686 461
+  s_5db987750027ae::t_db8c6b764744b3 451,455
+  s_5db987750027ae::t_c305b53a9207ab 466
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_5db987750027ae::t_00e76f714478a6 22,114
+  s_5db987750027ae::t_054d63069e5686 20
+  s_5db987750027ae::t_7ecbed661547ca 93
+  s_5db987750027ae::t_c305b53a9207ab 115,118
+docs/acceptance.md
+  s_5db987750027ae::t_1179f25dfe9c52 363,365-366,377-378
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b8da1a732bf62be902ecc125a69898d889d017d8",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
