@@ -115,47 +115,6 @@ public static class CqrsServiceCollectionExtensions
 
             return services;
         }
-
-        /// <summary>
-        /// Throws when a command or query whose handler is registered declares, with an <see cref="IRequiresAuthorizer"/>
-        /// attribute such as Security's <c>[RequiresPermission]</c>, an authorizer of the Kit that is not registered for
-        /// it, one line per operation: its check would never run. Another authorizer of the same operation does not count.
-        /// It reads the registrations as they are, so call it on the Host's final ones, when the container is built:
-        /// <c>AddPouryaKitModules</c> does, and a Host without Modules passes it to <c>ConfigureContainer</c>.
-        /// </summary>
-        public void EnsurePouryaKitDeclaredAuthorizers()
-        {
-            ArgumentNullException.ThrowIfNull(services);
-
-            // ImplementationType throws on a keyed descriptor, and the dispatcher resolves handlers and authorizers unkeyed.
-            var unkeyed = services.Where(descriptor => !descriptor.IsKeyedService).ToList();
-            var registered = unkeyed
-                .Where(descriptor => descriptor.ImplementationType is not null)
-                .Select(descriptor => (descriptor.ServiceType, descriptor.ImplementationType!))
-                .ToHashSet();
-            List<string> problems =
-            [
-                .. unkeyed
-                    .Select(descriptor => OperationTypes.HandledBy(descriptor.ServiceType))
-                    .OfType<Type>()
-                    .Distinct()
-                    .SelectMany(operation =>
-                        operation
-                            .GetCustomAttributes(inherit: false)
-                            .OfType<IRequiresAuthorizer>()
-                            .Where(declared =>
-                                !registered.Contains((typeof(IAuthorizer<>).MakeGenericType(operation), declared.AuthorizerOf(operation)))
-                            )
-                            .Select(declared =>
-                                $"{operation.FullName} declares {declared.GetType().Name}, but its check is not registered, so it would run unchecked. Call {declared.Registration} with the assembly {operation.Assembly.GetName().Name} in the Composition Root that registers its handler."
-                            )
-                    ),
-            ];
-            if (problems.Count > 0)
-            {
-                throw new InvalidOperationException(string.Join(Environment.NewLine, problems));
-            }
-        }
     }
 
     // The dispatcher and what each Operation's scope needs, registered once whatever calls it: AddPouryaKitCqrs, with or
@@ -167,6 +126,10 @@ public static class CqrsServiceCollectionExtensions
         services.TryAddScoped(OperationContextServiceProviderExtensions.Read);
         services.TryAddScoped<IDispatcher, Dispatcher>();
         services.TryAddSingleton(TimeProvider.System);
+        // Run by the Host's AddPouryaKitCompositionChecks when it starts.
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, DeclaredAuthorizersCheck>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, QueryCacheCheck>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, UnitOfWorkCheck>());
     }
 
     // A second call with the same assembly adds nothing; a different handler for an operation already handled is a

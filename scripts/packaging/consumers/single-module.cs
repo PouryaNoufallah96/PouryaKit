@@ -16,6 +16,8 @@ builder.Services.AddPouryaKitCqrs(typeof(NotesDbContext).Assembly);
 builder.Services.AddPouryaKitValidation(typeof(NotesDbContext).Assembly);
 builder.Services.AddPouryaKitDapper("app", typeof(NotesDbContext).Assembly);
 builder.Services.AddPouryaKitWeb();
+// The packed Cqrs's Host entry: the validated container and the composition checks, run when the Host starts.
+builder.AddPouryaKitCompositionChecks();
 
 using var app = builder.Build();
 await using var scope = app.Services.CreateAsyncScope();

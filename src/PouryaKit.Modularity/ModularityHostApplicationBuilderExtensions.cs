@@ -10,13 +10,13 @@ public static class ModularityHostApplicationBuilderExtensions
     {
         /// <summary>
         /// Adds the Host's Modules, all in the Host's one container. Each Module's Composition Root runs once, and each
-        /// Module is reached through its <see cref="IGatewayProcessor{TModule}"/>. The container is validated when the
-        /// Host is built, in every environment: every registration must be constructible and no singleton may depend on
-        /// a scoped service, or <c>Build</c> throws. <c>Build</c> also throws when a command or query whose handler is
-        /// registered declares an authorizer the Kit must register and none was, such as a
-        /// <c>[RequiresPermission]</c> whose Module's Composition Root never called <c>AddPouryaKitPermissions</c>.
-        /// A Host that later calls <c>ConfigureContainer</c> with another service provider factory replaces this one,
-        /// and both checks with it.
+        /// Module is reached through its <see cref="IGatewayProcessor{TModule}"/>. It composes the Host's checks with
+        /// <see cref="CqrsHostApplicationBuilderExtensions.AddPouryaKitCompositionChecks"/>: the container is validated
+        /// when the Host is built, in every environment, and the Kit's composition checks stop the Host when it starts,
+        /// such as on a <c>[RequiresPermission]</c> whose Module's Composition Root never called
+        /// <c>AddPouryaKitPermissions</c>, or a declaration of a Module's messages made without its Module. A Host that
+        /// later calls <c>ConfigureContainer</c> replaces the container the checks install, and fails when it starts,
+        /// naming the call.
         /// </summary>
         public IHostApplicationBuilder AddPouryaKitModules(Action<ModulesBuilder> modules)
         {
@@ -25,13 +25,10 @@ public static class ModularityHostApplicationBuilderExtensions
 
             modules(new ModulesBuilder(builder.Services));
 
-            builder.Services.AddPouryaKitCqrs();
+            builder.AddPouryaKitCompositionChecks();
             // Added after every Composition Root, so it is the IUnitOfWork the dispatcher resolves.
             builder.Services.AddScoped(RouteUnitOfWork);
             builder.Services.AddScoped<IReadingStateGuard>(services => (RouteUnitOfWork(services, required: false) as IReadingStateGuard)!);
-            builder.ConfigureContainer(
-                new ModularServiceProviderFactory(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true })
-            );
             return builder;
         }
     }

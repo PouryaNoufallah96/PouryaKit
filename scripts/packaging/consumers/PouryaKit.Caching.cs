@@ -8,7 +8,7 @@ var services = new ServiceCollection().AddPouryaKitCqrs().AddPouryaKitCaching();
 var filled = services.Any(descriptor => descriptor.ServiceType == typeof(IQueryCache) && descriptor.Lifetime == ServiceLifetime.Singleton);
 ICacheableQuery query = new GetOrderQuery(Guid.CreateVersion7());
 IInvalidatesCache command = new CancelOrderCommand(Guid.CreateVersion7());
-Console.WriteLine(filled && query.CacheTags.Count == 1 && command.InvalidatedCacheTags.Count == 1 ? 1 : 0);
+Console.WriteLine(filled && query is IRequiresQueryCache && query.CacheTags.Count == 1 && command.InvalidatedCacheTags.Count == 1 ? 1 : 0);
 
 internal sealed record GetOrderQuery(Guid OrderId) : Query<string>, ICacheableQuery
 {
