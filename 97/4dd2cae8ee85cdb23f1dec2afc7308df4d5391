@@ -1,0 +1,47 @@
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_f9b09181890e05 53,270,272-273,285-286,370,486,630
+.agents/skills/pourya-kit/references/templates.md
+  s_bdf0617f846b2b::t_f9b09181890e05 43
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_bdf0617f846b2b::t_ff1d3b8e144337 994-1003
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_bdf0617f846b2b::t_523ebd2291e6cc 48
+docs/acceptance.md
+  s_bdf0617f846b2b::t_144af27c501739 145,510,600-601,603-607,611
+docs/foundation-review.md
+  s_bdf0617f846b2b::t_f9b09181890e05 867
+docs/adr/0001-one-host-container.md
+  s_bdf0617f846b2b::t_ff1d3b8e144337 51-52
+docs/adr/0002-no-mediator-dependency.md
+  s_bdf0617f846b2b::t_ff1d3b8e144337 274-277,281,283-285
+.claude/agent-memory/kit-implementer/module-seam-and-composition-check-facts.md
+  s_bdf0617f846b2b::t_523ebd2291e6cc 3,10-13,18,20
+.agents/skills/pourya-kit/references/caching.md
+  s_bdf0617f846b2b::t_5dc7062ac1ee1d 28
+.agents/skills/pourya-kit/references/messaging.md
+  s_bdf0617f846b2b::t_2dafa4eb24571c 81,180,431,698
+.agents/skills/pourya-kit/references/modules.md
+  s_bdf0617f846b2b::t_9dcbbf4105503d 54,127,130-131,207
+.agents/skills/pourya-kit/references/security.md
+  s_bdf0617f846b2b::t_691412067290d4 38,44
+GLOSSARY.md
+  s_bdf0617f846b2b::t_ed87c73a1a39ef 43
+README.md
+  s_bdf0617f846b2b::t_ab3098b6dbce79 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "974dd2cae8ee85cdb23f1dec2afc7308df4d5391",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
