@@ -13,9 +13,11 @@ public sealed class QueryCacheTests
         await using var host = TestHost.Build(withQueryCache: true);
         using var outside = Begun(host);
         using var inside = Begun(host);
+        using var beforeIt = Begun(host);
 
         await ThingsGateway.GetThing(Dispatcher(outside));
         await ThingsGateway.ReadThingInsideTheUnitOfWork(Dispatcher(inside));
+        await ThingsGateway.AuthorizeByRunningAQuery(Dispatcher(beforeIt));
 
         Assert.Equal(
             [
@@ -30,6 +32,8 @@ public sealed class QueryCacheTests
         );
         Assert.Contains("handle GetThingQuery", Trace(inside));
         Assert.DoesNotContain(Trace(inside), step => step.StartsWith("cache", StringComparison.Ordinal));
+        // A query in the outermost command's own checks runs before its Unit of Work starts.
+        Assert.Equal(["cache GetThingQuery", "uow:begin"], Trace(beforeIt).Where(step => step is "cache GetThingQuery" or "uow:begin"));
     }
 
     [Fact]
