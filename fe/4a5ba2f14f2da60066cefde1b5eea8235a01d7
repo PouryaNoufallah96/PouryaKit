@@ -1,0 +1,92 @@
+README.md
+  s_41c3eef9abbce4::t_929191476b3851 5
+.claude/agent-memory/kit-implementer/paging-facts.md
+  s_41c3eef9abbce4::t_929191476b3851 1-25
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_41c3eef9abbce4::t_929191476b3851 7,38,42,44-63,66,83,86-95
+  s_41c3eef9abbce4::t_30d7a5e3e151e5 96
+.agents/skills/pourya-kit/SKILL.md
+  s_41c3eef9abbce4::t_929191476b3851 29,31-32,35
+scripts/packaging/consumers/PouryaKit.Persistence.Dapper.cs
+  s_41c3eef9abbce4::t_929191476b3851 1-15
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_929191476b3851 3,52,56,58,60,86,222,240,311,327,342,347,356,442,450
+.agents/skills/pourya-kit/references/persistence.md
+  s_41c3eef9abbce4::t_929191476b3851 184-217
+.agents/skills/pourya-kit/references/web.md
+  s_41c3eef9abbce4::t_929191476b3851 8,147-152,164-169
+  s_41c3eef9abbce4::t_7f0a40b0bce4a1 170
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsEndpoint.cs
+  s_41c3eef9abbce4::t_929191476b3851 17-22
+src/PouryaKit.Cqrs/PageRequest.cs
+  s_41c3eef9abbce4::t_929191476b3851 1-35
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryHandler.cs
+  s_41c3eef9abbce4::t_929191476b3851 8,10-29,35
+src/PouryaKit.Web/HttpPageRequest.cs
+  s_41c3eef9abbce4::t_929191476b3851 1-95
+tests/ModularMonolith.Tests/SharedJsonTests.cs
+  s_41c3eef9abbce4::t_929191476b3851 45
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQuery.cs
+  s_41c3eef9abbce4::t_929191476b3851 5-18
+src/PouryaKit.Cqrs/Page.cs
+  s_41c3eef9abbce4::t_929191476b3851 1-35
+src/PouryaKit.Persistence.Dapper/DapperPageExtensions.cs
+  s_41c3eef9abbce4::t_929191476b3851 1-48
+tests/ModularMonolith.Tests/Stub/ProductPagesProbe.cs
+  s_41c3eef9abbce4::t_929191476b3851 1-59
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_41c3eef9abbce4::t_929191476b3851 93-141
+docs/acceptance.md
+  s_41c3eef9abbce4::t_929191476b3851 191-209
+  s_41c3eef9abbce4::t_a3af231cdccb52 190
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_41c3eef9abbce4::t_929191476b3851 30
+src/PouryaKit.Persistence.EFCore/EfRepository.cs
+  s_41c3eef9abbce4::t_929191476b3851 78-121
+scripts/packaging/consumers/PouryaKit.Persistence.EFCore.cs
+  s_41c3eef9abbce4::t_929191476b3851 1-35
+src/PouryaKit.Cqrs/PageDeclaration.cs
+  s_41c3eef9abbce4::t_929191476b3851 1-308
+tests/ModularMonolith.Tests/WebTests.cs
+  s_41c3eef9abbce4::t_929191476b3851 46-50
+tests/PouryaKit.Cqrs.Tests/PageTests.cs
+  s_41c3eef9abbce4::t_929191476b3851 1-92
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_41c3eef9abbce4::t_929191476b3851 77
+src/PouryaKit.Persistence.Dapper/PageSql.cs
+  s_41c3eef9abbce4::t_929191476b3851 1-156
+tests/ModularMonolith.Tests/PersistencePreparationTests.cs
+  s_41c3eef9abbce4::t_929191476b3851 87
+tests/ModularMonolith.Tests/DapperTests.cs
+  s_41c3eef9abbce4::t_929191476b3851 45,54
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryValidator.cs
+  s_41c3eef9abbce4::t_929191476b3851 1-21
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_41c3eef9abbce4::t_929191476b3851 15-16,40
+src/PouryaKit.Persistence.Dapper/PouryaKit.Persistence.Dapper.csproj
+  s_41c3eef9abbce4::t_929191476b3851 10
+docs/foundation-review.md
+  s_41c3eef9abbce4::t_929191476b3851 253,834
+tests/ModularMonolith.Tests/PagingTests.cs
+  s_41c3eef9abbce4::t_929191476b3851 1-332
+src/PouryaKit.Cqrs/FilterOperator.cs
+  s_41c3eef9abbce4::t_929191476b3851 1-73
+src/PouryaKit.Persistence.EFCore/PageExpressions.cs
+  s_41c3eef9abbce4::t_929191476b3851 1-160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fe4a5ba2f14f2da60066cefde1b5eea8235a01d7",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
