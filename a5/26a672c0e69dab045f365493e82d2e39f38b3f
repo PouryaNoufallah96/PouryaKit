@@ -1,0 +1,211 @@
+docs/provenance/PouryaKit.Messaging.Wolverine.md
+  s_bdf0617f846b2b::t_57a8e0e6c6636f 5
+tests/ModularMonolith.Tests/CodeGenerationTests.cs
+  s_bdf0617f846b2b::t_c7b8d6750b80c3 2,5,22-23
+tests/ModularMonolith.Tests/IntegrationEventVersionTests.cs
+  s_bdf0617f846b2b::t_c7b8d6750b80c3 5,103-104,122-123,142-143
+  s_bdf0617f846b2b::t_20a721e77fae71 144
+src/PouryaKit.Messaging.Wolverine/SnapshotServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_4d00638e8dd2f8 65,79
+  s_bdf0617f846b2b::t_f16d9fd1a3b53e 29
+src/PouryaKit.Messaging.Wolverine/DurableQueuesCheck.cs
+  s_bdf0617f846b2b::t_4d00638e8dd2f8 1-14,16-83
+  s_bdf0617f846b2b::t_be9969ea264a28 15
+src/PouryaKit.Cqrs/CompositionCheckRunner.cs
+  s_bdf0617f846b2b::t_be9969ea264a28 8
+  s_bdf0617f846b2b::t_285b16a6338506 7,9-10,18,20
+  s_bdf0617f846b2b::t_df4e1ad2f6f35b 6
+tests/ModularMonolith.Tests/IntegrationEventTests.cs
+  s_bdf0617f846b2b::t_c7b8d6750b80c3 393-394
+  s_bdf0617f846b2b::t_af97d0253d0fb6 344
+src/PouryaKit.Messaging.Wolverine/NotificationHandlerServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_0e1beac7c7e8d7 26-28
+  s_bdf0617f846b2b::t_4d00638e8dd2f8 91
+  s_bdf0617f846b2b::t_ad959873de56a9 25,43-44
+tests/ModularMonolith.Tests/SharedStoreSchemaTests.cs
+  s_bdf0617f846b2b::t_f8c02629f36dd9 50-51
+  s_bdf0617f846b2b::t_c7b8d6750b80c3 52-53
+  s_bdf0617f846b2b::t_32f18d4459b7d0 9,54
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_bdf0617f846b2b::t_3624f7f3db79b2 155-171
+  s_bdf0617f846b2b::t_47d397f1fcd364 14,19-21,63,65-67,104,106-107,117,120,123,126,131-154,172-193,210-219
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_bdf0617f846b2b::t_57a8e0e6c6636f 74
+.agents/skills/pourya-kit/references/persistence.md
+  s_bdf0617f846b2b::t_57a8e0e6c6636f 97
+.agents/skills/pourya-kit/references/messaging.md
+  s_bdf0617f846b2b::t_57a8e0e6c6636f 700
+  s_bdf0617f846b2b::t_31d668b98a8f01 698
+  s_bdf0617f846b2b::t_5bdeca2218b4b2 81,180,431
+docs/acceptance.md
+  s_bdf0617f846b2b::t_daadedda411a19 613-615
+  s_bdf0617f846b2b::t_1de57ce6a057d7 620-627,634,636-637,639-642
+  s_bdf0617f846b2b::t_ed7832a69da050 145,510,600-601,603-607,611
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_bdf0617f846b2b::t_e88bf3e2b8aa2d 49
+  s_bdf0617f846b2b::t_7844c1664631d8 48
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_bdf0617f846b2b::t_1c2f72e21ee9a4 33-40,50
+src/PouryaKit.Messaging.Wolverine/IntegrationEventServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_ac3423e91b9dba 24-26
+  s_bdf0617f846b2b::t_4d00638e8dd2f8 57,70-73,95,128
+  s_bdf0617f846b2b::t_8dac6aa5ce2608 23
+src/PouryaKit.Messaging.Wolverine/Subscriptions.cs
+  s_bdf0617f846b2b::t_4d00638e8dd2f8 15
+tests/ModularMonolith.Tests/IntegrationEventWiringTests.cs
+  s_bdf0617f846b2b::t_0b95f5504cbace 116,122
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_bdf0617f846b2b::t_8c4b01f023cb90 478-479
+  s_bdf0617f846b2b::t_c7b8d6750b80c3 480-481
+  s_bdf0617f846b2b::t_0b95f5504cbace 455,460-461,464
+  s_bdf0617f846b2b::t_32f18d4459b7d0 13,482
+src/PouryaKit.Web.OpenApi/WebOpenApiServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_be9969ea264a28 81
+  s_bdf0617f846b2b::t_b5ce12bc02be92 102
+.agents/skills/pourya-kit/references/web.md
+  s_bdf0617f846b2b::t_be9969ea264a28 139
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_1670a02593052e 30,67
+  s_bdf0617f846b2b::t_be9969ea264a28 34
+README.md
+  s_bdf0617f846b2b::t_31d668b98a8f01 9
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/Program.cs
+  s_bdf0617f846b2b::t_7ab577eb97741e 67-69
+src/PouryaKit.Persistence.Postgres/PostgresServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_0e1beac7c7e8d7 22
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_57a8e0e6c6636f 425,437,486,503,506
+  s_bdf0617f846b2b::t_5c36ce0032b6e4 255
+  s_bdf0617f846b2b::t_be9969ea264a28 286,579
+  s_bdf0617f846b2b::t_19fed3bd051f0e 53,270,272-273,285,370,630
+src/PouryaKit.Messaging.Wolverine/DelayedCommandServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_4d00638e8dd2f8 85,102
+  s_bdf0617f846b2b::t_ac3423e91b9dba 23-25
+  s_bdf0617f846b2b::t_61a509a2664e3e 22
+src/PouryaKit.Web.OpenApi/VersionedModuleRouteGroups.cs
+  s_bdf0617f846b2b::t_be9969ea264a28 56
+  s_bdf0617f846b2b::t_1670a02593052e 57
+.agents/skills/pourya-kit/references/modules.md
+  s_bdf0617f846b2b::t_be9969ea264a28 133
+  s_bdf0617f846b2b::t_31d668b98a8f01 124,127,130,132,134-136
+  s_bdf0617f846b2b::t_5c36ce0032b6e4 212
+  s_bdf0617f846b2b::t_d88a6d57948bcd 54
+src/PouryaKit.Cqrs/IStartupCheck.cs
+  s_bdf0617f846b2b::t_6fca5a0cfd96c8 1-18
+src/PouryaKit.Cqrs/CqrsHostApplicationBuilderExtensions.cs
+  s_bdf0617f846b2b::t_0664ba9cf335a5 20-26
+  s_bdf0617f846b2b::t_07e77a78eb6d2f 17-19
+  s_2bb3f5dbb99632::t_f160587132fbdc 12-16
+src/PouryaKit.Messaging.Wolverine/RecurringCommandStart.cs
+  s_bdf0617f846b2b::t_4d00638e8dd2f8 12
+src/PouryaKit.Persistence.Dapper/ReadConnectionCheck.cs
+  s_bdf0617f846b2b::t_0e1beac7c7e8d7 7
+  s_bdf0617f846b2b::t_5e2675b9216916 8
+src/PouryaKit.Persistence.Postgres/PostgresConnectionsCheck.cs
+  s_bdf0617f846b2b::t_e86bfb072f7f75 8-9
+  s_bdf0617f846b2b::t_0e1beac7c7e8d7 7
+docs/provenance/PouryaKit.Messaging.Wolverine.RabbitMq.md
+  s_bdf0617f846b2b::t_57a8e0e6c6636f 5
+docs/foundation-review.md
+  s_bdf0617f846b2b::t_be9969ea264a28 252
+  s_bdf0617f846b2b::t_7aeeae23806eeb 867
+.agents/skills/pourya-kit/references/templates.md
+  s_bdf0617f846b2b::t_5c36ce0032b6e4 43
+GLOSSARY.md
+  s_bdf0617f846b2b::t_bdcaa10b0de2c8 46-49
+  s_2bb3f5dbb99632::t_d1e5eda78e15dc 43
+src/PouryaKit.Cqrs/ICompositionCheck.cs
+  s_bdf0617f846b2b::t_944ce0d8d47432 10-12
+  s_bdf0617f846b2b::t_b866904dc24830 7-9
+  s_2bb3f5dbb99632::t_43cca5882c181d 6
+src/PouryaKit.Web/UnmappedEndpointsCheck.cs
+  s_bdf0617f846b2b::t_1670a02593052e 10
+  s_bdf0617f846b2b::t_be9969ea264a28 9
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_bdf0617f846b2b::t_bccccf65534fe3 16,22-23,94,103,115-129,134,140,146-147,181-188,190
+  s_bdf0617f846b2b::t_be9969ea264a28 132
+  s_bdf0617f846b2b::t_60d364d57127d6 130-131,133
+src/PouryaKit.Messaging.Wolverine/INotificationOutbox.cs
+  s_bdf0617f846b2b::t_ac3423e91b9dba 6
+.agents/skills/pourya-kit/references/openapi.md
+  s_bdf0617f846b2b::t_be9969ea264a28 58
+scripts/packaging/consumers/PouryaKit.Cqrs.cs
+  s_bdf0617f846b2b::t_7a507002541d29 12
+.claude/agent-memory/kit-implementer/misconfigured-host-facts.md
+  s_bdf0617f846b2b::t_86d8826670f18c 17-20
+  s_bdf0617f846b2b::t_58fb55e8f7bbc4 3
+src/PouryaKit.Persistence.Dapper/DapperServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_0e1beac7c7e8d7 24
+.agents/skills/pourya-kit/references/caching.md
+  s_bdf0617f846b2b::t_435ab27efee774 28
+.agents/skills/pourya-kit/references/security.md
+  s_bdf0617f846b2b::t_fa1e3c640ee735 38,44
+.claude/agent-memory/kit-implementer/module-seam-and-composition-check-facts.md
+  s_bdf0617f846b2b::t_49606e4ad06ce0 3,10-13,18,20
+docs/adr/0001-one-host-container.md
+  s_bdf0617f846b2b::t_bfca96b5e4c87f 51-52
+docs/adr/0002-no-mediator-dependency.md
+  s_bdf0617f846b2b::t_a677fca106ec6c 274-277,281,283-285
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_bdf0617f846b2b::t_edd61fd72f9dcb 994-1003
+src/PouryaKit.Caching/ICacheableQuery.cs
+  s_bdf0617f846b2b::t_cc9d8dbabbef51 7
+src/PouryaKit.Cqrs/ComposedFeatures.cs
+  s_bdf0617f846b2b::t_e031550067150a 6-11,14-16,32-39,43
+src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_d1f7a454025aeb 127-129,131
+src/PouryaKit.Cqrs/HostComposition.cs
+  s_bdf0617f846b2b::t_21c8d6b7f7e9c9 10-11,15,27,31-32,34,43-44,47-49,52
+src/PouryaKit.Cqrs/IModuleServices.cs
+  s_bdf0617f846b2b::t_34871236b67aca 23-24,34,40-42,60-64,66,69-71,73
+src/PouryaKit.Cqrs/IQueryCache.cs
+  s_bdf0617f846b2b::t_fc0d9bbef657da 11
+src/PouryaKit.Cqrs/IRequiresAuthorizer.cs
+  s_bdf0617f846b2b::t_f7d73823dd65ed 5-6
+src/PouryaKit.Cqrs/IRequiresQueryCache.cs
+  s_bdf0617f846b2b::t_3ddb64d618ea67 6
+src/PouryaKit.Cqrs/UnitOfWorkCheck.cs
+  s_bdf0617f846b2b::t_40cec27168c631 1-2,5-11,16,20
+src/PouryaKit.Cqrs/ValidatingServiceProviderFactory.cs
+  s_bdf0617f846b2b::t_60cb5e0b3088fb 5-9,18-28
+src/PouryaKit.Messaging.Wolverine/ModuleOwnershipCheck.cs
+  s_bdf0617f846b2b::t_3a7bebddb5c085 6-9,14,16-23,25-27,29-31,34,37-38,44,47,50-51,57-58,67,70-71,77-78
+src/PouryaKit.Modularity/ModularityHostApplicationBuilderExtensions.cs
+  s_bdf0617f846b2b::t_9f4a0f5b7febf4 14-18
+src/PouryaKit.Modularity/ModulesBuilder.cs
+  s_bdf0617f846b2b::t_a98ec2d1238f27 2,27-30
+src/PouryaKit.Security/RequiresPermissionAttribute.cs
+  s_bdf0617f846b2b::t_9ea13d20c54a64 7-10
+src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/HostTests.cs
+  s_bdf0617f846b2b::t_c44683f308a032 79,81
+tests/ModularMonolith.Tests/SecurityTests.cs
+  s_bdf0617f846b2b::t_b97ce0083f1ac0 77,79-86
+tests/ModularMonolith.Tests/Unowned/ModularMonolith.Tests.Unowned.csproj
+  s_bdf0617f846b2b::t_07ebe2a927393c 2-4,9
+tests/ModularMonolith.Tests/Unowned/UnownedCommand.cs
+  s_bdf0617f846b2b::t_c3907b02ea7403 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a526a672c0e69dab045f365493e82d2e39f38b3f",
+  "prompts": {},
+  "sessions": {
+    "s_2bb3f5dbb99632": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a54e315b871dcdbc0",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
