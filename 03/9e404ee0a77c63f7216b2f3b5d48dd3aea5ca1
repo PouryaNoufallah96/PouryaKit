@@ -1,0 +1,34 @@
+docs/architecture/README.md
+  s_6c3c3736ba14ff::t_5b401da958b603 303
+.claude/agent-memory/kit-implementer/jwt-bearer-facts.md
+  s_6c3c3736ba14ff::t_5b401da958b603 14
+src/PouryaKit.Security.JwtBearer/JwtBearerServiceCollectionExtensions.cs
+  s_6c3c3736ba14ff::t_5b401da958b603 26-31
+.agents/skills/pourya-kit/references/security.md
+  s_6c3c3736ba14ff::t_5b401da958b603 211,215,221
+tests/ModularMonolith.Tests/JwtBearerTests.cs
+  s_6c3c3736ba14ff::t_5b401da958b603 4,14-15,55,74-76,122-124,130-144,152-163,171-256,262-267
+src/PouryaKit.Security.JwtBearer/VerifiedClaims.cs
+  s_6c3c3736ba14ff::t_5b401da958b603 8-9,14-23,25-29
+src/PouryaKit.Security.JwtBearer/JwtBearerValidation.cs
+  s_6c3c3736ba14ff::t_5b401da958b603 3,22,25,60-70,73,80-89
+  s_6c3c3736ba14ff::t_696436b1b1d325 90
+docs/acceptance.md
+  s_6c3c3736ba14ff::t_5b401da958b603 303,305-306
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "039e404ee0a77c63f7216b2f3b5d48dd3aea5ca1",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
