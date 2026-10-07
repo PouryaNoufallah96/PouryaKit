@@ -1,0 +1,73 @@
+.agents/skills/pourya-kit/references/testing.md
+  s_5db987750027ae::t_9ae5292fb36e6d 193
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 71-72,80,97-99
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 188-210,418-421
+  s_5db987750027ae::t_38236b63a9cf1f 187,422
+src/PouryaKit.Cqrs/OperationContext.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 14-15,20-24,37
+src/PouryaKit.Web/IdempotencyKeyHeader.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 10-12,15
+docs/adr/0002-no-mediator-dependency.md
+  s_5db987750027ae::t_9ae5292fb36e6d 175-178
+GLOSSARY.md
+  s_5db987750027ae::t_9ae5292fb36e6d 60-63,137
+src/PouryaKit.Web/HttpCallerContext.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 43-45
+docs/acceptance.md
+  s_5db987750027ae::t_9ae5292fb36e6d 365-367,379,382
+  s_5db987750027ae::t_6805f186c24f1d 383
+docs/architecture/README.md
+  s_5db987750027ae::t_9ae5292fb36e6d 260,373,509,523,546
+docs/foundation-review.md
+  s_5db987750027ae::t_9ae5292fb36e6d 847
+src/PouryaKit.Persistence.EFCore/IdempotencyTable.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 18-20
+src/PouryaKit.Web/PouryaKitWebOptions.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 20-22
+scripts/packaging/consumers/PouryaKit.Web.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 10
+src/PouryaKit.Web.OpenApi/IdempotencyKeyParameter.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 1-35
+src/PouryaKit.Web.OpenApi/WebOpenApiServiceCollectionExtensions.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 28-29,58
+tests/ModularMonolith.Tests/TestAuthentication.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 25-27,56
+.agents/skills/pourya-kit/references/openapi.md
+  s_5db987750027ae::t_9ae5292fb36e6d 88,140,146
+.claude/agent-memory/kit-implementer/idempotency-facts.md
+  s_5db987750027ae::t_9ae5292fb36e6d 21
+tests/PouryaKit.ArchitectureTests/FeatureCodeTests.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 43-44
+src/PouryaKit.Web/IdempotencyKeyRequirement.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 1-18
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_5db987750027ae::t_9ae5292fb36e6d 80,85
+.agents/skills/pourya-kit/references/web.md
+  s_5db987750027ae::t_9ae5292fb36e6d 243,261
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 70,245
+tests/PouryaKit.Cqrs.Tests/IdempotencyTests.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 72-78
+src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 71-72,74,92
+tests/ModularMonolith.Tests/IdempotencyTests.cs
+  s_5db987750027ae::t_9ae5292fb36e6d 186-209
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "177fe1736fb967c8c7fb0da00ba904784c232619",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
