@@ -1,0 +1,33 @@
+src/PouryaKit.Web/WebHttpClientBuilderExtensions.cs
+  s_41c3eef9abbce4::t_29cb7ae73710ec 33-34,40,42-44,46-47,49-60
+.claude/agent-memory/kit-implementer/outgoing-http-facts.md
+  s_41c3eef9abbce4::t_29cb7ae73710ec 3,21-22
+.agents/skills/pourya-kit/references/web.md
+  s_41c3eef9abbce4::t_29cb7ae73710ec 237
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_41c3eef9abbce4::t_29cb7ae73710ec 32
+docs/acceptance.md
+  s_41c3eef9abbce4::t_29cb7ae73710ec 233
+tests/ModularMonolith.Tests/OutgoingHttpTests.cs
+  s_41c3eef9abbce4::t_29cb7ae73710ec 111-131,289-290,294-295,300-320
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_29cb7ae73710ec 456
+src/PouryaKit.Web/HttpReplayPolicies.cs
+  s_41c3eef9abbce4::t_29cb7ae73710ec 1-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "13f56be011cfddb8f5f1e606f3199a42427a1957",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
