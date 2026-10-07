@@ -152,3 +152,16 @@ Host's trust boundary (G.6) moves only as far as the application's own peer list
   visible ASCII characters with spaces only between them; any other value, a CR or LF that would start another header
   included, fails the call before anything is sent, naming the header. The receiving Host applies the same rule to a
   trusted peer's headers and answers 400 (`OutgoingHttpTests`, `TrustedPeerTests`).
+
+## Amendment (2026-10-07, ticket #42 follow-up: the context in the idempotency key)
+
+The decision above stands. The owner decided on 2026-10-07 that these rules of the context belong here; the
+idempotency slot itself is recorded in [ADR 0002's amendment](0002-no-mediator-dependency.md#amendment-2026-10-07-tickets-42-and-43-the-optional-idempotency-and-caching-slots).
+
+- **The request id is Operation Context data and part of the idempotency contract.** Whoever opens the Operation sets
+  it on the context; an idempotent command's key is the tenant, the Actor, the command and the request id.
+- **A tenant is null or not blank.** An Operation without a tenant has a null one, which a key stores as one fixed
+  sentinel; a tenant never collapses to a blank or sentinel value that a real tenant could equal.
+- **Identity construction is deterministic.** A key is made from those values alone, never from the time or the
+  Operation's own id, so a repeat that carries the same values always finds the same key, and contexts that differ in
+  any of them never share one.

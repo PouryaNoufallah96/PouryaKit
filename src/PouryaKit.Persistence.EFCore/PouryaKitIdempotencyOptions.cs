@@ -1,0 +1,28 @@
+namespace PouryaKit.Persistence.EFCore;
+
+/// <summary>
+/// How long the Host keeps the keys of <c>[Idempotent]</c> commands. Every <see cref="CleanupInterval"/>, one background
+/// service removes from every Module's <see cref="IdempotencyTable"/> the keys reserved longer than
+/// <see cref="Retention"/> ago, <see cref="BatchSize"/> at a time, each batch its own statement on a connection of its
+/// own, outside every request and Unit of Work. A repeat within the retention replays its first success; one after its
+/// key was removed runs as a new request. Configure it with <c>Configure&lt;PouryaKitIdempotencyOptions&gt;</c>, for
+/// example from a configuration section.
+/// </summary>
+/// <remarks>
+/// The Host fails when it starts unless <see cref="Retention"/> is positive or <see cref="Timeout.InfiniteTimeSpan"/>,
+/// <see cref="CleanupInterval"/> is positive and <see cref="BatchSize"/> is at least 1.
+/// </remarks>
+public sealed class PouryaKitIdempotencyOptions
+{
+    /// <summary>
+    /// How long a key is kept after it was reserved: 24 hours by default. A key is removed by the first cleanup after
+    /// its retention ends. <see cref="Timeout.InfiniteTimeSpan"/> keeps every key, and no cleanup runs.
+    /// </summary>
+    public TimeSpan Retention { get; set; } = TimeSpan.FromHours(24);
+
+    /// <summary>The time between two cleanups, on the Host's <see cref="TimeProvider"/>: 1 hour by default.</summary>
+    public TimeSpan CleanupInterval { get; set; } = TimeSpan.FromHours(1);
+
+    /// <summary>The most keys one statement removes, 1000 by default; a cleanup repeats it until a batch is short.</summary>
+    public int BatchSize { get; set; } = 1000;
+}

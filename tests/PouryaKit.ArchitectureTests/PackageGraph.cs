@@ -31,7 +31,7 @@ internal static class PackageGraph
         ["PouryaKit.Persistence"] = new(["PouryaKit.Domain"], ["Ardalis.Specification"]),
         ["PouryaKit.Persistence.EFCore"] = new(
             ["PouryaKit.Core", "PouryaKit.Cqrs", "PouryaKit.Persistence"],
-            ["Microsoft.EntityFrameworkCore.Relational", "Ardalis.Specification.EntityFrameworkCore"]
+            ["Microsoft.EntityFrameworkCore.Relational", "Ardalis.Specification.EntityFrameworkCore", "Microsoft.Extensions.Hosting.Abstractions"]
         ),
         ["PouryaKit.Persistence.Postgres"] = new(
             ["PouryaKit.Persistence.EFCore"],

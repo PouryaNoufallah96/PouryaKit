@@ -10,13 +10,14 @@ The Outbox seam of the commit sequence's step 5 (`IUnitOfWorkOutbox`, called by 
 
 The tracked-state comparison (`TrackedState`), shared by the EF Unit of Work's reading guard and `SnapshotStep`, is new Kit code too. It compares mapped values recursively through EF's value comparers.
 
-The idempotency key store (`EfIdempotencyStore`, `IdempotencyTable`, ticket #42) is new Kit code too, on the pattern of the Kit's own Receipts in `PouryaKit.Messaging.Wolverine.EFCore`: a table outside the Module's model, written with `insert … on conflict do nothing` on the Unit of Work's transaction. Its [PouryaKit.Cqrs](PouryaKit.Cqrs.md) record names the reference implementations it replaces.
+The idempotency key store (`EfIdempotencyStore`, `IdempotencyTable`, ticket #42) is new Kit code too, on the pattern of the Kit's own Receipts in `PouryaKit.Messaging.Wolverine.EFCore`: a table outside the Module's model, written with `insert … on conflict do nothing` on the Unit of Work's transaction. Its [PouryaKit.Cqrs](PouryaKit.Cqrs.md) record names the reference implementations it replaces. Its retention (`PouryaKitIdempotencyOptions`, `IdempotencyKeyCleanup`, #42 follow-up) is new Kit code too, a `BackgroundService` on a `PeriodicTimer`. The default retention of 24 hours follows Stripe's API reference, "Idempotent requests" (https://docs.stripe.com/api/idempotent_requests, checked 2026-10-07): keys may be removed once they are at least 24 hours old, and a key reused after that starts a new request.
 
 ## Package dependencies
 
-Checked on nuget.org on 2026-10-05; licence expressions from each package's nuspec. Neither is reciprocal or commercial (ADR 0002).
+Checked on nuget.org on 2026-10-05, and on 2026-10-07 for the Hosting abstractions (10.0.12, the latest stable); licence expressions from each package's nuspec. None is reciprocal or commercial (ADR 0002).
 
 - `Microsoft.EntityFrameworkCore.Relational` 10.0.12, `MIT`.
+- `Microsoft.Extensions.Hosting.Abstractions` 10.0.12, `MIT` (#42 follow-up: the version `Directory.Packages.props` already pins for Modularity), for `BackgroundService`.
 - `Ardalis.Specification.EntityFrameworkCore` 9.3.1, `MIT`. It has no `net10.0` target; its `net9.0` target asks for EF Core 9.0.8 or later, so it restores against EF Core 10.0.12. Its specification evaluator is exercised at runtime against PostgreSQL by `PersistenceTests.The_generic_repository_finds_by_id_and_finds_lists_checks_and_counts_by_specification`. Its `RepositoryBase` is not used, because its `AddAsync` saves.
 
 ## Typed-ID value converter

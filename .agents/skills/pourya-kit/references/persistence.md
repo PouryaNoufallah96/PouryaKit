@@ -11,6 +11,7 @@
 - [Unique values](#unique-values)
 - [Domain Event Handlers](#domain-event-handlers)
 - [Migrations](#migrations)
+- [Idempotency key retention](#idempotency-key-retention)
 
 A Module's DbContext, a mapping and the aggregate it maps, from the Proving Sample:
 
@@ -314,3 +315,16 @@ dotnet ef migrations add Initial \
 - Opting an aggregate into audit or soft delete, or adding a unique index, changes the model: add a migration for it.
 - A Module with an `[Idempotent]` command ([commands-queries-validation.md](commands-queries-validation.md#request-idempotency)) keeps its keys in a table `pouryakit_idempotency_keys` of its own schema, outside its model. Add it once with `dotnet ef migrations add IdempotencyKeys` and the Module's options, as above: the model did not change, so the migration is empty and the snapshot stays as it was; fill its `Up` with `migrationBuilder.CreateIdempotencyTable("catalog")` and its `Down` with `migrationBuilder.DropIdempotencyTable("catalog")` (`PouryaKit.Persistence.EFCore`, the Module's schema). Nothing checks it at startup: without it, the first opted-in command with a request id throws an `InvalidOperationException` that names the call, and nothing commits.
 - The Host applies no migration at startup. `HostFixture` applies every Module's in tests.
+
+## Idempotency key retention
+
+- The Host keeps an idempotency key for its retention, then removes it, and a repeat of its request runs as a new one. One background service, added once whatever the number of Modules, removes from every Module's `pouryakit_idempotency_keys` the keys reserved longer ago than the retention, every cleanup interval, a batch of keys per statement until a batch is short. It runs on the Host's `TimeProvider`, in a scope and on connections of its own, never inside a request or a Unit of Work, and skips a Module without the table.
+- `PouryaKitIdempotencyOptions` (`PouryaKit.Persistence.EFCore`) sets it for the whole Host: `Retention` 24 hours, `CleanupInterval` 1 hour and `BatchSize` 1000 by default. A key replays for at least its retention and is removed by the first cleanup after it, so choose a retention longer than any client keeps retrying. Configure it in the Host, for example from configuration:
+
+```csharp
+builder.Services.Configure<PouryaKitIdempotencyOptions>(builder.Configuration.GetSection("PouryaKit:Idempotency"));
+```
+
+- `Retention = Timeout.InfiniteTimeSpan` keeps every key and runs no cleanup. The Host fails to start unless the retention is positive or infinite, the interval positive and the batch size at least 1.
+- A cleanup that removed keys logs how many (`IdempotencyKeysRemoved`); one that fails is logged at Error level (`IdempotencyKeyCleanupFailed`), and the next one tries again.
+- To test it, build the Host with the test clock as its `TimeProvider`: advancing the clock past the interval runs a cleanup, which removes the keys the clock has aged past the retention.
