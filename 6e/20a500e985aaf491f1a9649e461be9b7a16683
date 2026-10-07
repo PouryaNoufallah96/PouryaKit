@@ -1,0 +1,41 @@
+docs/provenance/ModularMonolith.md
+  s_5db987750027ae::t_f4499e4cb624ae 11
+  s_5db987750027ae::t_36ac693056d823 12
+.agents/skills/pourya-kit/references/caching.md
+  s_5db987750027ae::t_4119548ae80470 1-96
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_5db987750027ae::t_25c25139ee8a3c 66
+README.md
+  s_5db987750027ae::t_0f2154512e85d8 5,7
+docs/foundation-review.md
+  s_5db987750027ae::t_32d42b50a3b95c 260,848
+docs/acceptance.md
+  s_5db987750027ae::t_4833c35d7ffc0f 379-402
+  s_5db987750027ae::t_45e3762f45639f 74,77,120
+docs/adr/0002-no-mediator-dependency.md
+  s_5db987750027ae::t_f33be63e755948 155,159-160,198-232
+docs/provenance/PouryaKit.Cqrs.md
+  s_5db987750027ae::t_8df5d360869504 5
+.agents/skills/pourya-kit/SKILL.md
+  s_5db987750027ae::t_25c25139ee8a3c 3,39
+docs/architecture/README.md
+  s_5db987750027ae::t_da78128f9ba34e 3,52,62,80,91,153-154,161,173,196-197,239,249,304-314,580,582
+docs/provenance/PouryaKit.Caching.md
+  s_5db987750027ae::t_9e705e108242f4 1-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6e20a500e985aaf491f1a9649e461be9b7a16683",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
