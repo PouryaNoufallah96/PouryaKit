@@ -172,7 +172,9 @@ The idempotency slot (ticket #42):
   Unit of Work's own transaction, and committed or rolled back with the command's effect. The dispatcher and Feature
   code never save or commit. `PouryaKit.Persistence.EFCore` implements the store with a table in each Module's schema,
   `insert … on conflict do nothing`, so a concurrent repeat waits on the uncommitted key and then replays the committed
-  success, or runs when the first transaction rolled back.
+  success, or runs when the first transaction rolled back. A key is kept for its retention, 24 hours unless
+  `PouryaKitIdempotencyOptions` says otherwise, then removed by one cleanup outside every request and Unit of Work, so a
+  repeat after that runs as a new request (ticket #42 follow-up, [architecture](../architecture/README.md#pouryakitpersistenceefcore)).
 - **When it runs.** A command opts in with `[Idempotent]`. The slot runs when such a command is outermost and its
   `OperationContext.RequestId` is set; the key is the tenant (a null tenant stored as one fixed sentinel, the empty
   string, which no tenant can equal because `OperationContext` refuses a blank one), the Actor, the command's full

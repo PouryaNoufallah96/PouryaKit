@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 
@@ -14,7 +15,9 @@ public static class EfCoreServiceCollectionExtensions
         /// container, or in this Module when called on a Module's builder. It adds the generic repository over it, the
         /// <see cref="IUnitOfWorkConnection"/> through which a plain SQL write joins the active Unit of Work's transaction,
         /// and the <see cref="IIdempotencyStore"/> that keeps the keys of <c>[Idempotent]</c> commands in that
-        /// transaction, in the Module's <see cref="IdempotencyTable"/>.
+        /// transaction, in the Module's <see cref="IdempotencyTable"/>. Once for the Host, it adds the background
+        /// service that removes expired keys from every Module's table, as <see cref="PouryaKitIdempotencyOptions"/>
+        /// sets, and checks those options when the Host starts.
         /// When a messaging package registered an <see cref="IUnitOfWorkOutbox"/>, the Unit of Work commits through it.
         /// A database package such as <c>PouryaKit.Persistence.Postgres</c> calls it; Feature code never does.
         /// </summary>
@@ -35,6 +38,12 @@ public static class EfCoreServiceCollectionExtensions
             services.TryAddScoped(typeof(IRepository<,>), typeof(EfRepository<,>));
             services.TryAddScoped<IUnitOfWorkConnection, EfUnitOfWorkConnection>();
             services.TryAddScoped<IIdempotencyStore, EfIdempotencyStore>();
+            services.TryAddSingleton(TimeProvider.System);
+            services.AddHostedService<IdempotencyKeyCleanup>();
+            services.AddOptions<PouryaKitIdempotencyOptions>().ValidateOnStart();
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<IValidateOptions<PouryaKitIdempotencyOptions>, IdempotencyKeyCleanup.Validation>()
+            );
             return services;
         }
 

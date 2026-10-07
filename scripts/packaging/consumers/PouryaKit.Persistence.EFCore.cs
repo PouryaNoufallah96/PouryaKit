@@ -5,9 +5,10 @@ using PouryaKit.Domain;
 using PouryaKit.Persistence.EFCore;
 
 // The packed EF Core paging API, declared and mapped as a Feature's repository would, and the migration of a Module
-// with an idempotent command; no database is needed to build it.
+// with an idempotent command and the retention of its keys; no database is needed to build it.
 var page = new Page<NoteListItem>([], 1, NoteRepository.Paging.Declaration.MaxSize, 0);
-Console.WriteLine(page.TotalPages + NoteRepository.Paging.Declaration.Sorts.Count + IdempotencyTable.Name.Length);
+var retention = new PouryaKitIdempotencyOptions { Retention = TimeSpan.FromHours(48), CleanupInterval = TimeSpan.FromMinutes(30), BatchSize = 500 };
+Console.WriteLine(page.TotalPages + NoteRepository.Paging.Declaration.Sorts.Count + IdempotencyTable.Name.Length + retention.BatchSize);
 
 internal sealed class IdempotencyKeys : Migration
 {

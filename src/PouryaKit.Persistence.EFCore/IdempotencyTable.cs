@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
+using PouryaKit.Cqrs;
 
 namespace PouryaKit.Persistence.EFCore;
 
@@ -8,23 +10,24 @@ namespace PouryaKit.Persistence.EFCore;
 /// migration creates it with <see cref="CreateIdempotencyTable"/>, once, in every Module with a command that opts in.
 /// A row is keyed by tenant, Actor kind and id, the command's full type name and the request id; a null tenant is
 /// stored as <see cref="NoTenant"/>. Its response is the command's success value as JSON, null for a command without
-/// one. Rows are never removed by the Kit.
+/// one, and its <c>reserved_at</c> the Host's time when the key was reserved. The Host removes a row once it is older
+/// than <see cref="PouryaKitIdempotencyOptions.Retention"/>.
 /// </summary>
 public static class IdempotencyTable
 {
     public const string Name = "pouryakit_idempotency_keys";
 
-    /// <summary>
-    /// The tenant column of an Operation without a tenant: the empty string, which no tenant can be, since an
-    /// <c>OperationContext</c> refuses a blank one. A Host without tenants keeps one stable key per Actor, command and
-    /// request id.
-    /// </summary>
-    public const string NoTenant = "";
+    /// <summary>The tenant column of an Operation without a tenant: <see cref="OperationContext.NoTenant"/>.</summary>
+    public const string NoTenant = OperationContext.NoTenant;
 
     extension(MigrationBuilder migrationBuilder)
     {
-        /// <summary>Creates the idempotency key table in <paramref name="schema"/>, the Module's own.</summary>
-        public void CreateIdempotencyTable(string schema) =>
+        /// <summary>
+        /// Creates the idempotency key table in <paramref name="schema"/>, the Module's own, with the index on
+        /// <c>reserved_at</c> its cleanup reads.
+        /// </summary>
+        public void CreateIdempotencyTable(string schema)
+        {
             migrationBuilder.CreateTable(
                 name: Name,
                 schema: schema,
@@ -36,6 +39,7 @@ public static class IdempotencyTable
                     command = table.Column<string>(type: "text", nullable: false),
                     request_id = table.Column<string>(type: "text", nullable: false),
                     response = table.Column<string>(type: "text", nullable: true),
+                    reserved_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                 },
                 constraints: table =>
                     table.PrimaryKey(
@@ -50,7 +54,15 @@ public static class IdempotencyTable
                         }
                     )
             );
+            migrationBuilder.CreateIndex(name: $"ix_{Name}_reserved_at", schema: schema, table: Name, column: "reserved_at");
+        }
 
         public void DropIdempotencyTable(string schema) => migrationBuilder.DropTable(name: Name, schema: schema);
     }
+
+    // The table in the DbContext's Module schema. The name comes from the model, never from input.
+    internal static string In(DbContext dbContext) =>
+        dbContext.Model.GetDefaultSchema() is { } schema
+            ? $"\"{schema.Replace("\"", "\"\"", StringComparison.Ordinal)}\".{Name}"
+            : Name;
 }

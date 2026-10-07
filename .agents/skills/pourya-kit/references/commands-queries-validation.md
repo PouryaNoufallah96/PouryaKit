@@ -84,7 +84,7 @@ internal sealed record CreateProductCommand(Guid ProductId, Guid CategoryId, str
 - The value is kept as JSON in the Kit's representation and read back as the command's response type, which must round-trip through it. Renaming the command's type starts new keys.
 - A nested command never reserves, even one that opts in: it joins the outer Operation. A request id reaching an outermost command that does not opt in, or a Host whose persistence keeps no keys, throws `InvalidOperationException` at dispatch.
 - Feature code never calls `IIdempotencyStore`, the persistence package's seam: a structure test rejects a Module that does ([testing.md](testing.md#structure-tests)).
-- The keys live in a table of the Module's own schema, which a migration creates ([persistence.md](persistence.md#migrations)). The Kit never removes a row.
+- The keys live in a table of the Module's own schema, which a migration creates ([persistence.md](persistence.md#migrations)). A key replays for its retention, 24 hours by default; after that the Host's cleanup removes it and a repeat runs as a new request ([persistence.md](persistence.md#idempotency-key-retention)).
 
 ## Code that only reads
 

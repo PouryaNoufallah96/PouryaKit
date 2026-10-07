@@ -9,7 +9,7 @@ namespace PouryaKit.Persistence.EFCore;
 // a key another transaction holds waits for that transaction, then inserts nothing when it committed and the key when
 // it rolled back. ON CONFLICT DO NOTHING leaves this transaction usable either way, where a unique violation would abort
 // it before the committed success could be read.
-internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork) : IIdempotencyStore
+internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider timeProvider) : IIdempotencyStore
 {
     private const string UndefinedTable = "42P01";
 
@@ -20,8 +20,8 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork) : IIdempotencyS
         ArgumentNullException.ThrowIfNull(key);
         var reserved = await ExecuteAsync(
             table =>
-                $"insert into {table} (tenant, actor_kind, actor_id, command, request_id) values ({{0}}, {{1}}, {{2}}, {{3}}, {{4}}) on conflict do nothing",
-            (database, sql) => database.ExecuteSqlRawAsync(sql, Values(key), cancellationToken)
+                $"insert into {table} (tenant, actor_kind, actor_id, command, request_id, reserved_at) values ({{0}}, {{1}}, {{2}}, {{3}}, {{4}}, {{5}}) on conflict do nothing",
+            (database, sql) => database.ExecuteSqlRawAsync(sql, [.. Values(key), timeProvider.GetUtcNow()], cancellationToken)
         );
         if (reserved == 1)
         {
@@ -35,7 +35,7 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork) : IIdempotencyS
         return recorded is [var response]
             ? new RecordedSuccess(response)
             : throw new InvalidOperationException(
-                $"The key of request {key.RequestId} for {key.Command} was held by another Operation and is gone. Rows of {IdempotencyTable.Name} are never removed while a repeat of their request may still arrive."
+                $"The key of request {key.RequestId} for {key.Command} was held by another Operation and is gone: its retention ({nameof(PouryaKitIdempotencyOptions)}.{nameof(PouryaKitIdempotencyOptions.Retention)}) ended and the cleanup removed it while this repeat waited. Sent again, the request runs as a new one."
             );
     }
 
@@ -72,10 +72,7 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork) : IIdempotencyS
             );
         }
 
-        // The table name comes from the Module's model, never from input; the values are parameters.
-        var table = dbContext.Model.GetDefaultSchema() is { } schema
-            ? $"\"{schema.Replace("\"", "\"\"", StringComparison.Ordinal)}\".{IdempotencyTable.Name}"
-            : IdempotencyTable.Name;
+        var table = IdempotencyTable.In(dbContext);
         var statement = sql(table);
         try
         {
