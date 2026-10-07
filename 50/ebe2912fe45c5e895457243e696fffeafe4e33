@@ -1,0 +1,31 @@
+tests/ModularMonolith.Tests/Stub/StubCaching.cs
+  s_5db987750027ae::t_bddad490083a8c 114-175
+src/PouryaKit.Caching/HybridQueryCache.cs
+  s_5db987750027ae::t_fb6d264aaa1fce 33,37-39,42-43,45,50
+src/PouryaKit.Cqrs/OperationContext.cs
+  s_5db987750027ae::t_612f39c43b9d66 41-43
+tests/ModularMonolith.Tests/CachingTests.cs
+  s_5db987750027ae::t_ad7e9f83a576d5 84-133
+src/PouryaKit.Cqrs/Dispatcher.cs
+  s_5db987750027ae::t_b145ba6873fe48 157,185,227-245
+src/PouryaKit.Cqrs/IQueryCache.cs
+  s_5db987750027ae::t_612f39c43b9d66 17-18
+src/PouryaKit.Caching/ICacheableQuery.cs
+  s_5db987750027ae::t_612f39c43b9d66 8-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "50ebe2912fe45c5e895457243e696fffeafe4e33",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
