@@ -8,35 +8,46 @@ namespace PouryaKit.Persistence.EFCore;
 // A key is a row in the Module's own schema, written on its Unit of Work's transaction. Under read committed, inserting
 // a key another transaction holds waits for that transaction, then inserts nothing when it committed and the key when
 // it rolled back. ON CONFLICT DO NOTHING leaves this transaction usable either way, where a unique violation would abort
-// it before the committed success could be read.
+// it before the committed success could be read. It locks nothing it finds, so the cleanup may remove an expired key
+// between the insert and the read; the key is then reserved again, so the request runs as a new one.
 internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider timeProvider) : IIdempotencyStore
 {
     private const string UndefinedTable = "42P01";
+
+    private const string UndefinedColumn = "42703";
+
+    private const int ReserveAttempts = 3;
 
     private const string Key = "tenant = {0} and actor_kind = {1} and actor_id = {2} and command = {3} and request_id = {4}";
 
     public async Task<RecordedSuccess?> ReserveAsync(IdempotencyKey key, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(key);
-        var reserved = await ExecuteAsync(
-            table =>
-                $"insert into {table} (tenant, actor_kind, actor_id, command, request_id, reserved_at) values ({{0}}, {{1}}, {{2}}, {{3}}, {{4}}, {{5}}) on conflict do nothing",
-            (database, sql) => database.ExecuteSqlRawAsync(sql, [.. Values(key), timeProvider.GetUtcNow()], cancellationToken)
-        );
-        if (reserved == 1)
+        for (var attempt = 1; attempt <= ReserveAttempts; attempt++)
         {
-            return null;
+            var reserved = await ExecuteAsync(
+                table =>
+                    $"insert into {table} (tenant, actor_kind, actor_id, command, request_id, reserved_at) values ({{0}}, {{1}}, {{2}}, {{3}}, {{4}}, {{5}}) on conflict do nothing",
+                (database, sql) => database.ExecuteSqlRawAsync(sql, [.. Values(key), timeProvider.GetUtcNow()], cancellationToken)
+            );
+            if (reserved == 1)
+            {
+                return null;
+            }
+
+            var recorded = await ExecuteAsync(
+                table => $"select response as \"Value\" from {table} where {Key}",
+                (database, sql) => database.SqlQueryRaw<string?>(sql, Values(key)).ToListAsync(cancellationToken)
+            );
+            if (recorded is [var response])
+            {
+                return new RecordedSuccess(response);
+            }
         }
 
-        var recorded = await ExecuteAsync(
-            table => $"select response as \"Value\" from {table} where {Key}",
-            (database, sql) => database.SqlQueryRaw<string?>(sql, Values(key)).ToListAsync(cancellationToken)
+        throw new InvalidOperationException(
+            $"The key of request {key.RequestId} for {key.Command} was held, then gone before it could be read, {ReserveAttempts} times in a row; something keeps removing the keys of {IdempotencyTable.Name}."
         );
-        return recorded is [var response]
-            ? new RecordedSuccess(response)
-            : throw new InvalidOperationException(
-                $"The key of request {key.RequestId} for {key.Command} was held by another Operation and is gone: its retention ({nameof(PouryaKitIdempotencyOptions)}.{nameof(PouryaKitIdempotencyOptions.Retention)}) ended and the cleanup removed it while this repeat waited. Sent again, the request runs as a new one."
-            );
     }
 
     public async Task RecordAsync(IdempotencyKey key, string response, CancellationToken cancellationToken)
@@ -82,6 +93,13 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider ti
         {
             throw new InvalidOperationException(
                 $"{dbContext.GetType().Name} has no {table} table to keep the keys of its [Idempotent] commands in. Add a migration to the Module that calls CreateIdempotencyTable with its schema.",
+                exception
+            );
+        }
+        catch (DbException exception) when (exception.SqlState == UndefinedColumn)
+        {
+            throw new InvalidOperationException(
+                $"{table} of {dbContext.GetType().Name} has no reserved_at column: it was created before CreateIdempotencyTable added it. Drop the table and create it again with CreateIdempotencyTable, or add the column and its index: alter table {table} add column reserved_at timestamp with time zone not null default now(); alter table {table} alter column reserved_at drop default; create index ix_{IdempotencyTable.Name}_reserved_at on {table} (reserved_at);",
                 exception
             );
         }
