@@ -13,11 +13,15 @@ public static class IntegrationEventServiceCollectionExtensions
         /// Declares that <paramref name="module"/>, the Module's definition type, publishes
         /// <typeparamref name="TIntegrationEvent"/> under <paramref name="wireName"/>. The wire name is stored with every
         /// delivery of it and resolves its type when the delivery is read back, so it is stable: keep it when the type is
-        /// renamed. A Module's Composition Root calls it on its builder; an application without Modules calls it on its
+        /// renamed. One wire name is one version of one contract type: a new version is a new type under a new wire
+        /// name, such as <c>ProductCreatedV2</c> under <c>catalog.product-created.v2</c>, published beside the old one
+        /// while subscriptions move to it, and each subscription receives only the type it subscribed to; nothing converts one
+        /// version into another. A Module's Composition Root calls it on its builder; an application without Modules calls it on its
         /// own services with no Module. Throws here, at startup, when the type is not a concrete class or is a Domain
         /// Event, when the wire name is missing, invalid or equal ignoring case to another's, and when the type is already
         /// published under another name or by another Module. The Host then fails to start unless an Outbox writes Integration Events
-        /// (<see cref="INotificationOutbox"/>).
+        /// (<see cref="INotificationOutbox"/>), and when Wolverine would route another of its message types to this
+        /// type's subscriptions, because that type's wire name, name or full name equals this type's full name, ignoring case.
         /// </summary>
         public IServiceCollection Publish<TIntegrationEvent>(string wireName, Type? module = null)
             where TIntegrationEvent : class
