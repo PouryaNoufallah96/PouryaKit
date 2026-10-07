@@ -31,11 +31,13 @@ docs/architecture/README.md
   s_41c3eef9abbce4::t_649b58028612f6 110-111,122,145,176,383-384,386-387,395,404,408,420
   s_41c3eef9abbce4::t_5497a6ef669fee 424
   s_41c3eef9abbce4::t_4ae67e94b62afe 426
+  s_41c3eef9abbce4::t_775797bc671789 163,407
 samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Errors/QuoteErrors.cs
   s_41c3eef9abbce4::t_fe9e9a4642a49e 1-10
 docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
   s_41c3eef9abbce4::t_be7e8cad695298 784
   s_41c3eef9abbce4::t_727d6f6e8e9a6a 751,767-783,785-799
+  s_41c3eef9abbce4::t_775797bc671789 766
 src/PouryaKit.Messaging.Wolverine/DelayedCommands.cs
   s_41c3eef9abbce4::t_755876ad271c42 1-36
 src/PouryaKit.Messaging.Wolverine/DelayedCommandDeclarations.cs
@@ -46,6 +48,7 @@ docs/acceptance.md
   s_41c3eef9abbce4::t_74320f1d05775e 162,191-200
   s_41c3eef9abbce4::t_fdc592774c6981 201
   s_41c3eef9abbce4::t_4b680ccb598a1c 178
+  s_41c3eef9abbce4::t_775797bc671789 190
 tests/ModularMonolith.Tests/NotificationTests.cs
   s_41c3eef9abbce4::t_40f15a720044ec 445,464
 tests/ModularMonolith.Tests/DeliveryProbes.cs
@@ -75,6 +78,7 @@ src/PouryaKit.Messaging.Wolverine/DelayedCommandFailedException.cs
   s_41c3eef9abbce4::t_78371618b8c774 1-19
 .agents/skills/pourya-kit/references/messaging.md
   s_41c3eef9abbce4::t_3f30cff362312e 3,20,433-472,495,625-626,636
+  s_41c3eef9abbce4::t_775797bc671789 634-635
 samples/ModularMonolith/src/Modules/Billing/Billing/Infrastructure/Data/Migrations/20261006233545_Quotes.Designer.cs
   s_41c3eef9abbce4::t_1aeb7b474d95ab 1-127
 samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/ValueObjects/QuoteId.cs
