@@ -1,0 +1,23 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_41c3eef9abbce4::t_cc2e1b30bb6c87 30
+.claude/agent-memory/kit-implementer/delayed-command-facts.md
+  s_41c3eef9abbce4::t_1849452f844baa 1-13,18-22,24-26
+  s_41c3eef9abbce4::t_a1b1303533722a 14-17
+  s_41c3eef9abbce4::t_f97eaf46e3727f 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9cf511af1c4933fe1fdb7143dc798fa031461118",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
