@@ -32,3 +32,4 @@
 - [Outgoing HTTP facts](outgoing-http-facts.md) — #48: handler scope, PostConfigure survives handler removal, safe-method allow-list, header injection, WireMock traps, test cwd
 - [Delayed command facts](delayed-command-facts.md) — #44: scheduled envelope via EF outbox, system clock, own-database restart proof, retry rows vs not-yet-due
 - [Observability facts](observability-facts.md) — #47: listener misses a lazily created static source, decorator after TryAdd, TraceParent on Operation, one-shot failure probe
+- [OpenAPI and versioning facts](openapi-versioning-facts.md) — #41: Asp.Versioning.OpenApi wiring, clock-reading notices, URL vs header groups, Scalar auth, Web-only test Host
