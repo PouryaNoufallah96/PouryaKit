@@ -113,3 +113,42 @@ Proven at the Gateway seam ([acceptance](../acceptance.md#wave-2-continuation-tr
 - `OperationContextTests.A_question_to_another_module_continues_the_asking_operations_context`
 
 The two #38 delivery tests show that the delivery seam keeps its trust.
+
+## Amendment (2026-10-07, ticket #48: calls between Kit Hosts)
+
+The decision above stands, and so does "every request starts a new chain of work" for every caller but one: a
+configured, authenticated peer Host. Spec #33 (user stories 39 to 42) asked for HTTP continuations between Hosts; the
+Host's trust boundary (G.6) moves only as far as the application's own peer list.
+
+- **A trusted peer continues an Operation; nobody else does.** `PouryaKitTrustedPeerOptions.Peers` lists the peers by
+  the value an authenticated identity carries in `PouryaKitWebOptions.ActorClaim`; it is empty by default. Only when an
+  authenticated identity of the request names a listed peer does Web build the request's context from the Kit's
+  headers, as a delivery does from a message's: `new OperationContext(actor, tenant, correlationId, causationId)`, with
+  an `OperationId` of its own, in the same context creation as before, so no middleware is added. A peer's request
+  without the headers runs as the peer in a new chain; one with incomplete or unreadable headers is refused with 400.
+  Every other caller, authenticated or anonymous, keeps its claims-derived identity and a new chain, and its headers
+  are ignored: a header never identifies a peer, so a public caller cannot set an Actor, a tenant, a correlation or a
+  causation (`TrustedPeerTests`). A continuation is trusted as before (G.6), so the permission check stands aside for it
+  as for a delivered one; an authorizer the application registered still runs.
+- **The headers are Messaging's vocabulary.** The names and format are those of `PouryaKit.Messaging`'s
+  `OperationContextHeaders`. Web does not reference Messaging (plan section C), so it states the same names in the
+  internal `OperationContextHttpHeaders`, and the tests write and read them by Messaging's constants, which keeps one
+  vocabulary.
+- **Outgoing calls carry the context explicitly and never the bearer token.** `AddPouryaKitOperationContext()` writes
+  the context a request was given with `WithOperationContext(context)`: the Actor, tenant and correlation, and the
+  calling Operation's `OperationId` as the causation, on every attempt. `HttpClientFactory` builds its handlers in a
+  scope of its own, and reading the incoming request instead (`IHttpContextAccessor`, as
+  `cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.Security/Utilities/HttpClientAuthorizationDelegatingHandler.cs`
+  does) is the ambient read this ADR rejects; it would also leave a delivery or a scheduled job with no context. The
+  handler copies nothing from an incoming request, so the caller's `Authorization` header and bearer token are never
+  forwarded (G.6, plan I.3; `OutgoingHttpTests`); a peer authenticates the calling Host by the Host's own credentials.
+- **Retry never replays a write unless the client says it is safe.** The resilience handler is the standard
+  `AddStandardResilienceHandler()`, which needs no Aspire or ServiceDefaults. By default it retries only GET, HEAD,
+  OPTIONS and TRACE, an allow-list, so an extension write such as PROPPATCH is sent once too; every method is retried
+  only with `HttpReplay.AllRequests`, the explicit choice of a client whose downstream makes writes replay-safe, and any
+  other `HttpReplay` value fails the registration. A Host with ServiceDefaults keeps one resilience pipeline per client
+  (#52).
+- **A context value that could break a header is never sent.** An Actor id or tenant is sent only when it is 1 to 256
+  visible ASCII characters with spaces only between them; any other value, a CR or LF that would start another header
+  included, fails the call before anything is sent, naming the header. The receiving Host applies the same rule to a
+  trusted peer's headers and answers 400 (`OutgoingHttpTests`, `TrustedPeerTests`).

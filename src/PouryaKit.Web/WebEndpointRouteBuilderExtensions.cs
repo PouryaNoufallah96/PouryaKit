@@ -17,18 +17,21 @@ public static class WebEndpointRouteBuilderExtensions
         /// Maps every Module's endpoints under its own route group, which requires an authenticated caller. Before an
         /// endpoint runs, the request's Operation is begun with an <see cref="OperationContext"/> built once from the
         /// caller: the Actor is the person the <see cref="PouryaKitWebOptions.ActorClaim"/> names, and the Operation
-        /// starts a new chain of work (no incoming header sets its correlation). The endpoint injects that
-        /// <see cref="OperationContext"/> and passes it to its Module's Gateway.
+        /// starts a new chain of work. Only a caller authenticated as a peer in
+        /// <see cref="PouryaKitTrustedPeerOptions.Peers"/> continues an Operation of its own instead, from the Kit's
+        /// headers; every other caller's headers are ignored. The endpoint injects that <see cref="OperationContext"/>
+        /// and passes it to its Module's Gateway.
         /// </summary>
         public IEndpointRouteBuilder MapPouryaKitModuleEndpoints()
         {
             ArgumentNullException.ThrowIfNull(routes);
 
             var options = routes.ServiceProvider.GetRequiredService<IOptions<PouryaKitWebOptions>>().Value;
+            var peers = routes.ServiceProvider.GetRequiredService<IOptions<PouryaKitTrustedPeerOptions>>().Value.Peers;
             foreach (var module in routes.ServiceProvider.GetServices<ModuleEndpoints>())
             {
                 var group = routes.MapGroup(module.RoutePrefix).RequireAuthorization();
-                ((IEndpointConventionBuilder)group).Finally(endpoint => BeginOperationFirst(endpoint, options));
+                ((IEndpointConventionBuilder)group).Finally(endpoint => BeginOperationFirst(endpoint, options, peers));
                 foreach (var endpoint in module.Endpoints)
                 {
                     endpoint.Map(group);
@@ -58,7 +61,7 @@ public static class WebEndpointRouteBuilderExtensions
 
     // Runs as the endpoint's own first step, after authorization and before the endpoint binds its parameters, which
     // is where it resolves the OperationContext; an endpoint filter would run after that binding.
-    private static void BeginOperationFirst(EndpointBuilder endpoint, PouryaKitWebOptions options)
+    private static void BeginOperationFirst(EndpointBuilder endpoint, PouryaKitWebOptions options, ISet<string> peers)
     {
         var anonymousActor = endpoint.Metadata.OfType<AnonymousActor>().LastOrDefault()?.Actor;
         if (anonymousActor is null && endpoint.Metadata.OfType<IAllowAnonymous>().Any())
@@ -73,13 +76,19 @@ public static class WebEndpointRouteBuilderExtensions
             ?? throw new InvalidOperationException($"{endpoint.DisplayName} has no request delegate to run.");
         endpoint.RequestDelegate = httpContext =>
         {
-            httpContext.RequestServices.BeginOperation(CallerContext(httpContext.User, anonymousActor, options));
+            httpContext.RequestServices.BeginOperation(CallerContext(httpContext, anonymousActor, options, peers));
             return run(httpContext);
         };
     }
 
-    private static OperationContext CallerContext(ClaimsPrincipal caller, Actor? anonymousActor, PouryaKitWebOptions options)
+    private static OperationContext CallerContext(
+        HttpContext httpContext,
+        Actor? anonymousActor,
+        PouryaKitWebOptions options,
+        ISet<string> peers
+    )
     {
+        var caller = httpContext.User;
         if (caller.Identity?.IsAuthenticated != true)
         {
             return new OperationContext(
@@ -96,6 +105,15 @@ public static class WebEndpointRouteBuilderExtensions
             throw new InvalidOperationException(
                 $"The authenticated caller has no {options.ActorClaim} claim to identify the Actor. Set PouryaKitWebOptions.ActorClaim to the claim the authentication scheme issues."
             );
+        }
+
+        // The peer's identity comes from an identity that authenticated, never from a header or an unauthenticated one.
+        var trustedPeer = caller.Identities.Any(identity =>
+            identity.IsAuthenticated && identity.FindFirst(options.ActorClaim)?.Value is { } peer && peers.Contains(peer)
+        );
+        if (trustedPeer && OperationContextHttpHeaders.Continued(httpContext.Request.Headers) is { } continued)
+        {
+            return continued;
         }
 
         return new OperationContext(

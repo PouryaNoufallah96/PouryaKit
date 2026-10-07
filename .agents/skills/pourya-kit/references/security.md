@@ -94,7 +94,7 @@ public sealed class CallerPermissions(IHttpContextAccessor http, IOptions<Pourya
 - Only the Kit sets the mark. A context your code creates is never trusted, whatever `causationId` you give it. `Continue()` is trusted only when it is called on the context of the Operation it runs in, after that Operation was authorized. Outside it, on a context that never ran or whose Operation has ended, and inside an authorizer or a validator, `Continue()` only records the causation. `CausationId` only records the chain.
 - A handler in an authorized Operation can therefore continue into protected work that its Actor holds no permission for (G.6). Declare a permission on the Operation that decides to cause such work, and review what its handler continues into.
 - Only the permission check stands aside. Every other `IAuthorizer<T>` registered for the continued command or query still runs, with the original Actor, and can refuse it; recognise a trusted continuation there by `context.IsTrustedContinuation`, never by `CausationId`.
-- An HTTP request always starts a new chain of work, with no causation, so a caller can never present its request as a continuation.
+- An HTTP request starts a new chain of work, with no causation, so a caller cannot present its request as a continuation. The one exception is a caller the Host authenticates as one of its configured trusted peer Hosts, whose request continues the Operation its context headers name ([web.md](web.md#calls-between-kit-hosts)); a header never identifies a peer.
 
 ## Testing permissions
 
