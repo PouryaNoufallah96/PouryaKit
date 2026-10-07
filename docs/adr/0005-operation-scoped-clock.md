@@ -44,3 +44,13 @@ attempt through the dispatcher, as the Kit's internal `Deliver` command in the s
 (`src/PouryaKit.Messaging.Wolverine/SubscriptionDelivery.cs`), so the dispatcher binds the container's `TimeProvider`
 as it does for every Operation, and no delivery code calls `DomainClock.Use`. Whether an `AsyncLocal` set in an xUnit
 constructor or fixture reaches the test method is still unverified.
+
+## Amendment (2026-10-07, ticket #44)
+
+The decision above stands; one time the Kit uses is not the Operation's. A delayed command
+(`IDelayedCommands.Schedule(command, at)`) is due at an absolute time, which the scheduling handler computes from the
+container's `TimeProvider`, as `OpenQuote` does. Wolverine's message store then compares that time with the system
+clock (`DateTimeOffset.UtcNow`) on its scheduled-job poll, not with any `TimeProvider`, so a Host that registers a fake
+clock fires its delayed commands against real time. A test that needs one to run uses a short real delay
+(`DelayedCommandTests`); a fake clock moves the time the Operation records, never when the store runs the command
+(ADR 0006, amendment for #44).

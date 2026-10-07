@@ -1,5 +1,6 @@
 using Billing.Infrastructure.Data.Context;
 using Billing.PriceLists.Features.OpenPriceList;
+using Billing.Quotes.Features.ExpireQuote;
 using Catalog.Contracts.Products.Events.V1;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging.Wolverine;
@@ -19,5 +20,6 @@ public sealed class BillingModule : IModuleDefinition
             "billing.product-created",
             typeof(BillingModule)
         );
+        module.AddPouryaKitDelayedCommand<ExpireQuoteCommand>("billing.expire-quote", typeof(BillingModule));
     }
 }

@@ -33,7 +33,7 @@ public sealed class StoredDeliveriesSchemaTests(AppFixture app) : HostTest<AppFi
             await SqlAsync($"""
                 create schema {quotedSchema};
                 create table {quotedSchema}.wolverine_incoming_envelopes
-                    (id uuid, received_at text, message_type text, status text);
+                    (id uuid, received_at text, message_type text, status text, attempts int not null default 0, execution_time timestamptz);
                 create table {quotedSchema}.wolverine_outgoing_envelopes (id uuid);
                 create table {quotedSchema}.wolverine_dead_letters
                     (id uuid, received_at text, message_type text, replayable bool);

@@ -103,8 +103,12 @@ _Avoid_: Consumer, outbox processor, side-effect handler
 A Module's reaction to an Integration Event or Snapshot published by another Module.
 _Avoid_: Consumer, subscriber, listener
 
+**Delayed command**:
+A command an Operation schedules to run later in its own Module, committed with the Operation and run once due as its continuation, with its Actor, tenant and correlation.
+_Avoid_: Scheduled job, timer, deferred command
+
 **Outbox**:
-A Module's share of its Host's durable message store: the Notifications, Integration Events and Snapshots the Module has committed but not yet finished delivering.
+A Module's share of its Host's durable message store: the Notifications, Integration Events, Snapshots and delayed commands the Module has committed but not yet finished delivering.
 _Avoid_: Message table, queue
 
 **Inbox**:
@@ -120,7 +124,7 @@ One bounded slice of a read result, with its position and the total count.
 _Avoid_: Paged list, list result, page list
 
 **Receipt**:
-A handler's record that it has already applied a specific Notification, Integration Event or Snapshot.
+A handler's record that it has already applied a specific Notification, Integration Event or Snapshot, or a Module's record that it has run a specific delayed command.
 The Module's Receipt store also holds its publication records, keyed `<wire name>#published`, one per Integration Event type and Domain Event; those are not Receipts (ADR 0006).
 _Avoid_: Inbox row, idempotency marker, processed flag
 

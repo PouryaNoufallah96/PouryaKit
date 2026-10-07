@@ -19,7 +19,8 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
         /// writes the Domain Events its Operation handled, those with a Notification Handler, the Integration Events
         /// its Notification Handler published, and the Snapshots of the aggregates it changed, those with an Integration
         /// Event Handler, to its Outbox in the same commit as the change, one durable delivery per subscription, and sends
-        /// them only after the commit. Each handler's delivery records a Receipt in its Module's Unit of Work, so a
+        /// them only after the commit; the commands it scheduled with <see cref="IDelayedCommands"/> are written in the
+        /// same commit, each stored until it is due. Each handler's delivery, and each delayed command's, records a Receipt in its Module's Unit of Work, so a
         /// redelivered or concurrently duplicated Notification, Integration Event or Snapshot applies its effect once, and
         /// a Snapshot older than one already applied not at all. The store is the database of the connection string named <paramref name="connectionName"/>,
         /// which every Module's DbContext must also use, in the schema <paramref name="schema"/>; Wolverine creates its
@@ -44,6 +45,8 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
             builder.Services.TryAddScoped<INotificationOutbox, WolverineOutbox>();
             builder.Services.TryAddScoped<PublishedIntegrationEvents>();
             builder.Services.TryAddScoped<IIntegrationEventOutbox>(scope => scope.GetRequiredService<PublishedIntegrationEvents>());
+            builder.Services.TryAddScoped<ScheduledDelayedCommands>();
+            builder.Services.TryAddScoped<IDelayedCommandOutbox>(scope => scope.GetRequiredService<ScheduledDelayedCommands>());
             builder.Services.TryAddScoped<IReceipts, EfReceipts>();
             return builder.UsePouryaKitWolverine(wolverine =>
             {

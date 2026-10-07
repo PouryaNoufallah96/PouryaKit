@@ -52,8 +52,8 @@ public abstract class HostFixture : IAsyncLifetime
 
     /// <summary>
     /// Waits until every delivery an earlier test caused has finished, then deletes every row except the migrations
-    /// history and the message store's own tables, in every schema, and every stored delivery. A Module whose tables
-    /// share the store's schema is reset like any other.
+    /// history and the message store's own tables, in every schema, and every stored delivery, delayed commands not yet
+    /// due included. A Module whose tables share the store's schema is reset like any other.
     /// </summary>
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
@@ -88,7 +88,8 @@ public abstract class HostFixture : IAsyncLifetime
 
     /// <summary>
     /// Runs <paramref name="operation"/>, typically a Gateway call, then waits until every delivery it caused has been
-    /// handled or dead-lettered, including deliveries those deliveries caused, and returns them in no particular order.
+    /// handled or dead-lettered, including deliveries those deliveries caused, and returns them in no particular order. A
+    /// delayed command not yet due is returned without waiting for it; it is waited for once due.
     /// Fails when the Operation stored no delivery at all, so a test that waits for deliveries never passes on none.
     /// It first waits until no earlier delivery is pending, so nothing an earlier Operation caused is credited to this one.
     /// </summary>
@@ -115,8 +116,8 @@ public abstract class HostFixture : IAsyncLifetime
     }
 
     /// <summary>
-    /// Waits until no stored delivery is pending: every one handled or dead-lettered, such as after a test handed one
-    /// out again.
+    /// Waits until no stored delivery is pending: every one handled, dead-lettered or a delayed command not yet due, such
+    /// as after a test handed one out again.
     /// </summary>
     public Task WaitUntilDeliveredAsync(CancellationToken cancellationToken = default) =>
         (Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.")).WaitUntilSettledAsync(

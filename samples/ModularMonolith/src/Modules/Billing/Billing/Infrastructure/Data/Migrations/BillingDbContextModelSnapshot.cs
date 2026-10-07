@@ -73,6 +73,51 @@ namespace Billing.Infrastructure.Data.Migrations
 
                     b.ToTable("price_lists", "billing");
                 });
+
+            modelBuilder.Entity("Billing.Quotes.Entities.Quote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("ExpiresOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_on");
+
+                    b.Property<DateTimeOffset>("LastChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_changed_at");
+
+                    b.Property<string>("LastChangedBy")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("last_changed_by");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("state");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_quotes");
+
+                    b.ToTable("quotes", "billing");
+                });
 #pragma warning restore 612, 618
         }
     }

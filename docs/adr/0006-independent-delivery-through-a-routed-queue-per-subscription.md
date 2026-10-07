@@ -763,3 +763,41 @@ new wire name, published beside the old one during a transition.
   `IntegrationEventVersionTests.Startup_fails_when_wolverine_would_route_one_message_type_to_the_subscriptions_of_another`.
   Each version otherwise reaches only its own subscriptions, each with its own Receipt of the shared identity
   (`IntegrationEventVersionTests.One_operation_publishes_both_versions_and_each_subscription_applies_only_its_own_with_its_receipt_in_one_commit`).
+
+## Amendment (2026-10-07, ticket #44: delayed commands)
+
+The decision above stands. Ticket #44 delivers a fourth kind of message on the same shape: a command a Module schedules
+to run later (`IDelayedCommands`), as a continuation of the scheduling Operation (spec #33, "Scheduling"). ADR 0004's
+commit sequence is unchanged: the Unit of Work writes the command in its Outbox step, in the same transaction.
+
+- **One route and queue per declared command.** `AddPouryaKitDelayedCommand<TCommand>(name, module)` gives the command
+  `PublishMessage(commandType).ToLocalQueue(name)` and one pre-built handler, `DelayedCommandDelivery`, registered with
+  `AddMessageHandler`, so the command may stay internal. Its deliveries share the Kit's stored retries, dead letters and
+  startup queue check; a delayed command's name may not be a subscription's
+  (`src/PouryaKit.Messaging.Wolverine/DelayedCommandExtension.cs`).
+- **When it runs is Wolverine's.** The Outbox publishes it with `DeliveryOptions.ScheduledTime`, so the store keeps
+  the envelope `Scheduled` and owned by no node until its scheduled-job poll finds it due against the system clock;
+  any running Host runs it, so the death of the scheduling Host loses nothing
+  (`DelayedCommandTests.An_expiry_scheduled_by_a_host_that_dies_before_it_is_due_runs_once_after_a_host_starts_with_the_scheduling_context`).
+  The Kit adds no scheduler of its own.
+- **Its Receipt.** One envelope is stored per scheduled command, and Wolverine keeps its id through promotion, stored
+  retries, recovery and replay, so the Receipt is the declared name and the envelope's id, in
+  `pouryakit_receipts`, whose format is unchanged. Each attempt runs the internal `RunDelayedCommand` through the
+  dispatcher, which records the Receipt and then sends the scheduled command nested, so the command's authorizers and
+  validator run, and its effect and Receipt commit together
+  (`DelayedCommandTests.A_delayed_command_handed_out_again_after_it_ran_finds_its_receipt_and_applies_nothing_more`).
+- **The stale-time rule does not hold for it.** The scheduled-job poll promotes the row with the node as its owner
+  and keeps its insert time, which `InboxStaleTime` counts from (`jasperfx/wolverine` tag `V6.46.0`,
+  `src/Persistence/Wolverine.Postgresql/PostgresqlMessageStore.cs:132-137`;
+  `src/Persistence/Wolverine.RDBMS/Durability/BumpStaleIncomingEnvelopesOperation.cs`). A delayed command due later
+  than the stale time after it was scheduled is therefore stale from its first attempt, and an attempt still running
+  at a recovery poll is handed out again, concurrently, as ticket #17's amendment describes for a late retry; its
+  Receipt keeps the database effect to one. No test pins this for delayed commands: the tests' delays are shorter than
+  the stale time.
+- **Its stored names.** `WireNaming` names no command, so Wolverine names it by its full CLR name. Renaming or moving the
+  type strands the commands stored before it, which are dead-lettered as unknown messages, as a removed subscription's
+  type is. The delivery reads the declaration from the queue the envelope was stored on, as `SubscriptionDelivery`
+  reads a subscription, so one stored under a name no longer declared fails with `UnknownDelayedCommandException`
+  and is dead-lettered rather than run again under the new name's Receipt key
+  (`DelayedCommandTests.A_delayed_command_stored_under_a_name_no_longer_declared_is_dead_lettered_and_never_run`).
+  The name follows the subscription name's rule, reserved queues included.

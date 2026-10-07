@@ -236,7 +236,11 @@ internal sealed class Subscriptions
         }
     }
 
-    private static bool Check(string name, string what, bool isQueue, List<string> problems)
+    /// <summary>
+    /// The one rule for a wire name and, with <paramref name="isQueue"/>, for the name of a durable queue, a
+    /// subscription's or a delayed command's: adds a problem and returns false when it is missing, invalid or reserved.
+    /// </summary>
+    public static bool Check(string name, string what, bool isQueue, List<string> problems)
     {
         if (string.IsNullOrWhiteSpace(name))
         {

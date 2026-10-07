@@ -31,6 +31,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["billing", "__EFMigrationsHistory"],
                 ["billing", "pouryakit_receipts"],
                 ["billing", "price_lists"],
+                ["billing", "quotes"],
                 ["catalog", "__EFMigrationsHistory"],
                 ["catalog", "categories"],
                 ["catalog", "pouryakit_receipts"],
