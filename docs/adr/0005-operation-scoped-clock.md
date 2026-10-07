@@ -54,3 +54,11 @@ clock (`DateTimeOffset.UtcNow`) on its scheduled-job poll, not with any `TimePro
 clock fires its delayed commands against real time. A test that needs one to run uses a short real delay
 (`DelayedCommandTests`); a fake clock moves the time the Operation records, never when the store runs the command
 (ADR 0006, amendment for #44).
+
+## Amendment (2026-10-07, ticket #45)
+
+The amendment for #44 holds for recurring commands too, and more strictly: no Operation computes their times. Each
+occurrence of a recurring command falls on a whole multiple of its cadence from the Unix epoch, and the Kit computes the
+first and the next occurrence against the system clock (`TimeProvider.System`), the clock the message store fires them
+by, not against the container's `TimeProvider`, so a fake clock in a test never moves when an occurrence runs
+(`RecurringCommandTests`; ADR 0006, amendment for #45).

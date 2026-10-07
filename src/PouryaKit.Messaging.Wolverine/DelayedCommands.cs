@@ -26,6 +26,13 @@ internal sealed class DelayedCommands(DelayedCommandDeclarations declarations, O
             );
         }
 
+        if (declared.Recurring is not null)
+        {
+            throw new InvalidOperationException(
+                $"{type.FullName} is the recurring command {declared.Name}, whose occurrences the Kit stores itself, one at a time; scheduling one more would run it outside its cadence."
+            );
+        }
+
         (
             scope.GetService<IDelayedCommandOutbox>()
             ?? throw new InvalidOperationException(

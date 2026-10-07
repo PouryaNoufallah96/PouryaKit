@@ -801,3 +801,41 @@ commit sequence is unchanged: the Unit of Work writes the command in its Outbox 
   and is dead-lettered rather than run again under the new name's Receipt key
   (`DelayedCommandTests.A_delayed_command_stored_under_a_name_no_longer_declared_is_dead_lettered_and_never_run`).
   The name follows the subscription name's rule, reserved queues included.
+
+## Amendment (2026-10-07, ticket #45: recurring commands)
+
+The decision above stands. Ticket #45 adds independent recurring work (spec #33, "Scheduling") on the delayed command's
+shape, with no scheduler of its own: no Quartz, and not Wolverine's own recurring-message agent (`opts.Schedules`),
+which publishes each occurrence from its own loop, outside any Unit of Work, so an occurrence could not commit with the
+effect of the one before it.
+
+- **A declaration of its own, in the same registry.** `AddPouryaKitRecurringCommand<TCommand>(name, systemActor,
+  occurrence, module)` records a delayed command with a `Recurrence`: the system Actor's name and the factory of each
+  occurrence's command. Its route, queue, pre-built handler, retries, dead letters and startup queue check are the
+  delayed command's (`src/PouryaKit.Messaging.Wolverine/DelayedCommandDeclarations.cs`). Its cadence,
+  `PouryaKitRecurringCommandOptions.Every`, is named options validated when the Host starts.
+- **Its own Operation.** `DelayedCommandDelivery` begins an occurrence's attempt with a new `OperationContext` of
+  `Actor.System(systemActor)`, no tenant and a new correlation, never `ContinuedOperationContext`, so it continues
+  nothing, is never a trusted continuation and restores no trace parent (ADR 0009)
+  (`RecurringCommandTests.ReconcileStock_runs_at_each_occurrence_under_its_system_actor_and_goes_on_after_a_host_restart`).
+- **The next occurrence commits with this one.** `RunDelayedCommandHandler` records the occurrence's Receipt, stores
+  the next occurrence through `IDelayedCommandOutbox`, then sends the command nested, so the next occurrence, the
+  effect and the Receipt share one transaction; a failed attempt leaves none of the three, and a dead-lettered one
+  stores no next occurrence. Occurrences fall on whole multiples of the cadence from the Unix epoch, and the next is
+  the first after both the occurrence and the system clock's now, so missed occurrences are skipped
+  (`RecurringCommandTests.An_occurrence_delivered_again_finds_its_receipt_and_neither_reconciles_again_nor_stores_another_occurrence`,
+  which compares the stored occurrence's and the reconciliation's commit timestamps).
+- **Its Receipt is the occurrence, not the envelope.** Wolverine clears `Envelope.ScheduledTime` when the occurrence
+  comes due (WolverineFx 6.46.0, the documentation of `Wolverine.RecurringMessage.OccurrenceHeaderKey`), so
+  the Outbox writes every delayed command's due time in the `DelayedCommandHeaders.DueAt` header, and the Receipt of a
+  recurring command is its name and a key derived from that time, in `pouryakit_receipts`, whose format is unchanged.
+  An occurrence that finds its Receipt applies nothing and stores no next occurrence.
+- **A Host start.** The internal `RecurringCommandStart`, after every hosted service started, asks Wolverine's
+  `IMessageStore.ScheduledMessages` for a `Scheduled` occurrence on the declaration's queue and, when none waits,
+  stores the first occurrence after now as an Operation of the system Actor in the Module. An occurrence taken from the
+  store and still running is not `Scheduled`, so a Host starting then, or two Hosts starting together, can store a
+  second chain; both fall on the same occurrence times, the first one both reach is applied once, and the chain whose
+  delivery found the Receipt ends
+  (`RecurringCommandTests.A_second_chain_a_starting_host_stores_while_an_occurrence_runs_applies_nothing_and_ends`).
+  The guarantee is one database effect per declaration and occurrence time; the Kit claims no exactly-once run and
+  nothing for an effect outside the database.

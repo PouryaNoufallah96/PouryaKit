@@ -1,6 +1,6 @@
 # Messaging
 
-`PouryaKit.Messaging`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Messaging.Wolverine.EFCore`: Notification Handlers that run after the commit, the Integration Events they publish for other Modules, and the Snapshots of a Module's aggregates that the Unit of Work publishes for other Modules, and the commands a Module schedules to run later, each delivery durable, retried and recorded on its own, on Wolverine with its message store in PostgreSQL. Feature code uses `PouryaKit.Messaging`, and `IDelayedCommands` of `PouryaKit.Messaging.Wolverine` to schedule a command. The Composition Root uses `PouryaKit.Messaging.Wolverine`; the Host and the Receipt and Snapshot version migrations use `PouryaKit.Messaging.Wolverine.EFCore`, which brings the other two, so a Module that declares Notification Handlers, publishes Snapshots or subscribes Integration Event Handlers references it. A Contracts project references nothing from the Kit.
+`PouryaKit.Messaging`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Messaging.Wolverine.EFCore`: Notification Handlers that run after the commit, the Integration Events they publish for other Modules, and the Snapshots of a Module's aggregates that the Unit of Work publishes for other Modules, and the commands a Module schedules to run later or declares as recurring work, each delivery durable, retried and recorded on its own, on Wolverine with its message store in PostgreSQL. Feature code uses `PouryaKit.Messaging`, and `IDelayedCommands` of `PouryaKit.Messaging.Wolverine` to schedule a command. The Composition Root uses `PouryaKit.Messaging.Wolverine`; the Host and the Receipt and Snapshot version migrations use `PouryaKit.Messaging.Wolverine.EFCore`, which brings the other two, so a Module that declares Notification Handlers, publishes Snapshots or subscribes Integration Event Handlers references it. A Contracts project references nothing from the Kit.
 
 - [Notification Handler or Domain Event Handler](#notification-handler-or-domain-event-handler)
 - [Writing a Notification Handler](#writing-a-notification-handler)
@@ -18,6 +18,7 @@
 - [What the Kit guarantees for a Snapshot](#what-the-kit-guarantees-for-a-snapshot)
 - [The rules of a mapper and a key](#the-rules-of-a-mapper-and-a-key)
 - [Delayed commands](#delayed-commands)
+- [Recurring commands](#recurring-commands)
 - [What the Kit guarantees](#what-the-kit-guarantees)
 - [Receipts](#receipts)
 - [Names](#names)
@@ -432,7 +433,7 @@ A feature author keeps these rules, or the copies in other Modules go wrong:
 
 ## Delayed commands
 
-A command's handler, a Domain Event Handler or a Notification Handler schedules one of its own Module's commands to run later with `IDelayedCommands` (`PouryaKit.Messaging.Wolverine`). The Unit of Work writes it to the Outbox in the same commit as the change, with the time it is due, and the message store keeps it until then. It is not a recurring job: work that recurs on a schedule, with no Operation to continue, is a separate declaration. From the Proving Sample's Billing Module:
+A command's handler, a Domain Event Handler or a Notification Handler schedules one of its own Module's commands to run later with `IDelayedCommands` (`PouryaKit.Messaging.Wolverine`). The Unit of Work writes it to the Outbox in the same commit as the change, with the time it is due, and the message store keeps it until then. It is not a recurring job: work that recurs on a cadence, with no Operation to continue, is a recurring command ([Recurring commands](#recurring-commands)). From the Proving Sample's Billing Module:
 
 ```csharp
 using PouryaKit.Cqrs;
@@ -470,6 +471,66 @@ internal sealed record ExpireQuoteCommand(Guid QuoteId) : Command;
 - **A failure** is retried and set aside as a dead letter of its name, received at `local://{name}/`, as a subscription's delivery is ([Retries](#retries), [Dead letters](#dead-letters)); a failed Result becomes a `DelayedCommandFailedException`, which names each Error.
 - **Cancelling** is the handler's business: the Kit does not remove a scheduled command, so check the state, as `ExpireQuote` refuses a quote that is no longer open.
 
+## Recurring commands
+
+Work that recurs on a cadence with no Operation to continue, such as a nightly reconciliation, is a recurring command: one of the Module's own commands, declared in its Composition Root with the system Actor it runs as. It is not a delayed command: no Operation schedules it, and it continues none ([Delayed commands](#delayed-commands)). From the Proving Sample's Inventory Module:
+
+```csharp
+using Dapper;
+using PouryaKit.Cqrs;
+using PouryaKit.Domain;
+using PouryaKit.Persistence;
+
+// StockItems/Features/ReconcileStock/: the command carries the occurrence it runs
+internal sealed record ReconcileStockCommand(DateTimeOffset Occurrence) : Command;
+
+internal sealed class ReconcileStockCommandHandler(IUnitOfWorkConnection unitOfWork, OperationContext context)
+    : CommandHandler<ReconcileStockCommand>
+{
+    public override async Task<Result> Handle(ReconcileStockCommand command, CancellationToken cancellationToken)
+    {
+        var (connection, transaction) = unitOfWork.Join();
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                "insert into inventory.stock_reconciliations (occurrence, stock_items, reconciled_by) select @Occurrence, count(*), @ReconciledBy from inventory.stock_items",
+                new { command.Occurrence, ReconciledBy = context.Actor.Id },
+                transaction,
+                cancellationToken: cancellationToken
+            )
+        );
+        return Result.Success();
+    }
+}
+
+// In the Composition Root:
+//     module
+//         .AddPouryaKitRecurringCommand(
+//             "inventory.reconcile-stock",
+//             systemActor: "inventory.stock-reconciler",
+//             occurrence => new ReconcileStockCommand(occurrence),
+//             typeof(InventoryModule)
+//         )
+//         .BindConfiguration("Inventory:ReconcileStock");
+// In the Host's appsettings.json:
+//     "Inventory": { "ReconcileStock": { "Every": "01:00:00" } }
+```
+
+- **Declare it** in its Module's Composition Root with `AddPouryaKitRecurringCommand<TCommand>(name, systemActor, occurrence, module)`. The name follows a delayed command's rules: its durable queue and half of its Receipts' key, so keep it; never a subscription's or another delayed command's. `systemActor` is required and names the Actor every occurrence runs as, `Actor.System(systemActor)`: nothing defaults to a system Actor. `occurrence` builds the command for each occurrence's time and must return the declared type. A command is declared once, delayed or recurring, never both.
+- **Configure its cadence.** The declaration returns the options builder of `PouryaKitRecurringCommandOptions`, named by the declaration's name, lower-cased: bind its `Every` from configuration (`BindConfiguration(section)`), or set it with `Configure`. The Host fails to start with an `OptionsValidationException` when `Every` is not longer than zero, so a missing configuration never runs it at a default. A changed cadence applies from the next occurrence stored.
+- **When it runs.** Occurrences fall on whole multiples of `Every` counted from the Unix epoch, in UTC: an hourly one runs at the top of each hour, a daily one at midnight UTC. The message store compares them with the system clock, not with the Host's `TimeProvider`, and finds one due on its scheduled-job poll (`ScheduledJobPollingTime`, 5 s by default), so a cadence shorter than the poll is not kept. A Host that starts runs the first occurrence after now.
+- **On whose authority.** Each attempt is a new Operation of the declared system Actor, in the declared Module, with no tenant, a new correlation and no causation, never a trusted continuation: it inherits nothing from the Operation that stored it, and nothing from any HTTP caller. Its trace parent is not restored either ([observability.md](observability.md)). It goes through the dispatcher with its authorizers and validator; a permission the command declares is checked for the system Actor as for any Actor, so the application grants it ([security.md](security.md#the-actors-permissions)).
+- **Once in the database.** Its delivery records a Receipt, the name and the occurrence's time, which the `DelayedCommandHeaders.DueAt` header carries, not the stored delivery's identity, in the command's own Unit of Work. A redelivered, replayed or concurrently duplicated occurrence finds it and applies nothing. An effect outside the database is at least once, as for a Notification.
+- **A failure** is retried and set aside as a dead letter of its name, as a delayed command's is, and then no next occurrence is stored: the work stops until the dead letter is replayed, which runs it and stores the next occurrence after now, or a Host starts, which stores the first occurrence after now. Watch the dead letters received at `local://{name}/`.
+- **Not scheduled by Feature code.** `IDelayedCommands.Schedule` throws for a recurring command: one more occurrence would run outside its cadence.
+
+### Restart semantics
+
+- **One occurrence stored at a time.** Each occurrence stores the next one, the first one after both its own time and now, in its own commit, through the Unit of Work's Outbox, with its effect and its Receipt. A Host that stops or dies therefore leaves the next occurrence in the message store, owned by no Host, and whichever Host runs next goes on with it; nothing is held in memory.
+- **A starting Host adds one only when none waits.** After every hosted service started, the Host looks in the message store for an occurrence waiting on the declaration's queue, due or not, a stored retry included; when there is none, it stores the first occurrence after now, as an Operation of the system Actor through the Module's Unit of Work. A stored occurrence of a retired name does not count; it is set aside as a dead letter when it comes due.
+- **Missed occurrences are skipped.** While no Host runs, the stored occurrence waits. A Host that starts later runs it, with the time it was due at, then the next occurrence after now; the occurrences between are not made up.
+- **The limit, and what keeps it safe.** An occurrence taken from the store and still running is not waiting, so a Host that starts at that moment, or two Hosts that start together on an empty store, store a second occurrence. Both chains fall on the same occurrence times, so they meet at the first one both reach, which is applied once: the delivery that finds its Receipt applies nothing and stores no next occurrence, and one chain remains. The guarantee is one effect in the database per declaration and occurrence time, not one stored occurrence at every instant, and not exactly one run of the handler.
+- **Testing.** The test fixture's Host stores its first occurrence when it starts, the reset removes it, and the fixture does not wait for an occurrence not yet due ([testing.md](testing.md#deliveries)). A test that needs occurrences to run starts its own Host on a database of its own with a short cadence, as `RecurringCommandTests` does, so the fixture's Host never runs one.
+
 ## What the Kit guarantees
 
 - **Stored in the commit.** The Unit of Work writes each Domain Event the Operation raised that a Notification Handler subscribes to into the Outbox, once per subscription, after it prepares persistence and before it saves, in the same transaction. The Notification exists if and only if the change commits: a failed Result, a failed Domain Event Handler, a refused save or an exception leaves none. A Domain Event that no Notification Handler subscribes to stores nothing.
@@ -492,7 +553,7 @@ An Integration Event is delivered the same way, sent after the commit, in a new 
 
 - A Module keeps its handlers' Receipts in a table `pouryakit_receipts` in its own schema, keyed by the subscription name, lower-cased, and the identity of what was delivered: a Notification's or Integration Event's is the Domain Event's `Id`; a Snapshot's is derived from its wire name, its aggregate's key and its version. The table is not part of the Module's model, so a migration creates it with `CreateReceiptTable` and the Module's schema.
 - Which Module needs which table:
-  - `pouryakit_receipts` (`CreateReceiptTable`): every Module that declares a Notification Handler, subscribes an Integration Event Handler, publishes Integration Events or declares a delayed command. Inventory calls it in its first migration, beside its own tables. A publishing Module's table also holds one row per Domain Event and wire name it published, keyed `<wire name>#published`, which no subscription name can take: it is how the Kit refuses a second Notification Handler publishing the same type for one Domain Event, and it is not a Receipt.
+  - `pouryakit_receipts` (`CreateReceiptTable`): every Module that declares a Notification Handler, subscribes an Integration Event Handler, publishes Integration Events or declares a delayed or recurring command. Inventory calls it in its first migration, beside its own tables. A publishing Module's table also holds one row per Domain Event and wire name it published, keyed `<wire name>#published`, which no subscription name can take: it is how the Kit refuses a second Notification Handler publishing the same type for one Domain Event, and it is not a Receipt.
   - `pouryakit_snapshot_versions` (`CreateSnapshotVersionTable`, [Keeping a copy](#keeping-a-copy)): every Module that subscribes to a Snapshot, beside its Receipt table.
 - Nothing checks either table at startup. Without one, every delivery that needs it fails with an `InvalidOperationException` that names the call to add, and is retried and set aside as a dead letter. `HostFixture` applies every migration before it starts the Host, so a test shows the gap at once.
 - The Kit removes no row from either table, and nothing should: a Receipt is what keeps a redelivery from applying twice.
@@ -632,7 +693,8 @@ A delayed command cannot keep the rule when it is due later than the stale time:
   - `PublishSnapshot`, for everything `Publish` refuses, and for a type already published as an Integration Event or as the Snapshot of another aggregate or with another mapper.
   - `Subscribe`, for a Domain Event; an abstract handler; a subscription name that is missing, invalid, reserved or colliding; and the same subscription declared for another Module. Repeating its declaration for the same Module adds nothing.
   - `AddPouryaKitDelayedCommand`, for an abstract or generic command; a name that is missing, invalid, reserved or another delayed command's; and the same command declared under another name or for another Module. Repeating it adds nothing.
-- **When the Host starts**, it fails, naming each problem, for a subscription to an Integration Event or Snapshot that no Module of the Host publishes; for a message type Wolverine would also route to another subscribed type's queues, because its wire name, its name or its full name equals that type's full name, ignoring case (a v2 published under the full name of its v1 would reach every v1 subscription); for an Integration Event this process already sends under another wire name; and for an Integration Event that Wolverine had already named otherwise before the Host declared it, because Wolverine keeps the first name it gives a type and would send it under that name. Wire names are declared all or none. It also fails for a delayed command whose name a subscription has.
+  - `AddPouryaKitRecurringCommand`, for everything `AddPouryaKitDelayedCommand` refuses, a missing system Actor or occurrence, and a command already declared as a delayed command.
+- **When the Host starts**, it fails, naming each problem, for a subscription to an Integration Event or Snapshot that no Module of the Host publishes; for a message type Wolverine would also route to another subscribed type's queues, because its wire name, its name or its full name equals that type's full name, ignoring case (a v2 published under the full name of its v1 would reach every v1 subscription); for an Integration Event this process already sends under another wire name; and for an Integration Event that Wolverine had already named otherwise before the Host declared it, because Wolverine keeps the first name it gives a type and would send it under that name. Wire names are declared all or none. It also fails for a delayed or recurring command whose name a subscription has, and with an `OptionsValidationException` for a recurring command whose cadence is not longer than zero.
 - **After every hosted service started**, it fails when Notification Handlers, Integration Events, Snapshots or delayed commands are declared but nothing writes them to an Outbox: `UsePouryaKitWolverine()` without a connection name, from `PouryaKit.Messaging.Wolverine`, runs Wolverine with no database, for a Host that declares none of them. It also fails when Host configuration made a subscription's or a delayed command's queue one that does not store what it receives, such as `LocalQueue(name).BufferedInMemory()`.
 - Not checked: that a Module whose Composition Root handles no command of its own, but declares Notification Handlers or subscriptions, has a Unit of Work (one that handles a command is checked when the Host is composed, [modules.md](modules.md#startup-checks)); and that a Module has the Receipt table and, for a Snapshot, the Snapshot version table ([Receipts](#receipts)). Not checked at startup either, but failing the Operation that commits: a Snapshot of an aggregate whose key the database generates, a Snapshot declaration without its Module in a Host of Modules, and one that covers independent aggregates ([The rules of a mapper and a key](#the-rules-of-a-mapper-and-a-key)).
 

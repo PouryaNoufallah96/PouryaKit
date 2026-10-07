@@ -44,7 +44,7 @@ The names are constants on `OperationTelemetry`:
 
 - The activity is current for the whole Operation: its authorization and validation, its handler, the Domain Event drain, the Unit of Work's Outbox write and its commit. A nested command or query is a child activity of the one that sent it.
 - The status is `Ok` for a success, `Error` with the Error codes (`Note.Rejected`) for a failed Result, and `Error` with the exception's type for an exception, which is also recorded as an `exception` event. The duration is measured in every case, with the same tags.
-- A delivery's outer Operation is tagged `Deliver`, or `RunDelayedCommand` for a delayed command. The delivered command and the commands its handler sends are its children.
+- A delivery's outer Operation is tagged `Deliver`, or `RunDelayedCommand` for a delayed or recurring command. The delivered command and the commands its handler sends are its children.
 
 ## The trace through delivery
 
@@ -61,6 +61,7 @@ request (ASP.NET Core)                  tracestate=vendor=1
 
 - Wolverine stores the id of the activity current when the Unit of Work writes the Outbox as the envelope's `parent-id`. The Outbox adds that activity's tracestate as the header `OperationContextHeaders.TraceState` (`pouryakit-tracestate`), which Wolverine does not carry.
 - Each delivery restores both into `Operation.TraceParent` when it begins the Operation. The delivery's activity is a child of Wolverine's span of the envelope when the Host samples the `Wolverine` source, and of the publishing Operation when it does not. Either way it carries the publishing tracestate. Without this step every hop would start a new trace.
+- An occurrence of a recurring command continues no Operation, so its delivery restores no parent: its Operation's activity is a child of Wolverine's span of the envelope when the Host samples the `Wolverine` source, and the root of a trace of its own when it does not ([messaging.md](messaging.md#recurring-commands)).
 - A retry is read back from the message store and stays in the trace, as a sibling of the attempt that failed. A delivery recovered on another Host keeps the parent too (proven in Spike #46).
 - This is proven for durable local delivery in one process. Propagation over RabbitMQ between processes is #52's, so do not claim it before that ticket.
 
