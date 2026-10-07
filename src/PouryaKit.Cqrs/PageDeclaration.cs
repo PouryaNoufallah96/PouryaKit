@@ -27,11 +27,15 @@ public sealed class PageDeclaration
 
     private readonly FrozenDictionary<string, FilterField> _fields;
 
-    /// <summary>Throws when a name is not a letter followed by letters and digits, or is declared twice.</summary>
+    /// <summary>
+    /// Throws when a name is not a letter followed by letters and digits, or is declared twice, and when
+    /// <paramref name="maxSize"/> is below <see cref="PageRequest.DefaultSize"/>, which would refuse every request that
+    /// states no size.
+    /// </summary>
     public PageDeclaration(IReadOnlyList<string> sorts, IReadOnlyList<FilterField>? filters = null, int maxSize = DefaultMaxSize)
     {
         ArgumentNullException.ThrowIfNull(sorts);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maxSize, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxSize, PageRequest.DefaultSize);
         if (sorts.Count == 0)
         {
             throw new ArgumentException("A Page read declares at least one sort key; the first is its default.", nameof(sorts));
@@ -158,7 +162,8 @@ public sealed class PageDeclaration
     }
 
     /// <summary>
-    /// The value of <paramref name="filter"/> as its field's declared type, parsed as <see cref="Validate"/> parsed it.
+    /// The value of <paramref name="filter"/> as its field's declared type, parsed as <see cref="Validate"/> parsed it;
+    /// a DateTimeOffset is in UTC.
     /// Throws when the filter is not one <see cref="Validate"/> accepts.
     /// </summary>
     public object ValueOf(PageFilter filter)
@@ -274,12 +279,19 @@ public sealed class FilterField
     }
 
     // A declared value, or the text of one; null for anything else.
+    // A time is read as UTC, the only offset Npgsql sends to timestamptz, so every helper gets the same instant.
     internal object? Read(object? value) =>
-        value switch
+        (
+            value switch
+            {
+                null => null,
+                string text => Types[ValueType].Parse(text),
+                _ => value.GetType() == ValueType ? value : null,
+            }
+        ) switch
         {
-            null => null,
-            string text => Types[ValueType].Parse(text),
-            _ => value.GetType() == ValueType ? value : null,
+            DateTimeOffset time => time.ToUniversalTime(),
+            var read => read,
         };
 
     // Names become query-string keys and Dapper parameter names, so they are kept to plain letters and digits.

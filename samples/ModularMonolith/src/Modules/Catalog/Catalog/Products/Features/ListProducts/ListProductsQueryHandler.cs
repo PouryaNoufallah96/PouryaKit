@@ -14,6 +14,7 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
           and (@name_eq is null or p.name = @name_eq)
           and (@name_contains is null or strpos(p.name, @name_contains) > 0)
           and (@category_eq is null or p.category_id = @category_eq)
+          and (@created_gte is null or p.created_at >= @created_gte)
         """;
 
     private static readonly PageSql Sql = new PageSql(

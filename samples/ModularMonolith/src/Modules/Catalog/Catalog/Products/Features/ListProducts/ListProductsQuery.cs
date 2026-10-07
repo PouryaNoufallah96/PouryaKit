@@ -11,6 +11,7 @@ internal sealed record ListProductsQuery(PageRequest Page) : Query<Page<ProductL
         [
             FilterField.Of<string>("name", FilterOperator.Equal, FilterOperator.Contains),
             FilterField.Of<Guid>("category", FilterOperator.Equal),
+            FilterField.Of<DateTimeOffset>("created", FilterOperator.GreaterThanOrEqual),
         ],
         maxSize: 50
     );

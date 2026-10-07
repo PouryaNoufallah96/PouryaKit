@@ -14,6 +14,7 @@ public sealed class PageTests
     [InlineData(2, 2, 5, 3, true, true)]
     [InlineData(3, 2, 5, 3, false, true)]
     [InlineData(4, 2, 4, 2, false, true)]
+    [InlineData(1, 2, long.MaxValue, long.MaxValue / 2 + 1, true, false)]
     public void A_pages_navigation_is_derived_from_its_number_size_and_total(
         int number,
         int size,
@@ -48,12 +49,16 @@ public sealed class PageTests
             new("category", FilterOperator.Equal, category),
             new("category", FilterOperator.Equal, category.ToString()),
             new("created", FilterOperator.GreaterThanOrEqual, "2026-10-07T12:00:00"),
+            new("created", FilterOperator.GreaterThanOrEqual, "2026-10-07T15:30:00+03:30"),
+            new("created", FilterOperator.GreaterThanOrEqual, new DateTimeOffset(2026, 10, 7, 15, 30, 0, TimeSpan.FromHours(3.5))),
         ];
+        var noon = new DateTimeOffset(2026, 10, 7, 12, 0, 0, TimeSpan.Zero);
 
-        Assert.Equal(
-            [category, category, new DateTimeOffset(2026, 10, 7, 12, 0, 0, TimeSpan.Zero)],
-            filters.Select(Declaration.ValueOf)
-        );
+        var values = filters.Select(Declaration.ValueOf).ToList();
+
+        Assert.Equal([category, category, noon, noon, noon], values);
+        // Every time is read as UTC, whatever offset it was given in, so both helpers send the same value.
+        Assert.All(values.OfType<DateTimeOffset>(), time => Assert.Equal(TimeSpan.Zero, time.Offset));
         Assert.Throws<InvalidOperationException>(() => Declaration.ValueOf(new("category", FilterOperator.Equal, 42)));
     }
 
@@ -65,6 +70,9 @@ public sealed class PageTests
         Assert.Throws<ArgumentException>(() => FilterField.Of<Guid>("category", FilterOperator.Contains));
         Assert.Throws<ArgumentException>(() => FilterField.Of<string>("name", FilterOperator.GreaterThan));
         Assert.Throws<ArgumentException>(() => FilterField.Of<float>("weight", FilterOperator.Equal));
+        // A maximum below the default size would refuse every request that states no size.
+        Assert.Throws<ArgumentOutOfRangeException>(() => new PageDeclaration(["name"], maxSize: PageRequest.DefaultSize - 1));
+        Assert.True(new PageDeclaration(["name"], maxSize: PageRequest.DefaultSize).Validate(new PageRequest()).IsSuccess);
     }
 
     [Fact]

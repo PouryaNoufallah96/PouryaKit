@@ -27,7 +27,7 @@ public sealed record Page<T>
 
     public long Total { get; }
 
-    public long TotalPages => (Total + Size - 1) / Size;
+    public long TotalPages => Total / Size + (Total % Size == 0 ? 0 : 1);
 
     public bool HasNext => Number < TotalPages;
 

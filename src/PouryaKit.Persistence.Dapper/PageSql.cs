@@ -141,7 +141,7 @@ public sealed class PageSql
             var filter = filters.FirstOrDefault(given => given.Field == field.Name && given.Operator == filterOperator);
             var value = filter is null ? null : Declaration.ValueOf(filter);
             // PostgreSQL types a parameter it sees as null only from the type it is sent with.
-            bound.Add(name, value is DateTimeOffset time ? time.ToUniversalTime() : value, DbTypes[field.ValueType]);
+            bound.Add(name, value, DbTypes[field.ValueType]);
         }
 
         bound.Add(SizeParameter, request.Size, DbType.Int32);

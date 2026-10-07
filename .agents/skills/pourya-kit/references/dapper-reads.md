@@ -48,6 +48,7 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
           and (@name_eq is null or p.name = @name_eq)
           and (@name_contains is null or strpos(p.name, @name_contains) > 0)
           and (@category_eq is null or p.category_id = @category_eq)
+          and (@created_gte is null or p.created_at >= @created_gte)
         """;
 
     private static readonly PageSql Sql = new PageSql(
@@ -88,7 +89,7 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
 
 - Write the read's SQL whole, once, in a static `PageSql`: the `SELECT` of the items and the `COUNT` of the same selection, sharing one `FROM` and `WHERE`, as `From` above. End the `SELECT` without `order by`, `limit` or a semicolon; the helper appends them.
 - Map every sort key the declaration declares to your own column with `OrderBy(sortKey, column)`, and name a unique column with `ThenBy`, usually the id, so rows with equal sort values keep one order from Page to Page. The direction applies to both. A sort key the declaration does not declare is never SQL: validation refuses it, and the helper throws before any SQL runs if a request reaches it unvalidated.
-- Each declared filter field and operator is the parameter `@{field}_{operator}`, the operator by its short name: `@name_eq`, `@name_contains`, `@category_eq`. Every one is always bound, to the filter's value as its declared type or to a typed null when the request does not filter on it, so test each in your `WHERE` with `(@x is null or …)`. Use them in both the `SELECT` and the `COUNT`: the `PageSql` constructor throws when either leaves one out, so the total always counts what the items select. A value is only ever a parameter, so SQL in it matches nothing.
+- Each declared filter field and operator is the parameter `@{field}_{operator}`, the operator by its short name: `@name_eq`, `@name_contains`, `@category_eq`, `@created_gte`. A time arrives in UTC, whatever offset the caller gave. Every one is always bound, to the filter's value as its declared type or to a typed null when the request does not filter on it, so test each in your `WHERE` with `(@x is null or …)`. Use them in both the `SELECT` and the `COUNT`: the `PageSql` constructor throws when either leaves one out, so the total always counts what the items select. A value is only ever a parameter, so SQL in it matches nothing.
 - Write each operator's meaning yourself, and keep it the same as an EF Core read of the same declaration: `strpos(p.name, @name_contains) > 0` is a case-sensitive contains with no `LIKE` wildcards, as EF Core's `Contains` is.
 - Read with `connection.QueryPageAsync<T>(sql, query.Page, parameters, cancellationToken)` on your lease. Pass the read's own parameters, such as a tenant, in `parameters`; `page_size`, `page_offset` and the filter names are the helper's. It runs the `COUNT`, then the `SELECT`, and answers `Page<T>`; a Page beyond the last has no items and the true total. The two run as separate statements, so a change committed between them can make the total differ from the items by that change.
 - Never build SQL from a `PageRequest` yourself: no sort key, field name or value a caller sends belongs in your SQL text.

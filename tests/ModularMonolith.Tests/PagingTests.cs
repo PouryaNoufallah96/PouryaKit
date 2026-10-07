@@ -139,8 +139,8 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
             lease.QueryPageAsync<object>(
                 new PageSql(
                     ListProductsQuery.Paging,
-                    "select p.name from catalog.products p where @name_eq is null and @name_contains is null and @category_eq is null",
-                    "select count(*) from catalog.products p where @name_eq is null and @name_contains is null and @category_eq is null"
+                    "select p.name from catalog.products p where @name_eq is null and @name_contains is null and @category_eq is null and @created_gte is null",
+                    "select count(*) from catalog.products p where @name_eq is null and @name_contains is null and @category_eq is null and @created_gte is null"
                 )
                     .OrderBy("name", "p.name")
                     .OrderBy("created", "p.created_at")
@@ -158,13 +158,53 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Fact]
+    public async Task A_time_filter_with_any_offset_selects_from_the_same_instant_through_dapper_and_ef_core()
+    {
+        await SeedAsync();
+        var created = await Fixture.ScalarAsync<DateTime>("select created_at from catalog.products where name = 'Floor lamp'");
+        // The same instant as the third product's creation, written in Tehran's offset rather than UTC.
+        var since = new DateTimeOffset(created, TimeSpan.Zero).ToOffset(TimeSpan.FromHours(3.5));
+        var request = new PageRequest
+        {
+            Sort = "created",
+            Filters = [new("created", FilterOperator.GreaterThanOrEqual, since)],
+        };
+
+        var dapper = await ListAsync(request);
+        var ef = await PageThroughEfAsync(request);
+
+        foreach (var page in new[] { dapper, ef })
+        {
+            Assert.Equal(["Floor lamp", "Armchair", "Lamp shade"], page.Value.Items.Select(item => item.Name));
+            Assert.Equal(3, page.Value.Total);
+        }
+    }
+
+    [Theory]
+    [InlineData(0, null)]
+    [InlineData(null, 0)]
+    [InlineData(null, 2)]
+    public async Task An_ef_core_page_refuses_a_specification_that_sets_its_own_skip_or_take(int? skip, int? take)
+    {
+        await using var scope = Fixture.Host.Services.CreateAsyncScope();
+        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(CatalogModule));
+        var pages = new ProductPages(scope.ServiceProvider.GetRequiredService<IUnitOfWork>());
+
+        var thrown = await Assert.ThrowsAsync<ArgumentException>(() =>
+            pages.PageLimitedAsync(skip, take, TestContext.Current.CancellationToken)
+        );
+
+        Assert.Equal("specification", thrown.ParamName);
+    }
+
+    [Fact]
     public void A_page_sql_whose_count_leaves_out_a_declared_filter_is_refused()
     {
         var thrown = Assert.Throws<ArgumentException>(() =>
             new PageSql(
                 ListProductsQuery.Paging,
-                "select p.name from catalog.products p where @name_eq is null and @name_contains is null and @category_eq is null",
-                "select count(*) from catalog.products p where @name_eq is null and @name_contains is null"
+                "select p.name from catalog.products p where @name_eq is null and @name_contains is null and @category_eq is null and @created_gte is null",
+                "select count(*) from catalog.products p where @name_eq is null and @name_contains is null and @created_gte is null"
             )
         );
 

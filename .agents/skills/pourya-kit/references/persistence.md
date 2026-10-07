@@ -198,7 +198,8 @@ internal sealed class ProductPages(IUnitOfWork unitOfWork) : EfRepository<Produc
         .ThenBy(product => product.Id)                                   // unique: equal names keep one order
         .Filter<string>("name", FilterOperator.Equal, name => product => product.Name == name)
         .Filter<string>("name", FilterOperator.Contains, name => product => product.Name.Contains(name))
-        .Filter<Guid>("category", FilterOperator.Equal, id => product => product.CategoryId == new CategoryId(id));
+        .Filter<Guid>("category", FilterOperator.Equal, id => product => product.CategoryId == new CategoryId(id))
+        .Filter<DateTimeOffset>("created", FilterOperator.GreaterThanOrEqual, since => product => product.CreatedAt >= since);
 
     public Task<Page<ProductListItemDto>> PageAsync(PageRequest request, CancellationToken ct) =>
         PageAsync(new ListItems(), Paging, request, ct);
@@ -211,7 +212,7 @@ internal sealed class ProductPages(IUnitOfWork unitOfWork) : EfRepository<Produc
 ```
 
 - Map every declared sort key with `OrderBy`, every declared field and operator with `Filter`, whose value type must be the field's, and name a unique `ThenBy` key. Each call returns a copy; keep the result in a static field. A request whose sort key or filter is undeclared, or expressions that miss part of the declaration, throw `InvalidOperationException` before any query runs.
-- `PageAsync` applies the specification's criteria and the request's filters, counts that selection, orders it, skips and takes the Page and projects it with the specification's `Select`. Give the specification criteria and a `Select` only: one with ordering, `Skip` or `Take` throws. The global query filters apply, so removed soft-deletable rows stay out.
+- `PageAsync` applies the specification's criteria and the request's filters, counts that selection, orders it, skips and takes the Page and projects it with the specification's `Select`. Give the specification criteria and a `Select` only: one with ordering, or that sets `Skip` or `Take` at all, `Take(0)` included, throws. The global query filters apply, so removed soft-deletable rows stay out.
 - A filter value reaches the database as a parameter of your predicate. `Contains` on PostgreSQL is case-sensitive, as `strpos` is in SQL.
 
 ## The Unit of Work

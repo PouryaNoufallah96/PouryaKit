@@ -92,10 +92,11 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
         ArgumentNullException.ThrowIfNull(specification);
         ArgumentNullException.ThrowIfNull(expressions);
         expressions.EnsureReads(request);
+        // Ardalis marks a Skip or Take that was never set with -1; any other value, 0 included, is the specification's own.
         if (
             specification.Selector is not { } selector
             || specification.OrderExpressions.Any()
-            || specification is { Skip: > 0 } or { Take: > 0 }
+            || specification is not { Skip: -1, Take: -1 }
         )
         {
             throw new ArgumentException(

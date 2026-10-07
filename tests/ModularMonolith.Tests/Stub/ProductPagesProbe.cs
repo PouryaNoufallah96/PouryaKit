@@ -30,13 +30,30 @@ internal sealed class ProductPages(IUnitOfWork unitOfWork) : EfRepository<Produc
         .ThenBy(product => product.Id)
         .Filter<string>("name", FilterOperator.Equal, name => product => product.Name == name)
         .Filter<string>("name", FilterOperator.Contains, name => product => product.Name.Contains(name))
-        .Filter<Guid>("category", FilterOperator.Equal, id => product => product.CategoryId == new CategoryId(id));
+        .Filter<Guid>("category", FilterOperator.Equal, id => product => product.CategoryId == new CategoryId(id))
+        .Filter<DateTimeOffset>("created", FilterOperator.GreaterThanOrEqual, since => product => product.CreatedAt >= since);
 
     public Task<Page<ProductListItemDto>> PageAsync(PageRequest request, CancellationToken cancellationToken) =>
         PageAsync(new ListItems(), Paging, request, cancellationToken);
 
+    // The same read with a specification that also sets its own Skip or Take, which the Page must refuse.
+    public Task<Page<ProductListItemDto>> PageLimitedAsync(int? skip, int? take, CancellationToken cancellationToken) =>
+        PageAsync(new ListItems(skip, take), Paging, new PageRequest(), cancellationToken);
+
     private sealed class ListItems : Specification<Product, ProductListItemDto>
     {
-        public ListItems() => Query.Select(product => new ProductListItemDto(product.Id, product.CategoryId, product.Name));
+        public ListItems(int? skip = null, int? take = null)
+        {
+            Query.Select(product => new ProductListItemDto(product.Id, product.CategoryId, product.Name));
+            if (skip is { } skipped)
+            {
+                Query.Skip(skipped);
+            }
+
+            if (take is { } taken)
+            {
+                Query.Take(taken);
+            }
+        }
     }
 }
