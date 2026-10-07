@@ -1,0 +1,30 @@
+tests/ModularMonolith.Tests/Unversioned/ModularMonolith.Tests.Unversioned.csproj
+  s_bdf0617f846b2b::t_cc42e9a942b471 2-3
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_bdf0617f846b2b::t_63082fa0791595 8
+  s_bdf0617f846b2b::t_fc79d9435da549 203-204,206
+.claude/agent-memory/kit-implementer/module-seam-and-composition-check-facts.md
+  s_bdf0617f846b2b::t_63082fa0791595 11
+tests/ModularMonolith.Tests/Misnamed/ModularMonolith.Tests.Misnamed.csproj
+  s_bdf0617f846b2b::t_63082fa0791595 2-5,11
+tests/ModularMonolith.Tests/Misnamed/SeparateCommandHandler.cs
+  s_bdf0617f846b2b::t_63082fa0791595 1-15
+docs/acceptance.md
+  s_bdf0617f846b2b::t_63082fa0791595 606
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "83a0be9e43431e88b6dc3a03e92cdfbe1e40c620",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
