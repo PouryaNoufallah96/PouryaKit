@@ -1,0 +1,35 @@
+src/PouryaKit.Cqrs/HostComposition.cs
+  s_bdf0617f846b2b::t_cc17b3e1bfe320 10-11
+  s_bdf0617f846b2b::t_fcfc82377eadce 15,27,31-32,34,43-44,47-49,52
+src/PouryaKit.Messaging.Wolverine/NotificationHandlerServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_f67d337f5d38d4 43-44
+  s_bdf0617f846b2b::t_cc17b3e1bfe320 25-28
+src/PouryaKit.Modularity/ModulesBuilder.cs
+  s_bdf0617f846b2b::t_f67d337f5d38d4 2,27-30
+src/PouryaKit.Cqrs/ComposedFeatures.cs
+  s_bdf0617f846b2b::t_789de572a69e6e 6-11,14-16,32-39,43
+src/PouryaKit.Cqrs/IModuleServices.cs
+  s_bdf0617f846b2b::t_f67d337f5d38d4 23-24,34,40-42,60-64,66,69-71,73
+src/PouryaKit.Messaging.Wolverine/ModuleOwnershipCheck.cs
+  s_bdf0617f846b2b::t_2155a6fbc163c5 6-9,14,16-23,25-27,29-31,34,37-38,44,47,50-51,57-58,67,70-71,77-78
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_bdf0617f846b2b::t_949abb348379d7 14,117,120-137,141-165,168,173-191,208-216
+  s_bdf0617f846b2b::t_cc17b3e1bfe320 19-21,63,65-67,104,106-107
+  s_bdf0617f846b2b::t_617889d87a14b5 217
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "38799c91e1d7fcebfd2902c103840c9e6b40fa4a",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
