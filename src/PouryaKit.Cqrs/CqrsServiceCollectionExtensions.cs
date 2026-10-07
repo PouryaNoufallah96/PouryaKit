@@ -7,13 +7,6 @@ namespace PouryaKit.Cqrs;
 
 public static class CqrsServiceCollectionExtensions
 {
-    private static readonly Type[] HandlerDefinitions =
-    [
-        typeof(CommandHandler<>),
-        typeof(CommandHandler<,>),
-        typeof(QueryHandler<,>),
-    ];
-
     extension(IServiceCollection services)
     {
         /// <summary>
@@ -59,14 +52,14 @@ public static class CqrsServiceCollectionExtensions
                 .ToList();
 
             var handlersByOperation = handlers.ToLookup(handler => handler.Service!.GenericTypeArguments[0]);
-            var operations = types.Where(IsOperation).Concat(handlersByOperation.Select(group => group.Key)).Distinct();
+            var operations = types.Where(OperationTypes.IsOperation).Concat(handlersByOperation.Select(group => group.Key)).Distinct();
             List<string> problems =
             [
                 .. classes
                     .Where(type =>
                         type.IsGenericTypeDefinition
                         && (
-                            IsOperation(type)
+                            OperationTypes.IsOperation(type)
                             || HandlerBase(type) is not null
                             || AuthorizerInterfaces(type).Any()
                             || DomainEventHandlerInterfaces(type).Any()
@@ -143,9 +136,8 @@ public static class CqrsServiceCollectionExtensions
             List<string> problems =
             [
                 .. unkeyed
-                    .Select(descriptor => descriptor.ServiceType)
-                    .Where(service => service.IsConstructedGenericType && HandlerDefinitions.Contains(service.GetGenericTypeDefinition()))
-                    .Select(service => service.GenericTypeArguments[0])
+                    .Select(descriptor => OperationTypes.HandledBy(descriptor.ServiceType))
+                    .OfType<Type>()
                     .Distinct()
                     .SelectMany(operation =>
                         operation
@@ -194,7 +186,7 @@ public static class CqrsServiceCollectionExtensions
     {
         for (var current = type.BaseType; current is not null; current = current.BaseType)
         {
-            if (current.IsGenericType && HandlerDefinitions.Contains(current.GetGenericTypeDefinition()))
+            if (OperationTypes.HandledBy(current) is not null)
             {
                 return current;
             }
@@ -206,25 +198,5 @@ public static class CqrsServiceCollectionExtensions
     // The dispatcher resolves an authorizer by the exact runtime type, so one for an open type parameter, a base type
     // or a marker interface would register and never run.
     private static bool IsConcreteOperation(Type type) =>
-        !type.IsGenericParameter && !type.ContainsGenericParameters && !type.IsAbstract && IsOperation(type);
-
-    private static bool IsOperation(Type type)
-    {
-        for (var current = type.BaseType; current is not null; current = current.BaseType)
-        {
-            if (
-                current == typeof(Command)
-                || (
-                    current.IsGenericType
-                    && current.GetGenericTypeDefinition() is var definition
-                    && (definition == typeof(Command<>) || definition == typeof(Query<>))
-                )
-            )
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
+        !type.IsGenericParameter && !type.ContainsGenericParameters && !type.IsAbstract && OperationTypes.IsOperation(type);
 }

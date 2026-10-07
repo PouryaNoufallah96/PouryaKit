@@ -31,7 +31,7 @@ public static class SecurityServiceCollectionExtensions
             List<string> problems =
             [
                 .. declared
-                    .Where(type => type.IsAbstract || type.ContainsGenericParameters || !IsOperation(type))
+                    .Where(type => type.IsAbstract || type.ContainsGenericParameters || !OperationTypes.IsOperation(type))
                     .Select(type =>
                         $"{type.FullName} declares a permission but is not one concrete command or query; the dispatcher would never check it."
                     ),
@@ -53,25 +53,5 @@ public static class SecurityServiceCollectionExtensions
 
             return services;
         }
-    }
-
-    private static bool IsOperation(Type type)
-    {
-        for (var current = type.BaseType; current is not null; current = current.BaseType)
-        {
-            if (
-                current == typeof(Command)
-                || (
-                    current.IsGenericType
-                    && current.GetGenericTypeDefinition() is var definition
-                    && (definition == typeof(Command<>) || definition == typeof(Query<>))
-                )
-            )
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
