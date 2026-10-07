@@ -1,0 +1,30 @@
+tests/ModularMonolith.Tests/OutgoingHttpTests.cs
+  s_41c3eef9abbce4::t_c729dfc78340a2 111-131,289-290,294-295,300-320
+.agents/skills/pourya-kit/references/web.md
+  s_41c3eef9abbce4::t_1252087896b5f2 237
+src/PouryaKit.Web/HttpReplayPolicies.cs
+  s_41c3eef9abbce4::t_988377db0b98db 1,27-28,30-31,33-34
+  s_41c3eef9abbce4::t_2b31a39f6ad8a0 2-26,29,32,35
+docs/architecture/README.md
+  s_41c3eef9abbce4::t_1252087896b5f2 453
+docs/acceptance.md
+  s_41c3eef9abbce4::t_1252087896b5f2 233
+src/PouryaKit.Web/WebHttpClientBuilderExtensions.cs
+  s_41c3eef9abbce4::t_988377db0b98db 33-34,40,42-44,46-47,49-60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e3b83d491920a7f45d694a563daa763a90b069bb",
+  "prompts": {},
+  "sessions": {
+    "s_41c3eef9abbce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd97207d-7c5b-4937-b5f4-b4c66f66d44f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
