@@ -1,0 +1,107 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_5db987750027ae::t_4a55380b1a646d 3,40
+.agents/skills/pourya-kit/references/caching.md
+  s_5db987750027ae::t_f9286c4d76ca28 1-96
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_5db987750027ae::t_2bd58ba91862e5 66
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_5db987750027ae::t_2ee8a3ad5ce0af 41
+.claude/agent-memory/kit-implementer/caching-facts.md
+  s_5db987750027ae::t_8496ceea2980e2 1-22
+Directory.Packages.props
+  s_5db987750027ae::t_26d4e19f711261 19-20,35
+PouryaKit.slnx
+  s_5db987750027ae::t_63b69f0f30e59e 3
+README.md
+  s_5db987750027ae::t_2a864a0a6558dc 5,7
+docs/acceptance.md
+  s_5db987750027ae::t_e2d689d41e5b6a 74,77,120,376,415-440
+docs/adr/0002-no-mediator-dependency.md
+  s_5db987750027ae::t_6e4e9bb1069d36 155,159-162,201-236
+docs/architecture/README.md
+  s_5db987750027ae::t_0b30602a739e22 3,52,62,80,91,158-159,168,184,209-210,252,262,317-327,608,610
+docs/foundation-review.md
+  s_5db987750027ae::t_deb919c88061fc 261,849
+docs/provenance/ModularMonolith.md
+  s_5db987750027ae::t_74b11617b81f20 11-12
+docs/provenance/PouryaKit.Caching.md
+  s_5db987750027ae::t_638a226f8c75ca 1-30
+docs/provenance/PouryaKit.Cqrs.md
+  s_5db987750027ae::t_efef70a37cc92a 5
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_5db987750027ae::t_ccef7e91eff35c 7-8,16
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_5db987750027ae::t_55e7df8fb7ed0f 5,87-94
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_5db987750027ae::t_98b969d42a24b6 10
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/GetProduct/GetProductQuery.cs
+  s_5db987750027ae::t_291c524b1a14b3 1,6-19
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RemoveProducts/RemoveProductsCommand.cs
+  s_5db987750027ae::t_d99aa2f316d48e 1-2,10,13-15
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommand.cs
+  s_5db987750027ae::t_87acfa6783e86a 1-2,7-10
+scripts/packaging/consumers/PouryaKit.Caching.cs
+  s_5db987750027ae::t_c6cd5d1b9d67cc 1-25
+scripts/packaging/inventory.json
+  s_5db987750027ae::t_c0040edc4507cb 14,33
+src/PouryaKit.Caching/CachingServiceCollectionExtensions.cs
+  s_5db987750027ae::t_91a2e32b37b70d 1-28
+src/PouryaKit.Caching/HybridQueryCache.cs
+  s_5db987750027ae::t_0dd7a89b31ac0d 1-108
+src/PouryaKit.Caching/ICacheableQuery.cs
+  s_5db987750027ae::t_4e3fda2553c3b1 1-24
+src/PouryaKit.Caching/IInvalidatesCache.cs
+  s_5db987750027ae::t_bd1c38a10aeb50 1-14
+src/PouryaKit.Caching/PouryaKit.Caching.csproj
+  s_5db987750027ae::t_10d9d140d3b3a5 1-8
+src/PouryaKit.Cqrs/Dispatcher.cs
+  s_5db987750027ae::t_97b012bcc33772 15-16,83,106,141,157,188,219-235,293-298,390-399,429,463,472-474,487
+src/PouryaKit.Cqrs/IQueryCache.cs
+  s_5db987750027ae::t_aadf3912ba1714 1-34
+src/PouryaKit.Cqrs/Operation.cs
+  s_5db987750027ae::t_19a4566203b204 30,152,165,167-181
+src/PouryaKit.Cqrs/OperationContext.cs
+  s_5db987750027ae::t_2207c30539a839 40-46
+tests/ModularMonolith.Tests/CachingTests.cs
+  s_5db987750027ae::t_ef32e93ebb0b41 1-284
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_5db987750027ae::t_d2af5fffa67a85 9
+tests/ModularMonolith.Tests/Stub/StubCaching.cs
+  s_5db987750027ae::t_ddf2d75e1cf0e9 1-113
+tests/ModularMonolith.Tests/Stub/StubModule.cs
+  s_5db987750027ae::t_14973f94683ed8 65
+tests/PouryaKit.ArchitectureTests/FeatureCodeTests.cs
+  s_5db987750027ae::t_31a300b43fd304 46
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_5db987750027ae::t_c8c0da26262849 71,250
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_5db987750027ae::t_25986dc540821f 71-72,85,107
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_5db987750027ae::t_fdf34e76ddca9f 19,89-90
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_5db987750027ae::t_580aed1ac6a39f 71-75
+tests/PouryaKit.ArchitectureTests/SharedJsonTests.cs
+  s_5db987750027ae::t_3445132865a5d2 9-11,17,22
+tests/PouryaKit.Cqrs.Tests.Module/Things.cs
+  s_5db987750027ae::t_6595b0d38306df 50-52,272-283
+tests/PouryaKit.Cqrs.Tests/QueryCacheTests.cs
+  s_5db987750027ae::t_ffc7445eec26aa 1-68
+tests/PouryaKit.Cqrs.Tests/StandIns.cs
+  s_5db987750027ae::t_b1a9915b801492 13-18,35-39,60-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e89ae0fcd7db5dcd53426b0178d4d13021659cc0",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
