@@ -1,0 +1,25 @@
+.claude/agent-memory/kit-implementer/worktree-and-check-gotchas.md
+  s_5db987750027ae::t_25a30cfe5616f7 16-17
+.claude/agent-memory/kit-implementer/workflow-script-facts.md
+  s_5db987750027ae::t_89ecd4ee5a1daa 16
+.claude/agent-memory/kit-implementer/merge-and-ci-tooling-facts.md
+  s_5db987750027ae::t_138af13982dd31 1-14
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_5db987750027ae::t_5e718a4011254d 42,44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3dd297bf8de59811240715060fad4ce58b0a308a",
+  "prompts": {},
+  "sessions": {
+    "s_5db987750027ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f5221c6-a787-43e4-af33-64c24bd8b044",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
