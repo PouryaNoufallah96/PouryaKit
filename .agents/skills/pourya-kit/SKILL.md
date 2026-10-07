@@ -1,6 +1,6 @@
 ---
 name: pourya-kit
-description: How to build a .NET modular monolith on PouryaKit. Use when writing, reviewing or testing code in a project that references PouryaKit packages, such as a Module, an aggregate, a command or query, a Domain Event Handler, a Notification Handler, a Dapper read, an Integration Event Handler, a Snapshot mapper, an endpoint, an API version or OpenAPI document, a permission on a command or query, a test against the hosted application or an architecture test of a Module's boundaries.
+description: How to build a .NET modular monolith on PouryaKit. Use when writing, reviewing or testing code in a project that references PouryaKit packages, such as a Module, an aggregate, a command or query, a Domain Event Handler, a Notification Handler, a Dapper read, an Integration Event Handler, a Snapshot mapper, an endpoint, an API version or OpenAPI document, a permission on a command or query, a Host that sends or receives Integration Events and Snapshots over RabbitMQ, a test against the hosted application or an architecture test of a Module's boundaries.
 ---
 
 # PouryaKit
