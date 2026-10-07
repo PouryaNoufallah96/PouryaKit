@@ -1,0 +1,80 @@
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/ReconcileStock/ReconcileStockCommandHandler.cs
+  s_6c3c3736ba14ff::t_0829fde0c74f75 1-27
+tests/ModularMonolith.Tests/RecurringCommandTests.cs
+  s_6c3c3736ba14ff::t_894d4f5c33e697 1-91,100-222
+  s_6c3c3736ba14ff::t_24a88a77f998d9 92-99
+scripts/packaging/consumers/PouryaKit.Messaging.Wolverine.cs
+  s_6c3c3736ba14ff::t_9b052c09222a0a 1-12,14-15
+  s_6c3c3736ba14ff::t_8b6453a0a78e6e 13
+src/PouryaKit.Messaging.Wolverine/DelayedCommandHeaders.cs
+  s_6c3c3736ba14ff::t_9c5ad3f71017f0 1-11
+src/PouryaKit.Messaging.Wolverine/DelayedCommandDeclarations.cs
+  s_6c3c3736ba14ff::t_c2387dc4f7090a 7-9,12-26,61,71
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_6c3c3736ba14ff::t_260b09475554c0 301-304
+src/PouryaKit.Messaging.Wolverine/PouryaKitRecurringCommandOptions.cs
+  s_6c3c3736ba14ff::t_af8d907e510eb5 1-14
+src/PouryaKit.Messaging.Wolverine/DelayedCommandServiceCollectionExtensions.cs
+  s_6c3c3736ba14ff::t_a457ca21efec68 4,35-74
+  s_6c3c3736ba14ff::t_45b2270f208144 75
+.agents/skills/pourya-kit/references/messaging.md
+  s_6c3c3736ba14ff::t_47cb5248d1d79a 3,21,436,474-520,522-533,556,696-697
+samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs
+  s_6c3c3736ba14ff::t_708dcf0f824b2f 7-8,35-44
+docs/foundation-review.md
+  s_6c3c3736ba14ff::t_87fad3631aa818 846
+samples/ModularMonolith/src/ModularMonolith.Host/appsettings.json
+  s_6c3c3736ba14ff::t_708dcf0f824b2f 4-8
+docs/adr/0005-operation-scoped-clock.md
+  s_6c3c3736ba14ff::t_87fad3631aa818 57-64
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs
+  s_6c3c3736ba14ff::t_a894d53f7b2c11 20,77-87
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_6c3c3736ba14ff::t_fe079fc46d89ae 45
+src/PouryaKit.Messaging.Wolverine/DelayedCommandDelivery.cs
+  s_6c3c3736ba14ff::t_d73e9d70759c4a 65,84
+  s_6c3c3736ba14ff::t_95ce6acc39713d 1,3,5,8,16-18,34,40,46-53,58-60,62-64,66-67,71-74,76,80-83,85-88,91-100
+src/PouryaKit.Messaging.Wolverine/RecurringCommandStart.cs
+  s_6c3c3736ba14ff::t_f70925c348f854 1-23,26,28-29,31-90
+  s_6c3c3736ba14ff::t_1dabc163a63cfb 24-25,27,30
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/ReconcileStock/ReconcileStockCommand.cs
+  s_6c3c3736ba14ff::t_d3d5dfe78a4d28 1-6
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_6c3c3736ba14ff::t_87fad3631aa818 804-818,820-828,830-841
+  s_6c3c3736ba14ff::t_305aef3f663c7f 829
+docs/architecture/README.md
+  s_6c3c3736ba14ff::t_2d649b341fc040 125,166,406,409,419,449
+tests/ModularMonolith.Tests/DeliveryProbes.cs
+  s_6c3c3736ba14ff::t_bc2e8d8567a70f 50-53
+src/PouryaKit.Messaging.Wolverine/DelayedCommands.cs
+  s_6c3c3736ba14ff::t_a894d53f7b2c11 29-35
+docs/acceptance.md
+  s_6c3c3736ba14ff::t_2d649b341fc040 261,277-287
+  s_6c3c3736ba14ff::t_5b535f603c5462 288
+.agents/skills/pourya-kit/SKILL.md
+  s_6c3c3736ba14ff::t_47cb5248d1d79a 33
+samples/ModularMonolith/src/Modules/Inventory/Inventory/Infrastructure/Data/Migrations/20261007150000_StockReconciliations.cs
+  s_6c3c3736ba14ff::t_bb97bc09073b8a 1-20
+GLOSSARY.md
+  s_6c3c3736ba14ff::t_87fad3631aa818 110-113,115,131
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_6c3c3736ba14ff::t_a894d53f7b2c11 23-24,48
+.agents/skills/pourya-kit/references/testing.md
+  s_6c3c3736ba14ff::t_47cb5248d1d79a 138
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "875ade4356450b793ed72ad43412d30fe6fbebf3",
+  "prompts": {},
+  "sessions": {
+    "s_6c3c3736ba14ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c482081-e03c-47b0-ae42-9bd8563cb210",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
