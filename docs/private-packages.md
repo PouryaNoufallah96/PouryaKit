@@ -8,12 +8,12 @@ MinVer is the only version engine. All Kit packages in `scripts/packaging/invent
 
 | Event | Version and behaviour |
 |---|---|
-| PR, tag push or manual CI on a non-main branch | Read-only CI validates packages and consumers. No publication from these runs. |
+| PR, tag push, integration branch (`feat/**`) push or manual CI on a non-main branch | Read-only CI validates packages and consumers. No publication from these runs. |
 | Main push | CI derives the MinVer Git-height prerelease, then successful CI authorizes private publication. |
 | Owner-created `v0.x` preview/rc tag on current main, followed by manual CI on main | CI fetches the tag and validates its exact MinVer version. Successful CI uses the same private publisher. |
 | Manual private-publication run on main | Select an original successful main CI run, attempt and SHA. Reuse its preserved packages and manifest. |
 
-Topic and integration branch pushes do not trigger CI; use PR validation or [manual branch CI](ci.md) when hosted proof is needed. A non-main manual run cannot authorize publication.
+Integration branch (`feat/**`) pushes trigger read-only CI; other topic branch pushes do not, so use PR validation or [manual branch CI](ci.md) when hosted proof is needed. Publication triggers only on a completed `main` CI run (`branches: [main]` under `workflow_run`), so neither an integration branch run nor a non-main manual run can authorize it.
 
 For a named version, choose and create an immutable tag such as `v0.2.0-rc.1` on the current main SHA using the normal owner-controlled Git process. Then select **CI**, **Run workflow**, branch **main**, or run:
 

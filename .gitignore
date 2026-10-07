@@ -7,7 +7,6 @@ obj/
 TestResults/
 artifacts/
 *.nupkg
-temp_auto_push.bat
 *.snupkg
 .DS_Store
 .env
@@ -18,5 +17,3 @@ CLAUDE.local.md
 .claude/worktrees/
 __pycache__/
 .claude-plugin/types/
-.gitignore
-branch_structure.json

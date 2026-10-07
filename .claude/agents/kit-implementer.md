@@ -30,6 +30,7 @@ Before editing in a worktree, confirm its base: `git merge-base --is-ancestor <i
 - A fix round runs the ticket's whole `verify`.
 - Run `verify` exactly as written, after your edits. You have two fix attempts; if it still fails, stop and report `blocked` with the failing output.
 - Report `done` only when every `verify` command passed in your final run.
+- When the brief asks for `validate.py`, run it after every commit, memory notes included, because it refuses a checkout that changes while it runs.
 - Keep the diff small and in the surrounding style. Every changed line traces to the objective.
 - When evidence contradicts an ADR or a section G decision, stop and report the evidence.
 - When you depart from the brief for a sound engineering reason inside `allowed_files`, continue and record it under `deviations`.
@@ -56,6 +57,7 @@ Your only finishing states are a `done` report and a `blocked` report. When the 
   ],
   "verify_attempts": 1,
   "shown_red": ["<test>: <the behaviour switched off>"],
+  "merge_notes": "<when the integration branch moved while you worked: the files that will conflict and the right post-merge values; omit otherwise>",
   "deviations": [],
   "blockers": []
 }
