@@ -934,11 +934,13 @@ read, and moves two broker rules to registration or to deployment.
   forbid it. System.Text.Json sees the annotations of properties and constructor parameters compiled with nullable
   reference types enabled, not of collection elements or generic arguments, and a contract whose members are settable or
   `init` properties without `required` requires none. The guarantee therefore holds for the positional records with
-  nullable reference types the Kit's Contracts use. The same options write: a null in a non-nullable member throws when
-  the Unit of Work writes the message to the Outbox, because Wolverine's EF Core outbox serializes an envelope as it adds
-  it to the transaction (`EfCoreEnvelopeTransaction.PersistOutgoingAsync`, `OutgoingMessage`, read decompiled from
-  WolverineFx.EntityFrameworkCore 6.46.0), so the publishing delivery fails and nothing commits. That side is inferred
-  and not pinned by a test.
+  nullable reference types the Kit's Contracts use. The same options write: serializing a null into a non-nullable
+  member throws `JsonException`, tested at the Domain seam
+  (`WireJsonTests.The_wire_options_refuse_to_write_null_into_a_non_nullable_member`, red with `RespectNullableAnnotations`
+  off). In a Host that serialization happens when the Unit of Work writes the message to the Outbox, because Wolverine's
+  EF Core outbox serializes an envelope as it adds it to the transaction (`EfCoreEnvelopeTransaction.PersistOutgoingAsync`,
+  `OutgoingMessage`, read decompiled from WolverineFx.EntityFrameworkCore 6.46.0), so the publishing delivery fails and
+  nothing commits. That path through the commit is read from the decompiled code and not proven by a test.
 - **Where the failure lands** (decompiled from WolverineFx 6.46.0 and WolverineFx.RDBMS 6.46.0):
   `HandlerPipeline.TryDeserializeEnvelope` catches the `JsonException` thrown by `SystemTextJsonSerializer.ReadFromData`
   and returns `MoveToErrorQueue`, so the failure policy's retries never apply. `MessageContext.MoveToDeadLetterQueueAsync`
