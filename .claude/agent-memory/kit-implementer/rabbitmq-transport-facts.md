@@ -1,6 +1,6 @@
 ---
 name: rabbitmq-transport-facts
-description: Ticket #51 facts - Wolverine's stub://replies listener, IBrokerEndpoint and DeadLetterStorage for transport-neutral checks, Catalog IVT decides test placement, extension-time transport setup
+description: Ticket #51 facts - stub://replies listener, IBrokerEndpoint and DeadLetterStorage checks, Catalog IVT decides test placement, a handler context swallows send failures (F6)
 metadata:
   type: project
 ---
@@ -32,12 +32,17 @@ Verified in ticket #51 (2026-10-07), WolverineFx.RabbitMQ 6.46.0, RabbitMQ 4.3.6
   with cwd at the repository root and config through env vars (`ConnectionStrings__app`) starts in about 2 s.
   Readiness: the broker queue's `ConsumerCount` > 0 (passive declare). `-- --help` means nothing to a generic Host: it
   starts and fails on its absent database.
-- **`EndpointFor` is recoverable from a handler's context.** The fan-out sends copies with
-  `context.EndpointFor(local://{subscription}).SendAsync`; the flush goes through `DurableLocalQueue.StoreAndForwardAsync`
-  (`PrepareForIncomingPersistence`, owner = node), so a copy in flight at a kill is handed out again (a mutation run
-  confirmed it, against my first reading of the S2 note). The S2 `Outgoing`/owner 0 hole is only through an EF
-  `DbContextOutbox`. `PublishAsync` from the fan-out would also hit the type's exchange route and loop forever through
-  a stale binding.
+- **`EndpointFor` to a durable local queue stores `Incoming`, owned by the node** (`DurableLocalQueue.StoreAndForwardAsync`,
+  `PrepareForIncomingPersistence`), so a copy in flight at a kill is handed out again. The S2 `Outgoing`/owner 0 hole is
+  only through an EF `DbContextOutbox`. `PublishAsync` from the fan-out would also hit the type's exchange route and
+  loop forever through a stale binding.
+- **A handler's own `MessageContext` swallows send failures (F6).** In a handler `Transaction == this`, so a send only
+  joins `_outstanding`; `FlushOutgoingMessagesAsync` (run by `MessageSucceededContinuation` before `CompleteAsync`)
+  catches each envelope's failure, logs "has been discarded" and never rethrows: a refused copy is lost while the
+  envelope is marked handled. The fan-out sends through `new MessageBus(context.Runtime)` (Transaction null), whose
+  `SendAsync` awaits `StoreAndForwardAsync` and throws after `DurableWriteRetry` (4 tries, ~400 ms). Proof technique: a
+  `before insert` trigger on `wolverine_incoming_envelopes` that raises for one `received_at`; the dead letter's
+  `exception_type` is `Npgsql.PostgresException`. Inventory.Host's own logs go to `RecordedLogs`, not the console.
 - **Mutation trap:** `!await X | flag` parses as `(!await X) | flag`; write `!(flag | await X)` to make a gate accept
   everything. Three Guid v7 made in one millisecond do not sort in creation order (assert membership, not order).
 

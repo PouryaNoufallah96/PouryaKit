@@ -53,14 +53,17 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
     // is sent again to the local queue of each subscription to its type, and nowhere else: through the type's routes it
     // would also reach any broker route the type has, and an envelope that came through a binding the Kit never made would
     // go round that broker for ever, each time under a new id. Each copy is stored as an incoming delivery of its queue
-    // before this envelope is marked handled, so recovery hands out a copy whose Host died, and a crash in between fans
-    // the envelope out again, where each copy finds its Receipt.
+    // before this returns, so recovery hands out a copy whose Host died, and a crash before this envelope is marked
+    // handled fans it out again, where each copy finds its Receipt. The copies go through a bus of their own: the
+    // handler's context would only queue them until it succeeded, then drop one its store refused and mark this envelope
+    // handled all the same. Here that store error throws, and this envelope is retried and dead-lettered instead.
     private async Task FanOutAsync(MessageContext context, Envelope envelope)
     {
         var message = envelope.Message!;
+        var copies = new MessageBus(context.Runtime) { CorrelationId = context.CorrelationId };
         foreach (var subscription in subscriptions.All.Where(subscription => subscription.Message == message.GetType()))
         {
-            await context.EndpointFor(new Uri($"local://{subscription.Name}")).SendAsync(message, CopiesOf(envelope));
+            await copies.EndpointFor(new Uri($"local://{subscription.Name}")).SendAsync(message, CopiesOf(envelope));
         }
     }
 
