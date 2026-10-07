@@ -74,6 +74,66 @@ internal sealed class ReadStampLedgerQueryHandler : QueryHandler<ReadStampLedger
         Task.FromResult<Result<string>>(ReadStampLedgerQuery.Ledger);
 }
 
+// A query that declares no permission and continues into one that does, as a handler asking another Module does: the
+// continued query runs on its authority. The authorizer of a query nested in it, which runs before that one is
+// authorized, and a task that outlives it record whether Continue() is trusted there.
+internal sealed record AskStampLedgerQuery(string Text) : Query<string>;
+
+internal sealed class AskStampLedgerQueryHandler(
+    IDispatcher dispatcher,
+    IGatewayProcessor<StubModule> stub,
+    OperationContext context,
+    ContinuationProbes probes
+) : QueryHandler<AskStampLedgerQuery, string>
+{
+    public override async Task<Result<string>> Handle(AskStampLedgerQuery query, CancellationToken cancellationToken)
+    {
+        await dispatcher.QueryAsync(new NestedInAskQuery(query.Text), cancellationToken);
+        var probe = probes.For(query.Text);
+        probe.AfterItEnded = Task.Run(async () =>
+        {
+            await probe.Ended.Task;
+            return context.Continue().IsTrustedContinuation;
+        });
+        return await stub.QueryAsync(new ReadStampLedgerQuery(), context.Continue(), cancellationToken);
+    }
+}
+
+internal sealed record NestedInAskQuery(string Text) : Query<bool>;
+
+internal sealed class NestedInAskQueryHandler : QueryHandler<NestedInAskQuery, bool>
+{
+    public override Task<Result<bool>> Handle(NestedInAskQuery query, CancellationToken cancellationToken) =>
+        Task.FromResult<Result<bool>>(true);
+}
+
+internal sealed class NestedInAskAuthorizer(OperationContext context, ContinuationProbes probes) : IAuthorizer<NestedInAskQuery>
+{
+    public Task<Result> AuthorizeAsync(NestedInAskQuery operation, CancellationToken cancellationToken)
+    {
+        probes.For(operation.Text).WhileChecking = context.Continue().IsTrustedContinuation;
+        return Task.FromResult(Result.Success());
+    }
+}
+
+/// <summary>Whether <see cref="OperationContext.Continue"/> was trusted where <see cref="AskStampLedgerQuery"/> called it, by text.</summary>
+internal sealed class ContinuationProbes
+{
+    private readonly ConcurrentDictionary<string, Probe> _probes = [];
+
+    public Probe For(string text) => _probes.GetOrAdd(text, _ => new Probe());
+
+    internal sealed class Probe
+    {
+        public bool? WhileChecking { get; set; }
+
+        /// <summary>Completed by the test once the query returned; the task started inside it then continues.</summary>
+        public TaskCompletionSource Ended { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task<bool>? AfterItEnded { get; set; }
+    }
+}
+
 internal sealed record NoteToStampDomainEvent(string Text) : DomainEvent;
 
 internal sealed class StampNoteNotificationHandler(IDispatcher dispatcher) : INotificationHandler<NoteToStampDomainEvent>

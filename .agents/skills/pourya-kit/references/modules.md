@@ -80,13 +80,13 @@ var created = await catalog.SendAsync(
 - `Actor`: `Actor.Person(id)`, a person as the trust boundary that authenticated them identifies them, or `Actor.System(name)`, a named system identity for independent work no person caused, such as a scheduled job. `Actor.Kind` says which.
 - `Tenant`: the tenant or company the Operation runs for; null where the application has none.
 - `CorrelationId`: shared by every Operation in one chain of work; a new context with none given correlates with its own `OperationId`.
-- `CausationId`: the Operation or message that caused this one; null for the Operation that started the chain.
+- `CausationId`: the Operation or message that caused this one; null for the Operation that started the chain. Informational: it never makes a context trusted.
 
 Starting and continuing work:
 
 - A caller that starts work creates `new OperationContext(actor, tenant)` and passes it to the Gateway. Create one for each Operation: two calls with one context share an `OperationId`.
 - Work one Operation causes runs with `context.Continue()`: the same Actor, tenant and correlation, the causing Operation's `OperationId` as its causation, and a new `OperationId`. A Module that answers another Module's question passes the asking Operation's `Continue()` to its own Gateway.
-- A continuation is trusted (G.6): its Actor is not authenticated again, and the Kit adds no authorization of its own for it. An `IAuthorizer` registered for the command or query it runs still runs, with the original Actor, and can recognise a continuation by its `CausationId`.
+- A continuation is trusted (G.6) when the Kit restores it for a delivery, or when a running, authorized Operation continues its own context with `Continue()`: its Actor is not authenticated again, and the Kit adds no authorization of its own for it. A context application code builds, or continues outside the Operation that ran it, is never trusted. An `IAuthorizer` registered for the command or query it runs still runs, with the original Actor, and recognises a trusted continuation by `IsTrustedContinuation`, never by `CausationId`.
 - There is no anonymous or default Actor. `Actor.Person` and `Actor.System` refuse a blank id or name, the Gateway throws `ArgumentNullException` for a null context, and resolving `OperationContext` in a scope whose Operation was never begun throws `InvalidOperationException`. Name system work with `Actor.System("...")`.
 
 Reading it:

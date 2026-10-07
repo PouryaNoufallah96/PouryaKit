@@ -266,7 +266,26 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Fact]
-    public async Task A_continued_context_is_not_trusted_whether_or_not_the_kit_ran_the_context_it_continues()
+    public async Task A_running_authorized_operation_continues_into_a_permission_protected_query_without_its_actor_being_checked_again()
+    {
+        var text = Unique();
+
+        // Ada holds no permission to read the ledger: sent by her directly, the query is refused.
+        var answered = await Fixture
+            .Gateway<StubModule>()
+            .QueryAsync(new AskStampLedgerQuery(text), new OperationContext(Actor.Person("ada")), TestContext.Current.CancellationToken);
+        var probe = Fixture.Host.Services.GetRequiredService<ContinuationProbes>().For(text);
+        probe.Ended.SetResult();
+
+        Assert.Empty(answered.Errors);
+        Assert.Equal(ReadStampLedgerQuery.Ledger, answered.Value);
+        // Not while the checks of a query nested in it ran, before that one was authorized, nor once it had ended.
+        Assert.False(probe.WhileChecking);
+        Assert.False(await probe.AfterItEnded!);
+    }
+
+    [Fact]
+    public async Task A_context_continued_outside_the_operation_that_ran_it_is_not_trusted()
     {
         var text = Unique();
         var stub = Fixture.Gateway<StubModule>();

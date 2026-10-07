@@ -181,6 +181,7 @@ internal sealed partial class Dispatcher(
         where TResult : Result
     {
         using (operation.EnterChecks())
+        using (AuthorizedOperation.Checking())
         {
             foreach (var authorizer in services.GetServices<IAuthorizer<TCommandOrQuery>>())
             {
@@ -200,6 +201,9 @@ internal sealed partial class Dispatcher(
                 }
             }
         }
+
+        // From here the Operation is authorized: Continue() on its context is a trusted continuation.
+        using var running = AuthorizedOperation.Running(operation.Context);
 
         // A query, or a command nested in another one: it joins the Operation's Unit of Work, if any.
         if (!ownsUnitOfWork)

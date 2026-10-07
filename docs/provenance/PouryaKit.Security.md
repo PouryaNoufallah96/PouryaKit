@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Security`. Format and rules: [README](README.md).
 
-`IActorPermissions`, `PermissionErrors` and the continuation rule of the permission check (a context with a `CausationId` is not checked again, ADR 0007) are new Kit code, so they have no record here.
+`IActorPermissions`, `PermissionErrors` and the continuation rule of the permission check (a context the Kit marked `IsTrustedContinuation` is not checked again, ADR 0007 and #57) are new Kit code, so they have no record here.
 
 ## Package dependencies
 
