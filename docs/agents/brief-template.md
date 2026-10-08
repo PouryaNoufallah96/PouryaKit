@@ -47,6 +47,7 @@ dotnet test --project tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj -
 dotnet test --project tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
 dotnet test --project tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
 python3 .agents/scripts/check-ai-setup.py
+python3 .agents/scripts/check-docs.py
 ```
 
 Each ticket's brief adds its own test projects.

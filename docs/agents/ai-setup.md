@@ -21,7 +21,7 @@ One home per concern. Anything both tools use lives in `.agents/` or at the root
 | Status line | `.claude/statusline.sh` | Claude Code, main session, through `statusLine` in `.claude/settings.json` |
 | Claude Code settings | `.claude/settings.json` | Claude Code: subagent default model, agent teams on, the output style, the status line, subagent rows, subagent worktree base, allow a branch `git push` and ask before a push to `main`, the guard |
 | Codex config | `.codex/config.toml` | Codex, once the repository is trusted: model, effort, review model, subagent defaults |
-| Check scripts | `.agents/scripts/check-ai-setup.py`, which also runs `.agents/scripts/check-tree.py` on every tracked path | Run by hand after any change, and by the `ai-setup` CI job; `check-tree.py` also by the `pre-commit` hook |
+| Check scripts | `.agents/scripts/check-ai-setup.py`, which also runs `.agents/scripts/check-tree.py` on every tracked path; `.agents/scripts/check-docs.py` for the Markdown; the unit tests beside them (`test_*.py`) | Run by hand after any change, and by the `ai-setup` CI job; `check-tree.py` also by the `pre-commit` hook; `check-docs.py` also by every implementer's `verify` |
 | CI failure reader | `.agents/scripts/ci-failures.py` | Run by hand on a failed CI run (`docs/agents/running-a-spec.md`) |
 | Role memory | `.claude/agent-memory/kit-implementer/` | Claude Code, for `kit-implementer` only; created on first use, committed |
 | Git hooks | `.githooks/` | Git, once a clone runs `git config core.hooksPath .githooks`: `pre-commit` and `pre-merge-commit` refuse staged merge conflict markers, and `pre-commit` a staged path outside the tree's top-level entries ("The guard") |
@@ -179,9 +179,10 @@ Done when `/debug-config` lists the project layer and `/hooks` shows the guard a
 
 ```bash
 python3 .agents/scripts/check-ai-setup.py
+python3 .agents/scripts/check-docs.py
 ```
 
-It needs Python 3.11 or later, prints one `FAIL` line per problem naming the file and the reason, and exits non-zero on any. A rule glob that matches no file yet is a `WARN`. Besides the AI setup it fails on a merge conflict marker in any tracked text file, on any `check-tree.py` offence among the tracked paths, and on a package count spelled out in `README.md`, the Kit's skill or `docs/architecture/README.md` (a number before "packages" or "nupkgs"), which would drift when a package is added: those name the packages of `scripts/packaging/inventory.json` instead. The `ai-setup` job runs it on the [CI workflow's documented triggers](../ci.md).
+Each needs Python 3.11 or later, prints one `FAIL` line per problem naming the file and the reason, and exits non-zero on any. A rule glob that matches no file yet is a `WARN`. Besides the AI setup, `check-ai-setup.py` fails on a merge conflict marker in any tracked text file, on any `check-tree.py` offence among the tracked paths, and on a package count spelled out in `README.md`, the Kit's skill or `docs/architecture/README.md` (a number before "packages" or "nupkgs"), which would drift when a package is added: those name the packages of `scripts/packaging/inventory.json` instead. `check-docs.py` fails on a backticked name in the Kit's skill, `README.md`, `docs/architecture/` or a top-level doc that names nothing in the code (an illustrative or third-party name goes in its `ALLOWED` list, with the reason), a broken relative link or anchor, a code span paired with the wrong backtick, a table row cut off from its table, and a line a union merge kept twice; its docstring gives each rule and what it leaves out. Its `--fences` mode only prints whether each Markdown file changed against `HEAD` changed a fenced block, so an implementer knows whether the skill's snippet harness must run. The `ai-setup` job runs both, then the unit tests beside them, on the [CI workflow's documented triggers](../ci.md).
 
 ## Verified against
 
