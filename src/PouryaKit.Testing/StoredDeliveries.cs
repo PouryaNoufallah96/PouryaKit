@@ -44,6 +44,20 @@ internal sealed class StoredDeliveries(
         ];
 
     /// <summary>
+    /// Every envelope the store holds for a sending agent, as <c>{message type} to {destination}</c>: written in a commit
+    /// and not yet sent, such as while its broker is unavailable. A sent one is deleted.
+    /// </summary>
+    public async Task<List<string>> OutgoingAsync(CancellationToken cancellationToken) =>
+        [
+            .. (
+                await RowsAsync(
+                    $"select message_type, destination from {quotedSchema}.wolverine_outgoing_envelopes order by id",
+                    cancellationToken
+                )
+            ).Select(row => $"{row[0]} to {row[1]}"),
+        ];
+
+    /// <summary>
     /// The subscription a delivery received at <paramref name="receivedAt"/> was for: the name of its local queue,
     /// <c>local://{subscription}/</c>. A delivery received at a broker queue, such as <c>rabbitmq://queue/{ServiceName}</c>,
     /// was for no subscription yet, so it is named by that address.

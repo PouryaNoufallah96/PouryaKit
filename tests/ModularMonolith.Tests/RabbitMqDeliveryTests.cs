@@ -24,6 +24,7 @@ using Wolverine.Persistence.Durability.DeadLetterManagement;
 using Wolverine.RabbitMQ;
 using Wolverine.Runtime;
 using Wolverine.Runtime.Serialization;
+using Wolverine.Transports.Sending;
 
 namespace ModularMonolith.Tests;
 
@@ -712,6 +713,57 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
         using var json = JsonDocument.Parse(envelope.Data!);
         Assert.Equal("application/json", envelope.ContentType);
         Assert.Equal($"\"{sent.ProbeId.Value}\"", json.RootElement.GetProperty("probeId").GetRawText());
+    }
+
+    // A Snapshot only Inventory.Host subscribes to leaves the Catalog Host as one broker envelope, which the store deletes
+    // once sent (final review, finding 6): AssertNothingSentAsync fails on it once sent before the Operation returns, and
+    // while its sender is paused, as Wolverine pauses it when the broker is unavailable, with the envelope still stored.
+    [Fact]
+    public async Task Assert_nothing_sent_fails_on_a_snapshot_sent_only_to_the_broker_once_sent_and_while_it_waits_for_the_broker()
+    {
+        var environment = await broker.CreateEnvironmentAsync();
+        await using var fixture = new BrokerHostFixture(environment.Broker);
+        await fixture.InitializeAsync();
+        var catalog = fixture.Gateway<CatalogModule>();
+        var product = Guid.CreateVersion7();
+        await BrokerEnvironment.CreateProductAsync(fixture.Host, product, "Lamp");
+        await fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+        const string Sent = "The Operation sent catalog.product-snapshot.v1 to rabbitmq://exchange/catalog.product-snapshot.v1.";
+
+        var sent = await Assert.ThrowsAsync<DeliveryAssertionException>(() =>
+            fixture.AssertNothingSentAsync(
+                async () =>
+                {
+                    var renamed = await catalog.SendAsync(new RenameProductCommand(product, "Desk lamp"), TestContext.Current.CancellationToken);
+                    // Sent, and deleted from the store, before the Operation returns.
+                    await fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+                    return renamed;
+                },
+                TestContext.Current.CancellationToken
+            )
+        );
+        var sender = (SendingAgent)
+            fixture
+                .Host.Services.GetRequiredService<IWolverineRuntime>()
+                .Endpoints.GetOrBuildSendingAgent(new Uri("rabbitmq://exchange/catalog.product-snapshot.v1"));
+        // Longer than the Operation and the read after it take on any machine; disposing the Host ends it.
+        await sender.PauseAsync(TimeSpan.FromSeconds(60));
+        var waiting = await Assert.ThrowsAsync<DeliveryAssertionException>(() =>
+            fixture.AssertNothingSentAsync(
+                () => catalog.SendAsync(new RenameProductCommand(product, "Floor lamp"), TestContext.Current.CancellationToken),
+                TestContext.Current.CancellationToken
+            )
+        );
+
+        Assert.Equal(Sent, sent.Message);
+        Assert.Equal(Sent, waiting.Message);
+    }
+
+    // ModularMonolith.Host with the broker, as a HostFixture: Catalog and Billing, with Inventory in another Host.
+    private sealed class BrokerHostFixture(Uri broker) : HostFixture
+    {
+        protected override IHost CreateHost(string connectionString) =>
+            AppFixture.ComposeHost("Development", connectionString, new RecordedLogs(), null, $"--ConnectionStrings:broker={broker}");
     }
 
     // Creates the product, renames it, then renames or removes it, each in an Operation of its own, and returns the

@@ -19,12 +19,25 @@ public static class EfCoreServiceCollectionExtensions
         /// service that removes expired keys from every Module's table, as <see cref="PouryaKitIdempotencyOptions"/>
         /// sets, and checks those options when the Host starts.
         /// When a messaging package registered an <see cref="IUnitOfWorkOutbox"/>, the Unit of Work commits through it.
+        /// It records the DbContext, once, as a <see cref="DbContextConnection"/> with <paramref name="connectionName"/>,
+        /// the connection string it stores over when its registration names one, so the Kit's composition checks compare
+        /// its connection with the message store's when the Host's container is built.
         /// A database package such as <c>PouryaKit.Persistence.Postgres</c> calls it; Feature code never does.
         /// </summary>
-        public IServiceCollection AddPouryaKitEfCore<TDbContext>()
+        public IServiceCollection AddPouryaKitEfCore<TDbContext>(string? connectionName = null)
             where TDbContext : PouryaKitDbContext
         {
             ArgumentNullException.ThrowIfNull(services);
+            // An Outbox writes on this DbContext's connection, whoever registered the DbContext.
+            if (
+                !services.Any(descriptor =>
+                    descriptor.ImplementationInstance is DbContextConnection recorded && recorded.DbContext == typeof(TDbContext)
+                )
+            )
+            {
+                services.AddSingleton(new DbContextConnection(connectionName, typeof(TDbContext)));
+            }
+
             // Added, not tried: on a Module's builder it becomes that Module's own, whatever the Host already holds.
             services.AddScoped<IUnitOfWork>(provider => new EfUnitOfWork(
                 provider.GetRequiredService<TDbContext>(),

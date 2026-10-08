@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Diagnostics.Metrics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +10,7 @@ using Respawn;
 using Respawn.Graph;
 using Testcontainers.PostgreSql;
 using Weasel.Core.Migrations;
+using Wolverine;
 using Wolverine.Persistence.Durability;
 using Wolverine.Persistence.Durability.DeadLetterManagement;
 using Wolverine.RDBMS;
@@ -166,24 +169,31 @@ public abstract class HostFixture : IAsyncLifetime
     }
 
     /// <summary>
-    /// Runs <paramref name="operation"/> and fails unless it stored no delivery: what a rolled-back Operation leaves.
+    /// Runs <paramref name="operation"/> and fails unless it sent nothing: what a rolled-back Operation leaves. A delivery
+    /// to a subscription of the Host is stored; an envelope for a broker is stored until it is sent, then deleted, so the
+    /// assertion also counts every envelope Wolverine handed to a sending agent while the Operation ran, and every one still
+    /// stored for one afterwards, such as while its broker is unavailable.
     /// It first waits until no earlier delivery is pending, so nothing an earlier Operation caused is charged to this
-    /// one; a delivery is stored in the Operation's own commit, so nothing needs waiting for afterwards.
+    /// one; an envelope is stored in the Operation's own commit and handed out before the Operation returns, so nothing
+    /// needs waiting for afterwards.
     /// </summary>
     public async Task<T> AssertNothingSentAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(operation);
         var store = Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.");
         var before = await SettledIdsAsync(store, cancellationToken);
+        using var handedOut = new SentEnvelopes(Host.Services.GetRequiredService<IWolverineRuntime>());
 
         var outcome = await operation();
 
-        var sent = (await store.AllAsync(cancellationToken)).Where(row => !before.Contains(row.Id)).ToList();
-        if (sent.Count > 0)
+        string[] sent =
+        [
+            .. (await store.AllAsync(cancellationToken)).Where(row => !before.Contains(row.Id)).Select(row => row.Delivery.Subscription),
+            .. handedOut.Envelopes.Concat(await store.OutgoingAsync(cancellationToken)).Distinct(),
+        ];
+        if (sent.Length > 0)
         {
-            throw new DeliveryAssertionException(
-                $"The Operation sent {sent.Count} deliveries: {string.Join(", ", sent.Select(row => row.Delivery.Subscription))}."
-            );
+            throw new DeliveryAssertionException($"The Operation sent {string.Join(", ", sent)}.");
         }
 
         return outcome;
@@ -233,6 +243,52 @@ public abstract class HostFixture : IAsyncLifetime
     {
         await store.WaitUntilSettledAsync(DeliveryTimeout, cancellationToken);
         return await store.IdsAsync(cancellationToken);
+    }
+
+    // Every envelope the Host's Wolverine hands to a sending agent for another address than one of its local queues, as
+    // Wolverine counts it in its wolverine-messages-sent instrument, on that runtime's own Meter, until disposed. Wolverine
+    // counts an envelope when a sending agent takes it, before its broker has it, so the count stays when the store deletes
+    // the sent envelope; a delivery to a local queue is stored, and counted there.
+    private sealed class SentEnvelopes : IDisposable
+    {
+        private readonly MeterListener _listener = new();
+        private readonly ConcurrentQueue<string> _envelopes = [];
+
+        public SentEnvelopes(IWolverineRuntime runtime)
+        {
+            _listener.InstrumentPublished = (instrument, listener) =>
+            {
+                if (instrument.Meter == runtime.Meter && instrument.Name == MetricsConstants.MessagesSent)
+                {
+                    listener.EnableMeasurementEvents(instrument);
+                }
+            };
+            _listener.SetMeasurementEventCallback<int>(
+                (_, _, tags, _) =>
+                {
+                    string? type = null, destination = null;
+                    foreach (var tag in tags)
+                    {
+                        (type, destination) = tag.Key switch
+                        {
+                            "message.type" => (tag.Value as string, destination),
+                            "message.destination" => (type, tag.Value as string),
+                            _ => (type, destination),
+                        };
+                    }
+
+                    if (destination is not null && !destination.StartsWith("local:", StringComparison.Ordinal))
+                    {
+                        _envelopes.Enqueue($"{type} to {destination}");
+                    }
+                }
+            );
+            _listener.Start();
+        }
+
+        public IReadOnlyCollection<string> Envelopes => _envelopes;
+
+        public void Dispose() => _listener.Dispose();
     }
 
     private IDeadLetters DeadLetterStorage() =>
