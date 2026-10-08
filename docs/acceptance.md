@@ -37,6 +37,7 @@ The third seam of the Testing Decisions is proven in `tests/PouryaKit.Architectu
 | A Module's only public types are its Composition Root and what its Host implements for it | `ModuleBoundaryTests` |
 | Feature code never saves, commits, writes in bulk or calls a step only the Kit runs | `FeatureCodeTests` |
 | No transport type in Feature code; no envelope storage in a Module's DbContext | `FeatureCodeTests` |
+| No application code implements a contract the Kit fills for its pipeline, the dispatcher and the two optional slots included | `PipelineContractTests` (ticket #54) |
 | Only the Kit's drain clears Domain Events | `FeatureCodeTests` |
 | Only Domain sets up JSON options; Web, Cqrs and Caching apply `UsePouryaKitJson`, and Messaging.Wolverine alone its strict variant `UsePouryaKitWireJson` | `SharedJsonTests` (tickets #34, #60) |
 | No Dapper write to an aggregate's table | `DapperWriteTests` |
@@ -665,3 +666,15 @@ Ticket #54's criterion "Use the existing central packaging, MinVer, CI validatio
 | Workflow checks | `python3 -c "import yaml…"` on both publication workflows, `actionlint` with `shellcheck`, `python3 -m unittest discover -s tests/releases/publication -p 'test_*.py'`, `python3 -m unittest discover -s scripts/packaging -p 'test_*.py'`, `python3 .agents/scripts/check-ai-setup.py` | All passed; the publication checks still extract and run the artifact-verification step unchanged. |
 
 Not proven locally: the credentialed install from GitHub Packages. `NuGetPackageSourceCredentials_GitHub` reaches only a source named `GitHub` in a configuration file (NuGet's `PackageSourceProvider` reads `NuGetPackageSourceCredentials_<name>`), which is why the install runs beside the copied `NuGet.Config`; an `--add-source` URL would carry no credentials. The first `main` publication after the merge of `feat/wave-2` is that proof. The generated solutions are restored there, not built or tested: `validate.py`'s template consumers build them, run their smoke tests and publish their Hosts from the produced packages.
+
+## Wave 2 pipeline contracts only the Kit implements, ticket #54
+
+Ticket #54's acceptance criteria "Structure/composition checks" and "Reconcile … applicable ADR amendments", for the
+owner's decision of 2026-10-07 (D4): spec #33's "Applications cannot register arbitrary pipeline steps" is enforced by a
+structure test, and ADR 0002 says what holds ([its #54 amendment](adr/0002-no-mediator-dependency.md)). No Kit code
+changed.
+
+| Scenario | Proven by | Notes |
+|---|---|---|
+| An application type that implements a contract the Kit fills for its pipeline is rejected, naming the type, the contract and the assembly's file | `PipelineContractTests.An_application_type_that_implements_a_pipeline_contract_is_rejected` | The negative case is `Offending.OwnQueryCache`, an `IQueryCache`. Red once with the type no longer implementing `IQueryCache`, and with the rule's contract list empty |
+| No application code of the Proving Sample implements one: both Hosts and every project they reference that is no Kit package; the Kit's packages hold each one's implementations | `PipelineContractTests.No_module_or_host_implements_a_pipeline_contract_and_the_kit_implements_each` | The contracts: `IDispatcher`, `IGatewayProcessor<TModule>`, `IUnitOfWork`, `IValidationStep<T>`, `IReadingStateGuard`, `IIdempotencyStore`, `IQueryCache`, `IUnitOfWorkOutbox`, `INotificationOutbox`, `IIntegrationEventOutbox`, `IDelayedCommandOutbox`, `ISnapshotMappers`, `IReceipts`; `IDispatcher` has two Kit implementations, Cqrs's and Observability's decorator. Red with the open-generic match off (`FluentValidationStep<T>` went unseen), with the list empty, and with `IDispatcher` and `IGatewayProcessor<TModule>` taken off it. `IAuthorizer<T>` and the handler contracts stay the application's |

@@ -157,7 +157,8 @@ on (`src/PouryaKit.Cqrs/Dispatcher.cs`, `src/PouryaKit.Cqrs/Operation.cs`):
 The decision above stands. Plan I.6 decided that the fixed pipeline has two optional slots, idempotency before the
 Unit of Work and caching around a query, filled only by the Kit, and that applications still register no steps.
 Ticket #42 implemented the idempotency slot at commit `829e7ad` (`src/PouryaKit.Cqrs/Dispatcher.cs`, `Steps`), and
-ticket #43 the caching slot, in the same method, at commit `4aa98b7`.
+ticket #43 the caching slot, in the same method, at commit `4aa98b7`. *Since 2026-10-08 (ticket #54) a structure test,
+not only this text, keeps the slots the Kit's: see the amendment below.*
 
 The idempotency slot (ticket #42):
 
@@ -219,7 +220,8 @@ The caching slot (ticket #43):
 - **The Kit's Caching package supplies the one implementation.** `IQueryCache` is a Cqrs seam that exists for the
   Kit, as `IIdempotencyStore` exists for persistence packages; `PouryaKit.Caching` registers its implementation over
   `HybridCache`, and `PouryaKit.Cqrs` never references Caching. The dispatcher takes whatever `IQueryCache` is
-  registered, so a Host registration that replaces it is possible, but outside what this ADR supports. A query opts in
+  registered, so a Host registration that replaces it is possible, but outside what this ADR supports. *Since
+  2026-10-08 (ticket #54) an application's own implementation fails a structure test; see the amendment below.* A query opts in
   with Caching's `ICacheableQuery` (key, duration, tags). Its implementation makes one `HybridCache.GetOrCreateAsync`
   call, so concurrent misses in one Host share a handler run; another Host runs its own. The effective key adds the
   query's full type name, the tenant (a null tenant as `OperationContext.NoTenant`, the empty string #42's key table
@@ -300,3 +302,33 @@ request id on a command that does not opt in.
   the design review's finding API-01, which the orchestrator accepted on 2026-10-08.
 - Proven by `MisconfiguredHostTests.An_endpoint_that_requires_an_idempotency_key_on_a_get_fails_the_host_at_start`, red
   with the refusal switched off, against PostgreSQL.
+
+## Amendment (2026-10-08, ticket #54: applications implement none of the pipeline's contracts)
+
+The decision above stands. The #42 and #43 amendments say the two optional slots are filled only by the Kit, yet their
+contracts are public and the dispatcher takes whatever implementation is registered, so an application could implement
+or replace one, and only Feature code calling one was refused. The owner approved enforcing it on 2026-10-07
+(decision D4).
+
+- **Public so the Kit's own packages fill them.** `IIdempotencyStore` and `IQueryCache` are public Cqrs contracts
+  because `PouryaKit.Persistence.EFCore` and `PouryaKit.Caching` fill them and Cqrs references neither. The
+  pipeline's other seams are public for the same reason, since another Kit package fills or calls each: Cqrs's
+  `IUnitOfWork`, `IValidationStep<T>` and `IReadingStateGuard`, Persistence.EFCore's `IUnitOfWorkOutbox`, and
+  Messaging.Wolverine's `INotificationOutbox`, `IIntegrationEventOutbox`, `IDelayedCommandOutbox`, `ISnapshotMappers`
+  and `IReceipts`. Cqrs's `IDispatcher`, the pipeline itself, and Modularity's Gateway `IGatewayProcessor<TModule>`
+  are public because application code sends through them, and only the Kit implements them. Each contract has one Kit
+  implementation, but for `IDispatcher`, which Observability also decorates.
+- **Applications implement none of them and call neither slot; the structure tests enforce both.** `FeatureCodeTests`
+  refuses a Module that calls a step only the Kit runs, either slot included;
+  `PipelineContractTests` refuses an application type that implements any of these contracts, so a dispatcher
+  decorator or a second cache, store or Unit of Work in an application, a pipeline step by another name, fails. The
+  first judges the Proving Sample's Modules, the second its application code: both Hosts and every project they
+  reference that is no Kit package. A consuming project copies both with the other structure rules. Nothing changes
+  at run time: the dispatcher still takes whatever is registered.
+- **Not in the set.** `IAuthorizer<T>` and the handler contracts stay the application's: every authorizer it
+  registers runs, as the Wave 1 amendment above says. The composition checks, the Module seam and the declaration
+  markers (`IRequiresAuthorizer`, `IRequiresQueryCache`) add nothing to the pipeline, so this rule does not judge them.
+- Proven by `PipelineContractTests.An_application_type_that_implements_a_pipeline_contract_is_rejected`, red with the
+  offending `OwnQueryCache` no longer implementing `IQueryCache` and with the rule's contract list empty, and by
+  `PipelineContractTests.No_module_or_host_implements_a_pipeline_contract_and_the_kit_implements_each`, red with
+  `IDispatcher` and `IGatewayProcessor<TModule>` taken off the list.

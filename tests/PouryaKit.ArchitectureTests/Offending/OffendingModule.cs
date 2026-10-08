@@ -109,6 +109,23 @@ internal sealed class KitStepCallingCommandHandler(
     }
 }
 
+// Fills the dispatcher's query cache slot itself: a pipeline step by another name.
+internal sealed class OwnQueryCache : IQueryCache
+{
+    public Task<Result<TResponse>> QueryAsync<TResponse>(
+        Query<TResponse> query,
+        OperationContext context,
+        Func<CancellationToken, Task<Result<TResponse>>> handle,
+        Action endRead,
+        CancellationToken cancellationToken
+    )
+        where TResponse : notnull => handle(cancellationToken);
+
+    public IEnumerable<string> TagsInvalidatedBy(object command) => [];
+
+    public Task EvictAsync(IReadOnlyCollection<string> tags) => Task.CompletedTask;
+}
+
 internal sealed class ConnectingCommandHandler(OffendingDbContext dbContext) : CommandHandler<OffendCommand>
 {
     public override Task<Result> Handle(OffendCommand command, CancellationToken cancellationToken)
