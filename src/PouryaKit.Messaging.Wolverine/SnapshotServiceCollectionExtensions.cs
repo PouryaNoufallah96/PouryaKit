@@ -43,7 +43,7 @@ public static class SnapshotServiceCollectionExtensions
         /// <summary>
         /// Declares, in the Host's composition, that <paramref name="module"/>, a Module's definition type, publishes the
         /// Snapshot <typeparamref name="TSnapshot"/> of every <typeparamref name="TAggregate"/>, as
-        /// <see cref="PublishSnapshot{TAggregate, TSnapshot, TMapper}(string)"/> on that Module's builder does. Throws,
+        /// <c>PublishSnapshot</c> on that Module's builder does. Throws,
         /// besides, when called on the builder of another Module.
         /// </summary>
         public IServiceCollection PublishSnapshot<TAggregate, TSnapshot, TMapper>(string wireName, Type module)

@@ -31,3 +31,10 @@ dotnet_diagnostic.IDE0290.severity = warning
 dotnet_diagnostic.IDE0032.severity = warning
 # System.Threading.Lock
 dotnet_diagnostic.IDE0330.severity = warning
+# Unnecessary using directives. The analyzer runs in a build only where the documentation file is generated
+# (GenerateDocumentationFile in Directory.Build.props).
+dotnet_diagnostic.IDE0005.severity = warning
+
+# EF Core generates a migration with usings it does not need.
+[**/Migrations/*.cs]
+dotnet_diagnostic.IDE0005.severity = none

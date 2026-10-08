@@ -32,7 +32,7 @@ public static class IntegrationEventServiceCollectionExtensions
         /// <summary>
         /// Declares, in the Host's composition, that <paramref name="module"/>, a Module's definition type, publishes
         /// <typeparamref name="TIntegrationEvent"/> under <paramref name="wireName"/>, as
-        /// <see cref="Publish{TIntegrationEvent}(string)"/> on that Module's builder does. Throws, besides, when called on
+        /// <c>Publish</c> on that Module's builder does. Throws, besides, when called on
         /// the builder of another Module.
         /// </summary>
         public IServiceCollection Publish<TIntegrationEvent>(string wireName, Type module)
@@ -81,7 +81,7 @@ public static class IntegrationEventServiceCollectionExtensions
         /// <summary>
         /// Subscribes, in the Host's composition, the Integration Event Handler <typeparamref name="THandler"/> of
         /// <paramref name="module"/>, a Module's definition type, as
-        /// <see cref="Subscribe{TIntegrationEvent, THandler}(string)"/> on that Module's builder does: its deliveries run
+        /// <c>Subscribe</c> on that Module's builder does: its deliveries run
         /// in <paramref name="module"/>. Throws, besides, when called on the builder of another Module.
         /// </summary>
         public IServiceCollection Subscribe<TIntegrationEvent, THandler>(string subscriptionName, Type module)

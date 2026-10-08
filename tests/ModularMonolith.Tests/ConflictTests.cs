@@ -2,7 +2,6 @@ using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Errors;
 using Catalog.Products.Features.CreateProduct;
-using Catalog.Products.Features.ImportProducts;
 using Catalog.Products.Features.RemoveProducts;
 using Catalog.Products.Features.RenameProduct;
 using Microsoft.EntityFrameworkCore;

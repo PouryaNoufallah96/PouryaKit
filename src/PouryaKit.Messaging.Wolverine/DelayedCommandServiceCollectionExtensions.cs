@@ -29,7 +29,7 @@ public static class DelayedCommandServiceCollectionExtensions
 
         /// <summary>
         /// Declares, in the Host's composition, that <paramref name="module"/>, a Module's definition type, schedules
-        /// <typeparamref name="TCommand"/>, as <see cref="AddPouryaKitDelayedCommand{TCommand}(string)"/> on that Module's
+        /// <typeparamref name="TCommand"/>, as <c>AddPouryaKitDelayedCommand</c> on that Module's
         /// builder does. Throws, besides, when called on the builder of another Module.
         /// </summary>
         public IServiceCollection AddPouryaKitDelayedCommand<TCommand>(string name, Type module)
@@ -54,7 +54,7 @@ public static class DelayedCommandServiceCollectionExtensions
         /// already stored, so the cadence goes on whatever an occurrence did. Feature code
         /// never schedules it with <see cref="IDelayedCommands"/>. Declare it once: declaring it again with another system Actor
         /// or occurrence factory, or as a delayed command too, throws, naming the declaration it already has. Throws here as
-        /// <see cref="AddPouryaKitDelayedCommand{TCommand}(string)"/> does; the Host fails when it is built or starts as for
+        /// <c>AddPouryaKitDelayedCommand</c> does; the Host fails when it is built or starts as for
         /// a delayed command, and fails to start when the cadence is not longer than zero.
         /// </summary>
         public OptionsBuilder<PouryaKitRecurringCommandOptions> AddPouryaKitRecurringCommand<TCommand>(
@@ -67,7 +67,7 @@ public static class DelayedCommandServiceCollectionExtensions
         /// <summary>
         /// Declares, in the Host's composition, that <paramref name="module"/>, a Module's definition type, runs
         /// <typeparamref name="TCommand"/> as recurring work, as
-        /// <see cref="AddPouryaKitRecurringCommand{TCommand}(string, string, Func{DateTimeOffset, TCommand})"/> on that
+        /// <c>AddPouryaKitRecurringCommand</c> on that
         /// Module's builder does. Throws, besides, when called on the builder of another Module.
         /// </summary>
         public OptionsBuilder<PouryaKitRecurringCommandOptions> AddPouryaKitRecurringCommand<TCommand>(
