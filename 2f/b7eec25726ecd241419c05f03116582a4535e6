@@ -1,0 +1,21 @@
+docs/acceptance.md
+  s_bdf0617f846b2b::t_f75366788338dd 7,771
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_bdf0617f846b2b::t_8e5bbd2c5b5174 714
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2fb7eec25726ecd241419c05f03116582a4535e6",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
