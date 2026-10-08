@@ -43,11 +43,34 @@ CLEAN = {
 }
 # A C# test and a Python one, and a record that points at both, names the first one's file and a member that is no test.
 TESTS = {
-    "tests/Shop.Tests/ProductTests.cs": "public sealed class ProductTests\n{\n    [Fact]\n    public void A_product_is_renamed() { }\n}\n",
-    "scripts/test_shop.py": "class InventoryTests(unittest.TestCase):\n    def test_inventory_is_exact(self):\n        pass\n",
-    "docs/acceptance.md": "# Acceptance\n\n`ProductTests.A_product_is_renamed` and `InventoryTests.test_inventory_is_exact`"
-    " pass; see `ProductTests.cs`. `Product.Retitle` is gone.\n",
+    # Two declared tests, and six names that are no test of ProductTests: one called by an initializer, one called by a
+    # test, one in a string, one in a comment, one declared by a nested type and one by another class of the file.
+    "tests/Shop.Tests/ProductTests.cs": '''public sealed class ProductTests(Fixture app) : HostTest<Fixture>(app)
+{
+    private readonly Product _product = Build("{");
+
+    [Fact]
+    public void A_product_is_renamed()
+    {
+        A_product_is_called();
+        var text = "void A_product_is_quoted() { }"; // void A_product_is_commented() { }
+    }
+
+    [Theory, InlineData(new[] { "a" })]
+    public async Task<Result<int>> A_product_is_priced(string[] codes) => await Price(codes);
+
+    private sealed class Stub { public void A_stub_is_declared() { } }
 }
+
+public sealed class OtherTests { [Fact] public void An_other_is_declared() { } }
+''',
+    "scripts/test_shop.py": 'FIXTURE = "class GhostTests:\\n    def test_ghost(self): pass"\n\n\nclass InventoryTests(unittest.TestCase):\n'
+    "    def test_inventory_is_exact(self):\n        self.helper_is_called()\n",
+    "docs/acceptance.md": "# Acceptance\n\n`ProductTests.A_product_is_renamed`, `ProductTests.A_product_is_priced` and"
+    " `InventoryTests.test_inventory_is_exact` pass; see `ProductTests.cs`. `Product.Retitle` is gone.\n",
+}
+NOT_DECLARED = ("ProductTests.Build", "ProductTests.A_product_is_called", "ProductTests.A_product_is_quoted", "ProductTests.A_product_is_commented",
+                "ProductTests.A_stub_is_declared", "ProductTests.An_other_is_declared", "InventoryTests.helper_is_called")
 ADOPTED = {"src/Catalog/Money.cs": "// A money value, adapted from the Till project's Money.\npublic readonly record struct Money(decimal Amount);\n"}
 RECORD = "# Catalog\n\n## Money\n\n- **Kit files:** `src/Catalog/Money.cs`\n"
 
@@ -160,6 +183,16 @@ class CheckDocsTests(unittest.TestCase):
         self.assertEqual(code, 1, out)
         self.assertIn("FAIL  docs/acceptance.md:3: `ProductTests.A_product_is_retitled` names no test: the class ProductTests has no method A_product_is_retitled", out)
         self.assertIn("FAIL  docs/acceptance.md:3: `OrderTests.An_order_is_placed` names no test: no test class OrderTests", out)
+
+    def test_a_name_a_test_file_only_calls_quotes_or_declares_elsewhere_is_no_test(self) -> None:
+        pointers = "".join(f"`{pointer}`\n" for pointer in (*NOT_DECLARED, "GhostTests.test_ghost"))
+        self.write(TESTS | {"docs/acceptance.md": "# Acceptance\n\n" + pointers})
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        for line, pointer in enumerate(NOT_DECLARED, start=3):
+            name, method = pointer.split(".")
+            self.assertIn(f"FAIL  docs/acceptance.md:{line}: `{pointer}` names no test: the class {name} has no method {method};", out)
+        self.assertIn("`GhostTests.test_ghost` names no test: no test class GhostTests;", out)
 
     def test_adopted_code_without_a_provenance_record_fails(self) -> None:
         """The README's format example names a Kit file too, and is no record."""
