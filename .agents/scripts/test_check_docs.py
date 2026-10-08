@@ -32,7 +32,8 @@ CLEAN = {
     "src/Catalog/Product.cs": "public sealed class Product { public void Rename() { } }\n",
     # Not the Kit's, and not drift: a namespace root, an allowed name, a header and prose.
     "README.md": "# Shop\n\n`Product.Rename()` renames a `Product`. `System.Byte[]`, `AllowAnyOrigin`,"
-    " `WWW-Authenticate: Bearer` and `My Shop` are not the Kit's.\nSee [the guide](docs/guide.md#the-product).\n",
+    " `WWW-Authenticate: Bearer` and `My Shop` are not the Kit's.\nSee [the guide](docs/guide.md#the-product) and"
+    " [its table][Table].\n\n[table]: docs/guide.md#the-product\n",
     "docs/guide.md": "# Guide\n\n## The product\n\n" + TABLE,
     "docs/adr/0007-context.md": "# Context\n\n" + FIXED,
     MEMORY: "- [Product facts](product-facts.md) — the product\n- [Order facts](order-facts.md) — orders\n",
@@ -60,10 +61,16 @@ class CheckDocsTests(unittest.TestCase):
             (self.root / path).parent.mkdir(parents=True, exist_ok=True)
             (self.root / path).write_text(text, encoding="utf-8")
 
-    def check(self, *args: str) -> tuple[int, str]:
-        git(self.root, "add", "-A")
+    def check(self, *args: str, stage: bool = True) -> tuple[int, str]:
+        if stage:
+            git(self.root, "add", "-A")
         done = subprocess.run([sys.executable, ".agents/scripts/check-docs.py", *args], cwd=self.root, capture_output=True, text=True)
         return done.returncode, done.stdout
+
+    def assertPasses(self, files: dict[str, str]) -> None:
+        self.write(files)
+        code, out = self.check()
+        self.assertEqual(code, 0, out)
 
     def assertFails(self, files: dict[str, str], line: str) -> None:
         self.write(files)
@@ -82,6 +89,31 @@ class CheckDocsTests(unittest.TestCase):
 
     def test_a_link_to_a_missing_anchor_fails(self) -> None:
         self.assertFails({"README.md": "# Shop\n\nSee [the guide](docs/guide.md#the-products).\n"}, "README.md:3: link to docs/guide.md#the-products: no heading of docs/guide.md has the anchor")
+
+    def test_a_reference_definition_to_a_missing_file_fails(self) -> None:
+        self.assertFails({"README.md": "# Shop\n\nSee [the shop][shop].\n\n[shop]: READ-ME.md\n"}, "README.md:5: link to READ-ME.md: no such file")
+
+    def test_a_reference_definition_to_a_missing_anchor_fails(self) -> None:
+        defined = "# Shop\n\nSee [the guide][guide].\n\n[guide]: docs/guide.md#the-products\n"
+        self.assertFails({"README.md": defined}, "README.md:5: link to docs/guide.md#the-products: no heading of docs/guide.md has the anchor")
+
+    def test_a_reference_with_no_definition_fails(self) -> None:
+        self.assertFails({"README.md": "# Shop\n\nSee [the shop][nowhere].\n"}, "README.md:3: link to reference [nowhere]: no definition")
+
+    def test_a_link_to_a_tracked_file_deleted_but_not_staged_fails(self) -> None:
+        git(self.root, "add", "-A")
+        (self.root / "docs/guide.md").unlink()
+        code, out = self.check(stage=False)
+        self.assertEqual(code, 1, out)
+        self.assertIn("FAIL  README.md:4: link to docs/guide.md#the-product: no such file", out)
+
+    def test_a_generated_suffix_and_a_literal_heading_take_distinct_ids(self) -> None:
+        steps = "# Guide\n\n## The product\n\n## Step\n\n## Step\n\n## Step-1\n\nThe third is [this one](#step-1-1).\n"
+        self.assertPasses({"docs/guide.md": steps})
+
+    def test_a_padded_span_quoting_a_backtick_passes(self) -> None:
+        padded = "# Context\n\n" + FIXED + "\nIts name in a padded span: `` `OperationContext.RestoreTrusted` ``.\n"
+        self.assertPasses({"docs/adr/0007-context.md": padded})
 
     def test_a_sentence_inserted_inside_a_code_span_fails(self) -> None:
         self.assertFails({"docs/adr/0007-context.md": "# Context\n\n" + SPLIT}, "docs/adr/0007-context.md:3: code span `PouryaKit.Messaging. The third is ` starts or ends with a space")
