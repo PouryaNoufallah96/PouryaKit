@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using PouryaKit.Cqrs;
 using PouryaKit.Persistence.EFCore;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
@@ -23,8 +24,9 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
         /// same commit, each stored until it is due. Each handler's delivery, and each delayed command's, records a Receipt in its Module's Unit of Work, so a
         /// redelivered or concurrently duplicated Notification, Integration Event or Snapshot applies its effect once, and
         /// a Snapshot older than one already applied not at all. The store is the database of the connection string named <paramref name="connectionName"/>,
-        /// which every Module's DbContext must also use, in the schema <paramref name="schema"/>; Wolverine creates its
-        /// tables there when the Host starts. <see cref="PouryaKitMessageStoreOptions"/> holds the durability mode and
+        /// in the schema <paramref name="schema"/>, where Wolverine creates its tables when the Host starts; each Outbox
+        /// is written in its Unit of Work's own transaction, so the Host fails when it is built if a Module's DbContext
+        /// names another database. <see cref="PouryaKitMessageStoreOptions"/> holds the durability mode and
         /// the inbox stale time. Everything <c>UsePouryaKitWolverine()</c> of <c>PouryaKit.Messaging.Wolverine</c> does
         /// applies too; <paramref name="configure"/> adds Host-specific Wolverine configuration, as it does there.
         /// </summary>
@@ -48,6 +50,9 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
             builder.Services.TryAddScoped<ScheduledDelayedCommands>();
             builder.Services.TryAddScoped<IDelayedCommandOutbox>(scope => scope.GetRequiredService<ScheduledDelayedCommands>());
             builder.Services.TryAddScoped<IReceipts, EfReceipts>();
+            builder.Services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ICompositionCheck>(new MessageStoreDatabaseCheck(connectionName, connectionString))
+            );
             return builder.UsePouryaKitWolverine(wolverine =>
             {
                 wolverine.PersistMessagesWithPostgresql(connectionString, schema);

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
+using PouryaKit.Persistence.EFCore;
 
 namespace PouryaKit.Persistence.Postgres;
 
@@ -13,7 +14,7 @@ internal sealed class PostgresConnectionsCheck : ICompositionCheck
     {
         var configuration = services.GetRequiredService<IConfiguration>();
         return services
-            .GetServices<PostgresConnection>()
+            .GetServices<DbContextConnection>()
             .Where(connection => string.IsNullOrWhiteSpace(configuration.GetConnectionString(connection.Name)))
             .GroupBy(connection => connection.Name)
             .Select(missing =>
@@ -21,6 +22,3 @@ internal sealed class PostgresConnectionsCheck : ICompositionCheck
             );
     }
 }
-
-/// <summary>The connection string one <c>UsePostgres</c> call names for its DbContext.</summary>
-internal sealed record PostgresConnection(string Name, Type DbContext);

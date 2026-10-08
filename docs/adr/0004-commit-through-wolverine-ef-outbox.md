@@ -376,3 +376,20 @@ the pinned version (`JasperFx/wolverine` commit `dc63f46`, `docs/guide/codegen.m
   the consumers' copies, so the checkout gets no generated file. The Proving Sample's child-process test runs
   `Inventory.Host` in Production, Static, from the tests' build. Each published generated Host was started once by hand
   in Production against PostgreSQL (`docs/acceptance.md`).
+
+## Amendment (2026-10-08, ticket #63: the store's database checked when the Host is built)
+
+The decision above stands. "One message store serves two DbContexts" holds "provided every DbContext connects to the
+store's database", and until ticket #63 nothing checked that proviso: it was a deployment rule only.
+
+- **What a DbContext on another database did.** #54's probe of 2026-10-08 (`MessageStoreDatabaseTests` at commit
+  `3861dc9`, recorded in `docs/acceptance.md`) confirmed the unmapped path above: Wolverine writes each envelope on the
+  Unit of Work's own connection and transaction, in the store's schema, so into the DbContext's database. With no store
+  tables there, the first Operation that wrote to the Outbox failed with `42P01` and nothing committed. With a copy of the
+  store's tables there, it committed into that copy, the handlers ran once from the in-memory flush, and the rows stayed
+  `Incoming` where the store never reads them, with nothing logged at Warning or above.
+- **The check.** `UsePouryaKitWolverine(connectionName)` registers the composition check `MessageStoreDatabaseCheck`. When
+  the Host's container is built, it compares the connection string Wolverine was given with each DbContext's, which
+  `UsePostgres` records as a `DbContextConnection` (`PouryaKit.Persistence.EFCore`) and the check reads from the Host's
+  final configuration, on hosts, ports and database as written, and fails the build with one line per DbContext on
+  another database. It opens no connection, and two names for one database pass (`MessageStoreDatabaseTests`).
