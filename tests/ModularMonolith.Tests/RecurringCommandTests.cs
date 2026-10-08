@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Globalization;
 using Inventory;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +11,7 @@ using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
 using PouryaKit.Testing;
 using Wolverine;
+using Wolverine.Persistence.Durability.DeadLetterManagement;
 using Wolverine.Runtime;
 
 namespace ModularMonolith.Tests;
@@ -235,6 +237,98 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         var reconciliations = await RowsAsync(connectionString, "select count(*), count(distinct occurrence) from inventory.stock_reconciliations");
         Assert.Equal(reconciliations[0][0], reconciliations[0][1]);
         Assert.Empty(await RowsAsync(connectionString, "select id from wolverine.wolverine_dead_letters"));
+    }
+
+    // Every attempt fails, as while its database is down for longer than the stored retries, until the first occurrence is
+    // set aside; no Host starts again and nothing is replayed, so only an attempt that set one aside stored what runs next.
+    [Fact]
+    public async Task An_occurrence_set_aside_as_a_dead_letter_stores_the_next_occurrence_which_runs()
+    {
+        var connectionString = await NewDatabaseAsync();
+        await using var host = Compose(connectionString, TimeSpan.FromSeconds(1));
+        List<DateTimeOffset> setAside;
+        try
+        {
+            using (DeliveryProbes.FailAfterReceipt(ReconcileStock))
+            {
+                await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
+                await WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_dead_letters where {OnQueue})");
+            }
+
+            await WaitUntilAsync(connectionString, "exists (select from inventory.stock_reconciliations)");
+            // An occurrence stored close to the first dead letter may have come due, and been set aside, before the failure ended.
+            var deadLetters = await host
+                .Services.GetRequiredService<IWolverineRuntime>()
+                .Storage.DeadLetters.QueryAsync(new DeadLetterEnvelopeQuery { PageSize = 0 }, TestContext.Current.CancellationToken);
+            setAside =
+            [
+                .. deadLetters.Envelopes.Select(deadLetter =>
+                    DateTimeOffset.Parse(deadLetter.Envelope.Headers[DelayedCommandHeaders.Occurrence]!, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+                ),
+            ];
+        }
+        finally
+        {
+            await host.StopAsync(TestContext.Current.CancellationToken);
+        }
+
+        // Each occurrence set aside was attempted once more than there are retry delays, and applied nothing.
+        Assert.NotEmpty(setAside);
+        Assert.All(
+            setAside,
+            occurrence => Assert.Equal(
+                1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count,
+                DeliveryProbes.AttemptsOf(ReconcileStock, ReceiptOf(occurrence.UtcDateTime)).Count
+            )
+        );
+        // What ran came after every occurrence set aside, under the system Actor, each with its Receipt.
+        Assert.Equal(
+            [[true, true]],
+            await RowsAsync(
+                connectionString,
+                $"""
+                select bool_and(occurrence > '{setAside.Max():O}' and reconciled_by = '{Reconciler}'),
+                       count(*) = (select count(*) from inventory.pouryakit_receipts where subscription = '{ReconcileStock}')
+                from inventory.stock_reconciliations
+                """
+            )
+        );
+    }
+
+    // Every attempt but the last fails: none of them sets the occurrence aside, so none stores an occurrence of its own.
+    [Fact]
+    public async Task An_occurrence_that_succeeds_on_its_last_attempt_leaves_only_the_next_occurrence_its_commit_stored()
+    {
+        var connectionString = await NewDatabaseAsync();
+        await using var host = Compose(connectionString, TimeSpan.FromSeconds(1));
+        List<object[]> reconciled;
+        List<object[]> waiting;
+        try
+        {
+            using (DeliveryProbes.FailAfterReceipt(ReconcileStock, TestDeliveryServiceCollectionExtensions.RetryDelays.Count))
+            using (var committed = DeliveryProbes.HoldAfterCommit(typeof(InventoryModule), ReconcileStock))
+            {
+                await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
+                // The last attempt committed, and is not yet acknowledged.
+                await committed.Held;
+                reconciled = await RowsAsync(connectionString, "select occurrence from inventory.stock_reconciliations");
+                waiting = await RowsAsync(
+                    connectionString,
+                    $"select pg_xact_commit_timestamp(e.xmin) = pg_xact_commit_timestamp(r.xmin) from wolverine.wolverine_incoming_envelopes e, inventory.stock_reconciliations r where e.{OnQueue} and e.status = 'Scheduled'"
+                );
+            }
+        }
+        finally
+        {
+            await host.StopAsync(TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal(
+            1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count,
+            DeliveryProbes.AttemptsOf(ReconcileStock, ReceiptOf((DateTime)Assert.Single(reconciled)[0])).Count
+        );
+        // One occurrence waits, the one stored in the reconciliation's commit.
+        Assert.True((bool)Assert.Single(waiting)[0]);
     }
 
     // A release that turned a delayed command's declaration into a recurring one, under the same name, while one of its

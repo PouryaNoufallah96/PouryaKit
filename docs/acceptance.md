@@ -786,3 +786,24 @@ registers no check runner. The runner comes with the dispatcher's registration (
 included. It runs nothing degraded: each Module route group begins the request's Operation
 (`src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs`), and `BeginOperation` resolves the `Operation` only that
 registration adds, so the Host fails at its first request instead.
+
+## Wave 2 final structural review
+
+The structural review of spec #33 at `74e873b`, before #54 closes; each finding fixed is recorded below.
+
+### A recurring command's schedule survives a dead-lettered occurrence (finding R2)
+
+A failed occurrence rolled back the next occurrence it had stored with its effect, so once its stored retries were
+spent it was dead-lettered and nothing stored a next one: the declaration stopped until a replay or a Host start,
+against plan I.3's "durable replacement for in-memory Quartz stores" and the Glossary's "every occurrence of a
+cadence". The attempt whose failure sets an occurrence aside, the one numbered beyond
+`PouryaKitMessagingOptions.RetryDelays` (Wolverine counts an attempt before the handler runs, then takes the retry
+policy's slot of that number; [ADR 0006](adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md)'s
+#45 amendment cites the source), now stores the next occurrence after now in an Operation of its own unless one waits,
+through `RecurringCommandStart`'s query and Operation. A successful occurrence still stores the next one in its own
+commit.
+
+| Scenario | Proven by | Notes |
+|---|---|---|
+| An occurrence that fails every attempt is set aside after them, and the next occurrence it stores runs | `RecurringCommandTests.An_occurrence_set_aside_as_a_dead_letter_stores_the_next_occurrence_which_runs` | Inventory's `ReconcileStock` at a one-second cadence on a database of its own; `DeliveryProbes.FailAfterReceipt` fails every attempt until the first dead letter appears, and no Host starts again and nothing is replayed. Each occurrence set aside, read from its dead letter's `DelayedCommandHeaders.Occurrence` header, had three attempts and left no reconciliation or Receipt; every reconciliation is of a later occurrence, under the system Actor, with its Receipt. Red once with the dead-letter branch off: no reconciliation within 15 s |
+| An occurrence that fails every attempt but its last stores no occurrence of its own: one waits, the one its commit stored | `RecurringCommandTests.An_occurrence_that_succeeds_on_its_last_attempt_leaves_only_the_next_occurrence_its_commit_stored` | `FailAfterReceipt` gains a count and fails the first two deliveries; the occurrence's commit is held while the store is read. Red once with the attempt recognised one too early (`>=`) and once with every failed attempt storing one: two occurrences waited |
