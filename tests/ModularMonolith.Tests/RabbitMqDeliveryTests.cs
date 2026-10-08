@@ -746,7 +746,8 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
             fixture
                 .Host.Services.GetRequiredService<IWolverineRuntime>()
                 .Endpoints.GetOrBuildSendingAgent(new Uri("rabbitmq://exchange/catalog.product-snapshot.v1"));
-        await sender.PauseAsync(TimeSpan.FromSeconds(5));
+        // Longer than the Operation and the read after it take on any machine; disposing the Host ends it.
+        await sender.PauseAsync(TimeSpan.FromSeconds(60));
         var waiting = await Assert.ThrowsAsync<DeliveryAssertionException>(() =>
             fixture.AssertNothingSentAsync(
                 () => catalog.SendAsync(new RenameProductCommand(product, "Floor lamp"), TestContext.Current.CancellationToken),
