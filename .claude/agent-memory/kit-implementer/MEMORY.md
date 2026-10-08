@@ -52,3 +52,4 @@
 - [Pipeline contract rule facts](pipeline-contract-rule-facts.md) — #54: open-generic implements check, the 14-contract set and exclusions, both Hosts in scope, PDB paths differ in CI
 - [Sent envelope capture facts](sent-envelope-capture-facts.md) — final review D: wolverine-messages-sent Meter sees deleted broker envelopes, latched sender, PauseAsync, broker HostFixture
 - [Store database check facts](store-database-check-facts.md) — #63: Npgsql parse splits no host:port, store uses the composition-time string, cross-package record is public, read GetDbConnection not options, unknown database fails
+- [Final review Web facts](final-review-web-facts.md) — final review A: Web RestoreTrusted, peer-continuation HTTP proof, DisplayName without methods, stop_if over docs-sync

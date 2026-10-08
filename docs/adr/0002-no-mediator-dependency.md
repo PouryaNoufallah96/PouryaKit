@@ -333,3 +333,17 @@ or replace one, and only Feature code calling one was refused. The owner approve
   offending `OwnQueryCache` no longer implementing `IQueryCache` and with the rule's contract list empty, and by
   `PipelineContractTests.No_module_or_host_implements_a_pipeline_contract_and_the_kit_implements_each`, red with
   `IDispatcher` and `IGatewayProcessor<TModule>` taken off the list.
+
+## Amendment (2026-10-08, Wave 2 final structural review: an Idempotency-Key needs a write method)
+
+The decision above stands, and so does the #62 amendment's refusal of a safe method, but not its exception: "An
+endpoint mapped for every method, with no method metadata, is not refused" no longer holds. Such an endpoint, mapped
+with `Map(pattern, handler)` or with an empty `HttpMethodMetadata`, answers every method, GET included, so it required
+a key that a query ignores (finding R5 of the final structural review).
+
+- **`RequireIdempotencyKey()` needs explicit, non-empty method metadata with no safe method in it.** An endpoint with no
+  method metadata or an empty method list throws in the same `Finally` hook when it is built, naming the fix: map the
+  command on POST, PUT, PATCH or DELETE, or remove `RequireIdempotencyKey()`. A list naming GET, HEAD, OPTIONS or TRACE
+  is refused as before, with the same message.
+- Proven by `MisconfiguredHostTests.An_endpoint_that_requires_an_idempotency_key_but_names_no_method_fails_the_host_at_start`,
+  for both shapes, red with the new refusal switched off (both Hosts started), against PostgreSQL.
