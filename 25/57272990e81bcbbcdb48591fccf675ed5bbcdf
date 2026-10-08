@@ -1,0 +1,23 @@
+.claude/output-styles/kit-orchestrator.md
+  s_75dee3f51db59e::t_fd7097001e5dd8 28
+AGENTS.md
+  s_75dee3f51db59e::t_8b05a019344f9f 68
+docs/agents/running-a-spec.md
+  s_75dee3f51db59e::t_9cd49930aa6e98 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2557272990e81bcbbcdb48591fccf675ed5bbcdf",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
