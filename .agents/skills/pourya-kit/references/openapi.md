@@ -129,7 +129,7 @@ if (app.Environment.IsDevelopment())
 }
 ```
 
-- The Module deprecates a version (`HasDeprecatedApiVersion`); the Host configures when it ends. `PouryaKitOpenApiOptions.Sunsets` is keyed by the version as the Modules declare it; a key that names no version throws when the options are read.
+- The Module deprecates a version (`HasDeprecatedApiVersion`); the Host configures the date it is announced to end on. The Kit reports that date and keeps serving the version after it: a Module ends a version by no longer declaring it. `PouryaKitOpenApiOptions.Sunsets` is keyed by the version as the Modules declare it; a key that names no version throws when the options are read.
 - A response of a version with a sunset carries `Sunset: Wed, 30 Jun 2027 00:00:00 GMT` and `Link: <https://example.com/catalog/api-v1-sunset>; rel="sunset"; type="text/html"`.
 - The version's document states it in `info.description` (`This API version is deprecated. Its sunset date is Wed, 30 Jun 2027 00:00:00 GMT.`, then the link) and in `x-api-versioning.links`, and marks each of its operations `deprecated`.
 - Nothing is derived from the current time (ADR 0005): the date is the configured one, never "now + n days", and the notice names it the same way before and after it passes. Asp.Versioning's default notice says "was" or "will be" from the clock; the Kit replaces it.
