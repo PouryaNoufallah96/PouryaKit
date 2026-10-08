@@ -1,0 +1,46 @@
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_bdf0617f846b2b::t_5adac4504595a5 264-267,285-286,302-303
+  s_bdf0617f846b2b::t_5f1fc5776d0aed 287-289
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_bdf0617f846b2b::t_399e41b5562fcb 18
+.agents/skills/pourya-kit/references/testing.md
+  s_bdf0617f846b2b::t_3be7c3b05303f0 193
+  s_bdf0617f846b2b::t_c50fe7b0c2c315 194
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_bdf0617f846b2b::t_51eafdf0ae19eb 50
+tests/PouryaKit.ArchitectureTests/PipelineContractTests.cs
+  s_bdf0617f846b2b::t_1fa48403a56869 11,13-17,21,28-29
+  s_bdf0617f846b2b::t_6ae1297fa2e51d 6-7
+docs/acceptance.md
+  s_bdf0617f846b2b::t_2e3e86741fea37 40,667
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_2e3e86741fea37 637,643
+docs/adr/0002-no-mediator-dependency.md
+  s_bdf0617f846b2b::t_f823ea7b76715a 306,321-322
+  s_bdf0617f846b2b::t_2e3e86741fea37 333-334
+  s_bdf0617f846b2b::t_8a67386cc1f7ef 318-320,323-327
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_bdf0617f846b2b::t_3be7c3b05303f0 62
+.claude/agent-memory/kit-implementer/pipeline-contract-rule-facts.md
+  s_bdf0617f846b2b::t_51eafdf0ae19eb 3,11-12
+tests/PouryaKit.ArchitectureTests/Sample.cs
+  s_bdf0617f846b2b::t_f752eadcf2101c 64-75
+  s_bdf0617f846b2b::t_03cfd3db66bba2 3
+  s_bdf0617f846b2b::t_26bff651b0696c 63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "97acb77187d9b2c8a5b60d6a231df4925d6d76a9",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
