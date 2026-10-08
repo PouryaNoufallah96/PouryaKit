@@ -27,13 +27,15 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
 - Union duplicates: in a file `.gitattributes` merges with `merge=union`, a line twice or two lines linking the same
   target fails. A union merge keeps both sides of a line both branches changed.
 - Test pointers: in `docs/acceptance.md`, which the Names rule leaves out, a span that is exactly `Class.Method`
-  with a class ending in `Tests` must name a test: some file under `tests/`, under the templates' generated tests
-  or named `test_*.py` declares the class and holds `Method(`. A renamed test is drift to fix (`git log -S<Method>`
-  finds the new name); a test the row itself says was removed goes in REMOVED_TESTS with the reason. A file holding
-  two test classes lends each the other's methods, and `docs/adr/` stays out: it keeps renamed names on purpose.
-- Provenance: a `.cs` file under `src/` or `samples/` whose `//` comment says the code is shaped like, adapted from,
-  ported from or taken from something must be named in the **Kit files** line of a record in `docs/provenance/`
-  (its README's format example is no record). Ordinary prose that trips it is said another way.
+  with a class ending in `Tests` must name a declared test: a method that the body of a class of that name declares,
+  in a `.cs` file under `tests/` or the templates' generated tests, or in a `test_*.py`. Python is read with `ast`;
+  in C#, comments and string literals are no code, and what sits inside a member's own braces (a method body, a
+  nested type) is no declaration of the class. A renamed test is drift to fix (`git log -S<Method>` finds the new
+  name); a test the row itself says was removed goes in REMOVED_TESTS with the reason. `docs/adr/` stays out: it
+  keeps renamed names on purpose.
+- Provenance: a `.cs` file under `src/`, `samples/` or `tests/` whose `//` comment says the code is shaped like,
+  adapted from, ported from or taken from something must be named in the **Kit files** line of a record in
+  `docs/provenance/` (its README's format example is no record). Ordinary prose that trips it is said another way.
 
 `--fences` only prints: for each Markdown file changed against HEAD, whether its fenced blocks changed, so an
 implementer knows whether the skill's snippet harness must run.
@@ -41,6 +43,7 @@ implementer knows whether the skill's snippet harness must run.
 
 from __future__ import annotations
 
+import ast
 import json
 import os
 import re
@@ -85,6 +88,12 @@ ALLOWED = {
 ACCEPTANCE = "docs/acceptance.md"
 TEST_SOURCE = re.compile(r"(?:tests/|src/PouryaKit\.Templates/content/.+/tests/).+\.cs|(?:.+/)?test_\w+\.py")
 TEST_POINTER = re.compile(r"(\w+Tests)\.(?!cs$)(\w+)")  # `CatalogTests.cs` names a file, not a test
+# C# text that is no code: a comment, a raw, a verbatim or an ordinary string literal, a character literal.
+CS_NOT_CODE = re.compile("|".join((
+    r"//[^\n]*", r"/\*.*?\*/",
+    r'\$*("{3,}).*?\1', r'\$?@\$?"(?:[^"]|"")*"', r'\$?"(?:[^"\\\n]|\\.)*"',
+    r"'(?:[^'\\\n]|\\.)+'",
+)), re.S)
 # Tests the acceptance record names although they are gone, each with the row's own reason.
 REMOVED_TESTS = {
     "SnapshotTests.A_snapshot_declared_without_its_module_in_a_host_of_modules_fails_the_operation_that_would_publish_it":
@@ -345,22 +354,59 @@ def check_union_duplicates(files: list[str]) -> None:
                 targets.setdefault(target, number)
 
 
+def python_tests(text: str) -> dict[str, set[str]]:
+    """Each class of a Python source whose name ends in Tests, with the methods its body declares."""
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return {}
+    return {
+        node.name: {member.name for member in node.body if isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef))}
+        for node in ast.walk(tree) if isinstance(node, ast.ClassDef) and node.name.endswith("Tests")
+    }
+
+
+def csharp_tests(text: str) -> dict[str, set[str]]:
+    """Each class of a C# source whose name ends in Tests, with the methods its body declares."""
+    code, found = CS_NOT_CODE.sub(" ", text), {}
+    for declared in re.finditer(r"\bclass\s+(\w+Tests)\b", code):
+        start = code.find("{", declared.end())
+        members, depth = [], 0  # the body's own text; a member's braces, and all they hold, become the `;` that ends it
+        for char in code[start:] if start != -1 else "":
+            if char == "{":
+                depth += 1
+                members.append(";" if depth == 2 else "")
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+            elif depth == 1:
+                members.append(char)
+        body = "".join(members)
+        while (bare := re.sub(r"\[[^\[\]]*\]", " ", body)) != body:  # attributes, and the brackets of an array type
+            body = bare
+        # A method's name comes before the member's first parenthesis, with no `=` on the way: that is an initializer.
+        declarations = (re.match(r"[^=(]*?\b(\w+)\s*(?:<[^<>()]*>)?\s*\(", member) for member in body.split(";"))
+        found.setdefault(declared.group(1), set()).update(match.group(1) for match in declarations if match)
+    return found
+
+
 def check_test_pointers(docs: dict[str, Doc], files: list[str]) -> None:
     if ACCEPTANCE not in docs:
         return
-    classes: dict[str, str] = {}  # each test class's name, with the text of every file that declares one of that name
+    classes: dict[str, set[str]] = {}  # each test class's name, with the methods every class of that name declares
     for path in files:
         if TEST_SOURCE.fullmatch(path) and (ROOT / path).is_file():
             text = (ROOT / path).read_text(encoding="utf-8", errors="ignore")
-            for name in set(re.findall(r"\bclass\s+(\w+Tests)\b", text)):
-                classes[name] = classes.get(name, "") + text
+            for name, methods in (python_tests if path.endswith(".py") else csharp_tests)(text).items():
+                classes.setdefault(name, set()).update(methods)
     reported = set(REMOVED_TESTS)
     for number, span in docs[ACCEPTANCE].spans():
         pointer = TEST_POINTER.fullmatch(span)
         if not pointer or span in reported:
             continue
         name, method = pointer.groups()
-        if not re.search(rf"\b{method}\s*\(", classes.get(name, "")):
+        if method not in classes.get(name, ()):
             reported.add(span)
             missing = f"the class {name} has no method {method}" if name in classes else f"no test class {name}"
             failures.append(f"{ACCEPTANCE}:{number}: `{span}` names no test: {missing}; a renamed test is found with `git log -S{method}`, a removed one goes in REMOVED_TESTS with the reason")
@@ -374,7 +420,7 @@ def check_provenance(files: list[str]) -> None:
                 if line.startswith(KIT_FILES):
                     recorded |= set(re.findall(r"`([^`]+)`", line))
     for path in files:
-        if not (path.startswith(("src/", "samples/")) and path.endswith(".cs") and path not in recorded and (ROOT / path).is_file()):
+        if not (path.startswith(("src/", "samples/", "tests/")) and path.endswith(".cs") and path not in recorded and (ROOT / path).is_file()):
             continue
         for number, line in enumerate((ROOT / path).read_text(encoding="utf-8", errors="ignore").splitlines(), start=1):
             if said := ADOPTED.search(line):

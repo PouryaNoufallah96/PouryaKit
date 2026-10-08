@@ -42,8 +42,8 @@ SUMMARY = "<!-- codex-pull-request-review-summary -->\n\n| Review | Status |\n| 
 RUNNING, COMPLETED = "🔄 **Running** since <relative-time>", "✅ **Completed** <relative-time>"
 
 
-def thread(ident: str, body: str, *, resolved: bool = False, line: int | None = 13, author: str = "cubic-dev-ai") -> dict:
-    comment = {"databaseId": 4219982016, "author": {"login": author}, "body": body}
+def thread(ident: str, body: str, *, resolved: bool = False, line: int | None = 13, author: str = "cubic-dev-ai", comment: int = 4219982016) -> dict:
+    comment = {"databaseId": comment, "author": {"login": author}, "body": body}
     return {"id": ident, "isResolved": resolved, "isOutdated": line is None, "path": "src/Kit/AuthorizedOperation.cs", "line": line, "originalLine": 11, "comments": {"nodes": [comment]}}
 
 
@@ -51,8 +51,17 @@ def page(nodes: list[dict], cursor: str | None = None) -> dict:
     return {"data": {"repository": {"pullRequest": {"reviewThreads": {"pageInfo": {"hasNextPage": bool(cursor), "endCursor": cursor}, "nodes": nodes}}}}}
 
 
-def check(name: str, bucket: str, completed: str = "0001-01-01T00:00:00Z") -> dict:
-    return {"name": name, "bucket": bucket, "completedAt": completed}
+def check(name: str, status: str = "COMPLETED", conclusion: str = "SUCCESS") -> dict:
+    return {"__typename": "CheckRun", "name": name, "status": status, "conclusion": conclusion}
+
+
+def status(context: str, state: str) -> dict:
+    return {"__typename": "StatusContext", "context": context, "state": state}
+
+
+def view(checks: list[dict], codex: str = COMPLETED) -> tuple[int, dict]:
+    """One poll's answer: the head commit's checks, and the comments with Codex's summary."""
+    return 0, {"statusCheckRollup": checks, "comments": [{"body": "@codex review"}, {"body": SUMMARY.format(status=codex)}]}
 
 
 class Gh:
@@ -94,7 +103,8 @@ class PrThreadsTests(unittest.TestCase):
     def test_reply_resolve_leaves_a_thread_unresolved_when_its_reply_fails_and_goes_on(self) -> None:
         replies = [{"thread": "PRRT_a", "comment": 11, "body": "Fixed in abc1234."}, {"thread": "PRRT_b", "comment": 22, "body": "Not changed."},
                    {"thread": "PRRT_c", "comment": 33, "body": "Fixed."}]
-        gh = Gh((0, {"id": 1}), (0, {}), (1, ""), (0, {"id": 3}), (1, ""))
+        listed = page([thread("PRRT_a", CUBIC, comment=11), thread("PRRT_b", CUBIC, comment=22), thread("PRRT_c", CODEX, comment=33)])
+        gh = Gh((0, listed), (0, {"id": 1}), (0, {}), (1, ""), (0, {"id": 3}), (1, ""))
         code, out = run(gh, pr_threads.reply_resolve, "o/r", 65, replies)
         self.assertEqual(code, 1, out)
         self.assertEqual(out.splitlines(), [
@@ -103,9 +113,20 @@ class PrThreadsTests(unittest.TestCase):
             "PRRT_c FAILED, replied, but NOT resolved: HTTP 422: refused",
             "pr-threads: 1 of 3 thread(s) answered and resolved on #65",
         ])
-        self.assertEqual(gh.calls[0], ("api", "--method", "POST", "repos/o/r/pulls/65/comments/11/replies", "-f", "body=Fixed in abc1234."))
-        self.assertEqual(gh.calls[1][-1], "thread=PRRT_a")
-        self.assertEqual(len(gh.calls), 5)  # the second thread's reply failed, so nothing asked to resolve it
+        self.assertEqual(gh.calls[1], ("api", "--method", "POST", "repos/o/r/pulls/65/comments/11/replies", "-f", "body=Fixed in abc1234."))
+        self.assertEqual(gh.calls[2][-1], "thread=PRRT_a")
+        self.assertEqual(len(gh.calls), 6)  # the second thread's reply failed, so nothing asked to resolve it
+
+    def test_reply_resolve_posts_nothing_when_an_entry_pairs_a_thread_with_a_comment_that_is_not_its_first(self) -> None:
+        listed = page([thread("PRRT_a", CUBIC, comment=11), thread("PRRT_b", CUBIC, comment=22)])
+        good = {"thread": "PRRT_a", "comment": 11, "body": "Fixed."}
+        for bad, named in (({"thread": "PRRT_b", "comment": 11, "body": "Fixed."}, "PRRT_b with comment 11"),  # another thread's comment
+                           ({"thread": "PRRT_of_another_pull_request", "comment": 22, "body": "Fixed."}, "PRRT_of_another_pull_request with comment 22"),
+                           ({"thread": "PRRT_b", "comment": "23", "body": "Fixed."}, "PRRT_b with comment 23")):  # a reply in the thread
+            gh = Gh((0, listed))
+            with self.subTest(bad=bad), self.assertRaisesRegex(ValueError, f"nothing was posted: no review thread of #65 has that id and that first comment: {named}$"):
+                run(gh, pr_threads.reply_resolve, "o/r", 65, [good, bad])
+            self.assertEqual(len(gh.calls), 1, gh.calls)  # the threads were read; neither a reply nor a resolution was sent
 
     def test_a_replies_file_with_a_missing_id_or_an_empty_body_is_refused_whole(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
@@ -118,29 +139,40 @@ class PrThreadsTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "must hold a list of"):
                 pr_threads.read_replies(path)
 
-    def test_wait_returns_after_two_quiet_polls_and_names_a_failed_check(self) -> None:
-        running = {"comments": [{"body": "@codex review"}, {"body": SUMMARY.format(status=RUNNING)}]}
-        done = {"comments": [{"body": SUMMARY.format(status=COMPLETED)}]}
-        finished = [check("ai-setup", "pass", "2026-10-08T21:08:55Z"), check("build-and-test / validate", "fail", "2026-10-08T21:18:57Z"),
-                    check("publication-checks", "pending", "2026-10-08T21:08:50Z")]  # in progress for good, with a completion time
-        gh = Gh((1, ""), (0, done),  # the head commit has no check yet
-                (8, [check("ai-setup", "pending")]), (0, done),
-                (0, finished), (0, running),
-                (1, finished), (0, done),
-                (1, finished), (0, done))
+    def test_wait_returns_after_two_quiet_polls_once_nothing_runs(self) -> None:
+        # GitHub kept pull request #65's publication-checks in progress for good; its conclusion says it passed.
+        ended = [check("ai-setup"), check("publication-checks", "IN_PROGRESS", "SUCCESS"), check("docs", conclusion="SKIPPED"), status("CodeRabbit", "SUCCESS")]
+        gh = Gh((0, {"statusCheckRollup": None, "comments": []}), view([check("ai-setup", "IN_PROGRESS", "")]), view([check("ai-setup"), status("CodeRabbit", "PENDING")]),
+                view(ended, codex=RUNNING), view(ended), view(ended))
         code, out = run(gh, pr_threads.wait, 65, 600, 30)
-        self.assertEqual(code, 1, out)
+        self.assertEqual(code, 0, out)
         self.assertEqual(out.splitlines(), [
             "waiting for no check reported yet",
             "waiting for check ai-setup",
+            "waiting for check CodeRabbit",
             "waiting for the Codex review",
             "quiet once; one more poll",
-            "pr-threads: #65 is quiet: 3 check run(s), 1 failed: build-and-test / validate; no Codex review running",
+            "pr-threads: #65 is quiet: 4 check(s): 4 passed, 0 failed, 0 cancelled, 0 with no outcome; no Codex review running",
         ])
 
+    def test_wait_exits_1_for_a_check_that_ended_any_other_way_than_passing(self) -> None:
+        for ended, counted in (
+            (check("build", conclusion="FAILURE"), "1 passed, 1 failed (build), 0 cancelled, 0 with no outcome"),
+            (check("build", "IN_PROGRESS", "FAILURE"), "1 passed, 1 failed (build), 0 cancelled, 0 with no outcome"),  # kept in progress, and failed
+            (check("build", conclusion="TIMED_OUT"), "1 passed, 1 failed (build), 0 cancelled, 0 with no outcome"),
+            (status("build", "ERROR"), "1 passed, 1 failed (build), 0 cancelled, 0 with no outcome"),
+            (check("build", conclusion="CANCELLED"), "1 passed, 0 failed, 1 cancelled (build), 0 with no outcome"),
+            (check("build", conclusion=""), "1 passed, 0 failed, 0 cancelled, 1 with no outcome (build)"),
+            (check("build", conclusion="STALE"), "1 passed, 0 failed, 0 cancelled, 1 with no outcome (build)"),
+            (status("build", ""), "1 passed, 0 failed, 0 cancelled, 1 with no outcome (build)"),
+        ):
+            with self.subTest(ended=ended):
+                code, out = run(Gh(*[view([check("ai-setup"), ended])] * 2), pr_threads.wait, 65, 600, 30)
+                self.assertEqual(code, 1, out)
+                self.assertTrue(out.endswith(f"pr-threads: #65 is quiet: 2 check(s): {counted}; no Codex review running\n"), out)
+
     def test_wait_gives_up_after_the_timeout(self) -> None:
-        gh = Gh(*[(8, [check("ai-setup", "pending")]), (0, {"comments": []})] * 2)
-        code, out = run(gh, pr_threads.wait, 65, 45, 30)
+        code, out = run(Gh(*[view([check("ai-setup", "QUEUED", "")])] * 2), pr_threads.wait, 65, 45, 30)
         self.assertEqual(code, 3, out)
         self.assertTrue(out.endswith("pr-threads: #65 was not quiet after 45 s\n"), out)
 

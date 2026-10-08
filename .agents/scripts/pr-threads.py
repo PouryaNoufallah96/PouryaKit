@@ -13,13 +13,17 @@ the first comment's body without the reviewers' boilerplate: HTML comments, cubi
 Codex's reaction line and its `<sub>` badge, whose priority is kept as `P2:`. Its last line counts them.
 
 reply-resolve reads a JSON list of `{"thread": <thread id>, "comment": <first comment's id>, "body": <reply>}`, the two
-ids as list prints them. For each it posts the reply, then resolves the thread, and prints one line with the outcome; a
-thread whose reply failed is left unresolved. Exits 1 if any failed.
+ids as list prints them. Before it posts anything it checks every entry against the pull request's threads: the thread
+must be one of them and the comment its first comment, the only one a reply can answer; one entry that is not refuses
+the whole file, as a malformed one does. For each entry it then posts the reply, resolves the thread and prints one
+line with the outcome; a thread whose reply failed is left unresolved. Exits 1 if any failed.
 
 wait polls until no check is running and Codex's summary comment shows no review running, on two polls in a row,
-because a check or review requested a moment ago is not listed yet. It then prints the checks that failed. A check
-GitHub lists as in progress with a completion time has finished (pull request #65 kept one that way for good).
-Exits 0 when none did, 1 when one did, 3 after the timeout (45 minutes unless --timeout says otherwise).
+because a check or review requested a moment ago is not listed yet. It reads what GitHub concluded for each check of
+the head commit (`gh pr view --json statusCheckRollup`), never its status alone: GitHub can leave a finished check run
+in progress for good, as pull request #65 holds one, and the conclusion still says how it ended. Its last line counts
+the checks that passed, failed and were cancelled, and those for which GitHub states no outcome, which is no pass.
+Exits 0 when every check passed, 1 otherwise, 3 after the timeout (45 minutes unless --timeout says otherwise).
 """
 
 from __future__ import annotations
@@ -49,6 +53,13 @@ BOILERPLATE = [
     (re.compile(r"\n{3,}"), "\n\n"),
 ]
 CODEX_SUMMARY, CODEX_RUNNING = "codex-pull-request-review-summary", "**Running**"
+# What GitHub concluded: a check run's conclusion or a commit status's state. A word that is not here is no outcome.
+OUTCOMES = {
+    "SUCCESS": "passed", "NEUTRAL": "passed", "SKIPPED": "passed",
+    "FAILURE": "failed", "TIMED_OUT": "failed", "ACTION_REQUIRED": "failed", "STARTUP_FAILURE": "failed", "ERROR": "failed",
+    "CANCELLED": "cancelled", "PENDING": "running", "EXPECTED": "running",
+}
+COUNTED = (("passed", "passed"), ("failed", "failed"), ("cancelled", "cancelled"), ("unknown", "with no outcome"))
 
 
 def gh(*args: str) -> subprocess.CompletedProcess[str]:
@@ -107,6 +118,10 @@ def read_replies(path: Path) -> list[dict]:
 
 
 def reply_resolve(repo: str, pr: int, replies: list[dict]) -> int:
+    # The reply goes to a comment and the resolution to a thread, so a pair that is not one thread's answers one and closes another.
+    first = {thread["id"]: thread["comments"]["nodes"][0]["databaseId"] for thread in threads(repo, pr)}
+    if mispaired := [f"{reply['thread']} with comment {reply['comment']}" for reply in replies if first.get(reply["thread"]) != int(reply["comment"])]:
+        raise ValueError(f"nothing was posted: no review thread of #{pr} has that id and that first comment: {', '.join(mispaired)}")
     failed = 0
     for reply in replies:
         done = gh("api", "--method", "POST", f"repos/{repo}/pulls/{pr}/comments/{reply['comment']}/replies", "-f", f"body={reply['body']}")
@@ -122,10 +137,18 @@ def reply_resolve(repo: str, pr: int, replies: list[dict]) -> int:
     return FAILED if failed else 0
 
 
-def unsettled(checks: list[dict] | None, comments: list[dict]) -> list[str]:
-    """What is still running; `checks` is None while the head commit has no check yet."""
-    running = {check["name"] for check in checks or [] if check["bucket"] == "pending" and check["completedAt"][:4] in ("", "0001")}
-    waiting = ["no check reported yet"] if checks is None else [f"check {name}" for name in sorted(running)]
+def outcome(check: dict) -> str:
+    """running, passed, failed, cancelled or unknown. A check run with a conclusion has ended, whatever its status says;
+    one without is running, unless its status says it completed, and then nothing says how it ended."""
+    concluded = check.get("conclusion") or check.get("state")
+    if not concluded:
+        return "running" if check.get("status") not in (None, "", "COMPLETED") else "unknown"
+    return OUTCOMES.get(concluded, "unknown")
+
+
+def unsettled(results: list[tuple[str, str]], comments: list[dict]) -> list[str]:
+    """What is still running; a head commit with no check at all has not been picked up yet."""
+    waiting = sorted({f"check {name}" for name, result in results if result == "running"}) if results else ["no check reported yet"]
     if any(CODEX_SUMMARY in comment["body"] and CODEX_RUNNING in comment["body"] for comment in comments):
         waiting.append("the Codex review")
     return waiting
@@ -134,14 +157,17 @@ def unsettled(checks: list[dict] | None, comments: list[dict]) -> list[str]:
 def wait(pr: int, timeout: float, interval: float) -> int:
     deadline, quiet = time.monotonic() + timeout, 0
     while True:
-        listed = gh("pr", "checks", str(pr), "--json", "name,bucket,completedAt")  # exits non-zero while a check is pending or failed
-        checks = json.loads(listed.stdout) if listed.stdout.strip() else None
-        waiting = unsettled(checks, gh_json("pr", "view", str(pr), "--json", "comments")["comments"])
+        view = gh_json("pr", "view", str(pr), "--json", "statusCheckRollup,comments")
+        results = [(check.get("name") or check.get("context") or "unnamed", outcome(check)) for check in view["statusCheckRollup"] or []]
+        waiting = unsettled(results, view["comments"])
         quiet = 0 if waiting else quiet + 1
         if quiet == 2:
-            failed = sorted({check["name"] for check in checks if check["bucket"] == "fail"})
-            print(f"pr-threads: #{pr} is quiet: {len(checks)} check run(s), {len(failed)} failed{': ' + ', '.join(failed) if failed else ''}; no Codex review running")
-            return FAILED if failed else 0
+            counts = []
+            for result, label in COUNTED:
+                names = [name for name, found in results if found == result]
+                counts.append(f"{len(names)} {label}" + (f" ({', '.join(sorted(set(names)))})" if names and result != "passed" else ""))
+            print(f"pr-threads: #{pr} is quiet: {len(results)} check(s): {', '.join(counts)}; no Codex review running")
+            return 0 if all(result == "passed" for _, result in results) else FAILED
         print(f"waiting for {', '.join(waiting)}" if waiting else "quiet once; one more poll", flush=True)
         if time.monotonic() + interval > deadline:
             print(f"pr-threads: #{pr} was not quiet after {timeout:.0f} s")
