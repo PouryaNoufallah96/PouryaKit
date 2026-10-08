@@ -1,0 +1,21 @@
+.claude/rules/ai-setup.md
+  s_4f44a41d89c3b1::t_b4a9aa91caf1aa 29
+docs/agents/ai-setup.md
+  s_4f44a41d89c3b1::t_d612384d1a2d6c 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1dad376d8adabdbf5e5958efb4f6c3fef0d046d4",
+  "prompts": {},
+  "sessions": {
+    "s_4f44a41d89c3b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "876ff07b-1f33-4cd5-86a7-a6eda87eb025",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
