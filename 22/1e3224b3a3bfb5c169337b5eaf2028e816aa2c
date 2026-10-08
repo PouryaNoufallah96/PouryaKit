@@ -1,0 +1,23 @@
+docs/adr/0002-no-mediator-dependency.md
+  s_bdf0617f846b2b::t_cc1b98335a3a04 315
+  s_bdf0617f846b2b::t_8a0dcbb3325703 316-318
+  s_bdf0617f846b2b::t_c18305d1c4b047 314
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_bdf0617f846b2b::t_c18305d1c4b047 262
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "221e3224b3a3bfb5c169337b5eaf2028e816aa2c",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
