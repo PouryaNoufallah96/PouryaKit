@@ -751,6 +751,8 @@ tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj` printed 508 passed, 0 
 
 `python3 scripts/packaging/validate.py --no-fetch` on the ticket's source (commit `6ec8a22`, before this paragraph was added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof` at version `0.1.0-preview.0.106`, with the Release runtime suite at 769 passed, 0 failed, 0 skipped. The generated Hosts of both templates build under the new check, each naming one connection string for its store and its DbContexts.
 
+After the review's fix round (findings F1 to F4 of `99a6d0e`: the user's database when none is named, the connection each DbContext's built options hold, Unix socket directories, numeric ports), merged with `feat/wave-2` at `8a25353` (#54's docs reconcile), `python3 scripts/packaging/validate.py --no-fetch` on commit `fcd0429` (before this paragraph was added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof` at version `0.1.0-preview.0.114`, with the Release runtime suite at 776 passed, 0 failed, 0 skipped. The merged tree's full suites passed first: ModularMonolith.Tests 515 passed, ArchitectureTests 98 passed.
+
 ## Wave 2 documentation and AI guidance reconciled, ticket #54
 
 Ticket #54's criterion "Reconcile Capability documentation, C4 diagrams, applicable ADR amendments and the Kit's
