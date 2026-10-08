@@ -1,0 +1,21 @@
+.agents/scripts/pr-threads.py
+  s_75dee3f51db59e::t_eda4cfea124969 16-19,121-124
+.agents/scripts/test_pr_threads.py
+  s_75dee3f51db59e::t_eda4cfea124969 45-46,106-107,116-129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bf1a775d2caa6d5cd86acd4e8ae5ea75176ddb8e",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
