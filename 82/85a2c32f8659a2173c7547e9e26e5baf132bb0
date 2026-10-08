@@ -1,0 +1,25 @@
+docs/acceptance.md
+  s_bdf0617f846b2b::t_17dd7e782e82d2 651-664
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_bdf0617f846b2b::t_6c32520d10c6c8 50
+.claude/agent-memory/kit-implementer/publication-feed-facts.md
+  s_bdf0617f846b2b::t_29009248548bf7 1-17
+.claude/agent-memory/kit-implementer/template-package-facts.md
+  s_bdf0617f846b2b::t_593014eca2b9a2 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8285a2c32f8659a2173c7547e9e26e5baf132bb0",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
