@@ -836,3 +836,8 @@ store deletes a sent envelope), and on one still stored for a broker afterwards 
 Verify on the package's tree merged with packages A and C (`66fdb2f`): `dotnet build PouryaKit.slnx` (0 warnings);
 `MessageStoreDatabaseTests` 18, `MisconfiguredHostTests` 10, `RabbitMqDeliveryTests` 20, `SnapshotTests` 30, `ModularMonolith.Tests` 528,
 `PouryaKit.ArchitectureTests` 98, all passed; `check-ai-setup.py` 0 failures.
+
+`python3 scripts/packaging/validate.py --no-fetch` on package D's commit `3bcc583`, merged with `66fdb2f` (before this
+paragraph was added), printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed:
+template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof.` at
+version `0.1.0-preview.0.120`.
