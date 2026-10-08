@@ -1,0 +1,48 @@
+tests/PouryaKit.ArchitectureTests/PipelineContractTests.cs
+  s_bdf0617f846b2b::t_0787ddf13fb972 7-8,12,15-29
+  s_bdf0617f846b2b::t_276d6b0df2bf1d 1-6,9-11,13-14,30-41
+docs/adr/0002-no-mediator-dependency.md
+  s_bdf0617f846b2b::t_b8449e3cfa9469 304-316,326-328
+  s_bdf0617f846b2b::t_3f1ab7045eaede 317-319
+  s_bdf0617f846b2b::t_2add138e3965ff 320-322
+  s_bdf0617f846b2b::t_7f6ff2e718549a 323-325
+  s_bdf0617f846b2b::t_5d66d6a1c657cc 160-161
+  s_bdf0617f846b2b::t_b9185b0a6133a6 223-224
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_bdf0617f846b2b::t_c3bc80bad628ab 62
+  s_bdf0617f846b2b::t_4184ade0719808 86
+docs/acceptance.md
+  s_bdf0617f846b2b::t_b462f0fe51b6ae 40,652-663
+.agents/skills/pourya-kit/references/testing.md
+  s_bdf0617f846b2b::t_c3bc80bad628ab 194
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_bdf0617f846b2b::t_8e01fb23a1ecfd 261-270,274-285,298-308
+  s_bdf0617f846b2b::t_dd7dead07b96af 271-273
+  s_bdf0617f846b2b::t_638da17ec198d3 259-260,286-297,309-310
+.agents/skills/pourya-kit/references/caching.md
+  s_bdf0617f846b2b::t_6a77f9dc5f959b 27
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_bdf0617f846b2b::t_a162303f054e9d 112-128
+.claude/agent-memory/kit-implementer/pipeline-contract-rule-facts.md
+  s_bdf0617f846b2b::t_01cb21ad6d9f78 1-18
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_bdf0617f846b2b::t_31b943111110c5 50
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_2c1da047c3353e 270,643
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "525868497f4fd4ed94fd61ad4350fd05f9b9b321",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
