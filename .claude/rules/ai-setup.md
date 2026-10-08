@@ -26,4 +26,4 @@ One home per concern: `.claude/` and `.codex/` hold only what each tool loads na
 - **Review routing follows `AGENTS.md`.** Extend the saved `kit-review` for cross-provider dual review instead of adding another workflow. After editing a saved workflow, run `/reload-skills`.
 - **The guard is frozen.** It is a seatbelt, not a sandbox. Change it only after a real incident, and review only the lines that changed.
 - **Leave nothing dead.** In the same change, remove what it makes obsolete: a key the tool no longer reads, a file nothing loads, a doc line the code no longer matches. Keep `docs/agents/ai-setup.md` and the guard's docstring in step with the files they describe.
-- **Finish with `python3 .agents/scripts/check-ai-setup.py`.** It must exit 0.
+- **Finish with `python3 .agents/scripts/check-ai-setup.py` and `python3 .agents/scripts/check-docs.py`.** Both must exit 0.
