@@ -347,3 +347,34 @@ a key that a query ignores (finding R5 of the final structural review).
   is refused as before, with the same message.
 - Proven by `MisconfiguredHostTests.An_endpoint_that_requires_an_idempotency_key_but_names_no_method_fails_the_host_at_start`,
   for both shapes, red with the new refusal switched off (both Hosts started), against PostgreSQL.
+
+## Amendment (2026-10-08, ticket #66: a type's assembly in the idempotency key and the query cache key)
+
+The decision above stands, and so do the two slots. What changes is how each key names a type. The #42 and #43
+amendments say "the command's full type name" and "the query's full type name"; both now also carry the simple name of
+the assembly that holds the type. The owner decided it on 2026-10-08, on a finding of the AI reviews of the pull request
+that merges Wave 2.
+
+- **Why.** The runtime lets two assemblies hold a type of one namespace-qualified name, and the Kit refuses neither.
+  With the full name alone, two such cacheable queries in one Host, or in two Hosts on one distributed cache, shared an
+  entry for the same Actor, tenant and declared key, and two such `[Idempotent]` commands scanned into one Module, or
+  into an application without Modules, shared a row for the same Actor, tenant and request id. The second caller was
+  then served the first type's answer without its own handler running.
+- **One rule for both keys, and for any later one.** A type is named `Namespace.Type, Assembly`: its `FullName`, then
+  the simple name of its assembly (`Assembly.GetName().Name`). `IdempotencyKey.Command` is that string, and the query
+  cache key's first part is that string, escaped as its other parts are. The two packages share no internal member
+  (`PouryaKit.Caching` sees none of Cqrs's, and ADR 0007 keeps Cqrs's one `InternalsVisibleTo` to the trusted restore),
+  so the rule is written at both places, each naming the other, and here once. A key added later names a type the
+  same way.
+- **Never the assembly-qualified name.** It carries the assembly's version, culture and public key token: two Hosts on
+  different builds of one assembly would stop sharing a distributed cache's entries, a deploy would orphan every
+  stored idempotency key, and it would take from the 1024 characters `HybridCache` allows a key.
+- **What it costs.** Nothing today: no package is published, so no stored row and no cache entry carries the former
+  key. From the first publication on, renaming the assembly that holds a command or a query starts new keys, as
+  renaming the type always did: a repeat inside the retention runs once more, and a cached answer is read again.
+  The key table's `command` column is `text` in its primary key, so no schema or migration changes.
+- Proven against PostgreSQL by `SameNamedTypeTests` in `tests/ModularMonolith.Tests`, an application whose Features come
+  from two assemblies holding a query and a command of one full name each:
+  `Two_cacheable_queries_of_one_full_name_in_two_assemblies_each_get_their_own_handlers_answer` and
+  `Two_idempotent_commands_of_one_full_name_in_two_assemblies_each_run_under_one_request_id`, each red with the
+  assembly left out of its key, when the second caller received the first type's answer.

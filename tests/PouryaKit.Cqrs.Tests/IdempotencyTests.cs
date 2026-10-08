@@ -7,7 +7,8 @@ namespace PouryaKit.Cqrs.Tests;
 // PostgreSQL in ModularMonolith.Tests.
 public sealed class IdempotencyTests
 {
-    private const string SealThing = "PouryaKit.Cqrs.Tests.Module.SealThingCommand";
+    // The command as its key names it: its full name, then its assembly's simple name.
+    private const string SealThing = "PouryaKit.Cqrs.Tests.Module.SealThingCommand, PouryaKit.Cqrs.Tests.Module";
 
     [Fact]
     public async Task Only_an_outermost_command_with_a_request_id_reserves_its_key_inside_the_unit_of_work_before_its_handler()

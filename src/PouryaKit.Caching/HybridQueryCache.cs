@@ -90,11 +90,14 @@ internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<Hybrid
         }
     }
 
-    // Each part escaped, so no tenant, Actor id or declared key can end its part early and match another entry's key.
+    // Each part escaped, so no assembly name, tenant, Actor id or declared key can end its part early and match another
+    // entry's key. The query is named by its full name and its assembly's simple name, exactly as the dispatcher names a
+    // command in its idempotency key (ADR 0002, #66 amendment), so same-named queries of two assemblies share no entry;
+    // never by its assembly-qualified name, whose version would keep two builds of one assembly from sharing an entry.
     private static string Key(OperationContext context, Type query, string key) =>
         string.Join(
             '|',
-            query.FullName,
+            Uri.EscapeDataString($"{query.FullName}, {query.Assembly.GetName().Name}"),
             Uri.EscapeDataString(context.Tenant ?? OperationContext.NoTenant),
             context.Actor.Kind,
             Uri.EscapeDataString(context.Actor.Id),

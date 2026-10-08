@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A cacheable query and an idempotent command with the namespace-qualified names of two of the Stub Module's, for
+       the key tests: one application then holds two types of one full name. They need an assembly apart from the Stub
+       Module's, since one assembly holds a full name once; ModularMonolith.Tests leaves this folder out of its own
+       sources. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\PouryaKit.Caching\PouryaKit.Caching.csproj" />
+  </ItemGroup>
+</Project>

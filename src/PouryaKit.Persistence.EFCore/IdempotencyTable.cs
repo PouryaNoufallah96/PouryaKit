@@ -8,7 +8,8 @@ namespace PouryaKit.Persistence.EFCore;
 /// The table a Module keeps the keys of its <c>[Idempotent]</c> commands in, in its own schema beside its data, so a key
 /// and its recorded success commit with the command's effect or not at all. It is not part of the Module's model: a
 /// migration creates it with <see cref="CreateIdempotencyTable"/>, once, in every Module with a command that opts in.
-/// A row is keyed by tenant, Actor kind and id, the command's full type name and the request id; a null tenant is
+/// A row is keyed by tenant, Actor kind and id, the command's full type name with its assembly's simple name
+/// (<c>Namespace.Type, Assembly</c>) and the request id; a null tenant is
 /// stored as <see cref="NoTenant"/>. Its response is the command's success value as JSON, null for a command without
 /// one, and its <c>reserved_at</c> the Host's time when the key was reserved. The Host removes a row once it is older
 /// than <see cref="PouryaKitIdempotencyOptions.Retention"/>.

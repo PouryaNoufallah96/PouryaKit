@@ -340,9 +340,13 @@ internal sealed partial class Dispatcher(
             ?? throw new InvalidOperationException(
                 $"{typeof(TCommand).Name} opts in with [Idempotent] and runs with a request id, but no IIdempotencyStore is registered to keep its key. Register a Unit of Work that keeps keys, such as PouryaKit.Persistence.EFCore's."
             );
+        // The command is named by its full name and its assembly's simple name, exactly as the query cache names a query
+        // in its key (ADR 0002, #66 amendment), so same-named commands of two assemblies share no key; never by its
+        // assembly-qualified name, whose version would orphan every stored key at a deploy.
+        var command = typeof(TCommand);
         return new Reservation<TResult>(
             store,
-            new IdempotencyKey(context.Tenant, context.Actor, typeof(TCommand).FullName!, requestId),
+            new IdempotencyKey(context.Tenant, context.Actor, $"{command.FullName}, {command.Assembly.GetName().Name}", requestId),
             idempotent
         );
     }
