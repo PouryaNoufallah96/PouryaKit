@@ -1,0 +1,25 @@
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_75dee3f51db59e::t_9dfcc913005e85 99
+src/PouryaKit.Cqrs/ICompositionCheck.cs
+  s_75dee3f51db59e::t_418395db968769 7-11,13-15
+src/PouryaKit.Cqrs/CqrsHostApplicationBuilderExtensions.cs
+  s_75dee3f51db59e::t_f3c08b3038570e 26-29
+src/PouryaKit.Cqrs/CompositionCheckRunner.cs
+  s_75dee3f51db59e::t_9dfcc913005e85 21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f4eacfa6a46168e7ce3232b082eb7656d3a86e43",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
