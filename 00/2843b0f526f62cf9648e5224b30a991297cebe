@@ -1,0 +1,48 @@
+src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs
+  s_bdf0617f846b2b::t_f98b0276e2b2ba 75-77,98-101,103-116
+docs/adr/0002-no-mediator-dependency.md
+  s_bdf0617f846b2b::t_a17edb1fb5ba9f 336-349
+docs/acceptance.md
+  s_bdf0617f846b2b::t_98d964a9cbc15c 641,789-803
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_bdf0617f846b2b::t_32d3a9f57f2be5 141
+  s_bdf0617f846b2b::t_9c1d9dfdeb7325 125-140,142-145
+tests/ModularMonolith.Tests/TrustedPeerTests.cs
+  s_bdf0617f846b2b::t_05fdc04895f66b 76-77
+  s_bdf0617f846b2b::t_45cc573f23e60e 86,88,102-105,142-144
+  s_bdf0617f846b2b::t_20166155d5ef09 3-6,9,75,78-85,87,89-101,106-107,133-141
+  s_bdf0617f846b2b::t_41a94d26cc24ba 145
+docs/adr/0007-operation-context-set-by-the-scope-opener.md
+  s_bdf0617f846b2b::t_426deaa393f543 173-176
+  s_bdf0617f846b2b::t_c3e7debede56b6 168-172,177-185
+.agents/skills/pourya-kit/references/web.md
+  s_bdf0617f846b2b::t_88d6a86087e88b 239,243
+tests/ModularMonolith.Tests/Stub/StubEndpoints.cs
+  s_bdf0617f846b2b::t_9c1d9dfdeb7325 105-124
+.agents/skills/pourya-kit/references/observability.md
+  s_bdf0617f846b2b::t_88d6a86087e88b 83
+.agents/skills/pourya-kit/references/security.md
+  s_bdf0617f846b2b::t_b5b50b636cb66d 96
+src/PouryaKit.Web/OperationContextHttpHeaders.cs
+  s_bdf0617f846b2b::t_e5a7634e795c99 56-59,80-85
+tests/PouryaKit.ArchitectureTests/TrustedRestoreTests.cs
+  s_bdf0617f846b2b::t_c9ddc36fe23b98 42-43,45
+src/PouryaKit.Cqrs/Actor.cs
+  s_bdf0617f846b2b::t_4c490dca069e0b 25-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "002843b0f526f62cf9648e5224b30a991297cebe",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
