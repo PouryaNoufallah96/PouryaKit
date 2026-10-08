@@ -133,7 +133,7 @@ def merge(top: Path, head: str, message: str) -> None:
         lines = [f"the merge of {head[:7]} stopped on conflicts and is left in progress:", *(f"  {name}" for name in conflicted)]
         if "docs/acceptance.md" in conflicted:
             lines.append("docs/acceptance.md: both sides appended a section; keep both sections, in ticket order.")
-        lines.append(f"Resolve, commit, then run: python3 .agents/scripts/merge-package.py --post-merge {head[:7]} [--push]")
+        lines.append(f"Resolve, commit, then run: python3 .agents/scripts/merge-package.py --post-merge {head[:7]}")
         raise Stop(CONFLICT, "\n".join(lines))
     stopped = "\nthe merge is still in progress; `git merge --abort` drops it" if in_progress else ""
     raise Stop(GIT_FAILED, f"git merge failed: {(done.stderr or done.stdout).strip()}{stopped}")
