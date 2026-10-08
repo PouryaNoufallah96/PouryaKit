@@ -53,8 +53,10 @@ internal static class OperationContextHttpHeaders
     }
 
     // The continuation a trusted peer's request asks for: the same Actor, tenant and correlation, caused by the peer's
-    // Operation, with an OperationId of its own. Null when the request carries none of the headers; a request that
-    // carries some but not a complete, readable context is refused with 400, as a request that cannot be read is.
+    // Operation, with an OperationId of its own. Called only for a caller authenticated as a trusted peer, so the context
+    // is restored as a trusted continuation (ADR 0007): the permission check does not authorize its Actor again. Null
+    // when the request carries none of the headers; a request that carries some but not a complete, readable context is
+    // refused with 400, as a request that cannot be read is.
     public static OperationContext? Continued(IHeaderDictionary headers)
     {
         if (!Names.Any(headers.ContainsKey))
@@ -75,7 +77,12 @@ internal static class OperationContextHttpHeaders
             var kind => throw new BadHttpRequestException($"The request's {ActorKindName} header {kind} is not an ActorKind."),
         };
         string? tenant = headers.ContainsKey(Tenant) ? Single(Tenant) : null;
-        return new OperationContext(actor, tenant, Id(Single(CorrelationId), CorrelationId), Id(Single(CausationId), CausationId));
+        return OperationContext.RestoreTrusted(
+            actor,
+            tenant,
+            Id(Single(CorrelationId), CorrelationId),
+            Id(Single(CausationId), CausationId)
+        );
     }
 
     // The Kit's rule for a context header value, on both sides of a call, and for an Idempotency-Key: no control

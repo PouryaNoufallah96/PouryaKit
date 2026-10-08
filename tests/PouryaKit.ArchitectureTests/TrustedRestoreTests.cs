@@ -39,8 +39,10 @@ public sealed class TrustedRestoreTests
             where call.Callee != $"{nameof(OperationContext)}.RestoreTrusted"
             select $"{call.Owner.FullName} in {call.Package} calls {call.Callee}, an internal member of PouryaKit.Cqrs."
         );
-        // The rule reads the call it allows: delivery restores the context it runs with.
+        // The rule reads the calls it allows: delivery restores the context it runs with, and Web the context a trusted
+        // peer's request continues.
         Assert.Contains(internalCalls, call => call.Package == "PouryaKit.Messaging.Wolverine");
+        Assert.Contains(internalCalls, call => call.Package == "PouryaKit.Web");
     }
 
     // Internal to Cqrs: an internal member, or any member of a type only Cqrs can name. A constructed generic type is

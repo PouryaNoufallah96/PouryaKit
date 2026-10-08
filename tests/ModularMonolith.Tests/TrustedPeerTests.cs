@@ -1,7 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using Catalog;
+using Catalog.Categories.Features.CreateCategory;
+using Catalog.Products.Features.CreateProduct;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
+using PouryaKit.Security;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -67,6 +72,39 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
         );
     }
 
+    // Final structural review R1 (ADR 0007's #57 amendment): the peer's request is a trusted continuation, so the
+    // permission the command declares is not checked again for the continued Actor. Neither Ada nor the peer holds it
+    // here. The same headers from a caller the Host does not trust are that caller's own request, and it is refused.
+    [Fact]
+    public async Task A_trusted_peer_continues_into_a_permission_protected_command_its_actor_holds_no_permission_for_and_an_untrusted_caller_is_refused()
+    {
+        var name = $"Lamp {Guid.CreateVersion7():N}";
+        var lamp = await CreateProductAsync(name);
+        using var peer = WithContextHeaders(Fixture.Client(AppFixture.TrustedPeer));
+        using var person = WithContextHeaders(Fixture.Client("grace"));
+
+        var refused = await RemoveAsync(person, name);
+        var refusedRows = await Fixture.RowsAsync($"select is_deleted from catalog.products where id = '{lamp}'");
+        var continued = await RemoveAsync(peer, name);
+
+        Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
+        using (var problem = JsonDocument.Parse(await refused.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)))
+        {
+            Assert.Equal(
+                [PermissionErrors.Denied.Code],
+                problem.RootElement.GetProperty("errors").EnumerateArray().Select(error => error.GetProperty("code").GetString())
+            );
+        }
+        Assert.Equal([[false]], refusedRows);
+        Assert.Equal(HttpStatusCode.OK, continued.StatusCode);
+        Assert.Equal("1", await continued.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        // Removed as the continued Actor, not as the peer.
+        Assert.Equal(
+            [[true, "ada"]],
+            await Fixture.RowsAsync($"select is_deleted, deleted_by from catalog.products where id = '{lamp}'")
+        );
+    }
+
     [Theory]
     [InlineData(OperationContextHeaders.CausationId, null)]
     [InlineData(OperationContextHeaders.CorrelationId, "not-a-guid")]
@@ -91,6 +129,19 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
     }
+
+    private async Task<Guid> CreateProductAsync(string name)
+    {
+        var catalog = Fixture.Gateway<CatalogModule>();
+        var category = Guid.CreateVersion7();
+        var product = Guid.CreateVersion7();
+        await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(new CreateProductCommand(product, category, name), TestContext.Current.CancellationToken);
+        return product;
+    }
+
+    private static Task<HttpResponseMessage> RemoveAsync(HttpClient client, string name) =>
+        client.PostAsJsonAsync("/stub/catalog-products/removal", new { names = new[] { name } }, TestContext.Current.CancellationToken);
 
     private static HttpClient WithContextHeaders(HttpClient client)
     {

@@ -102,6 +102,26 @@ internal sealed class KeyedReadEndpoint : IEndpoint
     }
 }
 
+/// <summary>Maps <see cref="KeyedAnyMethodEndpoint"/>, without method metadata or with an empty method list.</summary>
+internal sealed record KeyedAnyMethodRoute(bool EmptyMethodList);
+
+// An endpoint that requires an Idempotency-Key but names no HTTP method, which the Host must refuse: it answers every
+// method, GET included, whose query ignores the key. It is mapped only in a Host that registers KeyedAnyMethodRoute.
+internal sealed class KeyedAnyMethodEndpoint : IEndpoint
+{
+    public void Map(IEndpointRouteBuilder routes)
+    {
+        if (routes.ServiceProvider.GetService<KeyedAnyMethodRoute>() is { } route)
+        {
+            var endpoint = routes.Map("/keyed-any", () => "any").RequireIdempotencyKey();
+            if (route.EmptyMethodList)
+            {
+                endpoint.WithMetadata(new HttpMethodMetadata([]));
+            }
+        }
+    }
+}
+
 internal sealed class MixedErrorsEndpoint : IEndpoint
 {
     public static readonly ImmutableArray<Error> Errors =
