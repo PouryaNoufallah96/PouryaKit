@@ -2,7 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using PouryaKit.Cqrs;
-using Wolverine;
 using Wolverine.Configuration;
 using Wolverine.Runtime;
 using Wolverine.Transports;

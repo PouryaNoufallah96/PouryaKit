@@ -20,6 +20,23 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
 
 The Billing Module (ticket #17) adds no package: it references what Inventory references, except `PouryaKit.Persistence.Dapper`.
 
+## The service defaults recipes
+
+- **Kit files:** `samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs`, which `PouryaKit.Templates` packs into both templates
+- **Upstream:** https://github.com/microsoft/aspire
+- **Commit:** 3751e615ad660621f2a7aa4c390ef48e08a0eed8
+- **Upstream paths:** `src/Aspire.ProjectTemplates/templates/aspire-servicedefaults/Extensions.cs`
+- **Licence:** MIT
+- **Adoption:** adapted
+- **Ticket:** #52, recorded in the final audit of Wave 2 (2026-10-08)
+- **Intentional differences:**
+  - The class, its namespace `Microsoft.Extensions.Hosting`, the two endpoint path constants and the names `AddServiceDefaults`, `ConfigureOpenTelemetry`, `AddDefaultHealthChecks` and `MapDefaultEndpoints` are upstream's, so a Host composes the recipes as an Aspire project does; the members are C# 14 extension members.
+  - OpenTelemetry adds the Kit's source and meter (`OperationTelemetry.SourceName`) beside the application's, and exports over OTLP only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, as upstream does.
+  - Readiness adds the `databases` check, which asks each registered DbContext whether its database answers; upstream has the `self` liveness check only.
+  - Every `HttpClient` takes `AddPouryaKitResilience()`, which retries safe methods only, in place of upstream's `AddStandardResilienceHandler()`.
+  - `/alive` is mapped in every environment, anonymous and exempt from rate limiting, and `/health` in Development only (ticket #64); upstream maps both in Development only.
+  - `AddSerilogDefaults()` is the Kit's own recipe; upstream has none.
+
 ## Dead-letter and replay acceptance scenario
 
 - **Kit files:** `tests/ModularMonolith.Tests/FailingDeliveryTests.cs`, `tests/ModularMonolith.Tests/Stub/StubCirculation.cs`

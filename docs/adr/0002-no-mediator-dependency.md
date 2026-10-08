@@ -284,6 +284,10 @@ silent, which supersedes the #43 amendment's "Optional, at the cost of a null ch
   `AddPouryaKitCompositionChecks`, which `AddPouryaKitModules` calls and a Host without Modules calls itself; they add
   nothing to the pipeline. The declared-authorizer check (#56) is one of them and still stops the Host when it is built:
   a built Host runs Operations through its Gateways before it starts, so no check waits for the start.
+  *Since ticket #62 (2026-10-08) `UsePouryaKitWolverine` calls the entry too, and a check that only the built
+  application can answer, such as an endpoint never mapped, is an `IStartupCheck` run at `StartingAsync`; a
+  composition check still never waits for the start ([ADR 0006](0006-independent-delivery-through-a-routed-queue-per-subscription.md),
+  the amendment for #54).*
 - Proven by `CompositionCheckTests.A_cacheable_query_in_a_host_without_caching_fails_the_host_when_built_naming_the_call`,
   red with the check switched off, against PostgreSQL.
 
