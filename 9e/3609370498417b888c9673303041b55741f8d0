@@ -1,0 +1,31 @@
+.agents/scripts/merge-package.py
+  s_4f44a41d89c3b1::t_63a9cccb968a77 119-121,125,127,131,133
+  s_4f44a41d89c3b1::t_b4460886d8bcad 144
+  s_4f44a41d89c3b1::t_de1933b149d24f 206-207,209-210
+  s_4f44a41d89c3b1::t_ccaff3cc3dd1e9 225,236
+  s_4f44a41d89c3b1::t_5d51267e9fa2d6 20-22
+  s_4f44a41d89c3b1::t_300fc45fdad1da 85
+  s_4f44a41d89c3b1::t_8281058b9a5e59 29
+  s_4f44a41d89c3b1::t_46b7e6ff0970d3 104-108
+  s_4f44a41d89c3b1::t_9ef012a1abf76b 5-6,9-11
+.agents/scripts/test_merge_package.py
+  s_4f44a41d89c3b1::t_fbabc705ea392a 15,20,30-31,36,56,59,62-67,69,79,81-82,87-88,100,107-147,156,166,176,183,191,200,206,211
+docs/agents/running-a-spec.md
+  s_4f44a41d89c3b1::t_01a53ae630d5f4 31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9e3609370498417b888c9673303041b55741f8d0",
+  "prompts": {},
+  "sessions": {
+    "s_4f44a41d89c3b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "876ff07b-1f33-4cd5-86a7-a6eda87eb025",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
