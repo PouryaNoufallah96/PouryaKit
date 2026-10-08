@@ -50,4 +50,4 @@
 - [Publication feed facts](publication-feed-facts.md) — #54: dotnet new install ignores source mapping, cwd NuGet.Config for credentials, silent template restore, step run locally
 - [Test gaps and store database facts](test-gaps-and-store-database-facts.md) — #54: Outbox on the DbContext connection (other database 42P01, stale store tables silent), limiter catch by accounting, probe commit-then-remove
 - [Pipeline contract rule facts](pipeline-contract-rule-facts.md) — #54: open-generic implements check, the 14-contract set and exclusions, both Hosts in scope, PDB paths differ in CI
-- [Store database check facts](store-database-check-facts.md) — #63: Npgsql parse splits no host:port, store uses the composition-time string, cross-package record is public
+- [Store database check facts](store-database-check-facts.md) — #63: Npgsql parse splits no host:port, store uses the composition-time string, cross-package record is public, read GetDbConnection not options, unknown database fails

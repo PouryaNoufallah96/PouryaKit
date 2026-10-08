@@ -63,15 +63,42 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         );
     }
 
-    // Read as Npgsql reads them: a database named as the other side's user is that user's, a string that names neither a
-    // database nor a user leaves its database unknown, which is not compared, and a port inside the host is a number.
+    // Read as Npgsql reads them: a database named as the other side's user is that user's, and a port inside the host is a
+    // number.
     [Theory]
     [InlineData("Host=db;Database=app;Username=catalog", "Host=db;Username=app")]
-    [InlineData("Host=db", "Host=db;Database=app")]
     [InlineData("Host=db;Port=5432;Database=app", "Host=db:05432;Database=app")]
     public void Two_strings_npgsql_reads_as_one_database_build(string module, string store)
     {
         using var host = Compose(module, store).Build();
+    }
+
+    // Npgsql leaves the database of a string that names neither a database nor a user to the client's user, which the
+    // string does not show.
+    [Fact]
+    public void A_dbcontext_whose_string_names_neither_a_database_nor_a_user_fails_the_host_when_built_naming_its_connection()
+    {
+        var builder = Compose("Host=db", "Host=db;Database=app");
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            "UsePostgres stores StubDbContext over the connection string app, which names neither a database nor a user, so its database is left to the client's user and cannot be compared with the message store's, the database db:5432/app. Set Database, or at least Username, in the connection string app.",
+            thrown.Message
+        );
+    }
+
+    [Fact]
+    public void A_message_store_whose_string_names_neither_a_database_nor_a_user_fails_the_host_when_built_naming_its_connection()
+    {
+        var builder = Compose("Host=db;Database=app", "Host=db");
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            "UsePouryaKitWolverine keeps the message store over the connection string messages, which names neither a database nor a user, so its database is left to the client's user and no DbContext's can be compared with it. Set Database, or at least Username, in the connection string messages.",
+            thrown.Message
+        );
     }
 
     // EF Core applies a ConfigureDbContext after AddDbContext over it, so the DbContext uses the string it names.
@@ -85,6 +112,53 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
 
         Assert.Equal(
             "UsePostgres stores StubDbContext over the connection string app, the database db:5432/elsewhere, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database db:5432/app, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
+            thrown.Message
+        );
+    }
+
+    // EF Core gives a DbContext moved onto an Npgsql data source the source's connection, whether the string UsePostgres
+    // wrote was cleared first or left in place, unused.
+    [Fact]
+    public void A_dbcontext_moved_onto_a_data_source_on_another_database_fails_the_host_when_built_naming_it()
+    {
+        using var dataSource = NpgsqlDataSource.Create("Host=db;Database=elsewhere;Username=catalog");
+        var builder = Compose("Host=db;Database=app", "Host=db;Database=app");
+        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql((string?)null).UseNpgsql(dataSource));
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            "UsePostgres stores StubDbContext over the connection string app, the database db:5432/elsewhere, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database db:5432/app, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
+            thrown.Message
+        );
+    }
+
+    [Fact]
+    public void A_dbcontext_moved_onto_a_data_source_on_the_message_stores_database_builds_whatever_string_it_left()
+    {
+        using var dataSource = NpgsqlDataSource.Create("Host=db;Database=app;Username=catalog");
+        var builder = Compose("Host=db;Database=elsewhere", "Host=db;Database=app");
+        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql(dataSource));
+
+        using var host = builder.Build();
+    }
+
+    // EF Core's own message, quoted, for a DbContext it gives no connection, here one a ConfigureDbContext moved onto a
+    // name the configuration lacks.
+    [Fact]
+    public void A_dbcontext_ef_core_gives_no_connection_fails_the_host_when_built_quoting_ef_core()
+    {
+        var builder = Compose("Host=db;Database=app", "Host=db;Database=app");
+        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql("Name=ConnectionStrings:missing"));
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.StartsWith(
+            "UsePostgres stores StubDbContext over the connection string app, but EF Core gives it no connection (\"A named connection string was used, but the name 'ConnectionStrings:missing' was not found",
+            thrown.Message
+        );
+        Assert.EndsWith(
+            "\"), so its database cannot be compared with the message store's, the database db:5432/app. Give StubDbContext a connection string, a connection or a data source on the message store's database.",
             thrown.Message
         );
     }
