@@ -37,9 +37,8 @@ public static class PostgresServiceCollectionExtensions
                     .UseSnakeCaseNamingConvention()
             );
             services.TryAddSingleton<IUniqueConstraintReader, PostgresUniqueConstraintReader>();
-            services.AddSingleton(new DbContextConnection(connectionName, typeof(TDbContext)));
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, PostgresConnectionsCheck>());
-            return services.AddPouryaKitEfCore<TDbContext>();
+            return services.AddPouryaKitEfCore<TDbContext>(connectionName);
         }
     }
 }

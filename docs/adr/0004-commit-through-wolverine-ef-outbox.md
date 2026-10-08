@@ -390,7 +390,9 @@ store's database", and until ticket #63 nothing checked that proviso: it was a d
   `Incoming` where the store never reads them, with nothing logged at Warning or above.
 - **The check.** `UsePouryaKitWolverine(connectionName)` registers the composition check `MessageStoreDatabaseCheck`. When
   the Host's container is built, it compares the connection string Wolverine was given with the connection of each
-  DbContext `UsePostgres` records as a `DbContextConnection` (`PouryaKit.Persistence.EFCore`), the connection EF Core
+  DbContext `UsePostgres` records as a `DbContextConnection` (`PouryaKit.Persistence.EFCore`; since the Wave 2 final
+  review, 2026-10-08, `AddPouryaKitEfCore` records every DbContext it makes a Unit of Work, so one the application
+  registered itself is checked too, and `UsePostgres` passes it the connection name), the connection EF Core
   gives the DbContext itself, whatever configured it, a later `ConfigureDbContext` onto another string, a connection or
   an Npgsql data source included, on hosts, ports and database as Npgsql reads them, and fails the build with one line
   per DbContext on another database. It opens no connection, and two names for one database pass

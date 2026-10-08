@@ -786,3 +786,27 @@ registers no check runner. The runner comes with the dispatcher's registration (
 included. It runs nothing degraded: each Module route group begins the request's Operation
 (`src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs`), and `BeginOperation` resolves the `Operation` only that
 registration adds, so the Host fails at its first request instead.
+
+## Wave 2 final structural review
+
+The structural review of the integration branch at `74e873b` (2026-10-08), its findings fixed in packages on disjoint
+files.
+
+### Package D: every Unit of Work's DbContext checked against the store; the negative delivery assertion sees broker envelopes
+
+Findings 2 (high) and 6 (medium). `AddPouryaKitEfCore<TDbContext>(connectionName = null)` records the DbContext's
+`DbContextConnection` once, where the Outbox attaches, with the connection name `UsePostgres` passes it and none for a
+DbContext the application registered itself; `MessageStoreDatabaseCheck` checks every record and `PostgresConnectionsCheck`
+only the named ones. `AssertNothingSentAsync` also fails on an envelope Wolverine handed to a sending agent for a broker
+while the Operation ran, read from Wolverine's `wolverine-messages-sent` counter on the Host runtime's own `Meter` (the
+store deletes a sent envelope), and on one still stored for a broker afterwards (a latched sender hands nothing out).
+
+| Guarantee | Test | Red once |
+|---|---|---|
+| A DbContext the application registered with `AddDbContext` on another database, made a Unit of Work with `AddPouryaKitEfCore`, fails the build naming it, beside a store on the fixture's database | `MessageStoreDatabaseTests.A_dbcontext_the_application_registered_on_another_database_fails_the_host_when_built_naming_it` | With `AddPouryaKitEfCore` recording only a named DbContext, the Host built. |
+| A record with no name is not the named-connection check's: such a DbContext on the store's database builds beside `UsePostgres` | `MessageStoreDatabaseTests.A_dbcontext_the_application_registered_on_the_message_stores_database_builds_beside_use_postgres` | With `PostgresConnectionsCheck` reading the record's null name, the build failed on a missing `ConnectionStrings:` line. |
+| An outgoing-only publication fails `AssertNothingSentAsync`: a Snapshot only Inventory.Host subscribes to, sent and deleted before the Operation returns, and with its sender paused (`SendingAgent.PauseAsync`, as Wolverine latches it while the broker is unavailable) | `RabbitMqDeliveryTests.Assert_nothing_sent_fails_on_a_snapshot_sent_only_to_the_broker_once_sent_and_while_it_waits_for_the_broker` | With the counter's listener not started, the first assertion passed; with the stored outgoing envelopes not read, the second passed. |
+
+Verify on the package's tree: `dotnet build PouryaKit.slnx` (0 warnings); `MessageStoreDatabaseTests` 18,
+`MisconfiguredHostTests` 8, `RabbitMqDeliveryTests` 20, `SnapshotTests` 30, `ModularMonolith.Tests` 523,
+`PouryaKit.ArchitectureTests` 98, all passed; `check-ai-setup.py` 0 failures.

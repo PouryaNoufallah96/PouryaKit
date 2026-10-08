@@ -186,6 +186,39 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         using var host = Compose(app.ConnectionString, store).Build();
     }
 
+    // AddPouryaKitEfCore attaches the Outbox to a DbContext the application registered itself, on a connection no
+    // configuration name gives (final review, finding 2).
+    [Fact]
+    public void A_dbcontext_the_application_registered_on_another_database_fails_the_host_when_built_naming_it()
+    {
+        var module = new NpgsqlConnectionStringBuilder(app.ConnectionString) { Database = "module" };
+        var store = new NpgsqlConnectionStringBuilder(app.ConnectionString);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:messages={store.ConnectionString}"]
+        );
+        builder.Services.AddDbContext<StubDbContext>(options => options.UseNpgsql(module.ConnectionString));
+        builder.Services.AddPouryaKitEfCore<StubDbContext>();
+        builder.UsePouryaKitWolverine(connectionName: "messages");
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            $"AddPouryaKitEfCore makes StubDbContext a Unit of Work over the connection its own registration gives it, the database {module.Host}:{module.Port}/module, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database {store.Host}:{store.Port}/{store.Database}, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Register StubDbContext on the message store's database.",
+            thrown.Message
+        );
+    }
+
+    // A DbContext the application registered itself names no connection string, so the check of named ones passes it by.
+    [Fact]
+    public void A_dbcontext_the_application_registered_on_the_message_stores_database_builds_beside_use_postgres()
+    {
+        var builder = Compose(app.ConnectionString, app.ConnectionString);
+        builder.Services.AddDbContext<ReadCollectionDbContext>(options => options.UseNpgsql(app.ConnectionString));
+        builder.Services.AddPouryaKitEfCore<ReadCollectionDbContext>();
+
+        using var host = builder.Build();
+    }
+
     private static HostApplicationBuilder Compose(string module, string store)
     {
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
