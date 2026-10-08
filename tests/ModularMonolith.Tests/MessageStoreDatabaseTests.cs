@@ -40,9 +40,12 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         );
     }
 
-    // Read as Npgsql reads them: a string that names no database names its user's.
+    // Read as Npgsql reads them: a string that names no database names its user's, and a Unix socket's directory keeps its
+    // case and takes the separate port.
     [Theory]
     [InlineData("Host=db;Username=catalog", "Host=db;Username=messages", "db:5432/catalog", "db:5432/messages")]
+    [InlineData("Host=/run/postgresql;Database=app", "Host=/run/PostgreSQL;Database=app", "/run/postgresql:5432/app", "/run/PostgreSQL:5432/app")]
+    [InlineData("Host=/run/postgresql;Port=5432;Database=app", "Host=/run/postgresql;Port=5433;Database=app", "/run/postgresql:5432/app", "/run/postgresql:5433/app")]
     public void A_dbcontext_on_another_database_as_npgsql_reads_the_strings_fails_the_host_when_built_naming_both(
         string module,
         string store,
