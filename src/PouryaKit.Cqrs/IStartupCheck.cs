@@ -12,7 +12,7 @@ public interface IStartupCheck
 {
     /// <summary>
     /// One sentence for each problem the started application would have, naming its fix; none when there is none.
-    /// <paramref name="services"/> is the Host's container, from which a check resolves singletons only.
+    /// <paramref name="services"/> is the Host's container, from which a check resolves singletons, or scoped services from a scope of its own that it disposes; a check opens no connection.
     /// </summary>
     IEnumerable<string> Check(HostComposition composition, IServiceProvider services);
 }
