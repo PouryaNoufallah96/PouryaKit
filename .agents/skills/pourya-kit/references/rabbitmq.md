@@ -10,7 +10,7 @@
 - [A body the contract cannot read](#a-body-the-contract-cannot-read)
 - [Dead letters at the broker queue](#dead-letters-at-the-broker-queue)
 - [Deploying a Host that receives](#deploying-a-host-that-receives)
-- [Startup checks](#startup-checks)
+- [The Host's checks](#the-hosts-checks)
 - [Testing across Hosts](#testing-across-hosts)
 
 The topology is ADR 0006's #50 amendment, topology B. There is no service discovery, no Saga, no template for a Host of one Module, and no exactly-once delivery: each effect in a receiving Module's database is applied once by its Receipt, and an effect outside the database is at least once, as inside one Host.
@@ -133,9 +133,9 @@ A message published before a receiving Host's queue exists, or before its queue 
 
 **Stopping receiving a wire name:** the Kit declares bindings and never removes one, so a binding outlives the subscription that made it. When a deployment stops receiving a wire name, remove its binding from the Host's queue, for example with `rabbitmqadmin` or the broker's management UI. Left in place, each message of it still arrives: one of a wire name the Host no longer knows is dead-lettered at the queue, and one the Host now publishes itself reaches its subscriptions a second time, where their Receipts stop it.
 
-## Startup checks
+## The Host's checks
 
-- **When the Host starts**, it fails for a subscription whose Integration Event or Snapshot no Module of the Host publishes and no `Receive` or `ReceiveSnapshot` declares, and for a message type Wolverine would also route wherever a published type goes, because its wire name, name or full name equals that type's full name: with a broker, a v2 published under the full name of its v1 would be sent to v1's exchange. Both as in [messaging.md](messaging.md#startup-checks).
+- **When the Host starts**, it fails for a subscription whose Integration Event or Snapshot no Module of the Host publishes and no `Receive` or `ReceiveSnapshot` declares, and for a message type Wolverine would also route wherever a published type goes, because its wire name, name or full name equals that type's full name: with a broker, a v2 published under the full name of its v1 would be sent to v1's exchange. Both as in [messaging.md](messaging.md#the-hosts-checks).
 - **After every hosted service started**, it fails when Host configuration made a listener on a broker one that does not store what it receives in a durable Inbox, such as `ListenToRabbitQueue(name).BufferedInMemory()`, or one whose dead letters go to a broker dead-letter queue instead of the message store, such as `DeadLetterQueueing(...)`. The check reads Wolverine's own description of each broker listener (`IBrokerEndpoint`, `EndpointMode`, `DeadLetterStorage`), so it holds for any broker transport.
 
 ## Testing across Hosts

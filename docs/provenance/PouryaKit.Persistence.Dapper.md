@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Persistence.Dapper`. Format and rules: [README](README.md).
 
-The check of the read connection string at start (`ReadConnectionCheck`, ticket #62) is new Kit code, so it has no record here.
+The check of the read connection string when the Host's container is built (`ReadConnectionCheck`, ticket #62) is new Kit code, so it has no record here.
 
 ## Package dependencies
 

@@ -296,6 +296,7 @@ request id on a command that does not opt in.
   and change nothing. An endpoint mapped for every method, with no method metadata, is not refused.
 - **Whether the command opts in stays a dispatch check.** The endpoint's delegate builds the command it sends, so the
   endpoint cannot know its type when it is built; the dispatcher's refusal of a request id on a command without
-  `[Idempotent]` is the one check of it, and the ticket's planned build-time command check is dropped.
+  `[Idempotent]` is the one check of it. The ticket's planned build-time command check was not built for that reason,
+  the design review's finding API-01, which the orchestrator accepted on 2026-10-08.
 - Proven by `MisconfiguredHostTests.An_endpoint_that_requires_an_idempotency_key_on_a_get_fails_the_host_at_start`, red
   with the refusal switched off, against PostgreSQL.
