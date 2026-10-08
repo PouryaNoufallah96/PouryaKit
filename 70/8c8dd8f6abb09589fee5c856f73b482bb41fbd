@@ -1,0 +1,24 @@
+src/PouryaKit.Security/SecurityServiceCollectionExtensions.cs
+  s_75dee3f51db59e::t_e3d91af501e893 19-25
+  s_75dee3f51db59e::t_8de701e818c255 18
+src/PouryaKit.Security/IActorPermissions.cs
+  s_75dee3f51db59e::t_5c94df7957d297 8-9
+docs/provenance/PouryaKit.Security.md
+  s_75dee3f51db59e::t_dca1b070ac2857 24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "708c8dd8f6abb09589fee5c856f73b482bb41fbd",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
