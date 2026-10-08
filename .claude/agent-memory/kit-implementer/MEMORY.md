@@ -3,8 +3,8 @@
 - [Docs verification tools](docs-verification-tools.md) — docs packages since #8, #64 rename: check-docs.py, skill snippets, Mermaid C4, reference checkouts, ADR amendment style
 - [Merge, CI and workflow tooling](merge-ci-and-workflow-tooling-facts.md) — retros and kit-review: union merge, scratch-clone proofs, gh job logs, branch names as data, workflow scripts, Codex input limit
 - [Core, JSON and architecture tests](core-json-and-architecture-test-facts.md) — #6 #19 #34 #37 #54 #55: STJ typed IDs, shared JSON options, IL reader, ImplementingTypes order, slot rule
-- [Cqrs and Modularity](cqrs-and-modularity-facts.md) — #7 #10 #13 #56 #57: FluentValidation, Domain Event drain, Module ownership, declared authorizers, continuation trust
-- [Composition checks](composition-check-facts.md) — #61 #62 #63, final review B: build vs start checks, StartAsync order, store database check, RoutingCheck and Declare
+- [Cqrs and Modularity](cqrs-and-modularity-facts.md) — #7 #10 #13 #56 #57 #66: FluentValidation, Domain Event drain, Module ownership, authorizers, trust, Cqrs internals, same-named types
+- [Composition checks](composition-check-facts.md) — #61 #62 #63 #66, final review B: build vs start checks, store database check, RoutingCheck, blank connection strings
 - [Persistence and Dapper](persistence-and-dapper-facts.md) — #8 #9 #11 #35: Unit of Work routing, EF savepoints, two-scope race, Npgsql typed nulls, Ardalis, dotnet-ef traps
 - [Wolverine runtime and delivery](wolverine-runtime-and-delivery-facts.md) — S1 #2, S2 #5, #15 #17 #54 #58, final review D: store, recovery, stale time, dead letters, codegen, sent envelopes
 - [Snapshots and scheduled commands](snapshot-and-scheduled-command-facts.md) — #18 #44 #45, final review R2: version gate, Receipt masking, scheduled envelopes, recurring chains
