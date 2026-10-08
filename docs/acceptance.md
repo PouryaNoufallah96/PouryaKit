@@ -789,27 +789,6 @@ registration adds, so the Host fails at its first request instead.
 
 ## Wave 2 final structural review
 
-The structural review of the integration branch at `74e873b` (2026-10-08), its findings fixed in packages on disjoint
-files.
-
-### Package D: every Unit of Work's DbContext checked against the store; the negative delivery assertion sees broker envelopes
-
-Findings 2 (high) and 6 (medium). `AddPouryaKitEfCore<TDbContext>(connectionName = null)` records the DbContext's
-`DbContextConnection` once, where the Outbox attaches, with the connection name `UsePostgres` passes it and none for a
-DbContext the application registered itself; `MessageStoreDatabaseCheck` checks every record and `PostgresConnectionsCheck`
-only the named ones. `AssertNothingSentAsync` also fails on an envelope Wolverine handed to a sending agent for a broker
-while the Operation ran, read from Wolverine's `wolverine-messages-sent` counter on the Host runtime's own `Meter` (the
-store deletes a sent envelope), and on one still stored for a broker afterwards (a latched sender hands nothing out).
-
-| Guarantee | Test | Red once |
-|---|---|---|
-| A DbContext the application registered with `AddDbContext` on another database, made a Unit of Work with `AddPouryaKitEfCore`, fails the build naming it, beside a store on the fixture's database | `MessageStoreDatabaseTests.A_dbcontext_the_application_registered_on_another_database_fails_the_host_when_built_naming_it` | With `AddPouryaKitEfCore` recording only a named DbContext, the Host built. |
-| A record with no name is not the named-connection check's: such a DbContext on the store's database builds beside `UsePostgres` | `MessageStoreDatabaseTests.A_dbcontext_the_application_registered_on_the_message_stores_database_builds_beside_use_postgres` | With `PostgresConnectionsCheck` reading the record's null name, the build failed on a missing `ConnectionStrings:` line. |
-| An outgoing-only publication fails `AssertNothingSentAsync`: a Snapshot only Inventory.Host subscribes to, sent and deleted before the Operation returns, and with its sender paused (`SendingAgent.PauseAsync`, as Wolverine latches it while the broker is unavailable) | `RabbitMqDeliveryTests.Assert_nothing_sent_fails_on_a_snapshot_sent_only_to_the_broker_once_sent_and_while_it_waits_for_the_broker` | With the counter's listener not started, the first assertion passed; with the stored outgoing envelopes not read, the second passed. |
-
-Verify on the package's tree: `dotnet build PouryaKit.slnx` (0 warnings); `MessageStoreDatabaseTests` 18,
-`MisconfiguredHostTests` 8, `RabbitMqDeliveryTests` 20, `SnapshotTests` 30, `ModularMonolith.Tests` 523,
-`PouryaKit.ArchitectureTests` 98, all passed; `check-ai-setup.py` 0 failures.
 The Wave 2 final structural review of 2026-10-08 (tip `74e873b`; two independent legs, Claude and Codex, read-only)
 found defects in closed tickets. By the owner's instruction each is fixed at its root, with runtime proof, and no ticket
 is reopened; the fixes ran as four packages on disjoint files, each recorded under its own heading here.
@@ -826,3 +805,22 @@ is reopened; the fixes ran as four packages on disjoint files, each recorded und
 `python3 scripts/packaging/validate.py --no-fetch` on package A's commit `002843b` (before this paragraph was added)
 printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof`
 at version `0.1.0-preview.0.114`. ModularMonolith.Tests passed first: 523 passed; ArchitectureTests 98 passed.
+
+### Package D: every Unit of Work's DbContext checked against the store; the negative delivery assertion sees broker envelopes
+
+Findings 2 (high) and 6 (medium). `AddPouryaKitEfCore<TDbContext>(connectionName = null)` records the DbContext's
+`DbContextConnection` once, where the Outbox attaches, with the connection name `UsePostgres` passes it and none for a
+DbContext the application registered itself; `MessageStoreDatabaseCheck` checks every record and `PostgresConnectionsCheck`
+only the named ones. `AssertNothingSentAsync` also fails on an envelope Wolverine handed to a sending agent for a broker
+while the Operation ran, read from Wolverine's `wolverine-messages-sent` counter on the Host runtime's own `Meter` (the
+store deletes a sent envelope), and on one still stored for a broker afterwards (a latched sender hands nothing out).
+
+| Guarantee | Test | Red once |
+|---|---|---|
+| A DbContext the application registered with `AddDbContext` on another database, made a Unit of Work with `AddPouryaKitEfCore`, fails the build naming it, beside a store on the fixture's database | `MessageStoreDatabaseTests.A_dbcontext_the_application_registered_on_another_database_fails_the_host_when_built_naming_it` | With `AddPouryaKitEfCore` recording only a named DbContext, the Host built. |
+| A record with no name is not the named-connection check's: such a DbContext on the store's database builds beside `UsePostgres` | `MessageStoreDatabaseTests.A_dbcontext_the_application_registered_on_the_message_stores_database_builds_beside_use_postgres` | With `PostgresConnectionsCheck` reading the record's null name, the build failed on a missing `ConnectionStrings:` line. |
+| An outgoing-only publication fails `AssertNothingSentAsync`: a Snapshot only Inventory.Host subscribes to, sent and deleted before the Operation returns, and with its sender paused (`SendingAgent.PauseAsync`, as Wolverine latches it while the broker is unavailable) | `RabbitMqDeliveryTests.Assert_nothing_sent_fails_on_a_snapshot_sent_only_to_the_broker_once_sent_and_while_it_waits_for_the_broker` | With the counter's listener not started, the first assertion passed; with the stored outgoing envelopes not read, the second passed. |
+
+Verify on the package's tree merged with package A (`6ecf342`): `dotnet build PouryaKit.slnx` (0 warnings);
+`MessageStoreDatabaseTests` 18, `MisconfiguredHostTests` 10, `RabbitMqDeliveryTests` 20, `SnapshotTests` 30, `ModularMonolith.Tests` 526,
+`PouryaKit.ArchitectureTests` 98, all passed; `check-ai-setup.py` 0 failures.
