@@ -1,0 +1,30 @@
+docs/architecture/README.md
+  s_75dee3f51db59e::t_6ac71e998f911d 279
+  s_75dee3f51db59e::t_da3494b39a17f1 418
+docs/adr/0003-single-commit-owner.md
+  s_75dee3f51db59e::t_8cd69b5d4b1de8 58-109,114-115
+  s_75dee3f51db59e::t_c49f8c0479b76a 110-113
+.agents/skills/pourya-kit/references/persistence.md
+  s_75dee3f51db59e::t_a853dd18c4a377 103-104
+docs/acceptance.md
+  s_75dee3f51db59e::t_c5255e83ced3d8 967
+  s_75dee3f51db59e::t_53ae18065891cf 951-966,968-970
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_75dee3f51db59e::t_108ca939cb6982 103-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d08c7e9afbd4e99e8025e0c14459978e4a93f052",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
