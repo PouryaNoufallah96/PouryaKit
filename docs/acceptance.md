@@ -740,3 +740,5 @@ The Proving Sample's Hosts, both templates and every test Host compose without c
 string, `app`, for its store and its DbContexts. On this package's tree, `dotnet test --project
 tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj` printed 508 passed, 0 failed, 0 skipped, and `dotnet test
 --project tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj` 98 passed, 0 failed, 0 skipped.
+
+`python3 scripts/packaging/validate.py --no-fetch` on the ticket's source (commit `6ec8a22`, before this paragraph was added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof` at version `0.1.0-preview.0.106`, with the Release runtime suite at 769 passed, 0 failed, 0 skipped. The generated Hosts of both templates build under the new check, each naming one connection string for its store and its DbContexts.
