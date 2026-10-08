@@ -1,0 +1,34 @@
+docs/acceptance.md
+  s_bdf0617f846b2b::t_6b99e78e3f699b 747
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_55b7478bbd80d3 526
+src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs
+  s_bdf0617f846b2b::t_ca272a972bf527 49
+  s_bdf0617f846b2b::t_c59041efe96edd 46-48,50
+.agents/skills/pourya-kit/references/messaging.md
+  s_bdf0617f846b2b::t_91f4f309b0f571 698
+tests/ModularMonolith.Tests/MessageStoreDatabaseTests.cs
+  s_bdf0617f846b2b::t_b7e737bc37b95a 7,199-210,212
+  s_bdf0617f846b2b::t_5452f42daa79e0 163-167,169-174
+  s_bdf0617f846b2b::t_c5f15fd733bea1 147-148,150,158
+  s_bdf0617f846b2b::t_a8564d5d821098 161-162
+  s_bdf0617f846b2b::t_dc8617d2434593 211
+.claude/agent-memory/kit-implementer/store-database-check-facts.md
+  s_bdf0617f846b2b::t_491fe5f6d4e7a6 17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fc76990040d8f503d500010f04ee32276cb6a432",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
