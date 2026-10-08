@@ -158,7 +158,7 @@ def wait(pr: int, timeout: float, interval: float) -> int:
     deadline, quiet = time.monotonic() + timeout, 0
     while True:
         view = gh_json("pr", "view", str(pr), "--json", "statusCheckRollup,comments")
-        results = [(check.get("name") or check.get("context") or "unnamed", outcome(check)) for check in view["statusCheckRollup"]]
+        results = [(check.get("name") or check.get("context") or "unnamed", outcome(check)) for check in view["statusCheckRollup"] or []]
         waiting = unsettled(results, view["comments"])
         quiet = 0 if waiting else quiet + 1
         if quiet == 2:

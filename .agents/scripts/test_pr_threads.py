@@ -142,7 +142,7 @@ class PrThreadsTests(unittest.TestCase):
     def test_wait_returns_after_two_quiet_polls_once_nothing_runs(self) -> None:
         # GitHub kept pull request #65's publication-checks in progress for good; its conclusion says it passed.
         ended = [check("ai-setup"), check("publication-checks", "IN_PROGRESS", "SUCCESS"), check("docs", conclusion="SKIPPED"), status("CodeRabbit", "SUCCESS")]
-        gh = Gh(view([]), view([check("ai-setup", "IN_PROGRESS", "")]), view([check("ai-setup"), status("CodeRabbit", "PENDING")]),
+        gh = Gh((0, {"statusCheckRollup": None, "comments": []}), view([check("ai-setup", "IN_PROGRESS", "")]), view([check("ai-setup"), status("CodeRabbit", "PENDING")]),
                 view(ended, codex=RUNNING), view(ended), view(ended))
         code, out = run(gh, pr_threads.wait, 65, 600, 30)
         self.assertEqual(code, 0, out)
