@@ -1,0 +1,25 @@
+.agents/scripts/check-docs.py
+  s_75dee3f51db59e::t_1bbd123fb43374 91-96
+  s_75dee3f51db59e::t_9ed6c23826d8d1 30-35,46,357-393,397,401-402,409
+.agents/scripts/test_check_docs.py
+  s_75dee3f51db59e::t_4bbcaf2c0c27a7 72
+  s_75dee3f51db59e::t_fff3252d4e6f73 187-196
+  s_75dee3f51db59e::t_714a6e5fd9ee42 46-47
+  s_75dee3f51db59e::t_82495ae9526773 48-62,64-71,73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "706d9c39eb08a73e7d1fea6a768528f767734ea3",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
