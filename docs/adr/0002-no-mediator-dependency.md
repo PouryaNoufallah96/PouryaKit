@@ -313,7 +313,8 @@ or replace one, and only Feature code calling one was refused. The owner approve
 - **Public so the Kit's own packages fill them.** `IIdempotencyStore` and `IQueryCache` are public Cqrs contracts
   because `PouryaKit.Persistence.EFCore` and `PouryaKit.Caching` fill them and Cqrs references neither. The
   pipeline's other seams are public for the same reason, since another Kit package fills or calls each: Cqrs's
-  `IUnitOfWork`, `IValidationStep<T>` and `IReadingStateGuard`, Persistence.EFCore's `IUnitOfWorkOutbox`, and
+  `IUnitOfWork`, `IValidationStep<T>` and `IReadingStateGuard`, Persistence.EFCore's `IUnitOfWorkOutbox` and
+  `IUniqueConstraintReader`, which Persistence.Postgres fills for the Unit of Work's save, and
   Messaging.Wolverine's `INotificationOutbox`, `IIntegrationEventOutbox`, `IDelayedCommandOutbox`, `ISnapshotMappers`
   and `IReceipts`. Cqrs's `IDispatcher`, the pipeline itself, and Modularity's Gateway `IGatewayProcessor<TModule>`
   are public because application code sends through them, and only the Kit implements them. Each contract has one Kit

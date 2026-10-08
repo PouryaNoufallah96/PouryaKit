@@ -270,6 +270,8 @@ internal static partial class ModuleRules
     /// Features write;</item>
     /// <item><c>IReadingStateGuard</c>: the check of tracked state across every step that only reads; the EF Unit of Work
     /// fills it;</item>
+    /// <item><c>IUniqueConstraintReader</c>: the save step's reading of a refused save's unique constraint, which the EF Unit
+    /// of Work turns into the Module's Error; Persistence.Postgres fills it;</item>
     /// <item><c>IIdempotencyStore</c> and <c>IQueryCache</c>: the pipeline's two optional slots; Persistence.EFCore and
     /// Caching fill them;</item>
     /// <item><c>IUnitOfWorkOutbox</c>: the Unit of Work's Outbox write and send; Messaging.Wolverine.EFCore fills it and
@@ -304,6 +306,7 @@ internal static partial class ModuleRules
         typeof(IUnitOfWork),
         typeof(IValidationStep<>),
         typeof(IReadingStateGuard),
+        typeof(IUniqueConstraintReader),
         typeof(IIdempotencyStore),
         typeof(IQueryCache),
         typeof(IUnitOfWorkOutbox),
