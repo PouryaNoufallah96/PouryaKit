@@ -1,0 +1,45 @@
+.agents/skills/pourya-kit/references/messaging.md
+  s_75dee3f51db59e::t_43104b758e13c6 700
+.agents/skills/pourya-kit/references/persistence.md
+  s_75dee3f51db59e::t_3642abe3605591 104
+THIRD-PARTY-NOTICES.md
+  s_75dee3f51db59e::t_af314a6b63e9d2 18-48
+docs/acceptance.md
+  s_75dee3f51db59e::t_2ff7ac9361567b 201-202,409-411,956,974-991
+docs/adr/0002-no-mediator-dependency.md
+  s_75dee3f51db59e::t_bdd866c0ca88f2 287-290
+docs/adr/0003-single-commit-owner.md
+  s_75dee3f51db59e::t_ab75b4923d1f42 105-112
+docs/architecture/README.md
+  s_75dee3f51db59e::t_c89b4eb0f062e4 291,514
+docs/provenance/ModularMonolith.md
+  s_75dee3f51db59e::t_ed0a354a27e4ee 23-39
+samples/ModularMonolith/src/ModularMonolith.Host/CallerPermissions.cs
+  s_75dee3f51db59e::t_78613ed044a21c 12
+src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs
+  s_75dee3f51db59e::t_342b22305477e9 45
+src/PouryaKit.Messaging.Wolverine/INotificationOutbox.cs
+  s_75dee3f51db59e::t_e0e3f3fb1b27eb 4-8
+src/PouryaKit.Persistence.EFCore/EfRepository.cs
+  s_75dee3f51db59e::t_fcc9138d694985 140
+tests/ModularMonolith.Tests/MessageStoreDatabaseTests.cs
+  s_75dee3f51db59e::t_c202a6d283ab63 40,63,88,116,133
+tests/ModularMonolith.Tests/RepositoryTests.cs
+  s_75dee3f51db59e::t_2f2be7ef4a35e7 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d12137a39b35a8338ca971d7d13c7098d572e3a6",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
