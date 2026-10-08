@@ -1,0 +1,24 @@
+scripts/packaging/test_validation.py
+  s_75dee3f51db59e::t_b8e6aeda6510ce 105,115
+  s_75dee3f51db59e::t_7a474def1dc36f 59-90,95-104,106-114,116-119
+  s_75dee3f51db59e::t_0aa74a032bff11 91-94
+scripts/packaging/validate.py
+  s_75dee3f51db59e::t_19e441f7ec94e7 469
+  s_75dee3f51db59e::t_f614f480a5a459 24-27,451-468,470-473,478-479,483-484
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b68bf6550c4aab65263a5edfe4c1d9b679c88fc5",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
