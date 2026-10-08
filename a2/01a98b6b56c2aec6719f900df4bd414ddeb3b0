@@ -1,0 +1,62 @@
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_bdf0617f846b2b::t_2eab12c7c51c9e 82,118,138
+docs/acceptance.md
+  s_bdf0617f846b2b::t_3533ee0bd03f1d 813
+  s_bdf0617f846b2b::t_775a436fc41631 808-812,814-817
+.agents/skills/pourya-kit/references/messaging.md
+  s_bdf0617f846b2b::t_2eab12c7c51c9e 282,586,690-691,701-702,704
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_bdf0617f846b2b::t_027bc29be4b11c 55
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_2eab12c7c51c9e 291,478,512-513
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_bdf0617f846b2b::t_2eab12c7c51c9e 949-961,1023-1055
+.agents/skills/pourya-kit/references/modules.md
+  s_bdf0617f846b2b::t_2eab12c7c51c9e 124,131-132
+.claude/agent-memory/kit-implementer/messaging-checks-at-build-facts.md
+  s_bdf0617f846b2b::t_4f36d087f88a7b 1-19
+src/PouryaKit.Messaging.Wolverine/DelayedCommandExtension.cs
+  s_bdf0617f846b2b::t_64fb49b51b9243 7-8
+src/PouryaKit.Messaging.Wolverine/DelayedCommandServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_f04ac002b16cfa 24,56-57
+src/PouryaKit.Messaging.Wolverine/IntegrationEventServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_64119c8f1db4e0 24-27,50-51,72-75
+src/PouryaKit.Messaging.Wolverine/NotificationHandlerServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_4e8d88be4442e2 26-28
+src/PouryaKit.Messaging.Wolverine/PouryaKitWolverineExtension.cs
+  s_bdf0617f846b2b::t_d70bd1218c7a73 7-8
+src/PouryaKit.Messaging.Wolverine/RoutingCheck.cs
+  s_bdf0617f846b2b::t_b0bcb362c41d56 1-40
+src/PouryaKit.Messaging.Wolverine/SubscriptionUnitOfWorkCheck.cs
+  s_bdf0617f846b2b::t_1ae926e80c0ca6 1-37
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_bdf0617f846b2b::t_2507048630d068 39-44,59-60
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_bdf0617f846b2b::t_9db7864ee33b38 163-201,294-300
+tests/ModularMonolith.Tests/IntegrationEventTests.cs
+  s_bdf0617f846b2b::t_4f3a501291962b 338,340-346,356,358-360,366,368-374,384,390,394
+tests/ModularMonolith.Tests/IntegrationEventVersionTests.cs
+  s_bdf0617f846b2b::t_c501c1e496ec26 98,103,108,117,121,128,130-131,133
+tests/ModularMonolith.Tests/IntegrationEventWiringTests.cs
+  s_bdf0617f846b2b::t_69068118e6aa00 8,129,134-135,137,139,141-142,144-168,201-208
+tests/ModularMonolith.Tests/StrictWireWritingTests.cs
+  s_bdf0617f846b2b::t_050b773ae5ed75 1-77
+tests/ModularMonolith.Tests/Stub/StubIntegrationEvents.cs
+  s_bdf0617f846b2b::t_6fc889fb451c2e 12,59-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a201a98b6b56c2aec6719f900df4bd414ddeb3b0",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
