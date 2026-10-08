@@ -1,0 +1,28 @@
+.claude/agent-memory/kit-implementer/workflow-script-facts.md
+  s_4f44a41d89c3b1::t_098f29ccb1f277 18-19
+  s_4f44a41d89c3b1::t_8634c1619e93ee 3
+  s_4f44a41d89c3b1::t_4b03c1b67566ff 20
+.claude/agent-memory/kit-implementer/merge-and-ci-tooling-facts.md
+  s_4f44a41d89c3b1::t_0b75849c693199 13-14
+  s_4f44a41d89c3b1::t_97d45d873de9a3 3
+  s_4f44a41d89c3b1::t_249be3baafd3c3 15
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_4f44a41d89c3b1::t_f1d920e2e72218 44
+  s_4f44a41d89c3b1::t_85c7674528254a 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "330b4ecb41bbcb0e114be3ffa0a38e3f8f7fdffe",
+  "prompts": {},
+  "sessions": {
+    "s_4f44a41d89c3b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "876ff07b-1f33-4cd5-86a7-a6eda87eb025",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
