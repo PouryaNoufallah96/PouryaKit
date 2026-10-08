@@ -63,17 +63,23 @@ public sealed class HostTests(App app)
         Assert.Equal(product, Assert.Single(page.GetProperty("items").EnumerateArray()).GetProperty("id").GetGuid());
     }
 
-    // The service defaults' liveness endpoint is mapped. That it asks nothing outside the process, so it stays healthy while
-    // the database is down, is the recipe's own proof (HostRecipeTests in the Kit's Proving Sample, #52).
+    // The service defaults map /alive in every environment, so the Host is started as it is deployed, in Production,
+    // beside the fixture's, and asked without a token, as an orchestrator's probe asks. /health is for developers: no
+    // endpoint serves it there, so the Host's authenticated-by-default policy answers it. That liveness asks nothing
+    // outside the process, so it stays healthy while the database is down, is the recipe's own proof (HostRecipeTests in
+    // the Kit's Proving Sample, #52).
     [Fact]
     public async Task The_host_answers_alive_through_the_service_defaults()
     {
-        using var client = app.ClientAs();
+        await using var deployed = app.WithWebHostBuilder(builder => builder.UseEnvironment(Environments.Production));
+        using var client = deployed.CreateClient();
 
         var alive = await client.GetAsync("/alive", TestContext.Current.CancellationToken);
+        var health = await client.GetAsync("/health", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, alive.StatusCode);
         Assert.Equal("Healthy", await alive.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(HttpStatusCode.Unauthorized, health.StatusCode);
     }
 
     // Catalog's RemoveProducts declares a permission; without its check registered the Host never builds.

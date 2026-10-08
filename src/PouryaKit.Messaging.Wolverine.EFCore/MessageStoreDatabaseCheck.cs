@@ -10,15 +10,15 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 // Wolverine writes each envelope on the Unit of Work's own connection and transaction, in the store's schema, so a DbContext
 // on another database than the store's writes its Outbox there: the Operation fails when that database holds no store
 // tables, and commits where no delivery reads it when it holds a copy of them. The store's side is the connection string
-// Wolverine was given. The DbContexts are every one AddPouryaKitEfCore made a Unit of Work, through UsePostgres, which names
-// its connection string, or over a DbContext the application registered itself, which may name one. Each DbContext's side is
-// the connection EF Core gives the DbContext itself, created in the check's own scope, whatever configured it, a
-// ConfigureDbContext after UsePostgres included: a connection string (EF Core resolves its named form,
-// Name=ConnectionStrings:app, which UsePostgres writes), a DbConnection or an Npgsql data source. The connection
-// is not opened: nothing connects. The strings are compared on the hosts, ports and database they name; nothing resolves a
-// host name, so localhost and 127.0.0.1 differ. A string that names no database names its user's, as Npgsql and PostgreSQL
-// read it; one that names neither leaves the database to the client's user, which the string does not show, so it fails
-// the build too, asking for the database to be named.
+// Wolverine was given. The DbContexts are every one AddPouryaKitEfCore made a Unit of Work, through UsePouryaKitPostgres,
+// which names its connection string, or over a DbContext the application registered itself, which may name one. Each
+// DbContext's side is the connection EF Core gives the DbContext itself, created in the check's own scope, whatever
+// configured it, a ConfigureDbContext after UsePouryaKitPostgres included: a connection string (EF Core resolves its named
+// form, Name=ConnectionStrings:app, which UsePouryaKitPostgres writes), a DbConnection or an Npgsql data source. The
+// connection is not opened: nothing connects. The strings are compared on the hosts, ports and database they name; nothing
+// resolves a host name, so localhost and 127.0.0.1 differ. A string that names no database names its user's, as Npgsql and
+// PostgreSQL read it; one that names neither leaves the database to the client's user, which the string does not show, so
+// it fails the build too, asking for the database to be named.
 internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, string storeConnectionString) : ICompositionCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
@@ -47,7 +47,7 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
 
             var (stored, fix, together) = connection.Name is { } named
                 ? (
-                    $"UsePostgres stores {connection.DbContext.Name} over the connection string {named}",
+                    $"UsePouryaKitPostgres stores {connection.DbContext.Name} over the connection string {named}",
                     $"Set Database, or at least Username, in the connection string {named}.",
                     "Use one connection string for the message store and every Module's DbContext."
                 )

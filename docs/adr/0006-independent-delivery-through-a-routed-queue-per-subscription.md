@@ -1066,3 +1066,14 @@ delivery failed although the Host started (finding 3).
   `IntegrationEventWiringTests.Building_fails_on_a_type_received_from_another_host_that_no_subscription_handles_naming_subscribe`
   and the renamed `Building_fails_…` tests of `IntegrationEventTests`, `IntegrationEventVersionTests` and
   `IntegrationEventWiringTests`, each red with its check or line switched off.
+
+## Amendment (2026-10-08, ticket #64: the `PouryaKit` prefix on two registrations)
+
+The decision above stands. On 2026-10-08 the owner decided that the two registrations of the Kit without the `PouryaKit`
+prefix take it before the first publication, with no alias and no forwarder: `UsePostgres<TDbContext>`
+(`PouryaKit.Persistence.Postgres`) is now `UsePouryaKitPostgres<TDbContext>`, and `MapUniqueConstraint<TDbContext>`
+(`PouryaKit.Persistence.EFCore`) is now `MapPouryaKitUniqueConstraint<TDbContext>`. Signatures and behaviour are
+unchanged. The text above keeps the former names, as it was written: where it says `UsePostgres`, the code says
+`UsePouryaKitPostgres`, the line `SubscriptionUnitOfWorkCheck` reports names the new call, and the test the amendment
+above cites as `…_naming_use_postgres` is now
+`CompositionCheckTests.A_module_that_subscribes_but_registers_no_unit_of_work_fails_the_host_when_built_naming_use_pouryakit_postgres`.

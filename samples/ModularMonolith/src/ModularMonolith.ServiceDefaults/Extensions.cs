@@ -117,15 +117,22 @@ public static class Extensions
 
     extension(WebApplication app)
     {
-        // Anonymous, since a Kit Host authenticates every endpoint by default. As in Aspire's template, only in
-        // Development: see https://aka.ms/aspire/healthchecks before mapping them in other environments.
+        // /alive in every environment, for an orchestrator's liveness probe, which carries no token. It is anonymous,
+        // since a Kit Host authenticates every endpoint by default, and exempt from rate limiting, since an anonymous
+        // call counts in the Kit limiter's one partition of callers without an Actor, and a probe refused there would
+        // restart a healthy Host. It asks the live checks only, which never leave the process, and answers the status
+        // word alone, so it has no dependency call for a request timeout to bound or an output cache to save.
+        // /health asks each database, so it stays in Development only, where Aspire's template keeps both endpoints:
+        // see https://aka.ms/aspire/healthchecks before mapping it elsewhere, or tagging as live a check that leaves
+        // the process.
         public WebApplication MapDefaultEndpoints()
         {
+            app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions { Predicate = check => check.Tags.Contains(LiveTag) })
+                .AllowAnonymous()
+                .DisableRateLimiting();
             if (app.Environment.IsDevelopment())
             {
                 app.MapHealthChecks(HealthEndpointPath).AllowAnonymous();
-                app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions { Predicate = check => check.Tags.Contains(LiveTag) })
-                    .AllowAnonymous();
             }
 
             return app;

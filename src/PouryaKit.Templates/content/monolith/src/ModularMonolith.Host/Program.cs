@@ -80,7 +80,9 @@ app.UseAuthorization();
 // After authorization: it partitions by the authenticated Actor.
 app.UseRateLimiter();
 app.MapPouryaKitModuleEndpoints();
-// /health and /alive, and the OpenAPI documents with their Scalar reference, are for developers, and public there.
+// /alive in every environment, for an orchestrator's liveness probe: anonymous, outside the rate limit, and with no
+// request timeout or output cache, since it asks nothing outside the process. /health, which asks each database, and
+// the OpenAPI documents with their Scalar reference are for developers: mapped in Development only, and public there.
 app.MapDefaultEndpoints();
 if (app.Environment.IsDevelopment())
 {

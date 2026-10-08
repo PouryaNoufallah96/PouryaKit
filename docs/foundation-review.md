@@ -222,7 +222,7 @@ Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its origi
 
 - `PouryaKit.Domain` has no `IDomainEvent`. A Domain Event derives from the abstract record `DomainEvent`, which
   assigns its `Id` and `OccurredOn` once (ticket #6).
-- The unique-constraint → Error mapping, `MapUniqueConstraint`, lives in `PouryaKit.Persistence.EFCore`;
+- The unique-constraint → Error mapping, `MapPouryaKitUniqueConstraint`, lives in `PouryaKit.Persistence.EFCore`;
   `PouryaKit.Persistence.Postgres` only reads the violated constraint's name from PostgreSQL's error (ticket #11).
 - The typed-ID conventions (G.3) store a typed ID as its value and never make a key database-generated: a numeric
   typed ID the database generates needs `ValueGeneratedOnAdd()` in its entity's own mapping (ticket #8).
@@ -248,8 +248,8 @@ Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its origi
 | Cqrs | Domain, Core | `Microsoft.Extensions.DependencyInjection.Abstractions`, `Logging.Abstractions`; `Microsoft.Extensions.DependencyInjection` and `Microsoft.Extensions.Hosting.Abstractions` (ticket #61, 2026-10-07: the Host's validated container and its composition checks moved here from Modularity, so a Host without Modules installs them through Cqrs's `AddPouryaKitCompositionChecks`; MIT, under the standing rule below) |
 | Validation | Cqrs | FluentValidation |
 | Modularity | Cqrs | `Microsoft.Extensions.Hosting.Abstractions` (`Microsoft.Extensions.DependencyInjection` until ticket #61, 2026-10-07, which moved the validating factory that needed it to Cqrs) |
-| Persistence.EFCore | Cqrs, Core | EF Core Relational; `Microsoft.Extensions.Hosting.Abstractions` (#42 follow-up, 2026-10-07: the idempotency key cleanup is a `BackgroundService`; MIT, under the standing rule below. Wave 2 final review, 2026-10-08: the composition check of each named connection string, `DbContextConnectionsCheck`, moved here from Persistence.Postgres, uses Cqrs's `ICompositionCheck` and `IConfiguration`, which this reference brings; no reference added) |
-| Persistence.Postgres | Persistence.EFCore (ticket #62, 2026-10-08: its composition check of each named connection string uses Cqrs's `ICompositionCheck` through it, and `IConfiguration` through EF Core; no reference added. Ticket #63, 2026-10-08: the record of each DbContext's connection it registers, `DbContextConnection`, is Persistence.EFCore's, so Messaging.Wolverine.EFCore reads it too. Wave 2 final review, 2026-10-08: that check moved to Persistence.EFCore, where the records are made) | Npgsql EF provider, EFCore.NamingConventions |
+| Persistence.EFCore | Cqrs, Core | EF Core Relational; `Microsoft.Extensions.Hosting.Abstractions` (#42 follow-up, 2026-10-07: the idempotency key cleanup is a `BackgroundService`; MIT, under the standing rule below. Wave 2 final review, 2026-10-08: the composition check of each named connection string, `DbContextConnectionsCheck`, moved here from Persistence.Postgres, uses Cqrs's `ICompositionCheck` and `IConfiguration`, which this reference brings; no reference added. Ticket #64, 2026-10-08, the owner's decision: its registration `MapUniqueConstraint` is renamed `MapPouryaKitUniqueConstraint`, with no alias, so every registration of the Kit carries the prefix; no reference changed) |
+| Persistence.Postgres | Persistence.EFCore (ticket #62, 2026-10-08: its composition check of each named connection string uses Cqrs's `ICompositionCheck` through it, and `IConfiguration` through EF Core; no reference added. Ticket #63, 2026-10-08: the record of each DbContext's connection it registers, `DbContextConnection`, is Persistence.EFCore's, so Messaging.Wolverine.EFCore reads it too. Wave 2 final review, 2026-10-08: that check moved to Persistence.EFCore, where the records are made. Ticket #64, 2026-10-08, the owner's decision: its registration `UsePostgres` is renamed `UsePouryaKitPostgres`, with no alias, so every registration of the Kit carries the prefix; no reference changed) | Npgsql EF provider, EFCore.NamingConventions |
 | Persistence.Dapper | Cqrs, Core (#35, 2026-10-07: Cqrs for the Page types; Domain comes through Cqrs) | Dapper, Npgsql (ADO.NET driver only, no EF), `Microsoft.Extensions.Configuration.Abstractions`, `Microsoft.Extensions.DependencyInjection.Abstractions` |
 | Messaging | Domain (handlers return `Result`) | none |
 | Messaging.Wolverine | Cqrs, Messaging, Core | WolverineFx |
@@ -271,7 +271,7 @@ Amended on 2026-10-05, each addition MIT and already present in every Host:
   the validating factory in ticket #61 (2026-10-07), as the table records; `AddPouryaKitModules` turns them on through
   Cqrs's `AddPouryaKitCompositionChecks`.*
 - Persistence.Dapper references `Microsoft.Extensions.Configuration.Abstractions` (owner, ticket #9): the read
-  connection is registered by connection name, as `UsePostgres` is. It also references
+  connection is registered by connection name, as `UsePouryaKitPostgres` is. It also references
   `Microsoft.Extensions.DependencyInjection.Abstractions` explicitly (owner, ticket #9 review): its registration call
   on a Module's builder needs it, and the transitive copy Npgsql brings is not the pinned version. Its closure still
   holds no EF Core.
@@ -484,7 +484,7 @@ public sealed class CatalogModule : IModuleDefinition
     public string Name => "catalog";
     public void Configure(ModuleBuilder module)
     {
-        module.UsePostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
+        module.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
         module.AddFeaturesFrom(typeof(CatalogModule).Assembly);   // handlers, validators, endpoints, repositories
         module.Publish<ProductRenamedV1>("catalog.product-renamed.v1");
         module.PublishSnapshot<Product, ProductSnapshotV1>("catalog.product-snapshot.v1");

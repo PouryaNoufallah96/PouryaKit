@@ -23,8 +23,8 @@ internal sealed class SubscriptionUnitOfWorkCheck : ICompositionCheck
 
             var names = string.Join(", ", owned.Select(subscription => subscription.Name).Order(StringComparer.Ordinal));
             yield return module is null
-                ? $"The application has the subscriptions {names} but registers no Unit of Work, so each of their deliveries would fail before its handler runs. Register the Unit of Work of a persistence package, for example with UsePostgres."
-                : $"{module.Name} has the subscriptions {names} but registers no Unit of Work, so each of their deliveries would fail before its handler runs. Declare its data in its Composition Root, for example with UsePostgres.";
+                ? $"The application has the subscriptions {names} but registers no Unit of Work, so each of their deliveries would fail before its handler runs. Register the Unit of Work of a persistence package, for example with UsePouryaKitPostgres."
+                : $"{module.Name} has the subscriptions {names} but registers no Unit of Work, so each of their deliveries would fail before its handler runs. Declare its data in its Composition Root, for example with UsePouryaKitPostgres.";
         }
     }
 

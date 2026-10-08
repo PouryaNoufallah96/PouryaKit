@@ -36,7 +36,7 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
-            $"UsePostgres stores StubDbContext over the connection string app, the database {module.Host}:{module.Port}/module, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database {store.Host}:{store.Port}/{store.Database}, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
+            $"UsePouryaKitPostgres stores StubDbContext over the connection string app, the database {module.Host}:{module.Port}/module, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database {store.Host}:{store.Port}/{store.Database}, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
             thrown.Message
         );
     }
@@ -59,7 +59,7 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
-            $"UsePostgres stores StubDbContext over the connection string app, the database {moduleDatabase}, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database {storeDatabase}, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
+            $"UsePouryaKitPostgres stores StubDbContext over the connection string app, the database {moduleDatabase}, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database {storeDatabase}, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
             thrown.Message
         );
     }
@@ -84,7 +84,7 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
-            "UsePostgres stores StubDbContext over the connection string app, which names neither a database nor a user, so its database is left to the client's user and cannot be compared with the message store's, the database db:5432/app. Set Database, or at least Username, in the connection string app.",
+            "UsePouryaKitPostgres stores StubDbContext over the connection string app, which names neither a database nor a user, so its database is left to the client's user and cannot be compared with the message store's, the database db:5432/app. Set Database, or at least Username, in the connection string app.",
             thrown.Message
         );
     }
@@ -112,13 +112,13 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
-            "UsePostgres stores StubDbContext over the connection string app, the database db:5432/elsewhere, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database db:5432/app, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
+            "UsePouryaKitPostgres stores StubDbContext over the connection string app, the database db:5432/elsewhere, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database db:5432/app, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
             thrown.Message
         );
     }
 
-    // EF Core gives a DbContext moved onto an Npgsql data source the source's connection, whether the string UsePostgres
-    // wrote was cleared first or left in place, unused.
+    // EF Core gives a DbContext moved onto an Npgsql data source the source's connection, whether the string
+    // UsePouryaKitPostgres wrote was cleared first or left in place, unused.
     [Fact]
     public void A_dbcontext_moved_onto_a_data_source_on_another_database_fails_the_host_when_built_naming_it()
     {
@@ -129,7 +129,7 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
-            "UsePostgres stores StubDbContext over the connection string app, the database db:5432/elsewhere, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database db:5432/app, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
+            "UsePouryaKitPostgres stores StubDbContext over the connection string app, the database db:5432/elsewhere, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database db:5432/app, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
             thrown.Message
         );
     }
@@ -166,7 +166,7 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
             ["--environment", "Production", "--ConnectionStrings:app=Host=db;Database=app"]
         );
-        builder.Services.UsePostgres<KeylessModelContext>(connectionName: "app", schema: "keyless");
+        builder.Services.UsePouryaKitPostgres<KeylessModelContext>(connectionName: "app", schema: "keyless");
         builder.UsePouryaKitWolverine(connectionName: "app");
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
@@ -208,8 +208,8 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         );
     }
 
-    // A name AddPouryaKitEfCore records is checked without UsePostgres too, and the store's check leaves it to that line
-    // (final review D, F1).
+    // A name AddPouryaKitEfCore records is checked without UsePouryaKitPostgres too, and the store's check leaves it to that
+    // line (final review D, F1).
     [Fact]
     public void A_connection_name_add_pouryakit_ef_core_records_and_the_configuration_lacks_fails_the_host_when_built_naming_its_key()
     {
@@ -231,7 +231,7 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
 
     // A DbContext the application registered itself names no connection string, so the check of named ones passes it by.
     [Fact]
-    public void A_dbcontext_the_application_registered_on_the_message_stores_database_builds_beside_use_postgres()
+    public void A_dbcontext_the_application_registered_on_the_message_stores_database_builds_beside_use_pouryakit_postgres()
     {
         var builder = Compose(app.ConnectionString, app.ConnectionString);
         builder.Services.AddDbContext<ReadCollectionDbContext>(options => options.UseNpgsql(app.ConnectionString));
@@ -245,7 +245,7 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
             ["--environment", "Production", $"--ConnectionStrings:app={module}", $"--ConnectionStrings:messages={store}"]
         );
-        builder.Services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         builder.UsePouryaKitWolverine(connectionName: "messages");
         return builder;
     }

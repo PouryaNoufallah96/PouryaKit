@@ -83,7 +83,7 @@ dotnet run --project src/Acme.Shop.Host
 
 - The Host applies no migrations at startup; they are the Host's, as [persistence.md](persistence.md) says.
 - Without `Authentication:Schemes:Bearer` the Host does not start. `dotnet user-jwts create` fills it for development and prints a token; in production, configure the issuer, audiences and signing keys of the real identity provider.
-- The `http` launch profile runs in Development on `http://localhost:5080`, where `/health`, `/alive`, the OpenAPI documents and the Scalar reference are mapped. A token's `sub` is the Actor, its `tenant` the tenant, and its `permission` claims the Actor's permissions.
+- The `http` launch profile runs in Development on `http://localhost:5080`, where `/health`, the OpenAPI documents and the Scalar reference are mapped, beside `/alive`, which every environment maps. A token's `sub` is the Actor, its `tenant` the tenant, and its `permission` claims the Actor's permissions.
 
 ## The smoke test
 
@@ -91,7 +91,7 @@ dotnet run --project src/Acme.Shop.Host
 
 - A category and a product created over HTTP, the product with an `Idempotency-Key`: 201 with its id and versioned location; the same key again answers the same status, body and location, and the filtered, sorted list still has one product.
 - `Program` hands its command line to JasperFx, which reads the factory's settings as no command it knows, so the fixture sets `JasperFxEnvironment.AutoStartHost`: JasperFx then starts the Host first (Wolverine's integration testing guide).
-- `/alive` answers 200 through the service defaults. That it asks nothing outside the process, so it stays healthy while the database is down, is the recipe's own proof (`HostRecipeTests` in the Proving Sample, #52).
+- `/alive` answers 200 `Healthy` through the service defaults, to a caller without a token, from the Host started a second time in Production, as it is deployed; `/health` answers 401 there, since the service defaults map it in Development only. That liveness asks nothing outside the process, so it stays healthy while the database is down, is the recipe's own proof (`HostRecipeTests` in the Proving Sample, #52).
 - Composed with a `ConnectionStrings:broker` value, the Host joins the broker under its derived service name (below). The test builds it with no hosted service running, so no broker is needed.
 - With the permission checks removed from the registrations, the Host does not build: `RemoveProductsCommand declares RequiresPermissionAttribute, but its check is not registered`.
 - The modular monolith adds one cross-Module effect: a product Catalog creates opens its stock item in Inventory's schema.
@@ -104,7 +104,7 @@ dotnet test --project tests/Acme.Shop.Tests/Acme.Shop.Tests.csproj
 
 - `src/Acme.Shop.ServiceDefaults` is the application's own copy of the service defaults recipes: OpenTelemetry with OTLP export when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, liveness and readiness, service discovery, one resilience pipeline for every `HttpClient`, and Serilog. Change or drop any of them there ([host-recipes.md](host-recipes.md)).
 - The `downstream` client takes its resilience from the defaults and adds only `AddPouryaKitOperationContext()`. A client that needs other limits removes the default pipeline first, as [host-recipes.md](host-recipes.md#one-resilience-pipeline) shows; adding `AddPouryaKitResilience()` on top would stack a second pipeline, which the Kit refuses when the client is created.
-- `/alive` asks nothing outside the process; `/health` also asks each database.
+- `/alive` asks nothing outside the process and is mapped in every environment, anonymous and exempt from the rate limit, for an orchestrator's liveness probe. `/health` also asks each database and is mapped in Development only. Why `/alive` carries no request timeout or output cache, and what a Host that maps more takes from Aspire's guidance, is in [host-recipes.md](host-recipes.md#liveness-and-readiness).
 - Redis (`ConnectionStrings:cache`) and RabbitMQ (`ConnectionStrings:broker`) are off until configured. With a broker, the Host's queue, its service name on the broker, is the project's name lower-cased, each run of characters other than letters and digits a hyphen: `-n Acme.Shop` gives `acme-shop`. The template's `serviceName` symbol derives it, because a queue name takes only letters and digits in segments joined by single dots or hyphens, and the Host refuses any other name as it is composed (`UsePouryaKitRabbitMq`). A name with no letter or digit gives none, and another kind of Host on the same broker needs a name of its own; another Host that receives Catalog's events declares them as [rabbitmq.md](rabbitmq.md#a-host-that-receives) shows.
 - CORS policies (`PouryaKit:Web:Cors`), compression (`PouryaKit:Web:Compression`), the rate limit (`PouryaKit:Web:RateLimit`), trusted peers (`PouryaKit:TrustedPeers`) and idempotency key retention (`PouryaKit:Idempotency`) are read from configuration; none is set.
 

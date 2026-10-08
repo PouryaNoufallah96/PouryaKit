@@ -20,7 +20,7 @@ public sealed class CodeGenerationTests(AppFixture app)
         var connectionString = new NpgsqlConnectionStringBuilder(app.ConnectionString) { Database = database }.ConnectionString;
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production", $"--ConnectionStrings:app={connectionString}"]);
         // The Unit of Work the Kit's deliveries record their Receipts in: the Kit's container is validated when it is built.
-        builder.Services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         builder.UsePouryaKitWolverine(connectionName: "app", configure: wolverine => wolverine.Discovery.IncludeType<PingedHandler>());
         using var host = builder.Build();
 

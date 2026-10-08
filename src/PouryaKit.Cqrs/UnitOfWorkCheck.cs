@@ -27,7 +27,7 @@ internal sealed class UnitOfWorkCheck : ICompositionCheck
         return command is null || unkeyed.Any(descriptor => descriptor.ServiceType == typeof(IUnitOfWork))
             ? []
             : [
-                $"The Host handles the command {command.FullName} but registers no Unit of Work, so the command would fail when it runs. Register the Unit of Work of a persistence package, for example with UsePostgres.",
+                $"The Host handles the command {command.FullName} but registers no Unit of Work, so the command would fail when it runs. Register the Unit of Work of a persistence package, for example with UsePouryaKitPostgres.",
             ];
     }
 }

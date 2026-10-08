@@ -23,9 +23,10 @@ public static class CqrsHostApplicationBuilderExtensions
         /// <see cref="InvalidOperationException"/> in the same shape. It also registers the dispatcher.
         /// <c>AddPouryaKitModules</c> and <c>UsePouryaKitWolverine</c> call it; another Host calls it after any
         /// <c>ConfigureContainer</c> of its own, since a later <c>ConfigureContainer</c> replaces the container it
-        /// installs, which skips the validation and both moments' checks, and the Host then fails when it starts, naming
-        /// the call. A Host that registers the dispatcher, as every Kit Host does, but never calls it fails when it
-        /// starts too, naming this call: no Kit Host runs without its checks. Calling it again changes nothing.
+        /// installs, which skips the validation, the composition checks and the startup checks, and the Host then fails
+        /// when it starts, naming the call. A Host that registers the dispatcher, as every Kit Host does, but never calls
+        /// it fails when it starts too, naming this call: no Kit Host runs without its checks. Calling it again changes
+        /// nothing.
         /// </summary>
         public IHostApplicationBuilder AddPouryaKitCompositionChecks()
         {

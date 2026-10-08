@@ -32,8 +32,8 @@ public static class CatalogModule
         public IServiceCollection AddCatalog()
         {
             var catalog = typeof(CatalogModule).Assembly;
-            services.UsePostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
-            services.MapUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
+            services.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
+            services.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
             services.AddPouryaKitDapper(connectionName: "app", catalog);
             services.AddPouryaKitCqrs(catalog);
             services.AddPouryaKitValidation(catalog);
