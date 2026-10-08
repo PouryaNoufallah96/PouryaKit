@@ -24,13 +24,14 @@ public static class CqrsHostApplicationBuilderExtensions
         /// <c>AddPouryaKitModules</c> and <c>UsePouryaKitWolverine</c> call it; another Host calls it after any
         /// <c>ConfigureContainer</c> of its own, since a later <c>ConfigureContainer</c> replaces the container it
         /// installs, which skips the validation and both moments' checks, and the Host then fails when it starts, naming
-        /// the call. Calling it again changes nothing.
+        /// the call. A Host that registers the dispatcher, as every Kit Host does, but never calls it fails when it
+        /// starts too, naming this call: no Kit Host runs without its checks. Calling it again changes nothing.
         /// </summary>
         public IHostApplicationBuilder AddPouryaKitCompositionChecks()
         {
             ArgumentNullException.ThrowIfNull(builder);
             CqrsServiceCollectionExtensions.AddDispatcher(builder.Services);
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, CompositionCheckRunner>());
+            builder.Services.TryAddSingleton<CompositionChecksInstalled>();
             builder.ConfigureContainer(new ValidatingServiceProviderFactory());
             return builder;
         }

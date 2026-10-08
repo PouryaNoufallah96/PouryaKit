@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using PouryaKit.Core;
 
 namespace PouryaKit.Cqrs;
@@ -128,6 +129,9 @@ public static class CqrsServiceCollectionExtensions
         // even when no Composition Root calls AddPouryaKitCqrs.
         services.TryAddScoped(provider => new DomainEventDrain(provider, provider.GetRequiredService<Operation>()));
         services.TryAddSingleton(TimeProvider.System);
+        // Every Kit Host reaches the dispatcher, so every Kit Host that starts runs the runner, which fails when the
+        // Host never installed AddPouryaKitCompositionChecks: no Kit Host is silently without its checks.
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, CompositionCheckRunner>());
         // Run by the Host's AddPouryaKitCompositionChecks when its container is built.
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, DeclaredAuthorizersCheck>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, QueryCacheCheck>());
