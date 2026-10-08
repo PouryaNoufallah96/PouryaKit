@@ -1,0 +1,21 @@
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_bdf0617f846b2b::t_e58e33cfc1f44a 23
+.claude/agent-memory/kit-implementer/template-package-facts.md
+  s_bdf0617f846b2b::t_289e8fbd19b115 20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "858e2f3c3b5fdcd80c67a05b1b8c558ce6889501",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
