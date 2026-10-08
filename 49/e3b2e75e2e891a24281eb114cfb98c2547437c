@@ -1,0 +1,31 @@
+.editorconfig
+  s_75dee3f51db59e::t_6b02c5bf220b1c 34-40
+Directory.Build.props
+  s_75dee3f51db59e::t_2d6e5e6c302555 9-13
+docs/packages.md
+  s_75dee3f51db59e::t_fe8f236e84aac2 19
+src/PouryaKit.Messaging.Wolverine/DelayedCommandServiceCollectionExtensions.cs
+  s_75dee3f51db59e::t_682ddfaee54cb1 32,57,70
+src/PouryaKit.Messaging.Wolverine/IntegrationEventServiceCollectionExtensions.cs
+  s_75dee3f51db59e::t_a8ae1e19f555e3 35,84
+src/PouryaKit.Messaging.Wolverine/NotificationHandlerServiceCollectionExtensions.cs
+  s_75dee3f51db59e::t_9e64be1d73f97a 38
+src/PouryaKit.Messaging.Wolverine/SnapshotServiceCollectionExtensions.cs
+  s_75dee3f51db59e::t_59cdb0ec573aec 46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "49e3b2e75e2e891a24281eb114cfb98c2547437c",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
