@@ -1,0 +1,51 @@
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 3,8,26-27,30
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_4f44a41d89c3b1::t_0f86cee5d1cbf3 1
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-15
+.claude/agent-memory/kit-implementer/core-json-and-architecture-test-facts.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-3,8-45,60-70
+.claude/agent-memory/kit-implementer/integration-event-wire-and-rabbitmq-facts.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-3,8-10,23-70
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-3,8-10,16,23-47
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-3,10-11,17-37,41-57,61-80
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-3,8-67,79-85,87-88
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-3,8-35,50-88
+.claude/agent-memory/kit-implementer/composition-check-facts.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-3,8-35,50-58
+.claude/agent-memory/kit-implementer/caching-and-idempotency-facts.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-3,8-39,55-56
+.claude/agent-memory/kit-implementer/observability-tracing-and-http-facts.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-3,8-40,54-55
+.claude/agent-memory/kit-implementer/merge-ci-and-workflow-tooling-facts.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-3,8-19,31-32
+.claude/agent-memory/kit-implementer/cqrs-and-modularity-facts.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-3,8-13,15-25,37-56
+  s_4f44a41d89c3b1::t_0f86cee5d1cbf3 14
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-3,8-40,58-69
+.claude/agent-memory/kit-implementer/snapshot-and-scheduled-command-facts.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-3,8-10,27-61
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_4f44a41d89c3b1::t_01f3dcf47acf65 2-3,8,10,19-60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "796f342a8a45a7e3e30e013231d569825b2ffd04",
+  "prompts": {},
+  "sessions": {
+    "s_4f44a41d89c3b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "876ff07b-1f33-4cd5-86a7-a6eda87eb025",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": null
+    }
+  }
+}
