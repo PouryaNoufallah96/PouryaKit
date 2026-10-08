@@ -4,7 +4,7 @@ Spec #1's Testing Decisions list the Gateway-seam acceptance scenarios, from pla
 
 The plan row is the B.1 behaviour the Phase acceptance line cites, or the Phase when it cites none.
 
-The Wave 2 sections without a `validate.py` PASS line (#37, #38, #44, #56, #57), and the PASS lines older than their section's last source change, are covered by the integrated runs: the close-out's final `validate.py` run on the `feat/wave-2` tip, which #54's closing comment cites, is the package record for all of them.
+The Wave 2 sections without a `validate.py` PASS line (among them #37, #38, #44, #56, #57 and the #54 packages), and the PASS lines older than their section's last source change, are covered by the integrated runs: the close-out's final `validate.py` run on the `feat/wave-2` tip, which #54's closing comment cites, is the package record for all of them.
 
 | Scenario | Plan row | Proven by | Notes |
 |---|---|---|---|
@@ -773,7 +773,7 @@ the generated smoke test.
 A recorded limitation, from the #62 re-score: a Host made of `AddPouryaKitWeb` alone, with no Cqrs registration,
 registers no check runner. The runner comes with the dispatcher's registration (`AddDispatcher` in
 `src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs`), which only `AddPouryaKitCqrs` and
-`AddPouryaKitCompositionChecks` make, so such a Host starts with its startup checks unrun, `UnmappedApiVersionsCheck`
+`AddPouryaKitCompositionChecks` make, so such a Host starts with its startup checks unrun, `UnmappedEndpointsCheck`
 included. It runs nothing degraded: each Module route group begins the request's Operation
 (`src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs`), and `BeginOperation` resolves the `Operation` only that
 registration adds, so the Host fails at its first request instead.

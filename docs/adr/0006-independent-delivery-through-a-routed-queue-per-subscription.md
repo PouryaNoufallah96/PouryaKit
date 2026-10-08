@@ -711,7 +711,7 @@ These follow from reading the Kit's code at `0e48945`; the Spike used stand-ins 
 - **The startup check.** `src/PouryaKit.Messaging.Wolverine/StartupCheck.cs:29-42` checks only the local queues. It
   should also require a durable Inbox on the broker listener. *Done in #51 ("Implemented", below); the file is
   `DurableQueuesCheck.cs` since #62 (2026-10-08), which moved its Outbox part to the composition check `OutboxCheck`
-  and keeps the queue and broker-listener checks at Wolverine's `StartedAsync`.*
+  and keeps the queue and broker-listener checks at the Host's `StartedAsync` (its own `IHostedLifecycleService`), once Wolverine has started.*
 - **A wire name a Host both publishes and subscribes to** must not be bound to that Host's broker queue. Its local
   routes already deliver it. Bound, it would come back from the broker and be delivered twice, and only the Receipt
   would stop it. The fan-out's `PublishAsync` would also reach the exchange again, through the Host's own broker
