@@ -13,8 +13,10 @@ the first comment's body without the reviewers' boilerplate: HTML comments, cubi
 Codex's reaction line and its `<sub>` badge, whose priority is kept as `P2:`. Its last line counts them.
 
 reply-resolve reads a JSON list of `{"thread": <thread id>, "comment": <first comment's id>, "body": <reply>}`, the two
-ids as list prints them. For each it posts the reply, then resolves the thread, and prints one line with the outcome; a
-thread whose reply failed is left unresolved. Exits 1 if any failed.
+ids as list prints them. Before it posts anything it checks every entry against the pull request's threads: the thread
+must be one of them and the comment its first comment, the only one a reply can answer; one entry that is not refuses
+the whole file, as a malformed one does. For each entry it then posts the reply, resolves the thread and prints one
+line with the outcome; a thread whose reply failed is left unresolved. Exits 1 if any failed.
 
 wait polls until no check is running and Codex's summary comment shows no review running, on two polls in a row,
 because a check or review requested a moment ago is not listed yet. It reads what GitHub concluded for each check of
@@ -116,6 +118,10 @@ def read_replies(path: Path) -> list[dict]:
 
 
 def reply_resolve(repo: str, pr: int, replies: list[dict]) -> int:
+    # The reply goes to a comment and the resolution to a thread, so a pair that is not one thread's answers one and closes another.
+    first = {thread["id"]: thread["comments"]["nodes"][0]["databaseId"] for thread in threads(repo, pr)}
+    if mispaired := [f"{reply['thread']} with comment {reply['comment']}" for reply in replies if first.get(reply["thread"]) != int(reply["comment"])]:
+        raise ValueError(f"nothing was posted: no review thread of #{pr} has that id and that first comment: {', '.join(mispaired)}")
     failed = 0
     for reply in replies:
         done = gh("api", "--method", "POST", f"repos/{repo}/pulls/{pr}/comments/{reply['comment']}/replies", "-f", f"body={reply['body']}")
