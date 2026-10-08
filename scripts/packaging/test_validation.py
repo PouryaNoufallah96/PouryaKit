@@ -56,6 +56,67 @@ class HistoryTests(unittest.TestCase):
             self.assertFalse((Path(folder) / "history.json").exists())
 
 
+class SinceTests(unittest.TestCase):
+    EXEMPT = ["docs/acceptance.md", "docs/agents/ai-setup.md", ".agents/scripts/check-docs.py", ".claude/agent-memory/kit-implementer/MEMORY.md",
+              ".codex/agents/kit-implementer.toml", ".githooks/pre-commit", "AGENTS.md", "CLAUDE.md", "GLOSSARY.md", "README.md", "skills-lock.json"]
+
+    def test_only_documentation_and_the_ai_setup_need_no_validation(self):
+        self.assertEqual([], validate.needing_validation(self.EXEMPT))
+        for path in ("src/PouryaKit.Domain/Result.cs", "samples/ModularMonolith/src/ModularMonolith.Host/Program.cs",
+                     "tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs", "tests/ModularMonolith.Tests/CachingTests.cs",
+                     "scripts/packaging/validate.py", "scripts/packaging/inventory.json", "THIRD-PARTY-NOTICES.md", "LICENSE",
+                     "Directory.Build.props", "Directory.Build.targets", "Directory.Packages.props", "global.json", "nuget.config",
+                     "PouryaKit.slnx", ".config/dotnet-tools.json", ".editorconfig", ".github/workflows/package-validation.yml",
+                     "docs.md", "src/PouryaKit.Templates/content/shared/README.md", "a-new-directory/file.txt"):
+            with self.subTest(path=path):
+                self.assertEqual([path], validate.needing_validation([*self.EXEMPT, path]))
+
+    def test_the_validation_runs_unless_every_committed_uncommitted_and_untracked_change_is_exempt(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+
+            def git(*arguments):
+                subprocess.run(["git", "-C", folder, "-c", "user.name=Proof", "-c", "user.email=proof@example.invalid",
+                                "-c", "core.hooksPath=/dev/null", *arguments], check=True, capture_output=True)
+
+            def write(path, text):
+                (root / path).parent.mkdir(parents=True, exist_ok=True)
+                (root / path).write_text(text)
+
+            def exit_code(*arguments):
+                with patch.object(validate, "ROOT", root), patch.object(validate, "validate") as full, \
+                        patch("sys.argv", ["validate.py", "--no-fetch", "--output", str(root / "evidence"), *arguments]):
+                    return validate.main(), full.called
+
+            def changed(ref):
+                with patch.object(validate, "ROOT", root):
+                    return validate.changed_since(ref)
+
+            git("init", "-q")
+            write("docs/guide.md", "# Guide\n")
+            write("src/Kit/A.cs", "class A;\n")
+            write("old/name.txt", "moved\n")
+            git("add", "-A")
+            git("commit", "-q", "-m", "base")
+            self.assertEqual((0, False), exit_code("--since", "HEAD"))
+            write("docs/guide.md", "# Guide\n\nMore.\n")
+            git("commit", "-q", "-am", "docs")
+            write("AGENTS.md", "# Agents\n")
+            self.assertEqual(["AGENTS.md", "docs/guide.md"], changed("HEAD~1"))
+            self.assertEqual((0, False), exit_code("--since", "HEAD~1"))
+            self.assertEqual((0, True), exit_code())
+            write("scripts/new.py", "pass\n")
+            self.assertEqual((0, True), exit_code("--since", "HEAD~1"))
+            (root / "scripts/new.py").unlink()
+            write("src/Kit/A.cs", "class A { }\n")
+            self.assertEqual((0, True), exit_code("--since", "HEAD~1"))
+            git("checkout", "-q", "--", "src/Kit/A.cs")
+            git("mv", "old/name.txt", "docs/name.txt")
+            self.assertEqual(["AGENTS.md", "docs/guide.md", "docs/name.txt", "old/name.txt"], changed("HEAD~1"))
+            self.assertEqual((1, False), exit_code("--since", "no-such-ref"))
+            self.assertFalse((root / "evidence").exists())
+
+
 class InventoryTests(unittest.TestCase):
     def test_inventory_is_nonempty_and_exact(self):
         expected = [{"id": "PouryaKit.Domain"}]
