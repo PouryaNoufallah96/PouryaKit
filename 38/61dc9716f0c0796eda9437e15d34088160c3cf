@@ -1,0 +1,22 @@
+tests/ModularMonolith.Tests/MessageStoreDatabaseTests.cs
+  s_bdf0617f846b2b::t_0ce098868f57da 53
+  s_bdf0617f846b2b::t_3ca1c370e09594 16-20,23-26,31,33-35,38-39,47-48,52,57-60,64,68-69,72,79-98,108,110,121,124,126,130,132
+  s_bdf0617f846b2b::t_e2f0ea49a82e8e 32,36-37,63
+  s_bdf0617f846b2b::t_12e5291ff2d5d1 1-15,21-22,27-30,40-46,49-51,54-56,61-62,65-67,70-71,73-78,99-107,109,111-120,122-123,125,127-129,131,133-136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3861dc9716f0c0796eda9437e15d34088160c3cf",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
