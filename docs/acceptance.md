@@ -896,3 +896,7 @@ would fail. Set ConnectionStrings:missing, or name a connection the Host configu
 
 Verify on the fix: `dotnet build PouryaKit.slnx` (0 warnings); `MisconfiguredHostTests` 13, `MessageStoreDatabaseTests` 19,
 `ModularMonolith.Tests` 538, `PouryaKit.ArchitectureTests` 98, all passed; `check-ai-setup.py` 0 failures.
+
+`python3 scripts/packaging/validate.py --no-fetch` on the second fix round's commit `5f6c6c8` (before this paragraph was
+added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4,
+template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof.` at version `0.1.0-preview.0.122`.
