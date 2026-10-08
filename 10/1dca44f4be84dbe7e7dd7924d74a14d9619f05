@@ -1,0 +1,66 @@
+docs/acceptance.md
+  s_bdf0617f846b2b::t_83ff28cccb8dac 655-656
+  s_bdf0617f846b2b::t_ed19b1d6d283f2 637,647
+.agents/skills/pourya-kit/SKILL.md
+  s_bdf0617f846b2b::t_63b05b285e68f5 41
+.agents/skills/pourya-kit/references/caching.md
+  s_bdf0617f846b2b::t_a35d12971380ff 28
+.agents/skills/pourya-kit/references/messaging.md
+  s_bdf0617f846b2b::t_441991abdf0d04 29,81,180,283,431,611,688,698,700-701
+.agents/skills/pourya-kit/references/modules.md
+  s_bdf0617f846b2b::t_52e34c8771e1b2 9,122,130-131,133,136
+.agents/skills/pourya-kit/references/openapi.md
+  s_bdf0617f846b2b::t_33fbad49d1a7ca 58,63-64
+.agents/skills/pourya-kit/references/persistence.md
+  s_bdf0617f846b2b::t_d3fa320a6545e7 97
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_bdf0617f846b2b::t_6d58d597bc9a7c 13,136,138
+.agents/skills/pourya-kit/references/security.md
+  s_bdf0617f846b2b::t_07e1386d1bc869 44
+.agents/skills/pourya-kit/references/templates.md
+  s_bdf0617f846b2b::t_2f8bb1b29cc790 37,43
+.agents/skills/pourya-kit/references/web.md
+  s_bdf0617f846b2b::t_fc8372072e490f 138
+.claude/agent-memory/kit-implementer/misconfigured-host-facts.md
+  s_bdf0617f846b2b::t_28ab13850232fe 20
+GLOSSARY.md
+  s_bdf0617f846b2b::t_c7b242ae8c2449 44
+docs/adr/0002-no-mediator-dependency.md
+  s_bdf0617f846b2b::t_6abe3bccd36746 301-302
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_1b42fd7e7789ec 286,506,566,630
+docs/provenance/PouryaKit.Persistence.Dapper.md
+  s_bdf0617f846b2b::t_b2672d47f4d7cf 5
+docs/provenance/PouryaKit.Persistence.Postgres.md
+  s_bdf0617f846b2b::t_cdc3935b5c197b 5
+src/PouryaKit.Cqrs/CompositionCheckRunner.cs
+  s_bdf0617f846b2b::t_02d179c9b6eacf 6-11,19-21,37-40
+src/PouryaKit.Cqrs/CqrsHostApplicationBuilderExtensions.cs
+  s_bdf0617f846b2b::t_fda6c77dd20c52 27-28,34
+src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_76c82855b9390c 4,132-134
+src/PouryaKit.Web/ActorRateLimiting.cs
+  s_bdf0617f846b2b::t_1f2865acfa2b68 85-89,92-95
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_aa36ef50177d64 43-44
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_bdf0617f846b2b::t_88687155e504c1 1,55-86
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_bdf0617f846b2b::t_8684818a9633fb 264-287,345,357-361
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "101dca44f4be84dbe7e7dd7924d74a14d9619f05",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
