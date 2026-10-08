@@ -1,6 +1,6 @@
 ---
 name: publication-feed-facts
-description: #54 publication package - dotnet new install ignores source mapping, reads only the working folder's NuGet.Config for credentials, a template PackageReference restores silently, running a workflow step locally
+description: Ticket #54 publication facts - dotnet new install ignores source mapping, reads only the working folder's NuGet.Config for credentials, a template PackageReference restores silently, running a workflow step locally
 metadata:
   type: project
 ---
