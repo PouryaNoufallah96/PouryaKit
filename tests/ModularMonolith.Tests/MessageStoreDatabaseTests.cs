@@ -63,11 +63,12 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         );
     }
 
-    // Read as Npgsql reads them: a database named as the other side's user is that user's, and a string that names neither
-    // a database nor a user leaves its database unknown, which is not compared.
+    // Read as Npgsql reads them: a database named as the other side's user is that user's, a string that names neither a
+    // database nor a user leaves its database unknown, which is not compared, and a port inside the host is a number.
     [Theory]
     [InlineData("Host=db;Database=app;Username=catalog", "Host=db;Username=app")]
     [InlineData("Host=db", "Host=db;Database=app")]
+    [InlineData("Host=db;Port=5432;Database=app", "Host=db:05432;Database=app")]
     public void Two_strings_npgsql_reads_as_one_database_build(string module, string store)
     {
         using var host = Compose(module, store).Build();

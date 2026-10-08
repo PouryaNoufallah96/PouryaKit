@@ -70,38 +70,53 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
             : null;
     }
 
-    // A database is its server's hosts, each with its port, Npgsql's default when the string names none, and its name, null
-    // when unknown.
-    private sealed record PostgresDatabase(string Hosts, string? Name)
+    // A database is its servers, each a host and a port, in order, and its name, null when unknown.
+    private sealed record PostgresDatabase(IReadOnlyList<(string Host, int Port)> Servers, string? Name)
     {
         public static PostgresDatabase Of(string connectionString)
         {
             var settings = new NpgsqlConnectionStringBuilder(connectionString);
-            var hosts = (settings.Host ?? "")
-                .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-                .Select(host =>
-                    IsUnixSocket(host) ? $"{host}:{settings.Port}" : (HasPort(host) ? host : $"{host}:{settings.Port}").ToLowerInvariant()
-                )
-                .Order(StringComparer.Ordinal);
-            return new(string.Join(',', hosts), settings.Database ?? settings.Username);
+            return new(
+                [
+                    .. (settings.Host ?? "")
+                        .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                        .Select(host => Server(host, settings.Port))
+                        .OrderBy(server => server.Host, StringComparer.Ordinal)
+                        .ThenBy(server => server.Port),
+                ],
+                settings.Database ?? settings.Username
+            );
         }
 
-        public bool Matches(PostgresDatabase other) => Hosts == other.Hosts && (Name is null || other.Name is null || Name == other.Name);
+        public bool Matches(PostgresDatabase other) =>
+            Servers.SequenceEqual(other.Servers) && (Name is null || other.Name is null || Name == other.Name);
 
-        public override string ToString() => Name is null ? Hosts : $"{Hosts}/{Name}";
-
-        // Npgsql's reading of a host (NpgsqlConnectionStringBuilder.IsUnixSocket): a rooted path, or one starting with @, is
-        // the directory of a Unix socket, whose name the separate port completes; its case is kept and no port is split off.
-        private static bool IsUnixSocket(string host) => Path.IsPathRooted(host) || host.StartsWith('@');
-
-        // Npgsql's reading of any other host (NpgsqlConnectionStringBuilder.TrySplitHostPort): its last colon starts a port
-        // unless the host is a bare IPv6 address.
-        private static bool HasPort(string host)
+        public override string ToString()
         {
+            var servers = string.Join(',', Servers.Select(server => $"{server.Host}:{server.Port}"));
+            return Name is null ? servers : $"{servers}/{Name}";
+        }
+
+        // Npgsql's reading of one host (NpgsqlConnectionStringBuilder.IsUnixSocket, then TrySplitHostPort). A rooted path, or
+        // one starting with @, is the directory of a Unix socket, whose name the separate port completes: its case is kept and
+        // no port is split off. Any other host ignores case, and its last colon starts a port, parsed as a number, unless the
+        // host is a bare IPv6 address; without one it takes the separate port.
+        private static (string Host, int Port) Server(string host, int port)
+        {
+            if (Path.IsPathRooted(host) || host.StartsWith('@'))
+            {
+                return (host, port);
+            }
+
             var colon = host.LastIndexOf(':');
             var previous = colon == -1 ? -1 : host.AsSpan(0, colon).LastIndexOf(':');
             var bracket = host.LastIndexOf(']');
-            return colon != -1 && (previous == -1 || (colon > bracket && previous < bracket));
+            return
+                colon != -1
+                && (previous == -1 || (colon > bracket && previous < bracket))
+                && int.TryParse(host.AsSpan(colon + 1), out var written)
+                ? (host[..colon].ToLowerInvariant(), written)
+                : (host.ToLowerInvariant(), port);
         }
     }
 }
