@@ -65,8 +65,8 @@ public static class WebEndpointRouteBuilderExtensions
         }
 
         /// <summary>
-        /// Requires an <c>Idempotency-Key</c> header on every request to a POST, PUT or DELETE endpoint whose command opts
-        /// in with <see cref="IdempotentAttribute"/>. The header's value becomes the request's
+        /// Requires an <c>Idempotency-Key</c> header on every request to a POST, PUT, PATCH or DELETE endpoint whose command
+        /// opts in with <see cref="IdempotentAttribute"/>. The header's value becomes the request's
         /// <see cref="OperationContext.RequestId"/>, so a repeat by the same Actor and tenant answers what the first
         /// request answered, through the same Result and the same <c>ToHttpResult</c> mapping, without running the
         /// command again. A request without a single header of 1 to 256 visible ASCII characters, with spaces only
