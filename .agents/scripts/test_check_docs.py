@@ -90,6 +90,17 @@ class CheckDocsTests(unittest.TestCase):
     def test_a_link_to_a_missing_anchor_fails(self) -> None:
         self.assertFails({"README.md": "# Shop\n\nSee [the guide](docs/guide.md#the-products).\n"}, "README.md:3: link to docs/guide.md#the-products: no heading of docs/guide.md has the anchor")
 
+    def test_a_titled_link_or_a_parenthesised_destination_to_a_missing_file_fails(self) -> None:
+        links = "# Guide\n\nSee [a](missing1.md 'Guide'), [b](missing2.md (Guide)) and [c](dir/(x).md).\n"
+        self.write({"docs/guide.md": links})
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        for target in ("missing1.md", "missing2.md", "dir/(x).md"):
+            self.assertIn(f"FAIL  docs/guide.md:3: link to {target}: no such file", out)
+
+    def test_a_percent_encoded_anchor_resolves(self) -> None:
+        self.assertPasses({"docs/accents.md": "# Accents\n\n## Café\n\nSee [the café](#caf%C3%A9) and [again](#café).\n"})
+
     def test_a_reference_definition_to_a_missing_file_fails(self) -> None:
         self.assertFails({"README.md": "# Shop\n\nSee [the shop][shop].\n\n[shop]: READ-ME.md\n"}, "README.md:5: link to READ-ME.md: no such file")
 

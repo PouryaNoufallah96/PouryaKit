@@ -90,7 +90,8 @@ BLOCK_START = re.compile(r"\s{0,3}#{1,6}(?:\s|$)|\s*(?:[-*+]|\d{1,9}[.)])\s|\s*>
 ONE_LINE_BLOCK = re.compile(r"\s{0,3}#{1,6}(?:\s|$)|\s*\|")
 TABLE_ROW = re.compile(r"\s*\|")
 SEPARATOR = re.compile(r"\s*\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*")
-LINK = re.compile(r"\]\(\s*<?([^()\s<>]+)>?(?:\s+\"[^\"]*\")?\s*\)")
+# The destination may hold one level of balanced parentheses; the title, when present, is quoted with "", '' or ().
+LINK = re.compile(r"\]\(\s*<?((?:[^()\s<>]|\([^()\s]*\))+)>?(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)")
 DEFINITION = re.compile(r" {0,3}\[([^\]]+)\]:\s*<?([^\s<>]+)>?(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*")
 REFERENCE = re.compile(r"\[([^\]]+)\]\[([^\]]*)\]")
 failures: list[str] = []
@@ -262,7 +263,7 @@ def check_links(docs: dict[str, Doc], files: list[str]) -> None:
         if re.match(r"[A-Za-z][A-Za-z0-9+.-]*:", target):
             return
         part, _, anchor = target.partition("#")
-        part = unquote(part)
+        part, anchor = unquote(part), unquote(anchor)  # a browser decodes both before resolving
         dest = os.path.normpath(part.lstrip("/") if part.startswith("/") else os.path.join(os.path.dirname(path), part)) if part else path
         if dest not in tracked or not (ROOT / dest).exists():  # tracked, and not deleted from the working tree
             failures.append(f"{path}:{number}: link to {target}: no such file in the repository")
