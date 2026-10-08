@@ -1,0 +1,70 @@
+.agents/scripts/check-tree.py
+  s_75dee3f51db59e::t_55e8527b2385f8 25
+GLOSSARY.md
+  s_75dee3f51db59e::t_7ca0c17a168d12 119
+src/PouryaKit.Cqrs/IStartupCheck.cs
+  s_75dee3f51db59e::t_79a1b29f77fd4b 5-7,15
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_75dee3f51db59e::t_55e8527b2385f8 364-365
+docs/provenance/PouryaKit.Security.md
+  s_75dee3f51db59e::t_55e8527b2385f8 9
+src/PouryaKit.Cqrs/CompositionCheckRunner.cs
+  s_75dee3f51db59e::t_79a1b29f77fd4b 21
+docs/ci.md
+  s_75dee3f51db59e::t_55e8527b2385f8 3
+.claude/rules/kit-code.md
+  s_75dee3f51db59e::t_55e8527b2385f8 22
+src/PouryaKit.Persistence.EFCore/DbContextConnection.cs
+  s_75dee3f51db59e::t_79a1b29f77fd4b 7
+.claude/agents/kit-implementer.md
+  s_75dee3f51db59e::t_55e8527b2385f8 34
+.agents/skills/pourya-kit/references/modules.md
+  s_75dee3f51db59e::t_55e8527b2385f8 127
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_75dee3f51db59e::t_46892a22f22adf 104-121
+  s_75dee3f51db59e::t_1551d5abc0c0d6 302-325
+  s_75dee3f51db59e::t_7d6ccda4ff22c3 326
+src/PouryaKit.Cqrs/ValidatingServiceProviderFactory.cs
+  s_75dee3f51db59e::t_79a1b29f77fd4b 21-29,39-41
+  s_75dee3f51db59e::t_c6ae137dcd58e6 30-38
+src/PouryaKit.Cqrs/ICompositionCheck.cs
+  s_75dee3f51db59e::t_79a1b29f77fd4b 20
+.githooks/staged-conflict-markers
+  s_75dee3f51db59e::t_55e8527b2385f8 8
+.codex/agents/kit-implementer.toml
+  s_75dee3f51db59e::t_55e8527b2385f8 33
+src/PouryaKit.Cqrs/IQueryCache.cs
+  s_75dee3f51db59e::t_79a1b29f77fd4b 38-39
+src/PouryaKit.Core/SynchronizationContextScope.cs
+  s_75dee3f51db59e::t_21354c83bb7f6f 10-11
+src/PouryaKit.Cqrs/CqrsHostApplicationBuilderExtensions.cs
+  s_75dee3f51db59e::t_79a1b29f77fd4b 13-15
+scripts/packaging/consumers/PouryaKit.Messaging.Wolverine.RabbitMq.cs
+  s_75dee3f51db59e::t_55e8527b2385f8 7-8
+scripts/packaging/consumers/single-module.cs
+  s_75dee3f51db59e::t_55e8527b2385f8 19
+src/PouryaKit.Cqrs/AuthorizedOperation.cs
+  s_75dee3f51db59e::t_79a1b29f77fd4b 13-14
+src/PouryaKit.Messaging.Wolverine/DurableQueuesCheck.cs
+  s_75dee3f51db59e::t_79a1b29f77fd4b 51,70
+docs/provenance/PouryaKit.Testing.md
+  s_75dee3f51db59e::t_55e8527b2385f8 16
+docs/provenance/PouryaKit.Core.md
+  s_75dee3f51db59e::t_79a1b29f77fd4b 37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e16a3ac7d12d87c78fb8544f630da2e8aec200d0",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
