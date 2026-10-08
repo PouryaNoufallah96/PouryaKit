@@ -37,6 +37,7 @@ The third seam of the Testing Decisions is proven in `tests/PouryaKit.Architectu
 | A Module's only public types are its Composition Root and what its Host implements for it | `ModuleBoundaryTests` |
 | Feature code never saves, commits, writes in bulk or calls a step only the Kit runs | `FeatureCodeTests` |
 | No transport type in Feature code; no envelope storage in a Module's DbContext | `FeatureCodeTests` |
+| No Module or Host implements a contract the Kit fills for its pipeline, the two optional slots included | `PipelineContractTests` (ticket #54) |
 | Only the Kit's drain clears Domain Events | `FeatureCodeTests` |
 | Only Domain sets up JSON options; Web, Cqrs and Caching apply `UsePouryaKitJson`, and Messaging.Wolverine alone its strict variant `UsePouryaKitWireJson` | `SharedJsonTests` (tickets #34, #60) |
 | No Dapper write to an aggregate's table | `DapperWriteTests` |
@@ -648,3 +649,15 @@ it sees, `WebApplication`'s automatic `UseRouting`, `UseAuthentication` and `Use
 `python3 scripts/packaging/validate.py --no-fetch` on the ticket's source (commit `bf83fe3`, the merge of `feat/wave-2` at `a87e637` plus #62, before this paragraph was added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof` at version `0.1.0-preview.0.99`, with the Release runtime suite at 749 passed, 0 failed, 0 skipped. The clean consumers exercise the changed API from the produced packages: `PouryaKit.Security.JwtBearer` reads `PouryaKitClaimTypes.Tenant` from `PouryaKit.Cqrs`, and `PouryaKit.Web` creates a client with one resilience pipeline past the new handler filter; the generated Hosts of both templates start under the new composition checks, every endpoint and Notification Handler declared and mapped and every connection string set, with Web's `TenantClaim` left to its default.
 
 On the merge of `feat/wave-2` at `30b8f9f` (#61's fix round: composition checks at the container build), with the checks adapted to two moments (startup checks for what the built application shows; `UsePouryaKitWolverine` installing the entry), `python3 scripts/packaging/validate.py --no-fetch` on the merge commit (`a526a67`, before this paragraph was added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof` at version `0.1.0-preview.0.101`, with the Release runtime suite at 753 passed, 0 failed, 0 skipped. The `PouryaKit.Cqrs` clean consumer now names `IStartupCheck` beside `ICompositionCheck`; the generated Hosts of both templates build under the composition checks and start under the startup checks, every endpoint mapped.
+
+## Wave 2 pipeline contracts only the Kit implements, ticket #54
+
+Ticket #54's acceptance criteria "Structure/composition checks" and "Reconcile … applicable ADR amendments", for the
+owner's decision of 2026-10-07 (D4): spec #33's "Applications cannot register arbitrary pipeline steps" is enforced by a
+structure test, and ADR 0002 says what holds ([its #54 amendment](adr/0002-no-mediator-dependency.md)). No Kit code
+changed.
+
+| Scenario | Proven by | Notes |
+|---|---|---|
+| An application type that implements a contract the Kit fills for its pipeline is rejected, naming the type, the contract and the assembly's file | `PipelineContractTests.An_application_type_that_implements_a_pipeline_contract_is_rejected` | The negative case is `Offending.OwnQueryCache`, an `IQueryCache`. Red once with the type no longer implementing `IQueryCache`, and with the rule's contract list empty |
+| No Module or Host of the Proving Sample implements one, and each has its one Kit implementation | `PipelineContractTests.No_module_or_host_implements_a_pipeline_contract_and_each_has_one_kit_implementation` | The contracts: `IUnitOfWork`, `IValidationStep<T>`, `IReadingStateGuard`, `IIdempotencyStore`, `IQueryCache`, `IUnitOfWorkOutbox`, `INotificationOutbox`, `IIntegrationEventOutbox`, `IDelayedCommandOutbox`, `ISnapshotMappers`, `IReceipts`. Red with the open-generic match off (`FluentValidationStep<T>` went unseen) and with the list empty. `IAuthorizer<T>` and the handler contracts stay the application's |
