@@ -899,6 +899,19 @@ effect of the one before it.
   the first after both the occurrence and the system clock's now, so missed occurrences are skipped
   (`RecurringCommandTests.An_occurrence_delivered_again_finds_its_receipt_and_neither_reconciles_again_nor_stores_another_occurrence`,
   which compares the stored occurrence's and the reconciliation's commit timestamps).
+  *Changed by the Wave 2 final structural review (2026-10-08, finding R2): a dead-lettered occurrence stopped the
+  schedule until a replay or a Host start, against the Capability's purpose (plan I.3, the durable replacement for
+  in-memory Quartz stores) and the Glossary's "every occurrence of a cadence". The attempt whose failure sets an
+  occurrence aside now stores the next occurrence after now in an Operation of its own, unless one waits, through
+  `RecurringCommandStart`'s query and Operation; another chain stored meanwhile meets this one at an occurrence both
+  reach, whose Receipt keeps one. The attempt is the one numbered beyond `PouryaKitMessagingOptions.RetryDelays`:
+  Wolverine counts an attempt before it runs the handler, then takes the retry policy's slot of that number, one
+  stored retry per delay and then the error queue, which every later number goes to as well (`jasperfx/wolverine` tag
+  `V6.46.0`, commit `1f22835a2b3e32dbf4b75c7a5273622ee74a4929`, `src/Wolverine/Runtime/Handlers/Executor.cs:235-273`,
+  `src/Wolverine/ErrorHandling/PolicyExpression.cs:243-248` and `:321-338`, `src/Wolverine/ErrorHandling/FailureRule.cs:31-67`).
+  An earlier failed attempt stores nothing, since its retry may commit the next occurrence itself
+  (`RecurringCommandTests.An_occurrence_set_aside_as_a_dead_letter_stores_the_next_occurrence_which_runs`,
+  `RecurringCommandTests.An_occurrence_that_succeeds_on_its_last_attempt_leaves_only_the_next_occurrence_its_commit_stored`).*
 - **Its Receipt is the occurrence, not the envelope.** Wolverine clears `Envelope.ScheduledTime` when the occurrence
   comes due (`jasperfx/wolverine` tag `V6.46.0`, commit `1f22835a2b3e32dbf4b75c7a5273622ee74a4929`,
   `src/Wolverine/Runtime/Recurring/RecurringMessage.cs:24-30`, the documentation of `OccurrenceHeaderKey`), so the

@@ -1,6 +1,6 @@
 ---
 name: recurring-command-facts
-description: Ticket #45 facts - Wolverine's own Schedules agent and why it was not used, ScheduledTime cleared at fire, ScheduledMessages query API, epoch-grid occurrences, fixture interference, Hold-based second-chain proof
+description: Ticket #45 facts - Wolverine's own Schedules agent and why it was not used, ScheduledTime cleared at fire, ScheduledMessages query API, epoch-grid occurrences, fixture interference, Hold-based second-chain proof; final-review R2 - the dead-letter attempt read from Envelope.Attempts, and why a second test pins it
 metadata:
   type: project
 ---
@@ -18,6 +18,10 @@ Verified in ticket #45 (2026-10-07), WolverineFx 6.46.0; check the merged code b
 - #47 landed mid-ticket: `ContinuedOperationContext` returns `(Context, TraceParent)` and `BeginOperation` takes a third `ActivityContext`; a recurring occurrence passes `default`, so its activity parents on Wolverine's span when sampled, else a new trace.
 - **Deterministic gates (review F3):** `HoldAfterCommit(typeof(InventoryModule), name)` stops an occurrence right after its commit (its next occurrence just stored, captured by id and `execution_time`), then quick-stop; `HoldAfterReceipt(name)` armed while that hold is held keeps every later occurrence from committing during the assertions. A seed check needs no timing at an hourly cadence.
 - Mutation script: `mutate45.py` in the session scratchpad (10 mutations incl. kind check and repeat message, all red).
+
+- **The dead-letter attempt (Wave 2 final review R2, 2026-10-08).** Inside a Wolverine handler, `envelope.Attempts` is already this attempt's number: `Executor.ExecuteAsync` increments it before `HandleAsync` (6.46.0 `src/Wolverine/Runtime/Handlers/Executor.cs:235`, `:247`), and on a throw `FailureRule.TryCreateContinuation` takes the slot whose `Attempt == Attempts`; `ScheduleRetry(delays)` adds one slot per delay, `.Then.MoveToErrorQueue()` the next, and past the last slot the rule returns `MoveToErrorQueue` itself. So `Attempts > RetryDelays.Length` is the attempt that dead-letters. `DelayedCommandDelivery` catches with that filter and calls `RecurringCommandStart.StoreFirstUnlessWaitingAsync` on `context.Runtime.Cancellation` (the handler's token is the execution-timeout CTS). A 6.46.0 source tree sat in another session's scratchpad (`c004d81d.../scratchpad/wsrc/wolverine-6.46.0`); `Directory.Build.props` confirms the version.
+- **The unless-waits query hides an early store.** With "store on every failed attempt" or `>=`, the dead-letter test stays green: the first store wins and later ones see it waiting. Only a test where every attempt but the last fails, then reads the store while `HoldAfterCommit` holds the successful commit (two `Scheduled` rows when an early attempt stored one), pins the moment. `DeliveryProbes.FailAfterReceipt(name, deliveries)` gained a count for it.
+- **A dead letter's occurrence** is readable through `runtime.Storage.DeadLetters.QueryAsync(new DeadLetterEnvelopeQuery { PageSize = 0 })`: `DeadLetterEnvelope.Envelope.Headers[DelayedCommandHeaders.Occurrence]` survives. Do not assert exactly one dead letter at a short cadence: the next occurrence can come due milliseconds after the first dead letter, before the test disarms the failure.
 
 **Why:** each decided a #45 test or design point.
 **How to apply:** for any change to recurring or delayed commands, the Outbox write, or tests that start extra Hosts. Related: [[delayed-command-facts]], [[dead-letter-and-stale-time-facts]], [[observability-facts]].

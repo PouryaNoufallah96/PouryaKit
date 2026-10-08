@@ -26,6 +26,7 @@ internal static class DeliveryProbes
     private static Hold? _commitHold;
     private static Hold? _versionHold;
     private static string? _failing;
+    private static int _failures;
     private static string? _failingOnce;
 
     /// <summary>
@@ -84,11 +85,13 @@ internal static class DeliveryProbes
 
     /// <summary>
     /// Fails every delivery to <paramref name="subscription"/> right after it records its Receipt, before its handler
-    /// runs, with an exception thrown inside its transaction, until disposed: the Receipt rolls back with it, and the
-    /// delivery is retried and then dead-lettered. The Module's own code is untouched.
+    /// runs, with an exception thrown inside its transaction, until disposed, or only the first
+    /// <paramref name="deliveries"/>: the Receipt rolls back with it, and the delivery is retried and then dead-lettered.
+    /// The Module's own code is untouched.
     /// </summary>
-    public static IDisposable FailAfterReceipt(string subscription)
+    public static IDisposable FailAfterReceipt(string subscription, int deliveries = int.MaxValue)
     {
+        _failures = deliveries;
         _failing = subscription;
         return new Binding(() => _failing = null);
     }
@@ -222,7 +225,7 @@ internal static class DeliveryProbes
             if (
                 recorded
                 && (
-                    string.Equals(_failing, subscription, StringComparison.OrdinalIgnoreCase)
+                    (string.Equals(_failing, subscription, StringComparison.OrdinalIgnoreCase) && Interlocked.Decrement(ref _failures) >= 0)
                     || (_failingOnce is { } once && string.Equals(once, subscription, StringComparison.OrdinalIgnoreCase) && Interlocked.CompareExchange(ref _failingOnce, null, once) == once)
                 )
             )

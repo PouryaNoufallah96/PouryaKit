@@ -50,7 +50,8 @@ public static class DelayedCommandServiceCollectionExtensions
         /// occurrence whose Receipt is already recorded, whichever stored delivery carries it, applies nothing and stores
         /// no next occurrence, so two Hosts that each stored one end with one. Occurrences missed while no Host ran are
         /// not made up: the one stored runs late, then the next one after now. An occurrence that fails is retried, then
-        /// set aside as a dead letter, and the next one is stored only when it is replayed or a Host starts. Feature code
+        /// set aside as a dead letter, and the attempt that sets it aside stores the next one after now unless one is
+        /// already stored, so the cadence goes on whatever an occurrence did. Feature code
         /// never schedules it with <see cref="IDelayedCommands"/>. Declare it once: declaring it again with another system Actor
         /// or occurrence factory, or as a delayed command too, throws, naming the declaration it already has. Throws here as
         /// <see cref="AddPouryaKitDelayedCommand{TCommand}(string)"/> does; the Host fails when it is built or starts as for
