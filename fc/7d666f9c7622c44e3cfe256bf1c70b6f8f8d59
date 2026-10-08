@@ -1,0 +1,26 @@
+src/PouryaKit.Web/ActorRateLimiting.cs
+  s_bdf0617f846b2b::t_18e6b02dfe1cee 85-89,92-95
+.agents/skills/pourya-kit/references/web.md
+  s_bdf0617f846b2b::t_2d52346b349808 138
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_2d52346b349808 43-44
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_bdf0617f846b2b::t_852e1c72d8f6fd 55-86
+  s_bdf0617f846b2b::t_ff82aa40e1e63e 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fc7d666f9c7622c44e3cfe256bf1c70b6f8f8d59",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
