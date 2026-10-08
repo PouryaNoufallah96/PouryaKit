@@ -10,7 +10,7 @@ The vendored skill holds in shape: an integration branch, a frontier computed fr
 |---|---|
 | An implementer subagent calls `tdd` | A `kit-implementer` with a brief: `objective`, `allowed_files`, `verify`, optional `stop_if`, and why the work matters. |
 | One `code-review` over the integration branch at the end | Review per ticket, sized as workflow step 3 says. The wave's last ticket is the close-out, where `/archify-review` runs once (step 6). |
-| A draft pull request | None. A ticket closes with `gh issue close <n> --comment` as soon as it is merged into the integration branch and its gates pass, so the blocking edges give the next frontier. |
+| A draft pull request | One for the Wave, not one per ticket. Open the integration branch's pull request to `main` as a draft once the first ticket is merged, so the outside reviewers read the work as it lands instead of as one diff at the end; at each ticket close comment `@codex review` on it and judge what comes back as step 4 of `docs/agents/ai-setup.md` says; mark it ready at close-out. A ticket still closes with `gh issue close <n> --comment` as soon as it is merged into the integration branch and its gates pass, so the blocking edges give the next frontier. |
 | A merger subagent | The orchestrator merges a clean branch itself (`.agents/scripts/merge-package.py`, "State and handoff"); a merger subagent only on conflicts. |
 | The implementer merges the integration tip before reporting | Not required. The orchestrator's merge, and its test run on the merged tree, cover it. |
 

@@ -65,7 +65,7 @@ Both reviewers apply these to the diff. Report defects the diff introduced; olde
 - A violation of a rule under "Rules", or a name that drifts from its `GLOSSARY.md` term. A contradiction of an ADR or a section G decision is severity high.
 - A test that would still pass if every collaborator returned its default, or coverage that restates another test.
 - A claimed runtime guarantee without runtime proof.
-- Docs or AI guidance left out of sync with the change.
+- Docs or AI guidance left out of sync with the change. For each sentence or message the diff changes, search its old key phrase across `src/`, the Kit's skill, `docs/architecture/` and `docs/acceptance.md`: a restatement left as it was is a finding.
 
 ## Rule router
 
