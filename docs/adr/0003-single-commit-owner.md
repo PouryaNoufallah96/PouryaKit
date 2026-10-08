@@ -55,3 +55,61 @@ code now depend on.
   not conflict (`src/PouryaKit.Persistence.EFCore/PersistencePreparation.cs`;
   `PersistencePreparationTests.A_page_moved_to_another_folder_advances_and_stamps_both_folders_once`,
   `PersistencePreparationTests.Changing_a_part_of_an_aggregate_the_operation_did_not_load_throws_and_writes_nothing`).
+
+## Amendment (2026-10-08, tickets #66 and #67: a write no Unit of Work would commit is refused)
+
+The decision above stands. Since only the Unit of Work commits, a write made where no Unit of Work runs is never
+saved, and before these tickets it was lost without a word: the scope kept it and dropped it. The owner decided both
+points below on 2026-10-08. The 2026-10-06 amendment's "Code that only reads" bullet stays as written and still holds
+for code that only reads; where it and this amendment differ, this one holds: `Operation.MayChangeState` alone no
+longer decides whether the repository writes, because it is true in a scope that runs no command at all.
+
+- **The signal.** `Operation.IsUnitOfWorkActive` (`src/PouryaKit.Cqrs/Operation.cs`) is public, with a private setter.
+  It is the one signal of the window in which the Unit of Work of the Operation's outermost command runs: true from
+  the dispatcher's call of `IUnitOfWork.RunAsync`, made once that command's authorizers and validator have passed,
+  until that call has returned, committed or rolled back. The command's handler, every command nested in it, its Domain
+  Event Handlers, a delivery's Notification Handler or Integration Event Handler and a delayed command's run, each of
+  which the Kit runs inside a command of its own, all run inside the window. It is false before the Operation begins,
+  in a begun scope that sends no command, in a query sent on its own, in the outermost command's authorizers and
+  validator, and once the Unit of Work has ended. Ticket #66 made it public and the owner keeps it, because a Kit
+  package outside `PouryaKit.Cqrs` must be able to refuse a write that no Unit of Work would commit, and
+  [ADR 0007](0007-operation-context-set-by-the-scope-opener.md) keeps Cqrs's `InternalsVisibleTo` to the trusted
+  restore alone (`TrustedRestoreTests`). `Operation` already exposes `MayChangeState`, `Module` and `Context` the same
+  way: readable by any package, set only by Cqrs. Feature code has no need to read it.
+- **The rule.** A write that only a Unit of Work's commit persists is refused, with an `InvalidOperationException`
+  that names who may write, when it is made while no Unit of Work is active. Each write below checks `MayChangeState`
+  first, so code that only reads keeps the message that names its own mistake. The Kit applies the rule in three
+  places:
+  - `IDelayedCommands.Schedule` (#66): a command scheduled outside a Unit of Work would never be written to the Outbox
+    (`DelayedCommandTests.Scheduling_in_a_scope_of_a_host_of_modules_that_runs_no_unit_of_work_throws_and_stores_nothing`,
+    `DelayedCommandTests.Scheduling_in_a_scope_of_an_application_without_modules_that_runs_no_unit_of_work_throws`).
+  - `IRepository.AddAsync` and `Remove` (#67): the DbContext would track the change and nothing would save it
+    (`RepositoryTests.A_repository_write_in_a_scope_of_a_host_of_modules_that_runs_no_unit_of_work_throws_and_saves_nothing`,
+    `SingleModuleTests.A_repository_write_in_a_scope_that_runs_no_unit_of_work_throws_and_saves_nothing`). Every other
+    member of the repository reads and needs no Unit of Work, so a query sent on its own reads through it as before.
+  - `IUnitOfWorkConnection.Join()`, which has refused it since it was written: it reads the DbContext's current
+    transaction, not this signal, and the two agree inside `RunAsync`
+    (`DapperTests.Joining_the_unit_of_work_connection_where_no_unit_of_work_is_active_throws`).
+
+  `IIntegrationEventPublisher.Publish` needs no check of its own: it is refused anywhere but a Notification Handler's
+  delivery, which runs inside a Unit of Work. In a Host of Modules, a scope whose Operation never began fails earlier,
+  when the repository is resolved, because its Unit of Work is its Module's and the scope names none
+  (`RepositoryTests.A_repository_is_refused_in_a_scope_of_a_host_of_modules_whose_operation_never_began`).
+- **What the rule cannot cover.** A change to an aggregate loaded through the repository, or a Domain Event raised on
+  one, in a scope that runs no command, is still lost without a word: no call of the Kit is made, so there is nothing
+  to refuse, and the tracked-state comparison runs only at the end of a query, a check or a reading step. The Kit's own
+  write seams, `IReceipts`, the Outbox buffers (`IIntegrationEventOutbox`, `IDelayedCommandOutbox`) and
+  `IUnitOfWork.DbContext`, stay unguarded, because the structure test closes them to a Module
+  (`FeatureCodeTests.A_module_that_saves_commits_writes_in_bulk_or_runs_a_kit_step_is_rejected`). A Host's own
+  assembly is not judged by that test, so code there can still reach them.
+- **The alternatives rejected.**
+  - *Widening Cqrs's `InternalsVisibleTo`* to every package that guards a write, with the signal kept internal: it
+    would undo ADR 0007's rule that the list serves the trusted restore alone, and `TrustedRestoreTests` would have to
+    allow each package a second internal member.
+  - *Folding the window into `MayChangeState`*, false wherever no Unit of Work runs: it would change what every
+    existing check of code that only reads means. A scope that runs no command would be told that "code that only
+    reads" asked to write, which names a mistake nobody made, and the property's own contract, that a command is
+    refused where it is false, would no longer hold: the outermost command is sent exactly where no Unit of Work runs
+    yet.
+  - *A guard in the repository's constructor or its read members*: a query's handler injects the repository and reads
+    through it with no Unit of Work, and so does a specific repository built in a scope that runs no command.

@@ -11,12 +11,17 @@ public interface IRepository<TAggregate, in TId>
     where TAggregate : AggregateRoot<TId>
     where TId : notnull
 {
-    /// <summary>Starts tracking a new aggregate; the Unit of Work inserts it when the Operation commits.</summary>
+    /// <summary>
+    /// Starts tracking a new aggregate; the Unit of Work inserts it when the Operation commits. Throws
+    /// <see cref="InvalidOperationException"/> in code that only reads, and while no Unit of Work is active, where no
+    /// commit would save the aggregate.
+    /// </summary>
     Task AddAsync(TAggregate aggregate, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes an aggregate when the Operation commits: its row is deleted, or, when it is <see cref="ISoftDeletable"/>,
-    /// kept and marked deleted.
+    /// kept and marked deleted. Throws <see cref="InvalidOperationException"/> in code that only reads, and while no
+    /// Unit of Work is active, where no commit would save the removal.
     /// </summary>
     void Remove(TAggregate aggregate);
 

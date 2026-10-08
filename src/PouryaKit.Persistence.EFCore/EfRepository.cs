@@ -12,7 +12,10 @@ namespace PouryaKit.Persistence.EFCore;
 /// members on the inherited ones and on <see cref="ListAsync{TResult}"/>, which return loaded results. It gets no query
 /// and no DbContext from this class. <see cref="AddAsync"/> and <see cref="Remove"/> throw an
 /// <see cref="InvalidOperationException"/> where <see cref="Operation.MayChangeState"/> is false: in a query, an
-/// authorizer, a validator or a step of the Unit of Work that only reads.
+/// authorizer, a validator or a step of the Unit of Work that only reads. They throw one too where
+/// <see cref="Operation.IsUnitOfWorkActive"/> is false, such as a scope that sends no command or one whose command has
+/// ended: no commit would save the change, so it would be dropped with the scope. Every other member reads, and needs
+/// no Unit of Work.
 /// </summary>
 public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository<TAggregate, TId>
     where TAggregate : AggregateRoot<TId>
@@ -29,14 +32,14 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
     public async Task AddAsync(TAggregate aggregate, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(aggregate);
-        EnsureMayChangeState();
+        EnsureMayWrite();
         await _aggregates.AddAsync(aggregate, cancellationToken);
     }
 
     public void Remove(TAggregate aggregate)
     {
         ArgumentNullException.ThrowIfNull(aggregate);
-        EnsureMayChangeState();
+        EnsureMayWrite();
         _aggregates.Remove(aggregate);
     }
 
@@ -120,13 +123,21 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
     }
 
     // A query nested in a command runs inside the command's Unit of Work, so what it added would commit with the
-    // command, though a failed query Result alone marks nothing rollback-only.
-    private void EnsureMayChangeState()
+    // command, though a failed query Result alone marks nothing rollback-only. Outside a Unit of Work the DbContext
+    // would track the change and no commit would ever save it: it would be dropped with the scope, without a word.
+    private void EnsureMayWrite()
     {
         if (!_operation.MayChangeState)
         {
             throw new InvalidOperationException(
                 "Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write through the Unit of Work. Write from a command's handler or a Domain Event Handler."
+            );
+        }
+
+        if (!_operation.IsUnitOfWorkActive)
+        {
+            throw new InvalidOperationException(
+                $"The repository of {typeof(TAggregate).Name} was asked to write while no Unit of Work is active, so no commit would save the change and it would be lost. Write from a command's handler, a Domain Event Handler or a Notification Handler."
             );
         }
     }

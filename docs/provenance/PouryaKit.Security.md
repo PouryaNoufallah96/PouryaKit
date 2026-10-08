@@ -21,4 +21,4 @@ None shipped. `PouryaKit.Security` references `PouryaKit.Cqrs` (since ticket #38
   - No admin bypass: upstream lets an admin skip every feature check (`FeatureAuthorizationHandler.cs:10-15`); the Kit grants nothing by role, and a named system Actor holds only what the application grants it.
   - The check runs on the dispatcher's authorization hook, for the commands and queries that declare a permission, not as an ASP.NET Core authorization handler and policy, so it applies to an Operation however it arrives (HTTP, a Gateway call, a delivery) and adds no second dispatch path or policy provider.
   - The Actor's permissions come from the application's `IActorPermissions`, not from claims the Kit reads: the Kit reads no ambient request (ADR 0007), and the Proving Sample's Host implements the source from its HTTP caller's claims.
-  - A continuation is not checked again; upstream has no continuation.
+  - A trusted continuation, a context the Kit marked `IsTrustedContinuation`, is not checked again, and a causation alone does not make one; upstream has no continuation.

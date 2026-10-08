@@ -5,7 +5,8 @@ namespace PouryaKit.Security;
 /// <summary>
 /// The application's source of the permissions an Actor holds. The Kit has no role system or identity store: the
 /// application implements this from its own source, such as the permission claims its authentication scheme issues,
-/// and registers it. It is asked only for an Operation that is not a continuation.
+/// and registers it. It is asked for every Operation but a trusted continuation, one whose context is marked
+/// <see cref="OperationContext.IsTrustedContinuation"/>; a causation alone does not make one.
 /// </summary>
 public interface IActorPermissions
 {
