@@ -1,0 +1,47 @@
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_f757901b83abe9 286
+.agents/skills/pourya-kit/references/messaging.md
+  s_bdf0617f846b2b::t_b9f7bac1f2d4b3 431,698,701
+.agents/skills/pourya-kit/SKILL.md
+  s_bdf0617f846b2b::t_2de25beb331a33 30
+.agents/skills/pourya-kit/references/modules.md
+  s_bdf0617f846b2b::t_e69244fa6e9ddf 212
+.claude/agent-memory/kit-implementer/declared-authorizer-check-facts.md
+  s_bdf0617f846b2b::t_c0b21818b4a6a3 15
+.claude/agent-memory/kit-implementer/module-seam-and-composition-check-facts.md
+  s_bdf0617f846b2b::t_38bd90e2e526c6 3,10-11,14,17,19
+.claude/agent-memory/kit-implementer/worktree-and-check-gotchas.md
+  s_bdf0617f846b2b::t_015a70e525944e 19
+docs/acceptance.md
+  s_bdf0617f846b2b::t_1853efa8fd6322 606-607,619-620
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_bdf0617f846b2b::t_69d0881cb847d2 998-999
+src/PouryaKit.Cqrs/UnitOfWorkCheck.cs
+  s_bdf0617f846b2b::t_adcf53519fe054 6-12,20-26
+src/PouryaKit.Messaging.Wolverine/ModuleOwnershipCheck.cs
+  s_bdf0617f846b2b::t_cc22d056ef1eda 7-10,23-26,33-36
+src/PouryaKit.Messaging.Wolverine/SnapshotServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_c053f2a95ab55c 26-32
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_bdf0617f846b2b::t_886ea16202e398 8,132-148,193-209
+tests/ModularMonolith.Tests/Misnamed/ModularMonolith.Tests.Misnamed.csproj
+  s_bdf0617f846b2b::t_6fc67d8979ea85 2-5,11
+tests/ModularMonolith.Tests/Misnamed/SeparateCommandHandler.cs
+  s_bdf0617f846b2b::t_73f603c83c6af3 1-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "508bd9a533bb87bb35313382476774f2b915f134",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
