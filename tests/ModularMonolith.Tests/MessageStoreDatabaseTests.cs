@@ -208,6 +208,27 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         );
     }
 
+    // A name AddPouryaKitEfCore records is checked without UsePostgres too, and the store's check leaves it to that line
+    // (final review D, F1).
+    [Fact]
+    public void A_connection_name_add_pouryakit_ef_core_records_and_the_configuration_lacks_fails_the_host_when_built_naming_its_key()
+    {
+        var module = new NpgsqlConnectionStringBuilder(app.ConnectionString) { Database = "module" };
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:messages={app.ConnectionString}"]
+        );
+        builder.Services.AddDbContext<StubDbContext>(options => options.UseNpgsql(module.ConnectionString));
+        builder.Services.AddPouryaKitEfCore<StubDbContext>("unset");
+        builder.UsePouryaKitWolverine(connectionName: "messages");
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            "UsePostgres stores StubDbContext over the connection string unset, which the Host's configuration does not set (ConnectionStrings:unset), so every Operation that opens it would fail. Set ConnectionStrings:unset, or name in UsePostgres a connection the Host configures.",
+            thrown.Message
+        );
+    }
+
     // A DbContext the application registered itself names no connection string, so the check of named ones passes it by.
     [Fact]
     public void A_dbcontext_the_application_registered_on_the_message_stores_database_builds_beside_use_postgres()

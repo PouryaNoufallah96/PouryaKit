@@ -20,8 +20,10 @@ public static class EfCoreServiceCollectionExtensions
         /// sets, and checks those options when the Host starts.
         /// When a messaging package registered an <see cref="IUnitOfWorkOutbox"/>, the Unit of Work commits through it.
         /// It records the DbContext, once, as a <see cref="DbContextConnection"/> with <paramref name="connectionName"/>,
-        /// the connection string it stores over when its registration names one, so the Kit's composition checks compare
-        /// its connection with the message store's when the Host's container is built.
+        /// the connection string it stores over when its registration names one, so the Kit's composition checks refuse,
+        /// when the Host's container is built, a named connection string the Host's configuration lacks or leaves blank,
+        /// and compare its connection with the message store's. A name replaces an earlier record without one; a second,
+        /// different name for the same DbContext throws.
         /// A database package such as <c>PouryaKit.Persistence.Postgres</c> calls it; Feature code never does.
         /// </summary>
         public IServiceCollection AddPouryaKitEfCore<TDbContext>(string? connectionName = null)
@@ -29,14 +31,28 @@ public static class EfCoreServiceCollectionExtensions
         {
             ArgumentNullException.ThrowIfNull(services);
             // An Outbox writes on this DbContext's connection, whoever registered the DbContext.
-            if (
-                !services.Any(descriptor =>
-                    descriptor.ImplementationInstance is DbContextConnection recorded && recorded.DbContext == typeof(TDbContext)
-                )
-            )
+            var recorded = services.FirstOrDefault(descriptor =>
+                descriptor.ImplementationInstance is DbContextConnection connection && connection.DbContext == typeof(TDbContext)
+            );
+            if (recorded is null)
             {
                 services.AddSingleton(new DbContextConnection(connectionName, typeof(TDbContext)));
             }
+            else if (connectionName is not null && recorded.ImplementationInstance is DbContextConnection { Name: var recordedName })
+            {
+                if (recordedName is null)
+                {
+                    services[services.IndexOf(recorded)] = ServiceDescriptor.Singleton(new DbContextConnection(connectionName, typeof(TDbContext)));
+                }
+                else if (recordedName != connectionName)
+                {
+                    throw new InvalidOperationException(
+                        $"{typeof(TDbContext).Name} is already stored over the connection string {recordedName}, so it cannot also be stored over {connectionName}. Give one DbContext one connection string."
+                    );
+                }
+            }
+
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, DbContextConnectionsCheck>());
 
             // Added, not tried: on a Module's builder it becomes that Module's own, whatever the Host already holds.
             services.AddScoped<IUnitOfWork>(provider => new EfUnitOfWork(

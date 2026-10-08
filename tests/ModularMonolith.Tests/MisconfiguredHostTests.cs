@@ -12,6 +12,7 @@ using ModularMonolith.Tests.Unversioned;
 using PouryaKit.Cqrs;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Dapper;
+using PouryaKit.Persistence.EFCore;
 using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
 using PouryaKit.Validation;
@@ -162,6 +163,40 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
                 "Dapper reads use the connection string reports, which the Host's configuration does not set (ConnectionStrings:reports), so every read would fail. Set ConnectionStrings:reports, or name in AddPouryaKitDapper a connection the Host configures.",
             ],
             thrown.Message.Split(Environment.NewLine)
+        );
+    }
+
+    // The name UsePostgres passes replaces the record AddPouryaKitEfCore made earlier without one (final review D, F2).
+    [Fact]
+    public void A_connection_string_named_after_an_unnamed_record_of_the_dbcontext_fails_the_host_when_built_naming_its_key()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.Services.AddDbContext<StubDbContext>();
+        builder.Services.AddPouryaKitEfCore<StubDbContext>();
+        builder.Services.UsePostgres<StubDbContext>(connectionName: "missing", schema: "stub");
+        builder.AddPouryaKitCompositionChecks();
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            "UsePostgres stores StubDbContext over the connection string missing, which the Host's configuration does not set (ConnectionStrings:missing), so every Operation that opens it would fail. Set ConnectionStrings:missing, or name in UsePostgres a connection the Host configures.",
+            thrown.Message
+        );
+    }
+
+    [Fact]
+    public void A_dbcontext_given_a_second_connection_string_throws_naming_both()
+    {
+        var services = new ServiceCollection();
+        services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
+
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            services.UsePostgres<StubDbContext>(connectionName: "ledger", schema: "stub")
+        );
+
+        Assert.Equal(
+            "StubDbContext is already stored over the connection string app, so it cannot also be stored over ledger. Give one DbContext one connection string.",
+            thrown.Message
         );
     }
 
