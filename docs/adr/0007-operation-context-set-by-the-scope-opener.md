@@ -165,3 +165,21 @@ idempotency slot itself is recorded in [ADR 0002's amendment](0002-no-mediator-d
 - **Identity construction is deterministic.** A key is made from those values alone, never from the time or the
   Operation's own id, so a repeat that carries the same values always finds the same key, and contexts that differ in
   any of them never share one.
+
+## Amendment (2026-10-08, Wave 2 final structural review: the trusted peer's continuation is restored as trusted)
+
+The decision above stands, and so do the #57 and #48 amendments. The #48 amendment records that Web built a trusted
+peer's context with `new OperationContext(actor, tenant, correlationId, causationId)`, the public constructor that the
+#57 amendment made untrusted, so the permission check authorized the continued Actor again: a peer's continuation into
+a command that declares a permission was refused unless this Host's permission source granted it to that Actor for the
+peer's request. The #57 amendment's requirement that Web call `RestoreTrusted` was not met; the final structural review
+of Wave 2 found it (finding R1 of both reviewers).
+
+- **Web restores the peer's context as trusted.** `OperationContextHttpHeaders.Continued` returns
+  `OperationContext.RestoreTrusted(actor, tenant, correlationId, causationId)`, the second caller of that member beside
+  Messaging.Wolverine's delivery step. It is reached only after `HttpCallerContext` found an authenticated identity
+  naming a configured peer, so no other caller's headers reach it, and Web adds no other way to set the mark.
+- Proven by `TrustedPeerTests.A_trusted_peer_continues_into_a_permission_protected_command_its_actor_holds_no_permission_for_and_an_untrusted_caller_is_refused`,
+  red with the public constructor back (the peer was refused with 403), and by
+  `TrustedRestoreTests.The_packages_cqrs_opens_to_use_no_internal_member_of_it_but_the_trusted_restore`, which now
+  requires Web's call beside delivery's and went red the same way.
