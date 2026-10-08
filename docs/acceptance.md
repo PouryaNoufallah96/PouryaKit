@@ -901,3 +901,7 @@ Verify on the fix: `dotnet build PouryaKit.slnx` (0 warnings); `MisconfiguredHos
 `python3 scripts/packaging/validate.py --no-fetch` on the second fix round's commit `5f6c6c8` (before this paragraph was
 added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4,
 template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof.` at version `0.1.0-preview.0.122`.
+
+## Wave 2 close-out, ticket #54
+
+The final `validate.py --no-fetch` run of the Wave, on `930d8ba` (the `feat/wave-2` tip after the final structural review's four fix packages and their re-scores), is the package record for every Wave 2 section without a PASS line of its own and for every PASS line older than its section's last source change (the top note): `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof; version 0.1.0-preview.0.123`. The final structural review (two independent legs over the whole tree at `74e873b`), its dispositions and its four fix packages are recorded in the section above and in #54's closing comment; the owner's two open decisions (the `PouryaKit` prefix for `UsePostgres` and `MapUniqueConstraint`; `/alive` in every environment of the templates) are recorded there too.
