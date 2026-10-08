@@ -1,0 +1,34 @@
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_75dee3f51db59e::t_92328b91aa5e14 137-155
+tests/ModularMonolith.Tests/HostRecipeTests.cs
+  s_75dee3f51db59e::t_92328b91aa5e14 155-173
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_75dee3f51db59e::t_ef7f01a01be332 86,88
+tests/PouryaKit.ArchitectureTests/TemplateRules.cs
+  s_75dee3f51db59e::t_92328b91aa5e14 311-322
+docs/architecture/README.md
+  s_75dee3f51db59e::t_ef7f01a01be332 657
+docs/acceptance.md
+  s_75dee3f51db59e::t_ef7f01a01be332 925-926
+tests/ModularMonolith.Tests/RabbitMqDeliveryTests.cs
+  s_75dee3f51db59e::t_92328b91aa5e14 906-923
+.agents/skills/pourya-kit/references/templates.md
+  s_75dee3f51db59e::t_ef7f01a01be332 134
+  s_75dee3f51db59e::t_92328b91aa5e14 39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "90e0871dd8f6fdf5d6b86f2c0632d92ba54aace2",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
