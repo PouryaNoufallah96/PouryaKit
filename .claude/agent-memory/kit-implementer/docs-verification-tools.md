@@ -1,11 +1,11 @@
 ---
 name: docs-verification-tools
-description: How to prove skill snippets compile, Mermaid C4 parses, provenance paths resolve and dotnet-ef commands work without touching the repo; names, links and fences are check-docs.py's (docs packages, workflow steps 6 and 7)
+description: How to prove skill snippets compile, Mermaid C4 parses, provenance paths resolve and dotnet-ef commands work without touching the repo; names, links and fences are check-docs.py's; reference checkouts and ADR amendment style (docs packages, workflow steps 6 and 7)
 metadata:
   type: project
 ---
 
-Used in the #8 docs package (2026-10-05):
+## Docs packages (#8 onward, 2026-10-05 to 2026-10-08)
 
 - **Names, links, code spans, tables, fences: run `python3 .agents/scripts/check-docs.py`** (tracked since the session-5 retro, 2026-10-08), not the scratchpad `names.py`, `links.py` and `fences.py` the bullets below mention; `--fences` replaces `fences.py`. A name it reports that is illustrative or third-party goes in its `ALLOWED` list with the reason; a renamed one is drift to fix. Red-prove a change to it by copying `test_check_docs.py` beside a mutated copy of the script in a temp directory and running `unittest discover` there.
 - **Skill snippets compile:** a throwaway project in the scratchpad (outside the repo, so no Directory.*.props) with `ManagePackageVersionsCentrally=false`, inline package versions (xunit.v3, Microsoft.Extensions.Hosting) and absolute `ProjectReference`s to the worktree's `src/` projects. Paste each snippet with minimal stubs; `dotnet build` must show 0 errors.
@@ -23,6 +23,8 @@ Used in the #8 docs package (2026-10-05):
 - Record amendments (2026-10-06, Wave 1 close-out): `check-ai-setup.py` reads nothing in `docs/adr/`, the plan or `GLOSSARY.md`, so it cannot fail a records package. Prove every cited `Class.Method` and `src/` path with a python script over `git diff -U0` saved to the scratchpad (a piped `git diff | …` loop is refused as git-like), and remember a new ADR is untracked, so it is missing from that diff until staged. Style that held: `## Amendment (date, ticket)` opening "The decision above stands.", one bullet per decision with its reason and pinning test; an answered open point gets an inline italic `*Answered by …*` where it stands, as plan section F does. `allowed_files` can scope a file by section: the plan's "Recommended plan in one paragraph" (still "12 packages") is outside section C, so report it rather than edit it.
 - #54 docs reconcile (2026-10-08, a new session's scratchpad held none of the harness folders above; rebuilt in `54docs/`): **`mermaid.parse` of a C4 block is lenient**: a missing `)` or an unterminated string still parses, and a `Rel` to an undeclared alias passes; a misspelled keyword (`Containr(`) or an unclosed `System_Boundary {` is refused. Use a real block with one keyword misspelled as the negative control. A prose-only docs package proves it needs no snippet harness by comparing every fenced block of each changed `.md` between `git show HEAD:<file>` and the tree (now `check-docs.py --fences`). `dotnet pack src/PouryaKit.Templates` (seconds) then `dotnet new install <nupkg> --debug:custom-hive <abs>` and `dotnet new <short> -n Acme.Shop --no-restore` gives both solutions for a file-level diff in about a minute.
 - Since #13, `AddPouryaKitModules` validates the container on build in every environment; before it, only `HostApplicationBuilder` in Development did, which is why the sample's fixture still passes `--environment Development`.
+- Ultrabusiness: the local checkout's HEAD differs from the pinned `a85eacd`, but `git ls-tree`/`git show a85eacd:<path>` against it works for citing files at the pinned commit.
+- ADR amendments here add an italic pointer inside the earlier amendment's sentence (`*Since <date> (ticket #n) …; see the amendment below.*`), as #61 did, and never rewrite it.
 
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
-**How to apply:** at workflow steps 6 and 7 for any ticket. Related: [[persistence-ef-facts]], [[worktree-and-check-gotchas]].
+**How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].

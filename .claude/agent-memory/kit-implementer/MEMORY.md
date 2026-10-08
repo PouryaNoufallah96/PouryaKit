@@ -1,56 +1,15 @@
-- [.NET test conventions](dotnet-test-conventions.md) — MTP + xunit.v3 4.x, zero-test failure, MTP filter syntax, nuget.config/NU1507, SDK pin band
-- [Worktree and check gotchas](worktree-and-check-gotchas.md) — refused shell shapes, integration branch moving mid-package, gh issue view quirk, frontmatter colons, guard rm -r
-- [STJ and record facts](stj-and-record-facts.md) — base-type JsonConverter ignored, init props survive, derived record reuses Value
-- [Docs verification tools](docs-verification-tools.md) — compile skill snippets, parse Mermaid C4, provenance paths, ADR amendment style; check-docs.py for names, links, fences
-- [Persistence and EF facts](persistence-ef-facts.md) — #8: Module UoW routing via keyed IUnitOfWork, EF 10/Npgsql/dotnet-ef/Ardalis gotchas
-- [Dapper facts](dapper-facts.md) — #9: Npgsql warm pool ignores cancelled token, Dapper locks handler registration, seam and test traps
-- [Domain Event drain facts](domain-event-drain-facts.md) — #10: drain in Cqrs, rollback-only as the one failure signal, mutation-proof test tricks
-- [Cqrs design facts](cqrs-design-facts.md) — FluentValidation licence and scanner API, generic failed Result trick, #7 design calls
-- [Wolverine 6 Spike facts](wolverine-6-spike-facts.md) — Spike S1: RuntimeCompilation required, commit-timestamp proof, ~75 s default recovery, one outbox instance per commit attempt
-- [Wolverine spike gotchas](wolverine-spike-gotchas.md) — Spike S2: codegen needs public types, AddMessageHandler avoids it, EndpointFor writes Outgoing rows, stale-time vs in-memory retry
-- [Web and ASP.NET Core facts](web-aspnetcore-facts.md) — #14: binding before filters, Finally wrapper, .NET 10 handler logging, TestServer, dotnet-ef check
-- [Modularity and context facts](modularity-context-facts.md) — #13: validation needs the DI impl package, Gateway signature vs parallel merges, host-wide state in the service collection
-- [Persistence preparation facts](persistence-preparation-facts.md) — #11: EF savepoint hides rollback bugs, two-scope race technique, TestClock vs Gateway, ef remove trap
-- [Messaging delivery facts](messaging-delivery-facts.md) — #15: Wolverine start/extension timing, store-polling test helpers, redelivery and unknown-subscription tricks
-- [Integration Event facts](integration-event-facts.md) — #16: process-global wire names, StartAsync-time checks, receipt-hold concurrency proof
-- [Dead letter and stale time facts](dead-letter-and-stale-time-facts.md) — #17: replay mechanics, stale stored retry reproduced, dying Host without zombie, attempts not runs
-- [Architecture test facts](architecture-test-facts.md) — #19: BCL IL reader, Module/EF model discovery, routing's empty 405/415, Solo-node recovery race
-- [Workflow script facts](workflow-script-facts.md) — node --check rejects top-level return; scripts need agents for git/files; runner on a worktree; Codex failure reason; relay harness, inspect input limit
-- [Snapshot facts](snapshot-facts.md) — #18: step 4 in the Outbox write, version gate beside the Receipt, Receipt masks the gate in redelivery tests
-- [RabbitMQ topology Spike facts](rabbitmq-topology-spike-facts.md) — #50: fanout copies envelope id (IdOnly drops one), DLQ mode, rabbitmq:// address, harness traps
-- [Code-style analyzer facts](code-style-analyzer-facts.md) — listing the SDK's real IDE IDs, which C# 14 idioms have one, 2 s rebuilds are real
-- [Core helpers facts](core-helpers-facts.md) — #37: extension blocks emit public nested types, new src package needs arch-test reference, aliased offending copy
-- [Shared JSON facts](shared-json-facts.md) — #34: getter-only ASP.NET JsonOptions, Wolverine STJ mutates options, reading a stored envelope body
-- [W3C propagation facts](w3c-propagation-facts.md) — #46: parent-id at publish, Wolverine span only when sampled, SampleUsingParentId trap, no retry link, spike layout
-- [Security and permission facts](security-permission-facts.md) — #38: fallback policy reaches unmatched paths, non-Module endpoint test, TestActor grant, rebase recount, validate.py timing
-- [Declared authorizer check facts](declared-authorizer-check-facts.md) — #56: why a Cqrs seam, build-time factory hook, keyed ImplementationType throws, Gateway proof
-- [ImplementingTypes lookup facts](implementing-types-lookup-facts.md) — #55: Of vs Candidates, GetTypes order is MetadataToken order and a test pins it
-- [Password hashing facts](password-hashing-facts.md) — #40: PBKDF2 key floor, TryParse takes trailing NUL, strict base64, consumers/<name>.cs, OWASP pin, IL check
-- [Continuation trust facts](continuation-trust-facts.md) — #57: the one Cqrs IVT, Continue() trusted only in its running authorized Operation, ambient-check test tricks
-- [Versioning facts](versioning-facts.md) — #49: Wolverine type routes match by name, ilspycmd decompile, asking main to widen allowed_files, Receipt mutation scope
-- [Paging facts](paging-facts.md) — #35: page validation in the Feature validator, Npgsql typed nulls, EF Contains as LIKE, rebase onto moved wave branch
-- [Outgoing HTTP facts](outgoing-http-facts.md) — #48: handler scope, PostConfigure survives handler removal, safe-method allow-list, header injection, WireMock traps, test cwd
-- [Delayed command facts](delayed-command-facts.md) — #44: scheduled envelope via EF outbox, system clock, own-database restart proof, retry rows vs not-yet-due
-- [Observability facts](observability-facts.md) — #47: listener misses a lazily created static source, decorator after TryAdd, TraceParent on Operation, one-shot failure probe
-- [Web defaults facts](web-defaults-facts.md) — #36: RequireCors answers no preflight, compression cannot be inert, no 429 problem type, limiter seams
-- [JWT bearer facts](jwt-bearer-facts.md) — #39: config binder replaces TVP, ValidateOnStart hits every composed Host, second Host steals deliveries
-- [OpenAPI and versioning facts](openapi-versioning-facts.md) — #41: Asp.Versioning.OpenApi wiring, clock-reading notices, URL vs header groups, Scalar auth, Web-only test Host
-- [Recurring command facts](recurring-command-facts.md) — #45: Schedules not used, ScheduledTime cleared, epoch grid, fixture interference; R2: dead-letter attempt, pin it with a last-attempt test
-- [Idempotency facts](idempotency-facts.md) — #42: request id on OperationContext (Gateway scope), on conflict do nothing vs 23505, lock-wait proof, EF1002, endpoint opt-in ripple
-- [RabbitMQ transport facts](rabbitmq-transport-facts.md) — #51: stub://replies listener, IBrokerEndpoint/DeadLetterStorage checks, Catalog IVT decides test placement
-- [Idempotency retention facts](idempotency-retention-facts.md) — #42 follow-up: .NET 10 ExecuteAsync on Task.Run, tick failure stops the Host, DbContextOptions enumeration, to_regclass, log culture
-- [Caching facts](caching-facts.md) — #43: no token to HybridCache, outermost-query-only slot, serialize then end the read, factory throw stores nothing, StampedeJoin proof, Redis lag
-- [Cross-process tracing and recipe facts](cross-process-tracing-and-recipes-facts.md) — #52: copies lose parent-id at fan-out, defaults pipeline name, OTel providers as global listeners, health/Serilog proofs
-- [Merge and CI tooling facts](merge-and-ci-tooling-facts.md) — union merge drops a shared blank line, scratch-clone merge proof, gh job-log download quirks and speed, MTP failure shape, git-script test isolation
-- [Template package facts](template-package-facts.md) — #53/#59: engine traps, path token for raw names, pack-time version step, WebApplicationFactory, NuGet PrivateAssets graph gap, cache pollution
-- [Code generation for production facts](codegen-production-facts.md) — #58: Kit-called Wolverine picks the Kit as application assembly, codegen write needs no Roslyn, Debug-restore trap, WAF AutoStartHost
-- [Strict wire reading facts](strict-wire-reading-facts.md) — #60: STJ strict options probed, Wolverine read-failure dead-letter path, two contracts under one wire name, amq. on RabbitMQ
-- [Module seam and composition check facts](module-seam-and-composition-check-facts.md) — #61: checks at container build, StartAsync order, Kit delivery commands vs UoW check, zero-arg scan of a test assembly
-- [Misconfigured Host facts](misconfigured-host-facts.md) — #62: build vs start checks, Wolverine modes after start, IAuthenticationFeature, handler filter, plain test Hosts validated
-- [Publication feed facts](publication-feed-facts.md) — #54: dotnet new install ignores source mapping, cwd NuGet.Config for credentials, silent template restore, step run locally
-- [Test gaps and store database facts](test-gaps-and-store-database-facts.md) — #54: Outbox on the DbContext connection (other database 42P01, stale store tables silent), limiter catch by accounting, probe commit-then-remove
-- [Pipeline contract rule facts](pipeline-contract-rule-facts.md) — #54: open-generic implements check, the 14-contract set and exclusions, both Hosts in scope, PDB paths differ in CI
-- [Sent envelope capture facts](sent-envelope-capture-facts.md) — final review D: wolverine-messages-sent Meter sees deleted broker envelopes, latched sender, PauseAsync, broker HostFixture
-- [Store database check facts](store-database-check-facts.md) — #63: Npgsql parse splits no host:port, store uses the composition-time string, cross-package record is public, read GetDbConnection not options, unknown database fails
-- [Final review Web facts](final-review-web-facts.md) — final review A: Web RestoreTrusted, peer-continuation HTTP proof, DisplayName without methods, stop_if over docs-sync
-- [Messaging checks at the build facts](messaging-checks-at-build-facts.md) — final review B: RoutingCheck and Declare at build, outbound write wraps JsonException, Stub owns test handlers
+- [.NET and test conventions](dotnet-and-test-conventions.md) — #4 and the analyzer retro (2026-10-06): MTP and xunit.v3, analyzer IDs, compiler traps, mutation runs, tests a sample change ripples into
+- [Worktree, shell and check gotchas](worktree-shell-and-check-gotchas.md) — every ticket: refused shell shapes, the moving integration branch, check-ai-setup.py, scope requests, memory layout
+- [Docs verification tools](docs-verification-tools.md) — docs packages since #8: check-docs.py, compiling skill snippets, Mermaid C4, reference checkouts, ADR amendment style
+- [Merge, CI and workflow tooling](merge-ci-and-workflow-tooling-facts.md) — retros and kit-review: union merge, scratch-clone proofs, gh job logs, workflow scripts, Codex input limit
+- [Core, JSON and architecture tests](core-json-and-architecture-test-facts.md) — #6 #19 #34 #37 #54 #55: STJ typed IDs, shared JSON options, IL reader, ImplementingTypes order, slot rule
+- [Cqrs and Modularity](cqrs-and-modularity-facts.md) — #7 #10 #13 #56 #57: FluentValidation, Domain Event drain, Module ownership, declared authorizers, continuation trust
+- [Composition checks](composition-check-facts.md) — #61 #62 #63, final review B: build vs start checks, StartAsync order, store database check, RoutingCheck and Declare
+- [Persistence and Dapper](persistence-and-dapper-facts.md) — #8 #9 #11 #35: Unit of Work routing, EF savepoints, two-scope race, Npgsql typed nulls, Ardalis, dotnet-ef traps
+- [Wolverine runtime and delivery](wolverine-runtime-and-delivery-facts.md) — S1 #2, S2 #5, #15 #17 #54 #58, final review D: store, recovery, stale time, dead letters, codegen, sent envelopes
+- [Snapshots and scheduled commands](snapshot-and-scheduled-command-facts.md) — #18 #44 #45, final review R2: version gate, Receipt masking, scheduled envelopes, recurring chains
+- [Integration Events, wire and RabbitMQ](integration-event-wire-and-rabbitmq-facts.md) — #16 #49 #50 #51 #60: wire names, type routes, strict reading, fan-out topology, broker tests
+- [Web, security and OpenAPI](web-security-and-openapi-facts.md) — #14 #36 #38 #39 #40 #41 #54, final review A: binding, CORS, limiter, permissions, JWT, PBKDF2, versioning
+- [Observability, tracing and HTTP](observability-tracing-and-http-facts.md) — #46 #47 #48 #52: parent-id, listener traps, resilience pipeline, OpenTelemetry providers, health, Serilog
+- [Caching and idempotency](caching-and-idempotency-facts.md) — #42 #43 #54: request id, on conflict do nothing, retention service, HybridCache slot, StampedeJoin, Redis
+- [Templates, packaging and publication](templates-packaging-and-publication-facts.md) — #53 #54 #59: template engine, pack-time version, validate.py and consumers, feed install

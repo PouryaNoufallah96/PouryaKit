@@ -1,0 +1,69 @@
+---
+name: persistence-and-dapper-facts
+description: EF Core 10, Npgsql, dotnet-ef and Ardalis facts, Module Unit of Work routing, Dapper reads and the transaction seam, persistence preparation and conflict tests, paging
+metadata:
+  type: project
+---
+
+Check the merged code before relying on a design note. Each section names its ticket, its date and the versions it was verified on.
+
+## EF Core and Unit of Work routing (#8, 2026-10-05; EF Core 10.0.12, Npgsql EF 10.0.3, EFCore.NamingConventions 10.0.1)
+
+- **Unit of Work routing (one container, many Modules):** `ModuleBuilder` implements `IServiceCollection` and re-keys any unkeyed `IUnitOfWork` descriptor by the Module type; `AddPouryaKitModules` then adds one unkeyed router that reads the scope's `Operation.Module` (set by `IServiceProvider.BeginOperation`, which the Gateway calls). `EfRepository` takes `IUnitOfWork` and uses its DbContext. Persistence must `Add` (not `TryAdd`) its `IUnitOfWork`: a second `AddPouryaKitModules` call sees the first call's unkeyed router and TryAdd silently skips.
+- **Allowed-references trap:** Postgres may not reference Modularity, so `module.UsePostgres<T>()` only works because ModuleBuilder *is* an IServiceCollection.
+- Default schema comes from `RelationalOptionsExtension.Extract(options).MigrationsHistoryTableSchema` in `PouryaKitDbContext.OnModelCreating`.
+- `IgnoreAny<DomainEvent>()` in ConfigureConventions stops `AggregateRoot.DomainEvents` becoming a navigation.
+- A converted (typed-ID) numeric key is never made identity by convention; it needs `ValueGeneratedOnAdd()` per entity. With it, EF inserts with identity and reads the id back through the converter; the instance's Id stays null until save (no 0 or temporary value constructed).
+- EFCore.NamingConventions snake-cases the history table's columns (`migration_id`) but not its name (`__EFMigrationsHistory`).
+- `UseNpgsql("Name=ConnectionStrings:x")` resolves from DI `IConfiguration`; a design-time factory must register one or dotnet-ef fails.
+- Ardalis.Specification.EntityFrameworkCore 9.3.1 restores and evaluates fine on EF Core 10; its `RepositoryBase.AddAsync` calls SaveChanges, so use only `SpecificationEvaluator.Default.GetQuery`.
+- dotnet-ef 10.0.12: `--namespace` puts the model snapshot in a folder named after the namespace; pass `--output-dir` only. A test-project migration was generated with a temporary `IDesignTimeDbContextFactory` + temporary Design package, both removed after.
+- `dotnet new tool-manifest` on SDK 10.0.401 writes `dotnet-tools.json` at the repo root; move it to `.config/`.
+- `HostFixture` migrates from a scope of the built, not yet started Host, then starts it (review F2): a hosted service (Wolverine, #15) must find its tables at start. The Proving Sample's own packages are recorded in `docs/provenance/ModularMonolith.md`.
+- #12: `EfRepository<,>` is public and unsealed; a specific repository derives from it and builds on `protected ListAsync<TResult>(ISpecification<TAggregate, TResult>)`, which materialises. Review F1 (high): never hand a derived class an `IQueryable` — an empty Ardalis spec returns the DbSet itself (cast → `Entry(x).Context.SaveChanges`), and any EF query allows `ExecuteDelete/ExecuteUpdate`, which write around the Unit of Work's sequence. Ardalis's projection `GetQuery<T,TResult>` has no criteria-only flag (full spec, then Select) and no Distinct. Registered with `module.AddScoped<IProductRepository, ProductRepository>()`; ModuleBuilder re-keys only `IUnitOfWork`, so both repositories share the scope's DbContext.
+- Test technique (one container): a command/handler in the test assembly registered by `StubModule`'s `AddPouryaKitCqrs` scan is refused by Catalog's Gateway. In a test-owned scope, call `BeginOperation(ctx, typeof(CatalogModule))`, then send the probe through that scope's `IDispatcher` to run in Catalog's Unit of Work (`RepositoryTests`, `Stub/ProductRepositoriesProbe.cs`). This test technique does not permit cross-Module Feature calls to bypass the Gateway.
+- Avoid sample Features premised on duplicate product names: #11 is expected to put a unique constraint on `products.name`. Avoid row locks (`FOR UPDATE`) as an example: a second concurrency mechanism beside versions.
+- `dotnet ef` from the worktree root needs absolute `--project`/`--startup-project` paths (relative ones fail with "Unable to retrieve project metadata").
+
+## Dapper and the read connection (#9, 2026-10-05; Dapper 2.1.89, Npgsql 10.0.3)
+
+- `NpgsqlDataSource.OpenConnectionAsync(token)` with an already-cancelled token returns an idle pooled connection without throwing; the Kit's `ReadConnectionFactory` calls `ThrowIfCancellationRequested` first.
+- Dapper 2.1.89 `SqlMapper.AddTypeHandlerCore` takes a lock (source at commit eb47546); re-registering a type replaces the handler. No Kit-side lock needed. Positional records with typed-ID constructor parameters map fine once handlers exist.
+- Npgsql runs a command inside the connection's active transaction even when `command.Transaction` is null, so a test cannot detect a seam that drops the transaction; only a separate connection would escape it.
+- Npgsql's net10.0 closure is Logging.Abstractions -> DI.Abstractions only. Reading a connection string by name needs `Microsoft.Extensions.Configuration.Abstractions`, outside plan C's table: #9 added it after asking main by SendMessage; the owner approved it (2026-10-05). Asking main mid-package via SendMessage worked; the reply arrived after the first report.
+- #9 review: a transaction check alone is not a write guard: a query nested in a command, or a nested command's validator, runs inside the active transaction, and a failed query marks nothing rollback-only. `IUnitOfWorkConnection.Join()` also checks `Operation.MayChangeState` (no query or check running, and no Unit of Work step opened with `Operation.OnlyReading`).
+- A transitive package that a Kit package's public API compiles against (DI.Abstractions via Npgsql) is a review finding; reference it directly.
+- `ModuleBuilder` re-keys only `IUnitOfWork`; any other per-Module service registered with Add is last-wins Host-wide. Shared services (repository, `IUnitOfWorkConnection`) take the unkeyed `IUnitOfWork` (the router) with TryAdd.
+- A SQL-only EF migration (attributes `[DbContext]` + `[Migration]` on an internal class, no Designer) applies fine and leaves the snapshot unchanged.
+- Never assert which pooled server connection (`pg_backend_pid()`) the next lease gets: the shared Host's background work (Wolverine durability agent, other test classes) takes pooled connections too; #54 removed such an assertion after a CI flake (run 37614975892).
+
+## Persistence preparation and conflicts (#11, 2026-10-05; EF Core 10.0.12, Npgsql 10.0.3)
+
+- **EF Core rolls back to its own savepoint when `SaveChanges` fails inside a user transaction.** A mutation "commit after a concurrency conflict" left no EF-tracked row behind, so EF-written rows never prove the Unit of Work rolled back. Prove it with a raw-SQL write on `IUnitOfWorkConnection` in the same Operation (Stub `HoldChangeCommand` writes a marker category).
+- **Two-scope race technique:** a Stub command begun as a Catalog Operation (`BeginOperation(ctx, typeof(CatalogModule))` + `IDispatcher`) runs the real Feature nested, signals a `TaskCompletionSource`, then awaits a release. Wait for both signals before releasing the first, await it, then release the second. Holding *after* both nested changes ensures both Operations track the pre-commit row, so the loser conflicts at save. A spec query begun only after the winner commits may instead miss the row through the soft-delete filter.
+- **TestClock never reaches a Gateway Operation:** the dispatcher rebinds `DomainClock` with the Host's `TimeProvider`. Build a second Host with `ModularMonolithHost.CreateBuilder([...connection string])` then `builder.Services.AddSingleton<TimeProvider>(clock.Time)` (Cqrs TryAdds; last wins). It may remain unstarted only for Operations needing no running hosted service. Notification, Integration Event or Snapshot delivery paths need a started Host; stop or dispose it afterward (`PersistencePreparationTests`).
+- **`dotnet ef migrations remove` corrupted the Stub snapshot** because the last migration by ID was a hand-dated SQL-only one (no Designer). Never use remove there: delete the files and `git checkout` the snapshot. Rename a generated migration's timestamp (files + `[Migration]` id) to sort after hand-dated ones.
+- Model snapshot drift (e.g. `IsConcurrencyToken`) makes `Migrate()` throw in EF 9+, so a convention change needs a migration in every DbContext, the test-only Stub's too (temporary `IDesignTimeDbContextFactory` + temporary Design package, both removed after).
+- `Enumerable.Except` is a set operation: it silently deduplicates the left side.
+- `CascadeDeleteTiming.OnSaveChanges` is what keeps a soft-deleted aggregate's owned parts and children; with `Immediate`, `Remove` marks them Deleted before the prepare step and the save fails.
+- #11 fix round (review F1): the walk reads a child's holder from both the current and the original FK value, so a moved child bumps both aggregates and a nulled optional key bumps the one it left; an untracked holder throws (an unloaded aggregate cannot conflict). The Stub `Folder` has pages (required key), stickers (optional key) and `MovePage`; EF reparents a child moved between two tracked collections as an FK update, not an orphan delete.
+- `PouryaKitDbContext`'s constructor touches `ChangeTracker`, which builds the model: a model-convention refusal throws from `new MyContext()`, not from `.Model`.
+- Converting a removed soft-deletable entry Deleted -> Unchanged keeps the Operation's earlier changes to it (checked: a rename before removal was saved).
+- `AppFixture.RowsAsync` returns `DBNull.Value` for SQL null, not null.
+- #11 second fix round (F5): with `CascadeDeleteTiming.OnSaveChanges`, EF cascades hard deletes inside `SaveChanges` (dependent Deleted, or optional key cleared -> Modified), after the prepare step. The prepare step now calls `ChangeTracker.CascadeChanges()` after the soft-delete conversion. `CascadeChanges` also deletes severed orphans, so `DeleteOrphansTiming` must stay `Immediate` (pinned in `PouryaKitDbContext`): orphans are then Deleted at the prepare step's first DetectChanges and a soft-deletable one is converted.
+- Observing save-time mutation honestly: subscribe `DbContext.SavingChanges` (raised before the save's DetectChanges and cascades) and `ChangeTracker.StateChanged`, and record any transition to Added/Modified/Deleted after saving began (Stub `EditTrayCommand`). Accepting changes after the save goes only to Unchanged/Detached.
+- An EF base type with `ToTable` and derived types configured without one defaulted to one table per derived type in EF 10 here; say `UseTphMappingStrategy()` to get one table. Keys to sibling derived types share the base's `IKey` (F6).
+- A domain transition that raises an event (Product.Remove) needs its own once-guard: a removed aggregate is still found by later queries in the Operation until the prepare step marks it.
+
+## Paging (#35, 2026-10-07; Dapper 2.1.89, Npgsql 10.0.3, EF Core 10.0.12)
+
+- **Page validation runs in the Feature's validator** (`RuleFor(q => q.Page).Custom(...)` calling `PageDeclaration.Validate` and `AddFailure(new ValidationFailure(target, message) { ErrorCode = code })`), not in a Dispatcher edit: the advisor judged a Kit check beside `IValidationStep` a second validation path (G.8, ADR 0002) and a likely high review finding. The helpers re-run `Validate` and throw before any SQL, so a forgotten validator fails loudly. A reusable FluentValidation rule would belong in `PouryaKit.Validation` (left as an open question).
+- **Npgsql types a null parameter only from its DbType**: `@x is null or col = @x` with an untyped null fails ("could not determine data type"); pass `DynamicParameters.Add(name, null, DbType.X)`. A `DateTimeOffset` must be UTC (`ToUniversalTime()`), or Npgsql refuses it for timestamptz.
+- EF Core + Npgsql translates `Name.Contains(param)` to `name LIKE @p` with the parameter pre-escaped (case-sensitive, wildcards neutral), matching SQL `strpos(name, @p) > 0`. `product.CategoryId == new CategoryId(id)` inside a predicate factory translates: the funcletizer makes the typed ID a parameter.
+- Ardalis 9.3.1: `SpecificationEvaluator.Default.GetQuery(set, (ISpecification<T>)projectionSpec, evaluateCriteriaOnly: true)` gives criteria only for a projection spec; reject `OrderExpressions.Any()` and `spec is { Skip: > 0 } or { Take: > 0 }`.
+- Ardalis 9.3.1 marks a Skip or Take that was never set with **-1**, not 0 or null (probed by running a spec): "set at all" is `spec is not { Skip: -1, Take: -1 }`. A `> 0` guard silently drops `Take(0)`.
+- #35 review: normalise a typed value (DateTimeOffset to UTC) once, where the declaration parses it (`FilterField.Read`), not in one helper; otherwise EF Core passes a `+03:30` value Npgsql refuses. A test with a non-UTC offset through both helpers catches it.
+- Mutating the Dapper helper to inline filter values as quoted literals makes the injection tests fail by PostgreSQL syntax/type errors, not by a visible leak; still red, but say so.
+
+**Why:** each cost a run, a design detour or a wrong claim in a provenance record, or would have let a test pass vacuously; #9 to #18 build on these seams.
+**How to apply:** start from these when touching Persistence.*, Persistence.Dapper, the Unit of Work seam, conflicts, test migrations, paging, Dapper parameters or EF predicates; re-verify when bumping EF/Npgsql. Related: [[cqrs-and-modularity-facts]], [[snapshot-and-scheduled-command-facts]], [[dotnet-and-test-conventions]].
