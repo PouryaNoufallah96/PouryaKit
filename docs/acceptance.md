@@ -881,3 +881,18 @@ passed; `check-ai-setup.py` 0 failures.
 `python3 scripts/packaging/validate.py --no-fetch` on the fix round's commit `8c59588` (before this paragraph was added)
 printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4,
 template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof.` at version `0.1.0-preview.0.123`.
+
+Second full review (`9a5b405`, findings F4 to F6). F4 (medium): the two-names throw compared connection names ordinally,
+so `"app"` and `"APP"`, one configuration key, threw at registration; `AddPouryaKitEfCore` now compares them ignoring case,
+keeps the first spelling and throws only on names that differ beyond case, and `DbContextConnectionsCheck` groups its lines
+the same way. F5 (low): the architecture README's store-database sentence names `DbContextConnectionsCheck`. F6 (low): the
+check's line names no origin, since it covers every `AddPouryaKitEfCore` caller: `StubDbContext stores over the connection
+string missing, which the Host's configuration does not set (ConnectionStrings:missing), so every Operation that opens it
+would fail. Set ConnectionStrings:missing, or name a connection the Host configures where StubDbContext is registered.`
+
+| Guarantee | Test | Red once |
+|---|---|---|
+| `UsePostgres<T>("app", …)` then `AddPouryaKitEfCore<T>("APP")` records the DbContext once, as `app`, and the Host builds | `MisconfiguredHostTests.A_dbcontext_given_its_connection_name_again_in_another_case_is_recorded_once_and_builds` | With the comparison ordinal, the second call threw naming `app` and `APP`. |
+
+Verify on the fix: `dotnet build PouryaKit.slnx` (0 warnings); `MisconfiguredHostTests` 13, `MessageStoreDatabaseTests` 19,
+`ModularMonolith.Tests` 538, `PouryaKit.ArchitectureTests` 98, all passed; `check-ai-setup.py` 0 failures.

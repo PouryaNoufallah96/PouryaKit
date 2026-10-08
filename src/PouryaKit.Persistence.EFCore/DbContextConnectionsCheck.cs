@@ -16,9 +16,14 @@ internal sealed class DbContextConnectionsCheck : ICompositionCheck
         return services
             .GetServices<DbContextConnection>()
             .Where(connection => connection.Name is { } name && string.IsNullOrWhiteSpace(configuration.GetConnectionString(name)))
-            .GroupBy(connection => connection.Name)
+            .GroupBy(connection => connection.Name!, StringComparer.OrdinalIgnoreCase)
             .Select(missing =>
-                $"UsePostgres stores {string.Join(", ", missing.Select(connection => connection.DbContext.Name).Distinct())} over the connection string {missing.Key}, which the Host's configuration does not set (ConnectionStrings:{missing.Key}), so every Operation that opens it would fail. Set ConnectionStrings:{missing.Key}, or name in UsePostgres a connection the Host configures."
+            {
+                var dbContexts = missing.Select(connection => connection.DbContext.Name).Distinct().ToList();
+                var names = string.Join(", ", dbContexts);
+                var (stores, isRegistered) = dbContexts.Count == 1 ? ("stores", "is") : ("store", "are");
+                return $"{names} {stores} over the connection string {missing.Key}, which the Host's configuration does not set (ConnectionStrings:{missing.Key}), so every Operation that opens it would fail. Set ConnectionStrings:{missing.Key}, or name a connection the Host configures where {names} {isRegistered} registered.";
+            }
             );
     }
 }

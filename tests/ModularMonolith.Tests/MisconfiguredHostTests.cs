@@ -159,7 +159,7 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
 
         Assert.Equal(
             [
-                "UsePostgres stores StubDbContext over the connection string ledger, which the Host's configuration does not set (ConnectionStrings:ledger), so every Operation that opens it would fail. Set ConnectionStrings:ledger, or name in UsePostgres a connection the Host configures.",
+                "StubDbContext stores over the connection string ledger, which the Host's configuration does not set (ConnectionStrings:ledger), so every Operation that opens it would fail. Set ConnectionStrings:ledger, or name a connection the Host configures where StubDbContext is registered.",
                 "Dapper reads use the connection string reports, which the Host's configuration does not set (ConnectionStrings:reports), so every read would fail. Set ConnectionStrings:reports, or name in AddPouryaKitDapper a connection the Host configures.",
             ],
             thrown.Message.Split(Environment.NewLine)
@@ -179,9 +179,25 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
-            "UsePostgres stores StubDbContext over the connection string missing, which the Host's configuration does not set (ConnectionStrings:missing), so every Operation that opens it would fail. Set ConnectionStrings:missing, or name in UsePostgres a connection the Host configures.",
+            "StubDbContext stores over the connection string missing, which the Host's configuration does not set (ConnectionStrings:missing), so every Operation that opens it would fail. Set ConnectionStrings:missing, or name a connection the Host configures where StubDbContext is registered.",
             thrown.Message
         );
+    }
+
+    // Configuration keys ignore case, so a name differing only in case is the same connection string (final review D, F4).
+    [Fact]
+    public void A_dbcontext_given_its_connection_name_again_in_another_case_is_recorded_once_and_builds()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        // The sample Host's appsettings.json, copied beside the tests, sets ConnectionStrings:app.
+        builder.Services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        builder.Services.AddPouryaKitEfCore<StubDbContext>("APP");
+        builder.AddPouryaKitCompositionChecks();
+
+        var recorded = builder.Services.Select(descriptor => descriptor.ImplementationInstance).OfType<DbContextConnection>();
+
+        Assert.Equal([new DbContextConnection("app", typeof(StubDbContext))], recorded);
+        using var host = builder.Build();
     }
 
     [Fact]

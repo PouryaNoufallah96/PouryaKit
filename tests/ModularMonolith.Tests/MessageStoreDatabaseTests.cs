@@ -224,7 +224,7 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
-            "UsePostgres stores StubDbContext over the connection string unset, which the Host's configuration does not set (ConnectionStrings:unset), so every Operation that opens it would fail. Set ConnectionStrings:unset, or name in UsePostgres a connection the Host configures.",
+            "StubDbContext stores over the connection string unset, which the Host's configuration does not set (ConnectionStrings:unset), so every Operation that opens it would fail. Set ConnectionStrings:unset, or name a connection the Host configures where StubDbContext is registered.",
             thrown.Message
         );
     }

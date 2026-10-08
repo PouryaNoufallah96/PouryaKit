@@ -22,8 +22,9 @@ public static class EfCoreServiceCollectionExtensions
         /// It records the DbContext, once, as a <see cref="DbContextConnection"/> with <paramref name="connectionName"/>,
         /// the connection string it stores over when its registration names one, so the Kit's composition checks refuse,
         /// when the Host's container is built, a named connection string the Host's configuration lacks or leaves blank,
-        /// and compare its connection with the message store's. A name replaces an earlier record without one; a second,
-        /// different name for the same DbContext throws.
+        /// and compare its connection with the message store's. A name replaces an earlier record without one; the same name
+        /// again, ignoring case as configuration keys do, keeps the first spelling; a second, different name for the same
+        /// DbContext throws.
         /// A database package such as <c>PouryaKit.Persistence.Postgres</c> calls it; Feature code never does.
         /// </summary>
         public IServiceCollection AddPouryaKitEfCore<TDbContext>(string? connectionName = null)
@@ -44,7 +45,8 @@ public static class EfCoreServiceCollectionExtensions
                 {
                     services[services.IndexOf(recorded)] = ServiceDescriptor.Singleton(new DbContextConnection(connectionName, typeof(TDbContext)));
                 }
-                else if (recordedName != connectionName)
+                // Configuration keys ignore case, so "app" and "APP" name one connection string.
+                else if (!string.Equals(recordedName, connectionName, StringComparison.OrdinalIgnoreCase))
                 {
                     throw new InvalidOperationException(
                         $"{typeof(TDbContext).Name} is already stored over the connection string {recordedName}, so it cannot also be stored over {connectionName}. Give one DbContext one connection string."
