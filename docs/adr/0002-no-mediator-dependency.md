@@ -303,7 +303,7 @@ request id on a command that does not opt in.
 - Proven by `MisconfiguredHostTests.An_endpoint_that_requires_an_idempotency_key_on_a_get_fails_the_host_at_start`, red
   with the refusal switched off, against PostgreSQL.
 
-## Amendment (2026-10-08, ticket #54: applications neither call nor implement the pipeline's contracts)
+## Amendment (2026-10-08, ticket #54: applications implement none of the pipeline's contracts)
 
 The decision above stands. The #42 and #43 amendments say the two optional slots are filled only by the Kit, yet their
 contracts are public and the dispatcher takes whatever implementation is registered, so an application could implement
@@ -315,16 +315,20 @@ or replace one, and only Feature code calling one was refused. The owner approve
   pipeline's other seams are public for the same reason, since another Kit package fills or calls each: Cqrs's
   `IUnitOfWork`, `IValidationStep<T>` and `IReadingStateGuard`, Persistence.EFCore's `IUnitOfWorkOutbox`, and
   Messaging.Wolverine's `INotificationOutbox`, `IIntegrationEventOutbox`, `IDelayedCommandOutbox`, `ISnapshotMappers`
-  and `IReceipts`. Each has one Kit implementation.
-- **Applications neither call nor implement them, and the structure tests enforce both.** `FeatureCodeTests` refuses
-  a Module that calls a step only the Kit runs, either slot included; `PipelineContractTests` refuses a Module or Host
-  type that implements any of these contracts, so a second cache, store or Unit of Work in an application, a
-  pipeline step by another name, fails. The first judges the Proving Sample's Modules, the second its Modules and its
-  Host; a consuming project copies both with the other structure rules. Nothing changes at run time: the dispatcher
-  still takes whatever is registered.
+  and `IReceipts`. Cqrs's `IDispatcher`, the pipeline itself, and Modularity's Gateway `IGatewayProcessor<TModule>`
+  are public because application code sends through them, and only the Kit implements them. Each contract has one Kit
+  implementation, but for `IDispatcher`, which Observability also decorates.
+- **Applications implement none of them and call neither slot; the structure tests enforce both.** `FeatureCodeTests`
+  refuses a Module that calls a step only the Kit runs, either slot included;
+  `PipelineContractTests` refuses an application type that implements any of these contracts, so a dispatcher
+  decorator or a second cache, store or Unit of Work in an application, a pipeline step by another name, fails. The
+  first judges the Proving Sample's Modules, the second its application code: both Hosts and every project they
+  reference that is no Kit package. A consuming project copies both with the other structure rules. Nothing changes
+  at run time: the dispatcher still takes whatever is registered.
 - **Not in the set.** `IAuthorizer<T>` and the handler contracts stay the application's: every authorizer it
   registers runs, as the Wave 1 amendment above says. The composition checks, the Module seam and the declaration
   markers (`IRequiresAuthorizer`, `IRequiresQueryCache`) add nothing to the pipeline, so this rule does not judge them.
 - Proven by `PipelineContractTests.An_application_type_that_implements_a_pipeline_contract_is_rejected`, red with the
   offending `OwnQueryCache` no longer implementing `IQueryCache` and with the rule's contract list empty, and by
-  `PipelineContractTests.No_module_or_host_implements_a_pipeline_contract_and_each_has_one_kit_implementation`.
+  `PipelineContractTests.No_module_or_host_implements_a_pipeline_contract_and_the_kit_implements_each`, red with
+  `IDispatcher` and `IGatewayProcessor<TModule>` taken off the list.

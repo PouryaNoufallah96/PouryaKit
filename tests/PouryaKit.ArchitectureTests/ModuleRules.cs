@@ -261,6 +261,10 @@ internal static partial class ModuleRules
     /// contract the Kit fills for its pipeline would be one by another name, whatever registers it. Each contract is
     /// public only so another Kit package can fill or call it:
     /// <list type="bullet">
+    /// <item><c>IDispatcher</c>: the fixed pipeline itself; Cqrs fills it and Observability decorates it, so an application's
+    /// decorator or replacement would wrap every Operation in steps of its own;</item>
+    /// <item><c>IGatewayProcessor&lt;TModule&gt;</c>: the Gateway that begins each Operation sent from outside its Module;
+    /// Modularity fills it;</item>
     /// <item><c>IUnitOfWork</c>: the dispatcher runs every outermost command in it; the EF Unit of Work fills it (ADR 0003);</item>
     /// <item><c>IValidationStep&lt;T&gt;</c>: the dispatcher's validation step; Validation fills it from the validators
     /// Features write;</item>
@@ -278,11 +282,11 @@ internal static partial class ModuleRules
     /// <item><c>IReceipts</c>: the delivery step records a Receipt in the receiving Unit of Work; Messaging.Wolverine.EFCore
     /// fills it.</item>
     /// </list>
-    /// Unlike the steps <see cref="SavesOrCommits"/> names, which Feature code must not call, the list holds the marker
-    /// and the validation step, which have nothing to call, and no sealed class, which nothing can implement. The rule
-    /// reads every type of the assembly, nested and compiler-generated ones included, and rejects a class or struct that
-    /// implements one, naming the assembly's file; a Kit package implementing one is correct. Not seen: an implementation
-    /// made at run time, such as a <c>DispatchProxy</c>.
+    /// Unlike the steps <see cref="SavesOrCommits"/> names, which Feature code must not call, the list holds the dispatcher
+    /// and the Gateway, which Feature code calls, the marker and the validation step, which have nothing to call, and no
+    /// sealed class, which nothing can implement. The rule reads every type of the assembly, nested and compiler-generated
+    /// ones included, and rejects a class or struct that implements one, naming the assembly's file; a Kit package
+    /// implementing one is correct. Not seen: an implementation made at run time, such as a <c>DispatchProxy</c>.
     /// </summary>
     public static IEnumerable<string> ImplementsPipelineContracts(Assembly assembly) =>
         from type in assembly.GetTypes()
@@ -295,6 +299,8 @@ internal static partial class ModuleRules
 
     private static readonly Type[] PipelineContracts =
     [
+        typeof(IDispatcher),
+        typeof(IGatewayProcessor<>),
         typeof(IUnitOfWork),
         typeof(IValidationStep<>),
         typeof(IReadingStateGuard),
