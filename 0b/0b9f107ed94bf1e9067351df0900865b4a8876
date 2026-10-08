@@ -1,0 +1,26 @@
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_4f44a41d89c3b1::t_987c1cfb8a0d86 10
+.agents/scripts/test_check_docs.py
+  s_4f44a41d89c3b1::t_f484e705ed5606 35-36,64-66,70-74,93-116
+  s_4f44a41d89c3b1::t_9c6729b9fa5a62 117
+.agents/scripts/check-docs.py
+  s_4f44a41d89c3b1::t_2512bc3e255292 285-286,288
+  s_4f44a41d89c3b1::t_3265a3ebda66b5 19-20,276,279
+  s_4f44a41d89c3b1::t_266e05e7e6b798 17-18,94-95,152,161-164,180,184,238-240,244-254,260-274,277-278,280-284,287
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0b0b9f107ed94bf1e9067351df0900865b4a8876",
+  "prompts": {},
+  "sessions": {
+    "s_4f44a41d89c3b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "876ff07b-1f33-4cd5-86a7-a6eda87eb025",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
