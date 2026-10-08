@@ -11,7 +11,7 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 // on another database than the store's writes its Outbox there: the Operation fails when that database holds no store
 // tables, and commits where no delivery reads it when it holds a copy of them. The store's side is the connection string
 // Wolverine was given. The DbContexts are every one AddPouryaKitEfCore made a Unit of Work, through UsePostgres, which names
-// its connection string, or over a DbContext the application registered itself, which names none. Each DbContext's side is
+// its connection string, or over a DbContext the application registered itself, which may name one. Each DbContext's side is
 // the connection EF Core gives the DbContext itself, created in the check's own scope, whatever configured it, a
 // ConfigureDbContext after UsePostgres included: a connection string (EF Core resolves its named form,
 // Name=ConnectionStrings:app, which UsePostgres writes), a DbConnection or an Npgsql data source. The connection
@@ -39,7 +39,7 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
         using var scope = services.CreateScope();
         foreach (var connection in services.GetServices<DbContextConnection>())
         {
-            // A missing or blank named one is PostgresConnectionsCheck's line.
+            // A missing or blank named one is DbContextConnectionsCheck's line, which AddPouryaKitEfCore registers with every record.
             if (connection.Name is { } name && string.IsNullOrWhiteSpace(configuration.GetConnectionString(name)))
             {
                 continue;

@@ -858,3 +858,26 @@ Verify on the package's tree merged with packages A and C (`66fdb2f`): `dotnet b
 paragraph was added), printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed:
 template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof.` at
 version `0.1.0-preview.0.120`.
+
+Fix round (dual review of `ce38cc7`, findings F1 to F3). F1 (high): a name passed to `AddPouryaKitEfCore<TDbContext>(connectionName)`
+without `UsePostgres` escaped both checks, because only `UsePostgres` registered the missing-string check and
+`MessageStoreDatabaseCheck` leaves a missing named string to it. The check moved to where the records are made: Persistence.EFCore's
+`DbContextConnectionsCheck`, registered by `AddPouryaKitEfCore` with `TryAddEnumerable`, with `PostgresConnectionsCheck`'s
+message text (the record carries no origin, so the line still names `UsePostgres`); `PostgresConnectionsCheck` is deleted.
+F2 (medium): a name now replaces an earlier record of the DbContext without one, and a second, different name throws
+`InvalidOperationException` at registration naming both. F3 (low): `modules.md`'s store-database bullet names the line's
+parts for each case.
+
+| Guarantee | Test | Red once |
+|---|---|---|
+| A connection name `AddPouryaKitEfCore` records without `UsePostgres`, which the configuration lacks, fails the build naming `ConnectionStrings:unset`, beside a store on another database | `MessageStoreDatabaseTests.A_connection_name_add_pouryakit_ef_core_records_and_the_configuration_lacks_fails_the_host_when_built_naming_its_key` | With `DbContextConnectionsCheck` not registered, the Host built; `MisconfiguredHostTests.A_connection_string_the_configuration_lacks_or_leaves_blank_fails_the_host_when_built_naming_its_key` failed too, so the one check covers `UsePostgres`'s names. |
+| `AddDbContext`, `AddPouryaKitEfCore<T>()`, then `UsePostgres<T>("missing", …)` fails the build naming `ConnectionStrings:missing` | `MisconfiguredHostTests.A_connection_string_named_after_an_unnamed_record_of_the_dbcontext_fails_the_host_when_built_naming_its_key` | With the unnamed record kept, the Host built. |
+| A second, different connection name for one DbContext throws at registration, naming both | `MisconfiguredHostTests.A_dbcontext_given_a_second_connection_string_throws_naming_both` | With the throw removed, the second `UsePostgres` returned. |
+
+Verify on the fix: `dotnet build PouryaKit.slnx` (0 warnings); `MessageStoreDatabaseTests` 19, `MisconfiguredHostTests` 12,
+`SharedStoreSchemaTests` 1, `ModularMonolith.Tests` 537, `PouryaKit.ArchitectureTests` 98 (`PackageGraphTests` 25), all
+passed; `check-ai-setup.py` 0 failures.
+
+`python3 scripts/packaging/validate.py --no-fetch` on the fix round's commit `8c59588` (before this paragraph was added)
+printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4,
+template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof.` at version `0.1.0-preview.0.123`.

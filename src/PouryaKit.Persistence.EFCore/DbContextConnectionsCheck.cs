@@ -1,14 +1,14 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
-using PouryaKit.Persistence.EFCore;
 
-namespace PouryaKit.Persistence.Postgres;
+namespace PouryaKit.Persistence.EFCore;
 
-// The connection strings the Modules' DbContexts name, read from the Host's final configuration when its container is
-// built: a missing or blank one would fail the first Operation that opens its DbContext, once the Host serves. A
-// DbContext the application registered itself names none here. Nothing connects.
-internal sealed class PostgresConnectionsCheck : ICompositionCheck
+// The connection strings the DbContexts' records name, read from the Host's final configuration when its container is
+// built: a missing or blank one would fail the first Operation that opens its DbContext, once the Host serves. It lives
+// where the records are made, so every name AddPouryaKitEfCore records is checked, whoever passed it. A DbContext the
+// application registered itself names none here. Nothing connects.
+internal sealed class DbContextConnectionsCheck : ICompositionCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {

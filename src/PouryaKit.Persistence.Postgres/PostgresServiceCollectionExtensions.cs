@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using PouryaKit.Cqrs;
 using PouryaKit.Persistence.EFCore;
 
 namespace PouryaKit.Persistence.Postgres;
@@ -37,7 +36,6 @@ public static class PostgresServiceCollectionExtensions
                     .UseSnakeCaseNamingConvention()
             );
             services.TryAddSingleton<IUniqueConstraintReader, PostgresUniqueConstraintReader>();
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, PostgresConnectionsCheck>());
             return services.AddPouryaKitEfCore<TDbContext>(connectionName);
         }
     }
