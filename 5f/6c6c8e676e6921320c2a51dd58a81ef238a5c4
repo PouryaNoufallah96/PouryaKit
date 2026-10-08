@@ -1,0 +1,33 @@
+src/PouryaKit.Persistence.EFCore/DbContextConnectionsCheck.cs
+  s_bdf0617f846b2b::t_d3c32724a3244a 19,21-26
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_205b5d67281081 414,526
+docs/acceptance.md
+  s_bdf0617f846b2b::t_030eae15256fab 884-898
+.agents/skills/pourya-kit/references/persistence.md
+  s_bdf0617f846b2b::t_205b5d67281081 97
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_bdf0617f846b2b::t_3480d3ee98858b 162,182,187-200
+  s_bdf0617f846b2b::t_8197af56ff722d 201-202
+src/PouryaKit.Persistence.EFCore/EfCoreServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_d3c32724a3244a 25-27,48
+  s_bdf0617f846b2b::t_ee283abe5fdc37 49
+tests/ModularMonolith.Tests/MessageStoreDatabaseTests.cs
+  s_bdf0617f846b2b::t_3480d3ee98858b 227
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5f6c6c8e676e6921320c2a51dd58a81ef238a5c4",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
