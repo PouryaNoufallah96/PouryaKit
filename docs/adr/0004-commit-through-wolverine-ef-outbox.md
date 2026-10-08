@@ -390,8 +390,10 @@ store's database", and until ticket #63 nothing checked that proviso: it was a d
   `Incoming` where the store never reads them, with nothing logged at Warning or above.
 - **The check.** `UsePouryaKitWolverine(connectionName)` registers the composition check `MessageStoreDatabaseCheck`. When
   the Host's container is built, it compares the connection string Wolverine was given with the connection of each
-  DbContext `UsePostgres` records as a `DbContextConnection` (`PouryaKit.Persistence.EFCore`), read from the DbContext's
-  built options, so a later `ConfigureDbContext` counts, on hosts, ports and database as Npgsql reads them, and fails the
-  build with one line per DbContext on another database. It opens no connection, and two names for one database pass
-  (`MessageStoreDatabaseTests`). Not compared: the database of a string that names neither a database nor a user, and a
-  DbContext moved onto an Npgsql data source.
+  DbContext `UsePostgres` records as a `DbContextConnection` (`PouryaKit.Persistence.EFCore`), the connection EF Core
+  gives the DbContext itself, whatever configured it, a later `ConfigureDbContext` onto another string, a connection or
+  an Npgsql data source included, on hosts, ports and database as Npgsql reads them, and fails the build with one line
+  per DbContext on another database. It opens no connection, and two names for one database pass
+  (`MessageStoreDatabaseTests`). A string that names neither a database nor a user, on either side, leaves the database
+  to the client's user, so it fails the build too, asking for `Database`, or at least `Username` (orchestrator's decision
+  of 2026-10-08, second review of #63).

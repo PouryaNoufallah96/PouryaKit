@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
@@ -11,13 +10,13 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 // Wolverine writes each envelope on the Unit of Work's own connection and transaction, in the store's schema, so a DbContext
 // on another database than the store's writes its Outbox there: the Operation fails when that database holds no store
 // tables, and commits where no delivery reads it when it holds a copy of them. The store's side is the connection string
-// Wolverine was given. Each DbContext's is the one its built options hold, so a ConfigureDbContext after UsePostgres counts:
-// EF Core's named form (Name=ConnectionStrings:app, which UsePostgres writes) resolved from the Host's final configuration
-// as EF Core resolves it, or the string of the DbConnection the options hold; building the options opens nothing. A
-// DbContext on an Npgsql data source is not checked: only the provider's own options, which this package cannot reference,
-// hold it. The strings are compared on the hosts, ports and database they name: nothing connects or resolves a host name,
-// so localhost and 127.0.0.1 differ. A string that names no database names its user's, as Npgsql and PostgreSQL read it;
-// one that names neither leaves the database to the client's user, so its database is unknown and not compared.
+// Wolverine was given. Each DbContext's is the connection EF Core gives the DbContext itself, created in the check's own
+// scope, whatever configured it, a ConfigureDbContext after UsePostgres included: a connection string (EF Core resolves its
+// named form, Name=ConnectionStrings:app, which UsePostgres writes), a DbConnection or an Npgsql data source. The connection
+// is not opened: nothing connects. The strings are compared on the hosts, ports and database they name; nothing resolves a
+// host name, so localhost and 127.0.0.1 differ. A string that names no database names its user's, as Npgsql and PostgreSQL
+// read it; one that names neither leaves the database to the client's user, which the string does not show, so it fails
+// the build too, asking for the database to be named.
 internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, string storeConnectionString) : ICompositionCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
@@ -27,75 +26,78 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
             yield break;
         }
 
+        if (PostgresDatabase.Of(storeConnectionString) is not { } store)
+        {
+            yield return $"UsePouryaKitWolverine keeps the message store over the connection string {storeConnectionName}, which names neither a database nor a user, so its database is left to the client's user and no DbContext's can be compared with it. Set Database, or at least Username, in the connection string {storeConnectionName}.";
+            yield break;
+        }
+
         var configuration = services.GetRequiredService<IConfiguration>();
-        var store = PostgresDatabase.Of(storeConnectionString);
-        // AddDbContext registers each DbContext's options scoped.
+        // AddDbContext registers each DbContext scoped.
         using var scope = services.CreateScope();
         foreach (var connection in services.GetServices<DbContextConnection>())
         {
             // A missing or blank one is PostgresConnectionsCheck's line.
-            if (
-                scope.ServiceProvider.GetService(typeof(DbContextOptions<>).MakeGenericType(connection.DbContext)) is IDbContextOptions options
-                && ConnectionStringOf(options, configuration) is { } named
-                && !string.IsNullOrWhiteSpace(named)
-                && PostgresDatabase.Of(named) is var database
-                && !database.Matches(store)
-            )
+            if (string.IsNullOrWhiteSpace(configuration.GetConnectionString(connection.Name)))
+            {
+                continue;
+            }
+
+            var (connectionString, failure) = ConnectionStringOf(scope.ServiceProvider, connection.DbContext);
+            if (failure is not null)
+            {
+                yield return $"UsePostgres stores {connection.DbContext.Name} over the connection string {connection.Name}, but EF Core gives it no connection (\"{failure}\"), so its database cannot be compared with the message store's, the database {store}. Give {connection.DbContext.Name} a connection string, a connection or a data source on the message store's database.";
+            }
+            else if (PostgresDatabase.Of(connectionString) is not { } database)
+            {
+                yield return $"UsePostgres stores {connection.DbContext.Name} over the connection string {connection.Name}, which names neither a database nor a user, so its database is left to the client's user and cannot be compared with the message store's, the database {store}. Set Database, or at least Username, in the connection string {connection.Name}.";
+            }
+            else if (!database.Matches(store))
             {
                 yield return $"UsePostgres stores {connection.DbContext.Name} over the connection string {connection.Name}, the database {database}, but UsePouryaKitWolverine keeps the message store over the connection string {storeConnectionName}, the database {store}, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.";
             }
         }
     }
 
-    private static string? ConnectionStringOf(IDbContextOptions options, IConfiguration configuration)
+    // The string of the connection EF Core gives the DbContext, which it does not open, or EF Core's message when it gives
+    // none, as for a named form the configuration lacks. Npgsql's provider gives a DbContext with no string, connection or
+    // data source a connection with an empty string, which names no database.
+    private static (string ConnectionString, string? Failure) ConnectionStringOf(IServiceProvider services, Type dbContext)
     {
-        var relational = options.Extensions.OfType<RelationalOptionsExtension>().FirstOrDefault();
-        return relational?.ConnectionString is { } connectionString
-            ? NameOf(connectionString) is { } name
-                ? configuration[name] ?? configuration[$"ConnectionStrings:{name}"]
-                : connectionString
-            : relational?.Connection?.ConnectionString;
+        try
+        {
+            return (((DbContext)services.GetRequiredService(dbContext)).Database.GetDbConnection().ConnectionString ?? "", null);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return ("", exception.Message);
+        }
     }
 
-    // EF Core's named form, as NamedConnectionStringResolverBase reads it: the keyword name and one '=', its key looked up
-    // as written, then under ConnectionStrings.
-    private static string? NameOf(string connectionString)
+    // A database is its servers, each a host and a port, in order, and its name.
+    private sealed record PostgresDatabase(IReadOnlyList<(string Host, int Port)> Servers, string Name)
     {
-        var equals = connectionString.IndexOf('=');
-        return
-            equals >= 0
-            && connectionString.IndexOf('=', equals + 1) < 0
-            && connectionString[..equals].Trim().Equals("name", StringComparison.OrdinalIgnoreCase)
-            ? connectionString[(equals + 1)..].Trim()
-            : null;
-    }
-
-    // A database is its servers, each a host and a port, in order, and its name, null when unknown.
-    private sealed record PostgresDatabase(IReadOnlyList<(string Host, int Port)> Servers, string? Name)
-    {
-        public static PostgresDatabase Of(string connectionString)
+        // Null when the string names neither a database nor a user.
+        public static PostgresDatabase? Of(string connectionString)
         {
             var settings = new NpgsqlConnectionStringBuilder(connectionString);
-            return new(
-                [
-                    .. (settings.Host ?? "")
-                        .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-                        .Select(host => Server(host, settings.Port))
-                        .OrderBy(server => server.Host, StringComparer.Ordinal)
-                        .ThenBy(server => server.Port),
-                ],
-                settings.Database ?? settings.Username
-            );
+            return (settings.Database ?? settings.Username) is { } name
+                ? new(
+                    [
+                        .. (settings.Host ?? "")
+                            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                            .Select(host => Server(host, settings.Port))
+                            .OrderBy(server => server.Host, StringComparer.Ordinal)
+                            .ThenBy(server => server.Port),
+                    ],
+                    name
+                )
+                : null;
         }
 
-        public bool Matches(PostgresDatabase other) =>
-            Servers.SequenceEqual(other.Servers) && (Name is null || other.Name is null || Name == other.Name);
+        public bool Matches(PostgresDatabase other) => Servers.SequenceEqual(other.Servers) && Name == other.Name;
 
-        public override string ToString()
-        {
-            var servers = string.Join(',', Servers.Select(server => $"{server.Host}:{server.Port}"));
-            return Name is null ? servers : $"{servers}/{Name}";
-        }
+        public override string ToString() => $"{string.Join(',', Servers.Select(server => $"{server.Host}:{server.Port}"))}/{Name}";
 
         // Npgsql's reading of one host (NpgsqlConnectionStringBuilder.IsUnixSocket, then TrySplitHostPort). A rooted path, or
         // one starting with @, is the directory of a Unix socket, whose name the separate port completes: its case is kept and
