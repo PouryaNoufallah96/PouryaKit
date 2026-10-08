@@ -38,6 +38,36 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         );
     }
 
+    // Read as Npgsql reads them: a string that names no database names its user's.
+    [Theory]
+    [InlineData("Host=db;Username=catalog", "Host=db;Username=messages", "db:5432/catalog", "db:5432/messages")]
+    public void A_dbcontext_on_another_database_as_npgsql_reads_the_strings_fails_the_host_when_built_naming_both(
+        string module,
+        string store,
+        string moduleDatabase,
+        string storeDatabase
+    )
+    {
+        var builder = Compose(module, store);
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            $"UsePostgres stores StubDbContext over the connection string app, the database {moduleDatabase}, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database {storeDatabase}, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
+            thrown.Message
+        );
+    }
+
+    // Read as Npgsql reads them: a database named as the other side's user is that user's, and a string that names neither
+    // a database nor a user leaves its database unknown, which is not compared.
+    [Theory]
+    [InlineData("Host=db;Database=app;Username=catalog", "Host=db;Username=app")]
+    [InlineData("Host=db", "Host=db;Database=app")]
+    public void Two_strings_npgsql_reads_as_one_database_build(string module, string store)
+    {
+        using var host = Compose(module, store).Build();
+    }
+
     // The store's string names the fixture's database in other words: Server for Host, the port inside the host, the host
     // in upper case, and a setting that leaves the database alone.
     [Fact]
