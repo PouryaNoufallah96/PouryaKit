@@ -4,7 +4,7 @@
   "classifications": ["Web", "API", "Modular monolith", "PouryaKit"],
   "identity": "PouryaKit.Templates.ModularMonolith",
   "name": "PouryaKit modular monolith",
-  "description": "A Host on PouryaKit with the Proving Sample's Catalog, Billing and Inventory Modules, their Composition Roots and Gateway endpoints, with the service defaults and an HTTP smoke test.",
+  "description": "A Host on PouryaKit of several Modules, the Proving Sample's Catalog, Billing and Inventory, composed with PouryaKit.Modularity: each with its Composition Root and reached through its Gateway, the Modules talking through Integration Events, Snapshots and Contracts. With the service defaults and an HTTP smoke test.",
   "shortName": "pouryakit-modular-monolith",
   "sourceName": "ModularMonolith",
   "defaultName": "Shop",

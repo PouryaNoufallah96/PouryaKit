@@ -109,7 +109,7 @@ public sealed class CallerPermissions(IHttpContextAccessor http, IOptions<Pourya
 
 ## Password hashing
 
-For an application that stores its own passwords. The Kit only hashes and verifies: it stores nothing and has no user, account, identity store or token issuance.
+For an application that stores its own passwords. The Kit only hashes and verifies: it stores nothing and has no user, account, identity store or token issuance ([JWT bearer authentication](#jwt-bearer-authentication)).
 
 ```csharp
 using PouryaKit.Security;
@@ -180,7 +180,7 @@ Raise `Iterations` when the guidance does; existing hashes keep verifying and ar
 
 ## JWT bearer authentication
 
-For a Host whose callers present bearer tokens from an identity provider. The Kit verifies and normalizes them; it issues none.
+For a Host whose callers present bearer tokens from an identity provider. The Kit verifies and normalizes them; it issues none. JWT token creation is an excluded recommendation: spec #33 records it as a recommendation the owner has not accepted, not a Wave 2 deliverable, and the plan's catalogue refuses token issuance (I.3), so a Host that must issue tokens does it with its identity provider, outside the Kit.
 
 ```csharp
 using PouryaKit.Security.JwtBearer;
@@ -211,11 +211,11 @@ builder.Services.AddPouryaKitWeb();   // reads the tenant under PouryaKitClaimTy
 - The token keeps its own claim names (`MapInboundClaims` stays false). For each verified token the Kit writes the value of `PouryaKitJwtBearerOptions.ActorClaim`, `"sub"` by default, as the identity's `ClaimTypes.NameIdentifier`, which `PouryaKit.Web` reads as `Actor.Person(id)`, and the value of `TenantClaim` as `PouryaKitClaimTypes.Tenant` (`PouryaKit.Cqrs`), the claim `PouryaKit.Web` reads the Operation's tenant from by default, so the Host names the token's tenant claim once, here. A claim the token itself carries under either of those two types is dropped first. Every other claim, such as the `permission` claims the Proving Sample's `CallerPermissions` reads, keeps its name.
 - A token without the tenant claim runs with a null tenant and is not refused, as with any scheme ([web.md](web.md#the-caller-and-the-actor)). An application in which every caller must have a tenant enforces it itself, in an `IAuthorizer<T>` or its own `OnTokenValidated`.
 - A token whose signature, issuer, audience or lifetime fails, or that carries no Actor claim, or more than one Actor or tenant value, is refused: the request is anonymous, and an endpoint that requires authentication answers 401 as a problem response, with the scheme's `WWW-Authenticate: Bearer` header.
-- An `OnTokenValidated` of the application's own still runs, after the normalization and only for a token the Kit kept: set it, and any other event delegate, on the existing `Events` with `Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, ...)`. The start check verifies that the normalization is the scheme's `OnTokenValidated`, so replacing `Events` in a `PostConfigure`, assigning a `JwtBearerEvents` subclass, or setting `EventsType` fails the start: each would let the normalization be skipped.
+- An `OnTokenValidated` of the application's own still runs, after the normalization and only for a token the Kit kept: set it, and any other event delegate, on the existing `Events` with `Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, ...)`. The options check at start verifies that the normalization is the scheme's `OnTokenValidated`, so replacing `Events` in a `PostConfigure`, assigning a `JwtBearerEvents` subclass, or setting `EventsType` fails the start: each would let the normalization be skipped.
 
 ### Testing JWT bearer authentication
 
-- Test with real tokens and the real middleware. The Proving Sample's `TestIssuer` signs tokens with an HMAC key generated for the test run and gives every Host the tests compose its `Authentication:Schemes:Bearer` section on the command line (`ValidIssuer`, `ValidAudiences`, `SigningKeys`), so the shared Host's bearer scheme passes its start check even while `TestAuthentication` is the default. `Microsoft.IdentityModel.JsonWebTokens`' `JsonWebTokenHandler` creates the tokens; it arrives with the bearer package.
+- Test with real tokens and the real middleware. The Proving Sample's `TestIssuer` signs tokens with an HMAC key generated for the test run and gives every Host the tests compose its `Authentication:Schemes:Bearer` section on the command line (`ValidIssuer`, `ValidAudiences`, `SigningKeys`), so the shared Host's bearer scheme passes its options check at start even while `TestAuthentication` is the default. `Microsoft.IdentityModel.JsonWebTokens`' `JsonWebTokenHandler` creates the tokens; it arrives with the bearer package.
 - A test of the bearer scheme builds its own Host with `AppFixture.ComposeHost(..., configure: builder => builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme))`, which makes `Bearer` the default again, and starts it.
-- Prove each refusal with a token that differs in one thing: another signing key, issuer or audience, a lifetime that ended beyond the handler's five minutes of clock skew, no `sub`, no `aud`. Prove the start check with one weakened option per case on the composed Host, each validator delegate and each way of replacing the events included, and that `StartAsync` throws.
+- Prove each refusal with a token that differs in one thing: another signing key, issuer or audience, a lifetime that ended beyond the handler's five minutes of clock skew, no `sub`, no `aud`. Prove the options check with one weakened option per case on the composed Host, each validator delegate and each way of replacing the events included, and that `StartAsync` throws.
 - A second started Host shares the message store's queues. Wait for the fixture's deliveries (`Fixture.WaitUntilDeliveredAsync`) before starting it and before it is disposed, or it can take a delivery and die holding it, and the next test's reset times out.

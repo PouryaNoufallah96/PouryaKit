@@ -4,6 +4,8 @@ Spec #1's Testing Decisions list the Gateway-seam acceptance scenarios, from pla
 
 The plan row is the B.1 behaviour the Phase acceptance line cites, or the Phase when it cites none.
 
+The Wave 2 sections without a `validate.py` PASS line (#37, #38, #44, #56, #57), and the PASS lines older than their section's last source change, are covered by the integrated runs: the close-out's final `validate.py` run on the `feat/wave-2` tip, which #54's closing comment cites, is the package record for all of them.
+
 | Scenario | Plan row | Proven by | Notes |
 |---|---|---|---|
 | A failed Result rolls back | 2 | `UnitOfWorkTests.A_failed_result_returned_after_writing_leaves_nothing_written`; `NotificationTests.An_operation_that_rolls_back_stores_no_notification` ("failed Result") | The second test also shows that no Outbox row is left. |
@@ -653,6 +655,7 @@ it sees, `WebApplication`'s automatic `UseRouting`, `UseAuthentication` and `Use
 On the merge of `feat/wave-2` at `30b8f9f` (#61's fix round: composition checks at the container build), with the checks adapted to two moments (startup checks for what the built application shows; `UsePouryaKitWolverine` installing the entry), `python3 scripts/packaging/validate.py --no-fetch` on the merge commit (`a526a67`, before this paragraph was added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof` at version `0.1.0-preview.0.101`, with the Release runtime suite at 753 passed, 0 failed, 0 skipped. The `PouryaKit.Cqrs` clean consumer now names `IStartupCheck` beside `ICompositionCheck`; the generated Hosts of both templates build under the composition checks and start under the startup checks, every endpoint mapped.
 
 After the review's fix round (findings F1 to F6 of `ee7d080`: the composition-check runner comes with the dispatcher, so a Kit Host that never installs the checks fails when it starts; the limiter refuses the order only where authentication is registered; wording of the checks' moments and names) and the merge of `feat/wave-2` at `4be1aa3` (#61's F7-F9 follow-up), `python3 scripts/packaging/validate.py --no-fetch` on the merge commit (`508bd9a`, before this paragraph was added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof` at version `0.1.0-preview.0.107`, with the Release runtime suite at 757 passed, 0 failed, 0 skipped.
+
 ## Wave 2 private-feed publication covers the template package, ticket #54
 
 Ticket #54's criterion "Use the existing central packaging, MinVer, CI validation and private-feed consumer path for new or changed Wave 2 packages", with the owner's decision of 2026-10-07: the publication workflow is fixed on the integration branch, and the real private-feed publication of the Wave 2 set runs on `main` with the merge of `feat/wave-2`, never from another branch. This package made no remote write: no push to the GitHub feed and no workflow run.
@@ -742,3 +745,30 @@ tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj` printed 508 passed, 0 
 --project tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj` 98 passed, 0 failed, 0 skipped.
 
 `python3 scripts/packaging/validate.py --no-fetch` on the ticket's source (commit `6ec8a22`, before this paragraph was added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof` at version `0.1.0-preview.0.106`, with the Release runtime suite at 769 passed, 0 failed, 0 skipped. The generated Hosts of both templates build under the new check, each naming one connection string for its store and its DbContexts.
+
+## Wave 2 documentation and AI guidance reconciled, ticket #54
+
+Ticket #54's criterion "Reconcile Capability documentation, C4 diagrams, applicable ADR amendments and the Kit's
+skill/rules/agent guidance with delivered behavior. Preserve JWT token creation as an excluded recommendation and record
+owner additions accurately", the completeness audit of 2026-10-07 and the owner's decision of 2026-10-07 on the monolith:
+keep the single-Module monolith and make the templates' roles and its growth path explicit. Documentation and AI
+guidance only: no Kit code changed, and in template content only the two `template.json` descriptions and one comment of
+the generated smoke test.
+
+| What | Where | Evidence |
+|---|---|---|
+| The templates' roles: the monolith is the single-Module start that grows into the modular monolith by adding `PouryaKit.Modularity`; the modular monolith is several Modules, each reached through its Gateway | Both `template.json` descriptions; [templates.md](../.agents/skills/pourya-kit/references/templates.md), "Growing the monolith into a modular monolith"; [the architecture doc](architecture/README.md)'s Proving Sample view, which gains the template package | Both templates generated with `-n Acme.Shop` from the package packed at this tree: twelve files differ and the rest are the same files; nine change when Catalog becomes a Module (`Directory.Packages.props`, `Catalog.csproj`, `CatalogModule.cs`, the five endpoints, `Program.cs`), three by Billing and Inventory (the solution, the Host's csproj, `appsettings.json`); the modular monolith adds Billing, Inventory, `CatalogProducts.cs` and `CrossModuleTests.cs`. The two traps of the path, a declaration without its Module and a `ConfigureContainer` of the Host's own, are stated as closed by #61 and #62. `TemplateTests` passes. |
+| JWT token creation is an excluded recommendation, not a deliverable | [security.md](../.agents/skills/pourya-kit/references/security.md), "JWT bearer authentication" | Spec #33's Implementation Decisions keep it a recommendation, not an accepted owner decision or a Wave 2 deliverable, and plan I.3 refuses token issuance; no Kit package issues a token (`PouryaKit.Security.JwtBearer` validates and normalizes only, #39). |
+| Owner additions recorded as additions | Plan I.3: the Paging row (allow-listed filters, #35), the Security row (PBKDF2, #40) and, added now, the HttpClient context handler row (outgoing HTTP retry without Aspire, #48) | Each named as the owner's addition in spec #33, as its Implementation Decisions ask, not as text the checked plan held. |
+| The plan's catalogue | Plan I.3's One JSON setup (#34) and Integration Event versioning (#49) rows gain their Built notes, the latter its Glossary words ("a subscription to v1"); the Health row's proof is two compositions in Wave 2; I.6's ADR 0002 slots and ADR 0006 RabbitMQ answer are marked resolved | Section C's Cqrs, Modularity, Persistence.Postgres and Security.JwtBearer rows checked against each csproj: unchanged. |
+| ADRs keep their records; dated notes only | 0006: the #50 record's `StartupCheck.cs` is `DurableQueuesCheck.cs` since #62, and its inferred point tested in #51; 0008: #36's note of 2026-10-07 under an amendment heading of its own, word for word; 0009: the Outbox-write placement #47 showed red | ADR 0004's #58 amendment checked against the four Hosts' csproj files and `Program.cs`: unchanged. |
+| The architecture doc and the Kit's skill follow #58 to #63 | The Wolverine package's checks named at their own moments (composition checks, the routing checks as Wolverine starts, `DurableQueuesCheck` once it has started) instead of "the startup checks"; `AddPouryaKitEndpoints`, `AddPouryaKitValidation`, `AddPouryaKitPermissions` and `AddPouryaKitDapper` with the Module's assembly inferred (#61); the Glossary's words ("subscription", "recurring command"); `SKILL.md`'s structure rules gain the pipeline-contract rule and its triggers the check terms; `README.md`'s status covers #59, #60 and #63; `docs/private-packages.md` says what a complete version's feed check is now and that the template install's hosted proof is the first `main` publication | The Mermaid views parse (`mermaid.parse` on each block, with a mutated block refused); every relative link and anchor of the changed files resolves. |
+| AI guidance | `docs/agents/brief-template.md`'s docs-sync set gains `docs/adr/*.md` and `src/PouryaKit.Templates/content/**`; `.claude/rules/kit-code.md`'s Stack line names the generated templates' smoke tests; `docs/agents/ai-setup.md`'s Known gaps record #53's Codex timeout and `worktree.baseRef: head` as confirmed | `python3 .agents/scripts/check-ai-setup.py`: 0 failures. `docs/agents/running-a-spec.md` names no start-time check in any step, so it is unchanged. |
+
+A recorded limitation, from the #62 re-score: a Host made of `AddPouryaKitWeb` alone, with no Cqrs registration,
+registers no check runner. The runner comes with the dispatcher's registration (`AddDispatcher` in
+`src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs`), which only `AddPouryaKitCqrs` and
+`AddPouryaKitCompositionChecks` make, so such a Host starts with its startup checks unrun, `UnmappedApiVersionsCheck`
+included. It runs nothing degraded: each Module route group begins the request's Operation
+(`src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs`), and `BeginOperation` resolves the `Operation` only that
+registration adds, so the Host fails at its first request instead.

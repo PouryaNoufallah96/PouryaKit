@@ -24,7 +24,7 @@ using Wolverine;
 namespace ModularMonolith.Tests;
 
 // The Host over HTTP, as Program composes it: Catalog's Features through the pipeline, the Unit of Work and PostgreSQL,
-// with a bearer token the Host verifies, and the composition's start checks.
+// with a bearer token the Host verifies, and the composition checks it runs when it is built.
 public sealed class HostTests(App app)
 {
     [Fact]

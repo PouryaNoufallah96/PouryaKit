@@ -33,7 +33,7 @@ Follow the last package added (`<package>`, #<ticket>): csproj metadata as its s
 
 ## Docs-sync set (allowed by default, beside the ticket's `allowed_files`)
 
-`.agents/skills/pourya-kit/SKILL.md` and `references/*.md`, `README.md` (the status list), `docs/architecture/README.md`, `docs/acceptance.md`, `docs/provenance/*.md`, `docs/foundation-review.md` (only your Capability's section C row and I.3 row, with a dated "Built" note), `scripts/packaging/consumers/<package>.cs`, `scripts/packaging/inventory.json` (a ticket that adds or removes a package), `Directory.Packages.props`, `PouryaKit.slnx`, `tests/PouryaKit.ArchitectureTests/**` (package graph and structure tests), `GLOSSARY.md` (a term the ticket introduces), and your agent memory directory.
+`.agents/skills/pourya-kit/SKILL.md` and `references/*.md`, `README.md` (the status list), `docs/architecture/README.md`, `docs/acceptance.md`, `docs/provenance/*.md`, `docs/adr/*.md` (a dated amendment of an ADR the ticket touches, never a rewrite of its record), `docs/foundation-review.md` (only your Capability's section C row and I.3 row, with a dated "Built" note), `src/PouryaKit.Templates/content/**` (the monolith's replacement of a changed sample Composition Root or Gateway endpoint, and the template csproj that matches a changed sample csproj, as `.claude/rules/kit-code.md` couples them), `scripts/packaging/consumers/<package>.cs`, `scripts/packaging/inventory.json` (a ticket that adds or removes a package), `Directory.Packages.props`, `PouryaKit.slnx`, `tests/PouryaKit.ArchitectureTests/**` (package graph and structure tests), `GLOSSARY.md` (a term the ticket introduces), and your agent memory directory.
 
 ## Tests
 
