@@ -91,6 +91,15 @@ git worktree remove .claude/worktrees/kit-review-codex
 
 The runner's first output line names an artifacts directory; `result.json` there holds the verdict, findings, coverage and limitations. Omitted `--model` and `--effort` use the provider's host configuration. Add them when the session specifies overrides. Copy that `result.json` to `.claude/reviews/<ticket or spec name>-<short head hash>.codex.json` beside the stable result file and name both in the ticket's evidence: the stable file keeps `complete: false` and the digest's `unknown`, which say the workflow's own leg did not return, not that the review failed, and a later reader needs the rerun's verdict beside it.
 
+Over 900,000 bytes of diff, the workflow skips the Codex leg before the runner starts, and the leg's note gives the size. `inspect` puts the whole diff in Codex's prompt, and Codex refuses an input over 1,048,576 characters: the final structural review of 2026-10-08 failed in two seconds on a 2.68 MB diff with "Input exceeds the maximum length of 1048576 characters". Run that leg by hand in review mode, with no `--base`. Codex then reads the worktree itself instead of an embedded diff, so the review brief names the base and head commits beside the spec, and `--artifacts` is a directory outside the checkout:
+
+```bash
+python3 .agents/skills/claudex-loop/scripts/runner.py review --host claude --builder claude \
+  --repo <detached worktree> --plan <review brief> --artifacts <dir> --timeout 1800
+```
+
+Its `result.json` is kept as above, under `.claude/reviews/` beside the stable result file.
+
 From a Codex-hosted session, spawn the `kit-reviewer` agent for the Codex review and run the Claude inspection through the same runner, on a worktree of the commit as above, with the ticket saved as a spec file outside the checkout:
 
 ```bash

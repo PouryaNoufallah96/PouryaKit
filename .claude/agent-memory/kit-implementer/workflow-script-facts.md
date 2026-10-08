@@ -1,6 +1,6 @@
 ---
 name: workflow-script-facts
-description: Facts about Claude Code workflow scripts (.claude/workflows/*.js) and the claudex-loop runner learned while reworking kit-review
+description: Facts about Claude Code workflow scripts (.claude/workflows/*.js) and the claudex-loop runner learned while reworking kit-review and guarding its Codex leg's input size
 metadata:
   type: project
 ---
@@ -14,6 +14,9 @@ metadata:
 - It happened again on 2026-10-07 even inside a Python raw string written with Write: Write turns the six characters `\uffff` into U+FFFF. Fix it with a Python script that replaces `chr(0xFFFF)` by `'\\' + 'uffff'`; a `sed` with `$'...'` is refused.
 - On 2026-10-07 the only Node on the machine was v24.21.0 (fnm), so the direct `node --check` of `kit-review.js` fails at any commit. Proof that holds: the wrapped check, plus a stub harness (`AsyncFunction('args','agent','parallel','phase','log', src)`) whose prepare stub returns an absolute fake `top`/`run`/`worktree` (`.../.claude/worktrees/kit-review-x`), whose `parallel` throws so the run goes straight to Finish, and whose finish stub runs the prompt's real bash block with `bash -c`. Run the same harness on `git show HEAD:` of the file for the red.
 - 2026-10-07 (retro, `.claude/reviews/` copy): the same harness proved a finish-stage change. Make the finish stub return `verdict` from the block's first stdout line and `removed` from its last, give the prepare stub a fake `top` under the scratchpad (the copy lands in `<top>/.claude/reviews/`), and pass the args as an object. A base-commit copy of the script through the same harness is the red run.
+
+- 2026-10-08 (session-5 retro B, the Codex-leg size guard): the same harness proves a relay-stage change. The `review:codex` stub takes the prompt's first ```bash fence, runs it with `spawnSync(shell, ['-c', block])` and returns the parsed last stdout line; `parallel` maps each leg with `.catch(() => null)` so a throwing kit-reviewer stub still reaches Finish; the fake top holds a stub `runner.py` that leaves a marker file. The relay agent's shell is the user's (zsh here), so run the block under both `bash` and `zsh`. macOS `wc -c` pads its count with spaces (`tr -d ' '`). The guard is testable in process: load `.agents/hooks/guard.py` with importlib and call `denied_reason("Bash", {"command": ...}, cwd)`; append a `git push --force` line as its control.
+- Codex in `inspect` mode refuses an input over 1,048,576 characters within about two seconds ("Input exceeds the maximum length of 1048576 characters"), because the runner embeds the whole diff in the prompt; `review` mode with no `--base` embeds none, and Codex reads the worktree in its read-only sandbox.
 
 **Why:** these cost a full investigation to find during the kit-review rework (retro item 1).
 **How to apply:** when a brief says to verify a workflow with `node --check`, run that direct check first and report its runtime and result. Use the wrapped check as a fallback if the runtime rejects the workflow body's top-level `return`. See [[worktree-and-check-gotchas]].

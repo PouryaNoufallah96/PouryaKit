@@ -15,7 +15,7 @@
 - [Integration Event facts](integration-event-facts.md) — #16: process-global wire names, StartAsync-time checks, receipt-hold concurrency proof
 - [Dead letter and stale time facts](dead-letter-and-stale-time-facts.md) — #17: replay mechanics, stale stored retry reproduced, dying Host without zombie, attempts not runs
 - [Architecture test facts](architecture-test-facts.md) — #19: BCL IL reader, Module/EF model discovery, routing's empty 405/415, Solo-node recovery race
-- [Workflow script facts](workflow-script-facts.md) — node --check rejects top-level return; scripts need agents for git/files; runner on a worktree; Codex failure reason
+- [Workflow script facts](workflow-script-facts.md) — node --check rejects top-level return; scripts need agents for git/files; runner on a worktree; Codex failure reason; relay harness, inspect input limit
 - [Snapshot facts](snapshot-facts.md) — #18: step 4 in the Outbox write, version gate beside the Receipt, Receipt masks the gate in redelivery tests
 - [RabbitMQ topology Spike facts](rabbitmq-topology-spike-facts.md) — #50: fanout copies envelope id (IdOnly drops one), DLQ mode, rabbitmq:// address, harness traps
 - [Code-style analyzer facts](code-style-analyzer-facts.md) — listing the SDK's real IDE IDs, which C# 14 idioms have one, 2 s rebuilds are real
@@ -41,7 +41,7 @@
 - [Idempotency retention facts](idempotency-retention-facts.md) — #42 follow-up: .NET 10 ExecuteAsync on Task.Run, tick failure stops the Host, DbContextOptions enumeration, to_regclass, log culture
 - [Caching facts](caching-facts.md) — #43: no token to HybridCache, outermost-query-only slot, serialize then end the read, factory throw stores nothing, StampedeJoin proof, Redis lag
 - [Cross-process tracing and recipe facts](cross-process-tracing-and-recipes-facts.md) — #52: copies lose parent-id at fan-out, defaults pipeline name, OTel providers as global listeners, health/Serilog proofs
-- [Merge and CI tooling facts](merge-and-ci-tooling-facts.md) — union merge drops a shared blank line, scratch-clone merge proof, gh job-log download quirks and speed, MTP failure shape
+- [Merge and CI tooling facts](merge-and-ci-tooling-facts.md) — union merge drops a shared blank line, scratch-clone merge proof, gh job-log download quirks and speed, MTP failure shape, git-script test isolation
 - [Template package facts](template-package-facts.md) — #53/#59: engine traps, path token for raw names, pack-time version step, WebApplicationFactory, NuGet PrivateAssets graph gap, cache pollution
 - [Code generation for production facts](codegen-production-facts.md) — #58: Kit-called Wolverine picks the Kit as application assembly, codegen write needs no Roslyn, Debug-restore trap, WAF AutoStartHost
 - [Strict wire reading facts](strict-wire-reading-facts.md) — #60: STJ strict options probed, Wolverine read-failure dead-letter path, two contracts under one wire name, amq. on RabbitMQ

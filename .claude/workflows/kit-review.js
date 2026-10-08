@@ -4,7 +4,7 @@ export const meta = {
   whenToUse: 'The dual review in AGENTS.md workflow step 3, for a ticket that claims a Kit runtime guarantee or changes a public API of the Kit. Pass { base, ticket } (or { base, spec } for work with no ticket); add previous (the earlier result file) only to re-review after a high finding was fixed. Read-only; returns a short digest and names the file with the full result; the main session judges it.',
   phases: [
     { title: 'Prepare', detail: 'resolve the commits, fetch the ticket, check out a detached review worktree' },
-    { title: 'Review', detail: 'Codex (claudex-loop runner, inspect mode), then kit-reviewer, review the same commit independently' },
+    { title: 'Review', detail: 'Codex (claudex-loop runner, inspect mode; over 900,000 bytes of diff the leg is skipped with that reason), then kit-reviewer, review the same commit independently' },
     { title: 'Verify', detail: 'merge duplicate findings and check each one against the code' },
     { title: 'Finish', detail: 'write the full result file and remove the review worktree' },
   ],
@@ -294,10 +294,18 @@ else:
         why.append("runner: " + record["error"])
     out["error"] = " | ".join(why)[:600] or "the runner left no result.json and no error message"
 print(json.dumps(out, ensure_ascii=False))`
-  const runnerCommand = `python3 '${top}/.agents/skills/claudex-loop/scripts/runner.py' inspect --host claude --builder claude --repo '${worktree}' --plan '${specFile}' --base '${baseCommit}'${codexModel ? ` --model ${codexModel}` : ''}${codexEffort ? ` --effort ${codexEffort}` : ''} --timeout 570 > '${run}/codex.out' 2> '${run}/codex.err'
+  // Inspect mode puts the whole diff in Codex's prompt, and Codex refuses an input over 1,048,576 characters in about
+  // two seconds with no usable reason (2.68 MB, 2026-10-08). Over 900,000 bytes, which leaves room for the prompt
+  // around the diff, the leg is skipped with an error that gives the size and the hand rerun in review mode.
+  const runnerCommand = `size=$(git -C '${worktree}' diff --no-ext-diff --no-textconv '${baseCommit}' HEAD | wc -c | tr -d ' ')
+if [ "$size" -gt 900000 ]; then
+printf '{"available": false, "verdict": "NONE", "findings": [], "read_count": 0, "unread": [], "limitations": [], "error": "the diff is %s bytes, over the Codex leg limit of 900000 (the runner refuses an input over 1048576 characters, prompt included); rerun the leg by hand in review mode, docs/agents/ai-setup.md step 3"}\\n' "$size"
+else
+python3 '${top}/.agents/skills/claudex-loop/scripts/runner.py' inspect --host claude --builder claude --repo '${worktree}' --plan '${specFile}' --base '${baseCommit}'${codexModel ? ` --model ${codexModel}` : ''}${codexEffort ? ` --effort ${codexEffort}` : ''} --timeout 570 > '${run}/codex.out' 2> '${run}/codex.err'
 python3 - '${run}' <<'PY'
 ${summarizeCodex}
-PY`
+PY
+fi`
   const relayPrompt = `You relay an independent Codex inspection. You do not review code yourself, and you never add, drop or reword a finding.
 
 1. Run exactly this command with the Bash tool, in the foreground, with the tool timeout set to 600000 ms. Add no flags, pipes or redirects:
