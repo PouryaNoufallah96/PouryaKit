@@ -1,0 +1,44 @@
+src/PouryaKit.Persistence.EFCore/EfCoreServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_111e9e07a6dffa 23-26,42-44,46,48-54
+  s_bdf0617f846b2b::t_8d3cd175faf17b 45
+  s_bdf0617f846b2b::t_4ea9d2c6ade58b 47
+  s_bdf0617f846b2b::t_092206948e6647 55
+  s_bdf0617f846b2b::t_b717d314a33ce8 34-37,41
+.agents/skills/pourya-kit/references/persistence.md
+  s_bdf0617f846b2b::t_9c6aeace7a1f89 97
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_9c6aeace7a1f89 291,414,431
+tests/ModularMonolith.Tests/MessageStoreDatabaseTests.cs
+  s_bdf0617f846b2b::t_526e5792b450c8 211-231
+docs/acceptance.md
+  s_bdf0617f846b2b::t_e9c406595a8aca 861-879
+src/PouryaKit.Persistence.EFCore/DbContextConnectionsCheck.cs
+  s_bdf0617f846b2b::t_ab5a2b18c67ff2 5-11
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_bdf0617f846b2b::t_526e5792b450c8 15,169-201
+  s_bdf0617f846b2b::t_96dd01e5e8ab74 202
+docs/foundation-review.md
+  s_bdf0617f846b2b::t_9c6aeace7a1f89 251-252
+docs/provenance/PouryaKit.Persistence.EFCore.md
+  s_bdf0617f846b2b::t_9c6aeace7a1f89 5
+src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs
+  s_bdf0617f846b2b::t_d7252d087b411d 14,42
+docs/provenance/PouryaKit.Persistence.Postgres.md
+  s_bdf0617f846b2b::t_9c6aeace7a1f89 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f75bfc5b3246164e1ab81b0bce03e94633efafb1",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
