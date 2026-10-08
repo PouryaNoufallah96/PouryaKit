@@ -1,0 +1,33 @@
+docs/private-packages.md
+  s_bdf0617f846b2b::t_f337b93e3fb3ae 51
+  s_bdf0617f846b2b::t_37e42180bb9dde 43
+  s_bdf0617f846b2b::t_027101498e6a73 16
+docs/packages.md
+  s_bdf0617f846b2b::t_fde15df8915738 47
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_f8ff11a945ebb8 24
+  s_bdf0617f846b2b::t_14426db750aa71 32
+  s_bdf0617f846b2b::t_e6b670f9b375a0 40
+.github/workflows/package-publication.yml
+  s_bdf0617f846b2b::t_44a2094b03692c 85
+  s_bdf0617f846b2b::t_64fce0a4ffc61e 112,114-115,118,121-131,133-145
+  s_bdf0617f846b2b::t_598f7c76f61dc8 132
+.agents/skills/pourya-kit/references/publication.md
+  s_bdf0617f846b2b::t_cac5ca8bdcdc25 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "071625db7ff79f0e72846db62bf5955559b0045e",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
