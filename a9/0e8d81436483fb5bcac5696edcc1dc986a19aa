@@ -1,0 +1,21 @@
+src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs
+  s_bdf0617f846b2b::t_635af808c4c099 82-84,93-98
+tests/ModularMonolith.Tests/MessageStoreDatabaseTests.cs
+  s_bdf0617f846b2b::t_635af808c4c099 43-44,47-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a90e8d81436483fb5bcac5696edcc1dc986a19aa",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
