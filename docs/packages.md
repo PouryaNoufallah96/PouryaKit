@@ -44,7 +44,7 @@ Use the `packages/` directory printed by the validator as a local NuGet source. 
 <PackageReference Include="PouryaKit.Web" Version="0.1.0-preview.0.HEIGHT" />
 ```
 
-Replace the example version with the manifest's actual MinVer version. The shared validator never publishes; the delivered [private publisher](private-packages.md) handles GitHub Packages publication and consumption. Nuget.org activation and stable 1.0 remain owner decisions.
+Replace the example version with the manifest's actual MinVer version. The shared validator never publishes; the delivered [private publisher](private-packages.md) handles GitHub Packages publication and consumption. After its push it restores every library package from the feed and installs `PouryaKit.Templates` from it rather than referencing it, then generates and restores the solution of each template; the Wave 2 set publishes with the merge of `feat/wave-2` to `main`, the only branch that publishes. Nuget.org activation and stable 1.0 remain owner decisions.
 
 ## Evidence
 

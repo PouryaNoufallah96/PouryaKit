@@ -82,7 +82,7 @@ jobs:
           (cd "$PACKAGES_DIR" && sha256sum --check "$RUNNER_TEMP/package-checksums.txt")
           echo "Validated main SHA: $ORIGINAL_SHA. MinVer version: $version." >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Push original packages and restore all inventory packages
+      - name: Push original packages and prove each from the feed
         env:
           GITHUB_TOKEN: ${{ github.token }}
           NuGetPackageSourceCredentials_GitHub: Username=${{ github.actor }};Password=${{ github.token }};ValidAuthenticationTypes=Basic
@@ -109,13 +109,37 @@ jobs:
               --source GitHub --api-key "$GITHUB_TOKEN" --skip-duplicate --no-symbols \
               --configfile "$RUNNER_TEMP/publication.NuGet.Config"
           done < <(jq -r '.packages[].file' "$PACKAGES_DIR/manifest.json")
+          version=$(jq -er '.version' "$PACKAGES_DIR/manifest.json")
           consumer=$(mktemp -d "$RUNNER_TEMP/private-consumer.XXXXXX")
+          export NUGET_HTTP_CACHE_PATH="$consumer/http-cache" NUGET_PLUGINS_CACHE_PATH="$consumer/plugin-cache"
+          # A library package is referenced at its exact version; a package of inventory kind "template" is installed instead.
           {
             echo '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup>'
-            jq -r '.version as $version | .packages[] | "<PackageReference Include=\"" + .id + "\" Version=\"[" + $version + "]\" />"' "$PACKAGES_DIR/manifest.json"
+            jq -r --arg version "$version" '.packages[] | select(.kind != "template") | "<PackageReference Include=\"" + .id + "\" Version=\"[" + $version + "]\" />"' scripts/packaging/inventory.json
             echo '</ItemGroup></Project>'
           } > "$consumer/Consumer.csproj"
-          NUGET_HTTP_CACHE_PATH="$consumer/http-cache" NUGET_PLUGINS_CACHE_PATH="$consumer/plugin-cache" \
-            dotnet restore "$consumer/Consumer.csproj" --packages "$consumer/packages" \
-              --configfile "$RUNNER_TEMP/publication.NuGet.Config"
-          echo 'NuGet push and clean restore of all inventory packages completed. HTTP 409 duplicates are skipped; remote byte identity is not verified.' >> "$GITHUB_STEP_SUMMARY"
+          dotnet restore "$consumer/Consumer.csproj" --packages "$consumer/packages" \
+            --configfile "$RUNNER_TEMP/publication.NuGet.Config"
+          proven="every library package referenced at $version"
+          # The feed's side of the template consumers in scripts/packaging/validate.py, which install the produced nupkg instead.
+          # dotnet new install reads the NuGet.Config of its working folder, credentials included, and ignores source mapping:
+          # that copy keeps the GitHub source alone.
+          mkdir "$consumer/templates"
+          cp "$RUNNER_TEMP/publication.NuGet.Config" "$consumer/templates/NuGet.Config"
+          dotnet nuget disable source nuget.org --configfile "$consumer/templates/NuGet.Config"
+          template_packages=$(jq -r '.packages[] | select(.kind == "template") | .id' scripts/packaging/inventory.json)
+          for id in $template_packages; do
+            (cd "$consumer/templates" && dotnet new install "$id@$version" --debug:custom-hive "$consumer/hive")
+            proven="$proven; $id installed"
+            short_names=$(jq -er '.shortName' "src/$id/content/"*/.template.config/template.json)
+            for template in $short_names; do
+              # The two name shapes of #59: a dotted name, and one a namespace cannot hold, kept as typed in paths.
+              for name in Acme.Shop acme-shop; do
+                (cd "$consumer/templates" && dotnet new "$template" -n "$name" -o "$template/$name" --no-restore --debug:custom-hive "$consumer/hive")
+                dotnet restore "$consumer/templates/$template/$name/$name.slnx" --packages "$consumer/packages" \
+                  --configfile "$RUNNER_TEMP/publication.NuGet.Config"
+                proven="$proven; dotnet new $template -n $name generated and restored"
+              done
+            done
+          done
+          echo "NuGet push completed, then from the feed with fresh caches: $proven. HTTP 409 duplicates are skipped; remote byte identity is not verified." >> "$GITHUB_STEP_SUMMARY"

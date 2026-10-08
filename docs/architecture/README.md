@@ -21,7 +21,7 @@ C4Container
     ContainerDb_Ext(evidence, "Retained CI evidence", "GitHub Actions artifact", "Tested SHA/result, original packages/manifest, logs and consumer assets; no caches")
     Container_Ext(publisher, "Private publisher", "Separate main workflow, one job group with cancellation disabled", "Successful main run/attempt/SHA; official artifact download and local provenance/hash checks")
     ContainerDb_Ext(privateFeed, "Private GitHub Packages", "Fixed authenticated NuGet feed", "Kit preview/rc packages for private consumption")
-    Container_Ext(privateConsumer, "Private-feed consumer", ".NET 10, fresh NuGet caches", "Restores every inventory package at its exact version after push")
+    Container_Ext(privateConsumer, "Private-feed consumer", ".NET 10, fresh NuGet caches", "After push, restores every library package at its exact version, installs the template package and restores the solutions its templates generate")
     ContainerDb_Ext(postgresql, "PostgreSQL", "Testcontainers", "Proving Sample runtime proof and the generated solutions' smoke tests")
     Rel(maintainer, path, "runs")
     Rel(ci, path, "runs at the actual checked-out SHA without forwarding credentials")
@@ -29,7 +29,7 @@ C4Container
     Rel(publisher, evidence, "downloads original main run/attempt artifacts with the official action, never rebuilds")
     Rel(publisher, privateFeed, "pushes original packages with dotnet nuget push and skips HTTP 409 duplicates")
     Rel(publisher, privateConsumer, "creates and restores with the job token")
-    Rel(privateConsumer, privateFeed, "restores Kit packages exclusively from")
+    Rel(privateConsumer, privateFeed, "installs the template package and restores Kit packages exclusively from")
     Rel(path, postgresql, "tests the shared Release output against")
     Rel(path, artifacts, "packs and checks")
     Rel(consumers, artifacts, "restores Kit dependencies exclusively from")
@@ -37,7 +37,7 @@ C4Container
     Rel(consumers, postgresql, "runs each generated solution's HTTP smoke test against")
 ```
 
-The artifact and consumer checks reuse `PackageGraph` and the license policy of the Structure seam. [CI](../ci.md) invokes the same path and distinguishes a PR's tested merge revision from its head SHA. Hosted same-repository success/failure, retained packages and read-only permissions are proven by PR #30; real private fork execution remains explicitly unverified under the owner exception. The [private publisher](../private-packages.md) authorizes successful main push/manual CI, downloads the original artifact, checks local provenance and hashes, then uses standard NuGet push and a fresh restore of every package in the inventory. HTTP 409 skipping does not verify remote byte identity. The active Phase 5 scope is complete; [hosted completion evidence](../private-packages.md#hosted-completion) records the final main CI and publication at `0.1.0-preview.0.13`. Compatibility automation, named cuts and content-verified recovery in #28/#29 are closed as not planned and require a new scoped ticket.
+The artifact and consumer checks reuse `PackageGraph` and the license policy of the Structure seam. [CI](../ci.md) invokes the same path and distinguishes a PR's tested merge revision from its head SHA. Hosted same-repository success/failure, retained packages and read-only permissions are proven by PR #30; real private fork execution remains explicitly unverified under the owner exception. The [private publisher](../private-packages.md) authorizes successful main push/manual CI, downloads the original artifact, checks local provenance and hashes, then uses standard NuGet push and a fresh restore of every library package in the inventory; `PouryaKit.Templates` is installed from the feed instead, and the solution of each template it holds is generated and restored. HTTP 409 skipping does not verify remote byte identity. The active Phase 5 scope is complete; [hosted completion evidence](../private-packages.md#hosted-completion) records the final main CI and publication at `0.1.0-preview.0.13`. Compatibility automation, named cuts and content-verified recovery in #28/#29 are closed as not planned and require a new scoped ticket.
 
 ### Execution core
 
