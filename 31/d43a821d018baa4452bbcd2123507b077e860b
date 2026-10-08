@@ -1,0 +1,36 @@
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_75dee3f51db59e::t_70f68119b5ed58 335-336,342
+  s_75dee3f51db59e::t_395ed523adcaac 122-127,131,133
+  s_75dee3f51db59e::t_10396e62d4d03e 128-130,132,134-141,345
+  s_75dee3f51db59e::t_eb4af14bf10d3c 337-341,343-344
+  s_75dee3f51db59e::t_f1abc9219645dc 360-363
+  s_995d51c7ba52eb::t_9c4cff09bdd290 346-347,364-365
+src/PouryaKit.Cqrs/ValidatingServiceProviderFactory.cs
+  s_75dee3f51db59e::t_899092165ae71c 29,41-54
+  s_75dee3f51db59e::t_fe6cfe89fc122d 38
+  s_75dee3f51db59e::t_0fe86c17ee26ad 55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "31d43a821d018baa4452bbcd2123507b077e860b",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_995d51c7ba52eb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bc20c19c-fc3d-4313-8fb9-fa4d635c28f2",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
