@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ModularMonolith.Tests.Stub;
 using Npgsql;
@@ -66,6 +68,21 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
     public void Two_strings_npgsql_reads_as_one_database_build(string module, string store)
     {
         using var host = Compose(module, store).Build();
+    }
+
+    // EF Core applies a ConfigureDbContext after AddDbContext over it, so the DbContext uses the string it names.
+    [Fact]
+    public void A_dbcontext_that_configure_db_context_moves_to_another_database_fails_the_host_when_built_naming_it()
+    {
+        var builder = Compose("Host=db;Database=app", "Host=db;Database=app");
+        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql("Host=db;Database=elsewhere"));
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            "UsePostgres stores StubDbContext over the connection string app, the database db:5432/elsewhere, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database db:5432/app, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
+            thrown.Message
+        );
     }
 
     // The store's string names the fixture's database in other words: Server for Host, the port inside the host, the host
