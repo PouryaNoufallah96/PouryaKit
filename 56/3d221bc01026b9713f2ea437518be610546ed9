@@ -1,0 +1,59 @@
+src/PouryaKit.Persistence.Postgres/PostgresConnectionsCheck.cs
+  s_bdf0617f846b2b::t_9c7be6f1deb5ec 9-10,18
+tests/ModularMonolith.Tests/MessageStoreDatabaseTests.cs
+  s_bdf0617f846b2b::t_358a7c3b265aeb 189-221
+.agents/skills/pourya-kit/references/testing.md
+  s_bdf0617f846b2b::t_b9dc39caec1f2b 138
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_bdf0617f846b2b::t_b9dc39caec1f2b 143
+docs/acceptance.md
+  s_bdf0617f846b2b::t_15d4015058ce09 789-812
+.agents/skills/pourya-kit/references/persistence.md
+  s_bdf0617f846b2b::t_b9dc39caec1f2b 97
+docs/provenance/PouryaKit.Persistence.Postgres.md
+  s_bdf0617f846b2b::t_b9dc39caec1f2b 5
+src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs
+  s_bdf0617f846b2b::t_dc2cf7140bfe78 13-17,42-43,48-59,66,70
+.agents/skills/pourya-kit/references/messaging.md
+  s_bdf0617f846b2b::t_b9dc39caec1f2b 83
+src/PouryaKit.Persistence.EFCore/EfCoreServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_9c7be6f1deb5ec 22-24,27,31-40
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_bdf0617f846b2b::t_b9dc39caec1f2b 393-395
+src/PouryaKit.Testing/HostFixture.cs
+  s_bdf0617f846b2b::t_c3852e4ec7ae25 1-2,13,172-175,177-178,185,189-194,196,248-291
+  s_bdf0617f846b2b::t_afb5b171d514f2 292-293
+.claude/agent-memory/kit-implementer/sent-envelope-capture-facts.md
+  s_bdf0617f846b2b::t_db370e91226a76 1-18
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_bdf0617f846b2b::t_3c2219b131ff7c 53
+src/PouryaKit.Persistence.EFCore/DbContextConnection.cs
+  s_bdf0617f846b2b::t_9c7be6f1deb5ec 4-9,11
+.agents/skills/pourya-kit/references/modules.md
+  s_bdf0617f846b2b::t_b9dc39caec1f2b 132
+tests/ModularMonolith.Tests/RabbitMqDeliveryTests.cs
+  s_bdf0617f846b2b::t_9c4fe868bdfdfd 27,718-766
+  s_bdf0617f846b2b::t_e1da0693ccb5af 767
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_b9dc39caec1f2b 414,431,605
+src/PouryaKit.Persistence.Postgres/PostgresServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_9c7be6f1deb5ec 41
+src/PouryaKit.Testing/StoredDeliveries.cs
+  s_bdf0617f846b2b::t_c3852e4ec7ae25 47-60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "563d221bc01026b9713f2ea437518be610546ed9",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
