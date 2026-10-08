@@ -1,0 +1,104 @@
+src/PouryaKit.Messaging.Wolverine/SubscriptionUnitOfWorkCheck.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 26-27
+src/PouryaKit.Persistence.EFCore/EfCoreServiceCollectionExtensions.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 89
+tests/ModularMonolith.Tests/MessageStoreDatabaseTests.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 39,62,87,115,132,169,234,248
+  s_75dee3f51db59e::t_0185974901df3c 120-121
+  s_75dee3f51db59e::t_d56875dd12bae2 211-212
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_75dee3f51db59e::t_99a8c5caf5c144 13
+.claude/agent-memory/kit-implementer/composition-check-facts.md
+  s_75dee3f51db59e::t_99a8c5caf5c144 41,47
+tests/ModularMonolith.Tests/Stub/StubModule.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 21
+src/PouryaKit.Modularity/ModularityHostApplicationBuilderExtensions.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 50
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_75dee3f51db59e::t_3abcd958e21ed0 1069-1079
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 477
+docs/provenance/PouryaKit.Persistence.Postgres.md
+  s_75dee3f51db59e::t_99a8c5caf5c144 5
+samples/ModularMonolith/src/Modules/Billing/Billing/BillingModule.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 17
+docs/foundation-review.md
+  s_75dee3f51db59e::t_ae86dffe29efeb 251
+  s_75dee3f51db59e::t_99a8c5caf5c144 225,274,487
+  s_75dee3f51db59e::t_42737247a14aef 252
+docs/architecture/README.md
+  s_75dee3f51db59e::t_99a8c5caf5c144 402,414,417,429,431
+src/PouryaKit.Cqrs/UnitOfWorkCheck.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 30
+docs/acceptance.md
+  s_75dee3f51db59e::t_99a8c5caf5c144 642,705,714,727,745-746,748,815,841,850,863,866,873-875,895
+src/PouryaKit.Modularity/HostModules.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 87
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 127,144,166,178,289
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 154,174-175,194,211,225,228
+  s_75dee3f51db59e::t_7369e213d33031 186-187
+.agents/skills/pourya-kit/references/messaging.md
+  s_75dee3f51db59e::t_99a8c5caf5c144 82-83,163,182,376,700-701
+tests/ModularMonolith.Tests/SharedStoreSchemaTests.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 49
+tests/ModularMonolith.Tests/SingleModuleTests.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 78
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_75dee3f51db59e::t_74379b458fd2a1 402-410
+.agents/skills/pourya-kit/references/modules.md
+  s_75dee3f51db59e::t_99a8c5caf5c144 21-22,51,126,131,134-135,203
+docs/provenance/PouryaKit.Persistence.EFCore.md
+  s_75dee3f51db59e::t_99a8c5caf5c144 7
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/CatalogModule.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 35-36
+samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 30-31
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_75dee3f51db59e::t_99a8c5caf5c144 16
+docs/provenance/PouryaKit.Persistence.Dapper.md
+  s_75dee3f51db59e::t_99a8c5caf5c144 14
+src/PouryaKit.Persistence.EFCore/IUniqueConstraintReader.cs
+  s_75dee3f51db59e::t_e073432832e109 7-8
+tests/ModularMonolith.Tests/MessagingReviewRegressionTests.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 99
+samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 21
+src/PouryaKit.Persistence.Postgres/PostgresServiceCollectionExtensions.cs
+  s_75dee3f51db59e::t_dde78b58b5557f 18-21
+  s_75dee3f51db59e::t_99a8c5caf5c144 23
+src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs
+  s_75dee3f51db59e::t_4a5f3ad86fda86 13-21
+  s_75dee3f51db59e::t_99a8c5caf5c144 50
+tests/ModularMonolith.Tests/CodeGenerationTests.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 23
+.agents/skills/pourya-kit/references/persistence.md
+  s_75dee3f51db59e::t_99a8c5caf5c144 82-83,97-98,260
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_75dee3f51db59e::t_99a8c5caf5c144 84-85
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_75dee3f51db59e::t_99a8c5caf5c144 104
+scripts/packaging/consumers/single-module.cs
+  s_75dee3f51db59e::t_99a8c5caf5c144 14
+src/PouryaKit.Persistence.EFCore/DbContextConnection.cs
+  s_75dee3f51db59e::t_762eef7233c288 6-7
+src/PouryaKit.Modularity/ModuleBuilder.cs
+  s_75dee3f51db59e::t_7e4651b85fc174 10-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1fd4f05a573246550eed827e708f83d78e1b20b8",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
