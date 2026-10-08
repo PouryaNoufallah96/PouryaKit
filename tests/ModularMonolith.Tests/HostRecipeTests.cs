@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -100,6 +101,54 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
                 (HttpStatusCode.OK, HttpStatusCode.OK),
             ],
             answers
+        );
+    }
+
+    // Every other /alive test runs in Development, where both endpoints are mapped. This Host authenticates every endpoint
+    // by default, so /alive answers only where it is mapped and allows anonymous callers, and /health, which no endpoint
+    // serves here, answers the fallback policy's 401.
+    [Fact]
+    public async Task Outside_development_liveness_answers_an_anonymous_caller_and_readiness_is_not_served()
+    {
+        await using var host = ComposeProductionWebHost();
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var anonymous = host.GetTestClient();
+
+        using var alive = await anonymous.GetAsync("/alive", TestContext.Current.CancellationToken);
+        using var health = await anonymous.GetAsync("/health", TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            (HttpStatusCode.OK, "Healthy", HttpStatusCode.Unauthorized),
+            (alive.StatusCode, await alive.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), health.StatusCode)
+        );
+    }
+
+    // An anonymous caller of an endpoint outside every Module resolves no Actor, so the Kit's limiter counts it in the
+    // one partition of such callers, which a liveness probe would share. The partition's one permit is spent before the
+    // probe arrives, and still refuses the next such caller after it.
+    [Fact]
+    public async Task Liveness_answers_while_the_rate_limit_refuses_the_other_callers_no_actor_resolves_for()
+    {
+        await using var host = ComposeProductionWebHost(builder =>
+            builder.Services.Configure<PouryaKitRateLimitOptions>(limit =>
+            {
+                limit.Enabled = true;
+                limit.PermitLimit = 1;
+                limit.Window = TimeSpan.FromMinutes(10);
+            })
+        );
+        host.MapGet("/public", () => "served").AllowAnonymous();
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var anonymous = host.GetTestClient();
+
+        using var first = await anonymous.GetAsync("/public", TestContext.Current.CancellationToken);
+        using var alive = await anonymous.GetAsync("/alive", TestContext.Current.CancellationToken);
+        using var aliveAgain = await anonymous.GetAsync("/alive", TestContext.Current.CancellationToken);
+        using var second = await anonymous.GetAsync("/public", TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            (HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.TooManyRequests),
+            (first.StatusCode, alive.StatusCode, aliveAgain.StatusCode, second.StatusCode)
         );
     }
 
@@ -247,6 +296,29 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
         client(builder.Services.AddHttpClient(Client));
         var app = builder.Build();
         await app.StartAsync(TestContext.Current.CancellationToken);
+        return app;
+    }
+
+    // A Web Host in Production with the service defaults, composed as the templates' Program.cs composes one: the tests'
+    // authentication scheme in place of the bearer one, authenticated by default, the Web defaults, and the middleware in
+    // the templates' order. Built, not started.
+    private static WebApplication ComposeProductionWebHost(Action<WebApplicationBuilder>? configure = null)
+    {
+        var builder = WebApplication.CreateBuilder(["--environment", "Production"]);
+        builder.WebHost.UseTestServer();
+        builder.AddServiceDefaults();
+        builder
+            .Services.AddAuthentication(TestAuthentication.SchemeName)
+            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
+        builder.Services.AddAuthorization();
+        builder.Services.AddPouryaKitWeb();
+        configure?.Invoke(builder);
+        var app = builder.Build();
+        app.UseRouting();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.UseRateLimiter();
+        app.MapDefaultEndpoints();
         return app;
     }
 
