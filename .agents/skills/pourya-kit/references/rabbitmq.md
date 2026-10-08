@@ -45,7 +45,7 @@ if (broker)
 }
 ```
 
-- `UsePouryaKitRabbitMq(connectionName, serviceName)` comes after `UsePouryaKitWolverine(connectionName)` of `PouryaKit.Messaging.Wolverine.EFCore`, whose store the broker's envelopes go through. It throws when the configuration has no such connection string, and when the service name is missing or not a valid name, such as one beginning with `amq.`, in any case, which RabbitMQ reserves for its own queues and exchanges.
+- `UsePouryaKitRabbitMq(connectionName, serviceName)` comes after `UsePouryaKitWolverine(connectionName)` of `PouryaKit.Messaging.Wolverine.EFCore`, whose store the broker's envelopes go through. It throws when the configuration has no such connection string or leaves it blank, and when the service name is missing or not a valid name, such as one beginning with `amq.`, in any case, which RabbitMQ reserves for its own queues and exchanges.
 - Nothing in a publishing Module changes: `Publish` and `PublishSnapshot` in its Composition Root ([messaging.md](messaging.md#declaring-what-a-module-publishes-and-subscribes)) already declare every wire name the Host sends.
 
 ## A Host that receives

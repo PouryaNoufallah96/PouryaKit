@@ -26,7 +26,8 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
         /// a Snapshot older than one already applied not at all. The store is the database of the connection string named <paramref name="connectionName"/>,
         /// in the schema <paramref name="schema"/>, where Wolverine creates its tables when the Host starts; each Outbox
         /// is written in its Unit of Work's own transaction, so the Host fails when it is built if a Module's DbContext
-        /// names another database. <see cref="PouryaKitMessageStoreOptions"/> holds the durability mode and
+        /// names another database, and this call throws when the configuration has no such connection string or leaves
+        /// it blank. <see cref="PouryaKitMessageStoreOptions"/> holds the durability mode and
         /// the inbox stale time. Everything <c>UsePouryaKitWolverine()</c> of <c>PouryaKit.Messaging.Wolverine</c> does
         /// applies too; <paramref name="configure"/> adds Host-specific Wolverine configuration, as it does there.
         /// </summary>
@@ -36,11 +37,16 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
             ArgumentException.ThrowIfNullOrWhiteSpace(connectionName);
             ArgumentException.ThrowIfNullOrWhiteSpace(schema);
 
-            var connectionString =
-                builder.Configuration.GetConnectionString(connectionName)
-                ?? throw new InvalidOperationException(
-                    $"The configuration has no connection string named {connectionName} for the message store."
+            // A blank one too: Wolverine takes one of spaces, and the Host is built and fails only when it starts,
+            // naming no connection.
+            var connectionString = builder.Configuration.GetConnectionString(connectionName);
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException(
+                    $"The configuration has no connection string named {connectionName} for the message store, or leaves it blank. Set ConnectionStrings:{connectionName}."
                 );
+            }
+
             builder.Services.AddOptions<PouryaKitMessageStoreOptions>();
             builder.Services.AddSingleton<IWolverineExtension, MessageStoreExtension>();
             builder.Services.TryAddScoped<IUnitOfWorkOutbox, WolverineOutbox>();
