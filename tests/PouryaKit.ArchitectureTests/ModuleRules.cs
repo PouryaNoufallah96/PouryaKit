@@ -259,7 +259,7 @@ internal static partial class ModuleRules
     /// <summary>
     /// Spec #33 and ADR 0002: applications register no pipeline steps, and an application's own implementation of a
     /// contract the Kit fills for its pipeline would be one by another name, whatever registers it. Each contract is
-    /// public only so a Kit package can fill it:
+    /// public only so another Kit package can fill or call it:
     /// <list type="bullet">
     /// <item><c>IUnitOfWork</c>: the dispatcher runs every outermost command in it; the EF Unit of Work fills it (ADR 0003);</item>
     /// <item><c>IValidationStep&lt;T&gt;</c>: the dispatcher's validation step; Validation fills it from the validators

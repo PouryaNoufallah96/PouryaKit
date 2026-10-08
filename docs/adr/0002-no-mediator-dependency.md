@@ -311,10 +311,11 @@ or replace one, and only Feature code calling one was refused. The owner approve
 (decision D4).
 
 - **Public so the Kit's own packages fill them.** `IIdempotencyStore` and `IQueryCache` are public Cqrs contracts
-  because `PouryaKit.Persistence.EFCore` and `PouryaKit.Caching` fill them and Cqrs references neither. So are the
-  pipeline's other seams: `IUnitOfWork`, `IValidationStep<T>` and `IReadingStateGuard`, and the commit sequence's
-  `IUnitOfWorkOutbox` with its marker `INotificationOutbox`, `IIntegrationEventOutbox`, `IDelayedCommandOutbox`,
-  `ISnapshotMappers` and the delivery step's `IReceipts`. Each has one Kit implementation.
+  because `PouryaKit.Persistence.EFCore` and `PouryaKit.Caching` fill them and Cqrs references neither. The
+  pipeline's other seams are public for the same reason, since another Kit package fills or calls each: Cqrs's
+  `IUnitOfWork`, `IValidationStep<T>` and `IReadingStateGuard`, Persistence.EFCore's `IUnitOfWorkOutbox`, and
+  Messaging.Wolverine's `INotificationOutbox`, `IIntegrationEventOutbox`, `IDelayedCommandOutbox`, `ISnapshotMappers`
+  and `IReceipts`. Each has one Kit implementation.
 - **Applications neither call nor implement them, and the structure tests enforce both.** `FeatureCodeTests` refuses
   a Module that calls a step only the Kit runs, either slot included; `PipelineContractTests` refuses a Module or Host
   type that implements any of these contracts, so a second cache, store or Unit of Work in an application, a
