@@ -30,6 +30,7 @@ public sealed class PipelineContractTests
                 "PouryaKit.Persistence.EFCore.EfIdempotencyStore implements IIdempotencyStore, a pipeline contract only the Kit implements (PouryaKit.Persistence.EFCore.dll).",
                 "PouryaKit.Persistence.EFCore.EfUnitOfWork implements IReadingStateGuard, a pipeline contract only the Kit implements (PouryaKit.Persistence.EFCore.dll).",
                 "PouryaKit.Persistence.EFCore.EfUnitOfWork implements IUnitOfWork, a pipeline contract only the Kit implements (PouryaKit.Persistence.EFCore.dll).",
+                "PouryaKit.Persistence.Postgres.PostgresUniqueConstraintReader implements IUniqueConstraintReader, a pipeline contract only the Kit implements (PouryaKit.Persistence.Postgres.dll).",
                 "PouryaKit.Validation.FluentValidationStep`1 implements IValidationStep, a pipeline contract only the Kit implements (PouryaKit.Validation.dll).",
             ],
             Sample.KitPackages.SelectMany(ModuleRules.ImplementsPipelineContracts).Order(StringComparer.Ordinal)
