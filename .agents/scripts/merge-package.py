@@ -4,6 +4,7 @@
 Usage:
   python3 .agents/scripts/merge-package.py <report.md> -m "<merge message>" --branch <integration branch> [--push]
   python3 .agents/scripts/merge-package.py --post-merge <head> --branch <integration branch> [--push]
+  python3 .agents/scripts/merge-package.py --ready --branch <integration branch> [--base main]
 
 <report.md> is the file save-report.py wrote; the last JSON object in it names `head` and `branch`. Before merging, the
 script refuses `--branch main` (only the pull request merges into main), a current branch that is not `--branch`, a dirty
@@ -16,10 +17,17 @@ origin only when the tree equals the head's and every check passed. The last std
 `merge=<sha7> tree=EQUAL|DIFFERS(<n>) checks=ok|FAIL(<names>) push=yes|no`; docs/agents/running-a-spec.md, "State and
 handoff", says what a differing tree requires.
 
-Exit codes: 0 done; 1 a check failed; 2 usage; 3 report unreadable; 4 dirty checkout; 5 head is not a commit; 6 no such
-branch; 7 branch tip is not the head; 8 not on the integration branch, or it is main; 9 head already merged (with
---post-merge: not merged); 10 conflict, merge left in progress; 11 another git failure; 12 --push refused, the tree
-differs; 13 push failed.
+--ready is the close-out question, asked before the integration branch's pull request is marked ready: does the base
+branch hold commits the branch lacks? It fetches origin/<base>. When the base holds such commits it lists them, the
+paths a merge would conflict in (`git merge-tree --write-tree`) and what check-tree.py says of the merged tree, which
+is checked out nowhere: the check runs in a scratch work tree that holds that tree's index and its .gitignore. It
+merges, commits and pushes nothing, so the checkout may be dirty. Its last stdout line is
+`ready=yes|no behind=<n> conflicts=<n> tree=ok|FAIL(<n>)`, and it exits 1 on `ready=no`.
+
+Exit codes: 0 done; 1 a check failed, or --ready found the base ahead; 2 usage; 3 report unreadable; 4 dirty checkout;
+5 head is not a commit; 6 no such branch; 7 branch tip is not the head; 8 not on the integration branch, or it is main;
+9 head already merged (with --post-merge: not merged); 10 conflict, merge left in progress; 11 another git failure;
+12 --push refused, the tree differs; 13 push failed.
 """
 
 from __future__ import annotations
@@ -31,8 +39,10 @@ import re
 import shlex
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
+TREE_CHECK = ".agents/scripts/check-tree.py"
 CHECKS = (".agents/scripts/check-ai-setup.py", ".agents/scripts/check-docs.py")
 (CHECK_FAILED, USAGE, REPORT, DIRTY, NOT_A_COMMIT, NO_BRANCH, BRANCH_MOVED, WRONG_BRANCH, MERGE_STATE, CONFLICT,
  GIT_FAILED, TREE_DIFFERS, PUSH_FAILED) = range(1, 14)
@@ -197,18 +207,65 @@ def post_merge(top: Path, head: str, branch: str, checks: list[list[str]], push:
     return code
 
 
+def tree_offences(top: Path, tree: str) -> list[str]:
+    """What check-tree.py says of a tree no checkout holds: one line per offence."""
+    script = top / TREE_CHECK
+    if not script.is_file():
+        return [f"{TREE_CHECK} is missing; a missing check fails, it is never skipped"]
+    with tempfile.TemporaryDirectory(prefix="merge-package-") as scratch:
+        # The check asks git for the tracked paths and for what .gitignore ignores, so git is pointed at the tree.
+        git_dir = git_out(top, "rev-parse", "--absolute-git-dir")
+        env = os.environ | {"GIT_DIR": git_dir, "GIT_WORK_TREE": scratch, "GIT_INDEX_FILE": str(Path(scratch, "index"))}
+        read = subprocess.run(["git", "read-tree", tree], cwd=scratch, env=env, capture_output=True, text=True)
+        if read.returncode:
+            raise Stop(GIT_FAILED, f"git read-tree {tree[:7]} failed: {read.stderr.strip()}")
+        ignore = git(top, "show", f"{tree}:.gitignore")
+        if ignore.returncode == 0:
+            Path(scratch, ".gitignore").write_text(ignore.stdout, encoding="utf-8")
+        paths = git_out(top, "ls-tree", "-r", "--name-only", tree)
+        done = subprocess.run([sys.executable, str(script)], input=paths, cwd=scratch, env=env, capture_output=True, text=True)
+    return done.stdout.splitlines() or ([f"check-tree exited {done.returncode}: {done.stderr.strip()}"] if done.returncode else [])
+
+
+def ready(top: Path, base: str) -> int:
+    remote = f"origin/{base}"
+    git_out(top, "fetch", "--quiet", "origin", f"+refs/heads/{base}:refs/remotes/{remote}")
+    behind = git_out(top, "log", "--oneline", f"HEAD..{remote}").splitlines()
+    if not behind:
+        print(f"{remote} has no commit that HEAD lacks\nready=yes behind=0 conflicts=0 tree=ok")
+        return 0
+    print(f"{remote} has {len(behind)} commit(s) that HEAD lacks:", *(f"  {line}" for line in behind), sep="\n")
+    merged = git(top, "merge-tree", "--write-tree", "--name-only", "--no-messages", "HEAD", remote)
+    if merged.returncode not in (0, 1) or not merged.stdout.strip():  # 1 means the merge has conflicts
+        raise Stop(GIT_FAILED, f"git merge-tree HEAD {remote} failed: {merged.stderr.strip()}")
+    tree, *conflicts = merged.stdout.splitlines()
+    if conflicts:
+        print(f"a merge of {remote} would conflict in {len(conflicts)} path(s):", *(f"  {name}" for name in conflicts), sep="\n")
+    offences = tree_offences(top, tree)
+    if offences:
+        print(f"check-tree refuses {len(offences)} thing(s) in the merged tree:", *(f"  {line}" for line in offences), sep="\n")
+    print(f"Merge {remote} into the branch, resolve what is listed, run the ticket checks on the result, then run --ready again.")
+    print(f"ready=no behind={len(behind)} conflicts={len(conflicts)} tree={'FAIL(' + str(len(offences)) + ')' if offences else 'ok'}")
+    return CHECK_FAILED
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(usage=argparse.SUPPRESS, description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("report", nargs="?", type=Path, help="the report file save-report.py wrote")
     parser.add_argument("-m", dest="message", help="the merge commit's message")
     parser.add_argument("--post-merge", metavar="HEAD", help="check, and with --push push, a merge committed by hand after a conflict")
+    parser.add_argument("--ready", action="store_true", help="only report whether origin/<base> holds commits the branch lacks, with the conflicts and tree offences a merge would bring")
+    parser.add_argument("--base", default="main", help="with --ready: the branch the pull request merges into (default: main)")
     parser.add_argument("--push", action="store_true", help="push the current branch to origin when the tree is equal and every check passed")
     parser.add_argument("--branch", required=True, help="the integration branch, which must be the current branch; never main")
     parser.add_argument("--checks", nargs="+", metavar="COMMAND", help="tests only, refused unless MERGE_PACKAGE_TESTS=1 is set: run these commands instead of the two check scripts; each is split into an argument list and run without a shell")
     args = parser.parse_args()
     if args.checks and os.environ.get("MERGE_PACKAGE_TESTS") != "1":
         parser.error("--checks replaces the gating checks, so it runs only under the unit tests, with MERGE_PACKAGE_TESTS=1 set")
-    if args.post_merge:
+    if args.ready:
+        if args.report or args.message or args.post_merge or args.push:
+            parser.error("--ready takes --branch and --base only")
+    elif args.post_merge:
         if args.report or args.message:
             parser.error("--post-merge takes no report and no -m")
         if not HEAD.fullmatch(args.post_merge):
@@ -223,6 +280,8 @@ def main() -> int:
     checks = [shlex.split(command) for command in args.checks] if args.checks else [[sys.executable, str(top / script)] for script in CHECKS]
     try:
         branch = integration_branch(top, args.branch)
+        if args.ready:
+            return ready(top, args.base)
         if args.post_merge:
             require_clean(top)
             head = require_head(top, args.post_merge)
