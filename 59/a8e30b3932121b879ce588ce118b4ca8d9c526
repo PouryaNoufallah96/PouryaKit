@@ -1,0 +1,28 @@
+docs/ci.md
+  s_75dee3f51db59e::t_9b784e98a15e6f 15
+docs/agents/brief-template.md
+  s_75dee3f51db59e::t_a2a683b72acce3 58
+docs/agents/ai-setup.md
+  s_75dee3f51db59e::t_92d475ecd2856e 26-27
+  s_75dee3f51db59e::t_494501c647e2a2 113
+  s_75dee3f51db59e::t_2fe9adf44b39f2 196
+docs/agents/running-a-spec.md
+  s_75dee3f51db59e::t_dd085ca650a49d 35
+  s_75dee3f51db59e::t_c073c58aa461bc 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "59a8e30b3932121b879ce588ce118b4ca8d9c526",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
