@@ -9,7 +9,7 @@ namespace ModularMonolith.Tests.Stub;
 
 // Integration Events the Proving Sample must not hold: the Stub publishes them and subscribes to them itself, with one
 // handler that records what its delivery sees, one that fails after its effect, and Notification Handlers that publish
-// and then fail, or publish what they must not.
+// and then fail, publish what they must not, or publish what the wire options cannot write.
 
 internal sealed record NoteSharedV1(Guid Id, DateTimeOffset OccurredOn, string Text);
 
@@ -53,6 +53,21 @@ internal sealed class RecordSharedNoteIntegrationEventHandler(IntegrationEventLo
     {
         log.Add(new Received(integrationEvent, context, operation));
         return Task.FromResult(Result.Success());
+    }
+}
+
+// Writes a copy of the note, then publishes it shared: without its text when asked, a null the contract forbids, which
+// the strict wire options refuse to write.
+internal sealed record NoteToCopyAndShareDomainEvent(string Text, bool WithoutText) : DomainEvent;
+
+internal sealed class CopyAndShareNoteNotificationHandler(IRepository<Note, NoteId> notes, IIntegrationEventPublisher events)
+    : INotificationHandler<NoteToCopyAndShareDomainEvent>
+{
+    public async Task<Result> Handle(NoteToCopyAndShareDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        await notes.AddAsync(Note.Write(CopyFiledNoteNotificationHandler.CopyOf(domainEvent.Text)), cancellationToken);
+        events.Publish(domainEvent.Id, new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.WithoutText ? null! : domainEvent.Text));
+        return Result.Success();
     }
 }
 

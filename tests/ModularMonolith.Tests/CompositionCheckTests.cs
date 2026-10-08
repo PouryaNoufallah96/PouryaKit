@@ -160,6 +160,45 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
+    // Each delivery runs in its Module's Unit of Work, where its Receipt is recorded (the final structural review of
+    // Wave 2, finding 3). The Host's other Modules, each with its own, add no line.
+    [Fact]
+    public void A_module_that_subscribes_but_registers_no_unit_of_work_fails_the_host_when_built_naming_use_postgres()
+    {
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            AppFixture.ComposeHost(
+                "Development",
+                Fixture.ConnectionString,
+                new RecordedLogs(),
+                builder => builder.AddPouryaKitModules(modules => modules.Add<SubscriptionOnlyModule>())
+            )
+        );
+
+        Assert.Equal(
+            "SubscriptionOnlyModule has the subscriptions tests.subscription-only but registers no Unit of Work, so each of their deliveries would fail before its handler runs. Declare its data in its Composition Root, for example with UsePostgres.",
+            thrown.Message
+        );
+    }
+
+    // Each needs a durable queue of its own (the final structural review of Wave 2, finding 11: a check at the build).
+    [Fact]
+    public void A_delayed_command_with_a_subscriptions_name_fails_the_host_when_built()
+    {
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            AppFixture.ComposeHost(
+                "Development",
+                Fixture.ConnectionString,
+                new RecordedLogs(),
+                builder => builder.Services.AddPouryaKitDelayedCommand<WriteNoteCommand>("Stub.Note-Shared", typeof(StubModule))
+            )
+        );
+
+        Assert.Equal(
+            $"The delayed command {typeof(WriteNoteCommand).FullName} and a subscription have the name stub.note-shared, ignoring case; each needs a queue of its own.",
+            thrown.Message
+        );
+    }
+
     // A Module counts as composed when it is added, whatever its Composition Root registers (#61 review finding F4).
     [Fact]
     public void A_declaration_without_its_module_fails_the_build_of_a_host_whose_modules_make_no_kit_registration()
@@ -250,6 +289,13 @@ public sealed class HandRegisteredModule : IModuleDefinition
         module.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
         module.AddScoped<CommandHandler<WriteNoteCommand>, WriteNoteCommandHandler>();
     }
+}
+
+// Subscribes to an Integration Event the Stub publishes, and declares no data.
+public sealed class SubscriptionOnlyModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module) =>
+        module.Subscribe<NoteSharedV1, RecordSharedNoteIntegrationEventHandler>("tests.subscription-only");
 }
 
 // Declares, on its own builder, a subscription it names for the Stub Module.

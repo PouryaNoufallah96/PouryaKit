@@ -946,6 +946,19 @@ read, and moves two broker rules to registration or to deployment.
   EF Core outbox serializes an envelope as it adds it to the transaction (`EfCoreEnvelopeTransaction.PersistOutgoingAsync`,
   `OutgoingMessage`, read decompiled from WolverineFx.EntityFrameworkCore 6.46.0), so the publishing delivery fails and
   nothing commits. That path through the commit is read from the decompiled code and not proven by a test.
+  *Corrected on 2026-10-08 (ticket #54, the final structural review of Wave 2, finding 7): `OutgoingMessage` belongs to
+  the branch for a DbContext with Wolverine's mappings (`IsWolverineEnabled()`), which the Kit never takes (ADR 0004). The
+  path is now proven: `StrictWireWritingTests.A_notification_handlers_integration_event_commits_with_its_effect_only_when_the_wire_options_can_write_it`,
+  against PostgreSQL, has a Notification Handler write a note and publish an Integration Event with null in a
+  non-nullable member. The exception's stack shows `WolverineOutbox.WriteAsync`, called by `EfUnitOfWork.RunAsync` before
+  the save, then `MessageBus.PersistOrSendAsync`, `EfCoreEnvelopeTransaction.PersistIncomingAsync` on its unmapped branch,
+  `DatabasePersistence.BuildIncomingStorageCommand`, `EnvelopeSerializer.Serialize` and `Envelope.Data`, where
+  `SystemTextJsonSerializer.Write` throws the `JsonException` that Wolverine wraps in a `WolverineSerializationException`.
+  The delivery is retried and dead-lettered with that exception, and its note, its Receipt, its publication record and
+  the envelope roll back, with no receiver effect; the same handler with the text commits each. Red with Wolverine writing
+  through `UsePouryaKitJson`: the null was written and delivered. An envelope routed to another Host goes through
+  `PersistOutgoingAsync`'s unmapped branch and `DatabasePersistence.BuildOutgoingStorageCommand`, which calls the same
+  `EnvelopeSerializer.Serialize`, read decompiled from WolverineFx.RDBMS 6.46.0.*
 - **Where the failure lands** (decompiled from WolverineFx 6.46.0 and WolverineFx.RDBMS 6.46.0):
   `HandlerPipeline.TryDeserializeEnvelope` catches the `JsonException` thrown by `SystemTextJsonSerializer.ReadFromData`
   and returns `MoveToErrorQueue`, so the failure policy's retries never apply. `MessageContext.MoveToDeadLetterQueueAsync`
@@ -1007,3 +1020,36 @@ reference Modularity. Ticket #61 returns to the sketch through a seam both may r
   `CompositionCheckTests.A_declaration_without_its_module_fails_the_build_of_a_host_whose_modules_make_no_kit_registration`
   and by `CompositionCheckTests.A_declaration_for_a_module_the_host_never_composed_fails_the_host_when_built`, against
   PostgreSQL.
+
+## Amendment (2026-10-08, ticket #54: the routing refusals at the build, and a subscription's Unit of Work)
+
+The decision above stands. The final structural review of Wave 2 found the refusals of the Host's routes at a moment of
+their own (finding 11), one declaration that bound nothing without a word (finding 10), and one Module whose every
+delivery failed although the Host started (finding 3).
+
+- **Routes are refused when the Host is built.** The refusals the #16, #49 and #50 amendments place at the start (a
+  subscription whose Integration Event or Snapshot has no wire name, a routing collision, a wire name the process sends
+  otherwise or that Wolverine named first, and, from #44, a delayed command named as a subscription) ran in
+  `PouryaKitWolverineExtension` and `DelayedCommandExtension`, when Wolverine's options were first resolved. They read
+  only the Host's final declarations, so a built Host that was never started met them inside its first publishing
+  Operation. They are now the composition check `RoutingCheck`, registered by `UsePouryaKitWolverine`, and the two
+  extensions only route. `WireNaming` declares the Host's wire names in that check, at the build, and only when the Host's
+  routes pass, so a Host built and never started keeps them for the process, as one that started and stopped does, even
+  when another composition check then fails its build. The Host's checks have three moments: the build, `StartingAsync`
+  and Wolverine's `StartedAsync` (`DurableQueuesCheck`). The tests that pinned the start now assert the build and are
+  renamed from `Startup_fails_…` to `Building_fails_…`.
+- **A received type needs a subscription.** `IWireNames.Received` keeps only the received wire names a subscription of
+  the Host handles, so a `Receive` or `ReceiveSnapshot` no subscription handles bound nothing to the Host's queue,
+  received nothing and reported nothing. `RoutingCheck` refuses it, naming `Subscribe<T, THandler>`.
+- **A subscription needs its Module's Unit of Work.** Every delivery runs `Deliver` as a command in its subscription's
+  Module, whose Unit of Work records the Receipt. A Module that handles a command of its own was checked as it was
+  composed, but one whose Composition Root only subscribed passed every check, and every delivery then failed at the Unit
+  of Work router. The composition check `SubscriptionUnitOfWorkCheck`, registered by `UsePouryaKitWolverine`, fails the
+  build for each composed Module with a subscription and no keyed Unit of Work, and, in an application without Modules,
+  for the application's subscriptions when no Unit of Work is registered, one line per Module naming its subscriptions
+  and `UsePostgres`. A Module that only answers queries needs none.
+- Proven by `CompositionCheckTests.A_module_that_subscribes_but_registers_no_unit_of_work_fails_the_host_when_built_naming_use_postgres`,
+  `CompositionCheckTests.A_delayed_command_with_a_subscriptions_name_fails_the_host_when_built`,
+  `IntegrationEventWiringTests.Building_fails_on_a_type_received_from_another_host_that_no_subscription_handles_naming_subscribe`
+  and the renamed `Building_fails_…` tests of `IntegrationEventTests`, `IntegrationEventVersionTests` and
+  `IntegrationEventWiringTests`, each red with its check or line switched off.

@@ -21,10 +21,10 @@ public static class IntegrationEventServiceCollectionExtensions
         /// version into another. Throws here, at startup, when the type is not a concrete class or is a Domain
         /// Event, when the wire name is missing, invalid or equal ignoring case to another's, and when the type is already
         /// published under another name or by another Module. The Host then fails when it is built if the declaration
-        /// belongs to no Module in a Host of Modules or to a Module the Host does not compose, or unless an Outbox writes
-        /// Integration Events (<see cref="INotificationOutbox"/>), and fails to start when Wolverine would route another
-        /// of its message types to this
-        /// type's subscriptions, because that type's wire name, name or full name equals this type's full name, ignoring case.
+        /// belongs to no Module in a Host of Modules or to a Module the Host does not compose, if no Outbox writes
+        /// Integration Events (<see cref="INotificationOutbox"/>), if Wolverine would route another of its message types
+        /// to this type's subscriptions, because that type's wire name, name or full name equals this type's full name,
+        /// ignoring case, and if this process already sends the type under another wire name.
         /// </summary>
         public IServiceCollection Publish<TIntegrationEvent>(string wireName)
             where TIntegrationEvent : class =>
@@ -47,7 +47,8 @@ public static class IntegrationEventServiceCollectionExtensions
         /// publishing Module runs in this Host is the Host's choice. The wire name is the one the publishing Module declares.
         /// Throws here, at startup, when the type is not a concrete class or is a Domain Event, when the wire name is
         /// missing, invalid or equal ignoring case to another's, when the type is already received under another name or as
-        /// a Snapshot, and when a Module of this Host publishes it. Declaring it again adds nothing.
+        /// a Snapshot, and when a Module of this Host publishes it. Declaring it again adds nothing. The Host then fails when
+        /// it is built if no subscription of the Host handles the type, since nothing would receive it.
         /// </summary>
         public IServiceCollection Receive<TIntegrationEvent>(string wireName)
             where TIntegrationEvent : class
@@ -68,9 +69,10 @@ public static class IntegrationEventServiceCollectionExtensions
         /// ignoring case to another subscription's, or the name of a queue Wolverine keeps for itself, or the same
         /// subscription belongs to another Module. Declaring the same subscription again in the same Module adds nothing.
         /// The name is kept lower-cased. The Host then fails when it is built if the declaration belongs to no Module in a
-        /// Host of Modules or to a Module the Host does not compose, and fails to start when no Module of the Host
-        /// publishes the type and no <c>Receive</c> declares it, when no Outbox writes Integration Events, or when the
-        /// subscription's queue, as Wolverine built it, is not a durable application queue.
+        /// Host of Modules or to a Module the Host does not compose, if that Module, or the application, registers no Unit
+        /// of Work, if no Module of the Host publishes the type and no <c>Receive</c> declares it, or if no Outbox writes
+        /// Integration Events, and fails to start when the subscription's queue, as Wolverine built it, is not a durable
+        /// application queue.
         /// </summary>
         public IServiceCollection Subscribe<TIntegrationEvent, THandler>(string subscriptionName)
             where TIntegrationEvent : class

@@ -21,7 +21,7 @@ public static class DelayedCommandServiceCollectionExtensions
         /// another delayed command's, ignoring case, and when the type is already declared under another name or for
         /// another Module. The Host then fails when it is built if the declaration belongs to no Module in a Host of
         /// Modules or to a Module the Host does not compose, or when no Outbox writes delayed commands
-        /// (<see cref="INotificationOutbox"/>), and fails to start when a subscription has the same name, or when its
+        /// (<see cref="INotificationOutbox"/>), or when a subscription has the same name, and fails to start when its
         /// queue, as Wolverine built it, is not a durable application queue.
         /// </summary>
         public IServiceCollection AddPouryaKitDelayedCommand<TCommand>(string name)
@@ -53,8 +53,8 @@ public static class DelayedCommandServiceCollectionExtensions
         /// set aside as a dead letter, and the next one is stored only when it is replayed or a Host starts. Feature code
         /// never schedules it with <see cref="IDelayedCommands"/>. Declare it once: declaring it again with another system Actor
         /// or occurrence factory, or as a delayed command too, throws, naming the declaration it already has. Throws here as
-        /// <see cref="AddPouryaKitDelayedCommand{TCommand}(string)"/> does; the Host fails to start, as for a delayed
-        /// command, and when the cadence is not longer than zero.
+        /// <see cref="AddPouryaKitDelayedCommand{TCommand}(string)"/> does; the Host fails when it is built or starts as for
+        /// a delayed command, and fails to start when the cadence is not longer than zero.
         /// </summary>
         public OptionsBuilder<PouryaKitRecurringCommandOptions> AddPouryaKitRecurringCommand<TCommand>(
             string name,
