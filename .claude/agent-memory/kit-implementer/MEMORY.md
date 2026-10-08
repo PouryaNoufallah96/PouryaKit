@@ -53,3 +53,4 @@
 - [Sent envelope capture facts](sent-envelope-capture-facts.md) — final review D: wolverine-messages-sent Meter sees deleted broker envelopes, latched sender, PauseAsync, broker HostFixture
 - [Store database check facts](store-database-check-facts.md) — #63: Npgsql parse splits no host:port, store uses the composition-time string, cross-package record is public, read GetDbConnection not options, unknown database fails
 - [Final review Web facts](final-review-web-facts.md) — final review A: Web RestoreTrusted, peer-continuation HTTP proof, DisplayName without methods, stop_if over docs-sync
+- [Messaging checks at the build facts](messaging-checks-at-build-facts.md) — final review B: RoutingCheck and Declare at build, outbound write wraps JsonException, Stub owns test handlers

@@ -95,18 +95,17 @@ public sealed class IntegrationEventVersionTests(AppFixture app) : HostTest<AppF
     }
 
     [Fact]
-    public async Task Startup_fails_when_wolverine_would_send_one_message_type_wherever_another_published_type_goes()
+    public void Building_fails_when_wolverine_would_send_one_message_type_wherever_another_published_type_goes()
     {
         // A Host that publishes both and subscribes to neither: a broker between Hosts routes every publication.
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.UsePouryaKitWolverine();
-        // An Outbox, as a Host that publishes registers one, so the Host builds and Wolverine's own refusal is what fails.
+        // An Outbox, as a Host that publishes registers one, so the routing refusal is the one problem.
         builder.Services.AddSingleton<INotificationOutbox, StandInOutbox>();
         builder.Services.Publish<ProducedV1>("tests.produced.v1");
         builder.Services.Publish<MisproducedV2>(typeof(ProducedV1).FullName!);
-        using var host = builder.Build();
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
             $"{typeof(MisproducedV2).FullName}, under the wire name {typeof(ProducedV1).FullName}, would also be sent wherever {typeof(ProducedV1).FullName} is published to, such as its exchange on a broker: Wolverine routes a published type to every message whose wire name, name or full name equals the type's full name, ignoring case. Give it a wire name and a name of its own.",
@@ -115,23 +114,23 @@ public sealed class IntegrationEventVersionTests(AppFixture app) : HostTest<AppF
     }
 
     [Fact]
-    public async Task Startup_fails_when_wolverine_would_route_one_message_type_to_the_subscriptions_of_another()
+    public void Building_fails_when_wolverine_would_route_one_message_type_to_the_subscriptions_of_another()
     {
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.UsePouryaKitWolverine();
-        // An Outbox, as a Host that publishes registers one, so the Host builds and Wolverine's own refusal is what fails.
+        // An Outbox, as a Host that publishes registers one, so the Outbox check stays quiet.
         builder.Services.AddSingleton<INotificationOutbox, StandInOutbox>();
         builder.Services.Publish<RoutedV1>("tests.routed.v1");
         builder.Services.Subscribe<RoutedV1, RoutedIntegrationEventHandler>("tests.routed");
         // A v2 published under the v1 contract's full name, a valid wire name of its own.
         builder.Services.Publish<MisroutedV2>(typeof(RoutedV1).FullName!);
-        using var host = builder.Build();
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
-        Assert.Equal(
+        // Beside the Unit of Work the application lacks, one line per problem.
+        Assert.Contains(
             $"{typeof(MisroutedV2).FullName}, under the wire name {typeof(RoutedV1).FullName}, would also reach every subscription of {typeof(RoutedV1).FullName}: Wolverine routes a subscribed type to every message whose wire name, name or full name equals the type's full name, ignoring case. Give it a wire name and a name of its own.",
-            thrown.Message
+            thrown.Message.Split(Environment.NewLine)
         );
     }
 }

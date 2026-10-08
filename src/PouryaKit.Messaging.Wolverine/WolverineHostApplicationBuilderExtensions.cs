@@ -36,8 +36,12 @@ public static class WolverineHostApplicationBuilderExtensions
         /// or published Integration Events calls the overload of <c>PouryaKit.Messaging.Wolverine.EFCore</c> instead, or
         /// fails when it is built; so does a Host with a Notification Handler in the Feature assemblies of a Module it
         /// composed, or of its own services, that no <c>AddPouryaKitNotificationHandlers</c> declares, naming that call.
-        /// A Host whose subscription's Integration Event no Module publishes and no <c>Receive</c> declares fails when it
-        /// starts. Wolverine generates its handler
+        /// The Host also fails when it is built, naming each problem, for a subscription whose Integration Event or
+        /// Snapshot no Module publishes and no <c>Receive</c> declares, a type received from another Host that no
+        /// subscription handles, a message type Wolverine would also route where another type goes, a delayed command
+        /// whose name a subscription has, a wire name this process already sends the type under, or one Wolverine gave
+        /// the type before it was declared, and for a subscription whose Module, or the application, registers no Unit of
+        /// Work. Wolverine generates its handler
         /// code at run time in Development and, in every other environment, loads it from the Host's own assembly, where
         /// <c>dotnet run -- codegen write</c> wrote it before the build (<see cref="TypeLoadMode.Static"/>): a Host there needs no
         /// runtime compiler, and one whose handler chain has no generated type fails when it starts.
@@ -52,6 +56,8 @@ public static class WolverineHostApplicationBuilderExtensions
             Subscriptions.In(builder.Services);
             builder.Services.AddOptions<PouryaKitMessagingOptions>();
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, UnregisteredNotificationHandlersCheck>());
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, RoutingCheck>());
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SubscriptionUnitOfWorkCheck>());
             builder.Services.TryAddScoped<CommandHandler<Deliver>, DeliverHandler>();
             builder.Services.TryAddScoped<IntegrationEventPublisher>();
             builder.Services.TryAddScoped<IIntegrationEventPublisher>(scope => scope.GetRequiredService<IntegrationEventPublisher>());

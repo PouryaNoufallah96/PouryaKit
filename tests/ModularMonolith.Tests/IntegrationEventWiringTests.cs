@@ -5,6 +5,7 @@ using Catalog.Contracts.Products.Events.V1;
 using Inventory;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Domain;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
@@ -125,18 +126,46 @@ public sealed class IntegrationEventWiringTests
     }
 
     [Fact]
-    public async Task Startup_fails_on_a_received_integration_event_wolverine_named_before_it_was_declared_and_says_it_is_received()
+    public void Building_fails_on_a_received_integration_event_wolverine_named_before_it_was_declared_and_says_it_is_received()
     {
         var named = typeof(EarlyReceivedV1).ToMessageTypeName();
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.UsePouryaKitWolverine();
+        // An Outbox, as a Host that subscribes registers one, so the Outbox check stays quiet.
+        builder.Services.AddSingleton<INotificationOutbox, StandInOutbox>();
         builder.Services.Receive<EarlyReceivedV1>("tests.early-received.v1");
-        using var host = builder.Build();
+        builder.Services.Subscribe<EarlyReceivedV1, EarlyReceivedIntegrationEventHandler>("tests.early-received");
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        // Beside the Unit of Work the application lacks, one line per problem.
+        Assert.Contains(
+            $"{typeof(EarlyReceivedV1).FullName} is received as tests.early-received.v1, but Wolverine named it {named} before it was declared and would send it under that name. Declare it before anything in the process sends or names it.",
+            thrown.Message.Split(Environment.NewLine)
+        );
+    }
+
+    // A received type binds the Host's queue only through a subscription to it (Subscriptions' IWireNames.Received).
+    [Theory]
+    [InlineData("Receive")]
+    [InlineData("ReceiveSnapshot")]
+    public void Building_fails_on_a_type_received_from_another_host_that_no_subscription_handles_naming_subscribe(string declaration)
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.UsePouryaKitWolverine();
+        if (declaration == "Receive")
+        {
+            builder.Services.Receive<UnsubscribedV1>("tests.unsubscribed.v1");
+        }
+        else
+        {
+            builder.Services.ReceiveSnapshot<UnsubscribedV1>("tests.unsubscribed.v1");
+        }
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
-            $"{typeof(EarlyReceivedV1).FullName} is received as tests.early-received.v1, but Wolverine named it {named} before it was declared and would send it under that name. Declare it before anything in the process sends or names it.",
+            $"{typeof(UnsubscribedV1).FullName} is declared received from another Host as tests.unsubscribed.v1, but no subscription of this Host handles it, so nothing would receive it. Subscribe<UnsubscribedV1, THandler>(subscriptionName) in the Composition Root of the Module that receives it, or remove the {declaration} declaration.",
             thrown.Message
         );
     }
@@ -169,3 +198,11 @@ public sealed class IntegrationEventWiringTests
 
 // Named for the process by one test only, before it is declared.
 internal sealed record EarlyReceivedV1(Guid Id);
+
+internal sealed class EarlyReceivedIntegrationEventHandler : IIntegrationEventHandler<EarlyReceivedV1>
+{
+    public Task<Result> Handle(EarlyReceivedV1 integrationEvent, CancellationToken cancellationToken) => Task.FromResult(Result.Success());
+}
+
+// Received by one test only, which no subscription handles.
+internal sealed record UnsubscribedV1(Guid Id);
