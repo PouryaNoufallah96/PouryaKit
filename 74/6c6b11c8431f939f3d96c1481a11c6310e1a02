@@ -1,0 +1,37 @@
+docs/agents/ai-setup.md
+  s_4f44a41d89c3b1::t_2705a10386e189 18
+.claude/agents/kit-implementer.md
+  s_4f44a41d89c3b1::t_2705a10386e189 29
+.claude/agent-memory/kit-implementer/merge-and-ci-tooling-facts.md
+  s_4f44a41d89c3b1::t_2705a10386e189 8
+AGENTS.md
+  s_4f44a41d89c3b1::t_2705a10386e189 48
+.gitattributes
+  s_4f44a41d89c3b1::t_2705a10386e189 1-4
+docs/agents/brief-template.md
+  s_4f44a41d89c3b1::t_2705a10386e189 3,19,36,81
+docs/agents/running-a-spec.md
+  s_4f44a41d89c3b1::t_2705a10386e189 29,34-35
+.claude/output-styles/kit-orchestrator.md
+  s_4f44a41d89c3b1::t_2705a10386e189 28
+.codex/agents/kit-implementer.toml
+  s_4f44a41d89c3b1::t_2705a10386e189 28
+.gitignore
+  s_4f44a41d89c3b1::t_2705a10386e189 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "746c6b11c8431f939f3d96c1481a11c6310e1a02",
+  "prompts": {},
+  "sessions": {
+    "s_4f44a41d89c3b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "876ff07b-1f33-4cd5-86a7-a6eda87eb025",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
