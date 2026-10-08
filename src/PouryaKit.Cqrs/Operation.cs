@@ -166,8 +166,16 @@ public sealed class Operation
 
     internal void EndUnitOfWork() => IsUnitOfWorkActive = false;
 
-    /// <summary>True while the Operation's write Unit of Work runs, where a query may see uncommitted state.</summary>
-    internal bool IsUnitOfWorkActive { get; private set; }
+    /// <summary>
+    /// True while the Unit of Work of the Operation's outermost command runs: from the moment the dispatcher starts it,
+    /// once that command's authorizers and validator have passed, until it has committed or rolled back. The command's
+    /// handler, every command nested in it, its Domain Event Handlers and a delivery's Notification Handler or
+    /// Integration Event Handler, which the Kit runs inside a command of its own, all run while it is true, and a query
+    /// there may see uncommitted state. It is false before the Operation begins, in a begun scope that sends no command,
+    /// in a query sent on its own, in the outermost command's authorizers and validator, and once the Unit of Work has
+    /// ended. A Kit package reads it to refuse a write that no Unit of Work would commit; Feature code has no need to.
+    /// </summary>
+    public bool IsUnitOfWorkActive { get; private set; }
 
     /// <summary>
     /// True while the running query is the Operation's outermost step: no command, authorizer, validator, other query

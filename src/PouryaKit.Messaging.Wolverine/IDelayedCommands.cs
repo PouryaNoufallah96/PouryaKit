@@ -17,8 +17,9 @@ public interface IDelayedCommands
     /// Schedules <paramref name="command"/> to run at <paramref name="at"/>, or as soon as the Operation commits when
     /// that time has passed. The message store compares it with the system clock, not with the Host's
     /// <see cref="TimeProvider"/>. Throws where the Operation only reads (in a query, an authorizer or a validator),
-    /// and when the running Operation's Module did not declare the command's type with
-    /// <c>AddPouryaKitDelayedCommand</c>.
+    /// where no Unit of Work is active (outside a command's handler, a Domain Event Handler and a Notification Handler,
+    /// such as in an endpoint or a hosted service, where no commit would store the command), and when the running
+    /// Operation's Module did not declare the command's type with <c>AddPouryaKitDelayedCommand</c>.
     /// </summary>
     void Schedule(Command command, DateTimeOffset at);
 }
