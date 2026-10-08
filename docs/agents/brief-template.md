@@ -55,7 +55,7 @@ Each ticket's brief adds its own test projects.
 ## Commit, then package validation
 
 1. Commit everything on your worktree branch, in one or a few commits with conventional messages such as `feat(<area>): <change> (#<n>)`. Do not push. Do not write to the tracker.
-2. On the committed tree, run `python3 scripts/packaging/validate.py --no-fetch --output <scratchpad>/validate-<n>`. Put its PASS line, with the commit it ran on, into `docs/acceptance.md` as earlier tickets did, and commit that. On a failure, fix inside `allowed_files` (two attempts), then report.
+2. On the committed tree, run `python3 scripts/packaging/validate.py --no-fetch --since <tip> --output <scratchpad>/validate-<n>`, where `<tip>` is the integration-branch commit this brief names. Put its PASS line, with the commit it ran on, into `docs/acceptance.md` as earlier tickets did, and commit that. A `SKIP` line instead means nothing you changed can reach a package: quote it in your report and record nothing, since CI runs the full validation. On a failure, fix inside `allowed_files` (two attempts), then report.
 
 ## Report
 
