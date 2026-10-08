@@ -821,6 +821,6 @@ store deletes a sent envelope), and on one still stored for a broker afterwards 
 | A record with no name is not the named-connection check's: such a DbContext on the store's database builds beside `UsePostgres` | `MessageStoreDatabaseTests.A_dbcontext_the_application_registered_on_the_message_stores_database_builds_beside_use_postgres` | With `PostgresConnectionsCheck` reading the record's null name, the build failed on a missing `ConnectionStrings:` line. |
 | An outgoing-only publication fails `AssertNothingSentAsync`: a Snapshot only Inventory.Host subscribes to, sent and deleted before the Operation returns, and with its sender paused (`SendingAgent.PauseAsync`, as Wolverine latches it while the broker is unavailable) | `RabbitMqDeliveryTests.Assert_nothing_sent_fails_on_a_snapshot_sent_only_to_the_broker_once_sent_and_while_it_waits_for_the_broker` | With the counter's listener not started, the first assertion passed; with the stored outgoing envelopes not read, the second passed. |
 
-Verify on the package's tree merged with package A (`6ecf342`): `dotnet build PouryaKit.slnx` (0 warnings);
+Verify on the package's tree merged with package A (`2c3b617`): `dotnet build PouryaKit.slnx` (0 warnings);
 `MessageStoreDatabaseTests` 18, `MisconfiguredHostTests` 10, `RabbitMqDeliveryTests` 20, `SnapshotTests` 30, `ModularMonolith.Tests` 526,
 `PouryaKit.ArchitectureTests` 98, all passed; `check-ai-setup.py` 0 failures.
