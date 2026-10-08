@@ -1,0 +1,50 @@
+.agents/skills/pourya-kit/references/openapi.md
+  s_bdf0617f846b2b::t_130995464766ce 63-64
+  s_bdf0617f846b2b::t_fb4ad5932dc2c4 58
+.agents/skills/pourya-kit/references/messaging.md
+  s_bdf0617f846b2b::t_fb4ad5932dc2c4 29,81,180,283,431,611,688,698,700-701
+docs/acceptance.md
+  s_bdf0617f846b2b::t_55322f8b1477af 632,642
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_bdf0617f846b2b::t_fb4ad5932dc2c4 13,136,138
+.agents/skills/pourya-kit/SKILL.md
+  s_bdf0617f846b2b::t_52fdc59290599d 41
+docs/provenance/PouryaKit.Persistence.Postgres.md
+  s_bdf0617f846b2b::t_fb4ad5932dc2c4 5
+docs/provenance/PouryaKit.Persistence.Dapper.md
+  s_bdf0617f846b2b::t_fb4ad5932dc2c4 5
+.agents/skills/pourya-kit/references/templates.md
+  s_bdf0617f846b2b::t_fb4ad5932dc2c4 37,43
+.agents/skills/pourya-kit/references/security.md
+  s_bdf0617f846b2b::t_fb4ad5932dc2c4 44
+.agents/skills/pourya-kit/references/caching.md
+  s_bdf0617f846b2b::t_fb4ad5932dc2c4 28
+.agents/skills/pourya-kit/references/modules.md
+  s_bdf0617f846b2b::t_fb4ad5932dc2c4 9,122,130-131,136
+  s_bdf0617f846b2b::t_130995464766ce 133
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_fb4ad5932dc2c4 506
+  s_bdf0617f846b2b::t_52fdc59290599d 630
+  s_bdf0617f846b2b::t_2d52346b349808 566
+  s_bdf0617f846b2b::t_5eddb76bd8349c 286
+GLOSSARY.md
+  s_bdf0617f846b2b::t_fb4ad5932dc2c4 44
+.agents/skills/pourya-kit/references/persistence.md
+  s_bdf0617f846b2b::t_fb4ad5932dc2c4 97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "afcc88098802ae823d374c8bc9145870fbde334a",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
