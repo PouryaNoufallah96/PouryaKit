@@ -18,7 +18,7 @@ public sealed class StubModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module)
     {
-        module.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         module.AddPouryaKitDapper(connectionName: "app");
         module.AddPouryaKitCqrs();
         module.AddPouryaKitValidation();

@@ -96,7 +96,7 @@ public sealed class MessagingReviewRegressionTests(AppFixture app) : HostTest<Ap
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
             ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
         );
-        builder.Services.UsePostgres<QuotedSchemaDbContext>("app", schema);
+        builder.Services.UsePouryaKitPostgres<QuotedSchemaDbContext>("app", schema);
         builder.Services.AddPouryaKitCqrs(typeof(StubModule).Assembly);
         builder.Services.AddPouryaKitCaching();
         builder.Services.AddScoped(

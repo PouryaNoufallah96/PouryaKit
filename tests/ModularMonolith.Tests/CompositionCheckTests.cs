@@ -124,7 +124,7 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
-            $"The Host handles the command {typeof(UnownedCommand).FullName} but registers no Unit of Work, so the command would fail when it runs. Register the Unit of Work of a persistence package, for example with UsePostgres.",
+            $"The Host handles the command {typeof(UnownedCommand).FullName} but registers no Unit of Work, so the command would fail when it runs. Register the Unit of Work of a persistence package, for example with UsePouryaKitPostgres.",
             thrown.Message
         );
     }
@@ -141,7 +141,7 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
-            $"The Host handles the command {typeof(UnownedCommand).FullName} but registers no Unit of Work, so the command would fail when it runs. Register the Unit of Work of a persistence package, for example with UsePostgres.",
+            $"The Host handles the command {typeof(UnownedCommand).FullName} but registers no Unit of Work, so the command would fail when it runs. Register the Unit of Work of a persistence package, for example with UsePouryaKitPostgres.",
             thrown.Message
         );
     }
@@ -163,7 +163,7 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     // Each delivery runs in its Module's Unit of Work, where its Receipt is recorded (the final structural review of
     // Wave 2, finding 3). The Host's other Modules, each with its own, add no line.
     [Fact]
-    public void A_module_that_subscribes_but_registers_no_unit_of_work_fails_the_host_when_built_naming_use_postgres()
+    public void A_module_that_subscribes_but_registers_no_unit_of_work_fails_the_host_when_built_naming_use_pouryakit_postgres()
     {
         var thrown = Assert.Throws<InvalidOperationException>(() =>
             AppFixture.ComposeHost(
@@ -175,7 +175,7 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         );
 
         Assert.Equal(
-            "SubscriptionOnlyModule has the subscriptions tests.subscription-only but registers no Unit of Work, so each of their deliveries would fail before its handler runs. Declare its data in its Composition Root, for example with UsePostgres.",
+            "SubscriptionOnlyModule has the subscriptions tests.subscription-only but registers no Unit of Work, so each of their deliveries would fail before its handler runs. Declare its data in its Composition Root, for example with UsePouryaKitPostgres.",
             thrown.Message
         );
     }
@@ -286,7 +286,7 @@ public sealed class HandRegisteredModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module)
     {
-        module.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         module.AddScoped<CommandHandler<WriteNoteCommand>, WriteNoteCommandHandler>();
     }
 }

@@ -11,7 +11,7 @@ using PouryaKit.Validation;
 using PouryaKit.Web;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.UsePostgres<NotesDbContext>(connectionName: "app", schema: "notes");
+builder.Services.UsePouryaKitPostgres<NotesDbContext>(connectionName: "app", schema: "notes");
 builder.Services.AddPouryaKitCqrs(typeof(NotesDbContext).Assembly);
 builder.Services.AddPouryaKitValidation(typeof(NotesDbContext).Assembly);
 builder.Services.AddPouryaKitDapper("app", typeof(NotesDbContext).Assembly);

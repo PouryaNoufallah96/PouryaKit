@@ -86,7 +86,7 @@ public static class EfCoreServiceCollectionExtensions
         /// a violation of one declared <c>DEFERRABLE INITIALLY DEFERRED</c> surfaces when the transaction commits, as an
         /// exception. Throws when the constraint is already mapped for that DbContext.
         /// </summary>
-        public IServiceCollection MapUniqueConstraint<TDbContext>(string constraint, Error error)
+        public IServiceCollection MapPouryaKitUniqueConstraint<TDbContext>(string constraint, Error error)
             where TDbContext : PouryaKitDbContext
         {
             ArgumentNullException.ThrowIfNull(services);

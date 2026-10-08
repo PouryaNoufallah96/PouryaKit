@@ -84,7 +84,7 @@ internal sealed class HostModules
         }
 
         throw new InvalidOperationException(
-            $"{module.Name} handles the command {command.FullName} but registers no Unit of Work. Declare its data in its Composition Root, for example with UsePostgres."
+            $"{module.Name} handles the command {command.FullName} but registers no Unit of Work. Declare its data in its Composition Root, for example with UsePouryaKitPostgres."
         );
     }
 

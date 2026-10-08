@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Persistence.Postgres`. Format and rules: [README](README.md).
 
-The reader of unique violations (`PostgresUniqueConstraintReader`, ticket #11) is new Kit code, so it has no record here. The check of each named connection string when the Host's container is built (`PostgresConnectionsCheck`, ticket #62) was new Kit code here too; since the Wave 2 final review (2026-10-08) it is `DbContextConnectionsCheck` in `PouryaKit.Persistence.EFCore`, where `AddPouryaKitEfCore` records the connection name `UsePostgres` passes it, and its record is there.
+The reader of unique violations (`PostgresUniqueConstraintReader`, ticket #11) is new Kit code, so it has no record here. The check of each named connection string when the Host's container is built (`PostgresConnectionsCheck`, ticket #62) was new Kit code here too; since the Wave 2 final review (2026-10-08) it is `DbContextConnectionsCheck` in `PouryaKit.Persistence.EFCore`, where `AddPouryaKitEfCore` records the connection name `UsePouryaKitPostgres` passes it, and its record is there.
 
 ## Package dependencies
 

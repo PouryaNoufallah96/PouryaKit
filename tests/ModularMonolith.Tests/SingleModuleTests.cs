@@ -75,7 +75,7 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
                 .AddInMemoryCollection([new("ConnectionStrings:app", Fixture.ConnectionString)])
                 .Build()
         );
-        services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         services.AddPouryaKitCqrs(typeof(StubDbContext).Assembly);
         services.AddPouryaKitCaching();
         services.AddPouryaKitValidation(typeof(StubDbContext).Assembly);

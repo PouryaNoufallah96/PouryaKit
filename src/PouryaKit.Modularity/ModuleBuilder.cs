@@ -7,11 +7,11 @@ namespace PouryaKit.Modularity;
 /// <summary>
 /// What a Module's Composition Root registers on: the Host container's services, seen from one Module
 /// (<see cref="IModuleServices"/>). Every Kit registration (<c>AddPouryaKitCqrs</c>, <c>AddPouryaKitValidation</c>,
-/// <c>UsePostgres</c>, <c>Subscribe</c>) is called on it, and belongs to this Module without naming it: one that scans
-/// Features scans the assembly of the Module's definition unless it names assemblies, and a declaration whose deliveries
-/// run in a Module runs in this one. The Unit of Work registered here belongs to this Module alone: an Operation reaches
-/// it only through the Module's Gateway, and the commands and queries whose handlers are registered here belong to this
-/// Module: its Gateway is the only one that runs them, and another Module that registers or removes one of their
+/// <c>UsePouryaKitPostgres</c>, <c>Subscribe</c>) is called on it, and belongs to this Module without naming it: one that
+/// scans Features scans the assembly of the Module's definition unless it names assemblies, and a declaration whose
+/// deliveries run in a Module runs in this one. The Unit of Work registered here belongs to this Module alone: an Operation
+/// reaches it only through the Module's Gateway, and the commands and queries whose handlers are registered here belong to
+/// this Module: its Gateway is the only one that runs them, and another Module that registers or removes one of their
 /// handlers fails while the Host is composed.
 /// </summary>
 public sealed class ModuleBuilder : IModuleServices

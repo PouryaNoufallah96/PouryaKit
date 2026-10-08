@@ -399,3 +399,12 @@ store's database", and until ticket #63 nothing checked that proviso: it was a d
   (`MessageStoreDatabaseTests`). A string that names neither a database nor a user, on either side, leaves the database
   to the client's user, so it fails the build too, asking for `Database`, or at least `Username` (orchestrator's decision
   of 2026-10-08, second review of #63).
+
+## Amendment (2026-10-08, ticket #64: the `PouryaKit` prefix on two registrations)
+
+The decision above stands. On 2026-10-08 the owner decided that the two registrations of the Kit without the `PouryaKit`
+prefix take it before the first publication, with no alias and no forwarder: `UsePostgres<TDbContext>`
+(`PouryaKit.Persistence.Postgres`) is now `UsePouryaKitPostgres<TDbContext>`, and `MapUniqueConstraint<TDbContext>`
+(`PouryaKit.Persistence.EFCore`) is now `MapPouryaKitUniqueConstraint<TDbContext>`. Signatures and behaviour are
+unchanged. The text above keeps the former names, as it was written: where it says `UsePostgres`, the code says
+`UsePouryaKitPostgres`, and the line `MessageStoreDatabaseCheck` reports names the new call.

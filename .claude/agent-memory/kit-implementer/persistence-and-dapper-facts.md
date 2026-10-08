@@ -10,7 +10,7 @@ Check the merged code before relying on a design note. Each section names its ti
 ## EF Core and Unit of Work routing (#8, 2026-10-05; EF Core 10.0.12, Npgsql EF 10.0.3, EFCore.NamingConventions 10.0.1)
 
 - **Unit of Work routing (one container, many Modules):** `ModuleBuilder` implements `IServiceCollection` and re-keys any unkeyed `IUnitOfWork` descriptor by the Module type; `AddPouryaKitModules` then adds one unkeyed router that reads the scope's `Operation.Module` (set by `IServiceProvider.BeginOperation`, which the Gateway calls). `EfRepository` takes `IUnitOfWork` and uses its DbContext. Persistence must `Add` (not `TryAdd`) its `IUnitOfWork`: a second `AddPouryaKitModules` call sees the first call's unkeyed router and TryAdd silently skips.
-- **Allowed-references trap:** Postgres may not reference Modularity, so `module.UsePostgres<T>()` only works because ModuleBuilder *is* an IServiceCollection.
+- **Allowed-references trap:** Postgres may not reference Modularity, so `module.UsePouryaKitPostgres<T>()` only works because ModuleBuilder *is* an IServiceCollection.
 - Default schema comes from `RelationalOptionsExtension.Extract(options).MigrationsHistoryTableSchema` in `PouryaKitDbContext.OnModelCreating`.
 - `IgnoreAny<DomainEvent>()` in ConfigureConventions stops `AggregateRoot.DomainEvents` becoming a navigation.
 - A converted (typed-ID) numeric key is never made identity by convention; it needs `ValueGeneratedOnAdd()` per entity. With it, EF inserts with identity and reads the id back through the converter; the instance's Id stays null until save (no 0 or temporary value constructed).

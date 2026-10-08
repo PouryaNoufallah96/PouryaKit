@@ -151,7 +151,7 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.Configuration.AddInMemoryCollection([new("ConnectionStrings:reports", " ")]);
         // The sample Host's appsettings.json, copied beside the tests, sets ConnectionStrings:app.
-        builder.Services.UsePostgres<StubDbContext>(connectionName: "ledger", schema: "stub");
+        builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "ledger", schema: "stub");
         builder.Services.AddPouryaKitDapper(connectionName: "reports");
         builder.AddPouryaKitCompositionChecks();
 
@@ -171,8 +171,8 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     public void Dbcontexts_missing_one_connection_string_in_two_cases_fail_the_host_when_built_in_one_line_naming_both()
     {
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
-        builder.Services.UsePostgres<StubDbContext>(connectionName: "x", schema: "stub");
-        builder.Services.UsePostgres<ReadCollectionDbContext>(connectionName: "X", schema: "stub");
+        builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "x", schema: "stub");
+        builder.Services.UsePouryaKitPostgres<ReadCollectionDbContext>(connectionName: "X", schema: "stub");
         builder.AddPouryaKitCompositionChecks();
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
@@ -183,14 +183,15 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         );
     }
 
-    // The name UsePostgres passes replaces the record AddPouryaKitEfCore made earlier without one (final review D, F2).
+    // The name UsePouryaKitPostgres passes replaces the record AddPouryaKitEfCore made earlier without one (final review D,
+    // F2).
     [Fact]
     public void A_connection_string_named_after_an_unnamed_record_of_the_dbcontext_fails_the_host_when_built_naming_its_key()
     {
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.Services.AddDbContext<StubDbContext>();
         builder.Services.AddPouryaKitEfCore<StubDbContext>();
-        builder.Services.UsePostgres<StubDbContext>(connectionName: "missing", schema: "stub");
+        builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "missing", schema: "stub");
         builder.AddPouryaKitCompositionChecks();
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
@@ -207,7 +208,7 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     {
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         // The sample Host's appsettings.json, copied beside the tests, sets ConnectionStrings:app.
-        builder.Services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         builder.Services.AddPouryaKitEfCore<StubDbContext>("APP");
         builder.AddPouryaKitCompositionChecks();
 
@@ -221,10 +222,10 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     public void A_dbcontext_given_a_second_connection_string_throws_naming_both()
     {
         var services = new ServiceCollection();
-        services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
 
         var thrown = Assert.Throws<InvalidOperationException>(() =>
-            services.UsePostgres<StubDbContext>(connectionName: "ledger", schema: "stub")
+            services.UsePouryaKitPostgres<StubDbContext>(connectionName: "ledger", schema: "stub")
         );
 
         Assert.Equal(

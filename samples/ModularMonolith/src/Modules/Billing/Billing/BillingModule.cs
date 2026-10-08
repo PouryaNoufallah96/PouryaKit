@@ -14,7 +14,7 @@ public sealed class BillingModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module)
     {
-        module.UsePostgres<BillingDbContext>(connectionName: "app", schema: "billing");
+        module.UsePouryaKitPostgres<BillingDbContext>(connectionName: "app", schema: "billing");
         module.AddPouryaKitCqrs();
         module.Subscribe<ProductCreatedV1, OpenPriceListIntegrationEventHandler>("billing.product-created");
         module.AddPouryaKitDelayedCommand<ExpireQuoteCommand>("billing.expire-quote");

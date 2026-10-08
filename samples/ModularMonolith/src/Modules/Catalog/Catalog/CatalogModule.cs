@@ -27,8 +27,8 @@ public sealed class CatalogModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module)
     {
-        module.UsePostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
-        module.MapUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
+        module.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
+        module.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
         module.AddPouryaKitDapper(connectionName: "app");
         module.AddPouryaKitCqrs();
         module.AddPouryaKitValidation();

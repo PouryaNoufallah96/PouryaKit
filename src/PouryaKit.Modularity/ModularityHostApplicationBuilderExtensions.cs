@@ -47,7 +47,7 @@ public static class ModularityHostApplicationBuilderExtensions
         var unitOfWork = services.GetKeyedService<IUnitOfWork>(module);
         return unitOfWork is null && required
             ? throw new InvalidOperationException(
-                $"{module.Name} registers no Unit of Work. Declare its data in its Composition Root, for example with UsePostgres."
+                $"{module.Name} registers no Unit of Work. Declare its data in its Composition Root, for example with UsePouryaKitPostgres."
             )
             : unitOfWork;
     }

@@ -101,7 +101,7 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
 
 ## Writing with plain SQL in the Unit of Work
 
-A Module-internal table that no aggregate maps, such as a projection, a read model or a tally, may be written with plain SQL that commits or rolls back with the Operation. Inject `IUnitOfWorkConnection` (`PouryaKit.Persistence`, registered by `UsePostgres`) and pass its transaction to every statement. The Proving Sample's projection is Inventory's copy of Catalog's products, which its Integration Event Handler writes this way from each Snapshot ([messaging.md](messaging.md#keeping-a-copy)); a tally shows the same in a command's handler:
+A Module-internal table that no aggregate maps, such as a projection, a read model or a tally, may be written with plain SQL that commits or rolls back with the Operation. Inject `IUnitOfWorkConnection` (`PouryaKit.Persistence`, registered by `UsePouryaKitPostgres`) and pass its transaction to every statement. The Proving Sample's projection is Inventory's copy of Catalog's products, which its Integration Event Handler writes this way from each Snapshot ([messaging.md](messaging.md#keeping-a-copy)); a tally shows the same in a command's handler:
 
 ```csharp
 using Dapper;

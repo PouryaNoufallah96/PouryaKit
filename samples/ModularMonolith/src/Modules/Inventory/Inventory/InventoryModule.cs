@@ -18,7 +18,7 @@ public sealed class InventoryModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module)
     {
-        module.UsePostgres<InventoryDbContext>(connectionName: "app", schema: "inventory");
+        module.UsePouryaKitPostgres<InventoryDbContext>(connectionName: "app", schema: "inventory");
         module.AddPouryaKitCqrs();
         module.Subscribe<ProductCreatedV1, OpenStockItemIntegrationEventHandler>("inventory.product-created");
         module.Subscribe<ProductCreatedV2, FileProductCategoryIntegrationEventHandler>("inventory.product-categories");
