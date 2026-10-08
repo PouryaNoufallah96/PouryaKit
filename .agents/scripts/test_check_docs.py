@@ -41,6 +41,15 @@ CLEAN = {
     ".claude/agent-memory/kit-implementer/order-facts.md": "# Order\n",
     ".gitattributes": f"{MEMORY} merge=union\n",
 }
+# A C# test and a Python one, and a record that points at both, names the first one's file and a member that is no test.
+TESTS = {
+    "tests/Shop.Tests/ProductTests.cs": "public sealed class ProductTests\n{\n    [Fact]\n    public void A_product_is_renamed() { }\n}\n",
+    "scripts/test_shop.py": "class InventoryTests(unittest.TestCase):\n    def test_inventory_is_exact(self):\n        pass\n",
+    "docs/acceptance.md": "# Acceptance\n\n`ProductTests.A_product_is_renamed` and `InventoryTests.test_inventory_is_exact`"
+    " pass; see `ProductTests.cs`. `Product.Retitle` is gone.\n",
+}
+ADOPTED = {"src/Catalog/Money.cs": "// A money value, adapted from the Till project's Money.\npublic readonly record struct Money(decimal Amount);\n"}
+RECORD = "# Catalog\n\n## Money\n\n- **Kit files:** `src/Catalog/Money.cs`\n"
 
 
 def git(root: Path, *args: str) -> None:
@@ -140,6 +149,25 @@ class CheckDocsTests(unittest.TestCase):
     def test_two_index_lines_linking_one_file_fail(self) -> None:
         both = CLEAN[MEMORY] + "- [Product facts](product-facts.md) — the product, renamed\n"
         self.assertFails({MEMORY: both}, f"{MEMORY}:3: links product-facts.md, as line 1 does")
+
+    def test_acceptance_pointers_to_existing_tests_pass(self) -> None:
+        self.assertPasses(TESTS)
+
+    def test_an_acceptance_pointer_to_a_renamed_test_or_a_missing_class_fails(self) -> None:
+        stale = "# Acceptance\n\n`ProductTests.A_product_is_retitled` and `OrderTests.An_order_is_placed` pass.\n"
+        self.write(TESTS | {"docs/acceptance.md": stale})
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn("FAIL  docs/acceptance.md:3: `ProductTests.A_product_is_retitled` names no test: the class ProductTests has no method A_product_is_retitled", out)
+        self.assertIn("FAIL  docs/acceptance.md:3: `OrderTests.An_order_is_placed` names no test: no test class OrderTests", out)
+
+    def test_adopted_code_without_a_provenance_record_fails(self) -> None:
+        """The README's format example names a Kit file too, and is no record."""
+        self.assertFails(ADOPTED | {"docs/provenance/README.md": RECORD}, "src/Catalog/Money.cs:1: the comment says the code is adapted from something, and no record in docs/provenance/ names the file under Kit files")
+
+    def test_adopted_code_a_provenance_record_names_passes_and_so_does_a_string_that_says_the_words(self) -> None:
+        quoted = {"src/Catalog/Messages.cs": 'public static class Messages { public const string Source = "taken from the header"; }\n'}
+        self.assertPasses(ADOPTED | quoted | {"docs/provenance/Catalog.md": RECORD})
 
     def test_fences_names_a_file_whose_fenced_block_changed(self) -> None:
         self.write({"docs/guide.md": "# Guide\n\n```bash\ndotnet build\n```\n"})
