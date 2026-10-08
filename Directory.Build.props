@@ -6,6 +6,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- The documentation file gives each package its IntelliSense and lets the build see an unnecessary using
+         (IDE0005) and an XML reference that names nothing (CS1574). CS1591 would ask a summary of every public
+         member of the samples and the tests. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
     <_KitSourceRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', 'src'))</_KitSourceRoot>
     <IsKitPackage Condition="$(MSBuildProjectDirectory.StartsWith('$(_KitSourceRoot)'))">true</IsKitPackage>
     <IsPackable Condition="'$(IsKitPackage)' != 'true'">false</IsPackable>

@@ -7,7 +7,6 @@ using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
-using PouryaKit.Modularity;
 using PouryaKit.Observability;
 using PouryaKit.Testing;
 

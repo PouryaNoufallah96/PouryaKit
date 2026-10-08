@@ -35,7 +35,7 @@ public static class NotificationHandlerServiceCollectionExtensions
 
         /// <summary>
         /// Declares, in the Host's composition, the Notification Handlers of <paramref name="module"/>, a Module's
-        /// definition type, as <see cref="AddPouryaKitNotificationHandlers(Assembly[])"/> on that Module's builder does:
+        /// definition type, as <c>AddPouryaKitNotificationHandlers</c> on that Module's builder does:
         /// those in <paramref name="featureAssemblies"/>, or in the assembly of the Module's definition when it names
         /// none. Throws, besides, when called on the builder of another Module.
         /// </summary>

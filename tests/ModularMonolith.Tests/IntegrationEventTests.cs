@@ -1,6 +1,5 @@
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
-using Catalog.Contracts.Products.Events.V1;
 using Catalog.Products.Events.DomainEvents;
 using Catalog.Products.Features.CreateProduct;
 using Inventory;
