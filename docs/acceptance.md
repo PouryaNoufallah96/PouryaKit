@@ -717,3 +717,26 @@ another connection would turn red; and a test of the fresh-database row would pi
 `dotnet test --project tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj` on this package's tree, merged with
 `feat/wave-2` at `b7f0dce`, printed 504 passed, 0 failed, 0 skipped. No `validate.py` run: the package changes tests and
 this record only.
+
+## Wave 2 the message store and every DbContext share one database, ticket #63
+
+Ticket #63, from the two-database probe above: the message store's connection and every connection a Module's or the
+application's DbContext uses (`UsePostgres`) must name one database, and a Host that breaks the rule fails when it is
+built instead of writing its Outbox where the store never reads it. The probe's two observations stay as recorded. One
+composition check in the shape of #62's connection-string checks, `MessageStoreDatabaseCheck` of
+`PouryaKit.Messaging.Wolverine.EFCore`, registered by `UsePouryaKitWolverine(connectionName)`, compares the string
+Wolverine was given with each DbContext's in the Host's final configuration, on its hosts, each with its port, and its
+database, as written; it opens no connection. The DbContexts' connections reach it through one record,
+`DbContextConnection` of `PouryaKit.Persistence.EFCore`, moved there from #62's `PostgresConnection` so that both
+checks read it; no reference was added ([ADR 0004](adr/0004-commit-through-wolverine-ef-outbox.md)'s #63 amendment).
+
+| Scenario | Proven by | Notes |
+|---|---|---|
+| A DbContext whose connection string names another database than the store's, by its name, its port or its host, fails the Host when it is built, one line naming both connection names, both databases and the fix | `MessageStoreDatabaseTests.A_dbcontext_on_another_database_than_the_message_store_fails_the_host_when_built_naming_both` (database, port, host) | The probe's composition: a Production Host without Modules, the Stub's DbContext as its Unit of Work on `app`, the store on `messages`, both derived from the fixture's PostgreSQL. Neither database is created: nothing connects while the Host is built, so a check that connected would have failed differently. Red once with the check off: all three Hosts built, as the probe's did; and with hosts and ports ignored: the port and host rows built |
+| Two connection names for one database pass, however the strings are written | `MessageStoreDatabaseTests.A_dbcontext_and_the_message_store_on_one_database_under_two_connection_names_build` | The store's string says `Server` for `Host`, puts the port inside the host, writes the host in upper case and adds an `Application Name`. Red once with the strings compared as written: the Host failed to build |
+| One record of each DbContext's connection feeds both checks | `MisconfiguredHostTests.A_connection_string_the_configuration_lacks_or_leaves_blank_fails_the_host_when_built_naming_its_key`; the rows above | Red once with `UsePostgres` registering no `DbContextConnection`: the missing-string line was gone and the three Hosts of the first row built. A missing or blank DbContext string stays `PostgresConnectionsCheck`'s line alone. |
+
+The Proving Sample's Hosts, both templates and every test Host compose without change: each names one connection
+string, `app`, for its store and its DbContexts. On this package's tree, `dotnet test --project
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj` printed 508 passed, 0 failed, 0 skipped, and `dotnet test
+--project tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj` 98 passed, 0 failed, 0 skipped.
