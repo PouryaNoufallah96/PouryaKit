@@ -13,7 +13,7 @@ MinVer is the only version engine. All Kit packages in `scripts/packaging/invent
 | Owner-created `v0.x` preview/rc tag on current main, followed by manual CI on main | CI fetches the tag and validates its exact MinVer version. Successful CI uses the same private publisher. |
 | Manual private-publication run on main | Select an original successful main CI run, attempt and SHA. Reuse its preserved packages and manifest. |
 
-Integration branch (`feat/**`) pushes trigger read-only CI; other topic branch pushes do not, so use PR validation or [manual branch CI](ci.md) when hosted proof is needed. Publication triggers only on a completed `main` CI run (`branches: [main]` under `workflow_run`), so neither an integration branch run nor a non-main manual run can authorize it.
+Integration branch (`feat/**`) pushes trigger read-only CI; other topic branch pushes do not, so use PR validation or [manual branch CI](ci.md) when hosted proof is needed. Publication triggers only on a completed `main` CI run (`branches: [main]` under `workflow_run`), so neither an integration branch run nor a non-main manual run can authorize it. The Wave 2 set, `PouryaKit.Templates` included, publishes with the merge of `feat/wave-2` to `main`, and its feed check installs that template package rather than referencing it ([below](#publication-and-trust)).
 
 For a named version, choose and create an immutable tag such as `v0.2.0-rc.1` on the current main SHA using the normal owner-controlled Git process. Then select **CI**, **Run workflow**, branch **main**, or run:
 
@@ -40,7 +40,7 @@ dotnet nuget push "$package" --source GitHub --api-key "$GITHUB_TOKEN" \
   --skip-duplicate --no-symbols --configfile "$RUNNER_TEMP/publication.NuGet.Config"
 ```
 
-`--skip-duplicate` treats an HTTP 409 as a skipped duplicate. It does not compare remote bytes with the manifest and does not prove identical-content recovery. Other push failures fail the job. After push, a temporary project references every inventory package at its exact version and restores with a fresh package/cache directory. Source mapping requires `PouryaKit.*` from GitHub Packages and permits third-party dependencies from nuget.org. This checks private-feed availability and dependency resolution, not remote raw-byte identity or runtime behaviour.
+`--skip-duplicate` treats an HTTP 409 as a skipped duplicate. It does not compare remote bytes with the manifest and does not prove identical-content recovery. Other push failures fail the job. After push, a temporary project references every library package in the inventory at its exact version and restores with a fresh package/cache directory. Source mapping requires `PouryaKit.*` from GitHub Packages and permits third-party dependencies from nuget.org. A package of inventory kind `template` is installed instead, since a `PackageReference` to it restores without assets and proves nothing about its templates: `dotnet new install PouryaKit.Templates@<version>` into a template hive of its own, then each template the package holds, by the `shortName` in `src/PouryaKit.Templates/content/*/.template.config/template.json`, is generated as `Acme.Shop` and as `acme-shop` and its solution restored with the same caches and configuration. `dotnet new install` reads the `NuGet.Config` of its working folder, where the `GitHub` source gets its credentials, and ignores source mapping, so it runs beside a copy of the configuration with nuget.org disabled. This checks private-feed availability and dependency resolution, not remote raw-byte identity or runtime behaviour; [package validation](packages.md#clean-consumers) builds and tests the generated solutions from the produced packages.
 
 ```mermaid
 flowchart LR
@@ -48,7 +48,7 @@ flowchart LR
   A --> D[Download original artifact]
   D --> V[Check receipt, inventory and hashes]
   V --> P[dotnet nuget push]
-  P --> R[Clean private-feed restore of all inventory packages]
+  P --> R[Clean private-feed restore of the library packages and of the solutions generated from the installed templates]
 ```
 
 ## Retry preserved originals

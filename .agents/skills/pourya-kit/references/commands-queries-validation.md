@@ -59,7 +59,7 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 
 ## The pipeline
 
-- Every command and query passes the same fixed steps: logging, the optional authorization hook, optional validation, then the handler; a command's handler runs inside the Unit of Work. Never register a pipeline step or a behaviour yourself.
+- Every command and query passes the same fixed steps: logging, the optional authorization hook, optional validation, then the handler; a command's handler runs inside the Unit of Work. Never register a pipeline step or a behaviour yourself, and never implement a contract the Kit fills for the pipeline, such as a decorator of `IDispatcher` or your own `IUnitOfWork`, `IValidationStep<T>`, `IIdempotencyStore`, `IQueryCache` or an Outbox seam: a structure test rejects an application type that does ([testing.md](testing.md#structure-tests)).
 - Send from outside the Module through its Gateway, with an Operation Context (see [modules.md](modules.md)). Inside a handler, send a nested command with an injected `IDispatcher`: `await dispatcher.SendAsync(new ReserveStockCommand(id), ct)`. It joins the outer Unit of Work, so the Operation commits once, and it reads the same Operation Context.
 - A nested command that fails, in its handler, its validation or its authorization, or by throwing, rolls the whole Operation back, even if your handler ignores its Result. The Operation then fails with that nested command's Errors. Pass a failure on with `return result.Errors;` instead of ignoring it.
 - A failed nested query that leaves tracked state unchanged rolls nothing back; act on its Result as you need.
@@ -83,7 +83,7 @@ internal sealed record CreateProductCommand(Guid ProductId, Guid CategoryId, str
 - The authorization hook and validation run before the replay: a repeat that now fails them answers that failure, not the first success.
 - The value is kept as JSON in the Kit's representation and read back as the command's response type, which must round-trip through it. Renaming the command's type starts new keys.
 - A nested command never reserves, even one that opts in: it joins the outer Operation. A request id reaching an outermost command that does not opt in, or a Host whose persistence keeps no keys, throws `InvalidOperationException` at dispatch.
-- Feature code never calls `IIdempotencyStore`, the persistence package's seam: a structure test rejects a Module that does ([testing.md](testing.md#structure-tests)).
+- Feature code never calls `IIdempotencyStore`, the persistence package's seam, and an application never implements it: structure tests reject a Module or Host that does either ([testing.md](testing.md#structure-tests)).
 - The keys live in a table of the Module's own schema, which a migration creates ([persistence.md](persistence.md#migrations)). A key replays for its retention, 24 hours by default; after that the Host's cleanup removes it and a repeat runs as a new request ([persistence.md](persistence.md#idempotency-key-retention)).
 
 ## Code that only reads

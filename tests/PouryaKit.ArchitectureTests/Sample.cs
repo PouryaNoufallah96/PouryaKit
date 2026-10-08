@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using Inventory.Host;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -56,6 +57,19 @@ internal static class Sample
     [
         .. ProjectReferencesOf(typeof(ModularMonolithHost).Assembly)
             .Where(assembly => Modules.Any(module => assembly.GetName().Name == $"{module.GetName().Name}.Contracts"))
+            .OrderBy(assembly => assembly.GetName().Name, StringComparer.Ordinal),
+    ];
+
+    /// <summary>
+    /// The Proving Sample's application code: its two Hosts and every project of this repository they reference that is
+    /// no Kit package, so each Module, its Contracts and the shared service defaults.
+    /// </summary>
+    public static readonly IReadOnlyList<Assembly> Application =
+    [
+        .. new[] { typeof(ModularMonolithHost).Assembly, typeof(InventoryHost).Assembly }
+            .SelectMany(host => ProjectReferencesOf(host).Prepend(host))
+            .Where(assembly => !assembly.GetName().Name!.StartsWith("PouryaKit", StringComparison.Ordinal))
+            .DistinctBy(assembly => assembly.GetName().Name)
             .OrderBy(assembly => assembly.GetName().Name, StringComparer.Ordinal),
     ];
 
