@@ -187,6 +187,45 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         await ProblemAsync(untrustedWithHeaders, HttpStatusCode.TooManyRequests);
     }
 
+    // The partition names the Actor's kind as well as its id: a person who bears the storefront's name is not one of its
+    // anonymous visitors, who run as the system Actor catalog.storefront.
+    [Fact]
+    public async Task A_person_named_as_a_public_endpoints_actor_has_a_partition_apart_from_its_anonymous_callers()
+    {
+        await using var host = Compose(RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0));
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var anonymous = AppFixture.ClientOf(host);
+        using var namesake = AppFixture.ClientOf(host, "catalog.storefront");
+
+        var visitor = await anonymous.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
+        var person = await namesake.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
+        var anotherVisitor = await anonymous.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, visitor.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, person.StatusCode);
+        await ProblemAsync(anotherVisitor, HttpStatusCode.TooManyRequests);
+    }
+
+    // Headers no Operation Context can be read from resolve no Actor, so the limiter counts the call in the one partition
+    // of requests no Actor resolves for, and the endpoint, not the limiter, refuses it.
+    [Fact]
+    public async Task A_trusted_peers_unreadable_context_headers_count_in_the_partition_no_actor_resolves_for_and_answer_400()
+    {
+        await using var host = Compose(RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0));
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var peer = AppFixture.ClientOf(host, AppFixture.TrustedPeer);
+
+        var unreadable = await peer.SendAsync(Continuing("ada", correlationId: "not-a-guid"), TestContext.Current.CancellationToken);
+        var unreadableAgain = await peer.SendAsync(Continuing("ada", correlationId: "not-a-guid"), TestContext.Current.CancellationToken);
+        var continuingAda = await peer.SendAsync(Continuing("ada"), TestContext.Current.CancellationToken);
+        var direct = await peer.GetAsync("/stub/context", TestContext.Current.CancellationToken);
+
+        await ProblemAsync(unreadable, HttpStatusCode.BadRequest);
+        await ProblemAsync(unreadableAgain, HttpStatusCode.TooManyRequests);
+        Assert.Equal(HttpStatusCode.OK, continuingAda.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, direct.StatusCode);
+    }
+
     [Fact]
     public async Task A_request_beyond_the_limit_waits_in_a_queue_of_its_own_size_until_the_next_window_and_one_beyond_the_queue_answers_429()
     {
@@ -255,13 +294,13 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         return request;
     }
 
-    // A call that continues an Operation of the person actorId, as a peer Host sends it.
-    private static HttpRequestMessage Continuing(string actorId)
+    // A call that continues an Operation of the person actorId, as a peer Host sends it, with correlationId when given.
+    private static HttpRequestMessage Continuing(string actorId, string? correlationId = null)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, "/stub/context");
         request.Headers.Add(OperationContextHeaders.ActorId, actorId);
         request.Headers.Add(OperationContextHeaders.ActorKind, nameof(ActorKind.Person));
-        request.Headers.Add(OperationContextHeaders.CorrelationId, Guid.CreateVersion7().ToString());
+        request.Headers.Add(OperationContextHeaders.CorrelationId, correlationId ?? Guid.CreateVersion7().ToString());
         request.Headers.Add(OperationContextHeaders.CausationId, Guid.CreateVersion7().ToString());
         return request;
     }

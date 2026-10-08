@@ -53,6 +53,23 @@ internal sealed class ThrowingNoteEndpoint : IEndpoint
         );
 }
 
+// An [Idempotent] command on PUT and on DELETE, the methods no idempotent command of Catalog is mapped on.
+internal sealed class CountedNoteEndpoint : IEndpoint
+{
+    public void Map(IEndpointRouteBuilder routes)
+    {
+        routes.MapPut("/counted-notes/{text}", CountAsync).RequireIdempotencyKey();
+        routes.MapDelete("/counted-notes/{text}", CountAsync).RequireIdempotencyKey();
+    }
+
+    private static async Task<Microsoft.AspNetCore.Http.IResult> CountAsync(
+        string text,
+        OperationContext context,
+        IGatewayProcessor<StubModule> stub,
+        CancellationToken cancellationToken
+    ) => (await stub.SendAsync(new CountNoteCommand(text), context, cancellationToken)).ToHttpResult();
+}
+
 /// <summary>Registered only by a test that builds a Host of its own, to map <see cref="PlainAnonymousEndpoint"/>.</summary>
 internal sealed class PlainAnonymousRoute;
 

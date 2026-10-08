@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.ImportProducts;
@@ -230,6 +231,50 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
+    }
+
+    // No idempotent command of Catalog is mapped on PUT or DELETE, so the Stub's counted note is, on both.
+    [Theory]
+    [InlineData("PUT")]
+    [InlineData("DELETE")]
+    public async Task An_idempotent_put_or_delete_without_a_key_answers_400_and_with_one_replays_the_first_response(string method)
+    {
+        using var client = Fixture.Client("ada");
+        var text = $"note-{Guid.CreateVersion7():N}";
+        var uri = $"/stub/counted-notes/{text}";
+        var key = IdempotentRequests.NewKey();
+        HttpRequestMessage Request(string? idempotencyKey)
+        {
+            var request = new HttpRequestMessage(new HttpMethod(method), uri);
+            if (idempotencyKey is not null)
+            {
+                request.Headers.Add(IdempotentRequests.Header, idempotencyKey);
+            }
+
+            return request;
+        }
+
+        var refused = await client.SendAsync(Request(null), TestContext.Current.CancellationToken);
+        var (first, _) = await Fixture.WaitForDeliveriesAsync(
+            () => client.SendAsync(Request(key), TestContext.Current.CancellationToken),
+            TestContext.Current.CancellationToken
+        );
+        var repeat = await Fixture.AssertNothingSentAsync(
+            () => client.SendAsync(Request(key), TestContext.Current.CancellationToken),
+            TestContext.Current.CancellationToken
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
+        Assert.Equal("application/problem+json", refused.Content.Headers.ContentType?.MediaType);
+        var problem = await refused.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+        Assert.Equal("https://tools.ietf.org/html/rfc9110#section-15.5.1", problem.GetProperty("type").GetString());
+        Assert.Equal((HttpStatusCode.OK, HttpStatusCode.OK), (first.StatusCode, repeat.StatusCode));
+        Assert.Equal(
+            await first.Content.ReadAsStringAsync(TestContext.Current.CancellationToken),
+            await repeat.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
+        );
+        Assert.Equal(1, Runs.Of(text));
+        Assert.Equal(1L, await Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = '{text}'"));
     }
 
     private static OperationContext Context(string requestId, Actor? actor = null, string? tenant = null) =>

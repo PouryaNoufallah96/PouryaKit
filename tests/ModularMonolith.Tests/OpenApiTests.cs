@@ -9,6 +9,7 @@ using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -218,6 +219,31 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
 
         Assert.All(Operations(v2), operation => Assert.False(operation.Body.TryGetProperty("security", out _), operation.Name));
         Assert.False(v2.TryGetProperty("components", out var components) && components.TryGetProperty("securitySchemes", out _));
+    }
+
+    // The Host registers JWT bearer beside the fixture's default test scheme, which the document cannot state; only the
+    // endpoint whose policy names the bearer scheme requires it.
+    [Fact]
+    public async Task An_operation_whose_policy_names_a_scheme_requires_that_scheme_and_not_the_default_one()
+    {
+        await using var host = AppFixture.ComposeHost("Development", Fixture.ConnectionString, new RecordedLogs());
+        host.MapGet("/bearer-only", () => "bearer")
+            .RequireAuthorization(new AuthorizeAttribute { AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme });
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var anonymous = Unversioned(AppFixture.ClientOf(host));
+
+        var v2 = await DocumentAsync(anonymous, "v2");
+
+        Assert.Equal(
+            [("/bearer-only get", true)],
+            Operations(v2)
+                .Where(operation => operation.Body.TryGetProperty("security", out _))
+                .Select(operation => (operation.Name, RequiresBearer(operation.Body)))
+        );
+        Assert.Equal(
+            """{"type":"http","scheme":"bearer"}""",
+            v2.GetProperty("components").GetProperty("securitySchemes").GetProperty("Bearer").GetRawText().Replace(" ", "").Replace("\n", "")
+        );
     }
 
     [Fact]

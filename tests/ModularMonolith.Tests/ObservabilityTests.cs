@@ -1,4 +1,7 @@
 using System.Diagnostics;
+using Billing;
+using Billing.Quotes.Features.ExpireQuote;
+using Billing.Quotes.Features.OpenQuote;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
@@ -15,6 +18,7 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
 {
     private const string Publishing = "catalog.product-created.publish-product-created";
     private const string Inventory = "inventory.product-created";
+    private const string ExpireQuote = "billing.expire-quote";
     private const string TraceState = "kit=47,other=v1";
 
     // CreateProduct (Catalog) commits a Notification; its delivery Operation in Catalog publishes ProductCreatedV1 from
@@ -71,6 +75,38 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         Assert.All(attempts, attempt => Assert.Equal(publishing.SpanId, attempt.ParentSpanId));
         Assert.All(attempts, attempt => Assert.Equal(TraceState, attempt.TraceStateString));
         Assert.Equal([[product, "ada"]], await Fixture.RowsAsync("select product_id, created_by from inventory.stock_items"));
+    }
+
+    // Billing's OpenQuote schedules the quote's expiry; the message store holds it until due, and its delivery then runs
+    // ExpireQuote nested in the delivery's Operation.
+    [Fact]
+    public async Task A_delayed_command_runs_in_the_trace_of_the_operation_that_scheduled_it_with_its_tracestate()
+    {
+        using var telemetry = new RecordedTelemetry();
+        var quote = Guid.CreateVersion7();
+
+        Activity upstream;
+        using (upstream = RecordedTelemetry.Upstream.StartActivity("request", ActivityKind.Server)!)
+        {
+            upstream.TraceStateString = TraceState;
+            var opened = await Fixture
+                .Gateway<BillingModule>()
+                .SendAsync(new OpenQuoteCommand(quote, TimeSpan.FromMilliseconds(300)), TestContext.Current.CancellationToken);
+            Assert.True(opened.IsSuccess);
+        }
+
+        await Fixture.WaitUntilAsync(
+            $"exists (select from wolverine.wolverine_incoming_envelopes where received_at = 'local://{ExpireQuote}/' and status = 'Handled')",
+            "The expiry never ran."
+        );
+
+        var trace = telemetry.Of(upstream.TraceId);
+        var openQuote = Assert.Single(trace, activity => Tag(activity, OperationTelemetry.OperationTag) == nameof(OpenQuoteCommand));
+        var expiry = DeliveryOperation(ExpireQuote, upstream.TraceId);
+        Assert.Equal(openQuote.SpanId, expiry.ParentSpanId);
+        Assert.Equal(TraceState, expiry.TraceStateString);
+        Assert.Equal(expiry.SpanId, Assert.Single(trace, activity => Tag(activity, OperationTelemetry.OperationTag) == nameof(ExpireQuoteCommand)).ParentSpanId);
+        Assert.Equal("Expired", await Fixture.ScalarAsync<string>($"select state from billing.quotes where id = '{quote}'"));
     }
 
     [Fact]
