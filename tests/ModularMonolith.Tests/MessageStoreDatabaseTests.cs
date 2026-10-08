@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ModularMonolith.Tests.Stub;
 using Npgsql;
@@ -34,6 +36,55 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
 
         Assert.Equal(
             $"UsePostgres stores StubDbContext over the connection string app, the database {module.Host}:{module.Port}/module, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database {store.Host}:{store.Port}/{store.Database}, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
+            thrown.Message
+        );
+    }
+
+    // Read as Npgsql reads them: a string that names no database names its user's, and a Unix socket's directory keeps its
+    // case and takes the separate port.
+    [Theory]
+    [InlineData("Host=db;Username=catalog", "Host=db;Username=messages", "db:5432/catalog", "db:5432/messages")]
+    [InlineData("Host=/run/postgresql;Database=app", "Host=/run/PostgreSQL;Database=app", "/run/postgresql:5432/app", "/run/PostgreSQL:5432/app")]
+    [InlineData("Host=/run/postgresql;Port=5432;Database=app", "Host=/run/postgresql;Port=5433;Database=app", "/run/postgresql:5432/app", "/run/postgresql:5433/app")]
+    public void A_dbcontext_on_another_database_as_npgsql_reads_the_strings_fails_the_host_when_built_naming_both(
+        string module,
+        string store,
+        string moduleDatabase,
+        string storeDatabase
+    )
+    {
+        var builder = Compose(module, store);
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            $"UsePostgres stores StubDbContext over the connection string app, the database {moduleDatabase}, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database {storeDatabase}, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
+            thrown.Message
+        );
+    }
+
+    // Read as Npgsql reads them: a database named as the other side's user is that user's, a string that names neither a
+    // database nor a user leaves its database unknown, which is not compared, and a port inside the host is a number.
+    [Theory]
+    [InlineData("Host=db;Database=app;Username=catalog", "Host=db;Username=app")]
+    [InlineData("Host=db", "Host=db;Database=app")]
+    [InlineData("Host=db;Port=5432;Database=app", "Host=db:05432;Database=app")]
+    public void Two_strings_npgsql_reads_as_one_database_build(string module, string store)
+    {
+        using var host = Compose(module, store).Build();
+    }
+
+    // EF Core applies a ConfigureDbContext after AddDbContext over it, so the DbContext uses the string it names.
+    [Fact]
+    public void A_dbcontext_that_configure_db_context_moves_to_another_database_fails_the_host_when_built_naming_it()
+    {
+        var builder = Compose("Host=db;Database=app", "Host=db;Database=app");
+        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql("Host=db;Database=elsewhere"));
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            "UsePostgres stores StubDbContext over the connection string app, the database db:5432/elsewhere, but UsePouryaKitWolverine keeps the message store over the connection string messages, the database db:5432/app, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.",
             thrown.Message
         );
     }

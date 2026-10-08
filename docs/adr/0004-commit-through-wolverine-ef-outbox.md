@@ -389,7 +389,9 @@ store's database", and until ticket #63 nothing checked that proviso: it was a d
   store's tables there, it committed into that copy, the handlers ran once from the in-memory flush, and the rows stayed
   `Incoming` where the store never reads them, with nothing logged at Warning or above.
 - **The check.** `UsePouryaKitWolverine(connectionName)` registers the composition check `MessageStoreDatabaseCheck`. When
-  the Host's container is built, it compares the connection string Wolverine was given with each DbContext's, which
-  `UsePostgres` records as a `DbContextConnection` (`PouryaKit.Persistence.EFCore`) and the check reads from the Host's
-  final configuration, on hosts, ports and database as written, and fails the build with one line per DbContext on
-  another database. It opens no connection, and two names for one database pass (`MessageStoreDatabaseTests`).
+  the Host's container is built, it compares the connection string Wolverine was given with the connection of each
+  DbContext `UsePostgres` records as a `DbContextConnection` (`PouryaKit.Persistence.EFCore`), read from the DbContext's
+  built options, so a later `ConfigureDbContext` counts, on hosts, ports and database as Npgsql reads them, and fails the
+  build with one line per DbContext on another database. It opens no connection, and two names for one database pass
+  (`MessageStoreDatabaseTests`). Not compared: the database of a string that names neither a database nor a user, and a
+  DbContext moved onto an Npgsql data source.
