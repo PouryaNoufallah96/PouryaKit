@@ -1,0 +1,61 @@
+.claude/rules/kit-code.md
+  s_bdf0617f846b2b::t_28c3d813c31d69 31
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_bdf0617f846b2b::t_1d1edd09faf905 712-714,718-721
+docs/adr/0009-w3c-trace-context-through-the-outbox.md
+  s_bdf0617f846b2b::t_1d1edd09faf905 130-133
+.agents/skills/pourya-kit/references/templates.md
+  s_bdf0617f846b2b::t_ba510e5555c679 3,7,34,39,53-70
+  s_bdf0617f846b2b::t_a3693d6f59edd7 71
+docs/agents/ai-setup.md
+  s_bdf0617f846b2b::t_28c3d813c31d69 213,220
+docs/private-packages.md
+  s_bdf0617f846b2b::t_4fbdfa493abcca 43,67,71
+.agents/skills/pourya-kit/references/web.md
+  s_bdf0617f846b2b::t_261d9deb772fda 144
+docs/acceptance.md
+  s_bdf0617f846b2b::t_60e652a2643e2d 7-8,658,748-774
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_bdf0617f846b2b::t_261d9deb772fda 74
+.agents/skills/pourya-kit/references/security.md
+  s_bdf0617f846b2b::t_261d9deb772fda 112,183,214,218,220
+.agents/skills/pourya-kit/references/modules.md
+  s_bdf0617f846b2b::t_261d9deb772fda 83,120
+README.md
+  s_bdf0617f846b2b::t_066830d4ec263d 22
+  s_bdf0617f846b2b::t_0fedd3a1636cce 5,9,23,27
+docs/foundation-review.md
+  s_bdf0617f846b2b::t_3c4b74cb5f67e4 270-272
+  s_bdf0617f846b2b::t_948e01d69419c4 843,855-857,977-981
+docs/agents/brief-template.md
+  s_bdf0617f846b2b::t_28c3d813c31d69 36
+.agents/skills/pourya-kit/SKILL.md
+  s_bdf0617f846b2b::t_eee82201c3e648 19-20,30,41
+src/PouryaKit.Templates/content/monolith/.template.config/template.json
+  s_bdf0617f846b2b::t_446313dc6cedd9 7
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_c01bf3ac95b3bb 190-192
+  s_bdf0617f846b2b::t_7e68cddd0f4394 5,123,163,168,193,200,302,316,443,478,505,513,560
+src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/HostTests.cs
+  s_bdf0617f846b2b::t_58937f86c03da7 27
+src/PouryaKit.Templates/content/modular/.template.config/template.json
+  s_bdf0617f846b2b::t_446313dc6cedd9 7
+docs/adr/0008-one-problem-response-for-every-http-failure.md
+  s_bdf0617f846b2b::t_1d1edd09faf905 32-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "62b2e58b029ad265c8b32c6ccca59b1a55857a6f",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
