@@ -1,0 +1,21 @@
+README.md
+  s_bdf0617f846b2b::t_991c5dd72cb1f9 5
+docs/acceptance.md
+  s_bdf0617f846b2b::t_b10f6471f6afde 904-907
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5a5a6b91bfce8a29430159e52d1717205b83518e",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
