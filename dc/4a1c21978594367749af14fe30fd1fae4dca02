@@ -1,0 +1,24 @@
+docs/acceptance.md
+  s_75dee3f51db59e::t_65cf480a87a680 931-948
+docs/architecture/README.md
+  s_75dee3f51db59e::t_55e8527b2385f8 274,279,344,508,526,544
+  s_75dee3f51db59e::t_79a1b29f77fd4b 620
+.agents/skills/pourya-kit/references/messaging.md
+  s_75dee3f51db59e::t_55e8527b2385f8 83,465
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dc4a1c21978594367749af14fe30fd1fae4dca02",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
