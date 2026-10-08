@@ -1,0 +1,43 @@
+src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs
+  s_bdf0617f846b2b::t_c96860d3e72c82 13-19,29-34,36,41-55,62,65,67-74,77-78,80-81,84-95,98,100
+  s_bdf0617f846b2b::t_c3a7edb86a78e0 63-64
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_bdf0617f846b2b::t_edff93ab22eb91 53
+docs/acceptance.md
+  s_bdf0617f846b2b::t_c338045e201598 743-746
+  s_bdf0617f846b2b::t_9c46dd8080c182 731-734
+  s_bdf0617f846b2b::t_13becb317d0491 747
+tests/ModularMonolith.Tests/MessageStoreDatabaseTests.cs
+  s_bdf0617f846b2b::t_059c002708b19f 146-147,149,155-163
+  s_bdf0617f846b2b::t_4d0d2373d6364a 66-67,76-101
+  s_bdf0617f846b2b::t_a311df136a94e9 102,119-145,148,150-151,153-154,164-165
+  s_bdf0617f846b2b::t_d13a71b39be8b3 152
+  s_bdf0617f846b2b::t_8f58f66aea8c06 103
+.agents/skills/pourya-kit/references/persistence.md
+  s_bdf0617f846b2b::t_a1d3c1da08b4ce 97
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_bdf0617f846b2b::t_916b2311570fa7 393-399
+.claude/agent-memory/kit-implementer/store-database-check-facts.md
+  s_bdf0617f846b2b::t_5e68416f1c7a8a 16-17
+  s_bdf0617f846b2b::t_7553e8cdb52a6c 3
+.agents/skills/pourya-kit/references/messaging.md
+  s_bdf0617f846b2b::t_6a792d3f293251 698
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_63a6aeb4e931ca 526
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f58a082884ef7ef5d8e3bd42374078d0044ee545",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
