@@ -1,0 +1,31 @@
+tests/ModularMonolith.Tests/WebDefaultsTests.cs
+  s_bdf0617f846b2b::t_8ca7832185daab 190-228,297-298,303
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_bdf0617f846b2b::t_a1bbd29b2e3c8b 12
+  s_bdf0617f846b2b::t_a5fe63830f5320 224-248
+docs/acceptance.md
+  s_bdf0617f846b2b::t_ab36983739d30b 681-716
+  s_bdf0617f846b2b::t_607d66564934b5 717-719
+tests/ModularMonolith.Tests/IdempotencyTests.cs
+  s_bdf0617f846b2b::t_001c25b44a43b0 3,236-279
+tests/ModularMonolith.Tests/ObservabilityTests.cs
+  s_bdf0617f846b2b::t_e0501dc05a13d8 2-4,21,80-111
+tests/ModularMonolith.Tests/Stub/StubEndpoints.cs
+  s_bdf0617f846b2b::t_5d325cce0ce6d1 56-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ae9b0a9c63791c80bfb3321dae54becfddecadc8",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
