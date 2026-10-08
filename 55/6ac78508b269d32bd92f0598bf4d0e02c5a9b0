@@ -1,0 +1,47 @@
+.github/workflows/ci.yml
+  s_4f44a41d89c3b1::t_ee9b734acdc17d 32-33
+.agents/scripts/check-docs.py
+  s_4f44a41d89c3b1::t_016ef07e9e7ca4 267-268
+  s_4f44a41d89c3b1::t_9b66ebbc9312df 49
+  s_4f44a41d89c3b1::t_84485c4075cd6d 1-48,50-83,85-127,130-141,144-156,158-162,164-175,177-181,183-192,194-196,198-231,233-238,241-243,245-251,255-257,259-266,269-334
+  s_4f44a41d89c3b1::t_4a646435919a17 84,128-129,142-143,157,176,182,193,197,232,239-240,252-253,258
+  s_4f44a41d89c3b1::t_abc46d39b3f1c7 163,244,254
+.claude/agent-memory/kit-implementer/worktree-and-check-gotchas.md
+  s_4f44a41d89c3b1::t_d5438ba2b62d1c 10
+docs/architecture/README.md
+  s_4f44a41d89c3b1::t_9b66ebbc9312df 278,291,512
+.claude/agent-memory/kit-implementer/pipeline-contract-rule-facts.md
+  s_4f44a41d89c3b1::t_9b66ebbc9312df 10
+docs/agents/brief-template.md
+  s_4f44a41d89c3b1::t_ac8819c0e0b83f 50
+.agents/scripts/test_check_docs.py
+  s_4f44a41d89c3b1::t_e293c20ee2f652 1-113
+docs/agents/ai-setup.md
+  s_4f44a41d89c3b1::t_2d091c96c37e5b 24
+  s_4f44a41d89c3b1::t_67846cb8174635 185
+  s_4f44a41d89c3b1::t_78c356528b6977 182
+docs/ci.md
+  s_4f44a41d89c3b1::t_95d56ab9acd8ec 3
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_4f44a41d89c3b1::t_d5438ba2b62d1c 3,10,16,19,21,24
+.claude/agent-memory/kit-implementer/core-helpers-facts.md
+  s_4f44a41d89c3b1::t_9b66ebbc9312df 10
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_4f44a41d89c3b1::t_d5438ba2b62d1c 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "556ac78508b269d32bd92f0598bf4d0e02c5a9b0",
+  "prompts": {},
+  "sessions": {
+    "s_4f44a41d89c3b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "876ff07b-1f33-4cd5-86a7-a6eda87eb025",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
