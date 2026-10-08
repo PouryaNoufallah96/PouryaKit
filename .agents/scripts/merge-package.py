@@ -2,12 +2,13 @@
 """Merges a package's reported head into the integration branch, checks the merged tree, and pushes only when it holds.
 
 Usage:
-  python3 .agents/scripts/merge-package.py <report.md> -m "<merge message>" [--push] [--branch <integration branch>]
-  python3 .agents/scripts/merge-package.py --post-merge <head> [--push]
+  python3 .agents/scripts/merge-package.py <report.md> -m "<merge message>" --branch <integration branch> [--push]
+  python3 .agents/scripts/merge-package.py --post-merge <head> --branch <integration branch> [--push]
 
 <report.md> is the file save-report.py wrote; the last JSON object in it names `head` and `branch`. Before merging, the
-script refuses a dirty checkout, a head that is not a commit, a branch whose tip is not that head (the agent committed
-after reporting), a current branch that is not the integration branch, and a head already merged. It runs
+script refuses `--branch main` (only the pull request merges into main), a current branch that is not `--branch`, a dirty
+checkout, a head that is not a commit, a branch name that is not one (`pkg~1` names an older commit, not a branch), a
+branch whose tip is not that head (the agent committed after reporting), and a head already merged. It runs
 `git merge --no-ff`. A conflict leaves the merge in progress: the orchestrator resolves and commits it, then runs the
 --post-merge form. The post-merge checks run in order, each a process whose own exit code is read: the merged tree
 against the head's, check-ai-setup.py, check-docs.py. A missing check script fails. --push pushes the current branch to
@@ -16,14 +17,16 @@ origin only when the tree equals the head's and every check passed. The last std
 handoff", says what a differing tree requires.
 
 Exit codes: 0 done; 1 a check failed; 2 usage; 3 report unreadable; 4 dirty checkout; 5 head is not a commit; 6 no such
-branch; 7 branch tip is not the head; 8 not on the integration branch; 9 head already merged (with --post-merge: not
-merged); 10 conflict, merge left in progress; 11 another git failure; 12 --push refused, the tree differs; 13 push failed.
+branch; 7 branch tip is not the head; 8 not on the integration branch, or it is main; 9 head already merged (with
+--post-merge: not merged); 10 conflict, merge left in progress; 11 another git failure; 12 --push refused, the tree
+differs; 13 push failed.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shlex
 import subprocess
@@ -34,7 +37,6 @@ CHECKS = (".agents/scripts/check-ai-setup.py", ".agents/scripts/check-docs.py")
 (CHECK_FAILED, USAGE, REPORT, DIRTY, NOT_A_COMMIT, NO_BRANCH, BRANCH_MOVED, WRONG_BRANCH, MERGE_STATE, CONFLICT,
  GIT_FAILED, TREE_DIFFERS, PUSH_FAILED) = range(1, 14)
 HEAD = re.compile(r"[0-9a-f]{7,40}")
-BRANCH = re.compile(r"[^\s-]\S*")  # no leading dash, so git never reads it as an option
 
 
 class Stop(Exception):
@@ -80,7 +82,7 @@ def read_report(path: Path) -> tuple[str, str]:
     head, branch = found.get("head"), found.get("branch")
     if not isinstance(head, str) or not HEAD.fullmatch(head):
         raise Stop(REPORT, f"the last JSON object in {path} has no head commit (7 to 40 hex digits): {head!r}")
-    if not isinstance(branch, str) or not BRANCH.fullmatch(branch):
+    if not isinstance(branch, str) or not branch:
         raise Stop(REPORT, f"the last JSON object in {path} has no branch name: {branch!r}")
     return head, branch
 
@@ -99,7 +101,11 @@ def require_head(top: Path, head: str) -> str:
 
 
 def require_tip(top: Path, head: str, branch: str) -> None:
-    tip = commit(top, f"refs/heads/{branch}")
+    # A revision expression (pkg~1) resolves to an older commit, and --branch expands @{-1}, so the name must come back
+    # unchanged and resolve as a ref, not as a revision.
+    if git(top, "check-ref-format", "--branch", branch).stdout.strip() != branch:
+        raise Stop(NO_BRANCH, f"{branch!r} is not a branch name")
+    tip = git(top, "show-ref", "--verify", "--hash", f"refs/heads/{branch}").stdout.strip()
     if not tip:
         raise Stop(NO_BRANCH, f"branch {branch} does not exist")
     if tip != head:
@@ -110,19 +116,21 @@ def require_tip(top: Path, head: str, branch: str) -> None:
         raise Stop(BRANCH_MOVED, f"branch {branch} is at {tip[:7]}, not the reported head {head[:7]}:\n{listing}\n{why}")
 
 
-def integration_branch(top: Path, wanted: str | None) -> str:
+def integration_branch(top: Path, wanted: str) -> str:
+    if wanted == "main":
+        raise Stop(WRONG_BRANCH, "main is never the integration branch: a package merges into the Wave's branch, and only the pull request merges into main")
     current = git(top, "symbolic-ref", "--quiet", "--short", "HEAD").stdout.strip()
     if not current:
         raise Stop(WRONG_BRANCH, "HEAD is detached; check out the integration branch")
-    if wanted and wanted != current:
+    if wanted != current:
         raise Stop(WRONG_BRANCH, f"the current branch is {current}, not the integration branch {wanted}")
-    print(f"integration branch: {current}" + ("" if wanted else " (the current branch, as no --branch was given)"))
+    print(f"integration branch: {current}")
     return current
 
 
-def merge(top: Path, head: str, message: str) -> None:
+def merge(top: Path, head: str, branch: str, message: str) -> None:
     if git(top, "merge-base", "--is-ancestor", head, "HEAD").returncode == 0:
-        raise Stop(MERGE_STATE, f"{head[:7]} is already merged into HEAD; --post-merge {head[:7]} runs the checks")
+        raise Stop(MERGE_STATE, f"{head[:7]} is already merged into HEAD; --post-merge {head[:7]} --branch {branch} runs the checks")
     done = git(top, "merge", "--no-ff", "-m", message, head)
     if done.returncode == 0:
         print(done.stdout.strip())
@@ -133,7 +141,7 @@ def merge(top: Path, head: str, message: str) -> None:
         lines = [f"the merge of {head[:7]} stopped on conflicts and is left in progress:", *(f"  {name}" for name in conflicted)]
         if "docs/acceptance.md" in conflicted:
             lines.append("docs/acceptance.md: both sides appended a section; keep both sections, in ticket order.")
-        lines.append(f"Resolve, commit, then run: python3 .agents/scripts/merge-package.py --post-merge {head[:7]}")
+        lines.append(f"Resolve, commit, then run: python3 .agents/scripts/merge-package.py --post-merge {head[:7]} --branch {branch}")
         raise Stop(CONFLICT, "\n".join(lines))
     stopped = "\nthe merge is still in progress; `git merge --abort` drops it" if in_progress else ""
     raise Stop(GIT_FAILED, f"git merge failed: {(done.stderr or done.stdout).strip()}{stopped}")
@@ -195,9 +203,11 @@ def main() -> int:
     parser.add_argument("-m", dest="message", help="the merge commit's message")
     parser.add_argument("--post-merge", metavar="HEAD", help="check, and with --push push, a merge committed by hand after a conflict")
     parser.add_argument("--push", action="store_true", help="push the current branch to origin when the tree is equal and every check passed")
-    parser.add_argument("--branch", help="the integration branch; the default is the current branch")
-    parser.add_argument("--checks", nargs="+", metavar="COMMAND", help="tests only: run these commands instead of the two check scripts; each is split into an argument list and run without a shell")
+    parser.add_argument("--branch", required=True, help="the integration branch, which must be the current branch; never main")
+    parser.add_argument("--checks", nargs="+", metavar="COMMAND", help="tests only, refused unless MERGE_PACKAGE_TESTS=1 is set: run these commands instead of the two check scripts; each is split into an argument list and run without a shell")
     args = parser.parse_args()
+    if args.checks and os.environ.get("MERGE_PACKAGE_TESTS") != "1":
+        parser.error("--checks replaces the gating checks, so it runs only under the unit tests, with MERGE_PACKAGE_TESTS=1 set")
     if args.post_merge:
         if args.report or args.message:
             parser.error("--post-merge takes no report and no -m")
@@ -212,10 +222,10 @@ def main() -> int:
     top = Path(found.stdout.strip())
     checks = [shlex.split(command) for command in args.checks] if args.checks else [[sys.executable, str(top / script)] for script in CHECKS]
     try:
+        branch = integration_branch(top, args.branch)
         if args.post_merge:
             require_clean(top)
             head = require_head(top, args.post_merge)
-            branch = integration_branch(top, args.branch)
             if git(top, "merge-base", "--is-ancestor", head, "HEAD").returncode:
                 raise Stop(MERGE_STATE, f"{head[:7]} is not merged into HEAD; commit the merge first")
         else:
@@ -223,8 +233,7 @@ def main() -> int:
             require_clean(top)
             head = require_head(top, reported)
             require_tip(top, head, name)
-            branch = integration_branch(top, args.branch)
-            merge(top, head, args.message)
+            merge(top, head, branch, args.message)
         return post_merge(top, head, branch, checks, args.push)
     except Stop as stop:
         print(f"merge-package: {stop}", file=sys.stderr)
