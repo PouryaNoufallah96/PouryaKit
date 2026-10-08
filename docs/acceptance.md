@@ -989,3 +989,4 @@ The owner's instruction of 2026-10-08, before pull request #65 merges: no unfini
 
 Kept by the owner's decision: a Host's own assembly keeps its access to the Kit's write seams.
 
+`python3 scripts/packaging/validate.py --no-fetch` on the audit's source (commit `d12137a`, before this paragraph was added) printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof` at version `0.1.0-preview.0.142`, as its manifest gives it: the generated solutions compile the service defaults without the removed `using`, and every packed notices file equals the root one, with the .NET Aspire section. On that commit `ModularMonolith.Tests` ran 561 passed, `PouryaKit.ArchitectureTests` 99 and `PouryaKit.Cqrs.Tests` 44.
