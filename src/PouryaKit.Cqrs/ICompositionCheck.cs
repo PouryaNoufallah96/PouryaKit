@@ -17,7 +17,7 @@ namespace PouryaKit.Cqrs;
 public interface ICompositionCheck
 {
     /// <summary>
-    /// One sentence for each problem in <paramref name="composition"/>, naming its fix; none when there is none.
+    /// One line for each problem in <paramref name="composition"/>, naming its fix; none when there is none.
     /// <paramref name="services"/> is the Host's container, from which a check resolves singletons, or scoped services from a scope of its own that it disposes; a check opens no connection.
     /// </summary>
     IEnumerable<string> Check(HostComposition composition, IServiceProvider services);

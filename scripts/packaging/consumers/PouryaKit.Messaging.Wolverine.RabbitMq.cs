@@ -4,7 +4,8 @@ using PouryaKit.Messaging.Wolverine.RabbitMq;
 
 System.Type[] types = [typeof(RabbitMqHostApplicationBuilderExtensions)];
 
-// A Host that receives an Integration Event another Host publishes, over the packed transport, composed as a Host would.
+// What a Host that receives an Integration Event another Host publishes calls on the packed transport. It is compiled,
+// never run: a real Host also subscribes to what it receives, and without that this one's Build would fail its checks.
 var builder = Host.CreateApplicationBuilder(["--ConnectionStrings:broker=amqp://guest:guest@localhost:5672/"]);
 builder.UsePouryaKitWolverine();
 builder.Services.Receive<PriceChangedV1>("pricing.price-changed.v1");

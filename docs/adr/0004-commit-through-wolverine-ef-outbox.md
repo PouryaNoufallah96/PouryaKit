@@ -361,8 +361,8 @@ the pinned version (`JasperFx/wolverine` commit `dc63f46`, `docs/guide/codegen.m
   so a publish restores for Release. Roslyn itself stays in a Host with the EF Core outbox, through
   `Microsoft.EntityFrameworkCore.Design`, as "Pinned versions and licences" says; the sample's ban of
   `Microsoft.CodeAnalysis` in the publish is not copied.
-- **The Testing package takes the exception this record allows.** `PouryaKit.Testing` references the package, so every
-  test Host runs Development from any build, Release included; a generated solution's test project, which does not
+- **The Testing package takes the exception this record allows.** `PouryaKit.Testing` references the package, so a
+  test Host can run Development from any build, Release included; a generated solution's test project, which does not
   reference `PouryaKit.Testing`, references it directly. No other Kit package references it (`PackageGraphTests`).
 - **What `codegen write` writes for a Kit Host.** The Kit's deliveries are `AddMessageHandler` handlers, which have no
   generated code, so a Kit Host gets `Internal/Generated/WolverineHandlers/GeneratedHandlerRegistry.cs` alone, an empty

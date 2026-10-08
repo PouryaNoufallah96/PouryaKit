@@ -116,7 +116,7 @@ A Module's reaction to an Integration Event or Snapshot published by another Mod
 _Avoid_: Consumer, subscriber, listener
 
 **Wire name**:
-The stable name a Notification, Integration Event or Snapshot is stored, routed and sent between Hosts under, and by which a delivery read back finds its type; one wire name is one version of one contract type.
+The stable name a Notification, Integration Event or Snapshot is stored under, and by which a delivery read back finds its type; an Integration Event or Snapshot is also sent between Hosts under it. A delivery's queue is its subscription's name, not the wire name. One wire name is one version of one contract type.
 _Avoid_: Message type name, topic, routing key, alias
 
 **Subscription**:

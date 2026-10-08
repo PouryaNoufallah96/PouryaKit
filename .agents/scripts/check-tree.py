@@ -22,7 +22,7 @@ TOP_LEVEL = {
 
 
 def main() -> int:
-    paths = [p.strip() for p in (sys.argv[1:] or sys.stdin.read().splitlines()) if p.strip()]
+    paths = [p for p in (sys.argv[1:] or sys.stdin.read().splitlines()) if p]
     offences = [f"{p}: '{p.split('/')[0]}' is not a top-level entry of this repository" for p in paths if p.split("/")[0] not in TOP_LEVEL]
     if ".gitignore" in paths:
         # Every tracked path the root .gitignore matches, .gitignore itself included. A `!` line re-includes, so it never counts.

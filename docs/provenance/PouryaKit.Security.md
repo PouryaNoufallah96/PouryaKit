@@ -6,7 +6,7 @@ Adopted implementations in `PouryaKit.Security`. Format and rules: [README](READ
 
 ## Package dependencies
 
-None shipped. `PouryaKit.Security` depends on `PouryaKit.Cqrs` only, as plan section C lists since ticket #38, and on no ASP.NET Core framework reference: the authenticated HTTP fallback policy is `PouryaKit.Web`'s (see [its record](PouryaKit.Web.md#authenticated-access-by-default)). Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
+None shipped. `PouryaKit.Security` references `PouryaKit.Cqrs` (since ticket #38) and `PouryaKit.Core` (since ticket #55), as plan section C lists, and no ASP.NET Core framework reference: the authenticated HTTP fallback policy is `PouryaKit.Web`'s (see [its record](PouryaKit.Web.md#authenticated-access-by-default)). Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
 
 ## Permission check
 

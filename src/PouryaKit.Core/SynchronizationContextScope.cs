@@ -7,8 +7,8 @@ namespace PouryaKit.Core;
 /// <remarks>
 /// Input contract: enter and dispose the scope on the same thread, once, in a <c>using</c> statement or declaration.
 /// The context belongs to the thread, so the scope is a <see langword="ref"/> struct, which the compiler keeps from
-/// living across an <see langword="await"/> that could resume on another thread. A <see langword="default"/> scope was
-/// never entered, and disposing it changes nothing.
+/// living across an <see langword="await"/>, which could resume on another thread. A <see langword="default"/> scope
+/// was never entered, and disposing it changes nothing.
 /// </remarks>
 public readonly ref struct SynchronizationContextScope : IDisposable
 {

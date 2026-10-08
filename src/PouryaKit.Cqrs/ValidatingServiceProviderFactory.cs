@@ -18,7 +18,27 @@ internal sealed class ValidatingServiceProviderFactory : IServiceProviderFactory
         var composition = new HostComposition(containerBuilder);
         containerBuilder.AddSingleton(composition);
         var provider = _container.CreateServiceProvider(containerBuilder);
-        List<string> problems = [.. provider.GetServices<ICompositionCheck>().SelectMany(check => check.Check(composition, provider))];
+        List<string> problems;
+        try
+        {
+            problems = [.. provider.GetServices<ICompositionCheck>().SelectMany(check => check.Check(composition, provider))];
+        }
+        catch
+        {
+            // A check that throws fails the build as its problems do, so the container it resolved from is disposed too.
+            // The check's exception is the one the Host must see: a failure to dispose never replaces it.
+            try
+            {
+                (provider as IDisposable)?.Dispose();
+            }
+            catch
+            {
+                // The check's exception is rethrown below.
+            }
+
+            throw;
+        }
+
         if (problems.Count == 0)
         {
             return provider;

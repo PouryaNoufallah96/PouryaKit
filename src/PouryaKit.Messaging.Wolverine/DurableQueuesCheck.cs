@@ -48,7 +48,7 @@ internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServicePr
         if (notDurable.Count > 0)
         {
             throw new InvalidOperationException(
-                $"The queues of these subscriptions or delayed commands do not store what they receive, so their deliveries would not survive a restart: {string.Join(", ", notDurable)}. Each such queue is a durable application queue; rename the subscription or delayed command, or remove the configuration that changed its queue."
+                $"The queues of these subscriptions or delayed commands do not store what they receive, so their deliveries would not survive a restart: {string.Join(", ", notDurable)}. Each must be a durable application queue; rename the subscription or delayed command, or remove the configuration that changed its queue."
             );
         }
 
@@ -67,7 +67,7 @@ internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServicePr
         return brokerListeners.Count == 0
             ? Task.CompletedTask
             : throw new InvalidOperationException(
-                $"These broker listeners receive from other Hosts but do not store what they receive in a durable Inbox, or set dead letters aside outside the message store: {string.Join(", ", brokerListeners)}. Each is Durable with dead letters Durable; remove the configuration that changed it, such as BufferedInMemory() or a broker dead-letter queue."
+                $"These broker listeners receive from other Hosts but do not store what they receive in a durable Inbox, or set dead letters aside outside the message store: {string.Join(", ", brokerListeners)}. Each must be Durable with dead letters Durable; remove the configuration that changed it, such as BufferedInMemory() or a broker dead-letter queue."
             );
     }
 

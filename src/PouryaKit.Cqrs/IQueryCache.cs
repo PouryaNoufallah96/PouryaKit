@@ -35,7 +35,8 @@ public interface IQueryCache
 
     /// <summary>
     /// Evicts every entry tagged with one of <paramref name="tags"/>, after the Operation whose commands declared them
-    /// committed. It takes no cancellation: the commit has happened, so the eviction is not the caller's to cancel.
+    /// committed; a tag the cache refuses is logged, and its entries are returned until they expire. It takes no
+    /// cancellation: the commit has happened, so the eviction is not the caller's to cancel.
     /// </summary>
     Task EvictAsync(IReadOnlyCollection<string> tags);
 }
