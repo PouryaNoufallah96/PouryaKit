@@ -48,6 +48,5 @@
 - [Module seam and composition check facts](module-seam-and-composition-check-facts.md) — #61: checks at container build, StartAsync order, Kit delivery commands vs UoW check, zero-arg scan of a test assembly
 - [Misconfigured Host facts](misconfigured-host-facts.md) — #62: build vs start checks, Wolverine modes after start, IAuthenticationFeature, handler filter, plain test Hosts validated
 - [Publication feed facts](publication-feed-facts.md) — #54: dotnet new install ignores source mapping, cwd NuGet.Config for credentials, silent template restore, step run locally
-- [Pipeline contract rule facts](pipeline-contract-rule-facts.md) — #54: open-generic implements check, the 14-contract set and exclusions, both Hosts in scope, PDB paths differ in CI
-- [Pipeline contract rule facts](pipeline-contract-rule-facts.md) — #54: open-generic implements check, the 13-contract set and exclusions, both Hosts in scope, PDB paths differ in CI
 - [Test gaps and store database facts](test-gaps-and-store-database-facts.md) — #54: Outbox on the DbContext connection (other database 42P01, stale store tables silent), limiter catch by accounting, probe commit-then-remove
+- [Pipeline contract rule facts](pipeline-contract-rule-facts.md) — #54: open-generic implements check, the 14-contract set and exclusions, both Hosts in scope, PDB paths differ in CI
