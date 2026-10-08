@@ -80,7 +80,7 @@ pouryakit.operation Deliver  ── broker ──▶  [Wolverine span of the env
 
 ## Exporting
 
-The Host adds an exporter for the source and the meter named `PouryaKit`, and for `Wolverine` if it wants Wolverine's spans as well, with the standard OpenTelemetry SDK. The service defaults recipe does it for both, and exports over OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured ([host-recipes.md](host-recipes.md#what-each-recipe-does)). Logs, Serilog included, are configured on the Host too. None of it belongs in a Module or in the Kit.
+The Host adds an exporter for the source and the meter named `PouryaKit`, and for `Wolverine` if it wants Wolverine's spans as well, with the standard OpenTelemetry SDK. The service defaults recipe registers the application's own source and `OperationTelemetry.SourceName`, not `Wolverine`, and exports over OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured ([host-recipes.md](host-recipes.md#what-each-recipe-does)); Wolverine's spans are opt-in: add `.AddSource("Wolverine")` to its `WithTracing` registration. Logs, Serilog included, are configured on the Host too. None of it belongs in a Module or in the Kit.
 
 ## Testing telemetry
 

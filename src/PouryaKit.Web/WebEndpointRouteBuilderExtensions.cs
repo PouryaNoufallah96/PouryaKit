@@ -72,9 +72,9 @@ public static class WebEndpointRouteBuilderExtensions
         /// command again. A request without a single header of 1 to 256 visible ASCII characters, with spaces only
         /// between them, is answered 400 as a problem response before its body is read. The requirement is the
         /// endpoint's <see cref="IdempotencyKeyRequirement"/> metadata, which the endpoint's OpenAPI operation states. On a
-        /// Module's endpoint mapped for GET, HEAD, OPTIONS or TRACE, whose query ignores the key, it throws when the
-        /// endpoint is built, which fails the Host's start; a command that does not opt in is refused when it is
-        /// dispatched, since only then is it known.
+        /// Module's endpoint mapped for GET, HEAD, OPTIONS or TRACE, whose query ignores the key, or mapped for no method,
+        /// which answers every method, GET included, it throws when the endpoint is built, which fails the Host's start;
+        /// a command that does not opt in is refused when it is dispatched, since only then is it known.
         /// </summary>
         public TBuilder RequireIdempotencyKey() => builder.WithMetadata(new IdempotencyKeyRequirement());
     }
@@ -95,16 +95,25 @@ public static class WebEndpointRouteBuilderExtensions
             endpoint.RequestDelegate
             ?? throw new InvalidOperationException($"{endpoint.DisplayName} has no request delegate to run.");
         var requiresIdempotencyKey = endpoint.Metadata.OfType<IdempotencyKeyRequirement>().Any();
-        // A safe method sends a query, which ignores the request id, so the key would be required and change nothing.
-        // Whether the endpoint's command opts in with [Idempotent] is known only when it is dispatched (ADR 0002).
-        if (
-            requiresIdempotencyKey
-            && endpoint.Metadata.OfType<IHttpMethodMetadata>().LastOrDefault()?.HttpMethods.FirstOrDefault(IsSafe) is { } safe
-        )
+        // A safe method sends a query, which ignores the request id, so the key would be required and change nothing; an
+        // endpoint mapped for no method, without method metadata or with an empty list, answers every method, GET
+        // included. Whether the endpoint's command opts in with [Idempotent] is known only when it is dispatched (ADR 0002).
+        if (requiresIdempotencyKey)
         {
-            throw new InvalidOperationException(
-                $"{endpoint.DisplayName} requires an Idempotency-Key on {safe}, a method that only reads, and a query ignores the key. Remove RequireIdempotencyKey(), or map the command on POST, PUT, PATCH or DELETE."
-            );
+            var methods = endpoint.Metadata.OfType<IHttpMethodMetadata>().LastOrDefault()?.HttpMethods ?? [];
+            if (methods.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    $"{endpoint.DisplayName} requires an Idempotency-Key but is mapped for no HTTP method, so it answers every method, GET included, and a query ignores the key. Map the command on POST, PUT, PATCH or DELETE, or remove RequireIdempotencyKey()."
+                );
+            }
+
+            if (methods.FirstOrDefault(IsSafe) is { } safe)
+            {
+                throw new InvalidOperationException(
+                    $"{endpoint.DisplayName} requires an Idempotency-Key on {safe}, a method that only reads, and a query ignores the key. Remove RequireIdempotencyKey(), or map the command on POST, PUT, PATCH or DELETE."
+                );
+            }
         }
         endpoint.RequestDelegate = httpContext =>
         {

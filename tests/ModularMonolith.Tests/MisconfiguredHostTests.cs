@@ -122,6 +122,27 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         );
     }
 
+    // Final structural review R5: an endpoint mapped for no method answers GET too, so naming no method is refused as GET is.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task An_endpoint_that_requires_an_idempotency_key_but_names_no_method_fails_the_host_at_start(bool emptyMethodList)
+    {
+        await using var host = AppFixture.ComposeHost(
+            "Production",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder => builder.Services.AddSingleton(new KeyedAnyMethodRoute(emptyMethodList))
+        );
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(
+            "/stub/keyed-any requires an Idempotency-Key but is mapped for no HTTP method, so it answers every method, GET included, and a query ignores the key. Map the command on POST, PUT, PATCH or DELETE, or remove RequireIdempotencyKey().",
+            thrown.Message
+        );
+    }
+
     // Nothing connects: the Host has no database to reach.
     [Fact]
     public void A_connection_string_the_configuration_lacks_or_leaves_blank_fails_the_host_when_built_naming_its_key()
