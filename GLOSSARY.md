@@ -41,7 +41,7 @@ _Avoid_: Module registration, startup, installer
 
 **Composition check**:
 A check of a Host's whole composition that the Kit runs when the Host's container is built, before anything runs, such as a Module's declaration made without its Module.
-_Avoid_: Health check, startup filter
+_Avoid_: Health check, startup filter, startup check
 
 **Startup check**:
 A check of a Host that only the built application can answer, such as an endpoint it never mapped, which the Kit runs when the Host starts, before any hosted service starts.

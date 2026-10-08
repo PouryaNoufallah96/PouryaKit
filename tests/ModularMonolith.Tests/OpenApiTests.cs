@@ -261,6 +261,30 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         );
     }
 
+    // A Web Host with no Modules and no Wolverine reaches the dispatcher but not the Kit's entry: it does not start
+    // unverified (#62 review finding F2).
+    [Fact]
+    public async Task A_web_host_that_never_installs_the_kits_checks_fails_at_start_naming_the_entry()
+    {
+        await using var host = PlainHost(
+            services =>
+            {
+                services.AddPouryaKitOpenApi();
+                services.AddPouryaKitApiVersions("/plians", versions => versions.HasApiVersion(new ApiVersion(1, 0)));
+            },
+            installChecks: false
+        );
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
+
+        Assert.Equal(
+            "The Kit's composition checks were never installed in this Host, so its container was not validated when it was built and none of its composition or startup checks ran. Call AddPouryaKitCompositionChecks() on the Host builder; AddPouryaKitModules and UsePouryaKitWolverine call it.",
+            thrown.Message
+        );
+    }
+
     [Fact]
     public async Task Scalar_lists_the_document_of_every_supported_version()
     {
@@ -318,7 +342,7 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
 
     // A Host of PouryaKit.Web alone: no Modules and no API versioning, with one route group of an endpoint that
     // declares no version.
-    private static WebApplication PlainHost(Action<IServiceCollection>? configure = null)
+    private static WebApplication PlainHost(Action<IServiceCollection>? configure = null, bool installChecks = true)
     {
         var builder = WebApplication.CreateBuilder(["--environment", "Development"]);
         builder.WebHost.UseTestServer();
@@ -330,7 +354,11 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         builder.Services.AddPouryaKitWeb();
         builder.Services.AddPouryaKitEndpoints("/plain", typeof(UnversionedEndpoints).Assembly);
         configure?.Invoke(builder.Services);
-        builder.AddPouryaKitCompositionChecks();
+        if (installChecks)
+        {
+            builder.AddPouryaKitCompositionChecks();
+        }
+
         var app = builder.Build();
         app.UseRouting();
         app.UseAuthentication();
