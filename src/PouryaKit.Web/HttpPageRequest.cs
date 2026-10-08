@@ -10,9 +10,10 @@ namespace PouryaKit.Web;
 /// each part optional. An operator is written by its short name (<c>eq</c>, <c>ne</c>, <c>contains</c>,
 /// <c>startswith</c>, <c>gt</c>, <c>gte</c>, <c>lt</c>, <c>lte</c>); a filter value stays text until the query's
 /// <see cref="PageDeclaration"/> reads it. What does not parse at all (a page or size that is not a whole number, a
-/// direction other than <c>asc</c> or <c>desc</c>, an unknown operator, a malformed filter key, a part given twice) is a
-/// request that cannot be read, answered 400 as a problem response; everything else, such as a size above the maximum
-/// or an undeclared sort key, reaches the query's validator and comes back as validation Errors. The endpoint answers
+/// direction other than <c>asc</c> or <c>desc</c>, an unknown operator, a malformed filter key, a <c>page</c>,
+/// <c>size</c>, <c>sort</c> or <c>direction</c> given twice) is a request that cannot be read, answered 400 as a problem
+/// response; everything else, such as a size above the maximum, an undeclared sort key or a filter's field and
+/// operator given twice, reaches the query's validator and comes back as validation Errors. The endpoint answers
 /// with <c>ToHttpResult()</c>, whose 200 body is the Page: <c>items</c>, <c>number</c>, <c>size</c>, <c>total</c>,
 /// <c>totalPages</c>, <c>hasNext</c> and <c>hasPrevious</c>.
 /// </summary>
