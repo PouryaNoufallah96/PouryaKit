@@ -36,6 +36,31 @@ internal sealed class DelayedCommandDelivery(DelayedCommandDeclarations declarat
             throw new UnknownDelayedCommandException(name, command.GetType(), storedAsOccurrence: occurrence is not null);
         }
 
+        try
+        {
+            await RunAsync(context, declared, command, occurrence, cancellation);
+        }
+        catch when (declared.Recurring is not null && IsSetAside(context))
+        {
+            // The failure of this attempt sets the occurrence aside as a dead letter, and the next occurrence it stored
+            // rolled back with it, so the next one is stored in an Operation of its own unless one already waits. If
+            // another Host stores one in between, or this Host dies before the dead letter is written and the occurrence
+            // runs again, the occurrence-time Receipt keeps one of the chains. On the runtime's token, since this
+            // attempt's may be the one its timeout cancelled. A failure here is what the dead letter records instead.
+            await RecurringCommandStart.StoreFirstUnlessWaitingAsync(context.Runtime.Services, declared, context.Runtime.Cancellation);
+            throw;
+        }
+    }
+
+    private static async Task RunAsync(
+        MessageContext context,
+        DelayedCommand declared,
+        Command command,
+        DateTimeOffset? occurrence,
+        CancellationToken cancellation
+    )
+    {
+        var envelope = context.Envelope!;
         // A recurring occurrence continues no Operation, so it starts a trace of its own too.
         var (operationContext, traceParent) = declared.Recurring is { } recurring
             ? (new OperationContext(Actor.System(recurring.SystemActor)), default(ActivityContext))
@@ -51,6 +76,11 @@ internal sealed class DelayedCommandDelivery(DelayedCommandDeclarations declarat
             throw new DelayedCommandFailedException(declared.Name, result.Errors);
         }
     }
+
+    // Wolverine counts the attempt before it runs this handler and, when it throws, takes the slot of that number in the
+    // Kit's retry policy: one stored retry per delay, then the error queue, which every later attempt goes to as well.
+    private static bool IsSetAside(MessageContext context) =>
+        context.Envelope!.Attempts > context.Runtime.Services.GetRequiredService<IOptions<PouryaKitMessagingOptions>>().Value.RetryDelays.Length;
 
     private static DateTimeOffset? OccurrenceOf(Envelope envelope) =>
         envelope.Headers.TryGetValue(DelayedCommandHeaders.Occurrence, out var occurrence) && occurrence is not null

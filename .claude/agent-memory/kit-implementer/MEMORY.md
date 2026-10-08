@@ -35,7 +35,7 @@
 - [Web defaults facts](web-defaults-facts.md) — #36: RequireCors answers no preflight, compression cannot be inert, no 429 problem type, limiter seams
 - [JWT bearer facts](jwt-bearer-facts.md) — #39: config binder replaces TVP, ValidateOnStart hits every composed Host, second Host steals deliveries
 - [OpenAPI and versioning facts](openapi-versioning-facts.md) — #41: Asp.Versioning.OpenApi wiring, clock-reading notices, URL vs header groups, Scalar auth, Web-only test Host
-- [Recurring command facts](recurring-command-facts.md) — #45: Wolverine Schedules not used, ScheduledTime cleared, ScheduledMessages query, epoch grid, fixture interference
+- [Recurring command facts](recurring-command-facts.md) — #45: Schedules not used, ScheduledTime cleared, epoch grid, fixture interference; R2: dead-letter attempt, pin it with a last-attempt test
 - [Idempotency facts](idempotency-facts.md) — #42: request id on OperationContext (Gateway scope), on conflict do nothing vs 23505, lock-wait proof, EF1002, endpoint opt-in ripple
 - [RabbitMQ transport facts](rabbitmq-transport-facts.md) — #51: stub://replies listener, IBrokerEndpoint/DeadLetterStorage checks, Catalog IVT decides test placement
 - [Idempotency retention facts](idempotency-retention-facts.md) — #42 follow-up: .NET 10 ExecuteAsync on Task.Run, tick failure stops the Host, DbContextOptions enumeration, to_regclass, log culture
