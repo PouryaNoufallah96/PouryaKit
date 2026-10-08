@@ -14,8 +14,10 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   review log (records that name renamed and removed symbols on purpose), `docs/foundation-review.md` (the plan),
   `docs/acceptance.md` (a record of runs, full of third-party exception and tool names) and `docs/provenance/`
   (upstream code).
-- Links: every relative link and `#anchor` resolves, with GitHub's heading slugs and duplicates numbered.
-- Code spans: a span whose text starts or ends with a space and runs past 20 characters fails. That is a backtick
+- Links: every relative link and `#anchor` resolves in the working tree, inline or through a reference definition
+  (`[id]: target`), with GitHub's heading slugs and duplicates numbered; a `[text][id]` with no definition fails.
+- Code spans: a span longer than 20 characters whose text starts or ends with a space fails, after CommonMark's
+  padding is stripped (one space from each end of a span padded on both sides). That is a backtick
   paired with the wrong partner: a sentence inserted inside a span (6ecf342) turns the prose between the spans after
   it into spans. Length or a sentence boundary alone cannot tell: test names, commands and quoted Kit messages run
   past 120 characters and hold sentences, while the spans of 6ecf342 stay under 90. Backticks pair per paragraph,
@@ -89,6 +91,8 @@ ONE_LINE_BLOCK = re.compile(r"\s{0,3}#{1,6}(?:\s|$)|\s*\|")
 TABLE_ROW = re.compile(r"\s*\|")
 SEPARATOR = re.compile(r"\s*\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*")
 LINK = re.compile(r"\]\(\s*<?([^()\s<>]+)>?(?:\s+\"[^\"]*\")?\s*\)")
+DEFINITION = re.compile(r" {0,3}\[([^\]]+)\]:\s*<?([^\s<>]+)>?(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*")
+REFERENCE = re.compile(r"\[([^\]]+)\]\[([^\]]*)\]")
 failures: list[str] = []
 
 
@@ -145,7 +149,7 @@ def inline_blocks(lines: list[str]):
 
 def code_spans(text: str):
     """(start, end, content) of each CommonMark code span: a backtick run opens one, the next run of the same
-    length closes it, and a run nothing closes is literal."""
+    length closes it, and a run nothing closes is literal. Line breaks become spaces."""
     runs = [match.span() for match in re.finditer(r"`+", text)]
     i = 0
     while i < len(runs):
@@ -154,7 +158,10 @@ def code_spans(text: str):
         if close is None:
             i += 1
             continue
-        yield start, runs[close][1], re.sub(r"\n\s*", " ", text[end : runs[close][0]])
+        content = re.sub(r"\n\s*", " ", text[end : runs[close][0]])
+        if content.startswith(" ") and content.endswith(" ") and content.strip(" "):
+            content = content[1:-1]  # CommonMark's padding, which lets a span start or end with a backtick
+        yield start, runs[close][1], content
         i = close + 1
 
 
@@ -170,12 +177,11 @@ class Doc:
                 yield first + 1 + text.count("\n", 0, start), content
 
     def prose(self):
-        """(line number, text) of each block with its code spans removed, where links are matched."""
+        """(first line number, text) of each block with its code spans blanked, where links are matched."""
         for first, text in self.blocks:
             for start, end, _ in reversed(list(code_spans(text))):
                 text = text[:start] + re.sub(r"[^\n]", " ", text[start:end]) + text[end:]
-            for offset, line in enumerate(text.split("\n")):
-                yield first + 1 + offset, line
+            yield first + 1, text
 
 
 def code_like(span: str) -> bool:
@@ -229,35 +235,57 @@ def slug(heading: str) -> str:
 
 
 def anchors(doc: Doc) -> set[str]:
-    found, seen = set(), {}
+    """Every heading's id. As github-slugger does, a taken id gets the next free `-<n>` suffix, so `A`, `A`, `A-1`
+    give a, a-1 and a-1-1."""
+    taken: dict[str, int] = {}
     for line in doc.lines:
         heading = re.match(r" {0,3}#{1,6}\s+(.*?)(?:\s+#+)?\s*$", line)
         if heading:
-            base = slug(heading.group(1))
-            count = seen.get(base, 0)
-            seen[base] = count + 1
-            found.add(base if count == 0 else f"{base}-{count}")
-    return found
+            base = found = slug(heading.group(1))
+            while found in taken:
+                taken[base] += 1
+                found = f"{base}-{taken[base]}"
+            taken[found] = 0
+    return set(taken)
+
+
+def label(text: str) -> str:
+    """A reference label as CommonMark matches it: case and runs of whitespace do not count."""
+    return " ".join(text.split()).casefold()
 
 
 def check_links(docs: dict[str, Doc], files: list[str]) -> None:
     tracked = set(files) | {str(Path(f).parents[i]) for f in files for i in range(len(Path(f).parents) - 1)}
     cached: dict[str, set[str]] = {}
+
+    def check(path: str, number: int, target: str) -> None:
+        if re.match(r"[A-Za-z][A-Za-z0-9+.-]*:", target):
+            return
+        part, _, anchor = target.partition("#")
+        part = unquote(part)
+        dest = os.path.normpath(part.lstrip("/") if part.startswith("/") else os.path.join(os.path.dirname(path), part)) if part else path
+        if dest not in tracked or not (ROOT / dest).exists():  # tracked, and not deleted from the working tree
+            failures.append(f"{path}:{number}: link to {target}: no such file in the repository")
+        elif anchor and dest.endswith(".md") and dest in docs:
+            if dest not in cached:
+                cached[dest] = anchors(docs[dest])
+            if anchor not in cached[dest]:
+                failures.append(f"{path}:{number}: link to {target}: no heading of {dest} has the anchor #{anchor}")
+
     for path, doc in docs.items():
-        for number, line in doc.prose():
-            for target in LINK.findall(line):
-                if re.match(r"[A-Za-z][A-Za-z0-9+.-]*:", target):
-                    continue
-                part, _, anchor = target.partition("#")
-                part = unquote(part)
-                dest = os.path.normpath(part.lstrip("/") if part.startswith("/") else os.path.join(os.path.dirname(path), part)) if part else path
-                if dest not in tracked:
-                    failures.append(f"{path}:{number}: link to {target}: no such file in the repository")
-                elif anchor and dest.endswith(".md") and dest in docs:
-                    if dest not in cached:
-                        cached[dest] = anchors(docs[dest])
-                    if anchor not in cached[dest]:
-                        failures.append(f"{path}:{number}: link to {target}: no heading of {dest} has the anchor #{anchor}")
+        defined = set()
+        for number, line in enumerate(doc.lines, start=1):
+            if definition := DEFINITION.fullmatch(line):
+                defined.add(label(definition.group(1)))
+                check(path, number, definition.group(2))
+        for first, text in doc.prose():
+            for link in LINK.finditer(text):
+                check(path, first + text.count("\n", 0, link.start()), link.group(1))
+            for use in REFERENCE.finditer(text):
+                name = " ".join((use.group(2) or use.group(1)).split())
+                if label(name) not in defined:
+                    number = first + text.count("\n", 0, use.start())
+                    failures.append(f"{path}:{number}: link to reference [{name}]: no definition `[{name}]: <target>` in the file")
 
 
 def check_code_spans(docs: dict[str, Doc]) -> None:
