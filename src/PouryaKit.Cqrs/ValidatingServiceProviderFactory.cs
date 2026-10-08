@@ -26,16 +26,7 @@ internal sealed class ValidatingServiceProviderFactory : IServiceProviderFactory
         catch
         {
             // A check that throws fails the build as its problems do, so the container it resolved from is disposed too.
-            // The check's exception is the one the Host must see: a failure to dispose never replaces it.
-            try
-            {
-                (provider as IDisposable)?.Dispose();
-            }
-            catch
-            {
-                // The check's exception is rethrown below.
-            }
-
+            Discard(provider);
             throw;
         }
 
@@ -44,7 +35,22 @@ internal sealed class ValidatingServiceProviderFactory : IServiceProviderFactory
             return provider;
         }
 
-        (provider as IDisposable)?.Dispose();
+        Discard(provider);
         throw new InvalidOperationException(string.Join(Environment.NewLine, problems));
+    }
+
+    // Disposes the container of a build that failed. The checks' problems, or a check's own exception, are what the Host
+    // must see: a container that cannot be disposed, for a singleton that is only IAsyncDisposable or whose Dispose
+    // throws, never replaces them.
+    private static void Discard(IServiceProvider provider)
+    {
+        try
+        {
+            (provider as IDisposable)?.Dispose();
+        }
+        catch
+        {
+            // The caller throws what failed the build.
+        }
     }
 }
