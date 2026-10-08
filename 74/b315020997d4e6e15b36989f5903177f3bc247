@@ -1,0 +1,21 @@
+.agents/scripts/check-docs.py
+  s_4f44a41d89c3b1::t_c948c794779cc4 93-94,266
+.agents/scripts/test_check_docs.py
+  s_4f44a41d89c3b1::t_c948c794779cc4 93-103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "74b315020997d4e6e15b36989f5903177f3bc247",
+  "prompts": {},
+  "sessions": {
+    "s_4f44a41d89c3b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "876ff07b-1f33-4cd5-86a7-a6eda87eb025",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
