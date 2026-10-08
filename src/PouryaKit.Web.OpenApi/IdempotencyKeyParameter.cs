@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
-using PouryaKit.Web;
 
 namespace PouryaKit.Web.OpenApi;
 

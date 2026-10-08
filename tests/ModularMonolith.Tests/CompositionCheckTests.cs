@@ -119,24 +119,43 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         Assert.True(resolved.Disposed);
     }
 
-    // The other way a check fails the build: it answers with its problems, which outlast a failing disposal too, whether
-    // a singleton's Dispose throws or the container's own does, for a singleton that can only be disposed asynchronously.
-    [Theory]
-    [InlineData(typeof(FailingDisposal))]
-    [InlineData(typeof(AsyncOnlyDisposal))]
-    public void Composition_problems_fail_the_build_with_every_problem_though_the_container_cannot_be_disposed(Type undisposable)
+    // The other way a check fails the build: it answers with its problems, which outlast a singleton whose disposal
+    // throws too.
+    [Fact]
+    public void Composition_problems_fail_the_build_with_every_problem_though_a_singletons_disposal_throws()
     {
         var resolved = new DisposalProbe();
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
-        builder.Services.AddSingleton(undisposable, _ => Activator.CreateInstance(undisposable)!);
+        builder.Services.AddSingleton(_ => new FailingDisposal());
         builder.Services.AddSingleton(_ => resolved);
-        builder.Services.AddSingleton<ICompositionCheck>(new ReportingCheck(undisposable));
+        builder.Services.AddSingleton<ICompositionCheck>(new ReportingCheck(typeof(FailingDisposal)));
         builder.AddPouryaKitCompositionChecks();
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(string.Join(Environment.NewLine, ReportingCheck.Problems), thrown.Message);
         Assert.True(resolved.Disposed);
+    }
+
+    // The failed build's container is disposed as the Host disposes its own, asynchronously: the container's Dispose
+    // throws for a singleton that is only IAsyncDisposable and would leave it, and whatever was created before it,
+    // undisposed.
+    [Fact]
+    public void A_failed_build_disposes_a_singleton_that_can_only_be_disposed_asynchronously()
+    {
+        var first = new DisposalProbe();
+        var asyncOnly = new AsyncOnlyDisposal();
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.Services.AddSingleton(_ => first);
+        builder.Services.AddSingleton(_ => asyncOnly);
+        builder.Services.AddSingleton<ICompositionCheck>(new ReportingCheck(typeof(DisposalProbe), typeof(AsyncOnlyDisposal)));
+        builder.AddPouryaKitCompositionChecks();
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(string.Join(Environment.NewLine, ReportingCheck.Problems), thrown.Message);
+        Assert.True(asyncOnly.Disposed);
+        Assert.True(first.Disposed);
     }
 
     [Fact]
@@ -332,14 +351,19 @@ internal sealed class ThrowingCheck : ICompositionCheck
     }
 }
 
-// Resolves the singleton the container cannot dispose, then the probe, and answers with two problems.
-internal sealed class ReportingCheck(Type undisposable) : ICompositionCheck
+// Resolves the given singletons in order, so the container disposes the last first, then the probe unless it was
+// given, and answers with two problems.
+internal sealed class ReportingCheck(params Type[] resolved) : ICompositionCheck
 {
     public static readonly string[] Problems = ["The first problem, with its fix.", "The second problem, with its fix."];
 
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {
-        services.GetRequiredService(undisposable);
+        foreach (var service in resolved)
+        {
+            services.GetRequiredService(service);
+        }
+
         services.GetRequiredService<DisposalProbe>();
         return Problems;
     }
@@ -357,10 +381,16 @@ internal sealed class FailingDisposal : IDisposable
     public void Dispose() => throw new NotSupportedException("The disposal failed.");
 }
 
-// The container's Dispose throws for a service it owns that is only IAsyncDisposable.
+// The container's Dispose throws for a service it owns that is only IAsyncDisposable; its DisposeAsync disposes it.
 internal sealed class AsyncOnlyDisposal : IAsyncDisposable
 {
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public bool Disposed { get; private set; }
+
+    public ValueTask DisposeAsync()
+    {
+        Disposed = true;
+        return ValueTask.CompletedTask;
+    }
 }
 
 // Its data and its one handler, registered by hand: no Composition Root of its Host calls AddPouryaKitCqrs.

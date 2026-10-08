@@ -9,7 +9,7 @@ namespace ModularMonolith.Host;
 /// <summary>
 /// The Host's source of permissions: the <see cref="ClaimType"/> claims the authentication scheme issued to the HTTP
 /// caller whose Operation this is. Any other Actor, a named system Actor included, holds none, so independent work never
-/// runs a protected command by default; a continuation of an authorized Operation is not asked again.
+/// runs a protected command by default; a trusted continuation of an authorized Operation is not asked again.
 /// </summary>
 public sealed class CallerPermissions(IHttpContextAccessor http, IOptions<PouryaKitWebOptions> web) : IActorPermissions
 {

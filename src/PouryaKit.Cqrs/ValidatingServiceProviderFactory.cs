@@ -39,14 +39,23 @@ internal sealed class ValidatingServiceProviderFactory : IServiceProviderFactory
         throw new InvalidOperationException(string.Join(Environment.NewLine, problems));
     }
 
-    // Disposes the container of a build that failed. The checks' problems, or a check's own exception, are what the Host
-    // must see: a container that cannot be disposed, for a singleton that is only IAsyncDisposable or whose Dispose
-    // throws, never replaces them.
+    // Disposes the container of a build that failed as the Host disposes its own: asynchronously, so a singleton that is
+    // only IAsyncDisposable is disposed too, and awaited here because a service provider factory is synchronous. The
+    // checks' problems, or a check's own exception, are what the Host must see: a disposal that throws never replaces
+    // them.
     private static void Discard(IServiceProvider provider)
     {
         try
         {
-            (provider as IDisposable)?.Dispose();
+            switch (provider)
+            {
+                case IAsyncDisposable container:
+                    container.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                    break;
+                case IDisposable container:
+                    container.Dispose();
+                    break;
+            }
         }
         catch
         {

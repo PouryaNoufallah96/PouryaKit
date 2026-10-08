@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
-using PouryaKit.Domain;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.EFCore;
 using PouryaKit.Testing;

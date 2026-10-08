@@ -102,6 +102,14 @@ longer decides whether the repository writes, because it is true in a scope that
   `IUnitOfWork.DbContext`, stay unguarded, because the structure test closes them to a Module
   (`FeatureCodeTests.A_module_that_saves_commits_writes_in_bulk_or_runs_a_kit_step_is_rejected`). A Host's own
   assembly is not judged by that test, so code there can still reach them.
+  *The final audit of Wave 2 (2026-10-08) narrowed the first case: a Module of a Host of Modules cannot reach it,
+  because an endpoint's scope names no Module and resolving a repository there throws, the Gateway opens and
+  disposes its own scope around one dispatch, and the structure test rejects a Module that begins an Operation. It
+  stays open in an application without Modules, where an endpoint or a service can take a repository itself. No
+  structure rule was added: the Kit's structure tests judge Modules of a Host of Modules, where it would refuse
+  nothing, and a service that a handler calls is a legitimate consumer it would refuse
+  ([#68](https://github.com/PouryaNoufallah96/PouryaKit/issues/68)). The owner keeps a Host's own access to the
+  write seams as it is.*
 - **The alternatives rejected.**
   - *Widening Cqrs's `InternalsVisibleTo`* to every package that guards a write, with the signal kept internal: it
     would undo ADR 0007's rule that the list serves the trusted restore alone, and `TrustedRestoreTests` would have to

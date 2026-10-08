@@ -16,7 +16,7 @@ namespace ModularMonolith.Tests;
 public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     internal const string NoUnitOfWork =
-        "The repository of Note was asked to write while no Unit of Work is active, so no commit would save the change and it would be lost. Write from a command's handler, a Domain Event Handler or a Notification Handler.";
+        "The repository of Note was asked to write while no Unit of Work is active, so no commit would save the change and it would be lost. Write from a command's handler, a Domain Event Handler, or a Notification or Integration Event Handler.";
 
     [Fact]
     public async Task A_command_removes_the_products_a_named_specification_selects()

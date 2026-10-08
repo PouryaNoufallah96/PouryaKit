@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Hosting;
 using ModularMonolith.Tests.Stub;
 using Npgsql;
 using PouryaKit.Messaging.Wolverine.EFCore;

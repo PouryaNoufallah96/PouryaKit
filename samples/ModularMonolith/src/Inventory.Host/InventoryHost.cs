@@ -1,6 +1,5 @@
 using Catalog.Contracts.Products.Events.V1;
 using Catalog.Contracts.Products.Events.V2;
-using Inventory;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
 using PouryaKit.Messaging.Wolverine;

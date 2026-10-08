@@ -42,7 +42,7 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
 
             var (stored, fix, together) = connection.Name is { } named
                 ? (
-                    $"UsePouryaKitPostgres stores {connection.DbContext.Name} over the connection string {named}",
+                    $"{connection.DbContext.Name} is stored over the connection string {named}",
                     $"Set Database, or at least Username, in the connection string {named}.",
                     "Use one connection string for the message store and every Module's DbContext."
                 )
