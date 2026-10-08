@@ -166,6 +166,23 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         );
     }
 
+    // Configuration keys ignore case, so two DbContexts on x and X miss one connection string, in one line.
+    [Fact]
+    public void Dbcontexts_missing_one_connection_string_in_two_cases_fail_the_host_when_built_in_one_line_naming_both()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.Services.UsePostgres<StubDbContext>(connectionName: "x", schema: "stub");
+        builder.Services.UsePostgres<ReadCollectionDbContext>(connectionName: "X", schema: "stub");
+        builder.AddPouryaKitCompositionChecks();
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            "StubDbContext, ReadCollectionDbContext store over the connection string x, which the Host's configuration does not set (ConnectionStrings:x), so every Operation that opens it would fail. Set ConnectionStrings:x, or name a connection the Host configures where StubDbContext, ReadCollectionDbContext are registered.",
+            thrown.Message
+        );
+    }
+
     // The name UsePostgres passes replaces the record AddPouryaKitEfCore made earlier without one (final review D, F2).
     [Fact]
     public void A_connection_string_named_after_an_unnamed_record_of_the_dbcontext_fails_the_host_when_built_naming_its_key()

@@ -893,6 +893,7 @@ would fail. Set ConnectionStrings:missing, or name a connection the Host configu
 | Guarantee | Test | Red once |
 |---|---|---|
 | `UsePostgres<T>("app", …)` then `AddPouryaKitEfCore<T>("APP")` records the DbContext once, as `app`, and the Host builds | `MisconfiguredHostTests.A_dbcontext_given_its_connection_name_again_in_another_case_is_recorded_once_and_builds` | With the comparison ordinal, the second call threw naming `app` and `APP`. |
+| Two DbContexts recorded on `x` and `X`, neither configured, fail the build in one line naming both in the plural and `ConnectionStrings:x` (re-score R7) | `MisconfiguredHostTests.Dbcontexts_missing_one_connection_string_in_two_cases_fail_the_host_when_built_in_one_line_naming_both` | With `DbContextConnectionsCheck` grouping ordinally, two singular lines appeared. |
 
 Verify on the fix: `dotnet build PouryaKit.slnx` (0 warnings); `MisconfiguredHostTests` 13, `MessageStoreDatabaseTests` 19,
 `ModularMonolith.Tests` 538, `PouryaKit.ArchitectureTests` 98, all passed; `check-ai-setup.py` 0 failures.

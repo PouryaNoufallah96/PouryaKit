@@ -18,6 +18,7 @@ Verified in ticket #63 (2026-10-08), Npgsql 10.0.3, WolverineFx 6.46.0; check th
 - **Unknown is never a wildcard** (F1, orchestrator 2026-10-08): a string naming neither `Database` nor `Username` fails the build with its own line; Npgsql would take PGUSER, the GSS principal or the OS user.
 - Mutating away a call to a private helper without an unused-member build error: keep the call, `(Helper(x) is var _ ? alternative : null)`.
 - Connection names are `IConfiguration` keys, which ignore case: compare and group them with `OrdinalIgnoreCase` (final review D F4, "app" vs "APP" threw). A check line shared by several registration APIs names none of them (F6).
+- A second DbContext for a build-time check test needs no new fixture: the Stub's `ReadCollectionDbContext` works beside `StubDbContext` under `UsePostgres`, since nothing builds its model at `Build()` (R7).
 - A pass-case test of a check ("two names for one database build") is vacuous with the check off; pair it with a mutation that breaks the comparison (strings compared as written) for its red-once.
 
 **Why:** each decided a #63 design point.
