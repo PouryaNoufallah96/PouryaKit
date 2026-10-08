@@ -1,0 +1,26 @@
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_75dee3f51db59e::t_a82cdd0c634f2f 68-73
+.claude/agent-memory/kit-implementer/composition-check-facts.md
+  s_75dee3f51db59e::t_41450de6aa0dd0 62
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_75dee3f51db59e::t_5d02bbb3e5789c 29
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_75dee3f51db59e::t_e05fec83e80eca 3
+  s_75dee3f51db59e::t_ab959fa8e853e2 7-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "76ab4b8bf23191f378b53b88a14b03b104a85b82",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
