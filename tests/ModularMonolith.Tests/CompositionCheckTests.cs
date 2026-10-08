@@ -96,7 +96,7 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
 
         Assert.StartsWith(
-            "The Host's container was built by another service provider factory than the Kit's: a ConfigureContainer call after AddPouryaKitCompositionChecks, which AddPouryaKitModules calls, replaced it.",
+            "The Host's container was built by another service provider factory than the Kit's: a ConfigureContainer call after AddPouryaKitCompositionChecks, which AddPouryaKitModules and UsePouryaKitWolverine call, replaced it.",
             thrown.Message
         );
     }
