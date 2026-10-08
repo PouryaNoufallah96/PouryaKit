@@ -1,0 +1,33 @@
+tests/ModularMonolith.Tests/DelayedCommandTests.cs
+  s_75dee3f51db59e::t_5445959b099fb7 10,12
+  s_75dee3f51db59e::t_d8a34ec98ef7e0 158-186
+  s_75dee3f51db59e::t_959671d7c4bae4 187-227
+  s_75dee3f51db59e::t_48e0c92dd9f136 300-305
+  s_75dee3f51db59e::t_0e6465114fdf5f 306
+src/PouryaKit.Messaging.Wolverine/DelayedCommands.cs
+  s_75dee3f51db59e::t_9c968d7b2242b6 6-8,23,25-27
+  s_75dee3f51db59e::t_4429d5a77f8ae0 24
+  s_75dee3f51db59e::t_874bcd17bcc2a2 28-30
+src/PouryaKit.Cqrs/Operation.cs
+  s_75dee3f51db59e::t_9c968d7b2242b6 169-178
+tests/ModularMonolith.Tests/Stub/StubDelayedCommands.cs
+  s_75dee3f51db59e::t_d8a34ec98ef7e0 3,73-74,76-77,82-86,90-118
+src/PouryaKit.Messaging.Wolverine/IDelayedCommands.cs
+  s_75dee3f51db59e::t_9c968d7b2242b6 20-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "02584c9539dd0d3d95f58899559c76f656a45dfd",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
