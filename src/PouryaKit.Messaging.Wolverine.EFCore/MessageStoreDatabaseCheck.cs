@@ -43,12 +43,11 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
                 continue;
             }
 
-            var (connectionString, failure) = ConnectionStringOf(scope.ServiceProvider, connection.DbContext);
-            if (failure is not null)
-            {
-                yield return $"UsePostgres stores {connection.DbContext.Name} over the connection string {connection.Name}, but EF Core gives it no connection (\"{failure}\"), so its database cannot be compared with the message store's, the database {store}. Give {connection.DbContext.Name} a connection string, a connection or a data source on the message store's database.";
-            }
-            else if (PostgresDatabase.Of(connectionString) is not { } database)
+            // Constructing the DbContext builds its model and its connection, so a model error or a named form the
+            // configuration lacks fails the build as EF Core's own exception. The connection is not opened; Npgsql's provider
+            // gives a DbContext with no string, connection or data source one with an empty string, which names no database.
+            var context = (DbContext)scope.ServiceProvider.GetRequiredService(connection.DbContext);
+            if (PostgresDatabase.Of(context.Database.GetDbConnection().ConnectionString ?? "") is not { } database)
             {
                 yield return $"UsePostgres stores {connection.DbContext.Name} over the connection string {connection.Name}, which names neither a database nor a user, so its database is left to the client's user and cannot be compared with the message store's, the database {store}. Set Database, or at least Username, in the connection string {connection.Name}.";
             }
@@ -56,21 +55,6 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
             {
                 yield return $"UsePostgres stores {connection.DbContext.Name} over the connection string {connection.Name}, the database {database}, but UsePouryaKitWolverine keeps the message store over the connection string {storeConnectionName}, the database {store}, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. Use one connection string for the message store and every Module's DbContext.";
             }
-        }
-    }
-
-    // The string of the connection EF Core gives the DbContext, which it does not open, or EF Core's message when it gives
-    // none, as for a named form the configuration lacks. Npgsql's provider gives a DbContext with no string, connection or
-    // data source a connection with an empty string, which names no database.
-    private static (string ConnectionString, string? Failure) ConnectionStringOf(IServiceProvider services, Type dbContext)
-    {
-        try
-        {
-            return (((DbContext)services.GetRequiredService(dbContext)).Database.GetDbConnection().ConnectionString ?? "", null);
-        }
-        catch (InvalidOperationException exception)
-        {
-            return ("", exception.Message);
         }
     }
 

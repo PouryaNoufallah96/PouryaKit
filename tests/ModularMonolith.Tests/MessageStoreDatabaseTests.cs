@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using ModularMonolith.Tests.Stub;
 using Npgsql;
 using PouryaKit.Messaging.Wolverine.EFCore;
+using PouryaKit.Persistence.EFCore;
 using PouryaKit.Persistence.Postgres;
 
 namespace ModularMonolith.Tests;
@@ -143,10 +144,10 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         using var host = builder.Build();
     }
 
-    // EF Core's own message, quoted, for a DbContext it gives no connection, here one a ConfigureDbContext moved onto a
-    // name the configuration lacks.
+    // Constructing a DbContext builds its connection and its model, so what EF Core refuses there fails the build as EF
+    // Core's own exception, which names the cause: here a ConfigureDbContext onto a name the configuration lacks.
     [Fact]
-    public void A_dbcontext_ef_core_gives_no_connection_fails_the_host_when_built_quoting_ef_core()
+    public void A_dbcontext_on_a_named_string_the_configuration_lacks_fails_the_host_when_built_with_ef_cores_exception()
     {
         var builder = Compose("Host=db;Database=app", "Host=db;Database=app");
         builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql("Name=ConnectionStrings:missing"));
@@ -154,13 +155,23 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.StartsWith(
-            "UsePostgres stores StubDbContext over the connection string app, but EF Core gives it no connection (\"A named connection string was used, but the name 'ConnectionStrings:missing' was not found",
+            "A named connection string was used, but the name 'ConnectionStrings:missing' was not found in the application's configuration.",
             thrown.Message
         );
-        Assert.EndsWith(
-            "\"), so its database cannot be compared with the message store's, the database db:5432/app. Give StubDbContext a connection string, a connection or a data source on the message store's database.",
-            thrown.Message
+    }
+
+    [Fact]
+    public void A_dbcontext_whose_model_ef_core_refuses_fails_the_host_when_built_with_ef_cores_exception()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", "--ConnectionStrings:app=Host=db;Database=app"]
         );
+        builder.Services.UsePostgres<KeylessModelContext>(connectionName: "app", schema: "keyless");
+        builder.UsePouryaKitWolverine(connectionName: "app");
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.StartsWith("The entity type 'Keyless' requires a primary key to be defined.", thrown.Message);
     }
 
     // The store's string names the fixture's database in other words: Server for Host, the port inside the host, the host
@@ -183,5 +194,19 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         builder.Services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
         builder.UsePouryaKitWolverine(connectionName: "messages");
         return builder;
+    }
+}
+
+internal sealed class Keyless
+{
+    public string Name { get; private set; } = "";
+}
+
+internal sealed class KeylessModelContext(DbContextOptions<KeylessModelContext> options) : PouryaKitDbContext(options)
+{
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<Keyless>();
     }
 }
