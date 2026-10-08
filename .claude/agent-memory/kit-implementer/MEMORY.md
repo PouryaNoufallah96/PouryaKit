@@ -1,11 +1,11 @@
 - [.NET and test conventions](dotnet-and-test-conventions.md) — #4 and the analyzer retro (2026-10-06): MTP and xunit.v3, analyzer IDs, compiler traps, mutation runs, tests a sample change ripples into
 - [Worktree, shell and check gotchas](worktree-shell-and-check-gotchas.md) — every ticket: refused shell shapes, the moving integration branch, check-ai-setup.py, scope requests, memory layout
-- [Docs verification tools](docs-verification-tools.md) — docs packages since #8, #64 rename: check-docs.py, skill snippets, Mermaid C4, reference checkouts, ADR amendment style
+- [Docs verification tools](docs-verification-tools.md) — docs packages since #8, #64 rename, #67: check-docs.py, skill snippets, Mermaid C4, reference checkouts, ADR amendment style
 - [Merge, CI and workflow tooling](merge-ci-and-workflow-tooling-facts.md) — retros and kit-review: union merge, scratch-clone proofs, gh job logs, branch names as data, workflow scripts, Codex input limit
 - [Core, JSON and architecture tests](core-json-and-architecture-test-facts.md) — #6 #19 #34 #37 #54 #55: STJ typed IDs, shared JSON options, IL reader, ImplementingTypes order, slot rule
 - [Cqrs and Modularity](cqrs-and-modularity-facts.md) — #7 #10 #13 #56 #57 #66: FluentValidation, Domain Event drain, Module ownership, authorizers, trust, Cqrs internals, same-named types
-- [Composition checks](composition-check-facts.md) — #61 #62 #63 #66, final review B: build vs start checks, store database check, RoutingCheck, blank connection strings
-- [Persistence and Dapper](persistence-and-dapper-facts.md) — #8 #9 #11 #35: Unit of Work routing, EF savepoints, two-scope race, Npgsql typed nulls, Ardalis, dotnet-ef traps
+- [Composition checks](composition-check-facts.md) — #61 #62 #63 #66 #67, final review B: build vs start checks, store database check, RoutingCheck, blank connection strings, failing disposal
+- [Persistence and Dapper](persistence-and-dapper-facts.md) — #8 #9 #11 #35 #67: Unit of Work routing, EF savepoints, two-scope race, Npgsql typed nulls, Ardalis, dotnet-ef traps, writes outside a Unit of Work
 - [Wolverine runtime and delivery](wolverine-runtime-and-delivery-facts.md) — S1 #2, S2 #5, #15 #17 #54 #58, final review D: store, recovery, stale time, dead letters, codegen, sent envelopes
 - [Snapshots and scheduled commands](snapshot-and-scheduled-command-facts.md) — #18 #44 #45, final review R2: version gate, Receipt masking, scheduled envelopes, recurring chains
 - [Integration Events, wire and RabbitMQ](integration-event-wire-and-rabbitmq-facts.md) — #16 #49 #50 #51 #60: wire names, type routes, strict reading, fan-out topology, broker tests
