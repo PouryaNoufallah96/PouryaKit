@@ -1,0 +1,21 @@
+src/PouryaKit.Web/HttpPageRequest.cs
+  s_75dee3f51db59e::t_74474493726d01 13-16
+.agents/skills/pourya-kit/references/web.md
+  s_75dee3f51db59e::t_7992118fe42e09 200
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4d90b5a721d36e85a9832982f192f50a76b368f3",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
