@@ -134,6 +134,25 @@ public sealed class TemplateTests
         );
     }
 
+    // Ticket #64: the service defaults exempt /alive from the rate limit through its endpoint, which the rate limiting
+    // middleware sees only after routing, and the Kit cannot detect a limiter placed before it.
+    [Fact]
+    public void Each_generated_host_routes_before_it_rate_limits()
+    {
+        Assert.All(
+            [Monolith, Modular],
+            template =>
+            {
+                Assert.Empty(RateLimitersBeforeRouting(Generated(template)));
+                Assert.Contains(Generated(template), file => file.Text.Contains("app.UseRateLimiter();", StringComparison.Ordinal));
+            }
+        );
+        Assert.Equal(
+            ["src/ModularMonolith.Host/Program.cs calls UseRouting() after UseRateLimiter(); route first, or the rate limit ignores the exemption of /alive and the Actor an anonymous endpoint names."],
+            RateLimitersBeforeRouting([new("src/ModularMonolith.Host/Program.cs", "app.UseRateLimiter();\napp.UseRouting();")])
+        );
+    }
+
     // Ticket #59: -n acme-shop names the folders acme-shop.Host, so the solution and the project references must too.
     [Fact]
     public void Each_template_names_its_projects_paths_through_the_name_as_typed_the_same_way_in_both()

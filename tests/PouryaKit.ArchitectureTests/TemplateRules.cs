@@ -308,6 +308,18 @@ internal static class TemplateRules
         where match.Groups[1].Value != token
         select $"{file.Path} passes the service name {match.Groups[1].Value}; pass {token}, which the template's serviceName symbol derives into a valid queue name from any project name.";
 
+    /// <summary>
+    /// A problem for each generated file that calls <c>UseRouting()</c> after <c>UseRateLimiter()</c>. The rate limiting
+    /// middleware reads the matched endpoint, so placed before routing it ignores the exemption of the service
+    /// defaults' <c>/alive</c> and the Actor an anonymous endpoint names, and the Kit cannot tell that order from a
+    /// request no endpoint matches.
+    /// </summary>
+    public static IEnumerable<string> RateLimitersBeforeRouting(IEnumerable<TextFile> generated) =>
+        from file in generated
+        let limiter = file.Text.IndexOf("app.UseRateLimiter()", StringComparison.Ordinal)
+        where limiter >= 0 && file.Text.IndexOf("app.UseRouting()", limiter, StringComparison.Ordinal) >= 0
+        select $"{file.Path} calls UseRouting() after UseRateLimiter(); route first, or the rate limit ignores the exemption of /alive and the Actor an anonymous endpoint names.";
+
     private static Dictionary<string, string> PackageVersions(string props) =>
         XDocument
             .Parse(props)

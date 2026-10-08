@@ -152,6 +152,25 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
         );
     }
 
+    // Inventory.Host composes the recipe without the Web defaults, so nothing authenticates its endpoints: as its own
+    // process in Production, /alive answers a caller with no credentials and no endpoint serves /health.
+    [Fact]
+    public async Task Inventory_host_running_as_its_own_process_in_production_answers_liveness_and_serves_no_readiness()
+    {
+        var environment = await broker.CreateEnvironmentAsync();
+        await environment.MigrateInventoryAsync();
+        using var process = InventoryProcess.Start(environment);
+        using var anonymous = new HttpClient { BaseAddress = await process.ListeningAsync(TestContext.Current.CancellationToken) };
+
+        using var alive = await anonymous.GetAsync("/alive", TestContext.Current.CancellationToken);
+        using var health = await anonymous.GetAsync("/health", TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            (HttpStatusCode.OK, "Healthy", HttpStatusCode.NotFound),
+            (alive.StatusCode, await alive.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), health.StatusCode)
+        );
+    }
+
     // Serilog's logger factory replaces the logging providers, the test's RecordedLogs among them; the recipe also writes
     // to every ILogEventSink the Host registers.
     [Fact]

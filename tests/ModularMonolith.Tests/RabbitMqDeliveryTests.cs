@@ -903,6 +903,24 @@ internal sealed class InventoryProcess : IDisposable
         return process;
     }
 
+    // The address the Host's HTTP server bound, from the line the Host logs once it has started.
+    public async Task<Uri> ListeningAsync(CancellationToken cancellationToken)
+    {
+        const string listening = "Now listening on: ";
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(120));
+        while (true)
+        {
+            if (_output.FirstOrDefault(line => line.Contains(listening, StringComparison.Ordinal)) is { } line)
+            {
+                return new Uri(line[(line.IndexOf(listening, StringComparison.Ordinal) + listening.Length)..].Trim());
+            }
+
+            Assert.False(timeout.IsCancellationRequested || _process.HasExited, $"Inventory.Host never listened:{Environment.NewLine}{Output}");
+            await Task.Delay(100, cancellationToken);
+        }
+    }
+
     public void Kill()
     {
         if (!_process.HasExited)
