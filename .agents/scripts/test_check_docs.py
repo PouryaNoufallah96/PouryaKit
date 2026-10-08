@@ -198,6 +198,10 @@ class CheckDocsTests(unittest.TestCase):
         """The README's format example names a Kit file too, and is no record."""
         self.assertFails(ADOPTED | {"docs/provenance/README.md": RECORD}, "src/Catalog/Money.cs:1: the comment says the code is adapted from something, and no record in docs/provenance/ names the file under Kit files")
 
+    def test_an_adopted_test_without_a_provenance_record_fails(self) -> None:
+        ported = {"tests/Shop.Tests/MoneyTests.cs": "public sealed class MoneyTests\n{\n    // Scenarios ported from the Till project's MoneyTests.\n}\n"}
+        self.assertFails(ported, "tests/Shop.Tests/MoneyTests.cs:3: the comment says the code is ported from something, and no record in docs/provenance/ names the file under Kit files")
+
     def test_adopted_code_a_provenance_record_names_passes_and_so_does_a_string_that_says_the_words(self) -> None:
         quoted = {"src/Catalog/Messages.cs": 'public static class Messages { public const string Source = "taken from the header"; }\n'}
         self.assertPasses(ADOPTED | quoted | {"docs/provenance/Catalog.md": RECORD})

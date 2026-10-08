@@ -33,9 +33,9 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   nested type) is no declaration of the class. A renamed test is drift to fix (`git log -S<Method>` finds the new
   name); a test the row itself says was removed goes in REMOVED_TESTS with the reason. `docs/adr/` stays out: it
   keeps renamed names on purpose.
-- Provenance: a `.cs` file under `src/` or `samples/` whose `//` comment says the code is shaped like, adapted from,
-  ported from or taken from something must be named in the **Kit files** line of a record in `docs/provenance/`
-  (its README's format example is no record). Ordinary prose that trips it is said another way.
+- Provenance: a `.cs` file under `src/`, `samples/` or `tests/` whose `//` comment says the code is shaped like,
+  adapted from, ported from or taken from something must be named in the **Kit files** line of a record in
+  `docs/provenance/` (its README's format example is no record). Ordinary prose that trips it is said another way.
 
 `--fences` only prints: for each Markdown file changed against HEAD, whether its fenced blocks changed, so an
 implementer knows whether the skill's snippet harness must run.
@@ -420,7 +420,7 @@ def check_provenance(files: list[str]) -> None:
                 if line.startswith(KIT_FILES):
                     recorded |= set(re.findall(r"`([^`]+)`", line))
     for path in files:
-        if not (path.startswith(("src/", "samples/")) and path.endswith(".cs") and path not in recorded and (ROOT / path).is_file()):
+        if not (path.startswith(("src/", "samples/", "tests/")) and path.endswith(".cs") and path not in recorded and (ROOT / path).is_file()):
             continue
         for number, line in enumerate((ROOT / path).read_text(encoding="utf-8", errors="ignore").splitlines(), start=1):
             if said := ADOPTED.search(line):
