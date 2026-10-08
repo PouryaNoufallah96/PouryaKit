@@ -1,0 +1,21 @@
+.claude/agent-memory/kit-implementer/store-database-check-facts.md
+  s_bdf0617f846b2b::t_5ea0845824d183 16
+.claude/agent-memory/kit-implementer/sent-envelope-capture-facts.md
+  s_bdf0617f846b2b::t_5ea0845824d183 15-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8c59588c3acf21b1f8ae7740c27fd2fa31adba77",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
