@@ -877,3 +877,7 @@ parts for each case.
 Verify on the fix: `dotnet build PouryaKit.slnx` (0 warnings); `MessageStoreDatabaseTests` 19, `MisconfiguredHostTests` 12,
 `SharedStoreSchemaTests` 1, `ModularMonolith.Tests` 537, `PouryaKit.ArchitectureTests` 98 (`PackageGraphTests` 25), all
 passed; `check-ai-setup.py` 0 failures.
+
+`python3 scripts/packaging/validate.py --no-fetch` on the fix round's commit `8c59588` (before this paragraph was added)
+printed `PASS 21 packages, 24 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4,
+template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof.` at version `0.1.0-preview.0.123`.
