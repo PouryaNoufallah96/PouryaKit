@@ -87,6 +87,29 @@ class MergePackageTest(unittest.TestCase):
     def origin_tip(self, branch: str = WAVE) -> str:
         return self.git_in(self.origin, "rev-parse", branch)
 
+    def main_at_the_tip(self) -> None:
+        """Origin gets a `main` at the integration branch's tip, which then holds the real tree check and a .gitignore."""
+        self.commit(".agents/scripts/check-tree.py", SCRIPT.with_name("check-tree.py").read_text(), "chore: the tree check")
+        self.commit(".gitignore", "bin/\n", "chore: ignore build output")
+        self.git("push", "--quiet", "origin", WAVE, f"{WAVE}:main")
+
+    def move_base(self, files: dict[str, str]) -> None:
+        """Another clone commits to origin's main, so this repository learns of the commit only by fetching."""
+        other = self.root / "other"
+        self.git_in(self.root, "-c", "core.hooksPath=" + os.devnull, "clone", "--quiet", "--branch", "main", str(self.origin), str(other))
+        for name, text in files.items():
+            (other / name).parent.mkdir(parents=True, exist_ok=True)
+            (other / name).write_text(text)
+        self.git_in(other, "add", "--force", "--all")
+        self.git_in(other, "-c", "user.name=Other", "-c", "user.email=other@example.invalid", "-c", "core.hooksPath=" + os.devnull, "commit", "--quiet", "-m", "chore: main moved")
+        self.git_in(other, "push", "--quiet", "origin", "main")
+
+    def assert_nothing_changed(self, head: str) -> None:
+        """--ready merged, committed and pushed nothing."""
+        self.assertEqual((self.git("rev-parse", "HEAD"), self.git("status", "--porcelain")), (head, ""))
+        self.assertFalse((self.repo / ".git/MERGE_HEAD").exists())
+        self.assertEqual(self.origin_tip(), head)
+
     def test_refuses_a_dirty_checkout(self) -> None:
         head = self.package()
         (self.repo / "stray.txt").write_text("stray\n")
@@ -209,6 +232,62 @@ class MergePackageTest(unittest.TestCase):
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
         self.assertEqual(self.summary(done), f"merge={merged[:7]} tree=EQUAL checks=ok push=yes")
         self.assertEqual(self.origin_tip(), merged)
+
+    def test_ready_when_the_base_holds_nothing_the_branch_lacks(self) -> None:
+        self.main_at_the_tip()
+        head = self.commit("docs/guide.md", "# Guide\n", "docs: the branch is ahead of main")
+        self.git("push", "--quiet", "origin", WAVE)
+        done = self.merge("--ready")
+        self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+        self.assertEqual(self.summary(done), "ready=yes behind=0 conflicts=0 tree=ok")
+        self.assert_nothing_changed(head)
+
+    def test_not_ready_lists_the_commits_of_a_base_that_moved(self) -> None:
+        self.main_at_the_tip()
+        head = self.git("rev-parse", "HEAD")
+        self.move_base({"docs/guide.md": "# Guide\n"})
+        done = self.merge("--ready")
+        self.assertEqual(done.returncode, 1, done.stdout + done.stderr)
+        self.assertIn("origin/main has 1 commit(s) that HEAD lacks:", done.stdout)
+        self.assertIn(" chore: main moved", done.stdout)
+        self.assertEqual(self.summary(done), "ready=no behind=1 conflicts=0 tree=ok")
+        self.assert_nothing_changed(head)
+
+    def test_not_ready_names_a_conflict_and_a_path_the_tree_check_refuses(self) -> None:
+        """Pull request #65's base: another project's files, and a file both sides changed."""
+        self.main_at_the_tip()
+        head = self.commit("docs/acceptance.md", "# Acceptance\n\n## #1\n\n## #2\n", "docs: a package's section")
+        self.git("push", "--quiet", "origin", WAVE)
+        self.move_base({"docs/acceptance.md": "# Acceptance\n\n## #1\n\n## #3\n", ".vscode/settings.json": "{}\n"})
+        done = self.merge("--ready")
+        self.assertEqual(done.returncode, 1, done.stdout + done.stderr)
+        self.assertIn("would conflict in 1 path(s):\n  docs/acceptance.md\n", done.stdout)
+        self.assertIn("  .vscode/settings.json: '.vscode' is not a top-level entry of this repository\n", done.stdout)
+        self.assertEqual(self.summary(done), "ready=no behind=1 conflicts=1 tree=FAIL(1)")
+        self.assert_nothing_changed(head)
+
+    def test_not_ready_judges_the_merged_gitignore_not_the_checkouts(self) -> None:
+        self.main_at_the_tip()
+        head = self.git("rev-parse", "HEAD")
+        self.move_base({".gitignore": "bin/\ndocs/\n"})
+        done = self.merge("--ready")
+        self.assertEqual(done.returncode, 1, done.stdout + done.stderr)
+        self.assertIn("  .gitignore:2: 'docs/' ignores the tracked path docs/acceptance.md\n", done.stdout)
+        self.assertEqual(self.summary(done), "ready=no behind=1 conflicts=0 tree=FAIL(1)")
+        self.assert_nothing_changed(head)
+
+    def test_not_ready_fails_the_tree_when_the_tree_check_is_missing(self) -> None:
+        self.git("push", "--quiet", "origin", f"{WAVE}:main")
+        self.move_base({"docs/guide.md": "# Guide\n"})
+        done = self.merge("--ready")
+        self.assertEqual(done.returncode, 1, done.stdout + done.stderr)
+        self.assertIn("check-tree.py is missing", done.stdout)
+        self.assertEqual(self.summary(done), "ready=no behind=1 conflicts=0 tree=FAIL(1)")
+
+    def test_ready_takes_no_merge_arguments(self) -> None:
+        done = self.merge("--ready", "--push")
+        self.assertEqual(done.returncode, 2, done.stdout + done.stderr)
+        self.assertIn("--ready takes --branch and --base only", done.stderr)
 
 
 if __name__ == "__main__":

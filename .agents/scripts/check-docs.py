@@ -26,6 +26,14 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   from its table, or a heading or paragraph put inside one, fails.
 - Union duplicates: in a file `.gitattributes` merges with `merge=union`, a line twice or two lines linking the same
   target fails. A union merge keeps both sides of a line both branches changed.
+- Test pointers: in `docs/acceptance.md`, which the Names rule leaves out, a span that is exactly `Class.Method`
+  with a class ending in `Tests` must name a test: some file under `tests/`, under the templates' generated tests
+  or named `test_*.py` declares the class and holds `Method(`. A renamed test is drift to fix (`git log -S<Method>`
+  finds the new name); a test the row itself says was removed goes in REMOVED_TESTS with the reason. A file holding
+  two test classes lends each the other's methods, and `docs/adr/` stays out: it keeps renamed names on purpose.
+- Provenance: a `.cs` file under `src/` or `samples/` whose `//` comment says the code is shaped like, adapted from,
+  ported from or taken from something must be named in the **Kit files** line of a record in `docs/provenance/`
+  (its README's format example is no record). Ordinary prose that trips it is said another way.
 
 `--fences` only prints: for each Markdown file changed against HEAD, whether its fenced blocks changed, so an
 implementer knows whether the skill's snippet harness must run.
@@ -74,6 +82,18 @@ ALLOWED = {
     "DurableLocalQueue": "Wolverine type",
     "IMessageStore": "Wolverine interface",
 }
+ACCEPTANCE = "docs/acceptance.md"
+TEST_SOURCE = re.compile(r"(?:tests/|src/PouryaKit\.Templates/content/.+/tests/).+\.cs|(?:.+/)?test_\w+\.py")
+TEST_POINTER = re.compile(r"(\w+Tests)\.(?!cs$)(\w+)")  # `CatalogTests.cs` names a file, not a test
+# Tests the acceptance record names although they are gone, each with the row's own reason.
+REMOVED_TESTS = {
+    "SnapshotTests.A_snapshot_declared_without_its_module_in_a_host_of_modules_fails_the_operation_that_would_publish_it":
+        "removed by #61: its row names it as the test that the composition check's test replaces",
+    "SnapshotTests.A_snapshot_declared_with_a_module_in_an_application_without_modules_fails_the_operation_that_would_publish_it":
+        "removed by #62, as its row says: the refusal at commit that it proved is only a backstop now",
+}
+ADOPTED = re.compile(r"//.*\b(shaped like|adapted from|ported from|taken from)\b", re.IGNORECASE)
+KIT_FILES = "- **Kit files:**"
 KEYWORDS = set("""
     abstract as base bool break byte case catch char checked class const continue decimal default delegate do double
     else enum event explicit extern false finally fixed float for foreach goto if implicit in int interface internal
@@ -325,6 +345,43 @@ def check_union_duplicates(files: list[str]) -> None:
                 targets.setdefault(target, number)
 
 
+def check_test_pointers(docs: dict[str, Doc], files: list[str]) -> None:
+    if ACCEPTANCE not in docs:
+        return
+    classes: dict[str, str] = {}  # each test class's name, with the text of every file that declares one of that name
+    for path in files:
+        if TEST_SOURCE.fullmatch(path) and (ROOT / path).is_file():
+            text = (ROOT / path).read_text(encoding="utf-8", errors="ignore")
+            for name in set(re.findall(r"\bclass\s+(\w+Tests)\b", text)):
+                classes[name] = classes.get(name, "") + text
+    reported = set(REMOVED_TESTS)
+    for number, span in docs[ACCEPTANCE].spans():
+        pointer = TEST_POINTER.fullmatch(span)
+        if not pointer or span in reported:
+            continue
+        name, method = pointer.groups()
+        if not re.search(rf"\b{method}\s*\(", classes.get(name, "")):
+            reported.add(span)
+            missing = f"the class {name} has no method {method}" if name in classes else f"no test class {name}"
+            failures.append(f"{ACCEPTANCE}:{number}: `{span}` names no test: {missing}; a renamed test is found with `git log -S{method}`, a removed one goes in REMOVED_TESTS with the reason")
+
+
+def check_provenance(files: list[str]) -> None:
+    recorded = set()
+    for path in files:
+        if path.startswith("docs/provenance/") and path.endswith(".md") and not path.endswith("/README.md") and (ROOT / path).is_file():
+            for line in (ROOT / path).read_text(encoding="utf-8").splitlines():
+                if line.startswith(KIT_FILES):
+                    recorded |= set(re.findall(r"`([^`]+)`", line))
+    for path in files:
+        if not (path.startswith(("src/", "samples/")) and path.endswith(".cs") and path not in recorded and (ROOT / path).is_file()):
+            continue
+        for number, line in enumerate((ROOT / path).read_text(encoding="utf-8", errors="ignore").splitlines(), start=1):
+            if said := ADOPTED.search(line):
+                failures.append(f"{path}:{number}: the comment says the code is {said.group(1).lower()} something, and no record in docs/provenance/ names the file under Kit files; add the record (docs/provenance/README.md gives its form), or say ordinary prose another way")
+                break
+
+
 def print_fences() -> int:
     changed = git("diff", "--name-only", "HEAD").splitlines() + git("ls-files", "--others", "--exclude-standard").splitlines()
     shown = 0
@@ -353,6 +410,8 @@ def main() -> int:
     check_code_spans(docs)
     check_tables(docs)
     check_union_duplicates(files)
+    check_test_pointers(docs, files)
+    check_provenance(files)
     for message in failures:
         print(f"FAIL  {message}")
     print(f"check-docs: {len(failures)} failure(s) in {len(docs)} Markdown file(s)")

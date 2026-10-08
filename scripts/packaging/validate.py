@@ -21,6 +21,10 @@ TEMPLATE_CONTENT = ROOT / "src/PouryaKit.Templates/content"
 # The name each template consumer generates its solution under: a dotted one, and a hyphenated one that the engine writes
 # as typed in file and folder names and the paths to them, but as `acme_shop` in code.
 GENERATED = {"pouryakit-monolith": "Acme.Shop", "pouryakit-modular-monolith": "acme-shop"}
+# --since: the only paths whose change cannot reach a package, a template or this validation, because nothing that is
+# built, tested or packed reads them: the docs and the AI setup. Any other path, known or not, means the validation runs.
+EXEMPT_DIRECTORIES = ("docs/", ".agents/", ".claude/", ".codex/", ".githooks/")
+EXEMPT_FILES = {"AGENTS.md", "CLAUDE.md", "GLOSSARY.md", "README.md", "skills-lock.json"}
 
 
 def run(command, *, cwd=ROOT, env=None, log=None, expect_failure=False):
@@ -444,13 +448,40 @@ def validate(output, *, fetch=True):
           f"smoke tests passed: {', '.join(smoke_tests)}), negative controls and MinVer proof. Manifest: {output / 'manifest.json'}", flush=True)
 
 
+def needing_validation(paths):
+    """The paths among `paths` that a package, a template or this validation is, or may be, built from."""
+    return [path for path in paths if not (path.startswith(EXEMPT_DIRECTORIES) or path in EXEMPT_FILES)]
+
+
+def changed_since(ref):
+    """Every path that differs from the commit `ref`: committed since, uncommitted or untracked. A rename counts twice."""
+    tracked = run(["git", "-C", ROOT, "diff", "--name-only", "--no-renames", f"{ref}^{{commit}}", "--"])
+    untracked = run(["git", "-C", ROOT, "ls-files", "--others", "--exclude-standard"])
+    return sorted(set((tracked + untracked).splitlines()))
+
+
+def skipped(ref):
+    """True, with one SKIP line, when nothing that differs from `ref` can change what this validation proves."""
+    changed = changed_since(ref)
+    if needed := needing_validation(changed):
+        print(f"--since {ref}: validating, {len(needed)} of {len(changed)} changed path(s) can reach a package, such as {needed[0]}", flush=True)
+        return False
+    print(f"SKIP: {len(changed)} path(s) differ from {ref}, and none is one a package, a template or this validation is built from. "
+          "CI runs the full validation on every push and pull request.", flush=True)
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, help="New evidence directory outside the checkout. Default: system temp.")
     parser.add_argument("--no-fetch", action="store_true", help="Use full history and tags already fetched by CI checkout; reject shallow history.")
+    parser.add_argument("--since", metavar="REF", help="Skip, with one SKIP line and exit 0, when every path that differs from REF "
+                        "is documentation or AI setup; the implementer's base. CI passes none, so it always validates.")
     arguments = parser.parse_args()
     output = arguments.output.resolve() if arguments.output else Path(tempfile.mkdtemp(prefix="pouryakit-packages-"))
     try:
+        if arguments.since and skipped(arguments.since):
+            return 0
         validate(output, fetch=not arguments.no_fetch)
     except (RuntimeError, ValueError, OSError, KeyError) as error:
         print(f"FAIL: {error}", flush=True)
