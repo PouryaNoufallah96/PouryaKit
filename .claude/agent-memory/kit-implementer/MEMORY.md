@@ -1,7 +1,7 @@
 - [.NET and test conventions](dotnet-and-test-conventions.md) — #4 and the analyzer retro (2026-10-06): MTP and xunit.v3, analyzer IDs, compiler traps, mutation runs, tests a sample change ripples into
 - [Worktree, shell and check gotchas](worktree-shell-and-check-gotchas.md) — every ticket: refused shell shapes, the moving integration branch, check-ai-setup.py, scope requests, memory layout
 - [Docs verification tools](docs-verification-tools.md) — docs packages since #8: check-docs.py, compiling skill snippets, Mermaid C4, reference checkouts, ADR amendment style
-- [Merge, CI and workflow tooling](merge-ci-and-workflow-tooling-facts.md) — retros and kit-review: union merge, scratch-clone proofs, gh job logs, workflow scripts, Codex input limit
+- [Merge, CI and workflow tooling](merge-ci-and-workflow-tooling-facts.md) — retros and kit-review: union merge, scratch-clone proofs, gh job logs, branch names as data, workflow scripts, Codex input limit
 - [Core, JSON and architecture tests](core-json-and-architecture-test-facts.md) — #6 #19 #34 #37 #54 #55: STJ typed IDs, shared JSON options, IL reader, ImplementingTypes order, slot rule
 - [Cqrs and Modularity](cqrs-and-modularity-facts.md) — #7 #10 #13 #56 #57: FluentValidation, Domain Event drain, Module ownership, declared authorizers, continuation trust
 - [Composition checks](composition-check-facts.md) — #61 #62 #63, final review B: build vs start checks, StartAsync order, store database check, RoutingCheck and Declare
