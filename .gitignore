@@ -16,6 +16,7 @@ CLAUDE.local.md
 .claude/agent-memory-local/
 .claude/worktrees/
 .claude/reviews/
+.claude/handoff/
 __pycache__/
 .claude-plugin/types/
 # Wolverine code `codegen write` generates in a Proving Sample Host; the Kit commits none (ADR 0004).

@@ -15,6 +15,7 @@ One home per concern. Anything both tools use lives in `.agents/` or at the root
 | Roles | `.claude/agents/<name>.md` paired with `.codex/agents/<name>.toml` | Each tool reads its own file |
 | Rules | `.claude/rules/*.md` | Claude Code by `paths`; Codex through the rule router in `AGENTS.md` |
 | Review workflow | `.claude/workflows/kit-review.js`; its results in the gitignored `.claude/reviews/` | Claude Code (`/kit-review`) |
+| Session handoff | `.claude/handoff/<session>/`, gitignored: the briefs, reports, evidence files and `HANDOFF.md` of a run | The main session (`docs/agents/running-a-spec.md`, "State and handoff"); the next session reads it first |
 | Guard | `.agents/hooks/guard.py` | Both, wired from `.claude/settings.json` and `.codex/hooks.json` |
 | Mod | `.claude/mods/kit-cockpit/`, linked from `.claude/skills/kit-cockpit` | Claude Code |
 | Status line | `.claude/statusline.sh` | Claude Code, main session, through `statusLine` in `.claude/settings.json` |

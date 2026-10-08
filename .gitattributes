@@ -1,4 +1,5 @@
-# Append-only files: a merge keeps both sides' new lines without a conflict. A line both branches changed is kept
-# twice, so read the merged file.
-docs/acceptance.md merge=union
+# The implementer memory index is a flat append-only list: a merge keeps both sides' new lines without a conflict,
+# and a line both branches changed is kept twice, which `.agents/scripts/check-docs.py` reports. `docs/acceptance.md`
+# left this driver on 2026-10-08 (session-5 retro): union put a new section inside one of its tables, and a conflict
+# of two appended sections is the signal to keep both, in ticket order.
 .claude/agent-memory/kit-implementer/MEMORY.md merge=union

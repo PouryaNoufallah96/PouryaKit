@@ -1,6 +1,6 @@
 # Brief template
 
-The two briefs a `kit-implementer` reads in a run of tickets: one common brief per batch, saved as `<scratchpad>/briefs/common.md`, and one brief per ticket beside it. Copy each block, fill every `<placeholder>`, and drop a section that does not apply. `docs/agents/running-a-spec.md`, "State and handoff", says what a brief carries and why.
+The two briefs a `kit-implementer` reads in a run of tickets: one common brief per batch, saved as `.claude/handoff/<session>/briefs/common.md`, and one brief per ticket beside it. Copy each block, fill every `<placeholder>`, and drop a section that does not apply. `docs/agents/running-a-spec.md`, "State and handoff", says what a brief carries and why.
 
 ## Common brief
 
@@ -16,7 +16,7 @@ Repository: `<repository root>`. Integration branch: `<integration branch>`, tip
 ## Read first (in this order)
 
 1. Your ticket: `gh issue view <n>`. Its "What to build" and acceptance criteria are the objective.
-2. The parent spec: `<scratchpad>/issues/<spec>.md` ("Implementation Decisions", "Testing Decisions", "Out of Scope").
+2. The parent spec: `.claude/handoff/<session>/issues/<spec>.md` ("Implementation Decisions", "Testing Decisions", "Out of Scope").
 3. `AGENTS.md`, `GLOSSARY.md`, `.claude/rules/kit-code.md` and `docs/agents/running-a-spec.md`.
 4. `docs/foundation-review.md`: section G, the "Allowed references" table in section C, the I.3 row your ticket names, and the I.4 and I.6 notes that apply.
 5. The ADRs your ticket touches (`docs/adr/`), with every later amendment in each file.
@@ -33,7 +33,7 @@ Follow the last package added (`<package>`, #<ticket>): csproj metadata as its s
 
 ## Docs-sync set (allowed by default, beside the ticket's `allowed_files`)
 
-`.agents/skills/pourya-kit/SKILL.md` and `references/*.md`, `README.md` (the status list), `docs/architecture/README.md`, `docs/acceptance.md`, `docs/provenance/*.md`, `docs/adr/*.md` (a dated amendment of an ADR the ticket touches, never a rewrite of its record), `docs/foundation-review.md` (only your Capability's section C row and I.3 row, with a dated "Built" note), `src/PouryaKit.Templates/content/**` (the monolith's replacement of a changed sample Composition Root or Gateway endpoint, and the template csproj that matches a changed sample csproj, as `.claude/rules/kit-code.md` couples them), `scripts/packaging/consumers/<package>.cs`, `scripts/packaging/inventory.json` (a ticket that adds or removes a package), `Directory.Packages.props`, `PouryaKit.slnx`, `tests/PouryaKit.ArchitectureTests/**` (package graph and structure tests), `GLOSSARY.md` (a term the ticket introduces), and your agent memory directory.
+`.agents/skills/pourya-kit/SKILL.md` and `references/*.md`, `README.md` (the status list), `docs/architecture/README.md`, `docs/acceptance.md`, `docs/provenance/*.md`, `docs/adr/*.md` (a dated amendment of an ADR the ticket touches, never a rewrite of its record), `docs/foundation-review.md` (only your Capability's section C row and I.3 row, with a dated "Built" note), `docs/*.md` (a top-level doc, such as `docs/packages.md` or `docs/private-packages.md`, where a line restates the behaviour you change), `src/PouryaKit.Templates/content/**` (the monolith's replacement of a changed sample Composition Root or Gateway endpoint, and the template csproj that matches a changed sample csproj, as `.claude/rules/kit-code.md` couples them), `scripts/packaging/consumers/<package>.cs`, `scripts/packaging/inventory.json` (a ticket that adds or removes a package), `Directory.Packages.props`, `PouryaKit.slnx`, `tests/PouryaKit.ArchitectureTests/**` (package graph and structure tests), `GLOSSARY.md` (a term the ticket introduces), and your agent memory directory. A `stop_if` never narrows this set.
 
 ## Tests
 
@@ -78,7 +78,7 @@ Costly guarantees:
 
 Design constraints:
 
-- `stop_if`: <conditions that end the package with a report, such as a new third-party package or a reference the plan forbids>.
+- `stop_if`: <package-specific conditions that end the work with a report, such as a new third-party package or a reference the plan forbids>. A file outside `allowed_files` and the docs-sync set is not one: ask the session and continue, as your role file says.
 - <Invariants and existing tests to keep green, the seams to extend, and the parallel tickets that touch the same files.>
 
 ## allowed_files
