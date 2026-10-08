@@ -1,0 +1,26 @@
+.agents/scripts/pr-threads.py
+  s_75dee3f51db59e::t_5ad8c43e28e2b4 19-21
+  s_75dee3f51db59e::t_5f2f09262492ea 12-13
+  s_75dee3f51db59e::t_a457d239cb0316 1-11,14-18,22-126,129-136,138-175
+  s_75dee3f51db59e::t_72db4575a0df5d 137
+  s_75dee3f51db59e::t_3c9b123cc06186 127-128
+.agents/scripts/test_pr_threads.py
+  s_75dee3f51db59e::t_ec794fe48fc757 71-73
+  s_75dee3f51db59e::t_ca20aa8430d747 1-70,74-149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0b3c6c134f820d03cae1a70ac94523c9b9cb362a",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
