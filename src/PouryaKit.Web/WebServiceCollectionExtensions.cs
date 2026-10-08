@@ -40,8 +40,8 @@ public static class WebServiceCollectionExtensions
         /// adds, and an exception thrown in authentication escapes the handler. <c>app.UseCors(name)</c> comes after
         /// <c>UseRouting()</c> and before <c>UseAuthentication()</c>, so a preflight request is answered without
         /// credentials; <c>app.UseRateLimiter()</c> comes after <c>UseAuthorization()</c>, since it partitions by the
-        /// authenticated Actor: an enabled rate limit throws at a request that reaches it before authentication ran,
-        /// naming the order, rather than put every caller in one partition. Compression needs no call: when enabled, it
+        /// authenticated Actor: in a Host that registers authentication, an enabled rate limit throws at a request that
+        /// reaches it before authentication ran, naming the order, rather than put every caller in one partition. Compression needs no call: when enabled, it
         /// is added outermost, before anything that writes a response.
         /// </remarks>
         public IServiceCollection AddPouryaKitWeb(Action<PouryaKitWebOptions>? configure = null)

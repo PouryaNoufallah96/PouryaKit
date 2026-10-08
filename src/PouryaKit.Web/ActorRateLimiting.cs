@@ -82,12 +82,17 @@ internal sealed class ActorRateLimiting : IValidateOptions<PouryaKitRateLimitOpt
     }
 
     // ASP.NET Core's AuthenticationMiddleware sets IAuthenticationFeature on every request it sees, anonymous ones too, so
-    // its absence means authentication has not run yet and every caller would look anonymous: one bucket for all. Routing
-    // has no such mark, since it sets nothing on a request no endpoint matches, so a limiter before UseRouting is not
-    // detected; it puts the anonymous callers of a public endpoint in the unresolved partition.
+    // in a Host that registers authentication its absence means authentication has not run yet and every caller would
+    // look anonymous: one bucket for all. A Host without authentication has only anonymous callers, partitioned by the
+    // Actor each endpoint names. Routing has no such mark, since it sets nothing on a request no endpoint matches, so a
+    // limiter before UseRouting is not detected; it puts the anonymous callers of a public endpoint in the unresolved
+    // partition.
     private static string Partition(HttpContext httpContext, PouryaKitWebOptions options, ISet<string> peers)
     {
-        if (httpContext.Features.Get<IAuthenticationFeature>() is null)
+        if (
+            httpContext.Features.Get<IAuthenticationFeature>() is null
+            && httpContext.RequestServices.GetService<IAuthenticationSchemeProvider>() is not null
+        )
         {
             throw new InvalidOperationException(
                 "The rate limit partitions each request by its Actor, but the request reached the rate limiter before authentication ran, so every caller would share one partition. Call app.UseAuthentication() before app.UseRateLimiter(), or leave UseAuthentication to WebApplication, which adds it ahead of the application's own middleware."

@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -48,6 +49,38 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         Assert.Equal(
             "The rate limit partitions each request by its Actor, but the request reached the rate limiter before authentication ran, so every caller would share one partition. Call app.UseAuthentication() before app.UseRateLimiter(), or leave UseAuthentication to WebApplication, which adds it ahead of the application's own middleware.",
             thrown.Message
+        );
+    }
+
+    // Without authentication every caller is anonymous and runs as the Actor its endpoint names, so the limiter partitions
+    // as before and refuses nothing for the order (#62 review finding F6).
+    [Fact]
+    public async Task A_rate_limit_in_a_host_without_authentication_partitions_public_callers_by_the_actor_their_endpoint_names()
+    {
+        var builder = WebApplication.CreateBuilder(["--environment", "Production"]);
+        builder.WebHost.UseTestServer();
+        builder.Services.AddAuthorization();
+        builder.Services.AddPouryaKitWeb();
+        builder.Services.Configure<PouryaKitRateLimitOptions>(limit =>
+        {
+            limit.Enabled = true;
+            limit.PermitLimit = 1;
+            limit.Window = TimeSpan.FromMinutes(10);
+        });
+        await using var host = builder.Build();
+        host.UseRateLimiter();
+        host.MapGet("/storefront", () => "served").AllowAnonymousAs(Actor.System("tests.storefront"));
+        host.MapGet("/kiosk", () => "served").AllowAnonymousAs(Actor.System("tests.kiosk"));
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var anonymous = AppFixture.ClientOf(host);
+
+        var first = await anonymous.GetAsync("/storefront", TestContext.Current.CancellationToken);
+        var second = await anonymous.GetAsync("/storefront", TestContext.Current.CancellationToken);
+        var otherActor = await anonymous.GetAsync("/kiosk", TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            (HttpStatusCode.OK, HttpStatusCode.TooManyRequests, HttpStatusCode.OK),
+            (first.StatusCode, second.StatusCode, otherActor.StatusCode)
         );
     }
 
