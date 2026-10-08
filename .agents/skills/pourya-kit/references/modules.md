@@ -80,7 +80,7 @@ var created = await catalog.SendAsync(
 `OperationContext` (`PouryaKit.Cqrs`) is plain data about who and what caused one Operation:
 
 - `OperationId`: a new version 7 Guid for each context created, so one context belongs to one Operation.
-- `Actor`: `Actor.Person(id)`, a person as the trust boundary that authenticated them identifies them, or `Actor.System(name)`, a named system identity for independent work no person caused, such as a scheduled job. `Actor.Kind` says which.
+- `Actor`: `Actor.Person(id)`, a person as the trust boundary that authenticated them identifies them, or `Actor.System(name)`, a named system identity for independent work no person caused, such as a recurring command. `Actor.Kind` says which.
 - `Tenant`: the tenant or company the Operation runs for; null where the application has none.
 - `CorrelationId`: shared by every Operation in one chain of work; a new context with none given correlates with its own `OperationId`.
 - `CausationId`: the Operation or message that caused this one; null for the Operation that started the chain. Informational: it never makes a context trusted.
@@ -117,7 +117,7 @@ Setting it:
 
 - `Operation.Module` (`PouryaKit.Cqrs`, a `Type`) is the Module the scope's opener named; the Gateway names its own. It belongs to the scope, not to the context, because work an Operation causes may run in another Module. It routes each command to that Module's Unit of Work: a command sent through `IDispatcher` in a scope whose Operation names no Module throws `InvalidOperationException` in a Host of Modules.
 - A command or query belongs to the Module whose Composition Root registers its handler. Its Gateway is the only one that runs it: sent through another Module's Gateway, it is refused with an `InvalidOperationException` naming both Modules, and one that no Module handles is refused too. Neither opens a scope.
-- A Composition Root that registers, replaces or removes the handler of a command or query another Module owns fails startup, naming both Modules.
+- A Composition Root that registers, replaces or removes the handler of a command or query another Module owns fails while the Host is composed, naming both Modules.
 
 ## The Host's checks
 

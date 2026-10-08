@@ -709,11 +709,16 @@ These follow from reading the Kit's code at `0e48945`; the Spike used stand-ins 
 - **The fan-out branch.** `src/PouryaKit.Messaging.Wolverine/SubscriptionDelivery.cs:22` reads the subscription from
   `Destination.Host`. The branch for the Host's broker queue goes before that line.
 - **The startup check.** `src/PouryaKit.Messaging.Wolverine/StartupCheck.cs:29-42` checks only the local queues. It
-  should also require a durable Inbox on the broker listener.
+  should also require a durable Inbox on the broker listener. *Done in #51 ("Implemented", below); the file is
+  `DurableQueuesCheck.cs` since #62 (2026-10-08), which moved its Outbox part to the composition check `OutboxCheck`
+  and keeps the queue and broker-listener checks at Wolverine's `StartedAsync`.*
 - **A wire name a Host both publishes and subscribes to** must not be bound to that Host's broker queue. Its local
   routes already deliver it. Bound, it would come back from the broker and be delivered twice, and only the Receipt
   would stop it. The fan-out's `PublishAsync` would also reach the exchange again, through the Host's own broker
-  route. This is inferred and was not tested.
+  route. This is inferred and was not tested. *Tested in #51 (2026-10-07):
+  `RabbitMqDeliveryTests.A_publication_whose_only_subscription_is_in_another_host_is_written_in_its_commit_and_applied_there_once`
+  shows such a wire name unbound from the Host's own queue ("Implemented", below, and the acceptance record's #51
+  section).*
 
 ### Invariants for permanent tests
 

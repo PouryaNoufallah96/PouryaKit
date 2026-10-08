@@ -127,7 +127,10 @@ these results. These points are inferred from source, not observed:
      separated by a test: Wolverine reads `Activity.Current` in `PublishAsync` (`src/Wolverine/Runtime/MessageBus.cs:315`
      and `:428` at `V6.46.0`), which `WolverineOutbox.WriteAsync` calls during the commit, before the flush. The Spike's
      stand-in wraps the whole dispatcher call, so it is current at both the write and the flush; no test ends it between
-     them. An Operation activity that ends before the Unit of Work writes the Outbox is never the parent.
+     them. An Operation activity that ends before the Unit of Work writes the Outbox is never the parent. *Shown red in
+     #47 (2026-10-07): `ObservabilityTests.A_product_created_in_catalog_and_stocked_in_inventory_is_one_trace_with_the_upstream_tracestate`
+     fails when the Operation activity ends before the Unit of Work writes the Outbox, since the stored `parent-id` no
+     longer names it (the acceptance record's #47 section).*
    - **Carry tracestate.** Seam: `src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs`, `WriteAsync`, beside
      `WithOperationContext`. It writes `Activity.Current?.TraceStateString` into a Kit header, because the stored envelope
      has none. The header name follows the Kit's header naming (`OperationContextHeaders`) and is #47's to choose.
