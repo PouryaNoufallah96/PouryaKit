@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ModularMonolith.Tests.Stub;
@@ -238,6 +239,25 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         builder.Services.AddPouryaKitEfCore<ReadCollectionDbContext>();
 
         using var host = builder.Build();
+    }
+
+    // A variable set to nothing gives a blank value, not a missing one. Wolverine refuses an empty one in its own words,
+    // which name no connection, and takes one of spaces, which no check then reports: the Host is built and fails when
+    // it starts.
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void A_blank_message_store_connection_string_is_refused_while_the_host_is_composed_naming_the_connection(string blank)
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.Configuration.AddInMemoryCollection([new("ConnectionStrings:messages", blank)]);
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.UsePouryaKitWolverine(connectionName: "messages"));
+
+        Assert.Equal(
+            "The configuration has no connection string named messages for the message store, or leaves it blank. Set ConnectionStrings:messages.",
+            thrown.Message
+        );
     }
 
     private static HostApplicationBuilder Compose(string module, string store)

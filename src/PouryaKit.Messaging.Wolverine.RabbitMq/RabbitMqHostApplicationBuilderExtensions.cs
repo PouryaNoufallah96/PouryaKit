@@ -27,7 +27,8 @@ public static class RabbitMqHostApplicationBuilderExtensions
         /// receiving Host exists, so before its first start with that subscription, reaches no queue of it and is lost to
         /// it: start a Host that receives a wire name before the first publication it must receive. Bindings are declared
         /// and never removed: when the Host stops receiving a wire name, remove its binding from the queue. Throws here when
-        /// the configuration has no such connection string, and when <paramref name="serviceName"/> is missing or invalid.
+        /// the configuration has no such connection string or leaves it blank, and when <paramref name="serviceName"/> is
+        /// missing or invalid.
         /// </summary>
         public IHostApplicationBuilder UsePouryaKitRabbitMq(string connectionName, string serviceName)
         {
@@ -41,11 +42,16 @@ public static class RabbitMqHostApplicationBuilderExtensions
                 );
             }
 
-            var connectionString =
-                builder.Configuration.GetConnectionString(connectionName)
-                ?? throw new InvalidOperationException(
-                    $"The configuration has no connection string named {connectionName} for the RabbitMQ broker."
+            // A blank one too: Wolverine applies nothing of it and says nothing, and the Host would dial the client's
+            // default broker.
+            var connectionString = builder.Configuration.GetConnectionString(connectionName);
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException(
+                    $"The configuration has no connection string named {connectionName} for the RabbitMQ broker, or leaves it blank. Set ConnectionStrings:{connectionName}."
                 );
+            }
+
             builder.Services.AddSingleton<IWolverineExtension>(services =>
                 new RabbitMqExtension(connectionString, serviceName, services.GetRequiredService<IWireNames>())
             );

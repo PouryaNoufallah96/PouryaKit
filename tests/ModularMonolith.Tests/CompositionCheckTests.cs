@@ -101,6 +101,24 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         );
     }
 
+    // A check may throw instead of answering, as the message store's does on a connection string it cannot read. The
+    // container disposes what it created last first, so the service whose disposal fails is resolved first.
+    [Fact]
+    public void A_composition_check_that_throws_fails_the_build_with_its_own_exception_and_the_container_is_disposed()
+    {
+        var resolved = new DisposalProbe();
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.Services.AddSingleton(_ => new FailingDisposal());
+        builder.Services.AddSingleton(_ => resolved);
+        builder.Services.AddSingleton<ICompositionCheck, ThrowingCheck>();
+        builder.AddPouryaKitCompositionChecks();
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(ThrowingCheck.Problem, thrown.Message);
+        Assert.True(resolved.Disposed);
+    }
+
     [Fact]
     public void A_cacheable_query_in_a_host_without_caching_fails_the_host_when_built_naming_the_call()
     {
@@ -280,6 +298,31 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
 
 /// <summary>An Integration Event no Module publishes.</summary>
 internal sealed record UnownedV1(Guid Id);
+
+// Resolves two singletons from the built container, which then owns their disposal, and throws.
+internal sealed class ThrowingCheck : ICompositionCheck
+{
+    public const string Problem = "The check itself failed.";
+
+    public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
+    {
+        services.GetRequiredService<FailingDisposal>();
+        services.GetRequiredService<DisposalProbe>();
+        throw new InvalidOperationException(Problem);
+    }
+}
+
+internal sealed class DisposalProbe : IDisposable
+{
+    public bool Disposed { get; private set; }
+
+    public void Dispose() => Disposed = true;
+}
+
+internal sealed class FailingDisposal : IDisposable
+{
+    public void Dispose() => throw new NotSupportedException("The disposal failed.");
+}
 
 // Its data and its one handler, registered by hand: no Composition Root of its Host calls AddPouryaKitCqrs.
 public sealed class HandRegisteredModule : IModuleDefinition

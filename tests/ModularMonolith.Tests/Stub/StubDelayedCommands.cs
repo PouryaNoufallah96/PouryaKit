@@ -1,5 +1,6 @@
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Persistence;
 
@@ -69,13 +70,49 @@ internal sealed class WriteKindChangedNoteCommandHandler(IRepository<Note, NoteI
     }
 }
 
-internal sealed record WriteDelayedNoteCommand(string Text) : Command;
+// Writes its note when it runs and, given a Then, schedules a note of that text for an hour later, from its own run.
+internal sealed record WriteDelayedNoteCommand(string Text, string? Then = null) : Command;
 
-internal sealed class WriteDelayedNoteCommandHandler(IRepository<Note, NoteId> notes) : CommandHandler<WriteDelayedNoteCommand>
+internal sealed class WriteDelayedNoteCommandHandler(IRepository<Note, NoteId> notes, IDelayedCommands later, TimeProvider time)
+    : CommandHandler<WriteDelayedNoteCommand>
 {
     public override async Task<Result> Handle(WriteDelayedNoteCommand command, CancellationToken cancellationToken)
     {
         await notes.AddAsync(Note.Write(command.Text), cancellationToken);
+        if (command.Then is { } then)
+        {
+            later.Schedule(new WriteDelayedNoteCommand(then), time.GetUtcNow().AddHours(1));
+        }
+
         return Result.Success();
     }
+}
+
+// Raised to have a note's reactions schedule: its Domain Event Handler in the Operation that wrote the note, an hour
+// ahead, and its Notification Handler in its delivery, at once, a note whose own run schedules one more.
+internal sealed record NoteToFollowUpDomainEvent(string Text) : DomainEvent;
+
+internal sealed class ScheduleFollowUpReaction(IDelayedCommands later, TimeProvider time) : IDomainEventHandler<NoteToFollowUpDomainEvent>
+{
+    public Task<Result> Handle(NoteToFollowUpDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        later.Schedule(new WriteDelayedNoteCommand(TextOf(domainEvent.Text)), time.GetUtcNow().AddHours(1));
+        return Task.FromResult(Result.Success());
+    }
+
+    public static string TextOf(string text) => $"from the Domain Event Handler of {text}";
+}
+
+internal sealed class ScheduleFollowUpNotificationHandler(IDelayedCommands later, TimeProvider time)
+    : INotificationHandler<NoteToFollowUpDomainEvent>
+{
+    public Task<Result> Handle(NoteToFollowUpDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        later.Schedule(new WriteDelayedNoteCommand(TextOf(domainEvent.Text), Then: RunTextOf(domainEvent.Text)), time.GetUtcNow());
+        return Task.FromResult(Result.Success());
+    }
+
+    public static string TextOf(string text) => $"from the Notification Handler of {text}";
+
+    public static string RunTextOf(string text) => $"from the delayed run of {text}";
 }

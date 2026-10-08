@@ -34,4 +34,4 @@ None shipped. `PouryaKit.Core` has no runtime package dependency and references 
 - **Intentional differences:**
   - One public type, the scope itself, instead of a static class with a nested public `Disposable`, so Core keeps to three public types.
   - `Enter` takes the context to set, none by default, instead of always clearing it.
-  - The scope is a `readonly ref struct`, so the compiler refuses one that lives across an `await` that could resume on another thread, and a `default` scope, never entered, restores nothing instead of clearing the context.
+  - The scope is a `readonly ref struct`, so the compiler refuses one that lives across an `await`, which could resume on another thread, and a `default` scope, never entered, restores nothing instead of clearing the context.

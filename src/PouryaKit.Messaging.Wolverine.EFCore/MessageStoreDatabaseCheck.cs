@@ -23,11 +23,6 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {
-        if (string.IsNullOrWhiteSpace(storeConnectionString))
-        {
-            yield break;
-        }
-
         if (PostgresDatabase.Of(storeConnectionString) is not { } store)
         {
             yield return $"UsePouryaKitWolverine keeps the message store over the connection string {storeConnectionName}, which names neither a database nor a user, so its database is left to the client's user and no DbContext's can be compared with it. Set Database, or at least Username, in the connection string {storeConnectionName}.";

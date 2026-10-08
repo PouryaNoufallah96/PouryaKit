@@ -3,6 +3,7 @@ using Billing;
 using Catalog;
 using Catalog.Contracts.Products.Events.V1;
 using Inventory;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Domain;
@@ -109,6 +110,24 @@ public sealed class IntegrationEventWiringTests
 
         Assert.StartsWith(
             "The service name amq.inventory names the Host's queue on the broker; use letters and digits in segments joined by single dots or hyphens, not beginning with amq., which RabbitMQ reserves.",
+            thrown.Message
+        );
+    }
+
+    // A variable set to nothing gives a blank value, not a missing one. Wolverine applies nothing of it and says
+    // nothing, so the Host would dial the client's default broker.
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void A_blank_broker_connection_string_is_refused_when_the_host_joins_the_broker_naming_the_connection(string blank)
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder();
+        builder.Configuration.AddInMemoryCollection([new("ConnectionStrings:broker", blank)]);
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.UsePouryaKitRabbitMq("broker", "inventory"));
+
+        Assert.Equal(
+            "The configuration has no connection string named broker for the RabbitMQ broker, or leaves it blank. Set ConnectionStrings:broker.",
             thrown.Message
         );
     }

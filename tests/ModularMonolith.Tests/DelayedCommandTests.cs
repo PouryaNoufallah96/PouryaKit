@@ -7,7 +7,9 @@ using ModularMonolith.Tests.Stub;
 using Npgsql;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
+using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
 using Wolverine;
 using Wolverine.Runtime;
@@ -153,6 +155,76 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from wolverine.wolverine_incoming_envelopes"));
     }
 
+    // Each of them runs inside a Unit of Work, so the refusal of a call outside one leaves them be: a Domain Event
+    // Handler in the Operation that raised its Domain Event, a Notification Handler in its delivery, and a delayed
+    // command, due at once here, in its own run.
+    [Fact]
+    public async Task A_domain_event_handler_a_notification_handler_and_a_delayed_commands_own_run_each_schedule()
+    {
+        var text = $"note {Guid.CreateVersion7()}";
+        var ranFromTheNotificationHandler = ScheduleFollowUpNotificationHandler.TextOf(text);
+
+        var written = await Fixture
+            .Gateway<StubModule>()
+            .SendAsync(new WriteNoteRaisingCommand(text, [new NoteToFollowUpDomainEvent(text)]), TestContext.Current.CancellationToken);
+        await Fixture.WaitUntilAsync(
+            $"exists (select from stub.notes where text = '{ranFromTheNotificationHandler}')",
+            "the note the Notification Handler scheduled was written"
+        );
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(written.IsSuccess);
+        // The Domain Event Handler's and the delayed run's wait their hour; the Notification Handler's has run.
+        Assert.Equal(
+            [["Handled", 1L], ["Scheduled", 2L]],
+            await Fixture.RowsAsync(
+                "select status, count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://stub.delayed-note/' group by status order by status"
+            )
+        );
+        Assert.Empty(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
+    }
+
+    // Only a Unit of Work's commit writes what a scope scheduled, so outside one the command would be dropped with the
+    // scope. A scope never begun names no Module either, and is told of the Unit of Work, not of a missing declaration.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Scheduling_in_a_scope_of_a_host_of_modules_that_runs_no_unit_of_work_throws_and_stores_nothing(bool begun)
+    {
+        Exception? thrown;
+        await using (var scope = Fixture.Host.Services.CreateAsyncScope())
+        {
+            if (begun)
+            {
+                scope.ServiceProvider.BeginOperation(new OperationContext(Actor.Person("ada")), typeof(StubModule));
+            }
+
+            thrown = Record.Exception(() => ScheduleNote(scope.ServiceProvider));
+        }
+
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from wolverine.wolverine_incoming_envelopes"));
+        Assert.StartsWith(NoUnitOfWork, Assert.IsType<InvalidOperationException>(thrown).Message);
+    }
+
+    // Built and never started: scheduling reaches no database. With no Module to name, nothing else refused the call.
+    [Fact]
+    public void Scheduling_in_a_scope_of_an_application_without_modules_that_runs_no_unit_of_work_throws()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
+        );
+        builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        builder.Services.AddPouryaKitDelayedCommand<WriteDelayedNoteCommand>("tests.delayed-note");
+        builder.UsePouryaKitWolverine("app");
+        using var host = builder.Build();
+        using var scope = host.Services.CreateScope();
+        scope.ServiceProvider.BeginOperation(new OperationContext(Actor.Person("ada")));
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => ScheduleNote(scope.ServiceProvider));
+
+        Assert.StartsWith(NoUnitOfWork, thrown.Message);
+    }
+
     // The quote's second opening is refused at the save, after the Outbox step wrote its expiry in the transaction.
     [Fact]
     public async Task A_scheduling_operation_whose_save_is_refused_after_the_outbox_was_written_leaves_no_delayed_command()
@@ -224,6 +296,13 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
             thrown.Message
         );
     }
+
+    private const string NoUnitOfWork =
+        "WriteDelayedNoteCommand was scheduled while no Unit of Work is active, so no commit would write it to the Outbox and it would never be stored. Schedule a command from a command's handler, a Domain Event Handler or a Notification Handler.";
+
+    // A command the scope's Host declares, scheduled as a handler would schedule it.
+    private static void ScheduleNote(IServiceProvider scope) =>
+        scope.GetRequiredService<IDelayedCommands>().Schedule(new WriteDelayedNoteCommand("never stored"), DateTimeOffset.UtcNow.AddHours(1));
 
     private static string Handled(string name) =>
         $"exists (select from wolverine.wolverine_incoming_envelopes where received_at = 'local://{name}/' and status = 'Handled')";

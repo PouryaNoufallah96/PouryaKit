@@ -10,8 +10,9 @@ public static class CqrsHostApplicationBuilderExtensions
     {
         /// <summary>
         /// Stops the Host when its container is built, before anything runs, when its composition holds a mistake the Kit
-        /// can see. The container is validated in every environment: every registration must be constructible and no
-        /// singleton may depend on a scoped service, or <c>Build</c> throws an <c>AggregateException</c>. Then every
+        /// can see. The container is validated in every environment: every service it builds through a constructor must
+        /// have its dependencies registered, and no singleton may depend on a scoped service, or <c>Build</c> throws an
+        /// <c>AggregateException</c>; it does not look inside a factory registration or an open generic one. Then every
         /// registered <see cref="ICompositionCheck"/> runs on the built container, and <c>Build</c> throws one
         /// <see cref="InvalidOperationException"/> naming every problem and its fix: among them a command or query that
         /// declares an authorizer the Kit must register when none is, such as a <c>[RequiresPermission]</c> without
