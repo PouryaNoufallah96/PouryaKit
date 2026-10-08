@@ -716,5 +716,5 @@ transaction is pinned by the commit-timestamp tests (`NotificationTests`, `Integ
 another connection would turn red; and a test of the fresh-database row would pin the absence of a check.
 
 `dotnet test --project tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj` on this package's tree, merged with
-`feat/wave-2` at `a51d7af`, printed 504 passed, 0 failed, 0 skipped. No `validate.py` run: the package changes tests and
+`feat/wave-2` at `b7f0dce`, printed 504 passed, 0 failed, 0 skipped. No `validate.py` run: the package changes tests and
 this record only.
