@@ -1,0 +1,24 @@
+.agents/scripts/test_check_docs.py
+  s_75dee3f51db59e::t_4469160a26ff36 153-171
+  s_75dee3f51db59e::t_0ed7416cd9eb47 44-52
+.agents/scripts/check-docs.py
+  s_75dee3f51db59e::t_4d52bd359729af 91
+  s_75dee3f51db59e::t_57613c92c40c8f 29-36,85-90,92,94-96,348-384,413-414
+  s_75dee3f51db59e::t_828d9c2a54d21e 93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "042584bbd795d707d4412aef7e302ae713fae3b0",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
