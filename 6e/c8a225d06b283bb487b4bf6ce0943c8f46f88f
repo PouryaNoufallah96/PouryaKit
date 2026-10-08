@@ -1,0 +1,53 @@
+tests/ModularMonolith.Tests/MessageStoreDatabaseTests.cs
+  s_bdf0617f846b2b::t_f3b23587760fde 1-62
+src/PouryaKit.Persistence.Postgres/PostgresConnectionsCheck.cs
+  s_bdf0617f846b2b::t_22af2206b66468 4,17
+.agents/skills/pourya-kit/references/persistence.md
+  s_bdf0617f846b2b::t_bbc3b270cd9b88 97
+docs/architecture/README.md
+  s_bdf0617f846b2b::t_bbc3b270cd9b88 286,399,409,426,521
+docs/foundation-review.md
+  s_bdf0617f846b2b::t_bbc3b270cd9b88 252,256
+src/PouryaKit.Persistence.EFCore/DbContextConnection.cs
+  s_bdf0617f846b2b::t_a977a93c2f2239 1-9
+src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs
+  s_bdf0617f846b2b::t_5dd80253807fd8 1-66
+docs/provenance/PouryaKit.Persistence.Postgres.md
+  s_bdf0617f846b2b::t_bbc3b270cd9b88 5
+.claude/agent-memory/kit-implementer/store-database-check-facts.md
+  s_bdf0617f846b2b::t_cb70946f58f381 1-18
+src/PouryaKit.Persistence.Postgres/PostgresServiceCollectionExtensions.cs
+  s_bdf0617f846b2b::t_22af2206b66468 40
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_bdf0617f846b2b::t_8722101d282c25 53
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_bdf0617f846b2b::t_bbc3b270cd9b88 379-395
+.agents/skills/pourya-kit/references/modules.md
+  s_bdf0617f846b2b::t_bbc3b270cd9b88 132
+docs/acceptance.md
+  s_bdf0617f846b2b::t_36954a73c6bc50 720-742
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs
+  s_bdf0617f846b2b::t_9b9489cb3d2cf4 5,27-29,53-55
+docs/provenance/PouryaKit.Persistence.EFCore.md
+  s_bdf0617f846b2b::t_78067d14aa6254 5
+.agents/skills/pourya-kit/references/messaging.md
+  s_bdf0617f846b2b::t_bbc3b270cd9b88 83,698
+docs/provenance/PouryaKit.Messaging.Wolverine.EFCore.md
+  s_bdf0617f846b2b::t_bbc3b270cd9b88 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6ec8a225d06b283bb487b4bf6ce0943c8f46f88f",
+  "prompts": {},
+  "sessions": {
+    "s_bdf0617f846b2b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a623e531-5113-48cd-b698-2c903ed178f5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
