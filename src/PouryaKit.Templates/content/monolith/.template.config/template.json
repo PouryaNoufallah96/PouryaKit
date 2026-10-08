@@ -4,7 +4,7 @@
   "classifications": ["Web", "API", "Monolith", "PouryaKit"],
   "identity": "PouryaKit.Templates.Monolith",
   "name": "PouryaKit monolith",
-  "description": "A Host on PouryaKit with the Proving Sample's Catalog as its one Module in all but name: a plain registration and IDispatcher endpoints, no Modularity, with the service defaults and an HTTP smoke test.",
+  "description": "A Host on PouryaKit that starts with one Module, the Proving Sample's Catalog, as a plain registration with IDispatcher endpoints and no Modularity; it grows into the modular monolith by adding PouryaKit.Modularity, its business code unchanged. With the service defaults and an HTTP smoke test.",
   "shortName": "pouryakit-monolith",
   "sourceName": "ModularMonolith",
   "defaultName": "Shop",

@@ -1,9 +1,10 @@
 # Project templates
 
-`PouryaKit.Templates`, a `dotnet new` template package: a new application starts from the Proving Sample's business code in one of two compositions. The templates are generated from the sample, never maintained beside it.
+`PouryaKit.Templates`, a `dotnet new` template package: a new application starts from the Proving Sample's business code in one of two compositions. The monolith is the single-Module start, which grows into the modular monolith by adding `PouryaKit.Modularity` ([below](#growing-the-monolith-into-a-modular-monolith)); the modular monolith is several Modules in one Host, each reached through its Gateway. The templates are generated from the sample, never maintained beside it.
 
 - [Install and generate](#install-and-generate)
 - [What each composition composes](#what-each-composition-composes)
+- [Growing the monolith into a modular monolith](#growing-the-monolith-into-a-modular-monolith)
 - [Running the generated Host](#running-the-generated-host)
 - [The smoke test](#the-smoke-test)
 - [The optional recipes](#the-optional-recipes)
@@ -30,11 +31,12 @@ dotnet new pouryakit-modular-monolith -n Acme.Shop
 
 | | `pouryakit-monolith` | `pouryakit-modular-monolith` |
 |---|---|---|
+| Role | The single-Module start: one Module's data and rules, which grows into the modular monolith when a second Module arrives | Several Modules in one Host, each reached through its Gateway |
 | Business code | Catalog and `Catalog.Contracts` | Catalog, `Catalog.Contracts`, Billing and Inventory |
 | Composition Root | `CatalogModule`, a static class whose `services.AddCatalog()` is a plain registration on the Host's services | Each Module's `IModuleDefinition`, added with `AddPouryaKitModules` |
 | Endpoint adapters | Each Feature's endpoint sends through `IDispatcher` | Each Feature's endpoint sends through `IGatewayProcessor<CatalogModule>` |
 | Kit packages | Every Wave 2 Capability that applies, without `PouryaKit.Modularity` | Every Wave 2 Capability, with `PouryaKit.Modularity` |
-| The Host's checks | Container validation, the composition checks and the startup checks from `AddPouryaKitCompositionChecks` | Both from `AddPouryaKitModules`, which calls it |
+| The Host's checks | Container validation, the composition checks and the startup checks from `AddPouryaKitCompositionChecks` | The same, from `AddPouryaKitModules`, which calls it |
 
 - **The same business code.** Aggregates, commands, queries, handlers, validators, the repository, Dapper reads and every event handler are the sample's own files in both. Only the Composition Root and the endpoint adapters differ, and in the modular monolith they are the sample's own too.
 - **The monolith is one Module in all but name** (plan I.1). A persistence package adds its `IUnitOfWork` with `Add`, and only Modularity's `ModuleBuilder` keys each Module's own, so a Host without Modularity holds one Unit of Work: one Module's data. The monolith therefore takes Catalog alone; Billing and Inventory stay in the modular monolith. Its Operation names no Module, its Unit of Work is the Host's, and Catalog publishes with no Module, so its Integration Events still reach another Host over RabbitMQ when a broker is configured.
@@ -47,6 +49,25 @@ builder.AddPouryaKitCompositionChecks();
 ```
 
 - **The monolith names its assembly; the modular monolith infers it.** The monolith's `AddCatalog()` runs on the Host's own services, which are no Module's builder, so its registrations name `typeof(CatalogModule).Assembly` and its declarations belong to the application. Each modular Composition Root registers on its Module's builder with no assembly and no Module ([modules.md](modules.md#the-composition-root)).
+
+## Growing the monolith into a modular monolith
+
+The monolith is where a project of one Module starts, not a limit on it. When a second Module arrives, the project adds `PouryaKit.Modularity` and becomes the modular monolith; no aggregate, command, query, handler, validator, repository, read or event handler changes, since both templates generate Catalog's business code from the same sample files. A Module that later runs in its own process is the service composition, Wave 4's template; the Proving Sample's `Inventory.Host` runs one over RabbitMQ ([rabbitmq.md](rabbitmq.md)).
+
+Generated with one name from one template package, the two solutions differ in twelve files, and the modular monolith adds Billing and Inventory, `CatalogProducts.cs` and its cross-Module test. Nine of the twelve change when Catalog becomes a Module:
+
+1. `Directory.Packages.props`: `PouryaKit.Modularity` at `$(PouryaKitVersion)`.
+2. `src/Modules/Catalog/Catalog/Catalog.csproj`: a `PackageReference` to `PouryaKit.Modularity`.
+3. `CatalogModule.cs`: the static class whose `services.AddCatalog()` registers on the Host's services becomes `public sealed class CatalogModule : IModuleDefinition`, whose `Configure(ModuleBuilder module)` makes the same calls on `module`, without the `typeof(CatalogModule).Assembly` each registration names in the monolith. On a Module's builder the Kit scans the Module's own assembly, and every declaration, `Publish`, `PublishSnapshot` and `AddPouryaKitNotificationHandlers` included, belongs to the Module with nothing added ([modules.md](modules.md#the-composition-root)).
+4. The five endpoints, `CreateCategoryEndpoint`, `CreateProductEndpoint`, `GetProductEndpoint`, `ListProductsEndpoint` and `RenameProductEndpoint`: each takes `OperationContext` and `IGatewayProcessor<CatalogModule>` in place of `IDispatcher`, and passes the context to `SendAsync` or `QueryAsync` ([web.md](web.md#endpoints)).
+5. `src/Acme.Shop.Host/Program.cs`: `builder.Services.AddCatalog()` becomes `builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>())`. `AddPouryaKitModules` calls `AddPouryaKitCompositionChecks()`, so the monolith's own call can go; calling it again changes nothing.
+
+The other three, the `.slnx`, the Host's csproj and `appsettings.json`, differ by Billing and Inventory: a second Module adds its project, its row in the solution, its `ProjectReference` in the Host, its `modules.Add<…>()` and its own configuration. `CatalogProducts.cs` and its registration, Catalog's answer to `ICatalogProducts` (in `Catalog.Contracts`, which both templates generate), come back when another Module asks Catalog a question ([modules.md](modules.md#asking-another-module-a-question)).
+
+The two traps this path had are closed:
+
+- **A declaration without its Module.** In the monolith a declaration belongs to the application. On a Module's builder it belongs to the Module with no argument (#61), and one left on `builder.Services` in a Host of Modules fails the Host when it is built, naming its form on the Module's builder and the form that names the Module ([modules.md](modules.md#the-hosts-checks)). Until #61 a Composition Root passed `typeof(CatalogModule)` to each declaration by hand, and a forgotten one failed only at its first publish.
+- **A `ConfigureContainer` of the Host's own.** The monolith's `Program.cs` holds none, and calls `AddPouryaKitCompositionChecks()` last, so one the Host adds before it keeps the checks installed. In a Host of Modules, a `ConfigureContainer` after `AddPouryaKitModules` replaces the container the checks install, and the Host fails when it starts, naming the call (#61, #62). Until #61 the monolith's `Program.cs` carried a `ConfigureContainer` block, and a Host grown from it lost its container validation and its checks without a word.
 
 ## Running the generated Host
 
