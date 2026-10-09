@@ -149,6 +149,19 @@ def check_skills() -> None:
             failures.append(f"{rel(entry)}: must be a symlink to .agents/skills/{entry.name} or .claude/mods/{entry.name}")
 
 
+def check_skills_lock() -> None:
+    """Each vendored skill still matches its hash in skills-lock.json. The hash's file order is JavaScript's, so Node computes it."""
+    node = shutil.which("node")
+    if node is None:
+        failures.append("skills-lock.json: node is not on PATH, so no vendored skill was checked against its hash")
+        return
+    done = subprocess.run([node, str(ROOT / ".agents/scripts/check-skills-lock.mjs")], capture_output=True, text=True)
+    found = [line.removeprefix("FAIL").strip() for line in done.stdout.splitlines() if line.startswith("FAIL")]
+    if done.returncode and not found:
+        found = [f"check-skills-lock.mjs: exit {done.returncode}: {done.stderr.strip()[-300:]}"]
+    failures.extend(found)
+
+
 def check_mods() -> None:
     """A mod is a plugin with a hooks module; Claude Code loads it through its .claude/skills symlink."""
     for mod in sorted(d for d in (ROOT / ".claude/mods").glob("*") if d.is_dir()):
@@ -534,6 +547,7 @@ def main() -> int:
     check_tree()
     check_package_counts()
     check_skills()
+    check_skills_lock()
     check_mods()
     check_agents()
     check_claude_settings()
