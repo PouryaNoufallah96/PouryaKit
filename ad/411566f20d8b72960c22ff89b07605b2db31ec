@@ -1,0 +1,46 @@
+docs/acceptance.md
+  s_2867f8a3b2cd19::t_1789af9d455233 1197-1209
+README.md
+  s_2867f8a3b2cd19::t_3668210b46f6b7 27
+docs/foundation-review.md
+  s_2867f8a3b2cd19::t_243d1022968a3c 7-8
+  s_2867f8a3b2cd19::t_6d8e3516d1dddf 1041-1049,1052-1055,1058-1072
+  s_2867f8a3b2cd19::t_ebbc8994d70987 1050-1051
+  s_2867f8a3b2cd19::t_ccf826b593db2e 1081-1082
+  s_2867f8a3b2cd19::t_e4009f53278cbb 1087
+  s_2867f8a3b2cd19::t_bfc10822c519e5 1001-1004
+  s_2867f8a3b2cd19::t_591e6064d378ed 9-13
+  s_2867f8a3b2cd19::t_b72ac8970f91a8 861
+  s_2867f8a3b2cd19::t_64ca0230aa91df 1040
+  s_2867f8a3b2cd19::t_d86749ae6aec0f 1056-1057
+  s_2867f8a3b2cd19::t_dbcb77facb90bc 779-780
+  s_2867f8a3b2cd19::t_f2b7b0998b7f6f 977
+  s_2867f8a3b2cd19::t_ddd540eeeda929 851
+  s_2867f8a3b2cd19::t_ad74314aebb064 5-6
+GLOSSARY.md
+  s_2867f8a3b2cd19::t_5bc66792e107d6 54-57
+docs/architecture/README.md
+  s_2867f8a3b2cd19::t_a01bd70eb68832 40
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_2867f8a3b2cd19::t_050c5e141ee556 3
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_2867f8a3b2cd19::t_07fea29dd9eee1 31
+.agents/skills/pourya-kit/references/publication.md
+  s_2867f8a3b2cd19::t_4e6b9eb2e5eebb 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ad411566f20d8b72960c22ff89b07605b2db31ec",
+  "prompts": {},
+  "sessions": {
+    "s_2867f8a3b2cd19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00cca649-e6c4-44eb-8549-8c8dbeae846f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
