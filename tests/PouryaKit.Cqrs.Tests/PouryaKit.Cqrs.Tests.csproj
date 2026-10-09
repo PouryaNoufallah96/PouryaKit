@@ -11,7 +11,11 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Remove="PouryaKit.Cqrs.Tests.Module\**" />
+    <None Remove="PouryaKit.Cqrs.Tests.Module\**" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\PouryaKit.Cqrs\PouryaKit.Cqrs.csproj" />
-    <ProjectReference Include="..\PouryaKit.Cqrs.Tests.Module\PouryaKit.Cqrs.Tests.Module.csproj" />
+    <ProjectReference Include="PouryaKit.Cqrs.Tests.Module\PouryaKit.Cqrs.Tests.Module.csproj" />
   </ItemGroup>
 </Project>

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Persistence.EFCore;
 
-namespace ModularMonolith.Tests;
+namespace ModularMonolith.Tests.Fixtures;
 
 /// <summary>
 /// A stop point between the Unit of Work's commit and the moment it sends what it wrote to the Outbox, for the

@@ -5,7 +5,7 @@ using PouryaKit.Cqrs;
 using PouryaKit.Security;
 using PouryaKit.Testing;
 
-namespace ModularMonolith.Tests;
+namespace ModularMonolith.Tests.Fixtures;
 
 // The Host's own source, plus an explicit grant to the tests' named Actor: the Gateway tests run as
 // GatewayTestExtensions.TestActor, independent work with no HTTP caller, which holds only the permissions granted here,

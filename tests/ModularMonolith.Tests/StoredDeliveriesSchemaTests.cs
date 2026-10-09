@@ -1,5 +1,16 @@
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.DependencyInjection;
+using ModularMonolith.Tests.Stub;
 using Npgsql;
+using PouryaKit.Caching;
+using PouryaKit.Cqrs;
+using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Messaging.Wolverine.EFCore;
+using PouryaKit.Persistence.EFCore;
+using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -143,5 +154,83 @@ public sealed class StoredDeliveriesSchemaTests(AppFixture app) : HostTest<AppFi
             await using var cleanup = new NpgsqlCommand("drop schema if exists \"review-broker\" cascade", connection);
             await cleanup.ExecuteNonQueryAsync(CancellationToken.None);
         }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Receipts_and_snapshot_versions_write_in_a_schema_containing_a_quote(bool snapshot)
+    {
+        const string schema = "review\"quoted";
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
+        );
+        builder.Services.UsePouryaKitPostgres<QuotedSchemaDbContext>("app", schema);
+        builder.Services.AddPouryaKitCqrs(typeof(StubModule).Assembly);
+        builder.Services.AddPouryaKitCaching();
+        builder.Services.AddScoped(
+            typeof(IReceipts),
+            typeof(ReceiptTable).Assembly.GetType("PouryaKit.Messaging.Wolverine.EFCore.EfReceipts", throwOnError: true)!
+        );
+        using var host = builder.Build();
+        await using var scope = host.Services.CreateAsyncScope();
+        scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("review")));
+        var dbContext = scope.ServiceProvider.GetRequiredService<QuotedSchemaDbContext>();
+        var migration = new MigrationBuilder("Npgsql.EntityFrameworkCore.PostgreSQL");
+        migration.EnsureSchema(schema);
+        migration.CreateReceiptTable(schema);
+        migration.CreateSnapshotVersionTable(schema);
+        try
+        {
+            foreach (var command in dbContext.GetService<IMigrationsSqlGenerator>().Generate(migration.Operations, dbContext.Model))
+            {
+                await dbContext.Database.ExecuteSqlRawAsync(command.CommandText, cancellationToken);
+            }
+
+            var receipts = scope.ServiceProvider.GetRequiredService<IReceipts>();
+            var messageId = Guid.CreateVersion7();
+            await using (var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken))
+            {
+                if (snapshot)
+                {
+                    Assert.True(await receipts.RecordVersionAsync("tests.review", "aggregate", 1, cancellationToken));
+                    Assert.True(await receipts.RecordVersionAsync("tests.review", "aggregate", 2, cancellationToken));
+                    Assert.False(await receipts.RecordVersionAsync("tests.review", "aggregate", 1, cancellationToken));
+                }
+                else
+                {
+                    Assert.True(await receipts.RecordAsync("tests.review", messageId, cancellationToken));
+                    Assert.False(await receipts.RecordAsync("tests.review", messageId, cancellationToken));
+                }
+
+                await transaction.CommitAsync(cancellationToken);
+            }
+
+            await using var connection = new NpgsqlConnection(Fixture.ConnectionString);
+            await connection.OpenAsync(cancellationToken);
+            await using var stored = new NpgsqlCommand(
+                snapshot
+                    ? "select version from \"review\"\"quoted\".pouryakit_snapshot_versions where subscription = 'tests.review' and aggregate_id = 'aggregate'"
+                    : "select count(*) from \"review\"\"quoted\".pouryakit_receipts where subscription = 'tests.review' and message_id = @id",
+                connection
+            );
+            if (!snapshot)
+            {
+                stored.Parameters.AddWithValue("id", messageId);
+            }
+
+            Assert.Equal(snapshot ? 2L : 1L, await stored.ExecuteScalarAsync(cancellationToken));
+        }
+        finally
+        {
+            await dbContext.Database.ExecuteSqlRawAsync("drop schema if exists \"review\"\"quoted\" cascade", CancellationToken.None);
+        }
+    }
+
+    private sealed class QuotedSchemaDbContext(DbContextOptions<QuotedSchemaDbContext> options) : PouryaKitDbContext(options)
+    {
+        // Only the migration-created messaging tables are needed; the Stub's mappings belong to its own DbContext.
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("review\"quoted");
     }
 }

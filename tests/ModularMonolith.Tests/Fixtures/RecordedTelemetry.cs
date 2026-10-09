@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using PouryaKit.Observability;
 
-namespace ModularMonolith.Tests;
+namespace ModularMonolith.Tests.Fixtures;
 
 /// <summary>
 /// A test's listeners, until disposed: every activity of the Kit's Operation source and of <see cref="Upstream"/> that

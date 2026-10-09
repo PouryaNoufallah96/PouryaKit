@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using ModularMonolith.Host;
 using PouryaKit.Cqrs;
 
-namespace ModularMonolith.Tests;
+namespace ModularMonolith.Tests.Fixtures;
 
 // Stands in for the Host's bearer scheme: a request with "Authorization: Test <id>" is the authenticated person <id>,
 // and a request without it is anonymous. It issues the claims the Kit's bearer scheme normalizes a verified token into:

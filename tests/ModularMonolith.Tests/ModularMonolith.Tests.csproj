@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="ModularMonolith.Tests.Fixtures" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Misnamed\**" />
