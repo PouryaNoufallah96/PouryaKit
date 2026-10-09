@@ -110,6 +110,23 @@ longer decides whether the repository writes, because it is true in a scope that
   nothing, and a service that a handler calls is a legitimate consumer it would refuse
   ([#68](https://github.com/PouryaNoufallah96/PouryaKit/issues/68)). The owner keeps a Host's own access to the
   write seams as it is.*
+  *Ticket #68 (2026-10-09) ran the first case in an application without Modules. Where the scope sends no command,
+  the change is lost without a word, as written: it is dropped and nothing throws
+  (`SingleModuleTests.A_change_to_a_loaded_aggregate_in_a_scope_that_sends_no_command_is_dropped_without_a_word`). A
+  query sent after the change is not refused, and the change is still dropped: the tracked-state comparison's
+  baseline is the query's start, which already holds the change
+  (`SingleModuleTests.A_change_to_a_loaded_aggregate_is_not_refused_by_a_query_sent_after_it_and_is_still_dropped`).
+  But a command the same scope sends after the change, and that succeeds, saves it: its commit saves the whole
+  DbContext, so the change is committed by a command that never made it
+  (`SingleModuleTests.A_change_to_a_loaded_aggregate_is_saved_by_the_commit_of_a_command_sent_after_it`). The three
+  tests change a value; none raises a Domain Event. The owner decided on 2026-10-09 to judge the monolith
+  template's own files, its Composition Root, its endpoints, the Host's `Program.cs` and the smoke test both
+  templates share: read as text, none of them takes a repository, as a parameter, a field or a local of
+  `IRepository<,>` or of an interface the Proving Sample derives from it, or from a service provider
+  (`TemplateTests.None_of_the_monoliths_own_files_takes_a_repository`; the rule's summary lists what text cannot
+  show). The template's business code is the Proving Sample's and this rule does not judge it, so it never has to
+  tell a handler from a service that a handler calls. What stays open: code an application adds after `dotnet new`
+  is not judged, since no package ships structure rules.*
 - **The alternatives rejected.**
   - *Widening Cqrs's `InternalsVisibleTo`* to every package that guards a write, with the signal kept internal: it
     would undo ADR 0007's rule that the list serves the trusted restore alone, and `TrustedRestoreTests` would have to

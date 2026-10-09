@@ -153,6 +153,35 @@ public sealed class TemplateTests
         );
     }
 
+    // Ticket #68: an application without Modules has a Unit of Work in its request scope, so an endpoint, a service or
+    // the Host could take a repository and change an aggregate outside a command, which the Kit cannot refuse.
+    [Fact]
+    public void None_of_the_monoliths_own_files_takes_a_repository()
+    {
+        IReadOnlyList<TextFile> own = [.. Own(Monolith), .. Own(Shared)];
+
+        Assert.Empty(RepositoriesTaken(own, PackedSample));
+        // The rule reads the Composition Root, which registers the sample's repository and takes none.
+        Assert.Contains(own, file => file.Text.Contains("AddScoped<IProductRepository, ProductRepository>()", StringComparison.Ordinal));
+        var endpoint = own.Single(file => file.Path.EndsWith("/RenameProductEndpoint.cs", StringComparison.Ordinal));
+        Assert.Equal(
+            [
+                "src/ModularMonolith.Host/Program.cs takes IRepository<Product, ProductId>; send a command through IDispatcher instead: a handler takes the repository, and a change made outside a command is dropped or saved by a command that never made it.",
+                "src/Modules/Catalog/Catalog/Products/Features/RenameProduct/ProductRenamer.cs takes IProductRepository; send a command through IDispatcher instead: a handler takes the repository, and a change made outside a command is dropped or saved by a command that never made it.",
+                "src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductEndpoint.cs takes IRepository<Product, ProductId>; send a command through IDispatcher instead: a handler takes the repository, and a change made outside a command is dropped or saved by a command that never made it.",
+            ],
+            RepositoriesTaken(
+                [
+                    .. own.Where(file => file != endpoint && file.Path != "src/ModularMonolith.Host/Program.cs"),
+                    endpoint with { Text = endpoint.Text.Replace("IDispatcher dispatcher", "IRepository<Product, ProductId> products", StringComparison.Ordinal) },
+                    new("src/Modules/Catalog/Catalog/Products/Features/RenameProduct/ProductRenamer.cs", "internal sealed class ProductRenamer(IProductRepository products);"),
+                    new("src/ModularMonolith.Host/Program.cs", "// IProductRepository is Catalog's own.\nvar products = scope.ServiceProvider.GetRequiredService<IRepository<Product, ProductId>>();"),
+                ],
+                PackedSample
+            ).Order(StringComparer.Ordinal)
+        );
+    }
+
     // Ticket #59: -n acme-shop names the folders acme-shop.Host, so the solution and the project references must too.
     [Fact]
     public void Each_template_names_its_projects_paths_through_the_name_as_typed_the_same_way_in_both()
