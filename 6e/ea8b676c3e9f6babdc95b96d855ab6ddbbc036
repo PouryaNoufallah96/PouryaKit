@@ -1,0 +1,23 @@
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_744c07a8061ea2::t_53677d70bf4ad7 36-41
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_744c07a8061ea2::t_c5f3ca392cf530 1
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_744c07a8061ea2::t_7e3bb79264b660 41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6eea8b676c3e9f6babdc95b96d855ab6ddbbc036",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
