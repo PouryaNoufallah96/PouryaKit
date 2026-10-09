@@ -1,0 +1,30 @@
+docs/adr/0010-one-namespace-per-kit-package.md
+  s_744c07a8061ea2::t_19702d4f1d243c 44-47
+.claude/agent-memory/kit-implementer/core-json-and-architecture-test-facts.md
+  s_744c07a8061ea2::t_19702d4f1d243c 75
+docs/architecture/README.md
+  s_744c07a8061ea2::t_19702d4f1d243c 660
+tests/PouryaKit.ArchitectureTests/NamespaceTests.cs
+  s_744c07a8061ea2::t_8812c319689628 6
+  s_744c07a8061ea2::t_9ad8712dcfd899 23-31
+docs/acceptance.md
+  s_744c07a8061ea2::t_529c78990a4501 1054
+tests/PouryaKit.ArchitectureTests/Offending/Stray/StrayType.cs
+  s_744c07a8061ea2::t_dd2857d83e18f6 1-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7baa1182ff762ca2f5ffcc61905c8f77f2c29eee",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
