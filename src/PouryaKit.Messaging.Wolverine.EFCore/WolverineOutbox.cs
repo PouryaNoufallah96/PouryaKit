@@ -27,7 +27,7 @@ internal sealed partial class WolverineOutbox(
     ISnapshotMappers snapshotMappers,
     ILogger<WolverineOutbox> logger
 ) : IUnitOfWorkOutbox,
-    INotificationOutbox
+    IOutbox
 {
     private DbContextOutbox? _written;
 

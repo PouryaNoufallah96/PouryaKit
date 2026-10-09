@@ -12,10 +12,16 @@ namespace PouryaKit.Persistence.EFCore;
 /// <see cref="IEntityTypeConfiguration{TEntity}"/> in the assembly is applied, and the default schema is the schema of
 /// the migrations history table. Every aggregate's <see cref="AggregateRoot{TId}.Version"/> is its concurrency token,
 /// and every <see cref="ISoftDeletable"/> entity is left out of queries by a filter named
-/// <c>PouryaKit.SoftDelete</c>. Override <see cref="OnModelCreating"/> only to add to it, and call the base.
+/// <see cref="SoftDeleteFilter"/>. Override <see cref="OnModelCreating"/> only to add to it, and call the base.
 /// </summary>
 public abstract class PouryaKitDbContext : DbContext
 {
+    /// <summary>
+    /// The name of the query filter that leaves soft-deleted rows out, <c>PouryaKit.SoftDelete</c>. A read that must see
+    /// them passes it to EF Core's <c>IgnoreQueryFilters([PouryaKitDbContext.SoftDeleteFilter])</c>.
+    /// </summary>
+    public const string SoftDeleteFilter = "PouryaKit.SoftDelete";
+
     protected PouryaKitDbContext(DbContextOptions options)
         : base(options)
     {

@@ -6,9 +6,10 @@ namespace PouryaKit.Domain;
 /// <summary>
 /// Writes every typed ID as its bare value and reads it back. <c>UsePouryaKitJson</c> adds it once to
 /// <see cref="JsonSerializerOptions.Converters"/>; System.Text.Json does not apply a converter
-/// attribute on a base type to derived types, so a per-type attribute is never the way.
+/// attribute on a base type to derived types, so a per-type attribute is never the way. Internal, so no code outside
+/// Domain can add it to options of its own.
 /// </summary>
-public sealed class TypedIdJsonConverterFactory : JsonConverterFactory
+internal sealed class TypedIdJsonConverterFactory : JsonConverterFactory
 {
     public override bool CanConvert(Type typeToConvert) => TypedId.GetValueType(typeToConvert) is not null;
 

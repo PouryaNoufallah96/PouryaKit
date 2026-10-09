@@ -42,7 +42,7 @@ None shipped. `PouryaKit.Domain` has no runtime package dependency and reference
 
 ## Entity, aggregate root, value object and business rules
 
-- **Kit files:** `src/PouryaKit.Domain/Entity.cs`, `src/PouryaKit.Domain/AggregateRoot.cs`, `src/PouryaKit.Domain/IAggregateRoot.cs`, `src/PouryaKit.Domain/ValueObject.cs`, `src/PouryaKit.Domain/IBusinessRule.cs`
+- **Kit files:** `src/PouryaKit.Domain/Entity.cs`, `src/PouryaKit.Domain/AggregateRoot.cs`, `src/PouryaKit.Domain/IAggregateRoot.cs`, `src/PouryaKit.Domain/IBusinessRule.cs`
 - **Upstream:** https://github.com/PouryaNoufallah96/cybernod
 - **Commit:** bae8ac3b7e46f09e9375647786d03391a500876a
 - **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.Core/Domain/Primitives/Entity.cs`, `src/BuildingBlocks/BuildingBlocks.Core/Domain/Primitives/AggregateRoot.cs`, `src/BuildingBlocks/BuildingBlocks.Core/Domain/Primitives/ValueObject.cs`, `src/BuildingBlocks/BuildingBlocks.Core/Domain/Primitives/IBusinessRule.cs`
@@ -55,6 +55,7 @@ None shipped. `PouryaKit.Domain` has no runtime package dependency and reference
   - The aggregate keeps Domain Events in a plain list instead of a `ConcurrentQueue`, raises them through a protected `Raise`, and clears them only through `IAggregateRoot`, implemented explicitly so that it is not on the aggregate's own surface. The de-duplication by event ID and the public add and remove methods are removed.
   - The aggregate exposes a `Version` with no mutator in the domain; the Unit of Work advances it once per changed aggregate. The idea of an aggregate version comes from Ultrabusiness (`a85eacd`, `src/BuildingBlocks/BuildingBlocks.DDD/SeedWork/Primitives/AggregateRoot.cs`), reimplemented with no code taken. Unlike there, raising a Domain Event does not advance it.
   - A value object is a record, so equality is synthesized from its type and members instead of hand-written equality components.
+  - Ticket #81 (2026-10-10) removed the value-object base record adapted from the upstream file named above: nothing derived from it, its one member repeated `Entity.CheckRule`, and a record already gives value equality.
 
 ## Domain Event base
 

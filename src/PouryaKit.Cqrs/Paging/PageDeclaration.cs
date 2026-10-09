@@ -93,23 +93,23 @@ public sealed class PageDeclaration
         var errors = ImmutableArray.CreateBuilder<Error>();
         if (request.Size < 1 || request.Size > MaxSize)
         {
-            errors.Add(Error.Validation("Page.SizeOutOfRange", $"The page size is from 1 to {MaxSize}.", "Size"));
+            errors.Add(Error.Validation(PageErrorCodes.SizeOutOfRange, $"The page size is from 1 to {MaxSize}.", "Size"));
         }
 
         // The offset of the Page's first item must fit an int, which EF Core's Skip takes.
         if (request.Number < 1 || (request.Size >= 1 && request.Number - 1 > int.MaxValue / request.Size))
         {
-            errors.Add(Error.Validation("Page.NumberOutOfRange", "The page number is 1 or more, within the reachable pages.", "Number"));
+            errors.Add(Error.Validation(PageErrorCodes.NumberOutOfRange, "The page number is 1 or more, within the reachable pages.", "Number"));
         }
 
         if (request.Sort is { } sort && !Sorts.Contains(sort, StringComparer.Ordinal))
         {
-            errors.Add(Error.Validation("Page.SortUnknown", $"Sort by one of: {string.Join(", ", Sorts)}.", "Sort"));
+            errors.Add(Error.Validation(PageErrorCodes.SortUnknown, $"Sort by one of: {string.Join(", ", Sorts)}.", "Sort"));
         }
 
         if (!Enum.IsDefined(request.Direction))
         {
-            errors.Add(Error.Validation("Page.DirectionUnknown", "Sort ascending or descending.", "Direction"));
+            errors.Add(Error.Validation(PageErrorCodes.DirectionUnknown, "Sort ascending or descending.", "Direction"));
         }
 
         var filters = request.Filters ?? [];
@@ -121,7 +121,7 @@ public sealed class PageDeclaration
             {
                 errors.Add(
                     Error.Validation(
-                        "Page.FilterUnknown",
+                        PageErrorCodes.FilterUnknown,
                         Filters.Count == 0
                             ? "This read has no filters."
                             : $"Filter on one of: {string.Join(", ", Filters.Select(declared => declared.Name))}.",
@@ -133,7 +133,7 @@ public sealed class PageDeclaration
             {
                 errors.Add(
                     Error.Validation(
-                        "Page.FilterOperatorUnsupported",
+                        PageErrorCodes.FilterOperatorUnsupported,
                         $"Filter {field.Name} with one of: {string.Join(", ", field.Operators.Select(supported => supported.Name))}.",
                         target
                     )
@@ -142,14 +142,14 @@ public sealed class PageDeclaration
             else if (field.Read(filter.Value) is null)
             {
                 errors.Add(
-                    Error.Validation("Page.FilterValueInvalid", $"Filter {field.Name} with a {field.TypeName} value.", target)
+                    Error.Validation(PageErrorCodes.FilterValueInvalid, $"Filter {field.Name} with a {field.TypeName} value.", target)
                 );
             }
             else if (!given.Add((field.Name, filter.Operator)))
             {
                 errors.Add(
                     Error.Validation(
-                        "Page.FilterRepeated",
+                        PageErrorCodes.FilterRepeated,
                         $"Filter {field.Name} with {filter.Operator.Name} once.",
                         target
                     )

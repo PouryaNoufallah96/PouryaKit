@@ -21,7 +21,7 @@ public static class IntegrationEventServiceCollectionExtensions
         /// Event, when the wire name is missing, invalid or equal ignoring case to another's, and when the type is already
         /// published under another name or by another Module. The Host then fails when it is built if the declaration
         /// belongs to no Module in a Host of Modules or to a Module the Host does not compose, if no Outbox writes
-        /// Integration Events (<see cref="INotificationOutbox"/>), if Wolverine would route another of its message types
+        /// Integration Events (<see cref="IOutbox"/>), if Wolverine would route another of its message types
         /// to this type's subscriptions, because that type's wire name, name or full name equals this type's full name,
         /// ignoring case, and if this process already sends the type under another wire name.
         /// </summary>

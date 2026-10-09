@@ -138,3 +138,17 @@ longer decides whether the repository writes, because it is true in a scope that
     yet.
   - *A guard in the repository's constructor or its read members*: a query's handler injects the repository and reads
     through it with no Unit of Work, and so does a specific repository built in a scope that runs no command.
+
+## Amendment (2026-10-10, ticket #81: the Unit of Work's DbContext is reached through a static accessor)
+
+The decision above stands, and so does the #66 and #67 amendment. Only the shape of one of the Kit's write seams
+changes. The DbContext an EF Core Unit of Work saves and commits was an extension property on `IUnitOfWork`, the
+amendment's `IUnitOfWork.DbContext`. Every repository has `PouryaKit.Persistence.EFCore` and an `IUnitOfWork` in scope,
+so code completion offered Feature code the DbContext this decision reserves for the Unit of Work, and only the
+structure test caught a call, after compilation (spec #74, finding A5).
+
+- **Now** `EfUnitOfWorkDbContext.Of(unitOfWork)`, a plain static accessor in the same package and namespace, which no
+  completion on `IUnitOfWork` lists. Its Kit callers, the Receipts and the idempotency store, are unchanged otherwise.
+- **The structure test still closes it to a Module.** `FeatureCodeTests.A_module_that_saves_commits_writes_in_bulk_or_runs_a_kit_step_is_rejected`
+  names the offending Module's call of `EfUnitOfWorkDbContext.Of`, red with the accessor taken off the rule's Kit
+  steps.

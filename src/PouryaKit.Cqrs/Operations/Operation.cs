@@ -11,16 +11,6 @@ namespace PouryaKit.Cqrs;
 public sealed class Operation
 {
     private readonly Func<IReadingStateGuard?> _readingState;
-    private static readonly Error ReadingChangedState = Error.Unexpected(
-        "Operation.ReadingChangedState",
-        "Code that only reads changed tracked state, so the Operation was rolled back."
-    );
-
-    /// <summary>
-    /// Creates an Operation without a persistence state guard. The Kit's service registration attaches the current
-    /// Unit of Work's guard when one exists; a manually constructed Operation guards only the Kit's write entry points.
-    /// </summary>
-    public Operation() : this(() => null) { }
 
     internal Operation(Func<IReadingStateGuard?> readingState) => _readingState = readingState;
 
@@ -228,7 +218,7 @@ public sealed class Operation
             }
             catch
             {
-                operation.MarkRollbackOnly([ReadingChangedState]);
+                operation.MarkRollbackOnly([OperationErrors.ReadingChangedState]);
                 throw;
             }
             finally

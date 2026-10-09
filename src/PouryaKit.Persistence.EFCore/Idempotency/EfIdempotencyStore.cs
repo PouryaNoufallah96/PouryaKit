@@ -72,7 +72,7 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider ti
     private async Task<T> ExecuteAsync<T>(Func<string, string> sql, Func<DatabaseFacade, string, Task<T>> run)
     {
         var dbContext =
-            unitOfWork.DbContext
+            EfUnitOfWorkDbContext.Of(unitOfWork)
             ?? throw new InvalidOperationException(
                 $"Idempotency keys are kept in the EF Core Unit of Work's transaction, but the scope's Unit of Work is {unitOfWork.GetType().Name}."
             );

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Options;
 
 namespace PouryaKit.Security;
 
@@ -31,43 +32,9 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
         this.keySize = keySize;
     }
 
-    public static Pbkdf2PasswordHasher Create(PasswordHashingOptions options)
-    {
-        var algorithm = Pbkdf2Algorithm.Of(options.Algorithm);
-        List<string> problems = [];
-        if (algorithm is null)
-        {
-            problems.Add($"Algorithm {options.Algorithm} is not one of {string.Join(", ", Enum.GetNames<PasswordHashAlgorithm>())}.");
-        }
-        else
-        {
-            if (options.Iterations < algorithm.MinIterations || options.Iterations > MaxIterations)
-            {
-                problems.Add(
-                    $"Iterations {options.Iterations} is outside {algorithm.MinIterations:N0} to {MaxIterations:N0} for {options.Algorithm}."
-                );
-            }
-
-            if (options.KeySize < MinKeySize || options.KeySize > algorithm.OutputSize)
-            {
-                problems.Add($"KeySize {options.KeySize} is outside {MinKeySize} to {algorithm.OutputSize} bytes for {options.Algorithm}.");
-            }
-        }
-
-        if (options.SaltSize < MinSaltSize || options.SaltSize > MaxSaltSize)
-        {
-            problems.Add($"SaltSize {options.SaltSize} is outside {MinSaltSize} to {MaxSaltSize} bytes.");
-        }
-
-        if (problems.Count > 0)
-        {
-            throw new InvalidOperationException(
-                $"The password hashing options are invalid:{Environment.NewLine}{string.Join(Environment.NewLine, problems)}"
-            );
-        }
-
-        return new(algorithm!, options.Iterations, options.SaltSize, options.KeySize);
-    }
+    // From options Validation accepted: IOptions<T>.Value runs it before the value reaches here.
+    public static Pbkdf2PasswordHasher Create(PouryaKitPasswordHashingOptions options) =>
+        new(Pbkdf2Algorithm.Of(options.Algorithm)!, options.Iterations, options.SaltSize, options.KeySize);
 
     public string Hash(string password)
     {
@@ -185,5 +152,40 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
                 "sha512" => Sha512,
                 _ => null,
             };
+    }
+
+    // The bounds new hashes are made within, checked when the Host starts.
+    internal sealed class Validation : IValidateOptions<PouryaKitPasswordHashingOptions>
+    {
+        public ValidateOptionsResult Validate(string? name, PouryaKitPasswordHashingOptions options)
+        {
+            var algorithm = Pbkdf2Algorithm.Of(options.Algorithm);
+            List<string> problems = [];
+            if (algorithm is null)
+            {
+                problems.Add($"Algorithm {options.Algorithm} is not one of {string.Join(", ", Enum.GetNames<PasswordHashAlgorithm>())}.");
+            }
+            else
+            {
+                if (options.Iterations < algorithm.MinIterations || options.Iterations > MaxIterations)
+                {
+                    problems.Add(
+                        $"Iterations {options.Iterations} is outside {algorithm.MinIterations:N0} to {MaxIterations:N0} for {options.Algorithm}."
+                    );
+                }
+
+                if (options.KeySize < MinKeySize || options.KeySize > algorithm.OutputSize)
+                {
+                    problems.Add($"KeySize {options.KeySize} is outside {MinKeySize} to {algorithm.OutputSize} bytes for {options.Algorithm}.");
+                }
+            }
+
+            if (options.SaltSize < MinSaltSize || options.SaltSize > MaxSaltSize)
+            {
+                problems.Add($"SaltSize {options.SaltSize} is outside {MinSaltSize} to {MaxSaltSize} bytes.");
+            }
+
+            return problems.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(problems);
+        }
     }
 }

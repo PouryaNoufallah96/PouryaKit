@@ -117,6 +117,8 @@ using PouryaKit.Security;
 // In the Host, or the Composition Root of the Module that owns the credentials; independent of permissions:
 // builder.Services.AddPouryaKitPasswordHashing();
 // builder.Services.AddPouryaKitPasswordHashing(options => options.Iterations = 700_000);
+// Or from configuration, as any options class:
+// builder.Services.Configure<PouryaKitPasswordHashingOptions>(builder.Configuration.GetSection("PasswordHashing"));
 
 internal sealed class Account
 {
@@ -144,7 +146,8 @@ internal sealed class Account
 - `hasher.Hash(password)` returns the string to store; `hasher.Verify(password, stored)` answers `Succeeded`, `SucceededNeedsUpgrade` or `Failed`. On `SucceededNeedsUpgrade`, store `Hash(password)` in place of the old hash while the plain password is at hand, in the same command as the sign-in's other changes, which its Unit of Work commits. Stored hashes are never invalidated by a configuration change.
 - `Verify` never throws: a missing password, a missing or malformed stored hash, an unsupported version or algorithm, and a password with no UTF-8 form are all `Failed`. Each `Hash` and `Verify` is CPU work by design, about 0.1 s at the defaults on current hardware; rate-limit sign-in at the HTTP boundary.
 - The empty password hashes like any other; what a password must look like is the application's rule, enforced before `Hash`.
-- Options outside their bounds fail `AddPouryaKitPasswordHashing` with an `InvalidOperationException` naming each one, so the Host never starts with a weak configuration.
+- `PouryaKitPasswordHashingOptions` follow the options pattern: the `configure` of `AddPouryaKitPasswordHashing` and every `Configure<PouryaKitPasswordHashingOptions>`, a configuration section's included, set the same options in order. A second `AddPouryaKitPasswordHashing` adds to what the first set and never restores the defaults; it replaces a hasher registered before it.
+- Options outside their bounds fail the Host's start with an `OptionsValidationException` naming each one, so the Host never serves with a weak configuration. The registration itself does not check them.
 
 | Option | Default | Allowed |
 |---|---|---|
@@ -175,8 +178,8 @@ Raise `Iterations` when the guidance does; existing hashes keep verifying and ar
 
 ### Testing password hashing
 
-- Test through `IPasswordHasher` from `AddPouryaKitPasswordHashing`, with no Host: the Kit's own tests take it from the service collection's descriptor.
-- The minimum iterations apply in tests too; at the defaults the Kit's 57 password test cases run in about 4 s.
+- Test through `IPasswordHasher` from `AddPouryaKitPasswordHashing`: the Kit's own tests resolve it from a provider built over the service collection, and start a Host to see options outside their bounds refused.
+- The minimum iterations apply in tests too; at the defaults the Kit's 60 password test cases run in about 4 s.
 
 ## JWT bearer authentication
 

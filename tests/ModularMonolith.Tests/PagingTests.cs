@@ -87,15 +87,15 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.All(listed.Errors, error => Assert.Equal(ErrorKind.Validation, error.Kind));
         Assert.Equal(
             [
-                ("Page.SizeOutOfRange", "Size"),
-                ("Page.NumberOutOfRange", "Number"),
-                ("Page.SortUnknown", "Sort"),
-                ("Page.FilterOperatorUnsupported", "Filters[0]"),
+                (PageErrorCodes.SizeOutOfRange, "Size"),
+                (PageErrorCodes.NumberOutOfRange, "Number"),
+                (PageErrorCodes.SortUnknown, "Sort"),
+                (PageErrorCodes.FilterOperatorUnsupported, "Filters[0]"),
                 // A typed value of another type is refused as text that does not parse is.
-                ("Page.FilterValueInvalid", "Filters[1]"),
-                ("Page.FilterValueInvalid", "Filters[2]"),
-                ("Page.FilterUnknown", "Filters[3]"),
-                ("Page.FilterRepeated", "Filters[5]"),
+                (PageErrorCodes.FilterValueInvalid, "Filters[1]"),
+                (PageErrorCodes.FilterValueInvalid, "Filters[2]"),
+                (PageErrorCodes.FilterUnknown, "Filters[3]"),
+                (PageErrorCodes.FilterRepeated, "Filters[5]"),
             ],
             listed.Errors.Select(error => (error.Code, error.Target))
         );
@@ -151,9 +151,9 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
         );
         var ef = await Assert.ThrowsAsync<InvalidOperationException>(() => PageThroughEfAsync(request));
 
-        Assert.Equal(("Page.SortUnknown", "Sort"), (Assert.Single(listed.Errors).Code, listed.Errors[0].Target));
-        Assert.Contains("Page.SortUnknown", dapper.Message);
-        Assert.Contains("Page.SortUnknown", ef.Message);
+        Assert.Equal((PageErrorCodes.SortUnknown, "Sort"), (Assert.Single(listed.Errors).Code, listed.Errors[0].Target));
+        Assert.Contains(PageErrorCodes.SortUnknown, dapper.Message);
+        Assert.Contains(PageErrorCodes.SortUnknown, ef.Message);
         Assert.Equal(5L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
     }
 
@@ -243,12 +243,12 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
         using var problem = await ProblemAsync(response);
         Assert.Equal(
             [
-                ("Page.FilterOperatorUnsupported", "Filters[0]"),
-                ("Page.FilterUnknown", "Filters[2]"),
-                ("Page.FilterValueInvalid", "Filters[1]"),
-                ("Page.NumberOutOfRange", "Number"),
-                ("Page.SizeOutOfRange", "Size"),
-                ("Page.SortUnknown", "Sort"),
+                (PageErrorCodes.FilterOperatorUnsupported, "Filters[0]"),
+                (PageErrorCodes.FilterUnknown, "Filters[2]"),
+                (PageErrorCodes.FilterValueInvalid, "Filters[1]"),
+                (PageErrorCodes.NumberOutOfRange, "Number"),
+                (PageErrorCodes.SizeOutOfRange, "Size"),
+                (PageErrorCodes.SortUnknown, "Sort"),
             ],
             problem
                 .RootElement.GetProperty("errors")

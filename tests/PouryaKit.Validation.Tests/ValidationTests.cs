@@ -30,6 +30,28 @@ internal sealed class RegisterProductHandler(HandledCommands handled) : CommandH
     }
 }
 
+// A failure added by hand carries no error code, so the step gives it the fallback code.
+internal sealed record LabelProductCommand(string Label) : Command;
+
+internal sealed class LabelProductValidator : AbstractValidator<LabelProductCommand>
+{
+    public LabelProductValidator() =>
+        RuleFor(x => x.Label)
+            .Custom((label, context) =>
+            {
+                if (label.Length == 0)
+                {
+                    context.AddFailure(nameof(LabelProductCommand.Label), "A product needs a label.");
+                }
+            });
+}
+
+internal sealed class LabelProductHandler : CommandHandler<LabelProductCommand>
+{
+    public override Task<Result> Handle(LabelProductCommand command, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success());
+}
+
 internal sealed record ArchiveProductCommand(Guid ProductId) : Command;
 
 // Misuse under test: a validator that sends a command runs before the Unit of Work starts.
@@ -88,6 +110,19 @@ public sealed class ValidationTests
         );
         Assert.All(result.Errors, e => Assert.Equal(ErrorKind.Validation, e.Kind));
         Assert.Equal(0, scope.ServiceProvider.GetRequiredService<HandledCommands>().Count);
+    }
+
+    // The code is published: the literal pins it.
+    [Fact]
+    public async Task A_failure_without_an_error_code_comes_back_with_the_validation_failed_code()
+    {
+        await using var host = BuildHost();
+        using var scope = host.CreateScope();
+
+        var result = await Dispatcher(scope).SendAsync(new LabelProductCommand(""), TestContext.Current.CancellationToken);
+
+        var error = Assert.Single(result.Errors);
+        Assert.Equal(("Validation.Failed", "Label", ErrorKind.Validation), (error.Code, error.Target, error.Kind));
     }
 
     [Fact]

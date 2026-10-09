@@ -37,7 +37,7 @@ public sealed class PageTests
         var beyond = Declaration.Validate(new PageRequest { Number = reachable + 1, Size = 50 });
 
         Assert.True(Declaration.Validate(new PageRequest { Number = reachable, Size = 50 }).IsSuccess);
-        Assert.Equal("Page.NumberOutOfRange", Assert.Single(beyond.Errors).Code);
+        Assert.Equal(PageErrorCodes.NumberOutOfRange, Assert.Single(beyond.Errors).Code);
     }
 
     [Fact]
