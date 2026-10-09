@@ -158,6 +158,35 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         Assert.True(first.Disposed);
     }
 
+    // A thread with a synchronization context, as a desktop application's has: the disposal's continuation is posted to
+    // the context, whose thread is the one that waits for it. The context here runs nothing it is given, as a blocked
+    // thread does.
+    [Fact]
+    public void A_failed_build_on_a_thread_with_a_synchronization_context_still_ends_and_disposes_what_awaits()
+    {
+        var awaiting = new AwaitingDisposal();
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.Services.AddSingleton(_ => awaiting);
+        builder.Services.AddSingleton<DisposalProbe>();
+        builder.Services.AddSingleton<ICompositionCheck>(new ReportingCheck(typeof(AwaitingDisposal)));
+        builder.AddPouryaKitCompositionChecks();
+        Exception? thrown = null;
+        var building = new Thread(() =>
+        {
+            SynchronizationContext.SetSynchronizationContext(new BlockedContext());
+            thrown = Record.Exception(() => builder.Build());
+        })
+        {
+            IsBackground = true,
+        };
+
+        building.Start();
+
+        Assert.True(building.Join(TimeSpan.FromSeconds(30)), "The failed build never ended: its disposal waits for the thread it blocks.");
+        Assert.Equal(string.Join(Environment.NewLine, ReportingCheck.Problems), Assert.IsType<InvalidOperationException>(thrown).Message);
+        Assert.True(awaiting.Disposed);
+    }
+
     [Fact]
     public void A_cacheable_query_in_a_host_without_caching_fails_the_host_when_built_naming_the_call()
     {
@@ -391,6 +420,24 @@ internal sealed class AsyncOnlyDisposal : IAsyncDisposable
         Disposed = true;
         return ValueTask.CompletedTask;
     }
+}
+
+// Its disposal awaits, so its continuation goes to the synchronization context that was current when it began.
+internal sealed class AwaitingDisposal : IAsyncDisposable
+{
+    public bool Disposed { get; private set; }
+
+    public async ValueTask DisposeAsync()
+    {
+        await Task.Yield();
+        Disposed = true;
+    }
+}
+
+// The context of a thread that is blocked: what is posted to it never runs.
+internal sealed class BlockedContext : SynchronizationContext
+{
+    public override void Post(SendOrPostCallback d, object? state) { }
 }
 
 // Its data and its one handler, registered by hand: no Composition Root of its Host calls AddPouryaKitCqrs.

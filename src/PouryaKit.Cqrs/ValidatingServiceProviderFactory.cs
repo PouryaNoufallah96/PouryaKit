@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using PouryaKit.Core;
 
 namespace PouryaKit.Cqrs;
 
@@ -42,7 +43,8 @@ internal sealed class ValidatingServiceProviderFactory : IServiceProviderFactory
     // Disposes the container of a build that failed as the Host disposes its own: asynchronously, so a singleton that is
     // only IAsyncDisposable is disposed too, and awaited here because a service provider factory is synchronous. The
     // checks' problems, or a check's own exception, are what the Host must see: a disposal that throws never replaces
-    // them.
+    // them. The thread has no synchronization context while it waits, so a disposal that awaits resumes elsewhere
+    // instead of waiting for the thread it blocks.
     private static void Discard(IServiceProvider provider)
     {
         try
@@ -50,7 +52,11 @@ internal sealed class ValidatingServiceProviderFactory : IServiceProviderFactory
             switch (provider)
             {
                 case IAsyncDisposable container:
-                    container.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                    using (SynchronizationContextScope.Enter())
+                    {
+                        container.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                    }
+
                     break;
                 case IDisposable container:
                     container.Dispose();
