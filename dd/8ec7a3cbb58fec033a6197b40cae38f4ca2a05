@@ -1,0 +1,51 @@
+samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs
+  s_744c07a8061ea2::t_f36bc97aef22f9 26,49-52,71
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_744c07a8061ea2::t_f36bc97aef22f9 55
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Categories/Events/DomainEventHandlers/CountProductInCategoryDomainEventHandler.cs
+  s_744c07a8061ea2::t_f36bc97aef22f9 1-26
+.agents/skills/pourya-kit/references/persistence.md
+  s_744c07a8061ea2::t_f36bc97aef22f9 276,290,292
+samples/ModularMonolith/src/Inventory.Host/InventoryHost.cs
+  s_744c07a8061ea2::t_f36bc97aef22f9 34-35
+.claude/agent-memory/kit-implementer/observability-tracing-and-http-facts.md
+  s_744c07a8061ea2::t_f36bc97aef22f9 60-66
+docs/acceptance.md
+  s_744c07a8061ea2::t_f36bc97aef22f9 1080-1094
+.agents/skills/pourya-kit/references/messaging.md
+  s_744c07a8061ea2::t_f36bc97aef22f9 69
+.agents/skills/pourya-kit/references/observability.md
+  s_744c07a8061ea2::t_f36bc97aef22f9 83,109
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_744c07a8061ea2::t_f36bc97aef22f9 10,13
+.claude/agent-memory/kit-implementer/snapshot-and-scheduled-command-facts.md
+  s_744c07a8061ea2::t_f36bc97aef22f9 60-63
+docs/architecture/README.md
+  s_744c07a8061ea2::t_f36bc97aef22f9 165,200
+docs/provenance/ModularMonolith.md
+  s_744c07a8061ea2::t_f36bc97aef22f9 34
+tests/ModularMonolith.Tests/HostRecipeTests.cs
+  s_744c07a8061ea2::t_f36bc97aef22f9 61-62
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_744c07a8061ea2::t_f36bc97aef22f9 48,55
+.agents/skills/pourya-kit/references/modules.md
+  s_744c07a8061ea2::t_f36bc97aef22f9 57
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Categories/Events/DomainEventHandlers/UncountProductInCategoryDomainEventHandler.cs
+  s_744c07a8061ea2::t_f36bc97aef22f9 1-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dd8ec7a3cbb58fec033a6197b40cae38f4ca2a05",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
