@@ -1,0 +1,48 @@
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_2867f8a3b2cd19::t_edc96aaf91e752 492-493
+  s_2867f8a3b2cd19::t_b0e1e42476db37 467-469,474-491
+  s_2867f8a3b2cd19::t_9de5f19dc255ca 470-473
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_2867f8a3b2cd19::t_0b67fd701eab9f 871-875
+src/PouryaKit.Messaging.Wolverine.EFCore/PouryaKitMessageStoreOptions.cs
+  s_2867f8a3b2cd19::t_5c80d4fc7092e9 17-23
+.agents/skills/pourya-kit/references/messaging.md
+  s_2867f8a3b2cd19::t_d9f16c8bced8bc 522
+  s_2867f8a3b2cd19::t_ada8315528d231 687
+  s_2867f8a3b2cd19::t_d4e9908a8d9f04 673
+docs/architecture/README.md
+  s_2867f8a3b2cd19::t_24c55e2a925e73 532
+  s_2867f8a3b2cd19::t_a51c4abd82de08 526
+tests/ModularMonolith.Tests/Stub/StubDelayedCommands.cs
+  s_2867f8a3b2cd19::t_c4653fb8f5f576 48-50
+tests/ModularMonolith.Tests/RecurringCommandTests.cs
+  s_2867f8a3b2cd19::t_465ee9ec1cf6a4 36,354,365,377,410,418
+  s_2867f8a3b2cd19::t_638c5890ee97b1 630-642
+  s_2867f8a3b2cd19::t_ea6d6041798cd6 429-488
+  s_2867f8a3b2cd19::t_986181fcaff93f 20
+  s_2867f8a3b2cd19::t_ae878dc6d9aa6a 343-353,355-364,366-376,378-409,411-417,419-428
+  s_2867f8a3b2cd19::t_38ec1c25026d83 3-4,8
+  s_2867f8a3b2cd19::t_5a5b4b848a68f6 14
+  s_2867f8a3b2cd19::t_44cabd6d93aa8b 340-342
+  s_2867f8a3b2cd19::t_5774588c4b26ad 582-585
+docs/acceptance.md
+  s_2867f8a3b2cd19::t_a405b4df966d95 1135-1144,1146,1148
+  s_2867f8a3b2cd19::t_316cdfe0b6e482 1147
+  s_2867f8a3b2cd19::t_74a55f7f396210 1145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "488f9c1aea23e12e3bf3c6e292114a8cf3c0f8f5",
+  "prompts": {},
+  "sessions": {
+    "s_2867f8a3b2cd19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00cca649-e6c4-44eb-8549-8c8dbeae846f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
