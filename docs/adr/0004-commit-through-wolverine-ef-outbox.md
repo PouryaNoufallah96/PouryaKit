@@ -464,3 +464,30 @@ citations above stay as they were read.
   with one consumer; the shared connection is read from the decompiled code. A known limit, not a Kit defect: after
   its last retry, about 68 s after the recovery, 6.48.x gives up, and the agent stays without a consumer until the next
   connection recovery, still with no health signal. Proof: `docs/acceptance.md`, the #75 section.
+
+## Amendment (2026-10-10, ticket #82: no EF Core transaction middleware)
+
+The decision above stands: the Unit of Work owns its transaction and writes the Outbox in it.
+`UsePouryaKitWolverine(connectionName)` no longer calls `UseEntityFrameworkCoreTransactions(TransactionMiddlewareMode.Eager)`,
+the line "The registration and commit code that worked" shows, so the decision's "The EF mode is `Eager`" no longer
+describes the Kit: it configures no EF Core middleware mode at all.
+
+- **What the line registered.** In WolverineFx 6.48.3 (decompiled `Wolverine.EntityFrameworkCore.dll`,
+  `WolverineEntityCoreExtensions.UseEntityFrameworkCoreTransactions(WolverineOptions, TransactionMiddlewareMode)`):
+  `IDbContextOutboxFactory`, the scoped `IDbContextOutbox<T>` and `IDbContextOutbox`, `OutgoingDomainEvents`,
+  `IDatabaseCleaner<T>`, the EF Core saga store diagnostics and the sources of implicit `DbContext` use; the
+  `EntityFrameworkCoreBackedPersistence` extension, which puts EF Core's persistence frame provider first in code
+  generation and adds its query and batching pre-compilation policies and `DbContextFactoryRefusalPolicy`; service
+  location for every registered `DbContext` in generated code; `Eager` as that frame provider's default mode; and the
+  EF Core storage frame provider for ancillary stores.
+- **Why the Kit does not need it.** Each of those serves a handler Wolverine generates or a caller of the scoped
+  `IDbContextOutbox<T>`, and the Kit has neither. Every Kit handler is pre-built and registered with
+  `AddMessageHandler` (ADR 0006), so no generated chain and no EF Core middleware runs in a delivery; the Unit of Work's
+  Outbox builds its own `DbContextOutbox` for each commit attempt (the Wave 1 amendment above) and resolves no
+  `IDbContextOutbox<T>`. The "EF mode" row of the evidence and the rejected `Lightweight` option concern Wolverine's own
+  middleware on a `[Transactional]` handler; for the owned Unit of Work the mode made no difference even in Spike S1.
+  An application that adds a Wolverine handler of its own with EF Core middleware calls `UseEntityFrameworkCoreTransactions`
+  itself, in the `configure` the call takes.
+- **Proof.** With the line and its two `using` directives removed (`4bf4b82`), `dotnet build PouryaKit.slnx` gave 0
+  warnings and `dotnet test PouryaKit.slnx` passed 830, 0 failed, the suite's whole count, in 2m27s
+  (`docs/acceptance.md`, "Pre-Wave 3 proofs before fixes, ticket #82").

@@ -45,8 +45,9 @@ internal sealed class ScheduleNoteThenFailCommandHandler(
     }
 }
 
-// Schedules a note for two seconds later under the name stub.kind-changed, which only a test's own Host declares: as a
-// delayed command in the Host that schedules it, and as a recurring command in the Host that finds it stored.
+// Schedules a note for two seconds later under the name a test's own Host declares for it: stub.kind-changed, as a
+// delayed command in the Host that schedules it and as a recurring command in the Host that finds it stored, or
+// stub.stale-note, as a delayed command due later than that Host's InboxStaleTime.
 internal sealed record ScheduleKindChangedNoteCommand(string Text) : Command;
 
 internal sealed class ScheduleKindChangedNoteCommandHandler(IDelayedCommands later, TimeProvider time)
