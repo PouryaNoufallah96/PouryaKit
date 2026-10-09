@@ -2,9 +2,15 @@
 
 Status: draft 6, 2026-10-04 (five Codex review rounds and the owner's decisions applied; see `foundation-review-log.md`). Analysis only — nothing was built, restored, run or modified in any
 inspected repository. The kit is named **PouryaKit**. Every API shown under the `PouryaKit.*` prefix is
-**proposed**, not existing CloudNativeKit/Woo functionality. *Phase 0 and Wave 1 have since been built from this plan
-(closed 2026-10-06). Where the build departed from it, a dated note in place or an amendment in `docs/adr/` says so;
-`docs/acceptance.md` maps the acceptance scenarios to tests, and the API as built is in the Kit's skill.*
+**proposed**, not existing CloudNativeKit/Woo functionality. *Phase 0, Wave 1 (closed 2026-10-06) and Wave 2 (spec #33,
+merged to `main` on 2026-10-09) have since been built from this plan. Where the build departed from it, a dated note in
+place or an amendment in `docs/adr/` says so; `docs/acceptance.md` maps the acceptance scenarios to tests, and the API as
+built is in the Kit's skill.*
+
+*Current sections (2026-10-10, #89):* section C's [Allowed references](#allowed-references) table, E's [Provenance and
+licensing](#provenance-and-licensing), which adoption work follows, G, and I.3, I.6 and I.7. History, the record of what was
+reviewed and planned: A, B, D, the rest of E and the [plan in one paragraph](#recommended-plan-in-one-paragraph); where one
+differs from a current section, the current one holds. No section moves, since code and docs cite them by letter.
 
 ## Inspected snapshots
 
@@ -770,7 +776,8 @@ as follow-up decisions and ADR amendments to record when the capability is built
 as `repository@commit path:line`; earlier Ultrabusiness evidence is cited as `Ultrabusiness@a85eacd`;
 the SSE, reporting and localization additions use `Ultrabusiness@d685de6`
 (private, pattern only, no file copied). Package facts were read from nuget.org and the libraries' own
-repositories on 2026-10-06. Nothing here is implemented.
+repositories on 2026-10-06. Nothing here is implemented. *Superseded 2026-10-10 (#89): the Wave 2 rows of I.3 are built,
+and their dated notes record where the build departed from them; Waves 3 and 4 are not built.*
 
 ### I.1 The three compositions
 
@@ -841,6 +848,7 @@ a call between Modules goes through the Gateway, never through YARP or gRPC loop
 Form: **P** = its own package · **R** = a registration method on an existing package · **T** =
 template recipe (native .NET; the Kit adds nothing) · **A** = application code · **–** = refused.
 The active [Phase 5 packaging and releases](#phase-5-packaging-and-releases) scope is complete; Wave 2 feature work can follow.
+*Superseded 2026-10-10 (#89): Wave 2 is built and merged to `main` (2026-10-09); Wave 3 is the next spec, after the prerequisites in I.6.*
 Wave 2 is the first follow-on Capability set after the merged Wave 1; Wave 3 needs Wave 2 pieces;
 Wave 4 is the sample agent and the template's third composition.
 
@@ -850,7 +858,7 @@ Wave 4 is the sample agent and the template's third composition.
 | One JSON setup | R | `Domain` (options), used by `Web` and `Messaging.Wolverine` | 2 | Wave 1 has two separate registrations (`src/PouryaKit.Web/WebServiceCollectionExtensions.cs:37`, `src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs:47`) | one `JsonSerializerOptions` factory for typed IDs, HTTP and messages; gRPC stays protobuf (*built 2026-10-07, #34: `UsePouryaKitJson` in Domain, applied by Web to ASP.NET Core's HTTP options and by Messaging.Wolverine to Wolverine's, so a typed ID has the same JSON in a response and in its envelope; Cqrs and Caching apply it too since #42 and #43, and `SharedJsonTests` keeps every other setup out*) (*amended 2026-10-07, #60: messages are read with its strict variant `UsePouryaKitWireJson`, .NET 10's `RespectRequiredConstructorParameters` and `RespectNullableAnnotations` on and unknown members skipped, so a body that lacks a member its contract requires, or carries null for a non-nullable one, is dead-lettered instead of handled with defaults; HTTP, cache and recorded responses keep the lenient reading; ADR 0006's #60 amendment*) | a typed ID round-trips identically through HTTP and an envelope; `StrictWireReadingTests` over RabbitMQ |
 | CORS, response compression, rate limiting | R | `Web`, from configuration | 2 | `cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.Web/Extensions/CompressionExtensions.cs:21-34`; `RateLimit/RateLimiterExtensions.cs:33-47` (429 through `IProblemDetailsService`, fits ADR 0008); `CloudNativeKit@e81d65e src/CloudNativeKit.Web/Cors/DependencyInjectionExtensions.cs:34-40` | all three live in the shared framework (no package); named CORS policy from configured origins, **no** `AllowAnyOrigin` fallback (rejected: `CorsExtensions.cs:47`); partition by Actor, never by `X-Forwarded-For` or Host header (rejected: `RateLimiterExtensions.cs:71-72,109-111`); `QueueLimit` configured separately (*built 2026-10-07, #36: `AddPouryaKitWeb` registers all three, each off until the Host binds `PouryaKitCorsOptions`, `PouryaKitCompressionOptions` or `PouryaKitRateLimitOptions`, validated at start; the Host applies a named policy with `UseCors(name)`, because a minimal API endpoint's `RequireCors` answers no preflight; compression is added outermost only when enabled, with `EnableForHttps`; the partition is the Actor the request's Operation runs as (an `AllowAnonymousAs` endpoint's named Actor for its unauthenticated callers, the continued Actor for a trusted peer); a rejection sets 429 and the existing status code pages write the problem response*) | 429 is a problem response; disallowed origin refused; compression on for HTTPS when enabled |
 | API versioning, OpenAPI, Scalar | P | `PouryaKit.Web.OpenApi` → `Web`; `Asp.Versioning.Http` 10.2.3, `Asp.Versioning.OpenApi` 10.2.3, `Microsoft.AspNetCore.OpenApi` 10.0.12, `Scalar.AspNetCore` 2.17.13 (all MIT) | 2 | `woo@149a3cf src/Web/ApiVersioningExtensions.cs:19-49` (header + URL readers, `'v'VVV`, substitute in URL); `cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.Web/OpenApi/OpenApiVersioningDocumentTransformer.cs:27-38,64-111`; `CloudNativeKit@e81d65e src/CloudNativeKit.Web/Minimal/Extensions/MinimalApiExtensions.cs:59-70` | per-Module route group gets a version set; documents enumerated from the version set, never a hard-coded `["v1"]`; sunset dates from configuration, not "now + 60 days" (rejected: `VersioningExtensions.cs:33-34`, ADR 0005); security requirements per operation (rejected: Woo's transformer adds schemes only) (*built 2026-10-07, #41, with `Scalar.AspNetCore` 2.17.14: a Module's Composition Root declares its versions with `AddPouryaKitApiVersions`, and Web's `MapPouryaKitModuleEndpoints` maps its endpoints through the `IModuleRouteGroups` the package registers, on two groups inside the Module's group bound to one version set, `v{version}` for the URL reader and the unversioned path for the `api-version` header reader; the Host registers `AddPouryaKitOpenApi` and configures each version's sunset date and link, and the document notices name that date without reading the clock*) | one document per version; Scalar serves them; deprecated version reports sunset |
-| Gateway | P | `PouryaKit.Gateway`, its own Host; `Yarp.ReverseProxy` 2.3.0 (MIT; latest release targets net8, runs on .NET 10 through that asset — re-check before Wave 3), `Microsoft.Extensions.ServiceDiscovery.Yarp` 10.10.0 | 3 | `cybernod@bae8ac3 src/API/Cybernod.ApiGateway.Yarp/Program.cs:40-54`; `Ultrabusiness@a85eacd src/ApiGateways/ApiGateway.Yarp/Configurations/Extensions/HostExtensions.cs:34-60` | config-loaded routes and clusters with service discovery; W3C trace context passed through (rejected: both mint a random `TraceId` header); health probe is `/health`, not the docs UI | a route to a service resolves by discovery; `traceparent` arrives unchanged |
+| Reverse proxy | P | `PouryaKit.ReverseProxy`, its own process (*renamed 2026-10-10, #89, as spec #74 decided: the Capability and its package were named Gateway, the glossary's term for a Module's only entry point*); `Yarp.ReverseProxy` 2.3.0 (MIT; latest release targets net8, runs on .NET 10 through that asset — re-check before Wave 3), `Microsoft.Extensions.ServiceDiscovery.Yarp` 10.10.0 | 3 | `cybernod@bae8ac3 src/API/Cybernod.ApiGateway.Yarp/Program.cs:40-54`; `Ultrabusiness@a85eacd src/ApiGateways/ApiGateway.Yarp/Configurations/Extensions/HostExtensions.cs:34-60` | config-loaded routes and clusters with service discovery; W3C trace context passed through (rejected: both mint a random `TraceId` header); health probe is `/alive`, which the service defaults map in every environment, not the docs UI; `/health`, which asks each database, is mapped in Development only (*restated 2026-10-10, #89: the probe was `/health`; a readiness endpoint outside Development is decided with the Wave 4 service composition, spec #74's D13*) | a route to a service resolves by discovery; `traceparent` arrives unchanged |
 | gRPC | P | `PouryaKit.Grpc`; `Grpc.AspNetCore` 2.84.0 (Apache-2.0), `Grpc.Net.ClientFactory` 2.84.0, `Google.Protobuf` 3.36.2 (BSD-3) | 3 | `Ultrabusiness@a85eacd src/BuildingBlocks/MainArchitecture/Presentation/MainArchitecture.API/Configurations/Extensions/GrpcExtensions.cs:68-89`; `MainArchitecture.SharedGrpcContracts/custom_types.proto` (decimal, guid) | client factory with one interceptor that copies Actor, tenant, correlation and causation (never a bearer token: rejected `Interceptors/GrpcExceptionInterceptor.cs:48-81`); deadline from configuration; server side maps `Result` to gRPC status; protobuf contracts only; **not a loopback inside one Host** (architecture test) | a cross-process call carries the Operation Context; a failed `Result` is a gRPC status with the Error |
 | Core helpers | P | `PouryaKit.Core`: predicate builder, reflection helpers, synchronization-context scope — nothing else (amended 2026-10-07, #55: `ImplementingTypes` gains `Candidates`, the candidate set a registration validates; the three-public-type cap stands) | 2 | `cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.Core/Utils/NoSynchronizationContextScope.cs:12-27`; predicate-builder visitor `Linq/PredicateBuilder.cs:19-41` | `AndAlso`/`OrElse` (both references use bitwise `And`/`Or`: `cybernod … PredicateBuilder.cs:25,40`; `CloudNativeKit … Linq/PredicateBuilder.cs:22,32`); reflection limited to implementing-type lookup (rejected: 1,782 lines returning `dynamic`); architecture test caps the package at these three | an architecture test fails if a fourth public type appears |
 | Security | P | `PouryaKit.Security` → `Cqrs` | 2 | `cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.Security/Jwt/Extensions/AuthExtensions.cs:53-59` (authenticated default policy); `FeatureAuthorizationHandler.cs:8-31` minus the admin bypass | permission contracts; an `IAuthorizer<T>` implementation that evaluates a declared permission against the Actor — optional, registered by the application for the commands it chooses (G.6) (*since #56, 2026-10-07: a declared permission must be registered by its Module's Composition Root, or the Host fails at build*); ASP.NET `FallbackPolicy` = authenticated at the HTTP boundary (*built 2026-10-07 in `PouryaKit.Web`, which owns the HTTP boundary; #38*); no runtime mutation of `AuthorizationOptions` (rejected: `FeaturePolicyProvider.cs:20-24`); optional PBKDF2 password hashing, an owner scope addition of spec #33 (*built 2026-10-07: PBKDF2-HMAC-SHA256, 600,000 iterations, 16-byte salt, 32-byte key, versioned `pbkdf2$1$…` encoding with upgrade detection, platform cryptography only, chosen from the OWASP Password Storage Cheat Sheet and the .NET 10 `Rfc2898DeriveBytes.Pbkdf2` reference; #40*) | unauthenticated HTTP → 401; a command with a declared permission and the wrong Actor → `Forbidden` Error → 403; a continuation runs without re-authorization (*since #57, 2026-10-07: a continuation is trusted only when the Kit marks it `IsTrustedContinuation`, restoring a delivery or continuing a running authorized Operation; a context application code builds, or continues outside the Operation that ran it, is checked; `CausationId` is informational*) |
@@ -966,7 +974,7 @@ module, operation, actor kind, outcome; delivery activities link to the publishi
 | Wave | Addition | Shows |
 |---|---|---|
 | 2 | `ListProducts` paged; `Idempotency-Key` on `CreateProduct`; `GetProduct` cached with tag invalidation on `RenameProduct` and `RemoveProducts`; a delayed `ExpireQuote` continuation (runs as the quoting Actor) and a recurring `ReconcileStock` declaration (runs as a named system Actor); versioned OpenAPI with Scalar; CORS/compression/rate limiting from configuration; a JWT test issuer and one permission-declared command; a trace that spans Catalog → Inventory delivery | paging, idempotency, caching, scheduling, OpenAPI, web defaults, security, observability |
-| 2 | Inventory run as its own process over RabbitMQ (the service composition), still passing the Wave 1 delivery tests | RabbitMQ transport, the template's third composition |
+| 2 | Inventory run as its own process over RabbitMQ (the service composition), still passing the Wave 1 delivery tests | RabbitMQ transport, the template's third composition (*corrected 2026-10-10, #89: built in #51 as `Inventory.Host`, the broker proof Host, which is not a template; the template's service composition stays Wave 4, I.7*) |
 | 3 | a Stream Module `Ledger` beside Catalog: one command appends, one projection reads, one Integration Event leaves through the existing messaging | event sourcing |
 | 3 | tenant-scoped Catalog rows, Receipts and Snapshots | multi-tenancy |
 | 3 | one agent with one tool, `GetProduct` through the Catalog Gateway, run as the calling Actor; Ollama in the AppHost | AI |
@@ -990,7 +998,10 @@ Decided above and needing only an ADR amendment when built (no owner input):
 - Catalogue rows superseded by this section: AI (was "application by default, Wave 4"); caching
   (section B said "native, no kit package"; this section gives it a package for the Result and key
   rules); the Security row's "also covers background commands" (contradicts G.6: continuations are
-  trusted and not re-authorized; the hook is optional).
+  trusted and not re-authorized; the hook is optional). *Added 2026-10-10 (#89):* Multi-tenancy (was the
+  package `PouryaKit.MultiTenancy`; I.3 makes it a registration across existing packages, not a package);
+  "Number sequences, AI" (was Wave 4, optional packages "only if reused across projects"; I.3 puts both in
+  Wave 3, number sequences as a registration in `Persistence.Postgres` and AI as the package above).
 
 Answered by the owner on 2026-10-06:
 
@@ -1026,6 +1037,39 @@ connected to another instance needs a delivery between instances that this plan 
 Wave 3's spec names that mechanism, and how it fits "no second push channel", before
 `PouryaKit.Realtime` is built. Nothing of it is implemented.
 
+Prerequisites for the Wave 3 spec, recorded 2026-10-10 (#89) from what Wave 2 built. Each restates I.3 rows against
+the code and names no new Capability:
+
+- *2026-10-10, Realtime row.* It references `Messaging` only, but `PouryaKit.Web` is the only place that begins the
+  Operation Context at the HTTP boundary and trusts a peer Host. An SSE stream is an HTTP endpoint, so the spec says
+  how it takes its caller's Actor and tenant through `Web`.
+- *2026-10-10, gRPC row.* It omits `Web` too, and its interceptor that copies Actor, tenant, correlation and
+  causation is a second header codec beside `Web`'s, which already writes those headers on an outgoing call and reads
+  them only from a trusted peer (`PouryaKitTrustedPeerOptions`). The gRPC side uses `Web`'s, with no second codec.
+- *2026-10-10, Multi-tenancy row.* Wave 2 built part of it: the tenant is on the Operation Context, in both header
+  sets (an outgoing HTTP call's and the Outbox's), taken from the configured JWT claim, which `Security.JwtBearer`
+  writes as `PouryaKitClaimTypes.Tenant`, and in the idempotency and cache keys. The row's Dapper lease that exposes the tenant as a parameter does not exist:
+  the seam is `IReadConnectionFactory.OpenAsync`, a plain open connection. The Receipt key is (subscription, message
+  id), so adding the tenant to it is a migration in every Module of every adopter that keeps Receipts.
+- *2026-10-10, AI row.* I.4's resilience handler on the provider's HTTP client would stack on the one pipeline the
+  service defaults give every client (`AddPouryaKitResilience()` in `ConfigureHttpClientDefaults`), and the Kit
+  refuses a client with two resilience handlers by throwing each time it is created. So the provider's client keeps
+  the Host's pipeline, or removes it with `RemoveAllResilienceHandlers()` before adding its own.
+- *2026-10-10, Number sequences row.* The Kit maps a unique violation (`23505`) to a Module's Error on an EF save
+  only: `IUniqueConstraintReader` reads a `DbUpdateException`. Plain SQL on the connection the Unit of Work joins
+  (`IUnitOfWorkConnection`) is outside that mapping, so the spec says how the row's `Conflict` is reached.
+- *2026-10-10, Saga row.* Its "Wolverine-discovered handler type" meets a Kit that turns Wolverine's conventional
+  discovery off (`DisableConventionalDiscovery()` in `UsePouryaKitWolverine`) and routes each subscribed type to its
+  own `Deliver` handler, which records the Receipt before the handler runs. The Saga's ADR and the Wave 3 spec name
+  the seam a Saga is reached through and say whether Receipts and the Operation Context apply to its steps.
+- *2026-10-10, the rows' proofs.* Several need test infrastructure the Kit lacks: two instances of a Host on one
+  store (Realtime's client on another instance), S3 and SMTP containers (Storage, Email), an AppHost (Aspire
+  resources) and an inspection of a Dapper query's SQL (Multi-tenancy's architecture test).
+- *2026-10-10, providers chosen from configuration* (AI's among them). They need no new seam: `ModuleBuilder` is an
+  `IServiceCollection` (`IModuleServices`), Inventory binds its options from its Composition Root with
+  `BindConfiguration`, and Dapper resolves configuration inside its registered factory. The spec directs provider
+  choice through options binding and a factory, keeping one declared composition.
+
 Spikes before building (no owner input, recorded as ADRs): the Marten two-store spike (I.4); the
 RabbitMQ topology spike under ADR 0006; a check whether Wolverine already propagates W3C trace
 context into envelopes. *Resolved, ADR 0009 (2026-10-07): it writes and restores `traceparent` on the
@@ -1034,11 +1078,13 @@ local path; #47 adds only the Operation activity's placement, `tracestate` and a
 ### I.7 Recommended plan after Wave 1
 
 Wave 1 is merged and the active [Phase 5 packaging and releases](#phase-5-packaging-and-releases) scope is complete.
+*Since 2026-10-09 Wave 2 is built and merged too (recorded 2026-10-10, #89), so Wave 3 is the next spec, after the
+prerequisites in I.6.*
 Use one spec per wave: **Wave 2** — paging, one JSON setup, Web
 defaults, Web.OpenApi, Core, Security and JwtBearer, request idempotency, Caching, scheduling,
 Observability, the HttpClient handler, the versioning rule, the RabbitMQ transport after its spike,
 and the template's first two compositions; **Wave 3** — Marten after its spike, multi-tenancy, AI,
-Gateway, Grpc, Realtime through SSE, Storage, Email, number sequences, the optional reporting renderer
+ReverseProxy (named Gateway until 2026-10-10, #89), Grpc, Realtime through SSE, Storage, Email, number sequences, the optional reporting renderer
 and opt-in report Module with its report job, optional localization, Aspire, the saga, a reusable
 FluentValidation page rule in `PouryaKit.Validation` (owner decision of 2026-10-07 on #35); **Wave 4** — the template's service composition and the sample agent polished for the
 skill. Every ticket follows section H. Wave 1 stays as built.

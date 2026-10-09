@@ -51,6 +51,10 @@ _Avoid_: Health check, startup filter, composition check
 The only entry point through which anything outside a Module asks it to run a command or query.
 _Avoid_: Module facade, mediator, bus
 
+**Reverse proxy**:
+The deployable application in front of a system's Hosts that forwards each incoming HTTP request, by configured routes, to the Host that serves it; it composes no Module.
+_Avoid_: Gateway, API gateway, edge service
+
 ### Execution
 
 **Operation**:
