@@ -9,8 +9,10 @@ Usage:
 <report.md> is the file save-report.py wrote; the last JSON object in it names `head` and `branch`. Before merging, the
 script refuses `--branch main` (only the pull request merges into main), a current branch that is not `--branch`, a dirty
 checkout, a head that is not a commit, a branch name that is not one (`pkg~1` names an older commit, not a branch), a
-branch whose tip is not that head (the agent committed after reporting), and a head already merged. It runs
-`git merge --no-ff`. A conflict leaves the merge in progress: the orchestrator resolves and commits it, then runs the
+branch whose tip is not that head (the agent committed after reporting), a head already merged, and a head whose
+code the package validation did not run on: the report names the commit `validate.py` ran on (`validated`, or `commit
+<sha>` in `validate`), and every path that differs between that commit and the head must be Markdown, since a `.cs`,
+props or script change after the validation is unproven. It runs `git merge --no-ff`. A conflict leaves the merge in progress: the orchestrator resolves and commits it, then runs the
 --post-merge form. The post-merge checks run in order, each a process whose own exit code is read: the merged tree
 against the head's, check-ai-setup.py, check-docs.py. A missing check script fails. --push pushes the current branch to
 origin only when the tree equals the head's and every check passed. The last stdout line after a merge is
@@ -27,7 +29,7 @@ merges, commits and pushes nothing, so the checkout may be dirty. Its last stdou
 Exit codes: 0 done; 1 a check failed, or --ready found the base ahead; 2 usage; 3 report unreadable; 4 dirty checkout;
 5 head is not a commit; 6 no such branch; 7 branch tip is not the head; 8 not on the integration branch, or it is main;
 9 head already merged (with --post-merge: not merged); 10 conflict, merge left in progress; 11 another git failure;
-12 --push refused, the tree differs; 13 push failed.
+12 --push refused, the tree differs; 13 push failed; 14 the head holds code the validation did not run on.
 """
 
 from __future__ import annotations
@@ -45,8 +47,10 @@ from pathlib import Path
 TREE_CHECK = ".agents/scripts/check-tree.py"
 CHECKS = (".agents/scripts/check-ai-setup.py", ".agents/scripts/check-docs.py")
 (CHECK_FAILED, USAGE, REPORT, DIRTY, NOT_A_COMMIT, NO_BRANCH, BRANCH_MOVED, WRONG_BRANCH, MERGE_STATE, CONFLICT,
- GIT_FAILED, TREE_DIFFERS, PUSH_FAILED) = range(1, 14)
+ GIT_FAILED, TREE_DIFFERS, PUSH_FAILED, UNVALIDATED) = range(1, 15)
 HEAD = re.compile(r"[0-9a-f]{7,40}")
+VALIDATED = re.compile(r"\b(?:commit|on)\s+([0-9a-f]{7,40})\b", re.IGNORECASE)  # "On commit f7abadc", "ran on ac0481c"
+
 
 
 class Stop(Exception):
@@ -74,7 +78,7 @@ def commit(top: Path, ref: str) -> str:
     return done.stdout.strip() if done.returncode == 0 else ""
 
 
-def read_report(path: Path) -> tuple[str, str]:
+def read_report(path: Path) -> tuple[str, str, str]:
     try:
         text = path.read_text(encoding="utf-8")
     except OSError as error:
@@ -94,7 +98,28 @@ def read_report(path: Path) -> tuple[str, str]:
         raise Stop(REPORT, f"the last JSON object in {path} has no head commit (7 to 40 hex digits): {head!r}")
     if not isinstance(branch, str) or not branch:
         raise Stop(REPORT, f"the last JSON object in {path} has no branch name: {branch!r}")
-    return head, branch
+    validated = found.get("validated")
+    if not isinstance(validated, str) or not HEAD.fullmatch(validated):
+        named = VALIDATED.search(found.get("validate", "") if isinstance(found.get("validate"), str) else "")
+        validated = named.group(1) if named else None
+    if validated is None:
+        raise Stop(REPORT, f"the last JSON object in {path} names no commit the package validation ran on: add `validated` (7 to 40 hex digits), or `commit <sha>` in `validate`")
+    return head, branch, validated
+
+
+def require_validated(top: Path, head: str, validated: str) -> str:
+    """The validation's commit is an ancestor of the head, and only Markdown differs between them: a `.cs`, props or
+    script change after `validate.py` ran is unproven, and the implementer reruns it on the head."""
+    full = commit(top, validated)
+    if not full:
+        raise Stop(NOT_A_COMMIT, f"the validated commit {validated} is not a commit in this repository")
+    if git(top, "merge-base", "--is-ancestor", full, head).returncode:
+        raise Stop(UNVALIDATED, f"the validated commit {validated[:7]} is not an ancestor of the head {head[:7]}: rerun validate.py on the head")
+    code = [name for name in git_out(top, "diff", "--name-only", full, head).splitlines() if not name.endswith(".md")]
+    if code:
+        raise Stop(UNVALIDATED, f"the head {head[:7]} holds code the validation on {validated[:7]} did not run on; rerun validate.py on the head:\n" + "\n".join(f"  {name}" for name in code))
+    print(f"validated={validated[:7]}: only Markdown differs between it and the head {head[:7]}")
+    return full
 
 
 def require_clean(top: Path) -> None:
@@ -288,10 +313,11 @@ def main() -> int:
             if git(top, "merge-base", "--is-ancestor", head, "HEAD").returncode:
                 raise Stop(MERGE_STATE, f"{head[:7]} is not merged into HEAD; commit the merge first")
         else:
-            reported, name = read_report(args.report)
+            reported, name, validated = read_report(args.report)
             require_clean(top)
             head = require_head(top, reported)
             require_tip(top, head, name)
+            require_validated(top, head, validated)
             merge(top, head, branch, args.message)
         return post_merge(top, head, branch, checks, args.push)
     except Stop as stop:

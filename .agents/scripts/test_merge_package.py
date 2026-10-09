@@ -64,9 +64,16 @@ class MergePackageTest(unittest.TestCase):
         self.commit("late.txt", "late\n", "fix: committed after the report")
         self.git("checkout", "--quiet", WAVE)
 
-    def report(self, head: str, branch: str = "pkg") -> str:
-        """A report as save-report.py writes it: a header, prose with a brace, then the JSON with a nested object last."""
+    def report(self, head: str, branch: str = "pkg", validated: str | None = "head", validate: str | None = None) -> str:
+        """A report as save-report.py writes it: a header, prose with a brace, then the JSON with a nested object last.
+        `validated` names the commit validate.py ran on (the head by default); `validate` is the prose line instead."""
         body = {"status": "done", "branch": branch, "head": head[:7], "commands": [{"command": "verify", "outcome": "passed"}]}
+        if validated == "head":
+            body["validated"] = head[:7]
+        elif validated:
+            body["validated"] = validated[:7]
+        if validate:
+            body["validate"] = validate
         path = self.root / "report-pkg.md"
         path.write_text(f"# pkg report\n\nThe {{ base }} came first.\n\n```json\n{json.dumps(body, indent=2)}\n```\n")
         return str(path)
@@ -167,6 +174,41 @@ class MergePackageTest(unittest.TestCase):
         self.assertIn("MERGE_PACKAGE_TESTS=1", done.stderr)
         self.assertEqual(self.git("rev-parse", "HEAD"), self.base)
         self.assertEqual(self.origin_tip(), self.base)
+
+    def test_refuses_a_head_with_code_after_the_validation(self) -> None:
+        # The shape of ticket #77's fix round (2026-10-09): validate.py ran on 7086ce8, then 7baa118 added a .cs file.
+        validated = self.package()
+        self.git("checkout", "--quiet", "pkg")
+        head = self.commit("tests/StrayType.cs", "class StrayType;\n", "test: added after the validation")
+        self.git("checkout", "--quiet", WAVE)
+        done = self.merge(self.report(head, validated=validated), "-m", "Merge pkg", checks=[self.passing])
+        self.assertEqual(done.returncode, 14, done.stdout + done.stderr)
+        self.assertIn("holds code the validation on", done.stderr)
+        self.assertIn("  tests/StrayType.cs", done.stderr)
+        self.assertEqual(self.git("rev-parse", "HEAD"), self.base)
+
+    def test_accepts_markdown_committed_after_the_validation(self) -> None:
+        validated = self.package()
+        self.git("checkout", "--quiet", "pkg")
+        head = self.commit("docs/acceptance.md", "# Acceptance\n\n## #1\n\n## pkg\n\nPASS\n", "docs: the PASS line")
+        self.git("checkout", "--quiet", WAVE)
+        done = self.merge(self.report(head, validated=validated), "-m", "Merge pkg", checks=[self.passing])
+        self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+        self.assertIn(f"validated={validated[:7]}: only Markdown differs", done.stdout)
+
+    def test_reads_the_validated_commit_from_the_validate_line(self) -> None:
+        head = self.package()
+        line = f"PASS 21 packages. On commit {head[:7]}, version 0.1.0-preview.0.23"
+        done = self.merge(self.report(head, validated=None, validate=line), "-m", "Merge pkg", checks=[self.passing])
+        self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+        self.assertIn(f"validated={head[:7]}", done.stdout)
+
+    def test_refuses_a_report_that_names_no_validated_commit(self) -> None:
+        head = self.package()
+        done = self.merge(self.report(head, validated=None), "-m", "Merge pkg", checks=[self.passing])
+        self.assertEqual(done.returncode, 3, done.stdout + done.stderr)
+        self.assertIn("names no commit the package validation ran on", done.stderr)
+        self.assertEqual(self.git("rev-parse", "HEAD"), self.base)
 
     def test_merges_and_reports_an_equal_tree(self) -> None:
         head = self.package()
