@@ -1,0 +1,24 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_744c07a8061ea2::t_408742569b3f99 3
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_744c07a8061ea2::t_016783977e84a7 30
+  s_744c07a8061ea2::t_d1d55da3ddbd0d 28
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_744c07a8061ea2::t_ec389d6c9ae286 60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "282487c2965ed00da0a5fac3aaaab4a7dcfba5c1",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
