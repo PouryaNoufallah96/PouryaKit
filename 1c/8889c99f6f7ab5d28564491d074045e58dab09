@@ -1,0 +1,38 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_2867f8a3b2cd19::t_5271a5c90546e3 1,8,12,14
+  s_2867f8a3b2cd19::t_5620c90cedc463 5-6
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_2867f8a3b2cd19::t_5271a5c90546e3 42-47
+.claude/agent-memory/kit-implementer/composition-check-facts.md
+  s_2867f8a3b2cd19::t_08847200c51bca 31
+.claude/agent-memory/kit-implementer/cqrs-and-modularity-facts.md
+  s_2867f8a3b2cd19::t_08847200c51bca 60
+.claude/agent-memory/kit-implementer/caching-and-idempotency-facts.md
+  s_2867f8a3b2cd19::t_5271a5c90546e3 55-58
+.claude/agent-memory/kit-implementer/core-json-and-architecture-test-facts.md
+  s_2867f8a3b2cd19::t_08847200c51bca 12
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_2867f8a3b2cd19::t_5271a5c90546e3 80-83
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_2867f8a3b2cd19::t_5271a5c90546e3 67-72
+.claude/agent-memory/kit-implementer/integration-event-wire-and-rabbitmq-facts.md
+  s_2867f8a3b2cd19::t_08847200c51bca 18
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_2867f8a3b2cd19::t_5271a5c90546e3 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1c8889c99f6f7ab5d28564491d074045e58dab09",
+  "prompts": {},
+  "sessions": {
+    "s_2867f8a3b2cd19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00cca649-e6c4-44eb-8549-8c8dbeae846f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
