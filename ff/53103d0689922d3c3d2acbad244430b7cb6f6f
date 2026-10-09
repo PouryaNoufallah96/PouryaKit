@@ -1,0 +1,21 @@
+docs/acceptance.md
+  s_744c07a8061ea2::t_d86727be2986e2 1028
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_744c07a8061ea2::t_1cb6a758a3e239 421,431-432
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ff53103d0689922d3c3d2acbad244430b7cb6f6f",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
