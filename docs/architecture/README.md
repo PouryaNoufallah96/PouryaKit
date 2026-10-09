@@ -535,7 +535,7 @@ Seams later packages build on:
 
 ## PouryaKit.Messaging.Wolverine.RabbitMq
 
-Optional delivery between Hosts through RabbitMQ (plan I.3, ticket #51), on ADR 0006's #50 amendment, topology B: receive once per Host, then route to each subscription's local queue. It references `PouryaKit.Messaging.Wolverine` and `WolverineFx.RabbitMQ` 6.48.2 (MIT; 6.46.0 until ticket #75, 2026-10-09), which brings `RabbitMQ.Client` (`Apache-2.0 OR MPL-2.0`, taken under Apache-2.0), `WolverineFx.Newtonsoft` and `Newtonsoft.Json` (MIT); messages still cross in the Kit's System.Text.Json representation. It references no EF Core or message-store package.
+Optional delivery between Hosts through RabbitMQ (plan I.3, ticket #51), on ADR 0006's #50 amendment, topology B: receive once per Host, then route to each subscription's local queue. It references `PouryaKit.Messaging.Wolverine` and `WolverineFx.RabbitMQ` 6.48.3 (MIT; 6.46.0 until ticket #75, then 6.48.2 until its follow-up, both 2026-10-09), which brings `RabbitMQ.Client` (`Apache-2.0 OR MPL-2.0`, taken under Apache-2.0), `WolverineFx.Newtonsoft` and `Newtonsoft.Json` (MIT); messages still cross in the Kit's System.Text.Json representation. It references no EF Core or message-store package.
 
 | Concern | Types |
 |---|---|
