@@ -45,7 +45,9 @@ CLEAN = {
 TESTS = {
     # Two declared tests, and six names that are no test of ProductTests: one called by an initializer, one called by a
     # test, one in a string, one in a comment, one declared by a nested type and one by another class of the file.
-    "tests/Shop.Tests/ProductTests.cs": '''public sealed class ProductTests(Fixture app) : HostTest<Fixture>(app)
+    "tests/Shop.Tests/ProductTests.cs": '''namespace Shop.Tests;
+
+public sealed class ProductTests(Fixture app) : HostTest<Fixture>(app)
 {
     private readonly Product _product = Build("{");
 
@@ -64,15 +66,21 @@ TESTS = {
 
 public sealed class OtherTests { [Fact] public void An_other_is_declared() { } }
 ''',
+    "tests/Shop.ArchitectureTests/LayerTests.cs": "namespace Shop.ArchitectureTests;\n\npublic sealed class LayerTests { [Fact] public void Layers_hold() { } }\n",
     "scripts/test_shop.py": 'FIXTURE = "class GhostTests:\\n    def test_ghost(self): pass"\n\n\nclass InventoryTests(unittest.TestCase):\n'
     "    def test_inventory_is_exact(self):\n        self.helper_is_called()\n",
+    # Qualified by its namespace, a pointer names the method or the class alone; `Shop.ArchitectureTests` names a project.
     "docs/acceptance.md": "# Acceptance\n\n`ProductTests.A_product_is_renamed`, `ProductTests.A_product_is_priced` and"
-    " `InventoryTests.test_inventory_is_exact` pass; see `ProductTests.cs`. `Product.Retitle` is gone.\n",
+    " `InventoryTests.test_inventory_is_exact` pass; see `ProductTests.cs`. `Product.Retitle` is gone.\n"
+    "`Shop.Tests.ProductTests.A_product_is_priced` and `Shop.ArchitectureTests.LayerTests` pass in `Shop.ArchitectureTests`.\n",
 }
 NOT_DECLARED = ("ProductTests.Build", "ProductTests.A_product_is_called", "ProductTests.A_product_is_quoted", "ProductTests.A_product_is_commented",
                 "ProductTests.A_stub_is_declared", "ProductTests.An_other_is_declared", "InventoryTests.helper_is_called")
 ADOPTED = {"src/Catalog/Money.cs": "// A money value, adapted from the Till project's Money.\npublic readonly record struct Money(decimal Amount);\n"}
 RECORD = "# Catalog\n\n## Money\n\n- **Kit files:** `src/Catalog/Money.cs`\n"
+# A record that cites a Kit file, and an upstream repository's paths under Upstream paths and as `repository@commit path`.
+KIT_RECORD = ("# Catalog\n\n## Product\n\n- **Kit files:** `src/Catalog/Product.cs`\n- **Upstream paths:** `src/Till/Product.cs`\n\n"
+              "Its rule is the one of `till@abc1234 src/Till/Rules.cs:3`.\n")
 
 
 def git(root: Path, *args: str) -> None:
@@ -194,6 +202,17 @@ class CheckDocsTests(unittest.TestCase):
             self.assertIn(f"FAIL  docs/acceptance.md:{line}: `{pointer}` names no test: the class {name} has no method {method};", out)
         self.assertIn("`GhostTests.test_ghost` names no test: no test class GhostTests;", out)
 
+    def test_a_qualified_pointer_naming_no_declared_test_fails(self) -> None:
+        """A method the class lacks, a class of another namespace, and a class no file declares."""
+        stale = ("# Acceptance\n\n`Shop.Tests.ProductTests.A_product_is_retitled`, `Shop.Domain.Tests.ProductTests.A_product_is_renamed`"
+                 " and `Shop.Tests.OrderTests` pass.\n")
+        self.write(TESTS | {"docs/acceptance.md": stale})
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn("FAIL  docs/acceptance.md:3: `Shop.Tests.ProductTests.A_product_is_retitled` names no test: the class Shop.Tests.ProductTests has no method A_product_is_retitled", out)
+        self.assertIn("FAIL  docs/acceptance.md:3: `Shop.Domain.Tests.ProductTests.A_product_is_renamed` names no test: no test class Shop.Domain.Tests.ProductTests", out)
+        self.assertIn("FAIL  docs/acceptance.md:3: `Shop.Tests.OrderTests` names no test: no test class Shop.Tests.OrderTests", out)
+
     def test_adopted_code_without_a_provenance_record_fails(self) -> None:
         """The README's format example names a Kit file too, and is no record."""
         self.assertFails(ADOPTED | {"docs/provenance/README.md": RECORD}, "src/Catalog/Money.cs:1: the comment says the code is adapted from something, and no record in docs/provenance/ names the file under Kit files")
@@ -205,6 +224,32 @@ class CheckDocsTests(unittest.TestCase):
     def test_adopted_code_a_provenance_record_names_passes_and_so_does_a_string_that_says_the_words(self) -> None:
         quoted = {"src/Catalog/Messages.cs": 'public static class Messages { public const string Source = "taken from the header"; }\n'}
         self.assertPasses(ADOPTED | quoted | {"docs/provenance/Catalog.md": RECORD})
+
+    def test_cited_kit_paths_that_exist_pass(self) -> None:
+        """A path on a record's Kit files line, and in the plan a path with a `:line` suffix, a folder and a glob."""
+        plan = "# Plan\n\n`src/PouryaKit.Shop/Cart.cs:3-7`, `src/PouryaKit.Shop/` and `src/PouryaKit.Shop/*.cs`.\n"
+        self.assertPasses({"src/PouryaKit.Shop/Cart.cs": "public sealed class Cart;\n", "docs/foundation-review.md": plan, "docs/provenance/Catalog.md": KIT_RECORD})
+
+    def test_a_cited_kit_file_that_does_not_exist_fails(self) -> None:
+        record = KIT_RECORD.replace("src/Catalog/Product.cs", "src/Catalog/Gone.cs")
+        self.write({"docs/provenance/Catalog.md": record, "docs/foundation-review.md": "# Plan\n\nSee `src/PouryaKit.Shop/Gone.cs:12`.\n"})
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn("FAIL  docs/provenance/Catalog.md:5: `src/Catalog/Gone.cs` names no file or folder in the repository", out)
+        self.assertIn("FAIL  docs/foundation-review.md:3: `src/PouryaKit.Shop/Gone.cs` names no file or folder in the repository", out)
+
+    def test_an_upstream_path_in_a_provenance_record_or_the_plan_passes(self) -> None:
+        """The record cites upstream paths under Upstream paths and as `repository@commit path`; the plan cites one that
+        way and one as a path of its own, outside the Kit's packages."""
+        plan = "# Plan\n\nAs `till@abc1234 src/Till/Rules.cs:3` does, and `src/Till/Price.cs:8-12`.\n"
+        self.assertPasses({"docs/provenance/Catalog.md": KIT_RECORD, "docs/foundation-review.md": plan})
+
+    def test_a_generated_consumer_project_in_the_acceptance_record_passes(self) -> None:
+        generated = "# Acceptance\n\nGenerated as `src/acme-shop.Host/acme-shop.Host.csproj` and `tests/acme-shop.Tests`, it passed.\n"
+        self.assertPasses({"docs/acceptance.md": generated})
+
+    def test_a_path_an_adr_cites_passes(self) -> None:
+        self.assertPasses({"docs/adr/0008-carts.md": "# Carts\n\nThe cart lived in `src/PouryaKit.Shop/Cart.cs:3` until it moved.\n"})
 
     def test_fences_names_a_file_whose_fenced_block_changed(self) -> None:
         self.write({"docs/guide.md": "# Guide\n\n```bash\ndotnet build\n```\n"})

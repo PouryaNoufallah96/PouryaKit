@@ -30,12 +30,22 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   with a class ending in `Tests` must name a declared test: a method that the body of a class of that name declares,
   in a `.cs` file under `tests/` or the templates' generated tests, or in a `test_*.py`. Python is read with `ast`;
   in C#, comments and string literals are no code, and what sits inside a member's own braces (a method body, a
-  nested type) is no declaration of the class. A renamed test is drift to fix (`git log -S<Method>` finds the new
-  name); a test the row itself says was removed goes in REMOVED_TESTS with the reason. `docs/adr/` stays out: it
-  keeps renamed names on purpose.
+  nested type) is no declaration of the class. A pointer qualified by its namespace, `Namespace.Class.Method` or
+  `Namespace.Class`, must name a class of that name in a file whose first namespace is that one, and the method when
+  it names one; a span that is a test file's namespace (`PouryaKit.ArchitectureTests`) names a project, not a test.
+  A renamed test is drift to fix (`git log -S<Method>` finds the new name); a test the row itself says was removed
+  goes in REMOVED_TESTS with the reason. `docs/adr/` stays out: it keeps renamed names on purpose.
 - Provenance: a `.cs` file under `src/`, `samples/` or `tests/` whose `//` comment says the code is shaped like,
   adapted from, ported from or taken from something must be named in the **Kit files** line of a record in
   `docs/provenance/` (its README's format example is no record). Ordinary prose that trips it is said another way.
+- Kit paths: a path the docs cite into the Kit must name a file or folder that git tracks or would track and the
+  working tree holds: each span that is a path on the **Kit files** line of a record in `docs/provenance/`, and
+  each span that is a path into the Kit's packages (`src/PouryaKit.*`), `samples/` or `tests/` in a top-level
+  `docs/*.md`, the plan and the acceptance record among them. A `:line` suffix is not part of the path, and a path
+  holding `*` is a glob that must match one. Out of scope by design: an upstream repository's path, which a record
+  cites under **Upstream paths** or as `repository@commit path` and the plan as a path outside the Kit's packages; the
+  test project of a solution generated from the templates (`tests/acme-shop.Tests`), which exists only during a
+  `validate.py` run; and `docs/adr/`, dated records. A moved file is cited at its new path.
 
 `--fences` only prints: for each Markdown file changed against HEAD, whether its fenced blocks changed, so an
 implementer knows whether the skill's snippet harness must run.
@@ -44,6 +54,7 @@ implementer knows whether the skill's snippet harness must run.
 from __future__ import annotations
 
 import ast
+import fnmatch
 import json
 import os
 import re
@@ -88,6 +99,7 @@ ALLOWED = {
 ACCEPTANCE = "docs/acceptance.md"
 TEST_SOURCE = re.compile(r"(?:tests/|src/PouryaKit\.Templates/content/.+/tests/).+\.cs|(?:.+/)?test_\w+\.py")
 TEST_POINTER = re.compile(r"(\w+Tests)\.(?!cs$)(\w+)")  # `CatalogTests.cs` names a file, not a test
+QUALIFIED_POINTER = re.compile(r"(\w+(?:\.\w+)*\.\w+Tests)(?:\.(?!cs$)(\w+))?")  # `Namespace.Class.Method`, or the class
 # C# text that is no code: a comment, a raw, a verbatim or an ordinary string literal, a character literal.
 CS_NOT_CODE = re.compile("|".join((
     r"//[^\n]*", r"/\*.*?\*/",
@@ -103,6 +115,11 @@ REMOVED_TESTS = {
 }
 ADOPTED = re.compile(r"//.*\b(shaped like|adapted from|ported from|taken from)\b", re.IGNORECASE)
 KIT_FILES = "- **Kit files:**"
+CITED_PATH = re.compile(r"([\w.-]+/[^\s:]*)(?::[\d,-]+)?")  # a span that is a repository path, maybe with a `:line`
+KIT_ROOTS = ("src/PouryaKit.", "samples/", "tests/")  # the Kit's packages, the Proving Sample and the tests
+# The test project of a solution that `validate.py` or ticket #59's probe generates from the templates under one of
+# these names exists only during the run. A generated `src/` project is no Kit package, so the rule never reads one.
+GENERATED = re.compile(r"tests/(?:acme[-_]shop|Acme\.Shop)\.")
 KEYWORDS = set("""
     abstract as base bool break byte case catch char checked class const continue decimal default delegate do double
     else enum event explicit extern false finally fixed float for foreach goto if implicit in int interface internal
@@ -367,8 +384,10 @@ def python_tests(text: str) -> dict[str, set[str]]:
 
 
 def csharp_tests(text: str) -> dict[str, set[str]]:
-    """Each class of a C# source whose name ends in Tests, with the methods its body declares."""
+    """Each class of a C# source whose name ends in Tests, with the methods its body declares, under its own name and
+    under that name qualified by the first namespace the file declares."""
     code, found = CS_NOT_CODE.sub(" ", text), {}
+    namespace = re.search(r"\bnamespace\s+([\w.]+)", code)
     for declared in re.finditer(r"\bclass\s+(\w+Tests)\b", code):
         start = code.find("{", declared.end())
         members, depth = [], 0  # the body's own text; a member's braces, and all they hold, become the `;` that ends it
@@ -387,7 +406,9 @@ def csharp_tests(text: str) -> dict[str, set[str]]:
             body = bare
         # A method's name comes before the member's first parenthesis, with no `=` on the way: that is an initializer.
         declarations = (re.match(r"[^=(]*?\b(\w+)\s*(?:<[^<>()]*>)?\s*\(", member) for member in body.split(";"))
-        found.setdefault(declared.group(1), set()).update(match.group(1) for match in declarations if match)
+        methods = {match.group(1) for match in declarations if match}
+        for name in {declared.group(1), f"{namespace.group(1)}.{declared.group(1)}" if namespace else declared.group(1)}:
+            found.setdefault(name, set()).update(methods)
     return found
 
 
@@ -400,25 +421,31 @@ def check_test_pointers(docs: dict[str, Doc], files: list[str]) -> None:
             text = (ROOT / path).read_text(encoding="utf-8", errors="ignore")
             for name, methods in (python_tests if path.endswith(".py") else csharp_tests)(text).items():
                 classes.setdefault(name, set()).update(methods)
+    namespaces = {name.rpartition(".")[0] for name in classes if "." in name}  # `PouryaKit.ArchitectureTests`: a project
     reported = set(REMOVED_TESTS)
     for number, span in docs[ACCEPTANCE].spans():
-        pointer = TEST_POINTER.fullmatch(span)
-        if not pointer or span in reported:
+        pointer = TEST_POINTER.fullmatch(span) or QUALIFIED_POINTER.fullmatch(span)
+        if not pointer or span in reported or span in namespaces:
             continue
         name, method = pointer.groups()
-        if method not in classes.get(name, ()):
+        if name not in classes or method is not None and method not in classes[name]:
             reported.add(span)
             missing = f"the class {name} has no method {method}" if name in classes else f"no test class {name}"
-            failures.append(f"{ACCEPTANCE}:{number}: `{span}` names no test: {missing}; a renamed test is found with `git log -S{method}`, a removed one goes in REMOVED_TESTS with the reason")
+            failures.append(f"{ACCEPTANCE}:{number}: `{span}` names no test: {missing}; a renamed test is found with `git log -S{method or name.rpartition('.')[2]}`, a removed one goes in REMOVED_TESTS with the reason")
+
+
+def kit_files(files: list[str]):
+    """(record, line number, span) of each code span on the **Kit files** line of a record in `docs/provenance/`; its
+    README's format example is no record."""
+    for path in files:
+        if path.startswith("docs/provenance/") and path.endswith(".md") and not path.endswith("/README.md") and (ROOT / path).is_file():
+            for number, line in enumerate((ROOT / path).read_text(encoding="utf-8").splitlines(), start=1):
+                if line.startswith(KIT_FILES):
+                    yield from ((path, number, span) for span in re.findall(r"`([^`]+)`", line))
 
 
 def check_provenance(files: list[str]) -> None:
-    recorded = set()
-    for path in files:
-        if path.startswith("docs/provenance/") and path.endswith(".md") and not path.endswith("/README.md") and (ROOT / path).is_file():
-            for line in (ROOT / path).read_text(encoding="utf-8").splitlines():
-                if line.startswith(KIT_FILES):
-                    recorded |= set(re.findall(r"`([^`]+)`", line))
+    recorded = {span for _, _, span in kit_files(files)}
     for path in files:
         if not (path.startswith(("src/", "samples/", "tests/")) and path.endswith(".cs") and path not in recorded and (ROOT / path).is_file()):
             continue
@@ -426,6 +453,20 @@ def check_provenance(files: list[str]) -> None:
             if said := ADOPTED.search(line):
                 failures.append(f"{path}:{number}: the comment says the code is {said.group(1).lower()} something, and no record in docs/provenance/ names the file under Kit files; add the record (docs/provenance/README.md gives its form), or say ordinary prose another way")
                 break
+
+
+def check_kit_paths(docs: dict[str, Doc], files: list[str]) -> None:
+    present = {f for f in files if (ROOT / f).exists()}  # tracked, and not deleted from the working tree
+    present |= {str(parent) for f in present for parent in Path(f).parents[:-1]}
+    cited = [(path, number, match.group(1)) for path, number, span in kit_files(files) if (match := CITED_PATH.fullmatch(span))]
+    for path, doc in docs.items():
+        if path.startswith("docs/") and path.count("/") == 1:
+            cited += [(path, number, match.group(1)) for number, span in doc.spans() if (match := CITED_PATH.fullmatch(span))
+                      and match.group(1).startswith(KIT_ROOTS) and not GENERATED.match(match.group(1))]
+    for path, number, kit_path in cited:
+        pattern = kit_path.rstrip("/")
+        if not (any(fnmatch.fnmatchcase(f, pattern) for f in present) if "*" in pattern else pattern in present):
+            failures.append(f"{path}:{number}: `{kit_path}` names no file or folder in the repository; cite a moved file at its current path")
 
 
 def print_fences() -> int:
@@ -458,6 +499,7 @@ def main() -> int:
     check_union_duplicates(files)
     check_test_pointers(docs, files)
     check_provenance(files)
+    check_kit_paths(docs, files)
     for message in failures:
         print(f"FAIL  {message}")
     print(f"check-docs: {len(failures)} failure(s) in {len(docs)} Markdown file(s)")
