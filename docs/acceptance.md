@@ -1025,7 +1025,7 @@ What stays open: code an application adds after `dotnet new` is not judged. The 
 
 ## Pre-Wave 3 WolverineFx 6.48.2, ticket #75
 
-Ticket #75 of spec #74 (finding P2), first and alone so that every later ticket of the initiative builds on it: the five `WolverineFx*` pins move from 6.46.0 to 6.48.2. In 6.46.0, one `ReconnectedAsync` exception while Wolverine rebuilt its RabbitMQ agents after a connection recovery left every listener after it without a consumer, while health stayed green; 6.48.0 repairs it (`JasperFx/wolverine` #4864, #4867). [ADR 0004](adr/0004-commit-through-wolverine-ef-outbox.md)'s #75 amendment records the move. No Kit package's code changed.
+Ticket #75 of spec #74 (finding P2), first and alone so that every later ticket of the initiative builds on it: the five `WolverineFx*` pins move from 6.46.0 to 6.48.2. In 6.46.0, one `ReconnectedAsync` exception while Wolverine rebuilt its RabbitMQ agents after a connection recovery left that listener and every one after it without a consumer, while health stayed green; 6.48.0 repairs it (`JasperFx/wolverine` #4864, #4867). [ADR 0004](adr/0004-commit-through-wolverine-ef-outbox.md)'s #75 amendment records the move. No Kit package's code changed.
 
 The release notes, read on 2026-10-09:
 
