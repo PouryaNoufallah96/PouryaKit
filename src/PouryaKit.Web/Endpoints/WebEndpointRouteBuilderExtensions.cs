@@ -70,11 +70,12 @@ public static class WebEndpointRouteBuilderExtensions
         /// <see cref="OperationContext.RequestId"/>, so a repeat by the same Actor and tenant answers what the first
         /// request answered, through the same Result and the same <c>ToHttpResult</c> mapping, without running the
         /// command again. A request without a single header of 1 to 256 visible ASCII characters, with spaces only
-        /// between them, is answered 400 as a problem response before its body is read. The requirement is the
-        /// endpoint's <see cref="IdempotencyKeyRequirement"/> metadata, which the endpoint's OpenAPI operation states. On a
-        /// Module's endpoint mapped for GET, HEAD, OPTIONS or TRACE, whose query ignores the key, or mapped for no method,
-        /// which answers every method, GET included, it throws when the endpoint is built, which fails the Host's start;
-        /// a command that does not opt in is refused when it is dispatched, since only then is it known.
+        /// between them, is answered 400 as a problem response whose detail states that rule, before its body is read.
+        /// The requirement is the endpoint's <see cref="IdempotencyKeyRequirement"/> metadata, which the endpoint's OpenAPI
+        /// operation states. On a Module's endpoint mapped for GET, HEAD, OPTIONS or TRACE, whose query ignores the key,
+        /// or mapped for no method, which answers every method, GET included, it throws when the endpoint is built, which
+        /// fails the Host's start; a command that does not opt in is refused when it is dispatched, since only then is it
+        /// known.
         /// </summary>
         public TBuilder RequireIdempotencyKey() => builder.WithMetadata(new IdempotencyKeyRequirement());
     }

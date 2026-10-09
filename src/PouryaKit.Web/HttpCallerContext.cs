@@ -13,7 +13,7 @@ internal static class HttpCallerContext
     /// with <c>AllowAnonymousAs(actor)</c>. An authenticated caller runs as the person its Actor claim names, unless it
     /// is a trusted peer whose headers continue an Operation, which then runs with the continued Actor. Null when no
     /// Actor resolves: an unauthenticated caller of an endpoint that names none, or a caller without the Actor claim.
-    /// Throws <see cref="BadHttpRequestException"/> when a trusted peer's context headers cannot be read.
+    /// Throws <see cref="KitBadRequestException"/> when a trusted peer's context headers cannot be read.
     /// </summary>
     public static OperationContext? Resolve(HttpContext httpContext, PouryaKitWebOptions options, ISet<string> peers)
     {

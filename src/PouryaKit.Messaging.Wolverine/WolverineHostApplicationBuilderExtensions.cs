@@ -28,8 +28,9 @@ public static class WolverineHostApplicationBuilderExtensions
         /// the same way. None of
         /// them is ever treated as handled. Wolverine discovers no handlers of its own. Messages are stored and delivered
         /// in the Kit's JSON representation, the one <c>AddPouryaKitWeb</c> gives HTTP bodies, read strictly
-        /// (<c>UsePouryaKitWireJson</c>): a body that lacks a member its type requires, or carries null where the type
-        /// forbids it, fails to read and is set aside as a dead letter with the error, never handled.
+        /// (<c>UsePouryaKitWireJson</c>): a body that lacks a member its type requires, carries null where the type
+        /// forbids it, or names one of its members twice, fails to read and is set aside as a dead letter with the error,
+        /// never handled.
         /// It installs the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>), so a Host with Wolverine has
         /// them with or without Modules. Nothing this overload registers writes an Outbox
         /// (<see cref="IOutbox"/>), so a Host that declares Notification Handlers, Integration Event Handlers

@@ -258,21 +258,44 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
         );
     }
 
+    // The Kit's own reason is the problem's detail: it names the rule the query string broke.
     [Theory]
-    [InlineData("page=two")]
-    [InlineData("size=1.5")]
-    [InlineData("page=1&page=2")]
-    [InlineData("direction=up")]
-    [InlineData("filter[name][like]=lamp")]
-    [InlineData("filter[name]=lamp")]
-    public async Task A_page_query_string_that_cannot_be_read_answers_400_as_a_problem_response(string query)
+    [InlineData("page=two", "The page query parameter is a whole number.")]
+    [InlineData("size=1.5", "The size query parameter is a whole number.")]
+    [InlineData("page=1&page=2", "The page query parameter is given once.")]
+    [InlineData("direction=up", "The direction query parameter is asc or desc.")]
+    [InlineData("filter[name][like]=lamp", "A filter query parameter is filter[field][operator], with an operator such as eq or contains.")]
+    [InlineData("filter[name]=lamp", "A filter query parameter is filter[field][operator], with an operator such as eq or contains.")]
+    public async Task A_page_query_string_that_cannot_be_read_answers_400_as_a_problem_response(string query, string detail)
     {
         using var client = Fixture.Client();
 
         var response = await client.GetAsync($"/catalog/products?{query}", TestContext.Current.CancellationToken);
 
         using var problem = await ProblemAsync(response);
+        Assert.Equal(detail, problem.RootElement.GetProperty("detail").GetString());
         Assert.False(problem.RootElement.TryGetProperty("errors", out _));
+    }
+
+    // Query string keys are read ignoring case, as IQueryCollection reads page, size, sort and direction.
+    [Fact]
+    public async Task A_filter_key_whose_prefix_is_capitalised_filters_the_page()
+    {
+        var (lighting, _) = await SeedAsync();
+        using var client = Fixture.Client();
+
+        var response = await client.GetAsync(
+            $"/catalog/products?sort=created&Filter[category][eq]={lighting}",
+            TestContext.Current.CancellationToken
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var page = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(
+            ["Desk lamp", "Floor lamp", "Lamp shade"],
+            page.RootElement.GetProperty("items").EnumerateArray().Select(item => item.GetProperty("name").GetString())
+        );
+        Assert.Equal(3, page.RootElement.GetProperty("total").GetInt64());
     }
 
     private static PageRequest Lighting(Guid lighting, int number) =>

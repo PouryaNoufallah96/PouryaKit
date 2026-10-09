@@ -19,6 +19,8 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
 
     private static readonly Guid Causation = Guid.CreateVersion7();
 
+    private const string Rule = "1 to 256 visible ASCII characters, with spaces only between them";
+
     [Fact]
     public async Task A_trusted_authenticated_peer_continues_the_operation_its_headers_name()
     {
@@ -105,15 +107,17 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
         );
     }
 
+    // The Kit's own reason is the problem's detail: it names the header and the rule it broke.
     [Theory]
-    [InlineData(OperationContextHeaders.CausationId, null)]
-    [InlineData(OperationContextHeaders.CorrelationId, "not-a-guid")]
-    [InlineData(OperationContextHeaders.ActorKind, "Robot")]
-    [InlineData(OperationContextHeaders.ActorId, "ada\u0007")]
-    [InlineData(OperationContextHeaders.Tenant, "acmé")]
+    [InlineData(OperationContextHeaders.CausationId, null, $"The request continues an Operation but has no single {OperationContextHeaders.CausationId} header that is {Rule}.")]
+    [InlineData(OperationContextHeaders.CorrelationId, "not-a-guid", $"The request's {OperationContextHeaders.CorrelationId} header is not a Guid.")]
+    [InlineData(OperationContextHeaders.ActorKind, "Robot", $"The request's {OperationContextHeaders.ActorKind} header Robot is not an ActorKind.")]
+    [InlineData(OperationContextHeaders.ActorId, "ada\u0007", $"The request continues an Operation but has no single {OperationContextHeaders.ActorId} header that is {Rule}.")]
+    [InlineData(OperationContextHeaders.Tenant, "acmé", $"The request continues an Operation but has no single {OperationContextHeaders.Tenant} header that is {Rule}.")]
     public async Task A_trusted_peer_whose_context_headers_are_incomplete_or_unreadable_is_refused_with_400(
         string header,
-        string? value
+        string? value,
+        string detail
     )
     {
         using var peer = WithContextHeaders(Fixture.Client(AppFixture.TrustedPeer));
@@ -128,6 +132,8 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+        Assert.Equal(detail, problem.GetProperty("detail").GetString());
     }
 
     private async Task<Guid> CreateProductAsync(string name)

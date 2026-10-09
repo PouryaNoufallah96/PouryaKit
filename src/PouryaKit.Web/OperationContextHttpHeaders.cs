@@ -67,14 +67,14 @@ internal static class OperationContextHttpHeaders
         string Single(string name) =>
             headers.TryGetValue(name, out var values) && values is [{ } value] && IsHeaderValue(value)
                 ? value
-                : throw new BadHttpRequestException($"The request continues an Operation but has no single {name} header that is {Rule}.");
+                : throw new KitBadRequestException($"The request continues an Operation but has no single {name} header that is {Rule}.");
 
         var actorId = Single(ActorId);
         var actor = Single(ActorKindName) switch
         {
             nameof(ActorKind.Person) => Actor.Person(actorId),
             nameof(ActorKind.System) => Actor.System(actorId),
-            var kind => throw new BadHttpRequestException($"The request's {ActorKindName} header {kind} is not an ActorKind."),
+            var kind => throw new KitBadRequestException($"The request's {ActorKindName} header {kind} is not an ActorKind."),
         };
         string? tenant = headers.ContainsKey(Tenant) ? Single(Tenant) : null;
         return OperationContext.RestoreTrusted(
@@ -92,10 +92,10 @@ internal static class OperationContextHttpHeaders
         value.Length is > 0 and <= MaxValueLength
         && value[0] != ' '
         && value[^1] != ' '
-        && value.All(character => character is >= ' ' and <= '~');
+        && !value.AsSpan().ContainsAnyExceptInRange(' ', '~');
 
     private static Guid Id(string value, string name) =>
         Guid.TryParse(value, CultureInfo.InvariantCulture, out var id)
             ? id
-            : throw new BadHttpRequestException($"The request's {name} header is not a Guid.");
+            : throw new KitBadRequestException($"The request's {name} header is not a Guid.");
 }

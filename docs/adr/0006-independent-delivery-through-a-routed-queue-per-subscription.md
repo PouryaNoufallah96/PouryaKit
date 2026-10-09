@@ -1082,3 +1082,16 @@ unchanged. The text above keeps the former names, as it was written: where it sa
 `UsePouryaKitPostgres`, the line `SubscriptionUnitOfWorkCheck` reports names the new call, and the test the amendment
 above cites as `…_naming_use_postgres` is now
 `CompositionCheckTests.A_module_that_subscribes_but_registers_no_unit_of_work_fails_the_host_when_built_naming_use_pouryakit_postgres`.
+
+## Amendment (2026-10-10, ticket #86: a member named twice)
+
+The decision above stands, and so does the strict reading of the #60 amendment. Since ticket #86 (decision D9 of spec
+#74) `UsePouryaKitJson`, which `UsePouryaKitWireJson` builds on, turns .NET 10's `AllowDuplicateProperties` off, so a
+body that names one of its contract's members twice, in its own case or another (`name` and `Name`, read ignoring case),
+fails to read with a `JsonException` (`Duplicate property 'name' encountered during deserialization of type '…'`)
+instead of keeping the last value. Across a broker it is dead-lettered at the Host's queue before the fan-out, as the
+#60 amendment describes, and no subscription receives a copy:
+`StrictWireReadingTests.A_body_that_names_a_member_of_its_contract_twice_is_dead_lettered_at_the_host_queue_with_the_error_and_never_handled`,
+red with the option at its default, under which the handler ran with the last value. A member the contract lacks is
+still skipped, once or twice. HTTP bodies, cached answers and recorded responses refuse a member named twice too, since
+they share `UsePouryaKitJson`; otherwise their reading stays lenient.

@@ -11,7 +11,7 @@ internal static class IdempotencyKeyHeader
         && values is [{ } value]
         && OperationContextHttpHeaders.IsHeaderValue(value)
             ? value
-            : throw new BadHttpRequestException(
+            : throw new KitBadRequestException(
                 $"The endpoint requires a single {IdempotencyKeyRequirement.Header} header that is {OperationContextHttpHeaders.Rule}."
             );
 }

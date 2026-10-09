@@ -106,6 +106,28 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         );
     }
 
+    // A body that names a member twice, in its own case or another, cannot be read (#86): it is refused before any
+    // validation, never read with its last value.
+    [Theory]
+    [InlineData("name")]
+    [InlineData("Name")]
+    public async Task A_body_that_names_a_member_twice_answers_400_as_a_problem_response_and_nothing_is_saved(string again)
+    {
+        using var client = Fixture.Client("ada");
+        var category = Guid.CreateVersion7();
+        using var body = new StringContent(
+            $$"""{"categoryId":"{{category}}","name":"Lamps","{{again}}":"Chairs"}""",
+            System.Text.Encoding.UTF8,
+            "application/json"
+        );
+
+        var response = await client.PostAsync("/catalog/categories", body, TestContext.Current.CancellationToken);
+
+        var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
+        Assert.False(problem.TryGetProperty("errors", out _));
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from catalog.categories where id = '{category}'"));
+    }
+
     [Fact]
     public async Task A_missing_product_answers_404_with_its_error()
     {
