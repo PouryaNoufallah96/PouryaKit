@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
-namespace ModularMonolith.Tests;
+namespace ModularMonolith.Tests.Fixtures;
 
 /// <summary>
 /// An identity provider of the tests' own: it signs tokens with a key generated for this test run, and every Host the

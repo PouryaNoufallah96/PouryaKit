@@ -7,7 +7,7 @@ using PouryaKit.Cqrs;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Persistence.EFCore;
 
-namespace ModularMonolith.Tests;
+namespace ModularMonolith.Tests.Fixtures;
 
 /// <summary>
 /// Stop points inside the Kit's delivery, for Integration Event tests: what an Operation of the test's own flow writes

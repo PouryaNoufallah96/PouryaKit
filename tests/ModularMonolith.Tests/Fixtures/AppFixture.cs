@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ModularMonolith.Host;
-using ModularMonolith.Tests;
 using ModularMonolith.Tests.Stub;
 using Npgsql;
 using PouryaKit.Modularity;
@@ -17,7 +16,7 @@ using PouryaKit.Web.OpenApi;
 [assembly: AssemblyFixture(typeof(AppFixture))]
 [assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
 
-namespace ModularMonolith.Tests;
+namespace ModularMonolith.Tests.Fixtures;
 
 /// <summary>
 /// The Proving Sample's Host, with the test-only <see cref="StubModule"/> beside Catalog, served in memory,

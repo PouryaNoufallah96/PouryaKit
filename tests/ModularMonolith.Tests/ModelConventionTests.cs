@@ -16,7 +16,7 @@ public sealed class ModelConventionTests
         var derivedRefused = Assert.Throws<InvalidOperationException>(() => new DerivedSoftDeletableContext());
 
         Assert.StartsWith("Cover is ISoftDeletable but is mapped as an owned type", ownedRefused.Message);
-        Assert.StartsWith("ArchivedShelf is ISoftDeletable but is mapped as a type derived from Shelf", derivedRefused.Message);
+        Assert.StartsWith("DerivedSoftDeletable is ISoftDeletable but is mapped as a type derived from HierarchyRoot", derivedRefused.Message);
     }
 }
 
@@ -34,9 +34,9 @@ internal sealed class Cover : ISoftDeletable
     public string? DeletedBy { get; private set; }
 }
 
-internal class Shelf : AggregateRoot<Guid>;
+internal class HierarchyRoot : AggregateRoot<Guid>;
 
-internal sealed class ArchivedShelf : Shelf, ISoftDeletable
+internal sealed class DerivedSoftDeletable : HierarchyRoot, ISoftDeletable
 {
     public bool IsDeleted { get; private set; }
 
@@ -61,7 +61,7 @@ internal sealed class DerivedSoftDeletableContext()
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.Entity<Shelf>();
-        modelBuilder.Entity<ArchivedShelf>().HasBaseType<Shelf>();
+        modelBuilder.Entity<HierarchyRoot>();
+        modelBuilder.Entity<DerivedSoftDeletable>().HasBaseType<HierarchyRoot>();
     }
 }

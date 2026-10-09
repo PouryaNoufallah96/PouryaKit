@@ -1,10 +1,14 @@
+using System.Reflection;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
+using PouryaKit.Messaging;
+using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Testing;
+using Wolverine;
 
 namespace ModularMonolith.Tests;
 
@@ -82,6 +86,31 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
         Assert.NotEqual(asking.OperationId, answering.OperationId);
         // Continued inside the asking Operation, which the Kit ran and authorized.
         Assert.True(answering.IsTrustedContinuation);
+    }
+
+    [Fact]
+    public void An_undefined_numeric_actor_kind_cannot_continue_as_a_system_actor()
+    {
+        var context = new OperationContext(Actor.System("review"));
+        var options = new DeliveryOptions().WithOperationContext(context);
+        var envelope = new Envelope();
+        foreach (var (name, value) in options.Headers)
+        {
+            envelope.Headers[name] = value;
+        }
+
+        // Exercise the transport's context reader without exposing this internal seam to Feature code.
+        var read = typeof(OperationContextHeaderExtensions).GetMethod(
+            "ContinuedOperationContext",
+            BindingFlags.Static | BindingFlags.NonPublic
+        )!;
+        var continued = Assert.IsType<(OperationContext Context, System.Diagnostics.ActivityContext TraceParent)>(read.Invoke(null, [envelope])).Context;
+        Assert.Equal(context.Actor, continued.Actor);
+        envelope.Headers[OperationContextHeaders.ActorKind] = "999";
+
+        var thrown = Assert.Throws<TargetInvocationException>(() => read.Invoke(null, [envelope]));
+
+        Assert.Contains("undefined ActorKind", Assert.IsType<InvalidOperationException>(thrown.InnerException).Message);
     }
 
     private async Task<Guid> CreateLampAsync()

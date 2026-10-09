@@ -33,6 +33,12 @@ metadata:
 - **A red run on an older package version (#75):** set the pins back in `Directory.Packages.props` with `sed`, run the class with `--filter-method <full name>` (it restores and rebuilds), then `cmp` the test bin's dll with `~/.nuget/packages/<id>/<old>/lib/net10.0/` to prove which version ran; set the pins forward and run again.
 - **IDE0130 in a build (#77, 2026-10-09):** works with no `CompilerVisibleProperty` (the SDK adds `RootNamespace` and `ProjectDir`); an `.editorconfig` section `[tests/**/*.cs]` with `dotnet_diagnostic.IDE0130.severity = warning` fails the next incremental build on a mismatch, and a later `none` section for one file wins. A linked source is judged by the sections of its physical path, so `Offending.Core`'s Core files fall under `src/**`. To test an exception, rename its section header to a path that matches nothing, build the one project, then copy the file back from the scratchpad.
 
+## Moving types in the test tree (#79, 2026-10-09; SDK 10.0.401)
+
+- **IDE0005 reports a run of adjacent unnecessary usings as one diagnostic at its first line:** `IntegrationEventWiringTests.cs(1,1)` covered both `using System.Reflection;` and `using Billing;`. Remove every adjacent unused using, then build again until none is reported. Each type cut out of a file, and each file moved into a child namespace, strands usings the build then fails on: `using ModularMonolith.Tests;` is redundant inside `ModularMonolith.Tests.Fixtures`, whose enclosing namespaces are in scope.
+- `ModularMonolith.Tests`' infrastructure is in `Fixtures/` (namespace `ModularMonolith.Tests.Fixtures`, one `<Using>` in the csproj): a new fixture, probe or helper goes there, a test class at the root. Root code still sees root types first, so a fixture type now arrives through a using like the Stub's and could become ambiguous (CS0104) with a same-named imported type; none did.
+- `git mv` of a project folder moves its untracked `bin/` and `obj/` with it; move them to the scratchpad first (`mv`, as `rm -r` is refused), so no stale `obj/` sits inside the new parent project. A project nested in a test project needs `Compile Remove` and `None Remove` for its folder before the first build, or the parent compiles its sources and its `obj/*.cs`.
+
 ## Mutation runs and their compile traps
 
 - Mutation via `if (false && …)` fails the build (CS0162 unreachable code under TreatWarningsAsErrors); use a runtime-false condition.

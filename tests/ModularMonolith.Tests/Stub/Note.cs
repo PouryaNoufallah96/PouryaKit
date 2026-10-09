@@ -2,7 +2,6 @@ using Ardalis.Specification;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PouryaKit.Domain;
-using PouryaKit.Persistence.EFCore;
 
 namespace ModularMonolith.Tests.Stub;
 
@@ -40,5 +39,3 @@ internal sealed class NotesWithText : Specification<Note>
 {
     public NotesWithText(string text) => Query.Where(note => note.Text == text).OrderBy(note => note.Id);
 }
-
-internal sealed class StubDbContext(DbContextOptions<StubDbContext> options) : PouryaKitDbContext(options);
