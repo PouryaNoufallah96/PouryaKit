@@ -9,9 +9,6 @@ namespace PouryaKit.Persistence.EFCore;
 // aggregate's Version is its concurrency token, and every soft-deletable entity is left out of queries.
 internal sealed class PouryaKitModelConvention : IModelFinalizingConvention
 {
-    /// <summary>The name of the query filter that leaves soft-deleted rows out, for <c>IgnoreQueryFilters</c>.</summary>
-    public const string SoftDeleteFilter = "PouryaKit.SoftDelete";
-
     public void ProcessModelFinalizing(
         IConventionModelBuilder modelBuilder,
         IConventionContext<IConventionModelBuilder> context
@@ -43,7 +40,7 @@ internal sealed class PouryaKitModelConvention : IModelFinalizingConvention
 
             if (typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType))
             {
-                entityType.Builder.HasQueryFilter(SoftDeleteFilter, NotDeleted(entityType.ClrType));
+                entityType.Builder.HasQueryFilter(PouryaKitDbContext.SoftDeleteFilter, NotDeleted(entityType.ClrType));
             }
         }
     }

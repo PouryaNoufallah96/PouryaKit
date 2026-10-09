@@ -32,7 +32,7 @@ public static class WolverineHostApplicationBuilderExtensions
         /// forbids it, fails to read and is set aside as a dead letter with the error, never handled.
         /// It installs the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>), so a Host with Wolverine has
         /// them with or without Modules. Nothing this overload registers writes an Outbox
-        /// (<see cref="INotificationOutbox"/>), so a Host that declares Notification Handlers, Integration Event Handlers
+        /// (<see cref="IOutbox"/>), so a Host that declares Notification Handlers, Integration Event Handlers
         /// or published Integration Events calls the overload of <c>PouryaKit.Messaging.Wolverine.EFCore</c> instead, or
         /// fails when it is built; so does a Host with a Notification Handler in the Feature assemblies of a Module it
         /// composed, or of its own services, that no <c>AddPouryaKitNotificationHandlers</c> declares, naming that call.

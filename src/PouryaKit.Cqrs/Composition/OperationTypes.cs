@@ -1,12 +1,17 @@
+using System.Collections.Concurrent;
+
 namespace PouryaKit.Cqrs;
 
 /// <summary>
 /// The one rule by which the Kit tells commands, queries and their handlers apart, for a Kit package's registration or
 /// composition check: a command derives from <see cref="Command"/> or <see cref="Command{TResponse}"/>, a query from
-/// <see cref="Query{TResponse}"/>, directly or through a base class of its own.
+/// <see cref="Query{TResponse}"/>, directly or through a base class of its own. Also the one name a Kit package's key
+/// gives a command or a query (<see cref="KeyName"/>).
 /// </summary>
 public static class OperationTypes
 {
+    private static readonly ConcurrentDictionary<Type, string> KeyNames = new();
+
     /// <summary>True when <paramref name="type"/> is a command or a query.</summary>
     public static bool IsOperation(Type type) => DerivesFrom(type, query: true);
 
@@ -27,6 +32,18 @@ public static class OperationTypes
             && (definition == typeof(CommandHandler<>) || definition == typeof(CommandHandler<,>) || definition == typeof(QueryHandler<,>))
                 ? handlerService.GenericTypeArguments[0]
                 : null;
+    }
+
+    /// <summary>
+    /// The name a stored or shared key gives <paramref name="operation"/>, such as the idempotency key's command and the
+    /// query cache key's query: its full name, then its assembly's simple name (<c>Namespace.Type, Assembly</c>). Two
+    /// assemblies may hold a type of one full name, and each keeps keys of its own; it is never the assembly-qualified
+    /// name, whose version would change every key at a deploy. Read once per type.
+    /// </summary>
+    public static string KeyName(Type operation)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        return KeyNames.GetOrAdd(operation, static type => $"{type.FullName}, {type.Assembly.GetName().Name}");
     }
 
     private static bool DerivesFrom(Type type, bool query)

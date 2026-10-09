@@ -83,7 +83,7 @@ public class TypedIdTests
         Assert.Equal(JsonSerializer.Serialize(order, fromDefaults), JsonSerializer.Serialize(order, fromWebDefaults));
         Assert.Equal(JsonSerializer.Serialize(order, fromDefaults), JsonSerializer.Serialize(order, fromSnakeCaseAndStrictEncoder));
         Assert.Contains("\"sku\":\"Lampe <Café> & \\\"Ø\\\"\"", JsonSerializer.Serialize(order, fromDefaults), StringComparison.Ordinal);
-        Assert.Single(fromWebDefaults.Converters, converter => converter is TypedIdJsonConverterFactory);
+        Assert.Single(fromWebDefaults.Converters, converter => converter.GetType().FullName == "PouryaKit.Domain.TypedIdJsonConverterFactory");
     }
 
     [Fact]

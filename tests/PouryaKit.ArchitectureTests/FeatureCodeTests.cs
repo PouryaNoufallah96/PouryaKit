@@ -38,7 +38,7 @@ public sealed class FeatureCodeTests
                 "Offending.CommittingCommandHandler runs the SQL statement \"update offending_marks set seen = true; abort work\".",
                 "Offending.ConnectingCommandHandler calls DbContext.get_Database.",
                 "Offending.KitStepCallingCommandHandler calls DomainEventDrain.RunAsync.",
-                "Offending.KitStepCallingCommandHandler calls EfUnitOfWorkExtensions.get_DbContext.",
+                "Offending.KitStepCallingCommandHandler calls EfUnitOfWorkDbContext.Of.",
                 "Offending.KitStepCallingCommandHandler calls IDelayedCommandOutbox.Add.",
                 "Offending.KitStepCallingCommandHandler calls IIdempotencyStore.RecordAsync.",
                 "Offending.KitStepCallingCommandHandler calls IIdempotencyStore.ReserveAsync.",

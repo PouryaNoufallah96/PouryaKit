@@ -13,7 +13,7 @@ internal sealed class OutboxCheck : ICompositionCheck
         var declared =
             subscriptions is not null && (subscriptions.All.Any() || subscriptions.Publications.Count > 0)
             || services.GetService<DelayedCommandDeclarations>()?.All.Any() == true;
-        return !declared || services.GetRequiredService<IServiceProviderIsService>().IsService(typeof(INotificationOutbox))
+        return !declared || services.GetRequiredService<IServiceProviderIsService>().IsService(typeof(IOutbox))
             ? []
             : [
                 "Notification Handlers, Integration Events, Snapshots or delayed commands are declared, but nothing writes them to an Outbox, so every Operation would commit and none would be delivered. Call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore on the Host.",

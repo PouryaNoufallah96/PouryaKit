@@ -23,7 +23,7 @@ public static class NotificationHandlerServiceCollectionExtensions
         /// itself or the same subscription declared for another Module. Repeating a declaration for the same Module adds
         /// nothing. The Host then fails when it is built if the declaration belongs to no Module in a Host of Modules or to
         /// a Module the Host does not compose, if that Module, or the application, registers no Unit of Work, or unless an
-        /// Outbox writes the Notifications (<see cref="INotificationOutbox"/>), and fails to start unless every
+        /// Outbox writes the Notifications (<see cref="IOutbox"/>), and fails to start unless every
         /// subscription's queue, as Wolverine built it, is a durable application queue.
         /// </summary>
         public IServiceCollection AddPouryaKitNotificationHandlers(params Assembly[] featureAssemblies) =>

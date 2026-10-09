@@ -18,6 +18,21 @@ public sealed class ModelConventionTests
         Assert.StartsWith("Cover is ISoftDeletable but is mapped as an owned type", ownedRefused.Message);
         Assert.StartsWith("DerivedSoftDeletable is ISoftDeletable but is mapped as a type derived from HierarchyRoot", derivedRefused.Message);
     }
+
+    // A read that must see removed rows names the filter by the public constant, whose value is published.
+    [Fact]
+    public void Ignoring_the_filter_the_public_constant_names_reads_soft_deleted_rows_too()
+    {
+        using var context = new SoftDeletableContext();
+
+        Assert.Equal("PouryaKit.SoftDelete", PouryaKitDbContext.SoftDeleteFilter);
+        Assert.Contains("WHERE", context.Set<Drawer>().ToQueryString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "WHERE",
+            context.Set<Drawer>().IgnoreQueryFilters([PouryaKitDbContext.SoftDeleteFilter]).ToQueryString(),
+            StringComparison.Ordinal
+        );
+    }
 }
 
 internal sealed class Binder : AggregateRoot<Guid>
@@ -45,6 +60,15 @@ internal sealed class DerivedSoftDeletable : HierarchyRoot, ISoftDeletable
     public string? DeletedBy { get; private set; }
 }
 
+internal sealed class Drawer : AggregateRoot<Guid>, ISoftDeletable
+{
+    public bool IsDeleted { get; private set; }
+
+    public DateTimeOffset? DeletedAt { get; private set; }
+
+    public string? DeletedBy { get; private set; }
+}
+
 internal sealed class OwnedSoftDeletableContext()
     : PouryaKitDbContext(new DbContextOptionsBuilder<OwnedSoftDeletableContext>().UseNpgsql("Host=localhost").Options)
 {
@@ -63,5 +87,15 @@ internal sealed class DerivedSoftDeletableContext()
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<HierarchyRoot>();
         modelBuilder.Entity<DerivedSoftDeletable>().HasBaseType<HierarchyRoot>();
+    }
+}
+
+internal sealed class SoftDeletableContext()
+    : PouryaKitDbContext(new DbContextOptionsBuilder<SoftDeletableContext>().UseNpgsql("Host=localhost").Options)
+{
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<Drawer>();
     }
 }

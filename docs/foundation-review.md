@@ -194,7 +194,7 @@ reason: a `Core` project that everything references.
 pourya-kit/
 ├── PouryaKit.slnx  Directory.Build.props  Directory.Packages.props  THIRD-PARTY-NOTICES.md
 ├── src/
-│   ├── PouryaKit.Domain/                 Result, Error, typed IDs, Entity, AggregateRoot, ValueObject,
+│   ├── PouryaKit.Domain/                 Result, Error, typed IDs, Entity, AggregateRoot,
 │   │                               IDomainEvent, IBusinessRule
 │   ├── PouryaKit.Cqrs/                   command/query/domain-handler contracts, dispatcher, fixed
 │   │                               pipeline, IUnitOfWork, OperationContext, authorization hook
@@ -238,6 +238,10 @@ Corrected on 2026-10-06 to match Wave 1 as built; the tree above keeps its origi
   below. It holds `IRepository` and `IUnitOfWorkConnection`, the seam through which a Module's plain-SQL write joins
   the Unit of Work (ticket #9), and references Domain and `Ardalis.Specification`. `PouryaKit.Persistence.EFCore`
   references it beside Cqrs, with `Ardalis.Specification.EntityFrameworkCore`.
+
+Corrected on 2026-10-10 by ticket #81 (decision D18): the tree's `PouryaKit.Domain` line no longer names a value-object
+base, which the package no longer has. Nothing derived from it, its one member repeated `Entity.CheckRule`, and a record
+already gives value equality.
 
 ### Allowed references
 

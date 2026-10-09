@@ -64,6 +64,12 @@ Verified by decompiling the shared framework with `ilspycmd -t <Type> <dll>` (wr
 - **Testing an internal singleton** from `PouryaKit.Security.Tests` without `Microsoft.Extensions.DependencyInjection`: register an instance and read `services.Single(d => d.ServiceType == …).ImplementationInstance`.
 - **Constant-time red-once** is structural. Try every byte offset of each method's IL for `call`/`callvirt` plus a token, `Module.ResolveMethod` in a try/catch, then assert that `FixedTimeEquals` is present and `SequenceEqual` is absent. `ArchitectureTests/Il.cs` was outside allowed_files.
 
+## Password hashing options under the options pattern (#81, 2026-10-10; Microsoft.Extensions.Hosting 10.0.12)
+
+- `Microsoft.Extensions.Options` reaches Security transitively (Cqrs → Hosting.Abstractions → Diagnostics.Abstractions), so `AddOptions<T>`, `IValidateOptions<T>` and `ValidateOnStart()` need no new reference or `PackageGraph` row. The validator is `Pbkdf2PasswordHasher.Validation`, nested like `IdempotencyKeyCleanup.Validation`, so it reads the hasher's private bounds.
+- `Host.StartAsync` throws the `OptionsValidationException` of a `ValidateOnStart` failure as is (not wrapped), with `OptionsType` and `Failures`. A bare `ServiceCollection` never runs `ValidateOnStart`; `Security.Tests` references the pinned `Microsoft.Extensions.Hosting` (test-only) to start a real Host and to bind a configuration section (`Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { DisableDefaults = true })` plus `AddInMemoryCollection`).
+- Red runs: without `ValidateOnStart` every out-of-bounds case starts; each check removed turns exactly its cases green; `Replace` weakened to `TryAdd` keeps an earlier hasher.
+
 ## OpenAPI and API versioning (#41, 2026-10-07; Asp.Versioning 10.2.3, Microsoft.AspNetCore.OpenApi 10.0.12, Scalar.AspNetCore 2.17.14)
 
 - **Wiring:** `AddApiVersioning(...).AddApiExplorer(...).AddOpenApi(o => ...)` (the versioning builder's `AddOpenApi`) plus `MapOpenApi().WithDocumentPerVersion()` serves `/openapi/v1.json` per described version; no `services.AddOpenApi()` needed. Per-document transformers go on `o.Document` (the `OpenApiOptions`), notices on `o.DocumentDescription`. Read the library with `ilspycmd -p -o <dir> ~/.nuget/packages/asp.versioning.openapi/10.2.3/lib/net10.0/Asp.Versioning.OpenApi.dll`.

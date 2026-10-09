@@ -9,7 +9,7 @@ Check the merged code before relying on a design note. Each section names its ti
 
 ## Typed IDs and records under System.Text.Json (#6, 2026-10-05; SDK 10.0.401)
 
-- System.Text.Json does NOT apply `[JsonConverter]` declared on an abstract base record to derived types; a derived typed ID serialized as `{"Value":...}`. So the converter must sit in the options' `Converters`; since #34 that happens only through Domain's `options.UsePouryaKitJson()` (Web and Wolverine call it), and a structure rule rejects code that adds `TypedIdJsonConverterFactory` itself ([[core-json-and-architecture-test-facts]]).
+- System.Text.Json does NOT apply `[JsonConverter]` declared on an abstract base record to derived types; a derived typed ID serialized as `{"Value":...}`. So the converter must sit in the options' `Converters`; since #34 that happens only through Domain's `options.UsePouryaKitJson()` (Web and Wolverine call it), and since #81 `TypedIdJsonConverterFactory` is internal, so the compiler (CS0122) refuses any other construction; Domain has no `InternalsVisibleTo`, so tests match it by full name.
 - STJ deserializing a positional derived record still sets the base record's public `init` properties (DomainEvent `Id`, `OccurredOn`) after the constructor runs, so identity and time survive a round-trip with no `[JsonConstructor]`.
 - `sealed record ProductId(Guid Value) : TypedId<Guid>(Value)` with a getter-only `Value` on the base compiles warning-free and synthesizes no second `Value` property.
 

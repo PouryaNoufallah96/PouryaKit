@@ -1,10 +1,10 @@
 namespace PouryaKit.Security;
 
 /// <summary>
-/// The parameters new hashes are made with, checked when <c>AddPouryaKitPasswordHashing</c> runs. The defaults and
-/// minimums follow the OWASP Password Storage Cheat Sheet for PBKDF2 (checked 2026-10-07).
+/// The parameters new hashes are made with, checked when the Host starts. The defaults and minimums follow the OWASP
+/// Password Storage Cheat Sheet for PBKDF2 (checked 2026-10-07).
 /// </summary>
-public sealed class PasswordHashingOptions
+public sealed class PouryaKitPasswordHashingOptions
 {
     /// <summary>The HMAC PBKDF2 iterates; <see cref="PasswordHashAlgorithm.Sha256"/> by default.</summary>
     public PasswordHashAlgorithm Algorithm { get; set; } = PasswordHashAlgorithm.Sha256;

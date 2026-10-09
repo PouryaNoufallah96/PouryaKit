@@ -4,7 +4,7 @@ namespace PouryaKit.Domain.Tests;
 
 public class DomainEventTests
 {
-    private static readonly JsonSerializerOptions Json = new() { Converters = { new TypedIdJsonConverterFactory() } };
+    private static readonly JsonSerializerOptions Json = new JsonSerializerOptions().UsePouryaKitJson();
 
     [Fact]
     public void A_domain_event_gets_a_time_ordered_identity_and_a_utc_time_once_when_raised()

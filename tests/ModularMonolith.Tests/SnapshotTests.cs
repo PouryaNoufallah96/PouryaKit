@@ -354,7 +354,7 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
             TestContext.Current.CancellationToken
         );
 
-        Assert.Equal("Operation.CommandThrew", Assert.Single(result.Errors).Code);
+        Assert.Equal(OperationErrors.CommandThrew.Code, Assert.Single(result.Errors).Code);
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.shelves"));
     }
 

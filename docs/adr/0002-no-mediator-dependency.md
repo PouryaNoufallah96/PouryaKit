@@ -382,3 +382,19 @@ that merges Wave 2.
   `Two_cacheable_queries_of_one_full_name_in_two_assemblies_each_get_their_own_handlers_answer` and
   `Two_idempotent_commands_of_one_full_name_in_two_assemblies_each_run_under_one_request_id`, each red with the
   assembly left out of its key, when the second caller received the first type's answer.
+
+## Amendment (2026-10-10, ticket #81: one helper names a type in every key, and the Outbox marker is `IOutbox`)
+
+The decision above stands, and so does the #66 amendment's rule. What changes is where the rule is written, and the
+name of one seam the #54 amendment lists.
+
+- **One helper.** The #66 amendment wrote the rule at both keys, each naming the other, because `PouryaKit.Caching`
+  sees none of Cqrs's internals. Since ticket #81 (spec #74, finding V13) it is written once, as the public
+  `OperationTypes.KeyName(Type)` of `PouryaKit.Cqrs`, which the dispatcher's idempotency key and Caching's query cache
+  key both call. It caches the name per type, so `Assembly.GetName()` no longer runs for every cacheable query. The
+  keys are byte-identical: `TypeKeyTests.The_idempotency_key_and_the_cache_key_name_a_type_by_its_full_name_and_its_assemblys_simple_name`
+  pins both as the key table and a distributed cache hold them, and passed unchanged before and after the helper; it
+  is red with the helper returning the assembly-qualified name.
+- **The Outbox marker is `IOutbox`.** Ticket #81 (decision D16) renamed the Messaging.Wolverine marker the #54
+  amendment lists, because it marks that a Host has an Outbox for every kind the glossary's Outbox covers, not for
+  Notifications alone. Its place among the pipeline's contracts is unchanged.

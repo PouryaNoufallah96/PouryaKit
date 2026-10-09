@@ -148,7 +148,7 @@ public sealed class IntegrationEventWiringTests
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.UsePouryaKitWolverine();
         // An Outbox, as a Host that subscribes registers one, so the Outbox check stays quiet.
-        builder.Services.AddSingleton<INotificationOutbox, StandInOutbox>();
+        builder.Services.AddSingleton<IOutbox, StandInOutbox>();
         builder.Services.Receive<EarlyReceivedV1>("tests.early-received.v1");
         builder.Services.Subscribe<EarlyReceivedV1, EarlyReceivedIntegrationEventHandler>("tests.early-received");
 

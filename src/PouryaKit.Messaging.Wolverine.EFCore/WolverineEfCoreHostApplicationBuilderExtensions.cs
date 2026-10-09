@@ -50,7 +50,7 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
             builder.Services.AddOptions<PouryaKitMessageStoreOptions>();
             builder.Services.AddSingleton<IWolverineExtension, MessageStoreExtension>();
             builder.Services.TryAddScoped<IUnitOfWorkOutbox, WolverineOutbox>();
-            builder.Services.TryAddScoped<INotificationOutbox, WolverineOutbox>();
+            builder.Services.TryAddScoped<IOutbox, WolverineOutbox>();
             builder.Services.TryAddScoped<PublishedIntegrationEvents>();
             builder.Services.TryAddScoped<IIntegrationEventOutbox>(scope => scope.GetRequiredService<PublishedIntegrationEvents>());
             builder.Services.TryAddScoped<ScheduledDelayedCommands>();
