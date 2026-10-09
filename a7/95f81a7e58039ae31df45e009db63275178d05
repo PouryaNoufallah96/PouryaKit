@@ -1,0 +1,42 @@
+docs/adr/0003-single-commit-owner.md
+  s_8e32520ab296c1::t_d295f80b8a0ada 113-114,119,126-129
+  s_8e32520ab296c1::t_ec702deec7c4d3 115-118,120-125
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_8e32520ab296c1::t_dfdf1e125105fd 103
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_8e32520ab296c1::t_297bd467318507 52-57
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_8e32520ab296c1::t_c6f77e19c7e453 74-79
+.agents/skills/pourya-kit/references/templates.md
+  s_8e32520ab296c1::t_4c195c172e0a12 42
+  s_8e32520ab296c1::t_fb01eb0cce89ad 134
+.agents/skills/pourya-kit/references/persistence.md
+  s_8e32520ab296c1::t_4185aaa70b0429 104
+docs/architecture/README.md
+  s_8e32520ab296c1::t_91151fc4a0e8e7 418
+  s_8e32520ab296c1::t_992b2dbdff152b 657
+docs/acceptance.md
+  s_8e32520ab296c1::t_831eca47494e5d 988
+  s_8e32520ab296c1::t_50648eca5b7fe3 1022
+  s_8e32520ab296c1::t_b9709812b4fc6e 1011
+  s_8e32520ab296c1::t_a5d189d8976e03 1007-1010,1012-1021
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_8e32520ab296c1::t_31fd089fedf3da 8
+  s_8e32520ab296c1::t_05c3fd5afe1383 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a795f81a7e58039ae31df45e009db63275178d05",
+  "prompts": {},
+  "sessions": {
+    "s_8e32520ab296c1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "894356de-d180-4dce-8974-c5f92eb7db1e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
