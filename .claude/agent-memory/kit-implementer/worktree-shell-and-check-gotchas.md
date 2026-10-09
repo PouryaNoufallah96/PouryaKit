@@ -57,6 +57,7 @@ The worktree base and the one-git-command rule are in the role file; these are w
 - `check-ai-setup.py` fails a new `docs/agents/*.md` that no `AGENTS.md`, rule, output style or role file names; a pointer from another `docs/agents/` file does not count. When `AGENTS.md` and the role files are outside `allowed_files`, the output style is the place.
 - The Edit tool validates `.claude/settings.json` against the live schema and refuses an invalid enum, so mutation-test `check-ai-setup.py` in memory (load the module, swap `loaded[path]`).
 - No pyyaml or actionlint by default: `ruby -ryaml` parses YAML; `brew install actionlint` works.
+- `python3 -m unittest .agents/scripts/test_check_docs.py` (a brief's verify, #76) stops with `ValueError: Empty module name`: the leading dot of `.agents` makes no module name. Run the CI job's `python3 -m unittest discover -s .agents/scripts -p 'test_*.py'` and say so under deviations.
 
 ## Scope: allowed_files, stop_if and asking the session
 
