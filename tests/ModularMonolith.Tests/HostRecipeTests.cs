@@ -58,6 +58,8 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
 
         var delivery = Assert.IsType<Activity>(Assert.Single(DeliveryProbes.ActivitiesOf(StockItems).Skip(earlier)));
         Assert.Contains(exported.Activities, activity => activity.Source.Name == OperationTelemetry.SourceName && activity.SpanId == delivery.SpanId);
+        // Each command the delivery's Operation sends to its database is a span of Npgsql's own source, under the Operation's.
+        Assert.Contains(exported.Activities, activity => activity.Source.Name == "Npgsql" && activity.ParentSpanId == delivery.SpanId);
         Assert.Contains(
             exported.Durations,
             duration =>

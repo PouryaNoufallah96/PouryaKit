@@ -273,7 +273,7 @@ using PouryaKit.Domain;
 using PouryaKit.Persistence;
 
 // Categories/Events/DomainEventHandlers/
-internal sealed class CountProductInCategoryHandler(IRepository<Category, CategoryId> categories)
+internal sealed class CountProductInCategoryDomainEventHandler(IRepository<Category, CategoryId> categories)
     : IDomainEventHandler<ProductCreatedDomainEvent>
 {
     public async Task<Result> Handle(ProductCreatedDomainEvent domainEvent, CancellationToken ct)
@@ -287,9 +287,9 @@ internal sealed class CountProductInCategoryHandler(IRepository<Category, Catego
 }
 ```
 
-Its counterpart, `UncountProductInCategoryHandler`, handles `ProductRemovedDomainEvent` the same way and lowers the count, so a removal and its category's count commit together.
+Its counterpart, `UncountProductInCategoryDomainEventHandler`, handles `ProductRemovedDomainEvent` the same way and lowers the count, so a removal and its category's count commit together.
 
-- Implement `IDomainEventHandler<TDomainEvent>` (`PouryaKit.Cqrs`) for one Domain Event type, in an `internal sealed` class in the Business Area that reacts, under `Events/DomainEventHandlers/`. `AddPouryaKitCqrs` registers it with the Module's other handlers. A class that handles several Domain Event types, or an abstract one, fails at startup.
+- Implement `IDomainEventHandler<TDomainEvent>` (`PouryaKit.Cqrs`) for one Domain Event type, in an `internal sealed` class named after its reaction and its kind, as `CountProductInCategoryDomainEventHandler` is, in the Business Area that reacts, under `Events/DomainEventHandlers/`. `AddPouryaKitCqrs` registers it with the Module's other handlers. A class that handles several Domain Event types, or an abstract one, fails at startup.
 - It runs only for a Domain Event of exactly its type, never for one derived from it. A Domain Event may have several handlers or none; one with no handler is fine, and the Operation commits.
 - It runs after the outermost command's handler returned a success and no nested command failed, before the prepare step and the save, in the same transaction. Handlers run one at a time, never concurrently; the handlers of one Domain Event run in the ordinal order of their full type names. An aggregate's Domain Events are handled in the order it raised them.
 - The Unit of Work takes the Domain Events of every aggregate it tracks: those added, found, listed or removed through a repository in the Operation. It clears them as it takes them.

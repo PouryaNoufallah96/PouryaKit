@@ -23,6 +23,7 @@ public static class Extensions
     private const string AlivenessEndpointPath = "/alive";
     private const string LiveTag = "live";
     private const string OtlpEndpoint = "OTEL_EXPORTER_OTLP_ENDPOINT";
+    private const string NpgsqlSource = "Npgsql";
 
     extension<TBuilder>(TBuilder builder)
         where TBuilder : IHostApplicationBuilder
@@ -45,8 +46,10 @@ public static class Extensions
             return builder;
         }
 
-        // The Kit's source and meter (OperationTelemetry.SourceName) beside ASP.NET Core, HttpClient and the runtime;
-        // add "Wolverine" to the sources to export Wolverine's spans too. OTLP export only when the endpoint is set.
+        // The Kit's source and meter (OperationTelemetry.SourceName) beside ASP.NET Core, HttpClient and the runtime, and
+        // Npgsql's own source, a span for each database command under the Operation that sends it (what AddNpgsql() of
+        // Npgsql.OpenTelemetry adds, without that package); add "Wolverine" to the sources to export Wolverine's spans
+        // too. OTLP export only when the endpoint is set.
         public TBuilder ConfigureOpenTelemetry()
         {
             builder.Logging.AddOpenTelemetry(logging =>
@@ -65,7 +68,7 @@ public static class Extensions
                 )
                 .WithTracing(tracing =>
                     tracing
-                        .AddSource(builder.Environment.ApplicationName, OperationTelemetry.SourceName)
+                        .AddSource(builder.Environment.ApplicationName, OperationTelemetry.SourceName, NpgsqlSource)
                         .AddAspNetCoreInstrumentation(aspNetCore =>
                             aspNetCore.Filter = context =>
                                 !context.Request.Path.StartsWithSegments(HealthEndpointPath)
