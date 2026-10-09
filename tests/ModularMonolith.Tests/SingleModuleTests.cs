@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Caching;
 using PouryaKit.Cqrs;
 using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
@@ -65,6 +66,31 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.folders"));
     }
 
+    // No Module's router refuses a scope never begun here, so the repository itself refuses the write in both scopes.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task A_repository_write_in_a_scope_that_runs_no_unit_of_work_throws_and_saves_nothing(bool begun)
+    {
+        var kept = await Fixture.ScalarAsync<long>("insert into stub.notes (text, version) values ('kept', 0) returning id");
+        await using var services = SingleModuleServices();
+        Exception? added;
+        Exception? removed;
+        await using (var scope = services.CreateAsyncScope())
+        {
+            if (begun)
+            {
+                scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("single-module")));
+            }
+
+            (added, removed) = await RepositoryTests.WriteOutsideAUnitOfWorkAsync(scope.ServiceProvider, kept);
+        }
+
+        Assert.Equal([["kept"]], await Fixture.RowsAsync("select text from stub.notes"));
+        Assert.Equal(RepositoryTests.NoUnitOfWork, Assert.IsType<InvalidOperationException>(added).Message);
+        Assert.Equal(RepositoryTests.NoUnitOfWork, Assert.IsType<InvalidOperationException>(removed).Message);
+    }
+
     private ServiceProvider SingleModuleServices()
     {
         var services = new ServiceCollection();
@@ -74,8 +100,9 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
                 .AddInMemoryCollection([new("ConnectionStrings:app", Fixture.ConnectionString)])
                 .Build()
         );
-        services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         services.AddPouryaKitCqrs(typeof(StubDbContext).Assembly);
+        services.AddPouryaKitCaching();
         services.AddPouryaKitValidation(typeof(StubDbContext).Assembly);
         return services.BuildServiceProvider();
     }

@@ -2,7 +2,8 @@
 name: kit-implementer
 description: Bounded writer for one work package. Edits only the allowed files, implements then adds focused tests, runs the given verify commands and returns a report. Use for implementation, tests and fixes of accepted review findings.
 disallowedTools: Agent
-effort: high
+model: claude-opus-5-5
+effort: xhigh
 memory: project
 ---
 
@@ -25,11 +26,12 @@ Before editing in a worktree, confirm its base: `git merge-base --is-ancestor <i
 ## Contract
 
 - One package, whole. Deliver the full objective inside `allowed_files`; the package is done when its behaviour works, and a first helper that compiles is the start.
-- Edit only `allowed_files`. Needing any other file is a `stop_if`: stop and report it. Your agent memory directory, when your runtime gives you one, is the single exception.
+- Edit only `allowed_files` and the docs-sync set your common brief lists. When the objective needs another file, ask the session that briefed you, naming the file and the exact change, and continue with the rest meanwhile; edit it only on the session's answer, and list it under `blockers` when none arrives before you report. Your agent memory directory, when your runtime gives you one, needs no permission.
 - Implement first. Then, when the package asks for tests, write focused tests as the "Tests" part of `.claude/rules/kit-code.md` says, and name under `shown_red` each test you saw go red as its "Red once" rule asks.
 - A fix round runs the ticket's whole `verify`.
 - Run `verify` exactly as written, after your edits. You have two fix attempts; if it still fails, stop and report `blocked` with the failing output.
 - Report `done` only when every `verify` command passed in your final run.
+- When the brief asks for `validate.py`, run it once, after the last implementation commit and with your memory notes committed first, and write nothing in the checkout while it runs, because it refuses a checkout that changes while it runs. Then record its result as the brief says.
 - Keep the diff small and in the surrounding style. Every changed line traces to the objective.
 - When evidence contradicts an ADR or a section G decision, stop and report the evidence.
 - When you depart from the brief for a sound engineering reason inside `allowed_files`, continue and record it under `deviations`.
@@ -49,12 +51,14 @@ Your only finishing states are a `done` report and a `blocked` report. When the 
   "status": "done | blocked",
   "summary": "<at most 120 words>",
   "branch": "<your branch>",
+  "base": "<the integration-branch commit your work starts from, after any fast-forward or rebase: the review base>",
   "head": "<git rev-parse HEAD at the end>",
   "commands": [
     { "command": "<as run>", "outcome": "passed | failed | not_run", "detail": "<the lines that matter>" }
   ],
   "verify_attempts": 1,
   "shown_red": ["<test>: <the behaviour switched off>"],
+  "merge_notes": "<when the integration branch moved while you worked: the files that will conflict and the right post-merge values; omit otherwise>",
   "deviations": [],
   "blockers": []
 }

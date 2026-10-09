@@ -91,3 +91,95 @@ on.
 - The explicit Actor an unauthenticated endpoint needs (Consequences, #14) is named with `AllowAnonymousAs(actor)`;
   plain `AllowAnonymous` on a Module's endpoint fails when the endpoint is built
   (`WebTests.A_module_endpoint_that_allows_anonymous_callers_without_naming_an_actor_fails_the_host_at_start`).
+
+## Amendment (2026-10-07, ticket #57: only the Kit establishes continuation trust)
+
+The decision above stands, but a causation no longer makes a context trusted. Through Wave 1, `PouryaKit.Security`'s permission check treated any context with a `CausationId` as a trusted continuation. The public constructor accepts any causation, and so does `Continue()` on any context, so application code could build a context that skipped the check. The owner decided on 2026-10-07 that the authorization and continuation design stays (G.6: work an authorized Operation creates is a trusted continuation, not re-authorized as the original user), and that only Kit code establishes that trust. Where the sentences above say a continuation is recognised by its `CausationId`, read `IsTrustedContinuation` instead.
+
+- **The trust mark.** `OperationContext.IsTrustedContinuation` is public and read-only. `CausationId` stays public and only records the chain. The permission check and any application authorizer recognise a trusted continuation by the flag, never by `CausationId`. The mark has no setter, no public init accessor and no constructor parameter, so neither application code nor a serializer can set it, and a record `with` can only clone it. The public constructor never sets it, whatever causation it is given.
+- **`Continue()` inside the running, authorized Operation is trusted (G.6).** `Continue()` gives a trusted context in one case only. It must be called on the exact context instance of an Operation that the dispatcher is running, after that Operation's authorization checks passed. It must also be called from inside that Operation: its handler, a Domain Event Handler, the Unit of Work's steps, or a Contracts implementation the handler calls, as `CatalogProducts` does. On any other context, it records the causation and gives an untrusted context. That covers a context that never ran, a context whose Operation has ended, and a context application code built. Inside an authorizer or a validator, even one nested in an authorized Operation, `Continue()` is not trusted either, because what those run is not yet authorized. The dispatcher holds the authorized Operation's context ambiently (`AuthorizedOperation`, internal to Cqrs), and only to check this claim. The context itself is still passed explicitly, so the ambient binding that this ADR rejects is not reintroduced. A task started inside the Operation that outlives it sees it end. `BeginOperation` alone grants nothing, because it is public.
+- **A restore from material the Kit wrote is trusted.** Outside a running Operation, the only member that sets the mark is `OperationContext.RestoreTrusted(actor, tenant, correlationId, causationId)`, which is internal to Cqrs. Its one caller today is the delivery step of `PouryaKit.Messaging.Wolverine` (`OperationContextHeaderExtensions.ContinuedOperationContext`). That step restores the context from the Outbox headers the Kit wrote when the causing, authorized Operation committed. This replaces the public constructor that the Consequences above name for #15 and #16. `Continue()` on a restored context, inside the delivery's running Operation, is trusted too. The trusted-peer binding of `PouryaKit.Web` (#48) must call `RestoreTrusted` and add no other way to set the mark. Delayed work (#44) stays trusted only when it is delivered through this restore path.
+- **The one `InternalsVisibleTo`.** Cqrs opens its internals to `PouryaKit.Messaging.Wolverine` and `PouryaKit.Web`, and to no other assembly. Security has to read the mark, and Kit packages other than Cqrs have to set it. Without `InternalsVisibleTo`, an application can call every public entry point that Kit delivery can call. An in-process secret would not help, because application code can read configuration and the container. The Kit uses this `InternalsVisibleTo` for `RestoreTrusted` only. `TrustedRestoreTests` in `tests/PouryaKit.ArchitectureTests` keeps the list to these two assemblies. It also fails when either assembly calls any other internal member of Cqrs.
+- **Limits.**
+  - A handler in an authorized Operation can continue into protected work that its Actor holds no permission for. One example is an Operation that declares no permission asking another Module a question that does declare one. That is G.6, not a gap: the work runs on the authority of the Operation that caused it, so which permissions an Operation declares, and what its handler continues into, are application design that review judges.
+  - An assembly named after one of the two opened assemblies, or code that uses reflection, can get past the rule; the Kit does not defend against code that does this on purpose.
+  - A delivery is trusted because the message store is trusted: any code that writes an envelope carrying the Kit's headers to a subscription's queue is restored as a trusted continuation.
+
+Proven at the Gateway seam ([acceptance](../acceptance.md#wave-2-continuation-trust-only-from-the-kit-ticket-57)) by these tests:
+
+- `SecurityTests.A_context_application_code_builds_with_a_causation_is_not_trusted_and_its_actor_is_checked`
+- `SecurityTests.A_context_continued_outside_the_operation_that_ran_it_is_not_trusted`
+- `SecurityTests.A_running_authorized_operation_continues_into_a_permission_protected_query_without_its_actor_being_checked_again`
+- `OperationContextTests.A_question_to_another_module_continues_the_asking_operations_context`
+
+The two #38 delivery tests show that the delivery seam keeps its trust.
+
+## Amendment (2026-10-07, ticket #48: calls between Kit Hosts)
+
+The decision above stands, and so does "every request starts a new chain of work" for every caller but one: a
+configured, authenticated peer Host. Spec #33 (user stories 39 to 42) asked for HTTP continuations between Hosts; the
+Host's trust boundary (G.6) moves only as far as the application's own peer list.
+
+- **A trusted peer continues an Operation; nobody else does.** `PouryaKitTrustedPeerOptions.Peers` lists the peers by
+  the value an authenticated identity carries in `PouryaKitWebOptions.ActorClaim`; it is empty by default. Only when an
+  authenticated identity of the request names a listed peer does Web build the request's context from the Kit's
+  headers, as a delivery does from a message's: `new OperationContext(actor, tenant, correlationId, causationId)`, with
+  an `OperationId` of its own, in the same context creation as before, so no middleware is added. A peer's request
+  without the headers runs as the peer in a new chain; one with incomplete or unreadable headers is refused with 400.
+  Every other caller, authenticated or anonymous, keeps its claims-derived identity and a new chain, and its headers
+  are ignored: a header never identifies a peer, so a public caller cannot set an Actor, a tenant, a correlation or a
+  causation (`TrustedPeerTests`). A continuation is trusted as before (G.6), so the permission check stands aside for it
+  as for a delivered one; an authorizer the application registered still runs.
+- **The headers are Messaging's vocabulary.** The names and format are those of `PouryaKit.Messaging`'s
+  `OperationContextHeaders`. Web does not reference Messaging (plan section C), so it states the same names in the
+  internal `OperationContextHttpHeaders`, and the tests write and read them by Messaging's constants, which keeps one
+  vocabulary.
+- **Outgoing calls carry the context explicitly and never the bearer token.** `AddPouryaKitOperationContext()` writes
+  the context a request was given with `WithOperationContext(context)`: the Actor, tenant and correlation, and the
+  calling Operation's `OperationId` as the causation, on every attempt. `HttpClientFactory` builds its handlers in a
+  scope of its own, and reading the incoming request instead (`IHttpContextAccessor`, as
+  `cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.Security/Utilities/HttpClientAuthorizationDelegatingHandler.cs`
+  does) is the ambient read this ADR rejects; it would also leave a delivery or a scheduled job with no context. The
+  handler copies nothing from an incoming request, so the caller's `Authorization` header and bearer token are never
+  forwarded (G.6, plan I.3; `OutgoingHttpTests`); a peer authenticates the calling Host by the Host's own credentials.
+- **Retry never replays a write unless the client says it is safe.** The resilience handler is the standard
+  `AddStandardResilienceHandler()`, which needs no Aspire or ServiceDefaults. By default it retries only GET, HEAD,
+  OPTIONS and TRACE, an allow-list, so an extension write such as PROPPATCH is sent once too; every method is retried
+  only with `HttpReplay.AllRequests`, the explicit choice of a client whose downstream makes writes replay-safe, and any
+  other `HttpReplay` value fails the registration. A Host with ServiceDefaults keeps one resilience pipeline per client
+  (#52).
+- **A context value that could break a header is never sent.** An Actor id or tenant is sent only when it is 1 to 256
+  visible ASCII characters with spaces only between them; any other value, a CR or LF that would start another header
+  included, fails the call before anything is sent, naming the header. The receiving Host applies the same rule to a
+  trusted peer's headers and answers 400 (`OutgoingHttpTests`, `TrustedPeerTests`).
+
+## Amendment (2026-10-07, ticket #42 follow-up: the context in the idempotency key)
+
+The decision above stands. The owner decided on 2026-10-07 that these rules of the context belong here; the
+idempotency slot itself is recorded in [ADR 0002's amendment](0002-no-mediator-dependency.md#amendment-2026-10-07-tickets-42-and-43-the-optional-idempotency-and-caching-slots).
+
+- **The request id is Operation Context data and part of the idempotency contract.** Whoever opens the Operation sets
+  it on the context; an idempotent command's key is the tenant, the Actor, the command and the request id.
+- **A tenant is null or not blank.** An Operation without a tenant has a null one, which a key stores as one fixed
+  sentinel; a tenant never collapses to a blank or sentinel value that a real tenant could equal.
+- **Identity construction is deterministic.** A key is made from those values alone, never from the time or the
+  Operation's own id, so a repeat that carries the same values always finds the same key, and contexts that differ in
+  any of them never share one.
+
+## Amendment (2026-10-08, Wave 2 final structural review: the trusted peer's continuation is restored as trusted)
+
+The decision above stands, and so do the #57 and #48 amendments. The #48 amendment records that Web built a trusted
+peer's context with `new OperationContext(actor, tenant, correlationId, causationId)`, the public constructor that the
+#57 amendment made untrusted, so the permission check authorized the continued Actor again: a peer's continuation into
+a command that declares a permission was refused unless this Host's permission source granted it to that Actor for the
+peer's request. The #57 amendment's requirement that Web call `RestoreTrusted` was not met; the final structural review
+of Wave 2 found it (finding R1 of both reviewers).
+
+- **Web restores the peer's context as trusted.** `OperationContextHttpHeaders.Continued` returns
+  `OperationContext.RestoreTrusted(actor, tenant, correlationId, causationId)`, the second caller of that member beside
+  Messaging.Wolverine's delivery step. It is reached only after `HttpCallerContext` found an authenticated identity
+  naming a configured peer, so no other caller's headers reach it, and Web adds no other way to set the mark.
+- Proven by `TrustedPeerTests.A_trusted_peer_continues_into_a_permission_protected_command_its_actor_holds_no_permission_for_and_an_untrusted_caller_is_refused`,
+  red with the public constructor back (the peer was refused with 403), and by
+  `TrustedRestoreTests.The_packages_cqrs_opens_to_use_no_internal_member_of_it_but_the_trusted_restore`, which now
+  requires Web's call beside delivery's and went red the same way.

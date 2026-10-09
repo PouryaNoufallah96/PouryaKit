@@ -30,7 +30,7 @@ Match the process to the task:
 
 When delegating: a `kit-implementer` brief carries `objective`, `allowed_files` and `verify`, and why the work matters. `stop_if` adds optional package-specific conditions; without it, apply the role's existing hard stops and record that assumption in the report. The objective states the deliverable, costly guarantees and reference baseline. Finish the selected acceptance criteria; an additional release framework or guarantee needs an owner scope decision. A role's report is a claim: read the diff and the `verify` output it reports before the next step, and re-run a check only when that leaves a doubt.
 
-Explicit session instructions about providers, models and effort override defaults. Keep model defaults in host configuration; see `docs/agents/ai-setup.md`, "Roles", for routing.
+Role model and effort are pinned per role in `docs/agents/ai-setup.md`, "Roles". An explicit Claude spawn model overrides that role's frontmatter. A Codex role file's model and effort take precedence over a spawn request.
 
 | Role | Use it for |
 |---|---|
@@ -45,7 +45,7 @@ Not test-first. Implement, then write focused tests for behaviour that matters; 
 1. Implement from the ticket and brief.
 2. Focused tests.
 3. Review, sized to the ticket. A ticket that claims a Kit runtime guarantee or changes a public API of the Kit gets two independent reviews in parallel. Other tickets follow the Operating model: clear, small changes need no separate reviewer unless risk or ambiguity requires one; normal tickets get one focused `kit-reviewer`. Executing a workflow does not itself make a Kit runtime guarantee.
-4. One fix round for the accepted findings, then a re-score of those findings only. Run a new full review only after a high finding was fixed, and at most once: a ticket gets two full reviews, then re-scores only. For any medium or low finding still open, record a disposition and move on.
+4. One fix round for the accepted findings, then a re-score of those findings only. Run a new full review only after a high finding was fixed, and at most once: a ticket gets two full reviews, then re-scores only. For any medium or low finding still open, record a disposition and move on. A low that a re-score raises gets no round of its own: the orchestrator fixes it directly when it is trivial and local, one line or one test checked at once, and records a disposition otherwise.
 5. Complete the runtime proof required by the ticket, including Kit guarantees and hosted publication where claimed.
 6. Update docs and C4 diagrams. The ticket's closing comment carries a value, cost and impact paragraph (the `archify-review` lens); `/archify-review` itself runs once per wave, at close-out.
 7. Update the Kit's own AI skill, rules and agent docs to match the change.
@@ -65,7 +65,7 @@ Both reviewers apply these to the diff. Report defects the diff introduced; olde
 - A violation of a rule under "Rules", or a name that drifts from its `GLOSSARY.md` term. A contradiction of an ADR or a section G decision is severity high.
 - A test that would still pass if every collaborator returned its default, or coverage that restates another test.
 - A claimed runtime guarantee without runtime proof.
-- Docs or AI guidance left out of sync with the change.
+- Docs or AI guidance left out of sync with the change. For each sentence or message the diff changes, search its old key phrase across `src/`, the Kit's skill, `docs/architecture/` and `docs/acceptance.md`: a restatement left as it was is a finding.
 
 ## Rule router
 
@@ -81,6 +81,8 @@ Claude Code loads these rules by path on its own. Codex does not: read the rule 
 ### Issue tracker
 
 Issues and specs live as GitHub issues on `PouryaNoufallah96/PouryaKit`. See `docs/agents/issue-tracker.md`.
+
+For `/to-tickets`, follow that guide's "Spec tickets" rules. They override ambiguous vendored wording about parent modification and distinguish parent links from blocking dependencies.
 
 ### Triage labels
 

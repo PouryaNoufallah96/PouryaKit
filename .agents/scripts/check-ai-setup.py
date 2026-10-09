@@ -23,6 +23,12 @@ AGENT_KEYS = {
     "skills", "mcpServers", "hooks", "memory", "background", "omitClaudeMd", "effort",
     "isolation", "color", "initialPrompt", "experimental",
 }  # the frontmatter table in code.claude.com/docs/en/sub-agents; unknown keys are ignored silently
+# Claude model, Claude effort, Codex model, Codex model_reasoning_effort. docs/agents/ai-setup.md "Roles".
+ROLE_ROUTING = {
+    "kit-implementer": ("claude-opus-5-5", "xhigh", "gpt-6.1-sol", "xhigh"),
+    "kit-reviewer": ("claude-fable-5-1", "high", "gpt-6-astra", "high"),
+    "kit-scout": ("claude-opus-5-5", "medium", "gpt-6.1-sol", "medium"),
+}
 OUTPUT_STYLE_KEYS = {"name", "description", "keep-coding-instructions"}  # code.claude.com/docs/en/output-styles
 AGENTS_MD_LIMIT = 32768  # Codex project_doc_max_bytes default
 GUARDED_TOOLS = {  # the tools the guard judges; each hooks file must send them to it
@@ -229,6 +235,22 @@ def check_agents() -> None:
             failures.append(f"{rel(claude[stem])}: name '{data.get('name')}' does not match the file name")
         if body.strip() != str(toml.get("developer_instructions", "")).strip():
             failures.append(f"role '{stem}': .md body and .toml developer_instructions differ")
+        expected = ROLE_ROUTING.get(stem)
+        if expected is None:
+            failures.append(f"role '{stem}': add it to ROLE_ROUTING")
+            continue
+        claude_model, claude_effort, codex_model, codex_effort = expected
+        if data.get("model") != claude_model or data.get("effort") != claude_effort:
+            failures.append(f"{rel(claude[stem])}: model/effort must be {claude_model} / {claude_effort}")
+        if toml.get("model") != codex_model or toml.get("model_reasoning_effort") != codex_effort:
+            failures.append(f"{rel(codex[stem])}: model/effort must be {codex_model} / {codex_effort}")
+    config = load(ROOT / ".codex/config.toml") or {}
+    agents = config.get("agents") if isinstance(config.get("agents"), dict) else {}
+    # /kit-review's Codex leg is `codex exec` and reads these, not the kit-reviewer file.
+    if config.get("model") != "gpt-6-astra" or config.get("model_reasoning_effort") != "high" or config.get("review_model") != "gpt-6-astra":
+        failures.append(".codex/config.toml: model, model_reasoning_effort and review_model must be gpt-6-astra / high / gpt-6-astra")
+    if agents.get("default_subagent_model") != "gpt-6.1-sol" or agents.get("default_subagent_reasoning_effort") != "high":
+        failures.append(".codex/config.toml: [agents] defaults must stay gpt-6.1-sol / high for a spawn that is not one of the three roles")
 
 
 def matches(matcher: str, tool: str) -> bool:
@@ -486,8 +508,31 @@ def check_conflict_markers() -> None:
                 failures.append(f"{name}:{number}: merge conflict marker")
 
 
+NUMBER = r"\d+|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:-(?:one|two|three|four|five|six|seven|eight|nine))?"
+
+
+def check_package_counts() -> None:
+    """The package count drifts on every merge that adds a package, so these docs name scripts/packaging/inventory.json instead."""
+    count = re.compile(rf"\b(?:{NUMBER})\s+(?:packages|nupkgs)\b", re.IGNORECASE)
+    for name in ("README.md", ".agents/skills/pourya-kit/SKILL.md", "docs/architecture/README.md"):
+        for number, line in enumerate((ROOT / name).read_text(encoding="utf-8").splitlines(), start=1):
+            if match := count.search(line):
+                failures.append(f"{name}:{number}: '{match.group(0)}' states a package count; name the packages of scripts/packaging/inventory.json instead")
+
+
+def check_tree() -> None:
+    """Every tracked path sits under a top-level entry of the tree, and .gitignore ignores no tracked path (.agents/scripts/check-tree.py)."""
+    listed = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    done = subprocess.run([sys.executable, str(ROOT / ".agents/scripts/check-tree.py")], input=listed, cwd=ROOT, capture_output=True, text=True)
+    failures.extend(f"check-tree: {line}" for line in done.stdout.splitlines())
+    if done.returncode and not done.stdout.strip():
+        failures.append(f"check-tree: exited {done.returncode}: {done.stderr.strip()}")
+
+
 def main() -> int:
     check_conflict_markers()
+    check_tree()
+    check_package_counts()
     check_skills()
     check_mods()
     check_agents()

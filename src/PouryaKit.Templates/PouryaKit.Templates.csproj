@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageType>Template</PackageType>
+    <PackageDescription>PouryaKit's dotnet new templates: a monolith and a modular monolith generated from the Proving Sample's business code, on the Kit's packages of the same version.</PackageDescription>
+    <PackageTags>dotnet-new;templates;modular-monolith;vertical-slices</PackageTags>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <IncludeSymbols>false</IncludeSymbols>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <!-- NU5128: a template package has content only, no lib folder for its target framework. -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <_Sample>$(MSBuildThisFileDirectory)../../samples/ModularMonolith/src/</_Sample>
+    <!-- The placeholder each template's Directory.Packages.props carries until the package is packed. -->
+    <_KitVersionToken>0.0.0-pouryakit</_KitVersionToken>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_PackTemplatesWithKitVersion</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+  <ItemGroup>
+    <_TemplateContent Include="content/**" Exclude="content/*/Directory.Packages.props" />
+    <_TemplatePackages Include="content/*/Directory.Packages.props" />
+    <!-- The business code both templates generate, packed from the Proving Sample: no copy of it is kept here. -->
+    <_SampleCode Include="$(_Sample)Modules/**/*.cs" Exclude="$(_Sample)**/bin/**;$(_Sample)**/obj/**" />
+    <_SampleCode Include="$(_Sample)ModularMonolith.Host/CallerPermissions.cs;$(_Sample)ModularMonolith.Host/LoggedNewProductAnnouncer.cs" />
+    <_SampleCode Include="$(_Sample)ModularMonolith.ServiceDefaults/Extensions.cs" />
+    <None Include="@(_TemplateContent)" Pack="true" PackagePath="content/%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="@(_SampleCode)" Pack="true" PackagePath="content/sample/$([MSBuild]::MakeRelative('$(_Sample)', '%(FullPath)'))" />
+    <!-- Both generated solutions build with the Kit's SDK and test runner, and migrate with its dotnet-ef. -->
+    <None Include="$(MSBuildThisFileDirectory)../../global.json" Pack="true" PackagePath="content/monolith/global.json;content/modular/global.json" />
+    <None Include="$(MSBuildThisFileDirectory)../../.config/dotnet-tools.json" Pack="true" PackagePath="content/monolith/.config/dotnet-tools.json;content/modular/.config/dotnet-tools.json" />
+  </ItemGroup>
+
+  <!-- Each template's Directory.Packages.props names the Kit's packages at the version this package is packed with. -->
+  <Target Name="_PackTemplatesWithKitVersion" DependsOnTargets="MinVer">
+    <ItemGroup>
+      <_BakedPackages Include="@(_TemplatePackages)">
+        <Baked>$(IntermediateOutputPath)templates/%(RecursiveDir)Directory.Packages.props</Baked>
+        <Text>$([System.IO.File]::ReadAllText('%(FullPath)'))</Text>
+      </_BakedPackages>
+    </ItemGroup>
+    <Error Condition="!$([System.String]::new('%(_BakedPackages.Text)').Contains('$(_KitVersionToken)'))" Text="%(_BakedPackages.Identity) has no $(_KitVersionToken) to replace with the Kit's version." />
+    <WriteLinesToFile File="%(_BakedPackages.Baked)" Lines="$([MSBuild]::Escape($([System.String]::new('%(_BakedPackages.Text)').Replace('$(_KitVersionToken)', '$(PackageVersion)'))))" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="%(_BakedPackages.Baked)" PackagePath="content/%(_BakedPackages.RecursiveDir)Directory.Packages.props" />
+    </ItemGroup>
+  </Target>
+</Project>

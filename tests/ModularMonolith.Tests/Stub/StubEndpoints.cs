@@ -53,6 +53,23 @@ internal sealed class ThrowingNoteEndpoint : IEndpoint
         );
 }
 
+// An [Idempotent] command on PUT and on DELETE, the methods no idempotent command of Catalog is mapped on.
+internal sealed class CountedNoteEndpoint : IEndpoint
+{
+    public void Map(IEndpointRouteBuilder routes)
+    {
+        routes.MapPut("/counted-notes/{text}", CountAsync).RequireIdempotencyKey();
+        routes.MapDelete("/counted-notes/{text}", CountAsync).RequireIdempotencyKey();
+    }
+
+    private static async Task<Microsoft.AspNetCore.Http.IResult> CountAsync(
+        string text,
+        OperationContext context,
+        IGatewayProcessor<StubModule> stub,
+        CancellationToken cancellationToken
+    ) => (await stub.SendAsync(new CountNoteCommand(text), context, cancellationToken)).ToHttpResult();
+}
+
 /// <summary>Registered only by a test that builds a Host of its own, to map <see cref="PlainAnonymousEndpoint"/>.</summary>
 internal sealed class PlainAnonymousRoute;
 
@@ -65,6 +82,42 @@ internal sealed class PlainAnonymousEndpoint : IEndpoint
         if (routes.ServiceProvider.GetService<PlainAnonymousRoute>() is not null)
         {
             routes.MapGet("/plain-anonymous", () => "anyone").AllowAnonymous();
+        }
+    }
+}
+
+/// <summary>Registered only by a test that builds a Host of its own, to map <see cref="KeyedReadEndpoint"/>.</summary>
+internal sealed class KeyedReadRoute;
+
+// A read that requires an Idempotency-Key, which the Host must refuse: its query ignores the key. It is mapped only in a
+// Host that registers KeyedReadRoute, so the shared Host still starts.
+internal sealed class KeyedReadEndpoint : IEndpoint
+{
+    public void Map(IEndpointRouteBuilder routes)
+    {
+        if (routes.ServiceProvider.GetService<KeyedReadRoute>() is not null)
+        {
+            routes.MapGet("/keyed-read", () => "read").RequireIdempotencyKey();
+        }
+    }
+}
+
+/// <summary>Maps <see cref="KeyedAnyMethodEndpoint"/>, without method metadata or with an empty method list.</summary>
+internal sealed record KeyedAnyMethodRoute(bool EmptyMethodList);
+
+// An endpoint that requires an Idempotency-Key but names no HTTP method, which the Host must refuse: it answers every
+// method, GET included, whose query ignores the key. It is mapped only in a Host that registers KeyedAnyMethodRoute.
+internal sealed class KeyedAnyMethodEndpoint : IEndpoint
+{
+    public void Map(IEndpointRouteBuilder routes)
+    {
+        if (routes.ServiceProvider.GetService<KeyedAnyMethodRoute>() is { } route)
+        {
+            var endpoint = routes.Map("/keyed-any", () => "any").RequireIdempotencyKey();
+            if (route.EmptyMethodList)
+            {
+                endpoint.WithMetadata(new HttpMethodMetadata([]));
+            }
         }
     }
 }

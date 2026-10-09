@@ -10,6 +10,7 @@ using PouryaKit.Domain;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
+using PouryaKit.Persistence.Dapper;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
@@ -42,6 +43,7 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
                 new Delivery("catalog.product-created.announce-new-product", "catalog.product-created", false),
                 new Delivery("catalog.product-created.publish-product-created", "catalog.product-created", false),
                 new Delivery("inventory.catalog-products", "catalog.product-snapshot.v1", false),
+                new Delivery("inventory.product-categories", "catalog.product-created.v2", false),
                 new Delivery("inventory.product-created", "catalog.product-created.v1", false),
             ],
             deliveries.OrderBy(delivery => delivery.Subscription, StringComparer.Ordinal)
@@ -297,7 +299,10 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
                 // A bounded wait for something that must not happen: the fixture's Host, alive throughout, polls the
                 // store several times and leaves the dead Host's delivery where it is.
                 await Task.Delay(TestDeliveryServiceCollectionExtensions.PollingTime * 5, TestContext.Current.CancellationToken);
-                afterDeath = await Fixture.RowsAsync("select status, owner_id <> 0 from wolverine.wolverine_incoming_envelopes");
+                // Beside the first occurrence of Inventory's recurring ReconcileStock, which the dying Host stored as it started.
+                afterDeath = await Fixture.RowsAsync(
+                    "select status, owner_id <> 0 from wolverine.wolverine_incoming_envelopes where received_at <> 'local://inventory.reconcile-stock/'"
+                );
 
                 await HostFixture.StartHostAsync(starting, TestContext.Current.CancellationToken);
                 return result;
@@ -384,15 +389,36 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
 
         Assert.Equal(
             [
-                "ModularMonolith.Tests.Misnamed.BadlyNamedDomainEvent's wire name misnamed.bad name is not a valid name: use letters and digits in segments joined by single dots or hyphens.",
+                "ModularMonolith.Tests.Misnamed.BadlyNamedDomainEvent's wire name misnamed.bad name is not a valid name: use letters and digits in segments joined by single dots or hyphens, not beginning with amq., which RabbitMQ reserves.",
                 "ModularMonolith.Tests.Misnamed.BlankNotificationHandler's subscription name is missing; declare one or remove the empty name.",
                 "ModularMonolith.Tests.Misnamed.ReservedNotificationHandler's subscription name agents is a queue Wolverine keeps for itself; choose another.",
                 "ModularMonolith.Tests.Misnamed.SecondTwinNotificationHandler and ModularMonolith.Tests.Misnamed.FirstTwinNotificationHandler have the subscription name misnamed.twin, ignoring case; give one a SubscriptionName of its own.",
                 "ModularMonolith.Tests.Misnamed.Shelved and ModularMonolith.Tests.Misnamed.ShelvedDomainEvent have the wire name modular-monolith.tests.misnamed.shelved, ignoring case; give one a WireName of its own.",
-                "ModularMonolith.Tests.Misnamed.SpacedNotificationHandler's subscription name misnamed.has space is not a valid name: use letters and digits in segments joined by single dots or hyphens.",
+                "ModularMonolith.Tests.Misnamed.SpacedNotificationHandler's subscription name misnamed.has space is not a valid name: use letters and digits in segments joined by single dots or hyphens, not beginning with amq., which RabbitMQ reserves.",
                 "ModularMonolith.Tests.Misnamed.UnnamedDomainEvent's wire name is missing; declare one or remove the empty name.",
             ],
-            thrown.Message.Split(Environment.NewLine).Order(StringComparer.Ordinal)
+            thrown.Message.Split(Environment.NewLine).Where(line => !line.Contains(MisshapenMark, StringComparison.Ordinal)).Order(StringComparer.Ordinal)
+        );
+    }
+
+    [Fact]
+    public void Startup_fails_on_a_notification_handler_that_is_generic_or_handles_several_an_abstract_or_a_generic_domain_event()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            builder.AddPouryaKitModules(modules => modules.Add<MisnamedModule>())
+        );
+
+        const string Rule = "a Notification Handler is a non-generic class that handles one concrete, non-generic Domain Event type.";
+        Assert.Equal(
+            [
+                $"ModularMonolith.Tests.Misnamed.AnyEventNotificationHandler`1{MisshapenMark}TDomainEvent; {Rule}",
+                $"ModularMonolith.Tests.Misnamed.AnyShapedNotificationHandler{MisshapenMark}ShapedDomainEvent; {Rule}",
+                $"ModularMonolith.Tests.Misnamed.BoxedNotificationHandler{MisshapenMark}BoxedDomainEvent`1; {Rule}",
+                $"ModularMonolith.Tests.Misnamed.TwoEventsNotificationHandler{MisshapenMark}PackedDomainEvent, SealedDomainEvent; {Rule}",
+            ],
+            thrown.Message.Split(Environment.NewLine).Where(line => line.Contains(MisshapenMark, StringComparison.Ordinal)).Order(StringComparer.Ordinal)
         );
     }
 
@@ -420,26 +446,24 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
 
         Assert.StartsWith(
-            $"The queues of these subscriptions do not store what they receive, so their Notifications would not survive a restart: local://{subscription}/ (Application, BufferedInMemory).",
+            $"The queues of these subscriptions or delayed commands do not store what they receive, so their deliveries would not survive a restart: local://{subscription}/ (Application, BufferedInMemory).",
             thrown.Message
         );
     }
 
     [Fact]
-    public async Task A_host_that_declares_notification_handlers_but_writes_no_outbox_fails_at_start()
+    public void A_host_that_declares_notification_handlers_but_writes_no_outbox_fails_when_built()
     {
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
-        builder.Services.AddPouryaKitNotificationHandlers(typeof(StubModule).Assembly);
-        // The transport-neutral overload: Wolverine runs, but no Unit of Work writes an Outbox.
+        // A handler with no dependency: the composition checks' container is validated when it is built.
+        builder.Services.AddPouryaKitNotificationHandlers(typeof(Unowned.UnownedNotificationHandler).Assembly);
+        // The transport-neutral overload, which installs the composition checks: Wolverine runs, but no Unit of Work
+        // writes an Outbox.
         builder.UsePouryaKitWolverine();
-        using var host = builder.Build();
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            host.StartAsync(TestContext.Current.CancellationToken)
-        );
-        await host.StopAsync(TestContext.Current.CancellationToken);
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
-        Assert.StartsWith("Notification Handlers, Integration Events or Snapshots are declared, but nothing writes them to an Outbox", thrown.Message);
+        Assert.StartsWith("Notification Handlers, Integration Events, Snapshots or delayed commands are declared, but nothing writes them to an Outbox", thrown.Message);
     }
 
     [Fact]
@@ -450,8 +474,12 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
             ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
         );
-        builder.Services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
-        builder.Services.AddPouryaKitCqrs(typeof(StubDbContext).Assembly);
+        builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        // The one command it sends, by hand, and what the Stub's Notification Handlers need: its other Features need
+        // the Stub Module's services, and the Kit's container is validated when it is built.
+        builder.Services.AddScoped<CommandHandler<WriteNoteRaisingCommand>, WriteNoteRaisingCommandHandler>();
+        builder.Services.AddSingleton<DeliveryLog>();
+        builder.Services.AddPouryaKitDapper(connectionName: "app");
         builder.Services.AddPouryaKitNotificationHandlers(typeof(StubDbContext).Assembly);
         builder.UsePouryaKitWolverine(connectionName: "app");
         builder.Services.UsePouryaKitTestDelivery();
@@ -584,6 +612,9 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.pouryakit_receipts"));
     }
 
+    // What the registration says of a Notification Handler of the wrong shape, which the Misnamed assembly also holds.
+    private const string MisshapenMark = " is a Notification Handler of ";
+
     private static string Unique() => $"note {Guid.CreateVersion7()}";
 
     private static string Subscription<THandler, TDomainEvent>() =>
@@ -596,5 +627,5 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
 public sealed class MisnamedModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module) =>
-        module.AddPouryaKitNotificationHandlers(typeof(MisnamedNotifications).Assembly, typeof(MisnamedModule));
+        module.AddPouryaKitNotificationHandlers(typeof(MisnamedNotifications).Assembly);
 }

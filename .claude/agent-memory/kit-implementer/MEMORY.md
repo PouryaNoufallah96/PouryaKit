@@ -1,20 +1,15 @@
-- [.NET test conventions](dotnet-test-conventions.md) — MTP + xunit.v3 4.x, zero-test failure, MTP filter syntax, nuget.config/NU1507, SDK pin band
-- [Worktree and check gotchas](worktree-and-check-gotchas.md) — refused shell shapes, integration branch moving mid-package, gh issue view quirk, frontmatter colons, guard rm -r
-- [STJ and record facts](stj-and-record-facts.md) — base-type JsonConverter ignored, init props survive, derived record reuses Value
-- [Docs verification tools](docs-verification-tools.md) — compile skill snippets, parse Mermaid C4, check links, names and provenance paths, ADR amendment style and citation checks
-- [Persistence and EF facts](persistence-ef-facts.md) — #8: Module UoW routing via keyed IUnitOfWork, EF 10/Npgsql/dotnet-ef/Ardalis gotchas
-- [Dapper facts](dapper-facts.md) — #9: Npgsql warm pool ignores cancelled token, Dapper locks handler registration, seam and test traps
-- [Domain Event drain facts](domain-event-drain-facts.md) — #10: drain in Cqrs, rollback-only as the one failure signal, mutation-proof test tricks
-- [Cqrs design facts](cqrs-design-facts.md) — FluentValidation licence and scanner API, generic failed Result trick, #7 design calls
-- [Wolverine 6 Spike facts](wolverine-6-spike-facts.md) — Spike S1: RuntimeCompilation required, commit-timestamp proof, ~75 s default recovery, one outbox instance per commit attempt
-- [Wolverine spike gotchas](wolverine-spike-gotchas.md) — Spike S2: codegen needs public types, AddMessageHandler avoids it, EndpointFor writes Outgoing rows, stale-time vs in-memory retry
-- [Web and ASP.NET Core facts](web-aspnetcore-facts.md) — #14: binding before filters, Finally wrapper, .NET 10 handler logging, TestServer, dotnet-ef check
-- [Modularity and context facts](modularity-context-facts.md) — #13: validation needs the DI impl package, Gateway signature vs parallel merges, host-wide state in the service collection
-- [Persistence preparation facts](persistence-preparation-facts.md) — #11: EF savepoint hides rollback bugs, two-scope race technique, TestClock vs Gateway, ef remove trap
-- [Messaging delivery facts](messaging-delivery-facts.md) — #15: Wolverine start/extension timing, store-polling test helpers, redelivery and unknown-subscription tricks
-- [Integration Event facts](integration-event-facts.md) — #16: process-global wire names, StartAsync-time checks, receipt-hold concurrency proof
-- [Dead letter and stale time facts](dead-letter-and-stale-time-facts.md) — #17: replay mechanics, stale stored retry reproduced, dying Host without zombie, attempts not runs
-- [Architecture test facts](architecture-test-facts.md) — #19: BCL IL reader, Module/EF model discovery, routing's empty 405/415, Solo-node recovery race
-- [Workflow script facts](workflow-script-facts.md) — node --check rejects top-level return; scripts need agents for git/files; runner on a worktree; Codex failure reason
-- [Snapshot facts](snapshot-facts.md) — #18: step 4 in the Outbox write, version gate beside the Receipt, Receipt masks the gate in redelivery tests
-- [Code-style analyzer facts](code-style-analyzer-facts.md) — listing the SDK's real IDE IDs, which C# 14 idioms have one, 2 s rebuilds are real
+- [.NET and test conventions](dotnet-and-test-conventions.md) — #4 and the analyzer retro (2026-10-06): MTP and xunit.v3, analyzer IDs, compiler traps, mutation runs, tests a sample change ripples into
+- [Worktree, shell and check gotchas](worktree-shell-and-check-gotchas.md) — every ticket: refused shell shapes, the moving integration branch, check-ai-setup.py, scope requests, memory layout
+- [Docs verification tools](docs-verification-tools.md) — docs packages since #8, #64 rename, #67: check-docs.py, skill snippets, Mermaid C4, reference checkouts, ADR amendment style
+- [Merge, CI and workflow tooling](merge-ci-and-workflow-tooling-facts.md) — retros and kit-review: union merge, scratch-clone proofs, gh job logs, branch names as data, workflow scripts, Codex input limit, pull request checks and threads, who runs in which cwd
+- [Core, JSON and architecture tests](core-json-and-architecture-test-facts.md) — #6 #19 #34 #37 #54 #55: STJ typed IDs, shared JSON options, IL reader, ImplementingTypes order, slot rule
+- [Cqrs and Modularity](cqrs-and-modularity-facts.md) — #7 #10 #13 #56 #57 #66: FluentValidation, Domain Event drain, Module ownership, authorizers, trust, Cqrs internals, same-named types
+- [Composition checks](composition-check-facts.md) — #61 #62 #63 #66 #67, final review B: build vs start checks, store database check, RoutingCheck, blank connection strings, failing disposal
+- [Persistence and Dapper](persistence-and-dapper-facts.md) — #8 #9 #11 #35 #67: Unit of Work routing, EF savepoints, two-scope race, Npgsql typed nulls, Ardalis, dotnet-ef traps, writes outside a Unit of Work
+- [Wolverine runtime and delivery](wolverine-runtime-and-delivery-facts.md) — S1 #2, S2 #5, #15 #17 #54 #58, final review D: store, recovery, stale time, dead letters, codegen, sent envelopes
+- [Snapshots and scheduled commands](snapshot-and-scheduled-command-facts.md) — #18 #44 #45, final review R2: version gate, Receipt masking, scheduled envelopes, recurring chains
+- [Integration Events, wire and RabbitMQ](integration-event-wire-and-rabbitmq-facts.md) — #16 #49 #50 #51 #60: wire names, type routes, strict reading, fan-out topology, broker tests
+- [Web, security and OpenAPI](web-security-and-openapi-facts.md) — #14 #36 #38 #39 #40 #41 #54 #64, final review A: binding, CORS, limiter, permissions, JWT, PBKDF2, versioning
+- [Observability, tracing and HTTP](observability-tracing-and-http-facts.md) — #46 #47 #48 #52 #64: parent-id, listener traps, resilience pipeline, OpenTelemetry providers, health, Serilog
+- [Caching and idempotency](caching-and-idempotency-facts.md) — #42 #43 #54: request id, on conflict do nothing, retention service, HybridCache slot, StampedeJoin, Redis
+- [Templates, packaging and publication](templates-packaging-and-publication-facts.md) — #53 #54 #59 #64 #66: template engine, pack-time version, validate.py and consumers, feed install

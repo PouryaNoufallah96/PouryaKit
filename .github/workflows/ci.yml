@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'feat/**']
     tags: ["**"]
   pull_request:
   workflow_dispatch:
@@ -29,6 +29,8 @@ jobs:
           python-version: "3.13"
 
       - run: python3 .agents/scripts/check-ai-setup.py
+      - run: python3 .agents/scripts/check-docs.py
+      - run: python3 -m unittest discover -s .agents/scripts -p 'test_*.py'
 
   build-and-test:
     permissions:

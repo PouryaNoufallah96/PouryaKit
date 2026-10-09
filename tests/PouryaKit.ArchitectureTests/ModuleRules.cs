@@ -67,8 +67,8 @@ internal static partial class ModuleRules
     /// <item>beginning, committing, rolling back or releasing a transaction or savepoint on an ADO.NET connection or
     /// transaction, or an EF Core transaction; a new <c>TransactionScope</c> or <c>CommittableTransaction</c>;</item>
     /// <item>the Kit's own steps: <c>IUnitOfWork</c>, the Unit of Work's DbContext (<c>EfUnitOfWorkExtensions</c>),
-    /// <c>IUnitOfWorkOutbox</c>, <c>IReceipts</c>, <c>IIntegrationEventOutbox</c>, <c>ISnapshotMappers</c>,
-    /// <c>DomainEventDrain</c>, <c>IReadingStateGuard</c>, <c>TrackedState</c>, opening a reading step (<c>Operation.OnlyReading</c>), and beginning an Operation
+    /// <c>IUnitOfWorkOutbox</c>, <c>IReceipts</c>, <c>IIntegrationEventOutbox</c>, <c>IDelayedCommandOutbox</c>, <c>IIdempotencyStore</c>, <c>ISnapshotMappers</c>,
+    /// <c>DomainEventDrain</c>, <c>IReadingStateGuard</c>, <c>TrackedState</c>, the query cache (<c>IQueryCache</c>), whose eviction follows the commit, opening a reading step (<c>Operation.OnlyReading</c>), and beginning an Operation
     /// (<c>BeginOperation</c>). The Gateway, the Web boundary and the Kit's delivery step begin Operations; so does an
     /// application of one Module that opens its own scopes, in its own assembly, which this rule would reject if that
     /// assembly were judged as a Module.</item>
@@ -241,10 +241,13 @@ internal static partial class ModuleRules
         typeof(IUnitOfWorkOutbox),
         typeof(IReceipts),
         typeof(IIntegrationEventOutbox),
+        typeof(IDelayedCommandOutbox),
+        typeof(IIdempotencyStore),
         typeof(ISnapshotMappers),
         typeof(DomainEventDrain),
         typeof(IReadingStateGuard),
         typeof(TrackedState),
+        typeof(IQueryCache),
     ];
 
     private static bool IsKitStep(MethodBase callee) =>
@@ -252,6 +255,67 @@ internal static partial class ModuleRules
         || callee.DeclaringType == typeof(EfUnitOfWorkExtensions)
         || (callee.DeclaringType == typeof(OperationContextServiceProviderExtensions) && callee.Name == "BeginOperation")
         || (callee.DeclaringType == typeof(Operation) && callee.Name == nameof(Operation.OnlyReading));
+
+    /// <summary>
+    /// Spec #33 and ADR 0002: applications register no pipeline steps, and an application's own implementation of a
+    /// contract the Kit fills for its pipeline would be one by another name, whatever registers it. Each contract is
+    /// public only so another Kit package can fill or call it:
+    /// <list type="bullet">
+    /// <item><c>IDispatcher</c>: the fixed pipeline itself; Cqrs fills it and Observability decorates it, so an application's
+    /// decorator or replacement would wrap every Operation in steps of its own;</item>
+    /// <item><c>IGatewayProcessor&lt;TModule&gt;</c>: the Gateway that begins each Operation sent from outside its Module;
+    /// Modularity fills it;</item>
+    /// <item><c>IUnitOfWork</c>: the dispatcher runs every outermost command in it; the EF Unit of Work fills it (ADR 0003);</item>
+    /// <item><c>IValidationStep&lt;T&gt;</c>: the dispatcher's validation step; Validation fills it from the validators
+    /// Features write;</item>
+    /// <item><c>IReadingStateGuard</c>: the check of tracked state across every step that only reads; the EF Unit of Work
+    /// fills it;</item>
+    /// <item><c>IUniqueConstraintReader</c>: the save step's reading of a refused save's unique constraint, which the EF Unit
+    /// of Work turns into the Module's Error; Persistence.Postgres fills it;</item>
+    /// <item><c>IIdempotencyStore</c> and <c>IQueryCache</c>: the pipeline's two optional slots; Persistence.EFCore and
+    /// Caching fill them;</item>
+    /// <item><c>IUnitOfWorkOutbox</c>: the Unit of Work's Outbox write and send; Messaging.Wolverine.EFCore fills it and
+    /// marks it with <c>INotificationOutbox</c>, so an application's own marker would pass the check that a Host which
+    /// publishes has an Outbox while nothing stores what it publishes;</item>
+    /// <item><c>IIntegrationEventOutbox</c> and <c>IDelayedCommandOutbox</c>: the Integration Events and delayed commands
+    /// of an Operation wait in them for its commit; Messaging.Wolverine.EFCore fills them;</item>
+    /// <item><c>ISnapshotMappers</c>: the Outbox builds the Snapshots of changed aggregates through it; Messaging.Wolverine
+    /// fills it;</item>
+    /// <item><c>IReceipts</c>: the delivery step records a Receipt in the receiving Unit of Work; Messaging.Wolverine.EFCore
+    /// fills it.</item>
+    /// </list>
+    /// Unlike the steps <see cref="SavesOrCommits"/> names, which Feature code must not call, the list holds the dispatcher
+    /// and the Gateway, which Feature code calls, the marker and the validation step, which have nothing to call, and no
+    /// sealed class, which nothing can implement. The rule reads every type of the assembly, nested and compiler-generated
+    /// ones included, and rejects a class or struct that implements one, naming the assembly's file; a Kit package
+    /// implementing one is correct. Not seen: an implementation made at run time, such as a <c>DispatchProxy</c>.
+    /// </summary>
+    public static IEnumerable<string> ImplementsPipelineContracts(Assembly assembly) =>
+        from type in assembly.GetTypes()
+        where !type.IsInterface
+        from contract in PipelineContracts
+        where contract.IsGenericTypeDefinition
+            ? type.GetInterfaces().Any(implemented => implemented.IsGenericType && implemented.GetGenericTypeDefinition() == contract)
+            : type.IsAssignableTo(contract)
+        select $"{type.FullName} implements {contract.Name.Split('`')[0]}, a pipeline contract only the Kit implements ({Path.GetFileName(assembly.Location)}).";
+
+    private static readonly Type[] PipelineContracts =
+    [
+        typeof(IDispatcher),
+        typeof(IGatewayProcessor<>),
+        typeof(IUnitOfWork),
+        typeof(IValidationStep<>),
+        typeof(IReadingStateGuard),
+        typeof(IUniqueConstraintReader),
+        typeof(IIdempotencyStore),
+        typeof(IQueryCache),
+        typeof(IUnitOfWorkOutbox),
+        typeof(INotificationOutbox),
+        typeof(IIntegrationEventOutbox),
+        typeof(IDelayedCommandOutbox),
+        typeof(ISnapshotMappers),
+        typeof(IReceipts),
+    ];
 
     private static bool IsMigration(Type type) => type.IsAssignableTo(typeof(Migration)) || type.IsAssignableTo(typeof(ModelSnapshot));
 

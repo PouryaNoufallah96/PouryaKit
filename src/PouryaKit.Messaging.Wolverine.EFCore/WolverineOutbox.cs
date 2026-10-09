@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -15,11 +16,14 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 // Writes each Domain Event and each Integration Event the Operation published, and the Snapshot of each aggregate it
 // changed, that has a subscription as one durable envelope per subscription, on the Unit of Work's own connection and
 // transaction (ADR 0004), carrying the Operation Context, an Integration Event its identity too, and a Snapshot its
-// aggregate and version, and sends them after the commit.
+// aggregate and version, and sends them after the commit. Each command the Operation scheduled is written the same way,
+// with the time it is due, and the message store holds it until then; a recurring command's occurrence also carries that
+// time in its own header, which marks it as one.
 internal sealed partial class WolverineOutbox(
     IWolverineRuntime runtime,
     IServiceProvider scope,
     PublishedIntegrationEvents integrationEvents,
+    ScheduledDelayedCommands delayedCommands,
     ISnapshotMappers snapshotMappers,
     ILogger<WolverineOutbox> logger
 ) : IUnitOfWorkOutbox,
@@ -40,16 +44,17 @@ internal sealed partial class WolverineOutbox(
         _written = null;
 
         // A message has a route for each of its subscriptions, and none without one.
-        List<(object Message, Guid? DomainEventId, Dictionary<string, string> Headers)> published =
+        List<(object Message, Guid? DomainEventId, Dictionary<string, string> Headers, DateTimeOffset? At)> published =
         [
-            .. messages.Select(message => (message, (Guid?)null, new Dictionary<string, string>())),
+            .. messages.Select(message => (message, (Guid?)null, new Dictionary<string, string>(), (DateTimeOffset?)null)),
             .. integrationEvents
                 .Take()
                 .Select(e =>
                     (
                         e.IntegrationEvent,
                         (Guid?)e.DomainEventId,
-                        new Dictionary<string, string> { [IntegrationEventHeaders.DomainEventId] = e.DomainEventId.ToString() }
+                        new Dictionary<string, string> { [IntegrationEventHeaders.DomainEventId] = e.DomainEventId.ToString() },
+                        (DateTimeOffset?)null
                     )
                 ),
             // A Snapshot needs no publication record: the Kit builds one per aggregate and contract in this commit, and
@@ -64,7 +69,23 @@ internal sealed partial class WolverineOutbox(
                         {
                             [SnapshotHeaders.AggregateId] = built.AggregateId,
                             [SnapshotHeaders.Version] = built.Version.ToString(CultureInfo.InvariantCulture),
-                        }
+                        },
+                        (DateTimeOffset?)null
+                    )
+                ),
+            .. delayedCommands
+                .Take()
+                .Select(scheduled =>
+                    (
+                        (object)scheduled.Command,
+                        (Guid?)null,
+                        scheduled.IsOccurrence
+                            ? new Dictionary<string, string>
+                            {
+                                [DelayedCommandHeaders.Occurrence] = scheduled.At.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
+                            }
+                            : [],
+                        (DateTimeOffset?)scheduled.At
                     )
                 ),
         ];
@@ -79,14 +100,21 @@ internal sealed partial class WolverineOutbox(
         var outbox = new DbContextOutbox(runtime, []);
         outbox.Enroll(dbContext);
         var context = scope.GetRequiredService<OperationContext>();
-        foreach (var (message, domainEventId, headers) in published)
+        // Wolverine writes the current activity's id as each envelope's parent-id, but no tracestate (ADR 0009).
+        var traceState = Activity.Current?.TraceStateString;
+        foreach (var (message, domainEventId, headers, at) in published)
         {
             if (domainEventId is { } publishedFor)
             {
                 await RecordPublicationAsync(message, publishedFor, cancellationToken);
             }
 
-            var options = new DeliveryOptions().WithOperationContext(context);
+            var options = new DeliveryOptions { ScheduledTime = at }.WithOperationContext(context);
+            if (traceState is { Length: > 0 })
+            {
+                options.Headers[OperationContextHeaders.TraceState] = traceState;
+            }
+
             foreach (var (name, value) in headers)
             {
                 options.Headers[name] = value;

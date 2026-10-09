@@ -3,6 +3,8 @@
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="Respawn" />
     <PackageReference Include="Testcontainers.PostgreSql" />
+    <!-- A test Host runs in Development, where Wolverine compiles its handler code at run time, from any build (ADR 0004). -->
+    <PackageReference Include="WolverineFx.RuntimeCompilation" />
     <PackageReference Include="xunit.v3.extensibility.core" />
   </ItemGroup>
   <ItemGroup>

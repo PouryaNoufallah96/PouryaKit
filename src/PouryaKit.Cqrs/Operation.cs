@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Cqrs;
@@ -26,7 +27,7 @@ public sealed class Operation
     private int _runningCommands;
     private int _runningQueries;
     private bool _commandStarted;
-    private bool _unitOfWorkActive;
+    private HashSet<string>? _tagsToEvict;
     private int _runningChecks;
     // The open steps that only read, in the order opened.
     private readonly List<ReadingStep> _readingSteps = [];
@@ -82,9 +83,17 @@ public sealed class Operation
         return reading;
     }
 
-    internal OperationContext? Context { get; private set; }
+    /// <summary>The Operation Context the scope's opener began the Operation with; null until it begins.</summary>
+    public OperationContext? Context { get; private set; }
 
-    internal void Begin(OperationContext context, Type? module)
+    /// <summary>
+    /// The trace context of the work that caused this Operation, as a message delivery restored it from the message it
+    /// runs; default when the scope's opener restored none. The Operation's activity starts with it as its parent when
+    /// no activity of that trace is current (ADR 0009).
+    /// </summary>
+    public ActivityContext TraceParent { get; private set; }
+
+    internal void Begin(OperationContext context, Type? module, ActivityContext traceParent)
     {
         if (Context is not null)
         {
@@ -95,6 +104,7 @@ public sealed class Operation
 
         Context = context;
         Module = module;
+        TraceParent = traceParent;
     }
 
     internal void MarkRollbackOnly(ImmutableArray<Error> errors)
@@ -139,7 +149,7 @@ public sealed class Operation
         }
 
         // A nested command joins the active Unit of Work; with none active, its handler would run with no owner.
-        if (_runningCommands > 0 && !_unitOfWorkActive)
+        if (_runningCommands > 0 && !IsUnitOfWorkActive)
         {
             throw new InvalidOperationException(
                 "A command was sent before the Operation's Unit of Work started. Only a handler may send a nested command."
@@ -152,9 +162,39 @@ public sealed class Operation
 
     internal void ExitCommand() => _runningCommands--;
 
-    internal void StartUnitOfWork() => _unitOfWorkActive = true;
+    internal void StartUnitOfWork() => IsUnitOfWorkActive = true;
 
-    internal void EndUnitOfWork() => _unitOfWorkActive = false;
+    internal void EndUnitOfWork() => IsUnitOfWorkActive = false;
+
+    /// <summary>
+    /// True while the Unit of Work of the Operation's outermost command runs: from the moment the dispatcher starts it,
+    /// once that command's authorizers and validator have passed, until it has committed or rolled back. The command's
+    /// handler, every command nested in it, its Domain Event Handlers and a delivery's Notification Handler or
+    /// Integration Event Handler, which the Kit runs inside a command of its own, all run while it is true, and a query
+    /// there may see uncommitted state. It is false before the Operation begins, in a begun scope that sends no command,
+    /// in a query sent on its own, in the outermost command's authorizers and validator, and once the Unit of Work has
+    /// ended. A Kit package reads it to refuse a write that no Unit of Work would commit; Feature code has no need to.
+    /// </summary>
+    public bool IsUnitOfWorkActive { get; private set; }
+
+    /// <summary>
+    /// True while the running query is the Operation's outermost step: no command, authorizer, validator, other query
+    /// or step that only reads is open around it, so none of them can have changed the tracked state it reads. The
+    /// query counts itself, since it is entered before its steps run.
+    /// </summary>
+    internal bool IsOutermostQuery =>
+        _runningQueries == 1 && _runningCommands == 0 && _runningChecks == 0 && _readingSteps.Count == 0;
+
+    /// <summary>The cache tags the Operation's commands declared, outermost and nested, evicted only once it commits.</summary>
+    internal IReadOnlyCollection<string> TagsToEvict => (IReadOnlyCollection<string>?)_tagsToEvict ?? [];
+
+    internal void EvictAfterCommit(IEnumerable<string> tags)
+    {
+        foreach (var tag in tags)
+        {
+            (_tagsToEvict ??= []).Add(tag);
+        }
+    }
 
     internal IDisposable EnterChecks()
     {

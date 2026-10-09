@@ -2,6 +2,9 @@ using System.Reflection;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using PouryaKit.Core;
+using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Persistence.Dapper;
@@ -13,9 +16,12 @@ public static class DapperServiceCollectionExtensions
         /// <summary>
         /// Adds Dapper reads over the connection string named <paramref name="connectionName"/> in the Host's
         /// configuration, and makes every typed ID in <paramref name="typedIdAssemblies"/> usable as a Dapper parameter
-        /// and result. Call it from each Module's Composition Root that reads with Dapper, usually with the Module's own
-        /// assembly. The Host holds one <see cref="IReadConnectionFactory"/> and one connection pool, shared by every
-        /// Module that names the same connection; naming a different connection in the same Host throws here.
+        /// and result. Call it from each Module's Composition Root that reads with Dapper: named with no assembly on a
+        /// Module's builder (<see cref="IModuleServices"/>), it takes the typed IDs of the assembly of the Module's
+        /// definition; named assemblies replace it. The Host holds one <see cref="IReadConnectionFactory"/> and one
+        /// connection pool, shared by every Module that names the same connection; naming a different connection in the
+        /// same Host throws here. With the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>), a connection
+        /// string the Host's configuration does not set, or sets blank, fails the Host's build, before any read.
         /// </summary>
         public IServiceCollection AddPouryaKitDapper(string connectionName, params Assembly[] typedIdAssemblies)
         {
@@ -23,7 +29,7 @@ public static class DapperServiceCollectionExtensions
             ArgumentException.ThrowIfNullOrWhiteSpace(connectionName);
             ArgumentNullException.ThrowIfNull(typedIdAssemblies);
 
-            AddTypedIdHandlers(typedIdAssemblies);
+            AddTypedIdHandlers(IModuleServices.FeatureAssembliesOf(services, typedIdAssemblies));
 
             var registered = services
                 .Select(descriptor => descriptor.ImplementationInstance)
@@ -39,6 +45,7 @@ public static class DapperServiceCollectionExtensions
             }
 
             services.AddSingleton(new ReadConnection(connectionName));
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ReadConnectionCheck>());
             services.AddSingleton<IReadConnectionFactory>(provider => new ReadConnectionFactory(
                 provider.GetRequiredService<IConfiguration>().GetConnectionString(connectionName)
                     ?? throw new InvalidOperationException(
@@ -54,7 +61,7 @@ public static class DapperServiceCollectionExtensions
     // the handler it replaces behaves identically and every Host keeps the same mapping.
     private static void AddTypedIdHandlers(Assembly[] assemblies)
     {
-        foreach (var type in assemblies.Distinct().SelectMany(assembly => assembly.GetTypes()))
+        foreach (var type in ImplementingTypes.Of(typeof(TypedId<>), assemblies))
         {
             if (TypedId.GetValueType(type) is { } valueType)
             {
@@ -63,7 +70,7 @@ public static class DapperServiceCollectionExtensions
             }
         }
     }
-
-    // Marks the connection the Host's Dapper reads use.
-    private sealed record ReadConnection(string Name);
 }
+
+/// <summary>The connection the Host's Dapper reads use.</summary>
+internal sealed record ReadConnection(string Name);

@@ -1,7 +1,9 @@
 # Pair of .claude/agents/kit-reviewer.md: keep name, description and instructions identical.
-# Model and effort come from the [agents] defaults or the spawn override.
+# This file's model and effort take precedence over a spawn override.
 name = "kit-reviewer"
 description = "Skeptical reviewer of one diff against its ticket or spec. Reports only diff-introduced defects with evidence and a derived disposition. Use for the independent review of a work package and for the re-review after fixes."
+model = "gpt-6-astra"
+model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 
 developer_instructions = '''

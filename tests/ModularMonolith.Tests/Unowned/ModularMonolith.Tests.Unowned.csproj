@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Features no Module declares, for the composition checks: a Notification Handler a Host of Modules declares without
+       a Module, and a command a Host without a Unit of Work handles. They need an assembly apart from the Stub Module's,
+       which the fixture's Host scans; ModularMonolith.Tests leaves this folder out of its own sources. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\PouryaKit.Cqrs\PouryaKit.Cqrs.csproj" />
+    <ProjectReference Include="..\..\..\src\PouryaKit.Messaging\PouryaKit.Messaging.csproj" />
+  </ItemGroup>
+</Project>

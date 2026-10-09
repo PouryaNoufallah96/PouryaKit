@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+"$(dirname "$0")/staged-conflict-markers" "$@"
+git diff --cached --name-only --diff-filter=AMR | python3 "$(dirname "$0")/../.agents/scripts/check-tree.py"

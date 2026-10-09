@@ -3,6 +3,7 @@
     <PackageReference Include="WolverineFx" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\PouryaKit.Core\PouryaKit.Core.csproj" />
     <ProjectReference Include="..\PouryaKit.Cqrs\PouryaKit.Cqrs.csproj" />
     <ProjectReference Include="..\PouryaKit.Messaging\PouryaKit.Messaging.csproj" />
   </ItemGroup>

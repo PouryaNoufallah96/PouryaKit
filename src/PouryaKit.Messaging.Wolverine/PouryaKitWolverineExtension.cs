@@ -4,8 +4,8 @@ using Wolverine.ErrorHandling;
 
 namespace PouryaKit.Messaging.Wolverine;
 
-// Applied when Wolverine's options are first resolved, as the Host starts, after every Composition Root ran: so it sees
-// the subscriptions of Modules added after UsePouryaKitWolverine, and checks what only the whole Host can tell.
+// Applied when Wolverine's options are first resolved, after every Composition Root ran: so it routes the subscriptions
+// of Modules added after UsePouryaKitWolverine too. RoutingCheck refused a Host whose routes are wrong when it was built.
 internal sealed class PouryaKitWolverineExtension(
     Subscriptions subscriptions,
     IOptions<PouryaKitMessagingOptions> options
@@ -13,26 +13,6 @@ internal sealed class PouryaKitWolverineExtension(
 {
     public void Configure(WolverineOptions wolverine)
     {
-        List<string> problems =
-        [
-            .. subscriptions
-                .All.Where(subscription =>
-                    !subscription.IsNotification && !subscriptions.Publications.ContainsKey(subscription.Message)
-                )
-                .Select(subscription =>
-                    $"{subscription.Handler.FullName} subscribes to {subscription.Message.FullName} under {subscription.Name}, but no Module of this Host publishes it, so it has no wire name. Declare Publish<{subscription.Message.Name}>(wireName, module), or PublishSnapshot for a Snapshot, in the publishing Module's Composition Root."
-                ),
-        ];
-        if (problems.Count == 0)
-        {
-            problems.AddRange(WireNaming.Declare(subscriptions.Publications));
-        }
-
-        if (problems.Count > 0)
-        {
-            throw new InvalidOperationException(string.Join(Environment.NewLine, problems));
-        }
-
         // One route per subscription, so one durable envelope per subscription, on the subscription's own queue.
         foreach (var subscription in subscriptions.All)
         {

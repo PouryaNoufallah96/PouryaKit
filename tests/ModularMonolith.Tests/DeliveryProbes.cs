@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,18 +13,21 @@ namespace ModularMonolith.Tests;
 /// Stop points inside the Kit's delivery, for Integration Event tests: what an Operation of the test's own flow writes
 /// to the Outbox; a hold on the first delivery of one subscription right after its Receipt, or its Snapshot's version,
 /// is recorded, inside its still open transaction; a hold on the first Operation of one Module right after it committed, before anything
-/// acknowledges it; a count of deliveries a committed Receipt turned away; and every delivery attempt. Every other
+/// acknowledges it; a count of deliveries a committed Receipt turned away; and every delivery attempt, with the Operation Context it
+/// ran with and the activity current in it. Every other
 /// Operation and delivery runs as usual.
 /// </summary>
 internal static class DeliveryProbes
 {
     private static readonly AsyncLocal<List<object>?> Written = new();
-    private static readonly ConcurrentQueue<(string Subscription, Guid MessageId, DateTimeOffset At)> Attempts = [];
+    private static readonly ConcurrentQueue<(string Subscription, Guid MessageId, DateTimeOffset At, OperationContext Context, Activity? Activity)> Attempts = [];
     private static readonly ConcurrentDictionary<string, int> TurnedAway = new(StringComparer.OrdinalIgnoreCase);
     private static Hold? _receiptHold;
     private static Hold? _commitHold;
     private static Hold? _versionHold;
     private static string? _failing;
+    private static int _failures;
+    private static string? _failingOnce;
 
     /// <summary>
     /// When each delivery of the message <paramref name="messageId"/> to <paramref name="subscription"/> began recording
@@ -31,6 +35,22 @@ internal static class DeliveryProbes
     /// </summary>
     public static IReadOnlyList<DateTimeOffset> AttemptsOf(string subscription, Guid messageId) =>
         [.. Attempts.Where(attempt => attempt.Subscription == subscription && attempt.MessageId == messageId).Select(attempt => attempt.At)];
+
+    /// <summary>The Operation Context each delivery <see cref="AttemptsOf"/> counts ran with, in the same order.</summary>
+    public static IReadOnlyList<OperationContext> ContextsOf(string subscription, Guid messageId) =>
+        [.. Attempts.Where(attempt => attempt.Subscription == subscription && attempt.MessageId == messageId).Select(attempt => attempt.Context)];
+
+    /// <summary>
+    /// The activity current in each delivery attempt to <paramref name="subscription"/> when it began recording its Receipt,
+    /// in the order they began, in any Host of the process: the attempt's Operation activity when the Host observes its
+    /// Operations, and null when no activity was current.
+    /// </summary>
+    public static IReadOnlyList<Activity?> ActivitiesOf(string subscription) =>
+        [.. Attempts.Where(attempt => attempt.Subscription == subscription).Select(attempt => attempt.Activity)];
+
+    /// <summary>The Operation Context of every delivery to <paramref name="subscription"/> that began recording its Receipt.</summary>
+    public static IReadOnlyList<OperationContext> ContextsOf(string subscription) =>
+        [.. Attempts.Where(attempt => attempt.Subscription == subscription).Select(attempt => attempt.Context)];
 
     /// <summary>Adds every message the commits of this flow write to the Outbox to <paramref name="written"/>, until disposed.</summary>
     public static IDisposable RecordWritten(List<object> written)
@@ -65,13 +85,25 @@ internal static class DeliveryProbes
 
     /// <summary>
     /// Fails every delivery to <paramref name="subscription"/> right after it records its Receipt, before its handler
-    /// runs, with an exception thrown inside its transaction, until disposed: the Receipt rolls back with it, and the
-    /// delivery is retried and then dead-lettered. The Module's own code is untouched.
+    /// runs, with an exception thrown inside its transaction, until disposed, or only the first
+    /// <paramref name="deliveries"/>: the Receipt rolls back with it, and the delivery is retried and then dead-lettered.
+    /// The Module's own code is untouched.
     /// </summary>
-    public static IDisposable FailAfterReceipt(string subscription)
+    public static IDisposable FailAfterReceipt(string subscription, int deliveries = int.MaxValue)
     {
+        _failures = deliveries;
         _failing = subscription;
         return new Binding(() => _failing = null);
+    }
+
+    /// <summary>
+    /// Fails the next delivery to <paramref name="subscription"/> right after it records its Receipt, as
+    /// <see cref="FailAfterReceipt"/> does, and only that one, so the store's retry of it runs as usual.
+    /// </summary>
+    public static IDisposable FailOnceAfterReceipt(string subscription)
+    {
+        _failingOnce = subscription;
+        return new Binding(() => _failingOnce = null);
     }
 
     /// <summary>How many deliveries to <paramref name="subscription"/> found their Receipt already committed.</summary>
@@ -85,7 +117,10 @@ internal static class DeliveryProbes
             services,
             (provider, outbox) => new RecordedOutbox(outbox, provider.GetRequiredService<Operation>(), provider.GetRequiredService<DeliveredSubscription>())
         );
-        Decorate<IReceipts>(services, (provider, receipts) => new HeldReceipts(receipts, provider.GetRequiredService<DeliveredSubscription>()));
+        Decorate<IReceipts>(
+            services,
+            (provider, receipts) => new HeldReceipts(receipts, provider.GetRequiredService<DeliveredSubscription>(), provider.GetRequiredService<OperationContext>)
+        );
     }
 
     private static void Decorate<TService>(IServiceCollection services, Func<IServiceProvider, TService, TService> decorate)
@@ -171,11 +206,11 @@ internal static class DeliveryProbes
         }
     }
 
-    private sealed class HeldReceipts(IReceipts receipts, DeliveredSubscription delivered) : IReceipts
+    private sealed class HeldReceipts(IReceipts receipts, DeliveredSubscription delivered, Func<OperationContext> context) : IReceipts
     {
         public async Task<bool> RecordAsync(string subscription, Guid messageId, CancellationToken cancellationToken)
         {
-            Attempts.Enqueue((subscription, messageId, DateTimeOffset.UtcNow));
+            Attempts.Enqueue((subscription, messageId, DateTimeOffset.UtcNow, context(), Activity.Current));
             delivered.Name ??= subscription;
             var recorded = await receipts.RecordAsync(subscription, messageId, cancellationToken);
             if (!recorded)
@@ -187,7 +222,13 @@ internal static class DeliveryProbes
                 await hold.OnReachedAsync(subscription);
             }
 
-            if (recorded && string.Equals(_failing, subscription, StringComparison.OrdinalIgnoreCase))
+            if (
+                recorded
+                && (
+                    (string.Equals(_failing, subscription, StringComparison.OrdinalIgnoreCase) && Interlocked.Decrement(ref _failures) >= 0)
+                    || (_failingOnce is { } once && string.Equals(once, subscription, StringComparison.OrdinalIgnoreCase) && Interlocked.CompareExchange(ref _failingOnce, null, once) == once)
+                )
+            )
             {
                 throw new InvalidOperationException($"The test failed the delivery to {subscription} after its Receipt.");
             }

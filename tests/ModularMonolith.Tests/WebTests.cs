@@ -31,6 +31,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         var productCreated = await client.PostAsJsonAsync(
             "/catalog/products",
             new { productId = product, categoryId = category, name = "Desk lamp" },
+            IdempotentRequests.NewKey(),
             TestContext.Current.CancellationToken
         );
         var found = await client.GetAsync(productCreated.Headers.Location, TestContext.Current.CancellationToken);
@@ -39,12 +40,15 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(HttpStatusCode.OK, categoryCreated.StatusCode);
         Assert.Equal($"\"{category}\"", await BodyAsync(categoryCreated));
         Assert.Equal(HttpStatusCode.Created, productCreated.StatusCode);
-        Assert.Equal($"/catalog/products/{product}", productCreated.Headers.Location?.OriginalString);
+        Assert.Equal($"/catalog/v2/products/{product}", productCreated.Headers.Location?.OriginalString);
         Assert.Equal($$"""{"id":"{{product}}"}""", await BodyAsync(productCreated));
         Assert.Equal(HttpStatusCode.OK, found.StatusCode);
         Assert.Equal($$"""{"id":"{{product}}","categoryId":"{{category}}","name":"Desk lamp"}""", await BodyAsync(found));
-        // The list's ids are typed IDs, written as their bare values.
-        Assert.Equal($$"""[{"id":"{{product}}","categoryId":"{{category}}","name":"Desk lamp"}]""", await BodyAsync(listed));
+        // The list is a Page; its ids are typed IDs, written as their bare values.
+        Assert.Equal(
+            $$"""{"items":[{"id":"{{product}}","categoryId":"{{category}}","name":"Desk lamp"}],"number":1,"size":20,"total":1,"totalPages":1,"hasNext":false,"hasPrevious":false}""",
+            await BodyAsync(listed)
+        );
     }
 
     [Fact]
@@ -55,6 +59,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         var response = await client.PostAsJsonAsync(
             "/catalog/products",
             new { productId = Guid.Empty, categoryId = Guid.CreateVersion7(), name = "" },
+            IdempotentRequests.NewKey(),
             TestContext.Current.CancellationToken
         );
 
@@ -75,6 +80,30 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
             error => Assert.NotEmpty(error.GetProperty("message").GetString()!)
         );
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
+    }
+
+    // HTTP bodies keep the lenient reading; only envelopes are read strictly (#60). A member the body lacks binds as its
+    // default and reaches the validator, where a strict read would refuse the body before any validation.
+    [Fact]
+    public async Task A_body_without_a_member_binds_it_as_its_default_and_validation_answers_400_for_it()
+    {
+        using var client = Fixture.Client("ada");
+
+        var response = await client.PostAsJsonAsync(
+            "/catalog/products",
+            new { productId = Guid.CreateVersion7(), categoryId = Guid.CreateVersion7() },
+            IdempotentRequests.NewKey(),
+            TestContext.Current.CancellationToken
+        );
+
+        var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
+        Assert.Equal(
+            [("NotEmptyValidator", "Name")],
+            problem
+                .GetProperty("errors")
+                .EnumerateArray()
+                .Select(error => (error.GetProperty("code").GetString(), error.GetProperty("target").GetString()))
+        );
     }
 
     [Fact]
@@ -121,12 +150,14 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         await client.PostAsJsonAsync(
             "/catalog/products",
             new { productId = lamp, categoryId = category, name = "Desk lamp" },
+            IdempotentRequests.NewKey(),
             TestContext.Current.CancellationToken
         );
 
         var response = await client.PostAsJsonAsync(
             "/catalog/products",
             new { productId = Guid.CreateVersion7(), categoryId = category, name = "Desk lamp" },
+            IdempotentRequests.NewKey(),
             TestContext.Current.CancellationToken
         );
 
@@ -209,6 +240,8 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         {
             Content = json is null ? null : new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
         };
+        // Creating a product requires one, so it is the body that cannot be read; reading a product ignores it.
+        request.Headers.Add(IdempotentRequests.Header, IdempotentRequests.NewKey());
 
         var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 
@@ -420,14 +453,4 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         await host.StartAsync(TestContext.Current.CancellationToken);
         return host;
     }
-
-    private sealed record SeenContext(
-        Guid OperationId,
-        SeenActor Actor,
-        string? Tenant,
-        Guid CorrelationId,
-        Guid? CausationId
-    );
-
-    private sealed record SeenActor(string Id, ActorKind Kind);
 }

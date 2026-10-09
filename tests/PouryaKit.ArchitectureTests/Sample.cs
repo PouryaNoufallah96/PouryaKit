@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using Inventory.Host;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -60,6 +61,19 @@ internal static class Sample
     ];
 
     /// <summary>
+    /// The Proving Sample's application code: its two Hosts and every project of this repository they reference that is
+    /// no Kit package, so each Module, its Contracts and the shared service defaults.
+    /// </summary>
+    public static readonly IReadOnlyList<Assembly> Application =
+    [
+        .. new[] { typeof(ModularMonolithHost).Assembly, typeof(InventoryHost).Assembly }
+            .SelectMany(host => ProjectReferencesOf(host).Prepend(host))
+            .Where(assembly => !assembly.GetName().Name!.StartsWith("PouryaKit", StringComparison.Ordinal))
+            .DistinctBy(assembly => assembly.GetName().Name)
+            .OrderBy(assembly => assembly.GetName().Name, StringComparer.Ordinal),
+    ];
+
+    /// <summary>
     /// The restored project of each application project the Host references, by assembly name, as the Host's own
     /// restore found it: a reference that no emitted code uses is still in it.
     /// </summary>
@@ -85,12 +99,13 @@ internal static class Sample
             );
     }
 
-    /// <summary>The Kit's packages, one per folder under <c>src/</c>.</summary>
+    /// <summary>The Kit's packages of code, one per folder under <c>src/</c>: every package but the templates, which has none.</summary>
     public static readonly IReadOnlyList<Assembly> KitPackages =
     [
         .. Directory
             .GetDirectories(Path.Combine(Repository.Root, "src"))
             .Select(Path.GetFileName)
+            .Where(name => name != "PouryaKit.Templates")
             .Order(StringComparer.Ordinal)
             .Select(name => Assembly.Load(name!)),
     ];

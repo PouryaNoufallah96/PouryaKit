@@ -80,6 +80,8 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
         Assert.Equal(asking.CorrelationId, answering.CorrelationId);
         Assert.Equal(asking.OperationId, answering.CausationId);
         Assert.NotEqual(asking.OperationId, answering.OperationId);
+        // Continued inside the asking Operation, which the Kit ran and authorized.
+        Assert.True(answering.IsTrustedContinuation);
     }
 
     private async Task<Guid> CreateLampAsync()

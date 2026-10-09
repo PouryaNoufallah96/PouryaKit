@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <!-- dotnet run reads appsettings.json from here; it is not copied, so no Host that references this one takes it. -->
+    <RunWorkingDirectory>$(MSBuildProjectDirectory)</RunWorkingDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- A web Host only to serve /health and /alive; the Web SDK would copy appsettings.json to the output. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+  <!-- Development compiles Wolverine's handler code at run time with Roslyn from this package; a Release build loads what
+       the codegen write command generated, so its publish carries no runtime compiler (ADR 0004). -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <PackageReference Include="WolverineFx.RuntimeCompilation" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Modules\Inventory\Inventory\Inventory.csproj" />
+    <ProjectReference Include="..\ModularMonolith.ServiceDefaults\ModularMonolith.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.Messaging.Wolverine.EFCore\PouryaKit.Messaging.Wolverine.EFCore.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.Messaging.Wolverine.RabbitMq\PouryaKit.Messaging.Wolverine.RabbitMq.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.Modularity\PouryaKit.Modularity.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.Observability\PouryaKit.Observability.csproj" />
+  </ItemGroup>
+</Project>

@@ -6,6 +6,7 @@ using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
+using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
 
@@ -45,8 +46,12 @@ public sealed class SharedStoreSchemaTests
             var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
                 ["--environment", "Production", $"--ConnectionStrings:app={connectionString}"]
             );
-            builder.Services.UsePostgres<StubDbContext>(connectionName: "app", schema: "stub");
-            builder.Services.AddPouryaKitCqrs(typeof(StubDbContext).Assembly);
+            builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+            // The one command it sends, by hand, and what the Stub's Notification Handlers need: its other Features need
+            // the Stub Module's services, and the Kit's container is validated when it is built.
+            builder.Services.AddScoped<CommandHandler<WriteNoteRaisingCommand>, WriteNoteRaisingCommandHandler>();
+            builder.Services.AddSingleton<DeliveryLog>();
+            builder.Services.AddPouryaKitDapper(connectionName: "app");
             builder.Services.AddPouryaKitNotificationHandlers(typeof(StubDbContext).Assembly);
             builder.UsePouryaKitWolverine(connectionName: "app", schema: "stub");
             builder.Services.UsePouryaKitTestDelivery();

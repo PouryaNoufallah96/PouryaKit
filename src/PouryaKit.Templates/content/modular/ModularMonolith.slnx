@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PouryaKitAppName.Host/PouryaKitAppName.Host.csproj" />
+    <Project Path="src/PouryaKitAppName.ServiceDefaults/PouryaKitAppName.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/">
+    <Project Path="src/Modules/Billing/Billing/Billing.csproj" />
+    <Project Path="src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj" />
+    <Project Path="src/Modules/Catalog/Catalog/Catalog.csproj" />
+    <Project Path="src/Modules/Inventory/Inventory/Inventory.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PouryaKitAppName.Tests/PouryaKitAppName.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -5,25 +5,29 @@ using PouryaKit.Cqrs;
 namespace PouryaKit.Modularity;
 
 /// <summary>
-/// What a Module's Composition Root registers on: the Host container's services, seen from one Module. Every Kit
-/// registration (<c>AddPouryaKitCqrs</c>, <c>AddPouryaKitValidation</c>, <c>UsePostgres</c>) is called on it. The
-/// Unit of Work registered here belongs to this Module alone: an Operation reaches it only through the Module's
-/// Gateway, and the commands and queries whose handlers are registered here belong to this Module: its Gateway is the
-/// only one that runs them, and another Module that registers or removes one of their handlers fails while the Host is
-/// composed.
+/// What a Module's Composition Root registers on: the Host container's services, seen from one Module
+/// (<see cref="IModuleServices"/>). Every Kit registration (<c>AddPouryaKitCqrs</c>, <c>AddPouryaKitValidation</c>,
+/// <c>UsePouryaKitPostgres</c>, <c>Subscribe</c>) is called on it, and belongs to this Module without naming it: one that
+/// scans Features scans the assembly of the Module's definition unless it names assemblies, and a declaration whose
+/// deliveries run in a Module runs in this one. The Unit of Work registered here belongs to this Module alone: an Operation
+/// reaches it only through the Module's Gateway, and the commands and queries whose handlers are registered here belong to
+/// this Module: its Gateway is the only one that runs them, and another Module that registers or removes one of their
+/// handlers fails while the Host is composed.
 /// </summary>
-public sealed class ModuleBuilder : IServiceCollection
+public sealed class ModuleBuilder : IModuleServices
 {
-    private readonly Type _module;
     private readonly IServiceCollection _services;
     private readonly HostModules _modules;
 
     internal ModuleBuilder(Type module, IServiceCollection services, HostModules modules)
     {
-        _module = module;
+        Module = module;
         _services = services;
         _modules = modules;
     }
+
+    /// <inheritdoc />
+    public Type Module { get; }
 
     public int Count => _services.Count;
 
@@ -34,7 +38,7 @@ public sealed class ModuleBuilder : IServiceCollection
         get => _services[index];
         set
         {
-            _modules.Release(_module, _services[index]);
+            _modules.Release(Module, _services[index]);
             _services[index] = Own(value);
         }
     }
@@ -47,7 +51,7 @@ public sealed class ModuleBuilder : IServiceCollection
     {
         foreach (var descriptor in _services)
         {
-            _modules.Release(_module, descriptor);
+            _modules.Release(Module, descriptor);
         }
 
         _services.Clear();
@@ -65,7 +69,7 @@ public sealed class ModuleBuilder : IServiceCollection
     {
         if (_services.Contains(item))
         {
-            _modules.Release(_module, item);
+            _modules.Release(Module, item);
         }
 
         return _services.Remove(item);
@@ -73,7 +77,7 @@ public sealed class ModuleBuilder : IServiceCollection
 
     public void RemoveAt(int index)
     {
-        _modules.Release(_module, _services[index]);
+        _modules.Release(Module, _services[index]);
         _services.RemoveAt(index);
     }
 
@@ -84,7 +88,7 @@ public sealed class ModuleBuilder : IServiceCollection
     private ServiceDescriptor Own(ServiceDescriptor descriptor)
     {
         ArgumentNullException.ThrowIfNull(descriptor);
-        _modules.Record(_module, descriptor);
+        _modules.Record(Module, descriptor);
         if (descriptor.ServiceType != typeof(IUnitOfWork) || descriptor.IsKeyedService)
         {
             return descriptor;
@@ -92,14 +96,14 @@ public sealed class ModuleBuilder : IServiceCollection
 
         if (descriptor.ImplementationInstance is { } instance)
         {
-            return new ServiceDescriptor(descriptor.ServiceType, _module, instance);
+            return new ServiceDescriptor(descriptor.ServiceType, Module, instance);
         }
 
         if (descriptor.ImplementationFactory is { } factory)
         {
             return new ServiceDescriptor(
                 descriptor.ServiceType,
-                _module,
+                Module,
                 (services, _) => factory(services),
                 descriptor.Lifetime
             );
@@ -107,7 +111,7 @@ public sealed class ModuleBuilder : IServiceCollection
 
         return new ServiceDescriptor(
             descriptor.ServiceType,
-            _module,
+            Module,
             descriptor.ImplementationType!,
             descriptor.Lifetime
         );

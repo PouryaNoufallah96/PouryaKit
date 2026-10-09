@@ -1,5 +1,6 @@
 {
   "packages": [
+    { "id": "PouryaKit.Core", "type": "PouryaKit.Core.ImplementingTypes" },
     { "id": "PouryaKit.Domain", "type": "PouryaKit.Domain.Result" },
     { "id": "PouryaKit.Cqrs", "type": "PouryaKit.Cqrs.IDispatcher" },
     { "id": "PouryaKit.Validation", "type": "PouryaKit.Validation.ValidationServiceCollectionExtensions" },
@@ -8,23 +9,43 @@
     { "id": "PouryaKit.Persistence.EFCore", "type": "PouryaKit.Persistence.EFCore.PouryaKitDbContext" },
     { "id": "PouryaKit.Persistence.Postgres", "type": "PouryaKit.Persistence.Postgres.PostgresServiceCollectionExtensions" },
     { "id": "PouryaKit.Persistence.Dapper", "type": "PouryaKit.Persistence.Dapper.IReadConnectionFactory" },
+    { "id": "PouryaKit.Security", "type": "PouryaKit.Security.IActorPermissions" },
+    { "id": "PouryaKit.Observability", "type": "PouryaKit.Observability.OperationTelemetry" },
+    { "id": "PouryaKit.Caching", "type": "PouryaKit.Caching.ICacheableQuery" },
+    { "id": "PouryaKit.Security.JwtBearer", "type": "PouryaKit.Security.JwtBearer.PouryaKitJwtBearerOptions" },
     { "id": "PouryaKit.Messaging", "type": "PouryaKit.Messaging.WireNameAttribute" },
     { "id": "PouryaKit.Messaging.Wolverine", "type": "PouryaKit.Messaging.Wolverine.IReceipts" },
     { "id": "PouryaKit.Messaging.Wolverine.EFCore", "type": "PouryaKit.Messaging.Wolverine.EFCore.ReceiptTable" },
+    { "id": "PouryaKit.Messaging.Wolverine.RabbitMq", "type": "PouryaKit.Messaging.Wolverine.RabbitMq.RabbitMqHostApplicationBuilderExtensions" },
     { "id": "PouryaKit.Web", "type": "PouryaKit.Web.IEndpoint" },
-    { "id": "PouryaKit.Testing", "type": "PouryaKit.Testing.Delivery" }
+    { "id": "PouryaKit.Web.OpenApi", "type": "PouryaKit.Web.OpenApi.PouryaKitOpenApiOptions" },
+    { "id": "PouryaKit.Testing", "type": "PouryaKit.Testing.Delivery" },
+    { "id": "PouryaKit.Templates", "kind": "template" }
   ],
   "compositions": [
     {
       "name": "single-module",
       "packages": ["PouryaKit.Cqrs", "PouryaKit.Validation", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Web"],
-      "excluded": ["PouryaKit.Modularity", "PouryaKit.Messaging"]
+      "excluded": ["PouryaKit.Modularity", "PouryaKit.Messaging", "PouryaKit.Web.OpenApi"]
     },
     {
       "name": "modular-monolith",
       "source": "samples/ModularMonolith/src",
-      "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Validation", "PouryaKit.Web"],
+      "entries": ["ModularMonolith.Host/ModularMonolith.Host.csproj", "Inventory.Host/Inventory.Host.csproj"],
+      "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Observability", "PouryaKit.Caching", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
       "excluded": []
+    },
+    {
+      "name": "template-monolith",
+      "template": "pouryakit-monolith",
+      "packages": ["PouryaKit.Caching", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
+      "excluded": ["PouryaKit.Modularity", "PouryaKit.Testing"]
+    },
+    {
+      "name": "template-modular-monolith",
+      "template": "pouryakit-modular-monolith",
+      "packages": ["PouryaKit.Modularity", "PouryaKit.Caching", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
+      "excluded": ["PouryaKit.Testing"]
     }
   ]
 }

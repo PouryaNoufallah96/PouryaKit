@@ -1,8 +1,11 @@
 using System.Reflection;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using PouryaKit.Core;
+using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Web;
@@ -15,14 +18,31 @@ public static class WebServiceCollectionExtensions
         /// Registers what every endpoint answers with: problem responses, the handler that turns an unexpected
         /// exception into a 500 problem response without its message and a request that cannot be read into a 400
         /// problem response in every environment, status code pages that write any other failure answered with an
-        /// empty body (such as routing's own 405 and 415) as a problem response, typed IDs written as their bare
-        /// values in JSON, and the claims that fill the <c>OperationContext</c>.
+        /// empty body (such as routing's own 405 and 415) as a problem response, the Kit's JSON representation
+        /// (<c>UsePouryaKitJson</c>, typed IDs as their bare values) for request and response bodies, the claims that
+        /// fill the <c>OperationContext</c>, and authenticated access by default: the authorization fallback policy
+        /// requires an authenticated caller wherever an endpoint states nothing, inside or outside a Module's route
+        /// group, unless the application set a fallback policy of its own. An endpoint opts out with
+        /// <c>AllowAnonymous</c>, on a Module's endpoint <c>AllowAnonymousAs(actor)</c>. It also registers the configured
+        /// defaults, each off until the Host configures it: the named CORS policies of <see cref="PouryaKitCorsOptions"/>,
+        /// response compression over HTTP and HTTPS when <see cref="PouryaKitCompressionOptions"/> enables it, and the
+        /// rate limit per Actor of <see cref="PouryaKitRateLimitOptions"/>, whose rejection answers 429 as a problem
+        /// response. Their options are validated when the Host starts. With the Kit's checks
+        /// (<c>AddPouryaKitCompositionChecks</c>, which <c>AddPouryaKitModules</c> calls), the Host's start fails, naming
+        /// the call, when an <see cref="IEndpoint"/> in the Feature assemblies of a Module it composed, or of its own
+        /// services, is not declared with <c>AddPouryaKitEndpoints</c> or not mapped by
+        /// <c>MapPouryaKitModuleEndpoints</c>: a startup check, since the application maps its routes after the build.
         /// </summary>
         /// <remarks>
         /// The handler sees only what runs after it, so <c>app.UseExceptionHandler()</c> comes first in the pipeline,
         /// before <c>UseRouting()</c>, <c>UseAuthentication()</c> and <c>UseAuthorization()</c>, each called
         /// explicitly: left to <c>WebApplication</c>, those three are inserted ahead of everything the application
-        /// adds, and an exception thrown in authentication escapes the handler.
+        /// adds, and an exception thrown in authentication escapes the handler. <c>app.UseCors(name)</c> comes after
+        /// <c>UseRouting()</c> and before <c>UseAuthentication()</c>, so a preflight request is answered without
+        /// credentials; <c>app.UseRateLimiter()</c> comes after <c>UseAuthorization()</c>, since it partitions by the
+        /// authenticated Actor: in a Host that registers authentication, an enabled rate limit throws at a request that
+        /// reaches it before authentication ran, naming the order, rather than put every caller in one partition. Compression needs no call: when enabled, it
+        /// is added outermost, before anything that writes a response.
         /// </remarks>
         public IServiceCollection AddPouryaKitWeb(Action<PouryaKitWebOptions>? configure = null)
         {
@@ -33,10 +53,18 @@ public static class WebServiceCollectionExtensions
             // Outside Development a parameter that fails to bind answers an empty 400; throwing hands it to the
             // exception handler, which answers the same problem response in every environment.
             services.PostConfigure<RouteHandlerOptions>(routeHandlers => routeHandlers.ThrowOnBadRequest = true);
+            // Registered first, so compression wraps everything that writes a response, the status code pages included.
+            ConfiguredCompression.Add(services);
             services.TryAddEnumerable(ServiceDescriptor.Transient<IStartupFilter, ProblemStatusCodePages>());
-            services.ConfigureHttpJsonOptions(json =>
-                json.SerializerOptions.Converters.Add(new TypedIdJsonConverterFactory())
+            ConfiguredCors.Add(services);
+            ActorRateLimiting.Add(services);
+            // Set once, while the Host is composed; nothing changes AuthorizationOptions after it starts.
+            services.Configure<AuthorizationOptions>(authorization =>
+                authorization.FallbackPolicy ??= new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()
             );
+            services.ConfigureHttpJsonOptions(json => json.SerializerOptions.UsePouryaKitJson());
+            services.TryAddSingleton<MappedEndpoints>();
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupCheck, UnmappedEndpointsCheck>());
             var options = services.AddOptions<PouryaKitWebOptions>();
             if (configure is not null)
             {
@@ -47,32 +75,32 @@ public static class WebServiceCollectionExtensions
         }
 
         /// <summary>
-        /// Declares the endpoints of one Module: every <see cref="IEndpoint"/> in <paramref name="endpointAssembly"/>,
+        /// Declares the endpoints of one Module: every <see cref="IEndpoint"/> in <paramref name="featureAssemblies"/>,
         /// internal types included, mapped by <c>MapPouryaKitModuleEndpoints</c> under the route group
-        /// <paramref name="routePrefix"/>. A Module's Composition Root calls it on its builder; an application without
-        /// Modules calls it on its own services. Throws when the assembly has no endpoint, or an endpoint has no
-        /// parameterless constructor.
+        /// <paramref name="routePrefix"/>. A Module's Composition Root calls it on its builder, where, named with no
+        /// assembly, it scans the assembly of the Module's definition (<see cref="IModuleServices"/>); named assemblies
+        /// replace it. An application without Modules calls it on its own services, naming the assembly. Throws when the
+        /// assemblies have no endpoint, or an endpoint has no parameterless constructor.
         /// </summary>
-        public IServiceCollection AddPouryaKitEndpoints(string routePrefix, Assembly endpointAssembly)
+        public IServiceCollection AddPouryaKitEndpoints(string routePrefix, params Assembly[] featureAssemblies)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentException.ThrowIfNullOrWhiteSpace(routePrefix);
-            ArgumentNullException.ThrowIfNull(endpointAssembly);
+            ArgumentNullException.ThrowIfNull(featureAssemblies);
 
+            var assemblies = IModuleServices.FeatureAssembliesOf(services, featureAssemblies);
             List<IEndpoint> endpoints =
             [
-                .. endpointAssembly
-                    .GetTypes()
-                    .Where(type =>
-                        type is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false }
-                        && type.IsAssignableTo(typeof(IEndpoint))
-                    )
+                .. ImplementingTypes
+                    .Of(typeof(IEndpoint), assemblies)
                     .Select(type => (IEndpoint)Activator.CreateInstance(type, nonPublic: true)!),
             ];
             if (endpoints.Count == 0)
             {
                 throw new InvalidOperationException(
-                    $"{endpointAssembly.GetName().Name} has no IEndpoint for the route group {routePrefix}."
+                    assemblies is []
+                        ? $"AddPouryaKitEndpoints names no assembly for the route group {routePrefix}, and on the Host's own services it infers none. Name the assembly of the endpoints."
+                        : $"{string.Join(", ", assemblies.Select(assembly => assembly.GetName().Name))} has no IEndpoint for the route group {routePrefix}."
                 );
             }
 

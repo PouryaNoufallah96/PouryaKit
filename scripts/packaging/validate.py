@@ -6,14 +6,25 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
+import time
 import xml.etree.ElementTree as ET
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 ARCHITECTURE = ROOT / "tests/PouryaKit.ArchitectureTests/bin/Release/net10.0/PouryaKit.ArchitectureTests.dll"
+# The projects a template generates: package content, not projects of this repository.
+TEMPLATE_CONTENT = ROOT / "src/PouryaKit.Templates/content"
+# The name each template consumer generates its solution under: a dotted one, and a hyphenated one that the engine writes
+# as typed in file and folder names and the paths to them, but as `acme_shop` in code.
+GENERATED = {"pouryakit-monolith": "Acme.Shop", "pouryakit-modular-monolith": "acme-shop"}
+# --since: the only paths whose change cannot reach a package, a template or this validation, because nothing that is
+# built, tested or packed reads them: the docs and the AI setup. Any other path, known or not, means the validation runs.
+EXEMPT_DIRECTORIES = ("docs/", ".agents/", ".claude/", ".codex/", ".githooks/")
+EXEMPT_FILES = {"AGENTS.md", "CLAUDE.md", "GLOSSARY.md", "README.md", "skills-lock.json"}
 
 
 def run(command, *, cwd=ROOT, env=None, log=None, expect_failure=False):
@@ -83,6 +94,11 @@ def consumer_config(folder, packages):
         '<TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup></Project>\n')
     (folder / "Directory.Build.targets").write_text("<Project />\n")
     (folder / "Directory.Packages.props").write_text((ROOT / "Directory.Packages.props").read_text())
+    consumer_feed(folder, packages)
+
+
+def consumer_feed(folder, packages):
+    """The consumer's NuGet.Config: Kit packages from the produced feed only, every other package from nuget.org."""
     config = ET.Element("configuration")
     sources = ET.SubElement(config, "packageSources")
     ET.SubElement(sources, "clear")
@@ -117,7 +133,46 @@ def simple_consumer(folder, ids, types, version):
     return folder / "Consumer.csproj"
 
 
-def sample_consumer(folder, source, version):
+def template_consumer(folder, template, hive):
+    """Generates the solution of `template`, installed from the produced package, with nothing of this repository's."""
+    name = GENERATED[template]
+    run(["dotnet", "new", template, "-n", name, "-o", folder / name, "--no-restore", "--debug:custom-hive", hive], cwd=folder)
+    return folder / name / f"{name}.slnx"
+
+
+# What `codegen write` writes for a Kit Host, the only code Wolverine generates for one, and the runtime compiler's
+# assemblies, which a Release publish must not carry (ADR 0004).
+GENERATED_REGISTRY = "Internal/Generated/WolverineHandlers/GeneratedHandlerRegistry.cs"
+RUNTIME_COMPILER = ("Wolverine.RuntimeCompilation.dll", "JasperFx.RuntimeCompiler.dll")
+
+
+def check_production_publish(host, published):
+    """The Host's Release publish holds the Host with the code `codegen write` generated, and no runtime compiler."""
+    if not (host / GENERATED_REGISTRY).is_file():
+        raise RuntimeError(f"codegen write wrote no {GENERATED_REGISTRY} in {host}.")
+    assembly = published / f"{host.name}.dll"
+    if not assembly.is_file() or b"GeneratedHandlerRegistry" not in assembly.read_bytes():
+        raise RuntimeError(f"The publish in {published} holds no {assembly.name} built with the generated code.")
+    if carried := [name for name in RUNTIME_COMPILER if (published / name).exists()]:
+        raise RuntimeError(f"The Release publish in {published} carries the runtime compiler: {', '.join(carried)}.")
+    return sorted(path.relative_to(host).as_posix() for path in (host / "Internal/Generated").rglob("*") if path.is_file())
+
+
+def production_publish(host, published, configfile, env, log):
+    """A Host's production step (ADR 0004), on a consumer's copy: `codegen write`, which compiles nothing, so the Release
+    build serves, then a publish restored for Release, where the Host does not reference the runtime compiler."""
+    started = time.monotonic()
+    run(["dotnet", "run", "--project", host, "-c", "Release", "--no-build", "--no-launch-profile", "--", "codegen", "write"],
+        cwd=host, env=env, log=f"{log}-codegen.log")
+    run(["dotnet", "restore", host, "-p:Configuration=Release", "--configfile", configfile, "--no-http-cache", "-p:RestoreFallbackFolders="],
+        cwd=host, env=env, log=f"{log}-publish-restore.log")
+    run(["dotnet", "publish", host, "-c", "Release", "--no-restore", "-o", published], cwd=host, env=env, log=f"{log}-publish.log")
+    generated = check_production_publish(host, published)
+    return (f"codegen write wrote {', '.join(generated)}, and the Release publish holds the Host built with it and neither "
+            f"{' nor '.join(RUNTIME_COMPILER)} ({time.monotonic() - started:.0f} s)")
+
+
+def sample_consumer(folder, source, entries, version):
     shutil.copytree(ROOT / source, folder / "src", ignore=shutil.ignore_patterns("bin", "obj"))
     for project in (folder / "src").rglob("*.csproj"):
         document = ET.parse(project)
@@ -131,7 +186,7 @@ def sample_consumer(folder, source, version):
                 else:
                     reference.set("Include", include)
         document.write(project, encoding="unicode")
-    return folder / "src/ModularMonolith.Host/ModularMonolith.Host.csproj"
+    return [folder / "src" / entry for entry in entries]
 
 
 def check_cache_folders(folders, cache):
@@ -294,9 +349,10 @@ def validate(output, *, fetch=True):
     inventory = json.loads((ROOT / "scripts/packaging/inventory.json").read_text())
     packages = inventory["packages"]
     ids = [package["id"] for package in packages]
-    types = {package["id"]: package["type"] for package in packages}
+    types = {package["id"]: package["type"] for package in packages if "type" in package}
     evaluated = {str(project.relative_to(ROOT)): properties(project, ["IsPackable", "PackageId", "EnablePackageValidation"])
-                 for tree in ("src", "tests", "samples") for project in sorted((ROOT / tree).rglob("*.csproj"))}
+                 for tree in ("src", "tests", "samples") for project in sorted((ROOT / tree).rglob("*.csproj"))
+                 if not project.is_relative_to(TEMPLATE_CONTENT)}
     check_inventory(packages, evaluated)
     (output / "evaluated-projects.json").write_text(json.dumps(evaluated, indent=2))
     inventory_controls(packages, evaluated, output / "inventory-controls.log")
@@ -312,16 +368,48 @@ def validate(output, *, fetch=True):
     evidence_file = output / "package-evidence.json"
     evidence_file.write_text(json.dumps(evidence, indent=2))
     run(["dotnet", ARCHITECTURE, "--validate-packages", evidence_file], log=output / "artifacts.log")
-    consumers = [{"name": package["id"], "packages": [package["id"]], "excluded": []} for package in packages]
+    # A library package gets a consumer that names its type; a template package gets the template consumers.
+    consumers = [{"name": package["id"], "packages": [package["id"]], "excluded": []} for package in packages if "type" in package]
     consumers += inventory["compositions"]
+    hive = output / "template-hive"
+    for package in packages:
+        if package.get("kind") == "template":
+            run(["dotnet", "new", "install", package_output / f"{package['id']}.{evidence['Version']}.nupkg", "--debug:custom-hive", hive],
+                log=output / "template-install.log")
+    smoke_tests = []
     for consumer in consumers:
         name = consumer["name"]
         folder = output / "consumers" / name
         folder.mkdir(parents=True)
+        if "template" in consumer:
+            started = time.monotonic()
+            # The generated solution brings its own SDK pin, build settings and central versions; only the feed is given.
+            consumer_feed(folder, package_output)
+            solution = template_consumer(folder, consumer["template"], hive)
+            generated = GENERATED[consumer["template"]]
+            env = isolated_env(folder)
+            run(["dotnet", "restore", solution, "--configfile", folder / "NuGet.Config", "--no-http-cache", "-p:RestoreFallbackFolders="],
+                cwd=solution.parent, env=env, log=output / f"consumer-{name}-restore.log")
+            run(["dotnet", "build", solution, "-c", "Release", "--no-restore"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-build.log")
+            tests = solution.parent / "tests" / f"{generated}.Tests" / f"{generated}.Tests.csproj"
+            result = run(["dotnet", "test", "--project", tests, "-c", "Release", "--no-build"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-test.log")
+            passed = re.search(r"succeeded: (\d+)", result)
+            failed = re.search(r"failed: (\d+)", result)
+            if not passed or not failed or failed.group(1) != "0" or passed.group(1) == "0":
+                raise RuntimeError(f"The smoke tests of {name} did not pass: {result}")
+            production = production_publish(solution.parent / "src" / f"{generated}.Host", folder / "publish", folder / "NuGet.Config",
+                                            env, output / f"consumer-{name}")
+            assets = check_consumer(folder, env, ids, evidence["Version"], consumer["excluded"])
+            evidence["Consumers"].append({"Name": name, "Packages": consumer["packages"], "Assets": assets})
+            smoke_tests.append(f"{name} (-n {generated}) {passed.group(1)}")
+            print(f"PASS template consumer {name}: generated with -n {generated}, restored and built from the produced packages; "
+                  f"{passed.group(1)} smoke tests passed; {production}; {time.monotonic() - started:.0f} s in all", flush=True)
+            continue
         consumer_config(folder, package_output)
-        project = sample_consumer(folder, consumer["source"], evidence["Version"]) if "source" in consumer else simple_consumer(folder, consumer["packages"], types, evidence["Version"])
-        if name == "single-module":
-            shutil.copy(ROOT / "scripts/packaging/consumers/single-module.cs", folder / "Program.cs")
+        projects = sample_consumer(folder, consumer["source"], consumer["entries"], evidence["Version"]) if "source" in consumer else [simple_consumer(folder, consumer["packages"], types, evidence["Version"])]
+        # A consumer with its own source under consumers/ exercises the packed API instead of only naming its types.
+        if (source := ROOT / "scripts/packaging/consumers" / f"{name}.cs").exists():
+            shutil.copy(source, folder / "Program.cs")
         # Kit references use the artifact version; third-party references retain central package management.
         central = ET.parse(folder / "Directory.Packages.props")
         for name_id in ids:
@@ -334,11 +422,19 @@ def validate(output, *, fetch=True):
                     reference.attrib.pop("Version", None)
             document.write(file, encoding="unicode")
         env = isolated_env(folder)
-        run(["dotnet", "restore", project, "--configfile", folder / "NuGet.Config", "--no-http-cache", "-p:RestoreFallbackFolders="], cwd=folder, env=env, log=output / f"consumer-{name}-restore.log")
-        run(["dotnet", "build", project, "-c", "Release", "--no-restore"], cwd=folder, env=env, log=output / f"consumer-{name}-build.log")
+        for project in projects:
+            log = name if len(projects) == 1 else f"{name}-{project.stem}"
+            run(["dotnet", "restore", project, "--configfile", folder / "NuGet.Config", "--no-http-cache", "-p:RestoreFallbackFolders="], cwd=folder, env=env, log=output / f"consumer-{log}-restore.log")
+            run(["dotnet", "build", project, "-c", "Release", "--no-restore"], cwd=folder, env=env, log=output / f"consumer-{log}-build.log")
+        # The copied Proving Sample's entries are its Hosts: each takes a generated Host's production step, on the copy.
+        productions = [(project.stem, production_publish(project.parent, folder / "publish" / project.stem, folder / "NuGet.Config",
+                                                         env, output / f"consumer-{name}-{project.stem}"))
+                       for project in projects] if "source" in consumer else []
         assets = check_consumer(folder, env, ids, evidence["Version"], consumer["excluded"])
         evidence["Consumers"].append({"Name": name, "Packages": consumer["packages"], "Assets": assets})
         print(f"PASS package-only consumer {name}", flush=True)
+        for host, production in productions:
+            print(f"PASS Host {host} of consumer {name}: {production}", flush=True)
     evidence_file.write_text(json.dumps(evidence, indent=2))
     run(["dotnet", ARCHITECTURE, "--validate-packages", evidence_file], log=output / "consumer-closures.log")
     artifact_controls(evidence, output)
@@ -348,16 +444,44 @@ def validate(output, *, fetch=True):
     artifacts = [{"id": name, "file": f"{name}.{evidence['Version']}.nupkg",
                   "sha256": hashlib.sha256((package_output / f"{name}.{evidence['Version']}.nupkg").read_bytes()).hexdigest()} for name in ids]
     (output / "manifest.json").write_text(json.dumps({"commit": commit, "version": evidence["Version"], "packages": artifacts}, indent=2) + "\n")
-    print(f"PASS {len(ids)} packages, {len(consumers)} clean consumers, negative controls and MinVer proof. Manifest: {output / 'manifest.json'}", flush=True)
+    print(f"PASS {len(ids)} packages, {len(consumers)} clean consumers ({len(smoke_tests)} generated from templates, "
+          f"smoke tests passed: {', '.join(smoke_tests)}), negative controls and MinVer proof. Manifest: {output / 'manifest.json'}", flush=True)
+
+
+def needing_validation(paths):
+    """The paths among `paths` that a package, a template or this validation is, or may be, built from."""
+    return [path for path in paths if not (path.startswith(EXEMPT_DIRECTORIES) or path in EXEMPT_FILES)]
+
+
+def changed_since(ref):
+    """Every path that differs from the commit `ref`: committed since, uncommitted or untracked. A rename counts twice."""
+    tracked = run(["git", "-C", ROOT, "diff", "--name-only", "--no-renames", f"{ref}^{{commit}}", "--"])
+    untracked = run(["git", "-C", ROOT, "ls-files", "--others", "--exclude-standard"])
+    return sorted(set((tracked + untracked).splitlines()))
+
+
+def skipped(ref):
+    """True, with one SKIP line, when nothing that differs from `ref` can change what this validation proves."""
+    changed = changed_since(ref)
+    if needed := needing_validation(changed):
+        print(f"--since {ref}: validating, {len(needed)} of {len(changed)} changed path(s) can reach a package, such as {needed[0]}", flush=True)
+        return False
+    print(f"SKIP: {len(changed)} path(s) differ from {ref}, and none is one a package, a template or this validation is built from. "
+          "CI runs the full validation on every push and pull request.", flush=True)
+    return True
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, help="New evidence directory outside the checkout. Default: system temp.")
     parser.add_argument("--no-fetch", action="store_true", help="Use full history and tags already fetched by CI checkout; reject shallow history.")
+    parser.add_argument("--since", metavar="REF", help="Skip, with one SKIP line and exit 0, when every path that differs from REF "
+                        "is documentation or AI setup; the implementer's base. CI passes none, so it always validates.")
     arguments = parser.parse_args()
     output = arguments.output.resolve() if arguments.output else Path(tempfile.mkdtemp(prefix="pouryakit-packages-"))
     try:
+        if arguments.since and skipped(arguments.since):
+            return 0
         validate(output, fetch=not arguments.no_fetch)
     except (RuntimeError, ValueError, OSError, KeyError) as error:
         print(f"FAIL: {error}", flush=True)

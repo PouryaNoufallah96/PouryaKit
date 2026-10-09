@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Cqrs`. Format and rules: [README](README.md).
 
-The dispatcher, its fixed pipeline, `Operation` and `IUnitOfWork` are new Kit code (plan section B.2, "Dispatcher + pipeline"; ADR 0002), and so are `OperationContext` and `Actor` (plan section B.2, "Background context"; ADR 0007), so they have no record here. The steps that only read (`Operation.OnlyReading`, ticket #18) and their persistence seam (`IReadingStateGuard`) are new Kit code too.
+The dispatcher, its fixed pipeline, `Operation` and `IUnitOfWork` are new Kit code (plan section B.2, "Dispatcher + pipeline"; ADR 0002), and so are `OperationContext` and `Actor` (plan section B.2, "Background context"; ADR 0007), so they have no record here. The steps that only read (`Operation.OnlyReading`, ticket #18) and their persistence seam (`IReadingStateGuard`) are new Kit code too. So is request idempotency (`IdempotentAttribute`, `OperationContext.RequestId`, `IIdempotencyStore` and the dispatcher's slot, ticket #42), built to the plan's own rule (I.3, I.4) because both reference implementations its I.3 row cites were rejected there: each writes its marker after the handler on a connection of its own and replays a default success. Nothing was taken from either. The query cache slot is new Kit code too (`IQueryCache`, the cache tags collected on `Operation`, `OperationContext.NoTenant` and the dispatcher's slot, ticket #43); what `PouryaKit.Caching` took from its reference is recorded in [PouryaKit.Caching.md](PouryaKit.Caching.md).
 
 ## Package dependencies
 
@@ -10,6 +10,18 @@ Checked against the NuGet cache on 2026-10-06; licence expressions from each pac
 
 - `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.12, `MIT`.
 - `Microsoft.Extensions.Logging.Abstractions` 10.0.12, `MIT`.
+- `Microsoft.Extensions.DependencyInjection` 10.0.12, `MIT`, and `Microsoft.Extensions.Hosting.Abstractions` 10.0.12,
+  `MIT` (ticket #61, checked 2026-10-07 in the NuGet cache's nuspecs; already in every Host). The validating
+  `DefaultServiceProviderFactory` of `AddPouryaKitCompositionChecks` needs the first, which moved here from Modularity;
+  its `IHostApplicationBuilder` and the check runner, an `IHostedLifecycleService`, need the second.
+
+The Module seam (`IModuleServices`), the composition checks (`AddPouryaKitCompositionChecks`, `ICompositionCheck`,
+`HostComposition`, `IRequiresQueryCache`) and `OperationTypes` are new Kit code (ticket #61), and so is
+`PouryaKitClaimTypes`, which ticket #62 moved here from `PouryaKit.Security` so that Web reads the tenant claim the
+Kit's bearer scheme writes by default. The convention that a
+Module's Features live in its definition's assembly follows Cybernod's lookup of a Module by its definition's assembly
+(`cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.Web/Modules/ModuleRegistry.cs:38-41`); no code was taken, and its
+static registry was rejected: the Kit records Modules in the Host's service collection.
 
 ## Commands, queries and their handlers
 

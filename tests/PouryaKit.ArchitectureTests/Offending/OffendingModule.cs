@@ -1,3 +1,5 @@
+using System.Reflection;
+using System.Text.Json;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -65,18 +67,22 @@ internal sealed class OffendingRow
     public string Name { get; set; } = "";
 }
 
-// Calls the steps only the Kit runs: the Unit of Work and its DbContext, the Outbox write, a Receipt, a Snapshot mapping, an Integration Event added to the
-// Outbox, the Domain Event drain, a new Operation begun in its own scope, and a reading step.
+// Calls the steps only the Kit runs: the Unit of Work and its DbContext, the Outbox write, a Receipt, a Snapshot mapping, an Integration Event and a delayed
+// command added to the Outbox, an idempotency key reserved and its success recorded, the Domain Event drain, a new Operation begun in its own scope, a
+// reading step, and a query cache eviction.
 internal sealed class KitStepCallingCommandHandler(
     IUnitOfWork unitOfWork,
     IUnitOfWorkOutbox outbox,
     IReceipts receipts,
     ISnapshotMappers snapshots,
     IIntegrationEventOutbox integrationEvents,
+    IDelayedCommandOutbox delayedCommands,
+    IIdempotencyStore idempotency,
     DomainEventDrain drain,
     IServiceProvider services,
     Operation operation,
     IReadingStateGuard readingState,
+    IQueryCache queryCache,
     OffendingDbContext dbContext
 ) : CommandHandler<OffendCommand>
 {
@@ -88,14 +94,36 @@ internal sealed class KitStepCallingCommandHandler(
         await receipts.RecordAsync("offending", Guid.CreateVersion7(), cancellationToken);
         _ = snapshots.Map(command, removed: false);
         integrationEvents.Add(Guid.CreateVersion7(), command);
+        delayedCommands.Add(command, DateTimeOffset.UnixEpoch);
+        var key = new IdempotencyKey(null, Actor.System("offending"), nameof(OffendCommand), "offending");
+        _ = await idempotency.ReserveAsync(key, cancellationToken);
+        await idempotency.RecordAsync(key, "{}", cancellationToken);
         await drain.RunAsync(() => [], cancellationToken);
         services.BeginOperation(new OperationContext(Actor.System("offending")));
         using var reading = operation.OnlyReading("offending", compareTrackedState: false);
         using var guarded = readingState.OnlyReading("offending");
         using var tracked = TrackedState.Capture(dbContext);
         tracked.ThrowIfChanged("offending");
+        await queryCache.EvictAsync(["offending"]);
         return Result.Success();
     }
+}
+
+// Fills the dispatcher's query cache slot itself: a pipeline step by another name.
+internal sealed class OwnQueryCache : IQueryCache
+{
+    public Task<Result<TResponse>> QueryAsync<TResponse>(
+        Query<TResponse> query,
+        OperationContext context,
+        Func<CancellationToken, Task<Result<TResponse>>> handle,
+        Action endRead,
+        CancellationToken cancellationToken
+    )
+        where TResponse : notnull => handle(cancellationToken);
+
+    public IEnumerable<string> TagsInvalidatedBy(object command) => [];
+
+    public Task EvictAsync(IReadOnlyCollection<string> tags) => Task.CompletedTask;
 }
 
 internal sealed class ConnectingCommandHandler(OffendingDbContext dbContext) : CommandHandler<OffendCommand>
@@ -153,6 +181,13 @@ internal sealed class ClearingDomainEventHandler(IAggregateRoot aggregate) : IDo
     }
 }
 
+// Writes its typed IDs in JSON of its own: snake_case names beside the Kit's camelCase.
+internal static class OwnJson
+{
+    public static JsonSerializerOptions Options() =>
+        new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, Converters = { new TypedIdJsonConverterFactory() } };
+}
+
 // Public, so other Modules could reach it; the generated migration beside it is public too, and that is no offence.
 public sealed record ExposedQuery : Query<int>;
 
@@ -160,6 +195,22 @@ public sealed class ExposedQueryHandler : QueryHandler<ExposedQuery, int>
 {
     public override Task<Result<int>> Handle(ExposedQuery query, CancellationToken cancellationToken) =>
         Task.FromResult<Result<int>>(1);
+}
+
+// Lists an assembly's types itself instead of asking PouryaKit.Core's ImplementingTypes.
+internal static class OwnTypeLookup
+{
+    public static IEnumerable<Type> All(Assembly assembly)
+    {
+        Func<Module, IEnumerable<Type>> inModule = module => module.GetTypes().Concat(module.FindTypes(null, null));
+        return assembly
+            .GetTypes()
+            .Concat(assembly.DefinedTypes)
+            .Concat(assembly.ExportedTypes)
+            .Concat(assembly.GetExportedTypes())
+            .Concat(assembly.Modules.SelectMany(inModule))
+            .Concat(assembly.GetModules().SelectMany(inModule));
+    }
 }
 
 [Migration("20261006000000_OffendingInitial")]

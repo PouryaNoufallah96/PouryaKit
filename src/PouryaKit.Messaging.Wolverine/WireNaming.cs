@@ -5,31 +5,32 @@ using Wolverine.Util;
 namespace PouryaKit.Messaging.Wolverine;
 
 // Wolverine's naming strategies, and the names they produce, are process-wide. A Domain Event's wire name is a pure
-// function of its type. An Integration Event's is declared by the Module that publishes it, so it is kept here for the
-// whole process, and a second Host in the process that declares the type under another name is refused: Wolverine would
-// otherwise go on using the first name.
+// function of its type. An Integration Event's is declared by the Module that publishes it, or by a Host that receives it
+// from another, so it is kept here for the whole process, and a second Host in the process that declares the type under
+// another name is refused: Wolverine would otherwise go on using the first name.
 internal sealed class WireNaming : IMessageTypeNaming
 {
     private static readonly ConcurrentDictionary<Type, string> Declared = new();
     private static readonly Lock Declaring = new();
 
     /// <summary>
-    /// Records the wire name of every Integration Event in <paramref name="publications"/> for this process, all or
-    /// none, and returns a problem for each one this process already knows under another name, or that Wolverine named
-    /// before it was declared: Wolverine keeps the first name it gives a type, and its envelopes would carry that one.
+    /// Records the wire name of every Integration Event and Snapshot in <paramref name="wireNames"/>, published by the
+    /// Host or, for the types in <paramref name="received"/>, received from another Host, for this process, all or none,
+    /// and returns a problem for each one this process already knows under another name, or that Wolverine named before it
+    /// was declared: Wolverine keeps the first name it gives a type, and its envelopes would carry that one.
     /// </summary>
-    public static List<string> Declare(IReadOnlyDictionary<Type, Publication> publications)
+    public static List<string> Declare(IReadOnlyDictionary<Type, string> wireNames, IReadOnlySet<Type> received)
     {
+        string As(Type type, string wireName) => $"{type.FullName} is {(received.Contains(type) ? "received" : "published")} as {wireName}";
+
         lock (Declaring)
         {
             List<string> problems =
             [
-                .. publications
-                    .Where(publication =>
-                        Declared.TryGetValue(publication.Key, out var name) && name != publication.Value.WireName
-                    )
-                    .Select(publication =>
-                        $"{publication.Key.FullName} is published as {publication.Value.WireName}, but this process already sends it as {Declared[publication.Key]}; a type keeps one wire name in a process."
+                .. wireNames
+                    .Where(named => Declared.TryGetValue(named.Key, out var name) && name != named.Value)
+                    .Select(named =>
+                        $"{As(named.Key, named.Value)}, but this process already sends it as {Declared[named.Key]}; a type keeps one wire name in a process."
                     ),
             ];
             if (problems.Count > 0)
@@ -37,18 +38,18 @@ internal sealed class WireNaming : IMessageTypeNaming
                 return problems;
             }
 
-            foreach (var (type, publication) in publications)
+            foreach (var (type, wireName) in wireNames)
             {
-                Declared.TryAdd(type, publication.WireName);
+                Declared.TryAdd(type, wireName);
             }
 
             return
             [
-                .. publications
-                    .Select(publication => (publication.Key, Declared: publication.Value.WireName, Sent: publication.Key.ToMessageTypeName()))
+                .. wireNames
+                    .Select(named => (named.Key, Declared: named.Value, Sent: named.Key.ToMessageTypeName()))
                     .Where(named => named.Sent != named.Declared)
                     .Select(named =>
-                        $"{named.Key.FullName} is published as {named.Declared}, but Wolverine named it {named.Sent} before it was declared and would send it under that name. Declare it before anything in the process sends or names it."
+                        $"{As(named.Key, named.Declared)}, but Wolverine named it {named.Sent} before it was declared and would send it under that name. Declare it before anything in the process sends or names it."
                     ),
             ];
         }

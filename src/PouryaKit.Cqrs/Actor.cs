@@ -22,8 +22,8 @@ public sealed record Actor
     public static Actor Person(string id) => new(id, ActorKind.Person);
 
     /// <summary>
-    /// A named system identity, for independent work no person caused, such as a scheduled job (G.6). Work that
-    /// continues an Operation keeps that Operation's Actor instead.
+    /// A named system identity, for independent work no person caused, such as a recurring command's occurrence (G.6).
+    /// Work that continues an Operation keeps that Operation's Actor instead.
     /// </summary>
     public static Actor System(string name) => new(name, ActorKind.System);
 }

@@ -8,7 +8,7 @@ import subprocess
 from unittest.mock import patch
 
 import validate
-from validate import check_inventory, check_cache_folders, check_consumer, isolated_env, prepare_history
+from validate import check_inventory, check_cache_folders, check_consumer, check_production_publish, isolated_env, prepare_history
 
 
 class HistoryTests(unittest.TestCase):
@@ -54,6 +54,67 @@ class HistoryTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "requires full history"):
                     prepare_history(Path(folder), fetch=False)
             self.assertFalse((Path(folder) / "history.json").exists())
+
+
+class SinceTests(unittest.TestCase):
+    EXEMPT = ["docs/acceptance.md", "docs/agents/ai-setup.md", ".agents/scripts/check-docs.py", ".claude/agent-memory/kit-implementer/MEMORY.md",
+              ".codex/agents/kit-implementer.toml", ".githooks/pre-commit", "AGENTS.md", "CLAUDE.md", "GLOSSARY.md", "README.md", "skills-lock.json"]
+
+    def test_only_documentation_and_the_ai_setup_need_no_validation(self):
+        self.assertEqual([], validate.needing_validation(self.EXEMPT))
+        for path in ("src/PouryaKit.Domain/Result.cs", "samples/ModularMonolith/src/ModularMonolith.Host/Program.cs",
+                     "tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs", "tests/ModularMonolith.Tests/CachingTests.cs",
+                     "scripts/packaging/validate.py", "scripts/packaging/inventory.json", "THIRD-PARTY-NOTICES.md", "LICENSE",
+                     "Directory.Build.props", "Directory.Build.targets", "Directory.Packages.props", "global.json", "nuget.config",
+                     "PouryaKit.slnx", ".config/dotnet-tools.json", ".editorconfig", ".github/workflows/package-validation.yml",
+                     "docs.md", "src/PouryaKit.Templates/content/shared/README.md", "a-new-directory/file.txt"):
+            with self.subTest(path=path):
+                self.assertEqual([path], validate.needing_validation([*self.EXEMPT, path]))
+
+    def test_the_validation_runs_unless_every_committed_uncommitted_and_untracked_change_is_exempt(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+
+            def git(*arguments):
+                subprocess.run(["git", "-C", folder, "-c", "user.name=Proof", "-c", "user.email=proof@example.invalid",
+                                "-c", "core.hooksPath=/dev/null", *arguments], check=True, capture_output=True)
+
+            def write(path, text):
+                (root / path).parent.mkdir(parents=True, exist_ok=True)
+                (root / path).write_text(text)
+
+            def exit_code(*arguments):
+                with patch.object(validate, "ROOT", root), patch.object(validate, "validate") as full, \
+                        patch("sys.argv", ["validate.py", "--no-fetch", "--output", str(root / "evidence"), *arguments]):
+                    return validate.main(), full.called
+
+            def changed(ref):
+                with patch.object(validate, "ROOT", root):
+                    return validate.changed_since(ref)
+
+            git("init", "-q")
+            write("docs/guide.md", "# Guide\n")
+            write("src/Kit/A.cs", "class A;\n")
+            write("old/name.txt", "moved\n")
+            git("add", "-A")
+            git("commit", "-q", "-m", "base")
+            self.assertEqual((0, False), exit_code("--since", "HEAD"))
+            write("docs/guide.md", "# Guide\n\nMore.\n")
+            git("commit", "-q", "-am", "docs")
+            write("AGENTS.md", "# Agents\n")
+            self.assertEqual(["AGENTS.md", "docs/guide.md"], changed("HEAD~1"))
+            self.assertEqual((0, False), exit_code("--since", "HEAD~1"))
+            self.assertEqual((0, True), exit_code())
+            write("scripts/new.py", "pass\n")
+            self.assertEqual((0, True), exit_code("--since", "HEAD~1"))
+            (root / "scripts/new.py").unlink()
+            write("src/Kit/A.cs", "class A { }\n")
+            self.assertEqual((0, True), exit_code("--since", "HEAD~1"))
+            git("checkout", "-q", "--", "src/Kit/A.cs")
+            git("mv", "old/name.txt", "docs/name.txt")
+            self.assertEqual(["AGENTS.md", "docs/guide.md", "docs/name.txt", "old/name.txt"], changed("HEAD~1"))
+            self.assertEqual((1, False), exit_code("--since", "no-such-ref"))
+            self.assertFalse((root / "evidence").exists())
 
 
 class InventoryTests(unittest.TestCase):
@@ -102,6 +163,30 @@ class ConsumerCacheTests(unittest.TestCase):
             cache = consumer / "cache/packages"
             assets.write_text(json.dumps({"packageFolders": {str(cache): {}}, "libraries": {}}))
             self.assertEqual([str(assets)], check_consumer(consumer, {"NUGET_PACKAGES": str(cache)}, [], "unused", []))
+
+
+class ProductionPublishTests(unittest.TestCase):
+    def test_a_publish_with_the_generated_code_and_no_runtime_compiler_passes_and_any_other_fails(self):
+        with tempfile.TemporaryDirectory() as folder:
+            host = Path(folder) / "Acme.Shop.Host"
+            published = Path(folder) / "publish"
+            (host / validate.GENERATED_REGISTRY).parent.mkdir(parents=True)
+            (host / validate.GENERATED_REGISTRY).write_text("// generated")
+            published.mkdir()
+            (published / "Acme.Shop.Host.dll").write_bytes(b"MZ GeneratedHandlerRegistry")
+            self.assertEqual([validate.GENERATED_REGISTRY], check_production_publish(host, published))
+
+            for compiler in validate.RUNTIME_COMPILER:
+                (published / compiler).write_bytes(b"MZ")
+                with self.subTest(compiler=compiler), self.assertRaisesRegex(RuntimeError, "carries the runtime compiler"):
+                    check_production_publish(host, published)
+                (published / compiler).unlink()
+            (published / "Acme.Shop.Host.dll").write_bytes(b"MZ")
+            with self.assertRaisesRegex(RuntimeError, "built with the generated code"):
+                check_production_publish(host, published)
+            (host / validate.GENERATED_REGISTRY).unlink()
+            with self.assertRaisesRegex(RuntimeError, "codegen write wrote no"):
+                check_production_publish(host, published)
 
 
 if __name__ == "__main__":

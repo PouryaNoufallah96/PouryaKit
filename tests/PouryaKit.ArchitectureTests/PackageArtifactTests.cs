@@ -124,4 +124,48 @@ public sealed class PackageArtifactTests
         Assert.Equal(["PouryaKit.Domain's SourceLink map has invalid wildcard syntax."],
             PackageArtifacts.SourceLinkDocumentViolations("PouryaKit.Domain", [source], [KeyValuePair.Create("/_/*", expected + "constant")], expected));
     }
+
+    // A generated solution's test project references its Host, which takes EF Core's design package with
+    // PrivateAssets="all"; NuGet then leaves that package out of the test project's graph, though WolverineFx's EF Core
+    // integration depends on it (#53).
+    [Fact]
+    public void A_consumer_closure_reads_the_packages_that_arrived_and_not_a_dependency_the_consumers_graph_left_out()
+    {
+        var folder = Directory.CreateTempSubdirectory("pouryakit-left-out-").FullName;
+        try
+        {
+            var packages = Path.Combine(folder, "packages") + Path.DirectorySeparatorChar;
+            Directory.CreateDirectory(Path.Combine(packages, "wolverinefx.entityframeworkcore", "6.46.0"));
+            File.WriteAllText(
+                Path.Combine(packages, "wolverinefx.entityframeworkcore", "6.46.0", "wolverinefx.entityframeworkcore.nuspec"),
+                """<package><metadata><id>WolverineFx.EntityFrameworkCore</id><license type="expression">MIT</license></metadata></package>"""
+            );
+            var assets = Path.Combine(folder, "project.assets.json");
+            File.WriteAllText(assets, JsonSerializer.Serialize(new
+            {
+                targets = new Dictionary<string, object>
+                {
+                    ["net10.0"] = new Dictionary<string, object>
+                    {
+                        ["PouryaKit.Messaging.Wolverine.EFCore/1.0.0"] = new { type = "package", dependencies = new Dictionary<string, string> { ["WolverineFx.EntityFrameworkCore"] = "6.46.0" } },
+                        ["WolverineFx.EntityFrameworkCore/6.46.0"] = new { type = "package", dependencies = new Dictionary<string, string> { ["Microsoft.EntityFrameworkCore.Design"] = "10.0.4" } },
+                    },
+                },
+                libraries = new Dictionary<string, object>
+                {
+                    ["PouryaKit.Messaging.Wolverine.EFCore/1.0.0"] = new { type = "package", path = "pouryakit.messaging.wolverine.efcore/1.0.0", files = new[] { "pouryakit.messaging.wolverine.efcore.nuspec" } },
+                    ["WolverineFx.EntityFrameworkCore/6.46.0"] = new { type = "package", path = "wolverinefx.entityframeworkcore/6.46.0", files = new[] { "wolverinefx.entityframeworkcore.nuspec" } },
+                },
+                packageFolders = new Dictionary<string, object> { [packages] = new { } },
+            }));
+            var shipped = XDocument.Parse(
+                """<package><metadata><id>PouryaKit.Messaging.Wolverine.EFCore</id><dependencies><group targetFramework="net10.0"><dependency id="WolverineFx.EntityFrameworkCore" version="6.46.0" /></group></dependencies></metadata></package>"""
+            );
+
+            var restored = RestoredPackage.InConsumer(shipped, assets);
+
+            Assert.Equal([new PackageLicence("WolverineFx.EntityFrameworkCore", "6.46.0", "MIT")], restored.Packages);
+        }
+        finally { Directory.Delete(folder, recursive: true); }
+    }
 }

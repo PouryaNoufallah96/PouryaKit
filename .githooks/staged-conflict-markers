@@ -1,0 +1,13 @@
+#!/bin/sh
+# Refuses a commit whose staged content adds a merge conflict marker. Reads the index, not the working tree, so a
+# marker corrected but not re-staged still blocks and an unstaged marker does not. A lone `=======` is a Markdown
+# setext heading, so only the two unambiguous markers count. Wired as pre-commit and pre-merge-commit through
+# `git config core.hooksPath .githooks` (docs/agents/ai-setup.md, "The guard"). The CI job and
+# .agents/scripts/check-ai-setup.py still check every tracked file.
+set -eu
+hits=$(git diff --cached --unified=0 --no-color --diff-filter=ACMRT -- . ':!*.pdf' ':!*.png' ':!*.nupkg' \
+  | grep -nE '^\+(<<<<<<< |>>>>>>> )' || true)
+if [ -n "$hits" ]; then
+  printf 'staged merge conflict marker:\n%s\nResolve it, stage the file again, then commit.\n' "$hits" >&2
+  exit 1
+fi

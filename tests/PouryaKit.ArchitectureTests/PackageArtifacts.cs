@@ -31,7 +31,9 @@ internal static class PackageArtifacts
             if (Path.GetFileName(file) != $"{name}.{evidence.Version}.nupkg") yield return $"{name} has an unexpected artifact filename.";
             foreach (var error in MetadataViolations(nuspec, archive, name, evidence)) yield return error;
             foreach (var error in PackageGraph.Violations(RestoredPackage.FromNuspec(nuspec))) yield return error;
-            foreach (var error in SourceLinkViolations(archive, name, evidence.Commit, evidence.Version)) yield return error;
+            // A template package carries content, no assembly to link to its source.
+            if (!IsTemplate(nuspec))
+                foreach (var error in SourceLinkViolations(archive, name, evidence.Commit, evidence.Version)) yield return error;
         }
         if (!nuspecs.Keys.ToHashSet().SetEquals(evidence.Packages))
         {
@@ -169,6 +171,9 @@ internal static class PackageArtifacts
                 yield return $"{name}'s SourceLink map sends {source} to the wrong repository-relative path.";
         }
     }
+
+    private static bool IsTemplate(XDocument nuspec) =>
+        nuspec.Descendants().Any(element => element.Name.LocalName == "packageType" && element.Attribute("name")?.Value == "Template");
 
     private static string Value(XDocument document, string name) => document.Descendants().Single(element => element.Name.LocalName == name).Value;
 }

@@ -11,6 +11,7 @@
 - [Unique values](#unique-values)
 - [Domain Event Handlers](#domain-event-handlers)
 - [Migrations](#migrations)
+- [Idempotency key retention](#idempotency-key-retention)
 
 A Module's DbContext, a mapping and the aggregate it maps, from the Proving Sample:
 
@@ -78,8 +79,8 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
 }
 
 // In the Composition Root:
-//     module.UsePostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
-//     module.MapUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
+//     module.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
+//     module.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
 // In a handler: inject IRepository<Product, ProductId> and call AddAsync, as in commands-queries-validation.md.
 ```
 
@@ -93,13 +94,14 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
 
 ## PostgreSQL
 
-- `UsePostgres<TDbContext>(connectionName, schema)` on the Module's builder reads the connection string `ConnectionStrings:{connectionName}` from the Host's configuration, gives the Module its own schema with its own `__EFMigrationsHistory`, names tables and columns in snake_case, and makes the DbContext the Module's Unit of Work. Modules may share one connection string; each keeps its own schema.
-- It also lets the Unit of Work read which unique index a refused save violated, for the Errors a Module maps with `MapUniqueConstraint` ([Unique values](#unique-values)).
+- `UsePouryaKitPostgres<TDbContext>(connectionName, schema)` on the Module's builder reads the connection string `ConnectionStrings:{connectionName}` from the Host's configuration, gives the Module its own schema with its own `__EFMigrationsHistory`, names tables and columns in snake_case, and makes the DbContext the Module's Unit of Work. Modules may share one connection string; each keeps its own schema. A connection string the Host's final configuration does not set, or sets blank, fails the Host when it is built, among the composition checks, one line per connection naming its DbContexts and its key, `ConnectionStrings:{connectionName}` (`CatalogDbContext stores over the connection string catalog, which the Host's configuration does not set (ConnectionStrings:catalog), …`); nothing connects ([modules.md](modules.md#the-hosts-checks)). The check belongs to `AddPouryaKitEfCore<TDbContext>(connectionName)`, which `UsePouryaKitPostgres` calls with its name, so a name passed to it directly is checked the same way. One DbContext has one connection name: a name replaces an earlier `AddPouryaKitEfCore<TDbContext>()` record without one, and a second, different name throws `InvalidOperationException` at registration, naming both; the same name in another case is one configuration key, so it is recorded once, in its first spelling. In a Host with the message store (`UsePouryaKitWolverine(connectionName)`), each DbContext's connection string must name the store's database, since the Outbox is written in the DbContext's own transaction: one that names another host, port or database fails the Host when it is built, naming both connection names and both databases ([messaging.md](messaging.md#the-hosts-checks)). Two connection names for one database pass. The check reads the connection EF Core gives the DbContext, without opening it, whatever configured it, a later `ConfigureDbContext` included, whether onto another string, a connection or an Npgsql data source, and reads its string as Npgsql does: one that names no database names its user's; one that names neither a database nor a user fails the build too, since the client's user then decides the database: name `Database`, or at least `Username`, in it. The check covers every DbContext `AddPouryaKitEfCore<TDbContext>()` makes a Unit of Work, which `UsePouryaKitPostgres` calls with its connection name: a DbContext the application registered itself with `AddDbContext` and made a Unit of Work that way is checked too, and its line names the DbContext and asks for it to be registered on the store's database.
+- It also lets the Unit of Work read which unique index a refused save violated, for the Errors a Module maps with `MapPouryaKitUniqueConstraint` ([Unique values](#unique-values)).
 
 ## The repository
 
 - Inject `IRepository<TAggregate, TId>`: `AddAsync`, `Remove`, `FindAsync(id)`, and `FindAsync`, `ListAsync`, `AnyAsync`, `CountAsync` by an Ardalis.Specification `Specification<T>`. It tracks changes in the Operation's Unit of Work; nothing on it saves. Feature code reaches its data through it, never through the DbContext: a structure test rejects a Module that calls `SaveChanges`, `DbContext.Database` or EF Core's bulk `ExecuteUpdate` and `ExecuteDelete` ([testing.md](testing.md#structure-tests)).
-- Add and remove only where the Operation may change state. `AddAsync` and `Remove` throw `InvalidOperationException` in [code that only reads](commands-queries-validation.md#code-that-only-reads), because a query nested in a command would otherwise write into the command's commit.
+- Add and remove only inside a Unit of Work, where the Operation may change state: from a command's handler, a Domain Event Handler, or a Notification or Integration Event Handler, whose delivery runs as a command. `AddAsync` and `Remove` throw `InvalidOperationException` in [code that only reads](commands-queries-validation.md#code-that-only-reads), because a query nested in a command would otherwise write into the command's commit. They throw it too outside a Unit of Work, such as in an endpoint, a hosted service or any scope that sends no command, and after the scope's command has returned: `The repository of Product was asked to write while no Unit of Work is active, so no commit would save the change and it would be lost.` Only a Unit of Work's commit saves what the repository tracks, so send a command to write.
+- The other members read and need no Unit of Work, so a query's handler may inject the repository. A change to an aggregate they loaded is saved only by a Unit of Work too, and there the Kit has no call to refuse: made in a scope that sends no command, it is lost without a word (ADR 0003). A Module of a Host of Modules cannot reach that scope: an endpoint's scope names no Module, so resolving a repository there throws. An application without Modules can, in an endpoint or a service that takes a repository itself: send a command instead.
 
 A named specification and a Feature that uses it, from the Proving Sample's Products Business Area:
 
@@ -181,6 +183,40 @@ internal sealed class ProductRepository(IUnitOfWork unitOfWork)
 - Register it in the Module's Composition Root: `module.AddScoped<IProductRepository, ProductRepository>()`. It tracks in the same Unit of Work as the generic repository, so a Feature may use both.
 - The base class gives it no query, no DbSet and no DbContext, so it has no way to save and no way to write around the Unit of Work. Never add one: the Unit of Work saves what the repositories track.
 
+### Reading a Page
+
+A read normally goes through Dapper ([dapper-reads.md](dapper-reads.md#reading-a-page)). When a Feature reads its Page through EF Core instead, a specific repository builds the member on the protected `PageAsync<TResult>`, with `PageExpressions<TAggregate>` mapping each name its query's `PageDeclaration` declares ([commands-queries-validation.md](commands-queries-validation.md#paging)). The Proving Sample reads `ListProducts`'s Page this way in its tests, to prove both helpers answer the same Page:
+
+```csharp
+using Ardalis.Specification;
+using PouryaKit.Cqrs;
+using PouryaKit.Persistence.EFCore;
+
+internal sealed class ProductPages(IUnitOfWork unitOfWork) : EfRepository<Product, ProductId>(unitOfWork)
+{
+    private static readonly PageExpressions<Product> Paging = new PageExpressions<Product>(ListProductsQuery.Paging)
+        .OrderBy("name", product => product.Name)
+        .OrderBy("created", product => product.CreatedAt)
+        .ThenBy(product => product.Id)                                   // unique: equal names keep one order
+        .Filter<string>("name", FilterOperator.Equal, name => product => product.Name == name)
+        .Filter<string>("name", FilterOperator.Contains, name => product => product.Name.Contains(name))
+        .Filter<Guid>("category", FilterOperator.Equal, id => product => product.CategoryId == new CategoryId(id))
+        .Filter<DateTimeOffset>("created", FilterOperator.GreaterThanOrEqual, since => product => product.CreatedAt >= since);
+
+    public Task<Page<ProductListItemDto>> PageAsync(PageRequest request, CancellationToken ct) =>
+        PageAsync(new ListItems(), Paging, request, ct);
+
+    private sealed class ListItems : Specification<Product, ProductListItemDto>
+    {
+        public ListItems() => Query.Select(product => new ProductListItemDto(product.Id, product.CategoryId, product.Name));
+    }
+}
+```
+
+- Map every declared sort key with `OrderBy`, every declared field and operator with `Filter`, whose value type must be the field's, and name a unique `ThenBy` key. Each call returns a copy; keep the result in a static field. A request whose sort key or filter is undeclared, or expressions that miss part of the declaration, throw `InvalidOperationException` before any query runs.
+- `PageAsync` applies the specification's criteria and the request's filters, counts that selection, orders it, skips and takes the Page and projects it with the specification's `Select`. Give the specification criteria and a `Select` only: one with ordering, or that sets `Skip` or `Take` at all, `Take(0)` included, throws. The global query filters apply, so removed soft-deletable rows stay out.
+- A filter value reaches the database as a parameter of your predicate. `Contains` on PostgreSQL is case-sensitive, as `strpos` is in SQL.
+
 ## The Unit of Work
 
 - Each command Operation runs in one transaction that the Unit of Work begins and owns, and commits in a fixed sequence:
@@ -222,7 +258,7 @@ Both are opt-in, per aggregate or entity, with a contract from `PouryaKit.Domain
 ## Unique values
 
 - Guard a unique value with a unique index in the mapping, never with a check before the write: a check reads only what is committed and cannot see a concurrent Operation. Name the index with a constant (`HasDatabaseName(NameIndex)`, as above). On a soft-deletable table, filter the index to the rows not removed (`HasFilter("is_deleted = false")`, SQL with snake_case names), so a removed aggregate's value is free again.
-- Map its violation to the Module's own Error in the Composition Root: `module.MapUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse)` (`PouryaKit.Persistence.EFCore`). The Error is usually of kind `Conflict`. Map each index once; mapping one twice for the same DbContext throws at composition.
+- Map its violation to the Module's own Error in the Composition Root: `module.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse)` (`PouryaKit.Persistence.EFCore`). The Error is usually of kind `Conflict`. Map each index once; mapping one twice for the same DbContext throws at composition.
 - The mapping covers a unique index or constraint the database checks when the row is written. A constraint declared `DEFERRABLE INITIALLY DEFERRED` is checked at commit, and its violation is an exception, not the mapped Error.
 - When the save violates a mapped index, the Unit of Work rolls everything back and the Operation fails with that Error. Any other database error, such as an unmapped constraint, a duplicate primary key or a foreign key, stays an exception: it rolls back and reaches the Gateway's caller.
 - A check before the write may still make the common case friendlier, as the import above skips names already in use; the index stays the guard.
@@ -278,4 +314,19 @@ dotnet ef migrations add Initial \
 
 - `dotnet-ef` builds the Host as its `Program` does and finds the internal DbContext in its container, so the DbContext stays internal and needs no design-time factory. Name it with `--context`; set the folder with `--output-dir` and the namespace follows.
 - Opting an aggregate into audit or soft delete, or adding a unique index, changes the model: add a migration for it.
+- A Module with an `[Idempotent]` command ([commands-queries-validation.md](commands-queries-validation.md#request-idempotency)) keeps its keys in a table `pouryakit_idempotency_keys` of its own schema, outside its model. Add it once with `dotnet ef migrations add IdempotencyKeys` and the Module's options, as above: the model did not change, so the migration is empty and the snapshot stays as it was; fill its `Up` with `migrationBuilder.CreateIdempotencyTable("catalog")` and its `Down` with `migrationBuilder.DropIdempotencyTable("catalog")` (`PouryaKit.Persistence.EFCore`, the Module's schema). Nothing checks it at startup: without it, the first opted-in command with a request id throws an `InvalidOperationException` that names the call, and nothing commits. The table's shape changed during Wave 2, before any release: `CreateIdempotencyTable` now also creates `reserved_at` and its index. A local database migrated from an earlier Wave 2 build has the table without them, and the first idempotent command throws an `InvalidOperationException` that names the column and its fix: drop the table and create it again with `CreateIdempotencyTable`, or run `alter table catalog.pouryakit_idempotency_keys add column reserved_at timestamp with time zone not null default now(); alter table catalog.pouryakit_idempotency_keys alter column reserved_at drop default; create index ix_pouryakit_idempotency_keys_reserved_at on catalog.pouryakit_idempotency_keys (reserved_at);` with the Module's schema.
 - The Host applies no migration at startup. `HostFixture` applies every Module's in tests.
+
+## Idempotency key retention
+
+- The Host keeps an idempotency key for its retention, then removes it, and a repeat of its request runs as a new one. One background service, added once whatever the number of Modules, removes from every Module's `pouryakit_idempotency_keys` the keys reserved longer ago than the retention, every cleanup interval, a batch of keys per statement until a batch is short. It runs on the Host's `TimeProvider`, in a scope and on connections of its own, never inside a request or a Unit of Work, and skips a Module without the table.
+- `PouryaKitIdempotencyOptions` (`PouryaKit.Persistence.EFCore`) sets it for the whole Host: `Retention` 24 hours, `CleanupInterval` 1 hour and `BatchSize` 1000 by default. A key replays for at least its retention and is removed by the first cleanup after it, so choose a retention longer than any client keeps retrying. Configure it in the Host, for example from configuration:
+
+```csharp
+builder.Services.Configure<PouryaKitIdempotencyOptions>(builder.Configuration.GetSection("PouryaKit:Idempotency"));
+```
+
+- `Retention = Timeout.InfiniteTimeSpan` keeps every key and runs no cleanup. The Host fails to start unless the retention is positive and at most 36500 days, or infinite, the interval from 1 ms to about 49.7 days, the range of `PeriodicTimer`, and the batch size at least 1.
+- A repeat whose expired key a cleanup removes while the repeat is being reserved runs as a new request.
+- A cleanup that removed keys logs how many (`IdempotencyKeysRemoved`); one that fails is logged at Error level (`IdempotencyKeyCleanupFailed`), and the next one tries again.
+- To test it, build the Host with the test clock as its `TimeProvider`: advancing the clock past the interval runs a cleanup, which removes the keys the clock has aged past the retention.

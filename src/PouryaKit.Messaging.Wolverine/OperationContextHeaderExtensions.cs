@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using PouryaKit.Cqrs;
 using Wolverine;
@@ -30,9 +31,13 @@ public static class OperationContextHeaderExtensions
         }
     }
 
-    // The context of the Operation a delivery runs: a continuation of the one that published the message, with the same
-    // Actor, tenant and correlation, caused by it, and an OperationId of its own.
-    internal static OperationContext ContinuedOperationContext(Envelope envelope)
+    // The context of the Operation a delivery runs: a trusted continuation of the one that published the message, with
+    // the same Actor, tenant and correlation, caused by it, and an OperationId of its own. Trusted because the Kit's
+    // Outbox wrote these headers when that authorized Operation committed. Beside it, the trace context of the activity
+    // current at publish: Wolverine's parent-id with the Kit's tracestate, default when the envelope names no parent. A
+    // copy fanned out from another Host's message has no parent-id of its own unless Wolverine's span was current at the
+    // fan-out; the Kit's traceparent header then names the publishing Operation.
+    internal static (OperationContext Context, ActivityContext TraceParent) ContinuedOperationContext(Envelope envelope)
     {
         string Header(string name) =>
             envelope.Headers.TryGetValue(name, out var value) && value is not null
@@ -48,11 +53,17 @@ public static class OperationContextHeaderExtensions
             _ => throw new InvalidOperationException($"The message {envelope.Id} has an undefined ActorKind header."),
         };
         envelope.Headers.TryGetValue(OperationContextHeaders.Tenant, out var tenant);
-        return new OperationContext(
-            actor,
-            tenant,
-            Guid.Parse(Header(OperationContextHeaders.CorrelationId), CultureInfo.InvariantCulture),
-            Guid.Parse(Header(OperationContextHeaders.CausationId), CultureInfo.InvariantCulture)
+        envelope.Headers.TryGetValue(OperationContextHeaders.TraceState, out var traceState);
+        var parent = envelope.ParentId ?? envelope.Headers.GetValueOrDefault(OperationContextHeaders.TraceParent);
+        ActivityContext.TryParse(parent, traceState, isRemote: true, out var traceParent);
+        return (
+            OperationContext.RestoreTrusted(
+                actor,
+                tenant,
+                Guid.Parse(Header(OperationContextHeaders.CorrelationId), CultureInfo.InvariantCulture),
+                Guid.Parse(Header(OperationContextHeaders.CausationId), CultureInfo.InvariantCulture)
+            ),
+            traceParent
         );
     }
 }

@@ -1,6 +1,5 @@
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
-using Catalog.Contracts.Products.Events.V1;
 using Catalog.Products.Events.DomainEvents;
 using Catalog.Products.Features.CreateProduct;
 using Inventory;
@@ -335,47 +334,44 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
     }
 
     [Fact]
-    public async Task Startup_fails_on_a_subscription_to_an_integration_event_no_module_of_the_host_publishes()
+    public void Building_fails_on_a_subscription_to_an_integration_event_no_module_of_the_host_publishes()
     {
-        await using var host = AppFixture.ComposeHost(
-            "Development",
-            Fixture.ConnectionString,
-            Fixture.Logs,
-            builder => builder.Services.Subscribe<TwinV1, TwinIntegrationEventHandler>("tests.unpublished-twin")
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            AppFixture.ComposeHost(
+                "Development",
+                Fixture.ConnectionString,
+                Fixture.Logs,
+                builder => builder.Services.Subscribe<TwinV1, TwinIntegrationEventHandler>("tests.unpublished-twin", typeof(StubModule))
+            )
         );
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
-
         Assert.Equal(
-            $"{typeof(TwinIntegrationEventHandler).FullName} subscribes to {typeof(TwinV1).FullName} under tests.unpublished-twin, but no Module of this Host publishes it, so it has no wire name. Declare Publish<TwinV1>(wireName, module), or PublishSnapshot for a Snapshot, in the publishing Module's Composition Root.",
+            $"{typeof(TwinIntegrationEventHandler).FullName} subscribes to {typeof(TwinV1).FullName} under tests.unpublished-twin, but no Module of this Host publishes it, so it has no wire name. Declare Publish<TwinV1>(wireName), or PublishSnapshot for a Snapshot, in the publishing Module's Composition Root; when another Host publishes it, declare Receive<TwinV1>(wireName), or ReceiveSnapshot for a Snapshot, in this Host's composition.",
             thrown.Message
         );
     }
 
     [Fact]
-    public async Task Startup_fails_when_another_host_of_the_process_already_sends_the_type_under_another_wire_name()
+    public async Task Building_fails_when_another_host_of_the_process_already_sends_the_type_under_another_wire_name()
     {
-        await using (
-            var first = AppFixture.ComposeHost(
+        // Built, never started: the build declares the Host's wire names for the process.
+        await AppFixture
+            .ComposeHost(
                 "Development",
                 Fixture.ConnectionString,
                 Fixture.Logs,
-                builder => builder.Services.Publish<ProcessNamedV1>("tests.process-named.v1")
+                builder => builder.Services.Publish<ProcessNamedV1>("tests.process-named.v1", typeof(StubModule))
             )
-        )
-        {
-            await first.StartAsync(TestContext.Current.CancellationToken);
-            await first.StopAsync(TestContext.Current.CancellationToken);
-        }
+            .DisposeAsync();
 
-        await using var second = AppFixture.ComposeHost(
-            "Development",
-            Fixture.ConnectionString,
-            Fixture.Logs,
-            builder => builder.Services.Publish<ProcessNamedV1>("tests.process-named.v2")
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            AppFixture.ComposeHost(
+                "Development",
+                Fixture.ConnectionString,
+                Fixture.Logs,
+                builder => builder.Services.Publish<ProcessNamedV1>("tests.process-named.v2", typeof(StubModule))
+            )
         );
-
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => second.StartAsync(TestContext.Current.CancellationToken));
 
         Assert.Equal(
             $"{typeof(ProcessNamedV1).FullName} is published as tests.process-named.v2, but this process already sends it as tests.process-named.v1; a type keeps one wire name in a process.",
@@ -384,16 +380,17 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
     }
 
     [Fact]
-    public async Task Startup_fails_on_an_integration_event_wolverine_named_before_it_was_declared()
+    public void Building_fails_on_an_integration_event_wolverine_named_before_it_was_declared()
     {
         // Something in the process named the type before any Host declared it; Wolverine keeps that name.
         var named = typeof(EarlyNamedV1).ToMessageTypeName();
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.UsePouryaKitWolverine();
+        // An Outbox, as a Host that publishes registers one, so the naming refusal is the one problem.
+        builder.Services.AddSingleton<INotificationOutbox, StandInOutbox>();
         builder.Services.Publish<EarlyNamedV1>("tests.early-named.v1");
-        using var host = builder.Build();
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
             $"{typeof(EarlyNamedV1).FullName} is published as tests.early-named.v1, but Wolverine named it {named} before it was declared and would send it under that name. Declare it before anything in the process sends or names it.",

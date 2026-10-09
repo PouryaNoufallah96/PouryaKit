@@ -1,5 +1,6 @@
 using Billing.Infrastructure.Data.Context;
 using Billing.PriceLists.Features.OpenPriceList;
+using Billing.Quotes.Features.ExpireQuote;
 using Catalog.Contracts.Products.Events.V1;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging.Wolverine;
@@ -13,11 +14,9 @@ public sealed class BillingModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module)
     {
-        module.UsePostgres<BillingDbContext>(connectionName: "app", schema: "billing");
-        module.AddPouryaKitCqrs(typeof(BillingModule).Assembly);
-        module.Subscribe<ProductCreatedV1, OpenPriceListIntegrationEventHandler>(
-            "billing.product-created",
-            typeof(BillingModule)
-        );
+        module.UsePouryaKitPostgres<BillingDbContext>(connectionName: "app", schema: "billing");
+        module.AddPouryaKitCqrs();
+        module.Subscribe<ProductCreatedV1, OpenPriceListIntegrationEventHandler>("billing.product-created");
+        module.AddPouryaKitDelayedCommand<ExpireQuoteCommand>("billing.expire-quote");
     }
 }

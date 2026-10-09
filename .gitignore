@@ -15,9 +15,9 @@ artifacts/
 CLAUDE.local.md
 .claude/agent-memory-local/
 .claude/worktrees/
+.claude/reviews/
+.claude/handoff/
 __pycache__/
 .claude-plugin/types/
-branch_structure.json
-temp_auto_push.bat
-temp_interactive_push.bat
-.gitignore
+# Wolverine code `codegen write` generates in a Proving Sample Host; the Kit commits none (ADR 0004).
+samples/ModularMonolith/src/*/Internal/Generated/

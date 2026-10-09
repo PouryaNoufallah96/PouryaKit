@@ -12,58 +12,93 @@ internal static class PackageGraph
     // Microsoft.EntityFrameworkCore.Relational, "Npgsql EF provider" Npgsql.EntityFrameworkCore.PostgreSQL, "xUnit v3"
     // xunit.v3.extensibility.core (the package for libraries) and "ASP.NET Core framework reference" the framework
     // Microsoft.AspNetCore.App. PouryaKit.Persistence has no row of its own: G.4 gives it Ardalis.Specification, over the
-    // aggregates of Domain.
+    // aggregates of Domain. Persistence.Dapper references Cqrs, not Domain, since its Page helper reads a Cqrs
+    // PageRequest into a Page (I.3 Paging, ticket #35).
     private static readonly Dictionary<string, Allowed> Table = new()
     {
+        ["PouryaKit.Caching"] = new(["PouryaKit.Cqrs"], ["Microsoft.Extensions.Caching.Hybrid"]),
+        ["PouryaKit.Core"] = new([], []),
         ["PouryaKit.Domain"] = new([], []),
+        // Cqrs builds the Host's validated container and runs its composition checks as it starts (#61, 2026-10-07),
+        // which takes the container's implementation and the Hosting abstractions from Modularity.
         ["PouryaKit.Cqrs"] = new(
-            ["PouryaKit.Domain"],
-            ["Microsoft.Extensions.DependencyInjection.Abstractions", "Microsoft.Extensions.Logging.Abstractions"]
+            ["PouryaKit.Core", "PouryaKit.Domain"],
+            [
+                "Microsoft.Extensions.DependencyInjection",
+                "Microsoft.Extensions.DependencyInjection.Abstractions",
+                "Microsoft.Extensions.Hosting.Abstractions",
+                "Microsoft.Extensions.Logging.Abstractions",
+            ]
         ),
         ["PouryaKit.Validation"] = new(["PouryaKit.Cqrs"], ["FluentValidation"]),
-        ["PouryaKit.Modularity"] = new(
-            ["PouryaKit.Cqrs"],
-            ["Microsoft.Extensions.Hosting.Abstractions", "Microsoft.Extensions.DependencyInjection"]
-        ),
+        ["PouryaKit.Modularity"] = new(["PouryaKit.Cqrs"], ["Microsoft.Extensions.Hosting.Abstractions"]),
         ["PouryaKit.Persistence"] = new(["PouryaKit.Domain"], ["Ardalis.Specification"]),
         ["PouryaKit.Persistence.EFCore"] = new(
-            ["PouryaKit.Cqrs", "PouryaKit.Persistence"],
-            ["Microsoft.EntityFrameworkCore.Relational", "Ardalis.Specification.EntityFrameworkCore"]
+            ["PouryaKit.Core", "PouryaKit.Cqrs", "PouryaKit.Persistence"],
+            ["Microsoft.EntityFrameworkCore.Relational", "Ardalis.Specification.EntityFrameworkCore", "Microsoft.Extensions.Hosting.Abstractions"]
         ),
         ["PouryaKit.Persistence.Postgres"] = new(
             ["PouryaKit.Persistence.EFCore"],
             ["Npgsql.EntityFrameworkCore.PostgreSQL", "EFCore.NamingConventions"]
         ),
         ["PouryaKit.Persistence.Dapper"] = new(
-            ["PouryaKit.Domain"],
+            ["PouryaKit.Core", "PouryaKit.Cqrs"],
             ["Dapper", "Npgsql", "Microsoft.Extensions.Configuration.Abstractions", "Microsoft.Extensions.DependencyInjection.Abstractions"]
         ),
         ["PouryaKit.Messaging"] = new(["PouryaKit.Domain"], []),
-        ["PouryaKit.Messaging.Wolverine"] = new(["PouryaKit.Cqrs", "PouryaKit.Messaging"], ["WolverineFx"]),
+        ["PouryaKit.Messaging.Wolverine"] = new(["PouryaKit.Core", "PouryaKit.Cqrs", "PouryaKit.Messaging"], ["WolverineFx"]),
         ["PouryaKit.Messaging.Wolverine.EFCore"] = new(
             ["PouryaKit.Messaging.Wolverine", "PouryaKit.Persistence.EFCore"],
             ["WolverineFx.EntityFrameworkCore", "WolverineFx.Postgresql"]
         ),
-        ["PouryaKit.Web"] = new(["PouryaKit.Cqrs"], [], ["Microsoft.AspNetCore.App"]),
+        ["PouryaKit.Messaging.Wolverine.RabbitMq"] = new(["PouryaKit.Messaging.Wolverine"], ["WolverineFx.RabbitMQ"]),
+        ["PouryaKit.Observability"] = new(["PouryaKit.Cqrs"], []),
+        ["PouryaKit.Security"] = new(["PouryaKit.Core", "PouryaKit.Cqrs"], []),
+        ["PouryaKit.Security.JwtBearer"] = new(["PouryaKit.Security"], ["Microsoft.AspNetCore.Authentication.JwtBearer"]),
+        ["PouryaKit.Web"] = new(
+            ["PouryaKit.Core", "PouryaKit.Cqrs"],
+            ["Microsoft.Extensions.Http.Resilience"],
+            ["Microsoft.AspNetCore.App"]
+        ),
+        ["PouryaKit.Web.OpenApi"] = new(
+            ["PouryaKit.Web"],
+            ["Asp.Versioning.Http", "Asp.Versioning.OpenApi", "Microsoft.AspNetCore.OpenApi", "Scalar.AspNetCore"],
+            ["Microsoft.AspNetCore.App"]
+        ),
+        // dotnet new templates, content only: the projects they generate reference the Kit's packages, the package none.
+        ["PouryaKit.Templates"] = new([], []),
         ["PouryaKit.Testing"] = new(
             ["PouryaKit.Modularity", "PouryaKit.Persistence.Postgres", "PouryaKit.Messaging.Wolverine.EFCore"],
-            ["Testcontainers.PostgreSql", "Respawn", "xunit.v3.extensibility.core", "Microsoft.Extensions.TimeProvider.Testing"]
+            ["Testcontainers.PostgreSql", "Respawn", "xunit.v3.extensibility.core", "Microsoft.Extensions.TimeProvider.Testing", "WolverineFx.RuntimeCompilation"]
         ),
     };
 
-    // What must never arrive in a package's closure, by package id prefix or project name. Every package also keeps
-    // WolverineFx.RuntimeCompilation out: Roslyn at run time is the Host's choice (ADR 0004).
+    // What must never arrive in a package's closure, by package id prefix or project name. Every package but Testing also
+    // keeps WolverineFx.RuntimeCompilation out: Roslyn at run time is the Host's choice in Development, and a test Host's
+    // (ADR 0004).
     private static readonly Dictionary<string, string[]> KeptOut = new()
     {
         ["PouryaKit.Persistence.Dapper"] = ["Microsoft.EntityFrameworkCore"],
         ["PouryaKit.Persistence.Postgres"] = ["WolverineFx", "JasperFx", "PouryaKit.Messaging"],
-        ["PouryaKit.Web"] = ["PouryaKit.Modularity"],
+        // Outgoing HTTP resilience is the standard handler alone, usable without an AppHost or ServiceDefaults.
+        // API versioning and OpenAPI are the optional Web.OpenApi's, so a Host without them takes none of it.
+        ["PouryaKit.Web"] = ["PouryaKit.Modularity", "Aspire", "Asp.Versioning", "Microsoft.AspNetCore.OpenApi", "Microsoft.OpenApi", "Scalar"],
+        // The token's claims reach Web as claims; the bearer scheme knows nothing of the HTTP endpoints that read them.
+        ["PouryaKit.Security.JwtBearer"] = ["PouryaKit.Web"],
+        // The native OpenAPI documents and Scalar are the one OpenAPI stack: no Swagger generator beside them.
+        ["PouryaKit.Web.OpenApi"] = ["PouryaKit.Modularity", "Aspire", "Swashbuckle", "NSwag"],
         // Transport- and database-neutral: no EF Core, no PostgreSQL driver, no message store.
         ["PouryaKit.Messaging.Wolverine"] = ["Microsoft.EntityFrameworkCore", "Npgsql", "WolverineFx.RDBMS", "WolverineFx.Postgresql", "Weasel"],
+        // A transport between Hosts, neutral to the database as well: its envelopes go through the Host's own store.
+        ["PouryaKit.Messaging.Wolverine.RabbitMq"] = ["Microsoft.EntityFrameworkCore", "Npgsql", "WolverineFx.RDBMS", "WolverineFx.Postgresql", "Weasel"],
+        // It emits through System.Diagnostics alone: exporters and logging are the Host's (I.3 Observability, #47).
+        ["PouryaKit.Observability"] = ["OpenTelemetry", "Serilog", "WolverineFx", "PouryaKit.Messaging"],
+        // Redis is the application's own distributed cache for HybridCache, never the Kit's (I.3 Caching, #43).
+        ["PouryaKit.Caching"] = ["StackExchange.Redis", "Microsoft.Extensions.Caching.StackExchangeRedis"],
     };
 
-    // Domain, and Messaging (Domain only), bring no package at all.
-    private static readonly HashSet<string> NoPackages = ["PouryaKit.Domain", "PouryaKit.Messaging"];
+    // Core and Domain, and Messaging (Domain only), bring no package at all; nor do the templates.
+    private static readonly HashSet<string> NoPackages = ["PouryaKit.Core", "PouryaKit.Domain", "PouryaKit.Messaging", "PouryaKit.Templates"];
 
     public static IEnumerable<string> Violations(RestoredPackage package)
     {
@@ -89,7 +124,7 @@ internal static class PackageGraph
         var closure = package.RuntimePackages.Select(arrived => arrived.Id).Concat(package.Projects).Distinct();
         foreach (var arrived in closure.Order(StringComparer.Ordinal))
         {
-            var keptOut = KeptOut.GetValueOrDefault(package.Name, []).Append("WolverineFx.RuntimeCompilation");
+            var keptOut = KeptOut.GetValueOrDefault(package.Name, []).Concat(package.Name == "PouryaKit.Testing" ? [] : ["WolverineFx.RuntimeCompilation"]);
             if (keptOut.Any(prefix => arrived.StartsWith(prefix, StringComparison.Ordinal)))
             {
                 yield return $"{package.Name}'s closure holds {arrived}, which section C keeps out of it.";

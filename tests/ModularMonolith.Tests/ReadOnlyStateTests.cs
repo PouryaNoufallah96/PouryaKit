@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using System.Reflection;
@@ -269,10 +268,8 @@ public sealed class ReadOnlyStateTests(AppFixture app) : HostTest<AppFixture>(ap
 
     public sealed class QueryOnlyReadingModule : IModuleDefinition
     {
-        public void Configure(ModuleBuilder module)
-        {
-            module.AddPouryaKitCqrs();
+        // Its one handler by hand: AddPouryaKitCqrs() on its builder would scan this whole test assembly.
+        public void Configure(ModuleBuilder module) =>
             module.AddScoped<QueryHandler<ConstantReadQuery, string>, ConstantReadQueryHandler>();
-        }
     }
 }

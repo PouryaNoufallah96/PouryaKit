@@ -1,10 +1,10 @@
 export const meta = {
   name: 'kit-review',
-  description: 'Per-ticket dual review: kit-reviewer and a Codex inspection in parallel on a worktree of one commit, then every finding checked against the code',
+  description: 'Per-ticket dual review: a Codex inspection, then kit-reviewer, on a worktree of one commit, then every finding checked against the code',
   whenToUse: 'The dual review in AGENTS.md workflow step 3, for a ticket that claims a Kit runtime guarantee or changes a public API of the Kit. Pass { base, ticket } (or { base, spec } for work with no ticket); add previous (the earlier result file) only to re-review after a high finding was fixed. Read-only; returns a short digest and names the file with the full result; the main session judges it.',
   phases: [
     { title: 'Prepare', detail: 'resolve the commits, fetch the ticket, check out a detached review worktree' },
-    { title: 'Review', detail: 'kit-reviewer and Codex (claudex-loop runner, inspect mode) review the same commit independently' },
+    { title: 'Review', detail: 'Codex (claudex-loop runner, inspect mode; over 900,000 bytes of diff the leg is skipped with that reason), then kit-reviewer, review the same commit independently' },
     { title: 'Verify', detail: 'merge duplicate findings and check each one against the code' },
     { title: 'Finish', detail: 'write the full result file and remove the review worktree' },
   ],
@@ -95,12 +95,24 @@ const VERIFIED = {
 }
 const FINISHED = {
   type: 'object',
-  required: ['bytes', 'removed'],
-  properties: { bytes: { type: 'integer' }, removed: { type: 'boolean' }, error: { type: 'string' } },
+  required: ['verdict', 'bytes', 'removed'],
+  properties: { verdict: { type: 'string' }, bytes: { type: 'integer' }, removed: { type: 'boolean' }, error: { type: 'string' } },
 }
 
+// `args` is a JSON object, or the word form the docs show: `base X ticket N`, optionally joined by `with`, `and` or commas.
+const WORD_KEYS = ['base', 'ticket', 'spec', 'head', 'previous', 'rescore', 'evidence', 'codexModel', 'codexEffort']
+const parseWords = (text) => {
+  const out = {}
+  const words = text.trim().split(/\s+/).map((w) => w.replace(/,$/, '')).filter((w) => w && !['with', 'and'].includes(w))
+  for (let i = 0; i < words.length; i += 2) {
+    const key = words[i].replace(/^--/, '')
+    if (!WORD_KEYS.includes(key) || i + 1 >= words.length) return null
+    out[key] = words[i + 1]
+  }
+  return Object.keys(out).length ? out : null
+}
 const input = typeof args === 'string'
-  ? (() => { try { return JSON.parse(args) } catch { return {} } })()
+  ? (() => { try { return JSON.parse(args) } catch { return parseWords(args) ?? {} } })()
   : (args ?? {})
 const str = (value) => String(value ?? '').trim()
 const base = str(input.base)
@@ -111,6 +123,7 @@ const scope = str(input.scope)
 const codexModel = str(input.codexModel)
 const codexEffort = str(input.codexEffort)
 const previousFile = str(input.previous)
+const evidenceFile = str(input.evidence)
 const rescoreIds = (Array.isArray(input.rescore) ? input.rescore : str(input.rescore).split(',')).map(str).filter(Boolean)
 const list = (value) => (Array.isArray(value) ? value : [])
 
@@ -118,9 +131,9 @@ const list = (value) => (Array.isArray(value) ? value : [])
 const fail = (error) => ({ workflow: 'kit-review', complete: false, verdict: 'unknown', error })
 const REF = /^[A-Za-z0-9][A-Za-z0-9._\/~^-]{0,199}$/
 const PATH = /^[A-Za-z0-9_.\/~][A-Za-z0-9_.\/@+-]{0,399}$/
-const USAGE = 'Pass { base, ticket } for a ticket, or { base, spec } for work with no ticket; optional head, scope, codexModel, codexEffort, and for a re-review previous (the earlier result file) with optional rescore ids.'
+const USAGE = 'Pass { base, ticket } for a ticket, or { base, spec } for work with no ticket; optional head, scope, evidence (a file of recorded execution evidence), codexModel, codexEffort, and for a re-review previous (the earlier result file) with optional rescore ids. JSON or the word form `base X ticket N`.'
 for (const key of Object.keys(input)) {
-  if (!['base', 'ticket', 'spec', 'head', 'scope', 'codexModel', 'codexEffort', 'previous', 'rescore'].includes(key)) return fail(`Unknown argument \`${key}\`. ${USAGE}`)
+  if (!['base', 'ticket', 'spec', 'head', 'scope', 'codexModel', 'codexEffort', 'previous', 'rescore', 'evidence'].includes(key)) return fail(`Unknown argument \`${key}\`. ${USAGE}`)
 }
 if (!REF.test(base) || base.includes('..')) return fail(`\`base\` must be the pre-change commit or ref, using only letters, digits and . _ / ~ ^ -. ${USAGE}`)
 if (!!ticket === !!spec) return fail(`Pass exactly one of \`ticket\` (an issue number) and \`spec\` (a file path). ${USAGE}`)
@@ -131,6 +144,7 @@ if (codexModel && !/^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(codexModel)) return 
 if (codexEffort && !['high', 'xhigh'].includes(codexEffort)) return fail('`codexEffort` must be "high" or "xhigh".')
 if (scope.length > 1000 || /[\u0000-\u001f\u007f]/.test(scope)) return fail('`scope` must be one plain-text line of at most 1000 characters.')
 if (previousFile && (!PATH.test(previousFile) || previousFile.includes('..'))) return fail('`previous` must be the path of an earlier kit-review result file.')
+if (evidenceFile && (!PATH.test(evidenceFile) || evidenceFile.includes('..'))) return fail('`evidence` must be the path of a text file holding the recorded execution evidence.')
 if (rescoreIds.length && !previousFile) return fail('`rescore` needs `previous`, the earlier kit-review result file that holds those findings.')
 if (rescoreIds.some((id) => !/^[A-Za-z0-9_-]{1,20}$/.test(id))) return fail('`rescore` must list finding ids such as F1, F3.')
 
@@ -163,7 +177,12 @@ ${ticket
     ? `gh issue view ${ticket} --json title,body --jq '"# " + .title + "\\n\\n" + .body' > "$run/spec.md"`
     : `cp '${spec}' "$run/spec.md"`}
 test -s "$run/spec.md" || { echo "kit-review: the spec is empty" >&2; exit 2; }
-${previousFile ? `python3 - '${previousFile}' '${rescoreIds.join(',')}' > "$run/previous.json" <<'PY'
+${ticket ? `parent=$(grep -A 3 '^## Parent' "$run/spec.md" | grep -oE 'issues/[0-9]+' | head -1 | grep -oE '[0-9]+' || true)
+if [ -n "$parent" ]; then printf '\\n\\n## Parent specification #%s (its body, for a reviewer that cannot fetch it)\\n\\n' "$parent" >> "$run/spec.md"; gh issue view "$parent" --json body --jq .body >> "$run/spec.md"; fi
+` : ''}${evidenceFile ? `test -s '${evidenceFile}' || { echo "kit-review: the evidence file is empty" >&2; exit 2; }
+printf '\\n\\n## Recorded execution evidence for the reviewed commit (supplied by the session)\\n\\nA record below that names the revision, the commands, their outcomes and the environment is the execution record of this commit; treat it as evidence, not as a claim to reproduce. BLOCKED stays the verdict only for required evidence that cannot be inspected at all.\\n\\n' >> "$run/spec.md"
+cat '${evidenceFile}' >> "$run/spec.md"
+` : ''}${previousFile ? `python3 - '${previousFile}' '${rescoreIds.join(',')}' > "$run/previous.json" <<'PY'
 ${extractPrevious}
 PY
 ` : 'echo "{}" > "$run/previous.json"'}
@@ -199,6 +218,10 @@ const head = prepared.head
 const baseCommit = prepared.base
 const specFile = `${run}/spec.md`
 const resultFile = `${run}/result.json`
+// The run directory is in system temp, which a later session cannot rely on, so the result is also kept, gitignored,
+// under the repository root: one file per ticket or spec and reviewed commit.
+const reviewDir = `${top}/.claude/reviews`
+const reviewFile = `${reviewDir}/${ticket || spec.split('/').pop().replace(/\.[^.]+$/, '') || 'spec'}-${head.slice(0, 7)}.json`
 const previous = list(prepared.previous)
 // A re-review that lost earlier findings on the way would pass them unseen, so the list must match what the
 // extraction counted, and the ids asked for. The worktree exists by now, so the finish step below still removes it.
@@ -217,6 +240,7 @@ const source = ticket ? `ticket #${ticket}` : `spec ${spec}`
 
 let full = null
 let finished = null
+let saved = false
 try {
   if (lostPrevious) throw new Error(`Re-review stopped before reviewing: ${lostPrevious}. Run it again.`)
   const reviewerPrompt = `Review commit ${head} against base ${baseCommit} for ${source}; its text is in ${specFile}.
@@ -270,10 +294,18 @@ else:
         why.append("runner: " + record["error"])
     out["error"] = " | ".join(why)[:600] or "the runner left no result.json and no error message"
 print(json.dumps(out, ensure_ascii=False))`
-  const runnerCommand = `python3 '${top}/.agents/skills/claudex-loop/scripts/runner.py' inspect --host claude --builder claude --repo '${worktree}' --plan '${specFile}' --base '${baseCommit}'${codexModel ? ` --model ${codexModel}` : ''}${codexEffort ? ` --effort ${codexEffort}` : ''} --timeout 570 > '${run}/codex.out' 2> '${run}/codex.err'
+  // Inspect mode puts the whole diff in Codex's prompt, and Codex refuses an input over 1,048,576 characters in about
+  // two seconds with no usable reason (2.68 MB, 2026-10-08). Over 900,000 bytes, which leaves room for the prompt
+  // around the diff, the leg is skipped with an error that gives the size and the hand rerun in review mode.
+  const runnerCommand = `size=$(git -C '${worktree}' diff --no-ext-diff --no-textconv '${baseCommit}' HEAD | wc -c | tr -d ' ')
+if [ "$size" -gt 900000 ]; then
+printf '{"available": false, "verdict": "NONE", "findings": [], "read_count": 0, "unread": [], "limitations": [], "error": "the diff is %s bytes, over the Codex leg limit of 900000 (the runner refuses an input over 1048576 characters, prompt included); rerun the leg by hand in review mode, docs/agents/ai-setup.md step 3"}\\n' "$size"
+else
+python3 '${top}/.agents/skills/claudex-loop/scripts/runner.py' inspect --host claude --builder claude --repo '${worktree}' --plan '${specFile}' --base '${baseCommit}'${codexModel ? ` --model ${codexModel}` : ''}${codexEffort ? ` --effort ${codexEffort}` : ''} --timeout 570 > '${run}/codex.out' 2> '${run}/codex.err'
 python3 - '${run}' <<'PY'
 ${summarizeCodex}
-PY`
+PY
+fi`
   const relayPrompt = `You relay an independent Codex inspection. You do not review code yourself, and you never add, drop or reword a finding.
 
 1. Run exactly this command with the Bash tool, in the foreground, with the tool timeout set to 600000 ms. Add no flags, pipes or redirects:
@@ -284,10 +316,15 @@ ${runnerCommand}
 3. If there is no such line (for example the tool call timed out), return available false, verdict NONE, empty findings, unread and limitations, read_count 0, and error quoting what the shell reported.`
 
   phase('Review')
-  const [claudeRaw, codexRaw] = await parallel([
-    () => agent(reviewerPrompt, { label: 'review:kit-reviewer', phase: 'Review', agentType: 'kit-reviewer', schema: CLAUDE_REVIEW }),
+  // One leg at a time, Codex first: the runner has a 570 s budget inside a foreground shell, and kit-reviewer's builds
+  // and test runs in the same worktree starved it twice (2026-10-07, #52 and #53: 570 s inside the workflow, about
+  // 250 s alone). Sequential costs a few minutes of wall-clock and removes the hand rerun.
+  const codexRaw = await parallel([
     () => agent(relayPrompt, { label: 'review:codex', phase: 'Review', effort: 'low', schema: CODEX_REVIEW }),
-  ])
+  ]).then((legs) => legs[0])
+  const claudeRaw = await parallel([
+    () => agent(reviewerPrompt, { label: 'review:kit-reviewer', phase: 'Review', agentType: 'kit-reviewer', schema: CLAUDE_REVIEW }),
+  ]).then((legs) => legs[0])
   const missing = (note) => ({ available: false, verdict: null, findings: [], read_count: 0, unread: [], limitations: [], note })
   const claude = claudeRaw ?? missing('kit-reviewer did not return')
   const codex = codexRaw ?? missing('the Codex relay did not return')
@@ -442,26 +479,34 @@ ${JSON.stringify(raised, null, 2)}
   full = { workflow: 'kit-review', complete: false, verdict: 'unknown', base: baseCommit, head, error: String(error?.message ?? error) }
 } finally {
   // Runs on success and on failure, so the review worktree never outlives the run. Writing the full result rides on
-  // this agent call, which removing the worktree needs anyway. Non-ASCII is escaped, so the length is the byte count.
+  // this agent call, which removing the worktree needs anyway. A quoted heredoc copies the text unchanged into the run
+  // directory, and the result counts as saved when the verdict parsed back from its copy under .claude/reviews is the
+  // one written; one retry when it is not. Non-ASCII is escaped, so the length is the byte count, kept as information.
   phase('Finish')
-  const content = `${JSON.stringify(full ?? fail('the review stopped early'), null, 2)}\n`
+  const written = full ?? fail('the review stopped early')
+  const content = `${JSON.stringify(written, null, 2)}\n`
     .replace(/[\u007f-\uffff]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)
   const finishPrompt = `You save a review result and remove a git worktree. You do not review or change anything else.
 
-1. Use the Write tool to create ${resultFile} with exactly the text between the two marker lines below, byte for byte: no marker lines, nothing added, nothing reformatted.
------BEGIN RESULT-----
-${content}-----END RESULT-----
-2. Run exactly this command with the Bash tool, in the foreground. Add no flags, pipes or redirects:
+1. Run exactly this command with the Bash tool, in the foreground, as one command: every line between the two fence lines, byte for byte. Add no flags, pipes or redirects, and reformat nothing.
 \`\`\`bash
-wc -c < '${resultFile}'; git -C '${top}' worktree remove --force '${worktree}'; test -e '${worktree}' && echo kept || echo removed
+cat > '${resultFile}' <<'KIT_REVIEW_RESULT'
+${content}KIT_REVIEW_RESULT
+mkdir -p '${reviewDir}' && cp '${resultFile}' '${reviewFile}'
+python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(d['verdict'])" '${reviewFile}'; wc -c < '${reviewFile}'; git -C '${top}' worktree remove --force '${worktree}'; test -e '${worktree}' && echo kept || echo removed
 \`\`\`
-3. Return bytes (the number wc printed), removed (true when the last line is "removed") and error (any error line the command printed, verbatim; omit it when there is none).`
-  try {
-    finished = await agent(finishPrompt, { label: 'finish', phase: 'Finish', effort: 'low', schema: FINISHED })
-  } catch (error) {
-    log(`Finish failed: ${error?.message ?? error}`)
+2. Return verdict (the line python printed; an empty string when it printed an error instead), bytes (the number wc printed), removed (true when the last line is "removed") and error (any error line the command printed, verbatim; omit it when there is none).`
+  for (let attempt = 1; attempt <= 2 && !saved; attempt++) {
+    try {
+      const got = await agent(finishPrompt, { label: attempt === 1 ? 'finish' : 'finish-retry', phase: 'Finish', effort: 'low', schema: FINISHED })
+      finished = { ...got, removed: !!got.removed || !!finished?.removed }
+      saved = String(got.verdict ?? '').trim() === written.verdict
+    } catch (error) {
+      log(`Finish failed: ${error?.message ?? error}`)
+    }
+    if (!saved && attempt === 1) log('The result file did not read back with the verdict written; running the finish step once more.')
   }
-  full = { ...full, size: content.length }
+  full = { ...written, size: content.length }
 }
 
 // The digest is what reaches the main session, so it stays well under the task notification's limit (about 9.8 KB)
@@ -469,10 +514,9 @@ wc -c < '${resultFile}'; git -C '${top}' worktree remove --force '${worktree}'; 
 // per finding, standing ones first and most severe first. Claims shrink, then the list is cut with a count of the
 // rest, which the result file holds.
 const DIGEST_LIMIT = 5500
-const saved = !!finished && Math.abs(finished.bytes - full.size) <= 1
 const cleanup = finished?.removed ? null : `The review worktree was not removed; run \`git worktree remove --force ${worktree}\`.`
 if (cleanup) log(cleanup)
-if (!saved) log(`The full result file was not written as expected (${finished ? `${finished.bytes} of ${full.size} bytes` : 'the finish agent did not return'}); the full result is in this return value.`)
+if (!saved) log(`The full result file was not written as expected (${finished ? `it read back verdict ${JSON.stringify(finished.verdict)}, ${finished.bytes} of ${full.size} bytes` : 'the finish agent did not return'}); the full result is in this return value.`)
 const oneLine = (value, max) => {
   const flat = String(value ?? '').replace(/\s+/g, ' ').trim()
   return flat.length > max ? `${flat.slice(0, max - 1)}…` : flat
@@ -484,11 +528,12 @@ const header = {
   workflow: 'kit-review',
   complete: full.complete,
   verdict: full.verdict,
-  result: saved ? resultFile : null,
+  result: saved ? reviewFile : null,
+  run,
   ...(cleanup ? { cleanup } : {}),
   ...(full.error ? { error: oneLine(full.error, 300) } : {}),
   note: saved
-    ? `Full result (evidence, fix and verification per finding; each leg's limitations) in ${resultFile}. Re-review after a high fix: previous = that file. "unknown" is never a pass.`
+    ? `Full result (evidence, fix and verification per finding; each leg's limitations) in ${reviewFile}. Re-review after a high fix: previous = that file. "unknown" is never a pass.`
     : 'The result file was not written; the full result is under `full` at the end. "unknown" is never a pass.',
   base: full.base,
   head: full.head,

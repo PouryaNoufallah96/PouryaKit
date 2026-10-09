@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using ModularMonolith.Tests.Stub;
 using Npgsql;
+using PouryaKit.Caching;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
@@ -76,7 +76,7 @@ public sealed class MessagingReviewRegressionTests(AppFixture app) : HostTest<Ap
             "ContinuedOperationContext",
             BindingFlags.Static | BindingFlags.NonPublic
         )!;
-        var continued = Assert.IsType<OperationContext>(read.Invoke(null, [envelope]));
+        var continued = Assert.IsType<(OperationContext Context, System.Diagnostics.ActivityContext TraceParent)>(read.Invoke(null, [envelope])).Context;
         Assert.Equal(context.Actor, continued.Actor);
         envelope.Headers[OperationContextHeaders.ActorKind] = "999";
 
@@ -95,8 +95,9 @@ public sealed class MessagingReviewRegressionTests(AppFixture app) : HostTest<Ap
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
             ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
         );
-        builder.Services.UsePostgres<QuotedSchemaDbContext>("app", schema);
+        builder.Services.UsePouryaKitPostgres<QuotedSchemaDbContext>("app", schema);
         builder.Services.AddPouryaKitCqrs(typeof(StubModule).Assembly);
+        builder.Services.AddPouryaKitCaching();
         builder.Services.AddScoped(
             typeof(IReceipts),
             typeof(ReceiptTable).Assembly.GetType("PouryaKit.Messaging.Wolverine.EFCore.EfReceipts", throwOnError: true)!

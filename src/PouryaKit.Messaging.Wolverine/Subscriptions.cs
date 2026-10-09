@@ -4,15 +4,15 @@ using PouryaKit.Domain;
 namespace PouryaKit.Messaging.Wolverine;
 
 /// <summary>
-/// Every subscription of one Host, of Notification Handlers and Integration Event Handlers, and every Integration Event
-/// and Snapshot its Modules publish. It lives in the Host's service collection, not in a static, so every Module's declaration adds to
-/// the same one, whenever it runs, and two Hosts in one process never share it. Names are compared ignoring case,
-/// because local queue names are lower-cased.
+/// Every subscription of one Host, of Notification Handlers and Integration Event Handlers, every Integration Event
+/// and Snapshot its Modules publish, and every one it receives from another Host. It lives in the Host's service
+/// collection, not in a static, so every Module's declaration adds to the same one, whenever it runs, and two Hosts in one
+/// process never share it. Names are compared ignoring case, because local queue names are lower-cased.
 /// </summary>
-internal sealed class Subscriptions
+internal sealed class Subscriptions : IWireNames
 {
     // The local queues Wolverine 6.46.0 creates for itself (LocalTransport, TransportConstants): "agents" is held in
-    // memory, and none of them is a subscription's durable queue. StartupCheck verifies the queues Wolverine built, so a
+    // memory, and none of them is a subscription's durable queue. DurableQueuesCheck verifies the queues Wolverine built, so a
     // name a later Wolverine reserves fails the Host's start too.
     private static readonly HashSet<string> ReservedQueues = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -30,6 +30,8 @@ internal sealed class Subscriptions
     private readonly Dictionary<Type, Publication> _publications = [];
     // Every published Snapshot contract, by its type.
     private readonly Dictionary<Type, SnapshotPublication> _snapshots = [];
+    // Every Integration Event and Snapshot another Host publishes, by its type, with its wire name and whether it is a Snapshot.
+    private readonly Dictionary<Type, (string WireName, bool IsSnapshot)> _received = [];
 
     public IEnumerable<Subscription> All => _byName.Values;
 
@@ -39,7 +41,23 @@ internal sealed class Subscriptions
 
     public IEnumerable<SnapshotPublication> Snapshots => _snapshots.Values;
 
-    public bool IsSnapshot(Type message) => _snapshots.ContainsKey(message);
+    public bool IsSnapshot(Type message) => _snapshots.ContainsKey(message) || _received.GetValueOrDefault(message).IsSnapshot;
+
+    /// <summary>Every Integration Event and Snapshot this Host receives from another Host.</summary>
+    public IReadOnlySet<Type> ReceivedTypes => _received.Keys.ToHashSet();
+
+    /// <summary>The wire name of every Integration Event and Snapshot that has one in this Host: published or received.</summary>
+    public IReadOnlyDictionary<Type, string> WireNames =>
+        _publications
+            .Select(publication => KeyValuePair.Create(publication.Key, publication.Value.WireName))
+            .Concat(_received.Select(received => KeyValuePair.Create(received.Key, received.Value.WireName)))
+            .ToDictionary();
+
+    IReadOnlyDictionary<Type, string> IWireNames.Published =>
+        _publications.ToDictionary(publication => publication.Key, publication => publication.Value.WireName);
+
+    IReadOnlyCollection<string> IWireNames.Received =>
+        [.. MessageTypes.Where(_received.ContainsKey).Select(type => _received[type].WireName)];
 
     public static Subscriptions In(IServiceCollection services)
     {
@@ -50,6 +68,7 @@ internal sealed class Subscriptions
 
         var subscriptions = new Subscriptions();
         services.AddSingleton(subscriptions);
+        services.AddSingleton<IWireNames>(subscriptions);
         return subscriptions;
     }
 
@@ -144,6 +163,63 @@ internal sealed class Subscriptions
     public void PublishSnapshot(SnapshotPublication snapshot, string wireName, Type? module) =>
         Publish(snapshot.Snapshot, wireName, module, snapshot);
 
+    /// <summary>
+    /// Records that another Host publishes <paramref name="message"/> under <paramref name="wireName"/>, as a Snapshot
+    /// when <paramref name="isSnapshot"/>, so this Host's subscriptions to it receive it from there. Throws when the
+    /// type is not a concrete class or is a Domain Event, when the name is missing, invalid or equal ignoring case to
+    /// another type's, when the type is already received under another name or as the other kind, and when a Module of
+    /// this Host publishes it. Declaring the same again adds nothing.
+    /// </summary>
+    public void Receive(Type message, string wireName, bool isSnapshot)
+    {
+        List<string> problems = [];
+        if (message.IsAssignableTo(typeof(DomainEvent)))
+        {
+            problems.Add(
+                $"{message.FullName} is a Domain Event; it reaches its own Module's Notification Handlers and never another Host. Receive the Integration Event its Module publishes."
+            );
+        }
+        else if (!message.IsClass || message.IsAbstract || message.ContainsGenericParameters)
+        {
+            problems.Add($"{message.FullName} is not a concrete class; receive the concrete Integration Event or Snapshot type.");
+        }
+        else if (Check(wireName, $"{message.FullName}'s wire name", isQueue: false, problems))
+        {
+            if (_received.TryGetValue(message, out var received))
+            {
+                if (received != (wireName, isSnapshot))
+                {
+                    problems.Add(
+                        $"{message.FullName} is received as {Kind(received.IsSnapshot)} {received.WireName} and as {Kind(isSnapshot)} {wireName}; another Host publishes it under one wire name, as one kind."
+                    );
+                }
+
+                ThrowIfAny(problems);
+                return;
+            }
+
+            if (_publications.TryGetValue(message, out var published))
+            {
+                problems.Add(Both(message, published.Module));
+            }
+            else if (_typeByWireName.TryGetValue(wireName, out var named))
+            {
+                problems.Add(
+                    $"{message.FullName} and {named.FullName} have the wire name {wireName}, ignoring case; one wire name is one version of one contract type."
+                );
+            }
+        }
+
+        ThrowIfAny(problems);
+        _received.Add(message, (wireName, isSnapshot));
+        _typeByWireName.Add(wireName, message);
+    }
+
+    private static string Kind(bool isSnapshot) => isSnapshot ? "the Snapshot" : "the Integration Event";
+
+    private static string Both(Type message, Type? module) =>
+        $"{message.FullName} is published by {module?.Name ?? "the application"} in this Host and declared as received from another Host. A Host publishes a contract or receives it: its subscriptions here receive it from its publication, so remove the Receive declaration.";
+
     private void Publish(Type integrationEvent, string wireName, Type? module, SnapshotPublication? snapshot)
     {
         List<string> problems = [];
@@ -164,7 +240,7 @@ internal sealed class Subscriptions
                 if (published != new Publication(wireName, module))
                 {
                     problems.Add(
-                        $"{integrationEvent.FullName} is published as {published.WireName} by {published.Module?.Name ?? "the application"} and as {wireName} by {module?.Name ?? "the application"}; one Module publishes it, under one wire name."
+                        $"{integrationEvent.FullName} is published as {published.WireName} by {published.Module?.Name ?? "the application"} and as {wireName} by {module?.Name ?? "the application"}; one Module publishes it, under one wire name, and a new version is a new type under a new wire name."
                     );
                 }
                 else if (_snapshots.GetValueOrDefault(integrationEvent) != snapshot)
@@ -178,10 +254,14 @@ internal sealed class Subscriptions
                 return;
             }
 
-            if (_typeByWireName.TryGetValue(wireName, out var named))
+            if (_received.ContainsKey(integrationEvent))
+            {
+                problems.Add(Both(integrationEvent, module));
+            }
+            else if (_typeByWireName.TryGetValue(wireName, out var named))
             {
                 problems.Add(
-                    $"{integrationEvent.FullName} and {named.FullName} have the wire name {wireName}, ignoring case; publish one under another name."
+                    $"{integrationEvent.FullName} and {named.FullName} have the wire name {wireName}, ignoring case; publish one under another name: a new version is a new type under a new wire name."
                 );
             }
         }
@@ -193,6 +273,38 @@ internal sealed class Subscriptions
         {
             _snapshots.Add(integrationEvent, snapshot);
         }
+    }
+
+    /// <summary>
+    /// A problem for each message type of the Host that Wolverine would also route where another type is routed: to the
+    /// subscriptions of a subscribed type, and to wherever a transport between Hosts sends a published type, such as its
+    /// exchange on a broker. Wolverine 6.46.0 routes a type to every message whose wire name, name or full name equals
+    /// that type's full name, ignoring case (<c>Subscription.Matches</c>, <c>RoutingScope.Type</c>). A v2 published under
+    /// the full name of its v1 would reach every v1 subscription, and every Host that receives v1.
+    /// </summary>
+    public List<string> RoutingCollisions()
+    {
+        List<(Type Type, string WireName)> named =
+        [
+            .. WireNames.Select(wireName => (wireName.Key, wireName.Value)),
+            .. MessageTypes
+                .Where(type => type.IsAssignableTo(typeof(DomainEvent)))
+                .Select(type => (type, MessageNames.WireNameOf(type))),
+        ];
+        HashSet<Type> subscribed = [.. MessageTypes];
+        return
+        [
+            .. from routed in subscribed.Union(_publications.Keys)
+            from message in named
+            where message.Type != routed
+                && new[] { message.WireName, message.Type.Name, message.Type.FullName }.Contains(
+                    routed.FullName,
+                    StringComparer.OrdinalIgnoreCase
+                )
+            select subscribed.Contains(routed)
+                ? $"{message.Type.FullName}, under the wire name {message.WireName}, would also reach every subscription of {routed.FullName}: Wolverine routes a subscribed type to every message whose wire name, name or full name equals the type's full name, ignoring case. Give it a wire name and a name of its own."
+                : $"{message.Type.FullName}, under the wire name {message.WireName}, would also be sent wherever {routed.FullName} is published to, such as its exchange on a broker: Wolverine routes a published type to every message whose wire name, name or full name equals the type's full name, ignoring case. Give it a wire name and a name of its own.",
+        ];
     }
 
     private static string Describe(SnapshotPublication? snapshot) =>
@@ -208,7 +320,11 @@ internal sealed class Subscriptions
         }
     }
 
-    private static bool Check(string name, string what, bool isQueue, List<string> problems)
+    /// <summary>
+    /// The one rule for a wire name and, with <paramref name="isQueue"/>, for the name of a durable queue, a
+    /// subscription's or a delayed command's: adds a problem and returns false when it is missing, invalid or reserved.
+    /// </summary>
+    public static bool Check(string name, string what, bool isQueue, List<string> problems)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -219,7 +335,7 @@ internal sealed class Subscriptions
         if (!MessageNames.IsValid(name))
         {
             problems.Add(
-                $"{what} {name} is not a valid name: use letters and digits in segments joined by single dots or hyphens."
+                $"{what} {name} is not a valid name: use letters and digits in segments joined by single dots or hyphens, not beginning with amq., which RabbitMQ reserves."
             );
             return false;
         }

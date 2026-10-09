@@ -1,8 +1,11 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/PouryaKit.Caching/PouryaKit.Caching.csproj" />
+    <Project Path="src/PouryaKit.Core/PouryaKit.Core.csproj" />
     <Project Path="src/PouryaKit.Cqrs/PouryaKit.Cqrs.csproj" />
     <Project Path="src/PouryaKit.Domain/PouryaKit.Domain.csproj" />
     <Project Path="src/PouryaKit.Messaging/PouryaKit.Messaging.csproj" />
+    <Project Path="src/PouryaKit.Messaging.Wolverine.RabbitMq/PouryaKit.Messaging.Wolverine.RabbitMq.csproj" />
     <Project Path="src/PouryaKit.Messaging.Wolverine/PouryaKit.Messaging.Wolverine.csproj" />
     <Project Path="src/PouryaKit.Messaging.Wolverine.EFCore/PouryaKit.Messaging.Wolverine.EFCore.csproj" />
     <Project Path="src/PouryaKit.Modularity/PouryaKit.Modularity.csproj" />
@@ -10,13 +13,20 @@
     <Project Path="src/PouryaKit.Persistence.Dapper/PouryaKit.Persistence.Dapper.csproj" />
     <Project Path="src/PouryaKit.Persistence.EFCore/PouryaKit.Persistence.EFCore.csproj" />
     <Project Path="src/PouryaKit.Persistence.Postgres/PouryaKit.Persistence.Postgres.csproj" />
+    <Project Path="src/PouryaKit.Observability/PouryaKit.Observability.csproj" />
+    <Project Path="src/PouryaKit.Security/PouryaKit.Security.csproj" />
+    <Project Path="src/PouryaKit.Security.JwtBearer/PouryaKit.Security.JwtBearer.csproj" />
+    <Project Path="src/PouryaKit.Templates/PouryaKit.Templates.csproj" />
     <Project Path="src/PouryaKit.Testing/PouryaKit.Testing.csproj" />
     <Project Path="src/PouryaKit.Validation/PouryaKit.Validation.csproj" />
     <Project Path="src/PouryaKit.Web/PouryaKit.Web.csproj" />
+    <Project Path="src/PouryaKit.Web.OpenApi/PouryaKit.Web.OpenApi.csproj" />
   </Folder>
   <Folder Name="/samples/" />
   <Folder Name="/samples/ModularMonolith/">
+    <Project Path="samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj" />
     <Project Path="samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj" />
+    <Project Path="samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj" />
     <Project Path="samples/ModularMonolith/src/Modules/Billing/Billing/Billing.csproj" />
     <Project Path="samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj" />
     <Project Path="samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj" />
@@ -25,12 +35,18 @@
   <Folder Name="/tests/">
     <Project Path="tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj" />
     <Project Path="tests/ModularMonolith.Tests/Misnamed/ModularMonolith.Tests.Misnamed.csproj" />
+    <Project Path="tests/ModularMonolith.Tests/Unversioned/ModularMonolith.Tests.Unversioned.csproj" />
+    <Project Path="tests/ModularMonolith.Tests/Unowned/ModularMonolith.Tests.Unowned.csproj" />
+    <Project Path="tests/ModularMonolith.Tests/SameNamed/ModularMonolith.Tests.SameNamed.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Contracts/Offending.Contracts.csproj" />
+    <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Core/Offending.Core.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending/Offending.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj" />
+    <Project Path="tests/PouryaKit.Core.Tests/PouryaKit.Core.Tests.csproj" />
     <Project Path="tests/PouryaKit.Cqrs.Tests.Module/PouryaKit.Cqrs.Tests.Module.csproj" />
     <Project Path="tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.csproj" />
     <Project Path="tests/PouryaKit.Domain.Tests/PouryaKit.Domain.Tests.csproj" />
+    <Project Path="tests/PouryaKit.Security.Tests/PouryaKit.Security.Tests.csproj" />
     <Project Path="tests/PouryaKit.Validation.Tests/PouryaKit.Validation.Tests.csproj" />
   </Folder>
 </Solution>

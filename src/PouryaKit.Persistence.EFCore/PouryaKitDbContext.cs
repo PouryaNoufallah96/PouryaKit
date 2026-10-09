@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using PouryaKit.Core;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Persistence.EFCore;
@@ -31,7 +32,7 @@ public abstract class PouryaKitDbContext : DbContext
         ArgumentNullException.ThrowIfNull(configurationBuilder);
         configurationBuilder.Conventions.Add(_ => new PouryaKitModelConvention());
         configurationBuilder.IgnoreAny<DomainEvent>();
-        foreach (var type in GetType().Assembly.GetTypes())
+        foreach (var type in ImplementingTypes.Of(typeof(TypedId<>), GetType().Assembly))
         {
             if (TypedId.GetValueType(type) is { } valueType)
             {

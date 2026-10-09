@@ -2,6 +2,8 @@
 
 Adopted implementations in `PouryaKit.Persistence.Dapper`. Format and rules: [README](README.md).
 
+The check of the read connection string when the Host's container is built (`ReadConnectionCheck`, ticket #62) is new Kit code, so it has no record here.
+
 ## Package dependencies
 
 Checked on nuget.org on 2026-10-05; licence expressions from each package's nuspec. None is reciprocal or commercial (ADR 0002), and none brings EF Core.
@@ -9,7 +11,7 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
 - `Dapper` 2.1.89, `Apache-2.0`; no dependencies on `net10.0`.
 - `Npgsql` 10.0.3, `PostgreSQL`, the ADO.NET driver alone. It is the version `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3 already resolves, so a Host has one driver. It brings `Microsoft.Extensions.Logging.Abstractions` 10.0.0, `MIT`, which brings `Microsoft.Extensions.DependencyInjection.Abstractions`.
 - `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.12, `MIT`; no dependencies on `net10.0`. It is a reference beyond the package's row in plan section C, approved by the owner on 2026-10-05: `AddPouryaKitDapper` is a registration call on a Module's builder, an `IServiceCollection`, so the package references it directly at the version the Kit pins, instead of compiling against the 10.0.0 that Npgsql brings.
-- `Microsoft.Extensions.Configuration.Abstractions` 10.0.12, `MIT`. It is a reference beyond the package's row in plan section C (Domain; Dapper, Npgsql), approved by the owner on 2026-10-05: `AddPouryaKitDapper` takes a connection name and reads `ConnectionStrings:<name>` from the Host's configuration, as `UsePostgres` does, and Npgsql's closure has no configuration abstractions. It brings only `Microsoft.Extensions.Primitives` 10.0.12, `MIT`, and no EF Core.
+- `Microsoft.Extensions.Configuration.Abstractions` 10.0.12, `MIT`. It is a reference beyond the package's row in plan section C (Domain; Dapper, Npgsql), approved by the owner on 2026-10-05: `AddPouryaKitDapper` takes a connection name and reads `ConnectionStrings:<name>` from the Host's configuration, as `UsePouryaKitPostgres` does, and Npgsql's closure has no configuration abstractions. It brings only `Microsoft.Extensions.Primitives` 10.0.12, `MIT`, and no EF Core.
 
 ## Read-connection lease
 

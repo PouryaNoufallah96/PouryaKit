@@ -1,10 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Notification Handlers whose names must fail startup. They need an assembly apart from the Stub Module's, which
-       the fixture's Host scans and must start; ModularMonolith.Tests leaves this folder out of its own sources. -->
+  <!-- Notification Handlers whose names or shapes must fail startup, and a command handler whose command lives in the
+       Unowned assembly, for the Unit of Work check, in an assembly no Composition Root scans for commands. They need an
+       assembly apart from the Stub Module's, which the fixture's Host scans and must start; ModularMonolith.Tests leaves
+       this folder out of its own sources. -->
   <PropertyGroup>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\PouryaKit.Messaging\PouryaKit.Messaging.csproj" />
+    <ProjectReference Include="..\Unowned\ModularMonolith.Tests.Unowned.csproj" />
   </ItemGroup>
 </Project>

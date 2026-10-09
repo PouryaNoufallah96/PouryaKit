@@ -14,19 +14,24 @@ One home per concern. Anything both tools use lives in `.agents/` or at the root
 | The Kit's own skill | `.agents/skills/pourya-kit/`, owned by this repository and so absent from `skills-lock.json` | Same as other skills; workflow step 7 updates it as each Capability lands |
 | Roles | `.claude/agents/<name>.md` paired with `.codex/agents/<name>.toml` | Each tool reads its own file |
 | Rules | `.claude/rules/*.md` | Claude Code by `paths`; Codex through the rule router in `AGENTS.md` |
-| Review workflow | `.claude/workflows/kit-review.js` | Claude Code (`/kit-review`) |
+| Review workflow | `.claude/workflows/kit-review.js`; its results in the gitignored `.claude/reviews/` | Claude Code (`/kit-review`) |
+| Session handoff | `.claude/handoff/<session>/`, gitignored: the briefs, reports, evidence files and `HANDOFF.md` of a run | The main session (`docs/agents/running-a-spec.md`, "State and handoff"); the next session reads it first |
 | Guard | `.agents/hooks/guard.py` | Both, wired from `.claude/settings.json` and `.codex/hooks.json` |
 | Mod | `.claude/mods/kit-cockpit/`, linked from `.claude/skills/kit-cockpit` | Claude Code |
 | Status line | `.claude/statusline.sh` | Claude Code, main session, through `statusLine` in `.claude/settings.json` |
-| Claude Code settings | `.claude/settings.json` | Claude Code: subagent default model, agent teams on, the output style, the status line, subagent rows, subagent worktree base, ask before `git push`, the guard |
+| Claude Code settings | `.claude/settings.json` | Claude Code: subagent default model, agent teams on, the output style, the status line, subagent rows, subagent worktree base, allow a branch `git push` and ask before a push to `main`, the guard |
 | Codex config | `.codex/config.toml` | Codex, once the repository is trusted: model, effort, review model, subagent defaults |
-| Check script | `.agents/scripts/check-ai-setup.py` | Run by hand after any change, and by the `ai-setup` CI job |
+| Check scripts | `.agents/scripts/check-ai-setup.py`, which also runs `.agents/scripts/check-tree.py` on every tracked path; `.agents/scripts/check-docs.py` for the Markdown; the unit tests beside them (`test_*.py`) | Run by hand after any change, and by the `ai-setup` CI job; `check-tree.py` also by the `pre-commit` hook; `check-docs.py` also by every implementer's `verify` |
+| CI failure reader | `.agents/scripts/ci-failures.py` | Run by hand on a failed CI run (`docs/agents/running-a-spec.md`) |
+| Merge helper | `.agents/scripts/merge-package.py`, with its tests beside it | Run by the main session on each implementer report (`docs/agents/running-a-spec.md`, "State and handoff"): merges the reported head, checks the tree and runs the check scripts, pushes only when they hold. Its `--ready` mode is the close-out check before the Wave's pull request is marked ready ("What changes from the skill" there) |
+| Pull request threads | `.agents/scripts/pr-threads.py`, with its tests beside it | Run by whoever owns a pull request's review round (step 4 below) |
 | Role memory | `.claude/agent-memory/kit-implementer/` | Claude Code, for `kit-implementer` only; created on first use, committed |
-| Process docs | `docs/agents/running-a-spec.md`, `docs/agents/spikes.md` | The main session, through the output style and step 6 below. `spikes.md` reaches a Spike's implementer and its record's reviewer through their briefs, as `running-a-spec.md` says; the "Spikes" line of `.claude/rules/kit-code.md` also names it for work under `src/`, `tests/` and `samples/` |
+| Git hooks | `.githooks/` | Git, once a clone runs `git config core.hooksPath .githooks`: `pre-commit` and `pre-merge-commit` refuse staged merge conflict markers, and `pre-commit` a staged path outside the tree's top-level entries ("The guard") |
+| Process docs | `docs/agents/running-a-spec.md`, `docs/agents/spikes.md`, `docs/agents/brief-template.md` | The main session, through the output style and step 6 below. `spikes.md` reaches a Spike's implementer and its record's reviewer through their briefs, as `running-a-spec.md` says; the "Spikes" line of `.claude/rules/kit-code.md` also names it for work under `src/`, `tests/` and `samples/` |
 
 ## Roles
 
-Each role is one pair with the same `name`, `description` and instructions. The contract is in the role file; models stay unpinned.
+Each role is one pair with the same `name`, `description` and instructions. The contract is in the role file. Each role pins its own model and effort.
 
 | Role | Access |
 |---|---|
@@ -36,7 +41,15 @@ Each role is one pair with the same `name`, `description` and instructions. The 
 
 `kit-reviewer` has no memory on purpose: an independent reviewer carries no conclusions from one diff into the next.
 
-Routing follows the session instruction in `AGENTS.md`. With no explicit override, Claude Code roles use `CLAUDE_CODE_SUBAGENT_MODEL` in `.claude/settings.json`; Codex roles use the `[agents]` defaults in `.codex/config.toml`. Pass an explicit session model and effort at spawn. Role files carry no model pin that can defeat that choice. Claude role effort defaults remain in frontmatter. Main-session and CLI review defaults remain in host configuration.
+Routing:
+
+| Role | Claude Code | Codex |
+|---|---|---|
+| `kit-implementer` | `claude-opus-5-5`, effort `xhigh` | `gpt-6.1-sol`, effort `xhigh` |
+| `kit-reviewer` | `claude-fable-5-1`, effort `high` | `gpt-6-astra`, effort `high` |
+| `kit-scout` | `claude-opus-5-5`, effort `medium` | `gpt-6.1-sol`, effort `medium` |
+
+Claude reads `model` and `effort` from the role's frontmatter. Codex reads `model` and `model_reasoning_effort` from the role's `.toml`. A Claude spawn that passes a model uses that model instead. A Codex role file's model and effort take precedence over a spawn override. `CLAUDE_CODE_SUBAGENT_MODEL` (`opus`) and the `[agents]` defaults cover a subagent that is not one of these roles. `/kit-review`'s Claude review leg spawns `kit-reviewer`. Its Codex leg is `codex exec` with no `--model` unless `codexModel` is passed, so it uses `model` and `model_reasoning_effort` in `.codex/config.toml`, which are `gpt-6-astra` and `high`. The prepare, verify and finish agents in that workflow stay on the host default.
 
 ## The ticket loop
 
@@ -46,19 +59,21 @@ The steps and gates are in `AGENTS.md`, "Workflow for every ticket". This is how
 
 **Steps 1–2: implement, then focused tests.** Choose the task shape from `AGENTS.md`, "Operating model". A clear, small delegated fix uses one bounded worker; a normal ticket uses `kit-implementer` with the brief. Check its report against the tree: read the diff and the `verify` output it reports. Re-run a check only when that leaves a doubt; the current models verify their own work, and a second run of everything is wasted time.
 
-**Step 3: review, sized to the ticket.** Use the review size from `AGENTS.md`. When one reviewer is required, give `kit-reviewer` the base and the spec. For dual review, the saved workflow in Claude Code is:
+**Step 3: review, sized to the ticket.** Use the review size from `AGENTS.md`. When one reviewer is required, give `kit-reviewer` the base and the spec. For dual review, the saved workflow in Claude Code, `.claude/workflows/kit-review.js`, is:
 
 ```text
 Run /kit-review with base <base commit> and ticket 42
 ```
 
-For an explicit Codex model instruction, pass it through, for example `codexModel gpt-6.1-sol`. The workflow's Claude agents use host defaults. If the session restricts all agents to one provider, run two independent reviewer agents in that host with the required model instead of invoking this cross-provider workflow. Apply the same review criteria and limits from `AGENTS.md`.
+The workflow takes its arguments as a JSON object or as the word form above (`key value` pairs: `base`, `ticket`, `spec`, `head`, `previous`, `rescore`, `evidence`, `codexModel`, `codexEffort`; `scope` is JSON-only). `base` is the `base` the implementer's report names. `evidence` is the path of a file the session writes with the recorded execution evidence (the verify commands and their totals, the package validation PASS line, the red-once list): the prepare stage appends it to `spec.md`, together with the parent spec's body named by the ticket's "Parent" link, so the Codex leg has the spec it cannot fetch and the record it cannot run. A record that names the revision, commands, outcomes and environment counts as the execution record; BLOCKED remains the right verdict when required evidence cannot be inspected at all.
+
+For an explicit Codex model instruction, pass it through, for example `codexModel gpt-6.1-sol`. The Claude review leg uses `kit-reviewer`'s model and effort. The prepare, verify and finish agents use host defaults. If the session restricts all agents to one provider, run two independent reviewer agents in that host with the required model instead of invoking this cross-provider workflow. Apply the same review criteria and limits from `AGENTS.md`.
 
 The work to review must be committed: the review reads one commit, never uncommitted changes. Pass `spec` (a file path, absolute or relative to the repository root) instead of `ticket` only for work with no ticket; exactly one of the two. Optional arguments: `head` (the commit to review; by default the commit your checkout is on when the run starts), `scope` (one line of plain text), `codexModel` (an explicit Codex model; omitted uses its host configuration), `codexEffort` (explicit `high` or `xhigh`; omitted uses host configuration), and `previous` with `rescore` for a re-review (step 4). A wrong combination fails at once and says what to pass.
 
-The workflow resolves `base` and `head` to hashes, saves the ticket's title and body as `spec.md` in a run directory under the system temp directory, and checks `head` out as a detached worktree under `.claude/worktrees/kit-review-<random>`. `kit-reviewer` and a Codex inspection then review that worktree in parallel, and one verification stage merges duplicate findings and checks each against the code. `kit-reviewer` may build and run tests there. When the run ends, on success or failure, the worktree is removed with `git worktree remove`. Your checkout is never read for the diff, so you can keep working, merging and running implementers during a review. A changed submodule or nested repository in the diff still aborts the Codex leg.
+The workflow resolves `base` and `head` to hashes, saves the ticket's title and body as `spec.md` in a run directory under the system temp directory (with the parent spec's body and the `evidence` file appended when present), and checks `head` out as a detached worktree under `.claude/worktrees/kit-review-<random>`. The Codex inspection reviews that worktree first, alone, then `kit-reviewer`, which may build and run tests there (the two ran in parallel until 2026-10-07, when the builds starved the Codex runner's 570 s budget twice); one verification stage then merges duplicate findings and checks each against the code. When the run ends, on success or failure, the worktree is removed with `git worktree remove`. Your checkout is never read for the diff, so you can keep working, merging and running implementers during a review. A changed submodule or nested repository in the diff still aborts the Codex leg.
 
-The value returned is a digest that a task notification shows in full: it stays under about 5.5 KB whatever the number of findings. It starts with `complete`, `verdict`, `result` and, when needed, `cleanup` and `error`, then `counts` and each leg's verdict and one-line `note`. A re-review adds `rescored`, which maps each earlier finding's id to its state. Then come the findings, standing ones first and most severe first, each with only `id`, `severity`, `status`, `path`, `by` (who raised it) and a `claim` of at most 160 characters. When they do not all fit, the claims shrink to 100 and then 60 characters, and after that the list stops where the budget ends, with `omitted` giving how many more are in the file. `result` names the file with the full result: `<run directory>/result.json`, holding every finding's evidence, fix and verification, and each leg's read count and limitations. Read that file when you need more than the digest. If the file could not be written, `result` is null and the full result comes back under `full`, at the end; if the worktree could not be removed, `cleanup` gives the command.
+The value returned is a digest that a task notification shows in full: it stays under about 5.5 KB whatever the number of findings. It starts with `complete`, `verdict`, `result`, `run` and, when needed, `cleanup` and `error`, then `counts` and each leg's verdict and one-line `note`. A re-review adds `rescored`, a list with each earlier finding's `id`, `state` and the `evidence` for it. Then come the findings, standing ones first and most severe first, each with only `id`, `severity`, `status`, `path`, `by` (who raised it) and a `claim` of at most 160 characters. When they do not all fit, the claims shrink to 100 and then 60 characters, and after that the list stops where the budget ends, with `omitted` giving how many more are in the file. `result` names the file with the full result, `.claude/reviews/<ticket number or spec file name>-<short head hash>.json` under the repository root, which outlives the system temp directory; it holds every finding's evidence, fix and verification, and each leg's read count and limitations. Read that file when you need more than the digest. `run` names the run directory, which keeps `spec.md` and the same `result.json`. If the file could not be written, `result` is null and the full result comes back under `full`, at the end; if the worktree could not be removed, `cleanup` gives the command.
 
 Each finding has a stable `id` (`F1`, `F2`, …) and a status of `confirmed`, `refuted` or `unverified`. `pass`, `fix` and `block` are computed from the findings that were not refuted: `block` when one of them is high, `fix` when any stands, `pass` when none does.
 
@@ -66,7 +81,7 @@ Each finding has a stable `id` (`F1`, `F2`, …) and a status of `confirmed`, `r
 
 The main session judges the findings; the workflow edits nothing in the reviewed commit.
 
-The Codex leg has about 9.5 minutes, because a foreground shell call is capped at 10. When it runs out, the verdict is `unknown`. Run that leg yourself in the background against a fresh worktree of the same commit, using the `spec.md` from the run directory named in `result`, and judge its findings together with the `kit-reviewer` leg:
+The Codex leg has about 9.5 minutes, because a foreground shell call is capped at 10. When it runs out, the verdict is `unknown`. Run that leg yourself in the background against a fresh worktree of the same commit, using the `spec.md` from the run directory named in `run`, and judge its findings together with the `kit-reviewer` leg:
 
 ```bash
 git worktree add --detach .claude/worktrees/kit-review-codex <head>
@@ -76,7 +91,16 @@ python3 .agents/skills/claudex-loop/scripts/runner.py inspect --host claude --bu
 git worktree remove .claude/worktrees/kit-review-codex
 ```
 
-The runner's first output line names an artifacts directory; `result.json` there holds the verdict, findings, coverage and limitations. Omitted `--model` and `--effort` use the provider's host configuration. Add them when the session specifies overrides.
+The runner's first output line names an artifacts directory; `result.json` there holds the verdict, findings, coverage and limitations. Omitted `--model` and `--effort` use the provider's host configuration. Add them when the session specifies overrides. Copy that `result.json` to `.claude/reviews/<ticket or spec name>-<short head hash>.codex.json` beside the stable result file and name both in the ticket's evidence: the stable file keeps `complete: false` and the digest's `unknown`, which say the workflow's own leg did not return, not that the review failed, and a later reader needs the rerun's verdict beside it.
+
+Over 900,000 bytes of diff, the workflow skips the Codex leg before the runner starts, and the leg's note gives the size. `inspect` puts the whole diff in Codex's prompt, and Codex refuses an input over 1,048,576 characters: the final structural review of 2026-10-08 failed in two seconds on a 2.68 MB diff with "Input exceeds the maximum length of 1048576 characters". Run that leg by hand in review mode, with no `--base`. Codex then reads the worktree itself instead of an embedded diff, so the review brief names the base and head commits beside the spec, and `--artifacts` is a directory outside the checkout:
+
+```bash
+python3 .agents/skills/claudex-loop/scripts/runner.py review --host claude --builder claude \
+  --repo <detached worktree> --plan <review brief> --artifacts <dir> --timeout 1800
+```
+
+Its `result.json` is kept as above, under `.claude/reviews/` beside the stable result file.
 
 From a Codex-hosted session, spawn the `kit-reviewer` agent for the Codex review and run the Claude inspection through the same runner, on a worktree of the commit as above, with the ticket saved as a spec file outside the checkout:
 
@@ -86,9 +110,9 @@ python3 .agents/skills/claudex-loop/scripts/runner.py inspect --host codex --bui
   --repo .claude/worktrees/kit-review-codex --plan /tmp/kit-ticket-42.md --base <base>
 ```
 
-**Step 4: fixes and re-scores.** Follow the review limits and small-change exception in `AGENTS.md`; normal tickets use `kit-implementer` for fixes and `kit-reviewer` for re-scores from fresh evidence. Before fixing, fetch all currently available review threads, deduplicate and judge their findings, then give one combined brief and push the fixes together; handle material new findings when they arrive. One owner monitors required checks through completion; the main session judges that report instead of polling in parallel.
+**Step 4: fixes and re-scores.** Follow the review limits and small-change exception in `AGENTS.md`; normal tickets use `kit-implementer` for fixes and `kit-reviewer` for re-scores from fresh evidence. Before fixing, fetch all currently available review threads, deduplicate and judge their findings, then give one combined brief and push the fixes together; handle material new findings when they arrive. One owner monitors required checks through completion; the main session judges that report instead of polling in parallel. On a pull request, `.agents/scripts/pr-threads.py` does the three: `list <pr>` prints the unresolved threads with the reviewers' boilerplate stripped, `reply-resolve <pr> <replies.json>` answers and resolves each one, and `wait <pr>` returns when the checks and the Codex review have finished; its docstring gives the file's form and the exit codes.
 
-Only after a high finding was fixed and committed, and only once per ticket, run `/kit-review` again with the same `base` and `ticket`, and `previous` set to the earlier result file:
+Only after a high finding was fixed and committed, and only once per ticket, run `/kit-review` again with the same `base` and `ticket`, and `previous` set to the earlier result file: the path in its `result`, or `result.json` in its `run` directory. When the earlier digest's `result` is null, save the `full` object from that run's task output to a file yourself and pass that path as `previous`:
 
 ```text
 Run /kit-review with base <base commit>, ticket 42, previous <earlier result file> and rescore F1,F3
@@ -96,7 +120,7 @@ Run /kit-review with base <base commit>, ticket 42, previous <earlier result fil
 
 `rescore` is optional: leave it out to re-score every earlier finding that was not refuted, or list the ids you accepted. `kit-reviewer` re-scores each of them, and Codex inspects the whole change fresh. If the earlier findings do not all reach the reviewer, the run stops with `unknown` before reviewing.
 
-The digest's `rescored` map gives each of them one state: `resolved`, `partial` or `unresolved`. A finding the reviewer did not re-score counts as `unresolved`. Each `partial` or `unresolved` one still stands under its earlier `id`, at no less than its earlier severity, and the full result shows its re-score under `previous`; a finding new in this round gets the next `F` number after the highest one any earlier round used, so an id is never reused.
+The digest's `rescored` list gives each of them one state: `resolved`, `partial` or `unresolved`. A finding the reviewer did not re-score counts as `unresolved`. Each `partial` or `unresolved` one still stands under its earlier `id`, at no less than its earlier severity, and the full result shows its re-score under `previous`; a finding new in this round gets the next `F` number after the highest one any earlier round used, so an id is never reused.
 **Step 5: complete runtime proof.** The main session checks the real-service probe evidence and runs any remaining proof commands required by the ticket.
 
 **Steps 6–7: docs and AI guidance.** The value, cost and impact paragraph goes in the ticket's closing comment, whose other contents `docs/agents/running-a-spec.md` lists; `/archify-review` runs at the wave's close-out. After updating the AI guidance, run the check script (below).
@@ -111,7 +135,7 @@ The digest's `rescored` map gives each of them one state: `resolved`, `partial` 
 
 **Subagent worktrees.** Claude Code creates each subagent worktree itself under the gitignored `.claude/worktrees/`, on a new branch, and removes it the usual way: at once if the agent changed nothing, otherwise by its periodic sweep. `"worktree": {"baseRef": "head"}` in `.claude/settings.json` bases it on the commit the session's checkout is on at spawn, instead of the remote's default branch; uncommitted changes do not carry over. The check script fails without it. To turn it off for yourself, put `{"worktree": {"baseRef": "fresh"}}` in `.claude/settings.local.json`. Codex creates no per-subagent worktree.
 
-**Subagent rows.** `subagentStatusLine` is an inline `jq` command that renders each row of the agent panel as `kit-implementer · opus-5-5 · high · 24% ctx`, leaving out a field the task does not report. Without `jq` the default rows show.
+**Subagent rows.** `subagentStatusLine` is an inline `jq` command that renders each row of the agent panel as `kit-implementer · opus-5-5 · xhigh · 24% ctx`, leaving out a field the task does not report. Without `jq` the default rows show.
 
 **The `kit-cockpit` mod.** A mod is a plugin whose handlers run inside Claude Code. This one does two things:
 
@@ -140,7 +164,7 @@ The guard is a seatbelt against accidents, not a sandbox. It stops the common de
 | Recursive delete | `rm -r`, `find -delete`, `find -exec rm`, `git clean -d` | One form only: a direct `rm -r` (optionally under `sudo`, `env` and the like) whose every argument is an option or a literal absolute path under a system temp directory, with no `--`. Never through `xargs` |
 | Destructive push | `git push` with `--force`, `-f`, `--mirror`, `--delete`, `-d`, `+refspec` or `:branch` | `--force-with-lease` |
 
-The first rule is how "never change the reference projects" is enforced without naming their locations. `.claude/settings.json` also sets an `ask` rule for `git push` in Claude Code.
+The first rule is how "never change the reference projects" is enforced without naming their locations. Beside the guard, the two Git hooks in `.githooks/` (`pre-commit`, `pre-merge-commit`, both running `staged-conflict-markers`) refuse a commit whose staged content adds `<<<<<<<` or `>>>>>>>`; they read the index, so a marker fixed but not re-staged still blocks. `pre-commit` then runs `.agents/scripts/check-tree.py` on the staged paths: it refuses a path whose first segment is not one of the tree's top-level entries, listed in the script, and a `.gitignore` line that ignores a tracked path. Enable them once per clone with `git config core.hooksPath .githooks`; the check script and CI still cover every tracked file. `.claude/settings.json` allows `Bash(git push *)` and asks when the command names `main` as a destination (`git push origin main`, `git push main`, `HEAD:main`, `refs/heads/main`) or uses `--all`. Ask is checked before allow, so those commands still prompt. A bare `git push`, or `git push -u origin HEAD`, is allowed: the rule sees the command text, not the branch checked out in this worktree. `git -C <dir> push` is a different command and is not covered by either rule. Codex has no ask rules; its approval policy stays in the user's own config, and this guard still blocks a destructive push.
 
 The docstring of `guard.py` states how a shell command is matched (for example, after a wrapper such as `sudo` every guarded word is judged), what is not covered and what is over-blocked. What it does not say:
 
@@ -166,9 +190,10 @@ Done when `/debug-config` lists the project layer and `/hooks` shows the guard a
 
 ```bash
 python3 .agents/scripts/check-ai-setup.py
+python3 .agents/scripts/check-docs.py
 ```
 
-It needs Python 3.11 or later, prints one `FAIL` line per problem naming the file and the reason, and exits non-zero on any. A rule glob that matches no file yet is a `WARN`. Besides the AI setup it fails on a merge conflict marker in any tracked text file. The `ai-setup` job runs it on the [CI workflow's documented triggers](../ci.md).
+Each needs Python 3.11 or later, prints one `FAIL` line per problem naming the file and the reason, and exits non-zero on any. A rule glob that matches no file yet is a `WARN`. Besides the AI setup, `check-ai-setup.py` fails on a merge conflict marker in any tracked text file, on any `check-tree.py` offence among the tracked paths, and on a package count spelled out in `README.md`, the Kit's skill or `docs/architecture/README.md` (a number before "packages" or "nupkgs"), which would drift when a package is added: those name the packages of `scripts/packaging/inventory.json` instead. `check-docs.py` fails on a backticked name in the Kit's skill, `README.md`, `docs/architecture/` or a top-level doc that names nothing in the code (an illustrative or third-party name goes in its `ALLOWED` list, with the reason), a broken relative link or anchor, a code span paired with the wrong backtick, a table row cut off from its table, a line a union merge kept twice, a `Class.Method` pointer in `docs/acceptance.md` to a test that no longer exists under that name, and a source file whose comment says its code is adapted from another codebase while no record in `docs/provenance/` names it; its docstring gives each rule and what it leaves out. Its `--fences` mode only prints whether each Markdown file changed against `HEAD` changed a fenced block, so an implementer knows whether the skill's snippet harness must run. The `ai-setup` job runs both, then the unit tests beside them, on the [CI workflow's documented triggers](../ci.md).
 
 ## Verified against
 
@@ -198,13 +223,13 @@ Ideas were taken from the owner's Ultrabusiness and ChainReporter setups. These 
 
 ## Known gaps
 
-- `kit-review` ran end to end on 2026-10-06 on ticket #4 (`base 43ff9ff`, `head 65d21b3`). It fetched the ticket by number, both legs ran, three findings were confirmed, the digest came back whole, `result.json` was written, and the review worktree was removed. A re-review of the same ticket ran the same day, with `previous` naming the first result file and `rescore F1,F3`: both came back `unresolved` under their earlier ids. Not yet taken in a live run: a failed leg, a result too large for the digest, and the finish step copying a large result byte for byte. Those paths were exercised only with stubbed agents.
-- A script cannot run commands, so `kit-review` uses two small agents: one to resolve the commits, fetch the ticket and create the worktree, and one to write the full result file and remove the worktree. The second copies the result as text; the workflow checks its byte count and returns the full result itself when the count is wrong. A run that is stopped by hand skips the cleanup: remove its worktree with `git worktree remove --force .claude/worktrees/kit-review-<random>`.
+- `kit-review` ran end to end on 2026-10-06 on ticket #4 (`base 43ff9ff`, `head 65d21b3`). It fetched the ticket by number, both legs ran, three findings were confirmed, the digest came back whole, `result.json` was written, and the review worktree was removed. A re-review of the same ticket ran the same day, with `previous` naming the first result file and `rescore F1,F3`: both came back `unresolved` under their earlier ids. Taken in a live run on 2026-10-07 (the #52 re-review, `base 8b7ab96`, `head d00ebc8`, `previous` and `rescore F1,F2,F3,F4` with an `evidence` file): the copy under `.claude/reviews/` (`52-d00ebc8.json`, read back with the written verdict), and a timed-out Codex leg (570 s while a full test suite and another implementer's builds ran on the same machine; the digest came back `unknown` with the Claude leg's re-scores intact, and the hand rerun above took 262 s). The Codex leg timed out inside the workflow once more on 2026-10-07, in #53's review, and its hand rerun came back approved with no findings. Session 5 (2026-10-07 and 2026-10-08) ran the two legs one after the other and saw no timeout in five dual reviews (#58, #60, #61 twice, #62), with implementers building on the same machine. Not yet taken in a live run: a result too large for the digest, and the finish step copying a large result byte for byte; those paths were exercised only with stubbed agents.
+- A script cannot run commands, so `kit-review` uses two small agents: one to resolve the commits, fetch the ticket and create the worktree, and one to write the full result file and remove the worktree. The second writes the result through a quoted heredoc, copies it to `.claude/reviews/` and parses the copy back in the same command; the workflow counts the file saved only when the verdict read back is the one written, runs that agent once more when it is not, and otherwise returns the full result itself. The byte count it also reports is information only. A run that is stopped by hand skips the cleanup: remove its worktree with `git worktree remove --force .claude/worktrees/kit-review-<random>`.
 - `/kit-review` supplies the cross-provider dual review when workflow step 3 requires it; a single reviewer or session-directed same-provider pair follows `AGENTS.md`. The vendored `code-review` skill, which reviews along a Standards axis and a Spec axis, is not part of the ticket gate.
 - The guard was exercised with Codex-shaped payloads through the check script, not inside a live Codex session. Whether Codex loads `.codex/agents/*.toml` could not be observed without a model call.
 - Mods are early access (Claude Code 2.1.287 or later), and their API may change between releases; re-run the two `claude plugin` commands after an upgrade. `kit-cockpit` passes them and loads, but it has not run in a live session. Unconfirmed: that the guard's deny reaches the mod as a `PreToolUse` deny with the marker still in its reason (without it the mod asks nothing and the deny stands), that the question appears with permission prompts off and "Run it once" then runs the command, what the band shows for role subagents and teammates, and hot reload. The 30-second check settles the first two.
 - The status line script was tested against mock payloads and a stub user command, not in a live session and not against a live feed to the user's own status line command. Whether `statusLine` resolves the script when a session starts in a subdirectory depends on Claude Code loading the project settings there; the command falls back to the repository root through `git`.
 - The subagent row command was tested against mock payloads, not a live agent panel.
-- `worktree.baseRef` is not yet confirmed by a spawn: a subagent worktree created on 2026-10-06 still started at the remote's default branch. After the first spawn from a session whose checkout has the setting, the new row in `git worktree list` must show the checkout's commit.
+- `worktree.baseRef: head` is confirmed: a subagent worktree created on 2026-10-06 still started at the remote's default branch, but every spawn of sessions 4 and 5 (2026-10-07 and 2026-10-08) started at the checkout's commit, such as #54's docs package at `325834f`, `feat/wave-2`'s tip, while `origin/main` was at `94f2dd6`. The role file's base check stays the backstop.
 - Four vendored skills (`blast-radius`, `how`, `interrogate`, `unslop`) set `disable-model-invocation` and have no `agents/openai.yaml`, so Codex can invoke them implicitly. Fixing that means editing vendored skills.
 - The vendored `implement` skill says to use `/tdd` where possible. The workflow in `AGENTS.md` overrides it: implement first, then focused tests.

@@ -1,3 +1,4 @@
+using JasperFx;
 using ModularMonolith.Host;
 
-await ModularMonolithHost.Build(ModularMonolithHost.CreateBuilder(args)).RunAsync();
+return await ModularMonolithHost.Build(ModularMonolithHost.CreateBuilder(args)).RunJasperFxCommands(args);

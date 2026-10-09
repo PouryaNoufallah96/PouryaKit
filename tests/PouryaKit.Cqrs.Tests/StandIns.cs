@@ -10,7 +10,12 @@ internal static class TestHost
     private static readonly ServiceProviderOptions Strict = new() { ValidateOnBuild = true, ValidateScopes = true };
 
     /// <summary>The Host wiring for the test Module: one call with its assembly, plus the stand-ins.</summary>
-    public static ServiceProvider Build(bool withValidationStep = true, Type? unitOfWork = null)
+    public static ServiceProvider Build(
+        bool withValidationStep = true,
+        Type? unitOfWork = null,
+        bool withIdempotencyStore = false,
+        bool withQueryCache = false
+    )
     {
         var services = new ServiceCollection()
             .AddPouryaKitCqrs(typeof(ThingsGateway).Assembly)
@@ -22,7 +27,67 @@ internal static class TestHost
             services.AddScoped(typeof(IValidationStep<>), typeof(ValidationStepStandIn<>));
         }
 
+        if (withIdempotencyStore)
+        {
+            services.AddScoped<IIdempotencyStore, IdempotencyStoreStandIn>();
+        }
+
+        if (withQueryCache)
+        {
+            services.AddScoped<IQueryCache, QueryCacheStandIn>();
+        }
+
         return services.BuildServiceProvider(Strict);
+    }
+}
+
+/// <summary>Records each key it reserves and each response it records, and holds no key a committed Operation recorded.</summary>
+internal sealed class IdempotencyStoreStandIn(OperationTrace trace) : IIdempotencyStore
+{
+    public Task<RecordedSuccess?> ReserveAsync(IdempotencyKey key, CancellationToken cancellationToken)
+    {
+        trace.Add($"reserve {key.Command} {key.RequestId}");
+        return Task.FromResult<RecordedSuccess?>(null);
+    }
+
+    public Task RecordAsync(IdempotencyKey key, string response, CancellationToken cancellationToken)
+    {
+        trace.Add($"record {key.Command} {response}");
+        return Task.CompletedTask;
+    }
+}
+
+/// <summary>
+/// Records each query it is asked and each eviction, runs every query, ending a success's read as a cache that stores it
+/// does, and reports a command's type name as the tag it invalidates.
+/// </summary>
+internal sealed class QueryCacheStandIn(OperationTrace trace) : IQueryCache
+{
+    public async Task<Result<TResponse>> QueryAsync<TResponse>(
+        Query<TResponse> query,
+        OperationContext context,
+        Func<CancellationToken, Task<Result<TResponse>>> handle,
+        Action endRead,
+        CancellationToken cancellationToken
+    )
+        where TResponse : notnull
+    {
+        trace.Add($"cache {query.GetType().Name}");
+        var result = await handle(cancellationToken);
+        if (result.IsSuccess)
+        {
+            endRead();
+        }
+
+        return result;
+    }
+
+    public IEnumerable<string> TagsInvalidatedBy(object command) => [command.GetType().Name];
+
+    public Task EvictAsync(IReadOnlyCollection<string> tags)
+    {
+        trace.Add($"evict {string.Join(' ', tags)}");
+        return Task.CompletedTask;
     }
 }
 

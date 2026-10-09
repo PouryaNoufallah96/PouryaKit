@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Xml.Linq;
 
 namespace PouryaKit.ArchitectureTests;
@@ -18,7 +19,8 @@ public sealed class PackageGraphTests
     [Fact]
     public void Every_kit_package_is_checked_and_closures_are_read_transitively()
     {
-        Assert.Equal(13, RestoredPackage.All.Count);
+        using var inventory = JsonDocument.Parse(File.ReadAllText(Path.Combine(Repository.Root, "scripts", "packaging", "inventory.json")));
+        Assert.Equal(inventory.RootElement.GetProperty("packages").GetArrayLength(), RestoredPackage.All.Count);
         // EF Core arrives in Postgres only through its provider, and Domain in Web only through Cqrs.
         Assert.Contains(Restored("PouryaKit.Persistence.Postgres").Packages, arrived => arrived.Id == "Microsoft.EntityFrameworkCore");
         Assert.Contains("PouryaKit.Domain", Restored("PouryaKit.Web").Projects);
@@ -30,6 +32,7 @@ public sealed class PackageGraphTests
         var dapper = Restored("PouryaKit.Persistence.Dapper");
         var wolverine = Restored("PouryaKit.Messaging.Wolverine");
         var web = Restored("PouryaKit.Web");
+        var openApi = Restored("PouryaKit.Web.OpenApi");
         var messaging = Restored("PouryaKit.Messaging");
 
         Assert.Equal(
@@ -50,8 +53,25 @@ public sealed class PackageGraphTests
             PackageGraph.Violations(web with { Projects = new HashSet<string>([.. web.Projects, "PouryaKit.Modularity"]) })
         );
         Assert.Equal(
+            ["PouryaKit.Web's closure holds Aspire.Hosting, which section C keeps out of it."],
+            PackageGraph.Violations(web with { Packages = [.. web.Packages, Arrived("Aspire.Hosting")] })
+        );
+        Assert.Equal(
+            ["PouryaKit.Web's closure holds Asp.Versioning.Http, which section C keeps out of it."],
+            PackageGraph.Violations(web with { Packages = [.. web.Packages, Arrived("Asp.Versioning.Http")] })
+        );
+        Assert.Equal(
+            ["PouryaKit.Web.OpenApi's closure holds Swashbuckle.AspNetCore.SwaggerGen, which section C keeps out of it."],
+            PackageGraph.Violations(openApi with { Packages = [.. openApi.Packages, Arrived("Swashbuckle.AspNetCore.SwaggerGen")] })
+        );
+        Assert.Equal(
             ["PouryaKit.Messaging's closure holds the packages [WolverineFx]; it must hold none."],
             PackageGraph.Violations(messaging with { Packages = [Arrived("WolverineFx")] })
+        );
+        var caching = Restored("PouryaKit.Caching");
+        Assert.Equal(
+            ["PouryaKit.Caching's closure holds StackExchange.Redis, which section C keeps out of it."],
+            PackageGraph.Violations(caching with { Packages = [.. caching.Packages, Arrived("StackExchange.Redis")] })
         );
     }
 
@@ -62,7 +82,7 @@ public sealed class PackageGraphTests
 
         Assert.Equal(
             [
-                "PouryaKit.Cqrs references the packages [MediatR, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Logging.Abstractions]; section C allows [Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Logging.Abstractions].",
+                "PouryaKit.Cqrs references the packages [MediatR, Microsoft.Extensions.DependencyInjection, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Hosting.Abstractions, Microsoft.Extensions.Logging.Abstractions]; section C allows [Microsoft.Extensions.DependencyInjection, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Hosting.Abstractions, Microsoft.Extensions.Logging.Abstractions].",
             ],
             PackageGraph.Violations(cqrs with { DirectPackages = new HashSet<string>([.. cqrs.DirectPackages, "MediatR"]) })
         );
@@ -73,7 +93,8 @@ public sealed class PackageGraphTests
     {
         var nuspec = XDocument.Parse("""
             <package><metadata><id>PouryaKit.Persistence.Dapper</id><dependencies><group targetFramework="net10.0">
-              <dependency id="PouryaKit.Domain" version="0.1.0-preview.1" />
+              <dependency id="PouryaKit.Core" version="0.1.0-preview.1" />
+              <dependency id="PouryaKit.Cqrs" version="0.1.0-preview.1" />
               <dependency id="Dapper" version="2.1.89" />
               <dependency id="Npgsql" version="10.0.3" />
               <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="10.0.12" />

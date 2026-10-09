@@ -14,8 +14,12 @@ internal sealed class ListProductsEndpoint : IEndpoint
         routes
             .MapGet(
                 "/products",
-                async (OperationContext context, IGatewayProcessor<CatalogModule> catalog, CancellationToken cancellationToken) =>
-                    (await catalog.QueryAsync(new ListProductsQuery(), context, cancellationToken)).ToHttpResult()
+                async (
+                    HttpPageRequest page,
+                    OperationContext context,
+                    IGatewayProcessor<CatalogModule> catalog,
+                    CancellationToken cancellationToken
+                ) => (await catalog.QueryAsync(new ListProductsQuery(page.Request), context, cancellationToken)).ToHttpResult()
             )
             .AllowAnonymousAs(Actor.System("catalog.storefront"));
 }

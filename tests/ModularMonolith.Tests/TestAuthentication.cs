@@ -3,12 +3,15 @@ using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ModularMonolith.Host;
+using PouryaKit.Cqrs;
 
 namespace ModularMonolith.Tests;
 
-// Stands in for the Host's JwtBearer: a request with "Authorization: Test <id>" is the authenticated person <id>, and
-// a request without it is anonymous. The claim it issues is the one JwtBearer maps a token's subject to; a
-// "Test-Tenant" header adds a tenant claim.
+// Stands in for the Host's bearer scheme: a request with "Authorization: Test <id>" is the authenticated person <id>,
+// and a request without it is anonymous. It issues the claims the Kit's bearer scheme normalizes a verified token into:
+// the Actor's, a tenant's from a "Test-Tenant" header, and a permission claim each from a "Test-Permissions" header,
+// comma-separated.
 internal sealed class TestAuthentication(
     IOptionsMonitor<AuthenticationSchemeOptions> options,
     ILoggerFactory logger,
@@ -17,9 +20,12 @@ internal sealed class TestAuthentication(
 {
     public const string SchemeName = "Test";
 
-    public const string TenantClaim = "tenant";
-
     public const string TenantHeader = "Test-Tenant";
+
+    /// <summary>A <see cref="TenantHeader"/> value that issues the tenant claim with an empty value.</summary>
+    public const string BlankTenant = "(blank)";
+
+    public const string PermissionsHeader = "Test-Permissions";
 
     /// <summary>A caller id that authenticates with no claim naming the person.</summary>
     public const string WithoutActorClaim = "(no actor claim)";
@@ -47,8 +53,15 @@ internal sealed class TestAuthentication(
             caller == WithoutActorClaim ? [new Claim(ClaimTypes.Name, caller)] : [new Claim(ClaimTypes.NameIdentifier, caller)];
         if (Request.Headers[TenantHeader].ToString() is { Length: > 0 } tenant)
         {
-            claims.Add(new Claim(TenantClaim, tenant));
+            claims.Add(new Claim(PouryaKitClaimTypes.Tenant, tenant == BlankTenant ? "" : tenant));
         }
+
+        claims.AddRange(
+            Request.Headers[PermissionsHeader]
+                .ToString()
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(permission => new Claim(CallerPermissions.ClaimType, permission))
+        );
 
         var identity = new ClaimsIdentity(claims, SchemeName);
         return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName)));
