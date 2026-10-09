@@ -1,0 +1,35 @@
+src/PouryaKit.Web.OpenApi/UnmappedApiVersionsCheck.cs
+  s_744c07a8061ea2::t_e209b3fba06943 1-16
+src/PouryaKit.Cqrs/Paging/FilterField.cs
+  s_744c07a8061ea2::t_e209b3fba06943 1-134
+src/PouryaKit.Cqrs/Pipeline/RecordedSuccess.cs
+  s_744c07a8061ea2::t_e209b3fba06943 1-7
+src/PouryaKit.Cqrs/Paging/SortDirection.cs
+  s_744c07a8061ea2::t_e209b3fba06943 1-7
+src/PouryaKit.Web/Defaults/PouryaKitCorsPolicy.cs
+  s_744c07a8061ea2::t_e209b3fba06943 1-23
+src/PouryaKit.Cqrs/Pipeline/IdempotencyKey.cs
+  s_744c07a8061ea2::t_e209b3fba06943 1-7
+src/PouryaKit.Cqrs/Paging/PageFilter.cs
+  s_744c07a8061ea2::t_e209b3fba06943 1-7
+src/PouryaKit.Cqrs/Operations/ActorKind.cs
+  s_744c07a8061ea2::t_e209b3fba06943 1-7
+src/PouryaKit.Cqrs/Paging/FilterOperatorNames.cs
+  s_744c07a8061ea2::t_e209b3fba06943 1-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "04c5b0c922a8a8d6824abf7ace90ec32d8ebc172",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
