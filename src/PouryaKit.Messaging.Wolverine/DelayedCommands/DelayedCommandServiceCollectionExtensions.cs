@@ -51,7 +51,9 @@ public static class DelayedCommandServiceCollectionExtensions
         /// no next occurrence, so two Hosts that each stored one end with one. Occurrences missed while no Host ran are
         /// not made up: the one stored runs late, then the next one after now. An occurrence that fails is retried, then
         /// set aside as a dead letter, and the attempt that sets it aside stores the next one after now unless one is
-        /// already stored, so the cadence goes on whatever an occurrence did. Feature code
+        /// already stored, so the cadence goes on whatever an occurrence did, except one whose stored body no longer
+        /// reads after a release changed the command's shape: Wolverine sets it aside before the Kit's delivery runs, so
+        /// nothing stores the next one until the next Host start. Feature code
         /// never schedules it with <see cref="IDelayedCommands"/>. Declare it once: declaring it again with another system Actor
         /// or occurrence factory, or as a delayed command too, throws, naming the declaration it already has. Throws here as
         /// <c>AddPouryaKitDelayedCommand</c> does; the Host fails when it is built or starts as for

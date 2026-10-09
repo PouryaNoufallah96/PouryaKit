@@ -7,7 +7,9 @@ public sealed class PouryaKitMessagingOptions
     /// How long a failed delivery waits before each further attempt: one attempt more than there are delays, after which
     /// the delivery is set aside as a dead letter. Each wait is stored with the delivery, not held in memory, so a
     /// restart neither loses nor repeats it. With a message store's inbox stale time, keep the delays together, plus
-    /// every attempt's run, shorter than it: an attempt that runs after it is handed out again while it runs.
+    /// every attempt's run, shorter than it: an attempt that runs after it is handed out again while it runs. That rule
+    /// covers a delivery sent at its commit; a delayed command or a recurring occurrence due later than the stale time
+    /// runs stale from its first attempt (<c>PouryaKitMessageStoreOptions.InboxStaleTime</c>).
     /// </summary>
     public TimeSpan[] RetryDelays { get; set; } = [TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(1)];
 }
