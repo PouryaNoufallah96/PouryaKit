@@ -1,0 +1,20 @@
+AGENTS.md
+  s_744c07a8061ea2::t_a223473efcad46 66,70-84
+  s_744c07a8061ea2::t_cf98ab4e46165e 85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6f905fc1b97229a10755a9731239d89bcd91a64a",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
