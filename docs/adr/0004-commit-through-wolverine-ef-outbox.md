@@ -457,7 +457,7 @@ citations above stay as they were read.
   hook then rebuilds again, while the exceptions that strand a listener (the client's own disposal errors, a quorum
   queue without a majority) cannot be produced on demand, and upstream's regression test injects an internal fake agent
   the Kit cannot build. The defect was reproduced on neither version. "A Kit Host receives through exactly one durable
-  broker listener" holds for durable listeners only: by Wolverine's default `DeclareRequestReplySystemQueue = true`
+  broker listener" holds for durable listeners only (the reply queue's endpoint mode is Inline, not durable in Wolverine's sense, whatever the broker lists; decompiled `RabbitMqQueue.cs:258`, `RabbitMqTransport.cs:557-560`): by Wolverine's default `DeclareRequestReplySystemQueue = true`
   (decompiled `RabbitMqTransport.cs:145`), each Host also listens on an auto-delete `wolverine.response.<guid>` queue,
   a System endpoint, through the same listening connection (decompiled `RabbitMqListener.cs:88`), so "every one after
   it" can apply to a Kit Host. That queue was observed in the broker during a `RabbitMqDeliveryTests` run, one per Host
