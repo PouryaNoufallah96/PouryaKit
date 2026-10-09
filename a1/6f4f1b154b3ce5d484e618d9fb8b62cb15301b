@@ -1,0 +1,21 @@
+.claude/agent-memory/kit-implementer/integration-event-wire-and-rabbitmq-facts.md
+  s_744c07a8061ea2::t_616bafb2c65627 78
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_744c07a8061ea2::t_ce873b9b4580fd 460
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a16f4f1b154b3ce5d484e618d9fb8b62cb15301b",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
