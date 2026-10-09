@@ -408,3 +408,31 @@ prefix take it before the first publication, with no alias and no forwarder: `Us
 (`PouryaKit.Persistence.EFCore`) is now `MapPouryaKitUniqueConstraint<TDbContext>`. Signatures and behaviour are
 unchanged. The text above keeps the former names, as it was written: where it says `UsePostgres`, the code says
 `UsePouryaKitPostgres`, and the line `MessageStoreDatabaseCheck` reports names the new call.
+
+## Amendment (2026-10-09, ticket #75: WolverineFx 6.48.2)
+
+The decision above stands. The five `WolverineFx*` pins move from 6.46.0 to 6.48.2: `WolverineFx`,
+`WolverineFx.EntityFrameworkCore`, `WolverineFx.Postgresql`, `WolverineFx.RabbitMQ` (ADR 0006's #50 amendment) and
+`WolverineFx.RuntimeCompilation`, in `Directory.Packages.props` and in each template's own, which `TemplateTests` keeps
+equal to it. "Pinned versions and licences" stays as the record of what Spike S1 ran on, and the `V6.46.0` source
+citations above stay as they were read.
+
+- **Why.** In 6.46.0, after a RabbitMQ connection recovery, Wolverine's connection monitor rebuilt the broker agents in a
+  plain loop: one `ReconnectedAsync` exception ended it, and that listener and every one after it kept a channel with no
+  consumer while its status stayed `Accepting` and health stayed green. 6.48.0 rebuilds each agent on its own, retries a
+  failed rebuild on a bounded schedule and tolerates tearing down a channel the client already closed
+  (`JasperFx/wolverine` #4864, #4867). A Kit Host receives through exactly one durable broker listener.
+- **Which release.** 6.48.2, as the ticket names it. The 6.48.1 notes fix the order in which a global partition slot's
+  backlog resumes on its new owner; the 6.48.2 notes make the leader's agent assignment scale to tens of thousands of
+  agents and add `DurabilitySettings.LeaderTakeoverHoldEvaluations` (default 1), which withholds first-time placements
+  for one evaluation after a leader takeover, and stands down while no other node holds an assignment. The Kit uses no
+  global partitioning and leaves the setting at its default. Each package is `MIT` with a `net10.0` asset; against
+  6.46.0 their only dependency change is `JasperFx`, `JasperFx.Events` and `JasperFx.SourceGenerator` 2.80.2 to 2.81.0,
+  `MIT`; `WolverineFx.RDBMS` and `WolverineFx.Newtonsoft` follow to 6.48.2, and restore resolves no other new version
+  (Weasel stays at 9.41.0).
+- **Proof.** Compatibility: the build has no warning, the whole suite passes on 6.48.2, and `validate.py` passes
+  (`docs/acceptance.md`, "Pre-Wave 3 WolverineFx 6.48.2, ticket #75"). The repair itself is upstream's, proven by its
+  own tests. `RabbitMqDeliveryTests.A_host_whose_broker_connections_drop_while_it_runs_consumes_its_queue_again_and_a_publication_committed_after_arrives`
+  closes every connection of the test's vhost from the broker while both Hosts run: the Inventory Host's queue loses its
+  consumer, gets it back, and a publication committed afterwards arrives. It passes on 6.46.0 as well, so it is not a
+  regression test for #4867: a single broker's forced close makes no rebuild throw, and the defect needs one that does.

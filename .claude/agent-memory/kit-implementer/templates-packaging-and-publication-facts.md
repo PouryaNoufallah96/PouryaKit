@@ -56,5 +56,11 @@ Check `.github/workflows/package-publication.yml` before relying on it.
 - **`Own(Monolith)` is `content/monolith` only.** What both templates share is `Own(Shared)`: join the two for "the monolith's own files", and filter to `.cs` (the lists hold project, solution and JSON files too).
 - **Red once for a text rule:** a scratchpad script that swaps one part of the rule at a time and runs `TemplateTests` showed each part matters (six runs, about 5 s each). Put one legitimate shape into the offending set (a comment that names the type) so the exact-messages assertion also pins what the rule must not refuse.
 
+## A third-party version bump (#75, 2026-10-09; WolverineFx 6.46.0 to 6.48.2)
+
+- **The templates pin third-party packages too:** each `content/{modular,monolith}/Directory.Packages.props` pins `WolverineFx.RuntimeCompilation` (and the other packages a generated solution references directly), and `TemplateTests` fails until they equal the root's. A bump of a root pin that a template also pins moves both.
+- **Proving what restore moved:** a scratchpad script that collects every `type: package` key of each `obj/project.assets.json` (skip `/content/`) before and after the bump, then `diff`; and a nuspec diff of the bumped packages from `https://api.nuget.org/v3-flatcontainer/<id>/<ver>/<id>.nuspec` (licence, target groups, net10.0 dependencies). Licences of the moved transitive packages read from the cache's nuspecs.
+- **Where an implementer's brief lives:** the main checkout's untracked `.claude/handoff/<run>/briefs/`, not the worktree; read it by absolute path.
+
 **Why:** each cost a probe or a validation run; the credential rule is not testable without the hosted feed.
 **How to apply:** for a new template or any package that is not a library, any `validate.py` run, any clean consumer, any change to the publication workflow, and a hosted proof of the private feed. Related: [[core-json-and-architecture-test-facts]], [[observability-tracing-and-http-facts]], [[worktree-shell-and-check-gotchas]].

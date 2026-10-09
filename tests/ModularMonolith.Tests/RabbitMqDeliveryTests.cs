@@ -407,6 +407,30 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
     }
 
     [Fact]
+    public async Task A_host_whose_broker_connections_drop_while_it_runs_consumes_its_queue_again_and_a_publication_committed_after_arrives()
+    {
+        var environment = await broker.CreateEnvironmentAsync();
+        using var inventory = await environment.StartInventoryHostAsync();
+        await using var catalog = await environment.StartCatalogHostAsync();
+        var product = Guid.CreateVersion7();
+
+        await broker.DropConnectionsAsync(environment.Broker);
+        await WaitAsync(async () => await environment.BrokerConsumersAsync(InventoryHost.ServiceName) == 0, "The drop never reached the Host's listener.");
+        await WaitAsync(async () => await environment.BrokerConsumersAsync(InventoryHost.ServiceName) > 0, "The Host never consumed its queue again after the drop.");
+
+        await BrokerEnvironment.CreateProductAsync(catalog, product, "Lamp");
+        await BrokerEnvironment.WaitUntilAsync(
+            environment.Inventory,
+            $"exists (select from inventory.stock_items where product_id = '{product}')",
+            "The publication committed after the drop never arrived."
+        );
+        await BrokerEnvironment.WaitUntilSettledAsync(environment.Inventory);
+        await BrokerEnvironment.WaitUntilSettledAsync(environment.Catalog);
+
+        Assert.Equal((1L, 1L), (await ReceiptsAsync(environment, StockItems), await StockItemsAsync(environment, product)));
+    }
+
+    [Fact]
     public async Task Two_hosts_with_different_service_names_each_receive_every_message()
     {
         var environment = await broker.CreateEnvironmentAsync();

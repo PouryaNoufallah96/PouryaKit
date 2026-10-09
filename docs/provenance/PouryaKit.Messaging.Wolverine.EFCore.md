@@ -8,7 +8,7 @@ The Outbox commit (`WolverineOutbox`, the Unit of Work's step 5) is the Kit's ow
 
 Checked on nuget.org on 2026-10-05 (ticket #15); licence expressions from each package's nuspec. None is reciprocal or commercial (ADR 0002).
 
-- `WolverineFx.EntityFrameworkCore` 6.46.0, `MIT`, with `Weasel.EntityFrameworkCore` 9.41.0, `MIT`. On `net10.0` it asks for EF Core 10.0.4 or later and restores against 10.0.12. It brings `Microsoft.EntityFrameworkCore.Design` 10.0.4 and its `Microsoft.CodeAnalysis` 5.0.0 packages at run time, all `MIT`, as plan section C expects.
-- `WolverineFx.Postgresql` 6.46.0, `MIT`, with `WolverineFx.RDBMS` 6.46.0, `Weasel.Core` 9.41.0 and `Weasel.Postgresql` 9.41.0, all `MIT`.
+- `WolverineFx.EntityFrameworkCore` 6.48.2, `MIT` (6.46.0 until ticket #75, 2026-10-09), with `Weasel.EntityFrameworkCore` 9.41.0, `MIT`. On `net10.0` it asks for EF Core 10.0.4 or later and restores against 10.0.12. It brings `Microsoft.EntityFrameworkCore.Design` 10.0.4 and its `Microsoft.CodeAnalysis` 5.0.0 packages at run time, all `MIT`, as plan section C expects.
+- `WolverineFx.Postgresql` 6.48.2, `MIT` (6.46.0 until ticket #75, 2026-10-09), with `WolverineFx.RDBMS` 6.48.2, `Weasel.Core` 9.41.0 and `Weasel.Postgresql` 9.41.0, all `MIT`; the move left every Weasel package at 9.41.0.
 - The package's restored closure is 82 packages: 76 `MIT`, 3 `BSD-3-Clause` (`NetTopologySuite` 2.5.0, `NetTopologySuite.IO.PostGis` 2.1.0, `Polly.Core` 8.6.5), 2 `PostgreSQL` (`Npgsql` and `Npgsql.NetTopologySuite` 9.0.4, which a Host with `PouryaKit.Persistence.Postgres` lifts to `Npgsql` 10.0.3) and 1 `Apache-2.0` (`NewId` 4.0.1).
 - It does not reference `WolverineFx.RuntimeCompilation`; the Host does (ADR 0004, "Defaults chosen", 2).
