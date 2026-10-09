@@ -31,6 +31,7 @@ metadata:
 - `ImmutableDictionary<,>.Empty` in a field initialiser trips IDE0301 under TreatWarningsAsErrors; write `[]`.
 - **xUnit1069 (#75, 2026-10-09):** a `[Fact(Timeout = …)]` whose body never names `TestContext.Current.CancellationToken` fails the build. Helpers that use the token inside do not count; a test whose waits all have deadlines can take a plain `[Fact]`, as most broker tests do.
 - **A red run on an older package version (#75):** set the pins back in `Directory.Packages.props` with `sed`, run the class with `--filter-method <full name>` (it restores and rebuilds), then `cmp` the test bin's dll with `~/.nuget/packages/<id>/<old>/lib/net10.0/` to prove which version ran; set the pins forward and run again.
+- **IDE0130 in a build (#77, 2026-10-09):** works with no `CompilerVisibleProperty` (the SDK adds `RootNamespace` and `ProjectDir`); an `.editorconfig` section `[tests/**/*.cs]` with `dotnet_diagnostic.IDE0130.severity = warning` fails the next incremental build on a mismatch, and a later `none` section for one file wins. A linked source is judged by the sections of its physical path, so `Offending.Core`'s Core files fall under `src/**`. To test an exception, rename its section header to a path that matches nothing, build the one project, then copy the file back from the scratchpad.
 
 ## Mutation runs and their compile traps
 

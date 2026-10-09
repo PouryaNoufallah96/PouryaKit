@@ -1,8 +1,8 @@
-- [.NET and test conventions](dotnet-and-test-conventions.md) — #4, the analyzer retro (2026-10-06), #75: MTP and xunit.v3, analyzer IDs, compiler traps, mutation runs, red runs on an older package, tests a sample change ripples into
+- [.NET and test conventions](dotnet-and-test-conventions.md) — #4, the analyzer retro (2026-10-06), #75, #77: MTP and xunit.v3, analyzer IDs, IDE0130, compiler traps, mutation runs, red runs on an older package, tests a sample change ripples into
 - [Worktree, shell and check gotchas](worktree-shell-and-check-gotchas.md) — every ticket: refused shell shapes, the moving integration branch, check-ai-setup.py, scope requests, memory layout
 - [Docs verification tools](docs-verification-tools.md) — docs packages since #8, #64 rename, #67, #76: check-docs.py and its path and pointer rules, skill snippets, Mermaid C4, reference checkouts, ADR amendment style
 - [Merge, CI and workflow tooling](merge-ci-and-workflow-tooling-facts.md) — retros and kit-review: union merge, scratch-clone proofs, gh job logs, branch names as data, workflow scripts, Codex input limit, pull request checks and threads, who runs in which cwd
-- [Core, JSON and architecture tests](core-json-and-architecture-test-facts.md) — #6 #19 #34 #37 #54 #55: STJ typed IDs, shared JSON options, IL reader, ImplementingTypes order, slot rule
+- [Core, JSON and architecture tests](core-json-and-architecture-test-facts.md) — #6 #19 #34 #37 #54 #55 #77: STJ typed IDs, shared JSON options, IL reader, ImplementingTypes order, slot rule, namespace rule
 - [Cqrs and Modularity](cqrs-and-modularity-facts.md) — #7 #10 #13 #56 #57 #66: FluentValidation, Domain Event drain, Module ownership, authorizers, trust, Cqrs internals, same-named types
 - [Composition checks](composition-check-facts.md) — #61 #62 #63 #66 #67, final review B: build vs start checks, store database check, RoutingCheck, blank connection strings, failing disposal
 - [Persistence and Dapper](persistence-and-dapper-facts.md) — #8 #9 #11 #35 #67 #68: Unit of Work routing, EF savepoints, two-scope race, Npgsql typed nulls, Ardalis, dotnet-ef traps, writes outside a Unit of Work and changes outside a command
@@ -12,4 +12,4 @@
 - [Web, security and OpenAPI](web-security-and-openapi-facts.md) — #14 #36 #38 #39 #40 #41 #54 #64, final review A: binding, CORS, limiter, permissions, JWT, PBKDF2, versioning
 - [Observability, tracing and HTTP](observability-tracing-and-http-facts.md) — #46 #47 #48 #52 #64: parent-id, listener traps, resilience pipeline, OpenTelemetry providers, health, Serilog
 - [Caching and idempotency](caching-and-idempotency-facts.md) — #42 #43 #54: request id, on conflict do nothing, retention service, HybridCache slot, StampedeJoin, Redis
-- [Templates, packaging and publication](templates-packaging-and-publication-facts.md) — #53 #54 #59 #64 #66 #68 #75: template engine, pack-time version, validate.py and consumers, feed install, text rules over a template's own files, version bumps
+- [Templates, packaging and publication](templates-packaging-and-publication-facts.md) — #53 #54 #59 #64 #66 #68 #75 #77: template engine, pack-time version, validate.py and consumers, feed install, text rules over a template's own files, version bumps
