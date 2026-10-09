@@ -43,7 +43,8 @@ first public release the Kit has no consumer to break; after it, reversing this 
      their marker (`CompilerGeneratedAttribute` or `GeneratedCodeAttribute`), not by their name, so a later generator
      is covered the same way. Its negative case is `Offending.Core`, whose four types, Core's sources and `TextHelpers`,
      are in `PouryaKit.Core` inside the assembly `Offending.Core`. `.editorconfig` sets
-     `dotnet_style_namespace_match_folder = false` for `src/**`, so no editor proposes a folder's namespace there.
+     `dotnet_style_namespace_match_folder = false` for `src/**`, so IDE0130 reports no folder mismatch there and
+     the structure rule is the one check.
    - Application code: `.editorconfig` raises IDE0130 to a warning for the Proving Sample's Modules
      (`samples/ModularMonolith/src/Modules/**`) and the test projects (`tests/**`), and sets it to `none` for each
      exception. The build treats warnings as errors and runs code style (`TreatWarningsAsErrors` and
