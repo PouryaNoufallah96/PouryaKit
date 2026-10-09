@@ -320,6 +320,28 @@ internal static class TemplateRules
         where limiter >= 0 && file.Text.IndexOf("app.UseRouting()", limiter, StringComparison.Ordinal) >= 0
         select $"{file.Path} calls UseRouting() after UseRateLimiter(); route first, or the rate limit ignores the exemption of /alive and the Actor an anonymous endpoint names.";
 
+    /// <summary>
+    /// A problem for each of a template's <paramref name="own"/> C# files that takes a repository: <c>IRepository</c>, or
+    /// an interface <paramref name="sample"/> derives from it. A file takes one when it declares a parameter, a field or
+    /// a local of that type, or asks a service provider for it. In an application without Modules the request scope has
+    /// a Unit of Work, so such a file can load an aggregate and change it outside a command, where no call of the Kit
+    /// is made to refuse it (ADR 0003, ticket #68). The business code comes from the sample and is not judged here, so
+    /// this rule never has to tell a handler from a service that a handler calls. A registration names the repository
+    /// as a type argument and takes nothing; <c>//</c> comments are left out. It cannot see a repository reached through
+    /// an alias, through <c>typeof</c>, inside another generic type such as <c>IEnumerable</c>, or through another type
+    /// the file takes that itself takes one.
+    /// </summary>
+    public static IEnumerable<string> RepositoriesTaken(IEnumerable<TextFile> own, IEnumerable<TextFile> sample)
+    {
+        var derived = sample.SelectMany(file => Regex.Matches(file.Text, @"(?<!\w)interface\s+(\w+)\s*:[^{]*?(?<!\w)IRepository<")).Select(match => match.Groups[1].Value);
+        var repository = string.Join('|', ["IRepository<[^<>]*>", .. derived.Distinct().Select(Regex.Escape)]);
+        var taken = new Regex($@"(?<!\w)(?<taken>{repository})\??\s+@?[A-Za-z_]|Service<\s*(?<taken>{repository})\s*>");
+        return from file in own
+            where file.Path.EndsWith(".cs", StringComparison.Ordinal)
+            from name in taken.Matches(Regex.Replace(file.Text, "//.*", "")).Select(match => match.Groups["taken"].Value).Distinct()
+            select $"{file.Path} takes {name}; send a command through IDispatcher instead: a handler takes the repository, and a change made outside a command is dropped or saved by a command that never made it.";
+    }
+
     private static Dictionary<string, string> PackageVersions(string props) =>
         XDocument
             .Parse(props)
