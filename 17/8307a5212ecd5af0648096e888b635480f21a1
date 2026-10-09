@@ -1,0 +1,42 @@
+docs/acceptance.md
+  s_744c07a8061ea2::t_7436a6202435f9 1046-1059
+.agents/scripts/test_check_docs.py
+  s_744c07a8061ea2::t_94be2e786dc761 205-215
+  s_744c07a8061ea2::t_a5068379e35355 81-83
+  s_744c07a8061ea2::t_1905e246627bcc 48-50
+  s_744c07a8061ea2::t_45ac45dc3f6d7c 228-241,244-253
+  s_744c07a8061ea2::t_5c1cfcfbcfcdf6 242-243
+  s_744c07a8061ea2::t_98840d493e37cf 69,72,74-75
+docs/agents/ai-setup.md
+  s_744c07a8061ea2::t_f2af008356cacf 203
+docs/foundation-review.md
+  s_744c07a8061ea2::t_3583b04291c24c 784
+.agents/scripts/check-docs.py
+  s_744c07a8061ea2::t_79bff7f528b89b 409-411
+  s_744c07a8061ea2::t_cd39950b509ec0 33-37,41-48
+  s_744c07a8061ea2::t_8fa750755d8507 387-388,390
+  s_744c07a8061ea2::t_24983739cc038d 57
+  s_744c07a8061ea2::t_9efb6890f101f3 437-439,442,444-448
+  s_744c07a8061ea2::t_8318aa36a7d33f 458-471
+  s_744c07a8061ea2::t_5478c9dacd3bae 427-428,431,434
+  s_744c07a8061ea2::t_5f2796ce498125 102
+  s_744c07a8061ea2::t_1429533728a569 502
+  s_744c07a8061ea2::t_bc5ae37449d8c6 118-122
+  s_744c07a8061ea2::t_b74ad36bbe6cdc 424
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "178307a5212ecd5af0648096e888b635480f21a1",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
