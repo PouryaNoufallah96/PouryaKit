@@ -1,0 +1,24 @@
+docs/acceptance.md
+  s_75dee3f51db59e::t_d59d4374689003 981
+src/PouryaKit.Cqrs/ValidatingServiceProviderFactory.cs
+  s_75dee3f51db59e::t_6534c52fa20089 2,46-47,55-59
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_75dee3f51db59e::t_6534c52fa20089 161-189,425-441
+  s_75dee3f51db59e::t_245a659e7664d5 442
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "193574ecacbdb3bfebc07a558a4114dd3fdfaae6",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
