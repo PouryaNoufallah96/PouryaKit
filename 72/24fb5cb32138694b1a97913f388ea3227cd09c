@@ -1,0 +1,30 @@
+tests/ModularMonolith.Tests/SingleModuleTests.cs
+  s_8e32520ab296c1::t_52e3bedbe5bd7a 95-129,131-154
+  s_8e32520ab296c1::t_2f8c36b78f6fc5 130
+  s_8e32520ab296c1::t_ea174f71118da4 6
+  s_4c190b72b0d430::t_4af148226cde37 155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7224fb5cb32138694b1a97913f388ea3227cd09c",
+  "prompts": {},
+  "sessions": {
+    "s_4c190b72b0d430": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11d53-6527-78b1-8612-0be350f5268b",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_8e32520ab296c1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "894356de-d180-4dce-8974-c5f92eb7db1e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
