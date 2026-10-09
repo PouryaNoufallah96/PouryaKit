@@ -5,7 +5,7 @@
 - [Core, JSON and architecture tests](core-json-and-architecture-test-facts.md) — #6 #19 #34 #37 #54 #55: STJ typed IDs, shared JSON options, IL reader, ImplementingTypes order, slot rule
 - [Cqrs and Modularity](cqrs-and-modularity-facts.md) — #7 #10 #13 #56 #57 #66: FluentValidation, Domain Event drain, Module ownership, authorizers, trust, Cqrs internals, same-named types
 - [Composition checks](composition-check-facts.md) — #61 #62 #63 #66 #67, final review B: build vs start checks, store database check, RoutingCheck, blank connection strings, failing disposal
-- [Persistence and Dapper](persistence-and-dapper-facts.md) — #8 #9 #11 #35 #67 #68: Unit of Work routing, EF savepoints, two-scope race, Npgsql typed nulls, Ardalis, dotnet-ef traps, writes and changes outside a Unit of Work
+- [Persistence and Dapper](persistence-and-dapper-facts.md) — #8 #9 #11 #35 #67 #68: Unit of Work routing, EF savepoints, two-scope race, Npgsql typed nulls, Ardalis, dotnet-ef traps, writes outside a Unit of Work and changes outside a command
 - [Wolverine runtime and delivery](wolverine-runtime-and-delivery-facts.md) — S1 #2, S2 #5, #15 #17 #54 #58, final review D: store, recovery, stale time, dead letters, codegen, sent envelopes
 - [Snapshots and scheduled commands](snapshot-and-scheduled-command-facts.md) — #18 #44 #45, final review R2: version gate, Receipt masking, scheduled envelopes, recurring chains
 - [Integration Events, wire and RabbitMQ](integration-event-wire-and-rabbitmq-facts.md) — #16 #49 #50 #51 #60: wire names, type routes, strict reading, fan-out topology, broker tests
