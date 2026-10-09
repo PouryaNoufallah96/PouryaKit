@@ -1,0 +1,21 @@
+docs/acceptance.md
+  s_8e32520ab296c1::t_a71eecd72c5987 1020,1023-1024
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_8e32520ab296c1::t_5e32ce610dcff6 36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8e977459b218b2c42f4dd1a142831a01a41199ab",
+  "prompts": {},
+  "sessions": {
+    "s_8e32520ab296c1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "894356de-d180-4dce-8974-c5f92eb7db1e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
