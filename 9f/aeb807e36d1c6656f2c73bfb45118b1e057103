@@ -1,0 +1,79 @@
+src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs
+  s_2867f8a3b2cd19::t_e7270f19f61c17 73-74
+  s_2867f8a3b2cd19::t_7273970777e12a 75-78
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_2867f8a3b2cd19::t_9e0776710f4061 1080-1092
+src/PouryaKit.Web/OperationContextHttpHeaders.cs
+  s_2867f8a3b2cd19::t_2d953ced3d4534 95
+  s_f029cb08974a65::t_9dc827c11dfbb6 70,77,100
+tests/ModularMonolith.Tests/TrustedPeerTests.cs
+  s_2867f8a3b2cd19::t_45f71faf2a0ed9 22-23,110,112-116,119-120,135-136
+.agents/skills/pourya-kit/references/web.md
+  s_2867f8a3b2cd19::t_524ea87a2e775d 135,200,240,251,303
+.agents/skills/pourya-kit/references/messaging.md
+  s_2867f8a3b2cd19::t_c8bcfb80b12ef0 83,627
+src/PouryaKit.Domain/JsonSerializerOptionsExtensions.cs
+  s_2867f8a3b2cd19::t_ec488dae27011e 13-14
+  s_f029cb08974a65::t_5f2a4422d8ca8b 26
+src/PouryaKit.Web/HttpCallerContext.cs
+  s_2867f8a3b2cd19::t_635b74c86cbf29 16
+docs/architecture/README.md
+  s_2867f8a3b2cd19::t_08ca9a60fd9366 240,568-569,572-573
+tests/ModularMonolith.Tests/IdempotencyTests.cs
+  s_2867f8a3b2cd19::t_45f71faf2a0ed9 21-24,237-238,277
+docs/adr/0008-one-problem-response-for-every-http-failure.md
+  s_2867f8a3b2cd19::t_9e0776710f4061 40-58
+tests/ModularMonolith.Tests/WebTests.cs
+  s_2867f8a3b2cd19::t_3f09cca3442a67 111-130
+  s_2867f8a3b2cd19::t_21be91b8d9b8b5 109-110
+.agents/skills/pourya-kit/references/domain-primitives.md
+  s_2867f8a3b2cd19::t_c8bcfb80b12ef0 70
+src/PouryaKit.Web/Endpoints/HttpPageRequest.cs
+  s_2867f8a3b2cd19::t_e7270f19f61c17 10-13,15-18
+  s_2867f8a3b2cd19::t_2d953ced3d4534 65
+  s_2867f8a3b2cd19::t_750dde0bfb739d 57,74,89,95
+docs/provenance/PouryaKit.Web.md
+  s_2867f8a3b2cd19::t_c8bcfb80b12ef0 46,55
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_2867f8a3b2cd19::t_c8bcfb80b12ef0 113
+  s_2867f8a3b2cd19::t_701127d878e295 115,117
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_2867f8a3b2cd19::t_aa37152157c043 31-33
+tests/ModularMonolith.Tests/PagingTests.cs
+  s_2867f8a3b2cd19::t_86b7e536362f50 261,263-269,276,280-298
+  s_2867f8a3b2cd19::t_3415c6a65a234e 299-300
+src/PouryaKit.Web/ProblemResponses/KitBadRequestException.cs
+  s_2867f8a3b2cd19::t_fd925e470a3eaa 1-9
+tests/ModularMonolith.Tests/StrictWireReadingTests.cs
+  s_2867f8a3b2cd19::t_ad14e24170ab40 2,20-22,55-56,58-65,67-74,115-131,144,156-161
+  s_2867f8a3b2cd19::t_cd9e3ce133f3e0 162
+src/PouryaKit.Web/ProblemResponses/UnexpectedExceptionHandler.cs
+  s_2867f8a3b2cd19::t_a6ed01ea7626e1 9-13,28,41
+  s_f029cb08974a65::t_e4131b31a79608 33
+src/PouryaKit.Web/Endpoints/IdempotencyKeyHeader.cs
+  s_f029cb08974a65::t_9f102071d24f8a 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9faeb807e36d1c6656f2c73bfb45118b1e057103",
+  "prompts": {},
+  "sessions": {
+    "s_2867f8a3b2cd19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00cca649-e6c4-44eb-8549-8c8dbeae846f",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_f029cb08974a65": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a4139265886868576",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
