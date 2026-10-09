@@ -5,8 +5,6 @@ using Microsoft.Extensions.Hosting;
 using PouryaKit.Cqrs;
 using PouryaKit.Persistence.EFCore;
 using Wolverine;
-using Wolverine.EntityFrameworkCore;
-using Wolverine.Persistence;
 using Wolverine.Postgresql;
 
 namespace PouryaKit.Messaging.Wolverine.EFCore;
@@ -62,9 +60,6 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
             return builder.UsePouryaKitWolverine(wolverine =>
             {
                 wolverine.PersistMessagesWithPostgresql(connectionString, schema);
-                // Eager is the mode in which Wolverine's own EF Core middleware commits a handler's effect and its
-                // inbox mark together; the Kit's Unit of Work owns its transaction either way.
-                wolverine.UseEntityFrameworkCoreTransactions(TransactionMiddlewareMode.Eager);
                 configure?.Invoke(wolverine);
             });
         }

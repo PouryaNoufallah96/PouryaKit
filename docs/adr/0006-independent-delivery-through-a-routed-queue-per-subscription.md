@@ -868,6 +868,11 @@ commit sequence is unchanged: the Unit of Work writes the command in its Outbox 
   at a recovery poll is handed out again, concurrently, as ticket #17's amendment describes for a late retry; its
   Receipt keeps the database effect to one. No test pins this for delayed commands: the tests' delays are shorter than
   the stale time.
+  *Pinned on 2026-10-10 (ticket #82): `RecurringCommandTests.A_delayed_command_and_an_occurrence_due_after_the_stale_time_and_handed_out_again_while_they_run_apply_one_effect_each_and_store_one_next_occurrence`
+  holds a delayed command and a recurring occurrence, each due about four times the stale time after it was stored,
+  after its Receipt until a copy handed out by a recovery poll waits on it: each applies one effect, and the occurrence
+  stores one next occurrence. Occurrences of the same runs that were not held, due two to four times the stale time
+  after they were stored, each ran once, so a copy is handed out only when a recovery poll comes while an attempt runs.*
 - **Its stored names.** `WireNaming` names no command, so Wolverine names it by its full CLR name. Renaming or moving the
   type strands the commands stored before it, which are dead-lettered as unknown messages, as a removed subscription's
   type is. The delivery reads the declaration from the queue the envelope was stored on, as `SubscriptionDelivery`

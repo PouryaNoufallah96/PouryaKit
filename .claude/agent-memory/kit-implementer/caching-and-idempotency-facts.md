@@ -56,5 +56,10 @@ HybridCache decompiled with ilspycmd.
 
 - HybridCache writes its distributed entry under the Kit's key unchanged (no prefix): a recording `IDistributedCache` registered before `AddPouryaKitCaching()` sees `Namespace.Type%2C%20Assembly|tenant|Kind|actor|key`. The write lands after the answer, so wait on its first `Set`. The command's key is `select command from <schema>.pouryakit_idempotency_keys`. `TypeKeyTests` does both.
 
+## Holding a Dapper read inside a cached query (#82, 2026-10-10; HybridCache 10.10.0)
+
+- **Hold after the read, never at `OpenAsync`:** held there, the handler reads after the commit and the proof is a false green. A decorator of the singleton `IReadConnectionFactory` (its descriptor has an `ImplementationFactory`) returns a `DbConnection` wrapper that waits in `DisposeAsync`, which the handler's `await using` reaches after Dapper's query. Arm it with an `AsyncLocal` set inside a helper `async` method, so it flows into the query (HybridCache runs the factory inline with `CancellationToken.None`) and not back to the test's rename. Code: the #82 report (T1 stayed out of the tree).
+- **T1 confirmed red twice:** HybridCache re-stamps an entry at factory completion when one of its tags was evicted during the run (decompiled `DefaultHybridCache.StampedeState<TState, T>.BackgroundFetchAsync`, `if (!Cache.IsValid(CacheItem)) UnsafeSetCreationTimestamp(...)`), so a read that began before a commit stores its old answer until expiry.
+
 **Why:** these decided the #42 and #43 shapes or a test of them, or cost a run.
 **How to apply:** for any Kit table written in the Unit of Work's transaction or cleaned across Modules, any race test, any endpoint opt-in, any Kit `BackgroundService` or test that drives one with the test clock, any HybridCache use, any slot that runs Feature code inside a library callback, and any single-flight or Redis test. Related: [[persistence-and-dapper-facts]], [[cqrs-and-modularity-facts]], [[web-security-and-openapi-facts]].
