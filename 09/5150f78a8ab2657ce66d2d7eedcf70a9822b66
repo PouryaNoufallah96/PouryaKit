@@ -1,0 +1,22 @@
+tests/ModularMonolith.Tests/BrokerFixture.cs
+  s_744c07a8061ea2::t_04923e84f0ac69 77-82
+tests/ModularMonolith.Tests/RabbitMqDeliveryTests.cs
+  s_744c07a8061ea2::t_948498c983fd73 410-432
+  s_744c07a8061ea2::t_97b6b3ad2f3c94 409
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "095150f78a8ab2657ce66d2d7eedcf70a9822b66",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
