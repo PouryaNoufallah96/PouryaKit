@@ -1,0 +1,37 @@
+docs/architecture/README.md
+  s_744c07a8061ea2::t_630f46b4f1ba2d 538
+docs/provenance/PouryaKit.Messaging.Wolverine.RabbitMq.md
+  s_744c07a8061ea2::t_630f46b4f1ba2d 11,13
+docs/provenance/ModularMonolith.md
+  s_744c07a8061ea2::t_630f46b4f1ba2d 15
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_744c07a8061ea2::t_3341f526d8d342 439-466
+docs/foundation-review.md
+  s_744c07a8061ea2::t_630f46b4f1ba2d 861
+docs/provenance/PouryaKit.Testing.md
+  s_744c07a8061ea2::t_630f46b4f1ba2d 16
+docs/provenance/PouryaKit.Messaging.Wolverine.EFCore.md
+  s_744c07a8061ea2::t_630f46b4f1ba2d 11-12
+docs/acceptance.md
+  s_744c07a8061ea2::t_6a96493d33d4c1 1047-1048
+docs/provenance/PouryaKit.Messaging.Wolverine.md
+  s_744c07a8061ea2::t_630f46b4f1ba2d 11
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_744c07a8061ea2::t_630f46b4f1ba2d 89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2380fc0a2b2f5467bd9750d1cc6ef330215d1ff3",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
