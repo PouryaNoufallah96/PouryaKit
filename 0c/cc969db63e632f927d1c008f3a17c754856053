@@ -1,0 +1,47 @@
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_744c07a8061ea2::t_7b29b366372359 411-437
+docs/provenance/PouryaKit.Messaging.Wolverine.md
+  s_744c07a8061ea2::t_432c2cdc8a63da 11
+docs/architecture/README.md
+  s_744c07a8061ea2::t_79cf19ac77fcd5 538
+docs/foundation-review.md
+  s_744c07a8061ea2::t_94e138ebc84d48 861
+docs/provenance/PouryaKit.Messaging.Wolverine.RabbitMq.md
+  s_744c07a8061ea2::t_d11e7a900a321e 11
+  s_744c07a8061ea2::t_32d8936d13cc99 13
+docs/provenance/PouryaKit.Messaging.Wolverine.EFCore.md
+  s_744c07a8061ea2::t_fad40742652b01 11
+  s_744c07a8061ea2::t_c99c1b323164ac 12
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_744c07a8061ea2::t_adeffed655ce9f 36
+docs/provenance/ModularMonolith.md
+  s_744c07a8061ea2::t_be11d8de84beee 15
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_744c07a8061ea2::t_1f42acaa990c46 89
+docs/provenance/PouryaKit.Testing.md
+  s_744c07a8061ea2::t_96b3af9abe7b23 16
+Directory.Packages.props
+  s_744c07a8061ea2::t_5b7ff18bfd5861 48-52
+docs/acceptance.md
+  s_744c07a8061ea2::t_57f383ec4e76b6 1039
+  s_744c07a8061ea2::t_f917f95dab1a61 1025-1038,1041-1043
+  s_744c07a8061ea2::t_5fc44ecf53dccc 1040
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_744c07a8061ea2::t_adeffed655ce9f 35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0ccc969db63e632f927d1c008f3a17c754856053",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
