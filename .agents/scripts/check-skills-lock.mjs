@@ -12,18 +12,19 @@
 // agents/openai.yaml before SKILL.md, a byte sort the other way round), which is why this check is not Python.
 
 import { createHash } from "node:crypto";
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const SKIPPED = new Set([".git", "node_modules", ".DS_Store"]); // Finder's file is never tracked
-
+// As the CLI collects them: regular files only, so a symlink is not hashed, and no .git or node_modules directory.
 function collect(dir, base, out) {
-  for (const name of readdirSync(dir)) {
-    if (SKIPPED.has(name)) continue;
-    const full = join(dir, name);
-    if (statSync(full).isDirectory()) collect(full, base, out);
-    else out.push({ path: relative(base, full).split("\\").join("/"), bytes: readFileSync(full) });
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name !== ".git" && entry.name !== "node_modules") collect(full, base, out);
+    } else if (entry.isFile() && entry.name !== ".DS_Store") { // Finder's file is never tracked
+      out.push({ path: relative(base, full).split("\\").join("/"), bytes: readFileSync(full) });
+    }
   }
 }
 

@@ -45,6 +45,11 @@ class CheckSkillsLock(unittest.TestCase):
         done = self.run_script()
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
 
+    def test_a_symlink_is_not_hashed(self) -> None:
+        (self.root / ".agents/skills/demo/link.md").symlink_to("SKILL.md")
+        done = self.run_script()
+        self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+
     def test_a_changed_file_fails_and_names_the_skill(self) -> None:
         (self.root / ".agents/skills/demo/SKILL.md").write_bytes(b"---\nname: demo\n---\nan edit\n")
         done = self.run_script()
