@@ -1,0 +1,21 @@
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs
+  s_2867f8a3b2cd19::t_622b3dbc085d96 54-56
+src/PouryaKit.Messaging.Wolverine/PouryaKitMessagingOptions.cs
+  s_2867f8a3b2cd19::t_57544c3fccbce7 10-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "214597a0614367ae490d0ae92600025fcecdcc7d",
+  "prompts": {},
+  "sessions": {
+    "s_2867f8a3b2cd19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00cca649-e6c4-44eb-8549-8c8dbeae846f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
