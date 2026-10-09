@@ -29,6 +29,8 @@ metadata:
 - C# 14 `field` keyword on a get-only property assigned in only one of two constructors (`Result<T>.Value`) fails with CS9264 under nullable; `[field: MaybeNull]` plus `field!` in the getter fixes it. Assigning a get-only `field`-backed property in a constructor writes the backing field.
 - A `ref struct` implementing `IDisposable` works with `using` and inside a non-async lambda or local function.
 - `ImmutableDictionary<,>.Empty` in a field initialiser trips IDE0301 under TreatWarningsAsErrors; write `[]`.
+- **xUnit1069 (#75, 2026-10-09):** a `[Fact(Timeout = …)]` whose body never names `TestContext.Current.CancellationToken` fails the build. Helpers that use the token inside do not count; a test whose waits all have deadlines can take a plain `[Fact]`, as most broker tests do.
+- **A red run on an older package version (#75):** set the pins back in `Directory.Packages.props` with `sed`, run the class with `--filter-method <full name>` (it restores and rebuilds), then `cmp` the test bin's dll with `~/.nuget/packages/<id>/<old>/lib/net10.0/` to prove which version ran; set the pins forward and run again.
 
 ## Mutation runs and their compile traps
 

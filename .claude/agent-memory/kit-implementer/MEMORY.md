@@ -1,4 +1,4 @@
-- [.NET and test conventions](dotnet-and-test-conventions.md) — #4 and the analyzer retro (2026-10-06): MTP and xunit.v3, analyzer IDs, compiler traps, mutation runs, tests a sample change ripples into
+- [.NET and test conventions](dotnet-and-test-conventions.md) — #4, the analyzer retro (2026-10-06), #75: MTP and xunit.v3, analyzer IDs, compiler traps, mutation runs, red runs on an older package, tests a sample change ripples into
 - [Worktree, shell and check gotchas](worktree-shell-and-check-gotchas.md) — every ticket: refused shell shapes, the moving integration branch, check-ai-setup.py, scope requests, memory layout
 - [Docs verification tools](docs-verification-tools.md) — docs packages since #8, #64 rename, #67: check-docs.py, skill snippets, Mermaid C4, reference checkouts, ADR amendment style
 - [Merge, CI and workflow tooling](merge-ci-and-workflow-tooling-facts.md) — retros and kit-review: union merge, scratch-clone proofs, gh job logs, branch names as data, workflow scripts, Codex input limit, pull request checks and threads, who runs in which cwd
@@ -8,8 +8,8 @@
 - [Persistence and Dapper](persistence-and-dapper-facts.md) — #8 #9 #11 #35 #67 #68: Unit of Work routing, EF savepoints, two-scope race, Npgsql typed nulls, Ardalis, dotnet-ef traps, writes outside a Unit of Work and changes outside a command
 - [Wolverine runtime and delivery](wolverine-runtime-and-delivery-facts.md) — S1 #2, S2 #5, #15 #17 #54 #58, final review D: store, recovery, stale time, dead letters, codegen, sent envelopes
 - [Snapshots and scheduled commands](snapshot-and-scheduled-command-facts.md) — #18 #44 #45, final review R2: version gate, Receipt masking, scheduled envelopes, recurring chains
-- [Integration Events, wire and RabbitMQ](integration-event-wire-and-rabbitmq-facts.md) — #16 #49 #50 #51 #60: wire names, type routes, strict reading, fan-out topology, broker tests
+- [Integration Events, wire and RabbitMQ](integration-event-wire-and-rabbitmq-facts.md) — #16 #49 #50 #51 #60 #75: wire names, type routes, strict reading, fan-out topology, broker tests, connection drops
 - [Web, security and OpenAPI](web-security-and-openapi-facts.md) — #14 #36 #38 #39 #40 #41 #54 #64, final review A: binding, CORS, limiter, permissions, JWT, PBKDF2, versioning
 - [Observability, tracing and HTTP](observability-tracing-and-http-facts.md) — #46 #47 #48 #52 #64: parent-id, listener traps, resilience pipeline, OpenTelemetry providers, health, Serilog
 - [Caching and idempotency](caching-and-idempotency-facts.md) — #42 #43 #54: request id, on conflict do nothing, retention service, HybridCache slot, StampedeJoin, Redis
-- [Templates, packaging and publication](templates-packaging-and-publication-facts.md) — #53 #54 #59 #64 #66 #68: template engine, pack-time version, validate.py and consumers, feed install, text rules over a template's own files
+- [Templates, packaging and publication](templates-packaging-and-publication-facts.md) — #53 #54 #59 #64 #66 #68 #75: template engine, pack-time version, validate.py and consumers, feed install, text rules over a template's own files, version bumps
