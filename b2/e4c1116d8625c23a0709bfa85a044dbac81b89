@@ -1,0 +1,102 @@
+skills-lock.json
+  s_e4860188e110d4::t_8db00209aa7fb5 23-27,65-70
+  s_e4860188e110d4::t_bbe9d0754e5e4d 182-187
+  s_e4860188e110d4::t_f38408a53e44a0 14,21,45,76,100,106,113,119,138,168,174,180,205,230,236
+  s_e4860188e110d4::t_4fb6b462ae24fc 22,71,181
+docs/agents/issue-tracker.md
+  s_e4860188e110d4::t_ec9de3ff4999ee 46
+  s_e4860188e110d4::t_484e21c244cb01 37
+  s_e4860188e110d4::t_e3e227ea47c440 24
+  s_e4860188e110d4::t_cabc8e22723a62 53
+  s_e4860188e110d4::t_74cad6a5655131 8,10
+docs/agents/triage-labels.md
+  s_e4860188e110d4::t_d901b852ee0abf 15
+.agents/scripts/check-skills-lock.mjs
+  s_e4860188e110d4::t_124636771da973 1-73
+.github/workflows/ci.yml
+  s_e4860188e110d4::t_9068bd2656672e 31-35
+docs/agents/running-a-spec.md
+  s_e4860188e110d4::t_8c50483ae75d2e 27
+.agents/scripts/check-ai-setup.py
+  s_e4860188e110d4::t_045d2c13fb19be 152-164
+  s_e4860188e110d4::t_b612628e189e10 550
+docs/agents/ai-setup.md
+  s_e4860188e110d4::t_1a45bad68fd707 247
+  s_e4860188e110d4::t_8c50483ae75d2e 154,159,232
+  s_e4860188e110d4::t_7bfb917dfece2c 126,205,231,233,246
+  s_e4860188e110d4::t_484e21c244cb01 24,155-158,160,203
+  s_e4860188e110d4::t_938fc3fff7a6e3 204
+.agents/scripts/test_check_skills_lock.py
+  s_e4860188e110d4::t_4fc6354638b360 1-68
+.claude/output-styles/kit-orchestrator.md
+  s_e4860188e110d4::t_8c50483ae75d2e 38
+  s_e4860188e110d4::t_484e21c244cb01 34-37
+.claude/rules/ai-setup.md
+  s_e4860188e110d4::t_484e21c244cb01 23
+.agents/skills/ask-matt/SKILL.md
+  s_e4860188e110d4::t_f09436708e8c2c 11-12,50
+.agents/skills/blast-radius/SKILL.md
+  s_e4860188e110d4::t_9be9056c3a1b04 38
+.agents/skills/chief-of-staff/SKILL.md
+  s_e4860188e110d4::t_4bb505c4e89e84 1-45
+.agents/skills/chief-of-staff/agents/openai.yaml
+  s_e4860188e110d4::t_c070c22ea62a70 1-5
+.agents/skills/code-review/SKILL.md
+  s_e4860188e110d4::t_5fa4265cdd0839 13,29,36,60-61
+.agents/skills/correct/SKILL.md
+  s_e4860188e110d4::t_508bdf297c1b83 1-32
+.agents/skills/diagnosing-bugs/SKILL.md
+  s_e4860188e110d4::t_d50b0d4d8dc456 125
+.agents/skills/grilling/SKILL.md
+  s_e4860188e110d4::t_9112896413f805 24-25
+.agents/skills/handoff/SKILL.md
+  s_e4860188e110d4::t_5137167da0b644 8
+.agents/skills/how/SKILL.md
+  s_e4860188e110d4::t_dd80364115af7b 37,47
+.agents/skills/implement/SKILL.md
+  s_e4860188e110d4::t_85e7bd11248182 9-11,15
+.agents/skills/interrogate/SKILL.md
+  s_e4860188e110d4::t_8e89dec2d1cd26 36,40-41,48
+.agents/skills/setup-matt-pocock-skills/SKILL.md
+  s_e4860188e110d4::t_f4411f3575e2d3 104-105
+.agents/skills/setup-matt-pocock-skills/issue-tracker-github.md
+  s_e4860188e110d4::t_84493a634d8698 8,10,24,35,42
+.agents/skills/setup-matt-pocock-skills/issue-tracker-gitlab.md
+  s_e4860188e110d4::t_d23f3b0bd1e12d 9,44
+.agents/skills/setup-matt-pocock-skills/triage-labels.md
+  s_e4860188e110d4::t_d2c6a71e2ec86f 15
+.agents/skills/tdd/SKILL.md
+  s_e4860188e110d4::t_9a0f3e225f6f2d 24
+.agents/skills/teach/SKILL.md
+  s_e4860188e110d4::t_bc8292cadfd825 12,110
+.agents/skills/technical-writing/SKILL.md
+  s_e4860188e110d4::t_ae8af9dd8f835d 1-106
+.agents/skills/to-tickets/SKILL.md
+  s_e4860188e110d4::t_fc47f7e5d60c6e 63,101
+.agents/skills/wayfinder/SKILL.md
+  s_e4860188e110d4::t_a318f7106b7552 65,114-115,124
+.agents/skills/wizard/template.sh
+  s_e4860188e110d4::t_da131db1d73cdb 73,91,94-97,101-102,104,106-110,117,124,126,131-133,135-136,139-141
+.claude/skills/chief-of-staff
+  s_e4860188e110d4::t_3926de32e5a567 1
+.claude/skills/correct
+  s_e4860188e110d4::t_f53138a521683d 1
+.claude/skills/technical-writing
+  s_e4860188e110d4::t_fc3c732679b9a0 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b2e4c1116d8625c23a0709bfa85a044dbac81b89",
+  "prompts": {},
+  "sessions": {
+    "s_e4860188e110d4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "46529f00-1409-4e8f-a287-0e449143c4c8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
