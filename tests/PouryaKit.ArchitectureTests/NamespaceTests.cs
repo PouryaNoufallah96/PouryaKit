@@ -3,6 +3,7 @@ extern alias OffendingCore;
 using System.CodeDom.Compiler;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Offending;
 
 namespace PouryaKit.ArchitectureTests;
 
@@ -19,8 +20,15 @@ public sealed class NamespaceTests
     [Fact]
     public void A_type_outside_its_packages_namespace_is_rejected()
     {
-        // Offending.Core compiles Core's sources and TextHelpers, all in PouryaKit.Core, into an assembly named
-        // Offending.Core. Its collection-expression type is generated, so it is not among them.
+        // A sub-namespace, the editor's folder default: every other type of Offending is in Offending, and its OpenAPI
+        // generator's output is marked.
+        Assert.Equal(
+            ["Offending.Stray.StrayType is not in Offending, the one namespace of its package."],
+            Violations(typeof(OffendingModule).Assembly)
+        );
+
+        // An unrelated namespace: Offending.Core compiles Core's sources and TextHelpers, all in PouryaKit.Core, into
+        // an assembly named Offending.Core. Its collection-expression type is generated, so it is not among them.
         var grown = typeof(OffendingCore::PouryaKit.Core.TextHelpers).Assembly;
 
         Assert.Equal(

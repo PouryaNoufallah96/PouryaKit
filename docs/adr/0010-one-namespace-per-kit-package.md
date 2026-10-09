@@ -41,8 +41,10 @@ first public release the Kit has no consumer to break; after it, reversing this 
    - Kit packages: `NamespaceTests` in `tests/PouryaKit.ArchitectureTests` asserts that every authored top-level type of
      each Kit package is in the namespace named after its assembly. It leaves out compiler-generated definitions by
      their marker (`CompilerGeneratedAttribute` or `GeneratedCodeAttribute`), not by their name, so a later generator
-     is covered the same way. Its negative case is `Offending.Core`, whose four types, Core's sources and `TextHelpers`,
-     are in `PouryaKit.Core` inside the assembly `Offending.Core`. `.editorconfig` sets
+     is covered the same way. Its negative cases hold it to equality, which neither a prefix check nor a check of
+     sub-namespaces alone meets: `Offending.Stray.StrayType`, in the folder `Stray/` of the assembly `Offending`, is in
+     a sub-namespace, the editor's folder default; `Offending.Core`'s four types, Core's sources and `TextHelpers`, are
+     in an unrelated namespace, `PouryaKit.Core`, inside the assembly `Offending.Core`. `.editorconfig` sets
      `dotnet_style_namespace_match_folder = false` for `src/**`, so IDE0130 reports no folder mismatch there and
      the structure rule is the one check.
    - Application code: `.editorconfig` raises IDE0130 to a warning for the Proving Sample's Modules
