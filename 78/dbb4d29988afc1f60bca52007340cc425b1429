@@ -1,0 +1,33 @@
+docs/provenance/PouryaKit.Observability.md
+  s_744c07a8061ea2::t_678fdca16b3903 5
+docs/acceptance.md
+  s_744c07a8061ea2::t_678fdca16b3903 787
+  s_744c07a8061ea2::t_6e0b997202a69d 1080-1096
+docs/provenance/PouryaKit.Caching.md
+  s_744c07a8061ea2::t_678fdca16b3903 5
+docs/provenance/PouryaKit.Messaging.Wolverine.RabbitMq.md
+  s_744c07a8061ea2::t_678fdca16b3903 5
+docs/foundation-review.md
+  s_744c07a8061ea2::t_678fdca16b3903 855
+docs/provenance/PouryaKit.Cqrs.md
+  s_744c07a8061ea2::t_678fdca16b3903 44
+docs/provenance/PouryaKit.Web.md
+  s_744c07a8061ea2::t_acc3097544d6d3 90
+  s_744c07a8061ea2::t_678fdca16b3903 17,32,46,75,104,118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "78dbb4d29988afc1f60bca52007340cc425b1429",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
