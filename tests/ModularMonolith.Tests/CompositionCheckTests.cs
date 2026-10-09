@@ -170,11 +170,14 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         builder.Services.AddSingleton<DisposalProbe>();
         builder.Services.AddSingleton<ICompositionCheck>(new ReportingCheck(typeof(AwaitingDisposal)));
         builder.AddPouryaKitCompositionChecks();
+        var blocked = new BlockedContext();
         Exception? thrown = null;
+        SynchronizationContext? afterwards = null;
         var building = new Thread(() =>
         {
-            SynchronizationContext.SetSynchronizationContext(new BlockedContext());
+            SynchronizationContext.SetSynchronizationContext(blocked);
             thrown = Record.Exception(() => builder.Build());
+            afterwards = SynchronizationContext.Current;
         })
         {
             IsBackground = true,
@@ -185,6 +188,8 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         Assert.True(building.Join(TimeSpan.FromSeconds(30)), "The failed build never ended: its disposal waits for the thread it blocks.");
         Assert.Equal(string.Join(Environment.NewLine, ReportingCheck.Problems), Assert.IsType<InvalidOperationException>(thrown).Message);
         Assert.True(awaiting.Disposed);
+        // The thread has its own context back once the wait is over.
+        Assert.Same(blocked, afterwards);
     }
 
     [Fact]
