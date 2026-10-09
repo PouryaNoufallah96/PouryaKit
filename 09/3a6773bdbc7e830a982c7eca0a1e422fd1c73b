@@ -1,0 +1,23 @@
+.claude/agent-memory/kit-implementer/core-json-and-architecture-test-facts.md
+  s_744c07a8061ea2::t_1bedf0b22d6fc4 73
+docs/acceptance.md
+  s_744c07a8061ea2::t_1bedf0b22d6fc4 1053,1055-1056,1062-1063
+docs/adr/0010-one-namespace-per-kit-package.md
+  s_744c07a8061ea2::t_1bedf0b22d6fc4 46-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "093a6773bdbc7e830a982c7eca0a1e422fd1c73b",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
