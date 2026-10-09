@@ -1,0 +1,75 @@
+tests/ModularMonolith.Tests/OperationContextTests.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1,8-9,11,91-113
+  s_744c07a8061ea2::t_175b547c7c6b4d 114-115
+tests/ModularMonolith.Tests/Fixtures/SeenContext.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-8
+tests/ModularMonolith.Tests/StoredDeliveriesSchemaTests.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 2-6,8-13,158-235
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_744c07a8061ea2::t_bc752d71779e0a 36-41
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_744c07a8061ea2::t_bc752d71779e0a 41
+PouryaKit.slnx
+  s_744c07a8061ea2::t_bc752d71779e0a 46
+tests/ModularMonolith.Tests/Fixtures/InventoryProcess.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-88
+tests/ModularMonolith.Tests/Fixtures/AppFixture.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-143
+tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.csproj
+  s_744c07a8061ea2::t_bc752d71779e0a 14-16,19
+  s_744c07a8061ea2::t_8502bef2587c89 13
+tests/ModularMonolith.Tests/Fixtures/IdempotentRequests.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-23
+tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.Module/Things.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-283
+tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-289
+tests/ModularMonolith.Tests/IntegrationEventWiringTests.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 189-210,212,214-220,222-225,228-230
+tests/ModularMonolith.Tests/Fixtures/TestActorPermissions.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-21
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_744c07a8061ea2::t_bc752d71779e0a 15
+tests/ModularMonolith.Tests/Fixtures/CommitProbe.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-56
+tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.Module/PouryaKit.Cqrs.Tests.Module.csproj
+  s_744c07a8061ea2::t_bc752d71779e0a 1-10
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_744c07a8061ea2::t_bc752d71779e0a 3-4
+tests/ModularMonolith.Tests/ModelConventionTests.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 19,37,39,64-65
+tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.Module/OperationTrace.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-17
+tests/ModularMonolith.Tests/Fixtures/RecordedLogs.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-33
+tests/ModularMonolith.Tests/Fixtures/DeliveryProbes.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-255
+tests/ModularMonolith.Tests/Fixtures/AuditProductIntegrationEventHandler.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-43
+tests/ModularMonolith.Tests/Fixtures/RecordedTelemetry.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-73
+tests/ModularMonolith.Tests/Stub/StubDbContext.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-6
+tests/ModularMonolith.Tests/Fixtures/TestAuthentication.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-69
+tests/ModularMonolith.Tests/Fixtures/TestIssuer.cs
+  s_744c07a8061ea2::t_bc752d71779e0a 1-57
+docs/acceptance.md
+  s_744c07a8061ea2::t_0c4832ce29a916 1100-1118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8c43da73bbb3d83bea5793892e98bd83353dfcd3",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
