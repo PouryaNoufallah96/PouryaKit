@@ -14,7 +14,7 @@ Checked on nuget.org on 2026-10-07 (ticket #48); licence expressions from each p
 
 ## Endpoint convention
 
-- **Kit files:** `src/PouryaKit.Web/IEndpoint.cs`, `src/PouryaKit.Web/WebServiceCollectionExtensions.cs`, `src/PouryaKit.Web/WebEndpointRouteBuilderExtensions.cs`
+- **Kit files:** `src/PouryaKit.Web/Endpoints/IEndpoint.cs`, `src/PouryaKit.Web/WebServiceCollectionExtensions.cs`, `src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs`
 - **Upstream:** https://github.com/PouryaNoufallah96/cybernod
 - **Commit:** bae8ac3b7e46f09e9375647786d03391a500876a
 - **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.Web/Endpoints/IEndpointDefinition.cs`, `src/BuildingBlocks/BuildingBlocks.Web/Extensions/EndpointExtensions.cs`
@@ -29,7 +29,7 @@ Checked on nuget.org on 2026-10-07 (ticket #48); licence expressions from each p
 
 ## Result to HTTP
 
-- **Kit files:** `src/PouryaKit.Web/ResultHttpExtensions.cs`
+- **Kit files:** `src/PouryaKit.Web/ProblemResponses/ResultHttpExtensions.cs`
 - **Upstream:** https://github.com/PouryaNoufallah96/cybernod
 - **Commit:** bae8ac3b7e46f09e9375647786d03391a500876a
 - **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.Web/Endpoints/EndpointResponseHandler.cs`
@@ -43,7 +43,7 @@ Checked on nuget.org on 2026-10-07 (ticket #48); licence expressions from each p
 
 ## Problem responses for unexpected exceptions
 
-- **Kit files:** `src/PouryaKit.Web/UnexpectedExceptionHandler.cs`, `src/PouryaKit.Web/WebServiceCollectionExtensions.cs`
+- **Kit files:** `src/PouryaKit.Web/ProblemResponses/UnexpectedExceptionHandler.cs`, `src/PouryaKit.Web/WebServiceCollectionExtensions.cs`
 - **Upstream:** https://github.com/mehdihadeli/vertical-slice-api-template
 - **Commit:** 4a398078850cc6bd10f521a09e92c4983cc44955
 - **Upstream paths:** `src/Shared/Web/ProblemDetail/ProblemDetailsService.cs`
@@ -72,7 +72,7 @@ Checked on nuget.org on 2026-10-07 (ticket #48); licence expressions from each p
 
 ## Outgoing Operation Context handler
 
-- **Kit files:** `src/PouryaKit.Web/OperationContextHttpHandler.cs`, `src/PouryaKit.Web/WebHttpClientBuilderExtensions.cs`
+- **Kit files:** `src/PouryaKit.Web/HttpClients/OperationContextHttpHandler.cs`, `src/PouryaKit.Web/HttpClients/WebHttpClientBuilderExtensions.cs`
 - **Upstream:** https://github.com/PouryaNoufallah96/cybernod
 - **Commit:** bae8ac3b7e46f09e9375647786d03391a500876a
 - **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.Security/Utilities/HttpClientAuthorizationDelegatingHandler.cs`
@@ -87,7 +87,7 @@ Checked on nuget.org on 2026-10-07 (ticket #48); licence expressions from each p
 
 ## Configured CORS policies
 
-- **Kit files:** `src/PouryaKit.Web/PouryaKitCorsOptions.cs`, `src/PouryaKit.Web/ConfiguredCors.cs`
+- **Kit files:** `src/PouryaKit.Web/Defaults/PouryaKitCorsOptions.cs`, `src/PouryaKit.Web/Defaults/PouryaKitCorsPolicy.cs`, `src/PouryaKit.Web/Defaults/ConfiguredCors.cs`
 - **Upstream:** https://github.com/mehdihadeli/CloudNativeKit
 - **Commit:** e81d65e6376008cb001fdbd886086dc6e84790c6
 - **Upstream paths:** `src/CloudNativeKit.Web/Cors/DependencyInjectionExtensions.cs`
@@ -101,7 +101,7 @@ Checked on nuget.org on 2026-10-07 (ticket #48); licence expressions from each p
 
 ## Response compression
 
-- **Kit files:** `src/PouryaKit.Web/PouryaKitCompressionOptions.cs`, `src/PouryaKit.Web/ConfiguredCompression.cs`
+- **Kit files:** `src/PouryaKit.Web/Defaults/PouryaKitCompressionOptions.cs`, `src/PouryaKit.Web/Defaults/ConfiguredCompression.cs`
 - **Upstream:** https://github.com/PouryaNoufallah96/cybernod
 - **Commit:** bae8ac3b7e46f09e9375647786d03391a500876a
 - **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.Web/Extensions/CompressionExtensions.cs`
@@ -115,7 +115,7 @@ Checked on nuget.org on 2026-10-07 (ticket #48); licence expressions from each p
 
 ## Rate limiting per Actor
 
-- **Kit files:** `src/PouryaKit.Web/PouryaKitRateLimitOptions.cs`, `src/PouryaKit.Web/ActorRateLimiting.cs`
+- **Kit files:** `src/PouryaKit.Web/Defaults/PouryaKitRateLimitOptions.cs`, `src/PouryaKit.Web/Defaults/ActorRateLimiting.cs`
 - **Upstream:** https://github.com/PouryaNoufallah96/cybernod
 - **Commit:** bae8ac3b7e46f09e9375647786d03391a500876a
 - **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.Web/RateLimit/RateLimiterExtensions.cs`
