@@ -39,6 +39,12 @@ metadata:
 - `ModularMonolith.Tests`' infrastructure is in `Fixtures/` (namespace `ModularMonolith.Tests.Fixtures`, one `<Using>` in the csproj): a new fixture, probe or helper goes there, a test class at the root. Root code still sees root types first, so a fixture type now arrives through a using like the Stub's and could become ambiguous (CS0104) with a same-named imported type; none did.
 - `git mv` of a project folder moves its untracked `bin/` and `obj/` with it; move them to the scratchpad first (`mv`, as `rm -r` is refused), so no stale `obj/` sits inside the new parent project. A project nested in a test project needs `Compile Remove` and `None Remove` for its folder before the first build, or the parent compiles its sources and its `obj/*.cs`.
 
+## The no-using-change proof (#81, 2026-10-10)
+
+- `git diff <base> -- '*.cs' | grep -E '^[+-]using '` also prints `using var` declarations, every using of a new file, and both sides of a `git mv` whose content changed past rename detection (`EfUnitOfWorkExtensions.cs` to `EfUnitOfWorkDbContext.cs`). New tests that need new usings go in a new file. A Kit-internal using a ticket's own design needs (`Microsoft.Extensions.Options` for the options pattern, `System.Collections.Concurrent` for a cache) is listed, not hidden with fully qualified names.
+- An `[InlineData]` argument must be a constant, so a test whose theory data names an `Error` keeps its literal code; pin published codes once with literals and use the symbols everywhere else.
+- FluentValidation's `context.AddFailure(propertyName, message)` in a `Custom` rule gives a failure with no error code: the path to the Kit's `Validation.Failed` fallback.
+
 ## Mutation runs and their compile traps
 
 - Mutation via `if (false && …)` fails the build (CS0162 unreachable code under TreatWarningsAsErrors); use a runtime-false condition.

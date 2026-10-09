@@ -52,5 +52,9 @@ HybridCache decompiled with ilspycmd.
 - **A rollback does not clear the ChangeTracker:** after a refused command, a query in the same scope (endpoint, test `CreateAsyncScope` + `BeginOperation`) reads the rolled-back values from `FindAsync`. `EditFolderCommand(…, FolderEdit.RelabelThenRefuse, …)` then a cacheable read is the red for the rollback-only refusal.
 - **Serialize before ending the read** (re-review F6, high): a response holding a deferred enumerable mutates on enumeration, i.e. during `JsonSerializer.Serialize`. `IQueryCache.QueryAsync` takes an `Action endRead` (the dispatcher passes `reading!.Dispose`); the factory handles, serializes, calls it, returns the string. Use a concrete response record holding `IEnumerable<string>`: `Result<T>`'s implicit conversion does not apply when `T` is an interface.
 
+## Pinning the stored keys (#81, 2026-10-10; Microsoft.Extensions.Caching.Hybrid 10.10.0)
+
+- HybridCache writes its distributed entry under the Kit's key unchanged (no prefix): a recording `IDistributedCache` registered before `AddPouryaKitCaching()` sees `Namespace.Type%2C%20Assembly|tenant|Kind|actor|key`. The write lands after the answer, so wait on its first `Set`. The command's key is `select command from <schema>.pouryakit_idempotency_keys`. `TypeKeyTests` does both.
+
 **Why:** these decided the #42 and #43 shapes or a test of them, or cost a run.
 **How to apply:** for any Kit table written in the Unit of Work's transaction or cleaned across Modules, any race test, any endpoint opt-in, any Kit `BackgroundService` or test that drives one with the test clock, any HybridCache use, any slot that runs Feature code inside a library callback, and any single-flight or Redis test. Related: [[persistence-and-dapper-facts]], [[cqrs-and-modularity-facts]], [[web-security-and-openapi-facts]].
