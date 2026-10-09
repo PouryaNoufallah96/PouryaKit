@@ -38,3 +38,27 @@ dotnet_diagnostic.IDE0005.severity = warning
 # EF Core generates a migration with usings it does not need.
 [**/Migrations/*.cs]
 dotnet_diagnostic.IDE0005.severity = none
+
+# ADR 0010: a Kit package keeps one namespace, its own name, in every folder.
+[src/**/*.cs]
+dotnet_style_namespace_match_folder = false
+
+# ADR 0010: application code's namespaces follow its folders. IDE0130 checks it in the Proving Sample's Modules and the
+# test projects; each file below is a deliberate exception.
+[samples/ModularMonolith/src/Modules/**/*.cs]
+dotnet_diagnostic.IDE0130.severity = warning
+
+[tests/**/*.cs]
+dotnet_diagnostic.IDE0130.severity = warning
+
+# Aspire's convention: the service defaults extend the host builder in Microsoft.Extensions.Hosting.
+[samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs]
+dotnet_diagnostic.IDE0130.severity = none
+
+# The Stub Module's namespace: each type here has the full name of one in the Stub's assembly.
+[tests/ModularMonolith.Tests/SameNamed/StubSameNamed.cs]
+dotnet_diagnostic.IDE0130.severity = none
+
+# PouryaKit.Core's namespace: the fourth public helper the Core rule must reject.
+[tests/PouryaKit.ArchitectureTests/Offending.Core/TextHelpers.cs]
+dotnet_diagnostic.IDE0130.severity = none

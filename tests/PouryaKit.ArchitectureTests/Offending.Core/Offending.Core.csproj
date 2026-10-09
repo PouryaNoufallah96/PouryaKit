@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- PouryaKit.Core's own sources plus a fourth public helper, so the Core rule is seen to reject a Core that grows
-       one. Never shipped. PouryaKit.ArchitectureTests references it under an alias, since its types share Core's
-       names. -->
+       one, and the namespace rule an assembly whose types are not in the namespace of its name. Never shipped.
+       PouryaKit.ArchitectureTests references it under an alias, since its types share Core's names. -->
   <PropertyGroup>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
