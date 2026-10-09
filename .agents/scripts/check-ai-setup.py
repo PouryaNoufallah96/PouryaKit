@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 GUARD = ROOT / ".agents/hooks/guard.py"
 MOD_HOOKS = ROOT / ".claude/mods/kit-cockpit/hooks/register.ts"
 STATUSLINE = ROOT / ".claude/statusline.sh"
+KIT_SKILL = "pourya-kit"  # owned by this repository, so the one skill skills-lock.json does not pin
 AGENT_KEYS = {
     "name", "description", "tools", "disallowedTools", "model", "permissionMode", "maxTurns",
     "skills", "mcpServers", "hooks", "memory", "background", "omitClaudeMd", "effort",
@@ -132,10 +133,13 @@ def load(path: Path):
 
 def check_skills() -> None:
     source, mirror, mods = ROOT / ".agents/skills", ROOT / ".claude/skills", ROOT / ".claude/mods"
+    pinned = (load(ROOT / "skills-lock.json") or {}).get("skills", {})
     for skill in sorted(d for d in source.iterdir() if (d / "SKILL.md").is_file()):
         data, _ = frontmatter(skill / "SKILL.md")
         if not data.get("name") or not data.get("description"):
             failures.append(f"{rel(skill)}/SKILL.md: needs name and description (Codex skips it otherwise)")
+        if skill.name != KIT_SKILL and skill.name not in pinned:
+            failures.append(f"{rel(skill)}: no entry in skills-lock.json, so nothing pins it; only {KIT_SKILL} is this repository's own")
         link = mirror / skill.name
         if not link.is_symlink() or link.resolve() != skill.resolve():
             failures.append(f".claude/skills/{skill.name}: not a symlink to {rel(skill)}")
@@ -147,6 +151,19 @@ def check_skills() -> None:
             failures.append(f"{rel(entry)}: real file or directory; skills live in .agents/skills and mods in .claude/mods")
         elif not entry.exists() or entry.resolve() not in homes:
             failures.append(f"{rel(entry)}: must be a symlink to .agents/skills/{entry.name} or .claude/mods/{entry.name}")
+
+
+def check_skills_lock() -> None:
+    """Each vendored skill still matches its hash in skills-lock.json. The hash's file order is JavaScript's, so Node computes it."""
+    node = shutil.which("node")
+    if node is None:
+        failures.append("skills-lock.json: node is not on PATH, so no vendored skill was checked against its hash")
+        return
+    done = subprocess.run([node, str(ROOT / ".agents/scripts/check-skills-lock.mjs")], capture_output=True, text=True)
+    found = [line.removeprefix("FAIL").strip() for line in done.stdout.splitlines() if line.startswith("FAIL")]
+    if done.returncode and not found:
+        found = [f"check-skills-lock.mjs: exit {done.returncode}: {done.stderr.strip()[-300:]}"]
+    failures.extend(found)
 
 
 def check_mods() -> None:
@@ -534,6 +551,7 @@ def main() -> int:
     check_tree()
     check_package_counts()
     check_skills()
+    check_skills_lock()
     check_mods()
     check_agents()
     check_claude_settings()

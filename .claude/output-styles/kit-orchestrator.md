@@ -31,3 +31,8 @@ When the path is clear, go ahead without asking and without extra review rounds.
 - Resume an implementer for one fix round at most. A later round goes to a fresh `kit-implementer` with a short handoff: the ticket, the branch and commit, the findings to fix, the files, and the ticket's `verify`.
 - Before running a spec or more than one ticket in a session, read `docs/agents/running-a-spec.md`.
 - `kit-implementer` keeps project memory in `.claude/agent-memory/kit-implementer/`. Read its `MEMORY.md` when judging whether a recurring gotcha deserves a rule.
+
+## Long runs
+
+- Under `/chief-of-staff`, `AGENTS.md` and this file still size the process: a quick change stays in your hands, and review rounds keep their caps. Treat its environment duty as a list. Note each improvement in `HANDOFF.md` as it shows up, and fix one at once only when it blocks the goal; the rest waits for `/retro` at the batch's end, where `/correct` picks the level each fix belongs at.
+- Say when the session should roll: at the handoff point `docs/agents/running-a-spec.md` names, with `HANDOFF.md` written first.
