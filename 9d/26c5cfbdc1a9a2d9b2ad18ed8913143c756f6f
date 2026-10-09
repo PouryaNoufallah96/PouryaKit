@@ -1,0 +1,42 @@
+docs/adr/0010-one-namespace-per-kit-package.md
+  s_744c07a8061ea2::t_003535753fbdac 32
+  s_744c07a8061ea2::t_5f1b9a1da82154 1-6,15-28,31,33-35,38-91
+  s_744c07a8061ea2::t_c9b961178e3f73 36-37
+  s_744c07a8061ea2::t_f1e09da4fdb9ba 29-30
+  s_744c07a8061ea2::t_d4ea78fecb765d 7-14
+tests/PouryaKit.ArchitectureTests/Offending.Core/Offending.Core.csproj
+  s_744c07a8061ea2::t_3f4a9320bf7ab9 3-4
+.editorconfig
+  s_744c07a8061ea2::t_48bf422322c8a1 41-46,49-54,56-58,60-62,64
+  s_744c07a8061ea2::t_747f3bfacf0309 47
+  s_744c07a8061ea2::t_112eb03ac157b2 48,55
+  s_744c07a8061ea2::t_7c1bed1d9aef6a 59,63
+docs/architecture/README.md
+  s_744c07a8061ea2::t_bc77a818858386 655,660
+tests/PouryaKit.ArchitectureTests/NamespaceTests.cs
+  s_744c07a8061ea2::t_7c6c71e143c118 1-15,17-36,43-44,47-48,51
+  s_744c07a8061ea2::t_debf3a3cdbc503 37-42,49-50
+  s_744c07a8061ea2::t_9a9a7d1e11d2bf 46
+  s_744c07a8061ea2::t_25523677804b1f 16,45
+docs/acceptance.md
+  s_744c07a8061ea2::t_7f190c299cf3ba 1053,1057
+  s_744c07a8061ea2::t_a38f34879ff687 1046-1052,1054-1056,1058-1061
+.claude/rules/kit-code.md
+  s_744c07a8061ea2::t_a13144e7449170 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9d26c5cfbdc1a9a2d9b2ad18ed8913143c756f6f",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
