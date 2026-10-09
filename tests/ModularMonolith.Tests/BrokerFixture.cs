@@ -74,6 +74,12 @@ public sealed class BrokerFixture : IAsyncLifetime
         return new NpgsqlConnectionStringBuilder(_postgres.GetConnectionString()) { Database = name }.ConnectionString;
     }
 
+    /// <summary>
+    /// Closes every client connection to the vhost of <paramref name="broker"/> from the broker's side, as a broker
+    /// restart or a network cut does, while the Hosts on it keep running.
+    /// </summary>
+    public Task DropConnectionsAsync(Uri broker) => RabbitCtlAsync("close_all_connections", "-p", broker.AbsolutePath.TrimStart('/'), "forced drop");
+
     private async Task RabbitCtlAsync(params string[] arguments)
     {
         var result = await _rabbit.ExecAsync(["rabbitmqctl", .. arguments]);
