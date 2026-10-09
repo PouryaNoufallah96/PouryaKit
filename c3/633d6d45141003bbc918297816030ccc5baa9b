@@ -1,0 +1,23 @@
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_8e32520ab296c1::t_c7b31072f138a2 178
+  s_8e32520ab296c1::t_6fa673db0e4b30 156-177,179-184
+tests/PouryaKit.ArchitectureTests/TemplateRules.cs
+  s_8e32520ab296c1::t_9a5397ee6611f4 323-327,333-344
+  s_8e32520ab296c1::t_3f4e553b2575f5 328-332
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c3633d6d45141003bbc918297816030ccc5baa9b",
+  "prompts": {},
+  "sessions": {
+    "s_8e32520ab296c1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "894356de-d180-4dce-8974-c5f92eb7db1e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
