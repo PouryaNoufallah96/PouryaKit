@@ -1,0 +1,25 @@
+.claude/agent-memory/kit-implementer/integration-event-wire-and-rabbitmq-facts.md
+  s_744c07a8061ea2::t_1434c348b7d725 69-75
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_744c07a8061ea2::t_0e2d7b15efaf39 1,11,15
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_744c07a8061ea2::t_0d79281131db85 59-64
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_744c07a8061ea2::t_34d98fa3be7fe5 32-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f7abadc94fa8a04c4a05f2f0ffa3f5ac089fd047",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
