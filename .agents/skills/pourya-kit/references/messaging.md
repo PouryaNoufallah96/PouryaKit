@@ -66,7 +66,7 @@ Both react to a Domain Event the Module raised. Choose by when the reaction may 
 
 - A Domain Event Handler runs inside the Operation's Unit of Work, before the commit, and its changes commit with the change or not at all. Use it to keep the Module's own aggregates consistent with each other ([persistence.md](persistence.md#domain-event-handlers)).
 - A Notification Handler runs after the commit, in an Operation of its own. Use it for anything that reaches outside the Module's own data and cannot be taken back, such as sending an email, pushing to a client, calling another system or publishing an Integration Event for other Modules. Its failure is retried; it never rolls back the change, which is already committed.
-- One Domain Event may have both, as the sample's `ProductCreatedDomainEvent` does: `CountProductInCategoryHandler` counts the product in the same commit, and afterwards `AnnounceNewProductNotificationHandler` announces it and `PublishProductCreatedNotificationHandler` tells other Modules about it. A Domain Event needs no Domain Event Handler to be delivered as a Notification.
+- One Domain Event may have both, as the sample's `ProductCreatedDomainEvent` does: `CountProductInCategoryDomainEventHandler` counts the product in the same commit, and afterwards `AnnounceNewProductNotificationHandler` announces it and `PublishProductCreatedNotificationHandler` tells other Modules about it. A Domain Event needs no Domain Event Handler to be delivered as a Notification.
 
 ## Writing a Notification Handler
 

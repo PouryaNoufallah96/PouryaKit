@@ -8,11 +8,11 @@ using PouryaKit.Persistence;
 
 namespace Catalog.Categories.Events.DomainEventHandlers;
 
-// Lowers the count in the same transaction as the product's removal: both are saved, or neither is.
-internal sealed class UncountProductInCategoryHandler(IRepository<Category, CategoryId> categories)
-    : IDomainEventHandler<ProductRemovedDomainEvent>
+// Counts a new product in its category in the same transaction as the product: both are saved, or neither is.
+internal sealed class CountProductInCategoryDomainEventHandler(IRepository<Category, CategoryId> categories)
+    : IDomainEventHandler<ProductCreatedDomainEvent>
 {
-    public async Task<Result> Handle(ProductRemovedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(ProductCreatedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         var category = await categories.FindAsync(domainEvent.CategoryId, cancellationToken);
         if (category is null)
@@ -20,7 +20,7 @@ internal sealed class UncountProductInCategoryHandler(IRepository<Category, Cate
             return CategoryErrors.NotFound;
         }
 
-        category.UncountProduct();
+        category.CountProduct();
         return Result.Success();
     }
 }

@@ -31,7 +31,7 @@ The Billing Module (ticket #17) adds no package: it references what Inventory re
 - **Ticket:** #52, recorded in the final audit of Wave 2 (2026-10-08)
 - **Intentional differences:**
   - The class, its namespace `Microsoft.Extensions.Hosting`, the two endpoint path constants and the names `AddServiceDefaults`, `ConfigureOpenTelemetry`, `AddDefaultHealthChecks` and `MapDefaultEndpoints` are upstream's, so a Host composes the recipes as an Aspire project does; the members are C# 14 extension members.
-  - OpenTelemetry adds the Kit's source and meter (`OperationTelemetry.SourceName`) beside the application's, and exports over OTLP only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, as upstream does.
+  - OpenTelemetry adds the Kit's source and meter (`OperationTelemetry.SourceName`) beside the application's, and Npgsql's own source `Npgsql` (ticket #80), which upstream does not add, and exports over OTLP only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, as upstream does.
   - Readiness adds the `databases` check, which asks each registered DbContext whether its database answers; upstream has the `self` liveness check only.
   - Every `HttpClient` takes `AddPouryaKitResilience()`, which retries safe methods only, in place of upstream's `AddStandardResilienceHandler()`.
   - `/alive` is mapped in every environment, anonymous and exempt from rate limiting, and `/health` in Development only (ticket #64); upstream maps both in Development only.

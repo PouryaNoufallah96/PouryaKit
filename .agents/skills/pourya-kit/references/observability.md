@@ -80,7 +80,7 @@ pouryakit.operation Deliver  ── broker ──▶  [Wolverine span of the env
 
 ## Exporting
 
-The Host adds an exporter for the source and the meter named `PouryaKit`, and for `Wolverine` if it wants Wolverine's spans as well, with the standard OpenTelemetry SDK. The service defaults recipe registers the application's own source and `OperationTelemetry.SourceName`, not `Wolverine`, and exports over OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured ([host-recipes.md](host-recipes.md#what-each-recipe-does)); Wolverine's spans are opt-in: add `.AddSource("Wolverine")` to its `WithTracing` registration. Logs, Serilog included, are configured on the Host too. None of it belongs in a Module or in the Kit.
+The Host adds an exporter for the source and the meter named `PouryaKit`, and for `Wolverine` if it wants Wolverine's spans as well, with the standard OpenTelemetry SDK. The service defaults recipe registers the application's own source, `OperationTelemetry.SourceName` and `Npgsql`, a span for each database command, not `Wolverine`, and exports over OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured ([host-recipes.md](host-recipes.md#what-each-recipe-does)); Wolverine's spans are opt-in: add `.AddSource("Wolverine")` to its `WithTracing` registration. Logs, Serilog included, are configured on the Host too. None of it belongs in a Module or in the Kit.
 
 ## Testing telemetry
 
@@ -106,4 +106,4 @@ ActivitySource.AddActivityListener(listener);
 - Assert on tags, `Status`, `ParentSpanId` and `TraceStateString`, not on timings. To assert a duration, use a `MeterListener` for the instrument `pouryakit.operation.duration` of the meter `PouryaKit`: a sub-second Operation has a value above zero with a fraction.
 - A test's tracestate reaches a first delivery attempt from the envelope held in memory. Only a retry reads the header back from the store, so test a retry when the header itself is the claim.
 - `ObservabilityTests` in the Proving Sample's tests does all of this for the Catalog-to-Inventory chain. Its `RecordedTelemetry` holds the listeners, and `DeliveryProbes.ActivitiesOf(subscription)` gives the activity each delivery attempt ran in.
-- `CrossProcessTracingTests` does it across RabbitMQ, with the Catalog Host and `Inventory.Host` of `BrokerFixture` both in the test process: a listener sees its own process only. `HostRecipeTests` shows the Kit's activities and durations reaching an exporter the test adds to the service defaults' own providers.
+- `CrossProcessTracingTests` does it across RabbitMQ, with the Catalog Host and `Inventory.Host` of `BrokerFixture` both in the test process: a listener sees its own process only. `HostRecipeTests` shows the Kit's activities and durations, and the `Npgsql` spans of a delivery's database commands under its Operation, reaching an exporter the test adds to the service defaults' own providers.
