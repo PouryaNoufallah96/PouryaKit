@@ -27,9 +27,3 @@ public sealed record Actor
     /// </summary>
     public static Actor System(string name) => new(name, ActorKind.System);
 }
-
-public enum ActorKind
-{
-    Person,
-    System,
-}

@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Observability`. Format and rules: [README](README.md).
 
-The trace through the Outbox is new Kit code, decided in [ADR 0009](../adr/0009-w3c-trace-context-through-the-outbox.md), so it has no record here. That covers the activity's placement around the whole dispatch, the tracestate header the Outbox writes (`src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs`), the parent each delivery restores (`src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs`, recorded as `Operation.TraceParent` in `src/PouryaKit.Cqrs/Operation.cs`) and the parent fallback in `src/PouryaKit.Observability/ObservedDispatcher.cs`. Wolverine's own `parent-id` handling, which the Kit relies on, is cited there from `jasperfx/wolverine` at tag `V6.46.0`.
+The trace through the Outbox is new Kit code, decided in [ADR 0009](../adr/0009-w3c-trace-context-through-the-outbox.md), so it has no record here. That covers the activity's placement around the whole dispatch, the tracestate header the Outbox writes (`src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs`), the parent each delivery restores (`src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs`, recorded as `Operation.TraceParent` in `src/PouryaKit.Cqrs/Operations/Operation.cs`) and the parent fallback in `src/PouryaKit.Observability/ObservedDispatcher.cs`. Wolverine's own `parent-id` handling, which the Kit relies on, is cited there from `jasperfx/wolverine` at tag `V6.46.0`.
 
 ## Package dependencies
 

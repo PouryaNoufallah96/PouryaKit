@@ -72,6 +72,7 @@ The worktree base and the one-git-command rule are in the role file; these are w
 
 - The system-reminder's copy of `AGENTS.md` comes from the main checkout and can differ from the worktree's: read the worktree file before editing. A Write or Edit to the main checkout's path is refused; use the worktree path.
 - `gh issue view N --comments` printed nothing from a worktree; `gh issue view N --repo PouryaNoufallah96/PouryaKit` plus `gh api repos/PouryaNoufallah96/PouryaKit/issues/N/comments` works.
+- **Pre-Wave 3 briefs live in the main checkout only** (`.claude/handoff/<date>/briefs/`, untracked): a worktree has no copy, so read them by the main checkout's absolute path (#78, 2026-10-09).
 - The shared scratchpad is shared with other agents of the session: another agent overwrote `mutate.py`; name scratch scripts per ticket (`mutate18.py`).
 - The scratchpad is shared by every session: keep backups and harnesses in a ticket folder (`p35/`); generic `*.bak` names collide.
 - **The scratchpad root is shared** with parallel implementers (`mutate.py`, `edit_*.py` of other tickets sit there): keep a ticket's scripts in a subfolder.

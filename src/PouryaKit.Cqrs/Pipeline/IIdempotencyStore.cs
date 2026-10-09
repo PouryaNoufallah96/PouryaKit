@@ -18,15 +18,3 @@ public interface IIdempotencyStore
     /// <summary>Records <paramref name="response"/> for <paramref name="key"/>, reserved in the same transaction.</summary>
     Task RecordAsync(IdempotencyKey key, string response, CancellationToken cancellationToken);
 }
-
-/// <summary>
-/// The key of one idempotent request: the tenant, null where the Operation has none; the Actor; the command, as its
-/// type's full name and its assembly's simple name (<c>Namespace.Type, Assembly</c>); and the request id.
-/// </summary>
-public sealed record IdempotencyKey(string? Tenant, Actor Actor, string Command, string RequestId);
-
-/// <summary>
-/// The success a committed Operation recorded for a key: its Result's value in the Kit's JSON representation, or null
-/// for a command without a value.
-/// </summary>
-public sealed record RecordedSuccess(string? Response);
