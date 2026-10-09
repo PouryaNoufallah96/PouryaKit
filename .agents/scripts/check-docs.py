@@ -40,12 +40,13 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   `docs/provenance/` (its README's format example is no record). Ordinary prose that trips it is said another way.
 - Kit paths: a path the docs cite into the Kit must name a file or folder that git tracks or would track and the
   working tree holds: each span that is a path on the **Kit files** line of a record in `docs/provenance/`, and
-  each span that is a path into the Kit's packages (`src/PouryaKit.*`), `samples/` or `tests/` in a top-level
-  `docs/*.md`, the plan and the acceptance record among them. A `:line` suffix is not part of the path, and a path
-  holding `*` is a glob that must match one. Out of scope by design: an upstream repository's path, which a record
-  cites under **Upstream paths** or as `repository@commit path` and the plan as a path outside the Kit's packages; the
-  test project of a solution generated from the templates (`tests/acme-shop.Tests`), which exists only during a
-  `validate.py` run; and `docs/adr/`, dated records. A moved file is cited at its new path.
+  each span that is a path into the Kit's packages (`src/PouryaKit.*`), `samples/` or `tests/` in the rest of such a
+  record, but its **Upstream paths** line, or in a top-level `docs/*.md`, the plan and the acceptance record among
+  them. A `:line` suffix is not part of the path, and a path holding `*` is a glob that must match one. Out of scope
+  by design: an upstream repository's path, which a record cites under **Upstream paths** or as
+  `repository@commit path` and the plan as a path outside the Kit's packages; the test project of a solution
+  generated from the templates (`tests/acme-shop.Tests`), which exists only during a `validate.py` run; and
+  `docs/adr/`, dated records. A moved file is cited at its new path.
 
 `--fences` only prints: for each Markdown file changed against HEAD, whether its fenced blocks changed, so an
 implementer knows whether the skill's snippet harness must run.
@@ -115,6 +116,7 @@ REMOVED_TESTS = {
 }
 ADOPTED = re.compile(r"//.*\b(shaped like|adapted from|ported from|taken from)\b", re.IGNORECASE)
 KIT_FILES = "- **Kit files:**"
+UPSTREAM_PATHS = "- **Upstream paths:**"
 CITED_PATH = re.compile(r"([\w.-]+/[^\s:]*)(?::[\d,-]+)?")  # a span that is a repository path, maybe with a `:line`
 KIT_ROOTS = ("src/PouryaKit.", "samples/", "tests/")  # the Kit's packages, the Proving Sample and the tests
 # The test project of a solution that `validate.py` or ticket #59's probe generates from the templates under one of
@@ -460,9 +462,11 @@ def check_kit_paths(docs: dict[str, Doc], files: list[str]) -> None:
     present |= {str(parent) for f in present for parent in Path(f).parents[:-1]}
     cited = [(path, number, match.group(1)) for path, number, span in kit_files(files) if (match := CITED_PATH.fullmatch(span))]
     for path, doc in docs.items():
-        if path.startswith("docs/") and path.count("/") == 1:
+        record = path.startswith("docs/provenance/") and not path.endswith("/README.md")
+        if record or path.startswith("docs/") and path.count("/") == 1:  # a record's Kit files line is read above
             cited += [(path, number, match.group(1)) for number, span in doc.spans() if (match := CITED_PATH.fullmatch(span))
-                      and match.group(1).startswith(KIT_ROOTS) and not GENERATED.match(match.group(1))]
+                      and match.group(1).startswith(KIT_ROOTS) and not GENERATED.match(match.group(1))
+                      and not (record and doc.lines[number - 1].startswith((KIT_FILES, UPSTREAM_PATHS)))]
     for path, number, kit_path in cited:
         pattern = kit_path.rstrip("/")
         if not (any(fnmatch.fnmatchcase(f, pattern) for f in present) if "*" in pattern else pattern in present):
