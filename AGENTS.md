@@ -63,9 +63,25 @@ Dual review invocations, including session provider/model overrides, are in `doc
 Both reviewers apply these to the diff. Report defects the diff introduced; older issues and matters of taste stay out. Flag:
 
 - A violation of a rule under "Rules", or a name that drifts from its `GLOSSARY.md` term. A contradiction of an ADR or a section G decision is severity high.
-- A test that would still pass if every collaborator returned its default, or coverage that restates another test.
+- A test that would still pass if every collaborator returned its default or under a weaker predicate than the rule states (a prefix check where the rule says equality, a scope narrower than the ticket names), or coverage that restates another test.
 - A claimed runtime guarantee without runtime proof.
 - Docs or AI guidance left out of sync with the change. For each sentence or message the diff changes, search its old key phrase across `src/`, the Kit's skill, `docs/architecture/` and `docs/acceptance.md`: a restatement left as it was is a finding.
+
+## Rules and what enforces them
+
+Correct a repeated mistake at the highest level that works; add the rule here only with its enforcement. A rule with nothing in its second column is a judgement call the reviewer carries.
+
+| Rule | Enforced by |
+|---|---|
+| Section G decisions are final; one implementation per concern; glossary terms | `kit-reviewer` (a contradiction of an ADR or section G is high) |
+| Reference projects are read-only | `.agents/hooks/guard.py` denies writes outside the working tree |
+| Permissive licences only (ADR 0002) | `LicenceTests` |
+| Feature code never saves, commits or touches the Outbox (ADR 0003) | `FeatureCodeTests`, `ModuleRules` |
+| One namespace per Kit package; application namespaces follow folders (ADR 0010) | `NamespaceTests`; IDE0130 in `.editorconfig` |
+| Docs name real code, paths and tests | `check-docs.py` (names, links, Kit paths, acceptance pointers, provenance) |
+| A merged head's code was validated | `merge-package.py` exit 14: only Markdown may differ from the validated commit |
+| A negative test discriminates the rule's exact predicate | `kit-reviewer` (the review rule above) |
+| A brief's commands come from the environment, never from memory | `docs/agents/brief-template.md`, "Verify" |
 
 ## Rule router
 
