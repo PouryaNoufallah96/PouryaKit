@@ -1,0 +1,19 @@
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_75dee3f51db59e::t_76fd66188303fc 173,175,178,180,191-192
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4f8c9c7f7f3b64f6dd9017bdc7e14e14221c0d4d",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
