@@ -1,0 +1,23 @@
+README.md
+  s_75dee3f51db59e::t_0abc64725babf0 5
+docs/private-packages.md
+  s_75dee3f51db59e::t_0abc64725babf0 16,67-69
+docs/acceptance.md
+  s_75dee3f51db59e::t_0abc64725babf0 671,993-1006
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "848a5f9a929fe354d65396cfd37cd6118f0a6141",
+  "prompts": {},
+  "sessions": {
+    "s_75dee3f51db59e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d11f190-5244-4a59-b525-cd457c2263cc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
