@@ -1,0 +1,24 @@
+.agents/scripts/check-skills-lock.mjs
+  s_e4860188e110d4::t_19aeae6ffff09b 15,19,21-27
+docs/agents/ai-setup.md
+  s_e4860188e110d4::t_19aeae6ffff09b 231
+.agents/scripts/test_check_skills_lock.py
+  s_e4860188e110d4::t_19aeae6ffff09b 48-51
+  s_e4860188e110d4::t_86b18796347b71 47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "423fd1e2576d07825edec2579a39cf615def77b4",
+  "prompts": {},
+  "sessions": {
+    "s_e4860188e110d4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "46529f00-1409-4e8f-a287-0e449143c4c8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
