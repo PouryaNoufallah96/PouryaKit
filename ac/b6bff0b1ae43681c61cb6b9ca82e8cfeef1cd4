@@ -1,0 +1,48 @@
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Categories/Events/DomainEventHandlers/UncountProductInCategoryDomainEventHandler.cs
+  s_744c07a8061ea2::t_64d71c4271087c 1-26
+samples/ModularMonolith/src/Inventory.Host/InventoryHost.cs
+  s_744c07a8061ea2::t_1be2e6bfb41443 34-35
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Categories/Events/DomainEventHandlers/CountProductInCategoryDomainEventHandler.cs
+  s_744c07a8061ea2::t_64d71c4271087c 1-26
+samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs
+  s_744c07a8061ea2::t_dcb31d56372ca5 49-52
+  s_744c07a8061ea2::t_ff4e0fc66c2d5e 26
+  s_744c07a8061ea2::t_927412487c5816 71
+.agents/skills/pourya-kit/references/persistence.md
+  s_744c07a8061ea2::t_bf920bd7695685 292
+  s_744c07a8061ea2::t_64d71c4271087c 276,290
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_744c07a8061ea2::t_1be2e6bfb41443 48,55
+docs/acceptance.md
+  s_744c07a8061ea2::t_b53f0265717043 1062-1074
+.agents/skills/pourya-kit/references/observability.md
+  s_744c07a8061ea2::t_1be2e6bfb41443 83
+  s_744c07a8061ea2::t_5211c4765b1f4f 109
+docs/provenance/ModularMonolith.md
+  s_744c07a8061ea2::t_1be2e6bfb41443 34
+docs/architecture/README.md
+  s_744c07a8061ea2::t_1be2e6bfb41443 200
+.agents/skills/pourya-kit/references/modules.md
+  s_744c07a8061ea2::t_2d55b5639964bb 57
+.agents/skills/pourya-kit/references/messaging.md
+  s_744c07a8061ea2::t_64d71c4271087c 69
+tests/ModularMonolith.Tests/HostRecipeTests.cs
+  s_744c07a8061ea2::t_bdd4e6c715865a 61
+  s_744c07a8061ea2::t_e98d107be9a135 62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "acb6bff0b1ae43681c61cb6b9ca82e8cfeef1cd4",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
