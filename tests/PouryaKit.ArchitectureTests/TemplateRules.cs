@@ -327,8 +327,8 @@ internal static class TemplateRules
     /// a Unit of Work, so such a file can load an aggregate and change it outside a command, where no call of the Kit
     /// is made to refuse it (ADR 0003, ticket #68). The business code comes from the sample and is not judged here, so
     /// this rule never has to tell a handler from a service that a handler calls. A registration names the repository
-    /// as a type argument and takes nothing; comments are left out. It cannot see a repository reached through an
-    /// alias, through <c>typeof</c>, inside another generic type such as <c>IEnumerable</c>, or through another type
+    /// as a type argument and takes nothing; <c>//</c> comments are left out. It cannot see a repository reached through
+    /// an alias, through <c>typeof</c>, inside another generic type such as <c>IEnumerable</c>, or through another type
     /// the file takes that itself takes one.
     /// </summary>
     public static IEnumerable<string> RepositoriesTaken(IEnumerable<TextFile> own, IEnumerable<TextFile> sample)
