@@ -124,7 +124,8 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
 
     // A query nested in a command runs inside the command's Unit of Work, so what it added would commit with the
     // command, though a failed query Result alone marks nothing rollback-only. Outside a Unit of Work the DbContext
-    // would track the change and no commit would ever save it: it would be dropped with the scope, without a word.
+    // would track the change with no commit of its own: it would be dropped with the scope, without a word, or
+    // saved by a command the scope sent after it.
     private void EnsureMayWrite()
     {
         if (!_operation.MayChangeState)

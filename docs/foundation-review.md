@@ -1016,6 +1016,12 @@ Answered by the owner on 2026-10-06:
    learning from Ultrabusiness's `AddLocalizationServices` and `UseLocalization`. An English-only
    Host does not reference it; do not copy their resource designer.
 
+Open for Wave 3 planning (recorded 2026-10-09 on the owner's word, not decided): answer 4 stands as
+written. A Notification is delivered to its handler once, on one instance, so reaching a client
+connected to another instance needs a delivery between instances that this plan does not name.
+Wave 3's spec names that mechanism, and how it fits "no second push channel", before
+`PouryaKit.Realtime` is built. Nothing of it is implemented.
+
 Spikes before building (no owner input, recorded as ADRs): the Marten two-store spike (I.4); the
 RabbitMQ topology spike under ADR 0006; a check whether Wolverine already propagates W3C trace
 context into envelopes. *Resolved, ADR 0009 (2026-10-07): it writes and restores `traceparent` on the
