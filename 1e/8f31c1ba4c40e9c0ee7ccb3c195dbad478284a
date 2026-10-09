@@ -1,0 +1,23 @@
+docs/foundation-review.md
+  s_8e32520ab296c1::t_047c2e3d3f1214 1019-1024
+src/PouryaKit.Persistence.EFCore/EfRepository.cs
+  s_8e32520ab296c1::t_047c2e3d3f1214 127-128
+docs/acceptance.md
+  s_8e32520ab296c1::t_047c2e3d3f1214 1020
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1e8f31c1ba4c40e9c0ee7ccb3c195dbad478284a",
+  "prompts": {},
+  "sessions": {
+    "s_8e32520ab296c1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "894356de-d180-4dce-8974-c5f92eb7db1e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
