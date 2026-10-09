@@ -1,0 +1,49 @@
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_2867f8a3b2cd19::t_ab5a54b33d8c57 87-91
+.agents/skills/pourya-kit/references/messaging.md
+  s_2867f8a3b2cd19::t_ab5a54b33d8c57 522,673,687
+.claude/agent-memory/kit-implementer/snapshot-and-scheduled-command-facts.md
+  s_2867f8a3b2cd19::t_ab5a54b33d8c57 64-69
+.claude/agent-memory/kit-implementer/caching-and-idempotency-facts.md
+  s_2867f8a3b2cd19::t_ab5a54b33d8c57 59-62
+  s_2867f8a3b2cd19::t_4c511156515085 63
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_2867f8a3b2cd19::t_ab5a54b33d8c57 871-875
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs
+  s_2867f8a3b2cd19::t_ab5a54b33d8c57 54-56
+docs/acceptance.md
+  s_2867f8a3b2cd19::t_ab5a54b33d8c57 1198-1213
+  s_2867f8a3b2cd19::t_c5a2467c236950 1197,1214
+docs/architecture/README.md
+  s_2867f8a3b2cd19::t_ab5a54b33d8c57 534
+  s_2867f8a3b2cd19::t_c5a2467c236950 528
+tests/ModularMonolith.Tests/RecurringCommandTests.cs
+  s_2867f8a3b2cd19::t_ab5a54b33d8c57 3-4,8,14,20,36,340-488,582-585,630-641
+  s_2867f8a3b2cd19::t_306b294fc75cfc 642
+tests/ModularMonolith.Tests/Stub/StubDelayedCommands.cs
+  s_2867f8a3b2cd19::t_ab5a54b33d8c57 48-50
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_2867f8a3b2cd19::t_ab5a54b33d8c57 467-493
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_2867f8a3b2cd19::t_ab5a54b33d8c57 11-13,18
+src/PouryaKit.Messaging.Wolverine.EFCore/PouryaKitMessageStoreOptions.cs
+  s_2867f8a3b2cd19::t_ab5a54b33d8c57 17-23
+src/PouryaKit.Messaging.Wolverine/PouryaKitMessagingOptions.cs
+  s_2867f8a3b2cd19::t_ab5a54b33d8c57 10-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c3d7fa2cf7077a521d9d69bb75adcd6d0c864a2d",
+  "prompts": {},
+  "sessions": {
+    "s_2867f8a3b2cd19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00cca649-e6c4-44eb-8549-8c8dbeae846f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
