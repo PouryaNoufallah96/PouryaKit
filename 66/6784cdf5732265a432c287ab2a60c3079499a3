@@ -1,0 +1,250 @@
+src/PouryaKit.Web/Endpoints/UnmappedEndpointsCheck.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-45
+src/PouryaKit.Cqrs/Operations/Actor.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-29
+src/PouryaKit.Cqrs/Paging/PageDeclaration.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-178
+src/PouryaKit.Cqrs/Pipeline/IQueryCache.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-42
+src/PouryaKit.Cqrs/Composition/HostComposition.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-53
+src/PouryaKit.Cqrs/Pipeline/IIdempotencyStore.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-20
+src/PouryaKit.Cqrs/Paging/PageFilter.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-7
+src/PouryaKit.Cqrs/Pipeline/IUnitOfWork.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-27
+src/PouryaKit.Persistence.EFCore/Idempotency/IdempotencyKeyCleanup.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-149
+src/PouryaKit.Web/HttpClients/HttpReplayPolicies.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-35
+src/PouryaKit.Web/HttpClients/WebHttpClientBuilderExtensions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-114
+src/PouryaKit.Web/Defaults/PouryaKitCorsPolicy.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-23
+src/PouryaKit.Cqrs/Pipeline/RecordedSuccess.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-7
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandExtension.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-19
+src/PouryaKit.Messaging.Wolverine/Subscriptions/SnapshotServiceCollectionExtensions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-84
+src/PouryaKit.Messaging.Wolverine/Composition/DurableQueuesCheck.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-82
+src/PouryaKit.Cqrs/Operations/PouryaKitClaimTypes.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-12
+src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-508
+src/PouryaKit.Web/HttpClients/SingleResilienceHandler.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-25
+src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-141
+docs/foundation-review.md
+  s_744c07a8061ea2::t_de083ff65c17d1 855
+src/PouryaKit.Cqrs/Paging/FilterOperator.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-33
+src/PouryaKit.Cqrs/Composition/UnitOfWorkCheck.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-33
+src/PouryaKit.Web/Defaults/PouryaKitRateLimitOptions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-29
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommands.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-52
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Deliver.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-48
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/IDelayedCommands.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-25
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/PouryaKitRecurringCommandOptions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-14
+src/PouryaKit.Cqrs/Composition/ComposedFeatures.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-52
+src/PouryaKit.Messaging.Wolverine/Composition/RoutingCheck.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-40
+src/PouryaKit.Web/ProblemResponses/UnexpectedExceptionHandler.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-54
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_744c07a8061ea2::t_de083ff65c17d1 75
+src/PouryaKit.Cqrs/Composition/QueryCacheCheck.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-24
+src/PouryaKit.Messaging.Wolverine/Subscriptions/IntegrationEventServiceCollectionExtensions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-133
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Subscription.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-77
+src/PouryaKit.Web/Endpoints/HttpPageRequest.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-96
+src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWorkExtensions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-17
+src/PouryaKit.Messaging.Wolverine/Subscriptions/IntegrationEventPublisher.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-68
+src/PouryaKit.Messaging.Wolverine/Subscriptions/IIntegrationEventOutbox.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-16
+docs/provenance/PouryaKit.Web.md
+  s_744c07a8061ea2::t_de083ff65c17d1 17,32,46,75,90,104,118
+src/PouryaKit.Cqrs/Composition/CompositionCheckRunner.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-40
+src/PouryaKit.Web/Endpoints/IdempotencyKeyHeader.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-17
+src/PouryaKit.Web/Defaults/ConfiguredCompression.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-36
+src/PouryaKit.Cqrs/Composition/CqrsHostApplicationBuilderExtensions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-40
+src/PouryaKit.Persistence.EFCore/Idempotency/PouryaKitIdempotencyOptions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-31
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandFailedException.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-19
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDeclarations.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-103
+src/PouryaKit.Persistence.EFCore/UnitOfWork/IUniqueConstraintReader.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-17
+src/PouryaKit.Cqrs/Operations/ActorKind.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-7
+src/PouryaKit.Cqrs/Paging/FilterOperatorNames.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-41
+src/PouryaKit.Web/Endpoints/IModuleRouteGroups.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-19
+src/PouryaKit.Persistence.EFCore/Idempotency/EfIdempotencyStore.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-107
+src/PouryaKit.Cqrs/Paging/SortDirection.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-7
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Subscriptions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-357
+src/PouryaKit.Web/Defaults/ConfiguredCors.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-83
+src/PouryaKit.Cqrs/Pipeline/IValidationStep.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-15
+docs/provenance/PouryaKit.Caching.md
+  s_744c07a8061ea2::t_de083ff65c17d1 5
+src/PouryaKit.Web/Endpoints/IEndpoint.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-28
+src/PouryaKit.Cqrs/Pipeline/IdempotencyKey.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-7
+src/PouryaKit.Messaging.Wolverine/Composition/SubscriptionUnitOfWorkCheck.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-37
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/IDelayedCommandOutbox.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-24
+docs/provenance/PouryaKit.Messaging.Wolverine.RabbitMq.md
+  s_744c07a8061ea2::t_de083ff65c17d1 5
+src/PouryaKit.Web/HttpClients/OperationContextHttpHandler.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-35
+src/PouryaKit.Persistence.EFCore/UnitOfWork/PersistencePreparation.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-149
+src/PouryaKit.Cqrs/Paging/Page.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-35
+src/PouryaKit.Messaging.Wolverine/Subscriptions/IWireNames.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-22
+src/PouryaKit.Cqrs/Paging/FilterField.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-134
+src/PouryaKit.Cqrs/Composition/IRequiresAuthorizer.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-25
+src/PouryaKit.Cqrs/Operations/AuthorizedOperation.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-37
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/RecurringCommandStart.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-97
+docs/provenance/PouryaKit.Cqrs.md
+  s_744c07a8061ea2::t_de083ff65c17d1 44
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/UnknownDelayedCommandException.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-25
+src/PouryaKit.Web/ProblemResponses/ProblemStatusCodePages.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-21
+src/PouryaKit.Cqrs/Paging/PageRequest.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-23
+src/PouryaKit.Messaging.Wolverine/Composition/OutboxCheck.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-22
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-114
+src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWorkConnection.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-37
+src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-111
+docs/acceptance.md
+  s_744c07a8061ea2::t_de083ff65c17d1 787
+  s_744c07a8061ea2::t_ab3c8d9ff51313 1081-1099
+src/PouryaKit.Messaging.Wolverine/Subscriptions/UnknownSubscriptionException.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-13
+src/PouryaKit.Web.OpenApi/UnmappedApiVersionsCheck.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-16
+src/PouryaKit.Cqrs/Composition/ICompositionCheck.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-24
+src/PouryaKit.Web/Endpoints/IdempotencyKeyRequirement.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-18
+src/PouryaKit.Messaging.Wolverine/Composition/UnregisteredNotificationHandlersCheck.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-32
+.claude/agent-memory/kit-implementer/core-json-and-architecture-test-facts.md
+  s_744c07a8061ea2::t_de083ff65c17d1 77-82
+src/PouryaKit.Messaging.Wolverine/Composition/ModuleOwnershipCheck.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-94
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandHeaders.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-14
+src/PouryaKit.Cqrs/Composition/DeclaredAuthorizersCheck.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-32
+src/PouryaKit.Web/Defaults/ActorRateLimiting.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-114
+src/PouryaKit.Messaging.Wolverine/Subscriptions/NotificationHandlerServiceCollectionExtensions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-94
+src/PouryaKit.Web/Defaults/PouryaKitCompressionOptions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-15
+src/PouryaKit.Cqrs/Pipeline/DomainEventDrain.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-119
+docs/provenance/PouryaKit.Observability.md
+  s_744c07a8061ea2::t_de083ff65c17d1 5
+src/PouryaKit.Cqrs/Composition/IRequiresQueryCache.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-10
+src/PouryaKit.Messaging.Wolverine/Subscriptions/IntegrationEventHandlerFailedException.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-19
+src/PouryaKit.Persistence.EFCore/Idempotency/IdempotencyTable.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-69
+src/PouryaKit.Cqrs/Operations/Operation.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-250
+src/PouryaKit.Messaging.Wolverine/Subscriptions/ISnapshotMappers.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-30
+src/PouryaKit.Messaging.Wolverine/Subscriptions/SnapshotMappers.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-93
+src/PouryaKit.Messaging.Wolverine/Subscriptions/NotificationHandlerFailedException.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-19
+src/PouryaKit.Cqrs/Pipeline/IReadingStateGuard.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-11
+src/PouryaKit.Web/ProblemResponses/ResultHttpExtensions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-87
+src/PouryaKit.Cqrs/Composition/IModuleServices.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-78
+src/PouryaKit.Persistence.EFCore/UnitOfWork/IUnitOfWorkOutbox.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-33
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_744c07a8061ea2::t_de083ff65c17d1 2,5
+src/PouryaKit.Cqrs/Composition/IStartupCheck.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-19
+src/PouryaKit.Web/Defaults/PouryaKitCorsOptions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-18
+src/PouryaKit.Cqrs/Composition/OperationTypes.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-52
+src/PouryaKit.Persistence.EFCore/UnitOfWork/TrackedState.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-143
+src/PouryaKit.Cqrs/Composition/ValidatingServiceProviderFactory.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-71
+src/PouryaKit.Cqrs/Operations/OperationContext.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-99
+src/PouryaKit.Cqrs/Operations/OperationContextServiceProviderExtensions.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-31
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-136
+src/PouryaKit.Messaging.Wolverine/Subscriptions/SubscriptionDelivery.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-120
+src/PouryaKit.Web/HttpClients/HttpReplay.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-18
+src/PouryaKit.Persistence.EFCore/UnitOfWork/UnitOfWorkErrors.cs
+  s_744c07a8061ea2::t_de083ff65c17d1 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "666784cdf5732265a432c287ab2a60c3079499a3",
+  "prompts": {},
+  "sessions": {
+    "s_744c07a8061ea2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df08c588-b151-48b5-a3b3-93f59aa38db4",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
