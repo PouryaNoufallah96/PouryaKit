@@ -1,0 +1,31 @@
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_fbe30cc48fad9d::t_88c380b08e42fd 65-67
+  s_fbe30cc48fad9d::t_56e6d16a4f7d90 64
+docs/architecture/README.md
+  s_fbe30cc48fad9d::t_0d25812ac8157a 518
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_fbe30cc48fad9d::t_a0a2f36fc1423c 372,375,385-386
+.agents/skills/pourya-kit/references/messaging.md
+  s_fbe30cc48fad9d::t_4e740736539724 618
+docs/acceptance.md
+  s_fbe30cc48fad9d::t_a909f67a98d8ec 1353,1366-1375
+  s_fbe30cc48fad9d::t_dd7d90ca53fdda 1225
+src/PouryaKit.Messaging.Wolverine/PouryaKitMessagingOptions.cs
+  s_fbe30cc48fad9d::t_4dba1a30272956 12-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "07c010f2aa09c02d119330a9e58293a1c81a0d23",
+  "prompts": {},
+  "sessions": {
+    "s_fbe30cc48fad9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "355fc114-9f49-46c2-b236-9a236d1e5b59",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
