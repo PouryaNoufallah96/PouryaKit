@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 namespace PouryaKit.Persistence.EFCore;
 
 /// <summary>
-/// Steps 4 and 5 of the Unit of Work's commit sequence: what an Operation publishes, its Snapshots included, is written
+/// The Snapshot and send steps of the Unit of Work's commit sequence: what an Operation publishes, its Snapshots included, is written
 /// to the Outbox in the Unit of Work's transaction, so it exists if and only if the change commits, and is sent only
 /// after the commit. A messaging package registers it, scoped; the EF Core Unit of Work calls it when one is registered.
 /// Feature code never does.

@@ -7,11 +7,11 @@ using PouryaKit.Domain;
 
 namespace PouryaKit.Persistence.EFCore;
 
-// Step 3 of the Unit of Work's commit sequence (ADR 0003), run once per Operation after the Domain Event drain and
+// The prepare step of the Unit of Work's commit sequence (ADR 0003), run once per Operation after the Domain Event drain and
 // before the save, so nothing changes these fields afterwards: removals of soft-deletable entities become a mark, the
 // cascades of the removals that stay deletions are resolved, every changed aggregate's Version advances by exactly
 // one, and auditable entities are stamped. The save then has nothing left to change. It returns the changed aggregates,
-// each once, whose Snapshots step 4 builds from this final state.
+// each once, whose Snapshots the Snapshot step builds from this final state.
 internal static class PersistencePreparation
 {
     public static IReadOnlyList<EntityEntry> Run(DbContext dbContext, Func<OperationContext> context)

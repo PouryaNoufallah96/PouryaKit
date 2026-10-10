@@ -2,7 +2,7 @@
 
 A reusable .NET 10 foundation for modular monoliths built from vertical slices.
 
-Status: Wave 1 and Wave 2 are complete. The Wave 2 set is in the private feed since `feat/wave-2` was merged into `main` on 2026-10-09 ([hosted completion](docs/private-packages.md#hosted-completion)). The Kit's packages (every entry of `scripts/packaging/inventory.json`), each usable on its own, make up these Capabilities:
+Status: Wave 1 and Wave 2 are complete. The Wave 2 set is in the private feed since `feat/wave-2` was merged into `main` on 2026-10-09 ([hosted completion](docs/private-packages.md#hosted-completion)). The Kit's packages (every entry of `scripts/packaging/inventory.json`), each usable on its own, make up these Capabilities, plus two features (Paging, Request idempotency) that span several of them:
 
 - [Domain primitives](.agents/skills/pourya-kit/references/domain-primitives.md) (`PouryaKit.Domain`)
 - [Commands, queries and validation](.agents/skills/pourya-kit/references/commands-queries-validation.md) (`PouryaKit.Cqrs`, `PouryaKit.Validation`)
