@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Delivery of Notifications and Integration Events",
+    "output": "docs/architecture/diagrams/delivery.html",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      696
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "repository": {
+      "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
+      "revision": "eb3c45c182e365dd6438c6f49377aa0893fd1603",
+      "link_mode": "web"
+    }
+  },
+  "participants": [
+    {
+      "id": "outbox",
+      "type": "messagebus",
+      "label": "Outbox",
+      "sublabel": "a commit",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
+          "line": 34,
+          "end_line": 127,
+          "label": "one envelope per route, with the context"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
+          "line": 133,
+          "end_line": 144,
+          "label": "the #published record"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
+          "line": 146,
+          "end_line": 163,
+          "label": "sent after the commit"
+        }
+      ]
+    },
+    {
+      "id": "broker",
+      "type": "cloud",
+      "label": "RabbitMQ",
+      "sublabel": "between Hosts",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqExtension.cs",
+          "line": 10,
+          "end_line": 33,
+          "label": "fanout per wire name, a queue per Host"
+        }
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "database",
+      "label": "Queue",
+      "sublabel": "per subscription",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/PouryaKitWolverineExtension.cs",
+          "line": 16,
+          "end_line": 28,
+          "label": "a local queue each; stored retries"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
+          "line": 110,
+          "end_line": 111,
+          "label": "durable; unknown types dead-lettered"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/PouryaKitMessagingOptions.cs",
+          "line": 6,
+          "end_line": 16,
+          "label": "1 s, 10 s, 1 min, then a dead letter"
+        }
+      ]
+    },
+    {
+      "id": "delivery",
+      "type": "backend",
+      "label": "Delivery",
+      "sublabel": "in each Host",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/SubscriptionDelivery.cs",
+          "line": 21,
+          "end_line": 50,
+          "label": "subscription by queue, new scope"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/SubscriptionDelivery.cs",
+          "line": 52,
+          "end_line": 86,
+          "label": "a broker envelope fanned out"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs",
+          "line": 38,
+          "end_line": 74,
+          "label": "a trusted continuation, trace parent"
+        }
+      ]
+    },
+    {
+      "id": "deliver",
+      "type": "backend",
+      "label": "Deliver",
+      "sublabel": "a command",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/Deliver.cs",
+          "line": 7,
+          "end_line": 11,
+          "label": "runs as the Operation's command"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/Deliver.cs",
+          "line": 23,
+          "end_line": 53,
+          "label": "Receipt, version gate, then handler"
+        }
+      ]
+    },
+    {
+      "id": "receipts",
+      "type": "database",
+      "label": "Receipts",
+      "sublabel": "Module schema",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/EfReceipts.cs",
+          "line": 8,
+          "end_line": 40,
+          "label": "Receipt and version rows"
+        }
+      ]
+    },
+    {
+      "id": "handler",
+      "type": "backend",
+      "label": "Handler",
+      "sublabel": "Feature",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/Subscription.cs",
+          "line": 45,
+          "end_line": 76,
+          "label": "Notification or Integration Event"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/IntegrationEventPublisher.cs",
+          "line": 19,
+          "end_line": 67,
+          "label": "publishes only in a Notification"
+        }
+      ]
+    }
+  ],
+  "messages": [
+    {
+      "id": "sent",
+      "from": "outbox",
+      "to": "queue",
+      "y": 160,
+      "label": "a Notification per subscription",
+      "variant": "emphasis"
+    },
+    {
+      "id": "attempt",
+      "from": "queue",
+      "to": "delivery",
+      "y": 188,
+      "label": "an attempt"
+    },
+    {
+      "id": "deliver",
+      "from": "delivery",
+      "to": "deliver",
+      "y": 216,
+      "label": "new scope: Deliver",
+      "variant": "emphasis"
+    },
+    {
+      "id": "receipt",
+      "from": "deliver",
+      "to": "receipts",
+      "y": 244,
+      "label": "Receipt first"
+    },
+    {
+      "id": "duplicate",
+      "from": "receipts",
+      "to": "deliver",
+      "y": 272,
+      "label": "held: success, no handler",
+      "variant": "return"
+    },
+    {
+      "id": "version",
+      "from": "deliver",
+      "to": "receipts",
+      "y": 300,
+      "label": "a Snapshot: newer only",
+      "variant": "dashed"
+    },
+    {
+      "id": "notification",
+      "from": "deliver",
+      "to": "handler",
+      "y": 328,
+      "label": "Notification Handler",
+      "variant": "emphasis"
+    },
+    {
+      "id": "publish",
+      "from": "handler",
+      "to": "outbox",
+      "y": 356,
+      "label": "Integration Event, in this commit"
+    },
+    {
+      "id": "exchange",
+      "from": "outbox",
+      "to": "broker",
+      "y": 384,
+      "label": "to its exchange",
+      "variant": "emphasis"
+    },
+    {
+      "id": "otherHost",
+      "from": "broker",
+      "to": "delivery",
+      "y": 412,
+      "label": "another Host's queue"
+    },
+    {
+      "id": "fanOut",
+      "from": "delivery",
+      "to": "queue",
+      "y": 440,
+      "label": "a stored copy each"
+    },
+    {
+      "id": "copy",
+      "from": "queue",
+      "to": "delivery",
+      "y": 468,
+      "label": "an attempt"
+    },
+    {
+      "id": "deliverCopy",
+      "from": "delivery",
+      "to": "deliver",
+      "y": 496,
+      "label": "new scope: Deliver",
+      "variant": "emphasis"
+    },
+    {
+      "id": "integration",
+      "from": "deliver",
+      "to": "handler",
+      "y": 524,
+      "label": "Receipt, then Integration Event Handler",
+      "variant": "emphasis"
+    },
+    {
+      "id": "failed",
+      "from": "deliver",
+      "to": "delivery",
+      "y": 552,
+      "label": "Errors or exception: throws",
+      "variant": "security"
+    },
+    {
+      "id": "retried",
+      "from": "delivery",
+      "to": "queue",
+      "y": 580,
+      "label": "stored retry, then dead letter",
+      "variant": "security"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "delivery",
+      "from": 184,
+      "to": 222,
+      "type": "backend"
+    },
+    {
+      "participant": "deliver",
+      "from": 212,
+      "to": 362,
+      "type": "backend"
+    },
+    {
+      "participant": "handler",
+      "from": 324,
+      "to": 362,
+      "type": "backend"
+    },
+    {
+      "participant": "delivery",
+      "from": 408,
+      "to": 446,
+      "type": "backend"
+    },
+    {
+      "participant": "deliver",
+      "from": 492,
+      "to": 556,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "One envelope per subscription",
+      "items": [
+        "The publishing commit writes one durable envelope for each subscription's route, with the Operation Context and the trace parent; the flush sends them after the commit.",
+        "Each attempt opens a new scope and begins its Operation as a trusted continuation in the subscription's Module, then sends Deliver through the dispatcher and that Module's Unit of Work."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Applied once",
+      "items": [
+        "The Receipt, keyed by the subscription and the message's identity, is recorded before the handler in the same transaction: a redelivery finds it and runs nothing.",
+        "A Snapshot or Tombstone is applied only when its version is newer than every version of that aggregate the subscription applied.",
+        "An Integration Event a Notification Handler publishes is written in that delivery's commit, beside a <wire name>#published record, so a second one of that type fails."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Across Hosts",
+      "items": [
+        "Each publication goes to a fanout exchange named by its wire name. Each kind of Host listens on one durable queue named by its service name, which its instances share, bound only to what other Hosts publish.",
+        "The receiving Host stores a copy on each subscription's local queue before it acknowledges the envelope; each copy is then delivered as in one Host."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Retries and dead letters",
+      "items": [
+        "A thrown exception or a failed Result is retried after 1 s, 10 s and 1 min by default, each wait stored with the delivery; the next failure sets it aside as a dead letter of its subscription.",
+        "Only that subscription's envelope is retried. An envelope of an unknown type is dead-lettered at once, never marked handled."
+      ]
+    }
+  ]
+}

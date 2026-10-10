@@ -63,5 +63,14 @@ metadata:
 - **A boundary is the bounding box of the nodes it wraps**, so another node placed inside the box reads as a member (RabbitMQ inside a Hosts region, an external package inside a package view's region), and no gate catches it: check each region's box against every node's position, and drop a region whose title already names the scope.
 - Met while grounding: `PouryaKit.Security.JwtBearer` uses no type of `PouryaKit.Security`; its tenant claim type is `PouryaKitClaimTypes` of `PouryaKit.Cqrs`, reached through that reference. A hub with eight dependents and a five-way `PouryaKit.Core` fan-in cannot be laid out without crossings; the receipt reports them as advisory.
 
+## Archify sequences and lifecycles (#107, 2026-10-11; Archify 3.0.1)
+
+- **A sequence fits 1080 by 696 at most:** the 7px text needs a viewBox no wider than about 1085 (`composition/desktop-readability`), and a canvas with no intrinsic fit needs width at least 1.55 times its height (`composition/viewport-height`, a warning that showcase fails). Messages that overlap horizontally need 28px between their `y`, the timeline ends at height minus 83, and the legend needs about 98px under the last message, so about 16 messages fit with the legend and 17 with `meta.legend.mode: "hidden"`. Plan the cut before the first draft.
+- **No self-message** (`from` equal to `to` fails: spans 0px); draw the consequence instead, such as the early return of a refused check.
+- **Sequence `segments` at that width put their labels in the wrong band** (a band's label landed in the band above, one hidden under the first message): validation passes, only a capture shows it. Leave them out.
+- **A transition or message `note` renders inline with its label** and inflates the label box to hundreds of pixels, so every label collides; keep notes out and put the fact in a card.
+- **A packed workflow row has no vertical corridor:** two nodes side by side in one lane sit 8px apart, so pinning `right:left` from a node in the lane below into the next node of the row fails (`workflow/explicit-pin-conflict`), and a node with two vertical edges on one side draws them in one corridor (`composition/ambiguous-corridor`). Give each node at most one vertical edge per side; moving a node into the other lane (the drain between its two checks) fixed what pins and `drop` routes could not.
+- **A lifecycle return crossing branches:** `route: "top-channel"` on the return cleared three crossings the receipt's `resolvedCrossovers` named.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].

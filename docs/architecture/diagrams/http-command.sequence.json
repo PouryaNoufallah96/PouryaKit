@@ -1,0 +1,403 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "An HTTP Request to a Command",
+    "output": "docs/architecture/diagrams/http-command.html",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      696
+    ],
+    "repository": {
+      "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
+      "revision": "eb3c45c182e365dd6438c6f49377aa0893fd1603",
+      "link_mode": "web"
+    },
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "HTTP",
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductEndpoint.cs",
+          "line": 17,
+          "end_line": 20,
+          "label": "POST /products in Catalog's group"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
+          "line": 42,
+          "end_line": 42,
+          "label": "Catalog's routes under /catalog"
+        }
+      ]
+    },
+    {
+      "id": "pipeline",
+      "type": "security",
+      "label": "Pipeline",
+      "sublabel": "middleware",
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 110,
+          "end_line": 122,
+          "label": "the order of the Host's middleware"
+        },
+        {
+          "path": "src/PouryaKit.Web/WebServiceCollectionExtensions.cs",
+          "line": 52,
+          "end_line": 69,
+          "label": "problem responses, authenticated default"
+        },
+        {
+          "path": "src/PouryaKit.Web/Defaults/ActorRateLimiting.cs",
+          "line": 90,
+          "end_line": 113,
+          "label": "rate limit partitioned by Actor"
+        }
+      ]
+    },
+    {
+      "id": "endpoint",
+      "type": "frontend",
+      "label": "Endpoint",
+      "sublabel": "Kit wrapper, Feature",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs",
+          "line": 123,
+          "end_line": 132,
+          "label": "context resolved, Operation begun"
+        },
+        {
+          "path": "src/PouryaKit.Web/HttpCallerContext.cs",
+          "line": 20,
+          "end_line": 34,
+          "label": "one resolution per request"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductEndpoint.cs",
+          "line": 28,
+          "end_line": 49,
+          "label": "the Gateway call and ToHttpResult"
+        }
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "Gateway",
+      "sublabel": "Catalog",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Modularity/GatewayProcessor.cs",
+          "line": 44,
+          "end_line": 60,
+          "label": "ownership check, a scope with the Module"
+        }
+      ]
+    },
+    {
+      "id": "dispatcher",
+      "type": "backend",
+      "label": "Dispatcher",
+      "sublabel": "fixed pipeline",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs",
+          "line": 86,
+          "end_line": 147,
+          "label": "clock, rollback-only mark, log scope"
+        },
+        {
+          "path": "src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs",
+          "line": 193,
+          "end_line": 243,
+          "label": "authorizers, validator, query cache"
+        },
+        {
+          "path": "src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs",
+          "line": 251,
+          "end_line": 316,
+          "label": "Unit of Work, key, eviction"
+        }
+      ]
+    },
+    {
+      "id": "uow",
+      "type": "database",
+      "label": "Unit of Work",
+      "sublabel": "EF Core",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 42,
+          "end_line": 92,
+          "label": "transaction and commit sequence"
+        },
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/Idempotency/EfIdempotencyStore.cs",
+          "line": 23,
+          "end_line": 67,
+          "label": "the key in the same transaction"
+        }
+      ]
+    },
+    {
+      "id": "handler",
+      "type": "backend",
+      "label": "Handler",
+      "sublabel": "Feature",
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommandHandler.cs",
+          "line": 10,
+          "end_line": 28,
+          "label": "returns a Result, saves nothing"
+        }
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Query cache",
+      "sublabel": "HybridCache",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Caching/HybridQueryCache.cs",
+          "line": 24,
+          "end_line": 102,
+          "label": "one run per key, keyed by Actor"
+        },
+        {
+          "path": "src/PouryaKit.Caching/HybridQueryCache.cs",
+          "line": 111,
+          "end_line": 136,
+          "label": "eviction by tag"
+        }
+      ]
+    }
+  ],
+  "messages": [
+    {
+      "id": "request",
+      "from": "client",
+      "to": "pipeline",
+      "y": 160,
+      "label": "POST /catalog/products, Idempotency-Key",
+      "variant": "emphasis"
+    },
+    {
+      "id": "refused",
+      "from": "pipeline",
+      "to": "client",
+      "y": 188,
+      "label": "401, 403 or 429 problem response",
+      "variant": "security"
+    },
+    {
+      "id": "routed",
+      "from": "pipeline",
+      "to": "endpoint",
+      "y": 216,
+      "label": "authenticated and authorized",
+      "variant": "default"
+    },
+    {
+      "id": "badKey",
+      "from": "endpoint",
+      "to": "client",
+      "y": 244,
+      "label": "400 problem: missing or bad key",
+      "variant": "security"
+    },
+    {
+      "id": "send",
+      "from": "endpoint",
+      "to": "gateway",
+      "y": 272,
+      "label": "SendAsync(command, context)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scope",
+      "from": "gateway",
+      "to": "dispatcher",
+      "y": 300,
+      "label": "new scope, Module begun",
+      "variant": "default"
+    },
+    {
+      "id": "checks",
+      "from": "dispatcher",
+      "to": "gateway",
+      "y": 328,
+      "label": "authorizer or validator Errors",
+      "variant": "return"
+    },
+    {
+      "id": "begin",
+      "from": "dispatcher",
+      "to": "uow",
+      "y": 356,
+      "label": "RunAsync: begin, reserve the key",
+      "variant": "emphasis"
+    },
+    {
+      "id": "handle",
+      "from": "dispatcher",
+      "to": "handler",
+      "y": 384,
+      "label": "Handle(command): Result",
+      "variant": "emphasis"
+    },
+    {
+      "id": "record",
+      "from": "dispatcher",
+      "to": "uow",
+      "y": 412,
+      "label": "record the success, commit",
+      "variant": "default"
+    },
+    {
+      "id": "committed",
+      "from": "uow",
+      "to": "dispatcher",
+      "y": 440,
+      "label": "committed, or rolled back",
+      "variant": "return"
+    },
+    {
+      "id": "evict",
+      "from": "dispatcher",
+      "to": "cache",
+      "y": 468,
+      "label": "after a commit: evict tags",
+      "variant": "dashed"
+    },
+    {
+      "id": "toEndpoint",
+      "from": "dispatcher",
+      "to": "endpoint",
+      "y": 496,
+      "label": "Result; Module scope disposed",
+      "variant": "return"
+    },
+    {
+      "id": "response",
+      "from": "endpoint",
+      "to": "client",
+      "y": 524,
+      "label": "ToHttpResult: 201 or problem",
+      "variant": "return"
+    },
+    {
+      "id": "cachedQuery",
+      "from": "dispatcher",
+      "to": "cache",
+      "y": 552,
+      "label": "or a cached query: GetOrCreateAsync",
+      "variant": "dashed"
+    },
+    {
+      "id": "miss",
+      "from": "cache",
+      "to": "handler",
+      "y": 580,
+      "label": "miss: run the query handler",
+      "variant": "dashed"
+    },
+    {
+      "id": "stored",
+      "from": "cache",
+      "to": "dispatcher",
+      "y": 608,
+      "label": "stored answer",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "pipeline",
+      "from": 156,
+      "to": 220,
+      "type": "security"
+    },
+    {
+      "participant": "endpoint",
+      "from": 212,
+      "to": 528,
+      "type": "frontend"
+    },
+    {
+      "participant": "gateway",
+      "from": 268,
+      "to": 500,
+      "type": "backend"
+    },
+    {
+      "participant": "dispatcher",
+      "from": 296,
+      "to": 500,
+      "type": "backend"
+    },
+    {
+      "participant": "uow",
+      "from": 352,
+      "to": 444,
+      "type": "database"
+    },
+    {
+      "participant": "handler",
+      "from": 380,
+      "to": 390,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Two scopes",
+      "items": [
+        "The wrapper resolves the Operation Context once per request, shared with the rate limit, and begins the request scope's Operation with no Module.",
+        "The Gateway checks that its Module owns the command, then begins a second scope's Operation with that Module, which routes it to the Module's Unit of Work.",
+        "In the monolith template the endpoint takes IDispatcher from the request scope: one scope, no Gateway."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "The dispatcher's order",
+      "items": [
+        "It binds the Host's clock and opens the log scope, then runs every authorizer and the validator; a failure returns Errors before any Unit of Work. Once they pass, the Operation is authorized, and continuing its context is a trusted continuation.",
+        "For the outermost command it starts the Unit of Work; the request id's key is reserved inside it, so a repeat waits, then replays the first success.",
+        "A request id on a command without [Idempotent] throws. After RunAsync returns, a success on a rollback-only Operation throws too."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "One problem response (ADR 0008)",
+      "items": [
+        "ToHttpResult maps a failed Result to RFC 9457 with every Error: validation 400, forbidden 403, not found 404, conflict 409, anything else 500.",
+        "An exception becomes a 500 problem response; a refused Idempotency-Key, a 400 whose detail states the rule.",
+        "An empty-bodied refusal of the pipeline, 401, 403 or 429, is written as the same problem response."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "A cached query",
+      "items": [
+        "Only the Operation's outermost query, while it is not rollback-only, reads and stores entries, keyed by its Actor and tenant.",
+        "A command's declared tags are evicted only after its Operation commits; a rollback evicts nothing."
+      ]
+    }
+  ]
+}
