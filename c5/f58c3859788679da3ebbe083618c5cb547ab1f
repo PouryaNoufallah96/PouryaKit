@@ -1,0 +1,23 @@
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_2867f8a3b2cd19::t_b38ef2734b5c7b 67-70
+docs/acceptance.md
+  s_2867f8a3b2cd19::t_2444a50155db71 1286-1287
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_2867f8a3b2cd19::t_b38ef2734b5c7b 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c5f58c3859788679da3ebbe083618c5cb547ab1f",
+  "prompts": {},
+  "sessions": {
+    "s_2867f8a3b2cd19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00cca649-e6c4-44eb-8549-8c8dbeae846f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
