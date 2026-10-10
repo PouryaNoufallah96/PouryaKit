@@ -1,0 +1,26 @@
+docs/architecture/README.md
+  s_a846915d2dd93c::t_aa78858a7ea5ad 5-29
+  s_a846915d2dd93c::t_63cfa82fa24a04 32,34,36-48,50,54-60,64,72-76,80,132-133,139,233-234,275-276,369-372,401,434-435
+docs/private-packages.md
+  s_a846915d2dd93c::t_f5df4805d8ce50 45
+README.md
+  s_a846915d2dd93c::t_807aec7b268dfb 48
+docs/acceptance.md
+  s_a846915d2dd93c::t_c47ca0a94117a1 1768,1781-1800
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "94eac04bcf13aac7ba1c82007670fd62d8682ed1",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
