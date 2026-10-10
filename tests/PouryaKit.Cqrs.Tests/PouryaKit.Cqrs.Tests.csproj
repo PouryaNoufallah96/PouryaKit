@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\PouryaKit.Cqrs\PouryaKit.Cqrs.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.Observability\PouryaKit.Observability.csproj" />
     <ProjectReference Include="PouryaKit.Cqrs.Tests.Module\PouryaKit.Cqrs.Tests.Module.csproj" />
   </ItemGroup>
 </Project>

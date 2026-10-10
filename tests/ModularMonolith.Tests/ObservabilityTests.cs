@@ -178,6 +178,40 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         );
     }
 
+    // The wrapper observes an Operation when either listener is there, not only when both are.
+    [Fact]
+    public async Task With_only_a_meter_listener_a_command_still_records_its_duration()
+    {
+        using var telemetry = new RecordedTelemetry(activities: false);
+
+        var written = await Fixture.Gateway<StubModule>().SendAsync(new WriteNoteCommand("metered"), TestContext.Current.CancellationToken);
+
+        Assert.True(written.IsSuccess);
+        Assert.Contains(
+            telemetry.Durations,
+            duration =>
+                (string?)duration.Tags[OperationTelemetry.OperationTag] == nameof(WriteNoteCommand)
+                && (string?)duration.Tags[OperationTelemetry.OutcomeTag] == OperationTelemetry.Succeeded
+        );
+    }
+
+    [Fact]
+    public async Task With_only_an_activity_listener_a_command_is_still_an_activity()
+    {
+        using var telemetry = new RecordedTelemetry(durations: false);
+        Activity upstream;
+
+        using (upstream = RecordedTelemetry.Upstream.StartActivity("request", ActivityKind.Server)!)
+        {
+            Assert.True((await Fixture.Gateway<StubModule>().SendAsync(new WriteNoteCommand("traced"), TestContext.Current.CancellationToken)).IsSuccess);
+        }
+
+        Assert.Contains(
+            telemetry.Of(upstream.TraceId),
+            activity => Tag(activity, OperationTelemetry.OperationTag) == nameof(WriteNoteCommand) && Tag(activity, OperationTelemetry.OutcomeTag) == OperationTelemetry.Succeeded
+        );
+    }
+
     // The category is created first, outside the trace; CreateProduct runs inside an upstream activity standing in for a
     // request whose W3C context ASP.NET Core restored, with a tracestate. Returns once every delivery it caused settled.
     private async Task<Activity> CreateProductAsync(Guid product)

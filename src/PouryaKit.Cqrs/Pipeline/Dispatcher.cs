@@ -18,9 +18,11 @@ internal sealed partial class Dispatcher(
 {
     private static readonly ConcurrentDictionary<Type, object> Invokers = new();
 
-    private static readonly Func<ILogger, string, IDisposable?> OperationScope = LoggerMessage.DefineScope<string>(
-        "Operation {Operation}"
-    );
+    // The Operation's ids and Module on every entry it logs, so its logs join their request without a tracing exporter.
+    private static readonly Func<ILogger, string, Guid?, Guid?, string?, IDisposable?> OperationScope =
+        LoggerMessage.DefineScope<string, Guid?, Guid?, string?>(
+            "Operation {Operation} {OperationId} correlation {CorrelationId} in {Module}"
+        );
 
     // An idempotent command's recorded response, in the one JSON representation the Kit writes everywhere.
     private static readonly JsonSerializerOptions ResponseJson = new JsonSerializerOptions().UsePouryaKitJson();
@@ -140,7 +142,8 @@ internal sealed partial class Dispatcher(
         where TResult : Result
     {
         var name = typeof(TCommandOrQuery).Name;
-        using var scope = OperationScope(logger, name);
+        var context = operation.Context;
+        using var scope = OperationScope(logger, name, context?.OperationId, context?.CorrelationId, operation.Module?.Name);
         LogRunning(logger, name);
         var started = Stopwatch.GetTimestamp();
 

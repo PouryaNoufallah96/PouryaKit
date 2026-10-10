@@ -33,6 +33,9 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
 
     private static readonly OperationContext Context = new(Actor.Person("ada"), "acme");
 
+    // ASP.NET Core's boundaries for http.server.request.duration, in seconds.
+    private static readonly double[] SecondScale = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10];
+
     private readonly WireMockServer downstream = WireMockServer.Start();
 
     public void Dispose()
@@ -67,6 +70,8 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
                 && duration.Count > 0
                 && duration.Sum > 0
         );
+        // The histogram's own bucket boundaries, which the exporter takes with no view of the Host's.
+        Assert.All(exported.Durations, duration => Assert.Equal(SecondScale, duration.Boundaries));
     }
 
     // The database stops taking connections while the Host runs: alter database ... allow_connections false, and its
@@ -187,16 +192,21 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
         });
         await using var catalog = await environment.StartCatalogHostAsync();
         var product = Guid.CreateVersion7();
+        var created = new OperationContext(Actor.Person("ada"));
 
-        await BrokerEnvironment.CreateProductAsync(catalog, product, "Lamp");
+        await BrokerEnvironment.CreateProductAsync(catalog, product, "Lamp", created);
         await StockedAsync(environment, product);
 
+        var dispatched = sink.Events.Where(logged => Scalar(logged, "SourceContext") == typeof(IDispatcher).Namespace + ".Dispatcher").ToList();
         Assert.Contains(
-            sink.Events,
-            logged =>
-                Scalar(logged, "SourceContext") == typeof(IDispatcher).Namespace + ".Dispatcher"
-                && logged.MessageTemplate.Text == "{Operation} succeeded in {ElapsedMilliseconds} ms"
-                && Scalar(logged, "Operation") == "Deliver"
+            dispatched,
+            logged => logged.MessageTemplate.Text == "{Operation} succeeded in {ElapsedMilliseconds} ms" && Scalar(logged, "Operation") == "Deliver"
+        );
+        // The Operation's log scope: the delivery's own id, the correlation of the CreateProduct it continues, its Module.
+        var delivery = Assert.Single(DeliveryProbes.ContextsOf(StockItems), context => context.CorrelationId == created.CorrelationId);
+        Assert.Contains(
+            ("Deliver", delivery.OperationId, created.CorrelationId, "InventoryModule"),
+            dispatched.Select(logged => (Scalar(logged, "Operation"), Id(logged, "OperationId"), Id(logged, "CorrelationId"), Scalar(logged, "Module")))
         );
     }
 
@@ -379,6 +389,9 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
     private static string? Scalar(LogEvent logged, string property) =>
         logged.Properties.TryGetValue(property, out var value) && value is ScalarValue { Value: string text } ? text : null;
 
+    private static Guid Id(LogEvent logged, string property) =>
+        logged.Properties.TryGetValue(property, out var value) && value is ScalarValue { Value: Guid id } ? id : Guid.Empty;
+
     private sealed class RecordedEvents : ILogEventSink
     {
         private readonly ConcurrentQueue<LogEvent> _events = [];
@@ -404,7 +417,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
             services.ConfigureOpenTelemetryMeterProvider(metrics => metrics.AddReader(new BaseExportingMetricReader(new DurationExporter(_durations))));
         }
 
-        public sealed record Duration(string? Module, string? Operation, string? Outcome, long Count, double Sum);
+        public sealed record Duration(string? Module, string? Operation, string? Outcome, long Count, double Sum, IReadOnlyList<double> Boundaries);
 
         private sealed class ActivityExporter(ConcurrentQueue<Activity> exported) : BaseExporter<Activity>
         {
@@ -438,13 +451,24 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
                             tags[tag.Key] = tag.Value as string;
                         }
 
+                        List<double> boundaries = [];
+                        foreach (var bucket in point.GetHistogramBuckets())
+                        {
+                            // The last bucket's bound is positive infinity, which no boundary declares.
+                            if (!double.IsPositiveInfinity(bucket.ExplicitBound))
+                            {
+                                boundaries.Add(bucket.ExplicitBound);
+                            }
+                        }
+
                         exported.Enqueue(
                             new Duration(
                                 tags.GetValueOrDefault(OperationTelemetry.ModuleTag),
                                 tags.GetValueOrDefault(OperationTelemetry.OperationTag),
                                 tags.GetValueOrDefault(OperationTelemetry.OutcomeTag),
                                 point.GetHistogramCount(),
-                                point.GetHistogramSum()
+                                point.GetHistogramSum(),
+                                boundaries
                             )
                         );
                     }

@@ -23,3 +23,15 @@ None shipped. `PouryaKit.Observability` depends on `PouryaKit.Cqrs` only and use
   - Tags are the Module, the type name, the Actor kind and the outcome. Upstream's handler-type tags come from scanning the command's assembly on every call (`CommandHandlerMetrics.cs:48-57`), and the Kit has no such scan.
   - No active, total, success or failure counters: the histogram's count per outcome gives them.
   - A failed Result is an outcome `failure` with status `Error`. Upstream sees only exceptions.
+
+## Operation duration bucket boundaries
+
+- **Kit files:** `src/PouryaKit.Observability/ObservedDispatcher.cs`
+- **Upstream:** https://github.com/dotnet/aspnetcore
+- **Commit:** 7387de91234d3ef751fa50b3d1bfede4130213ff
+- **Upstream paths:** `src/Shared/Metrics/MetricsConstants.cs`, `src/Hosting/Hosting/src/Internal/HostingMetrics.cs`
+- **Licence:** MIT
+- **Adoption:** pattern
+- **Ticket:** #84
+- **Intentional differences:**
+  - The values only: the fourteen second-scale boundaries of `MetricsConstants.ShortSecondsBucketBoundaries`, which ASP.NET Core declares as the `InstrumentAdvice<double>` of `http.server.request.duration` and which follow OpenTelemetry's semantic conventions for that histogram. The Kit declares them as the advice of `pouryakit.operation.duration`; no upstream code is taken.

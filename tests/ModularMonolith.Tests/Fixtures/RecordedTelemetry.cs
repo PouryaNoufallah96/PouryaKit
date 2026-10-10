@@ -8,7 +8,7 @@ namespace ModularMonolith.Tests.Fixtures;
 /// <summary>
 /// A test's listeners, until disposed: every activity of the Kit's Operation source and of <see cref="Upstream"/> that
 /// stopped, also Wolverine's when asked, all sampled with all data; and every Operation duration measurement with its
-/// tags. No exporter: what the Host emits is what the listeners see.
+/// tags. A test may leave out either listener. No exporter: what the Host emits is what the listeners see.
 /// </summary>
 internal sealed class RecordedTelemetry : IDisposable
 {
@@ -23,7 +23,7 @@ internal sealed class RecordedTelemetry : IDisposable
     private readonly ConcurrentQueue<Activity> _stopped = [];
     private readonly ConcurrentQueue<Duration> _measured = [];
 
-    public RecordedTelemetry(bool wolverine = false)
+    public RecordedTelemetry(bool wolverine = false, bool activities = true, bool durations = true)
     {
         _activities = new ActivityListener
         {
@@ -34,7 +34,11 @@ internal sealed class RecordedTelemetry : IDisposable
             SampleUsingParentId = static (ref _) => ActivitySamplingResult.AllDataAndRecorded,
             ActivityStopped = _stopped.Enqueue,
         };
-        ActivitySource.AddActivityListener(_activities);
+        if (activities)
+        {
+            ActivitySource.AddActivityListener(_activities);
+        }
+
         _durations.InstrumentPublished = (instrument, listener) =>
         {
             if (instrument.Meter.Name == OperationTelemetry.SourceName && instrument.Name == OperationTelemetry.DurationName)
@@ -54,7 +58,10 @@ internal sealed class RecordedTelemetry : IDisposable
                 _measured.Enqueue(new Duration(seconds, named));
             }
         );
-        _durations.Start();
+        if (durations)
+        {
+            _durations.Start();
+        }
     }
 
     /// <summary>Every recorded activity of <paramref name="trace"/> that stopped.</summary>

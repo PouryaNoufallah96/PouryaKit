@@ -88,5 +88,6 @@ public sealed class PageTests
                 Assert.True(FilterOperator.TryParseName(filterOperator.Name, out var parsed) && parsed == filterOperator)
         );
         Assert.False(FilterOperator.TryParseName("Equal", out _));
+        Assert.False(FilterOperator.TryParseName(null, out _));
     }
 }
