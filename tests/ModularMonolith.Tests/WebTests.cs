@@ -125,6 +125,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
         Assert.False(problem.TryGetProperty("errors", out _));
+        Assert.False(problem.TryGetProperty("detail", out _));
         Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from catalog.categories where id = '{category}'"));
     }
 

@@ -111,7 +111,7 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
     [Theory]
     [InlineData(OperationContextHeaders.CausationId, null, $"The request continues an Operation but has no single {OperationContextHeaders.CausationId} header that is {Rule}.")]
     [InlineData(OperationContextHeaders.CorrelationId, "not-a-guid", $"The request's {OperationContextHeaders.CorrelationId} header is not a Guid.")]
-    [InlineData(OperationContextHeaders.ActorKind, "Robot", $"The request's {OperationContextHeaders.ActorKind} header Robot is not an ActorKind.")]
+    [InlineData(OperationContextHeaders.ActorKind, "Robot", $"The request's {OperationContextHeaders.ActorKind} header is Person or System.")]
     [InlineData(OperationContextHeaders.ActorId, "ada\u0007", $"The request continues an Operation but has no single {OperationContextHeaders.ActorId} header that is {Rule}.")]
     [InlineData(OperationContextHeaders.Tenant, "acmé", $"The request continues an Operation but has no single {OperationContextHeaders.Tenant} header that is {Rule}.")]
     public async Task A_trusted_peer_whose_context_headers_are_incomplete_or_unreadable_is_refused_with_400(

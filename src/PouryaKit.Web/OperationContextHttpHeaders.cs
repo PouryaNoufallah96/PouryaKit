@@ -74,7 +74,9 @@ internal static class OperationContextHttpHeaders
         {
             nameof(ActorKind.Person) => Actor.Person(actorId),
             nameof(ActorKind.System) => Actor.System(actorId),
-            var kind => throw new KitBadRequestException($"The request's {ActorKindName} header {kind} is not an ActorKind."),
+            _ => throw new KitBadRequestException(
+                $"The request's {ActorKindName} header is {nameof(ActorKind.Person)} or {nameof(ActorKind.System)}."
+            ),
         };
         string? tenant = headers.ContainsKey(Tenant) ? Single(Tenant) : null;
         return OperationContext.RestoreTrusted(

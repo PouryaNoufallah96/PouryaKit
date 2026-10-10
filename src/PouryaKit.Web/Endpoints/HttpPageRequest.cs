@@ -7,9 +7,9 @@ namespace PouryaKit.Web;
 /// <summary>
 /// An endpoint parameter that reads a <see cref="PageRequest"/> from the query string:
 /// <c>?page=2&amp;size=20&amp;sort=name&amp;direction=desc&amp;filter[name][contains]=lamp&amp;filter[category][eq]=…</c>,
-/// each part optional and its key read ignoring case. An operator is written by its short name (<c>eq</c>, <c>ne</c>,
-/// <c>contains</c>, <c>startswith</c>, <c>gt</c>, <c>gte</c>, <c>lt</c>, <c>lte</c>); a filter value stays text until
-/// the query's <see cref="PageDeclaration"/> reads it. What does not parse at all (a page or size that is not a whole
+/// each part optional. The <c>filter[</c> prefix is read ignoring case, as the other keys are; an operator is written by
+/// its exact short name (<c>eq</c>, <c>ne</c>, <c>contains</c>, <c>startswith</c>, <c>gt</c>, <c>gte</c>, <c>lt</c>,
+/// <c>lte</c>); a filter value stays text until the query's <see cref="PageDeclaration"/> reads it. What does not parse at all (a page or size that is not a whole
 /// number, a direction other than <c>asc</c> or <c>desc</c>, an unknown operator, a malformed filter key, a <c>page</c>,
 /// <c>size</c>, <c>sort</c> or <c>direction</c> given twice) is a request that cannot be read, answered 400 as a problem
 /// response whose detail names the rule it broke; everything else, such as a size above the maximum, an undeclared sort
