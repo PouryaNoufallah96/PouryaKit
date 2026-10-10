@@ -1,0 +1,25 @@
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_a846915d2dd93c::t_c707ee351464e7 54-55,167
+.agents/skills/pourya-kit/references/persistence.md
+  s_a846915d2dd93c::t_fc4117d9792301 292
+docs/acceptance.md
+  s_a846915d2dd93c::t_f911587e483a64 1620
+src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_37e84ee0d59f17 24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "567c8b77a4a0a4321c424bec28757734876b4005",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
