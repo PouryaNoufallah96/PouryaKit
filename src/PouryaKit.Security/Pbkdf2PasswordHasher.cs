@@ -19,17 +19,17 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
     // what keeps a cut-down key from verifying.
     private const int MinKeySize = 32;
 
-    private readonly Pbkdf2Algorithm algorithm;
-    private readonly int iterations;
-    private readonly int saltSize;
-    private readonly int keySize;
+    private readonly Pbkdf2Algorithm _algorithm;
+    private readonly int _iterations;
+    private readonly int _saltSize;
+    private readonly int _keySize;
 
     private Pbkdf2PasswordHasher(Pbkdf2Algorithm algorithm, int iterations, int saltSize, int keySize)
     {
-        this.algorithm = algorithm;
-        this.iterations = iterations;
-        this.saltSize = saltSize;
-        this.keySize = keySize;
+        _algorithm = algorithm;
+        _iterations = iterations;
+        _saltSize = saltSize;
+        _keySize = keySize;
     }
 
     // From options Validation accepted: IOptions<T>.Value runs it before the value reaches here.
@@ -40,11 +40,11 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
     {
         ArgumentNullException.ThrowIfNull(password);
 
-        var salt = RandomNumberGenerator.GetBytes(saltSize);
-        var key = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, algorithm.HashName, keySize);
+        var salt = RandomNumberGenerator.GetBytes(_saltSize);
+        var key = Rfc2898DeriveBytes.Pbkdf2(password, salt, _iterations, _algorithm.HashName, _keySize);
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"{Prefix}${Version}${algorithm.Name}${iterations}${Convert.ToBase64String(salt)}${Convert.ToBase64String(key)}"
+            $"{Prefix}${Version}${_algorithm.Name}${_iterations}${Convert.ToBase64String(salt)}${Convert.ToBase64String(key)}"
         );
     }
 
@@ -73,10 +73,10 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
             return PasswordVerification.Failed;
         }
 
-        return stored.Algorithm != algorithm
-            || stored.Iterations < iterations
-            || stored.Salt.Length < saltSize
-            || stored.Key.Length < keySize
+        return stored.Algorithm != _algorithm
+            || stored.Iterations < _iterations
+            || stored.Salt.Length < _saltSize
+            || stored.Key.Length < _keySize
             ? PasswordVerification.SucceededNeedsUpgrade
             : PasswordVerification.Succeeded;
     }

@@ -24,12 +24,12 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
 
     private static readonly OperationContext Context = new(Actor.Person("ada"), "acme");
 
-    private readonly WireMockServer downstream = WireMockServer.Start();
+    private readonly WireMockServer _downstream = WireMockServer.Start();
 
     public override ValueTask DisposeAsync()
     {
-        downstream.Stop();
-        downstream.Dispose();
+        _downstream.Stop();
+        _downstream.Dispose();
         return base.DisposeAsync();
     }
 
@@ -99,8 +99,8 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
         using var replaySafe = Clients(HttpReplay.AllRequests);
 
         using var once = await SendAsync(safeMethods, new HttpMethod(method));
-        downstream.ResetScenario(method);
-        downstream.ResetLogEntries();
+        _downstream.ResetScenario(method);
+        _downstream.ResetLogEntries();
         using var replayed = await SendAsync(replaySafe, new HttpMethod(method));
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, once.StatusCode);
@@ -159,7 +159,7 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
     {
         RespondInTurn("GET", 200);
         using var services = Clients();
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"{downstream.Url}/downstream").WithOperationContext(
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{_downstream.Url}/downstream").WithOperationContext(
             new OperationContext(Actor.Person(actor), tenant)
         );
 
@@ -219,7 +219,7 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
     {
         RespondInTurn("GET", 200);
         using var services = Clients();
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"{downstream.Url}/downstream");
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{_downstream.Url}/downstream");
 
         var refused = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             services
@@ -240,7 +240,7 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
         RespondInTurn("GET", 200);
         using var ada = Fixture.Client("ada");
         using var bob = Fixture.Client("bob");
-        var relay = $"/stub/relay?url={Uri.EscapeDataString($"{downstream.Url}/downstream")}";
+        var relay = $"/stub/relay?url={Uri.EscapeDataString($"{_downstream.Url}/downstream")}";
 
         var sent = await Task.WhenAll(
             ada.GetFromJsonAsync<SeenContext>(relay, TestContext.Current.CancellationToken),
@@ -271,7 +271,7 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
     {
         for (var turn = 0; turn < statuses.Length; turn++)
         {
-            var mapping = downstream.Given(Request.Create().WithPath("/downstream").UsingMethod(method)).InScenario(method);
+            var mapping = _downstream.Given(Request.Create().WithPath("/downstream").UsingMethod(method)).InScenario(method);
             if (turn > 0)
             {
                 mapping = mapping.WhenStateIs($"answered {turn}");
@@ -328,14 +328,14 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
         CancellationToken? cancellationToken = null
     )
     {
-        using var request = new HttpRequestMessage(method, $"{downstream.Url}/downstream").WithOperationContext(Context);
+        using var request = new HttpRequestMessage(method, $"{_downstream.Url}/downstream").WithOperationContext(Context);
         return await services
             .GetRequiredService<IHttpClientFactory>()
             .CreateClient(Client)
             .SendAsync(request, cancellationToken ?? TestContext.Current.CancellationToken);
     }
 
-    private List<IRequestMessage> Journal() => [.. downstream.LogEntries.Select(entry => entry.RequestMessage!)];
+    private List<IRequestMessage> Journal() => [.. _downstream.LogEntries.Select(entry => entry.RequestMessage!)];
 
     private static Dictionary<string, string> Headers(IRequestMessage request) =>
         request.Headers!.ToDictionary(header => header.Key.ToLowerInvariant(), header => string.Join(",", header.Value));

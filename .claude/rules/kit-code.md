@@ -11,6 +11,7 @@ paths:
 
 - **Package boundaries.** Plan section C, "Allowed references", says what each package may reference. An MIT-licensed `Microsoft.Extensions.*` package may be referenced where a package needs it, added to that table in the same change; any other reference outside the table is an owner decision.
 - **Namespaces.** A Kit package has folders by responsibility and one namespace, the package name, in every folder; application code (the Proving Sample, the templates' content, the test projects) has namespaces that follow its folders (ADR 0010).
+- **Registration names.** `Use*` mirrors the verb of the framework call it wraps, applies a representation, or configures existing behaviour (`UsePouryaKitTestDelivery`); `Add*` adds a Capability's services; `Map*` maps; the Host builder is the receiver only when the call needs it. The one exception is the Module's messaging vocabulary of ADR 0006: `Publish<T>`, `Receive<T>`, `Subscribe<T, THandler>`, `PublishSnapshot` and `ReceiveSnapshot` keep their names in the Composition Root, beside `AddPouryaKitDelayedCommand` and `AddPouryaKitRecurringCommand`.
 - **Dispatch.** Commands and queries go through the Kit's own dispatcher and its fixed pipeline (ADR 0002).
 - **Isolation.** One host container; a Module is isolated by its assembly, `internal` types, its own DbContext and schema, and architecture tests (ADR 0001).
 - **Commit.** The Unit of Work owns every commit, in the fixed sequence in plan section C. Handlers and Feature code return a `Result` and leave saving, committing and the Outbox to it (ADR 0003).
