@@ -9,6 +9,10 @@ namespace PouryaKit.Messaging.Wolverine;
 /// </summary>
 public sealed class UnknownDelayedCommandException : Exception
 {
+    /// <summary>
+    /// The exception for a delivery of a <paramref name="command"/> stored under <paramref name="name"/>, a name this
+    /// Host declares for no delayed command of that type.
+    /// </summary>
     public UnknownDelayedCommandException(string name, Type command)
         : base(
             $"No delayed command of type {command.FullName} is declared under the name {name} in this Host, so its delivery cannot run. Declare it again, under that name, to run it."
@@ -21,5 +25,6 @@ public sealed class UnknownDelayedCommandException : Exception
                 : $"The delivery of {command.FullName} under the name {name} was stored as a delayed command, but this Host declares {name} as a recurring command, so it is never run as that command's system Actor."
         ) => Name = name;
 
+    /// <summary>The name the delivery was stored under.</summary>
     public string Name { get; }
 }

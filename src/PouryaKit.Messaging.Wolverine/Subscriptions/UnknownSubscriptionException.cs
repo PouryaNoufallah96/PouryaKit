@@ -9,5 +9,6 @@ public sealed class UnknownSubscriptionException(string subscription)
         $"No Notification Handler or Integration Event Handler subscribes under the name {subscription} in this Host, so its delivery cannot run. Declare the subscription again, under that name, to deliver it."
     )
 {
+    /// <summary>The subscription name the delivery arrived for.</summary>
     public string Subscription { get; } = subscription;
 }

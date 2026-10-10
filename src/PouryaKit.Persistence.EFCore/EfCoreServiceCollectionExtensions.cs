@@ -6,6 +6,10 @@ using PouryaKit.Domain;
 
 namespace PouryaKit.Persistence.EFCore;
 
+/// <summary>
+/// Composes the Persistence Capability over EF Core on a Module's or a Host's services: the DbContext as the Unit of
+/// Work, its repositories, and the Errors of its unique constraints.
+/// </summary>
 public static class EfCoreServiceCollectionExtensions
 {
     extension(IServiceCollection services)

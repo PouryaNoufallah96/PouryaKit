@@ -9,6 +9,10 @@ using Wolverine.Postgresql;
 
 namespace PouryaKit.Messaging.Wolverine.EFCore;
 
+/// <summary>
+/// Composes the Messaging Capability on Wolverine, with its durable message store and every Module's Outbox in
+/// PostgreSQL, on a Host's application builder.
+/// </summary>
 public static class WolverineEfCoreHostApplicationBuilderExtensions
 {
     extension(IHostApplicationBuilder builder)

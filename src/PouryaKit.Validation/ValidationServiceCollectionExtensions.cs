@@ -6,6 +6,10 @@ using PouryaKit.Cqrs;
 
 namespace PouryaKit.Validation;
 
+/// <summary>
+/// Composes the Validation Capability on a Module's services: the Features' validators as the pipeline's validation
+/// step.
+/// </summary>
 public static class ValidationServiceCollectionExtensions
 {
     extension(IServiceCollection services)

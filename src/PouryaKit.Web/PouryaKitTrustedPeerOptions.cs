@@ -15,5 +15,8 @@ namespace PouryaKit.Web;
 /// </remarks>
 public sealed class PouryaKitTrustedPeerOptions
 {
+    /// <summary>
+    /// The identities the <see cref="PouryaKitWebOptions.ActorClaim"/> names for the trusted peer Hosts.
+    /// </summary>
     public ISet<string> Peers { get; } = new HashSet<string>(StringComparer.Ordinal);
 }

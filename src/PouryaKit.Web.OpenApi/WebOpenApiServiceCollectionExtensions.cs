@@ -8,6 +8,10 @@ using PouryaKit.Cqrs;
 
 namespace PouryaKit.Web.OpenApi;
 
+/// <summary>
+/// Composes the API versions and OpenAPI Capability on a Host's services: API versioning, each Module's API versions,
+/// and one OpenAPI document per version.
+/// </summary>
 public static class WebOpenApiServiceCollectionExtensions
 {
     /// <summary>The request header a caller names the API version in, on a Module's unversioned paths.</summary>

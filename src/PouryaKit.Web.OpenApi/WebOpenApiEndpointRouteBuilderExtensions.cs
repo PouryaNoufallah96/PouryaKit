@@ -6,6 +6,9 @@ using Scalar.AspNetCore;
 
 namespace PouryaKit.Web.OpenApi;
 
+/// <summary>
+/// Serves the API versions and OpenAPI Capability's documents and Scalar API reference on a Host's routes.
+/// </summary>
 public static class WebOpenApiEndpointRouteBuilderExtensions
 {
     extension(IEndpointRouteBuilder routes)

@@ -16,6 +16,7 @@ public sealed record Actor
     /// <summary>The person's identifier, or the system's name.</summary>
     public string Id { get; }
 
+    /// <summary>Whether this Actor is a person or a named system.</summary>
     public ActorKind Kind { get; }
 
     /// <summary>A person, identified as the trust boundary that authenticated them identifies them.</summary>

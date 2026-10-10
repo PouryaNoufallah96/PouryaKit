@@ -6,6 +6,10 @@ using PouryaKit.Cqrs;
 
 namespace PouryaKit.Messaging.Wolverine;
 
+/// <summary>
+/// Declares a Module's delayed commands and recurring commands, part of the Messaging Capability, in its Composition
+/// Root or, naming the Module, in the Host's composition.
+/// </summary>
 public static class DelayedCommandServiceCollectionExtensions
 {
     extension(IServiceCollection services)

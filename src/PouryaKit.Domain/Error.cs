@@ -16,8 +16,10 @@ public sealed record Error
     /// <summary>The stable name of the reason, such as <c>Product.NameRequired</c>.</summary>
     public string Code { get; }
 
+    /// <summary>The reason in words, for a person to read.</summary>
     public string Message { get; }
 
+    /// <summary>What kind of reason this is, which a transport maps to its own codes.</summary>
     public ErrorKind Kind { get; }
 
     /// <summary>
@@ -26,6 +28,7 @@ public sealed record Error
     /// </summary>
     public string? Target { get; }
 
+    /// <summary>A <see cref="ErrorKind.Validation"/> Error about no single input.</summary>
     public static Error Validation(string code, string message) => new(code, message, ErrorKind.Validation);
 
     /// <summary>A validation Error about one input, named by <paramref name="target"/>.</summary>
@@ -35,11 +38,15 @@ public sealed record Error
         return new(code, message, ErrorKind.Validation, target);
     }
 
+    /// <summary>A <see cref="ErrorKind.NotFound"/> Error.</summary>
     public static Error NotFound(string code, string message) => new(code, message, ErrorKind.NotFound);
 
+    /// <summary>A <see cref="ErrorKind.Conflict"/> Error.</summary>
     public static Error Conflict(string code, string message) => new(code, message, ErrorKind.Conflict);
 
+    /// <summary>A <see cref="ErrorKind.Forbidden"/> Error.</summary>
     public static Error Forbidden(string code, string message) => new(code, message, ErrorKind.Forbidden);
 
+    /// <summary>An <see cref="ErrorKind.Unexpected"/> Error.</summary>
     public static Error Unexpected(string code, string message) => new(code, message, ErrorKind.Unexpected);
 }

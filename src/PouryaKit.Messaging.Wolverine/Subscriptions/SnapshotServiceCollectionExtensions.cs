@@ -5,6 +5,10 @@ using PouryaKit.Domain;
 
 namespace PouryaKit.Messaging.Wolverine;
 
+/// <summary>
+/// Declares, as part of the Messaging Capability, the Snapshots a Module publishes, in its Composition Root or the
+/// Host's composition, and those a Host receives from another Host.
+/// </summary>
 public static class SnapshotServiceCollectionExtensions
 {
     extension(IServiceCollection services)

@@ -6,6 +6,10 @@ using PouryaKit.Persistence.EFCore;
 
 namespace PouryaKit.Persistence.Postgres;
 
+/// <summary>
+/// Composes the Persistence Capability's PostgreSQL storage on a Module's services: its schema, its migrations history
+/// table and its connection.
+/// </summary>
 public static class PostgresServiceCollectionExtensions
 {
     extension(IServiceCollection services)

@@ -8,6 +8,10 @@ using PouryaKit.Cqrs;
 
 namespace PouryaKit.Web;
 
+/// <summary>
+/// Composes the Web Capability's endpoints on a Host's routes: maps every Module's endpoints, and states an endpoint's
+/// public Actor or its <c>Idempotency-Key</c>.
+/// </summary>
 public static class WebEndpointRouteBuilderExtensions
 {
     extension(IEndpointRouteBuilder routes)

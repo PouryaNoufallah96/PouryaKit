@@ -13,6 +13,7 @@ namespace PouryaKit.Web;
 /// </remarks>
 public sealed class PouryaKitCorsOptions
 {
+    /// <summary>The policies, each under the name the Host applies it by.</summary>
     public IDictionary<string, PouryaKitCorsPolicy> Policies { get; } =
         new Dictionary<string, PouryaKitCorsPolicy>(StringComparer.Ordinal);
 }

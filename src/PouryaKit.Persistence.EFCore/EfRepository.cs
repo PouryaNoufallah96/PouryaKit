@@ -29,6 +29,7 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
 
     private readonly Operation _operation = ((EfUnitOfWork)unitOfWork).Operation;
 
+    /// <inheritdoc />
     public async Task AddAsync(TAggregate aggregate, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(aggregate);
@@ -36,6 +37,7 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
         await _aggregates.AddAsync(aggregate, cancellationToken);
     }
 
+    /// <inheritdoc />
     public void Remove(TAggregate aggregate)
     {
         ArgumentNullException.ThrowIfNull(aggregate);
@@ -43,25 +45,30 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
         _aggregates.Remove(aggregate);
     }
 
+    /// <inheritdoc />
     public async Task<TAggregate?> FindAsync(TId id, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(id);
         return await _aggregates.FindAsync([id], cancellationToken);
     }
 
+    /// <inheritdoc />
     public Task<TAggregate?> FindAsync(
         ISpecification<TAggregate> specification,
         CancellationToken cancellationToken = default
     ) => Query(specification).FirstOrDefaultAsync(cancellationToken);
 
+    /// <inheritdoc />
     public Task<List<TAggregate>> ListAsync(
         ISpecification<TAggregate> specification,
         CancellationToken cancellationToken = default
     ) => Query(specification).ToListAsync(cancellationToken);
 
+    /// <inheritdoc />
     public Task<bool> AnyAsync(ISpecification<TAggregate> specification, CancellationToken cancellationToken = default) =>
         Query(specification, evaluateCriteriaOnly: true).AnyAsync(cancellationToken);
 
+    /// <inheritdoc />
     public Task<int> CountAsync(ISpecification<TAggregate> specification, CancellationToken cancellationToken = default) =>
         Query(specification, evaluateCriteriaOnly: true).CountAsync(cancellationToken);
 

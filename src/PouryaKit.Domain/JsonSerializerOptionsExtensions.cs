@@ -4,6 +4,9 @@ using System.Text.Json.Serialization;
 
 namespace PouryaKit.Domain;
 
+/// <summary>
+/// Applies the Kit's one JSON representation, typed IDs included, to <see cref="JsonSerializerOptions"/>.
+/// </summary>
 public static class JsonSerializerOptionsExtensions
 {
     extension(JsonSerializerOptions options)

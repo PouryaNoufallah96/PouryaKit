@@ -6,6 +6,10 @@ using PouryaKit.Core;
 
 namespace PouryaKit.Cqrs;
 
+/// <summary>
+/// Composes the Cqrs Capability on a Module's or a Host's services: the dispatcher, and the command handlers, query
+/// handlers, authorizers and Domain Event Handlers of the Features.
+/// </summary>
 public static class CqrsServiceCollectionExtensions
 {
     extension(IServiceCollection services)

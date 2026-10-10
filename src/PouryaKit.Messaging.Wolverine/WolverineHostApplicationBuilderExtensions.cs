@@ -11,6 +11,10 @@ using Wolverine.Util;
 
 namespace PouryaKit.Messaging.Wolverine;
 
+/// <summary>
+/// Composes the Messaging Capability's routing, delivery and retries on Wolverine, without an Outbox, on a Host's
+/// application builder.
+/// </summary>
 public static class WolverineHostApplicationBuilderExtensions
 {
     extension(IHostApplicationBuilder builder)

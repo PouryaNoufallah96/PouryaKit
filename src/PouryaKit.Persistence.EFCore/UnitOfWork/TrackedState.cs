@@ -67,6 +67,7 @@ public sealed class TrackedState : IDisposable
         }
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         if (_includeQueryLoads)

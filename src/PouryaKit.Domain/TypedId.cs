@@ -17,6 +17,10 @@ public abstract record TypedId<TValue>
         || typeof(TValue) == typeof(int)
         || typeof(TValue) == typeof(string);
 
+    /// <summary>
+    /// Wraps <paramref name="value"/>, and throws when it is null, an empty Guid or blank text, or when
+    /// <typeparamref name="TValue"/> is not Guid, long, int or string.
+    /// </summary>
     protected TypedId(TValue value)
     {
         if (!Supported)
@@ -34,8 +38,10 @@ public abstract record TypedId<TValue>
         Value = value;
     }
 
+    /// <summary>The value the typed ID wraps.</summary>
     public TValue Value { get; }
 
+    /// <inheritdoc />
     public sealed override string ToString() => string.Create(CultureInfo.InvariantCulture, $"{Value}");
 }
 

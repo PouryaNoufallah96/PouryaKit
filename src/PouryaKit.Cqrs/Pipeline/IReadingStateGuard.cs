@@ -7,5 +7,8 @@ namespace PouryaKit.Cqrs;
 /// </summary>
 public interface IReadingStateGuard
 {
+    /// <summary>
+    /// Captures the tracked state before a step that only reads, which <paramref name="step"/> names in a refusal.
+    /// </summary>
     IDisposable OnlyReading(string step);
 }

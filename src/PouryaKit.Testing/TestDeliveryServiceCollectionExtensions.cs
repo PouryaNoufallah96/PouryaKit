@@ -5,6 +5,7 @@ using Wolverine;
 
 namespace PouryaKit.Testing;
 
+/// <summary>Composes delivery at test speed, part of the Testing Capability, on a Host's services.</summary>
 public static class TestDeliveryServiceCollectionExtensions
 {
     extension(IServiceCollection services)
@@ -31,5 +32,6 @@ public static class TestDeliveryServiceCollectionExtensions
     /// <summary>The waits before each retry of a failed delivery: a delivery is attempted once more than there are.</summary>
     public static IReadOnlyList<TimeSpan> RetryDelays { get; } = [TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100)];
 
+    /// <summary>How often the message store is polled for retries and recoverable deliveries.</summary>
     public static TimeSpan PollingTime { get; } = TimeSpan.FromMilliseconds(100);
 }

@@ -16,6 +16,7 @@ namespace PouryaKit.Web;
 /// </remarks>
 public sealed class PouryaKitRateLimitOptions
 {
+    /// <summary>Whether the rate limit applies; false, the default, limits nothing.</summary>
     public bool Enabled { get; set; }
 
     /// <summary>The requests one partition is served in each window.</summary>

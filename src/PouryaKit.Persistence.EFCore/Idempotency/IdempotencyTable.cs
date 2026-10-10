@@ -16,6 +16,7 @@ namespace PouryaKit.Persistence.EFCore;
 /// </summary>
 public static class IdempotencyTable
 {
+    /// <summary>The idempotency key table's name, in the Module's schema.</summary>
     public const string Name = "pouryakit_idempotency_keys";
 
     /// <summary>The tenant column of an Operation without a tenant: <see cref="OperationContext.NoTenant"/>.</summary>
@@ -61,6 +62,7 @@ public static class IdempotencyTable
             migrationBuilder.CreateIndex(name: $"ix_{Name}_reserved_at", schema: schema, table: Name, column: "reserved_at");
         }
 
+        /// <summary>Drops the idempotency key table from <paramref name="schema"/>, the Module's own.</summary>
         public void DropIdempotencyTable(string schema) => migrationBuilder.DropTable(name: Name, schema: schema);
     }
 

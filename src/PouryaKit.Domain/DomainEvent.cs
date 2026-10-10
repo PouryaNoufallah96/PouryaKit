@@ -7,6 +7,10 @@ namespace PouryaKit.Domain;
 /// </summary>
 public abstract record DomainEvent
 {
+    /// <summary>
+    /// Creates the Domain Event and assigns its <see cref="Id"/> and <see cref="OccurredOn"/> from one reading of
+    /// <see cref="DomainClock"/>.
+    /// </summary>
     protected DomainEvent()
     {
         var now = DomainClock.Current.GetUtcNow();
@@ -14,8 +18,10 @@ public abstract record DomainEvent
         OccurredOn = now;
     }
 
+    /// <summary>The Domain Event's identity, which every redelivery of it keeps.</summary>
     public Guid Id { get; init; }
 
+    /// <summary>When the Domain Event was raised, in UTC.</summary>
     public DateTimeOffset OccurredOn
     {
         get;

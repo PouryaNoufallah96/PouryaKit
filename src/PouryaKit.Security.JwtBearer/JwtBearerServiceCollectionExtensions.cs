@@ -7,6 +7,7 @@ using PouryaKit.Cqrs;
 
 namespace PouryaKit.Security.JwtBearer;
 
+/// <summary>Composes JWT bearer authentication, part of the Security Capability, on a Host's services.</summary>
 public static class JwtBearerServiceCollectionExtensions
 {
     extension(IServiceCollection services)

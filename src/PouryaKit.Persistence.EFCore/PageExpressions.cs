@@ -25,6 +25,9 @@ public sealed class PageExpressions<TAggregate>
     private readonly Func<IOrderedQueryable<TAggregate>, bool, IOrderedQueryable<TAggregate>>? _thenBy;
     private readonly ImmutableDictionary<(string, FilterOperator), Func<object, Expression<Func<TAggregate, bool>>>> _filters;
 
+    /// <summary>
+    /// The expressions of a Page read <paramref name="declaration"/> allows, with no sort key or filter mapped yet.
+    /// </summary>
     public PageExpressions(PageDeclaration declaration)
     {
         ArgumentNullException.ThrowIfNull(declaration);
@@ -46,6 +49,7 @@ public sealed class PageExpressions<TAggregate>
         _filters = filters;
     }
 
+    /// <summary>The declaration whose sort keys and filters these expressions map.</summary>
     public PageDeclaration Declaration { get; }
 
     /// <summary>A copy that orders by <paramref name="key"/> when the request sorts by <paramref name="sortKey"/>.</summary>

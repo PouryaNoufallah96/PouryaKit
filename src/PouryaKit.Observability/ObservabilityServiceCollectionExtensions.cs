@@ -3,6 +3,10 @@ using PouryaKit.Cqrs;
 
 namespace PouryaKit.Observability;
 
+/// <summary>
+/// Composes the Observability Capability on a Host's services: an activity and a duration measurement for every command
+/// and query the dispatcher runs.
+/// </summary>
 public static class ObservabilityServiceCollectionExtensions
 {
     extension(IServiceCollection services)

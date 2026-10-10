@@ -22,6 +22,10 @@ public abstract class PouryaKitDbContext : DbContext
     /// </summary>
     public const string SoftDeleteFilter = "PouryaKit.SoftDelete";
 
+    /// <summary>
+    /// Creates the DbContext with <paramref name="options"/> and the cascade timings the Unit of Work's soft delete
+    /// relies on.
+    /// </summary>
     protected PouryaKitDbContext(DbContextOptions options)
         : base(options)
     {
@@ -33,6 +37,7 @@ public abstract class PouryaKitDbContext : DbContext
         ChangeTracker.DeleteOrphansTiming = CascadeTiming.Immediate;
     }
 
+    /// <inheritdoc />
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         ArgumentNullException.ThrowIfNull(configurationBuilder);
@@ -49,6 +54,7 @@ public abstract class PouryaKitDbContext : DbContext
         }
     }
 
+    /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
