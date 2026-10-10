@@ -1077,6 +1077,11 @@ to a Snapshot after data exists has no copy of an aggregate until it next change
 the Kit guarantees for a Snapshot"). The Wave 3 spec decides whether an operator command writes the current Snapshot of
 every aggregate through the Outbox for one subscription, under the existing version rules.
 
+A second Wave 3 planning question, recorded 2026-10-10 (#98, the final quality pass): `TrackedState.Capture` copies every tracked
+property of the Unit of Work's DbContext for each read-only step of an Operation (`EfUnitOfWork` captures with query loads
+included), so a Wave 3 handler that nests many queries pays that capture each time. Measure the cost on a representative
+nested-query Operation before Wave 3's Capabilities rely on it; nothing in Waves 1 and 2 showed it as a cost.
+
 Spikes before building (no owner input, recorded as ADRs): the Marten two-store spike (I.4); the
 RabbitMQ topology spike under ADR 0006; a check whether Wolverine already propagates W3C trace
 context into envelopes. *Resolved, ADR 0009 (2026-10-07): it writes and restores `traceparent` on the
