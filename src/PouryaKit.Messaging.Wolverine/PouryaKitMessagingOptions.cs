@@ -10,8 +10,8 @@ public sealed class PouryaKitMessagingOptions
     /// every attempt's run, shorter than it: an attempt that runs after it is handed out again while it runs. That rule
     /// covers a delivery sent at its commit; a delayed command or a recurring occurrence due later than the stale time
     /// runs stale from its first attempt (<c>PouryaKitMessageStoreOptions.InboxStaleTime</c>). Null, or a negative delay,
-    /// stops the Host when it starts, naming this option; so does an empty schedule, which Wolverine's stored retry
-    /// refuses, so a failed delivery is always retried at least once.
+    /// stops the Host when it starts, naming this option. An empty schedule fails the start too, in Wolverine's own retry
+    /// policy and with Wolverine's message, not this option's: a failed delivery is always retried at least once.
     /// </summary>
     public TimeSpan[] RetryDelays { get; set; } = [TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(1)];
 }
