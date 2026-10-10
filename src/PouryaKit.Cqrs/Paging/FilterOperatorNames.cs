@@ -2,6 +2,8 @@ namespace PouryaKit.Cqrs;
 
 public static class FilterOperatorNames
 {
+    private static readonly FilterOperator[] Operators = Enum.GetValues<FilterOperator>();
+
     extension(FilterOperator filterOperator)
     {
         /// <summary>The operator's short name, such as <c>eq</c> or <c>contains</c>.</summary>
@@ -25,7 +27,7 @@ public static class FilterOperatorNames
         /// <summary>The operator whose short name is exactly <paramref name="name"/>.</summary>
         public static bool TryParseName(string? name, out FilterOperator filterOperator)
         {
-            foreach (var candidate in Enum.GetValues<FilterOperator>())
+            foreach (var candidate in Operators)
             {
                 if (string.Equals(candidate.Name, name, StringComparison.Ordinal))
                 {

@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Data;
 using System.Text.RegularExpressions;
@@ -28,7 +29,7 @@ public sealed class PageSql
     internal const string SizeParameter = "page_size";
     internal const string OffsetParameter = "page_offset";
 
-    private static readonly ImmutableDictionary<Type, DbType> DbTypes = new Dictionary<Type, DbType>
+    private static readonly FrozenDictionary<Type, DbType> DbTypes = new Dictionary<Type, DbType>
     {
         [typeof(string)] = DbType.String,
         [typeof(Guid)] = DbType.Guid,
@@ -37,7 +38,7 @@ public sealed class PageSql
         [typeof(decimal)] = DbType.Decimal,
         [typeof(bool)] = DbType.Boolean,
         [typeof(DateTimeOffset)] = DbType.DateTimeOffset,
-    }.ToImmutableDictionary();
+    }.ToFrozenDictionary();
 
     private readonly ImmutableDictionary<string, string> _orderBy;
     private readonly string? _thenBy;

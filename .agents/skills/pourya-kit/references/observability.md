@@ -25,7 +25,7 @@ builder.Services.AddPouryaKitObservability();
 ```
 
 - In an application without Modularity, call it after `AddPouryaKitCqrs`. With no dispatcher registered yet it throws `InvalidOperationException`: "No dispatcher of the Kit is registered to observe. Call AddPouryaKitObservability after AddPouryaKitModules or AddPouryaKitCqrs." A second call does nothing.
-- A Host that never calls it has no activity and no measurement from the Kit. With it and nothing listening, each dispatch costs one check.
+- A Host that never calls it has no activity and no measurement from the Kit. With it and nothing listening, each dispatch costs one check and returns the dispatcher's own task, allocating nothing. The check asks for either listener: with only an activity listener, or only a meter listener, the Operation is still observed.
 - Feature code changes nothing. A handler starts no activity of its own for its command, and the Kit adds no pipeline step an application could register.
 - The Kit's dispatcher decorator wraps the whole dispatch, so any optional step the Kit adds inside its fixed pipeline, such as idempotency or caching, runs inside the Operation's activity and its duration.
 
@@ -37,7 +37,7 @@ The names are constants on `OperationTelemetry`:
 |---|---|
 | `ActivitySource` and `Meter` | `PouryaKit` (`OperationTelemetry.SourceName`) |
 | Activity, one per command or query, kind internal | `pouryakit.operation` (`ActivityName`) |
-| Histogram of each one's duration, unit `s`, a `double` that keeps fractions | `pouryakit.operation.duration` (`DurationName`) |
+| Histogram of each one's duration, unit `s`, a `double` that keeps fractions, with ASP.NET Core's second-scale bucket boundaries for `http.server.request.duration` (`0.005` to `10`) as its advice | `pouryakit.operation.duration` (`DurationName`) |
 | Tag: the Module the Operation runs in, by type name; absent without Modules | `pouryakit.module` |
 | Tag: the command's or query's type name | `pouryakit.operation` |
 | Tag: `Person` or `System` | `pouryakit.actor.kind` |
@@ -80,7 +80,7 @@ pouryakit.operation Deliver  ── broker ──▶  [Wolverine span of the env
 
 ## Exporting
 
-The Host adds an exporter for the source and the meter named `PouryaKit`, and for `Wolverine` if it wants Wolverine's spans as well, with the standard OpenTelemetry SDK. The service defaults recipe registers the application's own source, `OperationTelemetry.SourceName` and `Npgsql`, a span for each database command, not `Wolverine`, and exports over OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured ([host-recipes.md](host-recipes.md#what-each-recipe-does)); Wolverine's spans are opt-in: add `.AddSource("Wolverine")` to its `WithTracing` registration. Logs, Serilog included, are configured on the Host too. None of it belongs in a Module or in the Kit.
+The Host adds an exporter for the source and the meter named `PouryaKit`, and for `Wolverine` if it wants Wolverine's spans as well, with the standard OpenTelemetry SDK. The service defaults recipe registers the application's own source, `OperationTelemetry.SourceName` and `Npgsql`, a span for each database command, not `Wolverine`, and exports over OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured ([host-recipes.md](host-recipes.md#what-each-recipe-does)); Wolverine's spans are opt-in: add `.AddSource("Wolverine")` to its `WithTracing` registration. The OpenTelemetry SDK takes the histogram's bucket boundaries from its advice, so the exporter needs no view for it. Logs, Serilog included, are configured on the Host too; every entry logged inside an Operation carries the dispatcher's log scope, `Operation`, `OperationId`, `CorrelationId` and `Module` ([commands-queries-validation.md](commands-queries-validation.md#the-pipeline)), so a log backend joins it to its request without a trace. None of it belongs in a Module or in the Kit.
 
 ## Testing telemetry
 

@@ -15,37 +15,51 @@ internal sealed class ObservedDispatcher(IDispatcher dispatcher, Operation opera
     private static readonly Histogram<double> Duration = Meter.CreateHistogram<double>(
         OperationTelemetry.DurationName,
         unit: "s",
-        description: "The duration of a command or query the dispatcher ran."
+        description: "The duration of a command or query the dispatcher ran.",
+        // ASP.NET Core's second-scale boundaries for http.server.request.duration (dotnet/aspnetcore@7387de9, v10.0.0,
+        // src/Shared/Metrics/MetricsConstants.cs): an exporter's defaults are for milliseconds, and would put nearly
+        // every Operation in the first bucket.
+        advice: new InstrumentAdvice<double> { HistogramBucketBoundaries = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10] }
     );
+
+    // With nothing listening, the dispatch is the wrapped dispatcher's own task: the delegates are static, so no
+    // closure, delegate or state machine is allocated before the check.
+    private static bool Observing => Source.HasListeners() || Duration.Enabled;
 
     public Task<Result> SendAsync(Command command, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(command);
-        return ObserveAsync(command, () => dispatcher.SendAsync(command, cancellationToken));
+        return Observing
+            ? ObserveAsync(command, static (inner, sent, ct) => inner.SendAsync(sent, ct), cancellationToken)
+            : dispatcher.SendAsync(command, cancellationToken);
     }
 
     public Task<Result<TResponse>> SendAsync<TResponse>(Command<TResponse> command, CancellationToken cancellationToken = default)
         where TResponse : notnull
     {
         ArgumentNullException.ThrowIfNull(command);
-        return ObserveAsync(command, () => dispatcher.SendAsync(command, cancellationToken));
+        return Observing
+            ? ObserveAsync(command, static (inner, sent, ct) => inner.SendAsync(sent, ct), cancellationToken)
+            : dispatcher.SendAsync(command, cancellationToken);
     }
 
     public Task<Result<TResponse>> QueryAsync<TResponse>(Query<TResponse> query, CancellationToken cancellationToken = default)
         where TResponse : notnull
     {
         ArgumentNullException.ThrowIfNull(query);
-        return ObserveAsync(query, () => dispatcher.QueryAsync(query, cancellationToken));
+        return Observing
+            ? ObserveAsync(query, static (inner, asked, ct) => inner.QueryAsync(asked, ct), cancellationToken)
+            : dispatcher.QueryAsync(query, cancellationToken);
     }
 
-    private async Task<TResult> ObserveAsync<TResult>(object commandOrQuery, Func<Task<TResult>> dispatch)
+    private async Task<TResult> ObserveAsync<TCommandOrQuery, TResult>(
+        TCommandOrQuery commandOrQuery,
+        Func<IDispatcher, TCommandOrQuery, CancellationToken, Task<TResult>> dispatch,
+        CancellationToken cancellationToken
+    )
+        where TCommandOrQuery : notnull
         where TResult : Result
     {
-        if (!Source.HasListeners() && !Duration.Enabled)
-        {
-            return await dispatch();
-        }
-
         TagList tags = new() { { OperationTelemetry.OperationTag, commandOrQuery.GetType().Name } };
         if (operation.Module is { } module)
         {
@@ -71,7 +85,7 @@ internal sealed class ObservedDispatcher(IDispatcher dispatcher, Operation opera
         var outcome = OperationTelemetry.Threw;
         try
         {
-            var result = await dispatch();
+            var result = await dispatch(dispatcher, commandOrQuery, cancellationToken);
             if (result.IsSuccess)
             {
                 outcome = OperationTelemetry.Succeeded;
