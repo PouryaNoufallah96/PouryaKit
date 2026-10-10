@@ -1,0 +1,23 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_fbe30cc48fad9d::t_a633274e3de7bb 1
+.claude/agent-memory/kit-implementer/caching-and-idempotency-facts.md
+  s_fbe30cc48fad9d::t_c713cf3b213e85 71
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_fbe30cc48fad9d::t_a633274e3de7bb 69-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3f15c695443e4b36b5d22142a9632bc2d417ef7f",
+  "prompts": {},
+  "sessions": {
+    "s_fbe30cc48fad9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "355fc114-9f49-46c2-b236-9a236d1e5b59",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
