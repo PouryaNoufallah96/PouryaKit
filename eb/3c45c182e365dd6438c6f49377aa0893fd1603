@@ -1,0 +1,21 @@
+docs/acceptance.md
+  s_a846915d2dd93c::t_d235409ceec1f9 1705,1707,1716-1717
+docs/foundation-review.md
+  s_a846915d2dd93c::t_21f87ee94ca665 1082-1084
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "eb3c45c182e365dd6438c6f49377aa0893fd1603",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
