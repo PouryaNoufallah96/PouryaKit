@@ -72,6 +72,7 @@ tests/ModularMonolith.Tests/RabbitMqDeliveryTests.cs
 docs/acceptance.md
   s_fbe30cc48fad9d::t_08058e6dc5945c 1353,1379-1395
   s_fbe30cc48fad9d::t_0b9d9da94e1de2 510,520,524,541
+  s_fbe30cc48fad9d::t_e02df2ac0b9c73 1378
 tests/ModularMonolith.Tests/WebTests.cs
   s_fbe30cc48fad9d::t_ef8f06d01c2024 11
 src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/AppHost.cs
@@ -89,6 +90,7 @@ tests/ModularMonolith.Tests/TrustedPeerTests.cs
   s_fbe30cc48fad9d::t_ef8f06d01c2024 11,134
 docs/adr/0004-commit-through-wolverine-ef-outbox.md
   s_fbe30cc48fad9d::t_18159025f4a61c 494,532-540
+  s_fbe30cc48fad9d::t_e02df2ac0b9c73 531
 tests/ModularMonolith.Tests/StrictWireReadingTests.cs
   s_fbe30cc48fad9d::t_ef8f06d01c2024 97,122
   s_fbe30cc48fad9d::t_c4d6f958f3f2ca 23-24
