@@ -131,7 +131,7 @@ const list = (value) => (Array.isArray(value) ? value : [])
 const fail = (error) => ({ workflow: 'kit-review', complete: false, verdict: 'unknown', error })
 const REF = /^[A-Za-z0-9][A-Za-z0-9._\/~^-]{0,199}$/
 const PATH = /^[A-Za-z0-9_.\/~][A-Za-z0-9_.\/@+-]{0,399}$/
-const USAGE = 'Pass { base, ticket } for a ticket, or { base, spec } for work with no ticket; head (the implementer's commit; required in practice, since the default is the checkout's HEAD and a head equal to base is refused), scope, evidence (a file of recorded execution evidence), codexModel, codexEffort, and for a re-review previous (the earlier result file) with optional rescore ids. JSON or the word form `base X ticket N`.'
+const USAGE = 'Pass { base, ticket } for a ticket, or { base, spec } for work with no ticket; head (the commit of the implementer; required in practice, since the default is the HEAD of the checkout and a head equal to base is refused), scope, evidence (a file of recorded execution evidence), codexModel, codexEffort, and for a re-review previous (the earlier result file) with optional rescore ids. JSON or the word form `base X ticket N`.'
 for (const key of Object.keys(input)) {
   if (!['base', 'ticket', 'spec', 'head', 'scope', 'codexModel', 'codexEffort', 'previous', 'rescore', 'evidence'].includes(key)) return fail(`Unknown argument \`${key}\`. ${USAGE}`)
 }

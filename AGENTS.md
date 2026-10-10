@@ -83,6 +83,9 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | A merged head's code was validated | `merge-package.py` exit 14: only Markdown may differ from the validated commit |
 | A negative test discriminates the rule's exact predicate | `kit-reviewer` (the review rule above) |
 | A brief's commands come from the environment, never from memory | `docs/agents/brief-template.md`, "Verify" |
+| A review reads the implementer's commit, never the integration branch against itself | `kit-review.js` refuses `head` equal to `base` |
+| Pre-Wave 3 acceptance sections stay in ticket order after every merge | `check-docs.py` (ordered sections), run by `merge-package.py --post-merge` |
+| A docs or AI-setup edit passes its checks before it commits | `.githooks/pre-commit` runs `check-docs.py` and `check-ai-setup.py` on staged inputs |
 
 ## Rule router
 
