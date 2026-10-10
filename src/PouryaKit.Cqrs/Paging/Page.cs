@@ -7,8 +7,8 @@ namespace PouryaKit.Cqrs;
 public sealed record Page<T>
 {
     /// <summary>
-    /// A Page holding <paramref name="items"/>; throws when the number or the size is below 1, the total is negative,
-    /// or there are more items than the size.
+    /// A Page holding <paramref name="items"/>; throws when <paramref name="items"/> is null, the number or the size is
+    /// below 1, the total is negative, or there are more items than the size.
     /// </summary>
     public Page(IReadOnlyList<T> items, int number, int size, long total)
     {

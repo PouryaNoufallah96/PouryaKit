@@ -41,9 +41,13 @@ metadata:
 ## Documentation quality pass (#102, 2026-10-10)
 
 - **`check-docs.py` resolves cross-file anchors too**, from `docs/architecture/README.md` into `../../.agents/skills/pourya-kit/references/<file>.md#<slug>`: a misspelt one failed it ("no heading of … has the anchor"). The skill links out to `../../../../docs/...` already (`packages.md`, `publication.md`, and since #102 `persistence.md` to the commit sequence).
-- **One snippet, no harness:** a scratchpad csproj (`ManagePackageVersionsCentrally=false`, `FrameworkReference Microsoft.AspNetCore.App`) with absolute `ProjectReference`s to the worktree's sample projects (`Inventory`, `ModularMonolith.ServiceDefaults`) and Kit projects builds a Host snippet as `Program.cs` in about 10 s with no stubs; a deleted using is the negative control. `check-docs.py --fences | grep -v '^same'` names the only blocks a docs change touched.
+- **One snippet, no harness:** a scratchpad csproj (`ManagePackageVersionsCentrally=false`, `FrameworkReference Microsoft.AspNetCore.App`) with absolute `ProjectReference`s to the worktree's sample projects (`Inventory`, `ModularMonolith.ServiceDefaults`) and Kit projects builds a Host snippet as `Program.cs` in about 10 s with no stubs; a deleted using is the negative control. `check-docs.py --fences | grep -v '^same'` lists the Markdown files whose fenced blocks changed, not the blocks: read those files' diffs for them.
 - **One owner per fact, the cut procedure:** before reducing the architecture document's copy to a sentence and a link, list every fact in it and look each up in the owner; types, mechanism and history stay in the architecture sentence, behaviour facts found nowhere else move to the skill (#102 moved six). Removing a numbered list breaks other files' "step N" citations (`messaging.md` cited persistence's step 4): grep `step [0-9]` across the skill and `src/` comments.
 - **A review's line numbers drift:** run `git diff <review commit> <tip> -- <file>` per cited file first; three merged tickets had fixed four of the review's findings, and a finding unchanged since the review (SKILL.md line 20) still needed reading for what the reviewer meant.
+
+## Spans in the acceptance record (#105, 2026-10-11)
+
+- **A span in `docs/acceptance.md` that reads as a test pointer is checked as one:** an illustrative `ArchitectureTests.LayerTests` in backticks resolves as a class and its method and fails when no such class exists, so write illustrative names without backticks.
 
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].

@@ -182,6 +182,14 @@ state it commits (spec #74, finding P1).
   has such a property took about 22 ms before and after. Proven by
   `SnapshotTests.A_snapshot_is_refused_by_the_value_generator_selector_its_dbcontext_uses_when_two_share_a_model`, red
   with the selector's answer cached.*
+  *Extended on 2026-10-11 (ticket #105, the first review round of PR #103): a child's key is checked too. Every key
+  was left out, so a child whose key an identity column numbers was published with the key its entity held before the
+  save, while its row committed the database's number. The aggregate's own keys stay left out, its primary key
+  refused while it is temporary. A child's key generated on add is refused unless the generator the committing
+  DbContext's selector returns for it, which EF uses for a key whether or not its mapping names one, gives values
+  that are not temporary, as a `Guid` key's does. Proven by
+  `SnapshotTests.A_snapshot_is_refused_when_the_database_generates_the_key_of_a_child_in_its_aggregates_graph`, red
+  with child keys left out.*
 - **Proven against PostgreSQL** by `SnapshotTests.A_snapshot_of_an_aggregate_whose_database_generates_a_value_it_maps_fails_the_operation_that_saves_it`
   (a default value SQL on the root) and
   `SnapshotTests.A_snapshot_of_an_aggregate_whose_database_generates_a_value_of_an_owned_part_it_maps_fails_the_operation_that_saves_it`

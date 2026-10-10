@@ -93,7 +93,7 @@ internal sealed record RemoveProductsCommand(IReadOnlyList<string> Names) : Comm
 - Single flight is per Host. Two Hosts that miss the same key both run the handler.
 - An eviction is certain only in the Host whose Operation committed. Another Host may return its own in-memory copy until it expires; choose `CacheDuration` with that in mind.
 - On another Host, a query that read before a command committed may store the answer it read, which that Host's `HybridCache` keeps until it expires: only the committing Host's own runs in flight see its evictions. In the committing Host, an eviction that lands in the microseconds between the Kit's check, made once the handler's read has ended, and `HybridCache`'s own store is not seen either.
-- A caller that joins a run in flight after the commit receives that run's answer, read before the commit, for that one call; the run stores nothing.
+- A caller that joins a run in flight after a commit that evicted one of the run's tags receives that run's answer, read before the commit, for that one call; the run stores nothing.
 - Nested reads are never cached: a cacheable query an authorizer sends, such as a permission lookup, runs its handler every time.
 - The Kit caches query answers only. An Integration Event Handler or anything else that changes a cached resource without a command declares nothing; such data needs a short duration or no caching.
 

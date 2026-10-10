@@ -6,7 +6,7 @@ The package has no adopted implementation. Its topology, one fanout exchange per
 
 ## Package dependencies
 
-Checked on nuget.org on 2026-10-07 (ticket #51); licence expressions from each package's restored nuspec. None is reciprocal-only or commercial (ADR 0002), and `LicenceTests` checks the whole closure.
+Checked on nuget.org on 2026-10-07 (ticket #51), and again on 2026-10-09 for `WolverineFx.RabbitMQ` 6.48.3 (ticket #75's follow-up); licence expressions from each package's restored nuspec. None is reciprocal-only or commercial (ADR 0002), and `LicenceTests` checks the whole closure.
 
 - `WolverineFx.RabbitMQ` 6.48.3, `MIT`, the release of the Kit's `WolverineFx`, for `net10.0`. It was 6.46.0 until ticket #75 (2026-10-09), which took 6.48.2 for its repair of listener rebuilds after a connection recovery (`JasperFx/wolverine` #4864, #4867); the ticket's follow-up the same day took 6.48.3, which changes no file of `Wolverine.RabbitMQ`. Its closure adds:
   - `RabbitMQ.Client` 7.2.2, `Apache-2.0 OR MPL-2.0`: the Kit takes it under `Apache-2.0`, the branch `LicenceTests` accepts;

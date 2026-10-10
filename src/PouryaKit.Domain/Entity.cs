@@ -2,7 +2,10 @@ using System.Runtime.CompilerServices;
 
 namespace PouryaKit.Domain;
 
-/// <summary>An object with an identity. Two entities are equal when their types and IDs are equal.</summary>
+/// <summary>
+/// An object with an identity. Two entities are equal when they are one instance, or of one type with equal IDs that
+/// are not null.
+/// </summary>
 /// <remarks>
 /// Equality and hashing use the current ID. Do not change an entity's ID while it is in a hash-based collection
 /// using entity equality. For database-generated IDs, add the entity after its ID is assigned, or use
@@ -15,7 +18,7 @@ public abstract class Entity<TId>
     /// <summary>The entity's identity, which its equality compares.</summary>
     public TId Id { get; protected init; } = default!;
 
-    /// <summary>True when both are null, the same instance, or entities of one type with equal IDs.</summary>
+    /// <summary>True when both are null, the same instance, or entities of one type with equal IDs that are not null.</summary>
     public static bool operator ==(Entity<TId>? left, Entity<TId>? right) => Equals(left, right);
 
     /// <summary>True when the two are not equal as entities.</summary>

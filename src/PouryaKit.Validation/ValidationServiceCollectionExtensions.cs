@@ -8,8 +8,7 @@ namespace PouryaKit.Validation;
 
 /// <summary>
 /// Composes the validation of the Commands, queries and validation Capability on a Module's or a Host's services: the
-/// Features' validators as the pipeline's validation
-/// step.
+/// pipeline's validation step, backed by the Features' validators.
 /// </summary>
 public static class ValidationServiceCollectionExtensions
 {

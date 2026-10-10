@@ -1,7 +1,9 @@
 #!/bin/sh
 # Before a commit: conflict markers, the tree check, and the two repository checks when a staged path is one of their
 # inputs (session 5 merged a docs edit with a failing docs check because its output was piped). The checks read the
-# working tree, so a gated file staged in part is refused below; CI's ai-setup job runs both on the committed tree.
+# working tree, so a gated file staged in part is refused below. This is a seatbelt: an unstaged change to another
+# file the checks read, such as a source file whose names check-docs.py looks up, can still let a failing commit
+# through. CI's ai-setup job, which runs both on the committed tree, is the gate.
 set -eu
 "$(dirname "$0")/staged-conflict-markers" "$@"
 staged=$(git diff --cached --name-only --diff-filter=AMRD)

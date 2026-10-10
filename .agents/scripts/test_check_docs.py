@@ -222,6 +222,15 @@ class CheckDocsTests(unittest.TestCase):
         self.assertIn("FAIL  docs/acceptance.md:3: `Shop.Domain.Tests.ProductTests.A_product_is_renamed` names no test: no test class Shop.Domain.Tests.ProductTests", out)
         self.assertIn("FAIL  docs/acceptance.md:3: `Shop.Tests.OrderTests` names no test: no test class Shop.Tests.OrderTests", out)
 
+    def test_a_class_pointer_in_a_namespace_that_reads_like_a_test_class_passes(self) -> None:
+        """`ArchitectureTests.ModuleTests` also reads as the method ModuleTests of a class ArchitectureTests, which no file
+        declares; the class its namespace qualifies is the one meant (cubic on PR #103)."""
+        modules = {
+            "tests/ArchitectureTests/ModuleTests.cs": "namespace ArchitectureTests;\n\npublic sealed class ModuleTests { [Fact] public void Modules_hold() { } }\n",
+            "docs/acceptance.md": TESTS["docs/acceptance.md"] + "`ArchitectureTests.ModuleTests` passes.\n",
+        }
+        self.assertPasses(TESTS | modules)
+
     def test_adopted_code_without_a_provenance_record_fails(self) -> None:
         """The README's format example names a Kit file too, and is no record."""
         self.assertFails(ADOPTED | {"docs/provenance/README.md": RECORD}, "src/Catalog/Money.cs:1: the comment says the code is adapted from something, and no record in docs/provenance/ names the file under Kit files")
