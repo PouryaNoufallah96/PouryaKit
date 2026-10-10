@@ -105,5 +105,10 @@ metadata:
 - **A value a factory refuses, for a drift guard's red-once:** `RuntimeHelpers.GetUninitializedObject(typeof(FilterField))` plus `GetField("<Name>k__BackingField", NonPublic | Instance).SetValue` builds a field of a type `FilterField.Of` refuses, when the guard under test sits in another package.
 - **`cd <worktree> && python3 - <<'EOF'`** edit scripts of about 70 lines that only read and write files passed; a red-once runner in the scratchpad (`p100/mutate100.py`: JSON spec of replacements or a whole file, restored in `finally`) ran seven mutations without a refusal.
 
+## Testing HostFixture itself (#101, 2026-10-10; Testcontainers 4.15.0, Npgsql 10.0.3)
+
+- A test of the fixture's lifecycle derives a private fixture whose `CreateHost` returns an `IHost` double with `Services = new ServiceCollection().BuildServiceProvider()`: `StartHostAsync` then finds no `DbContextOptions` and only calls `StartAsync`. Call `InitializeAsync` and `DisposeAsync` from the test (a real container, about 1.3 s). The class needs no `AppFixture`, but the assembly fixture still starts with it.
+- **Observe the container's disposal by a connection**, with `Pooling = false` on the captured connection string: a pooled idle connector can open after the server is gone. After disposal the open throws an `NpgsqlException`.
+
 **Why:** Test projects run on Microsoft.Testing.Platform, chosen in ticket #4 (2026-10-05) as the plain current .NET 10 idiom; a later ticket repeating VSTest packages would create a second way of running tests. Each other fact cost a build, a run or a vacuous red in tickets #4 to #63 or retro C (2026-10-06).
 **How to apply:** before adding a test project, a test filter or an analyzer rule in `.editorconfig`; before every mutation run; when a change adds a table, a Module, a subscription or an Integration Event type to the sample. Related: [[worktree-shell-and-check-gotchas]], [[core-json-and-architecture-test-facts]].

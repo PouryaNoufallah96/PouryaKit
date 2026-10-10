@@ -222,21 +222,44 @@ public abstract class HostFixture : IAsyncLifetime
     /// <inheritdoc />
     public async ValueTask InitializeAsync()
     {
-        await _postgres.StartAsync();
+        await _postgres.StartAsync(TestContext.Current.CancellationToken);
         _host = CreateHost(ConnectionString);
-        await StartHostAsync(_host);
+        await StartHostAsync(_host, TestContext.Current.CancellationToken);
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// The Host is disposed even when it fails to stop, and the database container whatever the Host does; a failure
+    /// still reaches the caller.
+    /// </remarks>
     public async ValueTask DisposeAsync()
     {
-        if (_host is not null)
+        try
         {
-            await _host.StopAsync();
-            _host.Dispose();
+            if (_host is not null)
+            {
+                try
+                {
+                    await _host.StopAsync();
+                }
+                finally
+                {
+                    if (_host is IAsyncDisposable host)
+                    {
+                        await host.DisposeAsync();
+                    }
+                    else
+                    {
+                        _host.Dispose();
+                    }
+                }
+            }
+        }
+        finally
+        {
+            await _postgres.DisposeAsync();
         }
 
-        await _postgres.DisposeAsync();
         GC.SuppressFinalize(this);
     }
 

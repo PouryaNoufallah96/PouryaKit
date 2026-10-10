@@ -87,7 +87,7 @@ if (app.Environment.IsDevelopment())
 }
 ```
 
-- `AddPouryaKitOpenApi()` registers Asp.Versioning with its URL segment reader and its `api-version` header reader, reports each Module's supported and deprecated versions in every response, applies the configured sunsets, and registers one OpenAPI document per supported version with the Kit's notices, security requirements and required `Idempotency-Key` headers.
+- `AddPouryaKitOpenApi()` registers Asp.Versioning with its URL segment reader and its `api-version` header reader, reports each Module's supported and deprecated versions in every response, applies the configured sunsets, and registers one OpenAPI document per supported version with the Kit's notices, security requirements and required `Idempotency-Key` headers. A second call adds only its `configure`.
 - `MapPouryaKitOpenApi()` serves `/openapi/v1.json`, `/openapi/v2.json` and so on, and the Scalar reference at `/scalar/`. Like every endpoint they require an authenticated caller unless the returned builder says otherwise; the Proving Sample serves them in Development only, to anyone.
 
 ## What a caller sees
@@ -129,8 +129,8 @@ if (app.Environment.IsDevelopment())
 }
 ```
 
-- The Module deprecates a version (`HasDeprecatedApiVersion`); the Host configures the date it is announced to end on. The Kit reports that date and keeps serving the version after it: a Module ends a version by no longer declaring it. `PouryaKitOpenApiOptions.Sunsets` is keyed by the version as the Modules declare it.
-- The Host does not start, and its `OptionsValidationException` names each refused key, when a key names no API version, two keys name one version (`1` and `1.0`), a `Link` is not an absolute URI, or a sunset has neither a `Date` nor a `Link`. A date in the past stays valid, since nothing reads the clock, and so does a key no Module declares, whose versions are known only once the endpoints are mapped.
+- The Module deprecates a version (`HasDeprecatedApiVersion`); the Host configures the date it is announced to end on. The Kit reports that date and keeps serving the version after it: a Module ends a version by no longer declaring it. `PouryaKitOpenApiOptions.Sunsets`, an `IDictionary<string, ApiVersionSunset>`, is keyed by the version as the Modules declare it, compared ordinally.
+- The Host does not start, and its `OptionsValidationException` names each refused key, when a key names no API version, two keys name one version (`1` and `1.0`, or `1.0-Beta` and `1.0-beta`: Asp.Versioning ignores the case of a version's status), a `Link` is not an absolute URI, or a sunset has neither a `Date` nor a `Link`. A date in the past stays valid, since nothing reads the clock, and so does a key no Module declares, whose versions are known only once the endpoints are mapped.
 - Bound from configuration, an entry whose `Date` or `Link` the binder cannot convert (`next June`, `http://`) is left out without an error, so its version reports no sunset: the configuration binder skips a dictionary entry it fails to bind unless the Host's `Configure` call sets `BinderOptions.ErrorOnUnknownConfiguration`.
 - A response of a version with a sunset carries `Sunset: Wed, 30 Jun 2027 00:00:00 GMT` and `Link: <https://example.com/catalog/api-v1-sunset>; rel="sunset"; type="text/html"`.
 - The version's document states it in `info.description` (`This API version is deprecated. Its sunset date is Wed, 30 Jun 2027 00:00:00 GMT.`, then the link) and in `x-api-versioning.links`, and marks each of its operations `deprecated`.

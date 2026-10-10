@@ -13,9 +13,27 @@ internal static class HttpCallerContext
     /// with <c>AllowAnonymousAs(actor)</c>. An authenticated caller runs as the person its Actor claim names, unless it
     /// is a trusted peer whose headers continue an Operation, which then runs with the continued Actor. Null when no
     /// Actor resolves: an unauthenticated caller of an endpoint that names none, or a caller without the Actor claim.
-    /// Throws <see cref="KitBadRequestException"/> when a trusted peer's context headers cannot be read.
+    /// Throws <see cref="KitBadRequestException"/> when a trusted peer's context headers cannot be read. Resolved once
+    /// per request: the rate limit's partition and the endpoint's Operation share one context, while the request's
+    /// endpoint and caller are those it was resolved from.
     /// </summary>
     public static OperationContext? Resolve(HttpContext httpContext, PouryaKitWebOptions options, ISet<string> peers)
+    {
+        var endpoint = httpContext.GetEndpoint();
+        var caller = httpContext.User;
+        // Reused only as resolved: a limiter placed before routing saw no endpoint, and authorization placed after the
+        // limiter may replace the caller.
+        if (httpContext.Features.Get<Resolved>() is { } resolved && resolved.Endpoint == endpoint && resolved.Caller == caller)
+        {
+            return resolved.Context;
+        }
+
+        var context = Build(httpContext, options, peers);
+        httpContext.Features.Set(new Resolved(endpoint, caller, context));
+        return context;
+    }
+
+    private static OperationContext? Build(HttpContext httpContext, PouryaKitWebOptions options, ISet<string> peers)
     {
         var caller = httpContext.User;
         if (caller.Identity?.IsAuthenticated != true)
@@ -44,6 +62,9 @@ internal static class HttpCallerContext
         var tenant = options.TenantClaim is { } tenantClaim ? caller.FindFirstValue(tenantClaim) : null;
         return new OperationContext(Actor.Person(id), string.IsNullOrWhiteSpace(tenant) ? null : tenant);
     }
+
+    // A resolution that throws is not kept: the endpoint's own call throws it again, answering 400.
+    private sealed record Resolved(Endpoint? Endpoint, ClaimsPrincipal Caller, OperationContext? Context);
 }
 
 /// <summary>The Actor an endpoint's unauthenticated callers run as, from <c>AllowAnonymousAs(actor)</c>.</summary>

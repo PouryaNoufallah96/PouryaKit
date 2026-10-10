@@ -103,7 +103,8 @@ public static class WebServiceCollectionExtensions
         /// <paramref name="routePrefix"/>. A Module's Composition Root calls it on its builder, where, named with no
         /// assembly, it scans the assembly of the Module's definition (<see cref="IModuleServices"/>); named assemblies
         /// replace it. An application without Modules calls it on its own services, naming the assembly. Throws when the
-        /// assemblies have no endpoint, or an endpoint has no parameterless constructor.
+        /// assemblies have no endpoint, or an endpoint has no parameterless constructor, and when the route group or an
+        /// assembly is already declared, whose endpoints would be mapped twice.
         /// </summary>
         public IServiceCollection AddPouryaKitEndpoints(string routePrefix, params Assembly[] featureAssemblies)
         {
@@ -111,7 +112,23 @@ public static class WebServiceCollectionExtensions
             ArgumentException.ThrowIfNullOrWhiteSpace(routePrefix);
             ArgumentNullException.ThrowIfNull(featureAssemblies);
 
+            List<ModuleEndpoints> declared = [.. services.Select(descriptor => descriptor.ImplementationInstance).OfType<ModuleEndpoints>()];
+            if (declared.Any(module => module.RoutePrefix == routePrefix))
+            {
+                throw new InvalidOperationException($"The endpoints of the route group {routePrefix} are already declared.");
+            }
+
             var assemblies = IModuleServices.FeatureAssembliesOf(services, featureAssemblies);
+            foreach (var module in declared)
+            {
+                if (module.Endpoints.Select(endpoint => endpoint.GetType().Assembly).FirstOrDefault(assemblies.Contains) is { } assembly)
+                {
+                    throw new InvalidOperationException(
+                        $"The endpoints of {assembly.GetName().Name} are already declared, for the route group {module.RoutePrefix}."
+                    );
+                }
+            }
+
             List<IEndpoint> endpoints =
             [
                 .. ImplementingTypes

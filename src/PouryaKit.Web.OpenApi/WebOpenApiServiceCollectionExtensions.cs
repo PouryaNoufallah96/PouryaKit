@@ -31,7 +31,8 @@ public static class WebOpenApiServiceCollectionExtensions
         /// authentication schemes its policy names, or else the Host's default one, as far as each is a JWT bearer
         /// scheme, which the document states as HTTP bearer; a scheme of any other handler is left out, and an operation
         /// that allows anonymous callers requires none. An operation whose endpoint calls <c>RequireIdempotencyKey()</c>
-        /// declares the required <c>Idempotency-Key</c> header. <c>MapPouryaKitOpenApi</c> serves them.
+        /// declares the required <c>Idempotency-Key</c> header. <c>MapPouryaKitOpenApi</c> serves them. A second call
+        /// adds only its <paramref name="configure"/>.
         /// </summary>
         public IServiceCollection AddPouryaKitOpenApi(Action<PouryaKitOpenApiOptions>? configure = null)
         {
@@ -41,6 +42,12 @@ public static class WebOpenApiServiceCollectionExtensions
             if (configure is not null)
             {
                 options.Configure(configure);
+            }
+
+            // Asp.Versioning's AddOpenApi appends its delegate on every call: a second one would run each transformer twice.
+            if (services.Any(descriptor => descriptor.ImplementationType == typeof(SunsetValidation)))
+            {
+                return services;
             }
 
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<PouryaKitOpenApiOptions>, SunsetValidation>());

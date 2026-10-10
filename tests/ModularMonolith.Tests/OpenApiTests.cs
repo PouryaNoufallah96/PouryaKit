@@ -246,6 +246,28 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         );
     }
 
+    // Asp.Versioning appends its document delegate on every call; the Kit's second call adds none, so each transformer
+    // runs once.
+    [Fact]
+    public async Task A_second_registration_of_the_api_versions_and_documents_adds_nothing()
+    {
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder => builder.Services.AddPouryaKitOpenApi()
+        );
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var client = Unversioned(AppFixture.ClientOf(host));
+
+        var v1 = await DocumentAsync(client, "v1");
+
+        Assert.Equal(
+            ["/catalog/products post", "/catalog/v1/products post"],
+            CatalogOperations(v1).Where(operation => IdempotencyKeyOf(operation.Body) is not null).Select(operation => operation.Name)
+        );
+    }
+
     [Fact]
     public async Task A_created_products_location_names_the_version_the_request_selected_and_is_followed_as_it_is()
     {

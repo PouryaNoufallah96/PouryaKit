@@ -91,11 +91,16 @@ internal sealed class StoredDeliveries(
         }
     }
 
-    public async Task DeleteAllAsync(CancellationToken cancellationToken) =>
-        await RowsAsync(
+    public async Task DeleteAllAsync(CancellationToken cancellationToken)
+    {
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(
             $"delete from {_quotedSchema}.wolverine_incoming_envelopes; delete from {_quotedSchema}.wolverine_outgoing_envelopes; delete from {_quotedSchema}.wolverine_dead_letters",
-            cancellationToken
+            connection
         );
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
 
     private async Task<long> PendingAsync(CancellationToken cancellationToken) =>
         (long)(
