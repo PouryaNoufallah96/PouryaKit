@@ -1,0 +1,27 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_a846915d2dd93c::t_73bfa150ec8ec9 1,8-10
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_a846915d2dd93c::t_34353764a119fc 96-101
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_a846915d2dd93c::t_cb054f7aeaf189 84-88
+.claude/agent-memory/kit-implementer/snapshot-and-scheduled-command-facts.md
+  s_a846915d2dd93c::t_e50f19cf6136eb 94-99
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_a846915d2dd93c::t_7bd1efa44e2469 109-116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5c82876a7ac3e42c21ede9eca744b2fba16ad171",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
