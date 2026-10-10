@@ -1,0 +1,471 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The Proving Sample and the templates that pack it",
+    "output": "docs/architecture/diagrams/proving-sample-and-templates.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
+      "revision": "eb3c45c182e365dd6438c6f49377aa0893fd1603",
+      "link_mode": "web"
+    }
+  },
+  "components": [
+    {
+      "id": "tests",
+      "type": "external",
+      "label": "ModularMonolith.Tests",
+      "sublabel": "hosts both Hosts in its fixtures",
+      "pos": [
+        470,
+        40
+      ],
+      "size": [
+        320,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/ModularMonolith.Tests/Fixtures/AppFixture.cs",
+          "line": 27,
+          "end_line": 72,
+          "label": "hosts ModularMonolith.Host"
+        },
+        {
+          "path": "tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs",
+          "line": 95,
+          "end_line": 149,
+          "label": "both Hosts on one broker"
+        }
+      ]
+    },
+    {
+      "id": "mmhost",
+      "type": "backend",
+      "label": "ModularMonolith.Host",
+      "sublabel": "the web Host: Catalog and Billing, and Inventory without a broker",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        620,
+        70
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 76,
+          "end_line": 87,
+          "label": "composes the Modules"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 33,
+          "end_line": 40,
+          "label": "the broker and its service name"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
+          "line": 5,
+          "end_line": 27,
+          "label": "its references"
+        }
+      ]
+    },
+    {
+      "id": "invhost",
+      "type": "backend",
+      "label": "Inventory.Host",
+      "sublabel": "Inventory alone; /alive, /health in Development",
+      "pos": [
+        1065,
+        200
+      ],
+      "size": [
+        290,
+        70
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Inventory.Host/InventoryHost.cs",
+          "line": 13,
+          "end_line": 47,
+          "label": "Inventory alone, Catalog's wire names"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
+          "line": 130,
+          "end_line": 141,
+          "label": "/alive always; /health in Development"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj",
+          "line": 8,
+          "end_line": 27,
+          "label": "its references"
+        }
+      ]
+    },
+    {
+      "id": "billing",
+      "type": "backend",
+      "label": "Billing",
+      "sublabel": "price lists, quotes, ExpireQuote",
+      "pos": [
+        40,
+        372
+      ],
+      "size": [
+        240,
+        80
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Modules/Billing/Billing/BillingModule.cs",
+          "line": 15,
+          "end_line": 21,
+          "label": "subscribes v1; a delayed command"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Billing/Billing/Billing.csproj",
+          "line": 8,
+          "end_line": 14,
+          "label": "Catalog's Contracts, never Catalog"
+        }
+      ]
+    },
+    {
+      "id": "catalog",
+      "type": "backend",
+      "label": "Catalog",
+      "sublabel": "products, categories, cached GetProduct",
+      "pos": [
+        410,
+        380
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
+          "line": 28,
+          "end_line": 48,
+          "label": "publishes v1, v2 and the Snapshot"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/Notifications/PublishProductCreatedNotificationHandler.cs",
+          "line": 11,
+          "end_line": 21,
+          "label": "v1 and v2 from one handler"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj",
+          "line": 8,
+          "end_line": 19,
+          "label": "its Contracts and Kit packages"
+        }
+      ]
+    },
+    {
+      "id": "inventory",
+      "type": "backend",
+      "label": "Inventory",
+      "sublabel": "stock items, Catalog's products, ReconcileStock",
+      "pos": [
+        790,
+        380
+      ],
+      "size": [
+        250,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs",
+          "line": 19,
+          "end_line": 35,
+          "label": "three subscriptions; a recurring command"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/Inventory.csproj",
+          "line": 8,
+          "end_line": 15,
+          "label": "Catalog's Contracts, never Catalog"
+        }
+      ]
+    },
+    {
+      "id": "servicedefaults",
+      "type": "frontend",
+      "label": "ModularMonolith.ServiceDefaults",
+      "sublabel": "template content, not a Kit package",
+      "pos": [
+        1075,
+        380
+      ],
+      "size": [
+        270,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
+          "line": 16,
+          "end_line": 47,
+          "label": "the service defaults recipes"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj",
+          "line": 5,
+          "end_line": 24,
+          "label": "EF Core Relational, OpenTelemetry, Serilog"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
+          "line": 87,
+          "end_line": 95,
+          "label": "liveness and readiness checks"
+        }
+      ]
+    },
+    {
+      "id": "contracts",
+      "type": "external",
+      "label": "Catalog.Contracts",
+      "sublabel": "ProductCreatedV1, V2, ProductSnapshotV1, ICatalogProducts",
+      "pos": [
+        480,
+        560
+      ],
+      "size": [
+        340,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj",
+          "line": 1,
+          "end_line": 5,
+          "label": "plain records, no references"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/ICatalogProducts.cs",
+          "line": 3,
+          "end_line": 13,
+          "label": "the question Catalog answers"
+        }
+      ]
+    },
+    {
+      "id": "templates",
+      "type": "cloud",
+      "label": "PouryaKit.Templates",
+      "sublabel": "pouryakit-monolith (Catalog) and pouryakit-modular-monolith (all three)",
+      "pos": [
+        40,
+        720
+      ],
+      "size": [
+        1310,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/PouryaKit.Templates/PouryaKit.Templates.csproj",
+          "line": 18,
+          "end_line": 31,
+          "label": "packs the sample's code when packed"
+        },
+        {
+          "path": "src/PouryaKit.Templates/content/monolith/.template.config/template.json",
+          "line": 57,
+          "end_line": 71,
+          "label": "monolith: Catalog only"
+        },
+        {
+          "path": "src/PouryaKit.Templates/content/modular/.template.config/template.json",
+          "line": 57,
+          "end_line": 69,
+          "label": "modular: every sample Module"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "samples/ModularMonolith",
+      "wraps": [
+        "mmhost",
+        "invhost",
+        "billing",
+        "catalog",
+        "inventory",
+        "servicedefaults",
+        "contracts"
+      ],
+      "pad": 22
+    }
+  ],
+  "connections": [
+    {
+      "id": "tests-mmhost",
+      "from": "tests",
+      "to": "mmhost",
+      "label": "hosts and judges",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tests-invhost",
+      "from": "tests",
+      "to": "invhost",
+      "label": "hosts it with a broker",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "mmhost-billing",
+      "from": "mmhost",
+      "to": "billing",
+      "label": "composes",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mmhost-catalog",
+      "from": "mmhost",
+      "to": "catalog",
+      "label": "composes",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mmhost-inventory",
+      "from": "mmhost",
+      "to": "inventory",
+      "label": "composes, without a broker",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "invhost-inventory",
+      "from": "invhost",
+      "to": "inventory",
+      "label": "composes",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "invhost-servicedefaults",
+      "from": "invhost",
+      "to": "servicedefaults",
+      "label": "AddServiceDefaults",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "catalog-billing",
+      "from": "catalog",
+      "to": "billing",
+      "label": "ProductCreatedV1",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "catalog-inventory",
+      "from": "catalog",
+      "to": "inventory",
+      "label": "V1, V2, Snapshot",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "catalog-contracts",
+      "from": "catalog",
+      "to": "contracts",
+      "label": "publishes, answers",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "billing-contracts",
+      "from": "billing",
+      "to": "contracts",
+      "label": "references only",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "inventory-contracts",
+      "from": "inventory",
+      "to": "contracts",
+      "label": "references only",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "templates-billing",
+      "from": "templates",
+      "to": "billing",
+      "label": "packs",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "templates-catalog",
+      "from": "templates",
+      "to": "catalog",
+      "label": "packs"
+    },
+    {
+      "id": "templates-inventory",
+      "from": "templates",
+      "to": "inventory",
+      "label": "packs"
+    },
+    {
+      "id": "templates-servicedefaults",
+      "from": "templates",
+      "to": "servicedefaults",
+      "label": "packs",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Between the Modules",
+      "items": [
+        "Green arrows are Integration Events and Snapshots, written to the Outbox in the publishing Unit of Work's commit and delivered to each subscription; no Module references another Module.",
+        "Inventory and Billing reference Catalog's Contracts and never Catalog: Inventory receives ProductCreatedV1, ProductCreatedV2 and ProductSnapshotV1, Billing ProductCreatedV1 under its own subscription.",
+        "Billing schedules ExpireQuote as a delayed command; Inventory declares ReconcileStock as a recurring command for the system Actor inventory.stock-reconciler."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "The two Hosts",
+      "items": [
+        "With ConnectionStrings:broker, ModularMonolith.Host composes Catalog and Billing under the service name modular-monolith, and Inventory.Host composes Inventory under the service name inventory; what Catalog publishes then reaches Inventory over RabbitMQ.",
+        "Inventory.Host composes ModularMonolith.ServiceDefaults; ModularMonolith.Host does not.",
+        "ModularMonolith.ServiceDefaults references EF Core Relational for its readiness check, OpenTelemetry, service discovery, Serilog, PouryaKit.Web and PouryaKit.Observability."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "The templates",
+      "items": [
+        "PouryaKit.Templates keeps no copy of the business code: it packs the sample Modules' code, the service defaults recipes and two files of ModularMonolith.Host when the package is packed.",
+        "Each template's Host, project files and smoke test are the template's own; the monolith takes Catalog without Modularity."
+      ]
+    }
+  ]
+}
