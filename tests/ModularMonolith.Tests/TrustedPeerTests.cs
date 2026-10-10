@@ -8,6 +8,7 @@ using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Security;
 using PouryaKit.Testing;
+using static ModularMonolith.Tests.Fixtures.ProblemResponses;
 
 namespace ModularMonolith.Tests;
 
@@ -130,9 +131,7 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var response = await peer.GetAsync("/stub/context", TestContext.Current.CancellationToken);
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        var problem = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+        var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
         Assert.Equal(detail, problem.GetProperty("detail").GetString());
     }
 

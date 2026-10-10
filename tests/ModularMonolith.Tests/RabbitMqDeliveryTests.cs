@@ -30,7 +30,8 @@ namespace ModularMonolith.Tests;
 // Delivery between Hosts over RabbitMQ (ADR 0006, ticket #50 amendment), each row of its invariants table: the
 // Proving Sample's service composition, ModularMonolith.Host with a broker (Catalog and Billing) and Inventory.Host, each
 // a real Host with its own database and ServiceName, joined only by the broker.
-public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<BrokerFixture>
+[Collection<BrokerCollection>]
+public sealed class RabbitMqDeliveryTests(BrokerFixture broker)
 {
     private const string Audit = BrokerEnvironment.AuditSubscription;
     private const string StockItems = "inventory.product-created";
@@ -54,7 +55,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
         {
             await BrokerEnvironment.CreateProductAsync(catalog, product, "Lamp");
             await published.Held;
-            written = await BrokerEnvironment.RowsAsync(
+            written = await Sql.RowsAsync(
                 environment.Catalog,
                 """
                 select o.destination, pg_xact_commit_timestamp(o.xmin) = pg_xact_commit_timestamp(r.xmin)
@@ -77,7 +78,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
         Assert.Equal([["rabbitmq://exchange/catalog.product-created.v2", true]], written);
         Assert.Equal(
             [[product]],
-            await BrokerEnvironment.RowsAsync(
+            await Sql.RowsAsync(
                 environment.Inventory,
                 $"select c.product_id from inventory.product_categories c join inventory.pouryakit_receipts r on r.subscription = '{ProductCategories}' and pg_xact_commit_timestamp(r.xmin) = pg_xact_commit_timestamp(c.xmin)"
             )
@@ -119,7 +120,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
         var created = await environment.CreatedEventOfAsync(product);
         Assert.Equal(
             [[$"local://{Audit}/", "catalog.product-created.v1", typeof(IntegrationEventHandlerFailedException).FullName!]],
-            await BrokerEnvironment.RowsAsync(environment.Inventory, "select received_at, message_type, exception_type from wolverine.wolverine_dead_letters")
+            await Sql.RowsAsync(environment.Inventory, "select received_at, message_type, exception_type from wolverine.wolverine_dead_letters")
         );
         Assert.Equal(TestDeliveryServiceCollectionExtensions.RetryDelays.Count + 1, DeliveryProbes.AttemptsOf(Audit, created).Count);
         // Every attempt wrote its audit, and each rolled back with its Receipt.
@@ -163,7 +164,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
                 "The broker envelope was never marked handled."
             );
             // A kill ends the held attempt's transaction, its Receipt uncommitted.
-            await BrokerEnvironment.RowsAsync(
+            await Sql.RowsAsync(
                 environment.Inventory,
                 "select pg_terminate_backend(pid) from pg_stat_activity where datname = current_database() and state = 'idle in transaction' and query like '%pouryakit_receipts%'"
             );
@@ -185,7 +186,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
         // The same copy, handed out again, not a second fan-out.
         Assert.Equal(
             [[$"local://{Audit}/", "Handled"]],
-            await BrokerEnvironment.RowsAsync(environment.Inventory, $"select received_at, status from wolverine.wolverine_incoming_envelopes where received_at = 'local://{Audit}/'")
+            await Sql.RowsAsync(environment.Inventory, $"select received_at, status from wolverine.wolverine_incoming_envelopes where received_at = 'local://{Audit}/'")
         );
         Assert.Equal(2, DeliveryProbes.AttemptsOf(Audit, await environment.CreatedEventOfAsync(product)).Count);
         Assert.Equal([[product]], await AuditsWithTheirReceiptAsync(environment));
@@ -216,7 +217,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
 
         Assert.Equal(
             [[queue, "catalog.product-created.v1", "Handled"]],
-            await BrokerEnvironment.RowsAsync(environment.Catalog, "select received_at, message_type, status from wolverine.wolverine_incoming_envelopes where received_at like 'rabbitmq:%'")
+            await Sql.RowsAsync(environment.Catalog, "select received_at, message_type, status from wolverine.wolverine_incoming_envelopes where received_at like 'rabbitmq:%'")
         );
         Assert.Equal(0L, await BrokerEnvironment.ScalarAsync<long>(environment.Catalog, "select count(*) from wolverine.wolverine_dead_letters"));
         Assert.Equal(0u, await environment.BrokerMessagesAsync(ModularMonolithHost.ServiceName));
@@ -277,11 +278,11 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
 
         Assert.Equal(
             [[$"local://{Audit}/", "Handled", 2L], [$"local://{CatalogProducts}/", "Handled", 2L], [$"local://{ProductCategories}/", "Handled", 2L], [$"local://{StockItems}/", "Handled", 2L], [HostQueue, "Handled", 3L]],
-            await BrokerEnvironment.RowsAsync(environment.Inventory, "select received_at, status, count(*) from wolverine.wolverine_incoming_envelopes where message_type like 'catalog.%' group by 1, 2 order by 1")
+            await Sql.RowsAsync(environment.Inventory, "select received_at, status, count(*) from wolverine.wolverine_incoming_envelopes where message_type like 'catalog.%' group by 1, 2 order by 1")
         );
         Assert.Equal(
             [[Audit, 1L], [CatalogProducts, 1L], [ProductCategories, 1L], [StockItems, 1L]],
-            await BrokerEnvironment.RowsAsync(environment.Inventory, "select subscription, count(*) from inventory.pouryakit_receipts group by 1 order by 1")
+            await Sql.RowsAsync(environment.Inventory, "select subscription, count(*) from inventory.pouryakit_receipts group by 1 order by 1")
         );
         Assert.Equal(1L, await StockItemsAsync(environment, product));
         Assert.Equal(turnedAway + 1, DeliveryProbes.TurnedAwayFrom(StockItems));
@@ -296,7 +297,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
         var product = Guid.CreateVersion7();
 
         // The store refuses the audit's copy of every envelope, and nothing else.
-        await BrokerEnvironment.RowsAsync(
+        await Sql.RowsAsync(
             environment.Inventory,
             $"""
             create function public.refuse_audit_copy() returns trigger language plpgsql as $$
@@ -323,7 +324,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
         // refusal its cause, and the only record of the audit's delivery.
         Assert.Equal(
             [[HostQueue, "catalog.product-created.v1", "Npgsql.PostgresException"]],
-            await BrokerEnvironment.RowsAsync(environment.Inventory, "select received_at, message_type, exception_type from wolverine.wolverine_dead_letters")
+            await Sql.RowsAsync(environment.Inventory, "select received_at, message_type, exception_type from wolverine.wolverine_dead_letters")
         );
         Assert.Equal(
             (0L, 0L),
@@ -337,7 +338,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
         );
 
         // With the store healed, the replay fans the envelope out again, and each subscription applies it once.
-        await BrokerEnvironment.RowsAsync(
+        await Sql.RowsAsync(
             environment.Inventory,
             "drop trigger refuse_audit_copy on wolverine.wolverine_incoming_envelopes; drop function public.refuse_audit_copy();"
         );
@@ -355,7 +356,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
 
         Assert.Equal(
             [[$"local://{Audit}/", "Handled"], [HostQueue, "Handled"]],
-            await BrokerEnvironment.RowsAsync(
+            await Sql.RowsAsync(
                 environment.Inventory,
                 $"select received_at, status from wolverine.wolverine_incoming_envelopes where received_at in ('{HostQueue}', 'local://{Audit}/') and message_type = 'catalog.product-created.v1' order by 1"
             )
@@ -450,7 +451,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
             await BrokerEnvironment.WaitUntilSettledAsync(database);
             Assert.Equal(
                 [.. products.Order().Select(product => new object[] { product })],
-                await BrokerEnvironment.RowsAsync(database, "select product_id from inventory.stock_items order by 1")
+                await Sql.RowsAsync(database, "select product_id from inventory.stock_items order by 1")
             );
         }
     }
@@ -481,7 +482,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
         // Both Receipts are of the Domain Event Catalog published it for.
         Assert.Equal(
             [[Audit, created], [StockItems, created]],
-            await BrokerEnvironment.RowsAsync(environment.Inventory, $"select subscription, message_id from inventory.pouryakit_receipts where subscription in ('{Audit}', '{StockItems}') order by 1")
+            await Sql.RowsAsync(environment.Inventory, $"select subscription, message_id from inventory.pouryakit_receipts where subscription in ('{Audit}', '{StockItems}') order by 1")
         );
         // The delivery continues, as a trusted continuation, the Operation of Catalog that published it.
         var publishing = Assert.Single(DeliveryProbes.ContextsOf(PublishProductCreated, created));
@@ -517,7 +518,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
                 [HostQueue, "catalog.product-created.v2"],
                 [HostQueue, "catalog.product-snapshot.v1"],
             ],
-            await BrokerEnvironment.RowsAsync(environment.Inventory, "select received_at, message_type from wolverine.wolverine_incoming_envelopes where message_type like 'catalog.%' order by 1, 2")
+            await Sql.RowsAsync(environment.Inventory, "select received_at, message_type from wolverine.wolverine_incoming_envelopes where message_type like 'catalog.%' order by 1, 2")
         );
         Assert.Equal(0L, await BrokerEnvironment.ScalarAsync<long>(environment.Inventory, "select count(*) from wolverine.wolverine_dead_letters"));
     }
@@ -540,7 +541,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
 
         Assert.Equal(
             [[product, "Floor lamp", 3L]],
-            await BrokerEnvironment.RowsAsync(environment.Inventory, "select product_id, name, version from inventory.catalog_products")
+            await Sql.RowsAsync(environment.Inventory, "select product_id, name, version from inventory.catalog_products")
         );
     }
 
@@ -573,7 +574,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
         await BrokerEnvironment.WaitUntilSettledAsync(environment.Inventory);
         Assert.Equal(
             [[product, "Floor lamp", 3L]],
-            await BrokerEnvironment.RowsAsync(environment.Inventory, "select product_id, name, version from inventory.catalog_products")
+            await Sql.RowsAsync(environment.Inventory, "select product_id, name, version from inventory.catalog_products")
         );
     }
 
@@ -592,7 +593,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
             await BrokerEnvironment.WaitUntilSettledAsync(environment.Inventory);
         }
 
-        Assert.Empty(await BrokerEnvironment.RowsAsync(environment.Inventory, "select * from inventory.catalog_products"));
+        Assert.Empty(await Sql.RowsAsync(environment.Inventory, "select * from inventory.catalog_products"));
     }
 
     [Fact]
@@ -619,7 +620,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
         await BrokerEnvironment.WaitUntilAsync(environment.Inventory, "exists (select from wolverine.wolverine_dead_letters)", "The message was never dead-lettered.");
         Assert.Equal(
             [[id, HostQueue, "catalog.product-retired.v1"]],
-            await BrokerEnvironment.RowsAsync(environment.Inventory, "select id, received_at, message_type from wolverine.wolverine_dead_letters")
+            await Sql.RowsAsync(environment.Inventory, "select id, received_at, message_type from wolverine.wolverine_dead_letters")
         );
         Assert.Equal(0u, await environment.BrokerMessagesAsync(InventoryHost.ServiceName));
     }
@@ -672,14 +673,14 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
             // Each effect commits with its subscription's Receipt, by the Actor who created the product.
             Assert.Equal(
                 [[product, "ada", StockItems]],
-                await BrokerEnvironment.RowsAsync(
+                await Sql.RowsAsync(
                     environment.Inventory,
                     $"select s.product_id, s.created_by, r.subscription from inventory.stock_items s join inventory.pouryakit_receipts r on r.message_id = '{created}' and pg_xact_commit_timestamp(r.xmin) = pg_xact_commit_timestamp(s.xmin)"
                 )
             );
             Assert.Equal(
                 [[product, "ada", ProductCategories]],
-                await BrokerEnvironment.RowsAsync(
+                await Sql.RowsAsync(
                     environment.Inventory,
                     $"select c.product_id, c.filed_by, r.subscription from inventory.product_categories c join inventory.pouryakit_receipts r on r.message_id = '{created}' and pg_xact_commit_timestamp(r.xmin) = pg_xact_commit_timestamp(c.xmin)"
                 )
@@ -687,7 +688,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
             // The copy the process delivered carried the publishing Operation's tenant, correlation and causation.
             var publishing = Assert.Single(DeliveryProbes.ContextsOf(PublishProductCreated, created));
             var copy = EnvelopeSerializer.Deserialize(
-                (byte[])(await BrokerEnvironment.RowsAsync(environment.Inventory, $"select body from wolverine.wolverine_incoming_envelopes where received_at = 'local://{StockItems}/'"))[0][0]
+                (byte[])(await Sql.RowsAsync(environment.Inventory, $"select body from wolverine.wolverine_incoming_envelopes where received_at = 'local://{StockItems}/'"))[0][0]
             );
             Assert.Equal(
                 ["tenant-51", context.CorrelationId.ToString(), publishing.OperationId.ToString()],
@@ -727,7 +728,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
         );
         Assert.Equal(sent, Assert.Single(ProbedIntegrationEventHandler.Received, received => received.Id == sent.Id));
         var body = Assert.Single(
-            await BrokerEnvironment.RowsAsync(
+            await Sql.RowsAsync(
                 environment.Inventory,
                 $"select body from wolverine.wolverine_incoming_envelopes where received_at = '{HostQueue}' and message_type = '{ProbedV1.WireName}'"
             )
@@ -808,7 +809,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
         return
         [
             .. (
-                await BrokerEnvironment.RowsAsync(
+                await Sql.RowsAsync(
                     environment.Inventory,
                     $"select id, body from wolverine.wolverine_incoming_envelopes where received_at = '{HostQueue}' and message_type = 'catalog.product-snapshot.v1'"
                 )
@@ -828,7 +829,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
 
     // What Inventory.Host has applied, as if none of the Snapshots had ever arrived.
     private static Task ForgetCopiesAsync(BrokerEnvironment environment) =>
-        BrokerEnvironment.RowsAsync(
+        Sql.RowsAsync(
             environment.Inventory,
             $"delete from inventory.catalog_products; delete from inventory.pouryakit_snapshot_versions; delete from inventory.pouryakit_receipts where subscription = '{CatalogProducts}'"
         );
@@ -837,7 +838,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
     // fanned out once more.
     private static async Task RedeliverAsync(BrokerEnvironment environment, Guid envelope) =>
         Assert.Single(
-            await BrokerEnvironment.RowsAsync(
+            await Sql.RowsAsync(
                 environment.Inventory,
                 $"update wolverine.wolverine_incoming_envelopes set status = 'Incoming', owner_id = 0 where id = '{envelope}' returning id"
             )
@@ -851,7 +852,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker) : IClassFixture<
 
     // Every audit committed together with the audit subscription's Receipt.
     private static Task<List<object[]>> AuditsWithTheirReceiptAsync(BrokerEnvironment environment) =>
-        BrokerEnvironment.RowsAsync(
+        Sql.RowsAsync(
             environment.Inventory,
             $"select a.product_id from tests.product_audits a join inventory.pouryakit_receipts r on r.subscription = '{Audit}' and pg_xact_commit_timestamp(r.xmin) = pg_xact_commit_timestamp(a.xmin)"
         );

@@ -32,6 +32,8 @@ public sealed class TemplateTests
 
         Assert.Empty(ModularityIn(monolith));
         Assert.NotEmpty(ModularityIn(Generated(Modular)));
+        // The rule reads the smoke test, which runs on PouryaKit.Testing and names none of the Modularity it depends on.
+        Assert.Contains(monolith, file => file.Path.EndsWith(".Tests.csproj", StringComparison.Ordinal) && file.Text.Contains("\"PouryaKit.Testing\"", StringComparison.Ordinal));
         var endpoint = PackedSample.Single(file => file.Path.EndsWith("/CreateCategoryEndpoint.cs", StringComparison.Ordinal));
         Assert.Equal(
             [
@@ -70,6 +72,72 @@ public sealed class TemplateTests
                 [.. excluded, "src/Modules/Catalog/Catalog/Products/Features/RemoveProducts/RemoveProductsEndpoint.cs"],
                 [.. replacements, "src/Modules/Catalog/Catalog/Products/Features/Stray.cs"],
                 Unreplaced
+            )
+        );
+    }
+
+    // Ticket #87: the monolith's replacements are written by hand after the sample's files, so a change to Catalog's routes,
+    // versions, anonymous Actor, Idempotency-Key, endpoint names or registrations in the sample fails here, not in a
+    // generated Host that silently serves something else.
+    [Fact]
+    public void Each_file_the_monolith_replaces_makes_the_sample_files_calls_but_for_the_composition()
+    {
+        var replacements = Own(Monolith)
+            .Where(file => file.Path.StartsWith("src/Modules/", StringComparison.Ordinal) && file.Path.EndsWith(".cs", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.Empty(MirrorDifferences(replacements, PackedSample));
+        Assert.Equal(6, replacements.Count);
+        var module = replacements.Single(file => file.Path.EndsWith("/CatalogModule.cs", StringComparison.Ordinal));
+        var create = replacements.Single(file => file.Path.EndsWith("/CreateProductEndpoint.cs", StringComparison.Ordinal));
+        var rename = replacements.Single(file => file.Path.EndsWith("/RenameProductEndpoint.cs", StringComparison.Ordinal));
+        Assert.Equal(
+            [
+                """src/Modules/Catalog/Catalog/CatalogModule.cs calls Publish<ProductCreatedV2>("catalog.product-created.v3") where the sample's Modules/Catalog/Catalog/CatalogModule.cs calls Publish<ProductCreatedV2>("catalog.product-created.v2").""",
+                "src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductEndpoint.cs calls nothing more where the sample's Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductEndpoint.cs calls RequireIdempotencyKey().",
+                """src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductEndpoint.cs calls MapPut("/products/{productId}/title", async (…) => (…).ToHttpResult(…)) where the sample's Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductEndpoint.cs calls MapPut("/products/{productId}/name", async (…) => (…).ToHttpResult(…)).""",
+            ],
+            MirrorDifferences(
+                [
+                    .. replacements.Except([module, create, rename]),
+                    module with { Text = module.Text.Replace("catalog.product-created.v2", "catalog.product-created.v3", StringComparison.Ordinal) },
+                    create with { Text = create.Text.Replace(".RequireIdempotencyKey()", "", StringComparison.Ordinal) },
+                    rename with { Text = rename.Text.Replace("/products/{productId}/name", "/products/{productId}/title", StringComparison.Ordinal) },
+                ],
+                PackedSample
+            ).Order(StringComparer.Ordinal)
+        );
+    }
+
+    // Ticket #87: each template Host's pipeline is the sample Host's, which the Kit's own tests run.
+    [Fact]
+    public void Each_template_host_builds_the_sample_hosts_pipeline_in_its_order()
+    {
+        var sample = new TextFile("ModularMonolith.Host/ModularMonolithHost.cs", File.ReadAllText(Path.Combine(SampleRoot, "ModularMonolith.Host", "ModularMonolithHost.cs")));
+
+        Assert.All(
+            [Monolith, Modular],
+            template =>
+            {
+                var host = Own(template).Single(file => file.Text.Contains("app.UseRouting();", StringComparison.Ordinal));
+                Assert.Empty(PipelineDifferences(host, sample));
+                Assert.Contains("app.MapDefaultEndpoints();", host.Text, StringComparison.Ordinal);
+            }
+        );
+        var monolith = Own(Monolith).Single(file => file.Text.Contains("app.UseRouting();", StringComparison.Ordinal));
+        Assert.Equal(
+            [
+                $"{monolith.Path} builds its pipeline with UseExceptionHandler, UseRouting, UseCors, UseAuthorization, UseAuthentication, UseRateLimiter, MapPouryaKitModuleEndpoints, MapPouryaKitOpenApi; the sample's ModularMonolith.Host/ModularMonolithHost.cs with UseExceptionHandler, UseRouting, UseCors, UseAuthentication, UseAuthorization, UseRateLimiter, MapPouryaKitModuleEndpoints, MapPouryaKitOpenApi.",
+            ],
+            PipelineDifferences(
+                monolith with
+                {
+                    Text = monolith
+                        .Text.Replace("app.UseAuthentication();", "app.Swapped();", StringComparison.Ordinal)
+                        .Replace("app.UseAuthorization();", "app.UseAuthentication();", StringComparison.Ordinal)
+                        .Replace("app.Swapped();", "app.UseAuthorization();", StringComparison.Ordinal),
+                },
+                sample
             )
         );
     }

@@ -45,7 +45,7 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
 
         // Stored with the quote, in its commit, due at its expiry, and owned by no Host.
         var stored = Assert.Single(
-            await RowsAsync(
+            await Sql.RowsAsync(
                 connectionString,
                 $"""
                 select e.id, e.status, e.owner_id, e.execution_time = q.expires_on, q.state,
@@ -74,13 +74,13 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
 
         Assert.Equal(
             [["Expired", 2L, "alice"]],
-            await RowsAsync(connectionString, $"select state, version, last_changed_by from billing.quotes where id = '{quote}'")
+            await Sql.RowsAsync(connectionString, $"select state, version, last_changed_by from billing.quotes where id = '{quote}'")
         );
         Assert.Equal(
             [[ExpireQuote, envelope]],
-            await RowsAsync(connectionString, "select subscription, message_id from billing.pouryakit_receipts")
+            await Sql.RowsAsync(connectionString, "select subscription, message_id from billing.pouryakit_receipts")
         );
-        Assert.Empty(await RowsAsync(connectionString, "select id from wolverine.wolverine_dead_letters"));
+        Assert.Empty(await Sql.RowsAsync(connectionString, "select id from wolverine.wolverine_dead_letters"));
         // Every attempt continued the Operation that opened the quote: its Actor, tenant and correlation, caused by it.
         var contexts = DeliveryProbes.ContextsOf(ExpireQuote, envelope);
         Assert.NotEmpty(contexts);
@@ -339,28 +339,11 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         return new NpgsqlConnectionStringBuilder(Fixture.ConnectionString) { Database = database }.ConnectionString;
     }
 
-    private static async Task<List<object[]>> RowsAsync(string connectionString, string sql)
-    {
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync(TestContext.Current.CancellationToken);
-        await using var command = new NpgsqlCommand(sql, connection);
-        await using var reader = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken);
-        List<object[]> rows = [];
-        while (await reader.ReadAsync(TestContext.Current.CancellationToken))
-        {
-            var row = new object[reader.FieldCount];
-            reader.GetValues(row);
-            rows.Add(row);
-        }
-
-        return rows;
-    }
-
     private static async Task WaitUntilAsync(string connectionString, string condition)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(15));
-        while (!(bool)(await RowsAsync(connectionString, $"select {condition}"))[0][0])
+        while (!(bool)(await Sql.RowsAsync(connectionString, $"select {condition}"))[0][0])
         {
             Assert.False(timeout.IsCancellationRequested, $"Not reached within 15 s: {condition}");
             await Task.Delay(25, TestContext.Current.CancellationToken);

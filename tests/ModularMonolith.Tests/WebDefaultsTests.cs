@@ -1,12 +1,12 @@
 using System.IO.Compression;
 using System.Net;
-using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Testing;
+using static ModularMonolith.Tests.Fixtures.ProblemResponses;
 
 namespace ModularMonolith.Tests;
 
@@ -325,13 +325,5 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.DoesNotContain(preflight.Headers, header => header.Key.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase));
         Assert.Equal(HttpStatusCode.OK, request.StatusCode);
         Assert.DoesNotContain(request.Headers, header => header.Key.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static async Task<JsonElement> ProblemAsync(HttpResponseMessage response, HttpStatusCode status)
-    {
-        Assert.Equal(status, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
-        return problem.RootElement.Clone();
     }
 }

@@ -10,6 +10,7 @@ using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Testing;
+using static ModularMonolith.Tests.Fixtures.ProblemResponses;
 
 namespace ModularMonolith.Tests;
 
@@ -240,7 +241,7 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
             TestContext.Current.CancellationToken
         );
 
-        using var problem = await ProblemAsync(response);
+        var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
         Assert.Equal(
             [
                 (PageErrorCodes.FilterOperatorUnsupported, "Filters[0]"),
@@ -251,7 +252,7 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
                 (PageErrorCodes.SortUnknown, "Sort"),
             ],
             problem
-                .RootElement.GetProperty("errors")
+                .GetProperty("errors")
                 .EnumerateArray()
                 .Select(error => (error.GetProperty("code").GetString(), error.GetProperty("target").GetString()))
                 .Order()
@@ -272,9 +273,9 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var response = await client.GetAsync($"/catalog/products?{query}", TestContext.Current.CancellationToken);
 
-        using var problem = await ProblemAsync(response);
-        Assert.Equal(detail, problem.RootElement.GetProperty("detail").GetString());
-        Assert.False(problem.RootElement.TryGetProperty("errors", out _));
+        var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
+        Assert.Equal(detail, problem.GetProperty("detail").GetString());
+        Assert.False(problem.TryGetProperty("errors", out _));
     }
 
     // Query string keys are read ignoring case, as IQueryCollection reads page, size, sort and direction.
@@ -344,12 +345,5 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
         return await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
             .QueryAsync(new PageProductsThroughEfQuery(request), TestContext.Current.CancellationToken);
-    }
-
-    private static async Task<JsonDocument> ProblemAsync(HttpResponseMessage response)
-    {
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        return JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
     }
 }

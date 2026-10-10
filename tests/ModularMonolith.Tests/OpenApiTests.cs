@@ -18,6 +18,7 @@ using PouryaKit.Cqrs;
 using PouryaKit.Testing;
 using PouryaKit.Web;
 using PouryaKit.Web.OpenApi;
+using static ModularMonolith.Tests.Fixtures.ProblemResponses;
 
 namespace ModularMonolith.Tests;
 
@@ -449,14 +450,6 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         var response = await client.GetAsync($"/openapi/{name}.json", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         return await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
-    }
-
-    private static async Task ProblemAsync(HttpResponseMessage response, HttpStatusCode status)
-    {
-        Assert.Equal(status, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        var problem = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
-        Assert.Equal((int)status, problem.GetProperty("status").GetInt32());
     }
 
     private static IEnumerable<(string Name, JsonElement Body)> Operations(JsonElement document) =>

@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Testing;
+using static ModularMonolith.Tests.Fixtures.ProblemResponses;
 
 namespace ModularMonolith.Tests;
 
@@ -454,14 +454,6 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
 
     private static Task<string> BodyAsync(HttpResponseMessage response) =>
         response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-
-    private static async Task<JsonElement> ProblemAsync(HttpResponseMessage response, HttpStatusCode status)
-    {
-        Assert.Equal(status, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        using var problem = JsonDocument.Parse(await BodyAsync(response));
-        return problem.RootElement.Clone();
-    }
 
     private static async Task<SeenContext> ContextAsync(HttpClient client, string path)
     {

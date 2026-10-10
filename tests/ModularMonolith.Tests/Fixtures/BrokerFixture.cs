@@ -153,7 +153,7 @@ public sealed class BrokerEnvironment(BrokerFixture fixture, string catalog, str
         Action<WebApplicationBuilder>? configure = null
     )
     {
-        await RowsAsync(
+        await Sql.RowsAsync(
             database ?? inventory,
             "create schema if not exists tests; create table if not exists tests.product_audits (product_id uuid not null)"
         );
@@ -207,35 +207,14 @@ public sealed class BrokerEnvironment(BrokerFixture fixture, string catalog, str
     }
 
     /// <summary>
-    /// Waits until no delivery in the message store of <paramref name="database"/> is pending: every envelope handled,
-    /// dead-lettered or a delayed command not yet due, nothing waiting to be sent or replayed.
+    /// Waits until no delivery in the message store of <paramref name="database"/> is pending, as
+    /// <see cref="HostFixture"/> defines one: every envelope handled, dead-lettered or a delayed command not yet due,
+    /// nothing waiting to be sent or replayed.
     /// </summary>
     public static Task WaitUntilSettledAsync(string database) =>
-        WaitUntilAsync(
-            database,
-            "(select count(*) from wolverine.wolverine_incoming_envelopes where status <> 'Handled' and not (status = 'Scheduled' and attempts = 0 and execution_time > now())) + (select count(*) from wolverine.wolverine_outgoing_envelopes) + (select count(*) from wolverine.wolverine_dead_letters where replayable) = 0",
-            "Deliveries were still pending."
-        );
+        new StoredDeliveries(database, "wolverine", []).WaitUntilSettledAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
 
-    public static async Task<T> ScalarAsync<T>(string database, string sql) => (T)(await RowsAsync(database, sql))[0][0];
-
-    /// <summary>Every row <paramref name="sql"/> returns on <paramref name="database"/>, read on a connection of its own.</summary>
-    public static async Task<List<object[]>> RowsAsync(string database, string sql)
-    {
-        await using var connection = new NpgsqlConnection(database);
-        await connection.OpenAsync(TestContext.Current.CancellationToken);
-        await using var command = new NpgsqlCommand(sql, connection);
-        await using var reader = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken);
-        List<object[]> rows = [];
-        while (await reader.ReadAsync(TestContext.Current.CancellationToken))
-        {
-            var row = new object[reader.FieldCount];
-            reader.GetValues(row);
-            rows.Add(row);
-        }
-
-        return rows;
-    }
+    public static async Task<T> ScalarAsync<T>(string database, string sql) => (T)(await Sql.RowsAsync(database, sql))[0][0];
 
     /// <summary>Messages ready in the broker queue <paramref name="queue"/>, read with a passive declare.</summary>
     public async Task<uint> BrokerMessagesAsync(string queue)

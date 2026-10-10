@@ -20,7 +20,8 @@ namespace ModularMonolith.Tests;
 // contract requires that the body lacks, a null its contract forbids, or one of its members named twice (#86), fails the
 // read at its broker queue, and the envelope is dead-lettered there with the error before any subscription receives a
 // copy. A member the body has and the contract lacks is skipped.
-public sealed class StrictWireReadingTests(BrokerFixture broker) : IClassFixture<BrokerFixture>
+[Collection<BrokerCollection>]
+public sealed class StrictWireReadingTests(BrokerFixture broker)
 {
     private const string Subscription = "inventory.shape";
     private static readonly string HostQueue = $"rabbitmq://queue/{InventoryHost.ServiceName}";
@@ -93,7 +94,7 @@ public sealed class StrictWireReadingTests(BrokerFixture broker) : IClassFixture
             "Inventory.Host never applied the body with a member its contract lacks."
         );
         Assert.Equal(new ShapeV1(sent.Id, sent.ProductId, "Lamp"), Assert.Single(ShapeIntegrationEventHandler.Received, received => received.Id == sent.Id));
-        Assert.Empty(await BrokerEnvironment.RowsAsync(environment.Inventory, "select id from wolverine.wolverine_dead_letters"));
+        Assert.Empty(await Sql.RowsAsync(environment.Inventory, "select id from wolverine.wolverine_dead_letters"));
     }
 
     private static void ReceivesShapes(WebApplicationBuilder builder)
@@ -118,7 +119,7 @@ public sealed class StrictWireReadingTests(BrokerFixture broker) : IClassFixture
 
         Assert.DoesNotContain(ShapeIntegrationEventHandler.Received, received => received.Id == id);
         var deadLetter = Assert.Single(
-            await BrokerEnvironment.RowsAsync(environment.Inventory, "select received_at, message_type, exception_type, exception_message from wolverine.wolverine_dead_letters")
+            await Sql.RowsAsync(environment.Inventory, "select received_at, message_type, exception_type, exception_message from wolverine.wolverine_dead_letters")
         );
         Assert.Equal([HostQueue, ShapeV1.WireName, "System.Text.Json.JsonException"], deadLetter[..3]);
         Assert.StartsWith(error, (string)deadLetter[3], StringComparison.Ordinal);
