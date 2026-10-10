@@ -86,7 +86,7 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | A brief's commands come from the environment, never from memory | `docs/agents/brief-template.md`, "Verify" |
 | A review reads the implementer's commit, never the integration branch against itself | `kit-review.js` refuses `head` equal to `base` |
 | Pre-Wave 3 acceptance sections stay in ticket order after every merge | `check-docs.py` (ordered sections), run by `merge-package.py --post-merge` |
-| A docs or AI-setup edit passes its checks before it commits | `.githooks/pre-commit` runs `check-docs.py` and `check-ai-setup.py` over the working tree when a staged path is one of their inputs; CI's `ai-setup` job runs both on the committed tree |
+| A docs or AI-setup edit passes its checks before it commits | `.githooks/pre-commit` runs `check-docs.py` and `check-ai-setup.py` over the working tree when a staged path is one of their inputs, and refuses such a path staged in part; CI's `ai-setup` job runs both on the committed tree |
 
 ## Rule router
 
