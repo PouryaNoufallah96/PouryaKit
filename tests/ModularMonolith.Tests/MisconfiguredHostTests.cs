@@ -369,9 +369,10 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         null,
         "PouryaKitMessagingOptions.RetryDelays is null; set it to the delays a failed delivery waits before each further attempt."
     )]
+    [InlineData(new int[0], "PouryaKitMessagingOptions.RetryDelays is empty; set at least one delay, where a zero delay retries at once.")]
     [InlineData(new[] { -1 }, "PouryaKitMessagingOptions.RetryDelays holds a negative delay; set each delay to zero or longer.")]
     [InlineData(new[] { 1, -1 }, "PouryaKitMessagingOptions.RetryDelays holds a negative delay; set each delay to zero or longer.")]
-    public async Task A_null_or_negative_retry_schedule_stops_the_host_at_start_naming_the_option(int[]? delaysInSeconds, string failure)
+    public async Task A_null_empty_or_negative_retry_schedule_stops_the_host_at_start_naming_the_option(int[]? delaysInSeconds, string failure)
     {
         using var host = MessagingOnly(delaysInSeconds);
 
@@ -381,8 +382,8 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         Assert.Equal([failure], thrown.Failures);
     }
 
-    // A zero delay retries a failed delivery at once. An empty schedule is no positive case: Wolverine's ScheduleRetry
-    // refuses it at start, before and after ticket #83.
+    // A zero delay retries a failed delivery at once, the shortest valid schedule: an empty one is refused (the theory
+    // above).
     [Fact]
     public async Task A_zero_delay_retry_schedule_lets_the_host_start()
     {

@@ -62,6 +62,10 @@ public static class WolverineHostApplicationBuilderExtensions
                     "PouryaKitMessagingOptions.RetryDelays is null; set it to the delays a failed delivery waits before each further attempt."
                 )
                 .Validate(
+                    messaging => messaging.RetryDelays is null || messaging.RetryDelays.Length > 0,
+                    "PouryaKitMessagingOptions.RetryDelays is empty; set at least one delay, where a zero delay retries at once."
+                )
+                .Validate(
                     messaging => messaging.RetryDelays is null || messaging.RetryDelays.All(delay => delay >= TimeSpan.Zero),
                     "PouryaKitMessagingOptions.RetryDelays holds a negative delay; set each delay to zero or longer."
                 )

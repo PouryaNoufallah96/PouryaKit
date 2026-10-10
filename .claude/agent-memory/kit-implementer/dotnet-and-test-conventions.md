@@ -65,6 +65,7 @@ metadata:
 ## Sample and Kit tests a change ripples into
 
 - After #10 a Product needs an existing Category (`CountProductInCategoryDomainEventHandler`, named `CountProductInCategoryHandler` before #80, fails NotFound otherwise): any Catalog test creating products sends `CreateCategoryCommand` first. Parallel tickets that touch the sample model break each other's branches; expect a post-merge repair round.
+- **`53300 too many clients` (#95, 2026-10-10):** from `c3a3467` on this machine, the full `ModularMonolith.Tests` run fails `RecurringCommandTests.An_occurrence_stored_before_its_command_changed_shape_…` on PostgreSQL `53300` every time (four runs, one with no other suite running, and the base itself), while the class alone passes. Each run has its own container: `HostFixture` keeps PostgreSQL's default 100 connections (`BrokerFixture` sets 1000), and that test composes three Hosts on a database of its own. So it is not load from parallel tickets; run the base before calling it transient, and report it rather than rerun past once.
 - `tests/PouryaKit.Cqrs.Tests` holds deliberately invalid operations: never `AddPouryaKitCqrs(thatAssembly)`; register test handlers by hand.
 - `PersistenceTests.Each_module_has_its_own_schema...` asserts the exact table list and migration names: any new table or migration edits it (merge-conflict hotspot with parallel tickets).
 - Adding a Module to the sample breaks `PersistenceTests` (schema and DbContext lists) and `NotificationTests.A_new_product_is_announced…` (exact delivery list).
