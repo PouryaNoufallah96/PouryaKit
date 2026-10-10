@@ -64,5 +64,9 @@ Check `.github/workflows/package-publication.yml` before relying on it.
 - **Where an implementer's brief lives:** the main checkout's untracked `.claude/handoff/<run>/briefs/`, not the worktree; read it by absolute path.
 - **`--since` does not skip `.editorconfig` or `tests/` (#77):** only `docs/`, `.agents/`, `.claude/`, `.codex/`, `.githooks/` and five root files are exempt (`EXEMPT_DIRECTORIES` in `validate.py`), so a ticket touching a test project or the editorconfig runs the full validation, whatever its brief expects.
 
+## A validation run beside other suites (#84, 2026-10-10)
+
+- `validate.py`'s Release suite (`runtime-tests.log` in the output folder, 842 tests at #84) failed once with `53300: sorry, too many clients already` when `RecurringCommandTests` started a Host on its own database in the AppFixture container, while other agents' suites shared Docker; the rerun on the same commit passed. Rerun once with nothing changed, record both runs in the acceptance paragraph, and count it as no fix attempt. The suite's counts are in `runtime-tests.log`, not the main log.
+
 **Why:** each cost a probe or a validation run; the credential rule is not testable without the hosted feed.
 **How to apply:** for a new template or any package that is not a library, any `validate.py` run, any clean consumer, any change to the publication workflow, and a hosted proof of the private feed. Related: [[core-json-and-architecture-test-facts]], [[observability-tracing-and-http-facts]], [[worktree-shell-and-check-gotchas]].

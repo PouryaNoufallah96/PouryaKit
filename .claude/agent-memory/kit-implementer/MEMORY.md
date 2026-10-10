@@ -12,4 +12,4 @@
 - [Web, security and OpenAPI](web-security-and-openapi-facts.md) — #14 #36 #38 #39 #40 #41 #54 #64 #81, final review A: binding, CORS, limiter, permissions, JWT, PBKDF2, versioning
 - [Observability, tracing and HTTP](observability-tracing-and-http-facts.md) — #46 #47 #48 #52 #64 #80 #84: Npgsql source, parent-id, listener traps, bucket advice, log scopes, allocation proof, resilience, health, Serilog
 - [Caching and idempotency](caching-and-idempotency-facts.md) — #42 #43 #54 #81 #82: request id, on conflict do nothing, retention service, HybridCache slot, StampedeJoin, Redis
-- [Templates, packaging and publication](templates-packaging-and-publication-facts.md) — #53 #54 #59 #64 #66 #68 #75 #75b #77: template engine, pack-time version, validate.py and consumers, feed install, text rules over a template's own files, version bumps
+- [Templates, packaging and publication](templates-packaging-and-publication-facts.md) — #53 #54 #59 #64 #66 #68 #75 #75b #77 #84: template engine, pack-time version, validate.py and consumers, feed install, text rules over a template's own files, version bumps
