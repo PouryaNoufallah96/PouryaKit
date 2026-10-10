@@ -1,0 +1,35 @@
+docs/acceptance.md
+  s_a846915d2dd93c::t_e3e533b099eef0 1744-1757
+docs/architecture/diagrams/commit-sequence.html
+  s_a846915d2dd93c::t_f72306f47e4464 1-13811
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_a846915d2dd93c::t_1b63f937787924 1-448
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_a846915d2dd93c::t_6cdecc0ce438e6 1-13878
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_a846915d2dd93c::t_c51488cde26de2 1-391
+docs/architecture/diagrams/delivery.html
+  s_a846915d2dd93c::t_8e013ae956ecca 1-13832
+docs/architecture/diagrams/delivery.sequence.json
+  s_a846915d2dd93c::t_1ff05102aa176d 1-361
+docs/architecture/diagrams/http-command.html
+  s_a846915d2dd93c::t_e7cb727986e09e 1-13858
+docs/architecture/diagrams/http-command.sequence.json
+  s_a846915d2dd93c::t_6be6f1d1ed50e4 1-403
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4212c49197232c93b7c91134e6343e772951ca6e",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
