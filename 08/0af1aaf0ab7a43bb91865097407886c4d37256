@@ -1,0 +1,94 @@
+.agents/scripts/test_check_docs.py
+  s_a846915d2dd93c::t_a0dfca8cde7047 225-233
+src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotStep.cs
+  s_a846915d2dd93c::t_2facb7ca8cee41 160-162,175
+  s_a846915d2dd93c::t_b6ff8f11d317ba 200-201,207-209,215
+.agents/scripts/test_merge_package.py
+  s_a846915d2dd93c::t_8c75ee37bdc96c 190-203
+tests/ModularMonolith.Tests/SnapshotTests.cs
+  s_a846915d2dd93c::t_e1366e826d8425 721-723,728-731,735-737
+  s_a846915d2dd93c::t_8b8efaada7cdd4 693-696,701-705
+  s_a846915d2dd93c::t_b394f1d10f2ddc 438-452
+  s_a846915d2dd93c::t_161354a81b0e75 738
+.agents/scripts/check-docs.py
+  s_a846915d2dd93c::t_91a748ee3c24af 453-454
+  s_a846915d2dd93c::t_7987d5ee4e8850 39
+.agents/scripts/merge-package.py
+  s_a846915d2dd93c::t_4301907927ae35 124
+.agents/skills/pourya-kit/references/caching.md
+  s_a846915d2dd93c::t_951b7a44ae50dc 96
+.agents/skills/pourya-kit/references/messaging.md
+  s_a846915d2dd93c::t_a094aba52f7ce2 429
+.agents/skills/pourya-kit/references/persistence.md
+  s_a846915d2dd93c::t_ca2800771b0325 233
+.agents/skills/pourya-kit/references/security.md
+  s_a846915d2dd93c::t_ca591bb22a17ea 212
+.agents/skills/pourya-kit/references/templates.md
+  s_a846915d2dd93c::t_d5e497eab97803 133
+.agents/skills/pourya-kit/references/web.md
+  s_a846915d2dd93c::t_ae6203b666fcba 201,334
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_a846915d2dd93c::t_be5c067b400cf3 3,10,12
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_a846915d2dd93c::t_12c877f24c48b9 44,48-51
+.claude/agent-memory/kit-implementer/integration-event-wire-and-rabbitmq-facts.md
+  s_a846915d2dd93c::t_5f49b6dfb51f26 78
+.claude/agent-memory/kit-implementer/snapshot-and-scheduled-command-facts.md
+  s_a846915d2dd93c::t_721b5afd9cb21a 100-105
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_a846915d2dd93c::t_7f03673ddb860f 128-131
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_a846915d2dd93c::t_8a258fad654290 78
+.githooks/pre-commit
+  s_a846915d2dd93c::t_fecde8dd82090a 4-6
+AGENTS.md
+  s_a846915d2dd93c::t_d3ea28d3b1a551 77,89
+docs/acceptance.md
+  s_a846915d2dd93c::t_15b934a9303a8f 1720-1730
+docs/adr/0002-no-mediator-dependency.md
+  s_a846915d2dd93c::t_38f9d177d40983 398-401
+docs/adr/0003-single-commit-owner.md
+  s_a846915d2dd93c::t_58f77511cd238c 185-192
+docs/agents/ai-setup.md
+  s_a846915d2dd93c::t_9aca6f6e3d71ae 115,118
+docs/agents/brief-template.md
+  s_a846915d2dd93c::t_b57b8fbbe15beb 53
+docs/agents/issue-tracker.md
+  s_a846915d2dd93c::t_29a1ea89a442f7 11
+docs/architecture/README.md
+  s_a846915d2dd93c::t_d617e28e080262 537,578
+docs/foundation-review.md
+  s_a846915d2dd93c::t_49f49b848e43cb 861
+docs/provenance/PouryaKit.Messaging.Wolverine.RabbitMq.md
+  s_a846915d2dd93c::t_cb390232a53bb9 9
+src/PouryaKit.Caching/ICacheableQuery.cs
+  s_a846915d2dd93c::t_19605fa8a72109 14-16
+src/PouryaKit.Cqrs/Paging/Page.cs
+  s_a846915d2dd93c::t_fc1db1673bd9fd 10-11
+src/PouryaKit.Domain/Entity.cs
+  s_a846915d2dd93c::t_36feda868578e4 5-8,21
+src/PouryaKit.Messaging.Wolverine.EFCore/PouryaKitMessageStoreOptions.cs
+  s_a846915d2dd93c::t_4d13e4fbfb91d3 22-27
+src/PouryaKit.Validation/ValidationServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_60e428e249a5a9 11
+src/PouryaKit.Web.OpenApi/WebOpenApiEndpointRouteBuilderExtensions.cs
+  s_a846915d2dd93c::t_be35f78890ce24 10-11
+src/PouryaKit.Web/Defaults/PouryaKitCorsOptions.cs
+  s_a846915d2dd93c::t_fc875e8f38dd63 5-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "080af1aaf0ab7a43bb91865097407886c4d37256",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
