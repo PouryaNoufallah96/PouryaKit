@@ -12,9 +12,10 @@ namespace PouryaKit.Messaging.Wolverine;
 /// </summary>
 internal sealed class Subscriptions : IWireNames
 {
-    // The local queues Wolverine 6.46.0 creates for itself (LocalTransport, TransportConstants): "agents" is held in
-    // memory, and none of them is a subscription's durable queue. DurableQueuesCheck verifies the queues Wolverine built, so a
-    // name a later Wolverine reserves fails the Host's start too.
+    // The local queues Wolverine keeps for itself (LocalTransport, TransportConstants): 6.48.3 creates all but "system",
+    // which 6.46.0 created and TransportConstants still names, and holds "agents" in memory; none of them is a
+    // subscription's durable queue. DurableQueuesCheck verifies the queues Wolverine built, so a name a later Wolverine
+    // reserves fails the Host's start too.
     private static readonly FrozenSet<string> ReservedQueues = FrozenSet.Create(
         StringComparer.OrdinalIgnoreCase,
         "agents",
@@ -279,7 +280,7 @@ internal sealed class Subscriptions : IWireNames
     /// <summary>
     /// A problem for each message type of the Host that Wolverine would also route where another type is routed: to the
     /// subscriptions of a subscribed type, and to wherever a transport between Hosts sends a published type, such as its
-    /// exchange on a broker. Wolverine 6.46.0 routes a type to every message whose wire name, name or full name equals
+    /// exchange on a broker. Wolverine 6.48.3 routes a type to every message whose wire name, name or full name equals
     /// that type's full name, ignoring case (<c>Subscription.Matches</c>, <c>RoutingScope.Type</c>). A v2 published under
     /// the full name of its v1 would reach every v1 subscription, and every Host that receives v1.
     /// </summary>

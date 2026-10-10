@@ -50,7 +50,10 @@ public static class WolverineHostApplicationBuilderExtensions
         /// code at run time in Development and, in every other environment, loads it from the Host's own assembly, where
         /// <c>dotnet run -- codegen write</c> wrote it before the build (<see cref="TypeLoadMode.Static"/>): a Host there needs no
         /// runtime compiler, and one whose handler chain has no generated type fails when it starts.
-        /// <paramref name="configure"/> adds Host-specific Wolverine configuration and may override any of this.
+        /// <paramref name="configure"/> adds Host-specific Wolverine configuration as Wolverine is registered, after the
+        /// settings this call makes there, which it may override, but before the routes, handlers and retry policy, and a
+        /// message store's durability mode and inbox stale time, which the Kit applies when Wolverine first resolves its
+        /// options, so those are set through <see cref="PouryaKitMessagingOptions"/> and <c>PouryaKitMessageStoreOptions</c>.
         /// </summary>
         public IHostApplicationBuilder UsePouryaKitWolverine(Action<WolverineOptions>? configure = null)
         {
