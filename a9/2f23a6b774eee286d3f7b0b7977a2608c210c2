@@ -1,0 +1,83 @@
+tests/ModularMonolith.Tests/PagingTests.cs
+  s_a846915d2dd93c::t_ecbf24cb2513d7 218-242
+  s_a846915d2dd93c::t_6083482988149e 2-3
+src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotStep.cs
+  s_a846915d2dd93c::t_e2162b62943528 194,201-205,212-217
+  s_a846915d2dd93c::t_f084112fe46f95 45,48,53-56
+  s_a846915d2dd93c::t_4c27ceda824e4c 137-139,141,145-146,153-155,162,164,174,176-180
+  s_a846915d2dd93c::t_f40278b2e548bf 28-30
+tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs
+  s_a846915d2dd93c::t_b4da2ce93564e6 204-205
+  s_a846915d2dd93c::t_44a25face01063 43-50
+  s_a846915d2dd93c::t_45d1f480a58007 251-260,262,270-290
+tests/ModularMonolith.Tests/SnapshotTests.cs
+  s_a846915d2dd93c::t_55db197fdcb0ce 418-437
+  s_a846915d2dd93c::t_189b423f4f20c2 11
+  s_a846915d2dd93c::t_12907ff19e7988 715-722,725-736
+  s_a846915d2dd93c::t_b69784fb88fbe3 678-679,689-693,701
+  s_a846915d2dd93c::t_9c02ca16700961 702
+tests/ModularMonolith.Tests/Fixtures/CommitProbe.cs
+  s_a846915d2dd93c::t_934a9bf4294a88 29
+tests/ModularMonolith.Tests/Fixtures/Sql.cs
+  s_a846915d2dd93c::t_5376a440be6681 25-39
+src/PouryaKit.Persistence.Dapper/DapperServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_b161a2f5ab7e2e 26-27
+  s_a846915d2dd93c::t_9621560c892039 44
+src/PouryaKit.Messaging.Wolverine.EFCore/EfReceipts.cs
+  s_a846915d2dd93c::t_f78357d0f94e01 56-60
+tests/ModularMonolith.Tests/Fixtures/AppFixture.cs
+  s_a846915d2dd93c::t_37e24a689439c3 118
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs
+  s_a846915d2dd93c::t_c0cd6add9d5896 20
+  s_a846915d2dd93c::t_ce27bc8b71add0 5
+  s_a846915d2dd93c::t_4a363854fc8ae6 44,50-65,70-72,74-75
+  s_a846915d2dd93c::t_9f186d75c57c7f 73
+  s_a846915d2dd93c::t_83310e1f8a71df 76
+tests/ModularMonolith.Tests/IdempotencyRetentionTests.cs
+  s_a846915d2dd93c::t_488b75e2ff1237 167,172-176,178-183
+  s_a846915d2dd93c::t_13f61712d7201b 30-50
+  s_a846915d2dd93c::t_190195a14a4028 132-137,139-147
+  s_a846915d2dd93c::t_62967e273ca505 295-296,299-306
+  s_a846915d2dd93c::t_cabd9aeea631d9 95-96,99-118,122
+  s_a846915d2dd93c::t_be04c352531607 65-67,69-73,75-81
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs
+  s_a846915d2dd93c::t_07685aed2eba25 60-62
+tests/ModularMonolith.Tests/DapperTests.cs
+  s_a846915d2dd93c::t_2f5335cf5472a8 202-210
+src/PouryaKit.Persistence.Dapper/PageSql.cs
+  s_a846915d2dd93c::t_0b382f36414e5f 48-49,56-64
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_a846915d2dd93c::t_b787733c8e3484 74
+.agents/skills/pourya-kit/references/messaging.md
+  s_a846915d2dd93c::t_51b4828f41a7a0 523
+docs/acceptance.md
+  s_a846915d2dd93c::t_20e54f09c24135 1591-1621
+docs/adr/0003-single-commit-owner.md
+  s_a846915d2dd93c::t_df6b816ebc95cb 178-184
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_a846915d2dd93c::t_3f423329c97c49 886-893
+docs/architecture/README.md
+  s_a846915d2dd93c::t_bf5dfafd6615a3 450,452,512,530,535,537
+tests/ModularMonolith.Tests/DelayedCommandTests.cs
+  s_a846915d2dd93c::t_80500c7fbe0852 17-18,67,311-371
+tests/ModularMonolith.Tests/RecurringCommandTests.cs
+  s_a846915d2dd93c::t_b7b536a764815a 37,46,64,173,183,232,262,265,305-356,427,431,447,452,509,588
+tests/ModularMonolith.Tests/UnitOfWorkTests.cs
+  s_a846915d2dd93c::t_cf76a2278f4b5d 6-7,9,11-12,114-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a92f23a6b774eee286d3f7b0b7977a2608c210c2",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
