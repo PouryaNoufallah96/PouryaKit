@@ -1,0 +1,118 @@
+tests/ModularMonolith.Tests/Fixtures/Sql.cs
+  s_fbe30cc48fad9d::t_3c299b7111781e 1-25
+tests/ModularMonolith.Tests/JwtBearerTests.cs
+  s_fbe30cc48fad9d::t_ef8f06d01c2024 19
+scripts/packaging/test_validation.py
+  s_fbe30cc48fad9d::t_d55500489da753 168-222
+tests/ModularMonolith.Tests/HostRecipeTests.cs
+  s_fbe30cc48fad9d::t_c4d6f958f3f2ca 29-30
+  s_fbe30cc48fad9d::t_ef8f06d01c2024 90,100
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/Program.cs
+  s_fbe30cc48fad9d::t_6e2921726cf294 6
+tests/PouryaKit.ArchitectureTests/TemplateRules.cs
+  s_fbe30cc48fad9d::t_a22ba62a48e1f7 117-118
+  s_fbe30cc48fad9d::t_3952dc972ff625 159-251
+.agents/skills/pourya-kit/references/templates.md
+  s_fbe30cc48fad9d::t_2e7c3126fa7510 43,63,70,90,93-94,114-115,130,133-134
+tests/ModularMonolith.Tests/WebDefaultsTests.cs
+  s_fbe30cc48fad9d::t_ef8f06d01c2024 9
+tests/ModularMonolith.Tests/Fixtures/BrokerCollection.cs
+  s_fbe30cc48fad9d::t_d1a7ce6195cd72 1-9
+tests/ModularMonolith.Tests/Fixtures/ProblemResponses.cs
+  s_fbe30cc48fad9d::t_52786fdcf1f1eb 1-22
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_fbe30cc48fad9d::t_2e7c3126fa7510 86
+.claude/rules/kit-code.md
+  s_fbe30cc48fad9d::t_2e7c3126fa7510 23,32
+tests/ModularMonolith.Tests/SecurityTests.cs
+  s_fbe30cc48fad9d::t_ef8f06d01c2024 19
+scripts/packaging/inventory.json
+  s_fbe30cc48fad9d::t_38dddf3520b851 42,49
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/AppHost.cs
+  s_fbe30cc48fad9d::t_6e2921726cf294 1-100,102-104
+  s_fbe30cc48fad9d::t_ac76d0d8a2139b 101
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_fbe30cc48fad9d::t_94238bd4167999 35-36
+  s_fbe30cc48fad9d::t_344308f7df528e 79-144
+scripts/packaging/validate.py
+  s_fbe30cc48fad9d::t_a76c6aba3252dc 222-223
+  s_fbe30cc48fad9d::t_9532aa5810db09 410,412-413
+  s_fbe30cc48fad9d::t_b764082dfe330c 234-235
+  s_fbe30cc48fad9d::t_2a3af101322cd5 149-151,159-160,164,173-174,176
+  s_fbe30cc48fad9d::t_4d9b0f8e552f37 202-204,208,210
+tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs
+  s_fbe30cc48fad9d::t_071b6d4e2c4cc5 156
+  s_fbe30cc48fad9d::t_a5494b535489e3 210-212,215,217
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_fbe30cc48fad9d::t_f0f7685cb0daaf 16,22
+tests/ModularMonolith.Tests/PagingTests.cs
+  s_fbe30cc48fad9d::t_ef8f06d01c2024 13,244,255,276-278
+tests/ModularMonolith.Tests/IdempotencyTests.cs
+  s_fbe30cc48fad9d::t_ef8f06d01c2024 12,235,271
+tests/ModularMonolith.Tests/Fixtures/AppFixture.cs
+  s_fbe30cc48fad9d::t_14812a684c0c4e 112
+docs/architecture/README.md
+  s_fbe30cc48fad9d::t_1878b1508f39b7 292,637,645,664
+  s_fbe30cc48fad9d::t_cb245754b3e0cc 643
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_fbe30cc48fad9d::t_ef8f06d01c2024 21
+src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_fbe30cc48fad9d::t_df4882f3c76e7d 6-10
+.agents/skills/pourya-kit/references/testing.md
+  s_fbe30cc48fad9d::t_9dc1bd962c8c91 65
+docs/foundation-review.md
+  s_fbe30cc48fad9d::t_1878b1508f39b7 277
+src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/HostTests.cs
+  s_fbe30cc48fad9d::t_b1b89f32b4883a 6,12,16,20,26,32,55,72-75,77-79,82,90-94,96-108,110,118-120,122,124-129,142-144,146,152-164,166-180,186
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/Program.cs
+  s_fbe30cc48fad9d::t_6e2921726cf294 6
+tests/ModularMonolith.Tests/RabbitMqDeliveryTests.cs
+  s_fbe30cc48fad9d::t_ef8f06d01c2024 58,81,123,167,189,220,281,285,300,327,341,359,454,485,521,544,577,596,623,676,683,691,731,812,832,841,855
+  s_fbe30cc48fad9d::t_c4d6f958f3f2ca 33-34
+docs/acceptance.md
+  s_fbe30cc48fad9d::t_08058e6dc5945c 1353-1370
+  s_fbe30cc48fad9d::t_0b9d9da94e1de2 510,520,524,541
+tests/ModularMonolith.Tests/WebTests.cs
+  s_fbe30cc48fad9d::t_ef8f06d01c2024 11
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/AppHost.cs
+  s_fbe30cc48fad9d::t_ac76d0d8a2139b 105
+  s_fbe30cc48fad9d::t_6e2921726cf294 1-104,106-108
+tests/ModularMonolith.Tests/RecurringCommandTests.cs
+  s_fbe30cc48fad9d::t_ef8f06d01c2024 55,60,75,82,90,100,123,132,160,163,177,187,194,199,227,243,245,293,320-321,377,386,400,414,426,440,452,463,474,482,536,540,630
+docs/packages.md
+  s_fbe30cc48fad9d::t_1878b1508f39b7 30-31
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_fbe30cc48fad9d::t_f0f7685cb0daaf 17,23
+docs/provenance/PouryaKit.Templates.md
+  s_fbe30cc48fad9d::t_1878b1508f39b7 5,11
+tests/ModularMonolith.Tests/TrustedPeerTests.cs
+  s_fbe30cc48fad9d::t_ef8f06d01c2024 11,134
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_fbe30cc48fad9d::t_18159025f4a61c 494-503
+tests/ModularMonolith.Tests/StrictWireReadingTests.cs
+  s_fbe30cc48fad9d::t_ef8f06d01c2024 97,122
+  s_fbe30cc48fad9d::t_c4d6f958f3f2ca 23-24
+src/PouryaKit.Testing/PouryaKit.Testing.csproj
+  s_fbe30cc48fad9d::t_b64eb1a2f82d9f 14-16
+  s_fbe30cc48fad9d::t_00e44de36ef2f8 13
+tests/ModularMonolith.Tests/CrossProcessTracingTests.cs
+  s_fbe30cc48fad9d::t_c4d6f958f3f2ca 17-18
+tests/ModularMonolith.Tests/DelayedCommandTests.cs
+  s_fbe30cc48fad9d::t_ef8f06d01c2024 48,77,81,83,346
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "389f33abf2ca705f5010331163b805540c9e6fab",
+  "prompts": {},
+  "sessions": {
+    "s_fbe30cc48fad9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "355fc114-9f49-46c2-b236-9a236d1e5b59",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
