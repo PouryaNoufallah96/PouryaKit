@@ -1,0 +1,19 @@
+src/PouryaKit.Modularity/GatewayProcessor.cs
+  s_a846915d2dd93c::t_b96b7b5b273731 52-53,55-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0abd7425db9afdbb42ba0ce090422bb93cf0be82",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
