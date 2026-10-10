@@ -1,0 +1,197 @@
+Directory.Build.props
+  s_a846915d2dd93c::t_cea3b32eb87315 11-15
+src/PouryaKit.Caching/CachingServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_6ae2e125cade4e 7-10
+src/PouryaKit.Caching/ICacheableQuery.cs
+  s_a846915d2dd93c::t_2d747ac7874d21 12-18
+src/PouryaKit.Caching/IInvalidatesCache.cs
+  s_a846915d2dd93c::t_ee52aacd70f45b 13-15
+src/PouryaKit.Cqrs/CommandHandler.cs
+  s_a846915d2dd93c::t_c94c99b975c574 9,18-21
+src/PouryaKit.Cqrs/Composition/CqrsHostApplicationBuilderExtensions.cs
+  s_a846915d2dd93c::t_c8fcddc9a42807 6-9
+src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_f779cfc99d4112 9-12
+src/PouryaKit.Cqrs/IDispatcher.cs
+  s_a846915d2dd93c::t_a8308d14f7fdfa 12-14,17-20,24-27
+src/PouryaKit.Cqrs/IDomainEventHandler.cs
+  s_a846915d2dd93c::t_9d594f765409f1 17
+src/PouryaKit.Cqrs/Operations/Actor.cs
+  s_a846915d2dd93c::t_6c8091511556ab 19
+src/PouryaKit.Cqrs/Operations/ActorKind.cs
+  s_a846915d2dd93c::t_ab15afe18f8c27 3,6,8
+src/PouryaKit.Cqrs/Operations/OperationContext.cs
+  s_a846915d2dd93c::t_f5ef0c019a7886 35
+src/PouryaKit.Cqrs/Operations/OperationContextServiceProviderExtensions.cs
+  s_a846915d2dd93c::t_651b6f2d1325ec 6-8
+src/PouryaKit.Cqrs/Paging/FilterField.cs
+  s_a846915d2dd93c::t_9a35445108be5b 48,54
+src/PouryaKit.Cqrs/Paging/FilterOperatorNames.cs
+  s_a846915d2dd93c::t_4049380c9d3bd9 3
+src/PouryaKit.Cqrs/Paging/Page.cs
+  s_a846915d2dd93c::t_1f85e06769a21f 9-12,26,29,32,35,38,41,44
+src/PouryaKit.Cqrs/Paging/PageDeclaration.cs
+  s_a846915d2dd93c::t_05517ec8f870e3 25,71,74,77
+src/PouryaKit.Cqrs/Paging/PageRequest.cs
+  s_a846915d2dd93c::t_0ff7bd555d1648 13,16,22,25-27
+src/PouryaKit.Cqrs/Paging/SortDirection.cs
+  s_a846915d2dd93c::t_026cdb980909cc 3,6,8
+src/PouryaKit.Cqrs/Pipeline/IQueryCache.cs
+  s_a846915d2dd93c::t_a17a6422b951b3 21-25
+src/PouryaKit.Cqrs/Pipeline/IReadingStateGuard.cs
+  s_a846915d2dd93c::t_ee36dee8b67380 10-12
+src/PouryaKit.Cqrs/QueryHandler.cs
+  s_a846915d2dd93c::t_4064a70d453052 10-12
+src/PouryaKit.Domain/AggregateRoot.cs
+  s_a846915d2dd93c::t_660c5c2233d904 22-25
+src/PouryaKit.Domain/DomainClock.cs
+  s_a846915d2dd93c::t_c23ac5b76388a8 12-14
+src/PouryaKit.Domain/DomainEvent.cs
+  s_a846915d2dd93c::t_612406e694fd6a 10-13,21,24
+src/PouryaKit.Domain/Entity.cs
+  s_a846915d2dd93c::t_32f908691791ae 15,18,21,24,29,32-34
+src/PouryaKit.Domain/Error.cs
+  s_a846915d2dd93c::t_4cc65ac6dcc90b 19,22,31,41,44,47,50
+src/PouryaKit.Domain/ErrorKind.cs
+  s_a846915d2dd93c::t_5b7daab04c67a9 6,8,10-12,14,16
+src/PouryaKit.Domain/IAggregateRoot.cs
+  s_a846915d2dd93c::t_02ac800bef5ba6 9-11,14-16,19
+src/PouryaKit.Domain/IAuditable.cs
+  s_a846915d2dd93c::t_15e560bf04e0ae 12
+src/PouryaKit.Domain/IBusinessRule.cs
+  s_a846915d2dd93c::t_57b86d409741bf 6
+src/PouryaKit.Domain/ISoftDeletable.cs
+  s_a846915d2dd93c::t_88009f08c9263e 14,17
+src/PouryaKit.Domain/JsonSerializerOptionsExtensions.cs
+  s_a846915d2dd93c::t_da2e89e09817ec 7-9
+src/PouryaKit.Domain/Result.cs
+  s_a846915d2dd93c::t_3dfc69d20e3274 19,22,25,35,38,91,94,97
+src/PouryaKit.Domain/TypedId.cs
+  s_a846915d2dd93c::t_8102238beb5561 20-23,41,44
+src/PouryaKit.Messaging.Wolverine.EFCore/ReceiptTable.cs
+  s_a846915d2dd93c::t_8e5ecbdd23a924 14,32
+src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotVersionTable.cs
+  s_a846915d2dd93c::t_bfbc69d687ded6 15,34
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs
+  s_a846915d2dd93c::t_6ec50619770427 12-15
+src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqHostApplicationBuilderExtensions.cs
+  s_a846915d2dd93c::t_f48935748dd16d 8-11
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandFailedException.cs
+  s_a846915d2dd93c::t_e75c7285409f68 16,19
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_6d5a28408ec444 9-12
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/UnknownDelayedCommandException.cs
+  s_a846915d2dd93c::t_b60f9cc01f3213 12-15,28
+src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs
+  s_a846915d2dd93c::t_1b9a478eef6d5d 8-11
+src/PouryaKit.Messaging.Wolverine/Subscriptions/IntegrationEventHandlerFailedException.cs
+  s_a846915d2dd93c::t_c2c7aa3970329b 16,19
+src/PouryaKit.Messaging.Wolverine/Subscriptions/IntegrationEventServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_3aad1183fdd2e3 8-11
+src/PouryaKit.Messaging.Wolverine/Subscriptions/NotificationHandlerFailedException.cs
+  s_a846915d2dd93c::t_aa53464f1ea6d5 16,19
+src/PouryaKit.Messaging.Wolverine/Subscriptions/NotificationHandlerServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_af41b3a0edd0b4 9-12
+src/PouryaKit.Messaging.Wolverine/Subscriptions/SnapshotServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_672e6d532459d3 8-11
+src/PouryaKit.Messaging.Wolverine/Subscriptions/UnknownSubscriptionException.cs
+  s_a846915d2dd93c::t_135fae7588cd43 12
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_a846915d2dd93c::t_6bf33597562e0d 14-17
+src/PouryaKit.Messaging/IIntegrationEventHandler.cs
+  s_a846915d2dd93c::t_8ed9bb86543acc 15
+src/PouryaKit.Messaging/INotificationHandler.cs
+  s_a846915d2dd93c::t_b127bcb83693af 16
+src/PouryaKit.Messaging/IntegrationEventHeaders.cs
+  s_a846915d2dd93c::t_7289f59a920f8c 10
+src/PouryaKit.Messaging/OperationContextHeaders.cs
+  s_a846915d2dd93c::t_36d24a4700edf1 10,19
+src/PouryaKit.Messaging/SubscriptionNameAttribute.cs
+  s_a846915d2dd93c::t_f6594a4a32f1b4 11
+src/PouryaKit.Messaging/WireNameAttribute.cs
+  s_a846915d2dd93c::t_cd4df19b13b183 11
+src/PouryaKit.Modularity/IGatewayProcessor.cs
+  s_a846915d2dd93c::t_c7de1417c858a5 21-24,27-30,38-41
+src/PouryaKit.Modularity/ModularityHostApplicationBuilderExtensions.cs
+  s_a846915d2dd93c::t_2be56cf2b6310a 7-10
+src/PouryaKit.Modularity/ModuleBuilder.cs
+  s_a846915d2dd93c::t_d23cc27a885969 32,35,38,49,52,55,66,69,72,75,78,89
+src/PouryaKit.Observability/ObservabilityServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_1e807a16f21ac2 6-9
+src/PouryaKit.Persistence.Dapper/DapperPageExtensions.cs
+  s_a846915d2dd93c::t_b8f51cb1005fc4 7-10
+src/PouryaKit.Persistence.Dapper/DapperServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_b9dbd84e53f186 12-15
+src/PouryaKit.Persistence.Dapper/PageSql.cs
+  s_a846915d2dd93c::t_63260a1e808984 89,92-94,97
+src/PouryaKit.Persistence.EFCore/EfCoreServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_b973d573ab760b 9-12
+src/PouryaKit.Persistence.EFCore/EfRepository.cs
+  s_a846915d2dd93c::t_1bf640a75fee96 32,40,48,55,61,67,71
+src/PouryaKit.Persistence.EFCore/Idempotency/IdempotencyTable.cs
+  s_a846915d2dd93c::t_a4b7d9df9c5785 19,65
+src/PouryaKit.Persistence.EFCore/PageExpressions.cs
+  s_a846915d2dd93c::t_936b4e1f7c5f26 28-30,52
+src/PouryaKit.Persistence.EFCore/PouryaKitDbContext.cs
+  s_a846915d2dd93c::t_d805e270900a22 25-28,40,57
+src/PouryaKit.Persistence.EFCore/UnitOfWork/TrackedState.cs
+  s_a846915d2dd93c::t_619e6608ca7543 70
+src/PouryaKit.Persistence.Postgres/PostgresServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_3075a00a4598e6 9-12
+src/PouryaKit.Persistence/IRepository.cs
+  s_a846915d2dd93c::t_595c6e2b4e99f0 28,34,37,40-42
+src/PouryaKit.Security.JwtBearer/JwtBearerServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_dea893d7c40499 10
+src/PouryaKit.Security/PasswordHashingServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_7e82e3a4ebc252 7
+src/PouryaKit.Security/RequiresPermissionAttribute.cs
+  s_a846915d2dd93c::t_b06e7f6fbc2585 15
+src/PouryaKit.Security/SecurityServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_c2486a4f30bb70 9
+src/PouryaKit.Testing/GatewayTestExtensions.cs
+  s_a846915d2dd93c::t_dc952338af2f45 25-28,32-35,42-45
+src/PouryaKit.Testing/HostFixture.cs
+  s_a846915d2dd93c::t_ea0eb426dcf753 222,230
+src/PouryaKit.Testing/HostTest.cs
+  s_a846915d2dd93c::t_b69c57a907c621 10,13,16
+src/PouryaKit.Testing/TestClock.cs
+  s_a846915d2dd93c::t_025899ef6cb732 16,26
+src/PouryaKit.Testing/TestDeliveryServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_ae09f7c6e3f90b 8,35
+src/PouryaKit.Validation/ValidationServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_4f99028eb960e4 9-12
+src/PouryaKit.Web.OpenApi/WebOpenApiEndpointRouteBuilderExtensions.cs
+  s_a846915d2dd93c::t_2b8d7b30a4917b 9-11
+src/PouryaKit.Web.OpenApi/WebOpenApiServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_3f27b38b1bc8ad 11-14
+src/PouryaKit.Web/Defaults/PouryaKitCorsOptions.cs
+  s_a846915d2dd93c::t_1a94b49bd86e12 16
+src/PouryaKit.Web/Defaults/PouryaKitRateLimitOptions.cs
+  s_a846915d2dd93c::t_64378409f10b4c 19
+src/PouryaKit.Web/Endpoints/HttpPageRequest.cs
+  s_a846915d2dd93c::t_b56e4ec30821d7 26
+src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs
+  s_a846915d2dd93c::t_09fbc98daa26f7 11-14
+src/PouryaKit.Web/HttpClients/WebHttpClientBuilderExtensions.cs
+  s_a846915d2dd93c::t_494cc71759e33c 10-13
+src/PouryaKit.Web/PouryaKitTrustedPeerOptions.cs
+  s_a846915d2dd93c::t_e7c1743f8eabb5 18-20
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_d1b1a572f994ec 13-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b11083c3cd20f121fc212574db2d09c3cd066670",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
