@@ -12,6 +12,7 @@ public sealed class ObservedDispatcherTests
     public void With_nothing_listening_the_observed_dispatcher_returns_the_dispatchers_own_task_and_allocates_nothing()
     {
         using var host = new ServiceCollection()
+            .AddMetrics()
             .AddScoped<IDispatcher, CompletedDispatcher>()
             .AddPouryaKitCqrs()
             .AddPouryaKitObservability()
