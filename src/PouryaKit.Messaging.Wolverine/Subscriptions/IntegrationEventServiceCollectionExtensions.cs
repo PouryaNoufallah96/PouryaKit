@@ -21,7 +21,7 @@ public static class IntegrationEventServiceCollectionExtensions
         /// renamed. One wire name is one version of one contract type: a new version is a new type under a new wire
         /// name, such as <c>ProductCreatedV2</c> under <c>catalog.product-created.v2</c>, published beside the old one
         /// while subscriptions move to it, and each subscription receives only the type it subscribed to; nothing converts one
-        /// version into another. Throws here, at startup, when the type is not a concrete class or is a Domain
+        /// version into another. Throws here, while the Host is composed, when the type is not a concrete class or is a Domain
         /// Event, when the wire name is missing, invalid or equal ignoring case to another's, and when the type is already
         /// published under another name or by another Module. The Host then fails when it is built if the declaration
         /// belongs to no Module in a Host of Modules or to a Module the Host does not compose, if no Outbox writes
@@ -48,7 +48,7 @@ public static class IntegrationEventServiceCollectionExtensions
         /// so this Host's subscriptions to it receive it from there, through a transport between Hosts such as
         /// <c>UsePouryaKitRabbitMq</c>. The Host's composition calls it, not a Module's Composition Root: whether the
         /// publishing Module runs in this Host is the Host's choice. The wire name is the one the publishing Module declares.
-        /// Throws here, at startup, when the type is not a concrete class or is a Domain Event, when the wire name is
+        /// Throws here, while the Host is composed, when the type is not a concrete class or is a Domain Event, when the wire name is
         /// missing, invalid or equal ignoring case to another's, when the type is already received under another name or as
         /// a Snapshot, and when a Module of this Host publishes it. Declaring it again adds nothing. The Host then fails when
         /// it is built if no subscription of the Host handles the type, since nothing would receive it.
@@ -67,7 +67,7 @@ public static class IntegrationEventServiceCollectionExtensions
         /// calls it on its builder (<see cref="IModuleServices"/>), or of the application on its own services, to
         /// <typeparamref name="TIntegrationEvent"/> under <paramref name="subscriptionName"/>: its own durable queue and
         /// half of its Receipts' key, so it is stable; keep it when the handler is renamed. Its deliveries run in that
-        /// Module, so they reach its Unit of Work and its Receipts. The handler may be internal. Throws here, at startup,
+        /// Module, so they reach its Unit of Work and its Receipts. The handler may be internal. Throws here, while the Host is composed,
         /// when the type is a Domain Event, when the handler is abstract, and when the name is missing, invalid, equal
         /// ignoring case to another subscription's, or the name of a queue Wolverine keeps for itself, or the same
         /// subscription belongs to another Module. Declaring the same subscription again in the same Module adds nothing.

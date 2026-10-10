@@ -54,6 +54,8 @@ public static class WolverineHostApplicationBuilderExtensions
         /// settings this call makes there, which it may override, but before the routes, handlers and retry policy, and a
         /// message store's durability mode and inbox stale time, which the Kit applies when Wolverine first resolves its
         /// options, so those are set through <see cref="PouryaKitMessagingOptions"/> and <c>PouryaKitMessageStoreOptions</c>.
+        /// Call it once: a second call throws Wolverine's <see cref="InvalidOperationException"/>, since <c>UseWolverine</c> runs
+        /// once per service collection.
         /// </summary>
         public IHostApplicationBuilder UsePouryaKitWolverine(Action<WolverineOptions>? configure = null)
         {

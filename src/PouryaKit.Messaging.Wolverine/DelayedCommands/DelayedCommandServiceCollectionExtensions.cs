@@ -20,7 +20,7 @@ public static class DelayedCommandServiceCollectionExtensions
         /// later with <see cref="IDelayedCommands"/>, under <paramref name="name"/>: its durable queue and half of its
         /// Receipts' key, so it is stable; keep it when the type is renamed. The stored command names its type and is
         /// stored on the queue of its name, so renaming either strands the deliveries stored before it as dead letters.
-        /// Its deliveries run in that Module, so they reach its Unit of Work and its Receipts. Throws here, at startup,
+        /// Its deliveries run in that Module, so they reach its Unit of Work and its Receipts. Throws here, while the Host is composed,
         /// when the type is abstract or generic, when the name is missing, invalid, a queue Wolverine keeps for itself or
         /// another delayed command's, ignoring case, and when the type is already declared under another name or for
         /// another Module. The Host then fails when it is built if the declaration belongs to no Module in a Host of

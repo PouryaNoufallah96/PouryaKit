@@ -7,7 +7,7 @@ internal sealed class DeclaredAuthorizersCheck : ICompositionCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {
-        // ImplementationType throws on a keyed descriptor, and the dispatcher resolves handlers and authorizers unkeyed.
+        // A keyed descriptor's ImplementationType is null, and the dispatcher resolves handlers and authorizers unkeyed.
         var unkeyed = composition.Registrations.Where(descriptor => !descriptor.IsKeyedService).ToList();
         var registered = unkeyed
             .Where(descriptor => descriptor.ImplementationType is not null)

@@ -305,7 +305,8 @@ These follow from Option C, not from preference:
   whose type no longer has any subscription is marked `Handled` without running anything. With
   `UnknownMessageBehavior.DeadLetterQueue` it is dead-lettered instead. A stored delivery whose subscription was
   renamed fails the name lookup and is dead-lettered after the retry ladder. A subscription removed while its type
-  keeps others takes the same code path; that case was not tested separately.
+  keeps others takes the same code path; that case was not tested separately. *Tested by ticket #100 (2026-10-10) on 6.48.3; see
+  its note below.*
 - **Lazy code generation.** Generated chains compile at first delivery, not at Host start. Option C generates none, but
   spec story 71 still needs the Kit's own startup check of every subscription.
 

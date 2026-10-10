@@ -327,13 +327,19 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         )
         {
             await HostFixture.StartHostAsync(declaring, TestContext.Current.CancellationToken);
-            Assert.True(
-                (
-                    await declaring.Services.GetRequiredService<IGatewayProcessor<StubModule>>()
-                        .SendAsync(new ScheduleKindChangedNoteCommand(text), TestContext.Current.CancellationToken)
-                ).IsSuccess
-            );
-            await declaring.StopAsync(TestContext.Current.CancellationToken);
+            try
+            {
+                Assert.True(
+                    (
+                        await declaring.Services.GetRequiredService<IGatewayProcessor<StubModule>>()
+                            .SendAsync(new ScheduleKindChangedNoteCommand(text), TestContext.Current.CancellationToken)
+                    ).IsSuccess
+                );
+            }
+            finally
+            {
+                await declaring.StopAsync(TestContext.Current.CancellationToken);
+            }
         }
 
         var stored = Assert.Single(
