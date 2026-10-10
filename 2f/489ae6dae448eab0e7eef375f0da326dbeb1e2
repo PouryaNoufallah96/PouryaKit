@@ -1,0 +1,37 @@
+tests/ModularMonolith.Tests/Fixtures/ReadProbe.cs
+  s_fbe30cc48fad9d::t_5bbf544f7c5304 29-30,37-40
+src/PouryaKit.Caching/HybridQueryCache.cs
+  s_fbe30cc48fad9d::t_c3b3bac6c86430 109-110
+  s_fbe30cc48fad9d::t_e119b47856636b 18-20
+  s_fbe30cc48fad9d::t_a1d149ee102c0e 114,116,118-121
+tests/ModularMonolith.Tests/DapperTests.cs
+  s_fbe30cc48fad9d::t_ef8d54d04a8c84 82-92
+  s_fbe30cc48fad9d::t_4f6444b104638c 81
+tests/ModularMonolith.Tests/Stub/StubCaching.cs
+  s_fbe30cc48fad9d::t_cf1410cceded95 273-284
+docs/acceptance.md
+  s_fbe30cc48fad9d::t_f0c82147d33d60 1420,1428-1431,1433,1436,1455-1470
+  s_fbe30cc48fad9d::t_72083d9d9ac4fd 1435
+tests/ModularMonolith.Tests/CachingTests.cs
+  s_fbe30cc48fad9d::t_ab4bf5bbf61f28 263-302
+.agents/skills/pourya-kit/references/caching.md
+  s_fbe30cc48fad9d::t_cd139431dc3652 88
+docs/architecture/README.md
+  s_fbe30cc48fad9d::t_77c3e69b7307d0 346
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2f489ae6dae448eab0e7eef375f0da326dbeb1e2",
+  "prompts": {},
+  "sessions": {
+    "s_fbe30cc48fad9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "355fc114-9f49-46c2-b236-9a236d1e5b59",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
