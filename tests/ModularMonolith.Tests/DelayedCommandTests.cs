@@ -14,6 +14,8 @@ using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
 using Wolverine;
 using Wolverine.Runtime;
+using Wolverine.Runtime.Interop;
+using Wolverine.Runtime.Serialization;
 
 namespace ModularMonolith.Tests;
 
@@ -62,7 +64,7 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         try
         {
             await HostFixture.StartHostAsync(starting, TestContext.Current.CancellationToken);
-            await WaitUntilAsync(
+            await Sql.WaitUntilAsync(
                 connectionString,
                 $"exists (select from wolverine.wolverine_incoming_envelopes where id = '{envelope}' and status = 'Handled')"
             );
@@ -306,6 +308,67 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from billing.pouryakit_receipts"));
     }
 
+    // As after a release that removed a delayed command, its declaration with it, while one waited in the store: the Host
+    // that finds it due has no handler for its type, and Wolverine sets it aside at once, never retried and never run.
+    [Fact]
+    public async Task A_delayed_command_whose_type_no_declaration_names_any_more_is_dead_lettered_at_once_and_never_run()
+    {
+        const string retired = "stub.retired-type";
+        var connectionString = await NewDatabaseAsync();
+        var text = $"retired {Guid.CreateVersion7()}";
+        // Each Host is disposed before the next one is composed, so only one Host's connection pools are open at a time.
+        await using (
+            var declaring = AppFixture.ComposeHost(
+                "Development",
+                connectionString,
+                Fixture.Logs,
+                builder => builder.Services.AddPouryaKitDelayedCommand<WriteKindChangedNoteCommand>(retired, typeof(StubModule))
+            )
+        )
+        {
+            await HostFixture.StartHostAsync(declaring, TestContext.Current.CancellationToken);
+            Assert.True(
+                (
+                    await declaring.Services.GetRequiredService<IGatewayProcessor<StubModule>>()
+                        .SendAsync(new ScheduleKindChangedNoteCommand(text), TestContext.Current.CancellationToken)
+                ).IsSuccess
+            );
+            await declaring.StopAsync(TestContext.Current.CancellationToken);
+        }
+
+        var stored = Assert.Single(
+            await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where received_at = 'local://{retired}/' and status = 'Scheduled'")
+        )[0];
+        await using (var released = AppFixture.ComposeHost("Development", connectionString, Fixture.Logs))
+        {
+            await HostFixture.StartHostAsync(released, TestContext.Current.CancellationToken);
+            try
+            {
+                // The move to the dead letters and the mark as handled are two writes, queued in either order.
+                await Sql.WaitUntilAsync(
+                    connectionString,
+                    $"exists (select from wolverine.wolverine_dead_letters where id = '{stored}') and not exists (select from wolverine.wolverine_incoming_envelopes where id = '{stored}')"
+                );
+            }
+            finally
+            {
+                await released.StopAsync(TestContext.Current.CancellationToken);
+            }
+        }
+
+        var deadLetter = Assert.Single(
+            await Sql.RowsAsync(connectionString, "select id, received_at, exception_type, exception_message, body from wolverine.wolverine_dead_letters")
+        );
+        Assert.Equal(
+            [stored, $"local://{retired}/", typeof(UnknownMessageTypeNameException).FullName!, $"Unknown message type: '{typeof(WriteKindChangedNoteCommand).FullName}'"],
+            deadLetter[..4]
+        );
+        // Set aside the first time it was handed out, before any attempt.
+        Assert.Equal(0, EnvelopeSerializer.Deserialize((byte[])deadLetter[4]).Attempts);
+        Assert.Equal([[0L]], await Sql.RowsAsync(connectionString, $"select count(*) from stub.notes where text = '{text}'"));
+        Assert.Empty(DeliveryProbes.ContextsOf(retired));
+    }
+
     // Ignoring case, as Wolverine lower-cases a local queue's name.
     [Theory]
     [InlineData("scheduled")]
@@ -337,16 +400,5 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         var database = $"delayed_{Guid.CreateVersion7():N}";
         await Fixture.RowsAsync($"create database {database}");
         return new NpgsqlConnectionStringBuilder(Fixture.ConnectionString) { Database = database }.ConnectionString;
-    }
-
-    private static async Task WaitUntilAsync(string connectionString, string condition)
-    {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(15));
-        while (!(bool)(await Sql.RowsAsync(connectionString, $"select {condition}"))[0][0])
-        {
-            Assert.False(timeout.IsCancellationRequested, $"Not reached within 15 s: {condition}");
-            await Task.Delay(25, TestContext.Current.CancellationToken);
-        }
     }
 }

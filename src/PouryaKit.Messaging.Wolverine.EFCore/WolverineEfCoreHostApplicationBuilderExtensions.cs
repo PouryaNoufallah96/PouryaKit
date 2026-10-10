@@ -57,8 +57,9 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
                 )
                 .ValidateOnStart();
             builder.Services.AddSingleton<IWolverineExtension, MessageStoreExtension>();
-            builder.Services.TryAddScoped<IUnitOfWorkOutbox, WolverineOutbox>();
-            builder.Services.TryAddScoped<IOutbox, WolverineOutbox>();
+            builder.Services.TryAddScoped<WolverineOutbox>();
+            builder.Services.TryAddScoped<IUnitOfWorkOutbox>(scope => scope.GetRequiredService<WolverineOutbox>());
+            builder.Services.TryAddScoped<IOutbox>(scope => scope.GetRequiredService<WolverineOutbox>());
             builder.Services.TryAddScoped<PublishedIntegrationEvents>();
             builder.Services.TryAddScoped<IIntegrationEventOutbox>(scope => scope.GetRequiredService<PublishedIntegrationEvents>());
             builder.Services.TryAddScoped<ScheduledDelayedCommands>();

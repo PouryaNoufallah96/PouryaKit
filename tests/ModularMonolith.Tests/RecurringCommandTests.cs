@@ -34,6 +34,7 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
     private const string Reconciler = "inventory.stock-reconciler";
     private const string KindChanged = "stub.kind-changed";
     private const string StaleNote = "stub.stale-note";
+    private const string UnstoredNext = "stub.unstored-next";
 
     [Fact]
     public async Task ReconcileStock_runs_under_its_system_actor_and_the_occurrence_a_dying_host_stored_runs_after_a_restart()
@@ -42,7 +43,7 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         await using var dying = Compose(connectionString, TimeSpan.FromSeconds(3));
         await using var starting = Compose(connectionString, TimeSpan.FromSeconds(3));
         await HostFixture.StartHostAsync(dying, TestContext.Current.CancellationToken);
-        await WaitUntilAsync(connectionString, "exists (select from inventory.stock_reconciliations)");
+        await Sql.WaitUntilAsync(connectionString, "exists (select from inventory.stock_reconciliations)");
         object[] stored;
         DateTime died;
         try
@@ -60,7 +61,7 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
                 died = (DateTime)(await Sql.RowsAsync(connectionString, "select now()"))[0][0];
 
                 await HostFixture.StartHostAsync(starting, TestContext.Current.CancellationToken);
-                await WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_incoming_envelopes where id = '{stored[0]}' and status = 'Handled')");
+                await Sql.WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_incoming_envelopes where id = '{stored[0]}' and status = 'Handled')");
             }
         }
         finally
@@ -169,7 +170,7 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
                 later = DeliveryProbes.HoldAfterReceipt(ReconcileStock);
             }
 
-            await WaitUntilAsync(connectionString, Handled(occurrence[0]));
+            await Sql.WaitUntilAsync(connectionString, Handled(occurrence[0]));
             var turnedAway = DeliveryProbes.TurnedAwayFrom(ReconcileStock);
 
             // Pending again, as after a Host that died before acknowledging it, or a replay.
@@ -179,7 +180,7 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
                     $"update wolverine.wolverine_incoming_envelopes set status = 'Incoming', owner_id = 0 where id = '{occurrence[0]}' returning id"
                 )
             );
-            await WaitUntilAsync(connectionString, Handled(occurrence[0]));
+            await Sql.WaitUntilAsync(connectionString, Handled(occurrence[0]));
 
             Assert.Equal(turnedAway + 1, DeliveryProbes.TurnedAwayFrom(ReconcileStock));
             Assert.Equal(
@@ -228,7 +229,7 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
             }
 
             // Two chains would keep two occurrences stored for good; one remains once they met.
-            await WaitUntilAsync(
+            await Sql.WaitUntilAsync(
                 connectionString,
                 $"(select count(*) from inventory.stock_reconciliations) >= 4 and (select count(*) from wolverine.wolverine_incoming_envelopes where {OnQueue} and status <> 'Handled') = 1"
             );
@@ -258,10 +259,10 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
             using (DeliveryProbes.FailAfterReceipt(ReconcileStock))
             {
                 await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
-                await WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_dead_letters where {OnQueue})");
+                await Sql.WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_dead_letters where {OnQueue})");
             }
 
-            await WaitUntilAsync(connectionString, "exists (select from inventory.stock_reconciliations)");
+            await Sql.WaitUntilAsync(connectionString, "exists (select from inventory.stock_reconciliations)");
             // An occurrence stored close to the first dead letter may have come due, and been set aside, before the failure ended.
             var deadLetters = await host
                 .Services.GetRequiredService<IWolverineRuntime>()
@@ -298,6 +299,58 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
                 from inventory.stock_reconciliations
                 """
             )
+        );
+    }
+
+    // Every attempt fails, and when the last one sets the occurrence aside, storing the next occurrence fails too: the dead
+    // letter keeps the occurrence's own failure, the store's is logged beside it, and nothing waits until a Host starts.
+    [Fact]
+    public async Task An_occurrence_set_aside_while_storing_the_next_occurrence_fails_keeps_its_own_failure_and_logs_the_store_failure()
+    {
+        var connectionString = await NewDatabaseAsync();
+        var storing = true;
+        await using var host = Compose(
+            connectionString,
+            TimeSpan.FromHours(1),
+            builder =>
+                builder
+                    .Services.AddPouryaKitRecurringCommand(
+                        UnstoredNext,
+                        systemActor: "stub.unstored-next",
+                        occurrence => storing ? new WriteKindChangedNoteCommand($"recurring {occurrence:O}") : throw new TimeoutException("The test failed to store an occurrence."),
+                        typeof(StubModule)
+                    )
+                    .Configure(options => options.Every = TimeSpan.FromSeconds(1))
+        );
+        try
+        {
+            await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
+            // The start stored the first occurrence; from now on, building one to store fails.
+            storing = false;
+            using (DeliveryProbes.FailAfterReceipt(UnstoredNext))
+            {
+                await Sql.WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_dead_letters where received_at = 'local://{UnstoredNext}/')");
+            }
+        }
+        finally
+        {
+            await host.StopAsync(TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal(
+            [[typeof(InvalidOperationException).FullName, $"The test failed the delivery to {UnstoredNext} after its Receipt."]],
+            await Sql.RowsAsync(connectionString, $"select exception_type, exception_message from wolverine.wolverine_dead_letters where received_at = 'local://{UnstoredNext}/'")
+        );
+        var logged = Assert.Single(
+            Fixture.Logs.Entries,
+            entry => entry.Level == LogLevel.Error && entry.Message.Contains($"recurring command {UnstoredNext} failed", StringComparison.Ordinal)
+        );
+        Assert.Equal(
+            [typeof(TimeoutException), typeof(InvalidOperationException)],
+            Assert.IsType<AggregateException>(logged.Exception).InnerExceptions.Select(exception => exception.GetType())
+        );
+        Assert.Empty(
+            await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where received_at = 'local://{UnstoredNext}/' and status <> 'Handled'")
         );
     }
 
@@ -371,11 +424,11 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
                     ).IsSuccess
                 );
                 await held.Held;
-                await WaitUntilAsync(connectionString, CopyWaitsOnReceipt("stub"));
+                await Sql.WaitUntilAsync(connectionString, CopyWaitsOnReceipt("stub"));
             }
 
             delayed = Assert.Single(await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where received_at = 'local://{StaleNote}/'"));
-            await WaitUntilAsync(connectionString, Handled(delayed[0]));
+            await Sql.WaitUntilAsync(connectionString, Handled(delayed[0]));
 
             // An occurrence's commit stores the next one, due a cadence later.
             DeliveryProbes.Hold running;
@@ -391,12 +444,12 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
             using (running)
             {
                 await running.Held;
-                await WaitUntilAsync(connectionString, CopyWaitsOnReceipt("inventory"));
+                await Sql.WaitUntilAsync(connectionString, CopyWaitsOnReceipt("inventory"));
             }
 
             // The occurrence after it, when due, waits after its Receipt until the test ends, so it commits nothing here.
             later = DeliveryProbes.HoldAfterReceipt(ReconcileStock);
-            await WaitUntilAsync(connectionString, Handled(occurrence[0]));
+            await Sql.WaitUntilAsync(connectionString, Handled(occurrence[0]));
             waiting = await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status <> 'Handled'");
         }
         finally
@@ -453,7 +506,7 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
             {
                 // Due now, an hour early, once the start has looked for a waiting occurrence.
                 await ExecuteAsync(connectionString, "update wolverine.wolverine_incoming_envelopes set execution_time = now() where id = $1", stored[0]);
-                await WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_dead_letters where {OnQueue})");
+                await Sql.WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_dead_letters where {OnQueue})");
                 waiting = await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status <> 'Handled'");
             }
             finally
@@ -532,7 +585,7 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         await HostFixture.StartHostAsync(recurring, TestContext.Current.CancellationToken);
         try
         {
-            await WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_dead_letters where received_at = 'local://{KindChanged}/')");
+            await Sql.WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_dead_letters where received_at = 'local://{KindChanged}/')");
         }
         finally
         {
@@ -630,16 +683,5 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         }
 
         Assert.Equal(1, await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken));
-    }
-
-    private static async Task WaitUntilAsync(string connectionString, string condition)
-    {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(15));
-        while (!(bool)(await Sql.RowsAsync(connectionString, $"select {condition}"))[0][0])
-        {
-            Assert.False(timeout.IsCancellationRequested, $"Not reached within 15 s: {condition}");
-            await Task.Delay(25, TestContext.Current.CancellationToken);
-        }
     }
 }

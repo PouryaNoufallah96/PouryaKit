@@ -26,9 +26,7 @@ internal static class CommitProbe
     {
         var outbox = services.Single(descriptor => descriptor.ServiceType == typeof(IUnitOfWorkOutbox));
         services.Remove(outbox);
-        services.AddScoped<IUnitOfWorkOutbox>(provider => new ProbedOutbox(
-            (IUnitOfWorkOutbox)ActivatorUtilities.CreateInstance(provider, outbox.ImplementationType!)
-        ));
+        services.AddScoped<IUnitOfWorkOutbox>(provider => new ProbedOutbox((IUnitOfWorkOutbox)outbox.ImplementationFactory!(provider)));
     }
 
     private sealed class Binding : IDisposable

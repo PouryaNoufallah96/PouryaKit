@@ -53,6 +53,11 @@ internal sealed class EfReceipts(IUnitOfWork unitOfWork) : IReceipts
             ?? throw new InvalidOperationException(
                 $"Receipts are kept in the EF Core Unit of Work's transaction, but the scope's Unit of Work is {unitOfWork.GetType().Name}."
             );
+        if (dbContext.Database.CurrentTransaction is null)
+        {
+            throw new InvalidOperationException($"No Unit of Work is active, so there is no transaction to keep {keeps} in.");
+        }
+
         // The table name comes from the Module's model, never from input; the values are parameters.
         var table = dbContext.Model.GetDefaultSchema() is { } schema
             ? $"\"{schema.Replace("\"", "\"\"", StringComparison.Ordinal)}\".{name}"

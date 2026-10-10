@@ -1,4 +1,6 @@
 using System.Net;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
@@ -211,6 +213,31 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.Equal("count", thrown.ParamName);
         Assert.Contains("@category_eq", thrown.Message);
+    }
+
+    // FilterField keeps its own list of value types, so one it gains that the Dapper helper cannot send fails when the
+    // Feature's SQL is built, not at the first request that filters on it. FilterField.Of refuses every type outside its
+    // list today, so the field is made as such a release would make it.
+    [Fact]
+    public void A_page_sql_whose_filter_has_a_value_type_it_has_no_database_type_for_is_refused_when_built()
+    {
+        var field = (FilterField)RuntimeHelpers.GetUninitializedObject(typeof(FilterField));
+        foreach (var (property, value) in new (string, object)[]
+        {
+            (nameof(FilterField.Name), "day"),
+            (nameof(FilterField.ValueType), typeof(DateOnly)),
+            (nameof(FilterField.Operators), (IReadOnlyList<FilterOperator>)[FilterOperator.Equal]),
+        })
+        {
+            typeof(FilterField).GetField($"<{property}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(field, value);
+        }
+
+        var thrown = Assert.Throws<ArgumentException>(() =>
+            new PageSql(new PageDeclaration(["day"], [field]), "select d.day from days d where @day_eq is null", "select count(*) from days d where @day_eq is null")
+        );
+
+        Assert.Equal("declaration", thrown.ParamName);
+        Assert.StartsWith("The filter field day has values of DateOnly, which a Dapper Page read has no database type for.", thrown.Message, StringComparison.Ordinal);
     }
 
     [Fact]
