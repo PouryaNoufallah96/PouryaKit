@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
 using System.Collections.Frozen;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -21,9 +21,12 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 // save would publish stale.
 internal static class SnapshotStep
 {
-    // Read once per DbContext type, whose model EF builds once and never changes; the declarations are the Host's, so
-    // the key-space check itself still runs at each commit, over this.
-    private static readonly ConcurrentDictionary<Type, MappedAggregates> Models = new();
+    // Read once per model: the instance the DbContext exposes, which EF makes once for each model, one built for a
+    // model cache key or one given with UseModel, shares across contexts and never changes. One DbContext type can
+    // carry several models, so its type is not the key; an entry lives only as long as its model, so a model EF no
+    // longer holds is not pinned here. The declarations are the Host's, so the key-space check itself still runs at
+    // each commit, over this.
+    private static readonly ConditionalWeakTable<IModel, MappedAggregates> Models = [];
 
     public static List<(object Snapshot, string AggregateId, long Version)> Build(
         DbContext dbContext,
@@ -37,7 +40,7 @@ internal static class SnapshotStep
             return [];
         }
 
-        var mapped = Models.GetOrAdd(dbContext.GetType(), static (_, context) => MappedAggregates.Of(context), dbContext);
+        var mapped = Models.GetOrAdd(dbContext.Model, static (_, context) => MappedAggregates.Of(context), dbContext);
         mappers.CheckKeySpaces(mapped.Roots);
 
         using var prepared = TrackedState.Capture(dbContext);
