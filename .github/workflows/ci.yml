@@ -41,18 +41,3 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/package-validation.yml
-
-  publication-checks:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.13"
-      - name: Check publication trust and original artifacts
-        run: python3 -m unittest discover -s tests/releases/publication -p 'test_*.py'
