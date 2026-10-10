@@ -6,10 +6,10 @@
 - [Cqrs and Modularity](cqrs-and-modularity-facts.md) — #7 #10 #13 #56 #57 #66 #81: FluentValidation, Domain Event drain, Module ownership, authorizers, trust, Cqrs internals, same-named types
 - [Composition checks](composition-check-facts.md) — #61 #62 #63 #66 #67, final review B: build vs start checks, store database check, RoutingCheck, blank connection strings, failing disposal
 - [Persistence and Dapper](persistence-and-dapper-facts.md) — #8 #9 #11 #35 #67 #68 #81: Unit of Work routing, EF savepoints, two-scope race, Npgsql typed nulls, Ardalis, dotnet-ef traps, writes outside a Unit of Work and changes outside a command
-- [Wolverine runtime and delivery](wolverine-runtime-and-delivery-facts.md) — S1 #2, S2 #5, #15 #17 #54 #58 #82, final review D: store, recovery, stale time, dead letters, codegen, sent envelopes
+- [Wolverine runtime and delivery](wolverine-runtime-and-delivery-facts.md) — S1 #2, S2 #5, #15 #17 #54 #58 #82 #83, final review D: store, recovery, stale time, dead letters, codegen, sent envelopes
 - [Snapshots and scheduled commands](snapshot-and-scheduled-command-facts.md) — #18 #44 #45 #80 #82, final review R2: version gate, Receipt masking, scheduled envelopes, recurring chains
 - [Integration Events, wire and RabbitMQ](integration-event-wire-and-rabbitmq-facts.md) — #16 #49 #50 #51 #60 #75 #75b: wire names, type routes, strict reading, fan-out topology, broker tests, connection drops
-- [Web, security and OpenAPI](web-security-and-openapi-facts.md) — #14 #36 #38 #39 #40 #41 #54 #64 #81, final review A: binding, CORS, limiter, permissions, JWT, PBKDF2, versioning
+- [Web, security and OpenAPI](web-security-and-openapi-facts.md) — #14 #36 #38 #39 #40 #41 #54 #64 #81 #83, final review A: binding, CORS, limiter, permissions, JWT, PBKDF2, versioning
 - [Observability, tracing and HTTP](observability-tracing-and-http-facts.md) — #46 #47 #48 #52 #64 #80: Npgsql source, parent-id, listener traps, resilience pipeline, OpenTelemetry providers, health, Serilog
 - [Caching and idempotency](caching-and-idempotency-facts.md) — #42 #43 #54 #81 #82: request id, on conflict do nothing, retention service, HybridCache slot, StampedeJoin, Redis
 - [Templates, packaging and publication](templates-packaging-and-publication-facts.md) — #53 #54 #59 #64 #66 #68 #75 #75b #77: template engine, pack-time version, validate.py and consumers, feed install, text rules over a template's own files, version bumps
