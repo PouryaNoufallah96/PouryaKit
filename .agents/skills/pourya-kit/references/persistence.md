@@ -319,7 +319,8 @@ dotnet ef migrations add Initial \
 
 ## Idempotency key retention
 
-- The Host keeps an idempotency key for its retention, then removes it, and a repeat of its request runs as a new one. One background service, added once whatever the number of Modules, removes from every Module's `pouryakit_idempotency_keys` the keys reserved longer ago than the retention, every cleanup interval, a batch of keys per statement until a batch is short. It runs on the Host's `TimeProvider`, in a scope and on connections of its own, never inside a request or a Unit of Work, and skips a Module without the table.
+- The Host keeps an idempotency key for its retention, then removes it, and a repeat of its request runs as a new one. One background service, which `AddPouryaKitEfCore` adds once to every Host whatever the number of Modules, removes from every Module's `pouryakit_idempotency_keys` the keys reserved longer ago than the retention, every cleanup interval, a batch of keys per statement until a batch is short. It runs on the Host's `TimeProvider`, in a scope and on connections of its own, never inside a request or a Unit of Work. It walks every DbContext `AddPouryaKitEfCore` made a Unit of Work, probes each schema with PostgreSQL's `to_regclass`, and returns silently for a Module with no `[Idempotent]` command, which has no table.
+- The store, its cleanup and its table are PostgreSQL-only, as the Receipts are and as the Kit is: `on conflict do nothing`, `ctid`, `to_regclass`, PostgreSQL's SQLSTATE codes and a `timestamp with time zone` column.
 - `PouryaKitIdempotencyOptions` (`PouryaKit.Persistence.EFCore`) sets it for the whole Host: `Retention` 24 hours, `CleanupInterval` 1 hour and `BatchSize` 1000 by default. A key replays for at least its retention and is removed by the first cleanup after it, so choose a retention longer than any client keeps retrying. Configure it in the Host, for example from configuration:
 
 ```csharp

@@ -500,6 +500,8 @@ depend on, and the rules a consuming project must keep.
   - An aggregate whose key the database generates cannot publish a Snapshot: the key is unknown when the Snapshot is
     built, so the Operation that creates it fails
     (`SnapshotTests.A_snapshot_of_an_aggregate_whose_key_the_database_generates_fails_the_operation_that_creates_it`).
+    *Since 2026-10-10 (ticket #85), so does an aggregate with any other value the database generates in its mapped
+    graph; see ADR 0003's amendment for #85.*
   - Nothing removes a Receipt or a Snapshot-version row, so both tables grow with the messages a Module receives.
 
 ## Amendment (2026-10-07, ticket #50: RabbitMQ topology)

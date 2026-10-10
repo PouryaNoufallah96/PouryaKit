@@ -10,6 +10,7 @@ namespace PouryaKit.Persistence.EFCore;
 // and Unit of Work. Each batch is one statement committed on its own, so a cleanup never holds many row locks; a key
 // whose Operation has not committed is invisible to it. A Module whose cleanup fails is logged, and the next tick runs.
 internal sealed partial class IdempotencyKeyCleanup(
+    IEnumerable<DbContextConnection> dbContexts,
     IServiceScopeFactory scopes,
     IOptions<PouryaKitIdempotencyOptions> options,
     TimeProvider timeProvider,
@@ -22,7 +23,6 @@ internal sealed partial class IdempotencyKeyCleanup(
     internal static readonly TimeSpan MaxRetention = TimeSpan.FromDays(36500);
 
     private PeriodicTimer? _timer;
-    private Type[] _dbContexts = [];
 
     // The timer starts with the Host, not in ExecuteAsync, which .NET 10 runs on the thread pool: a tick due after the
     // Host started is never missed.
@@ -30,16 +30,6 @@ internal sealed partial class IdempotencyKeyCleanup(
     {
         if (options.Value.Retention != Timeout.InfiniteTimeSpan)
         {
-            // Every DbContext registered with AddDbContext is also registered as one non-generic DbContextOptions.
-            await using var scope = scopes.CreateAsyncScope();
-            _dbContexts =
-            [
-                .. scope
-                    .ServiceProvider.GetServices<DbContextOptions>()
-                    .Select(registered => registered.ContextType)
-                    .Where(type => type.IsAssignableTo(typeof(PouryaKitDbContext)))
-                    .Distinct(),
-            ];
             _timer = new PeriodicTimer(options.Value.CleanupInterval, timeProvider);
         }
 
@@ -55,7 +45,8 @@ internal sealed partial class IdempotencyKeyCleanup(
 
         while (await _timer.WaitForNextTickAsync(stoppingToken))
         {
-            foreach (var dbContextType in _dbContexts)
+            // Each DbContext AddPouryaKitEfCore made a Unit of Work, recorded once.
+            foreach (var dbContextType in dbContexts.Select(connection => connection.DbContext))
             {
                 try
                 {

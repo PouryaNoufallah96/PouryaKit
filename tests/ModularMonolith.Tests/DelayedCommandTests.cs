@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Billing;
 using Billing.Quotes.Features.ExpireQuote;
 using Billing.Quotes.Features.OpenQuote;
@@ -184,6 +185,27 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         Assert.Empty(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
     }
 
+    // Every delayed command runs as the same Kit command, so the run's Operation names the declaration beside it.
+    [Fact]
+    public async Task A_delayed_commands_run_is_an_operation_tagged_with_its_name()
+    {
+        using var telemetry = new RecordedTelemetry();
+        var earlier = DeliveryProbes.ActivitiesOf("stub.delayed-note").Count;
+        var text = $"note {Guid.CreateVersion7()}";
+
+        await Fixture
+            .Gateway<StubModule>()
+            .SendAsync(new WriteNoteRaisingCommand(text, [new NoteToFollowUpDomainEvent(text)]), TestContext.Current.CancellationToken);
+        await Fixture.WaitUntilAsync(
+            $"exists (select from stub.notes where text = '{ScheduleFollowUpNotificationHandler.TextOf(text)}')",
+            "the note the Notification Handler scheduled was written"
+        );
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+
+        var run = Assert.IsType<Activity>(Assert.Single(DeliveryProbes.ActivitiesOf("stub.delayed-note").Skip(earlier)));
+        Assert.Equal("stub.delayed-note", run.GetTagItem("pouryakit.subscription"));
+    }
+
     // Only a Unit of Work's commit writes what a scope scheduled, so outside one the command would be dropped with the
     // scope. A scope never begun names no Module either, and is told of the Unit of Work, not of a missing declaration.
     [Theory]
@@ -284,15 +306,18 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from billing.pouryakit_receipts"));
     }
 
-    [Fact]
-    public void A_delayed_command_named_after_a_queue_wolverine_keeps_for_itself_is_refused()
+    // Ignoring case, as Wolverine lower-cases a local queue's name.
+    [Theory]
+    [InlineData("scheduled")]
+    [InlineData("ScheDuled")]
+    public void A_delayed_command_named_after_a_queue_wolverine_keeps_for_itself_is_refused(string name)
     {
         var thrown = Assert.Throws<InvalidOperationException>(() =>
-            new ServiceCollection().AddPouryaKitDelayedCommand<WriteDelayedNoteCommand>("scheduled")
+            new ServiceCollection().AddPouryaKitDelayedCommand<WriteDelayedNoteCommand>(name)
         );
 
         Assert.Equal(
-            $"{typeof(WriteDelayedNoteCommand).FullName}'s delayed command name scheduled is a queue Wolverine keeps for itself; choose another.",
+            $"{typeof(WriteDelayedNoteCommand).FullName}'s delayed command name {name} is a queue Wolverine keeps for itself; choose another.",
             thrown.Message
         );
     }

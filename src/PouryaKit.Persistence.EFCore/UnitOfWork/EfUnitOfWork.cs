@@ -85,6 +85,8 @@ internal sealed class EfUnitOfWork(
             }
         }
 
+        // Not the caller's token: a rollback always completes, whatever the caller cancelled, and the Operation's failure
+        // is returned rather than a cancellation thrown in its place.
         await transaction.RollbackAsync(CancellationToken.None);
         return result.IsFailure ? result : operation.RollbackErrors;
     }

@@ -46,10 +46,12 @@ public static class OperationContextHeaderExtensions
                     $"The message {envelope.Id} has no {name} header, so it carries no Operation Context to continue. Only the Unit of Work's Outbox sends Notifications and Integration Events."
                 );
 
-        var actor = Enum.Parse<ActorKind>(Header(OperationContextHeaders.ActorKind)) switch
+        // The exact names WithOperationContext writes, and nothing else, as Web's OperationContextHttpHeaders.Continued
+        // reads its header: Cqrs opens its internals for RestoreTrusted alone (ADR 0007), so the two cannot share one.
+        var actor = Header(OperationContextHeaders.ActorKind) switch
         {
-            ActorKind.Person => Actor.Person(Header(OperationContextHeaders.ActorId)),
-            ActorKind.System => Actor.System(Header(OperationContextHeaders.ActorId)),
+            nameof(ActorKind.Person) => Actor.Person(Header(OperationContextHeaders.ActorId)),
+            nameof(ActorKind.System) => Actor.System(Header(OperationContextHeaders.ActorId)),
             _ => throw new InvalidOperationException($"The message {envelope.Id} has an undefined ActorKind header."),
         };
         envelope.Headers.TryGetValue(OperationContextHeaders.Tenant, out var tenant);

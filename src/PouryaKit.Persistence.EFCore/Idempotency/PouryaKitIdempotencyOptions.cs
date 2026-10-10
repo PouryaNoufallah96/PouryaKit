@@ -7,6 +7,10 @@ namespace PouryaKit.Persistence.EFCore;
 /// own, outside every request and Unit of Work. A repeat within the retention replays its first success; one after its
 /// key was removed runs as a new request. Configure it with <c>Configure&lt;PouryaKitIdempotencyOptions&gt;</c>, for
 /// example from a configuration section.
+/// <c>AddPouryaKitEfCore</c> installs the service in every Host: each cleanup walks every DbContext that call made a
+/// Unit of Work, probes its schema with PostgreSQL's <c>to_regclass</c>, and returns silently for one with no table, a
+/// Module with no <c>[Idempotent]</c> command. It runs PostgreSQL SQL only (<c>to_regclass</c>, <c>ctid</c>), as the
+/// store and the table are PostgreSQL-only.
 /// </summary>
 /// <remarks>
 /// The Host fails when it starts unless <see cref="Retention"/> is positive and at most 36500 days, or

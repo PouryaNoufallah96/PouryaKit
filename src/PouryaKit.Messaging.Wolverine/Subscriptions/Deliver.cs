@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 
@@ -15,8 +16,13 @@ internal sealed record SnapshotOf(string AggregateId, long Version);
 internal sealed class DeliverHandler(IServiceProvider scope, IntegrationEventPublisher publisher, IReceipts? receipts = null)
     : CommandHandler<Deliver>
 {
+    // Set on the activity of a delivery's Operation, which the dispatcher tags with Deliver or RunDelayedCommand alone:
+    // the subscription's or delayed command's declared name, one of a fixed set. The duration histogram keeps its tags.
+    public const string SubscriptionTag = "pouryakit.subscription";
+
     public override async Task<Result> Handle(Deliver command, CancellationToken cancellationToken)
     {
+        Activity.Current?.SetTag(SubscriptionTag, command.Subscription.Name);
         // Recorded before the handler runs, in the same transaction: a redelivery after the commit finds it and does
         // nothing, and a concurrent one waits for this one to commit or roll back.
         if (

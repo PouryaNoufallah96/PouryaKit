@@ -25,7 +25,10 @@ public static class IdempotencyTable
     {
         /// <summary>
         /// Creates the idempotency key table in <paramref name="schema"/>, the Module's own, with the index on
-        /// <c>reserved_at</c> its cleanup reads.
+        /// <c>reserved_at</c> its cleanup reads. A PostgreSQL table, as the store and the cleanup are PostgreSQL-only:
+        /// <c>reserved_at</c> is a <c>timestamp with time zone</c>, the store writes with <c>on conflict do nothing</c>,
+        /// and the cleanup, which <c>AddPouryaKitEfCore</c> installs in every Host, deletes by <c>ctid</c> and skips,
+        /// through <c>to_regclass</c>, every Module schema without this table.
         /// </summary>
         public void CreateIdempotencyTable(string schema)
         {

@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Domain;
 
@@ -14,15 +15,15 @@ internal sealed class Subscriptions : IWireNames
     // The local queues Wolverine 6.46.0 creates for itself (LocalTransport, TransportConstants): "agents" is held in
     // memory, and none of them is a subscription's durable queue. DurableQueuesCheck verifies the queues Wolverine built, so a
     // name a later Wolverine reserves fails the Host's start too.
-    private static readonly HashSet<string> ReservedQueues = new(StringComparer.OrdinalIgnoreCase)
-    {
+    private static readonly FrozenSet<string> ReservedQueues = FrozenSet.Create(
+        StringComparer.OrdinalIgnoreCase,
         "agents",
         "default",
         "durable",
         "replies",
         "scheduled",
-        "system",
-    };
+        "system"
+    );
 
     private readonly Dictionary<string, Subscription> _byName = new(StringComparer.OrdinalIgnoreCase);
     // The wire name of every Domain Event delivered as a Notification and of every Integration Event published.

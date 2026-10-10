@@ -249,6 +249,8 @@ Corrected on 2026-10-10 by ticket #81 (decision D18): the tree's `PouryaKit.Doma
 base, which the package no longer has. Nothing derived from it, its one member repeated `Entity.CheckRule`, and a record
 already gives value equality.
 
+Recorded on 2026-10-10 by ticket #85 (decision D15): the idempotency store, its cleanup and its table in `PouryaKit.Persistence.EFCore` are PostgreSQL-only, as the Receipts in `PouryaKit.Messaging.Wolverine.EFCore` are.
+
 ### Allowed references
 
 | Package | References | Third-party |
