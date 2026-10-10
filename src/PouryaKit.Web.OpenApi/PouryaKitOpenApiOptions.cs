@@ -15,7 +15,8 @@ public sealed class PouryaKitOpenApiOptions
     /// no Module declares, whose versions are known only once the endpoints are mapped. Bound from configuration, an entry
     /// whose <c>Date</c> or <c>Link</c> the binder cannot convert is left out without an error, so its version reports no
     /// sunset: the binder skips a dictionary entry it fails to bind unless the Host sets
-    /// <c>BinderOptions.ErrorOnUnknownConfiguration</c>.
+    /// <c>BinderOptions.ErrorOnUnknownConfiguration</c>. Keys are compared ordinally, so <c>"1.0-Beta"</c> and
+    /// <c>"1.0-beta"</c>, which name one version, are two keys the Host refuses rather than one replacing the other.
     /// </summary>
-    public Dictionary<string, ApiVersionSunset> Sunsets { get; } = [];
+    public IDictionary<string, ApiVersionSunset> Sunsets { get; } = new Dictionary<string, ApiVersionSunset>(StringComparer.Ordinal);
 }

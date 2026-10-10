@@ -26,6 +26,7 @@ builder.Services.AddPouryaKitObservability();
 
 - In an application without Modularity, call it after `AddPouryaKitCqrs`. With no dispatcher registered yet it throws `InvalidOperationException`: "No dispatcher of the Kit is registered to observe. Call AddPouryaKitObservability after AddPouryaKitModules or AddPouryaKitCqrs." A second call does nothing.
 - A Host that never calls it has no activity and no measurement from the Kit. With it and nothing listening, each dispatch costs one check and returns the dispatcher's own task, allocating nothing. The check asks for either listener: with only an activity listener, or only a meter listener, the Operation is still observed.
+- The duration's `Meter` comes from the Host container's `IMeterFactory`, which every Host built with `Host` or `WebApplication` registers, so each Host owns its instruments and disposes them with itself. A listener or exporter that selects the meter by its name sees every Host in the process.
 - Feature code changes nothing. A handler starts no activity of its own for its command, and the Kit adds no pipeline step an application could register.
 - The Kit's dispatcher decorator wraps the whole dispatch, so any optional step the Kit adds inside its fixed pipeline, such as idempotency or caching, runs inside the Operation's activity and its duration.
 

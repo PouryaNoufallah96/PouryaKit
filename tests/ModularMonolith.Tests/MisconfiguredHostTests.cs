@@ -276,6 +276,28 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         );
     }
 
+    // Declared twice, a route group's endpoints would be mapped twice, and each request to one of them would fail as
+    // ambiguous.
+    [Theory]
+    [InlineData("/plain", typeof(StubModule), "The endpoints of the route group /plain are already declared.")]
+    [InlineData(
+        "/other",
+        typeof(UnversionedEndpoints),
+        "The endpoints of ModularMonolith.Tests.Unversioned are already declared, for the route group /plain."
+    )]
+    public void A_route_group_or_an_assembly_whose_endpoints_are_already_declared_is_refused_when_declared_again(
+        string routePrefix,
+        Type inAssemblyOf,
+        string failure
+    )
+    {
+        var services = new ServiceCollection().AddPouryaKitEndpoints("/plain", typeof(UnversionedEndpoints).Assembly);
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => services.AddPouryaKitEndpoints(routePrefix, inAssemblyOf.Assembly));
+
+        Assert.Equal(failure, thrown.Message);
+    }
+
     [Fact]
     public async Task Endpoints_declared_but_never_mapped_stop_the_host_at_start_naming_the_call()
     {
@@ -486,6 +508,27 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         string[] keys = bindSampleConfiguration ? ["1.0"] : [];
         Assert.Equal(keys, host.Services.GetRequiredService<IOptions<PouryaKitOpenApiOptions>>().Value.Sunsets.Keys);
         await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    // Asp.Versioning ignores the case of a version's status, so two keys that differ only in case name one version. The
+    // sunsets keep both keys, and the Host refuses them by name, where a case-insensitive dictionary would keep the last.
+    [Fact]
+    public async Task Two_sunset_keys_that_differ_only_in_case_stop_the_host_at_start_naming_both()
+    {
+        var builder = WebOnly();
+        builder.Services.AddPouryaKitOpenApi(openApi =>
+        {
+            openApi.Sunsets["1.0-Beta"] = new ApiVersionSunset { Link = new Uri("https://example.com/upper-beta-sunset") };
+            openApi.Sunsets["1.0-beta"] = new ApiVersionSunset { Link = new Uri("https://example.com/lower-beta-sunset") };
+        });
+        await using var host = builder.Build();
+
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(
+            ["PouryaKitOpenApiOptions.Sunsets has the keys '1.0-Beta' and '1.0-beta', which name one API version; keep one sunset per version."],
+            thrown.Failures
+        );
     }
 
     // A Web Host with the Kit's OpenAPI registration, whose sunsets are bound from the configuration section the Hosts
