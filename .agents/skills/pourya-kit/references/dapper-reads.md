@@ -7,6 +7,7 @@
 - [Reading a Page](#reading-a-page)
 - [Typed IDs](#typed-ids)
 - [Writing with plain SQL in the Unit of Work](#writing-with-plain-sql-in-the-unit-of-work)
+- [Testing](#testing)
 
 The Proving Sample's `GetProduct` and `ListProducts` Features:
 
@@ -139,3 +140,9 @@ internal sealed class WriteNoteCommandHandler(IRepository<Note, NoteId> notes, I
 - Write only to the Module's own tables that no aggregate maps. An aggregate changes only through its repository; a plain-SQL write to its table bypasses its version, its audit and soft-delete fields and its Snapshots. A structure test rejects SQL in a Module's code that inserts into, updates, deletes from, merges into or truncates a table any Module's aggregate maps, with or without its schema ([testing.md](testing.md#structure-tests)).
 - The statement runs when you call it, inside the transaction, before the Unit of Work saves what the repositories track. It cannot see or reference rows added through a repository in the same Operation.
 - If the Operation fails anywhere, the write rolls back with everything else; on a success it commits in the same commit.
+
+## Testing
+
+- Test a read through its Module's Gateway against the hosted application ([testing.md](testing.md#each-test)): send the commands that write the rows, then the query, and assert on its Result, a missing row's `NotFound` included. A Gateway call returns after its commit, so a query sent next reads what the commands wrote. `DapperTests.Get_and_list_read_what_commands_committed_and_a_missing_product_is_not_found` in the Kit's repository is the pattern.
+- Test a Page read with rows that its filters, its sort and its page size each tell apart, and assert the items, their order and the total. Then send a request outside the declaration and assert its validation Errors. `PagingTests` proves that the Proving Sample's Dapper and EF Core reads of one declaration answer the same Page, and that SQL in a filter value stays a value.
+- Test a plain-SQL write in the Unit of Work with a command that succeeds and one that fails after writing, and read the table back with your own SQL on `Fixture.ConnectionString`: only the first one's row is there, as `DapperTests.A_dapper_write_on_the_unit_of_work_connection_commits_with_the_operation_and_rolls_back_with_it` shows.

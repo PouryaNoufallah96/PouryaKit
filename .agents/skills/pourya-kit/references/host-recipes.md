@@ -11,23 +11,32 @@ The service defaults of a Host built on PouryaKit: OpenTelemetry that exports th
 
 ## Composing a Host with them
 
-The Proving Sample's `Inventory.Host` is a minimal web Host only so that it can serve the health endpoints; it needs no `PouryaKit.Web` registration for them:
+The Proving Sample's `Inventory.Host` receives what Catalog publishes in another Host over RabbitMQ, and is a minimal web Host only so that it can serve the health endpoints; it needs no `PouryaKit.Web` registration for them. Its `InventoryHost` and `Program`, written as one file:
 
 ```csharp
+using Catalog.Contracts.Products.Events.V1;
+using Catalog.Contracts.Products.Events.V2;
 using Inventory;
 using JasperFx;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
+using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
+using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
 using PouryaKit.Observability;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 builder.AddPouryaKitModules(modules => modules.Add<InventoryModule>());
+// Catalog runs in another Host: its wire names, as its Composition Root publishes them (rabbitmq.md).
+builder.Services.Receive<ProductCreatedV1>("catalog.product-created.v1");
+builder.Services.Receive<ProductCreatedV2>("catalog.product-created.v2");
+builder.Services.ReceiveSnapshot<ProductSnapshotV1>("catalog.product-snapshot.v1");
 // The recipe exports what the Kit emits; the Kit emits only with this, after the Modules.
 builder.Services.AddPouryaKitObservability();
 builder.UsePouryaKitWolverine(connectionName: "app");
+builder.UsePouryaKitRabbitMq(connectionName: "broker", serviceName: "inventory");
 // Optional: Serilog in place of the logging providers.
 builder.AddSerilogDefaults();
 
