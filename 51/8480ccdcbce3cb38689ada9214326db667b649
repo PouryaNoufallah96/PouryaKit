@@ -1,0 +1,42 @@
+src/PouryaKit.Persistence.Postgres/PostgresServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_28af1aa10ec02d 10-11
+src/PouryaKit.Validation/ValidationServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_28af1aa10ec02d 10-11
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_28af1aa10ec02d 14
+src/PouryaKit.Templates/PouryaKit.Templates.csproj
+  s_a846915d2dd93c::t_9e21d5f857652b 19-20
+src/PouryaKit.Persistence.EFCore/EfCoreServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_28af1aa10ec02d 10
+src/PouryaKit.Cqrs/Composition/CqrsHostApplicationBuilderExtensions.cs
+  s_a846915d2dd93c::t_28af1aa10ec02d 7
+src/PouryaKit.Cqrs/Paging/FilterOperatorNames.cs
+  s_a846915d2dd93c::t_28af1aa10ec02d 4
+src/PouryaKit.Cqrs/Operations/OperationContextServiceProviderExtensions.cs
+  s_a846915d2dd93c::t_28af1aa10ec02d 7
+src/PouryaKit.Domain/Error.cs
+  s_a846915d2dd93c::t_9e21d5f857652b 53
+  s_a846915d2dd93c::t_28af1aa10ec02d 41,44-47,50
+src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqHostApplicationBuilderExtensions.cs
+  s_a846915d2dd93c::t_28af1aa10ec02d 9
+src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_28af1aa10ec02d 10
+src/PouryaKit.Security/SecurityServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_28af1aa10ec02d 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "518480ccdcbce3cb38689ada9214326db667b649",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
