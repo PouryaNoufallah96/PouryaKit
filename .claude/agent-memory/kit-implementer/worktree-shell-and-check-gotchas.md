@@ -51,6 +51,7 @@ The worktree base and the one-git-command rule are in the role file; these are w
 - In a fix round, do not rebase the reviewed commits onto a moved integration branch: the reviewers' base (here `f76463b`) must stay; report the move instead.
 - The coordinator may move the integration branch mid-package and ask for a merge before the acceptance step: the merge then sits between the probe commits and the package commit; `git diff <tip> HEAD` stays the package.
 - The coordinator may move the integration branch mid-package and ask for a merge: `git merge --ff-only <branch>` worked with uncommitted edits the tip did not touch; apply doc edits after it so anchors match the new tip.
+- **#82 merged mid-package over three docs I had edited (#86, 2026-10-10):** with no commit of my own yet, `git merge --ff-only` would refuse. Committed the package, probed with `git merge-tree --write-tree --name-only HEAD pre-wave-3` (a tree id alone means no conflict), then `git rebase pre-wave-3`; the base became the new tip and the verify ran after the rebase.
 
 ## check-ai-setup.py and other tools
 

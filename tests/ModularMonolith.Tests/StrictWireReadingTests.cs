@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.Json.Serialization;
 using Catalog;
 using Inventory;
 using Inventory.Host;
@@ -16,9 +17,9 @@ namespace ModularMonolith.Tests;
 
 // Two Hosts whose contract types under one wire name differ (#60): the Catalog Host publishes a contract of another
 // shape under the wire name Inventory.Host receives as ShapeV1. Inventory.Host reads the body strictly, so a member its
-// contract requires that the body lacks, or a null its contract forbids, fails the read at its broker queue, and the
-// envelope is dead-lettered there with the error before any subscription receives a copy. A member the body has and the
-// contract lacks is skipped.
+// contract requires that the body lacks, a null its contract forbids, or one of its members named twice (#86), fails the
+// read at its broker queue, and the envelope is dead-lettered there with the error before any subscription receives a
+// copy. A member the body has and the contract lacks is skipped.
 public sealed class StrictWireReadingTests(BrokerFixture broker) : IClassFixture<BrokerFixture>
 {
     private const string Subscription = "inventory.shape";
@@ -51,18 +52,26 @@ public sealed class StrictWireReadingTests(BrokerFixture broker) : IClassFixture
 
         await publisher.Publish(catalog);
 
-        await ArrivedAsync(environment);
+        await AssertDeadLetteredAsync(environment, id, error);
+    }
 
-        Assert.DoesNotContain(ShapeIntegrationEventHandler.Received, received => received.Id == id);
-        var deadLetter = Assert.Single(
-            await BrokerEnvironment.RowsAsync(environment.Inventory, "select received_at, message_type, exception_type, exception_message from wolverine.wolverine_dead_letters")
+    // The publishing contract writes ShapeV1's name a second time, capitalised, from its extension data.
+    [Fact]
+    public async Task A_body_that_names_a_member_of_its_contract_twice_is_dead_lettered_at_the_host_queue_with_the_error_and_never_handled()
+    {
+        var environment = await broker.CreateEnvironmentAsync();
+        using var inventory = await environment.StartInventoryHostAsync(configure: ReceivesShapes);
+        await using var catalog = await environment.StartCatalogHostAsync(builder =>
+            builder.Services.Publish<ShapeWithNameTwiceV1>(ShapeV1.WireName, typeof(CatalogModule))
         );
-        Assert.Equal([HostQueue, ShapeV1.WireName, "System.Text.Json.JsonException"], deadLetter[..3]);
-        Assert.StartsWith(error, (string)deadLetter[3], StringComparison.Ordinal);
-        // No subscription received a copy, whatever its handler would have done with it.
-        Assert.Equal(
-            0L,
-            await BrokerEnvironment.ScalarAsync<long>(environment.Inventory, $"select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://{Subscription}/'")
+        var sent = new ShapeWithNameTwiceV1(Guid.CreateVersion7(), Guid.CreateVersion7(), "Lamp") { Again = new() { ["Name"] = "Shade" } };
+
+        await PublishAsync(catalog, sent, sent.Id);
+
+        await AssertDeadLetteredAsync(
+            environment,
+            sent.Id,
+            $"Duplicate property 'name' encountered during deserialization of type '{typeof(ShapeV1).FullName}'."
         );
     }
 
@@ -103,6 +112,23 @@ public sealed class StrictWireReadingTests(BrokerFixture broker) : IClassFixture
         await scope.ServiceProvider.GetRequiredService<IMessageBus>().PublishAsync(contract, options);
     }
 
+    private static async Task AssertDeadLetteredAsync(BrokerEnvironment environment, Guid id, string error)
+    {
+        await ArrivedAsync(environment);
+
+        Assert.DoesNotContain(ShapeIntegrationEventHandler.Received, received => received.Id == id);
+        var deadLetter = Assert.Single(
+            await BrokerEnvironment.RowsAsync(environment.Inventory, "select received_at, message_type, exception_type, exception_message from wolverine.wolverine_dead_letters")
+        );
+        Assert.Equal([HostQueue, ShapeV1.WireName, "System.Text.Json.JsonException"], deadLetter[..3]);
+        Assert.StartsWith(error, (string)deadLetter[3], StringComparison.Ordinal);
+        // No subscription received a copy, whatever its handler would have done with it.
+        Assert.Equal(
+            0L,
+            await BrokerEnvironment.ScalarAsync<long>(environment.Inventory, $"select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://{Subscription}/'")
+        );
+    }
+
     // The broker envelope reached Inventory.Host's store, and everything it caused there is settled.
     private static async Task ArrivedAsync(BrokerEnvironment environment)
     {
@@ -115,7 +141,7 @@ public sealed class StrictWireReadingTests(BrokerFixture broker) : IClassFixture
     }
 }
 
-// Inventory.Host's contract under the wire name, and three publishing Hosts' contracts of other shapes under it.
+// Inventory.Host's contract under the wire name, and four publishing Hosts' contracts of other shapes under it.
 internal sealed record ShapeV1(Guid Id, Guid ProductId, string Name)
 {
     public const string WireName = "tests.shape.v1";
@@ -126,6 +152,13 @@ internal sealed record ShapeWithoutNameV1(Guid Id, Guid ProductId);
 internal sealed record ShapeWithNullableNameV1(Guid Id, Guid ProductId, string? Name);
 
 internal sealed record ShapeWithColourV1(Guid Id, Guid ProductId, string Name, string Colour);
+
+// System.Text.Json writes extension data after the members, without checking their names.
+internal sealed record ShapeWithNameTwiceV1(Guid Id, Guid ProductId, string Name)
+{
+    [JsonExtensionData]
+    public Dictionary<string, object>? Again { get; init; }
+}
 
 internal sealed class ShapeIntegrationEventHandler : IIntegrationEventHandler<ShapeV1>
 {

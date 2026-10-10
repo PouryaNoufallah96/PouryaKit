@@ -18,6 +18,10 @@ namespace ModularMonolith.Tests;
 // every run, and answers a value no other run answers, so an unguarded repeat would succeed again visibly.
 public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
 {
+    // The Kit's own reason for refusing a request without a readable key, the problem's detail.
+    private const string KeyRefused =
+        "The endpoint requires a single Idempotency-Key header that is 1 to 256 visible ASCII characters, with spaces only between them.";
+
     private NoteRuns Runs => Fixture.Host.Services.GetRequiredService<NoteRuns>();
 
     [Fact]
@@ -230,6 +234,8 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+        Assert.Equal(KeyRefused, problem.GetProperty("detail").GetString());
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
     }
 
@@ -268,6 +274,7 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal("application/problem+json", refused.Content.Headers.ContentType?.MediaType);
         var problem = await refused.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
         Assert.Equal("https://tools.ietf.org/html/rfc9110#section-15.5.1", problem.GetProperty("type").GetString());
+        Assert.Equal(KeyRefused, problem.GetProperty("detail").GetString());
         Assert.Equal((HttpStatusCode.OK, HttpStatusCode.OK), (first.StatusCode, repeat.StatusCode));
         Assert.Equal(
             await first.Content.ReadAsStringAsync(TestContext.Current.CancellationToken),
