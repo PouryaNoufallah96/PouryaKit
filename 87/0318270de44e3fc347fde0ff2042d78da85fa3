@@ -1,0 +1,33 @@
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_a846915d2dd93c::t_e2b32fdc91e252 81,84
+.agents/skills/pourya-kit/references/messaging.md
+  s_a846915d2dd93c::t_0778419ff6a83c 419,529,566
+.claude/rules/kit-code.md
+  s_a846915d2dd93c::t_a456e54bf8f147 12
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_a846915d2dd93c::t_45de917285b447 506
+docs/agents/ai-setup.md
+  s_a846915d2dd93c::t_5c139edc55b2e3 238
+docs/architecture/README.md
+  s_a846915d2dd93c::t_8eef473ba1ec6f 3,225
+docs/ci.md
+  s_a846915d2dd93c::t_36fae52eb10dfa 3
+docs/foundation-review.md
+  s_a846915d2dd93c::t_309f81dc5b9365 610,1075-1078
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "870318270de44e3fc347fde0ff2042d78da85fa3",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
