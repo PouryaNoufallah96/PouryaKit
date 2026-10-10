@@ -40,7 +40,7 @@ The separate [private publication workflow](private-packages.md) uses the offici
 
 ## Hosted proof boundary
 
-The final [CI run 37465576160](https://github.com/PouryaNoufallah96/PouryaKit/actions/runs/37465576160) succeeded at main SHA `b234f4f6c3ac113cf3fd8d874b88d20571480cef`: 386 runtime tests passed with zero failures or skips, thirteen packages and fifteen clean consumers validated at `0.1.0-preview.0.13`. Its original packages were published by successful [publication run 37466084084](https://github.com/PouryaNoufallah96/PouryaKit/actions/runs/37466084084); [private package guidance](private-packages.md#hosted-completion) records that separate proof.
+The hosted CI and publication runs on main that completed Phase 5, and those that completed Wave 2, are recorded with their commits, versions and counts in [private package guidance](private-packages.md#hosted-completion).
 
 On 2026-10-06, [temporary same-repository PR #30](https://github.com/PouryaNoufallah96/PouryaKit/pull/30) exercised the reviewed integration commit `be507881ac1aa6727b2fb830f91a72a5c1c14a3e`. It closed without merging. The proof branch alone introduced an undefined `IntentionalHostedConsumerFailure()` in the single-Module consumer fixture, then reverted it.
 

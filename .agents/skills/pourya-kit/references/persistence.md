@@ -6,6 +6,7 @@
 - [PostgreSQL](#postgresql)
 - [The repository](#the-repository)
 - [The Unit of Work](#the-unit-of-work)
+- [What the Kit guarantees](#what-the-kit-guarantees)
 - [Audit and soft delete](#audit-and-soft-delete)
 - [Versions and conflicts](#versions-and-conflicts)
 - [Unique values](#unique-values)
@@ -219,20 +220,24 @@ internal sealed class ProductPages(IUnitOfWork unitOfWork) : EfRepository<Produc
 
 ## The Unit of Work
 
-- Each command Operation runs in one transaction that the Unit of Work begins and owns, and commits in a fixed sequence:
-  1. The outermost handler returns. A failed Result, or a nested command that failed, ends the Operation here.
-  2. The Domain Event Handlers run ([below](#domain-event-handlers)), and the Unit of Work checks again that nothing failed.
-  3. It prepares persistence: soft-delete marks, the cascades of what was deleted, one version advance per changed aggregate, audit fields ([below](#audit-and-soft-delete)).
-  4. It builds the Snapshot, or the Tombstone, of each changed aggregate that a Snapshot is declared for, from that final state, carrying the version the prepare step set ([messaging.md](messaging.md#snapshots-between-modules)).
-  5. It writes the Operation's Notifications, the Integration Events a Notification Handler's delivery published, and the Snapshots to the Outbox, checks once more that nothing failed, because a Snapshot mapper may have caught a refused command, saves once and commits, and only after the commit sends them ([messaging.md](messaging.md#what-the-kit-guarantees)).
-
-  Nothing changes an aggregate after the prepare step: a Snapshot mapper that does fails the Operation.
-- A failed Result, a failed nested command or a failed Domain Event Handler rolls everything back, and nothing is prepared or written to the Outbox. An exception rolls back and reaches the Gateway's caller.
+- Each command Operation runs in one transaction that the Unit of Work begins and owns. After the outermost handler returns, it runs the [Domain Event Handlers](#domain-event-handlers), prepares persistence ([audit and soft delete](#audit-and-soft-delete), versions), builds the [Snapshots](messaging.md#snapshots-between-modules), writes the Outbox, saves once and commits, and only then sends what it wrote. Each step, with the checks between them, is in [the commit sequence](../../../../docs/architecture/README.md#the-commit-sequence) of the Kit's architecture document.
 - Code that only reads cannot change tracked state, including through a held aggregate reference. The EF Unit of Work supplies the Operation's `IReadingStateGuard`, which compares the state across queries, authorization and validation, and `OnlyReading` steps. It preserves legitimate pending command changes as the baseline and permits new tracked reads. Capture and comparison detect EF relationship changes even when automatic change detection is disabled, without changing that setting. A difference marks the Operation rollback-only before throwing, so a swallowed exception still prevents a commit. The shared `TrackedState` comparison includes mutable mapped values, child and owned entities, complex collections, and pending Domain Event identity and order. State restored before comparison is not detected ([code that only reads](commands-queries-validation.md#code-that-only-reads)). These are Kit seams; Feature code never calls them.
-- Steps 4 and 5, from the Snapshots to the send, are a Kit seam, `IUnitOfWorkOutbox` (`PouryaKit.Persistence.EFCore`), which `UsePouryaKitWolverine(connectionName)` registers. Feature code never uses it.
-- A save the database refuses for a concurrent change, or for a unique index the Module mapped, rolls everything back and fails the Operation with an Error ([Versions and conflicts](#versions-and-conflicts), [Unique values](#unique-values)). Any other database error stays an exception.
-- Nothing retries: no retrying execution strategy, no retry in the Unit of Work. To retry, send the command again through the Gateway.
+- Building the Snapshots, writing the Outbox and the send after the commit are a Kit seam, `IUnitOfWorkOutbox` (`PouryaKit.Persistence.EFCore`), which `UsePouryaKitWolverine(connectionName)` registers. Feature code never uses it.
 - A plain-SQL write to a Module-internal table that no aggregate maps joins this transaction through `IUnitOfWorkConnection` (`PouryaKit.Persistence`), from a command's handler, a Domain Event Handler, or a Notification or Integration Event Handler only; see [dapper-reads.md](dapper-reads.md).
+
+## What the Kit guarantees
+
+The commit is the Unit of Work's. Each guarantee below is proven by the Proving Sample's tests in the Kit's repository, named after it.
+
+- **One commit or nothing.** Everything an Operation changes, through its repositories, its nested commands, its Domain Event Handlers and `IUnitOfWorkConnection`, commits in one transaction with the Outbox rows it wrote. A failed Result, a failed nested command or a failed Domain Event Handler rolls all of it back, and nothing is prepared or written to the Outbox, even when the outer handler ignores the failure: `UnitOfWorkTests.A_failed_result_returned_after_writing_leaves_nothing_written`, `UnitOfWorkTests.A_nested_command_that_fails_rolls_back_the_operations_data_and_outbox_though_the_outer_handler_ignores_it`, `DomainEventTests.A_failed_handler_result_stops_the_drain_and_the_operation_fails_with_its_errors_leaving_nothing_written`, `DapperTests.A_dapper_write_on_the_unit_of_work_connection_commits_with_the_operation_and_rolls_back_with_it`.
+- **An exception rolls back too.** It reaches the Gateway's caller, and nothing is written: `UnitOfWorkTests.An_exception_thrown_after_writing_leaves_nothing_written`.
+- **Saved with no save in Feature code.** A command that succeeds is committed though its handler never saves: `UnitOfWorkTests.A_command_that_raises_no_domain_event_is_committed_though_its_handler_never_saves`.
+- **The Outbox in the commit, the send after it.** What the Operation publishes is written in its transaction and sent only after the commit, and an Operation that rolls back stores none of it: `NotificationTests.A_notification_is_stored_once_per_subscription_in_the_commit_of_the_change_and_sent_only_after_it`, `NotificationTests.An_operation_that_rolls_back_stores_no_notification`. What delivery then guarantees is in [messaging.md](messaging.md#what-the-kit-guarantees).
+- **Nothing changes after the prepare step.** A Snapshot mapper that changes its aggregate fails the Operation, and nothing commits: `SnapshotTests.A_snapshot_mapper_that_changes_its_aggregate_fails_the_operation_and_commits_nothing`.
+- **One version step per Operation.** An aggregate's `Version` advances by exactly one for each Operation that changes it or anything it owns ([Versions and conflicts](#versions-and-conflicts)): `PersistencePreparationTests.The_version_advances_exactly_once_for_each_operation_that_changes_any_part_of_the_aggregate`.
+- **A refused save is an Error.** A save the database refuses for a concurrent change, or for a unique index the Module mapped, rolls everything back and fails the Operation with an Error ([Versions and conflicts](#versions-and-conflicts), [Unique values](#unique-values)). Any other database error stays an exception: `ConflictTests.Two_operations_that_rename_the_same_product_commit_once_and_the_other_fails_with_a_conflict`, `ConflictTests.A_duplicate_product_name_fails_with_the_error_the_module_mapped_and_writes_nothing`, `ConflictTests.A_violated_constraint_with_no_mapped_error_stays_an_exception_and_writes_nothing`.
+- **Nothing retries.** No DbContext has a retrying execution strategy, and the Unit of Work never retries. To retry, send the command again through the Gateway, which runs a new Operation in a new scope: `PersistenceTests.No_module_db_context_has_a_retrying_execution_strategy`.
+- **No write without a Unit of Work.** A repository write where no Unit of Work runs throws and saves nothing ([The repository](#the-repository)): `SingleModuleTests.A_repository_write_in_a_scope_that_runs_no_unit_of_work_throws_and_saves_nothing`.
 
 ## Audit and soft delete
 
@@ -289,7 +294,7 @@ internal sealed class CountProductInCategoryDomainEventHandler(IRepository<Categ
 
 Its counterpart, `UncountProductInCategoryDomainEventHandler`, handles `ProductRemovedDomainEvent` the same way and lowers the count, so a removal and its category's count commit together.
 
-- Implement `IDomainEventHandler<TDomainEvent>` (`PouryaKit.Cqrs`) for one Domain Event type, in an `internal sealed` class named after its reaction and its kind, as `CountProductInCategoryDomainEventHandler` is, in the Business Area that reacts, under `Events/DomainEventHandlers/`. `AddPouryaKitCqrs` registers it with the Module's other handlers. A class that handles several Domain Event types, or an abstract one, fails while the Host is composed.
+- Implement `IDomainEventHandler<TDomainEvent>` (`PouryaKit.Cqrs`) for one Domain Event type, in an `internal sealed` class named after its reaction and its kind, as `CountProductInCategoryDomainEventHandler` is, in the Business Area that reacts, under `Events/DomainEventHandlers/`. `AddPouryaKitCqrs` registers it with the Module's other handlers. A class that handles several Domain Event types, or an abstract Domain Event type, fails while the Host is composed. An abstract handler class is not registered.
 - It runs only for a Domain Event of exactly its type, never for one derived from it. A Domain Event may have several handlers or none; one with no handler is fine, and the Operation commits.
 - It runs after the outermost command's handler returned a success and no nested command failed, before the prepare step and the save, in the same transaction. Handlers run one at a time, never concurrently; the handlers of one Domain Event run in the ordinal order of their full type names. An aggregate's Domain Events are handled in the order it raised them.
 - The Unit of Work takes the Domain Events of every aggregate it tracks: those added, found, listed or removed through a repository in the Operation. It clears them as it takes them.
