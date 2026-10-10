@@ -1,0 +1,25 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_a846915d2dd93c::t_71497eab7e0376 1,12-13
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_a846915d2dd93c::t_543c083d6b7621 96-100
+.claude/agent-memory/kit-implementer/observability-tracing-and-http-facts.md
+  s_a846915d2dd93c::t_21c3831bbf2805 75-80
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_a846915d2dd93c::t_936cee357e5ac7 115,119-126
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "77fa7526a8fbf484b9dfac9d2c356982c504d1dd",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
