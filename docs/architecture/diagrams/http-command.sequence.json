@@ -377,7 +377,7 @@
       "dot": "violet",
       "title": "The dispatcher's order",
       "items": [
-        "It binds the Host's clock and opens the log scope, then runs every authorizer and the validator; a failure returns Errors before any Unit of Work.",
+        "It binds the Host's clock and opens the log scope, then runs every authorizer and the validator; a failure returns Errors before any Unit of Work. Once they pass, the Operation is authorized, and continuing its context is a trusted continuation.",
         "For the outermost command it starts the Unit of Work; the request id's key is reserved inside it, so a repeat waits, then replays the first success.",
         "A request id on a command without [Idempotent] throws. After RunAsync returns, a success on a rollback-only Operation throws too."
       ]
