@@ -1,0 +1,42 @@
+src/PouryaKit.Caching/HybridQueryCache.cs
+  s_fbe30cc48fad9d::t_a84ea046d7cbca 1,18-20,40,49,52-57,59-74,76-81,84,88,90-95,105-107,111-118,151-152,154-173
+tests/ModularMonolith.Tests/Fixtures/AppFixture.cs
+  s_fbe30cc48fad9d::t_ad7c2bba778c4d 63
+docs/provenance/PouryaKit.Caching.md
+  s_fbe30cc48fad9d::t_992c2a4cb4cffe 5
+docs/acceptance.md
+  s_fbe30cc48fad9d::t_11f649c3d7b200 1433
+  s_fbe30cc48fad9d::t_5e177e09ff6bf7 1415-1432,1434-1453
+  s_fbe30cc48fad9d::t_1fa2c7829572c8 1204
+tests/ModularMonolith.Tests/CachingTests.cs
+  s_fbe30cc48fad9d::t_560fe941adcb18 241-243,245-248,251-256,259-261
+  s_fbe30cc48fad9d::t_16839b262ea49f 244,249-250,257-258
+  s_fbe30cc48fad9d::t_18da9c1a301455 371-377
+  s_fbe30cc48fad9d::t_d533890facc384 240
+README.md
+  s_fbe30cc48fad9d::t_cfbf817c605f36 18
+.agents/skills/pourya-kit/references/caching.md
+  s_fbe30cc48fad9d::t_9202d33837169f 95-96
+  s_fbe30cc48fad9d::t_a921427d56938e 88
+tests/ModularMonolith.Tests/Fixtures/ReadProbe.cs
+  s_fbe30cc48fad9d::t_33206a9248953e 1-85
+docs/architecture/README.md
+  s_fbe30cc48fad9d::t_f4f953c452e397 63
+  s_fbe30cc48fad9d::t_40ca8980bbf21b 346
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "001b637d5a37387240039500eb59a21ad2c7a901",
+  "prompts": {},
+  "sessions": {
+    "s_fbe30cc48fad9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "355fc114-9f49-46c2-b236-9a236d1e5b59",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
