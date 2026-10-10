@@ -43,7 +43,7 @@ The third seam of the Testing Decisions is proven in `tests/PouryaKit.Architectu
 | Only the Kit's drain clears Domain Events | `FeatureCodeTests` |
 | Only Domain sets up JSON options; Web, Cqrs and Caching apply `UsePouryaKitJson`, and Messaging.Wolverine alone its strict variant `UsePouryaKitWireJson` | `SharedJsonTests` (tickets #34, #60) |
 | No Dapper write to an aggregate's table | `DapperWriteTests` |
-| Only Core lists the types of an assembly; every other Kit package asks `ImplementingTypes` | `TypeLookupTests` (ticket #55) |
+| Only Core lists the types of an assembly; every other Kit package asks `ImplementingTypes`, except `PouryaKit.Validation`, which finds its validators with FluentValidation's own assembly scanner on purpose ([its provenance record](provenance/PouryaKit.Validation.md)) | `TypeLookupTests` (ticket #55; the exception named by ticket #99) |
 | Every Kit package's dependency closure matches plan section C | `PackageGraphTests` |
 | No package with a licence outside the permissive list | `LicenceTests` |
 
