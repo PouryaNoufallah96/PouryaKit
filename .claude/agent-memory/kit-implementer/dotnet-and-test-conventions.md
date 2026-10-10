@@ -93,5 +93,11 @@ metadata:
 - **What CS1591 reports and what it does not:** each enum member, operator, protected constructor and member, and every member inside an extension block, but neither an `extension(...)` block itself nor the primary constructor of a documented type.
 - **Inserting many summaries:** a scratchpad script took `(path, warning line, fragment, text)`, asserted the fragment on that line, inserted bottom-up above any attribute lines, kept XML tags whole when wrapping at 120 columns, and refused a spec that differed from the inventory. Then the reviewer's check: `git diff <base> -- src/ | grep '^[-+]' | grep -v '^[-+][-+]' | grep -v '^[-+][[:space:]]*///'` must print nothing.
 
+## Probes and traps (#100, 2026-10-10; SDK 10.0.401)
+
+- **`Host.CreateApplicationBuilder` inside `namespace ModularMonolith.Tests`** resolves `Host` to the sample's `ModularMonolith.Host` namespace (CS0234); write `Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder`. `Record.Exception(() => builder.UsePouryaKitWolverine())` binds the obsolete `Func<Task>` overload (CS0619) because the lambda returns a value; use a statement lambda.
+- **A value a factory refuses, for a drift guard's red-once:** `RuntimeHelpers.GetUninitializedObject(typeof(FilterField))` plus `GetField("<Name>k__BackingField", NonPublic | Instance).SetValue` builds a field of a type `FilterField.Of` refuses, when the guard under test sits in another package.
+- **`cd <worktree> && python3 - <<'EOF'`** edit scripts of about 70 lines that only read and write files passed; a red-once runner in the scratchpad (`p100/mutate100.py`: JSON spec of replacements or a whole file, restored in `finally`) ran seven mutations without a refusal.
+
 **Why:** Test projects run on Microsoft.Testing.Platform, chosen in ticket #4 (2026-10-05) as the plain current .NET 10 idiom; a later ticket repeating VSTest packages would create a second way of running tests. Each other fact cost a build, a run or a vacuous red in tickets #4 to #63 or retro C (2026-10-06).
 **How to apply:** before adding a test project, a test filter or an analyzer rule in `.editorconfig`; before every mutation run; when a change adds a table, a Module, a subscription or an Integration Event type to the sample. Related: [[worktree-shell-and-check-gotchas]], [[core-json-and-architecture-test-facts]].
