@@ -1,0 +1,21 @@
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_a846915d2dd93c::t_979cfc0481e603 111
+.agents/skills/pourya-kit/references/security.md
+  s_a846915d2dd93c::t_228b5240decd11 212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f6d19ae857895a2fed41b3d114b987bbdd2b0d9f",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
