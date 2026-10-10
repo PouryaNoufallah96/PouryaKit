@@ -53,8 +53,13 @@ public static class DelayedCommandServiceCollectionExtensions
         /// set aside as a dead letter, and the attempt that sets it aside stores the next one after now unless one is
         /// already stored, so the cadence goes on whatever an occurrence did, except one whose stored body no longer
         /// reads after a release changed the command's shape: Wolverine sets it aside before the Kit's delivery runs, so
-        /// nothing stores the next one until the next Host start. Feature code
-        /// never schedules it with <see cref="IDelayedCommands"/>. Declare it once: declaring it again with another system Actor
+        /// nothing stores the next one until the next Host start. Its signs are a dead letter received at
+        /// <c>local://{name}/</c> with a <c>JsonException</c> and an Error entry naming that queue. To recover, start any
+        /// one instance of the Host again, which stores the first occurrence after now, and discard that dead letter
+        /// (<c>IDeadLetters.DiscardAsync</c>); never replay it, since a replay is read as strictly and set aside again.
+        /// Change the command's shape only by adding members with a default value, or declare the new shape under a new
+        /// name; keeping the old type, forwarding to the new as Wolverine's <c>IForwardsTo&lt;T&gt;</c> does, is not
+        /// supported. Feature code never schedules it with <see cref="IDelayedCommands"/>. Declare it once: declaring it again with another system Actor
         /// or occurrence factory, or as a delayed command too, throws, naming the declaration it already has. Throws here as
         /// <c>AddPouryaKitDelayedCommand</c> does; the Host fails when it is built or starts as for
         /// a delayed command, and fails to start when the cadence is not longer than zero.
