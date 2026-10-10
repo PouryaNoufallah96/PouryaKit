@@ -491,3 +491,40 @@ describes the Kit: it configures no EF Core middleware mode at all.
 - **Proof.** With the line and its two `using` directives removed (`4bf4b82`), `dotnet build PouryaKit.slnx` gave 0
   warnings and `dotnet test PouryaKit.slnx` passed 830, 0 failed, the suite's whole count, in 2m27s
   (`docs/acceptance.md`, "Pre-Wave 3 proofs before fixes, ticket #82").
+
+## Amendment (2026-10-10, ticket #96: two different Hosts never share a store's schema)
+
+The decision above stands. "One store per Host", in the spike's registration comment and in "Consequences", and a schema
+"configurable per Host", in "Defaults chosen", 3, described the Kit's layout without excluding anything: the Kit's
+documentation promised `DurabilityMode.Balanced` safe with any number of instances on one store, and never said that two
+different Hosts on one schema are unsupported. Since ticket #96 they are a stated rule, and the upstream guidance that
+"Defaults chosen", 3, cites is its reason.
+
+- **The rule.** Instances of one Host share one store and one schema. Two different Hosts, with different handlers,
+  Modules or applications, each take a store of their own: another database, or another schema on one database through
+  the `schema` argument of `UsePouryaKitWolverine(connectionName, schema, configure)`. Sharing a schema between different
+  applications is unsupported.
+- **Why.** `JasperFx/wolverine` issue #4923, filed 2026-10-09, reproduced on WolverineFx 6.45.0 and 6.48.2 and open on
+  2026-10-10: when two different applications share one envelope-store schema in Balanced mode, the durability agent of a
+  node without the handlers recovers the other application's inbox rows and dead-letters them, as a Kit Host does with
+  every message it has no handler for (`UsePouryaKitWolverine` sets `UnknownMessageBehavior.DeadLetterQueue`), or drops
+  them under Wolverine's default. The maintainer's only comment, of 2026-10-09: "Process A and Process B in your usage
+  should *not* be using the same Wolverine storage." Wolverine's PostgreSQL guide says the same in a code comment of its
+  sample (`JasperFx/wolverine` tag `V6.48.3`, commit `c1eab2a7f04de7350c3b54741ae00351c6c303d1`,
+  `docs/guide/durability/postgresql.md:192-195`): "If separate logical services are targeting the same physical database,
+  you should use a separate schema name for each logical application". The Kit's pin, WolverineFx 6.48.3 (the #75
+  amendment), was published at 14:42 UTC on 2026-10-09, before the issue was filed at 18:11 UTC, and contains no fix.
+- **Documented, not checked.** The owner decided on 2026-10-10 to document the rule and add no runtime guard: Wolverine's
+  node record holds no application identity (its insert writes an id, the control URI, capabilities, a description and a
+  version: `JasperFx/wolverine` tag `V6.48.3`, `src/Persistence/Wolverine.Postgresql/PostgresqlNodePersistence.cs:66`),
+  so a check would have nothing to observe. `MessageStoreDatabaseCheck` (the #63 amendment) compares one Host's
+  DbContexts with that Host's own store and cannot see another Host. The Proving Sample keeps the rule with a database for
+  each of `ModularMonolith.Host` and `Inventory.Host`, and `BrokerFixture` gives each of its two Hosts a database of its
+  own.
+- **What the tests cover.** `SharedStoreSchemaTests` proves one Host whose store shares its Module's schema: a reset clears
+  the Module's rows and the store still delivers. `MessageStoreDatabaseTests` proves the check of one Host's DbContexts
+  against that Host's own store. No test covers two applications on one store.
+- **Where the rule is stated.** The `Durability` summary of `PouryaKitMessageStoreOptions`, the Kit's skill
+  (`messaging.md`, "The message store") and `docs/architecture/README.md` (`PouryaKit.Messaging.Wolverine.EFCore`). The
+  text above keeps its wording. The skill's `rabbitmq.md` keeps its own rule for the broker: two different Hosts never
+  share a service name, and so never a queue.

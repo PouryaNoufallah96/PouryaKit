@@ -6,7 +6,10 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 public sealed class PouryaKitMessageStoreOptions
 {
     /// <summary>
-    /// <see cref="DurabilityMode.Balanced"/>, the default, is safe with any number of Host instances on one store.
+    /// <see cref="DurabilityMode.Balanced"/>, the default, is safe with any number of Host instances on one store when
+    /// all are instances of one Host: another Host, one with other handlers or Modules, takes a store of its own,
+    /// another database or another schema through the <c>schema</c> argument of <c>UsePouryaKitWolverine</c>, since on a
+    /// shared schema a node without the other Host's handlers recovers its deliveries and dead-letters them.
     /// <see cref="DurabilityMode.Solo"/> assumes a single instance and recovers a stopped instance's deliveries at once.
     /// </summary>
     public DurabilityMode Durability { get; set; } = DurabilityMode.Balanced;
