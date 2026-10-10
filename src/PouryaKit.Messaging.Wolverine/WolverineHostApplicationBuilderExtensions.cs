@@ -54,7 +54,17 @@ public static class WolverineHostApplicationBuilderExtensions
             builder.AddPouryaKitCompositionChecks();
             WolverineMessageNaming.InsertFirst<WireNaming>();
             Subscriptions.In(builder.Services);
-            builder.Services.AddOptions<PouryaKitMessagingOptions>();
+            builder
+                .Services.AddOptions<PouryaKitMessagingOptions>()
+                .Validate(
+                    messaging => messaging.RetryDelays is not null,
+                    "PouryaKitMessagingOptions.RetryDelays is null; set it to the delays a failed delivery waits before each further attempt."
+                )
+                .Validate(
+                    messaging => messaging.RetryDelays is null || messaging.RetryDelays.All(delay => delay >= TimeSpan.Zero),
+                    "PouryaKitMessagingOptions.RetryDelays holds a negative delay; set each delay to zero or longer."
+                )
+                .ValidateOnStart();
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, UnregisteredNotificationHandlersCheck>());
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, RoutingCheck>());
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SubscriptionUnitOfWorkCheck>());

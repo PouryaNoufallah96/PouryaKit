@@ -65,12 +65,30 @@ public static class WebServiceCollectionExtensions
             services.ConfigureHttpJsonOptions(json => json.SerializerOptions.UsePouryaKitJson());
             services.TryAddSingleton<MappedEndpoints>();
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupCheck, UnmappedEndpointsCheck>());
-            var options = services.AddOptions<PouryaKitWebOptions>();
+            var options = services
+                .AddOptions<PouryaKitWebOptions>()
+                .Validate(
+                    web => !string.IsNullOrWhiteSpace(web.ActorClaim),
+                    "PouryaKitWebOptions.ActorClaim names no claim to identify the Actor."
+                )
+                .Validate(
+                    web => web.TenantClaim is null || !string.IsNullOrWhiteSpace(web.TenantClaim),
+                    "PouryaKitWebOptions.TenantClaim is blank; leave it null when the application has no tenant."
+                )
+                .ValidateOnStart();
             if (configure is not null)
             {
                 options.Configure(configure);
             }
 
+            // The Hosts configure their peers themselves (Configure<PouryaKitTrustedPeerOptions>); validated here.
+            services
+                .AddOptions<PouryaKitTrustedPeerOptions>()
+                .Validate(
+                    trusted => !trusted.Peers.Any(string.IsNullOrWhiteSpace),
+                    "PouryaKitTrustedPeerOptions.Peers lists a blank peer; name each peer by the Actor claim value of its authenticated identity."
+                )
+                .ValidateOnStart();
             return services;
         }
 
