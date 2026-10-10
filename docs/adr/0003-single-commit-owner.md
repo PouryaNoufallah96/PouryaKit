@@ -168,6 +168,13 @@ state it commits (spec #74, finding P1).
   `InvalidOperationException` names the entity and the property, and nothing commits. The graph is read from the model
   once per DbContext type. The Kit's own conventions, Guid version 7 keys and Kit-set versions and audit fields, never
   meet it, and keys stay allowed.
+  *Corrected on 2026-10-10 (ticket #92, final review R1): the graph is read once per model, the `IModel` instance the
+  DbContext exposes, not once per DbContext type. EF lets one DbContext type carry several models, one given with
+  `UseModel` or one per model cache key, and a read cached by type gave a second model the first one's aggregate roots
+  and generated properties, so the second model's refusals could be skipped. `SnapshotStep` keeps the read in a
+  `ConditionalWeakTable` keyed by that model, which holds an entry only as long as the model. Proven by
+  `SnapshotTests.A_snapshot_is_refused_by_the_model_its_dbcontext_uses_when_one_dbcontext_type_has_two_models`, red
+  with the type key.*
 - **Proven against PostgreSQL** by `SnapshotTests.A_snapshot_of_an_aggregate_whose_database_generates_a_value_it_maps_fails_the_operation_that_saves_it`
   (a default value SQL on the root) and
   `SnapshotTests.A_snapshot_of_an_aggregate_whose_database_generates_a_value_of_an_owned_part_it_maps_fails_the_operation_that_saves_it`
