@@ -1,0 +1,37 @@
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_a846915d2dd93c::t_467b5f19137b01 308-309
+tests/ModularMonolith.Tests/DelayedCommandTests.cs
+  s_a846915d2dd93c::t_467b5f19137b01 330-342
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_a846915d2dd93c::t_467b5f19137b01 92
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_467b5f19137b01 23
+src/PouryaKit.Messaging.Wolverine/Subscriptions/IntegrationEventServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_467b5f19137b01 24,51,70
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_a846915d2dd93c::t_467b5f19137b01 57-58
+tests/PouryaKit.ArchitectureTests/TypeLookupTests.cs
+  s_a846915d2dd93c::t_467b5f19137b01 7
+src/PouryaKit.Cqrs/Composition/DeclaredAuthorizersCheck.cs
+  s_a846915d2dd93c::t_467b5f19137b01 10
+.agents/skills/pourya-kit/references/messaging.md
+  s_a846915d2dd93c::t_467b5f19137b01 83
+src/PouryaKit.Messaging.Wolverine/Subscriptions/SnapshotServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_467b5f19137b01 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1082a55e88fcfff7082ed08f89279996e8a3ec35",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
