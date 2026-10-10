@@ -93,5 +93,11 @@ metadata:
 - **What CS1591 reports and what it does not:** each enum member, operator, protected constructor and member, and every member inside an extension block, but neither an `extension(...)` block itself nor the primary constructor of a documented type.
 - **Inserting many summaries:** a scratchpad script took `(path, warning line, fragment, text)`, asserted the fragment on that line, inserted bottom-up above any attribute lines, kept XML tags whole when wrapping at 120 columns, and refused a spec that differed from the inventory. Then the reviewer's check: `git diff <base> -- src/ | grep '^[-+]' | grep -v '^[-+][-+]' | grep -v '^[-+][[:space:]]*///'` must print nothing.
 
+## Timeouts, hangs and red runs (#99, 2026-10-10; xunit.v3 4.0.1)
+
+- **A rendezvous of two Operations hangs forever when one fails** unless something cancels the wait: `[Fact(Timeout = 30_000)]` plus `WaitAsync(cancellationToken)` on the token the handler receives. At the timeout xUnit cancels `TestContext.Current.CancellationToken` and reports an `AggregateException` holding the test's own failure and `Xunit.Sdk.TestTimeoutException`. The body must name `TestContext.Current.CancellationToken` (xUnit1069), so read it there and pass it down.
+- **Showing a hang red:** run `dotnet test` from a scratchpad Python script with `subprocess.Popen(..., start_new_session=True)` and `communicate(timeout=...)`; on `TimeoutExpired`, `os.killpg(process.pid, SIGKILL)` kills the test host too, and `pgrep -fl <assembly>` afterwards shows none left.
+- **`--filter-method` takes a full name or a wildcard:** a bare method name matches nothing and MTP exits 8 (zero tests); write `*Method_name`.
+
 **Why:** Test projects run on Microsoft.Testing.Platform, chosen in ticket #4 (2026-10-05) as the plain current .NET 10 idiom; a later ticket repeating VSTest packages would create a second way of running tests. Each other fact cost a build, a run or a vacuous red in tickets #4 to #63 or retro C (2026-10-06).
 **How to apply:** before adding a test project, a test filter or an analyzer rule in `.editorconfig`; before every mutation run; when a change adds a table, a Module, a subscription or an Integration Event type to the sample. Related: [[worktree-shell-and-check-gotchas]], [[core-json-and-architecture-test-facts]].
