@@ -51,8 +51,8 @@ internal sealed class GetProductQueryHandler(IProductReader reader) : QueryHandl
 ## Commands and queries
 
 - Declare each as a sealed record: `Command<TResponse>` for a command with a value, `Command` for one without (its handler derives from `CommandHandler<TCommand>` and returns `Result`), `Query<TResponse>` for a read. Name it after its intent with the `Command` or `Query` suffix.
-- Give each exactly one handler class deriving from `CommandHandler<,>`, `CommandHandler<>` or `QueryHandler<,>`. Keep both `internal`; the Kit finds them without `InternalsVisibleTo`. A command or query with no handler or several fails at startup.
-- Commands, queries, handlers and authorizers are never generic type definitions (no `EchoQuery<T>`): registration rejects them at startup.
+- Give each exactly one handler class deriving from `CommandHandler<,>`, `CommandHandler<>` or `QueryHandler<,>`. Keep both `internal`; the Kit finds them without `InternalsVisibleTo`. A command or query with no handler or several fails while the Host is composed.
+- Commands, queries, handlers and authorizers are never generic type definitions (no `EchoQuery<T>`): registration rejects them while the Host is composed.
 - A handler returns a Result and never saves, commits, begins a transaction or touches the Outbox: the Unit of Work does all of that once, for the whole Operation. This holds for every kind of handler, and a structure test rejects a Module whose code does any of it ([testing.md](testing.md#structure-tests)).
 - A query reads. Its handler is [code that only reads](#code-that-only-reads). It starts no Unit of Work of its own, but a query nested inside a command runs inside the command's active Unit of Work.
 - A Domain Event Handler (`IDomainEventHandler<TDomainEvent>`, also in `PouryaKit.Cqrs`) is the third kind of handler. The Unit of Work runs it, so it is taught in [persistence.md](persistence.md).
@@ -164,7 +164,7 @@ internal sealed class ListProductsQueryValidator : AbstractValidator<ListProduct
 
 ## Authorization hook
 
-- The Actor is authenticated and authorized at the external entry point. Add a per-operation rule only when one command or query needs it: an `internal` class implementing `IAuthorizer<TOperation>` for that one concrete command or query, returning `Result.Success()` or a `Forbidden` Error. It runs before validation. Without one, the step does nothing. An authorizer for a base type, a marker interface or an open type fails at startup, because it would never run.
+- The Actor is authenticated and authorized at the external entry point. Add a per-operation rule only when one command or query needs it: an `internal` class implementing `IAuthorizer<TOperation>` for that one concrete command or query, returning `Result.Success()` or a `Forbidden` Error. It runs before validation. Without one, the step does nothing. An authorizer for a base type, a marker interface or an open type fails while the Host is composed, because it would never run.
 - An authorizer reads the Actor and tenant from an injected `OperationContext` (see [modules.md](modules.md)). It runs for every Operation of its command or query, including one that continues another Module's Operation. `context.IsTrustedContinuation` is true for a context the Kit restored for a delivery, and for one that `Continue()` gave inside the running Operation it continues, after that Operation was authorized. `Continue()` inside an authorizer or a validator, or on a context that is not running, only records the causation. Recognise a trusted continuation by that flag, never by `CausationId`, which any code can set.
 - An authorizer or a validator may run a query (a permission or existence lookup), but it is [code that only reads](#code-that-only-reads): it runs before its command's handler, at every nesting depth, so a command it sends throws.
 
