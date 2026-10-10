@@ -1,0 +1,25 @@
+.githooks/pre-commit
+  s_a846915d2dd93c::t_bc6b8b39962bc9 4,10-12
+AGENTS.md
+  s_a846915d2dd93c::t_bc6b8b39962bc9 89
+docs/agents/ai-setup.md
+  s_a846915d2dd93c::t_c59fbc0c16ec57 29
+docs/agents/brief-template.md
+  s_a846915d2dd93c::t_a51f49953321e9 62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6b42a306136ced974c04764a2786783d1d736110",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
