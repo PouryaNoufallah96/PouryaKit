@@ -1,0 +1,50 @@
+src/PouryaKit.Messaging.Wolverine.EFCore/PouryaKitMessageStoreOptions.cs
+  s_2867f8a3b2cd19::t_a3a5c510468d35 23-24
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_2867f8a3b2cd19::t_a3a5c510468d35 58-68
+src/PouryaKit.Web/PouryaKitTrustedPeerOptions.cs
+  s_2867f8a3b2cd19::t_a3a5c510468d35 8-10
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_2867f8a3b2cd19::t_a3a5c510468d35 104-108
+  s_2867f8a3b2cd19::t_547e272c7ca656 109
+docs/architecture/README.md
+  s_2867f8a3b2cd19::t_a3a5c510468d35 517,538,572
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_2867f8a3b2cd19::t_a3a5c510468d35 9,13
+.agents/skills/pourya-kit/references/web.md
+  s_2867f8a3b2cd19::t_592fdbab4fd76e 303
+  s_2867f8a3b2cd19::t_a3a5c510468d35 260
+src/PouryaKit.Web/PouryaKitWebOptions.cs
+  s_2867f8a3b2cd19::t_a3a5c510468d35 15-17,26-28
+src/PouryaKit.Messaging.Wolverine/PouryaKitMessagingOptions.cs
+  s_2867f8a3b2cd19::t_a3a5c510468d35 12-14
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_2867f8a3b2cd19::t_a3a5c510468d35 2,9,14-15,28-29,294-427
+  s_2867f8a3b2cd19::t_74c2b7a7881557 428
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs
+  s_2867f8a3b2cd19::t_a3a5c510468d35 48-54
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_2867f8a3b2cd19::t_a3a5c510468d35 30-32,70-80,86-93
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_2867f8a3b2cd19::t_a3a5c510468d35 92-97
+docs/acceptance.md
+  s_2867f8a3b2cd19::t_592fdbab4fd76e 1216-1234
+.agents/skills/pourya-kit/references/messaging.md
+  s_2867f8a3b2cd19::t_a3a5c510468d35 617,665
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "694a5e777d3c916b1219120387643ad07b44da07",
+  "prompts": {},
+  "sessions": {
+    "s_2867f8a3b2cd19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00cca649-e6c4-44eb-8549-8c8dbeae846f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
