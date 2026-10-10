@@ -1,0 +1,25 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_a846915d2dd93c::t_16168cffcd9bc1 1,5-6
+.claude/agent-memory/kit-implementer/core-json-and-architecture-test-facts.md
+  s_a846915d2dd93c::t_8c0b2cbbd63824 88-92
+.claude/agent-memory/kit-implementer/cqrs-and-modularity-facts.md
+  s_a846915d2dd93c::t_4ff893a3b03829 41,62-67
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_a846915d2dd93c::t_9e26ed95652b38 96-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "65168dda05b4fb40010fe60af2ea9c908bcc1d40",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
