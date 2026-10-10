@@ -1,6 +1,6 @@
 ---
 name: snapshot-and-scheduled-command-facts
-description: Snapshot step 4 and the version gate, the step's model read and its key, the Receipt masking the gate in redelivery tests, delayed commands through the EF outbox, recurring command chains and the dead-letter attempt
+description: The Snapshot step and the version gate, the step's model read and its key, the Receipt masking the gate in redelivery tests, delayed commands through the EF outbox, recurring command chains and the dead-letter attempt
 metadata:
   type: project
 ---

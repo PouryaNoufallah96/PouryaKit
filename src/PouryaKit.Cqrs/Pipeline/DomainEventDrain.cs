@@ -5,7 +5,7 @@ using PouryaKit.Domain;
 namespace PouryaKit.Cqrs;
 
 /// <summary>
-/// Step 2 of the Unit of Work's commit sequence: runs the Domain Event Handlers of every Domain Event the Operation's
+/// The Domain Event drain of the Unit of Work's commit sequence: runs the Domain Event Handlers of every Domain Event the Operation's
 /// aggregates raised, inside the Unit of Work, until none remain. An <see cref="IUnitOfWork"/> calls it after the
 /// outermost command succeeded and before it saves; Feature code never calls it.
 /// </summary>

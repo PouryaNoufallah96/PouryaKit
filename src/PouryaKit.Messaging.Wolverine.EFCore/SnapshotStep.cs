@@ -11,7 +11,7 @@ using PouryaKit.Persistence.EFCore;
 
 namespace PouryaKit.Messaging.Wolverine.EFCore;
 
-// Step 4 of the Unit of Work's commit sequence: one Snapshot of each aggregate the prepare step advanced, under each
+// The Snapshot step of the Unit of Work's commit sequence: one Snapshot of each aggregate the prepare step advanced, under each
 // contract declared for it, a Tombstone when the Operation removed it, kept marked deleted or deleted outright, each
 // with the aggregate's key and the version being committed. Built from the prepared state, which nothing may change
 // afterwards (ADR 0003), so the mappers' run is checked against it: anything they changed, or a Domain Event they
