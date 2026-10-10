@@ -219,6 +219,7 @@ public abstract class HostFixture : IAsyncLifetime
         await host.StartAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public async ValueTask InitializeAsync()
     {
         await _postgres.StartAsync();
@@ -226,6 +227,7 @@ public abstract class HostFixture : IAsyncLifetime
         await StartHostAsync(_host);
     }
 
+    /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
         if (_host is not null)

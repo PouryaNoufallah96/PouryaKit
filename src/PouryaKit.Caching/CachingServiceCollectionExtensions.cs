@@ -4,6 +4,10 @@ using PouryaKit.Cqrs;
 
 namespace PouryaKit.Caching;
 
+/// <summary>
+/// Composes the Caching Capability on a Host's services: the query cache that answers a cacheable query and evicts the
+/// cache tags a committed command invalidates.
+/// </summary>
 public static class CachingServiceCollectionExtensions
 {
     extension(IServiceCollection services)

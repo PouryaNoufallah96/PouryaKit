@@ -18,8 +18,11 @@ public interface IQueryCache
     /// the same Actor and tenant, or the Result of <paramref name="handle"/>, which is stored only when it is a success.
     /// Before it stores or shares a success, the cache serializes it and then calls <paramref name="endRead"/>, which
     /// closes the query's read and throws when its handler, or serializing its answer, changed tracked state; nothing is
-    /// then stored. <paramref name="cancellationToken"/> is observed until the query's run starts or is joined; a run
-    /// others may share is not one caller's to cancel, so <paramref name="handle"/> may receive no cancellation.
+    /// then stored. A success whose run was in flight when <see cref="EvictAsync"/> evicted one of the query's tags is
+    /// not stored either: every caller that shared the run receives it, and the next query runs
+    /// <paramref name="handle"/> again. <paramref name="cancellationToken"/> is observed until the query's run starts
+    /// or is joined; a run others may share is not one caller's to cancel, so <paramref name="handle"/> may receive no
+    /// cancellation.
     /// </summary>
     Task<Result<TResponse>> QueryAsync<TResponse>(
         Query<TResponse> query,

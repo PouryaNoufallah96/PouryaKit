@@ -10,6 +10,9 @@ using PouryaKit.Domain;
 
 namespace PouryaKit.Web;
 
+/// <summary>
+/// Composes the Web Capability on a Host's services, and declares each Module's endpoints in its Composition Root.
+/// </summary>
 public static class WebServiceCollectionExtensions
 {
     extension(IServiceCollection services)

@@ -16,10 +16,13 @@ public class Result
     /// <summary>Every Error of a failure, in the order they were given; empty on success.</summary>
     public ImmutableArray<Error> Errors { get; }
 
+    /// <summary>True when the outcome is a success, with no Error.</summary>
     public bool IsSuccess => Errors.IsEmpty;
 
+    /// <summary>True when the outcome is a failure, with at least one Error.</summary>
     public bool IsFailure => !IsSuccess;
 
+    /// <summary>The success of an Operation that yields no value.</summary>
     public static Result Success() => SuccessResult;
 
     /// <summary>
@@ -29,8 +32,10 @@ public class Result
     public static Result<T> Success<T>(T value)
         where T : notnull => new(value);
 
+    /// <summary>A failure with <paramref name="error"/> as its one Error.</summary>
     public static implicit operator Result(Error error) => new(OneError(error));
 
+    /// <summary>A failure with <paramref name="errors"/>, which hold at least one Error and no null.</summary>
     public static implicit operator Result(ImmutableArray<Error> errors) => new(FailureErrors(errors));
 
     private protected static ImmutableArray<Error> OneError(Error error)
@@ -83,9 +88,12 @@ public sealed class Result<T> : Result
             IsSuccess ? field! : throw new InvalidOperationException("A failed Result has no value; read its Errors.");
     }
 
+    /// <summary>A success holding <paramref name="value"/>, which is never null.</summary>
     public static implicit operator Result<T>(T value) => Success(value);
 
+    /// <summary>A failure with <paramref name="error"/> as its one Error.</summary>
     public static implicit operator Result<T>(Error error) => new(OneError(error));
 
+    /// <summary>A failure with <paramref name="errors"/>, which hold at least one Error and no null.</summary>
     public static implicit operator Result<T>(ImmutableArray<Error> errors) => new(FailureErrors(errors));
 }

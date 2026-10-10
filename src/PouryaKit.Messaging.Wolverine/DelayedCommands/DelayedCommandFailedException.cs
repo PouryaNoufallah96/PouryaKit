@@ -13,7 +13,9 @@ public sealed class DelayedCommandFailedException(string delayedCommand, Immutab
         $"The delayed command {delayedCommand} failed with {string.Join(", ", errors.Select(error => $"{error.Code} ({error.Message})"))}; the delivery is retried, then set aside as a dead letter."
     )
 {
+    /// <summary>The name the delayed command or recurring command that failed is declared under.</summary>
     public string DelayedCommand { get; } = delayedCommand;
 
+    /// <summary>The Errors of the failed Result, in the order given.</summary>
     public ImmutableArray<Error> Errors { get; } = errors;
 }

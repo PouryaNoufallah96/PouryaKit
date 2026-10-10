@@ -22,6 +22,7 @@ namespace PouryaKit.Cqrs;
 /// </example>
 public sealed class PageDeclaration
 {
+    /// <summary>The largest Page size of a declaration that states none.</summary>
     public const int DefaultMaxSize = 100;
 
     private readonly FrozenDictionary<string, FilterField> _fields;
@@ -67,10 +68,13 @@ public sealed class PageDeclaration
         _fields = filters.ToFrozenDictionary(filter => filter.Name, StringComparer.Ordinal);
     }
 
+    /// <summary>The sort keys the read may be sorted by, the default first.</summary>
     public IReadOnlyList<string> Sorts { get; }
 
+    /// <summary>The fields the read may be filtered on, each with its operators and value type.</summary>
     public IReadOnlyList<FilterField> Filters { get; }
 
+    /// <summary>The largest <see cref="PageRequest.Size"/> the read accepts.</summary>
     public int MaxSize { get; }
 
     /// <summary>The sort key <paramref name="request"/> asks for, or the declaration's first.</summary>

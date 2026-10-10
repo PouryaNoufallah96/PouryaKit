@@ -8,5 +8,6 @@ namespace PouryaKit.Messaging;
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public sealed class WireNameAttribute(string name) : Attribute
 {
+    /// <summary>The stable wire name the message is stored under.</summary>
     public string Name { get; } = name;
 }

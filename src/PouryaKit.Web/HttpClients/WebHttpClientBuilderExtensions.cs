@@ -7,6 +7,10 @@ using PouryaKit.Cqrs;
 
 namespace PouryaKit.Web;
 
+/// <summary>
+/// Composes the Web Capability's outgoing HTTP on a client and its requests: the Operation Context in the Kit's
+/// headers, and the standard resilience.
+/// </summary>
 public static class WebHttpClientBuilderExtensions
 {
     extension(IHttpClientBuilder builder)

@@ -9,6 +9,10 @@ using PouryaKit.Domain;
 
 namespace PouryaKit.Persistence.Dapper;
 
+/// <summary>
+/// Composes the Dapper reads Capability on a Module's or a Host's services: the read connection, and typed IDs as
+/// Dapper parameters and results.
+/// </summary>
 public static class DapperServiceCollectionExtensions
 {
     extension(IServiceCollection services)

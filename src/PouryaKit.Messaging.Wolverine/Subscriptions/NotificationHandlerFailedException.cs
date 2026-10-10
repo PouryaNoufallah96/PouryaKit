@@ -13,7 +13,9 @@ public sealed class NotificationHandlerFailedException(string subscription, Immu
         $"The Notification Handler of the subscription {subscription} failed with {string.Join(", ", errors.Select(error => $"{error.Code} ({error.Message})"))}; the delivery is retried, then set aside as a dead letter."
     )
 {
+    /// <summary>The name of the subscription whose Notification Handler failed.</summary>
     public string Subscription { get; } = subscription;
 
+    /// <summary>The Errors of the failed Result, in the order given.</summary>
     public ImmutableArray<Error> Errors { get; } = errors;
 }

@@ -45,11 +45,13 @@ public sealed class FilterField
         TypeName = Types[valueType].Name;
     }
 
+    /// <summary>The name a filter gives the field: a letter followed by letters and digits.</summary>
     public string Name { get; }
 
     /// <summary>One of string, Guid, int, long, decimal, bool and DateTimeOffset.</summary>
     public Type ValueType { get; }
 
+    /// <summary>The operators a filter on the field may use, in the order declared.</summary>
     public IReadOnlyList<FilterOperator> Operators { get; }
 
     internal string TypeName { get; }

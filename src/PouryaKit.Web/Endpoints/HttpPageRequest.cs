@@ -23,6 +23,7 @@ public sealed class HttpPageRequest
 
     private HttpPageRequest(PageRequest request) => Request = request;
 
+    /// <summary>The Page the query string asks for, before the query's validator checks it.</summary>
     public PageRequest Request { get; }
 
     /// <summary>Called by ASP.NET Core to bind the parameter.</summary>

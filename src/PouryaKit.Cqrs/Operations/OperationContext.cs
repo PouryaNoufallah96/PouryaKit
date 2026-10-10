@@ -32,6 +32,7 @@ public sealed record OperationContext
     /// <summary>The identity of the Operation that runs with this context.</summary>
     public Guid OperationId { get; }
 
+    /// <summary>The Actor on whose authority the Operation runs.</summary>
     public Actor Actor { get; }
 
     /// <summary>The tenant or company the Operation runs for; null where the application has none. Never blank.</summary>

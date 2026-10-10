@@ -1,5 +1,9 @@
 namespace PouryaKit.Cqrs;
 
+/// <summary>
+/// Gives each <see cref="FilterOperator"/> the short name a filter writes it by, as part of the Cqrs Capability's
+/// paging.
+/// </summary>
 public static class FilterOperatorNames
 {
     private static readonly FilterOperator[] Operators = Enum.GetValues<FilterOperator>();

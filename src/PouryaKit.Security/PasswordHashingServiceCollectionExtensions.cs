@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 
 namespace PouryaKit.Security;
 
+/// <summary>Composes password hashing, part of the Security Capability, on a Host's services.</summary>
 public static class PasswordHashingServiceCollectionExtensions
 {
     extension(IServiceCollection services)

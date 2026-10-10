@@ -86,10 +86,15 @@ public sealed class PageSql
         _thenBy = thenBy;
     }
 
+    /// <summary>The declaration whose sort keys and filters this SQL maps.</summary>
     public PageDeclaration Declaration { get; }
 
+    /// <summary>
+    /// The Feature's <c>SELECT</c> of the items, to which the page helper appends its ordering and its limit.
+    /// </summary>
     public string Select { get; }
 
+    /// <summary>The Feature's <c>COUNT</c> of the same selection, run as written.</summary>
     public string Count { get; }
 
     /// <summary>

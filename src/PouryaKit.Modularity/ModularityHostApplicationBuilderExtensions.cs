@@ -4,6 +4,10 @@ using PouryaKit.Cqrs;
 
 namespace PouryaKit.Modularity;
 
+/// <summary>
+/// Composes the Modules Capability on a Host's application builder: each Module through its Composition Root, reached
+/// through its Gateway.
+/// </summary>
 public static class ModularityHostApplicationBuilderExtensions
 {
     extension(IHostApplicationBuilder builder)

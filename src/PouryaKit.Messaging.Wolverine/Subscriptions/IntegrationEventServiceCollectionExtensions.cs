@@ -5,6 +5,10 @@ using PouryaKit.Domain;
 
 namespace PouryaKit.Messaging.Wolverine;
 
+/// <summary>
+/// Declares, as part of the Messaging Capability, the Integration Events a Module publishes and subscribes to, in its
+/// Composition Root or the Host's composition, and those a Host receives from another Host.
+/// </summary>
 public static class IntegrationEventServiceCollectionExtensions
 {
     extension(IServiceCollection services)
