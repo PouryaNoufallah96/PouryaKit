@@ -1,0 +1,28 @@
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_fbe30cc48fad9d::t_bdb8a4d2ac6135 32
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_fbe30cc48fad9d::t_46886e980e91b6 96
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_fbe30cc48fad9d::t_5596347a3d4fa3 68
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_fbe30cc48fad9d::t_010972ae8089ec 1
+  s_fbe30cc48fad9d::t_f0d2381be2d0c6 3,9
+docs/acceptance.md
+  s_fbe30cc48fad9d::t_fec85f41066963 1362
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bd92cf017fd14c8ed1418894ceec2a939b16ca2f",
+  "prompts": {},
+  "sessions": {
+    "s_fbe30cc48fad9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "355fc114-9f49-46c2-b236-9a236d1e5b59",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
