@@ -60,6 +60,7 @@ public sealed class AppFixture : HostFixture
         builder.Services.UsePouryaKitTestDelivery();
         CommitProbe.Install(builder.Services);
         DeliveryProbes.Install(builder.Services);
+        ReadProbe.Install(builder.Services);
         builder.WebHost.UseTestServer();
         builder
             .Services.AddAuthentication(TestAuthentication.SchemeName)

@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Caching`. Format and rules: [README](README.md).
 
-The caching slot is new Kit code, built to the plan's own rule (I.3 Caching, I.6, ADR 0002) and decided there, so it has no record here: its place after the checks in `src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs`, the write Unit of Work bypass, the tags collected on `src/PouryaKit.Cqrs/Operations/Operation.cs` and evicted after the outermost commit, the effective key in `src/PouryaKit.Caching/HybridQueryCache.cs` and the null-tenant sentinel `OperationContext.NoTenant`. So is keeping a failed Result out of the cache, by failing `HybridCache`'s factory, since the reference's get-then-set shape that stores failures is rejected by the plan (below).
+The caching slot is new Kit code, built to the plan's own rule (I.3 Caching, I.6, ADR 0002) and decided there, so it has no record here: its place after the checks in `src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs`, the write Unit of Work bypass, the tags collected on `src/PouryaKit.Cqrs/Operations/Operation.cs` and evicted after the outermost commit, the effective key in `src/PouryaKit.Caching/HybridQueryCache.cs` and the null-tenant sentinel `OperationContext.NoTenant`. So is keeping a failed Result out of the cache, by failing `HybridCache`'s factory, since the reference's get-then-set shape that stores failures is rejected by the plan (below), and keeping out the answer of a read in flight across a commit, through the record of runs in flight that the commit's eviction marks (ticket #93).
 
 ## Package dependencies
 
