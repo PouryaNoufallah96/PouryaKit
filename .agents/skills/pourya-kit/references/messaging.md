@@ -614,7 +614,7 @@ internal sealed class AnnounceAddedProductNotificationHandler(INewProductAnnounc
 ## Retries
 
 - A delivery fails when its handler throws or its Operation returns a failed Result, including when nested work made it rollback-only even though the handler returned success. A failed Result is never acknowledged. Nothing the attempt changed commits, its Receipt included.
-- A failed delivery is retried after each of `PouryaKitMessagingOptions.RetryDelays` (`PouryaKit.Messaging.Wolverine`; 1 s, 10 s and 1 min by default): one attempt more than there are delays, so four. Each wait is stored with the delivery, which no Host instance holds while it waits, so a restart neither loses nor repeats it.
+- A failed delivery is retried after each of `PouryaKitMessagingOptions.RetryDelays` (`PouryaKit.Messaging.Wolverine`; 1 s, 10 s and 1 min by default): one attempt more than there are delays, so four. Each wait is stored with the delivery, which no Host instance holds while it waits, so a restart neither loses nor repeats it. Null or a negative delay stops the Host when it starts, with an `OptionsValidationException` naming the option. An empty schedule fails the start too, in Wolverine's own retry policy and with Wolverine's message, not the option's: a failed delivery is retried at least once. A zero delay retries at once.
 - Each attempt runs in a new scope, as a new Operation, and nothing of the attempt before is left in it: no DbContext, tracked aggregate or scoped service of the failed attempt reaches the next.
 - Only the failing subscription's delivery is retried. The other subscriptions of the same Domain Event or Integration Event are not delivered again, whether they succeeded or fail too.
 - Change the delays together with the inbox stale time, never alone ([The stale-time rule](#the-stale-time-rule)).
@@ -662,7 +662,7 @@ public sealed class DeadLetterTriage(IWolverineRuntime runtime)
 
 - `PouryaKitMessageStoreOptions` (`PouryaKit.Messaging.Wolverine.EFCore`) holds the store's settings:
   - `Durability`: `DurabilityMode.Balanced`, the default, is safe with any number of Host instances on one store. `DurabilityMode.Solo` assumes a single instance and recovers a stopped instance's deliveries at once; the tests use it.
-  - `InboxStaleTime`, 5 minutes by default: how long after a delivery was stored the store hands it out again when an instance still holds it. It is what delivers a Notification or Integration Event committed but never sent while its Host lives on, so such a delivery waits that long. Set it by [the stale-time rule](#the-stale-time-rule).
+  - `InboxStaleTime`, 5 minutes by default: how long after a delivery was stored the store hands it out again when an instance still holds it. It is what delivers a Notification or Integration Event committed but never sent while its Host lives on, so such a delivery waits that long. Set it by [the stale-time rule](#the-stale-time-rule). Zero or less stops the Host when it starts, with an `OptionsValidationException` naming the option.
 - The store's schema is the second argument of `UsePouryaKitWolverine(connectionName, schema, configure)`, `wolverine` by default.
 - Change the settings anywhere in the Host's composition, before it is built, as in [the stale-time rule](#the-stale-time-rule).
 

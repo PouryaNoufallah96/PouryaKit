@@ -101,5 +101,11 @@ Verified by decompiling the shared framework with `ilspycmd -t <Type> <dll>` (wr
 - **Web has no `InternalsVisibleTo`**, so tests pin the Kit's messages as literals; a constant interpolated string over `OperationContextHeaders` constants works inside `[InlineData]`. Red without the subclass: `GetProperty("detail")` throws `KeyNotFoundException`, which prints no `Assert.` line, so a mutation script's reason regex must also match `Exception:`.
 - **A duplicate-member HTTP test must use a mapped member** (`POST /catalog/categories` with `name` and `Name`, no key needed): HTTP options skip unmapped members, and a duplicated unmapped member is skipped too, so `price`/`Price` on a type without `price` passes before and after the change.
 
+## The Web options validated at start (#83, 2026-10-10; ASP.NET Core 10.0.12)
+
+- `MapPouryaKitModuleEndpoints` reads `PouryaKitWebOptions` and `PouryaKitTrustedPeerOptions` while the Host is composed, so in the sample's Host a refused value throws there, from `AppFixture.ComposeHost`. To prove `ValidateOnStart()` is wired, test in `MisconfiguredHostTests.WebOnly()`, which maps no Module endpoint: the failure then comes from `StartAsync` and goes green with `ValidateOnStart()` removed.
+- The configuration binder binds an empty or whitespace string into an `ISet<string>` (`PouryaKit:TrustedPeers:Peers:1` = `""` lands as `""`), so a blank-peer theory can bind from `AddInMemoryCollection` exactly as the Hosts bind.
+- `AddOptions<T>()` beside a Host's `Configure<T>(section)` changes nothing in the binding; `TrustedPeerTests` stayed green.
+
 **Why:** each decided a Web or Security design point or cost a round or a full-suite run.
 **How to apply:** when touching PouryaKit.Web, Web.OpenApi, Security, the sample Host's authentication or route groups, or options validation on start; for any CORS, compression or limiter change, any test that asserts a problem response's `type`, starts a second Host or crosses the permission check, any Kit-only trust mark, and any ticket that parses stored credentials or tokens or cites external guidance. Related: [[cqrs-and-modularity-facts]], [[composition-check-facts]], [[observability-tracing-and-http-facts]].

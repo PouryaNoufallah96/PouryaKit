@@ -1,14 +1,18 @@
 using System.Net;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using ModularMonolith.Tests.Stub;
 using ModularMonolith.Tests.Unowned;
 using ModularMonolith.Tests.Unversioned;
 using PouryaKit.Cqrs;
+using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.EFCore;
@@ -21,7 +25,8 @@ namespace ModularMonolith.Tests;
 
 // A Host composed wrongly in a way that would otherwise run degraded and say nothing fails where the mistake shows, with a
 // message naming the fix (ticket #62): when it is built, at start, when its endpoint is built, when its client is first
-// created, or at the first request.
+// created, or at the first request. A Kit option given a value it refuses stops the Host at start, naming the option
+// (ticket #83).
 public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     // WebApplication adds UseAuthentication ahead of the application's own middleware unless the application calls it,
@@ -284,6 +289,141 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
             $"The endpoints {typeof(UnversionedEndpoints).Namespace}.ReadActorEndpoint of the application are declared but never mapped, so they never answer. Call app.MapPouryaKitModuleEndpoints() once the Host is built.",
             thrown.Message
         );
+    }
+
+    // Observed at start, by ValidateOnStart: this Host maps no Module endpoints. One that does, as the sample's, fails
+    // earlier, in MapPouryaKitModuleEndpoints, which reads both claims while the Host is composed.
+    [Theory]
+    [InlineData(null, PouryaKitClaimTypes.Tenant, "PouryaKitWebOptions.ActorClaim names no claim to identify the Actor.")]
+    [InlineData("", PouryaKitClaimTypes.Tenant, "PouryaKitWebOptions.ActorClaim names no claim to identify the Actor.")]
+    [InlineData(" ", PouryaKitClaimTypes.Tenant, "PouryaKitWebOptions.ActorClaim names no claim to identify the Actor.")]
+    [InlineData(
+        ClaimTypes.NameIdentifier,
+        "",
+        "PouryaKitWebOptions.TenantClaim is blank; leave it null when the application has no tenant."
+    )]
+    [InlineData(
+        ClaimTypes.NameIdentifier,
+        "\t",
+        "PouryaKitWebOptions.TenantClaim is blank; leave it null when the application has no tenant."
+    )]
+    public async Task A_blank_actor_or_tenant_claim_stops_the_host_at_start_naming_the_option(
+        string? actorClaim,
+        string tenantClaim,
+        string failure
+    )
+    {
+        var builder = WebOnly();
+        builder.Services.Configure<PouryaKitWebOptions>(web =>
+        {
+            web.ActorClaim = actorClaim!;
+            web.TenantClaim = tenantClaim;
+        });
+        await using var host = builder.Build();
+
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(typeof(PouryaKitWebOptions), thrown.OptionsType);
+        Assert.Equal([failure], thrown.Failures);
+    }
+
+    // Bound from configuration, as the Hosts bind their peers. Observed at start, by ValidateOnStart, for the reason the
+    // claims' test gives.
+    [Theory]
+    [InlineData("")]
+    [InlineData("  ")]
+    public async Task A_blank_trusted_peer_stops_the_host_at_start_naming_the_option(string peer)
+    {
+        var builder = WebOnly();
+        builder.Configuration.AddInMemoryCollection(
+            [new("PouryaKit:TrustedPeers:Peers:0", AppFixture.TrustedPeer), new("PouryaKit:TrustedPeers:Peers:1", peer)]
+        );
+        builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));
+        await using var host = builder.Build();
+
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(typeof(PouryaKitTrustedPeerOptions), thrown.OptionsType);
+        Assert.Equal(
+            ["PouryaKitTrustedPeerOptions.Peers lists a blank peer; name each peer by the Actor claim value of its authenticated identity."],
+            thrown.Failures
+        );
+    }
+
+    [Fact]
+    public async Task A_null_tenant_claim_and_an_empty_peer_list_let_the_host_start()
+    {
+        var builder = WebOnly();
+        builder.Services.Configure<PouryaKitWebOptions>(web => web.TenantClaim = null);
+        builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));
+        await using var host = builder.Build();
+
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    // Observed at start, at the first read: Wolverine's options, built while the Host resolves its hosted services, read
+    // the schedule before ValidateOnStart runs.
+    [Theory]
+    [InlineData(
+        null,
+        "PouryaKitMessagingOptions.RetryDelays is null; set it to the delays a failed delivery waits before each further attempt."
+    )]
+    [InlineData(new[] { -1 }, "PouryaKitMessagingOptions.RetryDelays holds a negative delay; set each delay to zero or longer.")]
+    [InlineData(new[] { 1, -1 }, "PouryaKitMessagingOptions.RetryDelays holds a negative delay; set each delay to zero or longer.")]
+    public async Task A_null_or_negative_retry_schedule_stops_the_host_at_start_naming_the_option(int[]? delaysInSeconds, string failure)
+    {
+        using var host = MessagingOnly(delaysInSeconds);
+
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(typeof(PouryaKitMessagingOptions), thrown.OptionsType);
+        Assert.Equal([failure], thrown.Failures);
+    }
+
+    // A zero delay retries a failed delivery at once. An empty schedule is no positive case: Wolverine's ScheduleRetry
+    // refuses it at start, before and after ticket #83.
+    [Fact]
+    public async Task A_zero_delay_retry_schedule_lets_the_host_start()
+    {
+        using var host = MessagingOnly([0]);
+
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    // Observed at start, at the first read, as the retry schedule's: the message store's settings are read when Wolverine's
+    // options are built, before the store is reached.
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task An_inbox_stale_time_of_zero_or_less_stops_the_host_at_start_naming_the_option(int staleTimeInSeconds)
+    {
+        await using var host = AppFixture.ComposeHost(
+            "Production",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder =>
+                builder.Services.Configure<PouryaKitMessageStoreOptions>(store =>
+                    store.InboxStaleTime = TimeSpan.FromSeconds(staleTimeInSeconds)
+                )
+        );
+
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(typeof(PouryaKitMessageStoreOptions), thrown.OptionsType);
+        Assert.Equal(["PouryaKitMessageStoreOptions.InboxStaleTime is zero or negative; set it longer than zero."], thrown.Failures);
+    }
+
+    // A Host with Wolverine and no message store, retrying after the delays given, or with no schedule for null.
+    private static IHost MessagingOnly(int[]? delaysInSeconds)
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Development"]);
+        builder.UsePouryaKitWolverine();
+        builder.Services.Configure<PouryaKitMessagingOptions>(messaging =>
+            messaging.RetryDelays = delaysInSeconds is null ? null! : [.. delaysInSeconds.Select(seconds => TimeSpan.FromSeconds(seconds))]
+        );
+        return builder.Build();
     }
 
     // A Web Host with no database, authenticating with the tests' scheme, whose pipeline each test composes.

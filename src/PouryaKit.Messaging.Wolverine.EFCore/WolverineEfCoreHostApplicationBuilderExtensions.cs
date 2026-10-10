@@ -45,7 +45,13 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
                 );
             }
 
-            builder.Services.AddOptions<PouryaKitMessageStoreOptions>();
+            builder
+                .Services.AddOptions<PouryaKitMessageStoreOptions>()
+                .Validate(
+                    store => store.InboxStaleTime > TimeSpan.Zero,
+                    "PouryaKitMessageStoreOptions.InboxStaleTime is zero or negative; set it longer than zero."
+                )
+                .ValidateOnStart();
             builder.Services.AddSingleton<IWolverineExtension, MessageStoreExtension>();
             builder.Services.TryAddScoped<IUnitOfWorkOutbox, WolverineOutbox>();
             builder.Services.TryAddScoped<IOutbox, WolverineOutbox>();

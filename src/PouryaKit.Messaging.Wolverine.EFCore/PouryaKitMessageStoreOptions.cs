@@ -20,7 +20,8 @@ public sealed class PouryaKitMessageStoreOptions
     /// first attempt and, held by no instance while it waits, is handed out again only when a recovery poll finds an
     /// attempt of it still running. A delivery still running when it passes is handed out again, concurrently, on every
     /// recovery cycle until one run finishes; its Receipt keeps the effect to one, and a recurring command's next
-    /// occurrence to one, while each copy waits on it with a connection of its own.
+    /// occurrence to one, while each copy waits on it with a connection of its own. Zero or less stops the Host when it
+    /// starts, naming this option.
     /// </summary>
     public TimeSpan InboxStaleTime { get; set; } = TimeSpan.FromMinutes(5);
 }
