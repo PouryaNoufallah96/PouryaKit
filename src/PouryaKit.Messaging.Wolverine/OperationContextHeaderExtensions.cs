@@ -6,8 +6,8 @@ using Wolverine;
 namespace PouryaKit.Messaging.Wolverine;
 
 /// <summary>
-/// Carries an Operation Context in the headers of Wolverine's <see cref="DeliveryOptions"/>, so the work a message
-/// causes continues that Operation.
+/// Carries an Operation Context in the headers of Wolverine's <see cref="DeliveryOptions"/>, as part of the Messaging
+/// Capability, so the work a message causes continues that Operation.
 /// </summary>
 public static class OperationContextHeaderExtensions
 {

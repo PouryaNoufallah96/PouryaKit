@@ -4,7 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace PouryaKit.Cqrs;
 
 /// <summary>
-/// Begins an Operation on the service provider of its scope, for the code that opens an Operation's scope.
+/// Begins an Operation on the service provider of its scope, as part of the Cqrs Capability, for the code that opens an
+/// Operation's scope.
 /// </summary>
 public static class OperationContextServiceProviderExtensions
 {
