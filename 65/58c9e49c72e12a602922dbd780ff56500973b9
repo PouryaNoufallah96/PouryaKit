@@ -1,0 +1,20 @@
+docs/acceptance.md
+  s_fbe30cc48fad9d::t_99dc9b6ba1968a 1504-1515,1517-1535
+  s_fbe30cc48fad9d::t_7c43eb4ab4fddf 1516
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6558c9e49c72e12a602922dbd780ff56500973b9",
+  "prompts": {},
+  "sessions": {
+    "s_fbe30cc48fad9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "355fc114-9f49-46c2-b236-9a236d1e5b59",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
