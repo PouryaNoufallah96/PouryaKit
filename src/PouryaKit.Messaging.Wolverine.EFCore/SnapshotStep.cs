@@ -158,8 +158,9 @@ internal static class SnapshotStep
 
         // The graph the prepare step attributes changes to the aggregate by: the aggregate, every type it owns and every
         // child it holds through a navigation, their derived types included, down to another aggregate. The aggregate's
-        // own keys are left out, its primary key being refused at commit while it is still temporary; a child's key is a
-        // value like any other, which a mapper may publish.
+        // own keys are left out, its primary key being refused at commit while it is still temporary, and so is a shadow
+        // key, such as the one EF gives an owned collection, which no mapper can read. Any other key of a child is a value
+        // like any other, which a mapper may publish.
         private static IProperty[] GeneratedIn(IEntityType aggregate)
         {
             List<IProperty> generated = [];
@@ -172,7 +173,7 @@ internal static class SnapshotStep
                     continue;
                 }
 
-                foreach (var property in type.GetFlattenedProperties().Where(property => (type != aggregate || !property.IsKey()) && MayBeGenerated(property)))
+                foreach (var property in type.GetFlattenedProperties().Where(property => !(property.IsKey() && (type == aggregate || property.IsShadowProperty())) && MayBeGenerated(property)))
                 {
                     generated.Add(property);
                     if (!LeftToSelector(property))

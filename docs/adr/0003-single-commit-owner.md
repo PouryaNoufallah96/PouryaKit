@@ -188,9 +188,12 @@ state it commits (spec #74, finding P1).
   save, while its row committed the database's number. The aggregate's own keys stay left out, its primary key
   refused while it is temporary. A child's key generated on add is refused unless the generator the committing
   DbContext's selector returns for it, which EF uses for a key whether or not its mapping names one, gives values
-  that are not temporary, as a `Guid` key's does. Proven by
+  that are not temporary, as a `Guid` key's does. A shadow key is left out, since no mapper can read it: refusing the
+  one EF gives an owned collection by default would name a property the author never declared. Proven by
   `SnapshotTests.A_snapshot_is_refused_when_the_database_generates_the_key_of_a_child_in_its_aggregates_graph`, red
-  with child keys left out.*
+  with child keys left out, and
+  `SnapshotTests.A_snapshot_of_an_aggregate_whose_owned_collection_has_efs_default_key_is_built`, red with shadow keys
+  checked.*
 - **Proven against PostgreSQL** by `SnapshotTests.A_snapshot_of_an_aggregate_whose_database_generates_a_value_it_maps_fails_the_operation_that_saves_it`
   (a default value SQL on the root) and
   `SnapshotTests.A_snapshot_of_an_aggregate_whose_database_generates_a_value_of_an_owned_part_it_maps_fails_the_operation_that_saves_it`

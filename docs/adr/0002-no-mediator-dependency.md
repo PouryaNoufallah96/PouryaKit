@@ -396,8 +396,8 @@ name of one seam the #54 amendment lists.
   pins both as the key table and a distributed cache hold them, and passed unchanged before and after the helper; it
   is red with the helper returning the assembly-qualified name.
   *Corrected on 2026-10-11 (ticket #105, the first review round of PR #103): the keys are not byte-identical as
-  wholes. The idempotency key also holds the request id, and the cache key the tenant, the Actor and the query's own
-  key. What both hold is the type's name as `OperationTypes.KeyName` writes it: as it is in the idempotency key's
+  wholes. Both hold the tenant and the Actor; the idempotency key adds the request id, and the cache key the query's
+  own key. Both hold the type's name as `OperationTypes.KeyName` writes it: as it is in the idempotency key's
   `command` column, and escaped in the cache key, as every part of that key is.*
 - **The Outbox marker is `IOutbox`.** Ticket #81 (decision D16) renamed the Messaging.Wolverine marker the #54
   amendment lists, because it marks that a Host has an Outbox for every kind the glossary's Outbox covers, not for

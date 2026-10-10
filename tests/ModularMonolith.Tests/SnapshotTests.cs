@@ -450,6 +450,16 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         );
     }
 
+    // EF keys a lid's gaskets, an owned collection, by a number the database generates, in a shadow property no mapper can
+    // read, so the lid publishes.
+    [Fact]
+    public void A_snapshot_of_an_aggregate_whose_owned_collection_has_efs_default_key_is_built()
+    {
+        using LidContext gasketed = new(LidModel(stamped: false, gasketed: true));
+
+        Assert.Single(LidSnapshots(gasketed));
+    }
+
     [Theory(Timeout = 60_000)]
     [InlineData(ShelfSnapshotMapper.SendsACommand, "A command was sent from a Snapshot mapper, a step that only reads.")]
     [InlineData(ShelfSnapshotMapper.AddsAShelf, "Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write")]
@@ -691,9 +701,9 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
 
     // A model of lids with PostgreSQL's conventions, finalized as EF finalizes the model it builds for a DbContext; the
     // stamped one has the database fill in a lid's stamp when it is saved, the coded one a client-side generator its code,
-    // and the hinged one maps a lid's hinges, whose keys the database numbers. Every lid holds seals, children whose Guid
-    // keys EF sets when a seal is added.
-    private static IModel LidModel(bool stamped, bool coded = false, bool hinged = false)
+    // the hinged one maps a lid's hinges, whose keys the database numbers, and the gasketed one owns its gaskets under EF's
+    // default key. Every lid holds seals, children whose Guid keys EF sets when a seal is added.
+    private static IModel LidModel(bool stamped, bool coded = false, bool hinged = false, bool gasketed = false)
     {
         var model = NpgsqlConventionSetBuilder.CreateModelBuilder();
         var lid = model.Entity<Lid>();
@@ -701,6 +711,15 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         if (!hinged)
         {
             lid.Ignore(entity => entity.Hinges);
+        }
+
+        if (gasketed)
+        {
+            lid.OwnsMany(entity => entity.Gaskets);
+        }
+        else
+        {
+            lid.Ignore(entity => entity.Gaskets);
         }
 
         if (stamped)
@@ -720,6 +739,7 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         private readonly List<Hinge> _hinges = [new()];
         private readonly List<Seal> _seals = [new()];
+        private readonly List<Gasket> _gaskets = [new()];
 
         public string? Stamp { get; private set; }
 
@@ -729,12 +749,19 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
 
         public IReadOnlyList<Seal> Seals => _seals;
 
+        public IReadOnlyList<Gasket> Gaskets => _gaskets;
+
         public static Lid Of(Guid id) => new() { Id = id };
     }
 
     private sealed class Hinge : Entity<long>;
 
     private sealed class Seal : Entity<Guid>;
+
+    private sealed class Gasket
+    {
+        public int Size { get; private set; } = 1;
+    }
 
     private sealed class LidSnapshotMappers : ISnapshotMappers
     {
