@@ -182,8 +182,9 @@ state it commits (spec #74, finding P1).
   has such a property took about 22 ms before and after. Proven by
   `SnapshotTests.A_snapshot_is_refused_by_the_value_generator_selector_its_dbcontext_uses_when_two_share_a_model`, red
   with the selector's answer cached.*
-  *Extended on 2026-10-11 (ticket #105, the first review round of PR #103): a child's key is checked too. Every key
-  was left out, so a child whose key an identity column numbers was published with the key its entity held before the
+  *Extended on 2026-10-11 (ticket #105, the first review round of PR #103): a child's key is checked too, so the
+  refusal is no longer of non-key properties alone, and "keys stay allowed" holds for the aggregate's own keys only.
+  Every key was left out, so a child whose key an identity column numbers was published with the key its entity held before the
   save, while its row committed the database's number. The aggregate's own keys stay left out, its primary key
   refused while it is temporary. A child's key generated on add is refused unless the generator the committing
   DbContext's selector returns for it, which EF uses for a key whether or not its mapping names one, gives values
