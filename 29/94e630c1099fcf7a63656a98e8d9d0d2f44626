@@ -1,0 +1,52 @@
+tests/ModularMonolith.Tests/Fixtures/RecordedTelemetry.cs
+  s_2867f8a3b2cd19::t_0022f64684c67d 11,26,37-41,61-64
+docs/provenance/PouryaKit.Observability.md
+  s_2867f8a3b2cd19::t_ffbe550b903884 26-37
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_2867f8a3b2cd19::t_ffbe550b903884 62
+README.md
+  s_2867f8a3b2cd19::t_ffbe550b903884 17
+src/PouryaKit.Observability/ObservedDispatcher.cs
+  s_2867f8a3b2cd19::t_93c6e3beb8c28a 18-22,25-28,32-34,41-43,50-52,55-60
+  s_2867f8a3b2cd19::t_831429b8e3621c 88
+src/PouryaKit.Persistence.Dapper/PageSql.cs
+  s_2867f8a3b2cd19::t_78bfd8d4b50a14 1,32,41
+.agents/skills/pourya-kit/references/observability.md
+  s_2867f8a3b2cd19::t_ffbe550b903884 28,40,83
+tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.csproj
+  s_2867f8a3b2cd19::t_3d7281e44b675b 19
+src/PouryaKit.Cqrs/Paging/FilterOperatorNames.cs
+  s_2867f8a3b2cd19::t_78bfd8d4b50a14 5-6,30
+tests/ModularMonolith.Tests/HostRecipeTests.cs
+  s_2867f8a3b2cd19::t_6bbe44c052fbf7 36-38,73-74,195,197,200-206,208-209,392-394,420,454-463,470-471
+tests/ModularMonolith.Tests/ObservabilityTests.cs
+  s_2867f8a3b2cd19::t_0022f64684c67d 181-214
+tests/PouryaKit.Cqrs.Tests/PageTests.cs
+  s_2867f8a3b2cd19::t_78bfd8d4b50a14 91
+tests/PouryaKit.Cqrs.Tests/ObservedDispatcherTests.cs
+  s_2867f8a3b2cd19::t_43ddac16b04ddd 1-20,26-27,29-33,37-40,42,49-59,61,63,65-72
+  s_2867f8a3b2cd19::t_f37f68389b99d4 22-25,28,34-36,41,43-48
+  s_2867f8a3b2cd19::t_3d7281e44b675b 60,62,64
+  s_2867f8a3b2cd19::t_64dff4ca34c847 21
+src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs
+  s_2867f8a3b2cd19::t_11f557352d4818 21-25
+  s_2867f8a3b2cd19::t_69e3bffc14f1e1 145-146
+docs/architecture/README.md
+  s_2867f8a3b2cd19::t_ffbe550b903884 269,331
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2994e630c1099fcf7a63656a98e8d9d0d2f44626",
+  "prompts": {},
+  "sessions": {
+    "s_2867f8a3b2cd19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00cca649-e6c4-44eb-8549-8c8dbeae846f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
