@@ -1,0 +1,23 @@
+docs/acceptance.md
+  s_a846915d2dd93c::t_931264436ddd47 1727
+docs/architecture/diagrams/http-command.html
+  s_a846915d2dd93c::t_f8cb928301620f 5474
+docs/architecture/diagrams/http-command.sequence.json
+  s_a846915d2dd93c::t_60a6197ff9c7e2 380
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ece321c5a2e8c347e85637f1897c602e09d2213d",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
