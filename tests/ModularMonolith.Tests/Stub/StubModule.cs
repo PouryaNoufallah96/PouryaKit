@@ -55,6 +55,8 @@ public sealed class StubModule : IModuleDefinition
         module.Subscribe<TicketSnapshotV1, RecordSnapshotIntegrationEventHandler<TicketSnapshotV1>>("stub.ticket-snapshots");
         module.PublishSnapshot<Drawer, DrawerSnapshotV1, DrawerSnapshotMapper>("stub.drawer-snapshot.v1");
         module.Subscribe<DrawerSnapshotV1, RecordSnapshotIntegrationEventHandler<DrawerSnapshotV1>>("stub.drawer-snapshots");
+        module.PublishSnapshot<Badge, BadgeSnapshotV1, BadgeSnapshotMapper>("stub.badge-snapshot.v1");
+        module.Subscribe<BadgeSnapshotV1, RecordSnapshotIntegrationEventHandler<BadgeSnapshotV1>>("stub.badge-snapshots");
         module.Publish<NoteCirculatedV1>("stub.note-circulated.v1");
         module.Subscribe<NoteCirculatedV1, LedgerCirculatedNoteIntegrationEventHandler>(Circulation.Ledger);
         module.Subscribe<NoteCirculatedV1, ArchiveCirculatedNoteIntegrationEventHandler>(Circulation.Archive);

@@ -24,6 +24,28 @@ namespace ModularMonolith.Tests.Stub.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Badge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("Code")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("code");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_badges");
+
+                    b.ToTable("badges", "stub");
+                });
+
             modelBuilder.Entity("ModularMonolith.Tests.Stub.BinaryKey", b =>
                 {
                     b.Property<byte[]>("Id")

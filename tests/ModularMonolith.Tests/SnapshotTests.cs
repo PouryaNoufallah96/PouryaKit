@@ -370,6 +370,23 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from stub.drawers where id = '{drawer}'"));
     }
 
+    // A client-side generator sets a badge's code for good when the badge is added, before the Snapshot is built: the
+    // database writes nothing of it, so the badge commits and its Snapshot carries the code committed.
+    [Fact]
+    public async Task A_snapshot_of_an_aggregate_whose_value_a_client_side_generator_sets_carries_the_value_committed()
+    {
+        var badge = Guid.CreateVersion7();
+
+        await Fixture.WaitForDeliveriesAsync(() => StubAsync(new IssueBadgeCommand(badge)), TestContext.Current.CancellationToken);
+
+        var code = await Fixture.ScalarAsync<Guid>($"select code from stub.badges where id = '{badge}'");
+        Assert.NotEqual(Guid.Empty, code);
+        Assert.Equal(
+            [new BadgeSnapshotV1(badge, code, false, 1L)],
+            Received.All.Select(received => received.IntegrationEvent).OfType<BadgeSnapshotV1>().Where(snapshot => snapshot.BadgeId == badge)
+        );
+    }
+
     [Theory(Timeout = 60_000)]
     [InlineData(ShelfSnapshotMapper.SendsACommand, "A command was sent from a Snapshot mapper, a step that only reads.")]
     [InlineData(ShelfSnapshotMapper.AddsAShelf, "Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write")]

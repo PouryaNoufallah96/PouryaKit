@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.ValueGeneration;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
@@ -9,7 +10,8 @@ namespace ModularMonolith.Tests.Stub;
 
 // Aggregates with a Snapshot whose mapper reads a value the database generates when the aggregate is saved, after the
 // Snapshot is built: a ticket, whose serial is a default the database fills in, and a drawer, whose knob, an owned part,
-// has a label the database computes from its finish.
+// has a label the database computes from its finish. Beside them a badge, whose code a client-side generator sets for
+// good when the badge is added, before the Snapshot is built.
 
 internal sealed record TicketId(Guid Value) : TypedId<Guid>(Value);
 
@@ -97,5 +99,45 @@ internal sealed class DrawerConfiguration : IEntityTypeConfiguration<Drawer>
     {
         builder.ToTable("drawers");
         builder.OwnsOne(drawer => drawer.Knob, knob => knob.Property(part => part.Label).HasComputedColumnSql("upper(knob_finish)", stored: true));
+    }
+}
+
+internal sealed record BadgeId(Guid Value) : TypedId<Guid>(Value);
+
+internal sealed class Badge : AggregateRoot<BadgeId>
+{
+    private Badge() { }
+
+    public Guid Code { get; private set; }
+
+    public static Badge Issue(BadgeId id) => new() { Id = id };
+}
+
+internal sealed record BadgeSnapshotV1(Guid BadgeId, Guid Code, bool IsRemoved, long Version);
+
+internal sealed class BadgeSnapshotMapper : ISnapshotMapper<Badge, BadgeSnapshotV1>
+{
+    public BadgeSnapshotV1 Map(Badge badge) => new(badge.Id.Value, badge.Code, IsRemoved: false, badge.Version);
+
+    public BadgeSnapshotV1 Tombstone(Badge badge) => new(badge.Id.Value, badge.Code, IsRemoved: true, badge.Version);
+}
+
+internal sealed record IssueBadgeCommand(Guid Badge) : Command;
+
+internal sealed class IssueBadgeCommandHandler(IRepository<Badge, BadgeId> badges) : CommandHandler<IssueBadgeCommand>
+{
+    public override async Task<Result> Handle(IssueBadgeCommand command, CancellationToken cancellationToken)
+    {
+        await badges.AddAsync(Badge.Issue(new BadgeId(command.Badge)), cancellationToken);
+        return Result.Success();
+    }
+}
+
+internal sealed class BadgeConfiguration : IEntityTypeConfiguration<Badge>
+{
+    public void Configure(EntityTypeBuilder<Badge> builder)
+    {
+        builder.ToTable("badges");
+        builder.Property(badge => badge.Code).ValueGeneratedOnAdd().HasValueGenerator<GuidValueGenerator>();
     }
 }

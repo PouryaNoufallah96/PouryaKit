@@ -161,8 +161,8 @@ would commit one value and publish another, against this decision's intent that 
 state it commits (spec #74, finding P1).
 
 - **Refused at commit, beside the temporary key.** `SnapshotStep.Build` refuses a non-key property whose value the
-  database generates, a `ValueGenerated` other than `Never`, a default value SQL or a computed column, anywhere in the
-  mapped graph of an aggregate with a declared Snapshot: the aggregate, the types it owns and the children it holds
+  database generates, a default value SQL, a computed column or a `ValueGenerated` other than `Never` that no
+  client-side value generator sets for good when the entity is added, anywhere in the mapped graph of an aggregate with a declared Snapshot: the aggregate, the types it owns and the children it holds
   through a navigation, their derived types included, as the prepare step attributes their changes. The
   `InvalidOperationException` names the entity and the property, and nothing commits. The graph is read from the model
   once per DbContext type. The Kit's own conventions, Guid version 7 keys and Kit-set versions and audit fields, never
@@ -171,4 +171,5 @@ state it commits (spec #74, finding P1).
   (a default value SQL on the root) and
   `SnapshotTests.A_snapshot_of_an_aggregate_whose_database_generates_a_value_of_an_owned_part_it_maps_fails_the_operation_that_saves_it`
   (a computed column on an owned part), each red with the refusal off: the Snapshot published no value while the row
-  committed the database's.
+  committed the database's. `SnapshotTests.A_snapshot_of_an_aggregate_whose_value_a_client_side_generator_sets_carries_the_value_committed`
+  shows a client-side generator's value is not refused.

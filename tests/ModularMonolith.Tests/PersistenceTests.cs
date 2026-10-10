@@ -45,6 +45,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["inventory", "stock_items"],
                 ["inventory", "stock_reconciliations"],
                 ["stub", "__EFMigrationsHistory"],
+                ["stub", "badges"],
                 ["stub", "binary_keys"],
                 ["stub", "books"],
                 ["stub", "cards"],
@@ -88,6 +89,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 "stub SnapshotKeys",
                 "stub IdempotencyKeys",
                 "stub GeneratedValues",
+                "stub ClientGeneratedValues",
             ],
             history.Select(row => $"{row[0]} {((string)row[1]).Split('_', 2)[1]}")
         );
