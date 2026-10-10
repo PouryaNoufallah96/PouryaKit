@@ -1,0 +1,92 @@
+.agents/skills/pourya-kit/references/observability.md
+  s_2867f8a3b2cd19::t_6c75c19aafe4e7 48
+src/PouryaKit.Persistence.EFCore/DbContextConnection.cs
+  s_2867f8a3b2cd19::t_8c9dc9a9a495fd 9-10
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_2867f8a3b2cd19::t_9385531597a5d2 10,14
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_2867f8a3b2cd19::t_b85a108cbf493c 53,67,90
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs
+  s_2867f8a3b2cd19::t_9c5b17da3ddd87 106
+src/PouryaKit.Messaging.Wolverine/Subscriptions/SnapshotServiceCollectionExtensions.cs
+  s_2867f8a3b2cd19::t_858b181e99d508 25,29-32
+tests/ModularMonolith.Tests/CrossProcessTracingTests.cs
+  s_2867f8a3b2cd19::t_ce45725e1f9744 22,60-66,69-70
+.agents/skills/pourya-kit/references/messaging.md
+  s_2867f8a3b2cd19::t_6c75c19aafe4e7 428,706
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Subscriptions.cs
+  s_2867f8a3b2cd19::t_cc398a0ed65296 1,18-19,25-26
+tests/ModularMonolith.Tests/Stub/Migrations/20261010000346_GeneratedValues.cs
+  s_2867f8a3b2cd19::t_8607e0192fe919 1-56
+src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotStep.cs
+  s_2867f8a3b2cd19::t_2b23b31a34e972 125-127,139
+  s_2867f8a3b2cd19::t_e4175a02c12078 1-2,17-19,22-25,39,45-52,128-138,140-187
+  s_2867f8a3b2cd19::t_127b8180b4a13f 38
+src/PouryaKit.Persistence.EFCore/Idempotency/PouryaKitIdempotencyOptions.cs
+  s_2867f8a3b2cd19::t_6c75c19aafe4e7 10-13
+tests/ModularMonolith.Tests/Stub/StubSnapshotGeneratedValues.cs
+  s_2867f8a3b2cd19::t_87531195e06cd6 1-101
+src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs
+  s_2867f8a3b2cd19::t_2aafc009cc80b2 49-51,53-54
+tests/ModularMonolith.Tests/OperationContextTests.cs
+  s_2867f8a3b2cd19::t_788646e12cd503 95-96,99,104-132,145-162
+  s_2867f8a3b2cd19::t_30a1547879f5cc 163
+src/PouryaKit.Messaging/ISnapshotMapper.cs
+  s_2867f8a3b2cd19::t_127b8180b4a13f 20-22
+docs/foundation-review.md
+  s_2867f8a3b2cd19::t_6c75c19aafe4e7 246-247
+src/PouryaKit.Persistence.EFCore/Idempotency/IdempotencyTable.cs
+  s_2867f8a3b2cd19::t_6c75c19aafe4e7 28-31
+tests/ModularMonolith.Tests/DelayedCommandTests.cs
+  s_2867f8a3b2cd19::t_06e7e9ae0bb459 1
+  s_2867f8a3b2cd19::t_32b837765b7c33 188-208
+  s_2867f8a3b2cd19::t_d185b170ad6fa9 309-313,316,320
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Deliver.cs
+  s_2867f8a3b2cd19::t_932a80c75e6850 1,20-22
+  s_2867f8a3b2cd19::t_9c5b17da3ddd87 19,25
+docs/architecture/README.md
+  s_2867f8a3b2cd19::t_6c75c19aafe4e7 415-416,510,536
+  s_2867f8a3b2cd19::t_8c9dc9a9a495fd 417
+.claude/agent-memory/kit-implementer/snapshot-and-scheduled-command-facts.md
+  s_2867f8a3b2cd19::t_d2f29032bd6e1b 70-77
+tests/ModularMonolith.Tests/SnapshotTests.cs
+  s_2867f8a3b2cd19::t_a2718a04d2c096 331-372,592-593
+  s_2867f8a3b2cd19::t_67232923b6ee5f 594
+tests/ModularMonolith.Tests/Stub/Migrations/StubDbContextModelSnapshot.cs
+  s_2867f8a3b2cd19::t_8607e0192fe919 162-178,438-460,536-566
+  s_2867f8a3b2cd19::t_b5aa1fb133359e 567
+.agents/skills/pourya-kit/references/persistence.md
+  s_2867f8a3b2cd19::t_6c75c19aafe4e7 322-323
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_2867f8a3b2cd19::t_ff33268f529961 503-504
+docs/adr/0003-single-commit-owner.md
+  s_2867f8a3b2cd19::t_ff33268f529961 155-174
+.claude/agent-memory/kit-implementer/caching-and-idempotency-facts.md
+  s_2867f8a3b2cd19::t_960459a58ab651 30
+tests/ModularMonolith.Tests/Stub/Migrations/20261010000346_GeneratedValues.Designer.cs
+  s_2867f8a3b2cd19::t_8607e0192fe919 1-661
+src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs
+  s_2867f8a3b2cd19::t_2d32c9deba80b1 88-89
+src/PouryaKit.Persistence.EFCore/Idempotency/IdempotencyKeyCleanup.cs
+  s_2867f8a3b2cd19::t_636bb428dee16d 13,48-49
+src/PouryaKit.Persistence.EFCore/EfCoreServiceCollectionExtensions.cs
+  s_2867f8a3b2cd19::t_6c75c19aafe4e7 18-24
+tests/ModularMonolith.Tests/Stub/StubModule.cs
+  s_2867f8a3b2cd19::t_8baebb925d7cc4 54-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1ebec5c9c91038e0243343da5ef603ff484b0fa0",
+  "prompts": {},
+  "sessions": {
+    "s_2867f8a3b2cd19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00cca649-e6c4-44eb-8549-8c8dbeae846f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
