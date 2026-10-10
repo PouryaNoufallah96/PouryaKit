@@ -1,0 +1,52 @@
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_a846915d2dd93c::t_876326f2f3616e 1-157
+  s_a846915d2dd93c::t_82d658c169b404 158-581
+docs/acceptance.md
+  s_a846915d2dd93c::t_4a258469d27f73 1720-1742
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_a846915d2dd93c::t_79ea69c09013e1 1-130
+  s_a846915d2dd93c::t_6e35337df32f03 131-471
+docs/architecture/diagrams/kit-context.architecture.json
+  s_a846915d2dd93c::t_f00294252f0b4f 1-165
+  s_a846915d2dd93c::t_5d8f56577c5338 166-576
+docs/architecture/diagrams/execution-core.architecture.json
+  s_a846915d2dd93c::t_9b327d0218dc54 1-216
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_a846915d2dd93c::t_5b060c39089b36 1-135
+docs/architecture/diagrams/execution-core.finalize-summary.json
+  s_a846915d2dd93c::t_0c5186460130d1 1-348
+docs/architecture/diagrams/execution-core.html
+  s_a846915d2dd93c::t_af7576ddf529be 1-13956
+docs/architecture/diagrams/kit-context.finalize-summary.json
+  s_a846915d2dd93c::t_d6eb2d3bbfb5c4 1-76
+docs/architecture/diagrams/kit-context.html
+  s_a846915d2dd93c::t_66fc54d55694f4 1-13899
+docs/architecture/diagrams/messaging-and-delivery.finalize-summary.json
+  s_a846915d2dd93c::t_be5240debfd842 1-47
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_a846915d2dd93c::t_d045c8ecc7bb4a 1-13831
+docs/architecture/diagrams/module-boundaries.finalize-summary.json
+  s_a846915d2dd93c::t_75e6f5f5746bb8 1-47
+docs/architecture/diagrams/module-boundaries.html
+  s_a846915d2dd93c::t_3475d5e0e83db5 1-13873
+docs/architecture/diagrams/proving-sample-and-templates.finalize-summary.json
+  s_a846915d2dd93c::t_8602deaf18332d 1-163
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_a846915d2dd93c::t_7caaf53b2ff192 1-13847
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9e8deac96a8c0ffd28f367e38bd878838c295c96",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
