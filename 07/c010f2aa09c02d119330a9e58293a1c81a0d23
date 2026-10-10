@@ -10,6 +10,7 @@ tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
 docs/acceptance.md
   s_fbe30cc48fad9d::t_a909f67a98d8ec 1353,1366-1375
   s_fbe30cc48fad9d::t_dd7d90ca53fdda 1225
+  s_fbe30cc48fad9d::t_24901a98677c68 1365
 src/PouryaKit.Messaging.Wolverine/PouryaKitMessagingOptions.cs
   s_fbe30cc48fad9d::t_4dba1a30272956 12-14
 ---
