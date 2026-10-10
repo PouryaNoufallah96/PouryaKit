@@ -85,13 +85,15 @@ internal sealed record RemoveProductsCommand(IReadOnlyList<string> Names) : Comm
 - **After the checks.** The authorization hook and validation run before the cache is read, so a stored answer never skips them.
 - **Only the outermost query of an Operation that has not failed.** A query nested in a command, a check or another query may read a change they made before it started, which its own read-only check takes as its starting point, so it neither reads nor stores an entry. That covers a command's handler, a Domain Event Handler, any command's or query's authorizers and validators, the outermost command's included, and another query's handler. A query in an Operation that has already failed, such as one sent after a refused command in the same scope, runs uncached too, since the Operation may still track what was rolled back.
 - **Eviction after the outermost commit only.** A rolled-back Operation evicts nothing, so a valid entry survives a failed command. A command that rolls back after a nested query leaves no entry from it.
+- **A read in flight across a commit stores nothing.** A run whose handler was still running when a commit in this Host evicted one of its tags returns its answer to every caller that shared it and stores none, so the next read runs the handler again. A command that declares `HybridCache`'s wildcard tag `*`, which evicts every entry, reaches every run in flight; a run on other tags only is stored as usual. `HybridCache` alone would keep that answer, read before the commit, until it expires: it stamps an entry again when one of its tags was evicted while the handler ran.
 - **A failed eviction cannot fail a committed Operation.** When the distributed cache refuses it, the Kit logs `EvictionFailed` at Error level and returns the command's success; this Host's own copy is still evicted.
 
 ## Limits
 
 - Single flight is per Host. Two Hosts that miss the same key both run the handler.
 - An eviction is certain only in the Host whose Operation committed. Another Host may return its own in-memory copy until it expires; choose `CacheDuration` with that in mind.
-- A query that read before a concurrent command committed may store the answer it read, which `HybridCache` keeps until it expires.
+- On another Host, a query that read before a command committed may store the answer it read, which that Host's `HybridCache` keeps until it expires: only the committing Host's own runs in flight see its evictions. In the committing Host, an eviction that lands in the microseconds between the Kit's check, made once the handler's read has ended, and `HybridCache`'s own store is not seen either.
+- A caller that joins a run in flight after the commit receives that run's answer, read before the commit, for that one call; the run stores nothing.
 - Nested reads are never cached: a cacheable query an authorizer sends, such as a permission lookup, runs its handler every time.
 - The Kit caches query answers only. An Integration Event Handler or anything else that changes a cached resource without a command declares nothing; such data needs a short duration or no caching.
 

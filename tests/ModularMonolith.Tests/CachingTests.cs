@@ -238,6 +238,68 @@ public sealed class CachingTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Fact]
+    public async Task A_read_that_began_before_a_committed_rename_and_ended_after_its_eviction_leaves_no_entry_of_the_old_name()
+    {
+        var lamp = await CreateProductAsync("Lamp");
+        using var joins = new StampedeJoins();
+        var hold = new Hold();
+
+        var held = NameAfterHeldReadAsync(lamp, As("ada"), hold);
+        await hold.Changed.Task.WaitAsync(TimeSpan.FromSeconds(15), TestContext.Current.CancellationToken);
+        var joined = NameAsync(lamp, As("ada"));
+        await joins.Joined.WaitAsync(TestContext.Current.CancellationToken);
+        // The handler has read the old name and not yet returned: its run is in flight while the rename commits and evicts.
+        var renamed = await Catalog.SendAsync(new RenameProductCommand(lamp, "Desk lamp"), As("ada"), TestContext.Current.CancellationToken);
+        hold.Released.SetResult();
+
+        Assert.True(renamed.IsSuccess);
+        Assert.Equal("Lamp", await held);
+        // The run stores nothing, and the caller that shared it receives its answer all the same.
+        Assert.Equal("Lamp", await joined);
+        Assert.Equal("Desk lamp", await NameAsync(lamp, As("ada")));
+    }
+
+    [Fact]
+    public async Task A_read_in_flight_across_a_commit_that_evicts_every_entry_stores_nothing()
+    {
+        var lamp = await CreateProductAsync("Lamp");
+        var hold = new Hold();
+
+        var held = NameAfterHeldReadAsync(lamp, As("ada"), hold);
+        await hold.Changed.Task.WaitAsync(TimeSpan.FromSeconds(15), TestContext.Current.CancellationToken);
+        var evicted = await Stub.SendAsync(new EvictEveryEntryCommand(), TestContext.Current.CancellationToken);
+        hold.Released.SetResult();
+        var answered = await held;
+        await RenameBehindTheCacheAsync(lamp, "Shadow");
+
+        Assert.True(evicted.IsSuccess);
+        Assert.Equal("Lamp", answered);
+        // The handler ran again: nothing was stored.
+        Assert.Equal("Shadow", await NameAsync(lamp, As("ada")));
+    }
+
+    [Fact]
+    public async Task A_read_in_flight_across_a_commit_that_evicts_only_other_tags_is_stored()
+    {
+        var lamp = await CreateProductAsync("Lamp");
+        var desk = await CreateProductAsync("Desk");
+        var hold = new Hold();
+
+        var held = NameAfterHeldReadAsync(lamp, As("ada"), hold);
+        await hold.Changed.Task.WaitAsync(TimeSpan.FromSeconds(15), TestContext.Current.CancellationToken);
+        // Evicts the desk's tag, which the held read does not carry.
+        var renamed = await Catalog.SendAsync(new RenameProductCommand(desk, "Writing desk"), As("ada"), TestContext.Current.CancellationToken);
+        hold.Released.SetResult();
+        var answered = await held;
+        await RenameBehindTheCacheAsync(lamp, "Shadow");
+
+        Assert.True(renamed.IsSuccess);
+        Assert.Equal("Lamp", answered);
+        // The stored answer: the handler did not run again.
+        Assert.Equal("Lamp", await NameAsync(lamp, As("ada")));
+    }
+
+    [Fact]
     public async Task After_a_committed_removal_a_warm_read_is_not_found_for_every_actor()
     {
         var lamp = await CreateProductAsync("Lamp");
@@ -345,6 +407,13 @@ public sealed class CachingTests(AppFixture app) : HostTest<AppFixture>(app)
         host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>();
 
     private Task<string> NameAsync(Guid product, OperationContext context) => NameAsync(Catalog, product, context);
+
+    // Arms the probe in this call's flow only, so the rename the test sends meanwhile reads unheld.
+    private async Task<string> NameAfterHeldReadAsync(Guid product, OperationContext context, Hold hold)
+    {
+        ReadProbe.HoldAfterRead(hold);
+        return await NameAsync(product, context);
+    }
 
     private static async Task<string> NameAsync(IGatewayProcessor<CatalogModule> catalog, Guid product, OperationContext context) =>
         (await catalog.QueryAsync(new GetProductQuery(product), context, TestContext.Current.CancellationToken)).Value.Name;
