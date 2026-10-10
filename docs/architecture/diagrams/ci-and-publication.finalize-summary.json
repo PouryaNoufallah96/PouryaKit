@@ -7,13 +7,13 @@
   "quality": "showcase",
   "specification": {
     "path": "/Users/pourya/projects/personnal/pourya-kit/.claude/worktrees/108/docs/architecture/diagrams/ci-and-publication.workflow.json",
-    "sha256": "4c80eac9b44887ebf7c96836a7bd9b8e57da24cb846afbac87bc866959391025",
-    "bytes": 16431
+    "sha256": "d31ce497ff87c44419574a2c040b10d54466b370ceea394b09239bad19f07be4",
+    "bytes": 16747
   },
   "artifact": {
     "path": "/Users/pourya/projects/personnal/pourya-kit/.claude/worktrees/108/docs/architecture/diagrams/ci-and-publication.html",
-    "sha256": "7282acd7ae8c0e4bd0ca55b9bb032e9dffd36cf39c6cca63f60262ea798865e2",
-    "bytes": 784955
+    "sha256": "ff64814b4f2549a8879a067a13ea559f5b7c4bf1a3c0b21da6b8f870ae47130e",
+    "bytes": 785407
   },
   "gates": {
     "validate": "pass",
@@ -43,5 +43,5 @@
     "noticeText": null
   },
   "visualReview": "not-requested",
-  "durationMs": 3026
+  "durationMs": 3028
 }

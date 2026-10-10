@@ -57,7 +57,7 @@
   "groups": [
     {
       "id": "reusable_publication",
-      "label": "package-publication.yml, one run at a time",
+      "label": "package-publication.yml · cancel-in-progress: false",
       "lane": "publication",
       "fromCol": 1,
       "toCol": 4,
@@ -596,9 +596,10 @@
       "dot": "emerald",
       "title": "What validate.py proves",
       "items": [
+        "validate.py runs on Python with the .NET SDK; MinVer derives one version from the full history.",
         "One nupkg per inventory package, one MinVer version and source commit, the MIT license, third-party notices, SourceLink, and only the references PackageGraph allows.",
-        "Clean consumers, each with its own NuGet caches, restore Kit packages only from the produced set: each library package alone, a single Module, the copied Proving Sample, and both templates generated from the produced template package.",
-        "Each generated solution builds and passes its smoke tests against PostgreSQL; each generated Host and sample Host publishes for Release with the code codegen write generated.",
+        "Clean .NET 10 consumers, each with its own NuGet caches, restore Kit packages only from the produced set: each library package alone, a single Module, the copied Proving Sample, and both templates generated from the produced template package.",
+        "Each generated solution builds and passes its HTTP smoke tests against PostgreSQL; each generated Host and sample Host publishes for Release with the code codegen write generated.",
         "Consumer closures, negative controls and a MinVer proof pass, and the manifest records each package's SHA-256."
       ]
     },
@@ -609,14 +610,15 @@
         "Checkout fetches full history with the read-only token, then removes it; validate.py tests that exact SHA with no token and fetches nothing.",
         "The artifact keeps the tested SHA and result, the original packages and manifest, logs and consumer assets, never caches, on failure too.",
         "A pull request, tag, feat/** or failed run never authorizes publication; only 0.x preview and rc versions are published.",
-        "Only the publish job may write packages, with its own job token."
+        "Only the publish job may write packages: it pushes and restores with its own job token.",
+        "Its concurrency group has cancel-in-progress: false, so GitHub keeps one run going and one pending: serialization, not a queue."
       ]
     },
     {
       "dot": "amber",
       "title": "What the feed check proves",
       "items": [
-        "Every library package restores at its exact version with fresh caches, PouryaKit packages only from GitHub Packages.",
+        "A fresh .NET 10 project restores every library package at its exact version with fresh caches, PouryaKit packages only from GitHub Packages.",
         "The template package installs from the feed with nuget.org disabled, and each template's solution is generated as Acme.Shop and acme-shop and restored.",
         "--skip-duplicate skips an HTTP 409 without comparing the feed's bytes; a missing or expired artifact fails publication, and nothing is rebuilt."
       ]
