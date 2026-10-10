@@ -1,0 +1,26 @@
+docs/architecture/README.md
+  s_fbe30cc48fad9d::t_1d0364950ac3f8 512
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs
+  s_fbe30cc48fad9d::t_a0498bbc100467 56-62
+.agents/skills/pourya-kit/references/messaging.md
+  s_fbe30cc48fad9d::t_f386fa182e1bbb 524-527
+  s_fbe30cc48fad9d::t_6d99c736ca9a43 522
+  s_fbe30cc48fad9d::t_9c8f12a60d5533 523
+  s_fbe30cc48fad9d::t_7f50b7487b4659 528
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1b48013f603b377dba874cd0ae7c56341b8d3a87",
+  "prompts": {},
+  "sessions": {
+    "s_fbe30cc48fad9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "355fc114-9f49-46c2-b236-9a236d1e5b59",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
