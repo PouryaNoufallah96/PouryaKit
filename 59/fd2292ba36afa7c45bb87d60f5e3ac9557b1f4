@@ -1,0 +1,38 @@
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_fbe30cc48fad9d::t_d864242b9aae4b 420-505
+  s_fbe30cc48fad9d::t_7d9b055a897f41 23
+src/PouryaKit.Web.OpenApi/PouryaKitOpenApiOptions.cs
+  s_fbe30cc48fad9d::t_38dfee1ebe0410 12-13
+  s_fbe30cc48fad9d::t_95c2e0fd9c4e49 14-18
+.agents/skills/pourya-kit/references/openapi.md
+  s_fbe30cc48fad9d::t_fb6f4e9cd0864e 132-134
+  s_fbe30cc48fad9d::t_1a689a38dd62b0 150
+docs/architecture/README.md
+  s_fbe30cc48fad9d::t_8adddfea00f425 594
+docs/acceptance.md
+  s_fbe30cc48fad9d::t_c06c9387523cce 1389
+  s_fbe30cc48fad9d::t_69800bc6b43a70 1378-1388,1390
+src/PouryaKit.Web.OpenApi/WebOpenApiServiceCollectionExtensions.cs
+  s_fbe30cc48fad9d::t_31cac1b25c2f51 24
+  s_fbe30cc48fad9d::t_526e9023c6d044 133,137-182
+  s_fbe30cc48fad9d::t_6f15157923a657 36,42
+  s_fbe30cc48fad9d::t_c5081376a99005 25
+  s_fbe30cc48fad9d::t_a414865d07dc36 134-136
+  s_fbe30cc48fad9d::t_c7c111b6174878 43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "59fd2292ba36afa7c45bb87d60f5e3ac9557b1f4",
+  "prompts": {},
+  "sessions": {
+    "s_fbe30cc48fad9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "355fc114-9f49-46c2-b236-9a236d1e5b59",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
