@@ -1,0 +1,24 @@
+src/PouryaKit.Templates/content/modular/tests/ModularMonolith.Tests/CrossModuleTests.cs
+  s_fbe30cc48fad9d::t_5c91de108c3489 29
+  s_fbe30cc48fad9d::t_60a69b151e2793 36
+docs/adr/0003-single-commit-owner.md
+  s_fbe30cc48fad9d::t_8c5a25785279bd 124-125
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_fbe30cc48fad9d::t_1997b5be083a3e 94-108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1ee41048ddd0e602eb5125513bc1de89033ad1ce",
+  "prompts": {},
+  "sessions": {
+    "s_fbe30cc48fad9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "355fc114-9f49-46c2-b236-9a236d1e5b59",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
