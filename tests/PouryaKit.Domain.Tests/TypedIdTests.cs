@@ -114,6 +114,31 @@ public class TypedIdTests
         Assert.Throws<ArgumentException>(() => TypedId.From<ProductId, Guid>(Guid.Empty));
     }
 
+    // EF Core's converter and Dapper's handler create every ID they read through From, so it must cost no more than
+    // the constructor: no boxed value.
+    [Fact]
+    public void An_id_created_from_its_value_allocates_no_more_than_its_constructor()
+    {
+        var value = Guid.CreateVersion7();
+        _ = TypedId.From<ProductId, Guid>(value);
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 1_000; i++)
+        {
+            _ = TypedId.From<ProductId, Guid>(value);
+        }
+
+        var created = GC.GetAllocatedBytesForCurrentThread() - before;
+        before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 1_000; i++)
+        {
+            _ = new ProductId(value);
+        }
+
+        var constructed = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.Equal(constructed, created);
+    }
+
     [Fact]
     public void Value_types_other_than_guid_long_int_and_string_are_rejected()
     {

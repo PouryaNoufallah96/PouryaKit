@@ -169,7 +169,7 @@ internal sealed partial class Dispatcher(
         {
             LogSucceeded(logger, name, elapsed);
         }
-        else
+        else if (logger.IsEnabled(LogLevel.Information))
         {
             LogFailed(logger, name, string.Join(", ", result.Errors.Select(e => e.Code)), elapsed);
         }
@@ -355,10 +355,12 @@ internal sealed partial class Dispatcher(
     )]
     private static partial void LogSucceeded(ILogger logger, string operation, double elapsedMilliseconds);
 
+    // Its caller checks the level, so the error codes are joined only when the entry is written.
     [LoggerMessage(
         EventName = "Failed",
         Level = LogLevel.Information,
-        Message = "{Operation} failed with {ErrorCodes} in {ElapsedMilliseconds} ms"
+        Message = "{Operation} failed with {ErrorCodes} in {ElapsedMilliseconds} ms",
+        SkipEnabledCheck = true
     )]
     private static partial void LogFailed(ILogger logger, string operation, string errorCodes, double elapsedMilliseconds);
 

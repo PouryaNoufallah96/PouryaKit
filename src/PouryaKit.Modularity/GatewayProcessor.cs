@@ -40,7 +40,8 @@ internal sealed class GatewayProcessor<TModule>(IServiceScopeFactory scopes, Hos
         return RunAsync(query, context, dispatcher => dispatcher.QueryAsync(query, cancellationToken));
     }
 
-    private async Task<TResult> RunAsync<TResult>(
+    // A usage error throws here, before the caller gets a task; only the Operation itself runs in the task.
+    private Task<TResult> RunAsync<TResult>(
         object commandOrQuery,
         OperationContext context,
         Func<IDispatcher, Task<TResult>> run
@@ -48,9 +49,13 @@ internal sealed class GatewayProcessor<TModule>(IServiceScopeFactory scopes, Hos
     {
         ArgumentNullException.ThrowIfNull(context);
         modules.EnsureOwns(typeof(TModule), commandOrQuery.GetType());
+        return RunInScopeAsync();
 
-        await using var scope = scopes.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(context, typeof(TModule));
-        return await run(scope.ServiceProvider.GetRequiredService<IDispatcher>());
+        async Task<TResult> RunInScopeAsync()
+        {
+            await using var scope = scopes.CreateAsyncScope();
+            scope.ServiceProvider.BeginOperation(context, typeof(TModule));
+            return await run(scope.ServiceProvider.GetRequiredService<IDispatcher>());
+        }
     }
 }

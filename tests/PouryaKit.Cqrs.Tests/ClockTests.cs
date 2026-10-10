@@ -7,26 +7,28 @@ namespace PouryaKit.Cqrs.Tests;
 
 public sealed class ClockTests
 {
-    [Fact]
+    // A failing Operation leaves the other waiting for it, until the timeout cancels the test's token.
+    [Fact(Timeout = 30_000)]
     public async Task A_domain_event_raised_in_an_operation_takes_its_hosts_clock_and_parallel_operations_keep_their_own()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var monday = new DateTimeOffset(2026, 10, 5, 9, 0, 0, TimeSpan.Zero);
         var tuesday = monday.AddDays(1);
         var bothRunning = new Rendezvous(2);
         await using var mondayHost = Host(monday, bothRunning);
         await using var tuesdayHost = Host(tuesday, bothRunning);
 
-        var raised = await Task.WhenAll(Stamp(mondayHost), Stamp(tuesdayHost));
+        var raised = await Task.WhenAll(Stamp(mondayHost, cancellationToken), Stamp(tuesdayHost, cancellationToken));
 
         Assert.Equal([monday, tuesday], raised.Select(domainEvent => domainEvent.OccurredOn));
     }
 
-    private static async Task<StampedDomainEvent> Stamp(ServiceProvider host)
+    private static async Task<StampedDomainEvent> Stamp(ServiceProvider host, CancellationToken cancellationToken)
     {
         await using var scope = host.CreateAsyncScope();
         var stamped = await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
-            .SendAsync(new StampCommand(), TestContext.Current.CancellationToken);
+            .SendAsync(new StampCommand(), cancellationToken);
         return stamped.Value;
     }
 
@@ -51,7 +53,7 @@ internal sealed class StampCommandHandler(Rendezvous bothRunning) : CommandHandl
 {
     public override async Task<Result<StampedDomainEvent>> Handle(StampCommand command, CancellationToken cancellationToken)
     {
-        await bothRunning.ArriveAsync();
+        await bothRunning.ArriveAsync().WaitAsync(cancellationToken);
         return new StampedDomainEvent();
     }
 }

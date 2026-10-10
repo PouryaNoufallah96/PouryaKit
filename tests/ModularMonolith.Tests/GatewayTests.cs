@@ -1,8 +1,11 @@
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
+using Catalog.Products.Features.GetProduct;
+using Catalog.Products.Features.RenameProduct;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
+using ModularMonolith.Tests.Unowned;
 using PouryaKit.Cqrs;
 using PouryaKit.Testing;
 
@@ -66,5 +69,29 @@ public sealed class GatewayTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Contains("belongs to CatalogModule", thrown.Message);
         Assert.Contains("Gateway of StubModule", thrown.Message);
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
+    }
+
+    [Fact]
+    public void A_missing_context_or_an_operation_the_module_does_not_own_throws_before_the_gateway_returns_a_task()
+    {
+        var gateway = Fixture.Gateway<StubModule>();
+        var context = new OperationContext(GatewayTestExtensions.TestActor);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        Action[] withoutContext =
+        [
+            () => _ = gateway.SendAsync(new WriteNoteCommand("hello"), null!, cancellationToken),
+            () => _ = gateway.SendAsync(new WriteSharedNoteCommand(), null!, cancellationToken),
+            () => _ = gateway.QueryAsync(new ProbeScopeQuery(), null!, cancellationToken),
+        ];
+        Action[] notOwned =
+        [
+            () => _ = gateway.SendAsync(new RenameProductCommand(Guid.CreateVersion7(), "Lamp"), context, cancellationToken),
+            () => _ = gateway.SendAsync(new CreateCategoryCommand(Guid.CreateVersion7(), "Lamps"), context, cancellationToken),
+            () => _ = gateway.QueryAsync(new GetProductQuery(Guid.CreateVersion7()), context, cancellationToken),
+            () => _ = gateway.SendAsync(new UnownedCommand(), context, cancellationToken),
+        ];
+
+        Assert.All(withoutContext, send => Assert.Equal("context", Assert.Throws<ArgumentNullException>(send).ParamName));
+        Assert.All(notOwned, send => Assert.Throws<InvalidOperationException>(send));
     }
 }
