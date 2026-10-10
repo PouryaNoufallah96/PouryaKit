@@ -1718,6 +1718,29 @@ Deliberately left unchanged, with the reason: `AddPouryaKitJwtBearer` returns `A
 
 Architecture documentation (the `archify-review` lens, once at close-out): no package, namespace, dependency or runtime boundary changed in this pass, so the C4 diagrams and the package graph stand as #78 and #81 left them; the architecture README gave eleven behaviour facts to the skill references that own them and keeps the structure (#102). Value: Wave 3 starts from docs with one owner per fact and from code whose remaining lows are fixed with tests; cost: four work packages, four reviews, two final review legs; impact: no runtime behaviour changed outside the fixed defects.
 
+## Architecture diagrams: structure, ticket #106
+
+Ticket #106 of #104: five Archify `architecture` diagrams in `docs/architecture/diagrams/`, each a JSON source, its finalized HTML and its finalize receipt, authored from the code at `eb3c45c`, with every component's sources pinned to that revision. No file under `src/`, `samples/` or `tests/` changed; `docs/architecture/README.md` and its Mermaid views are #109's.
+
+| Diagram | The question it answers | Finalize receipt |
+|---|---|---|
+| `kit-context` | What surrounds a Host built on the Kit? | pass: validate, deliver, check, browser-check; 13 components, 14 relationships, 32 sources |
+| `module-boundaries` | What may a Module touch, and which architecture test rejects what it may not? | pass, all four gates; 12 components, 14 relationships, 33 sources |
+| `execution-core` | Which packages make up the execution core, and which may reference which? | pass, all four gates; 18 components, 24 relationships, 47 sources; 8 route crossings reported as advisory |
+| `messaging-and-delivery` | Which packages deliver messages, and which may reference which? | pass, all four gates; 11 components, 10 relationships, 23 sources |
+| `proving-sample-and-templates` | What is the Proving Sample made of, and what do the templates pack from it? | pass, all four gates; 9 components, 16 relationships, 23 sources; 3 route crossings reported as advisory |
+
+The two package diagrams draw the 29 references of `PackageGraph` (its lines 17 to 74), and no other: a script over both JSON sources found none missing and none extra. `PouryaKit.Testing` to `PouryaKit.Messaging.Wolverine.EFCore` appears in both, as a package of the other view drawn as a reference target, the old views' convention. The old views' arrows from a consuming Host to each package are not redrawn: the context and Module boundaries diagrams draw what a Host and a Module touch, and each package's own line says what it adds.
+
+| The old view said | The diagram says | The code |
+|---|---|---|
+| `Inventory.Host` serves `/health` and `/alive` | `/alive` in every environment, `/health` in Development only | `samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs` lines 130 to 141 |
+| One durable queue per Host | One durable queue per kind of Host, named by its service name | `src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqHostApplicationBuilderExtensions.cs` lines 21 to 33 |
+| The service defaults' technologies, without EF Core Relational | EF Core Relational among them, for the readiness check | `samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj` lines 9 and 10 |
+| `PouryaKit.Security.JwtBearer` writes the verified tenant under a claim type of `PouryaKit.Security` | The claim type is `PouryaKitClaimTypes` of `PouryaKit.Cqrs`, reached through the Security reference; JwtBearer uses no type of `PouryaKit.Security` | `src/PouryaKit.Security.JwtBearer/VerifiedClaims.cs` lines 3, 51 and 60 |
+
+The README's count of three views is #109's to correct. Checks: `check-docs.py` reads Markdown only, so the JSON and HTML files are outside it; it passed with this section. `validate.py` was not run: no package, template or validation input changed.
+
 ## Architecture diagrams: operations, ticket #108
 
 Ticket #108 (under #104): two Archify workflow diagrams of the Kit as built at `eb3c45c`, each with its JSON source and its finalized HTML in `docs/architecture/diagrams/`. The finalize receipts hold local machine paths, so they stay out of the repository; each one's summary line is quoted below, with the SHA-256 of the committed source and HTML it names. Every node cites the repository lines it rests on, verified by Archify against the committed bytes of that revision; Archify's workflow schema gives edges and cards no sources, so each of their facts rests on the sources of the nodes it joins. No file under `src/`, `samples/`, `tests/`, `.github/` or `scripts/` changed.

@@ -1,0 +1,581 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "What a Module may touch",
+    "output": "docs/architecture/diagrams/module-boundaries.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
+      "revision": "eb3c45c182e365dd6438c6f49377aa0893fd1603",
+      "link_mode": "web"
+    }
+  },
+  "components": [
+    {
+      "id": "hostcr",
+      "type": "backend",
+      "label": "Host's Composition Root",
+      "sublabel": "AddPouryaKitModules",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        220,
+        70
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 77,
+          "end_line": 87,
+          "label": "adds each Module"
+        },
+        {
+          "path": "src/PouryaKit.Modularity/ModulesBuilder.cs",
+          "line": 18,
+          "end_line": 34,
+          "label": "runs Configure once; registers the Gateway"
+        },
+        {
+          "path": "src/PouryaKit.Modularity/ModularityHostApplicationBuilderExtensions.cs",
+          "line": 24,
+          "end_line": 36,
+          "label": "one container; composition checks"
+        }
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Gateway",
+      "sublabel": "IGatewayProcessor<TModule>",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        220,
+        150
+      ],
+      "sources": [
+        {
+          "path": "src/PouryaKit.Modularity/IGatewayProcessor.cs",
+          "line": 6,
+          "end_line": 25,
+          "label": "the only way in; one Operation per call"
+        },
+        {
+          "path": "src/PouryaKit.Modularity/GatewayProcessor.cs",
+          "line": 44,
+          "end_line": 60,
+          "label": "new scope, Operation begun with its Module"
+        },
+        {
+          "path": "src/PouryaKit.Modularity/HostModules.cs",
+          "line": 91,
+          "end_line": 106,
+          "label": "refuses another Module's command"
+        }
+      ]
+    },
+    {
+      "id": "catcr",
+      "type": "backend",
+      "label": "Catalog's Composition Root",
+      "sublabel": "CatalogModule : IModuleDefinition",
+      "pos": [
+        420,
+        40
+      ],
+      "size": [
+        290,
+        70
+      ],
+      "sources": [
+        {
+          "path": "src/PouryaKit.Modularity/IModuleDefinition.cs",
+          "line": 3,
+          "end_line": 11,
+          "label": "Configure(ModuleBuilder)"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
+          "line": 26,
+          "end_line": 48,
+          "label": "declares data, Features, publications"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
+          "line": 77,
+          "end_line": 85,
+          "label": "the Module's only public type"
+        }
+      ]
+    },
+    {
+      "id": "uow",
+      "type": "backend",
+      "label": "Catalog's Unit of Work",
+      "sublabel": "IUnitOfWork keyed by the Module",
+      "pos": [
+        860,
+        40
+      ],
+      "size": [
+        250,
+        70
+      ],
+      "sources": [
+        {
+          "path": "src/PouryaKit.Modularity/ModuleBuilder.cs",
+          "line": 98,
+          "end_line": 130,
+          "label": "registered keyed by the Module"
+        },
+        {
+          "path": "src/PouryaKit.Modularity/ModularityHostApplicationBuilderExtensions.cs",
+          "line": 39,
+          "end_line": 57,
+          "label": "the Operation's Module picks it"
+        },
+        {
+          "path": "src/PouryaKit.Modularity/HostModules.cs",
+          "line": 71,
+          "end_line": 89,
+          "label": "a Module with commands must register one"
+        }
+      ]
+    },
+    {
+      "id": "endpoints",
+      "type": "frontend",
+      "label": "Catalog's endpoints",
+      "sublabel": "IEndpoint, internal",
+      "pos": [
+        420,
+        170
+      ],
+      "size": [
+        290,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductEndpoint.cs",
+          "line": 15,
+          "end_line": 33,
+          "label": "sends through Catalog's Gateway"
+        },
+        {
+          "path": "src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs",
+          "line": 123,
+          "end_line": 132,
+          "label": "the request's Operation Context"
+        }
+      ]
+    },
+    {
+      "id": "handlers",
+      "type": "backend",
+      "label": "Catalog's Feature code",
+      "sublabel": "handlers and aggregates, internal",
+      "pos": [
+        420,
+        290
+      ],
+      "size": [
+        290,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommandHandler.cs",
+          "line": 1,
+          "end_line": 28,
+          "label": "Kit types: CommandHandler, Result"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj",
+          "line": 8,
+          "end_line": 19,
+          "label": "its Contracts and Kit packages"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/GetProduct/CatalogProducts.cs",
+          "line": 8,
+          "end_line": 14,
+          "label": "answers its Contracts via its Gateway"
+        }
+      ]
+    },
+    {
+      "id": "inventory",
+      "type": "backend",
+      "label": "Inventory Module",
+      "sublabel": "another Module of the Host",
+      "pos": [
+        1160,
+        170
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/Inventory.csproj",
+          "line": 8,
+          "end_line": 15,
+          "label": "Catalog's Contracts, never Catalog"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
+          "line": 29,
+          "end_line": 53,
+          "label": "no reference to another Module's code"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
+          "line": 28,
+          "end_line": 39,
+          "label": "read from the restored closure"
+        }
+      ]
+    },
+    {
+      "id": "contracts",
+      "type": "external",
+      "label": "Catalog.Contracts",
+      "sublabel": "plain records, ICatalogProducts",
+      "pos": [
+        1160,
+        290
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj",
+          "line": 1,
+          "end_line": 5,
+          "label": "no reference at all"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/ICatalogProducts.cs",
+          "line": 3,
+          "end_line": 13,
+          "label": "the question Catalog answers"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
+          "line": 55,
+          "end_line": 72,
+          "label": "nothing of the Kit, no Module"
+        }
+      ]
+    },
+    {
+      "id": "pipeline",
+      "type": "security",
+      "label": "Pipeline contracts",
+      "sublabel": "only the Kit implements them",
+      "pos": [
+        60,
+        480
+      ],
+      "size": [
+        250,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
+          "line": 259,
+          "end_line": 318,
+          "label": "IDispatcher, IUnitOfWork, IQueryCache..."
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PipelineContractTests.cs",
+          "line": 10,
+          "end_line": 47,
+          "label": "Modules and Hosts implement none"
+        }
+      ]
+    },
+    {
+      "id": "kitsteps",
+      "type": "security",
+      "label": "Kit steps",
+      "sublabel": "commit, Outbox, Receipts, BeginOperation",
+      "pos": [
+        430,
+        480
+      ],
+      "size": [
+        270,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
+          "line": 58,
+          "end_line": 94,
+          "label": "saves, commits, bulk writes, Kit steps"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
+          "line": 236,
+          "end_line": 257,
+          "label": "the Kit steps Feature code never calls"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/FeatureCodeTests.cs",
+          "line": 16,
+          "end_line": 60,
+          "label": "only the Unit of Work saves (ADR 0003)"
+        }
+      ]
+    },
+    {
+      "id": "kit",
+      "type": "backend",
+      "label": "Kit packages",
+      "sublabel": "each references only what PackageGraph allows",
+      "pos": [
+        790,
+        480
+      ],
+      "size": [
+        560,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 17,
+          "end_line": 74,
+          "label": "the allowed references"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs",
+          "line": 12,
+          "end_line": 17,
+          "label": "each package checked against it"
+        }
+      ]
+    },
+    {
+      "id": "wolverine",
+      "type": "external",
+      "label": "Wolverine and JasperFx",
+      "sublabel": "transport types",
+      "pos": [
+        970,
+        620
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 49,
+          "end_line": 54,
+          "label": "only the Messaging.Wolverine packages"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
+          "line": 110,
+          "end_line": 143,
+          "label": "no transport type in a Module"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/FeatureCodeTests.cs",
+          "line": 83,
+          "end_line": 97,
+          "label": "Modules and Contracts name none"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ModularMonolith.Host: one container",
+      "wraps": [
+        "hostcr",
+        "gateway",
+        "catcr",
+        "uow",
+        "endpoints",
+        "handlers",
+        "inventory",
+        "contracts"
+      ],
+      "pad": 26
+    },
+    {
+      "kind": "security-group",
+      "label": "Catalog Module",
+      "wraps": [
+        "catcr",
+        "uow",
+        "endpoints",
+        "handlers"
+      ],
+      "pad": 14
+    },
+    {
+      "kind": "region",
+      "label": "PouryaKit",
+      "wraps": [
+        "pipeline",
+        "kitsteps",
+        "kit"
+      ],
+      "pad": 18
+    }
+  ],
+  "connections": [
+    {
+      "id": "adds-module",
+      "from": "hostcr",
+      "to": "catcr",
+      "label": "Add<CatalogModule>()",
+      "variant": "emphasis"
+    },
+    {
+      "id": "one-gateway",
+      "from": "hostcr",
+      "to": "gateway",
+      "label": "one per Module",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "registers-uow",
+      "from": "catcr",
+      "to": "uow",
+      "label": "registers it"
+    },
+    {
+      "id": "endpoint-sends",
+      "from": "endpoints",
+      "to": "gateway",
+      "label": "sends through",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "gateway-runs",
+      "from": "gateway",
+      "to": "handlers",
+      "label": "its Module's only",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "publishes-answers",
+      "from": "handlers",
+      "to": "contracts",
+      "label": "publishes, answers through"
+    },
+    {
+      "id": "contracts-only",
+      "from": "inventory",
+      "to": "contracts",
+      "label": "Contracts only",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "builds-on-kit",
+      "from": "handlers",
+      "to": "kit",
+      "label": "references",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "kit-transport",
+      "from": "kit",
+      "to": "wolverine",
+      "label": "Messaging.Wolverine only",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "never-other-module",
+      "from": "inventory",
+      "to": "handlers",
+      "label": "never: ModuleBoundaryTests",
+      "variant": "security"
+    },
+    {
+      "id": "never-contracts-kit",
+      "from": "contracts",
+      "to": "kit",
+      "label": "never: ModuleBoundaryTests",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "never-kit-steps",
+      "from": "handlers",
+      "to": "kitsteps",
+      "label": "never: FeatureCodeTests",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "never-pipeline",
+      "from": "handlers",
+      "to": "pipeline",
+      "label": "never implements: PipelineContractTests",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "never-transport",
+      "from": "inventory",
+      "to": "wolverine",
+      "label": "never: FeatureCodeTests",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Red lines: what the architecture tests reject",
+      "items": [
+        "A Module that references another Module's implementation, even unused: ModuleBoundaryTests, \u201cNo module references another modules implementation\u201d.",
+        "Contracts that reference the Kit or a Module: ModuleBoundaryTests, \u201cContracts reference nothing from the kit and no module\u201d.",
+        "Feature code that saves, commits, writes in bulk, opens a transaction or calls a Kit step such as the Unit of Work, the Outbox or BeginOperation (ADR 0003): FeatureCodeTests, \u201cNo module saves commits or touches its database and only the unit of work does\u201d.",
+        "A Module or its Contracts that name a Wolverine or JasperFx type: FeatureCodeTests, \u201cNo module contract or messaging contract names a transport type\u201d.",
+        "A Module, its Contracts or a Host that implements a pipeline contract: PipelineContractTests, \u201cNo module or host implements a pipeline contract and the kit implements each\u201d."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "What holds the boundary",
+      "items": [
+        "A Module's only public types are its Composition Root and what its Host implements for it: ModuleBoundaryTests, \u201cA modules only public types are its composition root and what its host implements for it\u201d.",
+        "The Gateway runs only its own Module's commands and queries, each as one Operation in a new scope begun with the Module; another Module's command throws.",
+        "The Unit of Work a Module's Composition Root registers is keyed by the Module, and the Operation's Module picks it; a Module that handles a command without one fails while the Host is composed.",
+        "Each Kit package references exactly what PackageGraph allows: PackageGraphTests, \u201cA kit packages references and closure are those section c allows\u201d."
+      ]
+    }
+  ]
+}
