@@ -1,0 +1,27 @@
+docs/acceptance.md
+  s_a846915d2dd93c::t_9cb66dc2aa6124 1305
+docs/adr/0003-single-commit-owner.md
+  s_a846915d2dd93c::t_68544524bd95e6 171-177
+docs/architecture/README.md
+  s_a846915d2dd93c::t_ca708300c94bbc 537
+src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotStep.cs
+  s_a846915d2dd93c::t_6b5b854cb81a37 3,24-29,43
+tests/ModularMonolith.Tests/SnapshotTests.cs
+  s_a846915d2dd93c::t_e03aedc8fe8466 1-2,8-10,13,17,397-416,641-689
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f80a3689a5f82b6668abd61aa0637331de0eef87",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
