@@ -26,6 +26,9 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   from its table, or a heading or paragraph put inside one, fails.
 - Union duplicates: in a file `.gitattributes` merges with `merge=union`, a line twice or two lines linking the same
   target fails. A union merge keeps both sides of a line both branches changed.
+- Ordered sections: in `docs/acceptance.md`, the `## <prefix> ..., ticket #N` headings of each prefix in ORDERED_SECTIONS
+  run in ascending ticket order. Parallel tickets append at the end and conflict there by design, and the owner asked
+  for ticket order after every merge (session 5 missed one until an advisor caught it).
 - Test pointers: in `docs/acceptance.md`, which the Names rule leaves out, a span that is exactly `Class.Method`
   with a class ending in `Tests` must name a declared test: a method that the body of a class of that name declares,
   in a `.cs` file under `tests/` or the templates' generated tests, or in a `test_*.py`. Python is read with `ast`;
@@ -414,6 +417,26 @@ def csharp_tests(text: str) -> dict[str, set[str]]:
     return found
 
 
+ORDERED_SECTIONS = ("Pre-Wave 3",)
+ORDERED_HEADING = re.compile(r"## (?P<prefix>" + "|".join(map(re.escape, ORDERED_SECTIONS)) + r") .*, ticket #(?P<ticket>\d+)\s*$")
+
+
+def check_section_order(docs: dict[str, Doc]) -> None:
+    doc = docs.get("docs/acceptance.md")
+    if doc is None:
+        return
+    last: dict[str, tuple[int, int]] = {}
+    for number, line in enumerate(doc.lines, start=1):
+        match = ORDERED_HEADING.match(line)
+        if not match:
+            continue
+        prefix, ticket = match.group("prefix"), int(match.group("ticket"))
+        if prefix in last and ticket < last[prefix][0]:
+            failures.append(f"docs/acceptance.md:{number}: the {prefix} section of ticket #{ticket} comes after ticket #{last[prefix][0]}'s (line {last[prefix][1]}); keep these sections in ticket order")
+        if prefix not in last or ticket > last[prefix][0]:
+            last[prefix] = (ticket, number)
+
+
 def check_test_pointers(docs: dict[str, Doc], files: list[str]) -> None:
     if ACCEPTANCE not in docs:
         return
@@ -501,6 +524,7 @@ def main() -> int:
     check_code_spans(docs)
     check_tables(docs)
     check_union_duplicates(files)
+    check_section_order(docs)
     check_test_pointers(docs, files)
     check_provenance(files)
     check_kit_paths(docs, files)

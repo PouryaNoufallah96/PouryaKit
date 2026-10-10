@@ -121,6 +121,15 @@ class CheckDocsTests(unittest.TestCase):
     def test_a_clean_tree_passes(self) -> None:
         self.assertEqual(self.check(), (0, "check-docs: 0 failure(s) in 6 Markdown file(s)\n"))
 
+    def test_pre_wave_3_acceptance_sections_out_of_ticket_order_fail(self) -> None:
+        """Session 5: #88's section was appended after #97's and left there until an advisor caught it."""
+        ordered = "# Acceptance\n\n## Pre-Wave 3 the Web fixes, ticket #86\n\nx\n\n## Pre-Wave 3 naming, ticket #88\n\nx\n\n## Pre-Wave 3 the OpenAPI options, ticket #97\n\nx\n"
+        self.assertPasses({"docs/acceptance.md": ordered})
+        disordered = "# Acceptance\n\n## Pre-Wave 3 the Web fixes, ticket #86\n\nx\n\n## Pre-Wave 3 the OpenAPI options, ticket #97\n\nx\n\n## Pre-Wave 3 naming, ticket #88\n\nx\n"
+        self.assertFails({"docs/acceptance.md": disordered}, "docs/acceptance.md:11: the Pre-Wave 3 section of ticket #88 comes after ticket #97's (line 7); keep these sections in ticket order")
+        # Earlier waves' records are not held to it: their sections sit in the order the Phases ran.
+        self.assertPasses({"docs/acceptance.md": "# Acceptance\n\n## Wave 2 caching, ticket #43\n\nx\n\n## Wave 2 messaging, ticket #42\n\nx\n"})
+
     def test_a_renamed_kit_symbol_fails(self) -> None:
         self.assertFails({"docs/guide.md": "# Guide\n\nCall `Product.Retitle()`.\n"}, "docs/guide.md:3: `Retitle` names nothing in the code")
 
