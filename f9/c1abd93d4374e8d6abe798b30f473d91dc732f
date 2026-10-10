@@ -1,0 +1,78 @@
+src/PouryaKit.Messaging.Wolverine.EFCore/EfReceipts.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 56-60
+docs/acceptance.md
+  s_a846915d2dd93c::t_bf189348f4bf34 1624-1655
+  s_a846915d2dd93c::t_92a74b215c058c 1623
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_a846915d2dd93c::t_bf189348f4bf34 74
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_a846915d2dd93c::t_bf189348f4bf34 102-106
+  s_a846915d2dd93c::t_0a4c0778329c23 107
+.agents/skills/pourya-kit/references/messaging.md
+  s_a846915d2dd93c::t_bf189348f4bf34 523
+docs/adr/0003-single-commit-owner.md
+  s_a846915d2dd93c::t_bf189348f4bf34 178-184
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_a846915d2dd93c::t_bf189348f4bf34 84-88
+.claude/agent-memory/kit-implementer/snapshot-and-scheduled-command-facts.md
+  s_a846915d2dd93c::t_bf189348f4bf34 94-99
+tests/ModularMonolith.Tests/RecurringCommandTests.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 37,46,64,173,183,232,262,265,305-356,427,431,447,452,509,588
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_a846915d2dd93c::t_bf189348f4bf34 886-893
+tests/ModularMonolith.Tests/Fixtures/Sql.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 25-39
+src/PouryaKit.Persistence.Dapper/PageSql.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 48-49,56-64
+src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotStep.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 28-30,45,48,53-56,137-139,141,145-146,153-155,162,164,174,176-180,194,201-205,212-217
+tests/ModularMonolith.Tests/UnitOfWorkTests.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 6-7,9,11-12,114-151
+tests/ModularMonolith.Tests/PagingTests.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 2-3,218-240
+  s_a846915d2dd93c::t_a5d5f948226188 241-242
+tests/ModularMonolith.Tests/SnapshotTests.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 11,418-437,678-679,689-693,701-702,715-722,725-736
+src/PouryaKit.Persistence.Dapper/DapperServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 26-27,44
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_a846915d2dd93c::t_bf189348f4bf34 8-10
+  s_a846915d2dd93c::t_2815079f346a3d 1
+tests/ModularMonolith.Tests/Fixtures/CommitProbe.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 29
+tests/ModularMonolith.Tests/DelayedCommandTests.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 17-18,67,311-371
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 60-62
+tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 43-50,204-205,251-260,262,270-290
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 5,20,44,50-65,70-75
+  s_a846915d2dd93c::t_54a7c6c97bacfa 76
+tests/ModularMonolith.Tests/DapperTests.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 202-210
+docs/architecture/README.md
+  s_a846915d2dd93c::t_bf189348f4bf34 450,452,512,530,535,537
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_a846915d2dd93c::t_bf189348f4bf34 109-116
+tests/ModularMonolith.Tests/IdempotencyRetentionTests.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 30-50,65-67,69-73,75-81,95-96,99-118,122,132-137,139-147,167,172-176,178-183,295-296,299-306
+tests/ModularMonolith.Tests/Fixtures/AppFixture.cs
+  s_a846915d2dd93c::t_bf189348f4bf34 118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f9c1abd93d4374e8d6abe798b30f473d91dc732f",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
