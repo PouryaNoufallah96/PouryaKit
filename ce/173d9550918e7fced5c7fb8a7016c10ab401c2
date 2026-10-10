@@ -1,0 +1,35 @@
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_a846915d2dd93c::t_938cd998729c02 1-310
+  s_a846915d2dd93c::t_915998c108247c 311-634
+docs/architecture/diagrams/host-start.workflow.json
+  s_a846915d2dd93c::t_a113ce4425ed07 171
+  s_a846915d2dd93c::t_9ca29969a6f4fa 1-163,165-170,172-209
+  s_a846915d2dd93c::t_1f3a954556bbe4 164
+  s_a846915d2dd93c::t_8109e0e57e2c5f 210-507
+docs/acceptance.md
+  s_a846915d2dd93c::t_cc596b9567b3d0 1720-1730
+docs/architecture/diagrams/ci-and-publication.finalize-summary.json
+  s_a846915d2dd93c::t_5ef60f3beb5760 1-47
+docs/architecture/diagrams/ci-and-publication.html
+  s_a846915d2dd93c::t_c2101cdfa7501d 1-13916
+docs/architecture/diagrams/host-start.finalize-summary.json
+  s_a846915d2dd93c::t_aa2aa7a6dea9a8 1-76
+docs/architecture/diagrams/host-start.html
+  s_a846915d2dd93c::t_082c7bd24e638e 1-13807
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ce173d9550918e7fced5c7fb8a7016c10ab401c2",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
