@@ -432,39 +432,48 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
     public async Task An_occurrence_stored_before_its_command_changed_shape_is_set_aside_and_logged_and_its_cadence_waits_for_the_next_host_start()
     {
         var connectionString = await NewDatabaseAsync();
-        await using var released = Compose(connectionString, TimeSpan.FromHours(1));
-        await using var restarted = Compose(connectionString, TimeSpan.FromHours(1));
-        await using var next = Compose(connectionString, TimeSpan.FromHours(1));
-        await HostFixture.StartHostAsync(released, TestContext.Current.CancellationToken);
-        await released.StopAsync(TestContext.Current.CancellationToken);
+        // Each Host is disposed before the next one starts, so only one Host's connection pools are open at a time:
+        // three at once filled the assembly's one PostgreSQL to its 100 connections (53300).
+        await using (var released = Compose(connectionString, TimeSpan.FromHours(1)))
+        {
+            await HostFixture.StartHostAsync(released, TestContext.Current.CancellationToken);
+            await released.StopAsync(TestContext.Current.CancellationToken);
+        }
+
         var stored = Assert.Single(await Sql.RowsAsync(connectionString, $"select id, body from wolverine.wolverine_incoming_envelopes where {OnQueue}"));
         // Its message as the release before wrote it, with the occurrence under a member since renamed.
         var envelope = EnvelopeSerializer.Deserialize((byte[])stored[1]);
         envelope.Data = Encoding.UTF8.GetBytes($$"""{"at":"{{envelope.Headers[DelayedCommandHeaders.Occurrence]}}"}""");
         await ExecuteAsync(connectionString, "update wolverine.wolverine_incoming_envelopes set body = $1 where id = $2", EnvelopeSerializer.Serialize(envelope), stored[0]);
         List<object[]> waiting;
-        await HostFixture.StartHostAsync(restarted, TestContext.Current.CancellationToken);
-        try
+        await using (var restarted = Compose(connectionString, TimeSpan.FromHours(1)))
         {
-            // Due now, an hour early, once the start has looked for a waiting occurrence.
-            await ExecuteAsync(connectionString, "update wolverine.wolverine_incoming_envelopes set execution_time = now() where id = $1", stored[0]);
-            await WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_dead_letters where {OnQueue})");
-            waiting = await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status <> 'Handled'");
-        }
-        finally
-        {
-            await restarted.StopAsync(TestContext.Current.CancellationToken);
+            await HostFixture.StartHostAsync(restarted, TestContext.Current.CancellationToken);
+            try
+            {
+                // Due now, an hour early, once the start has looked for a waiting occurrence.
+                await ExecuteAsync(connectionString, "update wolverine.wolverine_incoming_envelopes set execution_time = now() where id = $1", stored[0]);
+                await WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_dead_letters where {OnQueue})");
+                waiting = await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status <> 'Handled'");
+            }
+            finally
+            {
+                await restarted.StopAsync(TestContext.Current.CancellationToken);
+            }
         }
 
-        await HostFixture.StartHostAsync(next, TestContext.Current.CancellationToken);
         List<object[]> afterNextStart;
-        try
+        await using (var next = Compose(connectionString, TimeSpan.FromHours(1)))
         {
-            afterNextStart = await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status = 'Scheduled'");
-        }
-        finally
-        {
-            await next.StopAsync(TestContext.Current.CancellationToken);
+            await HostFixture.StartHostAsync(next, TestContext.Current.CancellationToken);
+            try
+            {
+                afterNextStart = await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status = 'Scheduled'");
+            }
+            finally
+            {
+                await next.StopAsync(TestContext.Current.CancellationToken);
+            }
         }
 
         // Set aside before the Kit's delivery ran, so it recorded no Receipt and reconciled nothing; the dead letter and an
