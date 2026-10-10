@@ -1002,7 +1002,7 @@ read, and moves two broker rules to registration or to deployment.
   `IMessageInbox.MoveToDeadLetterStorageAsync` unless the endpoint builds a dead-letter sender. A local queue builds
   none (`Endpoint.TryBuildDeadLetterSender`), and the RabbitMQ Host queue none because `DisableDeadLetterQueueing()`
   (`RabbitMqExtension.cs`) turns the broker's dead-letter queue off (`RabbitMqQueue.TryBuildDeadLetterSender`, read in
-  WolverineFx.RabbitMQ 6.48.2). The outcome above holds on both; no `IDeadLetterInterceptor` runs for a Kit Host, and
+  WolverineFx.RabbitMQ 6.48.3, the pinned version). The outcome above holds on both; no `IDeadLetterInterceptor` runs for a Kit Host, and
   the Kit registers none.*
 - **Unknown members are skipped,** the owner's lean, decided on this evidence. A member the body carries and the
   contract lacks is ignored (`JsonUnmappedMemberHandling.Skip`, set explicitly). The versioning rule (#49) makes "a change
