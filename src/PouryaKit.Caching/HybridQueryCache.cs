@@ -15,6 +15,9 @@ internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<Hybrid
 {
     private static readonly JsonSerializerOptions Json = new JsonSerializerOptions().UsePouryaKitJson();
 
+    // HybridCache's tag that evicts every entry.
+    private const string WildcardTag = "*";
+
     // This Host's handler runs in flight, each only while its factory runs, so the record never outgrows them.
     private readonly ConcurrentDictionary<RunningRead, byte> _running = new();
 
@@ -103,16 +106,19 @@ internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<Hybrid
 
     // The Operation has committed, so a failed eviction cannot fail it: it is logged, and the tag's entries are returned
     // until they expire. Tag by tag, so a distributed cache that refuses one leaves the others evicted. A run in flight
-    // on one of the tags may have read before the commit, so it is marked first and stores nothing; a run that starts
-    // later reads after the commit.
+    // on one of the tags, or on any tag when they include HybridCache's wildcard, which evicts every entry, may have
+    // read before the commit, so it is marked first and stores nothing; a run that starts later reads after the commit.
     public async Task EvictAsync(IReadOnlyCollection<string> tags)
     {
         ArgumentNullException.ThrowIfNull(tags);
-        foreach (var (read, _) in _running)
+        foreach (var tag in tags)
         {
-            if (read.Tags.Any(tags.Contains))
+            foreach (var (read, _) in _running)
             {
-                read.Evicted = true;
+                if (tag == WildcardTag || read.Tags.Contains(tag))
+                {
+                    read.Evicted = true;
+                }
             }
         }
 

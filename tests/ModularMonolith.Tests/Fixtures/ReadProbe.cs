@@ -26,13 +26,18 @@ internal static class ReadProbe
         services.AddSingleton<IReadConnectionFactory>(provider => new HeldReads((IReadConnectionFactory)reads.ImplementationFactory!(provider)));
     }
 
-    private sealed class HeldReads(IReadConnectionFactory reads) : IReadConnectionFactory
+    // Disposed with the Host in the wrapped factory's place, so the Host's disposal still reaches its connection pool.
+    private sealed class HeldReads(IReadConnectionFactory reads) : IReadConnectionFactory, IDisposable, IAsyncDisposable
     {
         public async ValueTask<DbConnection> OpenAsync(CancellationToken cancellationToken = default)
         {
             var connection = await reads.OpenAsync(cancellationToken);
             return Armed.Value is { } hold ? new HeldConnection(connection, hold) : connection;
         }
+
+        public void Dispose() => (reads as IDisposable)?.Dispose();
+
+        public ValueTask DisposeAsync() => reads is IAsyncDisposable disposable ? disposable.DisposeAsync() : ValueTask.CompletedTask;
     }
 
     private sealed class HeldConnection(DbConnection connection, Hold hold) : DbConnection

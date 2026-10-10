@@ -79,6 +79,18 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Fact]
+    public async Task Disposing_a_host_disposes_its_read_connection_pool()
+    {
+        var host = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
+        var connections = host.Services.GetRequiredService<IReadConnectionFactory>();
+        await using (await connections.OpenAsync(TestContext.Current.CancellationToken)) { }
+
+        await host.DisposeAsync();
+
+        await Assert.ThrowsAsync<ObjectDisposedException>(async () => await connections.OpenAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task Opening_a_read_connection_with_a_cancelled_token_is_cancelled()
     {
         await using (await Connections.OpenAsync(TestContext.Current.CancellationToken)) { }

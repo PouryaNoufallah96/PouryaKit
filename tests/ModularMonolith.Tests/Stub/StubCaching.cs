@@ -270,3 +270,15 @@ internal sealed class FolderNamesQueryHandler(IRepository<Folder, FolderId> fold
         yield return folder.Name;
     }
 }
+
+// Changes nothing and declares HybridCache's wildcard tag, so its commit evicts every entry.
+internal sealed record EvictEveryEntryCommand : Command, IInvalidatesCache
+{
+    public IReadOnlyCollection<string> InvalidatedCacheTags => ["*"];
+}
+
+internal sealed class EvictEveryEntryCommandHandler : CommandHandler<EvictEveryEntryCommand>
+{
+    public override Task<Result> Handle(EvictEveryEntryCommand command, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success());
+}

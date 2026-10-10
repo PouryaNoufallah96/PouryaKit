@@ -260,6 +260,46 @@ public sealed class CachingTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Fact]
+    public async Task A_read_in_flight_across_a_commit_that_evicts_every_entry_stores_nothing()
+    {
+        var lamp = await CreateProductAsync("Lamp");
+        var hold = new Hold();
+
+        var held = NameAfterHeldReadAsync(lamp, As("ada"), hold);
+        await hold.Changed.Task.WaitAsync(TimeSpan.FromSeconds(15), TestContext.Current.CancellationToken);
+        var evicted = await Stub.SendAsync(new EvictEveryEntryCommand(), TestContext.Current.CancellationToken);
+        hold.Released.SetResult();
+        var answered = await held;
+        await RenameBehindTheCacheAsync(lamp, "Shadow");
+
+        Assert.True(evicted.IsSuccess);
+        Assert.Equal("Lamp", answered);
+        // The handler ran again: nothing was stored.
+        Assert.Equal("Shadow", await NameAsync(lamp, As("ada")));
+    }
+
+    [Fact]
+    public async Task A_read_in_flight_across_a_commit_that_evicts_only_other_tags_is_stored()
+    {
+        var lamp = await CreateProductAsync("Lamp");
+        var desk = await CreateProductAsync("Desk");
+        var hold = new Hold();
+
+        var held = NameAfterHeldReadAsync(lamp, As("ada"), hold);
+        await hold.Changed.Task.WaitAsync(TimeSpan.FromSeconds(15), TestContext.Current.CancellationToken);
+        // Evicts the desk's tag, which the held read does not carry.
+        var renamed = await Catalog.SendAsync(new RenameProductCommand(desk, "Writing desk"), As("ada"), TestContext.Current.CancellationToken);
+        hold.Released.SetResult();
+        var answered = await held;
+        await RenameBehindTheCacheAsync(lamp, "Shadow");
+
+        Assert.True(renamed.IsSuccess);
+        Assert.Equal("Lamp", answered);
+        // The stored answer: the handler did not run again.
+        Assert.Equal("Lamp", await NameAsync(lamp, As("ada")));
+    }
+
+    [Fact]
     public async Task After_a_committed_removal_a_warm_read_is_not_found_for_every_actor()
     {
         var lamp = await CreateProductAsync("Lamp");
