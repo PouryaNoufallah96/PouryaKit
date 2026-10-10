@@ -1,0 +1,35 @@
+.claude/agent-memory/kit-implementer/archify-diagram-facts.md
+  s_a846915d2dd93c::t_c8f326a311e1f1 15
+docs/architecture/diagrams/execution-core.architecture.json
+  s_a846915d2dd93c::t_57e0023b0d7c30 16-27,29-44,48-59,61-71,75-86,88-98,102-113,115-132,136-147,149-165,169-180,182-193,197-208,210-226,230-241,243-259,263-274,276-293,297-308,310-321,325-336,338-349,353-364,366-382,386-397,399-415,419-430,432-437,441-452,454-469,473-484,486-502,506-517,519-536,540-551,553-569,574-738,741-762
+docs/architecture/diagrams/execution-core.finalize-summary.json
+  s_a846915d2dd93c::t_c0f2741646c6d7 10-11,15-16,46
+docs/architecture/diagrams/execution-core.html
+  s_a846915d2dd93c::t_0efd3ad0af9f95 4990,5016,5117-5118,5128-5129,5139-5140,5150-5151,5161-5162,5172-5173,5183-5184,5195-5196,5207-5208,5230-5231,5244-5245,5258-5259,5281-5282,5292-5293,5303-5304,5315-5316,5368,5372-5375,5377-5379,5381-5383,5385-5387,5389-5391
+docs/architecture/diagrams/kit-context.finalize-summary.json
+  s_a846915d2dd93c::t_055451f62bcf69 10-11,15-16,46
+docs/architecture/diagrams/kit-context.html
+  s_a846915d2dd93c::t_852637a7790e67 4990,5016,5112-5113,5137-5138,5289
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_a846915d2dd93c::t_cc53abc116fa53 16-27,29-33,37-48,50-54,58-69,71-76,80-91,93-109,113-124,126-142,146-157,159-164,168-179,181-198,202-213,215-231,235-246,248-259,263-274,276-293,297-308,310-321,326-336,339-418,421-445
+docs/architecture/diagrams/messaging-and-delivery.finalize-summary.json
+  s_a846915d2dd93c::t_6e8c2583f26eb0 10-11,15-16,46
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_a846915d2dd93c::t_2c6ca9e68d8453 5040-5041,5124-5126,5130-5131,5220-5221
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "173cfff709461feace7215b2fb8e8a7c295d7a55",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
