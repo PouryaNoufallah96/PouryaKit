@@ -1,0 +1,27 @@
+.agents/skills/pourya-kit/references/messaging.md
+  s_a846915d2dd93c::t_24fe6c30f67cbe 83
+docs/acceptance.md
+  s_a846915d2dd93c::t_493519f8c67b5e 1652
+docs/architecture/README.md
+  s_a846915d2dd93c::t_5768bf6263f94b 496,504,515
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Subscriptions.cs
+  s_a846915d2dd93c::t_17e2b88c9f14b6 15-18,283
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_a846915d2dd93c::t_ea2259a7657264 53-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "52c70e40d12862dc2e2cdcc2fcf4a686b001e97f",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
