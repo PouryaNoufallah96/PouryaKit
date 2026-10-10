@@ -26,19 +26,13 @@ public sealed class CrossModuleTests(App app)
 
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         // Inventory receives ProductCreatedV1 after Catalog's commit, in an Operation and a schema of its own.
+        await app.WaitUntilDeliveredAsync(cancellationToken);
         await using var connection = new NpgsqlConnection(app.ConnectionString);
         await connection.OpenAsync(cancellationToken);
         await using var stockItems = new NpgsqlCommand("select count(*) from inventory.stock_items where product_id = $1", connection)
         {
             Parameters = { new() { Value = product } },
         };
-        var deadline = DateTimeOffset.UtcNow.AddSeconds(30);
-        long opened;
-        while ((opened = (long)(await stockItems.ExecuteScalarAsync(cancellationToken))!) == 0 && DateTimeOffset.UtcNow < deadline)
-        {
-            await Task.Delay(100, cancellationToken);
-        }
-
-        Assert.Equal(1L, opened);
+        Assert.Equal(1L, (long)(await stockItems.ExecuteScalarAsync(cancellationToken))!);
     }
 }

@@ -3,10 +3,11 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-    <PackageReference Include="Testcontainers.PostgreSql" />
-    <!-- The Host runs in Development here, where Wolverine compiles its handler code at run time, from any build. -->
-    <PackageReference Include="WolverineFx.RuntimeCompilation" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <!-- PostgreSQL in a container, migrations, the Host's start and a data reset before each test. It brings
+         WolverineFx.RuntimeCompilation: the Host runs in Development here, where Wolverine compiles its handler code at run
+         time, from any build. -->
+    <PackageReference Include="PouryaKit.Testing" />
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
   <ItemGroup>

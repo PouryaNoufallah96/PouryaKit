@@ -14,7 +14,8 @@ namespace ModularMonolith.Tests;
 // The trace of an Operation continues across RabbitMQ into the deliveries it causes in another Host (ADR 0009, #52
 // amendment): ModularMonolith.Host with a broker (Catalog and Billing) and Inventory.Host, each observing its
 // Operations, joined only by the broker. An ActivityListener sees its own process only, so both Hosts run in this one.
-public sealed class CrossProcessTracingTests(BrokerFixture broker) : IClassFixture<BrokerFixture>
+[Collection<BrokerCollection>]
+public sealed class CrossProcessTracingTests(BrokerFixture broker)
 {
     private const string Publishing = "catalog.product-created.publish-product-created";
     private const string StockItems = "inventory.product-created";

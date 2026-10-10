@@ -114,7 +114,8 @@ internal static class TemplateRules
 
     /// <summary>
     /// The monolith runs without Modularity: no file it generates names the package or one of its public types or
-    /// registrations, in a project file or in code.
+    /// registrations, in a project file or in code. Its test project reaches Modularity only through PouryaKit.Testing,
+    /// which <c>validate.py</c> allows in that project's closure alone (ticket #87).
     /// </summary>
     public static IEnumerable<string> ModularityIn(IEnumerable<TextFile> generated) =>
         from file in generated
@@ -154,6 +155,99 @@ internal static class TemplateRules
             .Except(unreplaced)
             .Select(path => $"The monolith excludes the sample's {path} but has no file of its own there.")
             .Concat(replacements.Except(excluded).Select(path => $"The monolith's {path} replaces no file it excludes from the sample."));
+
+    /// <summary>
+    /// Each of the monolith's own files that replaces a sample file makes the sample file's calls, in its order and with
+    /// its arguments, so a route, an API version, an anonymous Actor, an Idempotency-Key, an endpoint name or a
+    /// registration that changes in the sample fails here until the monolith follows (ticket #87). A call is a member
+    /// call or an object creation, its arguments as written with any nested parentheses read as <c>(…)</c>, since each
+    /// nested call is compared on its own; a constant, such as an endpoint's name, is compared with its value. Read away
+    /// first are the composition's own differences: a sample endpoint passes the Operation Context to the Gateway, which
+    /// the monolith's <c>IDispatcher</c> takes from the request; only the sample registers <c>ICatalogProducts</c>, which
+    /// answers other Modules; and the monolith names its assembly, <c>catalog</c>, where a Module's registration infers
+    /// it. A type argument is read by its last name, as a file's usings decide how much of it is written.
+    /// </summary>
+    public static IEnumerable<string> MirrorDifferences(IEnumerable<TextFile> replacements, IReadOnlyList<TextFile> sample)
+    {
+        foreach (var replacement in replacements)
+        {
+            var original = sample.Single(file => "src/" + file.Path == replacement.Path);
+            List<string> calls = Calls(replacement.Text), expected = Calls(original.Text);
+            var at = Enumerable.Range(0, Math.Max(calls.Count, expected.Count)).FirstOrDefault(i => calls.ElementAtOrDefault(i) != expected.ElementAtOrDefault(i), -1);
+            if (at >= 0)
+            {
+                yield return $"{replacement.Path} calls {calls.ElementAtOrDefault(at) ?? "nothing more"} where the sample's {original.Path} calls {expected.ElementAtOrDefault(at) ?? "nothing more"}.";
+            }
+        }
+    }
+
+    private static List<string> Calls(string text)
+    {
+        text = Regex.Replace(text, "//.*", "");
+        text = Regex.Replace(text, @",\s*context(?=\s*[,)])", "");
+        text = Regex.Replace(Regex.Replace(text, @"\(\s*catalog\s*\)", "()"), @",\s*catalog(?=\s*\))", "");
+        var constants = Regex.Matches(text, @"\bconst\s+\w+\s+(\w+\s*=\s*[^;]*)").Select(match => (match.Index, Call: "const " + Spaced(match.Groups[1].Value)));
+        var calls = Regex
+            .Matches(text, @"(?:\.|\b(?<new>new)\s+)(?<name>\w+)\s*(?<types><[^()]*?>)?\s*\(")
+            .Select(match =>
+                (
+                    match.Index,
+                    Call: (match.Groups["new"].Success ? "new " : "")
+                        + match.Groups["name"].Value
+                        + Spaced(Regex.Replace(match.Groups["types"].Value, @"(?:\w+\.)+(\w+)", "$1"))
+                        + Arguments(text, match.Index + match.Length - 1)
+                )
+            );
+        return [.. constants.Concat(calls).OrderBy(call => call.Index).Select(call => call.Call).Where(call => call != "AddScoped<ICatalogProducts, CatalogProducts>()")];
+    }
+
+    // The arguments of the call whose parenthesis opens at open, each nested parenthesis read as (…).
+    private static string Arguments(string text, int open)
+    {
+        var arguments = new System.Text.StringBuilder();
+        var depth = 0;
+        for (var i = open; ; i++)
+        {
+            depth += text[i] switch
+            {
+                '(' => 1,
+                ')' => -1,
+                _ => 0,
+            };
+            if (depth == 0)
+            {
+                return Spaced(arguments.Append(')').ToString());
+            }
+
+            arguments.Append(depth switch
+            {
+                1 => text[i] == ')' ? ")" : text[i].ToString(),
+                2 when text[i] == '(' => "(…",
+                _ => "",
+            });
+        }
+    }
+
+    private static string Spaced(string text) => Regex.Replace(Regex.Replace(text, @"\s+", " "), @"(?<=\()\s|\s(?=\))", "");
+
+    /// <summary>
+    /// A template Host builds its request pipeline as the Proving Sample's Host does: the same <c>app.Use…</c> and
+    /// <c>app.Map…</c> calls in the same order, with <c>MapDefaultEndpoints</c> allowed, as only a generated Host has the
+    /// service defaults' endpoints. Middleware runs in the order it is added, so a template Host whose order or middleware
+    /// differs serves differently from the Host the Kit's tests run (ticket #87).
+    /// </summary>
+    public static IEnumerable<string> PipelineDifferences(TextFile host, TextFile sample)
+    {
+        var expected = Pipeline(sample.Text);
+        var actual = Pipeline(host.Text).Where(call => call != "MapDefaultEndpoints").ToList();
+        if (!actual.SequenceEqual(expected))
+        {
+            yield return $"{host.Path} builds its pipeline with {string.Join(", ", actual)}; the sample's {sample.Path} with {string.Join(", ", expected)}.";
+        }
+    }
+
+    private static List<string> Pipeline(string text) =>
+        [.. Regex.Matches(Regex.Replace(text, "//.*", ""), @"\bapp\.((?:Use|Map)\w*)\s*\(").Select(match => match.Groups[1].Value)];
 
     /// <summary>
     /// A template's project references what the sample's project at the same place references, Kit project references

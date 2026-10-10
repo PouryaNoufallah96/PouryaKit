@@ -528,3 +528,13 @@ different Hosts on one schema are unsupported. Since ticket #96 they are a state
   (`messaging.md`, "The message store") and `docs/architecture/README.md` (`PouryaKit.Messaging.Wolverine.EFCore`). The
   text above keeps its wording. The skill's `rabbitmq.md` keeps its own rule for the broker: two different Hosts never
   share a service name, and so never a queue.
+
+## Amendment (2026-10-10, ticket #87: the generated test project through `PouryaKit.Testing`)
+
+Two lines of the ticket #58 amendment no longer describe the templates. Each template Host composes in
+`AppHost.CreateBuilder(args)` and `AppHost.Build(builder)`, as the Proving Sample's `ModularMonolithHost` does, and its
+`Program.cs` is `return await AppHost.Build(AppHost.CreateBuilder(args)).RunJasperFxCommands(args);`: every Host still
+owns the command line. A generated solution's test project references `PouryaKit.Testing`, which brings
+`WolverineFx.RuntimeCompilation`, instead of the package itself, and hosts the Host through `AppHost` with
+`HostFixture`, never through `Program`, so it sets nothing for JasperFx. The Testing package's exception stands as
+recorded: no other Kit package references the compiler.

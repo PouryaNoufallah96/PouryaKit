@@ -121,7 +121,8 @@ longer decides whether the repository writes, because it is true in a scope that
   (`SingleModuleTests.A_change_to_a_loaded_aggregate_is_saved_by_the_commit_of_a_command_sent_after_it`). The three
   tests change a value; none raises a Domain Event. The owner decided on 2026-10-09 to judge the monolith
   template's own files, its Composition Root, its endpoints, the Host's `Program.cs` and the smoke test both
-  templates share: read as text, none of them takes a repository, as a parameter, a field or a local of
+  templates share (since 2026-10-10, ticket #87, also the Host's `AppHost.cs`, which now holds the composition
+  `Program.cs` held): read as text, none of them takes a repository, as a parameter, a field or a local of
   `IRepository<,>` or of an interface the Proving Sample derives from it, or from a service provider
   (`TemplateTests.None_of_the_monoliths_own_files_takes_a_repository`; the rule's summary lists what text cannot
   show). The template's business code is the Proving Sample's and this rule does not judge it, so it never has to

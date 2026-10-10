@@ -26,7 +26,8 @@ namespace ModularMonolith.Tests;
 
 // The service defaults of ModularMonolith.ServiceDefaults, template content and not a Kit package, composed with the
 // Kit: in Inventory.Host on the broker fixture, and in a Web Host of its own for outgoing HTTP against WireMock.Net.
-public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<BrokerFixture>, IDisposable
+[Collection<BrokerCollection>]
+public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
 {
     private const string StockItems = "inventory.product-created";
     private const string Client = "downstream";
@@ -86,7 +87,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
         var server = new NpgsqlConnectionStringBuilder(environment.Inventory) { Database = "postgres" }.ConnectionString;
         List<(HttpStatusCode, HttpStatusCode)> answers = [await HealthAsync(client)];
 
-        await BrokerEnvironment.RowsAsync(
+        await Sql.RowsAsync(
             server,
             $"alter database {database} with allow_connections false; select pg_terminate_backend(pid) from pg_stat_activity where datname = '{database}'"
         );
@@ -96,7 +97,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
         }
         finally
         {
-            await BrokerEnvironment.RowsAsync(server, $"alter database {database} with allow_connections true; select 1");
+            await Sql.RowsAsync(server, $"alter database {database} with allow_connections true; select 1");
         }
 
         answers.Add(await HealthAsync(client));
