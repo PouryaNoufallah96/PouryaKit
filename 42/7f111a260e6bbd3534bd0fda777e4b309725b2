@@ -1,0 +1,29 @@
+.claude/agent-memory/kit-implementer/cqrs-and-modularity-facts.md
+  s_a846915d2dd93c::t_b77cabf7633379 41
+.claude/agent-memory/kit-implementer/snapshot-and-scheduled-command-facts.md
+  s_a846915d2dd93c::t_de87a6fea2c28c 3
+docs/provenance/PouryaKit.Messaging.Wolverine.EFCore.md
+  s_a846915d2dd93c::t_34b1b625b0603f 5
+docs/provenance/PouryaKit.Persistence.EFCore.md
+  s_a846915d2dd93c::t_ff1972b296bc92 9
+src/PouryaKit.Cqrs/Pipeline/DomainEventDrain.cs
+  s_a846915d2dd93c::t_26f64e391443cc 8
+src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotStep.cs
+  s_a846915d2dd93c::t_f5347dd9d20086 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "427f111a260e6bbd3534bd0fda777e4b309725b2",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
