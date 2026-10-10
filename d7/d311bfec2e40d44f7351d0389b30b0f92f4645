@@ -1,0 +1,61 @@
+src/PouryaKit.Web.OpenApi/WebOpenApiServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_f26bdba5008756 34-35,49-51
+  s_a846915d2dd93c::t_0c53f6a1637c6b 47-48
+  s_a846915d2dd93c::t_09fc5550b86828 52
+src/PouryaKit.Web/HttpCallerContext.cs
+  s_a846915d2dd93c::t_0bd79198d70a95 65-67
+  s_a846915d2dd93c::t_5f64f5802adb63 16-18,21-22,26-30,32-35
+  s_a846915d2dd93c::t_75cb3688629935 31,36
+  s_a846915d2dd93c::t_9c77ed58ad520d 24-25
+  s_a846915d2dd93c::t_ea4dd1ab13b595 23
+src/PouryaKit.Observability/ObservabilityServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_2a81c1a9b7ab0a 43,52-56
+  s_a846915d2dd93c::t_d155aa02c5d23a 2,20-22
+tests/ModularMonolith.Tests/HostFixtureTests.cs
+  s_a846915d2dd93c::t_6915aa0e770fa3 1-67
+src/PouryaKit.Observability/ObservedDispatcher.cs
+  s_a846915d2dd93c::t_fa049bdd2e897d 103,106-121
+  s_a846915d2dd93c::t_5461fe1c0b6c4f 11-12,18
+  s_a846915d2dd93c::t_221c45f76b873c 122
+src/PouryaKit.Testing/StoredDeliveries.cs
+  s_a846915d2dd93c::t_b10ac23d46ceda 94-98,100,102-103
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_8c2600327e61f3 124,127
+  s_a846915d2dd93c::t_09ea398cc9880e 106-107,115-120,122-123,125-126,128-131
+src/PouryaKit.Testing/HostFixture.cs
+  s_a846915d2dd93c::t_dcc15664f66466 225,227,231-234,237,239-260
+src/PouryaKit.Web.OpenApi/PouryaKitOpenApiOptions.cs
+  s_a846915d2dd93c::t_091c5950134de6 18-19,21
+.agents/skills/pourya-kit/references/observability.md
+  s_a846915d2dd93c::t_60f8a31578319c 29
+.agents/skills/pourya-kit/references/openapi.md
+  s_a846915d2dd93c::t_7753eeec6168dc 90,132-133
+.agents/skills/pourya-kit/references/web.md
+  s_a846915d2dd93c::t_652e86936c4be1 144,335
+docs/architecture/README.md
+  s_a846915d2dd93c::t_afe6d7dfe331b3 331,565,578,592-593,610
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_a846915d2dd93c::t_d22010cdaac65b 279-300,513-533
+tests/ModularMonolith.Tests/ObservabilityTests.cs
+  s_a846915d2dd93c::t_072d13a4ba5775 1,3,10,218-254
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_a846915d2dd93c::t_8089e330695815 249-270
+tests/ModularMonolith.Tests/WebDefaultsTests.cs
+  s_a846915d2dd93c::t_de0188fe8175fc 3-5,8,258-278,284,287-289,356-378
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d7d311bfec2e40d44f7351d0389b30b0f92f4645",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
