@@ -1,0 +1,49 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_b294aa58ff72f6::t_e57877376e5011 17-18,21-22,45-54
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_b294aa58ff72f6::t_e0473d7557e80a 160-161
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_b294aa58ff72f6::t_ca19614c53ace6 10,143-148
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_b294aa58ff72f6::t_6bd62dae19d276 14,17-18,23,25,32-35,39
+.agents/skills/pourya-kit/references/messaging.md
+  s_b294aa58ff72f6::t_6fbb3fb42fe6a5 412,708
+.agents/skills/pourya-kit/references/modules.md
+  s_b294aa58ff72f6::t_21126ef8e5c426 12,219-225
+.agents/skills/pourya-kit/references/persistence.md
+  s_b294aa58ff72f6::t_48efa3d5c31992 9,223,225,228-241,297
+.agents/skills/pourya-kit/references/publication.md
+  s_b294aa58ff72f6::t_e34ab1ed932e0c 11
+.agents/skills/pourya-kit/references/templates.md
+  s_b294aa58ff72f6::t_0f665373e27373 133
+.agents/skills/pourya-kit/references/testing.md
+  s_b294aa58ff72f6::t_32e98284c35020 71,143
+.agents/skills/pourya-kit/references/web.md
+  s_b294aa58ff72f6::t_1ddadb0605ba18 138-139,199,253
+GLOSSARY.md
+  s_b294aa58ff72f6::t_edecbdcd6adec7 19,55,151
+README.md
+  s_b294aa58ff72f6::t_a17cb623bb9a53 25-27
+docs/acceptance.md
+  s_b294aa58ff72f6::t_2ddc66f8de0ee4 1676-1693
+docs/architecture/README.md
+  s_b294aa58ff72f6::t_f683e20c5a7d47 40,200,288,290,452,493,515,530,576-577,612,665
+docs/ci.md
+  s_b294aa58ff72f6::t_798fe0b61dcc27 43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9bfa5d0347a41689ff7bf91959d99adeb30b8a52",
+  "prompts": {},
+  "sessions": {
+    "s_b294aa58ff72f6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aimpl-102-a487d73fa423cb45",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
