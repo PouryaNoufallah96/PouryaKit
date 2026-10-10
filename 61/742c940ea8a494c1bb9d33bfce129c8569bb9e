@@ -1,0 +1,57 @@
+scripts/ci/test_publication.py
+  s_a846915d2dd93c::t_9630306cb364d7 12
+docs/ci.md
+  s_a846915d2dd93c::t_dd60b9916d0174 3
+docs/foundation-review.md
+  s_a846915d2dd93c::t_48416f7c8ba504 1075-1079
+  s_774264664261ae::t_26cab32e760e05 610,660-661,868
+docs/architecture/README.md
+  s_a846915d2dd93c::t_47cd01af973f12 225
+  s_a846915d2dd93c::t_308269d27e4bf1 3,40
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_a846915d2dd93c::t_6efbdb11981852 81,84
+.agents/skills/pourya-kit/references/messaging.md
+  s_a846915d2dd93c::t_dc5e7db6cd827c 419,566
+.agents/skills/pourya-kit/references/packages.md
+  s_a846915d2dd93c::t_04c0aba7b0cfa3 11
+.agents/skills/pourya-kit/references/publication.md
+  s_a846915d2dd93c::t_b8d57d0e23d58e 11
+.claude/rules/kit-code.md
+  s_a846915d2dd93c::t_bf620029bb9698 12,32
+README.md
+  s_a846915d2dd93c::t_616200267aded0 7-23,27
+docs/acceptance.md
+  s_a846915d2dd93c::t_e148ebc935504b 77,80,111,123,524,669,1000,1359,1410-1431
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_a846915d2dd93c::t_60422c4773b4b4 506,995-1006,1113-1137
+docs/agents/ai-setup.md
+  s_a846915d2dd93c::t_dc38b792a5c19b 238,248
+docs/packages.md
+  s_a846915d2dd93c::t_ee0dfe7ab88c75 19
+docs/provenance/PouryaKit.Templates.md
+  s_a846915d2dd93c::t_0c25dab4e11d26 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "61742c940ea8a494c1bb9d33bfce129c8569bb9e",
+  "prompts": {},
+  "sessions": {
+    "s_774264664261ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aimpl-90-a20a139b7c3dcd8c",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
