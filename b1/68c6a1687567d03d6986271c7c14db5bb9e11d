@@ -1,0 +1,51 @@
+tests/PouryaKit.Cqrs.Tests/FailureLogTests.cs
+  s_a846915d2dd93c::t_99098dce4b6380 57-63
+  s_a846915d2dd93c::t_dac66793d9dd74 1-56,64-88
+src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs
+  s_a846915d2dd93c::t_c49f5092da2445 172
+  s_a846915d2dd93c::t_ffa5a29def17ed 358,362-363
+src/PouryaKit.Modularity/GatewayProcessor.cs
+  s_a846915d2dd93c::t_c8aaf0a53faa21 43-44,52,54-59
+tests/PouryaKit.Cqrs.Tests/DispatchTests.cs
+  s_a846915d2dd93c::t_aa83b2f436f690 223
+tests/PouryaKit.Domain.Tests/TypedIdTests.cs
+  s_a846915d2dd93c::t_176d01b7640f3c 117-137,140-141
+  s_a846915d2dd93c::t_65f6a15082e52d 138-139
+src/PouryaKit.Domain/TypedId.cs
+  s_a846915d2dd93c::t_f5909ed88f2ae6 2
+  s_a846915d2dd93c::t_f6b065343fc046 84-85
+  s_a846915d2dd93c::t_b5ba8775a70d63 106-107
+src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_754628511487a9 146-147
+  s_a846915d2dd93c::t_bbca347b56f700 150
+tests/ModularMonolith.Tests/GatewayTests.cs
+  s_a846915d2dd93c::t_e2a2269f72b0f0 4-5,8,73-96
+tests/PouryaKit.Cqrs.Tests/ClockTests.cs
+  s_a846915d2dd93c::t_f5d38ffc8ad10a 10-11,14,21,26,31,56
+tests/PouryaKit.Cqrs.Tests/RegistrationTests.cs
+  s_a675d281c8f015::t_719796369cc788 2,139-154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b168c6a1687567d03d6986271c7c14db5bb9e11d",
+  "prompts": {},
+  "sessions": {
+    "s_a675d281c8f015": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aimpl-99-eedf64224408a297",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
