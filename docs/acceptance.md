@@ -1225,3 +1225,61 @@ Ticket #89 of spec #74 (findings P3, P4, P5, P11, V6 and D5): the plan says what
 | P11: I.6's superseded list names section C's Multi-tenancy package and its "Number sequences, AI" row's Wave 4 | Plan I.6, one dated clause | AI's form was already in the list; the clause adds Multi-tenancy and that row's Wave |
 | V6 and D5: the Wave 3 spec's prerequisites | Plan I.6, "Prerequisites for the Wave 3 spec": one dated note for each of the Realtime, gRPC, Multi-tenancy, AI, Number sequences and Saga rows, and one each for the rows' proof infrastructure and for providers chosen from configuration; no new Capability | Every seam the notes name read in the code at `5415c55`: `IReadConnectionFactory.OpenAsync`, a plain open connection; `IUniqueConstraintReader`, which reads a `DbUpdateException` only; the refusal of a client with two resilience handlers; the Receipt table's key (subscription, message id); `DisableConventionalDiscovery()` and the `Deliver` handler that records the Receipt first; `IModuleServices`, an `IServiceCollection`; Inventory's `BindConfiguration`; Dapper's factory reading `IConfiguration` |
 | Out of scope | | The glossary terms Tenant, Saga and Composition and the Project template's Wave 4 composition, which arrive with their specs; the readiness endpoint (D13) and the Saga seam itself; the plan's other sections, which stay as written |
+
+## Pre-Wave 3 Cqrs, Dapper and Observability fixes, ticket #84
+
+Ticket #84 of spec #74 (findings V1, V2, V8, Q8 and Q9's Cqrs and Dapper sites): the dispatch path's telemetry, its allocation when nothing listens and two lookups, fixed where the final assessment confirmed them, and V1 measured only. No public API changed, no package or version pin was added, and V1 changed no code.
+
+| Scenario | Proven by | Red once |
+|---|---|---|
+| V2: `pouryakit.operation.duration` declares ASP.NET Core's second-scale bucket boundaries for `http.server.request.duration` (`dotnet/aspnetcore@7387de9`, tag `v10.0.0`, `MetricsConstants.ShortSecondsBucketBoundaries`) as its `InstrumentAdvice<double>`, and the OpenTelemetry SDK exports them with no view | `HostRecipeTests.Inventory_hosts_deliveries_reach_the_exporters_of_its_service_defaults`, which gained one assertion: every exported point of the histogram has the fourteen boundaries, 0.005 to 10, read from `MetricPoint.GetHistogramBuckets()` | Red without the advice: `Assert.All() Failure: 6 out of 6 items in the collection did not pass`, `Actual: List<double> [0, 5, 10, 25, 50, ···]`, the SDK's millisecond defaults |
+| V8: the dispatcher's log scope carries the Operation's `OperationId`, `CorrelationId` and `Module` beside its type name, so its logs join their request without a tracing exporter | `HostRecipeTests.With_serilog_the_kits_logs_reach_a_sink_the_host_registers`, which gained one assertion: an entry the `Dispatcher` logged in `Inventory.Host` carries `Deliver`, the delivery's own `OperationId` (from `DeliveryProbes.ContextsOf`), the correlation of the `CreateProduct` it continues and `InventoryModule`. Serilog's logger provider turns the scope's values into the entry's properties, so the existing sink is the capture | Red with the scope given nulls for the three values: `Assert.Contains() Failure: Item not found in collection`, every tuple `00000000-…, 00000000-…, null` |
+| Q8: the fast path keeps the two-part predicate: it is taken only with no activity listener and the histogram disabled, so a Host with either listener alone still observes | `ObservabilityTests.With_only_a_meter_listener_a_command_still_records_its_duration`, `ObservabilityTests.With_only_an_activity_listener_a_command_is_still_an_activity`; `RecordedTelemetry` can leave out either listener | Red with `\|\|` turned into `&&`: both new cases failed (`Filter not matched in collection`), the class's other five passed |
+| Q8: with nothing listening, the wrapper returns the inner dispatcher's own task and allocates nothing: its delegates are static, so no closure, delegate or state machine is created before the check | `ObservedDispatcherTests.With_nothing_listening_the_observed_dispatcher_returns_the_dispatchers_own_task_and_allocates_nothing` (`PouryaKit.Cqrs.Tests`, which now references `PouryaKit.Observability`): a scope's observed dispatcher around a stand-in that returns completed tasks, warmed with 1,000 rounds, then `GC.GetAllocatedBytesForCurrentThread()` around 10,000 rounds of a command, a command with a response and a query | Red on the code before the change: `Actual: Tuple (False, False, False, 15840000)` in Debug and `(False, False, False, 5280000)` in Release, 528 and 176 bytes per dispatch; after it 0 in both, with the inner task returned as it is |
+| Q9: `PageSql.DbTypes` is a `FrozenDictionary`, as `PageDeclaration`'s and `FilterField`'s lookups are; `FilterOperatorNames.TryParseName` reads one cached `Enum.GetValues` array and keeps its loop, so a null name still answers false | `PageTests.Each_operator_has_one_short_name_that_parses_back_to_it`, which gained the null case; `DapperTests` and `PagingTests` through the full run | The null case is red with `ArgumentNullException.ThrowIfNull(name)` added to `TryParseName`; the frozen lookup answers as before, a refactor with no red run |
+| The Kit builds and the ticket's suites pass | `dotnet build PouryaKit.slnx`: 0 warnings, 0 errors. `ModularMonolith.Tests` 571 passed, 0 failed; `PouryaKit.Cqrs.Tests` 46; `PouryaKit.ArchitectureTests` 102; `check-docs.py` and `check-ai-setup.py` 0 failures | |
+| Docs | The Kit's skill (`observability.md`: the one check, either listener alone, the histogram's boundaries, the log scope; `commands-queries-validation.md`: the logging step's scope), [`docs/architecture/README.md`](architecture/README.md) (the pipeline's logging step, the wrapper's fast path and the histogram's advice), `README.md`'s observability line, and the provenance record of `PouryaKit.Observability` (the boundaries' source, adoption `pattern`: the values only) | |
+| Out of scope | | No change from V1's numbers (below). Q9's other two sites, `Subscriptions.ReservedQueues` and the header-value check, belong to other tickets of the spec |
+
+### V1: the measurement
+
+`EnterQuery` and `EnterChecks` each open a reading boundary, and each captures every tracked entry (`src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs`, `src/PouryaKit.Persistence.EFCore/UnitOfWork/TrackedState.cs`). Both stay (ADR 0003): this ticket only sizes them. A throwaway console project outside the repository, built in Release against this branch, measured two things:
+
+- **The second capture per nested query.** A command handler attaches N entities of five scalar properties to a DbContext that never opens a connection, then times 100 nested queries whose handler returns at once. The guard is `EfUnitOfWork`'s (`src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs`, `TrackedState.Capture(dbContext, includeQueryLoads: true)` compared when the boundary closes); a switch leaves out the checks boundary's capture, which is what removing it would save. 41 alternating rounds of each shape, medians.
+- **The DbContext a Dapper-only read constructs.** In the Proving Sample's Host, built and migrated against `postgres:18.6` but not started, Catalog's `ListProducts` through the dispatcher (an empty first Page: its select and count), 1,001 reads; and 15 rounds of 2,000 scopes of Catalog's Operation, timed and counted with `GC.GetAllocatedBytesForCurrentThread()` with nothing more, with its `IReadingStateGuard` resolved, and with its two boundaries opened and closed.
+
+```csharp
+// The guard: EfUnitOfWork's, or with the checks boundary's capture left out.
+public IDisposable OnlyReading(string step) =>
+    SkipChecksCapture && step == "An authorizer or a validator"
+        ? NoCapture.Instance
+        : new ReadingState(TrackedState.Capture(db, includeQueryLoads: true), step);
+
+// The command's handler: N tracked entities, then 100 timed nested queries.
+db.Items.AttachRange(Item.Many(command.Entities));
+var started = Stopwatch.GetTimestamp();
+for (var i = 0; i < command.Queries; i++)
+{
+    await dispatcher.QueryAsync(new NothingQuery(), cancellationToken);
+}
+
+return Stopwatch.GetElapsedTime(started).Ticks;
+
+// A Dapper-only read's guard, per scope: step 0 opens the scope only.
+using var scope = host.Services.CreateScope();
+scope.ServiceProvider.BeginOperation(context, typeof(CatalogModule));
+var guard = scope.ServiceProvider.GetRequiredService<IReadingStateGuard>(); // step 1
+guard.OnlyReading("A query").Dispose(); // step 2
+guard.OnlyReading("An authorizer or a validator").Dispose();
+```
+
+| N tracked entities | One boundary, capture and comparison | A nested query with both captures | With the outer capture only | The second capture | Its share |
+|---|---|---|---|---|---|
+| 0 | 0.3 to 0.9 µs | 1.2 to 2.9 µs | 0.9 to 1.9 µs | 0.2 to 1.0 µs | 19 to 35 % |
+| 10 | 8.3 to 9.1 µs | 18.5 to 24.7 µs | 8.5 to 13.4 µs | 10.0 to 11.3 µs | 46 to 54 % |
+| 100 | 78 to 79 µs | 162 to 171 µs | 81 to 84 µs | 81 to 86 µs | 50 to 51 % |
+| 1000 | 1,087 to 1,162 µs | 2,060 to 2,073 µs | 893 to 905 µs | 1,155 to 1,180 µs | 56 to 57 % |
+
+A Dapper-only read: the read took 877 to 1,194 µs (median); its guard added 21.0 to 21.6 µs and 59,300 to 59,450 bytes per read, 1.8 to 2.4 % of the read: resolving it, which constructs Catalog's DbContext and `EfUnitOfWork`, 20.6 to 21.6 µs and 58,140 bytes, and its two captures of the empty change tracker 0.07 to 0.46 µs and about 1,200 bytes.
+
+The ranges are two runs on 2026-10-10: macOS 27.0.1 (Darwin 27.0.0), Apple silicon, 18 cores, .NET 10.0.12 (SDK 10.0.401), Docker 29.8.1. Other agents' test suites ran beside them (a load average of 6 to 8; in the first run three `postgres:18.6`, a `rabbitmq:4.3.6` and a `redis:8.10.1` container of another suite), so the absolute times are indicative; with 10 or more tracked entities the shares agree between the runs. What they say: the second capture costs about 1 µs per tracked entity per nested query, half of the query's own cost once anything is tracked, and a Dapper-only read pays about 21 µs and 58 KB to construct a DbContext it never uses. Neither number changes code here; the orchestrator sizes any change, and none may remove a comparison.
