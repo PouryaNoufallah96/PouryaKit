@@ -1,0 +1,45 @@
+src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotStep.cs
+  s_2867f8a3b2cd19::t_3c98a1b7abf7b7 6,8,40,131,133,136-137,144,153,164,183-184,187,190,192-198
+  s_2867f8a3b2cd19::t_2a4e8e86ce0214 185-186
+.claude/agent-memory/kit-implementer/snapshot-and-scheduled-command-facts.md
+  s_2867f8a3b2cd19::t_9a08789604f795 76
+tests/ModularMonolith.Tests/Stub/Migrations/20261010005256_ClientGeneratedValues.cs
+  s_2867f8a3b2cd19::t_0da3dac5f06176 1-37
+.agents/skills/pourya-kit/references/messaging.md
+  s_2867f8a3b2cd19::t_69f474f82c1c67 428
+tests/ModularMonolith.Tests/Stub/Migrations/20261010005256_ClientGeneratedValues.Designer.cs
+  s_2867f8a3b2cd19::t_0da3dac5f06176 1-683
+docs/acceptance.md
+  s_2867f8a3b2cd19::t_69f474f82c1c67 1237-1238
+  s_2867f8a3b2cd19::t_e616fd661ca1b8 1247
+tests/ModularMonolith.Tests/SnapshotTests.cs
+  s_2867f8a3b2cd19::t_9d17347cdde169 373-389
+tests/ModularMonolith.Tests/Stub/StubModule.cs
+  s_2867f8a3b2cd19::t_9d17347cdde169 58-59
+tests/ModularMonolith.Tests/Stub/Migrations/StubDbContextModelSnapshot.cs
+  s_2867f8a3b2cd19::t_0da3dac5f06176 27-48
+docs/adr/0003-single-commit-owner.md
+  s_2867f8a3b2cd19::t_69f474f82c1c67 164-165,174-175
+docs/architecture/README.md
+  s_2867f8a3b2cd19::t_69f474f82c1c67 536
+tests/ModularMonolith.Tests/Stub/StubSnapshotGeneratedValues.cs
+  s_2867f8a3b2cd19::t_9d17347cdde169 3,13-14,104-143
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_2867f8a3b2cd19::t_9d17347cdde169 48,92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6f0b792465e003e2b1a68566a1becede9d5dc743",
+  "prompts": {},
+  "sessions": {
+    "s_2867f8a3b2cd19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00cca649-e6c4-44eb-8549-8c8dbeae846f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
