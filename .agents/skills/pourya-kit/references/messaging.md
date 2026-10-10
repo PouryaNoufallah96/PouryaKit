@@ -662,9 +662,9 @@ public sealed class DeadLetterTriage(IWolverineRuntime runtime)
 ## The message store
 
 - `PouryaKitMessageStoreOptions` (`PouryaKit.Messaging.Wolverine.EFCore`) holds the store's settings:
-  - `Durability`: `DurabilityMode.Balanced`, the default, is safe with any number of Host instances on one store. `DurabilityMode.Solo` assumes a single instance and recovers a stopped instance's deliveries at once; the tests use it.
+  - `Durability`: `DurabilityMode.Balanced`, the default, is safe with any number of Host instances on one store when all are instances of one Host (the store's schema, below). `DurabilityMode.Solo` assumes a single instance and recovers a stopped instance's deliveries at once; the tests use it.
   - `InboxStaleTime`, 5 minutes by default: how long after a delivery was stored the store hands it out again when an instance still holds it. It is what delivers a Notification or Integration Event committed but never sent while its Host lives on, so such a delivery waits that long. Set it by [the stale-time rule](#the-stale-time-rule). Zero or less stops the Host when it starts, with an `OptionsValidationException` naming the option.
-- The store's schema is the second argument of `UsePouryaKitWolverine(connectionName, schema, configure)`, `wolverine` by default.
+- The store's schema is the second argument of `UsePouryaKitWolverine(connectionName, schema, configure)`, `wolverine` by default. Instances of one Host share one store and one schema. Two different Hosts, with different handlers, Modules or applications, each take a store of their own: another database, or another schema on one database through that argument. Sharing a schema between different applications is unsupported: a node of one recovers the other's stored deliveries, has no handler for them and dead-letters them (Wolverine issue #4923). This is a deployment rule, and no check enforces it.
 - Change the settings anywhere in the Host's composition, before it is built, as in [the stale-time rule](#the-stale-time-rule).
 
 ## The stale-time rule
