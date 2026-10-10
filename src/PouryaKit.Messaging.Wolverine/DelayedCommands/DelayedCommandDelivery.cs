@@ -103,6 +103,7 @@ internal sealed class RunDelayedCommandHandler(
 {
     public override async Task<Result> Handle(RunDelayedCommand command, CancellationToken cancellationToken)
     {
+        Activity.Current?.SetTag(DeliverHandler.SubscriptionTag, command.Declared.Name);
         // Recorded before the command runs, in the same transaction, as a subscription's Receipt is. A delayed command's
         // Receipt is its message's; a recurring command's is its occurrence's, whichever stored delivery carries it.
         var receipt = command.Occurrence is { } occurrence ? ReceiptOf(occurrence) : command.MessageId;

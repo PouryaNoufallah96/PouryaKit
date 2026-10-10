@@ -159,6 +159,23 @@ namespace ModularMonolith.Tests.Stub.Migrations
                     b.ToTable("counters", "stub");
                 });
 
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Drawer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_drawers");
+
+                    b.ToTable("drawers", "stub");
+                });
+
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Folder", b =>
                 {
                     b.Property<Guid>("Id")
@@ -418,6 +435,29 @@ namespace ModularMonolith.Tests.Stub.Migrations
                     b.ToTable("stickers", "stub");
                 });
 
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Ticket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Serial")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasColumnName("serial")
+                        .HasDefaultValueSql("'printed by the database'");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tickets");
+
+                    b.ToTable("tickets", "stub");
+                });
+
             modelBuilder.Entity("ModularMonolith.Tests.Stub.TimestampKey", b =>
                 {
                     b.Property<DateTime>("Id")
@@ -491,6 +531,38 @@ namespace ModularMonolith.Tests.Stub.Migrations
                         .WithMany("Cards")
                         .HasForeignKey("TrayId")
                         .HasConstraintName("fk_cards_tray_tray_id");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Drawer", b =>
+                {
+                    b.OwnsOne("ModularMonolith.Tests.Stub.Knob", "Knob", b1 =>
+                        {
+                            b1.Property<Guid>("DrawerId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("Finish")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("knob_finish");
+
+                            b1.Property<string>("Label")
+                                .ValueGeneratedOnAddOrUpdate()
+                                .HasColumnType("text")
+                                .HasColumnName("knob_label")
+                                .HasComputedColumnSql("upper(knob_finish)", true);
+
+                            b1.HasKey("DrawerId");
+
+                            b1.ToTable("drawers", "stub");
+
+                            b1.WithOwner()
+                                .HasForeignKey("DrawerId")
+                                .HasConstraintName("fk_drawers_drawers_id");
+                        });
+
+                    b.Navigation("Knob")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Folder", b =>

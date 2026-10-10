@@ -45,7 +45,7 @@ The names are constants on `OperationTelemetry`:
 
 - The activity is current for the whole Operation: its authorization and validation, its handler, the Domain Event drain, the Unit of Work's Outbox write and its commit. A nested command or query is a child activity of the one that sent it.
 - The status is `Ok` for a success, `Error` with the Error codes (`Note.Rejected`) for a failed Result, and `Error` with the exception's type for an exception, which is also recorded as an `exception` event. The duration is measured in every case, with the same tags.
-- A delivery's outer Operation is tagged `Deliver`, or `RunDelayedCommand` for a delayed or recurring command. The delivered command and the commands its handler sends are its children.
+- A delivery's outer Operation is tagged `Deliver`, or `RunDelayedCommand` for a delayed or recurring command. Its activity also carries `pouryakit.subscription`, the declared name of the subscription or of the delayed or recurring command, so each subscription's deliveries can be told apart in a trace. The duration histogram does not carry it: a Module's deliveries share its `Deliver` and `RunDelayedCommand` series. The delivered command and the commands its handler sends are its children.
 
 ## The trace through delivery
 

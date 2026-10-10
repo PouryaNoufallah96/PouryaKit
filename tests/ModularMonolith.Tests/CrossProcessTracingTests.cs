@@ -19,6 +19,7 @@ public sealed class CrossProcessTracingTests(BrokerFixture broker) : IClassFixtu
     private const string Publishing = "catalog.product-created.publish-product-created";
     private const string StockItems = "inventory.product-created";
     private const string TraceState = "kit=52,other=v1";
+    private const string SubscriptionTag = "pouryakit.subscription";
 
     // CreateProduct commits a Notification; its delivery Operation in the Catalog Host publishes ProductCreatedV1; the
     // Inventory Host receives it from the broker and fans it out to Inventory's subscription, whose first attempt fails
@@ -56,10 +57,17 @@ public sealed class CrossProcessTracingTests(BrokerFixture broker) : IClassFixtu
             attempts,
             attempt =>
                 Assert.Equal(
-                    ("InventoryModule", publishing.SpanId, TraceState),
-                    (Tag(attempt, OperationTelemetry.ModuleTag), PublisherOf(attempt, trace, wolverineListened), attempt.TraceStateString)
+                    ("InventoryModule", StockItems, publishing.SpanId, TraceState),
+                    (
+                        Tag(attempt, OperationTelemetry.ModuleTag),
+                        Tag(attempt, SubscriptionTag),
+                        PublisherOf(attempt, trace, wolverineListened),
+                        attempt.TraceStateString
+                    )
                 )
         );
+        // Each delivery's Operation names its subscription, beside the Deliver command every one of them runs.
+        Assert.Equal(Publishing, Tag(publishing, SubscriptionTag));
     }
 
     // The category is created first, outside the trace; CreateProduct runs inside an upstream activity standing in for a

@@ -50,6 +50,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["stub", "cards"],
                 ["stub", "cases"],
                 ["stub", "counters"],
+                ["stub", "drawers"],
                 ["stub", "folders"],
                 ["stub", "leaflets"],
                 ["stub", "note_tallies"],
@@ -63,6 +64,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["stub", "shelves"],
                 ["stub", "snapshot_key_copies"],
                 ["stub", "stickers"],
+                ["stub", "tickets"],
                 ["stub", "timestamp_keys"],
                 ["stub", "trays"],
             ],
@@ -85,6 +87,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 "stub SnapshotGuards",
                 "stub SnapshotKeys",
                 "stub IdempotencyKeys",
+                "stub GeneratedValues",
             ],
             history.Select(row => $"{row[0]} {((string)row[1]).Split('_', 2)[1]}")
         );

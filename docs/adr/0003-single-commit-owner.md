@@ -152,3 +152,23 @@ structure test caught a call, after compilation (spec #74, finding A5).
 - **The structure test still closes it to a Module.** `FeatureCodeTests.A_module_that_saves_commits_writes_in_bulk_or_runs_a_kit_step_is_rejected`
   names the offending Module's call of `EfUnitOfWorkDbContext.Of`, red with the accessor taken off the rule's Kit
   steps.
+
+## Amendment (2026-10-10, ticket #85: a Snapshot never carries a value the database generates)
+
+The decision above stands. The Snapshot step builds each Snapshot from the prepared state, before the save, so a value
+the database writes during the save is not in it: a default value SQL or a computed column on a property a mapper reads
+would commit one value and publish another, against this decision's intent that what an Operation publishes is the
+state it commits (spec #74, finding P1).
+
+- **Refused at commit, beside the temporary key.** `SnapshotStep.Build` refuses a non-key property whose value the
+  database generates, a `ValueGenerated` other than `Never`, a default value SQL or a computed column, anywhere in the
+  mapped graph of an aggregate with a declared Snapshot: the aggregate, the types it owns and the children it holds
+  through a navigation, their derived types included, as the prepare step attributes their changes. The
+  `InvalidOperationException` names the entity and the property, and nothing commits. The graph is read from the model
+  once per DbContext type. The Kit's own conventions, Guid version 7 keys and Kit-set versions and audit fields, never
+  meet it, and keys stay allowed.
+- **Proven against PostgreSQL** by `SnapshotTests.A_snapshot_of_an_aggregate_whose_database_generates_a_value_it_maps_fails_the_operation_that_saves_it`
+  (a default value SQL on the root) and
+  `SnapshotTests.A_snapshot_of_an_aggregate_whose_database_generates_a_value_of_an_owned_part_it_maps_fails_the_operation_that_saves_it`
+  (a computed column on an owned part), each red with the refusal off: the Snapshot published no value while the row
+  committed the database's.
