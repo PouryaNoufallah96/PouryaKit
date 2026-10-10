@@ -607,7 +607,7 @@ The read-only authorization job requires successful CI and AI/package-validation
 2. CI remains read-only and preserves the tested SHA, MinVer version, package inventory, hashes and original artifacts. Successful main producer metadata authorizes a separate package-write job; failure or PR provenance cannot authorize it.
 3. Publish originals to the fixed private feed with the ephemeral job token, preserve the manifest, and restore all thirteen exact versions with fresh caches. Keep public publication and tag/Release writes disabled. Record actual hosted evidence in [#27](https://github.com/PouryaNoufallah96/PouryaKit/issues/27), with the existing fork-execution exception in #26.
 
-**Original acceptance closed as not planned:** #28/#29 described packaged public API comparison, reviewed compatibility/progression and migration notes, approved immutable named cuts, tagged validation, tag/package/manifest version agreement, GitHub Release announcement only after complete publication, remote raw-byte/SHA conflict checks and partial-publish identical-content recovery from original artifacts. These are historical requirements outside the completed active #24 scope, not guarantees of standard duplicate skipping. *Since 2026-10-10 (#90) this Phase is the boundary's one statement; the release-scope page that restated it is removed.* Resuming that work needs a new scoped brief; MinVer remains the sole version engine.
+**Original acceptance closed as not planned:** #28/#29 described packaged public API comparison, reviewed compatibility/progression and migration notes, approved immutable named cuts, tagged validation, tag/package/manifest version agreement, GitHub Release announcement only after complete publication, remote raw-byte/SHA conflict checks and partial-publish identical-content recovery from original artifacts. These are historical requirements outside the completed active #24 scope, not guarantees of standard duplicate skipping. *Since 2026-10-10 (#90), this Phase is the only statement of this boundary. The release-scope page that restated it was removed.* Resuming that work needs a new scoped brief; MinVer remains the sole version engine.
 
 The active scope's value is validated private packages with one version and a clean consumer restore. Its cost is the existing package validator plus standard Actions/CLI jobs and small provenance checks. Its impact is packaging and CI only; Kit runtime APIs, reference projects, credentials and access settings are unchanged. The active Phase 5 scope is complete: [CI run 37465576160](https://github.com/PouryaNoufallah96/PouryaKit/actions/runs/37465576160) and [publication run 37466084084](https://github.com/PouryaNoufallah96/PouryaKit/actions/runs/37466084084) succeeded at main SHA `b234f4f`, with 386 runtime tests passed, zero failures or skips, thirteen validated packages, fifteen clean consumers and the private-feed restore at MinVer `0.1.0-preview.0.13`. The broader original #24 acceptance was not delivered; #28/#29 are closed as not planned.
 
@@ -1072,10 +1072,10 @@ the code and names no new Capability:
   `BindConfiguration`, and Dapper resolves configuration inside its registered factory. The spec directs provider
   choice through options binding and a factory, keeping one declared composition.
 
-A Wave 3 planning question, recorded 2026-10-10 (#90, spec #74's D2), for no I.3 row: a Module that subscribes to a
-Snapshot after data exists has no copy of an aggregate until it next changes (the Kit's skill, `messaging.md`, "What
-the Kit guarantees for a Snapshot"). Whether an operator command writes the current Snapshot of every aggregate through
-the Outbox for one subscription, under the existing version rules, is decided with the Wave 3 spec.
+A Wave 3 planning question that belongs to no I.3 row, recorded 2026-10-10 (#90, spec #74's D2): a Module that subscribes
+to a Snapshot after data exists has no copy of an aggregate until it next changes (the Kit's skill, `messaging.md`, "What
+the Kit guarantees for a Snapshot"). The Wave 3 spec decides whether an operator command writes the current Snapshot of
+every aggregate through the Outbox for one subscription, under the existing version rules.
 
 Spikes before building (no owner input, recorded as ADRs): the Marten two-store spike (I.4); the
 RabbitMQ topology spike under ADR 0006; a check whether Wolverine already propagates W3C trace

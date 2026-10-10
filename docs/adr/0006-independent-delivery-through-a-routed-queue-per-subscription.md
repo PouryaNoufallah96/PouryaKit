@@ -503,7 +503,7 @@ depend on, and the rules a consuming project must keep.
     *Since 2026-10-10 (ticket #85), so does an aggregate with any other value the database generates in its mapped
     graph; see ADR 0003's amendment for #85.*
   - Nothing removes a Receipt or a Snapshot-version row, so both tables grow with the messages a Module receives.
-    *Kept on purpose since 2026-10-10 (ticket #90), with the publication records; see the amendment for #90 below.*
+    *Receipts are kept on purpose since 2026-10-10 (ticket #90), with the publication records; see the amendment for #90 below.*
 
 ## Amendment (2026-10-07, ticket #50: RabbitMQ topology)
 
