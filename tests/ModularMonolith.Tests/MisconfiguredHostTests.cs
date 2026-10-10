@@ -20,6 +20,7 @@ using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
 using PouryaKit.Validation;
 using PouryaKit.Web;
+using PouryaKit.Web.OpenApi;
 
 namespace ModularMonolith.Tests;
 
@@ -414,6 +415,92 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
 
         Assert.Equal(typeof(PouryaKitMessageStoreOptions), thrown.OptionsType);
         Assert.Equal(["PouryaKitMessageStoreOptions.InboxStaleTime is zero or negative; set it longer than zero."], thrown.Failures);
+    }
+
+    // Ticket #97. Bound from configuration, as the Hosts bind their sunsets, beside the sample's valid 1.0 one. Observed at
+    // start, by ValidateOnStart: this Host maps no versioned endpoint, so nothing else reads the sunsets.
+    [Theory]
+    [InlineData(
+        new[] { "v1:Date=2027-06-30T00:00:00+00:00" },
+        new[]
+        {
+            "PouryaKitOpenApiOptions.Sunsets has the key 'v1', which names no API version; key each sunset by an API version as the Modules declare it, such as \"1.0\".",
+        }
+    )]
+    [InlineData(
+        new[] { "2:Date=2027-06-30T00:00:00+00:00", "2.0:Link=https://example.com/api-v2-sunset" },
+        new[] { "PouryaKitOpenApiOptions.Sunsets has the keys '2' and '2.0', which name one API version; keep one sunset per version." }
+    )]
+    [InlineData(
+        new[] { "3.0:Link=/api-v3-sunset" },
+        new[]
+        {
+            "PouryaKitOpenApiOptions.Sunsets['3.0'].Link is '/api-v3-sunset', which is not an absolute URI; set the full address of the version's sunset policy page, such as https://example.com/api-v1-sunset.",
+        }
+    )]
+    [InlineData(
+        new[] { "4.0=" },
+        new[]
+        {
+            "PouryaKitOpenApiOptions.Sunsets['4.0'] has neither a Date nor a Link; set the date the version is announced to end on, the page of its sunset policy, or both, or remove the entry.",
+        }
+    )]
+    [InlineData(
+        new[] { "v1:Date=2027-06-30T00:00:00+00:00", "4.0:Link=api-v4-sunset.html" },
+        new[]
+        {
+            "PouryaKitOpenApiOptions.Sunsets['4.0'].Link is 'api-v4-sunset.html', which is not an absolute URI; set the full address of the version's sunset policy page, such as https://example.com/api-v1-sunset.",
+            "PouryaKitOpenApiOptions.Sunsets has the key 'v1', which names no API version; key each sunset by an API version as the Modules declare it, such as \"1.0\".",
+        }
+    )]
+    public async Task A_sunset_naming_no_version_or_a_version_twice_or_a_relative_link_or_nothing_stops_the_host_at_start_naming_its_key(
+        string[] settings,
+        string[] failures
+    )
+    {
+        await using var host = SunsetsFromConfiguration(settings);
+
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(typeof(PouryaKitOpenApiOptions), thrown.OptionsType);
+        Assert.Equal(failures, thrown.Failures);
+    }
+
+    // The sample's own sunset, from its appsettings.json in the tests' output, and none at all.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task The_samples_sunset_or_none_lets_the_host_start(bool bindSampleConfiguration)
+    {
+        var builder = WebOnly();
+        builder.Services.AddPouryaKitOpenApi();
+        if (bindSampleConfiguration)
+        {
+            builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
+        }
+
+        await using var host = builder.Build();
+
+        await host.StartAsync(TestContext.Current.CancellationToken);
+
+        string[] keys = bindSampleConfiguration ? ["1.0"] : [];
+        Assert.Equal(keys, host.Services.GetRequiredService<IOptions<PouryaKitOpenApiOptions>>().Value.Sunsets.Keys);
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    // A Web Host with the Kit's OpenAPI registration, whose sunsets are bound from the configuration section the Hosts
+    // bind: the sample's, plus each setting, "key=value" under PouryaKit:OpenApi:Sunsets.
+    private static WebApplication SunsetsFromConfiguration(string[] settings)
+    {
+        var builder = WebOnly();
+        builder.Configuration.AddInMemoryCollection(
+            settings
+                .Select(setting => setting.Split('=', 2))
+                .Select(pair => new KeyValuePair<string, string?>($"PouryaKit:OpenApi:Sunsets:{pair[0]}", pair[1]))
+        );
+        builder.Services.AddPouryaKitOpenApi();
+        builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
+        return builder.Build();
     }
 
     // A Host with Wolverine and no message store, retrying after the delays given, or with no schedule for null.
