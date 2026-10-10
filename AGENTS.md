@@ -74,7 +74,7 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | Rule | Enforced by |
 |---|---|
 | Section G decisions are final; one implementation per concern; glossary terms | `kit-reviewer` (a contradiction of an ADR or section G is high) |
-| Reference projects are read-only | `.agents/hooks/guard.py` denies writes outside the working tree |
+| Reference projects are read-only | `.agents/hooks/guard.py` denies file-tool writes outside the working tree; a shell write outside it is a reviewer judgement |
 | Permissive licences only (ADR 0002) | `LicenceTests` |
 | Feature code never saves, commits or touches the Outbox (ADR 0003) | `FeatureCodeTests`, `ModuleRules` |
 | One namespace per Kit package; application namespaces follow folders (ADR 0010) | `NamespaceTests`; IDE0130 in `.editorconfig` |
@@ -86,7 +86,7 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | A brief's commands come from the environment, never from memory | `docs/agents/brief-template.md`, "Verify" |
 | A review reads the implementer's commit, never the integration branch against itself | `kit-review.js` refuses `head` equal to `base` |
 | Pre-Wave 3 acceptance sections stay in ticket order after every merge | `check-docs.py` (ordered sections), run by `merge-package.py --post-merge` |
-| A docs or AI-setup edit passes its checks before it commits | `.githooks/pre-commit` runs `check-docs.py` and `check-ai-setup.py` over the working tree when a staged path is one of their inputs, and refuses such a path staged in part; CI's `ai-setup` job runs both on the committed tree |
+| A docs or AI-setup edit passes its checks before it commits | `.githooks/pre-commit` runs `check-docs.py` and `check-ai-setup.py` over the working tree when a staged path is one of their inputs, and refuses such a path staged in part. It is a seatbelt: an unstaged change to another file the checks read can still let a failing commit through. CI's `ai-setup` job, which runs both on the committed tree, is the gate |
 
 ## Rule router
 

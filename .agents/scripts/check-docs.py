@@ -36,6 +36,7 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   nested type) is no declaration of the class. A pointer qualified by its namespace, `Namespace.Class.Method` or
   `Namespace.Class`, must name a class of that name in a file whose first namespace is that one, and the method when
   it names one; a span that is a test file's namespace (`PouryaKit.ArchitectureTests`) names a project, not a test.
+  A span that reads both ways, `ArchitectureTests.LayerTests`, names the class when a file of that namespace declares it.
   A renamed test is drift to fix (`git log -S<Method>` finds the new name); a test the row itself says was removed
   goes in REMOVED_TESTS with the reason. `docs/adr/` stays out: it keeps renamed names on purpose.
 - Provenance: a `.cs` file under `src/`, `samples/` or `tests/` whose `//` comment says the code is shaped like,
@@ -449,7 +450,8 @@ def check_test_pointers(docs: dict[str, Doc], files: list[str]) -> None:
     namespaces = {name.rpartition(".")[0] for name in classes if "." in name}  # `PouryaKit.ArchitectureTests`: a project
     reported = set(REMOVED_TESTS)
     for number, span in docs[ACCEPTANCE].spans():
-        pointer = TEST_POINTER.fullmatch(span) or QUALIFIED_POINTER.fullmatch(span)
+        qualified = QUALIFIED_POINTER.fullmatch(span)
+        pointer = qualified if qualified and qualified.group(2) is None and qualified.group(1) in classes else TEST_POINTER.fullmatch(span) or qualified
         if not pointer or span in reported or span in namespaces:
             continue
         name, method = pointer.groups()

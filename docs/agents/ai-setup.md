@@ -112,10 +112,10 @@ python3 .agents/skills/claudex-loop/scripts/runner.py inspect --host codex --bui
 
 **Step 4: fixes and re-scores.** Follow the review limits and small-change exception in `AGENTS.md`; normal tickets use `kit-implementer` for fixes and `kit-reviewer` for re-scores from fresh evidence. Before fixing, fetch all currently available review threads, deduplicate and judge their findings, then give one combined brief and push the fixes together; handle material new findings when they arrive. One owner monitors required checks through completion; the main session judges that report instead of polling in parallel. On a pull request, `.agents/scripts/pr-threads.py` does the three: `list <pr>` prints the unresolved threads with the reviewers' boilerplate stripped, `reply-resolve <pr> <replies.json>` answers and resolves each one, and `wait <pr>` returns when the checks and the Codex review have finished; its docstring gives the file's form and the exit codes.
 
-Only after a high finding was fixed and committed, and only once per ticket, run `/kit-review` again with the same `base` and `ticket`, and `previous` set to the earlier result file: the path in its `result`, or `result.json` in its `run` directory. When the earlier digest's `result` is null, save the `full` object from that run's task output to a file yourself and pass that path as `previous`:
+Only after a high finding was fixed and committed, and only once per ticket, run `/kit-review` again with the same `base` and `ticket`, `head` set to the implementer's fixed commit, and `previous` set to the earlier result file: the path in its `result`, or `result.json` in its `run` directory. When the earlier digest's `result` is null, save the `full` object from that run's task output to a file yourself and pass that path as `previous`:
 
 ```text
-Run /kit-review with base <base commit>, ticket 42, previous <earlier result file> and rescore F1,F3
+Run /kit-review with base <base commit>, ticket 42, head <the implementer's fixed commit>, previous <earlier result file> and rescore F1,F3
 ```
 
 `rescore` is optional: leave it out to re-score every earlier finding that was not refuted, or list the ids you accepted. `kit-reviewer` re-scores each of them, and Codex inspects the whole change fresh. If the earlier findings do not all reach the reviewer, the run stops with `unknown` before reviewing.

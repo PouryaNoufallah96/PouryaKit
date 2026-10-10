@@ -157,8 +157,10 @@ internal static class SnapshotStep
         }
 
         // The graph the prepare step attributes changes to the aggregate by: the aggregate, every type it owns and every
-        // child it holds through a navigation, their derived types included, down to another aggregate. A key is left
-        // out: the Kit's are set by the application, and the aggregate's own is refused when it is still temporary.
+        // child it holds through a navigation, their derived types included, down to another aggregate. The aggregate's
+        // own keys are left out, its primary key being refused at commit while it is still temporary, and so is a shadow
+        // key, such as the one EF gives an owned collection, which no mapper can read. Any other key of a child is a value
+        // like any other, which a mapper may publish.
         private static IProperty[] GeneratedIn(IEntityType aggregate)
         {
             List<IProperty> generated = [];
@@ -171,7 +173,7 @@ internal static class SnapshotStep
                     continue;
                 }
 
-                foreach (var property in type.GetFlattenedProperties().Where(MayBeGenerated))
+                foreach (var property in type.GetFlattenedProperties().Where(property => !(property.IsKey() && (type == aggregate || property.IsShadowProperty())) && MayBeGenerated(property)))
                 {
                     generated.Add(property);
                     if (!LeftToSelector(property))
@@ -196,24 +198,21 @@ internal static class SnapshotStep
 
         // A value the database writes as it saves the row: a default value SQL, a computed column, or a value generated
         // on add or update, unless it is generated on add only and the application sets it for good when the entity is
-        // added, as EF does for a non-key property only through the value generator its mapping names, the one the
-        // selector returns to EF, and keeps only when that generator's values are not temporary.
+        // added, as EF does through the generator the selector returns, for a key and for any other property whose
+        // mapping names a generator, and keeps only when that generator's values are not temporary.
         public static bool IsGenerated(IProperty property, IValueGeneratorSelector generators) =>
             !LeftToSelector(property)
             || !(generators.TrySelect(property, property.DeclaringType, out var generator) && generator is { GeneratesTemporaryValues: false });
 
         private static bool MayBeGenerated(IProperty property) =>
-            !property.IsKey()
-            && (
-                property.GetDefaultValueSql() is not null
-                || property.GetComputedColumnSql() is not null
-                || property.ValueGenerated != ValueGenerated.Never
-            );
+            property.GetDefaultValueSql() is not null
+            || property.GetComputedColumnSql() is not null
+            || property.ValueGenerated != ValueGenerated.Never;
 
         private static bool LeftToSelector(IProperty property) =>
             property.GetDefaultValueSql() is null
             && property.GetComputedColumnSql() is null
             && property.ValueGenerated == ValueGenerated.OnAdd
-            && property.GetValueGeneratorFactory() is not null;
+            && (property.IsKey() || property.GetValueGeneratorFactory() is not null);
     }
 }

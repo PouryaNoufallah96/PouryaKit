@@ -121,7 +121,7 @@ def require_validated(top: Path, head: str, validated: str) -> str:
         raise Stop(NOT_A_COMMIT, f"the validated commit {validated} is not a commit in this repository")
     if git(top, "merge-base", "--is-ancestor", full, head).returncode:
         raise Stop(UNVALIDATED, f"the validated commit {validated[:7]} is not an ancestor of the head {head[:7]}: rerun validate.py on the head")
-    code = [name for name in git_out(top, "diff", "--name-only", full, head).splitlines() if not name.endswith(".md")]
+    code = [name for name in git_out(top, "diff", "--name-only", "--no-renames", full, head).splitlines() if not name.endswith(".md")]
     if code:
         raise Stop(UNVALIDATED, f"the head {head[:7]} holds code the validation on {validated[:7]} did not run on; rerun validate.py on the head:\n" + "\n".join(f"  {name}" for name in code))
     print(f"validated={validated[:7]}: only Markdown differs between it and the head {head[:7]}")

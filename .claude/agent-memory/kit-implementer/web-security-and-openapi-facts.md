@@ -125,5 +125,9 @@ Verified by decompiling the shared framework with `ilspycmd -t <Type> <dll>` (wr
 - `ServiceDescriptor.ImplementationInstance` and `ImplementationType` return null on a keyed descriptor (.NET 10, probed with `AddKeyedSingleton` before both guards): a `services.Any(d => d.ImplementationInstance is X)` scan needs no `IsKeyedService` filter.
 - `AddPouryaKitEndpoints` on a `ModuleBuilder` sees every Module's descriptors (it enumerates the Host's services), so a guard by `services.Any(...)` works across Modules, as `AddPouryaKitApiVersions`' does. `ComposedFeatures.Add` silently skips a repeated assembly.
 
+## RequireCors and preflights (#105, 2026-10-11; ASP.NET Core 10.0.12)
+
+- **`RequireCors(name)` answers preflights once the CORS middleware runs:** `RouteEndpointBuilder` sets `AcceptCorsPreflight` on the endpoint's method metadata whenever it carries `ICorsMetadata`, so routing matches the `OPTIONS` request. Alone it adds no middleware. Decompile the shared framework from `~/.dotnet/shared/Microsoft.AspNetCore.App/10.0.12/`; this machine has no `/usr/local/share/dotnet` copy of it.
+
 **Why:** each decided a Web or Security design point or cost a round or a full-suite run.
 **How to apply:** when touching PouryaKit.Web, Web.OpenApi, Security, the sample Host's authentication or route groups, or options validation on start; for any CORS, compression or limiter change, any test that asserts a problem response's `type`, starts a second Host or crosses the permission check, any Kit-only trust mark, and any ticket that parses stored credentials or tokens or cites external guidance. Related: [[cqrs-and-modularity-facts]], [[composition-check-facts]], [[observability-tracing-and-http-facts]].

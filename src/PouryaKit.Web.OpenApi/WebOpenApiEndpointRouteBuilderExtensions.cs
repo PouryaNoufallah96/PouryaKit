@@ -7,7 +7,8 @@ using Scalar.AspNetCore;
 namespace PouryaKit.Web.OpenApi;
 
 /// <summary>
-/// Serves the API versions and OpenAPI Capability's documents and Scalar API reference on a Host's routes.
+/// Serves the OpenAPI document of each API version and the Scalar API reference on a Host's routes, for the API
+/// versions and OpenAPI Capability.
 /// </summary>
 public static class WebOpenApiEndpointRouteBuilderExtensions
 {

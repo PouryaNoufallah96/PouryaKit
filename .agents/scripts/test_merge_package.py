@@ -187,6 +187,20 @@ class MergePackageTest(unittest.TestCase):
         self.assertIn("  tests/StrayType.cs", done.stderr)
         self.assertEqual(self.git("rev-parse", "HEAD"), self.base)
 
+    def test_refuses_code_renamed_to_markdown_after_the_validation(self) -> None:
+        # Rename detection names a renamed file by its new path alone, so a .cs file moved to .md read as Markdown only
+        # (cubic on PR #103).
+        validated = self.package("src/Moved.cs", "class Moved;\n")
+        self.git("checkout", "--quiet", "pkg")
+        self.git("mv", "src/Moved.cs", "src/Moved.md")
+        self.git("commit", "--quiet", "-m", "docs: renamed after the validation")
+        head = self.git("rev-parse", "HEAD")
+        self.git("checkout", "--quiet", WAVE)
+        done = self.merge(self.report(head, validated=validated), "-m", "Merge pkg", checks=[self.passing])
+        self.assertEqual(done.returncode, 14, done.stdout + done.stderr)
+        self.assertIn("  src/Moved.cs", done.stderr)
+        self.assertEqual(self.git("rev-parse", "HEAD"), self.base)
+
     def test_accepts_markdown_committed_after_the_validation(self) -> None:
         validated = self.package()
         self.git("checkout", "--quiet", "pkg")

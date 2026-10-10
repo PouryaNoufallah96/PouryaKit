@@ -17,9 +17,10 @@ namespace PouryaKit.Messaging;
 /// Its EF provider key must be a non-null Guid, int, long, string, byte array or DateTime. A DateTime key must use a
 /// PostgreSQL timestamp mapping of precision at most 6, with every value aligned to that precision so reload preserves
 /// its ticks; date mappings and values below the mapping's precision are refused before saving.
-/// Nothing in the aggregate's mapped graph, its owned parts and the children it holds included, may have a non-key value
-/// the database generates when it is saved, such as a default value SQL or a computed column: the Snapshot is built
-/// before the save, so a commit of such an aggregate is refused, naming the property.
+/// Nothing in the aggregate's mapped graph, its owned parts and the children it holds included, may have a value the
+/// database generates when it is saved, such as a default value SQL, a computed column or a child's identity key, other
+/// than the aggregate's own key and a shadow key, which no mapper can read: the Snapshot is built before the save, so a
+/// commit of such an aggregate is refused, naming the property.
 /// </summary>
 public interface ISnapshotMapper<in TAggregate, out TSnapshot>
     where TAggregate : IAggregateRoot

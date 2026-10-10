@@ -11,7 +11,9 @@ namespace PouryaKit.Caching;
 /// and its assembly's simple name, to the key, so the key names only what the query asks. A failed Result is never
 /// stored, and neither is a success whose handler, or whose serialization, changed tracked state, which throws. A
 /// success whose run was in flight when a commit in this Host evicted one of its <see cref="CacheTags"/> is not stored
-/// either: every caller that shared the run receives it, and the next read runs the handler again. Once its handler
+/// either: every caller that shared the run receives it, and the next read runs the handler again. An eviction that
+/// lands in the microseconds between the Kit's check, made once the handler's read has ended, and the cache's own
+/// store is not seen. Once its handler
 /// starts it runs to completion, ignoring the caller's cancellation, because other callers of the same query may be
 /// waiting on it; every caller waits for it. It uses the cache only as its Operation's outermost query: sent from a
 /// command's handler, an authorizer, a validator or another query, it may read a change they made, so it runs
