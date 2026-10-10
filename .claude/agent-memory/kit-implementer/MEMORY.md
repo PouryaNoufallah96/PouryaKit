@@ -12,4 +12,5 @@
 - [Web, security and OpenAPI](web-security-and-openapi-facts.md) — #14 #36 #38 #39 #40 #41 #54 #64 #81 #83 #86 #97 #101, final review A: binding, CORS, limiter, permissions, JWT, PBKDF2, versioning, validation shapes, status case
 - [Observability, tracing and HTTP](observability-tracing-and-http-facts.md) — #46 #47 #48 #52 #64 #80 #84 #101: Npgsql source, parent-id, listener traps, bucket advice, log scopes, allocation proof, resilience, health, Serilog, IMeterFactory
 - [Caching and idempotency](caching-and-idempotency-facts.md) — #42 #43 #54 #81 #82 #85 #93: request id, on conflict do nothing, retention service, HybridCache slot, StampedeJoin, Redis, runs in flight
+- [Archify diagrams](archify-diagram-facts.md) — #106: Chrome for the browser gate, sources on components only, what renders, stale browser evidence, overflow and label gaps
 - [Templates, packaging and publication](templates-packaging-and-publication-facts.md) — #53 #54 #59 #64 #66 #68 #75 #75b #77 #84 #87 #90: template engine, pack-time version, validate.py and consumers, feed install, text rules over a template's own files, version bumps, the AppHost split and test closures
