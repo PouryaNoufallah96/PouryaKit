@@ -7,13 +7,13 @@
   "quality": "showcase",
   "specification": {
     "path": "/Users/pourya/projects/personnal/pourya-kit/.claude/worktrees/106/docs/architecture/diagrams/kit-context.architecture.json",
-    "sha256": "3b6c28b5bf23236b9e5df5ac6fa116a1fd0b339007e3aab9462938369bc38120",
-    "bytes": 14710
+    "sha256": "0bb8982e0cd380709e1bb07bbc58f06c12645187414f1bf37323c6379f3b8a8a",
+    "bytes": 14527
   },
   "artifact": {
     "path": "/Users/pourya/projects/personnal/pourya-kit/.claude/worktrees/106/docs/architecture/diagrams/kit-context.html",
-    "sha256": "a9c6d9572af7a10f4a6ef1f825fcf7f1681e04d025978ab95eda334019ecb4fe",
-    "bytes": 785818
+    "sha256": "7d14385b9b153e0b2184c48670c169b8f08ab17df0af6c9ecb415b4a941df254",
+    "bytes": 785026
   },
   "gates": {
     "validate": "pass",
@@ -43,7 +43,7 @@
     "noticeText": null
   },
   "visualReview": "not-requested",
-  "durationMs": 2829,
+  "durationMs": 2819,
   "visualReviewRecommendation": {
     "action": "inspect-route-readability",
     "signals": {

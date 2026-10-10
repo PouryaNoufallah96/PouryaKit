@@ -13,123 +13,435 @@
   },
   "components": [
     {
-      "id": "domain", "type": "external", "label": "PouryaKit.Domain", "sublabel": "execution core view",
-      "pos": [40, 40], "size": [200, 64],
+      "id": "domain",
+      "type": "external",
+      "label": "PouryaKit.Domain",
+      "sublabel": "execution core view",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ],
       "sources": [
-        { "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs", "line": 21, "label": "its row" }
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 21,
+          "label": "its row"
+        }
       ]
     },
     {
-      "id": "core", "type": "external", "label": "PouryaKit.Core", "sublabel": "execution core view",
-      "pos": [480, 40], "size": [240, 64],
+      "id": "core",
+      "type": "external",
+      "label": "PouryaKit.Core",
+      "sublabel": "execution core view",
+      "pos": [
+        480,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ],
       "sources": [
-        { "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs", "line": 20, "label": "its row" }
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 20,
+          "label": "its row"
+        }
       ]
     },
     {
-      "id": "cqrs", "type": "external", "label": "PouryaKit.Cqrs", "sublabel": "execution core view",
-      "pos": [800, 40], "size": [240, 64],
+      "id": "cqrs",
+      "type": "external",
+      "label": "PouryaKit.Cqrs",
+      "sublabel": "execution core view",
+      "pos": [
+        800,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ],
       "sources": [
-        { "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs", "line": 22, "end_line": 32, "label": "its row" }
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 22,
+          "end_line": 32,
+          "label": "its row"
+        }
       ]
     },
     {
-      "id": "messaging", "type": "backend", "label": "PouryaKit.Messaging", "sublabel": "handler, publisher, mapper contracts",
-      "pos": [40, 200], "size": [200, 64],
+      "id": "messaging",
+      "type": "backend",
+      "label": "PouryaKit.Messaging",
+      "sublabel": "handler, publisher, mapper contracts",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ],
       "sources": [
-        { "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs", "line": 48, "label": "references Domain only" },
-        { "path": "src/PouryaKit.Messaging/INotificationHandler.cs", "line": 13, "end_line": 14, "label": "a Notification Handler of a Domain Event" },
-        { "path": "src/PouryaKit.Messaging/IIntegrationEventHandler.cs", "line": 12, "end_line": 13, "label": "an Integration Event Handler" }
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 48,
+          "label": "references Domain only"
+        },
+        {
+          "path": "src/PouryaKit.Messaging/INotificationHandler.cs",
+          "line": 13,
+          "end_line": 14,
+          "label": "a Notification Handler of a Domain Event"
+        },
+        {
+          "path": "src/PouryaKit.Messaging/IIntegrationEventHandler.cs",
+          "line": 12,
+          "end_line": 13,
+          "label": "an Integration Event Handler"
+        }
       ]
     },
     {
-      "id": "wolverine", "type": "messagebus", "label": "PouryaKit.Messaging.Wolverine", "sublabel": "declarations, a local queue per subscription, delivery, retries, dead letters",
-      "pos": [420, 200], "size": [750, 64],
+      "id": "wolverine",
+      "type": "messagebus",
+      "label": "PouryaKit.Messaging.Wolverine",
+      "sublabel": "declarations, a local queue per subscription, delivery, retries, dead letters",
+      "pos": [
+        420,
+        200
+      ],
+      "size": [
+        750,
+        64
+      ],
       "sources": [
-        { "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs", "line": 49, "label": "references Core, Cqrs, Messaging" },
-        { "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/SubscriptionDelivery.cs", "line": 42, "end_line": 49, "label": "each delivery an Operation, own scope" },
-        { "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/NotificationHandlerServiceCollectionExtensions.cs", "line": 50, "end_line": 59, "label": "finds handlers with ImplementingTypes" }
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 49,
+          "label": "references Core, Cqrs, Messaging"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/SubscriptionDelivery.cs",
+          "line": 42,
+          "end_line": 49,
+          "label": "each delivery an Operation, own scope"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/NotificationHandlerServiceCollectionExtensions.cs",
+          "line": 50,
+          "end_line": 59,
+          "label": "finds handlers with ImplementingTypes"
+        }
       ]
     },
     {
-      "id": "efcore", "type": "external", "label": "PouryaKit.Persistence.EFCore", "sublabel": "execution core view",
-      "pos": [40, 370], "size": [200, 64],
+      "id": "efcore",
+      "type": "external",
+      "label": "PouryaKit.Persistence.EFCore",
+      "sublabel": "execution core view",
+      "pos": [
+        40,
+        540
+      ],
+      "size": [
+        200,
+        64
+      ],
       "sources": [
-        { "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs", "line": 36, "end_line": 39, "label": "its row" }
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 36,
+          "end_line": 39,
+          "label": "its row"
+        }
       ]
     },
     {
-      "id": "wolverineef", "type": "messagebus", "label": "PouryaKit.Messaging.Wolverine.EFCore", "sublabel": "Outbox in the commit, message store, Receipts",
-      "pos": [440, 370], "size": [320, 64],
+      "id": "wolverineef",
+      "type": "messagebus",
+      "label": "PouryaKit.Messaging.Wolverine.EFCore",
+      "sublabel": "Outbox in the commit, message store, Receipts",
+      "pos": [
+        440,
+        370
+      ],
+      "size": [
+        320,
+        64
+      ],
       "sources": [
-        { "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs", "line": 50, "end_line": 53, "label": "references Wolverine and Persistence.EFCore" },
-        { "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs", "line": 16, "end_line": 30, "label": "the Unit of Work's Outbox" },
-        { "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs", "line": 20, "end_line": 36, "label": "commit, send after, Receipts, store" }
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 50,
+          "end_line": 53,
+          "label": "references Wolverine and Persistence.EFCore"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
+          "line": 16,
+          "end_line": 30,
+          "label": "the Unit of Work's Outbox"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs",
+          "line": 20,
+          "end_line": 36,
+          "label": "commit, send after, Receipts, store"
+        }
       ]
     },
     {
-      "id": "rabbitmq", "type": "messagebus", "label": "PouryaKit.Messaging.Wolverine.RabbitMq", "sublabel": "optional: delivery between Hosts",
-      "pos": [860, 370], "size": [320, 64],
+      "id": "rabbitmq",
+      "type": "messagebus",
+      "label": "PouryaKit.Messaging.Wolverine.RabbitMq",
+      "sublabel": "optional: delivery between Hosts",
+      "pos": [
+        860,
+        370
+      ],
+      "size": [
+        320,
+        64
+      ],
       "sources": [
-        { "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs", "line": 54, "label": "references Wolverine" },
-        { "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqExtension.cs", "line": 10, "end_line": 33, "label": "routes publications; one queue" },
-        { "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqHostApplicationBuilderExtensions.cs", "line": 16, "end_line": 36, "label": "unique to one kind of Host" }
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 54,
+          "label": "references Wolverine"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqExtension.cs",
+          "line": 10,
+          "end_line": 33,
+          "label": "routes publications; one queue"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqHostApplicationBuilderExtensions.cs",
+          "line": 16,
+          "end_line": 36,
+          "label": "unique to one kind of Host"
+        }
       ]
     },
     {
-      "id": "testing", "type": "external", "label": "PouryaKit.Testing", "sublabel": "execution core view",
-      "pos": [380, 540], "size": [200, 64],
+      "id": "testing",
+      "type": "external",
+      "label": "PouryaKit.Testing",
+      "sublabel": "execution core view",
+      "pos": [
+        380,
+        540
+      ],
+      "size": [
+        200,
+        64
+      ],
       "sources": [
-        { "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs", "line": 70, "end_line": 73, "label": "its row" },
-        { "path": "src/PouryaKit.Testing/HostFixture.cs", "line": 319, "end_line": 330, "label": "reads the stored deliveries" }
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 70,
+          "end_line": 73,
+          "label": "its row"
+        },
+        {
+          "path": "src/PouryaKit.Testing/HostFixture.cs",
+          "line": 319,
+          "end_line": 330,
+          "label": "reads the stored deliveries"
+        }
       ]
     },
     {
-      "id": "database", "type": "database", "label": "PostgreSQL", "sublabel": "message store, Receipts, versions",
-      "pos": [620, 540], "size": [240, 64],
+      "id": "database",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "message store, Receipts, versions",
+      "pos": [
+        620,
+        540
+      ],
+      "size": [
+        240,
+        64
+      ],
       "sources": [
-        { "path": "src/PouryaKit.Messaging.Wolverine.EFCore/ReceiptTable.cs", "line": 5, "end_line": 12, "label": "Receipts in each Module's schema" },
-        { "path": "src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotVersionTable.cs", "line": 5, "end_line": 13, "label": "Snapshot versions beside them" },
-        { "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs", "line": 90, "end_line": 93, "label": "Wolverine and RabbitMq keep no database" }
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/ReceiptTable.cs",
+          "line": 5,
+          "end_line": 12,
+          "label": "Receipts in each Module's schema"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotVersionTable.cs",
+          "line": 5,
+          "end_line": 13,
+          "label": "Snapshot versions beside them"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 90,
+          "end_line": 93,
+          "label": "Wolverine and RabbitMq keep no database"
+        }
       ]
     },
     {
-      "id": "broker", "type": "external", "label": "RabbitMQ", "sublabel": "exchange per wire name, queue per kind of Host",
-      "pos": [890, 540], "size": [260, 64],
+      "id": "broker",
+      "type": "external",
+      "label": "RabbitMQ",
+      "sublabel": "exchange per wire name, queue per kind of Host",
+      "pos": [
+        890,
+        540
+      ],
+      "size": [
+        260,
+        64
+      ],
       "sources": [
-        { "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqExtension.cs", "line": 12, "end_line": 32, "label": "fanout exchanges; the service name queue" },
-        { "path": "GLOSSARY.md", "line": 130, "end_line": 132, "label": "Service name" }
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqExtension.cs",
+          "line": 12,
+          "end_line": 32,
+          "label": "fanout exchanges; the service name queue"
+        },
+        {
+          "path": "GLOSSARY.md",
+          "line": 130,
+          "end_line": 132,
+          "label": "Service name"
+        }
       ]
     }
   ],
   "boundaries": [
-    { "kind": "region", "label": "PouryaKit messaging and delivery", "wraps": ["messaging", "wolverine", "wolverineef", "rabbitmq"], "pad": 20 }
+    {
+      "kind": "region",
+      "label": "PouryaKit messaging and delivery",
+      "wraps": [
+        "messaging",
+        "wolverine",
+        "wolverineef",
+        "rabbitmq"
+      ],
+      "pad": 20
+    }
   ],
   "connections": [
-    { "id": "messaging-domain", "from": "messaging", "to": "domain", "label": "handles its Domain Events", "fromSide": "top", "toSide": "bottom" },
-    { "id": "wolverine-messaging", "from": "wolverine", "to": "messaging", "label": "delivers to its handlers", "fromSide": "left", "toSide": "right" },
-    { "id": "wolverine-core", "from": "wolverine", "to": "core", "label": "finds Notification Handlers", "fromSide": "top", "toSide": "bottom" },
-    { "id": "wolverine-cqrs", "from": "wolverine", "to": "cqrs", "label": "each delivery an Operation", "fromSide": "top", "toSide": "bottom" },
-    { "id": "wolverineef-wolverine", "from": "wolverineef", "to": "wolverine", "label": "adds the Outbox and store", "fromSide": "top", "toSide": "bottom" },
-    { "id": "wolverineef-efcore", "from": "wolverineef", "to": "efcore", "label": "writes in its Unit of Work", "fromSide": "left", "toSide": "right" },
-    { "id": "rabbitmq-wolverine", "from": "rabbitmq", "to": "wolverine", "label": "routes, receives", "fromSide": "top", "toSide": "bottom" },
-    { "id": "testing-wolverineef", "from": "testing", "to": "wolverineef", "label": "waits for deliveries", "fromSide": "top", "toSide": "bottom" },
-    { "id": "wolverineef-database", "from": "wolverineef", "to": "database", "label": "stores", "fromSide": "bottom", "toSide": "top" },
-    { "id": "rabbitmq-broker", "from": "rabbitmq", "to": "broker", "label": "sends, receives", "fromSide": "bottom", "toSide": "top" }
+    {
+      "id": "messaging-domain",
+      "from": "messaging",
+      "to": "domain",
+      "label": "handles its Domain Events",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "wolverine-messaging",
+      "from": "wolverine",
+      "to": "messaging",
+      "label": "delivers to its handlers",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "wolverine-core",
+      "from": "wolverine",
+      "to": "core",
+      "label": "finds Notification Handlers",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "wolverine-cqrs",
+      "from": "wolverine",
+      "to": "cqrs",
+      "label": "each delivery an Operation",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "wolverineef-wolverine",
+      "from": "wolverineef",
+      "to": "wolverine",
+      "label": "adds the Outbox and store",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "wolverineef-efcore",
+      "from": "wolverineef",
+      "to": "efcore",
+      "label": "writes in its Unit of Work",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "rabbitmq-wolverine",
+      "from": "rabbitmq",
+      "to": "wolverine",
+      "label": "routes, receives",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "testing-wolverineef",
+      "from": "testing",
+      "to": "wolverineef",
+      "label": "waits for deliveries",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "wolverineef-database",
+      "from": "wolverineef",
+      "to": "database",
+      "label": "stores",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rabbitmq-broker",
+      "from": "rabbitmq",
+      "to": "broker",
+      "label": "sends, receives",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Arrows", "items": [
-      "An arrow between two packages is a project reference that PackageGraph allows; these are all of this view's references.",
-      "The packages of the execution core view appear here only as reference targets."
-    ] },
-    { "dot": "emerald", "title": "Delivery", "items": [
-      "A Module's Unit of Work writes its Notifications, Integration Events, Snapshots and delayed commands to the Outbox in the same commit as its change; they are sent only after the commit.",
-      "Each delivery runs as an Operation of the subscribing Module, in a scope of its own, and records a Receipt in that Module's Unit of Work, so a redelivery applies its effect once.",
-      "PouryaKit.Messaging.Wolverine keeps no database: the message store, the Outbox, Receipts and Snapshot versions are PouryaKit.Messaging.Wolverine.EFCore's."
-    ] },
-    { "dot": "violet", "title": "Between Hosts", "items": [
-      "PouryaKit.Messaging.Wolverine.RabbitMq is optional: a fanout exchange per published wire name with a durable outbox, and one durable queue per kind of Host, named by its service name, with a durable Inbox.",
-      "Instances of one kind of Host share its queue as competing receivers; no broker dead-letter queue is declared."
-    ] }
+    {
+      "dot": "cyan",
+      "title": "Arrows",
+      "items": [
+        "An arrow between two packages is a project reference that PackageGraph allows; these are all of this view's references.",
+        "The packages of the execution core view appear here only as reference targets."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Delivery",
+      "items": [
+        "A Module's Unit of Work writes its Notifications, Integration Events, Snapshots and delayed commands to the Outbox in the same commit as its change; they are sent only after the commit.",
+        "Each delivery runs as an Operation of the subscribing Module, in a scope of its own, and records a Receipt in that Module's Unit of Work, so a redelivery applies its effect once.",
+        "PouryaKit.Messaging.Wolverine keeps no database: the message store, the Outbox, Receipts and Snapshot versions are PouryaKit.Messaging.Wolverine.EFCore's."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Between Hosts",
+      "items": [
+        "PouryaKit.Messaging.Wolverine.RabbitMq is optional: a fanout exchange per published wire name with a durable outbox, and one durable queue per kind of Host, named by its service name, with a durable Inbox.",
+        "Instances of one kind of Host share its queue as competing receivers; no broker dead-letter queue is declared."
+      ]
+    }
   ]
 }

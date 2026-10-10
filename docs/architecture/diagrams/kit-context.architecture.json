@@ -411,17 +411,6 @@
       ]
     }
   ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "Hosts of the Proving Sample",
-      "wraps": [
-        "mmhost",
-        "invhost"
-      ],
-      "pad": 18
-    }
-  ],
   "connections": [
     {
       "id": "issues-token",

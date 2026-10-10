@@ -7,13 +7,13 @@
   "quality": "showcase",
   "specification": {
     "path": "/Users/pourya/projects/personnal/pourya-kit/.claude/worktrees/106/docs/architecture/diagrams/messaging-and-delivery.architecture.json",
-    "sha256": "09e2a4c9c129df9fa10a79e67a5d1b7185a0b89e280651130f2378cc953ce85c",
-    "bytes": 9021
+    "sha256": "927d4dcda5c101b9bced20c9915a2952067652565edea3b7df4dbf41f33e63a6",
+    "bytes": 11419
   },
   "artifact": {
     "path": "/Users/pourya/projects/personnal/pourya-kit/.claude/worktrees/106/docs/architecture/diagrams/messaging-and-delivery.html",
-    "sha256": "baa1d527f87152faa112e4cec7221959574c3e431144292fcd395265132cdac1",
-    "bytes": 775740
+    "sha256": "530d1f0f91cfb7d2de7d073109f755b002181cbbd291802e73b5a41571f55507",
+    "bytes": 775803
   },
   "gates": {
     "validate": "pass",
@@ -43,5 +43,5 @@
     "noticeText": null
   },
   "visualReview": "not-requested",
-  "durationMs": 2799
+  "durationMs": 2823
 }
