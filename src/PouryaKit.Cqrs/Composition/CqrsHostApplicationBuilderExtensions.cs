@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 namespace PouryaKit.Cqrs;
 
 /// <summary>
-/// Composes the Cqrs Capability's composition checks and startup checks, with its dispatcher, on a Host's application
+/// Composes the composition checks and startup checks of the Commands, queries and validation Capability, with its dispatcher, on a Host's application
 /// builder.
 /// </summary>
 public static class CqrsHostApplicationBuilderExtensions

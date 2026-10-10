@@ -11,7 +11,7 @@ using PouryaKit.Domain;
 namespace PouryaKit.Web;
 
 /// <summary>
-/// Composes the Web Capability on a Host's services, and declares each Module's endpoints in its Composition Root.
+/// Composes the Web Capability on a Host's services, and declares endpoints on a Module's or a Host's services.
 /// </summary>
 public static class WebServiceCollectionExtensions
 {

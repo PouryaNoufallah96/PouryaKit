@@ -1,7 +1,7 @@
 namespace PouryaKit.Cqrs;
 
 /// <summary>
-/// Gives each <see cref="FilterOperator"/> the short name a filter writes it by, as part of the Cqrs Capability's
+/// Gives each <see cref="FilterOperator"/> the short name a filter writes it by, as part of the Paging Capability's
 /// paging.
 /// </summary>
 public static class FilterOperatorNames

@@ -7,7 +7,8 @@ using PouryaKit.Cqrs;
 namespace PouryaKit.Validation;
 
 /// <summary>
-/// Composes the Validation Capability on a Module's services: the Features' validators as the pipeline's validation
+/// Composes the validation of the Commands, queries and validation Capability on a Module's or a Host's services: the
+/// Features' validators as the pipeline's validation
 /// step.
 /// </summary>
 public static class ValidationServiceCollectionExtensions

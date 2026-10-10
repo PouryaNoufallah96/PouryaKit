@@ -6,7 +6,7 @@ using Wolverine;
 namespace PouryaKit.Messaging.Wolverine.RabbitMq;
 
 /// <summary>
-/// Composes the RabbitMQ Capability on a Host's application builder: the Integration Events and Snapshots the Host
+/// Composes the RabbitMQ between Hosts Capability on a Host's application builder: the Integration Events and Snapshots the Host
 /// sends to and receives from other Hosts.
 /// </summary>
 public static class RabbitMqHostApplicationBuilderExtensions
