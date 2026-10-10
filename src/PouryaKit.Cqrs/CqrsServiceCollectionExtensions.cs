@@ -143,10 +143,11 @@ public static class CqrsServiceCollectionExtensions
     }
 
     // A second call with the same assembly adds nothing; a different handler for an operation already handled is a
-    // second handler.
+    // second handler. The dispatcher resolves handlers unkeyed, so a keyed service of a handler's type is no handler;
+    // its descriptor's ImplementationType is null, which would read as a second one.
     private static void AddHandler(IServiceCollection services, Type service, Type implementation)
     {
-        var existing = services.FirstOrDefault(descriptor => descriptor.ServiceType == service);
+        var existing = services.FirstOrDefault(descriptor => !descriptor.IsKeyedService && descriptor.ServiceType == service);
         if (existing is null)
         {
             services.AddScoped(service, implementation);

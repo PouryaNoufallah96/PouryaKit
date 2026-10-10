@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace PouryaKit.Domain;
@@ -80,8 +81,8 @@ public static class TypedId
         return null;
     }
 
-    // The constructor is looked up once per ID type; ConstructorInvoker does not wrap the
-    // constructor's own exceptions, so an empty value still surfaces as ArgumentException.
+    // The constructor is looked up once per ID type and called through a compiled lambda, which neither boxes the value
+    // nor wraps the constructor's own exceptions, so an empty value still surfaces as ArgumentException.
     private static class Factory<TId, TValue>
         where TId : TypedId<TValue>
         where TValue : notnull
@@ -102,8 +103,8 @@ public static class TypedId
                     );
             }
 
-            var invoker = ConstructorInvoker.Create(constructor);
-            return value => (TId)invoker.Invoke(value);
+            var value = Expression.Parameter(typeof(TValue), "value");
+            return Expression.Lambda<Func<TValue, TId>>(Expression.New(constructor, value), value).Compile();
         }
     }
 }
