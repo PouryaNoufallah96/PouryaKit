@@ -1,0 +1,71 @@
+docs/architecture/README.md
+  s_a846915d2dd93c::t_d56b6bd06330fe 331,565,578,592-593,610
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_a846915d2dd93c::t_d56b6bd06330fe 12-13
+  s_a846915d2dd93c::t_e51958f3f942e0 1
+src/PouryaKit.Web/HttpCallerContext.cs
+  s_a846915d2dd93c::t_d56b6bd06330fe 16-18,21-36,65-67
+src/PouryaKit.Testing/StoredDeliveries.cs
+  s_a846915d2dd93c::t_d56b6bd06330fe 94-98,100,102-103
+src/PouryaKit.Web.OpenApi/PouryaKitOpenApiOptions.cs
+  s_a846915d2dd93c::t_d56b6bd06330fe 18-19,21
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_a846915d2dd93c::t_d56b6bd06330fe 249-270
+tests/ModularMonolith.Tests/WebDefaultsTests.cs
+  s_a846915d2dd93c::t_d56b6bd06330fe 3-5,8,258-278,284,287-289,356-378
+src/PouryaKit.Observability/ObservedDispatcher.cs
+  s_a846915d2dd93c::t_d56b6bd06330fe 11-12,18,103,106-121
+  s_a846915d2dd93c::t_97dd84b5496520 122
+.agents/skills/pourya-kit/references/openapi.md
+  s_a846915d2dd93c::t_d56b6bd06330fe 90,132-133
+.claude/agent-memory/kit-implementer/observability-tracing-and-http-facts.md
+  s_a846915d2dd93c::t_d56b6bd06330fe 75-80
+tests/ModularMonolith.Tests/ObservabilityTests.cs
+  s_a846915d2dd93c::t_d56b6bd06330fe 1,3,10,218-252
+  s_a846915d2dd93c::t_1b9b976586c057 253-254
+src/PouryaKit.Testing/HostFixture.cs
+  s_a846915d2dd93c::t_d56b6bd06330fe 225,227,231-234,237,239-260
+src/PouryaKit.Web.OpenApi/WebOpenApiServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_d56b6bd06330fe 34-35,47-50
+  s_a846915d2dd93c::t_a4bb116f706ce3 51-52
+tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.csproj
+  s_a846915d2dd93c::t_d56b6bd06330fe 8
+tests/PouryaKit.Cqrs.Tests/ObservedDispatcherTests.cs
+  s_a846915d2dd93c::t_d56b6bd06330fe 15
+src/PouryaKit.Observability/ObservabilityServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_d56b6bd06330fe 2,20-22,43,52-56
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_a846915d2dd93c::t_d56b6bd06330fe 115,119-126
+  s_a846915d2dd93c::t_46b5548531c932 127
+docs/acceptance.md
+  s_a846915d2dd93c::t_d56b6bd06330fe 1657-1675
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_a846915d2dd93c::t_d56b6bd06330fe 279-300,513-532
+  s_a846915d2dd93c::t_dd7fd5d6d43b2a 533
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_d56b6bd06330fe 106-107,115-120,122-131
+tests/ModularMonolith.Tests/HostFixtureTests.cs
+  s_a846915d2dd93c::t_d56b6bd06330fe 1-67
+.agents/skills/pourya-kit/references/web.md
+  s_a846915d2dd93c::t_d56b6bd06330fe 144,335
+.agents/skills/pourya-kit/references/observability.md
+  s_a846915d2dd93c::t_d56b6bd06330fe 29
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_a846915d2dd93c::t_a6bfc772947fe6 108-112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bbb92fb3060b2e3890f6d50ea0b1995974b6ae9a",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
