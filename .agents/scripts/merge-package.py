@@ -84,18 +84,24 @@ def read_report(path: Path) -> tuple[str, str, str]:
     except OSError as error:
         raise Stop(REPORT, f"cannot read the report {path}: {error.strerror}")
     # Top-level objects only: after one parses, the scan resumes past its end, so a nested object is never "the last".
-    decoder, found, at = json.JSONDecoder(), None, text.find("{")
+    # An object that does not parse is remembered: when the last object that did parse has no head, the report's own
+    # JSON is the likely culprit (session 5, #87: a malformed `fixes` entry made the scan step inside and take a nested
+    # `commands` entry as the report), and the message names the line and the decoder's reason.
+    decoder, found, at, broken = json.JSONDecoder(), None, text.find("{"), None
     while at != -1:
         try:
             found, end = decoder.raw_decode(text, at)
-        except ValueError:
+        except ValueError as error:
+            if broken is None and text[at:at + 2] in ("{\n", "{\r"):
+                broken = f"line {text.count(chr(10), 0, at) + 1}: {error}"
             end = at + 1
         at = text.find("{", end)
     if found is None:
-        raise Stop(REPORT, f"the report {path} holds no JSON object")
+        raise Stop(REPORT, f"the report {path} holds no JSON object" + (f"; one at {broken} does not parse" if broken else ""))
     head, branch = found.get("head"), found.get("branch")
     if not isinstance(head, str) or not HEAD.fullmatch(head):
-        raise Stop(REPORT, f"the last JSON object in {path} has no head commit (7 to 40 hex digits): {head!r}")
+        hint = f"; the object at {broken} does not parse, so a nested object was read instead: fix the report's JSON" if broken else ""
+        raise Stop(REPORT, f"the last JSON object in {path} has no head commit (7 to 40 hex digits): {head!r}{hint}")
     if not isinstance(branch, str) or not branch:
         raise Stop(REPORT, f"the last JSON object in {path} has no branch name: {branch!r}")
     validated = found.get("validated")

@@ -203,6 +203,19 @@ class MergePackageTest(unittest.TestCase):
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
         self.assertIn(f"validated={head[:7]}", done.stdout)
 
+    def test_a_report_whose_json_does_not_parse_names_the_broken_line(self) -> None:
+        """Session 5, #87: a fix-round report's `fixes` entry lacked a key, the outer object failed to parse, and the scan
+        read a nested `commands` entry as the report. The message names the broken object's line instead."""
+        head = self.package()
+        path = Path(self.report(head))
+        text = path.read_text().replace('"commands"', '"fixes": {"R1": "done", "R2: not a key"},\n  "commands"')
+        path.write_text(text)
+        done = self.merge(str(path), "-m", "Merge pkg", checks=[self.passing])
+        self.assertEqual(done.returncode, 3, done.stdout + done.stderr)
+        self.assertIn("does not parse, so a nested object was read instead", done.stderr)
+        self.assertRegex(done.stderr, r"the object at line \d+: ")
+        self.assertEqual(self.git("rev-parse", "HEAD"), self.base)
+
     def test_refuses_a_report_that_names_no_validated_commit(self) -> None:
         head = self.package()
         done = self.merge(self.report(head, validated=None), "-m", "Merge pkg", checks=[self.passing])
