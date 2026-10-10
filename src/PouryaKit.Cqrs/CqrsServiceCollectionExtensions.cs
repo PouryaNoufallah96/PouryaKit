@@ -23,7 +23,8 @@ public static class CqrsServiceCollectionExtensions
         /// live; named assemblies replace it, in their order. On the Host's own services with no assembly, it registers the
         /// dispatcher alone. Throws here, while the Host is composed, when a command or
         /// query has no handler or several, when an authorizer is not for one concrete command or query, when a Domain
-        /// Event Handler handles several Domain Event types or an abstract one, or when a command, query, handler or
+        /// Event Handler handles several Domain Event types or an abstract Domain Event type (an abstract handler class is
+        /// skipped), or when a command, query, handler or
         /// authorizer is a generic type definition.
         /// </summary>
         public IServiceCollection AddPouryaKitCqrs(params Assembly[] featureAssemblies)
