@@ -1,0 +1,23 @@
+.agents/skills/pourya-kit/references/observability.md
+  s_a846915d2dd93c::t_1a5982fbebadaf 29
+tests/PouryaKit.Cqrs.Tests/ObservedDispatcherTests.cs
+  s_a846915d2dd93c::t_8f69f2aa66f435 15
+tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.csproj
+  s_a846915d2dd93c::t_982b27107a7d86 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9bf9f193e8b1ce39635c93ffd45fa49b4e58987f",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
