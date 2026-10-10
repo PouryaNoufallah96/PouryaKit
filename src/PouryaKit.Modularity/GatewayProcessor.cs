@@ -49,13 +49,13 @@ internal sealed class GatewayProcessor<TModule>(IServiceScopeFactory scopes, Hos
     {
         ArgumentNullException.ThrowIfNull(context);
         modules.EnsureOwns(typeof(TModule), commandOrQuery.GetType());
-        return RunInScopeAsync();
+        return RunInScopeAsync(context, run);
+    }
 
-        async Task<TResult> RunInScopeAsync()
-        {
-            await using var scope = scopes.CreateAsyncScope();
-            scope.ServiceProvider.BeginOperation(context, typeof(TModule));
-            return await run(scope.ServiceProvider.GetRequiredService<IDispatcher>());
-        }
+    private async Task<TResult> RunInScopeAsync<TResult>(OperationContext context, Func<IDispatcher, Task<TResult>> run)
+    {
+        await using var scope = scopes.CreateAsyncScope();
+        scope.ServiceProvider.BeginOperation(context, typeof(TModule));
+        return await run(scope.ServiceProvider.GetRequiredService<IDispatcher>());
     }
 }
