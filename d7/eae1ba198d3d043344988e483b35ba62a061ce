@@ -1,0 +1,25 @@
+src/PouryaKit.Cqrs/Operations/OperationContextServiceProviderExtensions.cs
+  s_a846915d2dd93c::t_6b61a54b0d9cac 7-8
+src/PouryaKit.Cqrs/Paging/FilterOperatorNames.cs
+  s_a846915d2dd93c::t_eeb412161f6807 3-6
+src/PouryaKit.Domain/JsonSerializerOptionsExtensions.cs
+  s_a846915d2dd93c::t_604a0947de7e26 8-9
+src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs
+  s_a846915d2dd93c::t_226dc39dec8b33 9-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d7eae1ba198d3d043344988e483b35ba62a061ce",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
