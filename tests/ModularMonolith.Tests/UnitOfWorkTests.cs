@@ -3,8 +3,13 @@ using Catalog.Categories.Entities;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Categories.ValueObjects;
 using Catalog.Products.Features.CreateProduct;
+using Microsoft.Extensions.DependencyInjection;
+using ModularMonolith.Host;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
+using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Persistence.EFCore;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -105,5 +110,43 @@ public sealed class UnitOfWorkTests(AppFixture app) : HostTest<AppFixture>(app)
             deliveries
         );
         Assert.Equal(2L, await Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text in ('{text}', 'nested {text}')"));
+    }
+
+    // A Receipt or a Snapshot's version commits with its delivery's effect only in the Unit of Work's transaction; a scope
+    // that runs no command has none, so either is refused there rather than committed on its own.
+    [Fact]
+    public async Task A_receipt_or_a_snapshot_version_recorded_where_no_unit_of_work_is_active_is_refused_and_nothing_is_kept()
+    {
+        const string subscription = "tests.no-unit-of-work";
+        await using var scope = Fixture.Host.Services.CreateAsyncScope();
+        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(StubModule));
+        var receipts = scope.ServiceProvider.GetRequiredService<IReceipts>();
+
+        var receipt = await Record.ExceptionAsync(() => receipts.RecordAsync(subscription, Guid.CreateVersion7(), TestContext.Current.CancellationToken));
+        var version = await Record.ExceptionAsync(() => receipts.RecordVersionAsync(subscription, "aggregate", 1, TestContext.Current.CancellationToken));
+
+        Assert.Equal(
+            [[0L, 0L]],
+            await Fixture.RowsAsync(
+                $"select (select count(*) from stub.pouryakit_receipts where subscription = '{subscription}'), (select count(*) from stub.pouryakit_snapshot_versions where subscription = '{subscription}')"
+            )
+        );
+        Assert.Equal("No Unit of Work is active, so there is no transaction to keep Receipts in.", Assert.IsType<InvalidOperationException>(receipt).Message);
+        Assert.Equal(
+            "No Unit of Work is active, so there is no transaction to keep the versions of the Snapshots its handlers applied in.",
+            Assert.IsType<InvalidOperationException>(version).Message
+        );
+    }
+
+    // The Unit of Work writes through the Outbox the Host's IOutbox marks: one instance per scope.
+    [Fact]
+    public async Task A_scope_resolves_one_outbox_for_its_unit_of_work_and_the_hosts_outbox_marker()
+    {
+        await using var host = ModularMonolithHost.Build(
+            ModularMonolithHost.CreateBuilder(["--environment", "Development", $"--ConnectionStrings:app={Fixture.ConnectionString}"])
+        );
+        await using var scope = host.Services.CreateAsyncScope();
+
+        Assert.Same(scope.ServiceProvider.GetRequiredService<IUnitOfWorkOutbox>(), scope.ServiceProvider.GetRequiredService<IOutbox>());
     }
 }

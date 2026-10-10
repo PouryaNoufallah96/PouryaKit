@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
@@ -16,7 +17,7 @@ namespace PouryaKit.Messaging.Wolverine;
 // rather than run under another name's Receipts. Each attempt runs in a scope of its own, in its Module: a delayed
 // command's begun as a continuation of the Operation that scheduled it, a recurring command's as a new Operation of its
 // declared system Actor, since no Operation caused it.
-internal sealed class DelayedCommandDelivery(DelayedCommandDeclarations declarations) : MessageHandler
+internal sealed partial class DelayedCommandDelivery(DelayedCommandDeclarations declarations) : MessageHandler
 {
     public override async Task HandleAsync(MessageContext context, CancellationToken cancellation)
     {
@@ -40,17 +41,38 @@ internal sealed class DelayedCommandDelivery(DelayedCommandDeclarations declarat
         {
             await RunAsync(context, declared, command, occurrence, cancellation);
         }
-        catch when (declared.Recurring is not null && IsSetAside(context))
+        catch (Exception failure) when (declared.Recurring is not null && IsSetAside(context))
         {
             // The failure of this attempt sets the occurrence aside as a dead letter, and the next occurrence it stored
             // rolled back with it, so the next one is stored in an Operation of its own unless one already waits. If
             // another Host stores one in between, or this Host dies before the dead letter is written and the occurrence
             // runs again, the occurrence-time Receipt keeps one of the chains. On the runtime's token, since this
-            // attempt's may be the one its timeout cancelled. A failure here is what the dead letter records instead.
-            await RecurringCommandStart.StoreFirstUnlessWaitingAsync(context.Runtime.Services, declared, context.Runtime.Cancellation);
+            // attempt's may be the one its timeout cancelled. The dead letter keeps this attempt's failure: a failure
+            // to store is logged beside it, and nothing then waits until a replay or a Host start stores the next one.
+            try
+            {
+                await RecurringCommandStart.StoreFirstUnlessWaitingAsync(context.Runtime.Services, declared, context.Runtime.Cancellation);
+            }
+            catch (Exception storeFailure)
+            {
+                LogNextOccurrenceNotStored(
+                    context.Runtime.Services.GetRequiredService<ILogger<DelayedCommandDelivery>>(),
+                    new AggregateException(storeFailure, failure),
+                    declared.Name,
+                    envelope.Id
+                );
+            }
+
             throw;
         }
     }
+
+    [LoggerMessage(
+        EventName = "NextOccurrenceNotStored",
+        Level = LogLevel.Error,
+        Message = "Storing the next occurrence of the recurring command {Name} failed (the first inner exception) as its occurrence {MessageId} was set aside as a dead letter with its own failure (the second); nothing waits until a replay of that dead letter or a Host start stores the next occurrence after now"
+    )]
+    private static partial void LogNextOccurrenceNotStored(ILogger logger, Exception exception, string name, Guid messageId);
 
     private static async Task RunAsync(
         MessageContext context,

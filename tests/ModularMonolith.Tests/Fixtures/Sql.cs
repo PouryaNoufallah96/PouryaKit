@@ -22,4 +22,19 @@ public static class Sql
 
         return rows;
     }
+
+    /// <summary>
+    /// Waits until the SQL <paramref name="condition"/> holds on <paramref name="connectionString"/>, read every 25 ms;
+    /// fails with <paramref name="because"/>, or with the condition when none is given, after <paramref name="seconds"/>.
+    /// </summary>
+    public static async Task WaitUntilAsync(string connectionString, string condition, string? because = null, int seconds = 15)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(seconds));
+        while (!(bool)(await RowsAsync(connectionString, $"select {condition}"))[0][0])
+        {
+            Assert.False(timeout.IsCancellationRequested, because ?? $"Not reached within {seconds} s: {condition}");
+            await Task.Delay(25, TestContext.Current.CancellationToken);
+        }
+    }
 }

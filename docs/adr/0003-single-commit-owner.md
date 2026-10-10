@@ -175,6 +175,13 @@ state it commits (spec #74, finding P1).
   `ConditionalWeakTable` keyed by that model, which holds an entry only as long as the model. Proven by
   `SnapshotTests.A_snapshot_is_refused_by_the_model_its_dbcontext_uses_when_one_dbcontext_type_has_two_models`, red
   with the type key.*
+  *Refined on 2026-10-10 (ticket #100): the read keeps the properties whose values the database may generate, and
+  whether a client-side value generator sets one for good is asked of the committing DbContext's
+  `IValueGeneratorSelector` at each commit. Two contexts given one model can replace the selector differently, and the
+  first one's answer was kept for both. The selector caches what it selects: 1,000 builds of a Snapshot whose aggregate
+  has such a property took about 22 ms before and after. Proven by
+  `SnapshotTests.A_snapshot_is_refused_by_the_value_generator_selector_its_dbcontext_uses_when_two_share_a_model`, red
+  with the selector's answer cached.*
 - **Proven against PostgreSQL** by `SnapshotTests.A_snapshot_of_an_aggregate_whose_database_generates_a_value_it_maps_fails_the_operation_that_saves_it`
   (a default value SQL on the root) and
   `SnapshotTests.A_snapshot_of_an_aggregate_whose_database_generates_a_value_of_an_owned_part_it_maps_fails_the_operation_that_saves_it`

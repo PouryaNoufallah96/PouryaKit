@@ -115,14 +115,5 @@ public sealed class AppFixture : HostFixture
     public async Task<T> ScalarAsync<T>(string sql) => (T)(await RowsAsync(sql))[0][0];
 
     /// <summary>Waits until the SQL <paramref name="condition"/> holds; fails with <paramref name="because"/> after 15 s.</summary>
-    public async Task WaitUntilAsync(string condition, string because)
-    {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(15));
-        while (!await ScalarAsync<bool>($"select {condition}"))
-        {
-            Assert.False(timeout.IsCancellationRequested, because);
-            await Task.Delay(25, TestContext.Current.CancellationToken);
-        }
-    }
+    public Task WaitUntilAsync(string condition, string because) => Sql.WaitUntilAsync(ConnectionString, condition, because);
 }

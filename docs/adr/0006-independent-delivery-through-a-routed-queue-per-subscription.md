@@ -883,6 +883,14 @@ commit sequence is unchanged: the Unit of Work writes the command in its Outbox 
   and is dead-lettered rather than run again under the new name's Receipt key
   (`DelayedCommandTests.A_delayed_command_stored_under_a_name_no_longer_declared_is_dead_lettered_and_never_run`).
   The name follows the subscription name's rule, reserved queues included.
+  *Pinned on 2026-10-10 (ticket #100): a stored command whose type no declaration names any more is dead-lettered as
+  an unknown message, read before from Wolverine's source, is now a live test.
+  `DelayedCommandTests.A_delayed_command_whose_type_no_declaration_names_any_more_is_dead_lettered_at_once_and_never_run`
+  stores a delayed command from one Host, then starts another on the same database that declares nothing for its
+  type: the first time it is handed out, the `IMissingHandler` that `UnknownMessageBehavior.DeadLetterQueue` registers
+  moves it to the dead letters, with `Wolverine.Runtime.Interop.UnknownMessageTypeNameException` and the message
+  "Unknown message type: '<full CLR name>'", its attempts 0, no incoming row left and nothing run. Red with that
+  handler removed: no dead letter within 15 s.*
 
 ## Amendment (2026-10-07, ticket #45: recurring commands)
 

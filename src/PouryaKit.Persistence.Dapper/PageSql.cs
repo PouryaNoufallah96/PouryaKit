@@ -45,13 +45,23 @@ public sealed class PageSql
 
     /// <summary>
     /// Throws when <paramref name="select"/> or <paramref name="count"/> does not use the parameter of every filter
-    /// <paramref name="declaration"/> declares, or when <paramref name="select"/> ends with a semicolon.
+    /// <paramref name="declaration"/> declares, when <paramref name="select"/> ends with a semicolon, and when a declared
+    /// filter's value type is one this SQL has no database type to send it as.
     /// </summary>
     public PageSql(PageDeclaration declaration, string select, string count)
     {
         ArgumentNullException.ThrowIfNull(declaration);
         ArgumentException.ThrowIfNullOrWhiteSpace(select);
         ArgumentException.ThrowIfNullOrWhiteSpace(count);
+        // FilterField keeps its own list of value types: one this table lacks fails when the Feature's SQL is built.
+        if (declaration.Filters.FirstOrDefault(field => !DbTypes.ContainsKey(field.ValueType)) is { } unmapped)
+        {
+            throw new ArgumentException(
+                $"The filter field {unmapped.Name} has values of {unmapped.ValueType.Name}, which a Dapper Page read has no database type for.",
+                nameof(declaration)
+            );
+        }
+
         Select = select.TrimEnd();
         if (Select.EndsWith(';'))
         {

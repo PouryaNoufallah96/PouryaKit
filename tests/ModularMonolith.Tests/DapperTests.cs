@@ -199,6 +199,15 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Contains("'reports'", thrown.Message);
     }
 
+    // Configuration keys ignore case, so "app" and "APP" name one connection string, as AddPouryaKitEfCore reads them.
+    [Fact]
+    public void Dapper_reads_named_again_in_another_case_share_the_one_connection()
+    {
+        var services = new ServiceCollection().AddPouryaKitDapper("app").AddPouryaKitDapper("APP");
+
+        Assert.Single(services, descriptor => descriptor.ServiceType == typeof(IReadConnectionFactory));
+    }
+
     private static Task<int> BackendAsync(System.Data.Common.DbConnection connection) =>
         connection.ExecuteScalarAsync<int>(
             new CommandDefinition("select pg_backend_pid()", cancellationToken: TestContext.Current.CancellationToken)

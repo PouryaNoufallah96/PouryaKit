@@ -40,8 +40,14 @@ public sealed class BrokerFixture : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
-        await _rabbit.DisposeAsync();
-        await _postgres.DisposeAsync();
+        try
+        {
+            await _rabbit.DisposeAsync();
+        }
+        finally
+        {
+            await _postgres.DisposeAsync();
+        }
     }
 
     /// <summary>A vhost and the Catalog Host's and Inventory Host's databases, new for one test.</summary>
@@ -195,16 +201,8 @@ public sealed class BrokerEnvironment(BrokerFixture fixture, string catalog, str
     }
 
     /// <summary>Waits until the SQL <paramref name="condition"/> holds on <paramref name="database"/>; fails with <paramref name="because"/>.</summary>
-    public static async Task WaitUntilAsync(string database, string condition, string because, int seconds = 30)
-    {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(seconds));
-        while (!await ScalarAsync<bool>(database, $"select {condition}"))
-        {
-            Assert.False(timeout.IsCancellationRequested, because);
-            await Task.Delay(50, TestContext.Current.CancellationToken);
-        }
-    }
+    public static Task WaitUntilAsync(string database, string condition, string because, int seconds = 30) =>
+        Sql.WaitUntilAsync(database, condition, because, seconds);
 
     /// <summary>
     /// Waits until no delivery in the message store of <paramref name="database"/> is pending, as
@@ -250,11 +248,18 @@ public sealed class BrokerEnvironment(BrokerFixture fixture, string catalog, str
     /// <summary>Applies Inventory's migrations to <see cref="Inventory"/>, as a deployment does before the Host starts.</summary>
     public async Task MigrateInventoryAsync()
     {
-        using var host = ComposeInventoryHost();
-        await using var scope = host.Services.CreateAsyncScope();
-        foreach (var options in scope.ServiceProvider.GetServices<DbContextOptions>())
+        var host = ComposeInventoryHost();
+        try
         {
-            await ((DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType)).Database.MigrateAsync(TestContext.Current.CancellationToken);
+            await using var scope = host.Services.CreateAsyncScope();
+            foreach (var options in scope.ServiceProvider.GetServices<DbContextOptions>())
+            {
+                await ((DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType)).Database.MigrateAsync(TestContext.Current.CancellationToken);
+            }
+        }
+        finally
+        {
+            await DisposeAsync(host);
         }
     }
 
@@ -262,7 +267,26 @@ public sealed class BrokerEnvironment(BrokerFixture fixture, string catalog, str
     public static async Task KillAsync(IHost host)
     {
         ((WolverineRuntime)host.Services.GetRequiredService<IWolverineRuntime>()).StopMode = StopMode.Quick;
-        await host.StopAsync(TestContext.Current.CancellationToken);
-        host.Dispose();
+        try
+        {
+            await host.StopAsync(TestContext.Current.CancellationToken);
+        }
+        finally
+        {
+            await DisposeAsync(host);
+        }
+    }
+
+    // Both Hosts are WebApplications, which dispose asynchronously; their Dispose would block on it.
+    private static async Task DisposeAsync(IHost host)
+    {
+        if (host is IAsyncDisposable disposable)
+        {
+            await disposable.DisposeAsync();
+        }
+        else
+        {
+            host.Dispose();
+        }
     }
 }

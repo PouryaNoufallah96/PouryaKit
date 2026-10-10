@@ -91,5 +91,11 @@ Check the merged code before relying on a design note. Each section names its ti
 - **A process-wide cache keyed by type shows only the first order per type:** to show both orders red in one test, give each order a DbContext type of its own (a subclass); the second half goes red only with the halves swapped, since the first half stops the run.
 - One run of the single test failed in 0 ms (a fixture start, by its timing) and eleven reruns passed; a grep-filtered output had hidden its message. Keep the whole output of a first failure.
 
+## The selector per commit and a failing store (#100, 2026-10-10; EF Core 10.0.12, WolverineFx 6.48.3)
+
+- **`ReplaceService<IValueGeneratorSelector, T>()` plus one `UseModel` instance still shares `dbContext.Model`** across the two contexts (`Assert.Same` holds), so a per-model cache must not hold a selector's answer. `IValueGeneratorSelector` can be implemented directly by a test double: its `Select` is `[Obsolete]`, and implementing it does not warn.
+- **Measuring `SnapshotStep.Build`:** a throwaway test in the fixture Host, a begun Stub scope, a tracked `Badge` (its code has `HasValueGenerator<GuidValueGenerator>`, so the selector decides it), the Host's `ISnapshotMappers`, `Build` by reflection: about 22 µs a build with or without the per-commit `TrySelect`; rounds spike to 29 ms per 1,000 now and then.
+- **Failing the dead-letter attempt's store without breaking the store:** declare a Stub recurring command whose occurrence factory throws once a captured local is flipped after the Host started, and `FailAfterReceipt(name)`: the probe fails each attempt before `RunDelayedCommandHandler` calls the factory, and only `StartRecurringCommand` on the last attempt reaches it. The dead letter keeps the probe's `InvalidOperationException`; the `TimeoutException` the factory throws arrives in the Error entry's `AggregateException`.
+
 **Why:** each would let a Snapshot, delayed-command or recurring test pass vacuously or decided a design point; #45 builds on #44's store and delivery.
 **How to apply:** when touching Snapshots, the Outbox seam or write, Receipts, the delivery step, delayed or recurring commands, or tests that start extra Hosts. Related: [[wolverine-runtime-and-delivery-facts]], [[persistence-and-dapper-facts]], [[observability-tracing-and-http-facts]].

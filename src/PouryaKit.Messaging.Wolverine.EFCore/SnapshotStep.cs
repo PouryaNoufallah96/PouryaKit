@@ -25,7 +25,9 @@ internal static class SnapshotStep
     // model cache key or one given with UseModel, shares across contexts and never changes. One DbContext type can
     // carry several models, so its type is not the key; an entry lives only as long as its model, so a model EF no
     // longer holds is not pinned here. The declarations are the Host's, so the key-space check itself still runs at
-    // each commit, over this.
+    // each commit, over this; and the value-generator selector is the DbContext's, which two contexts of one model
+    // can replace differently, so a value only a selected generator sets is judged at each commit, by the
+    // committing context's selector, whose own cache keeps that cheap.
     private static readonly ConditionalWeakTable<IModel, MappedAggregates> Models = [];
 
     public static List<(object Snapshot, string AggregateId, long Version)> Build(
@@ -40,14 +42,18 @@ internal static class SnapshotStep
             return [];
         }
 
-        var mapped = Models.GetOrAdd(dbContext.Model, static (_, context) => MappedAggregates.Of(context), dbContext);
+        var mapped = Models.GetOrAdd(dbContext.Model, MappedAggregates.Of);
         mappers.CheckKeySpaces(mapped.Roots);
 
+        var generators = dbContext.GetService<IValueGeneratorSelector>();
         using var prepared = TrackedState.Capture(dbContext);
         List<(object, string, long)> built = [];
         foreach (var entry in declared)
         {
-            if (mapped.Generated.GetValueOrDefault(entry.Metadata.ClrType) is { } generated)
+            if (
+                mapped.Generated.GetValueOrDefault(entry.Metadata.ClrType)?.FirstOrDefault(property => MappedAggregates.IsGenerated(property, generators))
+                is { } generated
+            )
             {
                 var part = $"{generated.DeclaringType.ClrType.Name}.{generated.Name}";
                 throw new InvalidOperationException(
@@ -128,33 +134,34 @@ internal static class SnapshotStep
     }
 
     // Every aggregate type the model maps, with the root of its hierarchy, in the model's order, which the key-space
-    // refusal lists them in; and the first property in each one's mapped graph whose value the database generates.
-    private sealed record MappedAggregates(IReadOnlyDictionary<Type, Type> Roots, FrozenDictionary<Type, IProperty> Generated)
+    // refusal lists them in; and, in the order each one's mapped graph is walked, the properties whose value the
+    // database may generate, up to the first it generates whatever the selector answers.
+    private sealed record MappedAggregates(IReadOnlyDictionary<Type, Type> Roots, FrozenDictionary<Type, IProperty[]> Generated)
     {
-        public static MappedAggregates Of(DbContext dbContext)
+        public static MappedAggregates Of(IModel model)
         {
-            var generators = dbContext.GetService<IValueGeneratorSelector>();
             List<IEntityType> aggregates =
             [
-                .. dbContext
-                    .Model.GetEntityTypes()
+                .. model
+                    .GetEntityTypes()
                     .Where(type => !type.IsOwned() && type.ClrType.IsAssignableTo(typeof(IAggregateRoot)))
                     .DistinctBy(type => type.ClrType),
             ];
             return new(
                 aggregates.ToDictionary(type => type.ClrType, type => type.GetRootType().ClrType),
                 aggregates
-                    .Select(type => (type.ClrType, Generated: GeneratedIn(type, generators)))
-                    .Where(aggregate => aggregate.Generated is not null)
-                    .ToFrozenDictionary(aggregate => aggregate.ClrType, aggregate => aggregate.Generated!)
+                    .Select(type => (type.ClrType, Generated: GeneratedIn(type)))
+                    .Where(aggregate => aggregate.Generated.Length > 0)
+                    .ToFrozenDictionary(aggregate => aggregate.ClrType, aggregate => aggregate.Generated)
             );
         }
 
         // The graph the prepare step attributes changes to the aggregate by: the aggregate, every type it owns and every
         // child it holds through a navigation, their derived types included, down to another aggregate. A key is left
         // out: the Kit's are set by the application, and the aggregate's own is refused when it is still temporary.
-        private static IProperty? GeneratedIn(IEntityType aggregate, IValueGeneratorSelector generators)
+        private static IProperty[] GeneratedIn(IEntityType aggregate)
         {
+            List<IProperty> generated = [];
             HashSet<IEntityType> seen = [];
             Stack<IEntityType> pending = new([aggregate]);
             while (pending.TryPop(out var type))
@@ -164,9 +171,13 @@ internal static class SnapshotStep
                     continue;
                 }
 
-                if (type.GetFlattenedProperties().FirstOrDefault(property => IsGenerated(property, generators)) is { } generated)
+                foreach (var property in type.GetFlattenedProperties().Where(MayBeGenerated))
                 {
-                    return generated;
+                    generated.Add(property);
+                    if (!LeftToSelector(property))
+                    {
+                        return [.. generated];
+                    }
                 }
 
                 foreach (
@@ -180,25 +191,29 @@ internal static class SnapshotStep
                 }
             }
 
-            return null;
+            return [.. generated];
         }
 
         // A value the database writes as it saves the row: a default value SQL, a computed column, or a value generated
         // on add or update, unless it is generated on add only and the application sets it for good when the entity is
         // added, as EF does for a non-key property only through the value generator its mapping names, the one the
         // selector returns to EF, and keeps only when that generator's values are not temporary.
-        private static bool IsGenerated(IProperty property, IValueGeneratorSelector generators) =>
+        public static bool IsGenerated(IProperty property, IValueGeneratorSelector generators) =>
+            !LeftToSelector(property)
+            || !(generators.TrySelect(property, property.DeclaringType, out var generator) && generator is { GeneratesTemporaryValues: false });
+
+        private static bool MayBeGenerated(IProperty property) =>
             !property.IsKey()
             && (
                 property.GetDefaultValueSql() is not null
                 || property.GetComputedColumnSql() is not null
                 || property.ValueGenerated != ValueGenerated.Never
-                    && !(
-                        property.ValueGenerated == ValueGenerated.OnAdd
-                        && property.GetValueGeneratorFactory() is not null
-                        && generators.TrySelect(property, property.DeclaringType, out var generator)
-                        && generator is { GeneratesTemporaryValues: false }
-                    )
             );
+
+        private static bool LeftToSelector(IProperty property) =>
+            property.GetDefaultValueSql() is null
+            && property.GetComputedColumnSql() is null
+            && property.ValueGenerated == ValueGenerated.OnAdd
+            && property.GetValueGeneratorFactory() is not null;
     }
 }
