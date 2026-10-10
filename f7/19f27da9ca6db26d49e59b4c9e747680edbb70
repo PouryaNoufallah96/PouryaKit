@@ -1,0 +1,25 @@
+.agents/skills/pourya-kit/references/persistence.md
+  s_a846915d2dd93c::t_f60f1f6f1de464 92
+docs/acceptance.md
+  s_a846915d2dd93c::t_39d33a452d11ec 1727
+docs/adr/0003-single-commit-owner.md
+  s_a846915d2dd93c::t_c2ecf55867b7e3 185-187
+src/PouryaKit.Messaging/ISnapshotMapper.cs
+  s_a846915d2dd93c::t_b90afd4770c65f 20-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f719f27da9ca6db26d49e59b4c9e747680edbb70",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
