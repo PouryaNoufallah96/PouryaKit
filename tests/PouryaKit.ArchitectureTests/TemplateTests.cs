@@ -91,6 +91,21 @@ public sealed class TemplateTests
         var module = replacements.Single(file => file.Path.EndsWith("/CatalogModule.cs", StringComparison.Ordinal));
         var create = replacements.Single(file => file.Path.EndsWith("/CreateProductEndpoint.cs", StringComparison.Ordinal));
         var rename = replacements.Single(file => file.Path.EndsWith("/RenameProductEndpoint.cs", StringComparison.Ordinal));
+        const string V1 = """services.Publish<ProductCreatedV1>("catalog.product-created.v1");""";
+        const string V2 = """services.Publish<ProductCreatedV2>("catalog.product-created.v2");""";
+        // The same calls in another order differ.
+        Assert.Equal(
+            [
+                """src/Modules/Catalog/Catalog/CatalogModule.cs calls Publish<ProductCreatedV2>("catalog.product-created.v2") where the sample's Modules/Catalog/Catalog/CatalogModule.cs calls Publish<ProductCreatedV1>("catalog.product-created.v1").""",
+            ],
+            MirrorDifferences(
+                [
+                    .. replacements.Except([module]),
+                    module with { Text = module.Text.Replace(V1, "services.Swapped();", StringComparison.Ordinal).Replace(V2, V1, StringComparison.Ordinal).Replace("services.Swapped();", V2, StringComparison.Ordinal) },
+                ],
+                PackedSample
+            )
+        );
         Assert.Equal(
             [
                 """src/Modules/Catalog/Catalog/CatalogModule.cs calls Publish<ProductCreatedV2>("catalog.product-created.v3") where the sample's Modules/Catalog/Catalog/CatalogModule.cs calls Publish<ProductCreatedV2>("catalog.product-created.v2").""",
