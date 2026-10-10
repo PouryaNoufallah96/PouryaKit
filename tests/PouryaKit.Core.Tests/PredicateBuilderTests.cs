@@ -7,7 +7,7 @@ public class PredicateBuilderTests
     // The right predicate counts its evaluations, so an eager (bitwise) composition is seen to run it when the left
     // predicate has already decided the result. Both predicates read the parameter, so the composed lambda only compiles
     // when each predicate's parameter was replaced by the composed lambda's parameter.
-    private int rightEvaluations;
+    private int _rightEvaluations;
 
     [Theory]
     [InlineData(3, false, false)]
@@ -19,7 +19,7 @@ public class PredicateBuilderTests
         var composed = AboveTen().AndAlso(Even()).Compile();
 
         Assert.Equal(left && right, composed(value));
-        Assert.Equal(left ? 1 : 0, rightEvaluations);
+        Assert.Equal(left ? 1 : 0, _rightEvaluations);
     }
 
     [Theory]
@@ -32,7 +32,7 @@ public class PredicateBuilderTests
         var composed = AboveTen().OrElse(Even()).Compile();
 
         Assert.Equal(left || right, composed(value));
-        Assert.Equal(left ? 0 : 1, rightEvaluations);
+        Assert.Equal(left ? 0 : 1, _rightEvaluations);
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class PredicateBuilderTests
 
     private bool Counted(bool result)
     {
-        rightEvaluations++;
+        _rightEvaluations++;
         return result;
     }
 }

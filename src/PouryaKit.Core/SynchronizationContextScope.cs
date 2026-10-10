@@ -12,13 +12,13 @@ namespace PouryaKit.Core;
 /// </remarks>
 public readonly ref struct SynchronizationContextScope : IDisposable
 {
-    private readonly SynchronizationContext? previous;
-    private readonly bool entered;
+    private readonly SynchronizationContext? _previous;
+    private readonly bool _entered;
 
     private SynchronizationContextScope(SynchronizationContext? previous)
     {
-        this.previous = previous;
-        entered = true;
+        _previous = previous;
+        _entered = true;
     }
 
     /// <summary>
@@ -35,9 +35,9 @@ public readonly ref struct SynchronizationContextScope : IDisposable
     /// <summary>Restores the context that was current when the scope was entered.</summary>
     public void Dispose()
     {
-        if (entered)
+        if (_entered)
         {
-            SynchronizationContext.SetSynchronizationContext(previous);
+            SynchronizationContext.SetSynchronizationContext(_previous);
         }
     }
 }

@@ -37,12 +37,12 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
     // ASP.NET Core's boundaries for http.server.request.duration, in seconds.
     private static readonly double[] SecondScale = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10];
 
-    private readonly WireMockServer downstream = WireMockServer.Start();
+    private readonly WireMockServer _downstream = WireMockServer.Start();
 
     public void Dispose()
     {
-        downstream.Stop();
-        downstream.Dispose();
+        _downstream.Stop();
+        _downstream.Dispose();
     }
 
     // What the service defaults export, seen by an exporter of the test's own added to their providers: no backend.
@@ -223,7 +223,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         using var response = await SendAsync(host, new HttpMethod(method));
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
-        Assert.Equal(attempts, downstream.LogEntries.Count());
+        Assert.Equal(attempts, _downstream.LogEntries.Count());
     }
 
     [Fact]
@@ -235,7 +235,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         using var response = await SendAsync(host, HttpMethod.Get);
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
-        var received = downstream.LogEntries.Select(entry => entry.RequestMessage!).ToList();
+        var received = _downstream.LogEntries.Select(entry => entry.RequestMessage!).ToList();
         Assert.Equal(3, received.Count);
         Assert.All(
             received,
@@ -275,7 +275,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
 
         using var response = await SendAsync(host, HttpMethod.Post);
 
-        Assert.Equal((typeof(ArgumentException), 1), (refused?.GetType(), downstream.LogEntries.Count()));
+        Assert.Equal((typeof(ArgumentException), 1), (refused?.GetType(), _downstream.LogEntries.Count()));
     }
 
     // The downstream asks for a retry after one second; the call is cancelled once the first attempt arrived, not on a
@@ -287,7 +287,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         await using var host = await StartWebHostAsync(client => client.AddPouryaKitOperationContext());
         using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         var call = SendAsync(host, HttpMethod.Get, cancellation.Token);
-        while (!downstream.LogEntries.Any() && !call.IsCompleted)
+        while (!_downstream.LogEntries.Any() && !call.IsCompleted)
         {
             await Task.Delay(10, TestContext.Current.CancellationToken);
         }
@@ -297,7 +297,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => call);
         // Past the first retry a call that ignored the cancellation would make.
         await Task.Delay(TimeSpan.FromSeconds(1.5), TestContext.Current.CancellationToken);
-        Assert.Single(downstream.LogEntries);
+        Assert.Single(_downstream.LogEntries);
     }
 
     // The rows commit before the delivery's Operation ends, logs and records its duration: wait for Wolverine to mark
@@ -375,12 +375,12 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
     private void RespondUnavailable(string? retryAfter = null)
     {
         var response = Response.Create().WithStatusCode(HttpStatusCode.ServiceUnavailable);
-        downstream.Given(Request.Create().WithPath("/downstream")).RespondWith(retryAfter is null ? response : response.WithHeader("Retry-After", retryAfter));
+        _downstream.Given(Request.Create().WithPath("/downstream")).RespondWith(retryAfter is null ? response : response.WithHeader("Retry-After", retryAfter));
     }
 
     private async Task<HttpResponseMessage> SendAsync(WebApplication host, HttpMethod method, CancellationToken? cancellationToken = null)
     {
-        using var request = new HttpRequestMessage(method, $"{downstream.Url}/downstream").WithOperationContext(Context);
+        using var request = new HttpRequestMessage(method, $"{_downstream.Url}/downstream").WithOperationContext(Context);
         return await host
             .Services.GetRequiredService<IHttpClientFactory>()
             .CreateClient(Client)
