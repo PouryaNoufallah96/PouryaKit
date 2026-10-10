@@ -1,0 +1,35 @@
+.editorconfig
+  s_fbe30cc48fad9d::t_2777da150a9428 37-60
+src/PouryaKit.Testing/StoredDeliveries.cs
+  s_fbe30cc48fad9d::t_90dc88698063b5 16,25,36,38,54,96,103
+tests/ModularMonolith.Tests/HostRecipeTests.cs
+  s_fbe30cc48fad9d::t_90dc88698063b5 40,44-45,226,238,278,290,300,378,383
+tests/ModularMonolith.Tests/OutgoingHttpTests.cs
+  s_fbe30cc48fad9d::t_90dc88698063b5 27,31-32,102-103,162,222,243,274,331,338
+tests/PouryaKit.Core.Tests/SynchronizationContextScopeTests.cs
+  s_fbe30cc48fad9d::t_90dc88698063b5 7,16,22,28,37,41,59,66
+src/PouryaKit.Security/Pbkdf2PasswordHasher.cs
+  s_fbe30cc48fad9d::t_90dc88698063b5 22-25,29-32,43-44,47,76-79
+src/PouryaKit.Core/SynchronizationContextScope.cs
+  s_fbe30cc48fad9d::t_90dc88698063b5 15-16,20-21,38,40
+tests/PouryaKit.Core.Tests/PredicateBuilderTests.cs
+  s_fbe30cc48fad9d::t_90dc88698063b5 10,22,35,65
+.claude/rules/kit-code.md
+  s_fbe30cc48fad9d::t_a8b88a1068777f 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "557661275dcb97d47db162f5fbfa0894c0759551",
+  "prompts": {},
+  "sessions": {
+    "s_fbe30cc48fad9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "355fc114-9f49-46c2-b236-9a236d1e5b59",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
