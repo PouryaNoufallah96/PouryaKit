@@ -1079,8 +1079,9 @@ every aggregate through the Outbox for one subscription, under the existing vers
 
 A second Wave 3 planning question, recorded 2026-10-10 (#98, the final quality pass): `TrackedState.Capture` copies every tracked
 property of the Unit of Work's DbContext for each read-only step of an Operation (`EfUnitOfWork` captures with query loads
-included), so a Wave 3 handler that nests many queries pays that capture each time. Measure the cost on a representative
-nested-query Operation before Wave 3's Capabilities rely on it; nothing in Waves 1 and 2 showed it as a cost.
+included), so a Wave 3 handler that nests many queries pays that capture each time. #84's V1 measured that shape on 2026-10-10
+(`docs/acceptance.md`, "V1: the measurement"): about 1 µs per tracked entity per nested query, half of a nested query's cost once
+anything is tracked. Decide on that number for a representative Wave 3 Operation before its Capabilities rely on deep nesting.
 
 Spikes before building (no owner input, recorded as ADRs): the Marten two-store spike (I.4); the
 RabbitMQ topology spike under ADR 0006; a check whether Wolverine already propagates W3C trace
