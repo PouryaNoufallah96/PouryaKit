@@ -1,0 +1,23 @@
+docs/acceptance.md
+  s_a846915d2dd93c::t_4b816bfc751675 1418
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_a846915d2dd93c::t_4b816bfc751675 1005
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_a846915d2dd93c::t_03060eb275385d 107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ca0359c789c467f72945e22532cb4a23534515e8",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
