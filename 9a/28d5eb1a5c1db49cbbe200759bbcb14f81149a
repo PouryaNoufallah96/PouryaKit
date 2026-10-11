@@ -1,0 +1,42 @@
+.github/workflows/ci.yml
+  s_a846915d2dd93c::t_d67f2066c527aa 22,25
+.agents/scripts/check-docs.py
+  s_a846915d2dd93c::t_a2b4517610de8b 57
+  s_a846915d2dd93c::t_d4401d2839409c 531-533
+docs/ci.md
+  s_a846915d2dd93c::t_3b43bb188a5bc3 3
+.agents/scripts/test_check_docs.py
+  s_a846915d2dd93c::t_03a1c5b3502df2 184-185,188
+  s_a846915d2dd93c::t_cd642b8d82e6ca 183,187,189-193
+docs/architecture/README.md
+  s_a846915d2dd93c::t_6fec74f44005ba 34-36
+docs/acceptance.md
+  s_a846915d2dd93c::t_42fcb5d9a85e22 1840
+  s_6bc323056c1352::t_34fa5b8b42dbcc 1823,1838
+docs/agents/ai-setup.md
+  s_a846915d2dd93c::t_6c8256941c77b5 203
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9a28d5eb1a5c1db49cbbe200759bbcb14f81149a",
+  "prompts": {},
+  "sessions": {
+    "s_6bc323056c1352": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aimpl-111-96f5bb67f22796ae",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
