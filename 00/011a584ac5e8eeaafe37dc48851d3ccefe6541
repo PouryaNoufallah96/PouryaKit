@@ -1,0 +1,25 @@
+tests/PouryaKit.ArchitectureTests/SampleNamespaceTests.cs
+  s_a846915d2dd93c::t_aa12ce68271739 1-77
+AGENTS.md
+  s_a846915d2dd93c::t_17fc27d38ff23b 80
+docs/adr/0010-one-namespace-per-kit-package.md
+  s_a846915d2dd93c::t_272ff94dd8b4de 56-57,100-103
+docs/architecture/README.md
+  s_a846915d2dd93c::t_158fbf69da7731 532
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "00011a584ac5e8eeaafe37dc48851d3ccefe6541",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
