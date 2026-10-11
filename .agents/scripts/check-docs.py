@@ -2,7 +2,7 @@
 """Checks the repository's Markdown, and the source ranges its diagrams cite, for the drift a script can catch; exits 1
 on any failure.
 
-Usage: python3 .agents/scripts/check-docs.py [--fences]
+Usage: python3 .agents/scripts/check-docs.py [--staged | --fences]
 
 It reads every Markdown file git tracks or would track (`git ls-files --cached --others --exclude-standard`), with
 fenced code and frontmatter blanked, except the vendored skills that `skills-lock.json` pins: their text is upstream's.
@@ -57,6 +57,9 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   describe the code: the revision is in HEAD's history, the path names a file at HEAD, `line` and `end_line` are
   in order within its lines, and `git diff <revision> HEAD` leaves the file unchanged. A change anywhere in a cited
   file fails, as a range cannot tell a moved line from a rewritten one. The HTML pages are not read.
+
+`--staged` also fails a diagram whose cited file the index changes against the pinned revision, so the pre-commit hook
+refuses the commit that changes a cited file instead of the one after it (the default compares HEAD only).
 
 `--fences` only prints: for each Markdown file changed against HEAD, whether its fenced blocks changed, so an
 implementer knows whether the skill's snippet harness must run.
@@ -519,6 +522,9 @@ def cited_sources(node):
             yield from cited_sources(item)
 
 
+STAGED = False
+
+
 def check_diagram_sources(files: list[str]) -> int:
     """Fails each cited range of a diagram source that may no longer say what the code does; returns the diagrams read."""
     diagrams = [f for f in files if f.startswith(DIAGRAMS) and f.endswith(".json") and (ROOT / f).is_file()]
@@ -538,6 +544,9 @@ def check_diagram_sources(files: list[str]) -> int:
         counts = subprocess.run(["git", "-c", "core.quotePath=false", "--literal-pathspecs", "grep", "-c", "", "HEAD", "--", *paths], cwd=ROOT, capture_output=True, text=True).stdout
         lines = {path: int(count) for path, _, count in (row.removeprefix("HEAD:").rpartition(":") for row in counts.splitlines())}
         changed = set(git("-c", "core.quotePath=false", "--literal-pathspecs", "diff", "--name-only", revision, "HEAD", "--", *paths).splitlines())
+        if STAGED:
+            # The commit being made: the index against the revision, so the change to a cited file fails its own commit.
+            changed |= set(git("-c", "core.quotePath=false", "--literal-pathspecs", "diff", "--name-only", "--cached", revision, "--", *paths).splitlines())
         for source in sources:
             path, first = str(source.get("path")), source.get("line")
             last = source.get("end_line", first)
@@ -570,7 +579,9 @@ def print_fences() -> int:
 def main() -> int:
     if sys.argv[1:] == ["--fences"]:
         return print_fences()
-    if sys.argv[1:]:
+    global STAGED
+    STAGED = sys.argv[1:] == ["--staged"]
+    if sys.argv[1:] and not STAGED:
         print(__doc__.strip(), file=sys.stderr)
         return 2
     files = listed()

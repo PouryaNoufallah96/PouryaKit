@@ -159,6 +159,18 @@ class CheckDocsTests(unittest.TestCase):
         self.commit()
         self.assertFails({}, f"{DIAGRAM}: src/Catalog/Cart.cs:1-2 cites a file changed since the revision {revision[:7]}; {REVERIFY}")
 
+    def test_a_staged_change_to_a_cited_file_fails_only_with_the_staged_flag(self) -> None:
+        """The hook's case: the commit that changes a cited file must fail itself, not the one after it (session 7, three times)."""
+        self.write(CART)
+        revision = self.commit()
+        self.write(diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 1, "end_line": 2}))
+        self.commit()
+        self.write({"src/Catalog/Cart.cs": CART["src/Catalog/Cart.cs"] + "// Carts.\n"})
+        self.assertEqual(self.check()[0], 0)
+        code, out = self.check("--staged")
+        self.assertEqual(code, 1, out)
+        self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Cart.cs:1-2 cites a file changed since the revision {revision[:7]}; {REVERIFY}", out)
+
     def test_a_diagram_range_past_the_end_of_its_file_or_out_of_order_fails(self) -> None:
         self.write(CART)
         revision = self.commit()
