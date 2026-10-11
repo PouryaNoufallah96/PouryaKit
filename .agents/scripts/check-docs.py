@@ -58,8 +58,10 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   in order within its lines, and `git diff <revision> HEAD` leaves the file unchanged. A change anywhere in a cited
   file fails, as a range cannot tell a moved line from a rewritten one. The HTML pages are not read.
 
-`--staged` also fails a diagram whose cited file the index changes against the pinned revision, so the pre-commit hook
-refuses the commit that changes a cited file instead of the one after it (the default compares HEAD only).
+`--staged` judges the commit being made: each diagram is read from the index, and a cited file is "changed" when the
+index differs from the pinned revision (the default compares HEAD). A cited file staged together with its diagram passes,
+so the repair path is two commits: the code and the diagram's ranges and labels first, then the diagram re-pinned to
+that commit. A cited file staged without its diagram is refused: that is the stale diagram the hook exists to catch.
 
 `--fences` only prints: for each Markdown file changed against HEAD, whether its fenced blocks changed, so an
 implementer knows whether the skill's snippet harness must run.
@@ -529,7 +531,8 @@ def check_diagram_sources(files: list[str]) -> int:
     """Fails each cited range of a diagram source that may no longer say what the code does; returns the diagrams read."""
     diagrams = [f for f in files if f.startswith(DIAGRAMS) and f.endswith(".json") and (ROOT / f).is_file()]
     for diagram in diagrams:
-        data = json.loads((ROOT / diagram).read_text(encoding="utf-8"))
+        text = subprocess.run(["git", "show", f":{diagram}"], cwd=ROOT, capture_output=True, text=True).stdout if STAGED else (ROOT / diagram).read_text(encoding="utf-8")
+        data = json.loads(text or "{}")
         sources = list(cited_sources(data))
         revision = str(data.get("meta", {}).get("repository", {}).get("revision", ""))
         if not sources:
@@ -543,10 +546,14 @@ def check_diagram_sources(files: list[str]) -> int:
         # changed since the revision. Literal pathspecs, so a path is never read as a glob.
         counts = subprocess.run(["git", "-c", "core.quotePath=false", "--literal-pathspecs", "grep", "-c", "", "HEAD", "--", *paths], cwd=ROOT, capture_output=True, text=True).stdout
         lines = {path: int(count) for path, _, count in (row.removeprefix("HEAD:").rpartition(":") for row in counts.splitlines())}
-        changed = set(git("-c", "core.quotePath=false", "--literal-pathspecs", "diff", "--name-only", revision, "HEAD", "--", *paths).splitlines())
         if STAGED:
-            # The commit being made: the index against the revision, so the change to a cited file fails its own commit.
-            changed |= set(git("-c", "core.quotePath=false", "--literal-pathspecs", "diff", "--name-only", "--cached", revision, "--", *paths).splitlines())
+            # The commit being made: the index against the revision. A diagram staged with the cited file is being
+            # updated for it (its pin follows in the next commit), so only a cited file staged without its diagram fails.
+            changed = set(git("-c", "core.quotePath=false", "--literal-pathspecs", "diff", "--name-only", "--cached", revision, "--", *paths).splitlines())
+            if git("diff", "--name-only", "--cached", "--", diagram).strip():
+                changed -= set(git("diff", "--name-only", "--cached", "--", *paths).splitlines())
+        else:
+            changed = set(git("-c", "core.quotePath=false", "--literal-pathspecs", "diff", "--name-only", revision, "HEAD", "--", *paths).splitlines())
         for source in sources:
             path, first = str(source.get("path")), source.get("line")
             last = source.get("end_line", first)

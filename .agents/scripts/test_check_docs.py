@@ -171,6 +171,31 @@ class CheckDocsTests(unittest.TestCase):
         self.assertEqual(code, 1, out)
         self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Cart.cs:1-2 cites a file changed since the revision {revision[:7]}; {REVERIFY}", out)
 
+    def test_a_cited_file_staged_with_its_diagram_passes_and_the_re_pin_passes_next(self) -> None:
+        """The repair path: the code and the diagram's ranges in one commit, the pin to that commit in the next."""
+        self.write(CART)
+        revision = self.commit()
+        self.write(diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 1, "end_line": 2}))
+        self.commit()
+        self.write({"src/Catalog/Cart.cs": CART["src/Catalog/Cart.cs"] + "// Carts.\n"} | diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 1, "end_line": 3}))
+        self.assertEqual(self.check("--staged")[0], 0)
+        first = self.commit()
+        self.write(diagram(first, {"path": "src/Catalog/Cart.cs", "line": 1, "end_line": 3}))
+        self.assertEqual(self.check("--staged")[0], 0)
+
+    def test_the_staged_check_reads_the_diagram_from_the_index(self) -> None:
+        """An unstaged edit that drops the citations does not hide the staged diagram's stale one."""
+        self.write(CART)
+        revision = self.commit()
+        self.write(diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 1, "end_line": 2}))
+        self.commit()
+        self.write({"src/Catalog/Cart.cs": CART["src/Catalog/Cart.cs"] + "// Carts.\n"})
+        git(self.root, "add", "-A")
+        (self.root / DIAGRAM).write_text(json.dumps({"meta": {}}), encoding="utf-8")
+        code, out = self.check("--staged", stage=False)
+        self.assertEqual(code, 1, out)
+        self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Cart.cs:1-2 cites a file changed since the revision {revision[:7]}; {REVERIFY}", out)
+
     def test_a_diagram_range_past_the_end_of_its_file_or_out_of_order_fails(self) -> None:
         self.write(CART)
         revision = self.commit()
