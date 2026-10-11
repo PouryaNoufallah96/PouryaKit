@@ -83,5 +83,11 @@ metadata:
 - **GitHub's raw file serves `.html` as `text/plain`**, so a brief's "the raw file renders it" is false; Archify's finalized pages are self-contained (no external `src`/`href`), so a checkout opened in a browser works.
 - **Renumbering the commit sequence** (Snapshots and Outbox merged into one step, as `EfUnitOfWork` calls `WriteAsync` once) touched only the README's own citations; `docs/provenance/` and the plan cite plan section C's five-step numbering ("step 4" is the Snapshots there), which does not move.
 
+## Diagram source citations (#111, 2026-10-11; Archify 3.0.1)
+
+- **`check-docs.py` fails a diagram whose cited file changed since its `meta.repository.revision`**, anywhere in the file. Any ticket that edits a file a diagram cites (`PackageGraph.cs`, `MisconfiguredHostTests.cs`, the template `HostTests.cs`, `SnapshotStep.cs` and about 110 more) must re-verify the cited ranges, re-pin and refinalize; of two parallel tickets, the one merged second meets the failure. Re-verify by printing each range at the old revision (`git show <rev>:<path>`) beside its candidate at HEAD and comparing them; a range that only moved keeps its label. Pin to a commit that is already pushed (the integration tip you verified against), so a rebase of your branch cannot orphan the revision.
+- **Refinalizing a page whose source changed only its revision or ranges changes one line of the HTML**, the `archify-source-evidence-data` script; a larger diff means another Archify version (the page's `<meta name="generator">` names it). The scratchpad clone can vanish with a new session: `git clone --depth 1 --branch v3.0.1 https://github.com/tt-a1i/archify.git` took over two minutes (run it in the background); `node bin/archify.mjs doctor` passes with no `npm install`.
+- **CI's `ai-setup` job checked out one commit** (no `fetch-depth`), so a pinned revision is not in its clone; the diagram check needs `fetch-depth: 0` there.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].
