@@ -41,7 +41,7 @@ static registry was rejected: the Kit records Modules in the Host's service coll
 
 ## The order of the Domain Event drain
 
-- **Kit files:** `src/PouryaKit.Cqrs/DomainEventDrain.cs`, `src/PouryaKit.Persistence.EFCore/EfUnitOfWork.cs`
+- **Kit files:** `src/PouryaKit.Cqrs/Pipeline/DomainEventDrain.cs`, `src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs`
 - **Upstream:** https://github.com/kgrzybek/modular-monolith-with-ddd
 - **Commit:** 91c8ef24b4cb6ef558c95d8267fa07d68c7059f8
 - **Upstream paths:** `src/BuildingBlocks/Infrastructure/DomainEventsDispatching/DomainEventsDispatcher.cs`, `src/BuildingBlocks/Infrastructure/DomainEventsDispatching/DomainEventsDispatcherNotificationHandlerDecorator.cs`, `src/BuildingBlocks/Infrastructure/UnitOfWork.cs`

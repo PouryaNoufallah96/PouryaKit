@@ -77,5 +77,14 @@ Check the merged code before relying on a design note. Each section names its ti
 - **Showing a silent comparison is not a missing guard:** in the same composition, have the query itself make the change (`ReadFolderQuery(id, null, ReadingChange.OwnedValue, false)`): it throws `A query changed a Label the Operation saves. …`. A throwaway probe is enough; record its message.
 - **Stub shapes for it:** `Note` has no mutator. `Folder.Relabel(colour)` changes a value and raises nothing (`Rename` raises `FolderRenamedDomainEvent`, whose handler adds a page in a later command's drain). A folder is auditable, so create it with `CreateFolderCommand` in a begun scope of its own, then read `label_colour` from `stub.folders`.
 
+## Named query filters without a database (#81, 2026-10-10; EF Core 10.0.12)
+
+- A `PouryaKitDbContext` built over `UseNpgsql("Host=localhost")` renders SQL with no connection: `Set<T>().ToQueryString()` shows the soft-delete `WHERE`, and `IgnoreQueryFilters([PouryaKitDbContext.SoftDeleteFilter])` (EF Core 10's named-filter overload) removes it. `ModelConventionTests` uses it for the public filter name.
+
+## Forwarded registrations and the probes that decorate them (#100, 2026-10-10)
+
+- **`WolverineOutbox` is registered once and forwarded** (`TryAddScoped<WolverineOutbox>()`, then factories for `IUnitOfWorkOutbox` and `IOutbox`), so a decorator must build the inner service through `ImplementationFactory`, not `ImplementationType`: `CommitProbe.Install` now does; `DeliveryProbes.Decorate` handles both.
+- **`EfReceipts` refuses outside a Unit of Work's transaction**, as `EfIdempotencyStore` does: a test that records Receipts by hand opens a transaction first (`StoredDeliveriesSchemaTests` does).
+
 **Why:** each cost a run, a design detour or a wrong claim in a provenance record, or would have let a test pass vacuously; #9 to #18 build on these seams.
 **How to apply:** start from these when touching Persistence.*, Persistence.Dapper, the Unit of Work seam, conflicts, test migrations, paging, Dapper parameters or EF predicates; re-verify when bumping EF/Npgsql. Related: [[cqrs-and-modularity-facts]], [[snapshot-and-scheduled-command-facts]], [[dotnet-and-test-conventions]].

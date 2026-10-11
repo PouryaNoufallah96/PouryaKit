@@ -1,12 +1,16 @@
 using System.IO.Compression;
 using System.Net;
-using System.Text.Json;
+using System.Net.Http.Json;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Testing;
+using static ModularMonolith.Tests.Fixtures.ProblemResponses;
 
 namespace ModularMonolith.Tests;
 
@@ -251,15 +255,38 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(HttpStatusCode.OK, (await waiting).StatusCode);
     }
 
-    private WebApplication Compose(params (string Key, string Value)[] settings) =>
+    // The limiter partitions the request by the Actor of the Operation Context the endpoint then begins its Operation
+    // with: one resolution serves both, so the caller's Actor claim is read once.
+    [Fact]
+    public async Task With_the_rate_limit_on_the_limiter_and_the_endpoint_share_one_resolution_of_the_callers_context()
+    {
+        ActorClaimReads reads = new();
+        await using var host = Compose(
+            builder => builder.Services.AddSingleton<IClaimsTransformation>(reads),
+            RateLimit(permitLimit: 10, window: "00:10:00", queueLimit: 0)
+        );
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var ada = AppFixture.ClientOf(host, "ada");
+
+        var context = await ada.GetFromJsonAsync<SeenContext>("/stub/context", TestContext.Current.CancellationToken);
+
+        Assert.Equal(("ada", 1), (context!.Actor.Id, reads.Count));
+    }
+
+    private WebApplication Compose(params (string Key, string Value)[] settings) => Compose(_ => { }, settings);
+
+    private WebApplication Compose(Action<WebApplicationBuilder> configure, params (string Key, string Value)[] settings) =>
         AppFixture.ComposeHost(
             "Production",
             Fixture.ConnectionString,
             new RecordedLogs(),
             builder =>
+            {
                 builder.Configuration.AddInMemoryCollection(
                     settings.Select(setting => KeyValuePair.Create($"PouryaKit:Web:{setting.Key}", (string?)setting.Value))
-                )
+                );
+                configure(builder);
+            }
         );
 
     private static (string, string)[] RateLimit(int permitLimit, string window, int queueLimit) =>
@@ -327,11 +354,26 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.DoesNotContain(request.Headers, header => header.Key.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase));
     }
 
-    private static async Task<JsonElement> ProblemAsync(HttpResponseMessage response, HttpStatusCode status)
+    // Hands out each authenticated caller as a principal that counts the reads of its Actor claim, the claim the Kit
+    // resolves the caller's Operation Context from. One request reads it in turn, never at once.
+    private sealed class ActorClaimReads : IClaimsTransformation
     {
-        Assert.Equal(status, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
-        return problem.RootElement.Clone();
+        public int Count { get; private set; }
+
+        public Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal) =>
+            Task.FromResult<ClaimsPrincipal>(new Counted(principal, this));
+
+        private sealed class Counted(ClaimsPrincipal principal, ActorClaimReads reads) : ClaimsPrincipal(principal)
+        {
+            public override Claim? FindFirst(string type)
+            {
+                if (type == ClaimTypes.NameIdentifier)
+                {
+                    reads.Count++;
+                }
+
+                return base.FindFirst(type);
+            }
+        }
     }
 }

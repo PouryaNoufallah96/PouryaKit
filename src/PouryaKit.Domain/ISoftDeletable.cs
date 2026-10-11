@@ -11,8 +11,10 @@ namespace PouryaKit.Domain;
 /// </summary>
 public interface ISoftDeletable
 {
+    /// <summary>True once an Operation removed it.</summary>
     bool IsDeleted { get; }
 
+    /// <summary>When an Operation removed it; null while it is not deleted.</summary>
     DateTimeOffset? DeletedAt { get; }
 
     /// <summary>The Id of the Actor whose Operation removed it.</summary>

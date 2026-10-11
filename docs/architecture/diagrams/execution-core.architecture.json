@@ -1,0 +1,764 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "PouryaKit execution core: packages and their references",
+    "output": "docs/architecture/diagrams/execution-core.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
+      "revision": "9503cf98baf3455eeacd786c2497f2a27512b8a5",
+      "link_mode": "web"
+    }
+  },
+  "components": [
+    {
+      "id": "domain",
+      "type": "backend",
+      "label": "PouryaKit.Domain",
+      "sublabel": "Result, Error, typed IDs, aggregates",
+      "pos": [
+        620,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 21,
+          "label": "references nothing"
+        },
+        {
+          "path": "src/PouryaKit.Domain/Result.cs",
+          "line": 10,
+          "end_line": 26,
+          "label": "Result"
+        },
+        {
+          "path": "src/PouryaKit.Domain/AggregateRoot.cs",
+          "line": 4,
+          "label": "aggregates"
+        }
+      ]
+    },
+    {
+      "id": "persistence",
+      "type": "backend",
+      "label": "PouryaKit.Persistence",
+      "sublabel": "repository and specifications",
+      "pos": [
+        910,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 35,
+          "label": "references Domain, Ardalis.Specification"
+        },
+        {
+          "path": "src/PouryaKit.Persistence/IRepository.cs",
+          "line": 6,
+          "end_line": 12,
+          "label": "IRepository over Domain's aggregates"
+        }
+      ]
+    },
+    {
+      "id": "validation",
+      "type": "backend",
+      "label": "PouryaKit.Validation",
+      "sublabel": "fills the validation step",
+      "pos": [
+        330,
+        170
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 33,
+          "label": "references Cqrs, FluentValidation"
+        },
+        {
+          "path": "src/PouryaKit.Validation/FluentValidationStep.cs",
+          "line": 11,
+          "end_line": 13,
+          "label": "implements IValidationStep"
+        }
+      ]
+    },
+    {
+      "id": "cqrs",
+      "type": "backend",
+      "label": "PouryaKit.Cqrs",
+      "sublabel": "dispatcher, pipeline, Operation",
+      "pos": [
+        620,
+        170
+      ],
+      "size": [
+        240,
+        454
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 22,
+          "end_line": 32,
+          "label": "references Core and Domain"
+        },
+        {
+          "path": "src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs",
+          "line": 11,
+          "end_line": 17,
+          "label": "the dispatcher"
+        },
+        {
+          "path": "src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs",
+          "line": 30,
+          "end_line": 42,
+          "label": "finds handlers with ImplementingTypes"
+        }
+      ]
+    },
+    {
+      "id": "efcore",
+      "type": "backend",
+      "label": "PouryaKit.Persistence.EFCore",
+      "sublabel": "Unit of Work, repository, Outbox seam",
+      "pos": [
+        910,
+        170
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 36,
+          "end_line": 39,
+          "label": "references Core, Cqrs, Persistence"
+        },
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 13,
+          "end_line": 22,
+          "label": "implements IUnitOfWork"
+        },
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/EfRepository.cs",
+          "line": 20,
+          "label": "implements IRepository"
+        }
+      ]
+    },
+    {
+      "id": "postgres",
+      "type": "backend",
+      "label": "PouryaKit.Persistence.Postgres",
+      "sublabel": "a Module's schema, snake_case",
+      "pos": [
+        1200,
+        170
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 40,
+          "end_line": 43,
+          "label": "references Persistence.EFCore"
+        },
+        {
+          "path": "src/PouryaKit.Persistence.Postgres/PostgresServiceCollectionExtensions.cs",
+          "line": 28,
+          "end_line": 44,
+          "label": "schema, history table, AddPouryaKitEfCore"
+        }
+      ]
+    },
+    {
+      "id": "jwtbearer",
+      "type": "security",
+      "label": "PouryaKit.Security.JwtBearer",
+      "sublabel": "verified JWT to Actor and tenant",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 57,
+          "label": "references Security"
+        },
+        {
+          "path": "src/PouryaKit.Security.JwtBearer/JwtBearerServiceCollectionExtensions.cs",
+          "line": 15,
+          "end_line": 33,
+          "label": "standard JWT bearer scheme"
+        },
+        {
+          "path": "src/PouryaKit.Security.JwtBearer/VerifiedClaims.cs",
+          "line": 51,
+          "end_line": 61,
+          "label": "tenant under Cqrs's claim type"
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "type": "security",
+      "label": "PouryaKit.Security",
+      "sublabel": "permission checks, password hashing",
+      "pos": [
+        330,
+        300
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 56,
+          "label": "references Core and Cqrs"
+        },
+        {
+          "path": "src/PouryaKit.Security/PermissionAuthorizer.cs",
+          "line": 8,
+          "end_line": 10,
+          "label": "an authorizer on Cqrs's hook"
+        },
+        {
+          "path": "src/PouryaKit.Security/SecurityServiceCollectionExtensions.cs",
+          "line": 28,
+          "end_line": 36,
+          "label": "finds declarations with ImplementingTypes"
+        }
+      ]
+    },
+    {
+      "id": "dapper",
+      "type": "backend",
+      "label": "PouryaKit.Persistence.Dapper",
+      "sublabel": "plain-SQL reads and Page reads",
+      "pos": [
+        910,
+        300
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 44,
+          "end_line": 47,
+          "label": "references Core and Cqrs"
+        },
+        {
+          "path": "src/PouryaKit.Persistence.Dapper/IReadConnectionFactory.cs",
+          "line": 5,
+          "end_line": 14,
+          "label": "reads on the Host's pool"
+        },
+        {
+          "path": "src/PouryaKit.Persistence.Dapper/DapperPageExtensions.cs",
+          "line": 11,
+          "end_line": 26,
+          "label": "a Cqrs PageRequest into a Page"
+        }
+      ]
+    },
+    {
+      "id": "database",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "a schema per Module",
+      "pos": [
+        1200,
+        300
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/PouryaKit.Persistence.Postgres/PostgresServiceCollectionExtensions.cs",
+          "line": 28,
+          "end_line": 44,
+          "label": "a DbContext per Module schema"
+        },
+        {
+          "path": "src/PouryaKit.Persistence.Dapper/IReadConnectionFactory.cs",
+          "line": 5,
+          "end_line": 11,
+          "label": "read connections"
+        }
+      ]
+    },
+    {
+      "id": "webopenapi",
+      "type": "frontend",
+      "label": "PouryaKit.Web.OpenApi",
+      "sublabel": "API versions, OpenAPI, Scalar",
+      "pos": [
+        40,
+        430
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 63,
+          "end_line": 67,
+          "label": "references Web; optional"
+        },
+        {
+          "path": "src/PouryaKit.Web.OpenApi/VersionedModuleRouteGroups.cs",
+          "line": 10,
+          "end_line": 13,
+          "label": "implements IModuleRouteGroups"
+        }
+      ]
+    },
+    {
+      "id": "web",
+      "type": "frontend",
+      "label": "PouryaKit.Web",
+      "sublabel": "endpoints, problem responses, HTTP",
+      "pos": [
+        330,
+        430
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 58,
+          "end_line": 62,
+          "label": "references Core and Cqrs"
+        },
+        {
+          "path": "src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs",
+          "line": 123,
+          "end_line": 132,
+          "label": "begins each request's Operation"
+        },
+        {
+          "path": "src/PouryaKit.Web/Endpoints/UnmappedEndpointsCheck.cs",
+          "line": 18,
+          "label": "finds endpoints with ImplementingTypes"
+        }
+      ]
+    },
+    {
+      "id": "observability",
+      "type": "backend",
+      "label": "PouryaKit.Observability",
+      "sublabel": "decorates the dispatcher",
+      "pos": [
+        910,
+        430
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 55,
+          "label": "references Cqrs"
+        },
+        {
+          "path": "src/PouryaKit.Observability/ObservedDispatcher.cs",
+          "line": 11,
+          "end_line": 14,
+          "label": "an IDispatcher around the dispatcher"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 94,
+          "end_line": 95,
+          "label": "no exporter"
+        }
+      ]
+    },
+    {
+      "id": "wolverineef",
+      "type": "external",
+      "label": "PouryaKit.Messaging.Wolverine.EFCore",
+      "sublabel": "messaging and delivery view",
+      "pos": [
+        1200,
+        430
+      ],
+      "size": [
+        270,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 50,
+          "end_line": 53,
+          "label": "its row"
+        }
+      ]
+    },
+    {
+      "id": "caching",
+      "type": "backend",
+      "label": "PouryaKit.Caching",
+      "sublabel": "fills the query cache slot",
+      "pos": [
+        330,
+        560
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 19,
+          "label": "references Cqrs, HybridCache"
+        },
+        {
+          "path": "src/PouryaKit.Caching/HybridQueryCache.cs",
+          "line": 14,
+          "label": "implements IQueryCache"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 96,
+          "end_line": 97,
+          "label": "never Redis"
+        }
+      ]
+    },
+    {
+      "id": "modularity",
+      "type": "backend",
+      "label": "PouryaKit.Modularity",
+      "sublabel": "Composition Root and Gateway",
+      "pos": [
+        910,
+        560
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 34,
+          "label": "references Cqrs"
+        },
+        {
+          "path": "src/PouryaKit.Modularity/IModuleDefinition.cs",
+          "line": 3,
+          "end_line": 11,
+          "label": "the Composition Root"
+        },
+        {
+          "path": "src/PouryaKit.Modularity/GatewayProcessor.cs",
+          "line": 55,
+          "end_line": 60,
+          "label": "dispatches each Gateway call"
+        }
+      ]
+    },
+    {
+      "id": "testing",
+      "type": "external",
+      "label": "PouryaKit.Testing",
+      "sublabel": "hosted app, migrations, deliveries",
+      "pos": [
+        1200,
+        560
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 70,
+          "end_line": 73,
+          "label": "references Modularity, Postgres, W.EFCore"
+        },
+        {
+          "path": "src/PouryaKit.Testing/HostFixture.cs",
+          "line": 202,
+          "end_line": 220,
+          "label": "migrates every DbContext, starts"
+        },
+        {
+          "path": "src/PouryaKit.Testing/HostFixture.cs",
+          "line": 319,
+          "end_line": 330,
+          "label": "reads the stored deliveries"
+        }
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "PouryaKit.Core",
+      "sublabel": "ImplementingTypes, PredicateBuilder, SynchronizationContextScope",
+      "pos": [
+        40,
+        700
+      ],
+      "size": [
+        1400,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 20,
+          "label": "references nothing"
+        },
+        {
+          "path": "src/PouryaKit.Core/ImplementingTypes.cs",
+          "line": 10,
+          "end_line": 32,
+          "label": "ImplementingTypes"
+        },
+        {
+          "path": "src/PouryaKit.Core/SynchronizationContextScope.cs",
+          "line": 13,
+          "end_line": 32,
+          "label": "SynchronizationContextScope"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cqrs-domain",
+      "from": "cqrs",
+      "to": "domain",
+      "label": "returns its Results",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "cqrs-core",
+      "from": "cqrs",
+      "to": "core",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "persistence-domain",
+      "from": "persistence",
+      "to": "domain",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "validation-cqrs",
+      "from": "validation",
+      "to": "cqrs",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "security-cqrs",
+      "from": "security",
+      "to": "cqrs",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "web-cqrs",
+      "from": "web",
+      "to": "cqrs",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "caching-cqrs",
+      "from": "caching",
+      "to": "cqrs",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "efcore-cqrs",
+      "from": "efcore",
+      "to": "cqrs",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "dapper-cqrs",
+      "from": "dapper",
+      "to": "cqrs",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "observability-cqrs",
+      "from": "observability",
+      "to": "cqrs",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "modularity-cqrs",
+      "from": "modularity",
+      "to": "cqrs",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "efcore-persistence",
+      "from": "efcore",
+      "to": "persistence",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "postgres-efcore",
+      "from": "postgres",
+      "to": "efcore",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "jwtbearer-security",
+      "from": "jwtbearer",
+      "to": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "webopenapi-web",
+      "from": "webopenapi",
+      "to": "web",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "security-core",
+      "from": "security",
+      "to": "core"
+    },
+    {
+      "id": "web-core",
+      "from": "web",
+      "to": "core"
+    },
+    {
+      "id": "efcore-core",
+      "from": "efcore",
+      "to": "core"
+    },
+    {
+      "id": "dapper-core",
+      "from": "dapper",
+      "to": "core"
+    },
+    {
+      "id": "testing-modularity",
+      "from": "testing",
+      "to": "modularity",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "testing-wolverineef",
+      "from": "testing",
+      "to": "wolverineef",
+      "label": "waits for deliveries",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "testing-postgres",
+      "from": "testing",
+      "to": "postgres",
+      "label": "migrates, resets",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "postgres-database",
+      "from": "postgres",
+      "to": "database",
+      "label": "writes",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "dapper-database",
+      "from": "dapper",
+      "to": "database",
+      "label": "reads",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Arrows",
+      "items": [
+        "An arrow between two packages is a project reference that PackageGraph allows, from the package that references to the one it references; these are all of this view's references. The two arrows into PostgreSQL are data access, not references: Persistence.Postgres writes, Persistence.Dapper reads.",
+        "PackageGraphTests checks each package's direct references and restored closure against PackageGraph.",
+        "PouryaKit.Messaging.Wolverine.EFCore belongs to the messaging and delivery view; it appears here because PouryaKit.Testing references it."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "What the core packages add",
+      "items": [
+        "PouryaKit.Cqrs holds commands, queries, their handlers, the dispatcher and its fixed pipeline, the Operation and its Operation Context, IUnitOfWork, and the composition checks a Host runs when its container is built.",
+        "Validation, Security, Observability and Caching each fill one seam of that pipeline: the validation step, the authorization hook, a decorator around the dispatcher, and the query cache slot.",
+        "Persistence.EFCore implements IUnitOfWork of Cqrs and IRepository of Persistence; Persistence.Postgres puts a Module's DbContext in its own schema on PostgreSQL.",
+        "Persistence.Dapper reads plain SQL on the Host's pooled connection, outside the Unit of Work, and reads a Cqrs PageRequest into a Page.",
+        "Web begins each HTTP request's Operation through Cqrs; Web.OpenApi, optional, versions each Module's route group.",
+        "Security.JwtBearer references Security alone; the tenant claim type it writes is PouryaKitClaimTypes of PouryaKit.Cqrs, reached through Security.",
+        "Cqrs, Security, Web, Persistence.EFCore and Persistence.Dapper reference PouryaKit.Core for its helpers, such as ImplementingTypes."
+      ]
+    }
+  ]
+}

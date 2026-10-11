@@ -9,6 +9,9 @@ public static class DomainClock
 {
     private static readonly AsyncLocal<TimeProvider?> Bound = new();
 
+    /// <summary>
+    /// The clock bound to the current asynchronous flow, or <see cref="TimeProvider.System"/> where none is bound.
+    /// </summary>
     public static TimeProvider Current => Bound.Value ?? TimeProvider.System;
 
     /// <summary>

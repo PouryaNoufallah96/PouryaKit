@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.ImportProducts;
@@ -10,6 +9,7 @@ using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Persistence.EFCore;
 using PouryaKit.Testing;
+using static ModularMonolith.Tests.Fixtures.ProblemResponses;
 
 namespace ModularMonolith.Tests;
 
@@ -18,6 +18,10 @@ namespace ModularMonolith.Tests;
 // every run, and answers a value no other run answers, so an unguarded repeat would succeed again visibly.
 public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
 {
+    // The Kit's own reason for refusing a request without a readable key, the problem's detail.
+    private const string KeyRefused =
+        "The endpoint requires a single Idempotency-Key header that is 1 to 256 visible ASCII characters, with spaces only between them.";
+
     private NoteRuns Runs => Fixture.Host.Services.GetRequiredService<NoteRuns>();
 
     [Fact]
@@ -228,8 +232,8 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
+        Assert.Equal(KeyRefused, problem.GetProperty("detail").GetString());
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
     }
 
@@ -264,10 +268,9 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
             TestContext.Current.CancellationToken
         );
 
-        Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
-        Assert.Equal("application/problem+json", refused.Content.Headers.ContentType?.MediaType);
-        var problem = await refused.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+        var problem = await ProblemAsync(refused, HttpStatusCode.BadRequest);
         Assert.Equal("https://tools.ietf.org/html/rfc9110#section-15.5.1", problem.GetProperty("type").GetString());
+        Assert.Equal(KeyRefused, problem.GetProperty("detail").GetString());
         Assert.Equal((HttpStatusCode.OK, HttpStatusCode.OK), (first.StatusCode, repeat.StatusCode));
         Assert.Equal(
             await first.Content.ReadAsStringAsync(TestContext.Current.CancellationToken),

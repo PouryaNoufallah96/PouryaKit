@@ -1,10 +1,10 @@
 # Domain primitives
 
-`PouryaKit.Domain`: Result and Error, typed IDs, entities, value objects, aggregates and their audit and soft-delete contracts, Domain Events and business rules. One namespace, `PouryaKit.Domain`; no dependencies.
+`PouryaKit.Domain`: Result and Error, typed IDs, entities, aggregates and their audit and soft-delete contracts, Domain Events and business rules. One namespace, `PouryaKit.Domain`; no dependencies.
 
 - [Result and Error](#result-and-error)
 - [Typed IDs](#typed-ids)
-- [Aggregates, entities and value objects](#aggregates-entities-and-value-objects)
+- [Aggregates and entities](#aggregates-and-entities)
 - [Domain Events](#domain-events)
 - [Business rules](#business-rules)
 - [The clock](#the-clock)
@@ -67,16 +67,15 @@ internal sealed class Product : AggregateRoot<ProductId>
 - Declare one per aggregate as a sealed record over `Guid`, `long`, `int` or `string`, as above. Two IDs are equal only when type and value are equal, so IDs of different aggregates cannot be mixed up.
 - Create a new Guid ID with `TypedId.New<ProductId>()`; it is time-ordered (version 7). Wrap a value from input with `new ProductId(value)`.
 - The constructor throws on an empty Guid or a blank string: that is a bug, so validate input before it reaches the constructor.
-- Write no converter and set up no JSON options of your own. `options.UsePouryaKitJson()` is the Kit's one JSON representation: camelCase names and every typed ID as its bare value (`"0199b2a4-..."`, `42`, `"LAMP-01"`), never `{"value":...}`. `AddPouryaKitWeb` applies it to request and response bodies ([web.md](web.md)), and `UsePouryaKitWolverine` applies `UsePouryaKitWireJson()`, the same representation read strictly, to stored and delivered messages ([messaging.md](messaging.md)), so an ID reads the same in both. Where code needs options of its own, create them with `new JsonSerializerOptions().UsePouryaKitJson()`; a structure test rejects setting an option or adding `TypedIdJsonConverterFactory` anywhere else. The converter also handles typed IDs as dictionary keys, and reports an empty ID in JSON as a `JsonException`. EF Core needs nothing either: `PouryaKitDbContext` stores every typed ID as its value (see [persistence.md](persistence.md)). Nor does Dapper: `AddPouryaKitDapper` makes every typed ID a parameter and a result (see [dapper-reads.md](dapper-reads.md)).
+- Write no converter and set up no JSON options of your own. `options.UsePouryaKitJson()` is the Kit's one JSON representation: camelCase names and every typed ID as its bare value (`"0199b2a4-..."`, `42`, `"LAMP-01"`), never `{"value":...}`. Names are read ignoring case, and a body that names one of its type's members twice, `price` and `Price` or `price` twice, fails to read with a `JsonException` instead of keeping the last value. `AddPouryaKitWeb` applies it to request and response bodies ([web.md](web.md)), and `UsePouryaKitWolverine` applies `UsePouryaKitWireJson()`, the same representation read strictly, to stored and delivered messages ([messaging.md](messaging.md)), so an ID reads the same in both. Where code needs options of its own, create them with `new JsonSerializerOptions().UsePouryaKitJson()`; a structure test rejects setting an option anywhere else, and the typed-ID converter is internal to `PouryaKit.Domain`, so no other code can add it. The converter also handles typed IDs as dictionary keys, and reports an empty ID in JSON as a `JsonException`. EF Core needs nothing either: `PouryaKitDbContext` stores every typed ID as its value (see [persistence.md](persistence.md)). Nor does Dapper: `AddPouryaKitDapper` makes every typed ID a parameter and a result (see [dapper-reads.md](dapper-reads.md)).
 
-## Aggregates, entities and value objects
+## Aggregates and entities
 
 - Raise a Domain Event with `Raise` from inside the aggregate. Never clear Domain Events and never set `Version`: the Unit of Work owns both. It takes and clears Domain Events when it runs their handlers (see [persistence.md](persistence.md)), and a structure test rejects a Module that clears them itself ([testing.md](testing.md#structure-tests)).
 - `Version` is 0 until the aggregate is saved, 1 after its first commit, and exactly one more for each later Operation that changes the aggregate or anything it owns. It is the concurrency token that turns a concurrent change into a conflict Error ([persistence.md](persistence.md#versions-and-conflicts)). Raising an event does not change the version.
 - Opt an aggregate or entity into audit with `IAuditable` and into soft delete with `ISoftDeletable`. Declare each of their properties with a private setter and never set it: the Unit of Work fills them before it saves ([persistence.md](persistence.md#audit-and-soft-delete)). Removing a soft-deletable aggregate raises no Domain Event of its own; when other aggregates care, give it a domain method that raises one, such as the Proving Sample's `Product.Remove()`.
 - Entities are equal when type and ID are equal; do not override equality.
 - Equality and hashing use the current ID. Do not change an entity's ID while it is in a hash-based collection using entity equality. For database-generated IDs, add the entity after its ID is assigned, or use `ReferenceEqualityComparer.Instance` when the collection tracks object instances across persistence. With reference equality, different instances remain distinct even when their IDs are equal.
-- Declare a value object as a record deriving from `ValueObject`. Its equality covers every member; a collection member compares by reference, so wrap it in a value object of its own.
 
 ## Domain Events
 
@@ -88,7 +87,7 @@ internal sealed class Product : AggregateRoot<ProductId>
 
 ## Business rules
 
-- Implement `IBusinessRule` with `IsBroken()` and the Error it returns. `CheckRule(rule)` in an entity, aggregate or value object returns a Result; a broken rule is a failed Result, never an exception.
+- Implement `IBusinessRule` with `IsBroken()` and the Error it returns. `CheckRule(rule)` in an entity or aggregate returns a Result; a broken rule is a failed Result, never an exception.
 
 ## The clock
 

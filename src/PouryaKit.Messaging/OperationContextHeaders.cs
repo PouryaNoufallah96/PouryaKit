@@ -7,6 +7,7 @@ namespace PouryaKit.Messaging;
 /// </summary>
 public static class OperationContextHeaders
 {
+    /// <summary>The Id of the Actor of the Operation that published the message.</summary>
     public const string ActorId = "pouryakit-actor-id";
 
     /// <summary><c>Person</c> or <c>System</c>.</summary>
@@ -15,6 +16,7 @@ public static class OperationContextHeaders
     /// <summary>Absent where the application has no tenant.</summary>
     public const string Tenant = "pouryakit-tenant";
 
+    /// <summary>The <c>CorrelationId</c> of the Operation that published the message.</summary>
     public const string CorrelationId = "pouryakit-correlation-id";
 
     /// <summary>The <c>OperationId</c> of the Operation that published the message.</summary>

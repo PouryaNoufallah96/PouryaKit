@@ -220,7 +220,7 @@ public sealed class DispatchTests
 
         var error = await Assert.ThrowsAsync<InvalidOperationException>(() => ThingsGateway.CreateThing(Dispatcher(scope)));
 
-        Assert.Contains(nameof(IUnitOfWork), error.Message);
+        Assert.Contains("returned a success that is not the command's own Result", error.Message);
     }
 
     [Fact]

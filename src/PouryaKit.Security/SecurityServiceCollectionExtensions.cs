@@ -6,6 +6,7 @@ using PouryaKit.Cqrs;
 
 namespace PouryaKit.Security;
 
+/// <summary>Composes permission checks, part of the Security Capability, on a Module's or a Host's services.</summary>
 public static class SecurityServiceCollectionExtensions
 {
     extension(IServiceCollection services)

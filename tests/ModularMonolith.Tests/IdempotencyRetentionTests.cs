@@ -27,20 +27,27 @@ public sealed class IdempotencyRetentionTests(AppFixture app) : HostTest<AppFixt
     public async Task A_key_replays_for_its_whole_retention_and_once_a_cleanup_removed_it_its_request_runs_as_a_new_one()
     {
         using var clock = new TestClock(Monday);
-        var host = await StartHostAsync(clock, new RecordedLogs());
-
-        Assert.Equal(1, await CountAsync(host, "old"));
-        clock.Time.Advance(TimeSpan.FromHours(1));
-        Assert.Equal(2, await CountAsync(host, "young"));
-        // With the default retention of 24 hours, the next cleanup removes the keys reserved before Monday 09:59.
-        clock.Time.Advance(TimeSpan.FromHours(24) - TimeSpan.FromMinutes(1));
-        await Fixture.WaitUntilAsync(
-            "not exists (select 1 from stub.pouryakit_idempotency_keys where request_id = 'old')",
-            "No cleanup removed the key reserved before its retention."
-        );
-        var young = await CountAsync(host, "young");
-        var old = await CountAsync(host, "old");
-        await StopAsync(host);
+        await using var host = Compose(clock, new RecordedLogs());
+        int young, old;
+        try
+        {
+            await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
+            Assert.Equal(1, await CountAsync(host, "old"));
+            clock.Time.Advance(TimeSpan.FromHours(1));
+            Assert.Equal(2, await CountAsync(host, "young"));
+            // With the default retention of 24 hours, the next cleanup removes the keys reserved before Monday 09:59.
+            clock.Time.Advance(TimeSpan.FromHours(24) - TimeSpan.FromMinutes(1));
+            await Fixture.WaitUntilAsync(
+                "not exists (select 1 from stub.pouryakit_idempotency_keys where request_id = 'old')",
+                "No cleanup removed the key reserved before its retention."
+            );
+            young = await CountAsync(host, "young");
+            old = await CountAsync(host, "old");
+        }
+        finally
+        {
+            await StopAsync(host);
+        }
 
         Assert.Equal(2, young);
         Assert.Equal(3, old);
@@ -55,15 +62,23 @@ public sealed class IdempotencyRetentionTests(AppFixture app) : HostTest<AppFixt
     {
         using var clock = new TestClock(Monday);
         var logs = new RecordedLogs();
-        var host = await StartHostAsync(clock, logs, options => options.BatchSize = 2);
-        foreach (var requestId in new[] { "r1", "r2", "r3", "r4", "r5" })
+        await using var host = Compose(clock, logs, options => options.BatchSize = 2);
+        string removed;
+        try
         {
-            await CountAsync(host, requestId);
-        }
+            await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
+            foreach (var requestId in new[] { "r1", "r2", "r3", "r4", "r5" })
+            {
+                await CountAsync(host, requestId);
+            }
 
-        clock.Time.Advance(TimeSpan.FromHours(25));
-        var removed = await WaitForLogAsync(logs, LogLevel.Information, "Removed ");
-        await StopAsync(host);
+            clock.Time.Advance(TimeSpan.FromHours(25));
+            removed = await WaitForLogAsync(logs, LogLevel.Information, "Removed ");
+        }
+        finally
+        {
+            await StopAsync(host);
+        }
 
         Assert.Equal(
             $"Removed 5 idempotency keys reserved before {Monday.AddHours(1):O} from \"stub\".pouryakit_idempotency_keys in 3 batches",
@@ -77,27 +92,35 @@ public sealed class IdempotencyRetentionTests(AppFixture app) : HostTest<AppFixt
     {
         using var clock = new TestClock(Monday);
         var logs = new RecordedLogs();
-        var host = await StartHostAsync(clock, logs);
-        await CountAsync(host, "r1");
-        // The column the cleanup reads is gone, so its statement fails in PostgreSQL.
-        await Fixture.RowsAsync("alter table stub.pouryakit_idempotency_keys rename column reserved_at to reserved");
+        await using var host = Compose(clock, logs);
+        bool stopping;
         try
         {
-            clock.Time.Advance(TimeSpan.FromHours(25));
-            await WaitForLogAsync(logs, LogLevel.Error, "Removing the expired idempotency keys of StubDbContext failed");
+            await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
+            await CountAsync(host, "r1");
+            // The column the cleanup reads is gone, so its statement fails in PostgreSQL.
+            await Fixture.RowsAsync("alter table stub.pouryakit_idempotency_keys rename column reserved_at to reserved");
+            try
+            {
+                clock.Time.Advance(TimeSpan.FromHours(25));
+                await WaitForLogAsync(logs, LogLevel.Error, "Removing the expired idempotency keys of StubDbContext failed");
+            }
+            finally
+            {
+                await Fixture.RowsAsync("alter table stub.pouryakit_idempotency_keys rename column reserved to reserved_at");
+            }
+
+            clock.Time.Advance(TimeSpan.FromHours(1));
+            await Fixture.WaitUntilAsync(
+                "not exists (select 1 from stub.pouryakit_idempotency_keys)",
+                "The cleanup after a failed one removed nothing."
+            );
+            stopping = host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping.IsCancellationRequested;
         }
         finally
         {
-            await Fixture.RowsAsync("alter table stub.pouryakit_idempotency_keys rename column reserved to reserved_at");
+            await StopAsync(host);
         }
-
-        clock.Time.Advance(TimeSpan.FromHours(1));
-        await Fixture.WaitUntilAsync(
-            "not exists (select 1 from stub.pouryakit_idempotency_keys)",
-            "The cleanup after a failed one removed nothing."
-        );
-        var stopping = host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping.IsCancellationRequested;
-        await StopAsync(host);
 
         Assert.False(stopping);
     }
@@ -106,14 +129,22 @@ public sealed class IdempotencyRetentionTests(AppFixture app) : HostTest<AppFixt
     public async Task A_host_whose_retention_is_infinite_keeps_every_key()
     {
         using var clock = new TestClock(Monday);
-        var host = await StartHostAsync(clock, new RecordedLogs(), options => options.Retention = Timeout.InfiniteTimeSpan);
-        Assert.Equal(1, await CountAsync(host, "r1"));
+        await using var host = Compose(clock, new RecordedLogs(), options => options.Retention = Timeout.InfiniteTimeSpan);
+        int repeat;
+        try
+        {
+            await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
+            Assert.Equal(1, await CountAsync(host, "r1"));
 
-        clock.Time.Advance(TimeSpan.FromDays(30));
-        // A cleanup that ran would have removed the key within milliseconds of the advance.
-        await Task.Delay(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
-        var repeat = await CountAsync(host, "r1");
-        await StopAsync(host);
+            clock.Time.Advance(TimeSpan.FromDays(30));
+            // A cleanup that ran would have removed the key within milliseconds of the advance.
+            await Task.Delay(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
+            repeat = await CountAsync(host, "r1");
+        }
+        finally
+        {
+            await StopAsync(host);
+        }
 
         Assert.Equal(1, repeat);
         Assert.Equal(1L, await Fixture.ScalarAsync<long>("select count(*) from stub.pouryakit_idempotency_keys"));
@@ -133,15 +164,23 @@ public sealed class IdempotencyRetentionTests(AppFixture app) : HostTest<AppFixt
                 "No cleanup removed the held key before the repeat read it."
             );
         });
-        var host = await StartHostAsync(
+        await using var host = Compose(
             clock,
             new RecordedLogs(),
             services: services => services.ConfigureDbContext<StubDbContext>(options => options.AddInterceptors(cleanedBetween))
         );
-        Assert.Equal(1, await CountAsync(host, "r1"));
+        int repeat;
+        try
+        {
+            await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
+            Assert.Equal(1, await CountAsync(host, "r1"));
 
-        var repeat = await CountAsync(host, "r1");
-        await StopAsync(host);
+            repeat = await CountAsync(host, "r1");
+        }
+        finally
+        {
+            await StopAsync(host);
+        }
 
         Assert.True(cleanedBetween.Ran);
         Assert.Equal(2, repeat);
@@ -253,24 +292,18 @@ public sealed class IdempotencyRetentionTests(AppFixture app) : HostTest<AppFixt
             }
         );
 
-    private async Task<WebApplication> StartHostAsync(
-        TestClock clock,
-        RecordedLogs logs,
-        Action<PouryaKitIdempotencyOptions>? configure = null,
-        Action<IServiceCollection>? services = null
-    )
-    {
-        var host = Compose(clock, logs, configure, services);
-        await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
-        return host;
-    }
-
-    // The Notifications the Host's runs stored are delivered before it stops, by whichever Host takes them.
+    // The Notifications the Host's runs stored are delivered before it stops, by whichever Host takes them; it stops
+    // whatever that wait does, and the test's await using disposes it.
     private async Task StopAsync(WebApplication host)
     {
-        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
-        await host.StopAsync(TestContext.Current.CancellationToken);
-        await host.DisposeAsync();
+        try
+        {
+            await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+        }
+        finally
+        {
+            await host.StopAsync(TestContext.Current.CancellationToken);
+        }
     }
 
     private async Task<int> CountAsync(IHost host, string requestId) =>

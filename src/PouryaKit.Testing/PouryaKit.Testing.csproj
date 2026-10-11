@@ -11,6 +11,10 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
+    <!-- The Kit's own Gateway-seam tests read the fixture's definition of a pending delivery for Hosts it does not host. -->
+    <InternalsVisibleTo Include="ModularMonolith.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\PouryaKit.Messaging.Wolverine.EFCore\PouryaKit.Messaging.Wolverine.EFCore.csproj" />
     <ProjectReference Include="..\PouryaKit.Modularity\PouryaKit.Modularity.csproj" />
     <ProjectReference Include="..\PouryaKit.Persistence.Postgres\PouryaKit.Persistence.Postgres.csproj" />

@@ -16,7 +16,8 @@
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_PackTemplatesWithKitVersion</TargetsForTfmSpecificContentInPackage>
   </PropertyGroup>
   <ItemGroup>
-    <_TemplateContent Include="content/**" Exclude="content/*/Directory.Packages.props" />
+    <!-- NoDefaultExcludes keeps the dotfiles a template ships; a Finder .DS_Store is excluded by name (ticket #92). -->
+    <_TemplateContent Include="content/**" Exclude="content/*/Directory.Packages.props;content/**/.DS_Store" />
     <_TemplatePackages Include="content/*/Directory.Packages.props" />
     <!-- The business code both templates generate, packed from the Proving Sample: no copy of it is kept here. -->
     <_SampleCode Include="$(_Sample)Modules/**/*.cs" Exclude="$(_Sample)**/bin/**;$(_Sample)**/obj/**" />

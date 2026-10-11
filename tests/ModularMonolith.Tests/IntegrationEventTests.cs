@@ -387,7 +387,7 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.UsePouryaKitWolverine();
         // An Outbox, as a Host that publishes registers one, so the naming refusal is the one problem.
-        builder.Services.AddSingleton<INotificationOutbox, StandInOutbox>();
+        builder.Services.AddSingleton<IOutbox, StandInOutbox>();
         builder.Services.Publish<EarlyNamedV1>("tests.early-named.v1");
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());

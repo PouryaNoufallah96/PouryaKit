@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using PouryaKit.Cqrs.Tests.Module;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Cqrs.Tests;
@@ -134,5 +135,21 @@ public sealed class RegistrationTests
 
         Assert.Contains($"{typeof(OrphanCommand).FullName} has 0 handlers", error.Message);
         Assert.Contains($"{typeof(TwiceHandledQuery).FullName} has 2 handlers", error.Message);
+    }
+
+    [Fact]
+    public void A_keyed_service_of_a_handlers_type_is_no_handler_and_the_scanned_handler_is_registered_beside_it()
+    {
+        var module = typeof(ThingsGateway).Assembly;
+        var handler = new ServiceCollection()
+            .AddPouryaKitCqrs(module)
+            .First(descriptor => descriptor.ServiceType.IsGenericType && descriptor.ServiceType.GetGenericTypeDefinition() == typeof(CommandHandler<>));
+        var services = new ServiceCollection().AddKeyedScoped(handler.ServiceType, "audit", handler.ImplementationType!);
+
+        services.AddPouryaKitCqrs(module);
+
+        var registered = services.Where(descriptor => descriptor.ServiceType == handler.ServiceType).ToList();
+        Assert.Equal("audit", Assert.Single(registered, descriptor => descriptor.IsKeyedService).ServiceKey);
+        Assert.Equal(handler.ImplementationType, Assert.Single(registered, descriptor => !descriptor.IsKeyedService).ImplementationType);
     }
 }

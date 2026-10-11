@@ -4,6 +4,10 @@ using PouryaKit.Cqrs;
 
 namespace PouryaKit.Persistence.Dapper;
 
+/// <summary>
+/// Reads one Page of a Feature's SQL through Dapper on a <see cref="DbConnection"/>, part of the Dapper reads
+/// Capability.
+/// </summary>
 public static class DapperPageExtensions
 {
     extension(DbConnection connection)

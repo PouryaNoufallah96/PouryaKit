@@ -14,5 +14,6 @@ namespace PouryaKit.Cqrs;
 public interface IDomainEventHandler<TDomainEvent>
     where TDomainEvent : DomainEvent
 {
+    /// <summary>Reacts to <paramref name="domainEvent"/> and returns the reaction's Result.</summary>
     Task<Result> Handle(TDomainEvent domainEvent, CancellationToken cancellationToken);
 }

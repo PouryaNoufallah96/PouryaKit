@@ -13,7 +13,7 @@ internal sealed class StoredDeliveries(
 )
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(25);
-    private readonly string quotedSchema = $"\"{schema.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
+    private readonly string _quotedSchema = $"\"{schema.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
 
     /// <summary>The tables the message store creates for itself, as it names them.</summary>
     public IReadOnlyList<(string Schema, string Name)> StoreTables => storeTables;
@@ -22,7 +22,7 @@ internal sealed class StoredDeliveries(
         [
             .. (
                 await RowsAsync(
-                    $"select id from {quotedSchema}.wolverine_incoming_envelopes union select id from {quotedSchema}.wolverine_dead_letters",
+                    $"select id from {_quotedSchema}.wolverine_incoming_envelopes union select id from {_quotedSchema}.wolverine_dead_letters",
                     cancellationToken
                 )
             ).Select(row => (Guid)row[0]),
@@ -33,9 +33,9 @@ internal sealed class StoredDeliveries(
             .. (
                 await RowsAsync(
                     $"""
-                    select id, received_at, message_type, false from {quotedSchema}.wolverine_incoming_envelopes
+                    select id, received_at, message_type, false from {_quotedSchema}.wolverine_incoming_envelopes
                     union all
-                    select id, received_at, message_type, true from {quotedSchema}.wolverine_dead_letters
+                    select id, received_at, message_type, true from {_quotedSchema}.wolverine_dead_letters
                     order by 1
                     """,
                     cancellationToken
@@ -51,7 +51,7 @@ internal sealed class StoredDeliveries(
         [
             .. (
                 await RowsAsync(
-                    $"select message_type, destination from {quotedSchema}.wolverine_outgoing_envelopes order by id",
+                    $"select message_type, destination from {_quotedSchema}.wolverine_outgoing_envelopes order by id",
                     cancellationToken
                 )
             ).Select(row => $"{row[0]} to {row[1]}"),
@@ -91,16 +91,21 @@ internal sealed class StoredDeliveries(
         }
     }
 
-    public async Task DeleteAllAsync(CancellationToken cancellationToken) =>
-        await RowsAsync(
-            $"delete from {quotedSchema}.wolverine_incoming_envelopes; delete from {quotedSchema}.wolverine_outgoing_envelopes; delete from {quotedSchema}.wolverine_dead_letters",
-            cancellationToken
+    public async Task DeleteAllAsync(CancellationToken cancellationToken)
+    {
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(
+            $"delete from {_quotedSchema}.wolverine_incoming_envelopes; delete from {_quotedSchema}.wolverine_outgoing_envelopes; delete from {_quotedSchema}.wolverine_dead_letters",
+            connection
         );
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
 
     private async Task<long> PendingAsync(CancellationToken cancellationToken) =>
         (long)(
             await RowsAsync(
-                $"select (select count(*) from {quotedSchema}.wolverine_incoming_envelopes where status <> 'Handled' and not (status = 'Scheduled' and attempts = 0 and execution_time > now())) + (select count(*) from {quotedSchema}.wolverine_outgoing_envelopes) + (select count(*) from {quotedSchema}.wolverine_dead_letters where replayable)",
+                $"select (select count(*) from {_quotedSchema}.wolverine_incoming_envelopes where status <> 'Handled' and not (status = 'Scheduled' and attempts = 0 and execution_time > now())) + (select count(*) from {_quotedSchema}.wolverine_outgoing_envelopes) + (select count(*) from {_quotedSchema}.wolverine_dead_letters where replayable)",
                 cancellationToken
             )
         )[0][0];

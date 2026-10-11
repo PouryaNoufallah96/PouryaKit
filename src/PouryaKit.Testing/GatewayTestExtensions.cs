@@ -22,15 +22,27 @@ public static class GatewayTestExtensions
     extension<TModule>(IGatewayProcessor<TModule> gateway)
         where TModule : IModuleDefinition
     {
+        /// <summary>
+        /// Runs <paramref name="command"/> through the Gateway as a new Operation of <see cref="TestActor"/> and
+        /// returns its Result.
+        /// </summary>
         public Task<Result> SendAsync(Command command, CancellationToken cancellationToken = default) =>
             gateway.SendAsync(command, new OperationContext(TestActor), cancellationToken);
 
+        /// <summary>
+        /// Runs <paramref name="command"/> through the Gateway as a new Operation of <see cref="TestActor"/> and
+        /// returns its Result, which holds the response on success.
+        /// </summary>
         public Task<Result<TResponse>> SendAsync<TResponse>(
             Command<TResponse> command,
             CancellationToken cancellationToken = default
         )
             where TResponse : notnull => gateway.SendAsync(command, new OperationContext(TestActor), cancellationToken);
 
+        /// <summary>
+        /// Runs <paramref name="query"/> through the Gateway as a new Operation of <see cref="TestActor"/> and returns
+        /// its Result, which holds the answer on success.
+        /// </summary>
         public Task<Result<TResponse>> QueryAsync<TResponse>(
             Query<TResponse> query,
             CancellationToken cancellationToken = default

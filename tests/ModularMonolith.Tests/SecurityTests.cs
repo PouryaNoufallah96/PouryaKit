@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
@@ -17,6 +16,7 @@ using PouryaKit.Modularity;
 using PouryaKit.Security;
 using PouryaKit.Testing;
 using PouryaKit.Web;
+using static ModularMonolith.Tests.Fixtures.ProblemResponses;
 
 namespace ModularMonolith.Tests;
 
@@ -339,14 +339,6 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         $"{operation.FullName} declares RequiresPermissionAttribute, but its check is not registered, so it would run unchecked. Call AddPouryaKitPermissions with the assembly ModularMonolith.Tests in the Composition Root that registers its handler.";
 
     private static string Unique() => Guid.CreateVersion7().ToString("N");
-
-    private static async Task<JsonElement> ProblemAsync(HttpResponseMessage response, HttpStatusCode status)
-    {
-        Assert.Equal(status, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
-        return problem.RootElement.Clone();
-    }
 }
 
 // Registers the permission checks of the Stub Module's commands and queries from another Module's Composition Root.

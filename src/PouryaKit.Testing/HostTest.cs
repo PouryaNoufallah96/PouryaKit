@@ -7,10 +7,13 @@ namespace PouryaKit.Testing;
 public abstract class HostTest<TFixture>(TFixture fixture) : IAsyncLifetime
     where TFixture : HostFixture
 {
+    /// <summary>The fixture whose Host this test runs against.</summary>
     protected TFixture Fixture { get; } = fixture;
 
+    /// <inheritdoc />
     public virtual async ValueTask InitializeAsync() => await Fixture.ResetAsync(TestContext.Current.CancellationToken);
 
+    /// <inheritdoc />
     public virtual ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(this);

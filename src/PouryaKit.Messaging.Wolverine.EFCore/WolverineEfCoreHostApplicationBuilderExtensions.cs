@@ -5,12 +5,14 @@ using Microsoft.Extensions.Hosting;
 using PouryaKit.Cqrs;
 using PouryaKit.Persistence.EFCore;
 using Wolverine;
-using Wolverine.EntityFrameworkCore;
-using Wolverine.Persistence;
 using Wolverine.Postgresql;
 
 namespace PouryaKit.Messaging.Wolverine.EFCore;
 
+/// <summary>
+/// Composes the Messaging Capability on Wolverine, with its durable message store and every Module's Outbox in
+/// PostgreSQL, on a Host's application builder.
+/// </summary>
 public static class WolverineEfCoreHostApplicationBuilderExtensions
 {
     extension(IHostApplicationBuilder builder)
@@ -47,10 +49,17 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
                 );
             }
 
-            builder.Services.AddOptions<PouryaKitMessageStoreOptions>();
+            builder
+                .Services.AddOptions<PouryaKitMessageStoreOptions>()
+                .Validate(
+                    store => store.InboxStaleTime > TimeSpan.Zero,
+                    "PouryaKitMessageStoreOptions.InboxStaleTime is zero or negative; set it longer than zero."
+                )
+                .ValidateOnStart();
             builder.Services.AddSingleton<IWolverineExtension, MessageStoreExtension>();
-            builder.Services.TryAddScoped<IUnitOfWorkOutbox, WolverineOutbox>();
-            builder.Services.TryAddScoped<INotificationOutbox, WolverineOutbox>();
+            builder.Services.TryAddScoped<WolverineOutbox>();
+            builder.Services.TryAddScoped<IUnitOfWorkOutbox>(scope => scope.GetRequiredService<WolverineOutbox>());
+            builder.Services.TryAddScoped<IOutbox>(scope => scope.GetRequiredService<WolverineOutbox>());
             builder.Services.TryAddScoped<PublishedIntegrationEvents>();
             builder.Services.TryAddScoped<IIntegrationEventOutbox>(scope => scope.GetRequiredService<PublishedIntegrationEvents>());
             builder.Services.TryAddScoped<ScheduledDelayedCommands>();
@@ -62,9 +71,6 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
             return builder.UsePouryaKitWolverine(wolverine =>
             {
                 wolverine.PersistMessagesWithPostgresql(connectionString, schema);
-                // Eager is the mode in which Wolverine's own EF Core middleware commits a handler's effect and its
-                // inbox mark together; the Kit's Unit of Work owns its transaction either way.
-                wolverine.UseEntityFrameworkCoreTransactions(TransactionMiddlewareMode.Eager);
                 configure?.Invoke(wolverine);
             });
         }

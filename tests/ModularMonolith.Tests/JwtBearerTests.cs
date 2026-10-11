@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
-using System.Text.Json;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
@@ -17,6 +16,7 @@ using ModularMonolith.Host;
 using PouryaKit.Cqrs;
 using PouryaKit.Security;
 using PouryaKit.Testing;
+using static ModularMonolith.Tests.Fixtures.ProblemResponses;
 
 namespace ModularMonolith.Tests;
 
@@ -347,12 +347,4 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
 
     private static Task<HttpResponseMessage> RemoveLampAsync(HttpClient client) =>
         client.PostAsJsonAsync("/stub/catalog-products/removal", new { names = new[] { "Lamp" } }, TestContext.Current.CancellationToken);
-
-    private static async Task<JsonElement> ProblemAsync(HttpResponseMessage response, HttpStatusCode status)
-    {
-        Assert.Equal(status, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
-        return problem.RootElement.Clone();
-    }
 }

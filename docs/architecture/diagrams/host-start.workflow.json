@@ -1,0 +1,507 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "A Host's start: what runs at each moment",
+    "output": "docs/architecture/diagrams/host-start.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
+      "revision": "9503cf98baf3455eeacd786c2497f2a27512b8a5",
+      "provider": "github",
+      "link_mode": "web"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Kit step"
+        },
+        "security": {
+          "label": "Kit check"
+        },
+        "messagebus": {
+          "label": "Wolverine"
+        },
+        "database": {
+          "label": "Database migration"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "kit",
+      "label": "Kit"
+    },
+    {
+      "id": "wolverine",
+      "label": "Wolverine"
+    },
+    {
+      "id": "tests",
+      "label": "Tests only"
+    }
+  ],
+  "phases": [
+    {
+      "id": "composing",
+      "label": "While composed",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "build",
+      "label": "Build()",
+      "fromCol": 1,
+      "toCol": 1,
+      "variant": "emphasis"
+    },
+    {
+      "id": "resolve",
+      "label": "Start: services resolved",
+      "fromCol": 2,
+      "toCol": 2
+    },
+    {
+      "id": "starting",
+      "label": "StartingAsync",
+      "fromCol": 3,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "start",
+      "label": "StartAsync",
+      "fromCol": 4,
+      "toCol": 4
+    },
+    {
+      "id": "started",
+      "label": "StartedAsync",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "groups": [
+    {
+      "id": "fixture",
+      "label": "HostFixture",
+      "lane": "tests",
+      "fromCol": 1,
+      "toCol": 1,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "declarations",
+    "container",
+    "composition",
+    "options",
+    "validated",
+    "startup",
+    "wolverine_start",
+    "durable"
+  ],
+  "nodes": [
+    {
+      "id": "declarations",
+      "lane": "kit",
+      "col": 0,
+      "type": "backend",
+      "label": "Declarations",
+      "sublabel": "each refuses its own mistakes",
+      "tag": "stops: while composed",
+      "width": 184,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Modularity/HostModules.cs",
+          "line": 27,
+          "end_line": 35,
+          "label": "a Module added twice throws"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs",
+          "line": 42,
+          "end_line": 50,
+          "label": "store connection string checked"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
+          "line": 100,
+          "end_line": 114,
+          "label": "UseWolverine lambda, then configure"
+        }
+      ],
+      "yOffset": -60
+    },
+    {
+      "id": "container",
+      "lane": "kit",
+      "col": 1,
+      "type": "security",
+      "label": "Container validated",
+      "sublabel": "ValidateOnBuild, ValidateScopes",
+      "tag": "stops: Build()",
+      "width": 184,
+      "yOffset": -60,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Cqrs/Composition/ValidatingServiceProviderFactory.cs",
+          "line": 13,
+          "end_line": 15,
+          "label": "ValidateOnBuild and ValidateScopes"
+        },
+        {
+          "path": "src/PouryaKit.Cqrs/Composition/CqrsHostApplicationBuilderExtensions.cs",
+          "line": 15,
+          "end_line": 18,
+          "label": "Build throws an AggregateException"
+        }
+      ]
+    },
+    {
+      "id": "composition",
+      "lane": "kit",
+      "col": 1,
+      "type": "security",
+      "label": "Composition checks",
+      "sublabel": "every check, one line a problem",
+      "tag": "stops: Build()",
+      "width": 184,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Cqrs/Composition/ValidatingServiceProviderFactory.cs",
+          "line": 17,
+          "end_line": 25,
+          "label": "every check on the built container"
+        },
+        {
+          "path": "src/PouryaKit.Cqrs/Composition/ValidatingServiceProviderFactory.cs",
+          "line": 34,
+          "end_line": 40,
+          "label": "one exception, every problem"
+        },
+        {
+          "path": "src/PouryaKit.Cqrs/Composition/ICompositionCheck.cs",
+          "line": 3,
+          "end_line": 16,
+          "label": "three moments of checks"
+        }
+      ],
+      "yOffset": 60
+    },
+    {
+      "id": "options",
+      "lane": "wolverine",
+      "col": 2,
+      "type": "messagebus",
+      "label": "Wolverine options built",
+      "sublabel": "the Kit's extensions applied",
+      "width": 184,
+      "sources": [
+        {
+          "path": "tests/ModularMonolith.Tests/MisconfiguredHostTests.cs",
+          "line": 402,
+          "end_line": 403,
+          "label": "built as hosted services resolve"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
+          "line": 53,
+          "end_line": 56,
+          "label": "configure runs before the extensions"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/PouryaKitWolverineExtension.cs",
+          "line": 7,
+          "end_line": 29,
+          "label": "routes, handlers, retry policy"
+        }
+      ]
+    },
+    {
+      "id": "validated",
+      "lane": "kit",
+      "col": 2,
+      "type": "security",
+      "label": "Options validated",
+      "sublabel": "the Kit's ValidateOnStart",
+      "tag": "stops: StartAsync",
+      "width": 184,
+      "sources": [
+        {
+          "path": "tests/ModularMonolith.Tests/MisconfiguredHostTests.cs",
+          "line": 331,
+          "end_line": 332,
+          "label": "observed at start, by ValidateOnStart"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs",
+          "line": 117,
+          "end_line": 123,
+          "label": "recurring cadence validated"
+        },
+        {
+          "path": "tests/ModularMonolith.Tests/MisconfiguredHostTests.cs",
+          "line": 433,
+          "end_line": 434,
+          "label": "store options read when options built"
+        }
+      ]
+    },
+    {
+      "id": "startup",
+      "lane": "kit",
+      "col": 3,
+      "type": "security",
+      "label": "Startup checks",
+      "sublabel": "before any hosted service starts",
+      "tag": "stops: StartAsync",
+      "width": 184,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Cqrs/Composition/CompositionCheckRunner.cs",
+          "line": 6,
+          "end_line": 24,
+          "label": "StartingAsync runs every startup check"
+        },
+        {
+          "path": "src/PouryaKit.Cqrs/Composition/IStartupCheck.cs",
+          "line": 3,
+          "end_line": 11,
+          "label": "what only the built application shows"
+        },
+        {
+          "path": "src/PouryaKit.Web/Endpoints/UnmappedEndpointsCheck.cs",
+          "line": 7,
+          "end_line": 10,
+          "label": "an endpoint never mapped"
+        }
+      ]
+    },
+    {
+      "id": "wolverine_start",
+      "lane": "wolverine",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Wolverine starts",
+      "sublabel": "compiles queues, builds its store",
+      "tag": "Static code outside Development",
+      "width": 184,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/Composition/DurableQueuesCheck.cs",
+          "line": 11,
+          "end_line": 14,
+          "label": "endpoints compiled only as it starts"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs",
+          "line": 28,
+          "end_line": 29,
+          "label": "creates its store tables at start"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
+          "line": 49,
+          "end_line": 52,
+          "label": "missing generated type fails start"
+        }
+      ]
+    },
+    {
+      "id": "durable",
+      "lane": "kit",
+      "col": 5,
+      "type": "security",
+      "label": "DurableQueuesCheck",
+      "sublabel": "each queue stores what it gets",
+      "tag": "stops: StartAsync",
+      "width": 184,
+      "yOffset": -60,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/Composition/DurableQueuesCheck.cs",
+          "line": 26,
+          "end_line": 52,
+          "label": "subscription and delayed queues"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/Composition/DurableQueuesCheck.cs",
+          "line": 54,
+          "end_line": 70,
+          "label": "broker listeners durable"
+        }
+      ]
+    },
+    {
+      "id": "recurring",
+      "lane": "kit",
+      "col": 5,
+      "type": "backend",
+      "label": "RecurringCommandStart",
+      "sublabel": "stores each first occurrence",
+      "tag": "an Operation, system Actor",
+      "width": 184,
+      "yOffset": 60,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/RecurringCommandStart.cs",
+          "line": 12,
+          "end_line": 26,
+          "label": "after DurableQueuesCheck"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/RecurringCommandStart.cs",
+          "line": 29,
+          "end_line": 51,
+          "label": "unless one waits in the store"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs",
+          "line": 114,
+          "end_line": 116,
+          "label": "registered after DurableQueuesCheck"
+        }
+      ]
+    },
+    {
+      "id": "migrate",
+      "lane": "tests",
+      "col": 1,
+      "type": "database",
+      "label": "Module migrations",
+      "sublabel": "every DbContext, then start",
+      "width": 184,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Testing/HostFixture.cs",
+          "line": 203,
+          "end_line": 219,
+          "label": "StartHostAsync migrates, then starts"
+        },
+        {
+          "path": "src/PouryaKit.Testing/HostFixture.cs",
+          "line": 223,
+          "end_line": 228,
+          "label": "InitializeAsync starts it the same way"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-build",
+      "from": "declarations",
+      "to": "container",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "e-checks",
+      "from": "container",
+      "to": "composition",
+      "label": "then",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e-resolve",
+      "from": "composition",
+      "to": "options",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "e-validate",
+      "from": "options",
+      "to": "validated",
+      "label": "then",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "e-starting",
+      "from": "validated",
+      "to": "startup",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-start",
+      "from": "startup",
+      "to": "wolverine_start",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-started",
+      "from": "wolverine_start",
+      "to": "durable",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-recurring",
+      "from": "durable",
+      "to": "recurring",
+      "label": "then",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e-fixture",
+      "from": "composition",
+      "to": "migrate",
+      "label": "in tests",
+      "variant": "dashed",
+      "role": "branch",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "e-fixture-start",
+      "from": "migrate",
+      "to": "options",
+      "label": "StartAsync",
+      "variant": "dashed",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Where a mistake stops the Host",
+      "items": [
+        "A declaration's own mistake throws while the Host is composed.",
+        "A composition check fails Build(): one InvalidOperationException, one line per problem; container validation throws an AggregateException.",
+        "A Kit option out of range fails StartAsync with an OptionsValidationException.",
+        "A startup check fails StartAsync before any hosted service starts, so the Host serves and delivers nothing; StartingAsync first fails a Host whose composition checks never ran.",
+        "A queue that does not store what it receives fails StartAsync once Wolverine has started."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Wolverine's configuration order",
+      "items": [
+        "While the Host is composed: UsePouryaKitWolverine's own settings, then the Host's configure.",
+        "When Wolverine's options are built: the Kit's routes, handlers, retry policy, delayed-command queues, durability mode, inbox stale time and RabbitMQ topology."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Migrations",
+      "items": [
+        "The Host applies no Module migrations when it starts.",
+        "Wolverine creates its message store tables as it starts, in a Host with a message store.",
+        "HostFixture applies every Module's migrations, then starts the Host: in tests only."
+      ]
+    }
+  ]
+}

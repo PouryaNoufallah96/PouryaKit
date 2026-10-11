@@ -50,7 +50,7 @@ python3 .agents/scripts/check-ai-setup.py
 python3 .agents/scripts/check-docs.py
 ```
 
-Each ticket's brief adds its own test projects.
+Each ticket's brief adds its own test projects. Every command in a brief is copied from a place that runs it, the CI workflow (`.github/workflows/ci.yml`) or an earlier brief whose report shows it passed, never retyped from memory: session 3 (2026-10-09) shipped `python3 -m unittest .agents/scripts/test_check_docs.py`, which stops with `ValueError: Empty module name` because the leading dot of `.agents` makes no module name. Whether `validate.py` runs in full or prints `SKIP` is the script's decision from its exempt paths; a brief does not predict it.
 
 ## Commit, then package validation
 
@@ -59,7 +59,7 @@ Each ticket's brief adds its own test projects.
 
 ## Report
 
-Your final message is your role's JSON report, as text, with these additions: `base` (the integration-branch commit your branch starts from, after any rebase), `branch` (your worktree branch), `head` (your last commit), `design` (at most 150 words: the choices the brief left open, and why), `packages` (each package added or bumped, with its version and licence), `docs_touched` (paths), `shown_red`, and `merge_notes` (the files a ticket merged in parallel likely touches too, with their right post-merge values: the README status list, acceptance counts, `inventory.json`, the `PackageGraphTests` count, the plan's section C table).
+Your final message is your role's JSON report, as text, with these additions: `base` (the integration-branch commit your branch starts from, after any rebase), `branch` (your worktree branch), `head` (your last commit), `design` (at most 150 words: the choices the brief left open, and why), `packages` (each package added or bumped, with its version and licence), `docs_touched` (paths), `shown_red`, `validated` (the commit `validate.py` ran on, which `merge-package.py` checks against `head`: only Markdown may differ, so a fix after the validation reruns it), and `merge_notes` (the files a ticket merged in parallel likely touches too, with their right post-merge values: the README status list, acceptance counts, `inventory.json`, the `PackageGraphTests` count, the plan's section C table). Keep the whole report under about 4 KB, with paths relative to the worktree and no text repeated between fields: the harness truncates a longer final message, and the main session then has to ask for the rest (session 6, 2026-10-10, lost the tail of three reports that way).
 ````
 
 ## Per-ticket brief

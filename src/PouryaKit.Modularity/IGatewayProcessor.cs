@@ -18,8 +18,16 @@ namespace PouryaKit.Modularity;
 public interface IGatewayProcessor<TModule>
     where TModule : IModuleDefinition
 {
+    /// <summary>
+    /// Runs <paramref name="command"/> as one Operation of the Module with <paramref name="context"/> and returns its
+    /// Result.
+    /// </summary>
     Task<Result> SendAsync(Command command, OperationContext context, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Runs <paramref name="command"/> as one Operation of the Module with <paramref name="context"/> and returns its
+    /// Result, which holds the response on success.
+    /// </summary>
     Task<Result<TResponse>> SendAsync<TResponse>(
         Command<TResponse> command,
         OperationContext context,
@@ -27,6 +35,10 @@ public interface IGatewayProcessor<TModule>
     )
         where TResponse : notnull;
 
+    /// <summary>
+    /// Runs <paramref name="query"/> as one Operation of the Module with <paramref name="context"/> and returns its
+    /// Result, which holds the answer on success.
+    /// </summary>
     Task<Result<TResponse>> QueryAsync<TResponse>(
         Query<TResponse> query,
         OperationContext context,

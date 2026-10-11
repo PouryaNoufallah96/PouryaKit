@@ -23,3 +23,7 @@ __pycache__/
 samples/ModularMonolith/src/*/Internal/Generated/
 # Serena's project folder: a local tool's, like the entries above. The Kit tracks none of it.
 .serena/
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore

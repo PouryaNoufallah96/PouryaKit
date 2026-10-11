@@ -1,0 +1,448 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "The Unit of Work's Commit Sequence",
+    "output": "docs/architecture/diagrams/commit-sequence.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
+      "revision": "9503cf98baf3455eeacd786c2497f2a27512b8a5",
+      "link_mode": "web"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "step"
+        },
+        "security": {
+          "label": "check that rolls back"
+        },
+        "messagebus": {
+          "label": "Outbox seam"
+        },
+        "database": {
+          "label": "database"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "steps",
+      "label": "The Unit of Work's steps"
+    },
+    {
+      "id": "checks",
+      "label": "Reactions and checks"
+    },
+    {
+      "id": "rollback",
+      "label": "Rollback",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "begin",
+    "run",
+    "check1",
+    "drain",
+    "check2",
+    "prepare",
+    "write",
+    "check3",
+    "save",
+    "commit",
+    "flush"
+  ],
+  "nodes": [
+    {
+      "id": "begin",
+      "lane": "steps",
+      "col": 0,
+      "type": "backend",
+      "label": "Begin",
+      "sublabel": "a transaction",
+      "width": 140,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 42,
+          "end_line": 48,
+          "label": "BeginTransactionAsync on the DbContext"
+        }
+      ]
+    },
+    {
+      "id": "run",
+      "lane": "steps",
+      "col": 1,
+      "type": "backend",
+      "label": "Run the command",
+      "sublabel": "key, handler, success",
+      "width": 150,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs",
+          "line": 259,
+          "end_line": 285,
+          "label": "reserve, handle, record in the transaction"
+        },
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/Idempotency/EfIdempotencyStore.cs",
+          "line": 23,
+          "end_line": 67,
+          "label": "the key on the Unit of Work's transaction"
+        },
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 49,
+          "end_line": 49,
+          "label": "the command runs"
+        }
+      ]
+    },
+    {
+      "id": "check1",
+      "lane": "checks",
+      "col": 1,
+      "type": "security",
+      "label": "Check",
+      "sublabel": "success, not rollback-only",
+      "width": 150,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 50,
+          "end_line": 50,
+          "label": "Result and Operation checked"
+        }
+      ]
+    },
+    {
+      "id": "drain",
+      "lane": "checks",
+      "col": 2,
+      "type": "backend",
+      "label": "Drain Domain Events",
+      "sublabel": "round after round",
+      "width": 150,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 52,
+          "end_line": 55,
+          "label": "every tracked aggregate"
+        },
+        {
+          "path": "src/PouryaKit.Cqrs/Pipeline/DomainEventDrain.cs",
+          "line": 40,
+          "end_line": 84,
+          "label": "rounds, depth guard, stops on failure"
+        },
+        {
+          "path": "src/PouryaKit.Cqrs/Pipeline/DomainEventDrain.cs",
+          "line": 95,
+          "end_line": 117,
+          "label": "one handler at a time, by name"
+        }
+      ]
+    },
+    {
+      "id": "check2",
+      "lane": "checks",
+      "col": 3,
+      "type": "security",
+      "label": "Check again",
+      "sublabel": "a handler may have failed",
+      "width": 150,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 57,
+          "end_line": 58,
+          "label": "rollback-only after the drain"
+        }
+      ]
+    },
+    {
+      "id": "prepare",
+      "lane": "steps",
+      "col": 3,
+      "type": "backend",
+      "label": "Prepare",
+      "sublabel": "soft delete, Version, audit",
+      "width": 150,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 60,
+          "end_line": 60,
+          "label": "returns the changed aggregates"
+        },
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/PersistencePreparation.cs",
+          "line": 17,
+          "end_line": 70,
+          "label": "marks, cascades, Version + 1, stamps"
+        }
+      ]
+    },
+    {
+      "id": "write",
+      "lane": "steps",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Write the Outbox",
+      "sublabel": "Snapshots, then envelopes",
+      "width": 150,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 61,
+          "end_line": 64,
+          "label": "only when an Outbox is registered"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
+          "line": 34,
+          "end_line": 144,
+          "label": "envelopes and #published records"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotStep.cs",
+          "line": 33,
+          "end_line": 72,
+          "label": "Snapshots built from the prepared state"
+        }
+      ]
+    },
+    {
+      "id": "check3",
+      "lane": "checks",
+      "col": 4,
+      "type": "security",
+      "label": "Check once more",
+      "sublabel": "a mapper's nested command",
+      "width": 150,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 66,
+          "end_line": 68,
+          "label": "rollback-only after the Outbox write"
+        }
+      ]
+    },
+    {
+      "id": "save",
+      "lane": "steps",
+      "col": 5,
+      "type": "database",
+      "label": "Save once",
+      "sublabel": "SaveChangesAsync",
+      "width": 140,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 70,
+          "end_line": 73,
+          "label": "a refusal becomes the Result"
+        },
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 95,
+          "end_line": 112,
+          "label": "concurrency or mapped unique constraint"
+        }
+      ],
+      "yOffset": -90
+    },
+    {
+      "id": "commit",
+      "lane": "steps",
+      "col": 5,
+      "type": "database",
+      "label": "Commit",
+      "sublabel": "the transaction",
+      "width": 140,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 76,
+          "end_line": 76,
+          "label": "CommitAsync"
+        }
+      ],
+      "yOffset": 0
+    },
+    {
+      "id": "flush",
+      "lane": "steps",
+      "col": 5,
+      "type": "messagebus",
+      "label": "Flush",
+      "sublabel": "send what was written",
+      "width": 140,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 77,
+          "end_line": 82,
+          "label": "after the commit, then the Result"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
+          "line": 146,
+          "end_line": 163,
+          "label": "a failed send is logged, not thrown"
+        }
+      ],
+      "yOffset": 90
+    },
+    {
+      "id": "rollback",
+      "lane": "rollback",
+      "col": 2,
+      "type": "security",
+      "label": "Roll back",
+      "sublabel": "return the Errors",
+      "width": 150,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 88,
+          "end_line": 91,
+          "label": "the failure or RollbackErrors"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "beginToRun",
+      "from": "begin",
+      "to": "run",
+      "role": "main"
+    },
+    {
+      "id": "runToCheck1",
+      "from": "run",
+      "to": "check1",
+      "role": "main"
+    },
+    {
+      "id": "check1ToDrain",
+      "from": "check1",
+      "to": "drain",
+      "role": "main"
+    },
+    {
+      "id": "drainToCheck2",
+      "from": "drain",
+      "to": "check2",
+      "role": "main"
+    },
+    {
+      "id": "check2ToPrepare",
+      "from": "check2",
+      "to": "prepare",
+      "role": "main"
+    },
+    {
+      "id": "prepareToWrite",
+      "from": "prepare",
+      "to": "write",
+      "role": "main"
+    },
+    {
+      "id": "writeToCheck3",
+      "from": "write",
+      "to": "check3",
+      "role": "main"
+    },
+    {
+      "id": "check3ToSave",
+      "from": "check3",
+      "to": "save",
+      "role": "main",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "saveToCommit",
+      "from": "save",
+      "to": "commit",
+      "label": "saved",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "id": "commitToFlush",
+      "from": "commit",
+      "to": "flush",
+      "role": "main"
+    },
+    {
+      "id": "check1Fails",
+      "from": "check1",
+      "to": "rollback",
+      "label": "fails",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "id": "check2Fails",
+      "from": "check2",
+      "to": "rollback",
+      "label": "fails",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "id": "check3Fails",
+      "from": "check3",
+      "to": "rollback",
+      "label": "fails",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "id": "saveRefused",
+      "from": "save",
+      "to": "rollback",
+      "label": "refused",
+      "role": "error",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "The Outbox write",
+      "items": [
+        "It builds each declared Snapshot or Tombstone from the prepared state; a mapper that changes anything fails the Operation.",
+        "It records each Integration Event's <wire name>#published in the Module's Receipt store, so a second publication of one type fails.",
+        "It writes one envelope per route, with the Operation Context, and each scheduled command with its due time; a message no route takes is left out."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Rollback",
+      "items": [
+        "A failed check or a refused save rolls back and returns the command's Errors or the Operation's RollbackErrors.",
+        "An exception at any step rolls back by disposing the transaction; one from the commit can leave the outcome unknown (ADR 0004).",
+        "Nothing retries: a retry needs a new scope."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Around it",
+      "items": [
+        "The dispatcher starts the Unit of Work for the outermost command, after its authorizers and validator pass; a nested command joins it.",
+        "A replayed request id returns its recorded success, and the steps after it find nothing to do.",
+        "Without a messaging package there is no Outbox seam: the write and the flush are skipped."
+      ]
+    }
+  ]
+}

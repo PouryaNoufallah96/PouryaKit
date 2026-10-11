@@ -165,6 +165,61 @@ class ConsumerCacheTests(unittest.TestCase):
             self.assertEqual([str(assets)], check_consumer(consumer, {"NUGET_PACKAGES": str(cache)}, [], "unused", []))
 
 
+class TestClosureTests(unittest.TestCase):
+    """The generated monolith's tests run through PouryaKit.Testing, which depends on Modularity; its Host never does."""
+    KIT = ["PouryaKit.Modularity", "PouryaKit.Testing", "PouryaKit.Web"]
+    REFUSED = ["PouryaKit.Modularity", "PouryaKit.Testing"]
+
+    @staticmethod
+    def consumer(folder, projects):
+        """A template consumer whose projects, `{folder: [package IDs]}`, restored those Kit packages from the produced feed."""
+        output = Path(folder)
+        consumer = output / "consumers/template-monolith"
+        produced = output / "packages"
+        produced.mkdir(parents=True)
+        env = isolated_env(consumer)
+        cache = Path(env["NUGET_PACKAGES"])
+        for project, ids in projects.items():
+            libraries = {}
+            for package in ids:
+                (produced / f"{package}.1.0.0.nupkg").write_bytes(package.encode())
+                restored = cache / package.lower() / "1.0.0"
+                restored.mkdir(parents=True, exist_ok=True)
+                (restored / f"{package.lower()}.1.0.0.nupkg").write_bytes(package.encode())
+                (restored / ".nupkg.metadata").write_text(json.dumps({"source": str(produced)}))
+                libraries[f"{package}/1.0.0"] = {"type": "package", "path": f"{package.lower()}/1.0.0"}
+            assets = consumer / project / "obj/project.assets.json"
+            assets.parent.mkdir(parents=True)
+            assets.write_text(json.dumps({"packageFolders": {str(cache): {}}, "libraries": libraries}))
+        return consumer, env
+
+    def test_the_test_project_restores_testing_and_modularity_which_the_runtime_closure_refuses(self):
+        with tempfile.TemporaryDirectory() as folder:
+            consumer, env = self.consumer(folder, {
+                "Acme.Shop/src/Acme.Shop.Host": ["PouryaKit.Web"],
+                "Acme.Shop/tests/Acme.Shop.Tests": ["PouryaKit.Web", "PouryaKit.Testing", "PouryaKit.Modularity"]})
+            self.assertEqual(2, len(check_consumer(consumer, env, self.KIT, "1.0.0", self.REFUSED)))
+
+    def test_the_hosts_closure_and_its_release_publish_refuse_modularity(self):
+        with tempfile.TemporaryDirectory() as folder:
+            consumer, env = self.consumer(folder, {
+                "Acme.Shop/src/Acme.Shop.Host": ["PouryaKit.Web", "PouryaKit.Modularity"],
+                "Acme.Shop/tests/Acme.Shop.Tests": ["PouryaKit.Web", "PouryaKit.Testing", "PouryaKit.Modularity"]})
+            with self.assertRaisesRegex(RuntimeError, r"excluded dependencies outside its tests: \['PouryaKit.Modularity', 'PouryaKit.Web'\]"):
+                check_consumer(consumer, env, self.KIT, "1.0.0", self.REFUSED)
+            host = Path(folder) / "Acme.Shop.Host"
+            published = Path(folder) / "publish"
+            (host / validate.GENERATED_REGISTRY).parent.mkdir(parents=True)
+            (host / validate.GENERATED_REGISTRY).write_text("// generated")
+            published.mkdir()
+            (published / "Acme.Shop.Host.dll").write_bytes(b"MZ GeneratedHandlerRegistry")
+            (published / "PouryaKit.Web.dll").write_bytes(b"MZ")
+            self.assertEqual([validate.GENERATED_REGISTRY], check_production_publish(host, published, self.REFUSED))
+            (published / "PouryaKit.Modularity.dll").write_bytes(b"MZ")
+            with self.assertRaisesRegex(RuntimeError, "carries PouryaKit.Modularity.dll, which its runtime closure refuses"):
+                check_production_publish(host, published, self.REFUSED)
+
+
 class ProductionPublishTests(unittest.TestCase):
     def test_a_publish_with_the_generated_code_and_no_runtime_compiler_passes_and_any_other_fails(self):
         with tempfile.TemporaryDirectory() as folder:

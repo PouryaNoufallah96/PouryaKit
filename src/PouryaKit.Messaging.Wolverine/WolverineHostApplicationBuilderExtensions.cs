@@ -11,6 +11,10 @@ using Wolverine.Util;
 
 namespace PouryaKit.Messaging.Wolverine;
 
+/// <summary>
+/// Composes the Messaging Capability's routing, delivery and retries on Wolverine, without an Outbox, on a Host's
+/// application builder.
+/// </summary>
 public static class WolverineHostApplicationBuilderExtensions
 {
     extension(IHostApplicationBuilder builder)
@@ -28,11 +32,12 @@ public static class WolverineHostApplicationBuilderExtensions
         /// the same way. None of
         /// them is ever treated as handled. Wolverine discovers no handlers of its own. Messages are stored and delivered
         /// in the Kit's JSON representation, the one <c>AddPouryaKitWeb</c> gives HTTP bodies, read strictly
-        /// (<c>UsePouryaKitWireJson</c>): a body that lacks a member its type requires, or carries null where the type
-        /// forbids it, fails to read and is set aside as a dead letter with the error, never handled.
+        /// (<c>UsePouryaKitWireJson</c>): a body that lacks a member its type requires, carries null where the type
+        /// forbids it, or names one of its members twice, fails to read and is set aside as a dead letter with the error,
+        /// never handled.
         /// It installs the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>), so a Host with Wolverine has
         /// them with or without Modules. Nothing this overload registers writes an Outbox
-        /// (<see cref="INotificationOutbox"/>), so a Host that declares Notification Handlers, Integration Event Handlers
+        /// (<see cref="IOutbox"/>), so a Host that declares Notification Handlers, Integration Event Handlers
         /// or published Integration Events calls the overload of <c>PouryaKit.Messaging.Wolverine.EFCore</c> instead, or
         /// fails when it is built; so does a Host with a Notification Handler in the Feature assemblies of a Module it
         /// composed, or of its own services, that no <c>AddPouryaKitNotificationHandlers</c> declares, naming that call.
@@ -45,7 +50,12 @@ public static class WolverineHostApplicationBuilderExtensions
         /// code at run time in Development and, in every other environment, loads it from the Host's own assembly, where
         /// <c>dotnet run -- codegen write</c> wrote it before the build (<see cref="TypeLoadMode.Static"/>): a Host there needs no
         /// runtime compiler, and one whose handler chain has no generated type fails when it starts.
-        /// <paramref name="configure"/> adds Host-specific Wolverine configuration and may override any of this.
+        /// <paramref name="configure"/> adds Host-specific Wolverine configuration as Wolverine is registered, after the
+        /// settings this call makes there, which it may override, but before the routes, handlers and retry policy, and a
+        /// message store's durability mode and inbox stale time, which the Kit applies when Wolverine first resolves its
+        /// options, so those are set through <see cref="PouryaKitMessagingOptions"/> and <c>PouryaKitMessageStoreOptions</c>.
+        /// Call it once: a second call throws Wolverine's <see cref="InvalidOperationException"/>, since <c>UseWolverine</c> runs
+        /// once per service collection.
         /// </summary>
         public IHostApplicationBuilder UsePouryaKitWolverine(Action<WolverineOptions>? configure = null)
         {
@@ -54,7 +64,21 @@ public static class WolverineHostApplicationBuilderExtensions
             builder.AddPouryaKitCompositionChecks();
             WolverineMessageNaming.InsertFirst<WireNaming>();
             Subscriptions.In(builder.Services);
-            builder.Services.AddOptions<PouryaKitMessagingOptions>();
+            builder
+                .Services.AddOptions<PouryaKitMessagingOptions>()
+                .Validate(
+                    messaging => messaging.RetryDelays is not null,
+                    "PouryaKitMessagingOptions.RetryDelays is null; set it to the delays a failed delivery waits before each further attempt."
+                )
+                .Validate(
+                    messaging => messaging.RetryDelays is null || messaging.RetryDelays.Length > 0,
+                    "PouryaKitMessagingOptions.RetryDelays is empty; set at least one delay, where a zero delay retries at once."
+                )
+                .Validate(
+                    messaging => messaging.RetryDelays is null || messaging.RetryDelays.All(delay => delay >= TimeSpan.Zero),
+                    "PouryaKitMessagingOptions.RetryDelays holds a negative delay; set each delay to zero or longer."
+                )
+                .ValidateOnStart();
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, UnregisteredNotificationHandlersCheck>());
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, RoutingCheck>());
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SubscriptionUnitOfWorkCheck>());

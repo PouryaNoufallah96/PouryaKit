@@ -13,5 +13,6 @@ namespace PouryaKit.Messaging;
 public interface INotificationHandler<TDomainEvent>
     where TDomainEvent : DomainEvent
 {
+    /// <summary>Reacts to the committed <paramref name="domainEvent"/> and returns the reaction's Result.</summary>
     Task<Result> Handle(TDomainEvent domainEvent, CancellationToken cancellationToken);
 }

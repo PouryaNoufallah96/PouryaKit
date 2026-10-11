@@ -1,0 +1,636 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "From a push to a package in the private feed",
+    "output": "docs/architecture/diagrams/ci-and-publication.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
+      "revision": "24e49217f5cade556e283ce45c90f6fc3af99a0b",
+      "provider": "github",
+      "link_mode": "web"
+    },
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Trigger"
+        },
+        "backend": {
+          "label": "Step"
+        },
+        "security": {
+          "label": "Gate"
+        },
+        "database": {
+          "label": "Store"
+        },
+        "external": {
+          "label": "External service"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "ci",
+      "label": "CI run · ci.yml"
+    },
+    {
+      "id": "validation",
+      "label": "Shared validation · validate.py"
+    },
+    {
+      "id": "evidence",
+      "label": "Services and evidence"
+    },
+    {
+      "id": "publication",
+      "label": "Private publication · main only"
+    },
+    {
+      "id": "feed",
+      "label": "Private feed"
+    }
+  ],
+  "groups": [
+    {
+      "id": "reusable_publication",
+      "label": "package-publication.yml · cancel-in-progress: false",
+      "lane": "publication",
+      "fromCol": 1,
+      "toCol": 4,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "trigger",
+    "build_and_test",
+    "build",
+    "pack",
+    "consumers",
+    "closures",
+    "artifact",
+    "download"
+  ],
+  "nodes": [
+    {
+      "id": "trigger",
+      "lane": "ci",
+      "col": 0,
+      "type": "frontend",
+      "label": "Push, PR or manual run",
+      "sublabel": "main, feat/**, tags, any PR",
+      "width": 170,
+      "sources": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "line": 3,
+          "end_line": 15,
+          "label": "triggers, read-only token"
+        }
+      ]
+    },
+    {
+      "id": "ai_setup",
+      "lane": "ci",
+      "col": 1,
+      "type": "backend",
+      "label": "ai-setup",
+      "sublabel": "AI setup, docs, script tests",
+      "width": 170,
+      "yOffset": -60,
+      "sources": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "line": 18,
+          "end_line": 40,
+          "label": "check-ai-setup, check-docs, unit tests"
+        }
+      ]
+    },
+    {
+      "id": "build_and_test",
+      "lane": "ci",
+      "col": 1,
+      "type": "backend",
+      "label": "build-and-test",
+      "sublabel": "full history, token removed",
+      "width": 170,
+      "yOffset": 60,
+      "sources": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "line": 42,
+          "end_line": 45,
+          "label": "parallel to ai-setup, no needs"
+        },
+        {
+          "path": ".github/workflows/package-validation.yml",
+          "line": 38,
+          "end_line": 44,
+          "label": "full-history checkout, no credentials"
+        },
+        {
+          "path": ".github/workflows/package-validation.yml",
+          "line": 52,
+          "end_line": 72,
+          "label": "script tests, revision, validate.py"
+        }
+      ]
+    },
+    {
+      "id": "ci_succeeded",
+      "lane": "ci",
+      "col": 5,
+      "type": "frontend",
+      "label": "Main CI completed",
+      "sublabel": "workflow_run on main",
+      "width": 170,
+      "sources": [
+        {
+          "path": ".github/workflows/private-publication.yml",
+          "line": 3,
+          "end_line": 21,
+          "label": "workflow_run on main, or manual"
+        }
+      ]
+    },
+    {
+      "id": "maintainer",
+      "lane": "validation",
+      "col": 0,
+      "type": "frontend",
+      "label": "Maintainer, locally",
+      "sublabel": "a clean committed checkout",
+      "width": 170,
+      "sources": [
+        {
+          "path": "scripts/packaging/validate.py",
+          "line": 350,
+          "end_line": 357,
+          "label": "clean checkout, evidence outside it"
+        },
+        {
+          "path": "scripts/packaging/validate.py",
+          "line": 484,
+          "end_line": 499,
+          "label": "local run fetches history"
+        }
+      ]
+    },
+    {
+      "id": "build",
+      "lane": "validation",
+      "col": 1,
+      "type": "backend",
+      "label": "Release build + tests",
+      "sublabel": "the solution, built once",
+      "width": 170,
+      "sources": [
+        {
+          "path": "scripts/packaging/validate.py",
+          "line": 368,
+          "end_line": 369,
+          "label": "Release build, tests without rebuild"
+        }
+      ]
+    },
+    {
+      "id": "pack",
+      "lane": "validation",
+      "col": 2,
+      "type": "security",
+      "label": "Pack + artifact checks",
+      "sublabel": "one version, commit, SourceLink",
+      "width": 170,
+      "sources": [
+        {
+          "path": "scripts/packaging/validate.py",
+          "line": 370,
+          "end_line": 379,
+          "label": "MinVer version, pack --no-build"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs",
+          "line": 24,
+          "end_line": 42,
+          "label": "metadata, graph, SourceLink, set"
+        },
+        {
+          "path": "scripts/packaging/validate.py",
+          "line": 269,
+          "end_line": 332,
+          "label": "negative controls"
+        }
+      ]
+    },
+    {
+      "id": "consumers",
+      "lane": "validation",
+      "col": 3,
+      "type": "security",
+      "label": "Clean consumers",
+      "sublabel": "produced packages only",
+      "tag": "templates: smoke tests, publish",
+      "width": 170,
+      "sources": [
+        {
+          "path": "scripts/packaging/validate.py",
+          "line": 380,
+          "end_line": 447,
+          "label": "library, sample and template consumers"
+        },
+        {
+          "path": "scripts/packaging/validate.py",
+          "line": 201,
+          "end_line": 236,
+          "label": "own caches, produced bytes only"
+        },
+        {
+          "path": "scripts/packaging/validate.py",
+          "line": 164,
+          "end_line": 176,
+          "label": "codegen write, Release publish"
+        }
+      ]
+    },
+    {
+      "id": "closures",
+      "lane": "validation",
+      "col": 4,
+      "type": "security",
+      "label": "Closures + manifest",
+      "sublabel": "MinVer proof, SHA-256 per package",
+      "width": 170,
+      "sources": [
+        {
+          "path": "scripts/packaging/validate.py",
+          "line": 448,
+          "end_line": 456,
+          "label": "closures, controls, manifest"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs",
+          "line": 44,
+          "end_line": 68,
+          "label": "consumer closures and licences"
+        },
+        {
+          "path": "scripts/packaging/validate.py",
+          "line": 239,
+          "end_line": 266,
+          "label": "MinVer proof"
+        }
+      ]
+    },
+    {
+      "id": "postgres",
+      "lane": "evidence",
+      "col": 2,
+      "type": "external",
+      "label": "PostgreSQL",
+      "sublabel": "Testcontainers",
+      "width": 170,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Testing/HostFixture.cs",
+          "line": 32,
+          "end_line": 34,
+          "label": "the fixture's PostgreSQL container"
+        },
+        {
+          "path": "src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/HostTests.cs",
+          "line": 137,
+          "end_line": 142,
+          "label": "generated tests use HostFixture"
+        }
+      ]
+    },
+    {
+      "id": "artifact",
+      "lane": "evidence",
+      "col": 4,
+      "type": "database",
+      "label": "Validation artifact",
+      "sublabel": "SHA, packages, logs; 90 days",
+      "width": 170,
+      "sources": [
+        {
+          "path": ".github/workflows/package-validation.yml",
+          "line": 74,
+          "end_line": 90,
+          "label": "collect, upload, 90-day retention"
+        },
+        {
+          "path": "scripts/ci/evidence.py",
+          "line": 54,
+          "end_line": 85,
+          "label": "hashes checked, no caches retained"
+        }
+      ]
+    },
+    {
+      "id": "authorize",
+      "lane": "publication",
+      "col": 5,
+      "type": "security",
+      "label": "Authorize",
+      "sublabel": "read-only, that exact attempt",
+      "width": 170,
+      "sources": [
+        {
+          "path": ".github/workflows/private-publication.yml",
+          "line": 27,
+          "end_line": 35,
+          "label": "push or manual, main, same repository"
+        },
+        {
+          "path": ".github/workflows/private-publication.yml",
+          "line": 44,
+          "end_line": 81,
+          "label": "exact attempt, both jobs succeeded"
+        }
+      ]
+    },
+    {
+      "id": "download",
+      "lane": "publication",
+      "col": 4,
+      "type": "backend",
+      "label": "Download original",
+      "sublabel": "that attempt's artifact",
+      "width": 170,
+      "sources": [
+        {
+          "path": ".github/workflows/package-publication.yml",
+          "line": 24,
+          "end_line": 53,
+          "label": "trusted main checkout, digest checked"
+        },
+        {
+          "path": ".github/workflows/private-publication.yml",
+          "line": 83,
+          "end_line": 94,
+          "label": "the run, attempt and SHA passed on"
+        }
+      ]
+    },
+    {
+      "id": "verify",
+      "lane": "publication",
+      "col": 3,
+      "type": "security",
+      "label": "Verify provenance",
+      "sublabel": "receipt, inventory, SHA-256",
+      "width": 170,
+      "sources": [
+        {
+          "path": ".github/workflows/package-publication.yml",
+          "line": 55,
+          "end_line": 83,
+          "label": "receipt, version, inventory, hashes"
+        }
+      ]
+    },
+    {
+      "id": "push",
+      "lane": "publication",
+      "col": 2,
+      "type": "backend",
+      "label": "dotnet nuget push",
+      "sublabel": "HTTP 409 skipped",
+      "width": 170,
+      "sources": [
+        {
+          "path": ".github/workflows/package-publication.yml",
+          "line": 85,
+          "end_line": 111,
+          "label": "job token, --skip-duplicate"
+        }
+      ]
+    },
+    {
+      "id": "feed_check",
+      "lane": "publication",
+      "col": 1,
+      "type": "security",
+      "label": "Feed check",
+      "sublabel": "fresh caches, exact version",
+      "tag": "templates installed, generated",
+      "width": 170,
+      "sources": [
+        {
+          "path": ".github/workflows/package-publication.yml",
+          "line": 112,
+          "end_line": 123,
+          "label": "every library package restored"
+        },
+        {
+          "path": ".github/workflows/package-publication.yml",
+          "line": 124,
+          "end_line": 145,
+          "label": "template installed, both names"
+        }
+      ]
+    },
+    {
+      "id": "github_packages",
+      "lane": "feed",
+      "col": 2,
+      "type": "external",
+      "label": "GitHub Packages",
+      "sublabel": "private NuGet feed",
+      "width": 170,
+      "sources": [
+        {
+          "path": ".github/workflows/package-publication.yml",
+          "line": 94,
+          "end_line": 106,
+          "label": "feed and source mapping"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-ai-setup",
+      "from": "trigger",
+      "to": "ai_setup"
+    },
+    {
+      "id": "e-build-and-test",
+      "from": "trigger",
+      "to": "build_and_test",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-runs",
+      "from": "build_and_test",
+      "to": "build",
+      "label": "no token",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e-local",
+      "from": "maintainer",
+      "to": "build",
+      "variant": "dashed"
+    },
+    {
+      "id": "e-pack",
+      "from": "build",
+      "to": "pack",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-consumers",
+      "from": "pack",
+      "to": "consumers",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-closures",
+      "from": "consumers",
+      "to": "closures",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-tests-db",
+      "from": "build",
+      "to": "postgres",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "e-smoke-db",
+      "from": "consumers",
+      "to": "postgres",
+      "label": "smoke tests",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "e-retain",
+      "from": "closures",
+      "to": "artifact",
+      "label": "pass or fail",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e-ai-done",
+      "from": "ai_setup",
+      "to": "ci_succeeded",
+      "label": "succeeded"
+    },
+    {
+      "id": "e-validate-done",
+      "from": "build_and_test",
+      "to": "ci_succeeded",
+      "label": "succeeded"
+    },
+    {
+      "id": "e-authorize",
+      "from": "ci_succeeded",
+      "to": "authorize",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e-download",
+      "from": "authorize",
+      "to": "download",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-original",
+      "from": "artifact",
+      "to": "download",
+      "label": "original bytes",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e-verify",
+      "from": "download",
+      "to": "verify",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-push",
+      "from": "verify",
+      "to": "push",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-feed-check",
+      "from": "push",
+      "to": "feed_check",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-pushed",
+      "from": "push",
+      "to": "github_packages",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e-restored",
+      "from": "feed_check",
+      "to": "github_packages",
+      "label": "restores from",
+      "fromSide": "bottom",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "What validate.py proves",
+      "items": [
+        "validate.py runs on Python with the .NET SDK; MinVer derives one version from the full history.",
+        "One nupkg per inventory package, one MinVer version and source commit, the MIT license, third-party notices, SourceLink, and only the references PackageGraph allows.",
+        "Clean .NET 10 consumers, each with its own NuGet caches, restore Kit packages only from the produced set: each library package alone, a single Module, the copied Proving Sample, and both templates generated from the produced template package.",
+        "Each generated solution builds and passes its HTTP smoke tests against PostgreSQL; each generated Host and sample Host publishes for Release with the code codegen write generated.",
+        "Consumer closures, negative controls and a MinVer proof pass, and the manifest records each package's SHA-256."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Trust",
+      "items": [
+        "Checkout fetches full history with the read-only token, then removes it; validate.py tests that exact SHA with no token and fetches nothing.",
+        "The artifact keeps the tested SHA and result, the original packages and manifest, logs and consumer assets, never caches, on failure too.",
+        "A pull request, tag, feat/** or failed run never authorizes publication; only 0.x preview and rc versions are published.",
+        "Only the publish job may write packages: it pushes and restores with its own job token.",
+        "Its concurrency group has cancel-in-progress: false, so GitHub keeps one run going and one pending: serialization, not a queue."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "What the feed check proves",
+      "items": [
+        "A fresh .NET 10 project restores every library package at its exact version with fresh caches, PouryaKit packages only from GitHub Packages.",
+        "The template package installs from the feed with nuget.org disabled, and each template's solution is generated as Acme.Shop and acme-shop and restored.",
+        "--skip-duplicate skips an HTTP 409 without comparing the feed's bytes; a missing or expired artifact fails publication, and nothing is rebuilt."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Where the detail lives",
+      "items": [
+        "docs/packages.md: the validation path, clean consumers, evidence.",
+        "docs/ci.md: checkout, credentials, the artifact contract.",
+        "docs/private-packages.md: versions, triggers, trust, retry, hosted runs."
+      ]
+    }
+  ]
+}

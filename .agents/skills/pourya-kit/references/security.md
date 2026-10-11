@@ -117,6 +117,8 @@ using PouryaKit.Security;
 // In the Host, or the Composition Root of the Module that owns the credentials; independent of permissions:
 // builder.Services.AddPouryaKitPasswordHashing();
 // builder.Services.AddPouryaKitPasswordHashing(options => options.Iterations = 700_000);
+// Or from configuration, as any options class:
+// builder.Services.Configure<PouryaKitPasswordHashingOptions>(builder.Configuration.GetSection("PasswordHashing"));
 
 internal sealed class Account
 {
@@ -144,7 +146,8 @@ internal sealed class Account
 - `hasher.Hash(password)` returns the string to store; `hasher.Verify(password, stored)` answers `Succeeded`, `SucceededNeedsUpgrade` or `Failed`. On `SucceededNeedsUpgrade`, store `Hash(password)` in place of the old hash while the plain password is at hand, in the same command as the sign-in's other changes, which its Unit of Work commits. Stored hashes are never invalidated by a configuration change.
 - `Verify` never throws: a missing password, a missing or malformed stored hash, an unsupported version or algorithm, and a password with no UTF-8 form are all `Failed`. Each `Hash` and `Verify` is CPU work by design, about 0.1 s at the defaults on current hardware; rate-limit sign-in at the HTTP boundary.
 - The empty password hashes like any other; what a password must look like is the application's rule, enforced before `Hash`.
-- Options outside their bounds fail `AddPouryaKitPasswordHashing` with an `InvalidOperationException` naming each one, so the Host never starts with a weak configuration.
+- `PouryaKitPasswordHashingOptions` follow the options pattern: the `configure` of `AddPouryaKitPasswordHashing` and every `Configure<PouryaKitPasswordHashingOptions>`, a configuration section's included, set the same options in order. A second `AddPouryaKitPasswordHashing` adds to what the first set and never restores the defaults; it replaces a hasher registered before it.
+- Options outside their bounds fail the Host's start with an `OptionsValidationException` naming each one, so the Host never serves with a weak configuration. The registration itself does not check them.
 
 | Option | Default | Allowed |
 |---|---|---|
@@ -175,8 +178,8 @@ Raise `Iterations` when the guidance does; existing hashes keep verifying and ar
 
 ### Testing password hashing
 
-- Test through `IPasswordHasher` from `AddPouryaKitPasswordHashing`, with no Host: the Kit's own tests take it from the service collection's descriptor.
-- The minimum iterations apply in tests too; at the defaults the Kit's 57 password test cases run in about 4 s.
+- Test through `IPasswordHasher` from `AddPouryaKitPasswordHashing`: the Kit's own tests resolve it from a provider built over the service collection, and start a Host to see options outside their bounds refused.
+- The minimum iterations apply in tests too; at the defaults the Kit's 60 password test cases run in about 4 s.
 
 ## JWT bearer authentication
 
@@ -206,7 +209,7 @@ builder.Services.AddPouryaKitWeb();   // reads the tenant under PouryaKitClaimTy
 }
 ```
 
-- `AddPouryaKitJwtBearer` registers standard JWT bearer authentication as the default scheme, `Bearer`. Its issuer, audiences and signing keys are the framework's own `JwtBearerOptions`, bound from `Authentication:Schemes:Bearer`: an `Authority` (or `MetadataAddress`) whose discovery document supplies the issuer and keys, or `ValidIssuer` and `SigningKeys`, as `dotnet user-jwts` writes them for development. Set anything else on the same options with `Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, ...)`; never call `AddJwtBearer` again.
+- `AddPouryaKitJwtBearer` registers standard JWT bearer authentication as the default scheme, `Bearer`. The requirement that an authority's metadata is read over HTTPS keeps ASP.NET Core's default (on), so a production Host reads its `Authority` over HTTPS. A Development Host that reads its metadata from an HTTP issuer sets `Authentication:Schemes:Bearer:RequireHttpsMetadata` to `false` in its own environment's configuration only; the Kit does not refuse that setting, which is for local development only. A deployed Host reads its metadata over HTTPS: whatever sits on the path of a metadata request made over HTTP can replace the issuer's signing keys, and forged tokens then validate. The framework's default already protects a Host that never sets it. Its issuer, audiences and signing keys are the framework's own `JwtBearerOptions`, bound from `Authentication:Schemes:Bearer`: an `Authority` (or `MetadataAddress`) whose discovery document supplies the issuer and keys, or `ValidIssuer` and `SigningKeys`, as `dotnet user-jwts` writes them for development. Set anything else on the same options with `Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, ...)`; never call `AddJwtBearer` again.
 - The Host fails when it starts, with an `OptionsValidationException` naming every problem, unless the scheme requires the audience (`RequireAudience`) and validates it against a configured audience, validates the issuer against a configured issuer or authority, the signature against a signing key or authority, and the token's lifetime and expiration time. Nothing in the Kit's options turns one off, and setting `ValidateAudience = false` or `RequireAudience = false`, leaving out every audience, or doing the same to the issuer fails the start, never the first request. A custom validator delegate that runs instead of one of these checks is refused by the Kit's scheme: setting `AudienceValidator`, `IssuerValidator`, `IssuerValidatorUsingConfiguration`, `LifetimeValidator`, `SignatureValidator` or `SignatureValidatorUsingConfiguration` fails the start with a failure naming it. The check reads the options as they end, after the configuration and every `Configure` and `PostConfigure`.
 - The token keeps its own claim names (`MapInboundClaims` stays false). For each verified token the Kit writes the value of `PouryaKitJwtBearerOptions.ActorClaim`, `"sub"` by default, as the identity's `ClaimTypes.NameIdentifier`, which `PouryaKit.Web` reads as `Actor.Person(id)`, and the value of `TenantClaim` as `PouryaKitClaimTypes.Tenant` (`PouryaKit.Cqrs`), the claim `PouryaKit.Web` reads the Operation's tenant from by default, so the Host names the token's tenant claim once, here. A claim the token itself carries under either of those two types is dropped first. Every other claim, such as the `permission` claims the Proving Sample's `CallerPermissions` reads, keeps its name.
 - A token without the tenant claim runs with a null tenant and is not refused, as with any scheme ([web.md](web.md#the-caller-and-the-actor)). An application in which every caller must have a tenant enforces it itself, in an `IAuthorizer<T>` or its own `OnTokenValidated`.

@@ -6,6 +6,10 @@ using PouryaKit.Core;
 
 namespace PouryaKit.Cqrs;
 
+/// <summary>
+/// Composes the Commands, queries and validation Capability on a Module's or a Host's services: the dispatcher, and the command handlers, query
+/// handlers, authorizers and Domain Event Handlers of the Features.
+/// </summary>
 public static class CqrsServiceCollectionExtensions
 {
     extension(IServiceCollection services)
@@ -17,9 +21,10 @@ public static class CqrsServiceCollectionExtensions
         /// different one to change the time Operations see. Named with no assembly on a Module's builder
         /// (<see cref="IModuleServices"/>), it scans the assembly of the Module's definition, where a Module's Features
         /// live; named assemblies replace it, in their order. On the Host's own services with no assembly, it registers the
-        /// dispatcher alone. Throws here, at startup, when a command or
+        /// dispatcher alone. Throws here, while the Host is composed, when a command or
         /// query has no handler or several, when an authorizer is not for one concrete command or query, when a Domain
-        /// Event Handler handles several Domain Event types or an abstract one, or when a command, query, handler or
+        /// Event Handler handles several Domain Event types or an abstract Domain Event type (an abstract handler class is
+        /// skipped), or when a command, query, handler or
         /// authorizer is a generic type definition.
         /// </summary>
         public IServiceCollection AddPouryaKitCqrs(params Assembly[] featureAssemblies)
@@ -139,10 +144,11 @@ public static class CqrsServiceCollectionExtensions
     }
 
     // A second call with the same assembly adds nothing; a different handler for an operation already handled is a
-    // second handler.
+    // second handler. The dispatcher resolves handlers unkeyed, so a keyed service of a handler's type is no handler;
+    // its descriptor's ImplementationType is null, which would read as a second one.
     private static void AddHandler(IServiceCollection services, Type service, Type implementation)
     {
-        var existing = services.FirstOrDefault(descriptor => descriptor.ServiceType == service);
+        var existing = services.FirstOrDefault(descriptor => !descriptor.IsKeyedService && descriptor.ServiceType == service);
         if (existing is null)
         {
             services.AddScoped(service, implementation);

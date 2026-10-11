@@ -305,7 +305,8 @@ These follow from Option C, not from preference:
   whose type no longer has any subscription is marked `Handled` without running anything. With
   `UnknownMessageBehavior.DeadLetterQueue` it is dead-lettered instead. A stored delivery whose subscription was
   renamed fails the name lookup and is dead-lettered after the retry ladder. A subscription removed while its type
-  keeps others takes the same code path; that case was not tested separately.
+  keeps others takes the same code path; that case was not tested separately. *Tested by ticket #100 (2026-10-10) on 6.48.3; see
+  its note below.*
 - **Lazy code generation.** Generated chains compile at first delivery, not at Host start. Option C generates none, but
   spec story 71 still needs the Kit's own startup check of every subscription.
 
@@ -500,7 +501,10 @@ depend on, and the rules a consuming project must keep.
   - An aggregate whose key the database generates cannot publish a Snapshot: the key is unknown when the Snapshot is
     built, so the Operation that creates it fails
     (`SnapshotTests.A_snapshot_of_an_aggregate_whose_key_the_database_generates_fails_the_operation_that_creates_it`).
+    *Since 2026-10-10 (ticket #85), so does an aggregate with any other value the database generates in its mapped
+    graph; see ADR 0003's amendment for #85.*
   - Nothing removes a Receipt or a Snapshot-version row, so both tables grow with the messages a Module receives.
+    *Receipts are kept on purpose since 2026-10-10 (ticket #90), with the publication records; see the amendment for #90 below.*
 
 ## Amendment (2026-10-07, ticket #50: RabbitMQ topology)
 
@@ -573,6 +577,7 @@ Each test gets two fresh databases and a RabbitMQ vhost of its own.
   `IdOnly` control.
 - **B's configuration.** One durable queue per Host, named by its `WolverineOptions.ServiceName`, bound to each
   subscribed wire name's exchange and listened to with `UseDurableInbox()`. One local route per subscription, as above.
+  *(2026-10-11, #109: "per Host" here means per kind of Host: the instances of one Host share the queue its service name names.)*
   `IdOnly`.
 
 | Point | Test (class.method, cases) | A, one queue per subscription | B, receive once then local queues |
@@ -868,6 +873,11 @@ commit sequence is unchanged: the Unit of Work writes the command in its Outbox 
   at a recovery poll is handed out again, concurrently, as ticket #17's amendment describes for a late retry; its
   Receipt keeps the database effect to one. No test pins this for delayed commands: the tests' delays are shorter than
   the stale time.
+  *Pinned on 2026-10-10 (ticket #82): `RecurringCommandTests.A_delayed_command_and_an_occurrence_due_after_the_stale_time_and_handed_out_again_while_they_run_apply_one_effect_each_and_store_one_next_occurrence`
+  holds a delayed command and a recurring occurrence, each due about four times the stale time after it was stored,
+  after its Receipt until a copy handed out by a recovery poll waits on it: each applies one effect, and the occurrence
+  stores one next occurrence. Occurrences of the same runs that were not held, due two to four times the stale time
+  after they were stored, each ran once, so a copy is handed out only when a recovery poll comes while an attempt runs.*
 - **Its stored names.** `WireNaming` names no command, so Wolverine names it by its full CLR name. Renaming or moving the
   type strands the commands stored before it, which are dead-lettered as unknown messages, as a removed subscription's
   type is. The delivery reads the declaration from the queue the envelope was stored on, as `SubscriptionDelivery`
@@ -875,6 +885,14 @@ commit sequence is unchanged: the Unit of Work writes the command in its Outbox 
   and is dead-lettered rather than run again under the new name's Receipt key
   (`DelayedCommandTests.A_delayed_command_stored_under_a_name_no_longer_declared_is_dead_lettered_and_never_run`).
   The name follows the subscription name's rule, reserved queues included.
+  *Pinned on 2026-10-10 (ticket #100): a stored command whose type no declaration names any more is dead-lettered as
+  an unknown message, read before from Wolverine's source, is now a live test.
+  `DelayedCommandTests.A_delayed_command_whose_type_no_declaration_names_any_more_is_dead_lettered_at_once_and_never_run`
+  stores a delayed command from one Host, then starts another on the same database that declares nothing for its
+  type: the first time it is handed out, the `IMissingHandler` that `UnknownMessageBehavior.DeadLetterQueue` registers
+  moves it to the dead letters, with `Wolverine.Runtime.Interop.UnknownMessageTypeNameException` and the message
+  "Unknown message type: '<full CLR name>'", its attempts 0, no incoming row left and nothing run. Red with that
+  handler removed: no dead letter within 15 s.*
 
 ## Amendment (2026-10-07, ticket #45: recurring commands)
 
@@ -984,6 +1002,18 @@ read, and moves two broker rules to registration or to deployment.
   first attempt of a local delivery is handed the published instance; a stored retry, a recovered delivery and a replay
   are read strictly, so a Domain Event or delayed command stored by a build whose type has since gained a required member
   is dead-lettered instead of run with a default.
+  *Corrected on 2026-10-10 (ticket #90; read decompiled from WolverineFx 6.48.3, the pinned version): a Kit Host does
+  not take the branch described above, which finds no native dead-letter queue and runs Wolverine's
+  `IDeadLetterInterceptor`s before `IMessageInbox.MoveToDeadLetterStorageAsync`. Every queue a Kit Host receives a
+  delivery on stores what it receives (its local queues through `UseDurableLocalQueues()`, its RabbitMQ Host queue
+  through `UseDurableInbox()`), and a durable listener hands the pipeline its `DurableReceiver`, which reports a
+  native dead-letter queue (`NativeDeadLetterQueueEnabled` is true). `MessageContext.MoveToDeadLetterQueueAsync`
+  therefore calls `DurableReceiver.MoveToErrorsAsync`, which writes the same `wolverine_dead_letters` row through
+  `IMessageInbox.MoveToDeadLetterStorageAsync` unless the endpoint builds a dead-letter sender. A local queue builds
+  none (`Endpoint.TryBuildDeadLetterSender`), and the RabbitMQ Host queue none because `DisableDeadLetterQueueing()`
+  (`RabbitMqExtension.cs`) turns the broker's dead-letter queue off (`RabbitMqQueue.TryBuildDeadLetterSender`, read in
+  WolverineFx.RabbitMQ 6.48.3, the pinned version). The outcome above holds on both; no `IDeadLetterInterceptor` runs for a Kit Host, and
+  the Kit registers none.*
 - **Unknown members are skipped,** the owner's lean, decided on this evidence. A member the body carries and the
   contract lacks is ignored (`JsonUnmappedMemberHandling.Skip`, set explicitly). The versioning rule (#49) makes "a change
   receivers could not read" a new version, which presumes changes they can read; skipping is what makes adding a member
@@ -1077,3 +1107,41 @@ unchanged. The text above keeps the former names, as it was written: where it sa
 `UsePouryaKitPostgres`, the line `SubscriptionUnitOfWorkCheck` reports names the new call, and the test the amendment
 above cites as `…_naming_use_postgres` is now
 `CompositionCheckTests.A_module_that_subscribes_but_registers_no_unit_of_work_fails_the_host_when_built_naming_use_pouryakit_postgres`.
+
+## Amendment (2026-10-10, ticket #86: a member named twice)
+
+The decision above stands, and so does the strict reading of the #60 amendment. Since ticket #86 (decision D9 of spec
+#74) `UsePouryaKitJson`, which `UsePouryaKitWireJson` builds on, turns .NET 10's `AllowDuplicateProperties` off, so a
+body that names one of its contract's members twice, in its own case or another (`name` and `Name`, read ignoring case),
+fails to read with a `JsonException` (`Duplicate property 'name' encountered during deserialization of type '…'`)
+instead of keeping the last value. Across a broker it is dead-lettered at the Host's queue before the fan-out, as the
+#60 amendment describes, and no subscription receives a copy:
+`StrictWireReadingTests.A_body_that_names_a_member_of_its_contract_twice_is_dead_lettered_at_the_host_queue_with_the_error_and_never_handled`,
+red with the option at its default, under which the handler ran with the last value. A member the contract lacks is
+still skipped, once or twice. HTTP bodies, cached answers and recorded responses refuse a member named twice too, since
+they share `UsePouryaKitJson`; otherwise their reading stays lenient.
+
+## Amendment (2026-10-10, ticket #90: Receipts and publication records are kept)
+
+The decision above stands. Spec #74's decision D1, approved by the owner: the Kit keeps every Receipt and every
+publication record, and its one cleanup removes idempotency keys only.
+
+- **What grows.** `pouryakit_receipts` holds one row per delivery a subscription applied, keyed (subscription, message
+  id) with no time column: a Notification's, an Integration Event's, a Snapshot's, a delayed command's and a recurring
+  occurrence's. A publishing Module's table also holds one `<wire name>#published` row per Integration Event it
+  published, one per Domain Event and type. Nothing removes either, as the Wave 1 amendment's "What a consuming project
+  must keep" records: the table grows by one row per delivery and one per publication.
+- **Why no retention tied to dead-letter expiry.** A Receipt is what stops a second effect on a redelivery that never
+  enters the dead-letter store. A broker envelope whose local copies all committed stays unhandled when its Host dies
+  before marking it, and is fanned out again when the Host restarts, where each copy finds its Receipt and applies
+  nothing (`RabbitMqDeliveryTests.A_host_killed_between_storing_the_copies_and_marking_the_broker_envelope_handled_fans_out_again_and_applies_each_effect_once`).
+  A horizon tied to dead letters does not cover that path. Wolverine's `DurabilitySettings.DeadLetterQueueExpirationEnabled`
+  (off by default, 10 days when on, read in WolverineFx 6.48.3) bounds dead letters only. A `#published` row cannot
+  age out either: it is the check that one Domain Event yields at most one Integration Event of each type
+  (`IntegrationEventTests.A_second_notification_handler_of_one_domain_event_publishing_the_same_type_fails_instead_of_being_dropped`,
+  the Wave 1 amendment above).
+- **The cleanup stays for idempotency keys.** `IdempotencyKeyCleanup` (`PouryaKit.Persistence.EFCore`, the #42
+  follow-up) removes expired idempotency keys and touches no Receipt, publication record or Snapshot version.
+- **A bounded policy is its own spec.** If one is ever wanted, it first accounts for every redelivery path, pending
+  broker envelopes, dead-letter replay and duplicate chains, before it deletes any deduplication state. Adding a time
+  column is then a migration in every Module that keeps Receipts.

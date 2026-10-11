@@ -31,8 +31,8 @@ public static class InventoryHost
     public static WebApplicationBuilder CreateBuilder(string[] args, string serviceName = ServiceName)
     {
         var builder = WebApplication.CreateBuilder(args);
-        // OpenTelemetry with the Kit's source and meter, health checks, service discovery and the standard HTTP
-        // resilience: the recipes of ModularMonolith.ServiceDefaults.
+        // OpenTelemetry with the Kit's source and meter and Npgsql's source, health checks, service discovery and the
+        // standard HTTP resilience: the recipes of ModularMonolith.ServiceDefaults.
         builder.AddServiceDefaults();
         builder.AddPouryaKitModules(modules => modules.Add<InventoryModule>());
         // Catalog runs in another Host: its wire names, as its Composition Root publishes them.

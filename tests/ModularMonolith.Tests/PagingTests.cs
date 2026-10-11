@@ -1,4 +1,6 @@
 using System.Net;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
@@ -10,6 +12,7 @@ using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Testing;
+using static ModularMonolith.Tests.Fixtures.ProblemResponses;
 
 namespace ModularMonolith.Tests;
 
@@ -87,15 +90,15 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.All(listed.Errors, error => Assert.Equal(ErrorKind.Validation, error.Kind));
         Assert.Equal(
             [
-                ("Page.SizeOutOfRange", "Size"),
-                ("Page.NumberOutOfRange", "Number"),
-                ("Page.SortUnknown", "Sort"),
-                ("Page.FilterOperatorUnsupported", "Filters[0]"),
+                (PageErrorCodes.SizeOutOfRange, "Size"),
+                (PageErrorCodes.NumberOutOfRange, "Number"),
+                (PageErrorCodes.SortUnknown, "Sort"),
+                (PageErrorCodes.FilterOperatorUnsupported, "Filters[0]"),
                 // A typed value of another type is refused as text that does not parse is.
-                ("Page.FilterValueInvalid", "Filters[1]"),
-                ("Page.FilterValueInvalid", "Filters[2]"),
-                ("Page.FilterUnknown", "Filters[3]"),
-                ("Page.FilterRepeated", "Filters[5]"),
+                (PageErrorCodes.FilterValueInvalid, "Filters[1]"),
+                (PageErrorCodes.FilterValueInvalid, "Filters[2]"),
+                (PageErrorCodes.FilterUnknown, "Filters[3]"),
+                (PageErrorCodes.FilterRepeated, "Filters[5]"),
             ],
             listed.Errors.Select(error => (error.Code, error.Target))
         );
@@ -151,9 +154,9 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
         );
         var ef = await Assert.ThrowsAsync<InvalidOperationException>(() => PageThroughEfAsync(request));
 
-        Assert.Equal(("Page.SortUnknown", "Sort"), (Assert.Single(listed.Errors).Code, listed.Errors[0].Target));
-        Assert.Contains("Page.SortUnknown", dapper.Message);
-        Assert.Contains("Page.SortUnknown", ef.Message);
+        Assert.Equal((PageErrorCodes.SortUnknown, "Sort"), (Assert.Single(listed.Errors).Code, listed.Errors[0].Target));
+        Assert.Contains(PageErrorCodes.SortUnknown, dapper.Message);
+        Assert.Contains(PageErrorCodes.SortUnknown, ef.Message);
         Assert.Equal(5L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
     }
 
@@ -212,6 +215,31 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Contains("@category_eq", thrown.Message);
     }
 
+    // FilterField keeps its own list of value types, so one it gains that the Dapper helper cannot send fails when the
+    // Feature's SQL is built, not at the first request that filters on it. FilterField.Of refuses every type outside its
+    // list today, so the field is made as such a release would make it.
+    [Fact]
+    public void A_page_sql_whose_filter_has_a_value_type_it_has_no_database_type_for_is_refused_when_built()
+    {
+        var field = (FilterField)RuntimeHelpers.GetUninitializedObject(typeof(FilterField));
+        foreach (var (property, value) in new (string, object)[]
+        {
+            (nameof(FilterField.Name), "day"),
+            (nameof(FilterField.ValueType), typeof(DateOnly)),
+            (nameof(FilterField.Operators), (IReadOnlyList<FilterOperator>)[FilterOperator.Equal]),
+        })
+        {
+            typeof(FilterField).GetField($"<{property}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(field, value);
+        }
+
+        var thrown = Assert.Throws<ArgumentException>(() =>
+            new PageSql(new PageDeclaration(["day"], [field]), "select d.day from days d where @day_eq is null", "select count(*) from days d where @day_eq is null")
+        );
+
+        Assert.Equal("declaration", thrown.ParamName);
+        Assert.StartsWith("The filter field day has values of DateOnly, which a Dapper Page read has no database type for.", thrown.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task The_http_page_is_read_from_the_query_string_and_answered_as_the_page_object()
     {
@@ -240,39 +268,62 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
             TestContext.Current.CancellationToken
         );
 
-        using var problem = await ProblemAsync(response);
+        var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
         Assert.Equal(
             [
-                ("Page.FilterOperatorUnsupported", "Filters[0]"),
-                ("Page.FilterUnknown", "Filters[2]"),
-                ("Page.FilterValueInvalid", "Filters[1]"),
-                ("Page.NumberOutOfRange", "Number"),
-                ("Page.SizeOutOfRange", "Size"),
-                ("Page.SortUnknown", "Sort"),
+                (PageErrorCodes.FilterOperatorUnsupported, "Filters[0]"),
+                (PageErrorCodes.FilterUnknown, "Filters[2]"),
+                (PageErrorCodes.FilterValueInvalid, "Filters[1]"),
+                (PageErrorCodes.NumberOutOfRange, "Number"),
+                (PageErrorCodes.SizeOutOfRange, "Size"),
+                (PageErrorCodes.SortUnknown, "Sort"),
             ],
             problem
-                .RootElement.GetProperty("errors")
+                .GetProperty("errors")
                 .EnumerateArray()
                 .Select(error => (error.GetProperty("code").GetString(), error.GetProperty("target").GetString()))
                 .Order()
         );
     }
 
+    // The Kit's own reason is the problem's detail: it names the rule the query string broke.
     [Theory]
-    [InlineData("page=two")]
-    [InlineData("size=1.5")]
-    [InlineData("page=1&page=2")]
-    [InlineData("direction=up")]
-    [InlineData("filter[name][like]=lamp")]
-    [InlineData("filter[name]=lamp")]
-    public async Task A_page_query_string_that_cannot_be_read_answers_400_as_a_problem_response(string query)
+    [InlineData("page=two", "The page query parameter is a whole number.")]
+    [InlineData("size=1.5", "The size query parameter is a whole number.")]
+    [InlineData("page=1&page=2", "The page query parameter is given once.")]
+    [InlineData("direction=up", "The direction query parameter is asc or desc.")]
+    [InlineData("filter[name][like]=lamp", "A filter query parameter is filter[field][operator], with an operator such as eq or contains.")]
+    [InlineData("filter[name]=lamp", "A filter query parameter is filter[field][operator], with an operator such as eq or contains.")]
+    public async Task A_page_query_string_that_cannot_be_read_answers_400_as_a_problem_response(string query, string detail)
     {
         using var client = Fixture.Client();
 
         var response = await client.GetAsync($"/catalog/products?{query}", TestContext.Current.CancellationToken);
 
-        using var problem = await ProblemAsync(response);
-        Assert.False(problem.RootElement.TryGetProperty("errors", out _));
+        var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
+        Assert.Equal(detail, problem.GetProperty("detail").GetString());
+        Assert.False(problem.TryGetProperty("errors", out _));
+    }
+
+    // Query string keys are read ignoring case, as IQueryCollection reads page, size, sort and direction.
+    [Fact]
+    public async Task A_filter_key_whose_prefix_is_capitalised_filters_the_page()
+    {
+        var (lighting, _) = await SeedAsync();
+        using var client = Fixture.Client();
+
+        var response = await client.GetAsync(
+            $"/catalog/products?sort=created&Filter[category][eq]={lighting}",
+            TestContext.Current.CancellationToken
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var page = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(
+            ["Desk lamp", "Floor lamp", "Lamp shade"],
+            page.RootElement.GetProperty("items").EnumerateArray().Select(item => item.GetProperty("name").GetString())
+        );
+        Assert.Equal(3, page.RootElement.GetProperty("total").GetInt64());
     }
 
     private static PageRequest Lighting(Guid lighting, int number) =>
@@ -321,12 +372,5 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
         return await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
             .QueryAsync(new PageProductsThroughEfQuery(request), TestContext.Current.CancellationToken);
-    }
-
-    private static async Task<JsonDocument> ProblemAsync(HttpResponseMessage response)
-    {
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        return JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
     }
 }

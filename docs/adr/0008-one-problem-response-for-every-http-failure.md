@@ -37,3 +37,22 @@ The decision above stands. Since #36 (2026-10-07) the rate limiter's 429 is answ
 and `status` but no `type`, which ASP.NET Core defines for no 429
 (`WebDefaultsTests.Each_actor_has_its_own_partition_which_spoofed_host_and_forwarded_for_headers_cannot_move_and_its_exhaustion_answers_429_as_a_problem_response`).
 Moved under this heading on 2026-10-08 (#54), word for word, from the third bullet above.
+
+## Amendment (2026-10-10, ticket #86: the Kit's reason as `detail`)
+
+The decision above stands. A request that could not be read answers its own status, 400, without `errors`; until ticket
+#86 it had no `detail` either, so the reason the Kit refused it, written in its message and logged at Debug, never
+reached the caller. Since #86 the Kit raises its own refusals as the internal `KitBadRequestException`, a
+`BadHttpRequestException`, and `UnexpectedExceptionHandler` writes its message as the problem's `detail`, RFC 9457's
+member for a human-readable explanation: the rule broken by a page query string (`HttpPageRequest`), by a missing or
+unreadable `Idempotency-Key`, or by a trusted peer's incomplete or unreadable context headers. A 400 ASP.NET Core raises
+itself, such as malformed JSON, a body that names one member twice or a route value that does not parse, keeps no
+`detail`, because its message quotes what the caller sent. No other member changes.
+
+Pinned by `PagingTests.A_page_query_string_that_cannot_be_read_answers_400_as_a_problem_response`,
+`IdempotencyTests.A_request_without_a_readable_idempotency_key_answers_400_as_a_problem_response_and_creates_nothing`,
+`IdempotencyTests.An_idempotent_put_or_delete_without_a_key_answers_400_and_with_one_replays_the_first_response` and
+`TrustedPeerTests.A_trusted_peer_whose_context_headers_are_incomplete_or_unreadable_is_refused_with_400`, each red when
+the refusing sites threw the bare `BadHttpRequestException`, and by
+`WebTests.A_request_that_cannot_be_read_answers_400_as_a_problem_response_and_is_not_logged_as_an_error`, red when the
+handler wrote every such message.

@@ -42,14 +42,7 @@ dotnet nuget push "$package" --source GitHub --api-key "$GITHUB_TOKEN" \
 
 `--skip-duplicate` treats an HTTP 409 as a skipped duplicate. It does not compare remote bytes with the manifest and does not prove identical-content recovery. Other push failures fail the job. After push, a temporary project references every library package in the inventory at its exact version and restores with a fresh package/cache directory. Source mapping requires `PouryaKit.*` from GitHub Packages and permits third-party dependencies from nuget.org. A package of inventory kind `template` is installed instead, since a `PackageReference` to it restores without assets and proves nothing about its templates: `dotnet new install PouryaKit.Templates@<version>` into a template hive of its own, then each template the package holds, by the `shortName` in `src/PouryaKit.Templates/content/*/.template.config/template.json`, is generated as `Acme.Shop` and as `acme-shop` and its solution restored with the same caches and configuration. `dotnet new install` reads the `NuGet.Config` of its working folder, where the `GitHub` source gets its credentials, and ignores source mapping, so it runs beside a copy of the configuration with nuget.org disabled. This checks private-feed availability and dependency resolution, not remote raw-byte identity or runtime behaviour; [package validation](packages.md#clean-consumers) builds and tests the generated solutions from the produced packages. The template install ran against a local feed stand-in first ([acceptance record](acceptance.md#wave-2-private-feed-publication-covers-the-template-package-ticket-54)), and against GitHub Packages in the first `main` publication after the merge of `feat/wave-2`, its hosted proof ([acceptance record](acceptance.md#wave-2-hosted-publication-from-main)).
 
-```mermaid
-flowchart LR
-  C[Successful main CI attempt] --> A[Read-only provenance check]
-  A --> D[Download original artifact]
-  D --> V[Check receipt, inventory and hashes]
-  V --> P[dotnet nuget push]
-  P --> R[Clean private-feed restore of the library packages and of the solutions generated from the installed templates]
-```
+The diagram [From a push to the private feed](architecture/diagrams/ci-and-publication.html) draws this path, from the CI run that validates the packages to the feed check.
 
 ## Retry preserved originals
 

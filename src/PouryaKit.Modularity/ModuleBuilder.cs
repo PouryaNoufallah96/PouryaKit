@@ -29,10 +29,13 @@ public sealed class ModuleBuilder : IModuleServices
     /// <inheritdoc />
     public Type Module { get; }
 
+    /// <inheritdoc />
     public int Count => _services.Count;
 
+    /// <inheritdoc />
     public bool IsReadOnly => _services.IsReadOnly;
 
+    /// <inheritdoc />
     public ServiceDescriptor this[int index]
     {
         get => _services[index];
@@ -43,10 +46,13 @@ public sealed class ModuleBuilder : IModuleServices
         }
     }
 
+    /// <inheritdoc />
     public void Add(ServiceDescriptor item) => _services.Add(Own(item));
 
+    /// <inheritdoc />
     public void Insert(int index, ServiceDescriptor item) => _services.Insert(index, Own(item));
 
+    /// <inheritdoc />
     public void Clear()
     {
         foreach (var descriptor in _services)
@@ -57,14 +63,19 @@ public sealed class ModuleBuilder : IModuleServices
         _services.Clear();
     }
 
+    /// <inheritdoc />
     public bool Contains(ServiceDescriptor item) => _services.Contains(item);
 
+    /// <inheritdoc />
     public void CopyTo(ServiceDescriptor[] array, int arrayIndex) => _services.CopyTo(array, arrayIndex);
 
+    /// <inheritdoc />
     public IEnumerator<ServiceDescriptor> GetEnumerator() => _services.GetEnumerator();
 
+    /// <inheritdoc />
     public int IndexOf(ServiceDescriptor item) => _services.IndexOf(item);
 
+    /// <inheritdoc />
     public bool Remove(ServiceDescriptor item)
     {
         if (_services.Contains(item))
@@ -75,6 +86,7 @@ public sealed class ModuleBuilder : IModuleServices
         return _services.Remove(item);
     }
 
+    /// <inheritdoc />
     public void RemoveAt(int index)
     {
         _modules.Release(Module, _services[index]);

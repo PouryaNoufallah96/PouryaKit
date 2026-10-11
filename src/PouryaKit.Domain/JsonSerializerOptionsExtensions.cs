@@ -4,13 +4,18 @@ using System.Text.Json.Serialization;
 
 namespace PouryaKit.Domain;
 
+/// <summary>
+/// Applies the Kit's one JSON representation, typed IDs included, to <see cref="JsonSerializerOptions"/>, as part of
+/// the Domain primitives Capability.
+/// </summary>
 public static class JsonSerializerOptionsExtensions
 {
     extension(JsonSerializerOptions options)
     {
         /// <summary>
         /// Sets the Kit's one JSON representation on these options and returns them: camelCase property names, read
-        /// ignoring case, text escaped only where JSON requires it, and every typed ID written as its bare value
+        /// ignoring case, a body that names one of its type's members twice, in any case, refused instead of keeping the
+        /// last value, text escaped only where JSON requires it, and every typed ID written as its bare value
         /// (<see cref="TypedIdJsonConverterFactory"/>). <c>AddPouryaKitWeb</c> applies it to the HTTP options, and
         /// <c>UsePouryaKitWolverine</c> applies <see cref="UsePouryaKitWireJson"/>, the same representation read
         /// strictly, to the options of stored and delivered messages, so a value is written the same way in a response
@@ -22,6 +27,7 @@ public static class JsonSerializerOptionsExtensions
             ArgumentNullException.ThrowIfNull(options);
             options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             options.PropertyNameCaseInsensitive = true;
+            options.AllowDuplicateProperties = false;
             options.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
             if (!options.Converters.Any(converter => converter is TypedIdJsonConverterFactory))
             {

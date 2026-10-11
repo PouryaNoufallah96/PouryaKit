@@ -26,19 +26,23 @@ namespace ModularMonolith.Tests;
 
 // The service defaults of ModularMonolith.ServiceDefaults, template content and not a Kit package, composed with the
 // Kit: in Inventory.Host on the broker fixture, and in a Web Host of its own for outgoing HTTP against WireMock.Net.
-public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<BrokerFixture>, IDisposable
+[Collection<BrokerCollection>]
+public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
 {
     private const string StockItems = "inventory.product-created";
     private const string Client = "downstream";
 
     private static readonly OperationContext Context = new(Actor.Person("ada"), "acme");
 
-    private readonly WireMockServer downstream = WireMockServer.Start();
+    // ASP.NET Core's boundaries for http.server.request.duration, in seconds.
+    private static readonly double[] SecondScale = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10];
+
+    private readonly WireMockServer _downstream = WireMockServer.Start();
 
     public void Dispose()
     {
-        downstream.Stop();
-        downstream.Dispose();
+        _downstream.Stop();
+        _downstream.Dispose();
     }
 
     // What the service defaults export, seen by an exporter of the test's own added to their providers: no backend.
@@ -58,6 +62,8 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
 
         var delivery = Assert.IsType<Activity>(Assert.Single(DeliveryProbes.ActivitiesOf(StockItems).Skip(earlier)));
         Assert.Contains(exported.Activities, activity => activity.Source.Name == OperationTelemetry.SourceName && activity.SpanId == delivery.SpanId);
+        // Each command the delivery's Operation sends to its database is a span of Npgsql's own source, under the Operation's.
+        Assert.Contains(exported.Activities, activity => activity.Source.Name == "Npgsql" && activity.ParentSpanId == delivery.SpanId);
         Assert.Contains(
             exported.Durations,
             duration =>
@@ -65,6 +71,8 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
                 && duration.Count > 0
                 && duration.Sum > 0
         );
+        // The histogram's own bucket boundaries, which the exporter takes with no view of the Host's.
+        Assert.All(exported.Durations, duration => Assert.Equal(SecondScale, duration.Boundaries));
     }
 
     // The database stops taking connections while the Host runs: alter database ... allow_connections false, and its
@@ -79,7 +87,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
         var server = new NpgsqlConnectionStringBuilder(environment.Inventory) { Database = "postgres" }.ConnectionString;
         List<(HttpStatusCode, HttpStatusCode)> answers = [await HealthAsync(client)];
 
-        await BrokerEnvironment.RowsAsync(
+        await Sql.RowsAsync(
             server,
             $"alter database {database} with allow_connections false; select pg_terminate_backend(pid) from pg_stat_activity where datname = '{database}'"
         );
@@ -89,7 +97,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
         }
         finally
         {
-            await BrokerEnvironment.RowsAsync(server, $"alter database {database} with allow_connections true; select 1");
+            await Sql.RowsAsync(server, $"alter database {database} with allow_connections true; select 1");
         }
 
         answers.Add(await HealthAsync(client));
@@ -185,16 +193,21 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
         });
         await using var catalog = await environment.StartCatalogHostAsync();
         var product = Guid.CreateVersion7();
+        var created = new OperationContext(Actor.Person("ada"));
 
-        await BrokerEnvironment.CreateProductAsync(catalog, product, "Lamp");
+        await BrokerEnvironment.CreateProductAsync(catalog, product, "Lamp", created);
         await StockedAsync(environment, product);
 
+        var dispatched = sink.Events.Where(logged => Scalar(logged, "SourceContext") == typeof(IDispatcher).Namespace + ".Dispatcher").ToList();
         Assert.Contains(
-            sink.Events,
-            logged =>
-                Scalar(logged, "SourceContext") == typeof(IDispatcher).Namespace + ".Dispatcher"
-                && logged.MessageTemplate.Text == "{Operation} succeeded in {ElapsedMilliseconds} ms"
-                && Scalar(logged, "Operation") == "Deliver"
+            dispatched,
+            logged => logged.MessageTemplate.Text == "{Operation} succeeded in {ElapsedMilliseconds} ms" && Scalar(logged, "Operation") == "Deliver"
+        );
+        // The Operation's log scope: the delivery's own id, the correlation of the CreateProduct it continues, its Module.
+        var delivery = Assert.Single(DeliveryProbes.ContextsOf(StockItems), context => context.CorrelationId == created.CorrelationId);
+        Assert.Contains(
+            ("Deliver", delivery.OperationId, created.CorrelationId, "InventoryModule"),
+            dispatched.Select(logged => (Scalar(logged, "Operation"), Id(logged, "OperationId"), Id(logged, "CorrelationId"), Scalar(logged, "Module")))
         );
     }
 
@@ -210,7 +223,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
         using var response = await SendAsync(host, new HttpMethod(method));
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
-        Assert.Equal(attempts, downstream.LogEntries.Count());
+        Assert.Equal(attempts, _downstream.LogEntries.Count());
     }
 
     [Fact]
@@ -222,7 +235,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
         using var response = await SendAsync(host, HttpMethod.Get);
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
-        var received = downstream.LogEntries.Select(entry => entry.RequestMessage!).ToList();
+        var received = _downstream.LogEntries.Select(entry => entry.RequestMessage!).ToList();
         Assert.Equal(3, received.Count);
         Assert.All(
             received,
@@ -262,7 +275,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
 
         using var response = await SendAsync(host, HttpMethod.Post);
 
-        Assert.Equal((typeof(ArgumentException), 1), (refused?.GetType(), downstream.LogEntries.Count()));
+        Assert.Equal((typeof(ArgumentException), 1), (refused?.GetType(), _downstream.LogEntries.Count()));
     }
 
     // The downstream asks for a retry after one second; the call is cancelled once the first attempt arrived, not on a
@@ -274,7 +287,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
         await using var host = await StartWebHostAsync(client => client.AddPouryaKitOperationContext());
         using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         var call = SendAsync(host, HttpMethod.Get, cancellation.Token);
-        while (!downstream.LogEntries.Any() && !call.IsCompleted)
+        while (!_downstream.LogEntries.Any() && !call.IsCompleted)
         {
             await Task.Delay(10, TestContext.Current.CancellationToken);
         }
@@ -284,7 +297,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => call);
         // Past the first retry a call that ignored the cancellation would make.
         await Task.Delay(TimeSpan.FromSeconds(1.5), TestContext.Current.CancellationToken);
-        Assert.Single(downstream.LogEntries);
+        Assert.Single(_downstream.LogEntries);
     }
 
     // The rows commit before the delivery's Operation ends, logs and records its duration: wait for Wolverine to mark
@@ -362,12 +375,12 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
     private void RespondUnavailable(string? retryAfter = null)
     {
         var response = Response.Create().WithStatusCode(HttpStatusCode.ServiceUnavailable);
-        downstream.Given(Request.Create().WithPath("/downstream")).RespondWith(retryAfter is null ? response : response.WithHeader("Retry-After", retryAfter));
+        _downstream.Given(Request.Create().WithPath("/downstream")).RespondWith(retryAfter is null ? response : response.WithHeader("Retry-After", retryAfter));
     }
 
     private async Task<HttpResponseMessage> SendAsync(WebApplication host, HttpMethod method, CancellationToken? cancellationToken = null)
     {
-        using var request = new HttpRequestMessage(method, $"{downstream.Url}/downstream").WithOperationContext(Context);
+        using var request = new HttpRequestMessage(method, $"{_downstream.Url}/downstream").WithOperationContext(Context);
         return await host
             .Services.GetRequiredService<IHttpClientFactory>()
             .CreateClient(Client)
@@ -376,6 +389,9 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
 
     private static string? Scalar(LogEvent logged, string property) =>
         logged.Properties.TryGetValue(property, out var value) && value is ScalarValue { Value: string text } ? text : null;
+
+    private static Guid Id(LogEvent logged, string property) =>
+        logged.Properties.TryGetValue(property, out var value) && value is ScalarValue { Value: Guid id } ? id : Guid.Empty;
 
     private sealed class RecordedEvents : ILogEventSink
     {
@@ -402,7 +418,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
             services.ConfigureOpenTelemetryMeterProvider(metrics => metrics.AddReader(new BaseExportingMetricReader(new DurationExporter(_durations))));
         }
 
-        public sealed record Duration(string? Module, string? Operation, string? Outcome, long Count, double Sum);
+        public sealed record Duration(string? Module, string? Operation, string? Outcome, long Count, double Sum, IReadOnlyList<double> Boundaries);
 
         private sealed class ActivityExporter(ConcurrentQueue<Activity> exported) : BaseExporter<Activity>
         {
@@ -436,13 +452,24 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IClassFixture<Broker
                             tags[tag.Key] = tag.Value as string;
                         }
 
+                        List<double> boundaries = [];
+                        foreach (var bucket in point.GetHistogramBuckets())
+                        {
+                            // The last bucket's bound is positive infinity, which no boundary declares.
+                            if (!double.IsPositiveInfinity(bucket.ExplicitBound))
+                            {
+                                boundaries.Add(bucket.ExplicitBound);
+                            }
+                        }
+
                         exported.Enqueue(
                             new Duration(
                                 tags.GetValueOrDefault(OperationTelemetry.ModuleTag),
                                 tags.GetValueOrDefault(OperationTelemetry.OperationTag),
                                 tags.GetValueOrDefault(OperationTelemetry.OutcomeTag),
                                 point.GetHistogramCount(),
-                                point.GetHistogramSum()
+                                point.GetHistogramSum(),
+                                boundaries
                             )
                         );
                     }

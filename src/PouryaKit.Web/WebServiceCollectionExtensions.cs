@@ -10,6 +10,9 @@ using PouryaKit.Domain;
 
 namespace PouryaKit.Web;
 
+/// <summary>
+/// Composes the Web Capability on a Host's services, and declares endpoints on a Module's or a Host's services.
+/// </summary>
 public static class WebServiceCollectionExtensions
 {
     extension(IServiceCollection services)
@@ -27,7 +30,9 @@ public static class WebServiceCollectionExtensions
         /// defaults, each off until the Host configures it: the named CORS policies of <see cref="PouryaKitCorsOptions"/>,
         /// response compression over HTTP and HTTPS when <see cref="PouryaKitCompressionOptions"/> enables it, and the
         /// rate limit per Actor of <see cref="PouryaKitRateLimitOptions"/>, whose rejection answers 429 as a problem
-        /// response. Their options are validated when the Host starts. With the Kit's checks
+        /// response. Their options are validated when the Host starts, as are the Actor and tenant claims of
+        /// <see cref="PouryaKitWebOptions"/> and the peers of <see cref="PouryaKitTrustedPeerOptions"/>, however the Host
+        /// configures them: at the start, or earlier, where <c>MapPouryaKitModuleEndpoints</c> first reads them. With the Kit's checks
         /// (<c>AddPouryaKitCompositionChecks</c>, which <c>AddPouryaKitModules</c> calls), the Host's start fails, naming
         /// the call, when an <see cref="IEndpoint"/> in the Feature assemblies of a Module it composed, or of its own
         /// services, is not declared with <c>AddPouryaKitEndpoints</c> or not mapped by
@@ -65,12 +70,30 @@ public static class WebServiceCollectionExtensions
             services.ConfigureHttpJsonOptions(json => json.SerializerOptions.UsePouryaKitJson());
             services.TryAddSingleton<MappedEndpoints>();
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupCheck, UnmappedEndpointsCheck>());
-            var options = services.AddOptions<PouryaKitWebOptions>();
+            var options = services
+                .AddOptions<PouryaKitWebOptions>()
+                .Validate(
+                    web => !string.IsNullOrWhiteSpace(web.ActorClaim),
+                    "PouryaKitWebOptions.ActorClaim names no claim to identify the Actor."
+                )
+                .Validate(
+                    web => web.TenantClaim is null || !string.IsNullOrWhiteSpace(web.TenantClaim),
+                    "PouryaKitWebOptions.TenantClaim is blank; leave it null when the application has no tenant."
+                )
+                .ValidateOnStart();
             if (configure is not null)
             {
                 options.Configure(configure);
             }
 
+            // The Hosts configure their peers themselves (Configure<PouryaKitTrustedPeerOptions>); validated here.
+            services
+                .AddOptions<PouryaKitTrustedPeerOptions>()
+                .Validate(
+                    trusted => !trusted.Peers.Any(string.IsNullOrWhiteSpace),
+                    "PouryaKitTrustedPeerOptions.Peers lists a blank peer; name each peer by the Actor claim value of its authenticated identity."
+                )
+                .ValidateOnStart();
             return services;
         }
 
@@ -80,7 +103,9 @@ public static class WebServiceCollectionExtensions
         /// <paramref name="routePrefix"/>. A Module's Composition Root calls it on its builder, where, named with no
         /// assembly, it scans the assembly of the Module's definition (<see cref="IModuleServices"/>); named assemblies
         /// replace it. An application without Modules calls it on its own services, naming the assembly. Throws when the
-        /// assemblies have no endpoint, or an endpoint has no parameterless constructor.
+        /// assemblies have no endpoint, or an endpoint has no parameterless constructor, and when the route group,
+        /// compared ignoring case, as the router matches a literal, or an assembly is already declared, whose endpoints
+        /// would be mapped twice.
         /// </summary>
         public IServiceCollection AddPouryaKitEndpoints(string routePrefix, params Assembly[] featureAssemblies)
         {
@@ -88,7 +113,23 @@ public static class WebServiceCollectionExtensions
             ArgumentException.ThrowIfNullOrWhiteSpace(routePrefix);
             ArgumentNullException.ThrowIfNull(featureAssemblies);
 
+            List<ModuleEndpoints> declared = [.. services.Select(descriptor => descriptor.ImplementationInstance).OfType<ModuleEndpoints>()];
+            if (declared.Any(module => string.Equals(module.RoutePrefix, routePrefix, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException($"The endpoints of the route group {routePrefix} are already declared.");
+            }
+
             var assemblies = IModuleServices.FeatureAssembliesOf(services, featureAssemblies);
+            foreach (var module in declared)
+            {
+                if (module.Endpoints.Select(endpoint => endpoint.GetType().Assembly).FirstOrDefault(assemblies.Contains) is { } assembly)
+                {
+                    throw new InvalidOperationException(
+                        $"The endpoints of {assembly.GetName().Name} are already declared, for the route group {module.RoutePrefix}."
+                    );
+                }
+            }
+
             List<IEndpoint> endpoints =
             [
                 .. ImplementingTypes
