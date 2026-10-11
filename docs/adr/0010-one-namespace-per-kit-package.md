@@ -53,7 +53,8 @@ first public release the Kit has no consumer to break; after it, reversing this 
      `EnforceCodeStyleInBuild` in `Directory.Build.props`), so a namespace there that does not follow its folder fails
      the build.
      *(2026-10-11, #110: the warning's scope is the whole Proving Sample, `samples/ModularMonolith/src/**`; see the
-     note under Consequences.)*
+     note under Consequences.)* *(2026-10-11, #112: `SampleNamespaceTests` also holds the Proving Sample to it where
+     IDE0130 is silent; see the note under Consequences.)*
    - The templates' generated solutions stay out: their shared props set no `EnforceCodeStyleInBuild`, and a hyphenated
      name such as `acme-shop` gives an invalid root namespace that makes the analyzer skip root files. `TemplateTests`
      and the sample's own build hold their shape; style enforcement for generated projects is a separate, later
@@ -96,4 +97,8 @@ Each was measured on 2026-10-09 at `505fd44`.
   *(2026-10-11, #110: the scope is now `samples/ModularMonolith/src/**`, so the Hosts and the service defaults are
   inside it, and the build fails without the `none` of `Extensions.cs`. IDE0130 does not report a namespace that holds a
   partial type with a second declaration, such as a class whose logging methods a source generator completes.)*
+  *(2026-10-11, #112: `SampleNamespaceTests` in `tests/PouryaKit.ArchitectureTests` closes that gap. It reads the
+  namespace each source file of the Proving Sample's projects declares and asserts that it equals the project's name
+  plus the file's folders, with `Extensions.cs` its one listed exception; build output and `Migrations/` are skipped.
+  `LoggedNewProductAnnouncer.cs`, moved to `ModularMonolith`, built green and failed the test.)*
 - `.claude/rules/kit-code.md` states the policy in one line.
