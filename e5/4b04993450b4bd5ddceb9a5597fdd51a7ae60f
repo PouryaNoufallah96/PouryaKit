@@ -1,0 +1,26 @@
+docs/acceptance.md
+  s_a846915d2dd93c::t_d3ef0ae0e943e2 1830
+  s_a846915d2dd93c::t_13d8dbc44dd9c6 1836
+  s_a846915d2dd93c::t_fa6b19113dea18 1773
+  s_a846915d2dd93c::t_013ce549335976 1840
+docs/architecture/diagrams/ci-and-publication.html
+  s_a846915d2dd93c::t_14b45eeecba8f8 4985
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_a846915d2dd93c::t_6ceaa2e45b8df3 11,108,125-126
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e54b04993450b4bd5ddceb9a5597fdd51a7ae60f",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
