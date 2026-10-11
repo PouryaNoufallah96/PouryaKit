@@ -54,7 +54,7 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   `docs/adr/`, dated records. A moved file is cited at its new path.
 - Diagram sources: each Archify diagram source, `docs/architecture/diagrams/*.json`, pins `meta.repository.revision`,
   and every entry of a `sources` list in it (`path`, `line`, `end_line`, one line when that is absent) must still
-  describe the code: the revision is a commit of this clone, the path names a file at HEAD, `line` and `end_line` are
+  describe the code: the revision is in HEAD's history, the path names a file at HEAD, `line` and `end_line` are
   in order within its lines, and `git diff <revision> HEAD` leaves the file unchanged. A change anywhere in a cited
   file fails, as a range cannot tell a moved line from a rewritten one. The HTML pages are not read.
 
@@ -528,8 +528,9 @@ def check_diagram_sources(files: list[str]) -> int:
         revision = str(data.get("meta", {}).get("repository", {}).get("revision", ""))
         if not sources:
             continue
-        if not re.fullmatch(r"[0-9a-f]{40}", revision) or subprocess.run(["git", "cat-file", "-e", f"{revision}^{{commit}}"], cwd=ROOT, capture_output=True).returncode:
-            failures.append(f"{diagram}: meta.repository.revision {revision or '(none)'} is no commit of this clone (a shallow clone lacks it: fetch the history); {REVERIFY}")
+        # In HEAD's history, not only present: a commit a rebase or squash left behind stays in a local clone for a while.
+        if not re.fullmatch(r"[0-9a-f]{40}", revision) or subprocess.run(["git", "merge-base", "--is-ancestor", revision, "HEAD"], cwd=ROOT, capture_output=True).returncode:
+            failures.append(f"{diagram}: meta.repository.revision {revision or '(none)'} is unreachable here: a shallow clone, or a revision squashed away; {REVERIFY}")
             continue
         paths = sorted({str(source.get("path")) for source in sources})
         # One call each for every cited file: its line count at HEAD (a path absent there is not listed), and whether it

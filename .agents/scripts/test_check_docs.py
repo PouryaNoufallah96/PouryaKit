@@ -180,11 +180,17 @@ class CheckDocsTests(unittest.TestCase):
         self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Cart.cs:1 names no file at HEAD; {REVERIFY}", out)
         self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Till.cs:1 names no file at HEAD; {REVERIFY}", out)
 
-    def test_a_diagram_pinned_to_no_commit_of_the_clone_fails(self) -> None:
+    def test_a_diagram_pinned_to_a_revision_unreachable_from_head_fails(self) -> None:
+        """A commit the clone lacks, and one it holds that a reset left out of HEAD's history, as a squash or rebase does;
+        the cited file is the same in that commit, so only its reachability fails it."""
         self.write(CART)
-        self.commit()
-        missing = "0123456789abcdef" * 2 + "01234567"
-        self.assertFails(diagram(missing, {"path": "src/Catalog/Cart.cs", "line": 1}), f"{DIAGRAM}: meta.repository.revision {missing} is no commit of this clone")
+        kept = self.commit()
+        self.write({"README.md": CLEAN["README.md"] + "More prose.\n"})
+        squashed = self.commit()
+        git(self.root, "reset", "-q", "--hard", kept)
+        for revision in ("0123456789abcdef" * 2 + "01234567", squashed):
+            with self.subTest(revision=revision):
+                self.assertFails(diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 1}), f"{DIAGRAM}: meta.repository.revision {revision} is unreachable here: a shallow clone, or a revision squashed away; {REVERIFY}")
 
     def test_pre_wave_3_acceptance_sections_out_of_ticket_order_fail(self) -> None:
         """Session 5: #88's section was appended after #97's and left there until an advisor caught it."""
