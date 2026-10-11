@@ -8,7 +8,7 @@
     "locale": "en",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "9cb263334f4d037d3362cda89b67dd74a03fa52a",
+      "revision": "9a28d5eb1a5c1db49cbbe200759bbcb14f81149a",
       "provider": "github",
       "link_mode": "web"
     },
@@ -105,7 +105,7 @@
         {
           "path": ".github/workflows/ci.yml",
           "line": 18,
-          "end_line": 38,
+          "end_line": 40,
           "label": "check-ai-setup, check-docs, unit tests"
         }
       ]
@@ -122,8 +122,8 @@
       "sources": [
         {
           "path": ".github/workflows/ci.yml",
-          "line": 40,
-          "end_line": 43,
+          "line": 42,
+          "end_line": 45,
           "label": "parallel to ai-setup, no needs"
         },
         {
