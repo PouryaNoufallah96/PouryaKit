@@ -21,9 +21,12 @@ public sealed class SampleNamespaceTests
     {
         var projects = Directory.GetFiles(Source, "*.csproj", SearchOption.AllDirectories);
 
-        // Two Hosts, the service defaults, three Modules and Catalog's Contracts: a walk that finds none judges nothing.
+        // Two Hosts, the service defaults, three Modules and Catalog's Contracts: a walk that finds none judges nothing, and
+        // a walk that skips the files judges nothing either, so the partial type IDE0130 misses must be among the judged.
         Assert.Equal(7, projects.Length);
-        Assert.Empty(projects.SelectMany(Drifts));
+        var judged = projects.SelectMany(Judged).ToList();
+        Assert.Contains(judged, file => file.Path == "ModularMonolith.Host/LoggedNewProductAnnouncer.cs");
+        Assert.Empty(judged.SelectMany(file => Drift(file.Path, file.Expected, File.ReadAllText(file.FullPath))));
     }
 
     [Fact]
@@ -47,8 +50,9 @@ public sealed class SampleNamespaceTests
         );
     }
 
-    // bin and obj hold build output; Migrations hold dotnet-ef's output.
-    private static IEnumerable<string> Drifts(string project)
+    // The files a project is judged by, each with the namespace its folders make it: bin and obj hold build output;
+    // Migrations hold dotnet-ef's output.
+    private static IEnumerable<(string Path, string Expected, string FullPath)> Judged(string project)
     {
         var folder = Path.GetDirectoryName(project)!;
         return
@@ -56,12 +60,7 @@ public sealed class SampleNamespaceTests
             let inProject = Path.GetRelativePath(folder, file).Replace('\\', '/')
             where !inProject.Split('/').Any(segment => segment is "bin" or "obj" or "Migrations")
             let path = Path.GetRelativePath(Source, file).Replace('\\', '/')
-            from drift in Drift(
-                path,
-                Exceptions.GetValueOrDefault(path) ?? Expected(Path.GetFileNameWithoutExtension(project), inProject),
-                File.ReadAllText(file)
-            )
-            select drift;
+            select (path, Exceptions.GetValueOrDefault(path) ?? Expected(Path.GetFileNameWithoutExtension(project), inProject), file);
     }
 
     // No project of the sample sets a RootNamespace, so a project's root namespace is its name (ADR 0010).
