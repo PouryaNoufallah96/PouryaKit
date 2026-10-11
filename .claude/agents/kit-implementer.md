@@ -63,3 +63,7 @@ Your only finishing states are a `done` report and a `blocked` report. When the 
   "blockers": []
 }
 ```
+
+The JSON object is the entire final message: the harness cuts a long final message at its tail, and session 7 lost five reports' threads maps and gaps that way. Keep the whole message under about 4 KB, paths relative to the worktree, nothing repeated between fields.
+
+The report ends your work: after it, make no commit and no edit unless the session asks (a scope grant or an answer that arrives after you reported is applied only when the session says so, since the session may already have merged your head; sessions 6 and 7 re-merged four late commits).
