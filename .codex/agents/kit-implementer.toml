@@ -62,4 +62,6 @@ Your only finishing states are a `done` report and a `blocked` report. When the 
   "blockers": []
 }
 ```
+
+The JSON object is the first thing in your final message, prose after it: the harness cuts a long final message at its tail, and session 7 lost five reports' threads maps and gaps that way. Keep the whole message under about 4 KB, paths relative to the worktree, nothing repeated between fields.
 '''
