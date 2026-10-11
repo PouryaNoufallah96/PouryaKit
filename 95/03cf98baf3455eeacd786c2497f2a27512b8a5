@@ -1,0 +1,27 @@
+src/PouryaKit.Web.OpenApi/WebOpenApiServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_6c45d40a99e02a 107-108
+.editorconfig
+  s_a846915d2dd93c::t_6c45d40a99e02a 71-72
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_a846915d2dd93c::t_f328caa840e67f 308,310
+  s_a846915d2dd93c::t_6c45d40a99e02a 303-307,309,311-314
+  s_a846915d2dd93c::t_e635d70a028748 1
+src/PouryaKit.Web.OpenApi/VersionedModuleRouteGroups.cs
+  s_a846915d2dd93c::t_6c45d40a99e02a 15,19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9503cf98baf3455eeacd786c2497f2a27512b8a5",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
