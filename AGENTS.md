@@ -66,6 +66,7 @@ Both reviewers apply these to the diff. Report defects the diff introduced; olde
 - A test that would still pass if every collaborator returned its default or under a weaker predicate than the rule states (a prefix check where the rule says equality, a scope narrower than the ticket names), or coverage that restates another test.
 - A claimed runtime guarantee without runtime proof.
 - Docs or AI guidance left out of sync with the change. For each sentence or message the diff changes, search its old key phrase across `src/`, the Kit's skill, `docs/architecture/` and `docs/acceptance.md`: a restatement left as it was is a finding.
+- A changed XML summary, code comment or skill sentence that states a behaviour the cited code does not have. Open the code it describes; a sentence that reads right but says the wrong thing is the finding the PR bots found 25 times in one round of PR #103 after six single reviews had passed it.
 
 ## Rules and what enforces them
 
