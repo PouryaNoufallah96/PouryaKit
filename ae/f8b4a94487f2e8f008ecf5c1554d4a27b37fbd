@@ -1,0 +1,36 @@
+.agents/scripts/check-docs.py
+  s_34eaa2fd8627c7::t_a93afc93c02681 61-66,534-535,537-544,555-557,560,573
+  s_34eaa2fd8627c7::t_13f5ac74097ede 558-559
+.githooks/pre-commit
+  s_34eaa2fd8627c7::t_a93afc93c02681 5-6
+  s_34eaa2fd8627c7::t_712756f47bab00 10-11
+  s_34eaa2fd8627c7::t_58e863353f0f45 16-17
+AGENTS.md
+  s_34eaa2fd8627c7::t_13f5ac74097ede 85
+docs/architecture/README.md
+  s_34eaa2fd8627c7::t_13f5ac74097ede 34
+.gitignore
+  s_34eaa2fd8627c7::t_ec8345190a4982 5-6
+  s_34eaa2fd8627c7::t_a93afc93c02681 30
+docs/agents/ai-setup.md
+  s_34eaa2fd8627c7::t_ee2fd991905a69 29,174
+.agents/scripts/test_check_docs.py
+  s_34eaa2fd8627c7::t_58e863353f0f45 180,183,186-212,226-253
+  s_34eaa2fd8627c7::t_8ab6762a798494 254
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aef8b4a94487f2e8f008ecf5c1554d4a27b37fbd",
+  "prompts": {},
+  "sessions": {
+    "s_34eaa2fd8627c7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12a88-a113-7171-a51d-a4399b13d651",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
