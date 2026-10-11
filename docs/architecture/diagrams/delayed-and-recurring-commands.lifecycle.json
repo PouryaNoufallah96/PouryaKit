@@ -72,7 +72,13 @@
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandExtension.cs",
           "line": 10,
           "end_line": 18,
-          "label": "one durable queue per declaration"
+          "label": "one local queue per declaration"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
+          "line": 111,
+          "end_line": 111,
+          "label": "every local queue durable"
         }
       ]
     },

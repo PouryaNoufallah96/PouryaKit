@@ -742,7 +742,7 @@
       "dot": "cyan",
       "title": "Arrows",
       "items": [
-        "An unlabelled arrow is a project reference that PackageGraph allows, from the package that references to the one it references; these are all the references between these packages.",
+        "An arrow between two packages is a project reference that PackageGraph allows, from the package that references to the one it references; these are all of this view's references. The two arrows into PostgreSQL are data access, not references: Persistence.Postgres writes, Persistence.Dapper reads.",
         "PackageGraphTests checks each package's direct references and restored closure against PackageGraph.",
         "PouryaKit.Messaging.Wolverine.EFCore belongs to the messaging and delivery view; it appears here because PouryaKit.Testing references it."
       ]
