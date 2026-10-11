@@ -104,7 +104,8 @@ public static class WebOpenApiServiceCollectionExtensions
 
             if (
                 services.Any(descriptor =>
-                    descriptor.ImplementationInstance is ModuleApiVersions declared && declared.RoutePrefix == routePrefix
+                    descriptor.ImplementationInstance is ModuleApiVersions declared
+                    && string.Equals(declared.RoutePrefix, routePrefix, StringComparison.OrdinalIgnoreCase)
                 )
             )
             {

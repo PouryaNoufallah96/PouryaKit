@@ -12,11 +12,11 @@ internal sealed class VersionedModuleRouteGroups(
     IServiceProvider services
 ) : IModuleRouteGroups
 {
-    private readonly HashSet<string> _mapped = [];
+    private readonly HashSet<string> _mapped = new(StringComparer.OrdinalIgnoreCase);
 
     public IReadOnlyList<IEndpointRouteBuilder> Map(string routePrefix, RouteGroupBuilder moduleGroup)
     {
-        var declared = declarations.SingleOrDefault(declaration => declaration.RoutePrefix == routePrefix);
+        var declared = declarations.SingleOrDefault(declaration => string.Equals(declaration.RoutePrefix, routePrefix, StringComparison.OrdinalIgnoreCase));
         if (declared is null)
         {
             return [moduleGroup];

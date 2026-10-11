@@ -68,7 +68,8 @@ dotnet_diagnostic.IDE0005.severity = none
 dotnet_style_namespace_match_folder = false
 
 # ADR 0010: application code's namespaces follow its folders. IDE0130 checks it in the Proving Sample's application code
-# and the test projects; each file below is a deliberate exception.
+# and the test projects, but for a partial type with a second declaration, which the analyzer never reports (ADR 0010,
+# Consequences); each file below is a deliberate exception.
 [samples/ModularMonolith/src/**/*.cs]
 dotnet_diagnostic.IDE0130.severity = warning
 

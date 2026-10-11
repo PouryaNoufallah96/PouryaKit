@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using System.Net;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
@@ -295,6 +296,18 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         var services = new ServiceCollection().AddPouryaKitEndpoints("/plain", typeof(UnversionedEndpoints).Assembly);
 
         var thrown = Assert.Throws<InvalidOperationException>(() => services.AddPouryaKitEndpoints(routePrefix, inAssemblyOf.Assembly));
+
+        Assert.Equal(failure, thrown.Message);
+    }
+
+    [Theory]
+    [InlineData("/plain", "The API versions of the route group /plain are already declared.")]
+    [InlineData("/PLAIN", "The API versions of the route group /PLAIN are already declared.")]
+    public void A_route_group_whose_api_versions_are_already_declared_is_refused_when_declared_again_whatever_the_case(string routePrefix, string failure)
+    {
+        var services = new ServiceCollection().AddPouryaKitApiVersions("/plain", versions => versions.HasApiVersion(new ApiVersion(1, 0)));
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => services.AddPouryaKitApiVersions(routePrefix, versions => versions.HasApiVersion(new ApiVersion(1, 0))));
 
         Assert.Equal(failure, thrown.Message);
     }
