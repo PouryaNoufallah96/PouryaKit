@@ -1,0 +1,23 @@
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_a846915d2dd93c::t_24a45ef114c39d 580
+docs/architecture/README.md
+  s_a846915d2dd93c::t_2155d3b06f91d8 369,434
+docs/provenance/PouryaKit.Messaging.Wolverine.RabbitMq.md
+  s_a846915d2dd93c::t_1a17e939feef40 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "21daff94ccac4778b5bbb283245d6fa0d3d04072",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
