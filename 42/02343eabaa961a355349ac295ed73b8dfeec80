@@ -1,0 +1,29 @@
+.agents/scripts/check-docs.py
+  s_a846915d2dd93c::t_6c19951cf127a5 61-64,534-535,550-556
+.agents/scripts/test_check_docs.py
+  s_a846915d2dd93c::t_6c19951cf127a5 174-198
+docs/architecture/README.md
+  s_a846915d2dd93c::t_f14c888f537aac 34
+.codex/agents/kit-implementer.toml
+  s_a846915d2dd93c::t_f14c888f537aac 66
+.claude/agents/kit-implementer.md
+  s_a846915d2dd93c::t_f14c888f537aac 67
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_a846915d2dd93c::t_5c9b0ae92c3636 90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4202343eabaa961a355349ac295ed73b8dfeec80",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
