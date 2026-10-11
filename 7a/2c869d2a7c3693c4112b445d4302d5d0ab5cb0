@@ -1,0 +1,23 @@
+.agents/scripts/check-docs.py
+  s_a846915d2dd93c::t_316404cd5c1f49 538,540
+docs/acceptance.md
+  s_a846915d2dd93c::t_9238a9a847d90f 1823
+docs/architecture/README.md
+  s_a846915d2dd93c::t_09c9ec787a96d4 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7a2c869d2a7c3693c4112b445d4302d5d0ab5cb0",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
