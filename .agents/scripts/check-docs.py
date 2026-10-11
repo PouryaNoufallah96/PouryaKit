@@ -535,9 +535,9 @@ def check_diagram_sources(files: list[str]) -> int:
         paths = sorted({str(source.get("path")) for source in sources})
         # One call each for every cited file: its line count at HEAD (a path absent there is not listed), and whether it
         # changed since the revision. Literal pathspecs, so a path is never read as a glob.
-        counts = subprocess.run(["git", "--literal-pathspecs", "grep", "-c", "", "HEAD", "--", *paths], cwd=ROOT, capture_output=True, text=True).stdout
+        counts = subprocess.run(["git", "-c", "core.quotePath=false", "--literal-pathspecs", "grep", "-c", "", "HEAD", "--", *paths], cwd=ROOT, capture_output=True, text=True).stdout
         lines = {path: int(count) for path, _, count in (row.removeprefix("HEAD:").rpartition(":") for row in counts.splitlines())}
-        changed = set(git("--literal-pathspecs", "diff", "--name-only", revision, "HEAD", "--", *paths).splitlines())
+        changed = set(git("-c", "core.quotePath=false", "--literal-pathspecs", "diff", "--name-only", revision, "HEAD", "--", *paths).splitlines())
         for source in sources:
             path, first = str(source.get("path")), source.get("line")
             last = source.get("end_line", first)
