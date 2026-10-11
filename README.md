@@ -45,6 +45,7 @@ The command prints its evidence directory outside the checkout, including the pa
 
 - Using the Kit, Capability by Capability: the Kit's skill, [.agents/skills/pourya-kit/](.agents/skills/pourya-kit/SKILL.md)
 - Packages, their references and the commit sequence: [docs/architecture/README.md](docs/architecture/README.md)
+- Diagrams of the Kit's structure, runtime flows and publication, in reading order: [the architecture document's Diagrams section](docs/architecture/README.md#diagrams)
 - Which test proves each acceptance scenario: [docs/acceptance.md](docs/acceptance.md)
 - Decisions: [docs/adr/](docs/adr/)
 - Plan and evidence: [docs/foundation-review.md](docs/foundation-review.md)

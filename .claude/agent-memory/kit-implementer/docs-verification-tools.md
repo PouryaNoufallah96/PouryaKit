@@ -76,5 +76,12 @@ metadata:
 
 - **A span in `docs/acceptance.md` that reads as a test pointer is checked as one:** an illustrative `ArchitectureTests.LayerTests` in backticks resolves as a class and its method and fails when no such class exists, so write illustrative names without backticks.
 
+## Integrating the diagrams into the architecture document (#109, 2026-10-11)
+
+- **`check-docs.py` resolves a Markdown link to a diagram's `.html`** and every same-file anchor, so draft the navigation table first and run it: the only failures are anchors of sections not yet written, a free slug check. A fenced `bash` block with `<placeholders>` and a `docs/architecture/diagrams/` code span pass; Feature names such as `RemoveProducts` pass because namespaces follow folders.
+- **`check-ai-setup.py` (since #105) reads `docs/architecture/README.md` for package counts:** "each arrow between two packages" failed as "'two packages' states a package count". Reword without a number before "packages".
+- **GitHub's raw file serves `.html` as `text/plain`**, so a brief's "the raw file renders it" is false; Archify's finalized pages are self-contained (no external `src`/`href`), so a checkout opened in a browser works.
+- **Renumbering the commit sequence** (Snapshots and Outbox merged into one step, as `EfUnitOfWork` calls `WriteAsync` once) touched only the README's own citations; `docs/provenance/` and the plan cite plan section C's five-step numbering ("step 4" is the Snapshots there), which does not move.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].
