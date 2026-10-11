@@ -56,7 +56,13 @@
           "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqExtension.cs",
           "line": 10,
           "end_line": 33,
-          "label": "fanout per wire name, a queue per Host"
+          "label": "fanout per wire name, a queue per kind of Host"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqHostApplicationBuilderExtensions.cs",
+          "line": 21,
+          "end_line": 30,
+          "label": "one queue per kind of Host, its instances share"
         }
       ]
     },
@@ -173,7 +179,7 @@
       "from": "outbox",
       "to": "queue",
       "y": 160,
-      "label": "a Notification per subscription",
+      "label": "a Notification or Integration Event per subscription",
       "variant": "emphasis"
     },
     {

@@ -5573,7 +5573,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <h3>Arrows</h3>
         </div>
         <ul>
-          <li>An unlabelled arrow is a project reference that PackageGraph allows, from the package that references to the one it references; these are all the references between these packages.</li>
+          <li>An arrow between two packages is a project reference that PackageGraph allows, from the package that references to the one it references; these are all of this view&#39;s references. The two arrows into PostgreSQL are data access, not references: Persistence.Postgres writes, Persistence.Dapper reads.</li>
           <li>PackageGraphTests checks each package&#39;s direct references and restored closure against PackageGraph.</li>
           <li>PouryaKit.Messaging.Wolverine.EFCore belongs to the messaging and delivery view; it appears here because PouryaKit.Testing references it.</li>
         </ul>
