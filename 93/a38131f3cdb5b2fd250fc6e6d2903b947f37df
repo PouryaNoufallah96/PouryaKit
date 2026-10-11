@@ -1,0 +1,21 @@
+.claude/agents/kit-implementer.md
+  s_a846915d2dd93c::t_e0bf27e269d2e8 66-67
+.codex/agents/kit-implementer.toml
+  s_a846915d2dd93c::t_fdfc5bae0214d1 65-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "93a38131f3cdb5b2fd250fc6e6d2903b947f37df",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
