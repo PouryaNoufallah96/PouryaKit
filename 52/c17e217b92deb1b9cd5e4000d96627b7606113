@@ -1,0 +1,31 @@
+.editorconfig
+  s_a846915d2dd93c::t_8bd59800400ad3 70-72
+docs/architecture/README.md
+  s_a846915d2dd93c::t_453ec444477e46 432
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_a846915d2dd93c::t_2199581e5814e2 117
+  s_a846915d2dd93c::t_7aa8adc927afde 106-108
+docs/adr/0010-one-namespace-per-kit-package.md
+  s_a846915d2dd93c::t_ee1ae7cd6ed3ac 96-98
+  s_a846915d2dd93c::t_ede9d9293e7c2f 55-56
+.agents/skills/pourya-kit/references/web.md
+  s_a846915d2dd93c::t_cd3a29424e6b8e 145
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_a846915d2dd93c::t_b9e1aa0722e545 280,283
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "52c17e217b92deb1b9cd5e4000d96627b7606113",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
