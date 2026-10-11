@@ -1,0 +1,23 @@
+AGENTS.md
+  s_a846915d2dd93c::t_e3dbdec7ff0c8d 50
+docs/acceptance.md
+  s_a846915d2dd93c::t_c6fe83eb649755 1799,1801
+docs/architecture/README.md
+  s_a846915d2dd93c::t_d356ee25e8626f 369
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "db0b7c6692c24020743458903ebecf84169ac227",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
