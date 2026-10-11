@@ -103,8 +103,9 @@ public static class WebServiceCollectionExtensions
         /// <paramref name="routePrefix"/>. A Module's Composition Root calls it on its builder, where, named with no
         /// assembly, it scans the assembly of the Module's definition (<see cref="IModuleServices"/>); named assemblies
         /// replace it. An application without Modules calls it on its own services, naming the assembly. Throws when the
-        /// assemblies have no endpoint, or an endpoint has no parameterless constructor, and when the route group or an
-        /// assembly is already declared, whose endpoints would be mapped twice.
+        /// assemblies have no endpoint, or an endpoint has no parameterless constructor, and when the route group,
+        /// compared ignoring case, as the router matches a literal, or an assembly is already declared, whose endpoints
+        /// would be mapped twice.
         /// </summary>
         public IServiceCollection AddPouryaKitEndpoints(string routePrefix, params Assembly[] featureAssemblies)
         {
@@ -113,7 +114,7 @@ public static class WebServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(featureAssemblies);
 
             List<ModuleEndpoints> declared = [.. services.Select(descriptor => descriptor.ImplementationInstance).OfType<ModuleEndpoints>()];
-            if (declared.Any(module => module.RoutePrefix == routePrefix))
+            if (declared.Any(module => string.Equals(module.RoutePrefix, routePrefix, StringComparison.OrdinalIgnoreCase)))
             {
                 throw new InvalidOperationException($"The endpoints of the route group {routePrefix} are already declared.");
             }
