@@ -58,10 +58,12 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   in order within its lines, and `git diff <revision> HEAD` leaves the file unchanged. A change anywhere in a cited
   file fails, as a range cannot tell a moved line from a rewritten one. The HTML pages are not read.
 
-`--staged` judges the commit being made: each diagram is read from the index, and a cited file is "changed" when the
-index differs from the pinned revision (the default compares HEAD). A cited file staged together with its diagram passes,
-so the repair path is two commits: the code and the diagram's ranges and labels first, then the diagram re-pinned to
-that commit. A cited file staged without its diagram is refused: that is the stale diagram the hook exists to catch.
+`--staged` reads the diagram sources and their cited files from the index, and compares those files with the pinned
+revision (the default compares HEAD). A cited file staged together with its diagram passes if the ranges fit the indexed
+file, so the repair path is two commits: the code and the diagram's ranges and labels first, then the diagram re-pinned
+to that commit. A cited file staged without its diagram is refused. The other rules still read the working tree: the hook
+refuses docs and AI-setup paths staged in part, but a source file staged in part can make those rules see different names
+or test declarations from the commit. CI's check on the committed tree is the gate.
 
 `--fences` only prints: for each Markdown file changed against HEAD, whether its fenced blocks changed, so an
 implementer knows whether the skill's snippet harness must run.
@@ -529,9 +531,17 @@ STAGED = False
 
 def check_diagram_sources(files: list[str]) -> int:
     """Fails each cited range of a diagram source that may no longer say what the code does; returns the diagrams read."""
-    diagrams = [f for f in files if f.startswith(DIAGRAMS) and f.endswith(".json") and (ROOT / f).is_file()]
+    candidates = git("ls-files", "--cached", "--", DIAGRAMS).splitlines() if STAGED else files
+    diagrams = [f for f in candidates if f.startswith(DIAGRAMS) and f.endswith(".json") and (STAGED or (ROOT / f).is_file())]
     for diagram in diagrams:
-        text = subprocess.run(["git", "show", f":{diagram}"], cwd=ROOT, capture_output=True, text=True).stdout if STAGED else (ROOT / diagram).read_text(encoding="utf-8")
+        if STAGED:
+            read = subprocess.run(["git", "show", f":{diagram}"], cwd=ROOT, capture_output=True, text=True)
+            if read.returncode:
+                failures.append(f"{diagram}: cannot read diagram source from the index")
+                continue
+            text = read.stdout
+        else:
+            text = (ROOT / diagram).read_text(encoding="utf-8")
         data = json.loads(text or "{}")
         sources = list(cited_sources(data))
         revision = str(data.get("meta", {}).get("repository", {}).get("revision", ""))
@@ -542,10 +552,12 @@ def check_diagram_sources(files: list[str]) -> int:
             failures.append(f"{diagram}: meta.repository.revision {revision or '(none)'} is unreachable here: a shallow clone, or a revision squashed away; {REVERIFY}")
             continue
         paths = sorted({str(source.get("path")) for source in sources})
-        # One call each for every cited file: its line count at HEAD (a path absent there is not listed), and whether it
-        # changed since the revision. Literal pathspecs, so a path is never read as a glob.
-        counts = subprocess.run(["git", "-c", "core.quotePath=false", "--literal-pathspecs", "grep", "-c", "", "HEAD", "--", *paths], cwd=ROOT, capture_output=True, text=True).stdout
-        lines = {path: int(count) for path, _, count in (row.removeprefix("HEAD:").rpartition(":") for row in counts.splitlines())}
+        # One call each for every cited file: its line count in the selected snapshot (an absent path is not listed),
+        # and whether it changed since the revision. Literal pathspecs, so a path is never read as a glob.
+        snapshot = "the index" if STAGED else "HEAD"
+        grep_args = ("--cached", "-c", "") if STAGED else ("-c", "", "HEAD")
+        counts = subprocess.run(["git", "-c", "core.quotePath=false", "--literal-pathspecs", "grep", *grep_args, "--", *paths], cwd=ROOT, capture_output=True, text=True).stdout
+        lines = {path: int(count) for path, _, count in ((row if STAGED else row.removeprefix("HEAD:")).rpartition(":") for row in counts.splitlines())}
         if STAGED:
             # The commit being made: the index against the revision. A diagram staged with the cited file is being
             # updated for it (its pin follows in the next commit), so only a cited file staged without its diagram fails.
@@ -558,7 +570,7 @@ def check_diagram_sources(files: list[str]) -> int:
             path, first = str(source.get("path")), source.get("line")
             last = source.get("end_line", first)
             if path not in lines:
-                problem = "names no file at HEAD"
+                problem = f"names no file at {snapshot}"
             elif not all(type(n) is int for n in (first, last)) or not 1 <= first <= last <= lines[path]:
                 problem = f"is no ordered range within the file's {lines[path]} lines"
             elif path in changed:

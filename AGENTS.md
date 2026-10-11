@@ -82,7 +82,7 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | Private fields are `_camelCase`; `const` and `static readonly` fields PascalCase | IDE1006 in `.editorconfig` |
 | Every public member of a Kit package has a summary | CS1591 in the build where `IsKitPackage` is true (`Directory.Build.props`) |
 | Docs name real code, paths and tests | `check-docs.py` (names, links, Kit paths, acceptance pointers, provenance) |
-| A diagram's cited source ranges are current | `check-docs.py` (diagram sources); the pre-commit hook runs it with `--staged`, so the commit that changes a cited file fails itself; CI's `ai-setup` job runs it on the committed tree |
+| A diagram's cited source ranges are current | `check-docs.py` (diagram sources); the pre-commit hook runs it with `--staged`, reading diagrams and cited files from the index: a changed cited file requires its diagram staged too, with ranges that fit the indexed file; CI's `ai-setup` job runs it on the committed tree |
 | A merged head's code was validated | `merge-package.py` exit 14: only Markdown may differ from the validated commit |
 | A negative test discriminates the rule's exact predicate | `kit-reviewer` (the review rule above) |
 | A brief's commands come from the environment, never from memory | `docs/agents/brief-template.md`, "Verify" |

@@ -2,6 +2,8 @@ bin/
 obj/
 .vs/
 .idea/
+/.vscode/
+/public/fonts/
 *.user
 *.suo
 TestResults/
@@ -24,5 +26,5 @@ __pycache__/
 samples/ModularMonolith/src/*/Internal/Generated/
 # Serena's project folder: a local tool's, like the entries above. The Kit tracks none of it.
 .serena/
-.gitignore
 branch_structure.json
+temp_interactive_push.bat
