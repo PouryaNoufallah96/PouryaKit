@@ -8,7 +8,7 @@
     "locale": "en",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "eb3c45c182e365dd6438c6f49377aa0893fd1603",
+      "revision": "9503cf98baf3455eeacd786c2497f2a27512b8a5",
       "provider": "github",
       "link_mode": "web"
     },
@@ -203,8 +203,8 @@
       "sources": [
         {
           "path": "tests/ModularMonolith.Tests/MisconfiguredHostTests.cs",
-          "line": 388,
-          "end_line": 389,
+          "line": 402,
+          "end_line": 403,
           "label": "built as hosted services resolve"
         },
         {
@@ -233,8 +233,8 @@
       "sources": [
         {
           "path": "tests/ModularMonolith.Tests/MisconfiguredHostTests.cs",
-          "line": 317,
-          "end_line": 318,
+          "line": 331,
+          "end_line": 332,
           "label": "observed at start, by ValidateOnStart"
         },
         {
@@ -245,8 +245,8 @@
         },
         {
           "path": "tests/ModularMonolith.Tests/MisconfiguredHostTests.cs",
-          "line": 419,
-          "end_line": 420,
+          "line": 433,
+          "end_line": 434,
           "label": "store options read when options built"
         }
       ]
