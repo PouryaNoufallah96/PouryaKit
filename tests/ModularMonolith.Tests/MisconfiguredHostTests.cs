@@ -277,9 +277,10 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     }
 
     // Declared twice, a route group's endpoints would be mapped twice, and each request to one of them would fail as
-    // ambiguous.
+    // ambiguous. The router matches a literal ignoring case, so /PLAIN is the same route group as /plain.
     [Theory]
     [InlineData("/plain", typeof(StubModule), "The endpoints of the route group /plain are already declared.")]
+    [InlineData("/PLAIN", typeof(StubModule), "The endpoints of the route group /PLAIN are already declared.")]
     [InlineData(
         "/other",
         typeof(UnversionedEndpoints),

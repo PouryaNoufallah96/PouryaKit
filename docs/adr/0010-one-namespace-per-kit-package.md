@@ -52,6 +52,8 @@ first public release the Kit has no consumer to break; after it, reversing this 
      exception. The build treats warnings as errors and runs code style (`TreatWarningsAsErrors` and
      `EnforceCodeStyleInBuild` in `Directory.Build.props`), so a namespace there that does not follow its folder fails
      the build.
+     *(2026-10-11, #110: the warning's scope is the whole Proving Sample, `samples/ModularMonolith/src/**`; see the
+     note under Consequences.)*
    - The templates' generated solutions stay out: their shared props set no `EnforceCodeStyleInBuild`, and a hyphenated
      name such as `acme-shop` gives an invalid root namespace that makes the analyzer skip root files. `TemplateTests`
      and the sample's own build hold their shape; style enforcement for generated projects is a separate, later
@@ -91,4 +93,7 @@ Each was measured on 2026-10-09 at `505fd44`.
   one file the scoped warning found, and it moved into a `Lookup/` folder with its namespace kept.
 - The Hosts and the service defaults are outside the warning's scope. On 2026-10-09 their files follow their folders,
   but for the service defaults' `Extensions.cs`, whose `none` already stands, so a wider scope needs no new exception.
+  *(2026-10-11, #110: the scope is now `samples/ModularMonolith/src/**`, so the Hosts and the service defaults are
+  inside it, and the build fails without the `none` of `Extensions.cs`. IDE0130 does not report a namespace that holds a
+  partial type with a second declaration, such as a class whose logging methods a source generator completes.)*
 - `.claude/rules/kit-code.md` states the policy in one line.
