@@ -1,8 +1,13 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using PouryaKit.Cqrs;
 
 namespace PouryaKit.Observability;
 
+/// <summary>
+/// Composes the Observability Capability on a Host's services: an activity and a duration measurement for every command
+/// and query the dispatcher runs.
+/// </summary>
 public static class ObservabilityServiceCollectionExtensions
 {
     extension(IServiceCollection services)
@@ -12,7 +17,9 @@ public static class ObservabilityServiceCollectionExtensions
         /// names <see cref="OperationTelemetry"/> lists. The activity is current for the whole Operation, its Unit of
         /// Work and Outbox write included, so the work the Operation publishes joins its trace; a delivery's Operation
         /// continues the publishing Operation's trace. Nothing is exported: the Host adds its exporter for
-        /// <see cref="OperationTelemetry.SourceName"/>. Call it after <c>AddPouryaKitModules</c> or
+        /// <see cref="OperationTelemetry.SourceName"/>. The measurements are taken on a <c>Meter</c> of the Host
+        /// container's <c>IMeterFactory</c>, which every Host built with <c>Host</c> or <c>WebApplication</c> registers, so
+        /// each Host owns its instruments and disposes them with itself. Call it after <c>AddPouryaKitModules</c> or
         /// <c>AddPouryaKitCqrs</c>, which register the dispatcher it wraps; throws when none is registered. A second call
         /// adds nothing.
         /// </summary>
@@ -33,6 +40,7 @@ public static class ObservabilityServiceCollectionExtensions
             }
 
             services.Remove(registered);
+            services.TryAddSingleton<ObservedDispatcher.Instruments>();
             services.AddScoped<IDispatcher>(new ObservedDispatcherFactory(ActivatorUtilities.CreateFactory(dispatcher, [])).Create);
             return services;
         }
@@ -41,6 +49,10 @@ public static class ObservabilityServiceCollectionExtensions
     private sealed class ObservedDispatcherFactory(ObjectFactory dispatcher)
     {
         public IDispatcher Create(IServiceProvider scope) =>
-            new ObservedDispatcher((IDispatcher)dispatcher(scope, null), scope.GetRequiredService<Operation>());
+            new ObservedDispatcher(
+                (IDispatcher)dispatcher(scope, null),
+                scope.GetRequiredService<Operation>(),
+                scope.GetRequiredService<ObservedDispatcher.Instruments>()
+            );
     }
 }

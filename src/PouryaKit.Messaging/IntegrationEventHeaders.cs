@@ -7,5 +7,6 @@ namespace PouryaKit.Messaging;
 /// </summary>
 public static class IntegrationEventHeaders
 {
+    /// <summary>The identity of the Domain Event the Integration Event follows from.</summary>
     public const string DomainEventId = "pouryakit-domain-event-id";
 }

@@ -6,6 +6,7 @@
 - [PostgreSQL](#postgresql)
 - [The repository](#the-repository)
 - [The Unit of Work](#the-unit-of-work)
+- [What the Kit guarantees](#what-the-kit-guarantees)
 - [Audit and soft delete](#audit-and-soft-delete)
 - [Versions and conflicts](#versions-and-conflicts)
 - [Unique values](#unique-values)
@@ -88,7 +89,7 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
 
 - One DbContext per Module, `internal sealed`, deriving from `PouryaKitDbContext`, with an empty body. Its conventions store every typed ID declared in its assembly as its value, never map Domain Events, apply every `IEntityTypeConfiguration<T>` in its assembly, and make the Module's schema the default. They also make every aggregate's `Version` its concurrency token and leave every removed soft-deletable entity out of queries. Override `OnModelCreating` only to add to it, and call the base.
 - Write one mapping per aggregate, beside its Business Area, stating only what is specific: table name, lengths, unique indexes, owned types and children, keys the database generates. Write no ID converter, no schema, no concurrency token, no query filter and nothing for the audit or soft-delete properties.
-- A Guid typed ID created by the application (`TypedId.New<ProductId>()`) needs nothing more. A numeric typed ID the database generates needs `builder.Property(note => note.Id).ValueGeneratedOnAdd();` in its mapping, because conventions never make a converted key database-generated. Its `Id` stays null until the Unit of Work saves, after the handler has returned, so such an aggregate cannot publish Snapshots ([messaging.md](messaging.md#the-rules-of-a-mapper-and-a-key)).
+- A Guid typed ID created by the application (`TypedId.New<ProductId>()`) needs nothing more. A numeric typed ID the database generates needs `builder.Property(note => note.Id).ValueGeneratedOnAdd();` in its mapping, because conventions never make a converted key database-generated. Its `Id` stays null until the Unit of Work saves, after the handler has returned, so such an aggregate cannot publish Snapshots, and neither can one holding a child whose declared key the database generates ([messaging.md](messaging.md#the-rules-of-a-mapper-and-a-key)).
 - What an aggregate owns is an owned type (`OwnsOne`, `OwnsMany`) or a child entity it holds in a navigation, mapped with a foreign key from that navigation: `builder.HasMany(folder => folder.Pages).WithOne().IsRequired();`. That key is how the Unit of Work finds the aggregate a changed child belongs to. A child the aggregate reaches by no navigation is not part of it, and neither is another aggregate referenced by its typed ID, as `Product.CategoryId` is.
 - Change a part of an aggregate only through the aggregate, loaded through its repository in the same Operation. A changed part whose aggregate the Operation did not load throws `InvalidOperationException` when the Operation commits, and nothing is committed: an aggregate that was not loaded cannot advance its version, so a concurrent change would not conflict.
 
@@ -219,20 +220,24 @@ internal sealed class ProductPages(IUnitOfWork unitOfWork) : EfRepository<Produc
 
 ## The Unit of Work
 
-- Each command Operation runs in one transaction that the Unit of Work begins and owns, and commits in a fixed sequence:
-  1. The outermost handler returns. A failed Result, or a nested command that failed, ends the Operation here.
-  2. The Domain Event Handlers run ([below](#domain-event-handlers)), and the Unit of Work checks again that nothing failed.
-  3. It prepares persistence: soft-delete marks, the cascades of what was deleted, one version advance per changed aggregate, audit fields ([below](#audit-and-soft-delete)).
-  4. It builds the Snapshot, or the Tombstone, of each changed aggregate that a Snapshot is declared for, from that final state, carrying the version the prepare step set ([messaging.md](messaging.md#snapshots-between-modules)).
-  5. It writes the Operation's Notifications, the Integration Events a Notification Handler's delivery published, and the Snapshots to the Outbox, checks once more that nothing failed, because a Snapshot mapper may have caught a refused command, saves once and commits, and only after the commit sends them ([messaging.md](messaging.md#what-the-kit-guarantees)).
-
-  Nothing changes an aggregate after the prepare step: a Snapshot mapper that does fails the Operation.
-- A failed Result, a failed nested command or a failed Domain Event Handler rolls everything back, and nothing is prepared or written to the Outbox. An exception rolls back and reaches the Gateway's caller.
+- Each command Operation runs in one transaction that the Unit of Work begins and owns. After the outermost handler returns, it runs the [Domain Event Handlers](#domain-event-handlers), prepares persistence ([audit and soft delete](#audit-and-soft-delete), versions), builds the [Snapshots](messaging.md#snapshots-between-modules), writes the Outbox, saves once and commits, and only then sends what it wrote. Each step, with the checks between them, is in [the commit sequence](../../../../docs/architecture/README.md#the-commit-sequence) of the Kit's architecture document.
 - Code that only reads cannot change tracked state, including through a held aggregate reference. The EF Unit of Work supplies the Operation's `IReadingStateGuard`, which compares the state across queries, authorization and validation, and `OnlyReading` steps. It preserves legitimate pending command changes as the baseline and permits new tracked reads. Capture and comparison detect EF relationship changes even when automatic change detection is disabled, without changing that setting. A difference marks the Operation rollback-only before throwing, so a swallowed exception still prevents a commit. The shared `TrackedState` comparison includes mutable mapped values, child and owned entities, complex collections, and pending Domain Event identity and order. State restored before comparison is not detected ([code that only reads](commands-queries-validation.md#code-that-only-reads)). These are Kit seams; Feature code never calls them.
-- Steps 4 and 5, from the Snapshots to the send, are a Kit seam, `IUnitOfWorkOutbox` (`PouryaKit.Persistence.EFCore`), which `UsePouryaKitWolverine(connectionName)` registers. Feature code never uses it.
-- A save the database refuses for a concurrent change, or for a unique index the Module mapped, rolls everything back and fails the Operation with an Error ([Versions and conflicts](#versions-and-conflicts), [Unique values](#unique-values)). Any other database error stays an exception.
-- Nothing retries: no retrying execution strategy, no retry in the Unit of Work. To retry, send the command again through the Gateway.
+- Building the Snapshots, writing the Outbox and the send after the commit are a Kit seam, `IUnitOfWorkOutbox` (`PouryaKit.Persistence.EFCore`), which `UsePouryaKitWolverine(connectionName)` registers. Feature code never uses it.
 - A plain-SQL write to a Module-internal table that no aggregate maps joins this transaction through `IUnitOfWorkConnection` (`PouryaKit.Persistence`), from a command's handler, a Domain Event Handler, or a Notification or Integration Event Handler only; see [dapper-reads.md](dapper-reads.md).
+
+## What the Kit guarantees
+
+The commit is the Unit of Work's. Each guarantee below is proven by the Proving Sample's tests in the Kit's repository, named after it.
+
+- **One commit or nothing.** Everything an Operation changes, through its repositories, its nested commands, its Domain Event Handlers and `IUnitOfWorkConnection`, commits in one transaction with the Outbox rows it wrote. A failed Result, a failed nested command or a failed Domain Event Handler rolls all of it back, and nothing is prepared or written to the Outbox, even when the outer handler ignores the failure: `UnitOfWorkTests.A_failed_result_returned_after_writing_leaves_nothing_written`, `UnitOfWorkTests.A_nested_command_that_fails_rolls_back_the_operations_data_and_outbox_though_the_outer_handler_ignores_it`, `DomainEventTests.A_failed_handler_result_stops_the_drain_and_the_operation_fails_with_its_errors_leaving_nothing_written`, `DapperTests.A_dapper_write_on_the_unit_of_work_connection_commits_with_the_operation_and_rolls_back_with_it`.
+- **An exception before the commit rolls back too.** It reaches the Gateway's caller, and nothing is written: `UnitOfWorkTests.An_exception_thrown_after_writing_leaves_nothing_written`. An exception the commit itself throws can leave the outcome unknown to the caller: the database may have committed and only its acknowledgement been lost.
+- **Saved with no save in Feature code.** A command that succeeds is committed though its handler never saves: `UnitOfWorkTests.A_command_that_raises_no_domain_event_is_committed_though_its_handler_never_saves`.
+- **The Outbox in the commit, the send after it.** What the Operation publishes is written in its transaction and sent only after the commit, and an Operation that rolls back stores none of it: `NotificationTests.A_notification_is_stored_once_per_subscription_in_the_commit_of_the_change_and_sent_only_after_it`, `NotificationTests.An_operation_that_rolls_back_stores_no_notification`. What delivery then guarantees is in [messaging.md](messaging.md#what-the-kit-guarantees).
+- **Nothing changes after the prepare step.** A Snapshot mapper that changes its aggregate fails the Operation, and nothing commits: `SnapshotTests.A_snapshot_mapper_that_changes_its_aggregate_fails_the_operation_and_commits_nothing`.
+- **One version step per Operation.** An aggregate's `Version` advances by exactly one for each Operation that changes it or anything it owns ([Versions and conflicts](#versions-and-conflicts)): `PersistencePreparationTests.The_version_advances_exactly_once_for_each_operation_that_changes_any_part_of_the_aggregate`.
+- **A refused save is an Error.** A save the database refuses for a concurrent change, or for a unique index the Module mapped, rolls everything back and fails the Operation with an Error ([Versions and conflicts](#versions-and-conflicts), [Unique values](#unique-values)). Any other database error stays an exception: `ConflictTests.Two_operations_that_rename_the_same_product_commit_once_and_the_other_fails_with_a_conflict`, `ConflictTests.A_duplicate_product_name_fails_with_the_error_the_module_mapped_and_writes_nothing`, `ConflictTests.A_violated_constraint_with_no_mapped_error_stays_an_exception_and_writes_nothing`.
+- **Nothing retries.** No Module DbContext has a retrying execution strategy: `PersistenceTests.No_module_db_context_has_a_retrying_execution_strategy`. The Unit of Work has no retry path of its own (a design fact, not a tested one): to retry, send the command again through the Gateway, which runs a new Operation in a new scope.
+- **No write without a Unit of Work.** A repository write where no Unit of Work runs throws and saves nothing ([The repository](#the-repository)): `SingleModuleTests.A_repository_write_in_a_scope_that_runs_no_unit_of_work_throws_and_saves_nothing`.
 
 ## Audit and soft delete
 
@@ -243,7 +248,7 @@ Both are opt-in, per aggregate or entity, with a contract from `PouryaKit.Domain
 - An auditable change, or the removal of a soft-deletable entity, in a scope whose Operation was never begun throws `InvalidOperationException`, and nothing commits: the stamp needs an Actor. An Operation that stamps nothing needs no context.
 - Audit: an added entity gets its creation and last change from the Operation; a changed one gets its last change. A change to anything an aggregate owns counts as a change of its root, so an auditable root is stamped then too, and a child moved from one aggregate to another stamps both.
 - Soft delete: `Remove` on the repository of a soft-deletable aggregate keeps its row. The prepare step turns the removal into `IsDeleted = true` with `DeletedAt` and `DeletedBy`, and everything the aggregate owns is kept with it. Removing an aggregate that is not soft-deletable deletes its row.
-- EF Core queries leave a removed entity out by convention, so the repository never returns one in a later Operation. A Dapper read must say `is_deleted = false` itself ([dapper-reads.md](dapper-reads.md)).
+- EF Core queries leave a removed entity out by convention, so the repository never returns one in a later Operation. The query filter is named `PouryaKitDbContext.SoftDeleteFilter` (`PouryaKit.Persistence.EFCore`, value `PouryaKit.SoftDelete`); a read that must see removed rows too, such as an audit view, passes it to EF Core: `IgnoreQueryFilters([PouryaKitDbContext.SoftDeleteFilter])`. A Dapper read must say `is_deleted = false` itself ([dapper-reads.md](dapper-reads.md)).
 - Removal raises no Domain Event of its own; an aggregate that publishes Snapshots publishes its Tombstone ([messaging.md](messaging.md#snapshots-between-modules)). When other aggregates care, give the aggregate a domain method that raises one and call it before the repository's `Remove`, as `RemoveProducts` above calls `Product.Remove()`. Guard the method so that a second call in the same Operation raises nothing more, as `Product` does.
 - Put `ISoftDeletable` on a type EF Core can filter: an aggregate or an entity that is not mapped as an owned type, at the root of its inheritance hierarchy or below a root that implements it too. An owned type, or a type derived from a root that is not soft-deletable, is refused when the model is built.
 - A soft-deletable child is kept when it is removed from its aggregate. It is deleted outright only when its parent is deleted outright and the child's key to that parent is required: its row cannot outlive the parent's. The Unit of Work resolves every such cascade in the prepare step, so the save itself changes nothing further.
@@ -273,7 +278,7 @@ using PouryaKit.Domain;
 using PouryaKit.Persistence;
 
 // Categories/Events/DomainEventHandlers/
-internal sealed class CountProductInCategoryHandler(IRepository<Category, CategoryId> categories)
+internal sealed class CountProductInCategoryDomainEventHandler(IRepository<Category, CategoryId> categories)
     : IDomainEventHandler<ProductCreatedDomainEvent>
 {
     public async Task<Result> Handle(ProductCreatedDomainEvent domainEvent, CancellationToken ct)
@@ -287,9 +292,9 @@ internal sealed class CountProductInCategoryHandler(IRepository<Category, Catego
 }
 ```
 
-Its counterpart, `UncountProductInCategoryHandler`, handles `ProductRemovedDomainEvent` the same way and lowers the count, so a removal and its category's count commit together.
+Its counterpart, `UncountProductInCategoryDomainEventHandler`, handles `ProductRemovedDomainEvent` the same way and lowers the count, so a removal and its category's count commit together.
 
-- Implement `IDomainEventHandler<TDomainEvent>` (`PouryaKit.Cqrs`) for one Domain Event type, in an `internal sealed` class in the Business Area that reacts, under `Events/DomainEventHandlers/`. `AddPouryaKitCqrs` registers it with the Module's other handlers. A class that handles several Domain Event types, or an abstract one, fails at startup.
+- Implement `IDomainEventHandler<TDomainEvent>` (`PouryaKit.Cqrs`) for one Domain Event type, in an `internal sealed` class named after its reaction and its kind, as `CountProductInCategoryDomainEventHandler` is, in the Business Area that reacts, under `Events/DomainEventHandlers/`. `AddPouryaKitCqrs` registers it with the Module's other handlers. A class that handles several Domain Event types, or an abstract Domain Event type, fails while the Host is composed. An abstract handler class is not registered.
 - It runs only for a Domain Event of exactly its type, never for one derived from it. A Domain Event may have several handlers or none; one with no handler is fine, and the Operation commits.
 - It runs after the outermost command's handler returned a success and no nested command failed, before the prepare step and the save, in the same transaction. Handlers run one at a time, never concurrently; the handlers of one Domain Event run in the ordinal order of their full type names. An aggregate's Domain Events are handled in the order it raised them.
 - The Unit of Work takes the Domain Events of every aggregate it tracks: those added, found, listed or removed through a repository in the Operation. It clears them as it takes them.
@@ -319,7 +324,8 @@ dotnet ef migrations add Initial \
 
 ## Idempotency key retention
 
-- The Host keeps an idempotency key for its retention, then removes it, and a repeat of its request runs as a new one. One background service, added once whatever the number of Modules, removes from every Module's `pouryakit_idempotency_keys` the keys reserved longer ago than the retention, every cleanup interval, a batch of keys per statement until a batch is short. It runs on the Host's `TimeProvider`, in a scope and on connections of its own, never inside a request or a Unit of Work, and skips a Module without the table.
+- The Host keeps an idempotency key for its retention, then removes it, and a repeat of its request runs as a new one. One background service, which `AddPouryaKitEfCore` adds once to every Host whatever the number of Modules, removes from every Module's `pouryakit_idempotency_keys` the keys reserved longer ago than the retention, every cleanup interval, a batch of keys per statement until a batch is short. It runs on the Host's `TimeProvider`, in a scope and on connections of its own, never inside a request or a Unit of Work. It walks every DbContext `AddPouryaKitEfCore` made a Unit of Work, probes each schema with PostgreSQL's `to_regclass`, and returns silently for a Module with no `[Idempotent]` command, which has no table.
+- The store, its cleanup and its table are PostgreSQL-only, as the Receipts are and as the Kit is: `on conflict do nothing`, `ctid`, `to_regclass`, PostgreSQL's SQLSTATE codes and a `timestamp with time zone` column.
 - `PouryaKitIdempotencyOptions` (`PouryaKit.Persistence.EFCore`) sets it for the whole Host: `Retention` 24 hours, `CleanupInterval` 1 hour and `BatchSize` 1000 by default. A key replays for at least its retention and is removed by the first cleanup after it, so choose a retention longer than any client keeps retrying. Configure it in the Host, for example from configuration:
 
 ```csharp

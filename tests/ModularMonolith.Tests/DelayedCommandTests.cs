@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Billing;
 using Billing.Quotes.Features.ExpireQuote;
 using Billing.Quotes.Features.OpenQuote;
@@ -13,6 +14,8 @@ using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
 using Wolverine;
 using Wolverine.Runtime;
+using Wolverine.Runtime.Interop;
+using Wolverine.Runtime.Serialization;
 
 namespace ModularMonolith.Tests;
 
@@ -44,7 +47,7 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
 
         // Stored with the quote, in its commit, due at its expiry, and owned by no Host.
         var stored = Assert.Single(
-            await RowsAsync(
+            await Sql.RowsAsync(
                 connectionString,
                 $"""
                 select e.id, e.status, e.owner_id, e.execution_time = q.expires_on, q.state,
@@ -61,7 +64,7 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         try
         {
             await HostFixture.StartHostAsync(starting, TestContext.Current.CancellationToken);
-            await WaitUntilAsync(
+            await Sql.WaitUntilAsync(
                 connectionString,
                 $"exists (select from wolverine.wolverine_incoming_envelopes where id = '{envelope}' and status = 'Handled')"
             );
@@ -73,13 +76,13 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
 
         Assert.Equal(
             [["Expired", 2L, "alice"]],
-            await RowsAsync(connectionString, $"select state, version, last_changed_by from billing.quotes where id = '{quote}'")
+            await Sql.RowsAsync(connectionString, $"select state, version, last_changed_by from billing.quotes where id = '{quote}'")
         );
         Assert.Equal(
             [[ExpireQuote, envelope]],
-            await RowsAsync(connectionString, "select subscription, message_id from billing.pouryakit_receipts")
+            await Sql.RowsAsync(connectionString, "select subscription, message_id from billing.pouryakit_receipts")
         );
-        Assert.Empty(await RowsAsync(connectionString, "select id from wolverine.wolverine_dead_letters"));
+        Assert.Empty(await Sql.RowsAsync(connectionString, "select id from wolverine.wolverine_dead_letters"));
         // Every attempt continued the Operation that opened the quote: its Actor, tenant and correlation, caused by it.
         var contexts = DeliveryProbes.ContextsOf(ExpireQuote, envelope);
         Assert.NotEmpty(contexts);
@@ -184,6 +187,27 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         Assert.Empty(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
     }
 
+    // Every delayed command runs as the same Kit command, so the run's Operation names the declaration beside it.
+    [Fact]
+    public async Task A_delayed_commands_run_is_an_operation_tagged_with_its_name()
+    {
+        using var telemetry = new RecordedTelemetry();
+        var earlier = DeliveryProbes.ActivitiesOf("stub.delayed-note").Count;
+        var text = $"note {Guid.CreateVersion7()}";
+
+        await Fixture
+            .Gateway<StubModule>()
+            .SendAsync(new WriteNoteRaisingCommand(text, [new NoteToFollowUpDomainEvent(text)]), TestContext.Current.CancellationToken);
+        await Fixture.WaitUntilAsync(
+            $"exists (select from stub.notes where text = '{ScheduleFollowUpNotificationHandler.TextOf(text)}')",
+            "the note the Notification Handler scheduled was written"
+        );
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+
+        var run = Assert.IsType<Activity>(Assert.Single(DeliveryProbes.ActivitiesOf("stub.delayed-note").Skip(earlier)));
+        Assert.Equal("stub.delayed-note", run.GetTagItem("pouryakit.subscription"));
+    }
+
     // Only a Unit of Work's commit writes what a scope scheduled, so outside one the command would be dropped with the
     // scope. A scope never begun names no Module either, and is told of the Unit of Work, not of a missing declaration.
     [Theory]
@@ -284,15 +308,85 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from billing.pouryakit_receipts"));
     }
 
+    // As after a release that removed a delayed command, its declaration with it, while one waited in the store: the Host
+    // that finds it due has no handler for its type, and Wolverine sets it aside at once, never retried and never run.
     [Fact]
-    public void A_delayed_command_named_after_a_queue_wolverine_keeps_for_itself_is_refused()
+    public async Task A_delayed_command_whose_type_no_declaration_names_any_more_is_dead_lettered_at_once_and_never_run()
+    {
+        const string retired = "stub.retired-type";
+        var connectionString = await NewDatabaseAsync();
+        var text = $"retired {Guid.CreateVersion7()}";
+        // Each Host is disposed before the next one is composed, so only one Host's connection pools are open at a time.
+        await using (
+            var declaring = AppFixture.ComposeHost(
+                "Development",
+                connectionString,
+                Fixture.Logs,
+                builder => builder.Services.AddPouryaKitDelayedCommand<WriteKindChangedNoteCommand>(retired, typeof(StubModule))
+            )
+        )
+        {
+            await HostFixture.StartHostAsync(declaring, TestContext.Current.CancellationToken);
+            try
+            {
+                Assert.True(
+                    (
+                        await declaring.Services.GetRequiredService<IGatewayProcessor<StubModule>>()
+                            .SendAsync(new ScheduleKindChangedNoteCommand(text), TestContext.Current.CancellationToken)
+                    ).IsSuccess
+                );
+            }
+            finally
+            {
+                await declaring.StopAsync(TestContext.Current.CancellationToken);
+            }
+        }
+
+        var stored = Assert.Single(
+            await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where received_at = 'local://{retired}/' and status = 'Scheduled'")
+        )[0];
+        await using (var released = AppFixture.ComposeHost("Development", connectionString, Fixture.Logs))
+        {
+            await HostFixture.StartHostAsync(released, TestContext.Current.CancellationToken);
+            try
+            {
+                // The move to the dead letters and the mark as handled are two writes, queued in either order.
+                await Sql.WaitUntilAsync(
+                    connectionString,
+                    $"exists (select from wolverine.wolverine_dead_letters where id = '{stored}') and not exists (select from wolverine.wolverine_incoming_envelopes where id = '{stored}')"
+                );
+            }
+            finally
+            {
+                await released.StopAsync(TestContext.Current.CancellationToken);
+            }
+        }
+
+        var deadLetter = Assert.Single(
+            await Sql.RowsAsync(connectionString, "select id, received_at, exception_type, exception_message, body from wolverine.wolverine_dead_letters")
+        );
+        Assert.Equal(
+            [stored, $"local://{retired}/", typeof(UnknownMessageTypeNameException).FullName!, $"Unknown message type: '{typeof(WriteKindChangedNoteCommand).FullName}'"],
+            deadLetter[..4]
+        );
+        // Set aside the first time it was handed out, before any attempt.
+        Assert.Equal(0, EnvelopeSerializer.Deserialize((byte[])deadLetter[4]).Attempts);
+        Assert.Equal([[0L]], await Sql.RowsAsync(connectionString, $"select count(*) from stub.notes where text = '{text}'"));
+        Assert.Empty(DeliveryProbes.ContextsOf(retired));
+    }
+
+    // Ignoring case, as Wolverine lower-cases a local queue's name.
+    [Theory]
+    [InlineData("scheduled")]
+    [InlineData("ScheDuled")]
+    public void A_delayed_command_named_after_a_queue_wolverine_keeps_for_itself_is_refused(string name)
     {
         var thrown = Assert.Throws<InvalidOperationException>(() =>
-            new ServiceCollection().AddPouryaKitDelayedCommand<WriteDelayedNoteCommand>("scheduled")
+            new ServiceCollection().AddPouryaKitDelayedCommand<WriteDelayedNoteCommand>(name)
         );
 
         Assert.Equal(
-            $"{typeof(WriteDelayedNoteCommand).FullName}'s delayed command name scheduled is a queue Wolverine keeps for itself; choose another.",
+            $"{typeof(WriteDelayedNoteCommand).FullName}'s delayed command name {name} is a queue Wolverine keeps for itself; choose another.",
             thrown.Message
         );
     }
@@ -312,33 +406,5 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         var database = $"delayed_{Guid.CreateVersion7():N}";
         await Fixture.RowsAsync($"create database {database}");
         return new NpgsqlConnectionStringBuilder(Fixture.ConnectionString) { Database = database }.ConnectionString;
-    }
-
-    private static async Task<List<object[]>> RowsAsync(string connectionString, string sql)
-    {
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync(TestContext.Current.CancellationToken);
-        await using var command = new NpgsqlCommand(sql, connection);
-        await using var reader = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken);
-        List<object[]> rows = [];
-        while (await reader.ReadAsync(TestContext.Current.CancellationToken))
-        {
-            var row = new object[reader.FieldCount];
-            reader.GetValues(row);
-            rows.Add(row);
-        }
-
-        return rows;
-    }
-
-    private static async Task WaitUntilAsync(string connectionString, string condition)
-    {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(15));
-        while (!(bool)(await RowsAsync(connectionString, $"select {condition}"))[0][0])
-        {
-            Assert.False(timeout.IsCancellationRequested, $"Not reached within 15 s: {condition}");
-            await Task.Delay(25, TestContext.Current.CancellationToken);
-        }
     }
 }

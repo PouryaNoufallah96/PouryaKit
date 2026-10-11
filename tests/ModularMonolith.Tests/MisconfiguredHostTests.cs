@@ -1,14 +1,19 @@
+using Asp.Versioning;
 using System.Net;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using ModularMonolith.Tests.Stub;
 using ModularMonolith.Tests.Unowned;
 using ModularMonolith.Tests.Unversioned;
 using PouryaKit.Cqrs;
+using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.EFCore;
@@ -16,12 +21,14 @@ using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
 using PouryaKit.Validation;
 using PouryaKit.Web;
+using PouryaKit.Web.OpenApi;
 
 namespace ModularMonolith.Tests;
 
 // A Host composed wrongly in a way that would otherwise run degraded and say nothing fails where the mistake shows, with a
 // message naming the fix (ticket #62): when it is built, at start, when its endpoint is built, when its client is first
-// created, or at the first request.
+// created, or at the first request. A Kit option given a value it refuses stops the Host at start, naming the option
+// (ticket #83).
 public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     // WebApplication adds UseAuthentication ahead of the application's own middleware unless the application calls it,
@@ -270,6 +277,41 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         );
     }
 
+    // Declared twice, a route group's endpoints would be mapped twice, and each request to one of them would fail as
+    // ambiguous. The router matches a literal ignoring case, so /PLAIN is the same route group as /plain.
+    [Theory]
+    [InlineData("/plain", typeof(StubModule), "The endpoints of the route group /plain are already declared.")]
+    [InlineData("/PLAIN", typeof(StubModule), "The endpoints of the route group /PLAIN are already declared.")]
+    [InlineData(
+        "/other",
+        typeof(UnversionedEndpoints),
+        "The endpoints of ModularMonolith.Tests.Unversioned are already declared, for the route group /plain."
+    )]
+    public void A_route_group_or_an_assembly_whose_endpoints_are_already_declared_is_refused_when_declared_again(
+        string routePrefix,
+        Type inAssemblyOf,
+        string failure
+    )
+    {
+        var services = new ServiceCollection().AddPouryaKitEndpoints("/plain", typeof(UnversionedEndpoints).Assembly);
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => services.AddPouryaKitEndpoints(routePrefix, inAssemblyOf.Assembly));
+
+        Assert.Equal(failure, thrown.Message);
+    }
+
+    [Theory]
+    [InlineData("/plain", "The API versions of the route group /plain are already declared.")]
+    [InlineData("/PLAIN", "The API versions of the route group /PLAIN are already declared.")]
+    public void A_route_group_whose_api_versions_are_already_declared_is_refused_when_declared_again_whatever_the_case(string routePrefix, string failure)
+    {
+        var services = new ServiceCollection().AddPouryaKitApiVersions("/plain", versions => versions.HasApiVersion(new ApiVersion(1, 0)));
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => services.AddPouryaKitApiVersions(routePrefix, versions => versions.HasApiVersion(new ApiVersion(1, 0))));
+
+        Assert.Equal(failure, thrown.Message);
+    }
+
     [Fact]
     public async Task Endpoints_declared_but_never_mapped_stop_the_host_at_start_naming_the_call()
     {
@@ -284,6 +326,249 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
             $"The endpoints {typeof(UnversionedEndpoints).Namespace}.ReadActorEndpoint of the application are declared but never mapped, so they never answer. Call app.MapPouryaKitModuleEndpoints() once the Host is built.",
             thrown.Message
         );
+    }
+
+    // Observed at start, by ValidateOnStart: this Host maps no Module endpoints. One that does, as the sample's, fails
+    // earlier, in MapPouryaKitModuleEndpoints, which reads both claims while the Host is composed.
+    [Theory]
+    [InlineData(null, PouryaKitClaimTypes.Tenant, "PouryaKitWebOptions.ActorClaim names no claim to identify the Actor.")]
+    [InlineData("", PouryaKitClaimTypes.Tenant, "PouryaKitWebOptions.ActorClaim names no claim to identify the Actor.")]
+    [InlineData(" ", PouryaKitClaimTypes.Tenant, "PouryaKitWebOptions.ActorClaim names no claim to identify the Actor.")]
+    [InlineData(
+        ClaimTypes.NameIdentifier,
+        "",
+        "PouryaKitWebOptions.TenantClaim is blank; leave it null when the application has no tenant."
+    )]
+    [InlineData(
+        ClaimTypes.NameIdentifier,
+        "\t",
+        "PouryaKitWebOptions.TenantClaim is blank; leave it null when the application has no tenant."
+    )]
+    public async Task A_blank_actor_or_tenant_claim_stops_the_host_at_start_naming_the_option(
+        string? actorClaim,
+        string tenantClaim,
+        string failure
+    )
+    {
+        var builder = WebOnly();
+        builder.Services.Configure<PouryaKitWebOptions>(web =>
+        {
+            web.ActorClaim = actorClaim!;
+            web.TenantClaim = tenantClaim;
+        });
+        await using var host = builder.Build();
+
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(typeof(PouryaKitWebOptions), thrown.OptionsType);
+        Assert.Equal([failure], thrown.Failures);
+    }
+
+    // Bound from configuration, as the Hosts bind their peers. Observed at start, by ValidateOnStart, for the reason the
+    // claims' test gives.
+    [Theory]
+    [InlineData("")]
+    [InlineData("  ")]
+    public async Task A_blank_trusted_peer_stops_the_host_at_start_naming_the_option(string peer)
+    {
+        var builder = WebOnly();
+        builder.Configuration.AddInMemoryCollection(
+            [new("PouryaKit:TrustedPeers:Peers:0", AppFixture.TrustedPeer), new("PouryaKit:TrustedPeers:Peers:1", peer)]
+        );
+        builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));
+        await using var host = builder.Build();
+
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(typeof(PouryaKitTrustedPeerOptions), thrown.OptionsType);
+        Assert.Equal(
+            ["PouryaKitTrustedPeerOptions.Peers lists a blank peer; name each peer by the Actor claim value of its authenticated identity."],
+            thrown.Failures
+        );
+    }
+
+    [Fact]
+    public async Task A_null_tenant_claim_and_an_empty_peer_list_let_the_host_start()
+    {
+        var builder = WebOnly();
+        builder.Services.Configure<PouryaKitWebOptions>(web => web.TenantClaim = null);
+        builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));
+        await using var host = builder.Build();
+
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    // Observed at start, at the first read: Wolverine's options, built while the Host resolves its hosted services, read
+    // the schedule before ValidateOnStart runs.
+    [Theory]
+    [InlineData(
+        null,
+        "PouryaKitMessagingOptions.RetryDelays is null; set it to the delays a failed delivery waits before each further attempt."
+    )]
+    [InlineData(new int[0], "PouryaKitMessagingOptions.RetryDelays is empty; set at least one delay, where a zero delay retries at once.")]
+    [InlineData(new[] { -1 }, "PouryaKitMessagingOptions.RetryDelays holds a negative delay; set each delay to zero or longer.")]
+    [InlineData(new[] { 1, -1 }, "PouryaKitMessagingOptions.RetryDelays holds a negative delay; set each delay to zero or longer.")]
+    public async Task A_null_empty_or_negative_retry_schedule_stops_the_host_at_start_naming_the_option(int[]? delaysInSeconds, string failure)
+    {
+        using var host = MessagingOnly(delaysInSeconds);
+
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(typeof(PouryaKitMessagingOptions), thrown.OptionsType);
+        Assert.Equal([failure], thrown.Failures);
+    }
+
+    // A zero delay retries a failed delivery at once, the shortest valid schedule: an empty one is refused (the theory
+    // above).
+    [Fact]
+    public async Task A_zero_delay_retry_schedule_lets_the_host_start()
+    {
+        using var host = MessagingOnly([0]);
+
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    // Observed at start, at the first read, as the retry schedule's: the message store's settings are read when Wolverine's
+    // options are built, before the store is reached.
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task An_inbox_stale_time_of_zero_or_less_stops_the_host_at_start_naming_the_option(int staleTimeInSeconds)
+    {
+        await using var host = AppFixture.ComposeHost(
+            "Production",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder =>
+                builder.Services.Configure<PouryaKitMessageStoreOptions>(store =>
+                    store.InboxStaleTime = TimeSpan.FromSeconds(staleTimeInSeconds)
+                )
+        );
+
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(typeof(PouryaKitMessageStoreOptions), thrown.OptionsType);
+        Assert.Equal(["PouryaKitMessageStoreOptions.InboxStaleTime is zero or negative; set it longer than zero."], thrown.Failures);
+    }
+
+    // Ticket #97. Bound from configuration, as the Hosts bind their sunsets, beside the sample's valid 1.0 one. Observed at
+    // start, by ValidateOnStart: this Host maps no versioned endpoint, so nothing else reads the sunsets.
+    [Theory]
+    [InlineData(
+        new[] { "v1:Date=2027-06-30T00:00:00+00:00" },
+        new[]
+        {
+            "PouryaKitOpenApiOptions.Sunsets has the key 'v1', which names no API version; key each sunset by an API version as the Modules declare it, such as \"1.0\".",
+        }
+    )]
+    [InlineData(
+        new[] { "2:Date=2027-06-30T00:00:00+00:00", "2.0:Link=https://example.com/api-v2-sunset" },
+        new[] { "PouryaKitOpenApiOptions.Sunsets has the keys '2' and '2.0', which name one API version; keep one sunset per version." }
+    )]
+    [InlineData(
+        new[] { "3.0:Link=/api-v3-sunset" },
+        new[]
+        {
+            "PouryaKitOpenApiOptions.Sunsets['3.0'].Link is '/api-v3-sunset', which is not an absolute URI; set the full address of the version's sunset policy page, such as https://example.com/api-v1-sunset.",
+        }
+    )]
+    [InlineData(
+        new[] { "4.0=" },
+        new[]
+        {
+            "PouryaKitOpenApiOptions.Sunsets['4.0'] has neither a Date nor a Link; set the date the version is announced to end on, the page of its sunset policy, or both, or remove the entry.",
+        }
+    )]
+    [InlineData(
+        new[] { "v1:Date=2027-06-30T00:00:00+00:00", "4.0:Link=api-v4-sunset.html" },
+        new[]
+        {
+            "PouryaKitOpenApiOptions.Sunsets['4.0'].Link is 'api-v4-sunset.html', which is not an absolute URI; set the full address of the version's sunset policy page, such as https://example.com/api-v1-sunset.",
+            "PouryaKitOpenApiOptions.Sunsets has the key 'v1', which names no API version; key each sunset by an API version as the Modules declare it, such as \"1.0\".",
+        }
+    )]
+    public async Task A_sunset_naming_no_version_or_a_version_twice_or_a_relative_link_or_nothing_stops_the_host_at_start_naming_its_key(
+        string[] settings,
+        string[] failures
+    )
+    {
+        await using var host = SunsetsFromConfiguration(settings);
+
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(typeof(PouryaKitOpenApiOptions), thrown.OptionsType);
+        Assert.Equal(failures, thrown.Failures);
+    }
+
+    // The sample's own sunset, from its appsettings.json in the tests' output, and none at all.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task The_samples_sunset_or_none_lets_the_host_start(bool bindSampleConfiguration)
+    {
+        var builder = WebOnly();
+        builder.Services.AddPouryaKitOpenApi();
+        if (bindSampleConfiguration)
+        {
+            builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
+        }
+
+        await using var host = builder.Build();
+
+        await host.StartAsync(TestContext.Current.CancellationToken);
+
+        string[] keys = bindSampleConfiguration ? ["1.0"] : [];
+        Assert.Equal(keys, host.Services.GetRequiredService<IOptions<PouryaKitOpenApiOptions>>().Value.Sunsets.Keys);
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    // Asp.Versioning ignores the case of a version's status, so two keys that differ only in case name one version. The
+    // sunsets keep both keys, and the Host refuses them by name, where a case-insensitive dictionary would keep the last.
+    [Fact]
+    public async Task Two_sunset_keys_that_differ_only_in_case_stop_the_host_at_start_naming_both()
+    {
+        var builder = WebOnly();
+        builder.Services.AddPouryaKitOpenApi(openApi =>
+        {
+            openApi.Sunsets["1.0-Beta"] = new ApiVersionSunset { Link = new Uri("https://example.com/upper-beta-sunset") };
+            openApi.Sunsets["1.0-beta"] = new ApiVersionSunset { Link = new Uri("https://example.com/lower-beta-sunset") };
+        });
+        await using var host = builder.Build();
+
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(
+            ["PouryaKitOpenApiOptions.Sunsets has the keys '1.0-Beta' and '1.0-beta', which name one API version; keep one sunset per version."],
+            thrown.Failures
+        );
+    }
+
+    // A Web Host with the Kit's OpenAPI registration, whose sunsets are bound from the configuration section the Hosts
+    // bind: the sample's, plus each setting, "key=value" under PouryaKit:OpenApi:Sunsets.
+    private static WebApplication SunsetsFromConfiguration(string[] settings)
+    {
+        var builder = WebOnly();
+        builder.Configuration.AddInMemoryCollection(
+            settings
+                .Select(setting => setting.Split('=', 2))
+                .Select(pair => new KeyValuePair<string, string?>($"PouryaKit:OpenApi:Sunsets:{pair[0]}", pair[1]))
+        );
+        builder.Services.AddPouryaKitOpenApi();
+        builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
+        return builder.Build();
+    }
+
+    // A Host with Wolverine and no message store, retrying after the delays given, or with no schedule for null.
+    private static IHost MessagingOnly(int[]? delaysInSeconds)
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Development"]);
+        builder.UsePouryaKitWolverine();
+        builder.Services.Configure<PouryaKitMessagingOptions>(messaging =>
+            messaging.RetryDelays = delaysInSeconds is null ? null! : [.. delaysInSeconds.Select(seconds => TimeSpan.FromSeconds(seconds))]
+        );
+        return builder.Build();
     }
 
     // A Web Host with no database, authenticating with the tests' scheme, whose pipeline each test composes.

@@ -66,7 +66,7 @@ internal static partial class ModuleRules
     /// at once, outside the tracked changes the Unit of Work prepares;</item>
     /// <item>beginning, committing, rolling back or releasing a transaction or savepoint on an ADO.NET connection or
     /// transaction, or an EF Core transaction; a new <c>TransactionScope</c> or <c>CommittableTransaction</c>;</item>
-    /// <item>the Kit's own steps: <c>IUnitOfWork</c>, the Unit of Work's DbContext (<c>EfUnitOfWorkExtensions</c>),
+    /// <item>the Kit's own steps: <c>IUnitOfWork</c>, the Unit of Work's DbContext (<c>EfUnitOfWorkDbContext</c>),
     /// <c>IUnitOfWorkOutbox</c>, <c>IReceipts</c>, <c>IIntegrationEventOutbox</c>, <c>IDelayedCommandOutbox</c>, <c>IIdempotencyStore</c>, <c>ISnapshotMappers</c>,
     /// <c>DomainEventDrain</c>, <c>IReadingStateGuard</c>, <c>TrackedState</c>, the query cache (<c>IQueryCache</c>), whose eviction follows the commit, opening a reading step (<c>Operation.OnlyReading</c>), and beginning an Operation
     /// (<c>BeginOperation</c>). The Gateway, the Web boundary and the Kit's delivery step begin Operations; so does an
@@ -233,7 +233,7 @@ internal static partial class ModuleRules
         callee.Name is "ExecuteUpdate" or "ExecuteUpdateAsync" or "ExecuteDelete" or "ExecuteDeleteAsync"
         && (callee.DeclaringType!.Namespace?.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal) ?? false);
 
-    // The seams the Kit's own steps call. INotificationOutbox is a marker with nothing to call, and Operation's other
+    // The seams the Kit's own steps call. IOutbox is a marker with nothing to call, and Operation's other
     // public members only read it, so neither is listed.
     private static readonly Type[] KitSteps =
     [
@@ -252,7 +252,7 @@ internal static partial class ModuleRules
 
     private static bool IsKitStep(MethodBase callee) =>
         KitSteps.Any(step => callee.DeclaringType!.IsAssignableTo(step))
-        || callee.DeclaringType == typeof(EfUnitOfWorkExtensions)
+        || callee.DeclaringType == typeof(EfUnitOfWorkDbContext)
         || (callee.DeclaringType == typeof(OperationContextServiceProviderExtensions) && callee.Name == "BeginOperation")
         || (callee.DeclaringType == typeof(Operation) && callee.Name == nameof(Operation.OnlyReading));
 
@@ -275,7 +275,7 @@ internal static partial class ModuleRules
     /// <item><c>IIdempotencyStore</c> and <c>IQueryCache</c>: the pipeline's two optional slots; Persistence.EFCore and
     /// Caching fill them;</item>
     /// <item><c>IUnitOfWorkOutbox</c>: the Unit of Work's Outbox write and send; Messaging.Wolverine.EFCore fills it and
-    /// marks it with <c>INotificationOutbox</c>, so an application's own marker would pass the check that a Host which
+    /// marks it with <c>IOutbox</c>, so an application's own marker would pass the check that a Host which
     /// publishes has an Outbox while nothing stores what it publishes;</item>
     /// <item><c>IIntegrationEventOutbox</c> and <c>IDelayedCommandOutbox</c>: the Integration Events and delayed commands
     /// of an Operation wait in them for its commit; Messaging.Wolverine.EFCore fills them;</item>
@@ -310,7 +310,7 @@ internal static partial class ModuleRules
         typeof(IIdempotencyStore),
         typeof(IQueryCache),
         typeof(IUnitOfWorkOutbox),
-        typeof(INotificationOutbox),
+        typeof(IOutbox),
         typeof(IIntegrationEventOutbox),
         typeof(IDelayedCommandOutbox),
         typeof(ISnapshotMappers),

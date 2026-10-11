@@ -1,0 +1,397 @@
+{
+  "schema_version": 2,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Delayed and Recurring Command Lifecycle",
+    "output": "docs/architecture/diagrams/delayed-and-recurring-commands.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
+      "revision": "eb3c45c182e365dd6438c6f49377aa0893fd1603",
+      "link_mode": "web"
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Command"
+    },
+    {
+      "id": "failed",
+      "label": "Failed attempt"
+    },
+    {
+      "id": "recovery",
+      "label": "Recovery"
+    },
+    {
+      "id": "terminal",
+      "label": "Ends"
+    }
+  ],
+  "states": [
+    {
+      "id": "scheduled",
+      "type": "start",
+      "label": "Scheduled",
+      "sublabel": "inside a Unit of Work",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommands.cs",
+          "line": 12,
+          "end_line": 51,
+          "label": "Schedule adds it to the scope's Outbox"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/ScheduledDelayedCommands.cs",
+          "line": 6,
+          "end_line": 19,
+          "label": "held until the Unit of Work writes it"
+        }
+      ]
+    },
+    {
+      "id": "stored",
+      "type": "waiting",
+      "label": "Stored",
+      "sublabel": "due time, no owner",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
+          "line": 76,
+          "end_line": 124,
+          "label": "written with ScheduledTime in the commit"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandExtension.cs",
+          "line": 10,
+          "end_line": 18,
+          "label": "one local queue per declaration"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
+          "line": 111,
+          "end_line": 111,
+          "label": "every local queue durable"
+        }
+      ]
+    },
+    {
+      "id": "running",
+      "type": "active",
+      "label": "Running",
+      "sublabel": "an attempt in a new scope",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs",
+          "line": 22,
+          "end_line": 38,
+          "label": "queue names the declaration; kind checked"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs",
+          "line": 77,
+          "end_line": 100,
+          "label": "continuation or system Actor; new scope"
+        }
+      ]
+    },
+    {
+      "id": "receipt",
+      "type": "decision",
+      "label": "Receipt",
+      "sublabel": "recorded before the command",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs",
+          "line": 126,
+          "end_line": 148,
+          "label": "Receipt, next occurrence, nested send"
+        }
+      ]
+    },
+    {
+      "id": "committed",
+      "type": "success",
+      "label": "Committed",
+      "sublabel": "effect, Receipt, next",
+      "lane": "main",
+      "col": 4,
+      "step": "05",
+      "sources": [
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 68,
+          "end_line": 83,
+          "label": "save, commit, then flush"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
+          "line": 76,
+          "end_line": 90,
+          "label": "the next occurrence carries its time"
+        }
+      ]
+    },
+    {
+      "id": "attemptFailed",
+      "type": "decision",
+      "label": "Attempt failed",
+      "sublabel": "throws or returns Errors",
+      "lane": "failed",
+      "col": 2,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs",
+          "line": 96,
+          "end_line": 99,
+          "label": "Errors become an exception"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/PouryaKitWolverineExtension.cs",
+          "line": 27,
+          "end_line": 28,
+          "label": "stored retries, then the error queue"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/PouryaKitMessagingOptions.cs",
+          "line": 16,
+          "end_line": 16,
+          "label": "1 s, 10 s, 1 min by default"
+        }
+      ]
+    },
+    {
+      "id": "nextStored",
+      "type": "active",
+      "label": "Next stored",
+      "sublabel": "unless one waits",
+      "lane": "recovery",
+      "col": 1,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/RecurringCommandStart.cs",
+          "line": 20,
+          "end_line": 52,
+          "label": "at Host start, unless one waits"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs",
+          "line": 44,
+          "end_line": 67,
+          "label": "by the attempt that sets one aside"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/RecurringCommandStart.cs",
+          "line": 87,
+          "end_line": 97,
+          "label": "the first occurrence after now"
+        }
+      ]
+    },
+    {
+      "id": "refused",
+      "type": "failure",
+      "label": "Refused",
+      "sublabel": "throws, never stored",
+      "lane": "terminal",
+      "col": 0,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommands.cs",
+          "line": 16,
+          "end_line": 43,
+          "label": "reading code, no Unit of Work, undeclared"
+        }
+      ]
+    },
+    {
+      "id": "deadLetter",
+      "type": "failure",
+      "label": "Dead letter",
+      "sublabel": "set aside, never handled",
+      "lane": "terminal",
+      "col": 2,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/PouryaKitWolverineExtension.cs",
+          "line": 28,
+          "end_line": 28,
+          "label": "MoveToErrorQueue after the last delay"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
+          "line": 110,
+          "end_line": 110,
+          "label": "an unknown type is dead-lettered"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/UnknownDelayedCommandException.cs",
+          "line": 3,
+          "end_line": 26,
+          "label": "a retired name or the other kind"
+        }
+      ]
+    },
+    {
+      "id": "appliedNothing",
+      "type": "neutral",
+      "label": "Applied nothing",
+      "sublabel": "Receipt already committed",
+      "lane": "terminal",
+      "col": 3,
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs",
+          "line": 129,
+          "end_line": 136,
+          "label": "a committed Receipt returns success"
+        }
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "id": "commitWrites",
+      "from": "scheduled",
+      "to": "stored",
+      "label": "commit"
+    },
+    {
+      "id": "comesDue",
+      "from": "stored",
+      "to": "running",
+      "label": "due"
+    },
+    {
+      "id": "recordsReceipt",
+      "from": "running",
+      "to": "receipt",
+      "label": "records"
+    },
+    {
+      "id": "commandSucceeds",
+      "from": "receipt",
+      "to": "committed",
+      "label": "new, succeeds",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nextOccurrence",
+      "from": "committed",
+      "to": "stored",
+      "label": "recurring: next",
+      "variant": "dashed",
+      "route": "top-channel"
+    },
+    {
+      "id": "scheduleRefused",
+      "from": "scheduled",
+      "to": "refused",
+      "label": "refused",
+      "variant": "security"
+    },
+    {
+      "id": "attemptThrows",
+      "from": "running",
+      "to": "attemptFailed",
+      "label": "throws",
+      "variant": "security"
+    },
+    {
+      "id": "commandFails",
+      "from": "receipt",
+      "to": "attemptFailed",
+      "label": "fails",
+      "variant": "security"
+    },
+    {
+      "id": "retryStored",
+      "from": "attemptFailed",
+      "to": "stored",
+      "label": "retry"
+    },
+    {
+      "id": "noDelayLeft",
+      "from": "attemptFailed",
+      "to": "deadLetter",
+      "label": "last",
+      "variant": "security"
+    },
+    {
+      "id": "setAsideStoresNext",
+      "from": "deadLetter",
+      "to": "nextStored",
+      "label": "recurring",
+      "variant": "dashed"
+    },
+    {
+      "id": "storesFirst",
+      "from": "nextStored",
+      "to": "stored",
+      "label": "store"
+    },
+    {
+      "id": "unknownAtOnce",
+      "from": "stored",
+      "to": "deadLetter",
+      "label": "at once",
+      "variant": "security"
+    },
+    {
+      "id": "receiptExists",
+      "from": "receipt",
+      "to": "appliedNothing",
+      "label": "exists",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Scheduled only inside a commit",
+      "items": [
+        "IDelayedCommands.Schedule throws for reading code, with no active Unit of Work, for a type its Module did not declare, and for a recurring command.",
+        "The Operation's commit writes the command as a Scheduled envelope with its due time; a rollback leaves nothing stored."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "On whose authority",
+      "items": [
+        "A delayed command runs as a continuation of the Operation that scheduled it: its Actor, tenant and correlation.",
+        "Each recurring occurrence is a new Operation of its declared system Actor, with no tenant and no restored trace parent.",
+        "The Receipt key is the envelope's id for a delayed command and the occurrence's time for a recurring one."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Dead letters",
+      "items": [
+        "A retired name or the other kind is retried, then set aside: UnknownDelayedCommandException.",
+        "A type no declaration names, or a body that no longer reads, is set aside at once, before the Kit's delivery runs.",
+        "The dead letter keeps the failing attempt's own exception; a failure to store the next occurrence is logged beside it."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Recovery",
+      "items": [
+        "Host start stores the first occurrence after now for each recurring command with none waiting on its queue.",
+        "After an unreadable occurrence, start any one instance of the Host, then discard the dead letter; never replay it."
+      ]
+    }
+  ]
+}

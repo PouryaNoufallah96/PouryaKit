@@ -4,7 +4,7 @@ using Offending;
 namespace PouryaKit.ArchitectureTests;
 
 // Ticket #55: one implementing-type lookup. Only PouryaKit.Core's ImplementingTypes lists the types of an assembly; every
-// other Kit package asks it.
+// other Kit package asks it, but PouryaKit.Validation, which finds validators through FluentValidation's own scanner.
 public sealed class TypeLookupTests
 {
     private static readonly HashSet<string> AssemblyListings =

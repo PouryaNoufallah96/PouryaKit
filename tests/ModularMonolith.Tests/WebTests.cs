@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Testing;
+using static ModularMonolith.Tests.Fixtures.ProblemResponses;
 
 namespace ModularMonolith.Tests;
 
@@ -104,6 +104,29 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
                 .EnumerateArray()
                 .Select(error => (error.GetProperty("code").GetString(), error.GetProperty("target").GetString()))
         );
+    }
+
+    // A body that names a member twice, in its own case or another, cannot be read (#86): it is refused before any
+    // validation, never read with its last value.
+    [Theory]
+    [InlineData("name")]
+    [InlineData("Name")]
+    public async Task A_body_that_names_a_member_twice_answers_400_as_a_problem_response_and_nothing_is_saved(string again)
+    {
+        using var client = Fixture.Client("ada");
+        var category = Guid.CreateVersion7();
+        using var body = new StringContent(
+            $$"""{"categoryId":"{{category}}","name":"Lamps","{{again}}":"Chairs"}""",
+            System.Text.Encoding.UTF8,
+            "application/json"
+        );
+
+        var response = await client.PostAsync("/catalog/categories", body, TestContext.Current.CancellationToken);
+
+        var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
+        Assert.False(problem.TryGetProperty("errors", out _));
+        Assert.False(problem.TryGetProperty("detail", out _));
+        Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from catalog.categories where id = '{category}'"));
     }
 
     [Fact]
@@ -431,14 +454,6 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
 
     private static Task<string> BodyAsync(HttpResponseMessage response) =>
         response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-
-    private static async Task<JsonElement> ProblemAsync(HttpResponseMessage response, HttpStatusCode status)
-    {
-        Assert.Equal(status, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        using var problem = JsonDocument.Parse(await BodyAsync(response));
-        return problem.RootElement.Clone();
-    }
 
     private static async Task<SeenContext> ContextAsync(HttpClient client, string path)
     {

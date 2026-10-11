@@ -19,6 +19,10 @@ public abstract class AggregateRoot<TId> : Entity<TId>, IAggregateRoot
     /// <summary>The Domain Events raised and not yet taken by the Unit of Work, in the order raised.</summary>
     public IReadOnlyList<DomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
+    /// <summary>
+    /// Raises <paramref name="domainEvent"/> on this aggregate, after those raised before it, for the Unit of Work to
+    /// take.
+    /// </summary>
     protected void Raise(DomainEvent domainEvent)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);

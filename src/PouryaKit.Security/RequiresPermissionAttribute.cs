@@ -12,6 +12,7 @@ namespace PouryaKit.Security;
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class RequiresPermissionAttribute : Attribute, IRequiresAuthorizer
 {
+    /// <summary>Declares that an Actor must hold <paramref name="permission"/> to run this command or query.</summary>
     public RequiresPermissionAttribute(string permission)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(permission);

@@ -6,6 +6,10 @@ using PouryaKit.Domain;
 
 namespace PouryaKit.Persistence.EFCore;
 
+/// <summary>
+/// Composes the Persistence and the Unit of Work Capability over EF Core on a Module's or a Host's services: the DbContext as the Unit of
+/// Work, its repositories, and the Errors of its unique constraints.
+/// </summary>
 public static class EfCoreServiceCollectionExtensions
 {
     extension(IServiceCollection services)
@@ -15,9 +19,13 @@ public static class EfCoreServiceCollectionExtensions
         /// container, or in this Module when called on a Module's builder. It adds the generic repository over it, the
         /// <see cref="IUnitOfWorkConnection"/> through which a plain SQL write joins the active Unit of Work's transaction,
         /// and the <see cref="IIdempotencyStore"/> that keeps the keys of <c>[Idempotent]</c> commands in that
-        /// transaction, in the Module's <see cref="IdempotencyTable"/>. Once for the Host, it adds the background
-        /// service that removes expired keys from every Module's table, as <see cref="PouryaKitIdempotencyOptions"/>
-        /// sets, and checks those options when the Host starts.
+        /// transaction, in the Module's <see cref="IdempotencyTable"/>. Once for the Host, in every Host, it adds the
+        /// background service that removes expired keys, as <see cref="PouryaKitIdempotencyOptions"/> sets, and checks
+        /// those options when the Host starts: at each cleanup it walks every DbContext this call made a Unit of Work,
+        /// probes each one's schema with PostgreSQL's <c>to_regclass</c>, and returns silently for one with no key
+        /// table, the DbContext of a Module with no <c>[Idempotent]</c> command. The store, its cleanup and the table
+        /// are PostgreSQL-only, as the Kit is: <c>on conflict</c>, <c>ctid</c>, <c>to_regclass</c>, PostgreSQL's
+        /// SQLSTATE codes and a <c>timestamp with time zone</c> column.
         /// When a messaging package registered an <see cref="IUnitOfWorkOutbox"/>, the Unit of Work commits through it.
         /// It records the DbContext, once, as a <see cref="DbContextConnection"/> with <paramref name="connectionName"/>,
         /// the connection string it stores over when its registration names one, so the Kit's composition checks refuse,

@@ -16,7 +16,7 @@ One independently usable area of the Kit, delivered as one package or a small gr
 _Avoid_: Layer, building block
 
 **Host**:
-The single deployable application that composes Modules.
+A deployable application that runs Operations, whether it composes Modules or none.
 _Avoid_: API project, shell
 
 **Module**:
@@ -50,6 +50,10 @@ _Avoid_: Health check, startup filter, composition check
 **Gateway**:
 The only entry point through which anything outside a Module asks it to run a command or query.
 _Avoid_: Module facade, mediator, bus
+
+**Reverse proxy**:
+The deployable application in front of a system's Hosts that forwards each incoming HTTP request, by configured routes, to the Host that serves it; it runs no Operation. Planned for Wave 3, not built yet.
+_Avoid_: Gateway, API gateway, edge service
 
 ### Execution
 
@@ -144,7 +148,7 @@ A Module's share of its Host's durable message store: the Integration Events and
 _Avoid_: Queue, message table
 
 **Stream**:
-An aggregate whose stored state is the ordered events it has appended, loaded by folding them; the Kit's second write model.
+An aggregate whose stored state is the ordered events it has appended, loaded by folding them; the Kit's second write model. Planned for Wave 3, not built yet.
 _Avoid_: Event-sourced entity, event stream aggregate
 
 **Page**:

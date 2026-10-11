@@ -12,8 +12,6 @@ internal sealed class FluentValidationStep<TOperation>(IEnumerable<IValidator<TO
     : IValidationStep<TOperation>
     where TOperation : notnull
 {
-    private const string FallbackCode = "Validation.Failed";
-
     public async Task<Result> ValidateAsync(TOperation operation, CancellationToken cancellationToken)
     {
         var errors = ImmutableArray.CreateBuilder<Error>();
@@ -28,7 +26,7 @@ internal sealed class FluentValidationStep<TOperation>(IEnumerable<IValidator<TO
 
     private static Error ToError(ValidationFailure failure)
     {
-        var code = string.IsNullOrWhiteSpace(failure.ErrorCode) ? FallbackCode : failure.ErrorCode;
+        var code = string.IsNullOrWhiteSpace(failure.ErrorCode) ? ValidationErrorCodes.Failed : failure.ErrorCode;
         var message = failure.ErrorMessage ?? "";
         return string.IsNullOrWhiteSpace(failure.PropertyName)
             ? Error.Validation(code, message)

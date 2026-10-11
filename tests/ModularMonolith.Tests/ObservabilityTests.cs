@@ -1,10 +1,13 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using Billing;
 using Billing.Quotes.Features.ExpireQuote;
 using Billing.Quotes.Features.OpenQuote;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
+using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Observability;
@@ -176,6 +179,77 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
                 && (string?)duration.Tags[OperationTelemetry.ModuleTag] == nameof(StubModule)
                 && (string?)duration.Tags[OperationTelemetry.OutcomeTag] == OperationTelemetry.Threw
         );
+    }
+
+    // The wrapper observes an Operation when either listener is there, not only when both are.
+    [Fact]
+    public async Task With_only_a_meter_listener_a_command_still_records_its_duration()
+    {
+        using var telemetry = new RecordedTelemetry(activities: false);
+
+        var written = await Fixture.Gateway<StubModule>().SendAsync(new WriteNoteCommand("metered"), TestContext.Current.CancellationToken);
+
+        Assert.True(written.IsSuccess);
+        Assert.Contains(
+            telemetry.Durations,
+            duration =>
+                (string?)duration.Tags[OperationTelemetry.OperationTag] == nameof(WriteNoteCommand)
+                && (string?)duration.Tags[OperationTelemetry.OutcomeTag] == OperationTelemetry.Succeeded
+        );
+    }
+
+    [Fact]
+    public async Task With_only_an_activity_listener_a_command_is_still_an_activity()
+    {
+        using var telemetry = new RecordedTelemetry(durations: false);
+        Activity upstream;
+
+        using (upstream = RecordedTelemetry.Upstream.StartActivity("request", ActivityKind.Server)!)
+        {
+            Assert.True((await Fixture.Gateway<StubModule>().SendAsync(new WriteNoteCommand("traced"), TestContext.Current.CancellationToken)).IsSuccess);
+        }
+
+        Assert.Contains(
+            telemetry.Of(upstream.TraceId),
+            activity => Tag(activity, OperationTelemetry.OperationTag) == nameof(WriteNoteCommand) && Tag(activity, OperationTelemetry.OutcomeTag) == OperationTelemetry.Succeeded
+        );
+    }
+
+    // The meter is the Host container's, from its IMeterFactory, so each Host owns its instruments and disposes them with
+    // itself; a static meter has no owner.
+    [Fact]
+    public async Task A_commands_duration_is_measured_on_a_meter_of_the_hosts_own_meter_factory()
+    {
+        ConcurrentQueue<object?> owners = [];
+        using var listener = new MeterListener
+        {
+            InstrumentPublished = (instrument, published) =>
+            {
+                if (instrument.Meter.Name == OperationTelemetry.SourceName && instrument.Name == OperationTelemetry.DurationName)
+                {
+                    published.EnableMeasurementEvents(instrument);
+                }
+            },
+        };
+        listener.SetMeasurementEventCallback<double>(
+            (instrument, _, tags, _) =>
+            {
+                foreach (var (name, value) in tags)
+                {
+                    if (name == OperationTelemetry.OperationTag && value is nameof(WriteNoteCommand))
+                    {
+                        owners.Enqueue(instrument.Meter.Scope);
+                    }
+                }
+            }
+        );
+        listener.Start();
+
+        var written = await Fixture.Gateway<StubModule>().SendAsync(new WriteNoteCommand("owned"), TestContext.Current.CancellationToken);
+
+        Assert.True(written.IsSuccess);
+        Assert.NotEmpty(owners);
+        Assert.All(owners, owner => Assert.Same(Fixture.Host.Services.GetRequiredService<IMeterFactory>(), owner));
     }
 
     // The category is created first, outside the trace; CreateProduct runs inside an upstream activity standing in for a

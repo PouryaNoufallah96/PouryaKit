@@ -25,14 +25,20 @@ public interface IRepository<TAggregate, in TId>
     /// </summary>
     void Remove(TAggregate aggregate);
 
+    /// <summary>The aggregate with <paramref name="id"/>, or null when there is none.</summary>
     Task<TAggregate?> FindAsync(TId id, CancellationToken cancellationToken = default);
 
     /// <summary>The first aggregate <paramref name="specification"/> selects, or null.</summary>
     Task<TAggregate?> FindAsync(ISpecification<TAggregate> specification, CancellationToken cancellationToken = default);
 
+    /// <summary>Every aggregate <paramref name="specification"/> selects, in its order.</summary>
     Task<List<TAggregate>> ListAsync(ISpecification<TAggregate> specification, CancellationToken cancellationToken = default);
 
+    /// <summary>True when an aggregate matches the criteria of <paramref name="specification"/>.</summary>
     Task<bool> AnyAsync(ISpecification<TAggregate> specification, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// How many aggregates match the criteria of <paramref name="specification"/>, whatever its paging.
+    /// </summary>
     Task<int> CountAsync(ISpecification<TAggregate> specification, CancellationToken cancellationToken = default);
 }

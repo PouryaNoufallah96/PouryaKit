@@ -9,6 +9,7 @@ namespace PouryaKit.Domain;
 /// </summary>
 public interface IAuditable
 {
+    /// <summary>When it was created, by the clock of the Operation that created it.</summary>
     DateTimeOffset CreatedAt { get; }
 
     /// <summary>The Id of the Actor whose Operation created it.</summary>

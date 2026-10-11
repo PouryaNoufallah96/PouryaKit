@@ -10,5 +10,8 @@ namespace PouryaKit.Caching;
 /// </summary>
 public interface IInvalidatesCache
 {
+    /// <summary>
+    /// The cache tags whose entries are evicted once the command's Operation commits, read before its handler runs.
+    /// </summary>
     IReadOnlyCollection<string> InvalidatedCacheTags { get; }
 }

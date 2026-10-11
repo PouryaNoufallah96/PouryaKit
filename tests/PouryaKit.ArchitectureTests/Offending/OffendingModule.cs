@@ -89,7 +89,7 @@ internal sealed class KitStepCallingCommandHandler(
     public override async Task<Result> Handle(OffendCommand command, CancellationToken cancellationToken)
     {
         await unitOfWork.RunAsync(_ => Task.FromResult(Result.Success()), cancellationToken);
-        _ = unitOfWork.DbContext;
+        _ = EfUnitOfWorkDbContext.Of(unitOfWork);
         await outbox.WriteAsync(dbContext, [command], [], cancellationToken);
         await receipts.RecordAsync("offending", Guid.CreateVersion7(), cancellationToken);
         _ = snapshots.Map(command, removed: false);
@@ -185,7 +185,7 @@ internal sealed class ClearingDomainEventHandler(IAggregateRoot aggregate) : IDo
 internal static class OwnJson
 {
     public static JsonSerializerOptions Options() =>
-        new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, Converters = { new TypedIdJsonConverterFactory() } };
+        new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
 }
 
 // Public, so other Modules could reach it; the generated migration beside it is public too, and that is no offence.

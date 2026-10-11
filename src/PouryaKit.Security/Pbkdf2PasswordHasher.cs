@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Options;
 
 namespace PouryaKit.Security;
 
@@ -18,66 +19,32 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
     // what keeps a cut-down key from verifying.
     private const int MinKeySize = 32;
 
-    private readonly Pbkdf2Algorithm algorithm;
-    private readonly int iterations;
-    private readonly int saltSize;
-    private readonly int keySize;
+    private readonly Pbkdf2Algorithm _algorithm;
+    private readonly int _iterations;
+    private readonly int _saltSize;
+    private readonly int _keySize;
 
     private Pbkdf2PasswordHasher(Pbkdf2Algorithm algorithm, int iterations, int saltSize, int keySize)
     {
-        this.algorithm = algorithm;
-        this.iterations = iterations;
-        this.saltSize = saltSize;
-        this.keySize = keySize;
+        _algorithm = algorithm;
+        _iterations = iterations;
+        _saltSize = saltSize;
+        _keySize = keySize;
     }
 
-    public static Pbkdf2PasswordHasher Create(PasswordHashingOptions options)
-    {
-        var algorithm = Pbkdf2Algorithm.Of(options.Algorithm);
-        List<string> problems = [];
-        if (algorithm is null)
-        {
-            problems.Add($"Algorithm {options.Algorithm} is not one of {string.Join(", ", Enum.GetNames<PasswordHashAlgorithm>())}.");
-        }
-        else
-        {
-            if (options.Iterations < algorithm.MinIterations || options.Iterations > MaxIterations)
-            {
-                problems.Add(
-                    $"Iterations {options.Iterations} is outside {algorithm.MinIterations:N0} to {MaxIterations:N0} for {options.Algorithm}."
-                );
-            }
-
-            if (options.KeySize < MinKeySize || options.KeySize > algorithm.OutputSize)
-            {
-                problems.Add($"KeySize {options.KeySize} is outside {MinKeySize} to {algorithm.OutputSize} bytes for {options.Algorithm}.");
-            }
-        }
-
-        if (options.SaltSize < MinSaltSize || options.SaltSize > MaxSaltSize)
-        {
-            problems.Add($"SaltSize {options.SaltSize} is outside {MinSaltSize} to {MaxSaltSize} bytes.");
-        }
-
-        if (problems.Count > 0)
-        {
-            throw new InvalidOperationException(
-                $"The password hashing options are invalid:{Environment.NewLine}{string.Join(Environment.NewLine, problems)}"
-            );
-        }
-
-        return new(algorithm!, options.Iterations, options.SaltSize, options.KeySize);
-    }
+    // From options Validation accepted: IOptions<T>.Value runs it before the value reaches here.
+    public static Pbkdf2PasswordHasher Create(PouryaKitPasswordHashingOptions options) =>
+        new(Pbkdf2Algorithm.Of(options.Algorithm)!, options.Iterations, options.SaltSize, options.KeySize);
 
     public string Hash(string password)
     {
         ArgumentNullException.ThrowIfNull(password);
 
-        var salt = RandomNumberGenerator.GetBytes(saltSize);
-        var key = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, algorithm.HashName, keySize);
+        var salt = RandomNumberGenerator.GetBytes(_saltSize);
+        var key = Rfc2898DeriveBytes.Pbkdf2(password, salt, _iterations, _algorithm.HashName, _keySize);
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"{Prefix}${Version}${algorithm.Name}${iterations}${Convert.ToBase64String(salt)}${Convert.ToBase64String(key)}"
+            $"{Prefix}${Version}${_algorithm.Name}${_iterations}${Convert.ToBase64String(salt)}${Convert.ToBase64String(key)}"
         );
     }
 
@@ -106,10 +73,10 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
             return PasswordVerification.Failed;
         }
 
-        return stored.Algorithm != algorithm
-            || stored.Iterations < iterations
-            || stored.Salt.Length < saltSize
-            || stored.Key.Length < keySize
+        return stored.Algorithm != _algorithm
+            || stored.Iterations < _iterations
+            || stored.Salt.Length < _saltSize
+            || stored.Key.Length < _keySize
             ? PasswordVerification.SucceededNeedsUpgrade
             : PasswordVerification.Succeeded;
     }
@@ -185,5 +152,40 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
                 "sha512" => Sha512,
                 _ => null,
             };
+    }
+
+    // The bounds new hashes are made within, checked when the Host starts.
+    internal sealed class Validation : IValidateOptions<PouryaKitPasswordHashingOptions>
+    {
+        public ValidateOptionsResult Validate(string? name, PouryaKitPasswordHashingOptions options)
+        {
+            var algorithm = Pbkdf2Algorithm.Of(options.Algorithm);
+            List<string> problems = [];
+            if (algorithm is null)
+            {
+                problems.Add($"Algorithm {options.Algorithm} is not one of {string.Join(", ", Enum.GetNames<PasswordHashAlgorithm>())}.");
+            }
+            else
+            {
+                if (options.Iterations < algorithm.MinIterations || options.Iterations > MaxIterations)
+                {
+                    problems.Add(
+                        $"Iterations {options.Iterations} is outside {algorithm.MinIterations:N0} to {MaxIterations:N0} for {options.Algorithm}."
+                    );
+                }
+
+                if (options.KeySize < MinKeySize || options.KeySize > algorithm.OutputSize)
+                {
+                    problems.Add($"KeySize {options.KeySize} is outside {MinKeySize} to {algorithm.OutputSize} bytes for {options.Algorithm}.");
+                }
+            }
+
+            if (options.SaltSize < MinSaltSize || options.SaltSize > MaxSaltSize)
+            {
+                problems.Add($"SaltSize {options.SaltSize} is outside {MinSaltSize} to {MaxSaltSize} bytes.");
+            }
+
+            return problems.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(problems);
+        }
     }
 }

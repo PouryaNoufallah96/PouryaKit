@@ -146,8 +146,9 @@ GENERATED_REGISTRY = "Internal/Generated/WolverineHandlers/GeneratedHandlerRegis
 RUNTIME_COMPILER = ("Wolverine.RuntimeCompilation.dll", "JasperFx.RuntimeCompiler.dll")
 
 
-def check_production_publish(host, published):
-    """The Host's Release publish holds the Host with the code `codegen write` generated, and no runtime compiler."""
+def check_production_publish(host, published, refused=()):
+    """The Host's Release publish holds the Host with the code `codegen write` generated, no runtime compiler, and no
+    assembly of a Kit package its runtime closure refuses (`refused`, prefixes of package IDs)."""
     if not (host / GENERATED_REGISTRY).is_file():
         raise RuntimeError(f"codegen write wrote no {GENERATED_REGISTRY} in {host}.")
     assembly = published / f"{host.name}.dll"
@@ -155,10 +156,12 @@ def check_production_publish(host, published):
         raise RuntimeError(f"The publish in {published} holds no {assembly.name} built with the generated code.")
     if carried := [name for name in RUNTIME_COMPILER if (published / name).exists()]:
         raise RuntimeError(f"The Release publish in {published} carries the runtime compiler: {', '.join(carried)}.")
+    if carried := sorted(path.name for path in published.glob("*.dll") if path.stem.startswith(tuple(refused))):
+        raise RuntimeError(f"The Release publish in {published} carries {', '.join(carried)}, which its runtime closure refuses.")
     return sorted(path.relative_to(host).as_posix() for path in (host / "Internal/Generated").rglob("*") if path.is_file())
 
 
-def production_publish(host, published, configfile, env, log):
+def production_publish(host, published, configfile, env, log, refused=()):
     """A Host's production step (ADR 0004), on a consumer's copy: `codegen write`, which compiles nothing, so the Release
     build serves, then a publish restored for Release, where the Host does not reference the runtime compiler."""
     started = time.monotonic()
@@ -167,9 +170,10 @@ def production_publish(host, published, configfile, env, log):
     run(["dotnet", "restore", host, "-p:Configuration=Release", "--configfile", configfile, "--no-http-cache", "-p:RestoreFallbackFolders="],
         cwd=host, env=env, log=f"{log}-publish-restore.log")
     run(["dotnet", "publish", host, "-c", "Release", "--no-restore", "-o", published], cwd=host, env=env, log=f"{log}-publish.log")
-    generated = check_production_publish(host, published)
+    generated = check_production_publish(host, published, refused)
+    refusing = f", nor an assembly of {' or '.join(refused)}" if refused else ""
     return (f"codegen write wrote {', '.join(generated)}, and the Release publish holds the Host built with it and neither "
-            f"{' nor '.join(RUNTIME_COMPILER)} ({time.monotonic() - started:.0f} s)")
+            f"{' nor '.join(RUNTIME_COMPILER)}{refusing} ({time.monotonic() - started:.0f} s)")
 
 
 def sample_consumer(folder, source, entries, version):
@@ -195,11 +199,15 @@ def check_cache_folders(folders, cache):
 
 
 def check_consumer(folder, env, package_ids, version, excluded):
+    """Every Kit package a project of `folder` restored is a produced one, and none is `excluded` (prefixes of package
+    IDs) but in a test project's closure, a project under a `tests` folder: what only the tests reference, such as
+    PouryaKit.Testing and the Modularity it depends on, never reaches what the Host runs."""
     assets = sorted(folder.glob("**/obj/project.assets.json"))
     if not assets:
         raise RuntimeError("Consumer did not produce restored assets.")
-    found = set()
+    runtime = set()
     for asset in assets:
+        test_project = "tests" in asset.relative_to(folder).parts
         document = json.loads(asset.read_text())
         folders = list(document["packageFolders"])
         check_cache_folders(folders, env["NUGET_PACKAGES"])
@@ -211,7 +219,8 @@ def check_consumer(folder, env, package_ids, version, excluded):
                     raise RuntimeError(f"Consumer has a source fallback: {resolved}")
             if not name_id.startswith("PouryaKit."):
                 continue
-            found.add(name_id)
+            if not test_project:
+                runtime.add(name_id)
             if library["type"] != "package" or name_id not in package_ids or resolved_version != version:
                 raise RuntimeError(f"Unexpected Kit dependency: {name}")
             cache = Path(env["NUGET_PACKAGES"]) / library["path"]
@@ -222,8 +231,8 @@ def check_consumer(folder, env, package_ids, version, excluded):
             produced = folder.parent.parent / "packages" / f"{name_id}.{version}.nupkg"
             if hashlib.sha256(cached.read_bytes()).digest() != hashlib.sha256(produced.read_bytes()).digest():
                 raise RuntimeError(f"Consumer substituted package bytes: {name}")
-    if any(any(name.startswith(prefix) for name in found) for prefix in excluded):
-        raise RuntimeError(f"Consumer brought excluded dependencies: {found}")
+    if any(any(name.startswith(prefix) for name in runtime) for prefix in excluded):
+        raise RuntimeError(f"Consumer brought excluded dependencies outside its tests: {sorted(runtime)}")
     return list(map(str, assets))
 
 
@@ -398,9 +407,10 @@ def validate(output, *, fetch=True):
             if not passed or not failed or failed.group(1) != "0" or passed.group(1) == "0":
                 raise RuntimeError(f"The smoke tests of {name} did not pass: {result}")
             production = production_publish(solution.parent / "src" / f"{generated}.Host", folder / "publish", folder / "NuGet.Config",
-                                            env, output / f"consumer-{name}")
+                                            env, output / f"consumer-{name}", consumer["excluded"])
             assets = check_consumer(folder, env, ids, evidence["Version"], consumer["excluded"])
-            evidence["Consumers"].append({"Name": name, "Packages": consumer["packages"], "Assets": assets})
+            # The generated test project restores the Kit packages its tests reference beside the Host's.
+            evidence["Consumers"].append({"Name": name, "Packages": consumer["packages"] + consumer.get("tests", []), "Assets": assets})
             smoke_tests.append(f"{name} (-n {generated}) {passed.group(1)}")
             print(f"PASS template consumer {name}: generated with -n {generated}, restored and built from the produced packages; "
                   f"{passed.group(1)} smoke tests passed; {production}; {time.monotonic() - started:.0f} s in all", flush=True)

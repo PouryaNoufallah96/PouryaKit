@@ -121,7 +121,8 @@ longer decides whether the repository writes, because it is true in a scope that
   (`SingleModuleTests.A_change_to_a_loaded_aggregate_is_saved_by_the_commit_of_a_command_sent_after_it`). The three
   tests change a value; none raises a Domain Event. The owner decided on 2026-10-09 to judge the monolith
   template's own files, its Composition Root, its endpoints, the Host's `Program.cs` and the smoke test both
-  templates share: read as text, none of them takes a repository, as a parameter, a field or a local of
+  templates share (since 2026-10-10, ticket #87, also the Host's `AppHost.cs`, which now holds the composition
+  `Program.cs` held): read as text, none of them takes a repository, as a parameter, a field or a local of
   `IRepository<,>` or of an interface the Proving Sample derives from it, or from a service provider
   (`TemplateTests.None_of_the_monoliths_own_files_takes_a_repository`; the rule's summary lists what text cannot
   show). The template's business code is the Proving Sample's and this rule does not judge it, so it never has to
@@ -138,3 +139,64 @@ longer decides whether the repository writes, because it is true in a scope that
     yet.
   - *A guard in the repository's constructor or its read members*: a query's handler injects the repository and reads
     through it with no Unit of Work, and so does a specific repository built in a scope that runs no command.
+
+## Amendment (2026-10-10, ticket #81: the Unit of Work's DbContext is reached through a static accessor)
+
+The decision above stands, and so does the #66 and #67 amendment. Only the shape of one of the Kit's write seams
+changes. The DbContext an EF Core Unit of Work saves and commits was an extension property on `IUnitOfWork`, the
+amendment's `IUnitOfWork.DbContext`. Every repository has `PouryaKit.Persistence.EFCore` and an `IUnitOfWork` in scope,
+so code completion offered Feature code the DbContext this decision reserves for the Unit of Work, and only the
+structure test caught a call, after compilation (spec #74, finding A5).
+
+- **Now** `EfUnitOfWorkDbContext.Of(unitOfWork)`, a plain static accessor in the same package and namespace, which no
+  completion on `IUnitOfWork` lists. Its Kit callers, the Receipts and the idempotency store, are unchanged otherwise.
+- **The structure test still closes it to a Module.** `FeatureCodeTests.A_module_that_saves_commits_writes_in_bulk_or_runs_a_kit_step_is_rejected`
+  names the offending Module's call of `EfUnitOfWorkDbContext.Of`, red with the accessor taken off the rule's Kit
+  steps.
+
+## Amendment (2026-10-10, ticket #85: a Snapshot never carries a value the database generates)
+
+The decision above stands. The Snapshot step builds each Snapshot from the prepared state, before the save, so a value
+the database writes during the save is not in it: a default value SQL or a computed column on a property a mapper reads
+would commit one value and publish another, against this decision's intent that what an Operation publishes is the
+state it commits (spec #74, finding P1).
+
+- **Refused at commit, beside the temporary key.** `SnapshotStep.Build` refuses a non-key property whose value the
+  database generates, a default value SQL, a computed column or a `ValueGenerated` other than `Never` that no
+  client-side value generator sets for good when the entity is added, anywhere in the mapped graph of an aggregate with a declared Snapshot: the aggregate, the types it owns and the children it holds
+  through a navigation, their derived types included, as the prepare step attributes their changes. The
+  `InvalidOperationException` names the entity and the property, and nothing commits. The graph is read from the model
+  once per DbContext type. The Kit's own conventions, Guid version 7 keys and Kit-set versions and audit fields, never
+  meet it, and keys stay allowed.
+  *Corrected on 2026-10-10 (ticket #92, final review R1): the graph is read once per model, the `IModel` instance the
+  DbContext exposes, not once per DbContext type. EF lets one DbContext type carry several models, one given with
+  `UseModel` or one per model cache key, and a read cached by type gave a second model the first one's aggregate roots
+  and generated properties, so the second model's refusals could be skipped. `SnapshotStep` keeps the read in a
+  `ConditionalWeakTable` keyed by that model, which holds an entry only as long as the model. Proven by
+  `SnapshotTests.A_snapshot_is_refused_by_the_model_its_dbcontext_uses_when_one_dbcontext_type_has_two_models`, red
+  with the type key.*
+  *Refined on 2026-10-10 (ticket #100): the read keeps the properties whose values the database may generate, and
+  whether a client-side value generator sets one for good is asked of the committing DbContext's
+  `IValueGeneratorSelector` at each commit. Two contexts given one model can replace the selector differently, and the
+  first one's answer was kept for both. The selector caches what it selects: 1,000 builds of a Snapshot whose aggregate
+  has such a property took about 22 ms before and after. Proven by
+  `SnapshotTests.A_snapshot_is_refused_by_the_value_generator_selector_its_dbcontext_uses_when_two_share_a_model`, red
+  with the selector's answer cached.*
+  *Extended on 2026-10-11 (ticket #105, the first review round of PR #103): a child's key is checked too, so the
+  refusal is no longer of non-key properties alone, and "keys stay allowed" holds for the aggregate's own keys only.
+  Every key was left out, so a child whose key an identity column numbers was published with the key its entity held before the
+  save, while its row committed the database's number. The aggregate's own keys stay left out, its primary key
+  refused while it is temporary. A child's key generated on add is refused unless the generator the committing
+  DbContext's selector returns for it, which EF uses for a key whether or not its mapping names one, gives values
+  that are not temporary, as a `Guid` key's does. A shadow key is left out, since no mapper can read it: refusing the
+  one EF gives an owned collection by default would name a property the author never declared. Proven by
+  `SnapshotTests.A_snapshot_is_refused_when_the_database_generates_the_key_of_a_child_in_its_aggregates_graph`, red
+  with child keys left out, and
+  `SnapshotTests.A_snapshot_of_an_aggregate_whose_owned_collection_has_efs_default_key_is_built`, red with shadow keys
+  checked.*
+- **Proven against PostgreSQL** by `SnapshotTests.A_snapshot_of_an_aggregate_whose_database_generates_a_value_it_maps_fails_the_operation_that_saves_it`
+  (a default value SQL on the root) and
+  `SnapshotTests.A_snapshot_of_an_aggregate_whose_database_generates_a_value_of_an_owned_part_it_maps_fails_the_operation_that_saves_it`
+  (a computed column on an owned part), each red with the refusal off: the Snapshot published no value while the row
+  committed the database's. `SnapshotTests.A_snapshot_of_an_aggregate_whose_value_a_client_side_generator_sets_carries_the_value_committed`
+  shows a client-side generator's value is not refused.

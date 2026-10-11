@@ -12,10 +12,20 @@ namespace PouryaKit.Persistence.EFCore;
 /// <see cref="IEntityTypeConfiguration{TEntity}"/> in the assembly is applied, and the default schema is the schema of
 /// the migrations history table. Every aggregate's <see cref="AggregateRoot{TId}.Version"/> is its concurrency token,
 /// and every <see cref="ISoftDeletable"/> entity is left out of queries by a filter named
-/// <c>PouryaKit.SoftDelete</c>. Override <see cref="OnModelCreating"/> only to add to it, and call the base.
+/// <see cref="SoftDeleteFilter"/>. Override <see cref="OnModelCreating"/> only to add to it, and call the base.
 /// </summary>
 public abstract class PouryaKitDbContext : DbContext
 {
+    /// <summary>
+    /// The name of the query filter that leaves soft-deleted rows out, <c>PouryaKit.SoftDelete</c>. A read that must see
+    /// them passes it to EF Core's <c>IgnoreQueryFilters([PouryaKitDbContext.SoftDeleteFilter])</c>.
+    /// </summary>
+    public const string SoftDeleteFilter = "PouryaKit.SoftDelete";
+
+    /// <summary>
+    /// Creates the DbContext with <paramref name="options"/> and the cascade timings the Unit of Work's soft delete
+    /// relies on.
+    /// </summary>
     protected PouryaKitDbContext(DbContextOptions options)
         : base(options)
     {
@@ -27,6 +37,7 @@ public abstract class PouryaKitDbContext : DbContext
         ChangeTracker.DeleteOrphansTiming = CascadeTiming.Immediate;
     }
 
+    /// <inheritdoc />
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         ArgumentNullException.ThrowIfNull(configurationBuilder);
@@ -43,6 +54,7 @@ public abstract class PouryaKitDbContext : DbContext
         }
     }
 
+    /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);

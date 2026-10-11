@@ -1,7 +1,4 @@
-using System.Reflection;
-using Billing;
 using Catalog;
-using Catalog.Contracts.Products.Events.V1;
 using Inventory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -151,7 +148,7 @@ public sealed class IntegrationEventWiringTests
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.UsePouryaKitWolverine();
         // An Outbox, as a Host that subscribes registers one, so the Outbox check stays quiet.
-        builder.Services.AddSingleton<INotificationOutbox, StandInOutbox>();
+        builder.Services.AddSingleton<IOutbox, StandInOutbox>();
         builder.Services.Receive<EarlyReceivedV1>("tests.early-received.v1");
         builder.Services.Subscribe<EarlyReceivedV1, EarlyReceivedIntegrationEventHandler>("tests.early-received");
 
@@ -189,30 +186,48 @@ public sealed class IntegrationEventWiringTests
         );
     }
 
-    [Fact]
-    public void Inventory_and_billing_know_catalog_only_through_its_contracts_and_no_contract_or_module_references_a_transport()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void A_publication_requires_a_concrete_event_type(bool abstractClass)
     {
-        var inventory = ReferencedBy(typeof(InventoryModule).Assembly);
-        Assert.Contains("Catalog.Contracts", inventory);
-        Assert.DoesNotContain("Catalog", inventory);
-        var billing = ReferencedBy(typeof(BillingModule).Assembly);
-        Assert.Contains("Catalog.Contracts", billing);
-        Assert.DoesNotContain("Catalog", billing);
-        Assert.DoesNotContain("Inventory", billing);
-        Assert.DoesNotContain("Billing", inventory);
-        // Contracts are plain records: nothing of the Kit, nothing of a transport.
-        Assert.DoesNotContain(ReferencedBy(typeof(ProductCreatedV1).Assembly), name => name.StartsWith("PouryaKit", StringComparison.Ordinal));
-        Assert.All(
-            ReferencedBy(typeof(IIntegrationEventPublisher).Assembly),
-            name => Assert.True(name == "PouryaKit.Domain" || name.StartsWith("System", StringComparison.Ordinal), name)
-        );
-        Assert.All(
-            [typeof(CatalogModule).Assembly, typeof(InventoryModule).Assembly, typeof(BillingModule).Assembly],
-            module => Assert.DoesNotContain(ReferencedBy(module), name => name.StartsWith("Wolverine", StringComparison.Ordinal))
-        );
+        var services = new ServiceCollection();
+
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+        {
+            if (abstractClass)
+            {
+                services.Publish<AbstractEvent>("tests.review.v1");
+            }
+            else
+            {
+                services.Publish<IEvent>("tests.review.v1");
+            }
+        });
+
+        Assert.Contains("is not a concrete class", thrown.Message);
     }
 
-    private static List<string> ReferencedBy(Assembly assembly) => [.. assembly.GetReferencedAssemblies().Select(name => name.Name!)];
+    [Fact]
+    public void The_same_subscription_cannot_belong_to_two_modules()
+    {
+        var services = new ServiceCollection();
+        services.Subscribe<TwinV1, TwinIntegrationEventHandler>("tests.review.twin", typeof(CatalogModule));
+        services.Subscribe<TwinV1, TwinIntegrationEventHandler>("Tests.Review.Twin", typeof(CatalogModule));
+        Assert.Single(services, descriptor => descriptor.ServiceType == typeof(TwinIntegrationEventHandler));
+
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            services.Subscribe<TwinV1, TwinIntegrationEventHandler>("tests.review.twin", typeof(InventoryModule))
+        );
+
+        Assert.Contains("tests.review.twin", thrown.Message);
+        Assert.Contains(nameof(CatalogModule), thrown.Message);
+        Assert.Contains(nameof(InventoryModule), thrown.Message);
+    }
+
+    private interface IEvent;
+
+    private abstract class AbstractEvent;
 }
 
 // Named for the process by one test only, before it is declared.

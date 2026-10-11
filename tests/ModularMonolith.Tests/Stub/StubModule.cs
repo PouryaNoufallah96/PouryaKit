@@ -51,6 +51,12 @@ public sealed class StubModule : IModuleDefinition
         module.Subscribe<TimestampKeySnapshotV1, CopyTimestampKeyIntegrationEventHandler>("stub.timestamp-key-snapshots");
         module.PublishSnapshot<BinaryKey, BinaryKeySnapshotV1, BinaryKeySnapshotMapper>("stub.binary-key-snapshot.v1");
         module.Subscribe<BinaryKeySnapshotV1, CopyBinaryKeyIntegrationEventHandler>("stub.binary-key-snapshots");
+        module.PublishSnapshot<Ticket, TicketSnapshotV1, TicketSnapshotMapper>("stub.ticket-snapshot.v1");
+        module.Subscribe<TicketSnapshotV1, RecordSnapshotIntegrationEventHandler<TicketSnapshotV1>>("stub.ticket-snapshots");
+        module.PublishSnapshot<Drawer, DrawerSnapshotV1, DrawerSnapshotMapper>("stub.drawer-snapshot.v1");
+        module.Subscribe<DrawerSnapshotV1, RecordSnapshotIntegrationEventHandler<DrawerSnapshotV1>>("stub.drawer-snapshots");
+        module.PublishSnapshot<Badge, BadgeSnapshotV1, BadgeSnapshotMapper>("stub.badge-snapshot.v1");
+        module.Subscribe<BadgeSnapshotV1, RecordSnapshotIntegrationEventHandler<BadgeSnapshotV1>>("stub.badge-snapshots");
         module.Publish<NoteCirculatedV1>("stub.note-circulated.v1");
         module.Subscribe<NoteCirculatedV1, LedgerCirculatedNoteIntegrationEventHandler>(Circulation.Ledger);
         module.Subscribe<NoteCirculatedV1, ArchiveCirculatedNoteIntegrationEventHandler>(Circulation.Archive);

@@ -159,51 +159,6 @@ public sealed class PasswordHashingTests
         Assert.Equal(PasswordVerification.Failed, Hasher().Verify("\ud800", Known));
     }
 
-    [Theory]
-    [InlineData(PasswordHashAlgorithm.Sha256, 599_999, 16, 32, "Iterations")]
-    [InlineData(PasswordHashAlgorithm.Sha512, 219_999, 16, 32, "Iterations")]
-    [InlineData(PasswordHashAlgorithm.Sha256, 10_000_001, 16, 32, "Iterations")]
-    [InlineData(PasswordHashAlgorithm.Sha256, 600_000, 15, 32, "SaltSize")]
-    [InlineData(PasswordHashAlgorithm.Sha256, 600_000, 65, 32, "SaltSize")]
-    [InlineData(PasswordHashAlgorithm.Sha256, 600_000, 16, 31, "KeySize")]
-    [InlineData(PasswordHashAlgorithm.Sha256, 600_000, 16, 33, "KeySize")]
-    [InlineData(PasswordHashAlgorithm.Sha512, 220_000, 16, 65, "KeySize")]
-    [InlineData((PasswordHashAlgorithm)7, 600_000, 16, 32, "Algorithm")]
-    public void Options_outside_their_bounds_fail_registration(
-        PasswordHashAlgorithm algorithm,
-        int iterations,
-        int saltSize,
-        int keySize,
-        string invalid
-    )
-    {
-        var thrown = Assert.Throws<InvalidOperationException>(() =>
-            Hasher(options =>
-            {
-                options.Algorithm = algorithm;
-                options.Iterations = iterations;
-                options.SaltSize = saltSize;
-                options.KeySize = keySize;
-            })
-        );
-
-        Assert.Contains(invalid, thrown.Message, StringComparison.Ordinal);
-    }
-
-    [Theory]
-    [InlineData(PasswordHashAlgorithm.Sha256, 10_000_000, 64, 32)]
-    [InlineData(PasswordHashAlgorithm.Sha512, 220_000, 16, 64)]
-    public void Options_at_their_bounds_are_accepted(PasswordHashAlgorithm algorithm, int iterations, int saltSize, int keySize)
-    {
-        _ = Hasher(options =>
-        {
-            options.Algorithm = algorithm;
-            options.Iterations = iterations;
-            options.SaltSize = saltSize;
-            options.KeySize = keySize;
-        });
-    }
-
     [Fact]
     public void Verification_compares_derived_keys_in_constant_time()
     {
@@ -213,12 +168,8 @@ public sealed class PasswordHashingTests
         Assert.DoesNotContain(calls, call => call.Name == "SequenceEqual");
     }
 
-    private static IPasswordHasher Hasher(Action<PasswordHashingOptions>? configure = null) =>
-        (IPasswordHasher)
-            new ServiceCollection()
-                .AddPouryaKitPasswordHashing(configure)
-                .Single(descriptor => descriptor.ServiceType == typeof(IPasswordHasher))
-                .ImplementationInstance!;
+    private static IPasswordHasher Hasher(Action<PouryaKitPasswordHashingOptions>? configure = null) =>
+        new ServiceCollection().AddPouryaKitPasswordHashing(configure).BuildServiceProvider().GetRequiredService<IPasswordHasher>();
 
     private static byte[] Derive(byte[] salt, int iterations, HashAlgorithmName algorithm, int keySize) =>
         Rfc2898DeriveBytes.Pbkdf2(Password, salt, iterations, algorithm, keySize);

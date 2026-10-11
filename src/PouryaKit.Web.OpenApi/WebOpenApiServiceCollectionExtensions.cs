@@ -8,6 +8,10 @@ using PouryaKit.Cqrs;
 
 namespace PouryaKit.Web.OpenApi;
 
+/// <summary>
+/// Composes the API versions and OpenAPI Capability on a Host's services: API versioning, each Module's API versions,
+/// and one OpenAPI document per version.
+/// </summary>
 public static class WebOpenApiServiceCollectionExtensions
 {
     /// <summary>The request header a caller names the API version in, on a Module's unversioned paths.</summary>
@@ -21,22 +25,32 @@ public static class WebOpenApiServiceCollectionExtensions
         /// <see cref="ApiVersionHeader"/> header on its unversioned paths (<c>/catalog/products</c>); naming none
         /// there, or two that differ, is refused with a 400 problem response. Every response reports the versions its
         /// Module supports and deprecates, and a version with a sunset in <see cref="PouryaKitOpenApiOptions"/> reports
-        /// that date and its policy link. The documents are the versions the Modules declared with
+        /// that date and its policy link; a sunset the Kit refuses stops the Host at start, naming its key
+        /// (<see cref="PouryaKitOpenApiOptions.Sunsets"/>). The documents are the versions the Modules declared with
         /// <c>AddPouryaKitApiVersions</c>; in each, an operation that requires an authenticated caller requires the
         /// authentication schemes its policy names, or else the Host's default one, as far as each is a JWT bearer
         /// scheme, which the document states as HTTP bearer; a scheme of any other handler is left out, and an operation
         /// that allows anonymous callers requires none. An operation whose endpoint calls <c>RequireIdempotencyKey()</c>
-        /// declares the required <c>Idempotency-Key</c> header. <c>MapPouryaKitOpenApi</c> serves them.
+        /// declares the required <c>Idempotency-Key</c> header. <c>MapPouryaKitOpenApi</c> serves them. A second call
+        /// adds only its <paramref name="configure"/>.
         /// </summary>
         public IServiceCollection AddPouryaKitOpenApi(Action<PouryaKitOpenApiOptions>? configure = null)
         {
             ArgumentNullException.ThrowIfNull(services);
 
-            var options = services.AddOptions<PouryaKitOpenApiOptions>();
+            var options = services.AddOptions<PouryaKitOpenApiOptions>().ValidateOnStart();
             if (configure is not null)
             {
                 options.Configure(configure);
             }
+
+            // Asp.Versioning's AddOpenApi appends its delegate on every call: a second one would run each transformer twice.
+            if (services.Any(descriptor => descriptor.ImplementationType == typeof(SunsetValidation)))
+            {
+                return services;
+            }
+
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<PouryaKitOpenApiOptions>, SunsetValidation>());
 
             services
                 .AddApiVersioning(versioning =>
@@ -90,7 +104,8 @@ public static class WebOpenApiServiceCollectionExtensions
 
             if (
                 services.Any(descriptor =>
-                    descriptor.ImplementationInstance is ModuleApiVersions declared && declared.RoutePrefix == routePrefix
+                    descriptor.ImplementationInstance is ModuleApiVersions declared
+                    && string.Equals(declared.RoutePrefix, routePrefix, StringComparison.OrdinalIgnoreCase)
                 )
             )
             {
@@ -125,6 +140,56 @@ public static class WebOpenApiServiceCollectionExtensions
             {
                 policy.Link(link).Type("text/html");
             }
+        }
+    }
+
+    // AddSunsets reads the sunsets only when Asp.Versioning first reads its options, as endpoints are built: at the first
+    // request, or never. This refuses at start what it would throw on, merge into one policy or write as a wrong link, so
+    // its throw stays a backstop a validated Host never reaches.
+    private sealed class SunsetValidation : IValidateOptions<PouryaKitOpenApiOptions>
+    {
+        public ValidateOptionsResult Validate(string? name, PouryaKitOpenApiOptions options)
+        {
+            List<string> failures = [];
+            List<(string Key, ApiVersion Version)> versions = [];
+            foreach (var (key, sunset) in options.Sunsets)
+            {
+                if (ApiVersionParser.Default.TryParse(key, out var version))
+                {
+                    versions.Add((key, version));
+                }
+                else
+                {
+                    failures.Add(
+                        $"PouryaKitOpenApiOptions.Sunsets has the key '{key}', which names no API version; key each sunset by an API version as the Modules declare it, such as \"1.0\"."
+                    );
+                }
+
+                if (sunset.Link is { IsAbsoluteUri: false } link)
+                {
+                    failures.Add(
+                        $"PouryaKitOpenApiOptions.Sunsets['{key}'].Link is '{link.OriginalString}', which is not an absolute URI; set the full address of the version's sunset policy page, such as https://example.com/api-v1-sunset."
+                    );
+                }
+
+                if (sunset is { Date: null, Link: null })
+                {
+                    failures.Add(
+                        $"PouryaKitOpenApiOptions.Sunsets['{key}'] has neither a Date nor a Link; set the date the version is announced to end on, the page of its sunset policy, or both, or remove the entry."
+                    );
+                }
+            }
+
+            // Compared as parsed versions, as Asp.Versioning keys its sunset policies: "1" and "1.0" are one version.
+            failures.AddRange(
+                versions
+                    .GroupBy(entry => entry.Version, entry => $"'{entry.Key}'")
+                    .Where(keys => keys.Count() > 1)
+                    .Select(keys =>
+                        $"PouryaKitOpenApiOptions.Sunsets has the keys {string.Join(" and ", keys)}, which name one API version; keep one sunset per version."
+                    )
+            );
+            return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
         }
     }
 }

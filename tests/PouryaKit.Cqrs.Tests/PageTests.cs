@@ -37,7 +37,7 @@ public sealed class PageTests
         var beyond = Declaration.Validate(new PageRequest { Number = reachable + 1, Size = 50 });
 
         Assert.True(Declaration.Validate(new PageRequest { Number = reachable, Size = 50 }).IsSuccess);
-        Assert.Equal("Page.NumberOutOfRange", Assert.Single(beyond.Errors).Code);
+        Assert.Equal(PageErrorCodes.NumberOutOfRange, Assert.Single(beyond.Errors).Code);
     }
 
     [Fact]
@@ -88,5 +88,6 @@ public sealed class PageTests
                 Assert.True(FilterOperator.TryParseName(filterOperator.Name, out var parsed) && parsed == filterOperator)
         );
         Assert.False(FilterOperator.TryParseName("Equal", out _));
+        Assert.False(FilterOperator.TryParseName(null, out _));
     }
 }

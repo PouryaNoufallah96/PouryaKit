@@ -101,7 +101,7 @@ public sealed class IntegrationEventVersionTests(AppFixture app) : HostTest<AppF
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.UsePouryaKitWolverine();
         // An Outbox, as a Host that publishes registers one, so the routing refusal is the one problem.
-        builder.Services.AddSingleton<INotificationOutbox, StandInOutbox>();
+        builder.Services.AddSingleton<IOutbox, StandInOutbox>();
         builder.Services.Publish<ProducedV1>("tests.produced.v1");
         builder.Services.Publish<MisproducedV2>(typeof(ProducedV1).FullName!);
 
@@ -119,7 +119,7 @@ public sealed class IntegrationEventVersionTests(AppFixture app) : HostTest<AppF
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
         builder.UsePouryaKitWolverine();
         // An Outbox, as a Host that publishes registers one, so the Outbox check stays quiet.
-        builder.Services.AddSingleton<INotificationOutbox, StandInOutbox>();
+        builder.Services.AddSingleton<IOutbox, StandInOutbox>();
         builder.Services.Publish<RoutedV1>("tests.routed.v1");
         builder.Services.Subscribe<RoutedV1, RoutedIntegrationEventHandler>("tests.routed");
         // A v2 published under the v1 contract's full name, a valid wire name of its own.
@@ -139,7 +139,7 @@ public sealed class IntegrationEventVersionTests(AppFixture app) : HostTest<AppF
 internal sealed record RoutedV1(Guid Id);
 
 // Marks a Host as one whose Unit of Work writes an Outbox; nothing here commits.
-internal sealed class StandInOutbox : INotificationOutbox;
+internal sealed class StandInOutbox : IOutbox;
 
 internal sealed record ProducedV1(Guid Id);
 

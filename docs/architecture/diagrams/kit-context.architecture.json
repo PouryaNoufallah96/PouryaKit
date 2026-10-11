@@ -1,0 +1,565 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "What surrounds a Host built on PouryaKit",
+    "output": "docs/architecture/diagrams/kit-context.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
+      "revision": "9503cf98baf3455eeacd786c2497f2a27512b8a5",
+      "link_mode": "web"
+    }
+  },
+  "components": [
+    {
+      "id": "idp",
+      "type": "security",
+      "label": "Identity provider",
+      "sublabel": "issues bearer JWTs",
+      "pos": [
+        370,
+        60
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/PouryaKit.Security.JwtBearer/JwtBearerValidation.cs",
+          "line": 7,
+          "end_line": 47,
+          "label": "issuer and keys: configured or Authority"
+        },
+        {
+          "path": "src/PouryaKit.Security.JwtBearer/JwtBearerServiceCollectionExtensions.cs",
+          "line": 15,
+          "end_line": 33,
+          "label": "standard JWT bearer; Host fails to start"
+        }
+      ]
+    },
+    {
+      "id": "proxy",
+      "type": "cloud",
+      "label": "Reverse proxy (planned)",
+      "sublabel": "PouryaKit.ReverseProxy, Wave 3",
+      "pos": [
+        530,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "sources": [
+        {
+          "path": "GLOSSARY.md",
+          "line": 54,
+          "end_line": 56,
+          "label": "planned for Wave 3, not built yet"
+        }
+      ]
+    },
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "HTTP caller",
+      "sublabel": "sends a bearer JWT",
+      "pos": [
+        40,
+        263
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 45,
+          "end_line": 52,
+          "label": "bearer JWT; authenticated by default"
+        },
+        {
+          "path": "src/PouryaKit.Web/HttpCallerContext.cs",
+          "line": 35,
+          "end_line": 63,
+          "label": "the Operation Context from the caller"
+        }
+      ]
+    },
+    {
+      "id": "mmhost",
+      "type": "backend",
+      "label": "ModularMonolith.Host",
+      "sublabel": "Catalog, Billing, and Inventory without a broker",
+      "pos": [
+        370,
+        250
+      ],
+      "size": [
+        300,
+        90
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 76,
+          "end_line": 87,
+          "label": "composes the Modules; Inventory w/o broker"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 99,
+          "end_line": 103,
+          "label": "message store; RabbitMQ with a broker"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
+          "line": 15,
+          "end_line": 27,
+          "label": "references the Kit's projects"
+        }
+      ]
+    },
+    {
+      "id": "rabbit",
+      "type": "messagebus",
+      "label": "RabbitMQ (optional)",
+      "sublabel": "exchange per wire name, queue per kind of Host",
+      "pos": [
+        850,
+        263
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqExtension.cs",
+          "line": 10,
+          "end_line": 33,
+          "label": "fanout exchange per wire name; one queue"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqHostApplicationBuilderExtensions.cs",
+          "line": 21,
+          "end_line": 33,
+          "label": "queue unique to one kind of Host"
+        },
+        {
+          "path": "GLOSSARY.md",
+          "line": 130,
+          "end_line": 132,
+          "label": "Service name"
+        }
+      ]
+    },
+    {
+      "id": "invhost",
+      "type": "backend",
+      "label": "Inventory.Host",
+      "sublabel": "Inventory alone; /alive, /health in Development",
+      "pos": [
+        1250,
+        250
+      ],
+      "size": [
+        290,
+        90
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Inventory.Host/InventoryHost.cs",
+          "line": 31,
+          "end_line": 55,
+          "label": "Inventory alone, receives over RabbitMQ"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
+          "line": 130,
+          "end_line": 141,
+          "label": "/alive always; /health in Development"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj",
+          "line": 20,
+          "end_line": 27,
+          "label": "references the Kit's projects"
+        }
+      ]
+    },
+    {
+      "id": "otlp",
+      "type": "external",
+      "label": "OTLP collector",
+      "sublabel": "traces, metrics and logs",
+      "pos": [
+        1305,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
+          "line": 60,
+          "end_line": 82,
+          "label": "Kit source and meter; OTLP when set"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
+          "line": 100,
+          "end_line": 117,
+          "label": "Serilog's OTLP sink when set"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 88,
+          "end_line": 90,
+          "label": "the Kit exports nothing"
+        }
+      ]
+    },
+    {
+      "id": "peer",
+      "type": "external",
+      "label": "Trusted peer Host",
+      "sublabel": "named by its Actor claim",
+      "pos": [
+        40,
+        470
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/PouryaKit.Web/PouryaKitTrustedPeerOptions.cs",
+          "line": 3,
+          "end_line": 21,
+          "label": "peers by authenticated Actor claim"
+        },
+        {
+          "path": "src/PouryaKit.Web/HttpCallerContext.cs",
+          "line": 52,
+          "end_line": 59,
+          "label": "only a trusted peer continues"
+        },
+        {
+          "path": "src/PouryaKit.Web/HttpClients/WebHttpClientBuilderExtensions.cs",
+          "line": 18,
+          "end_line": 29,
+          "label": "outgoing calls carry the Kit's headers"
+        }
+      ]
+    },
+    {
+      "id": "pgmm",
+      "type": "database",
+      "label": "PostgreSQL: modular_monolith",
+      "sublabel": "a schema per Module, and wolverine",
+      "pos": [
+        300,
+        470
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/appsettings.json",
+          "line": 2,
+          "end_line": 4,
+          "label": "database modular_monolith"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
+          "line": 30,
+          "label": "a schema per Module (catalog)"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs",
+          "line": 10,
+          "end_line": 24,
+          "label": "store and DbContexts on one database"
+        }
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis (optional)",
+      "sublabel": "HybridCache's distributed layer",
+      "pos": [
+        575,
+        470
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 91,
+          "end_line": 97,
+          "label": "only when ConnectionStrings:cache is set"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 96,
+          "end_line": 97,
+          "label": "no Kit package references Redis"
+        }
+      ]
+    },
+    {
+      "id": "pginv",
+      "type": "database",
+      "label": "PostgreSQL: inventory",
+      "sublabel": "schemas inventory and wolverine",
+      "pos": [
+        1330,
+        470
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Inventory.Host/appsettings.json",
+          "line": 2,
+          "end_line": 5,
+          "label": "database inventory; the broker"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs",
+          "line": 21,
+          "label": "schema inventory"
+        },
+        {
+          "path": "tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs",
+          "line": 53,
+          "end_line": 66,
+          "label": "one database per Host in the tests"
+        }
+      ]
+    },
+    {
+      "id": "feed",
+      "type": "cloud",
+      "label": "GitHub Packages",
+      "sublabel": "private NuGet feed of PouryaKit.*",
+      "pos": [
+        360,
+        650
+      ],
+      "size": [
+        210,
+        64
+      ],
+      "sources": [
+        {
+          "path": ".github/workflows/package-publication.yml",
+          "line": 94,
+          "end_line": 111,
+          "label": "dotnet nuget push to the feed"
+        },
+        {
+          "path": "docs/private-packages.md",
+          "line": 64,
+          "end_line": 83,
+          "label": "a consumer restores PouryaKit.* from it"
+        }
+      ]
+    },
+    {
+      "id": "kit",
+      "type": "backend",
+      "label": "PouryaKit packages",
+      "sublabel": "20 libraries and the templates",
+      "pos": [
+        700,
+        650
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "sources": [
+        {
+          "path": "scripts/packaging/inventory.json",
+          "line": 3,
+          "end_line": 23,
+          "label": "the 21 packages"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 17,
+          "end_line": 74,
+          "label": "their allowed references"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "issues-token",
+      "from": "idp",
+      "to": "caller",
+      "label": "issues the bearer JWT",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "http-request",
+      "from": "caller",
+      "to": "mmhost",
+      "label": "HTTPS, bearer JWT",
+      "variant": "emphasis"
+    },
+    {
+      "id": "authority",
+      "from": "mmhost",
+      "to": "idp",
+      "label": "Authority: issuer, keys",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "proxy-planned",
+      "from": "proxy",
+      "to": "mmhost",
+      "label": "planned: forwards by route",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "peer-continues",
+      "from": "peer",
+      "to": "mmhost",
+      "label": "continues its Operation",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "mm-database",
+      "from": "mmhost",
+      "to": "pgmm",
+      "label": "data and message store",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mm-redis",
+      "from": "mmhost",
+      "to": "redis",
+      "label": "with a cache string",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mm-broker",
+      "from": "mmhost",
+      "to": "rabbit",
+      "label": "publishes, with a broker",
+      "variant": "dashed"
+    },
+    {
+      "id": "broker-inventory",
+      "from": "rabbit",
+      "to": "invhost",
+      "label": "queue inventory"
+    },
+    {
+      "id": "inv-database",
+      "from": "invhost",
+      "to": "pginv",
+      "label": "data and message store",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "inv-otlp",
+      "from": "invhost",
+      "to": "otlp",
+      "label": "OTLP, when the endpoint is set",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "mm-kit",
+      "from": "mmhost",
+      "to": "kit",
+      "label": "built on",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "inv-kit",
+      "from": "invhost",
+      "to": "kit",
+      "label": "built on",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "kit-feed",
+      "from": "kit",
+      "to": "feed",
+      "label": "published to",
+      "fromSide": "left",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Hosts",
+      "items": [
+        "ModularMonolith.Host composes Catalog and Billing, and Inventory too when no broker is configured.",
+        "Inventory.Host composes Inventory alone and receives Catalog's ProductCreatedV1, ProductCreatedV2 and ProductSnapshotV1 from RabbitMQ.",
+        "A Host keeps its Modules' schemas and its message store in one database: the Host fails when built if a Module's DbContext names another."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Optional neighbours",
+      "items": [
+        "RabbitMQ only with ConnectionStrings:broker: one durable queue per kind of Host, named by its service name.",
+        "Redis only with ConnectionStrings:cache; no Kit package references Redis.",
+        "OTLP only through the ServiceDefaults recipes, when OTEL_EXPORTER_OTLP_ENDPOINT is set; PouryaKit.Observability exports nothing, and ModularMonolith.Host composes no exporter."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Trust",
+      "items": [
+        "Every endpoint is authenticated by default.",
+        "The Host does not start unless its bearer scheme validates the issuer, audience, signature and lifetime, from configured values or the Authority.",
+        "A trusted peer is named by its authenticated Actor claim, never by a header; outgoing calls carry the Kit's Operation Context headers, never the bearer token."
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Planned",
+      "items": [
+        "PouryaKit.ReverseProxy, in front of the Hosts, is planned for Wave 3 and not built."
+      ]
+    }
+  ]
+}

@@ -1,4 +1,20 @@
 #!/bin/sh
+# Before a commit: conflict markers, the tree check, and the two repository checks when a staged path is one of their
+# inputs (session 5 merged a docs edit with a failing docs check because its output was piped). The checks read the
+# working tree, so a gated file staged in part is refused below. This is a seatbelt: an unstaged change to another
+# file the checks read, such as a source file whose names check-docs.py looks up, can still let a failing commit
+# through. CI's ai-setup job, which runs both on the committed tree, is the gate.
 set -eu
 "$(dirname "$0")/staged-conflict-markers" "$@"
-git diff --cached --name-only --diff-filter=AMR | python3 "$(dirname "$0")/../.agents/scripts/check-tree.py"
+staged=$(git diff --cached --name-only --diff-filter=AMRD)
+printf '%s\n' "$staged" | python3 "$(dirname "$0")/../.agents/scripts/check-tree.py"
+top=$(git rev-parse --show-toplevel)
+# A gated path staged in part would be checked as it is on disk, not as it commits: refuse it (final review of #74, R2).
+partial=$(printf '%s\n' "$staged" | grep -E '\.md$|^\.gitattributes$|^skills-lock\.json$|^(\.claude/|\.codex/|\.agents/|AGENTS\.md$|CLAUDE\.md$)' | while IFS= read -r path; do [ -n "$path" ] && git diff --quiet -- "$path" || echo "$path"; done)
+if [ -n "$partial" ]; then echo "pre-commit: staged in part, so the checks would read the working tree, not the commit; stage the whole file or stash the rest:" >&2; printf '  %s\n' $partial >&2; exit 1; fi
+if printf '%s\n' "$staged" | grep -qE '\.md$|^\.gitattributes$|^skills-lock\.json$'; then
+  (cd "$top" && python3 .agents/scripts/check-docs.py) || { echo "pre-commit: check-docs.py failed; fix the docs or run it un-piped to see the lines" >&2; exit 1; }
+fi
+if printf '%s\n' "$staged" | grep -qE '^(\.claude/|\.codex/|\.agents/|AGENTS\.md$|CLAUDE\.md$|skills-lock\.json$)'; then
+  (cd "$top" && python3 .agents/scripts/check-ai-setup.py) || { echo "pre-commit: check-ai-setup.py failed" >&2; exit 1; }
+fi

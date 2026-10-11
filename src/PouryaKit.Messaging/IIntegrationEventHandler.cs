@@ -12,5 +12,6 @@ namespace PouryaKit.Messaging;
 public interface IIntegrationEventHandler<TIntegrationEvent>
     where TIntegrationEvent : class
 {
+    /// <summary>Applies the business effect of <paramref name="integrationEvent"/> and returns its Result.</summary>
     Task<Result> Handle(TIntegrationEvent integrationEvent, CancellationToken cancellationToken);
 }

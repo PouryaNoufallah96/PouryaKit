@@ -9,6 +9,10 @@ using PouryaKit.Domain;
 
 namespace PouryaKit.Persistence.Dapper;
 
+/// <summary>
+/// Composes the Dapper reads Capability on a Module's or a Host's services: the read connection, and typed IDs as
+/// Dapper parameters and results.
+/// </summary>
 public static class DapperServiceCollectionExtensions
 {
     extension(IServiceCollection services)
@@ -19,8 +23,8 @@ public static class DapperServiceCollectionExtensions
         /// and result. Call it from each Module's Composition Root that reads with Dapper: named with no assembly on a
         /// Module's builder (<see cref="IModuleServices"/>), it takes the typed IDs of the assembly of the Module's
         /// definition; named assemblies replace it. The Host holds one <see cref="IReadConnectionFactory"/> and one
-        /// connection pool, shared by every Module that names the same connection; naming a different connection in the
-        /// same Host throws here. With the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>), a connection
+        /// connection pool, shared by every Module that names the same connection, ignoring case as configuration keys
+        /// do; naming a different connection in the same Host throws here. With the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>), a connection
         /// string the Host's configuration does not set, or sets blank, fails the Host's build, before any read.
         /// </summary>
         public IServiceCollection AddPouryaKitDapper(string connectionName, params Assembly[] typedIdAssemblies)
@@ -37,7 +41,7 @@ public static class DapperServiceCollectionExtensions
                 .FirstOrDefault();
             if (registered is not null)
             {
-                return registered.Name == connectionName
+                return string.Equals(registered.Name, connectionName, StringComparison.OrdinalIgnoreCase)
                     ? services
                     : throw new InvalidOperationException(
                         $"Dapper reads already use the connection '{registered.Name}' in this Host, so they cannot also use '{connectionName}'."

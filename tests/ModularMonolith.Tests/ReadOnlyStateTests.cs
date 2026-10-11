@@ -38,7 +38,7 @@ public sealed class ReadOnlyStateTests(AppFixture app) : HostTest<AppFixture>(ap
 
         var result = await SendAsync(new ReadFolderCommand(folder, point, ReadingChange.Root, Swallow: true));
 
-        Assert.Equal("Operation.ReadingChangedState", Assert.Single(result.Errors).Code);
+        Assert.Equal(OperationErrors.ReadingChangedState.Code, Assert.Single(result.Errors).Code);
         await AssertUnchangedAsync();
     }
 
@@ -53,7 +53,7 @@ public sealed class ReadOnlyStateTests(AppFixture app) : HostTest<AppFixture>(ap
 
         var result = await SendAsync(new ReadFolderCommand(folder, ReadingPoint.Query, change, Swallow: true));
 
-        Assert.Equal("Operation.ReadingChangedState", Assert.Single(result.Errors).Code);
+        Assert.Equal(OperationErrors.ReadingChangedState.Code, Assert.Single(result.Errors).Code);
         await AssertUnchangedAsync();
         Assert.Equal([["first page"], ["second page"]], await Fixture.RowsAsync("select text from stub.pages order by text"));
     }
@@ -67,7 +67,7 @@ public sealed class ReadOnlyStateTests(AppFixture app) : HostTest<AppFixture>(ap
 
         var result = await SendAsync(new ReadFolderWithoutAutomaticDetectionCommand(folder, change));
 
-        Assert.Equal("Operation.ReadingChangedState", Assert.Single(result.Errors).Code);
+        Assert.Equal(OperationErrors.ReadingChangedState.Code, Assert.Single(result.Errors).Code);
         await AssertUnchangedAsync();
         Assert.Equal([["first page"], ["second page"]], await Fixture.RowsAsync("select text from stub.pages order by text"));
     }
@@ -180,7 +180,7 @@ public sealed class ReadOnlyStateTests(AppFixture app) : HostTest<AppFixture>(ap
     {
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
         scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(StubModule));
-        var db = scope.ServiceProvider.GetRequiredService<IUnitOfWork>().DbContext!;
+        var db = EfUnitOfWorkDbContext.Of(scope.ServiceProvider.GetRequiredService<IUnitOfWork>())!;
         var mappers = scope.ServiceProvider.GetRequiredService<ISnapshotMappers>();
         var build = Assembly.Load("PouryaKit.Messaging.Wolverine.EFCore").GetType("PouryaKit.Messaging.Wolverine.EFCore.SnapshotStep")!.GetMethod("Build")!;
         var warm = Stub.Shelf.Put("warm", "bay");
@@ -233,7 +233,7 @@ public sealed class ReadOnlyStateTests(AppFixture app) : HostTest<AppFixture>(ap
             }
             else
             {
-                Assert.Equal("Operation.ReadingChangedState", Assert.Single(result.Errors).Code);
+                Assert.Equal(OperationErrors.ReadingChangedState.Code, Assert.Single(result.Errors).Code);
             }
 
             var expected = change == ComplexReadingChange.Nothing && held ? original.Replace("two", "legitimate pending change", StringComparison.Ordinal) : original;

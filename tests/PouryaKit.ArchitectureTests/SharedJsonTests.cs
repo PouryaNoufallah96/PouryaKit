@@ -27,7 +27,7 @@ public sealed class SharedJsonTests
             Sample.KitPackages.Where(package => package != Domain).SelectMany(Il.CallsIn).Where(AppliesKitJson).Select(call => call.Owner.FullName).Distinct().Order(StringComparer.Ordinal)
         );
         // Domain itself is where the options are set up, and the rule sees it.
-        Assert.Contains("PouryaKit.Domain.JsonSerializerOptionsExtensions creates TypedIdJsonConverterFactory.", OwnJsonSetups(Domain));
+        Assert.Contains("PouryaKit.Domain.JsonSerializerOptionsExtensions calls JsonSerializerOptions.set_PropertyNamingPolicy.", OwnJsonSetups(Domain));
     }
 
     // A body of another shape is never handled with defaults where it crosses between Hosts or waits in the store, while
@@ -53,14 +53,13 @@ public sealed class SharedJsonTests
             [
                 "Offending.OwnJson calls JsonSerializerOptions.set_PropertyNamingPolicy.",
                 "Offending.OwnJson creates JsonSerializerOptions without applying UsePouryaKitJson.",
-                "Offending.OwnJson creates TypedIdJsonConverterFactory.",
             ],
             OwnJsonSetups(typeof(OffendingModule).Assembly).Order(StringComparer.Ordinal)
         );
     }
 
     // A method may create options only to apply UsePouryaKitJson or UsePouryaKitWireJson to them; nothing else sets an
-    // option or adds the typed-ID converter itself.
+    // option. The typed-ID converter is internal to Domain, so the compiler keeps every other package from adding it.
     private static IEnumerable<string> OwnJsonSetups(Assembly assembly)
     {
         var calls = Il.CallsIn(assembly).ToList();
@@ -69,8 +68,6 @@ public sealed class SharedJsonTests
             .Select(call =>
                 (call.Callee, call.Callee.DeclaringType) switch
                 {
-                    (ConstructorInfo, var type) when type == typeof(TypedIdJsonConverterFactory) =>
-                        $"{call.Owner.FullName} creates TypedIdJsonConverterFactory.",
                     (ConstructorInfo, var type) when type == typeof(JsonSerializerOptions) && !applying.Contains(call.Caller) =>
                         $"{call.Owner.FullName} creates JsonSerializerOptions without applying UsePouryaKitJson.",
                     (MethodInfo { Name: var name }, var type) when type == typeof(JsonSerializerOptions) && name.StartsWith("set_", StringComparison.Ordinal) =>

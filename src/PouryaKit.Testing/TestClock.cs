@@ -13,6 +13,7 @@ public sealed class TestClock : IDisposable
 {
     private readonly IDisposable _binding;
 
+    /// <summary>Binds a new clock set to <paramref name="now"/> as the <see cref="DomainClock"/>.</summary>
     public TestClock(DateTimeOffset now)
     {
         Time = new FakeTimeProvider(now);
@@ -22,5 +23,6 @@ public sealed class TestClock : IDisposable
     /// <summary>The bound clock; advance it to move time on.</summary>
     public FakeTimeProvider Time { get; }
 
+    /// <inheritdoc />
     public void Dispose() => _binding.Dispose();
 }

@@ -12,6 +12,7 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 /// </summary>
 public static class SnapshotVersionTable
 {
+    /// <summary>The Snapshot version table's name, in the Module's schema.</summary>
     public const string Name = "pouryakit_snapshot_versions";
 
     extension(MigrationBuilder migrationBuilder)
@@ -30,6 +31,7 @@ public static class SnapshotVersionTable
                 constraints: table => table.PrimaryKey($"pk_{Name}", applied => new { applied.subscription, applied.aggregate_id })
             );
 
+        /// <summary>Drops the Snapshot version table from <paramref name="schema"/>, the Module's own.</summary>
         public void DropSnapshotVersionTable(string schema) => migrationBuilder.DropTable(name: Name, schema: schema);
     }
 }

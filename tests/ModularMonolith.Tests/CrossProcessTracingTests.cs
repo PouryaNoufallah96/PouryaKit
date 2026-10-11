@@ -14,11 +14,13 @@ namespace ModularMonolith.Tests;
 // The trace of an Operation continues across RabbitMQ into the deliveries it causes in another Host (ADR 0009, #52
 // amendment): ModularMonolith.Host with a broker (Catalog and Billing) and Inventory.Host, each observing its
 // Operations, joined only by the broker. An ActivityListener sees its own process only, so both Hosts run in this one.
-public sealed class CrossProcessTracingTests(BrokerFixture broker) : IClassFixture<BrokerFixture>
+[Collection<BrokerCollection>]
+public sealed class CrossProcessTracingTests(BrokerFixture broker)
 {
     private const string Publishing = "catalog.product-created.publish-product-created";
     private const string StockItems = "inventory.product-created";
     private const string TraceState = "kit=52,other=v1";
+    private const string SubscriptionTag = "pouryakit.subscription";
 
     // CreateProduct commits a Notification; its delivery Operation in the Catalog Host publishes ProductCreatedV1; the
     // Inventory Host receives it from the broker and fans it out to Inventory's subscription, whose first attempt fails
@@ -56,10 +58,17 @@ public sealed class CrossProcessTracingTests(BrokerFixture broker) : IClassFixtu
             attempts,
             attempt =>
                 Assert.Equal(
-                    ("InventoryModule", publishing.SpanId, TraceState),
-                    (Tag(attempt, OperationTelemetry.ModuleTag), PublisherOf(attempt, trace, wolverineListened), attempt.TraceStateString)
+                    ("InventoryModule", StockItems, publishing.SpanId, TraceState),
+                    (
+                        Tag(attempt, OperationTelemetry.ModuleTag),
+                        Tag(attempt, SubscriptionTag),
+                        PublisherOf(attempt, trace, wolverineListened),
+                        attempt.TraceStateString
+                    )
                 )
         );
+        // Each delivery's Operation names its subscription, beside the Deliver command every one of them runs.
+        Assert.Equal(Publishing, Tag(publishing, SubscriptionTag));
     }
 
     // The category is created first, outside the trace; CreateProduct runs inside an upstream activity standing in for a

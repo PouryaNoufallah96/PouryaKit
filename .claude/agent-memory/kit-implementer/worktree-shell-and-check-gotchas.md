@@ -26,11 +26,13 @@ The worktree base and the one-git-command rule are in the role file; these are w
 - The worktree guard refuses a Bash heredoc whose text contains the word "git" anywhere (a python edit script naming `git diff`, or prose saying "git"); write the script to the scratchpad and run it with the worktree path as an argument, or use the Edit tool.
 - Shell: the worktree guard refused a `cat > file <<EOF` that named a path under the worktree; write files with the Write tool, edit with a scratchpad python script.
 - Guard refused: `cd … && cat > file <<EOF` (use Write), `--filter-method "*X*"` in a compound line, and `cp …; git status` together. Plain `dotnet test --filter-class` alone passes.
-- Shell: `python3 /dev/stdin <<'EOF'` with a short edit script passed; a longer `python3 - <<'EOF'` script was refused. `sed` on a `$VAR` path is refused: use the Read tool or a literal path.
+- Shell: `python3 /dev/stdin <<'EOF'` with a short edit script passed; a longer `python3 - <<'EOF'` script was refused. (#92 R1: `python3 /dev/stdin <path> <<'EOF'` scripts of about 120 lines that only read and write files passed every time; keep the word git out of them.) `sed` on a `$VAR` path is refused: use the Read tool or a literal path.
 - **Shell guard:** any command containing `dotnet nuget disable source` is refused ("runs a string through source"), and `cd … && PATH=… python3 …` is refused as git-like; `PATH=<venv>/bin:/usr/bin:/bin python3 -c …` alone passes. Neither python3 has PyYAML: a scratchpad venv (`python3 -m venv`, `pip install pyyaml`) runs the brief's YAML check unchanged.
 - The worktree guard refuses a `for` loop over `dotnet test` and a python heredoc that runs subprocesses: one command per call, or a script file in the scratchpad.
 - **Several test classes in one command:** a zsh `for` over class names is refused by the isolation check; a scratchpad Python script running `dotnet test --filter-class` per class through `subprocess` with `cwd=<worktree>` passes. Same for mutation runs (copy, mutate, build, run, restore in `finally`).
 - Edit traps: `s.replace("_module", "Module")` also rewrote `_modules` (use `\b`); IDE0032 is an error for a private field read by an expression-bodied property (make it an auto property). A `cat > <scratchpad>/x.py <<'EOF'` was refused once mid-session after several passed: write scripts with the Write tool.
+- Refused (#93, 2026-10-10): `D=<path>; grep … $D; sed -n … $D` (a variable path after an option), `for n in …; do awk -v n=$n …; done`. And `grep -o '.\{0,250\}X.\{0,250\}'` fails in this machine's `ugrep` ("exceeds complexity limits"): print context with a `python3 -c` regex instead. `git show <sha>:<path> > <scratchpad file>` passes.
+- Refused (#81, 2026-10-10): `for n in ...; do sed -n "${n}p" file; done` ("sed with a program computed at runtime"), and `mkdir … && cd … && cp … && cat > x <<EOF` in one command. `awk 'NR==52||NR==230 {print}' file` prints chosen lines; write a scratch project with Write, then `cp` and `dotnet run --project <abs csproj>` as separate commands.
 
 ## Git in a worktree and the moving integration branch
 
@@ -50,6 +52,7 @@ The worktree base and the one-git-command rule are in the role file; these are w
 - In a fix round, do not rebase the reviewed commits onto a moved integration branch: the reviewers' base (here `f76463b`) must stay; report the move instead.
 - The coordinator may move the integration branch mid-package and ask for a merge before the acceptance step: the merge then sits between the probe commits and the package commit; `git diff <tip> HEAD` stays the package.
 - The coordinator may move the integration branch mid-package and ask for a merge: `git merge --ff-only <branch>` worked with uncommitted edits the tip did not touch; apply doc edits after it so anchors match the new tip.
+- **#82 merged mid-package over three docs I had edited (#86, 2026-10-10):** with no commit of my own yet, `git merge --ff-only` would refuse. Committed the package, probed with `git merge-tree --write-tree --name-only HEAD pre-wave-3` (a tree id alone means no conflict), then `git rebase pre-wave-3`; the base became the new tip and the verify ran after the rebase.
 
 ## check-ai-setup.py and other tools
 
@@ -57,6 +60,8 @@ The worktree base and the one-git-command rule are in the role file; these are w
 - `check-ai-setup.py` fails a new `docs/agents/*.md` that no `AGENTS.md`, rule, output style or role file names; a pointer from another `docs/agents/` file does not count. When `AGENTS.md` and the role files are outside `allowed_files`, the output style is the place.
 - The Edit tool validates `.claude/settings.json` against the live schema and refuses an invalid enum, so mutation-test `check-ai-setup.py` in memory (load the module, swap `loaded[path]`).
 - No pyyaml or actionlint by default: `ruby -ryaml` parses YAML; `brew install actionlint` works.
+- `python3 -m unittest .agents/scripts/test_check_docs.py` (a brief's verify, #76) stops with `ValueError: Empty module name`: the leading dot of `.agents` makes no module name. Run the CI job's `python3 -m unittest discover -s .agents/scripts -p 'test_*.py'` and say so under deviations.
+- **git-ai writes into every repository this machine commits in** (#111, 2026-10-11): `~/.gitconfig` sets `trace2.eventTarget` to its daemon's socket, and after a commit `git-ai bg run` adds notes with `git fast-import`. A test that commits in a temporary repository and then deletes it failed seven runs in ten with `OSError: [Errno 66] Directory not empty` (a `fast_import_crash_<pid>` file in the leftover `.git` names it). Run such git calls with `GIT_CONFIG_GLOBAL=os.devnull` and `GIT_CONFIG_NOSYSTEM=1` (`test_check_docs.py`'s `ISOLATED`); `maintenance.auto=false` alone did not help. Repeat a suite several times before trusting one green run when it commits.
 
 ## Scope: allowed_files, stop_if and asking the session
 
@@ -69,8 +74,10 @@ The worktree base and the one-git-command rule are in the role file; these are w
 
 ## Session context, the scratchpad and this memory
 
-- The system-reminder's copy of `AGENTS.md` comes from the main checkout and can differ from the worktree's: read the worktree file before editing. A Write or Edit to the main checkout's path is refused; use the worktree path.
+- The system-reminder's copy of `AGENTS.md` comes from the main checkout and can differ from the worktree's: read the worktree file before editing. A Write or Edit to the main checkout's path is not always refused (#102: an Edit of this memory directory, whose path the role prompt gives as the main checkout's, succeeded and dirtied `pre-wave-3`): edit `<worktree>/.claude/agent-memory/…`, and check `git -C <main checkout> status --short` before reporting.
 - `gh issue view N --comments` printed nothing from a worktree; `gh issue view N --repo PouryaNoufallah96/PouryaKit` plus `gh api repos/PouryaNoufallah96/PouryaKit/issues/N/comments` works.
+- **Put the worktree under `<main checkout>/.claude/worktrees/<name>`**, which `.gitignore` lists: the guard denies file-tool writes outside the main checkout's tree, so a sibling directory such as `../pourya-kit-wt-105` refuses every Edit. `git -C <main checkout> worktree move <old> <new>` fixed it with nothing lost (#105, 2026-10-11).
+- **Pre-Wave 3 briefs live in the main checkout only** (`.claude/handoff/<date>/briefs/`, untracked): a worktree has no copy, so read them by the main checkout's absolute path (#78, 2026-10-09).
 - The shared scratchpad is shared with other agents of the session: another agent overwrote `mutate.py`; name scratch scripts per ticket (`mutate18.py`).
 - The scratchpad is shared by every session: keep backups and harnesses in a ticket folder (`p35/`); generic `*.bak` names collide.
 - **The scratchpad root is shared** with parallel implementers (`mutate.py`, `edit_*.py` of other tickets sit there): keep a ticket's scripts in a subfolder.

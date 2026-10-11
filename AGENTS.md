@@ -47,7 +47,7 @@ Not test-first. Implement, then write focused tests for behaviour that matters; 
 3. Review, sized to the ticket. A ticket that claims a Kit runtime guarantee or changes a public API of the Kit gets two independent reviews in parallel. Other tickets follow the Operating model: clear, small changes need no separate reviewer unless risk or ambiguity requires one; normal tickets get one focused `kit-reviewer`. Executing a workflow does not itself make a Kit runtime guarantee.
 4. One fix round for the accepted findings, then a re-score of those findings only. Run a new full review only after a high finding was fixed, and at most once: a ticket gets two full reviews, then re-scores only. For any medium or low finding still open, record a disposition and move on. A low that a re-score raises gets no round of its own: the orchestrator fixes it directly when it is trivial and local, one line or one test checked at once, and records a disposition otherwise.
 5. Complete the runtime proof required by the ticket, including Kit guarantees and hosted publication where claimed.
-6. Update docs and C4 diagrams. The ticket's closing comment carries a value, cost and impact paragraph (the `archify-review` lens); `/archify-review` itself runs once per wave, at close-out.
+6. Update docs and the architecture diagrams (`docs/architecture/README.md`, "Diagrams"). The ticket's closing comment carries a value, cost and impact paragraph (the `archify-review` lens); `/archify-review` itself runs once per wave, at close-out.
 7. Update the Kit's own AI skill, rules and agent docs to match the change.
 
 For infrastructure, CI and packaging, start with the installed standard Actions, `dotnet`/NuGet clients and MinVer. Implement custom protocol handling only after demonstrating a requirement those tools cannot cover.
@@ -63,9 +63,31 @@ Dual review invocations, including session provider/model overrides, are in `doc
 Both reviewers apply these to the diff. Report defects the diff introduced; older issues and matters of taste stay out. Flag:
 
 - A violation of a rule under "Rules", or a name that drifts from its `GLOSSARY.md` term. A contradiction of an ADR or a section G decision is severity high.
-- A test that would still pass if every collaborator returned its default, or coverage that restates another test.
+- A test that would still pass if every collaborator returned its default or under a weaker predicate than the rule states (a prefix check where the rule says equality, a scope narrower than the ticket names), or coverage that restates another test.
 - A claimed runtime guarantee without runtime proof.
 - Docs or AI guidance left out of sync with the change. For each sentence or message the diff changes, search its old key phrase across `src/`, the Kit's skill, `docs/architecture/` and `docs/acceptance.md`: a restatement left as it was is a finding.
+
+## Rules and what enforces them
+
+Correct a repeated mistake at the highest level that works; add the rule here only with its enforcement. A rule with nothing in its second column is a judgement call the reviewer carries.
+
+| Rule | Enforced by |
+|---|---|
+| Section G decisions are final; one implementation per concern; glossary terms | `kit-reviewer` (a contradiction of an ADR or section G is high) |
+| Reference projects are read-only | `.agents/hooks/guard.py` denies file-tool writes outside the working tree; a shell write outside it is a reviewer judgement |
+| Permissive licences only (ADR 0002) | `LicenceTests` |
+| Feature code never saves, commits or touches the Outbox (ADR 0003) | `FeatureCodeTests`, `ModuleRules` |
+| One namespace per Kit package; application namespaces follow folders (ADR 0010) | `NamespaceTests`; IDE0130 in `.editorconfig`; `SampleNamespaceTests` for the Proving Sample, partial types included |
+| Private fields are `_camelCase`; `const` and `static readonly` fields PascalCase | IDE1006 in `.editorconfig` |
+| Every public member of a Kit package has a summary | CS1591 in the build where `IsKitPackage` is true (`Directory.Build.props`) |
+| Docs name real code, paths and tests | `check-docs.py` (names, links, Kit paths, acceptance pointers, provenance) |
+| A diagram's cited source ranges are current | `check-docs.py` (diagram sources), run by CI's `ai-setup` job and the pre-commit hook |
+| A merged head's code was validated | `merge-package.py` exit 14: only Markdown may differ from the validated commit |
+| A negative test discriminates the rule's exact predicate | `kit-reviewer` (the review rule above) |
+| A brief's commands come from the environment, never from memory | `docs/agents/brief-template.md`, "Verify" |
+| A review reads the implementer's commit, never the integration branch against itself | `kit-review.js` refuses `head` equal to `base` |
+| Pre-Wave 3 acceptance sections stay in ticket order after every merge | `check-docs.py` (ordered sections), run by `merge-package.py --post-merge` |
+| A docs or AI-setup edit passes its checks before it commits | `.githooks/pre-commit` runs `check-docs.py` and `check-ai-setup.py` over the working tree when a staged path is one of their inputs, and refuses such a path staged in part. It is a seatbelt: an unstaged change to another file the checks read can still let a failing commit through. CI's `ai-setup` job, which runs both on the committed tree, is the gate |
 
 ## Rule router
 

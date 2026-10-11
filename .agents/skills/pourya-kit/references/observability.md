@@ -25,7 +25,8 @@ builder.Services.AddPouryaKitObservability();
 ```
 
 - In an application without Modularity, call it after `AddPouryaKitCqrs`. With no dispatcher registered yet it throws `InvalidOperationException`: "No dispatcher of the Kit is registered to observe. Call AddPouryaKitObservability after AddPouryaKitModules or AddPouryaKitCqrs." A second call does nothing.
-- A Host that never calls it has no activity and no measurement from the Kit. With it and nothing listening, each dispatch costs one check.
+- A Host that never calls it has no activity and no measurement from the Kit. With it and nothing listening, each dispatch costs one check and returns the dispatcher's own task, allocating nothing. The check asks for either listener: with only an activity listener, or only a meter listener, the Operation is still observed.
+- The duration's `Meter` comes from the Host container's `IMeterFactory`, which every Host built with `Host` or `WebApplication` registers, since the generic host's builder calls `AddMetrics()` while it populates the Host's services, so each Host owns its instruments and disposes them with itself. A listener or exporter that selects the meter by its name sees every Host in the process.
 - Feature code changes nothing. A handler starts no activity of its own for its command, and the Kit adds no pipeline step an application could register.
 - The Kit's dispatcher decorator wraps the whole dispatch, so any optional step the Kit adds inside its fixed pipeline, such as idempotency or caching, runs inside the Operation's activity and its duration.
 
@@ -37,7 +38,7 @@ The names are constants on `OperationTelemetry`:
 |---|---|
 | `ActivitySource` and `Meter` | `PouryaKit` (`OperationTelemetry.SourceName`) |
 | Activity, one per command or query, kind internal | `pouryakit.operation` (`ActivityName`) |
-| Histogram of each one's duration, unit `s`, a `double` that keeps fractions | `pouryakit.operation.duration` (`DurationName`) |
+| Histogram of each one's duration, unit `s`, a `double` that keeps fractions, with ASP.NET Core's second-scale bucket boundaries for `http.server.request.duration` (`0.005` to `10`) as its advice | `pouryakit.operation.duration` (`DurationName`) |
 | Tag: the Module the Operation runs in, by type name; absent without Modules | `pouryakit.module` |
 | Tag: the command's or query's type name | `pouryakit.operation` |
 | Tag: `Person` or `System` | `pouryakit.actor.kind` |
@@ -45,7 +46,7 @@ The names are constants on `OperationTelemetry`:
 
 - The activity is current for the whole Operation: its authorization and validation, its handler, the Domain Event drain, the Unit of Work's Outbox write and its commit. A nested command or query is a child activity of the one that sent it.
 - The status is `Ok` for a success, `Error` with the Error codes (`Note.Rejected`) for a failed Result, and `Error` with the exception's type for an exception, which is also recorded as an `exception` event. The duration is measured in every case, with the same tags.
-- A delivery's outer Operation is tagged `Deliver`, or `RunDelayedCommand` for a delayed or recurring command. The delivered command and the commands its handler sends are its children.
+- A delivery's outer Operation is tagged `Deliver`, or `RunDelayedCommand` for a delayed or recurring command. Its activity also carries `pouryakit.subscription`, the declared name of the subscription or of the delayed or recurring command, so each subscription's deliveries can be told apart in a trace. The duration histogram does not carry it: a Module's deliveries share its `Deliver` and `RunDelayedCommand` series. The delivered command and the commands its handler sends are its children.
 
 ## The trace through delivery
 
@@ -80,7 +81,7 @@ pouryakit.operation Deliver  ── broker ──▶  [Wolverine span of the env
 
 ## Exporting
 
-The Host adds an exporter for the source and the meter named `PouryaKit`, and for `Wolverine` if it wants Wolverine's spans as well, with the standard OpenTelemetry SDK. The service defaults recipe registers the application's own source and `OperationTelemetry.SourceName`, not `Wolverine`, and exports over OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured ([host-recipes.md](host-recipes.md#what-each-recipe-does)); Wolverine's spans are opt-in: add `.AddSource("Wolverine")` to its `WithTracing` registration. Logs, Serilog included, are configured on the Host too. None of it belongs in a Module or in the Kit.
+The Host adds an exporter for the source and the meter named `PouryaKit`, and for `Wolverine` if it wants Wolverine's spans as well, with the standard OpenTelemetry SDK. The service defaults recipe registers the application's own source, `OperationTelemetry.SourceName` and `Npgsql`, a span for each database command, not `Wolverine`, and exports over OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured ([host-recipes.md](host-recipes.md#what-each-recipe-does)); Wolverine's spans are opt-in: add `.AddSource("Wolverine")` to its `WithTracing` registration. The OpenTelemetry SDK takes the histogram's bucket boundaries from its advice, so the exporter needs no view for it. Logs, Serilog included, are configured on the Host too; every entry logged inside an Operation carries the dispatcher's log scope, `Operation`, `OperationId`, `CorrelationId` and `Module` ([commands-queries-validation.md](commands-queries-validation.md#the-pipeline)), so a log backend joins it to its request without a trace. None of it belongs in a Module or in the Kit.
 
 ## Testing telemetry
 
@@ -106,4 +107,4 @@ ActivitySource.AddActivityListener(listener);
 - Assert on tags, `Status`, `ParentSpanId` and `TraceStateString`, not on timings. To assert a duration, use a `MeterListener` for the instrument `pouryakit.operation.duration` of the meter `PouryaKit`: a sub-second Operation has a value above zero with a fraction.
 - A test's tracestate reaches a first delivery attempt from the envelope held in memory. Only a retry reads the header back from the store, so test a retry when the header itself is the claim.
 - `ObservabilityTests` in the Proving Sample's tests does all of this for the Catalog-to-Inventory chain. Its `RecordedTelemetry` holds the listeners, and `DeliveryProbes.ActivitiesOf(subscription)` gives the activity each delivery attempt ran in.
-- `CrossProcessTracingTests` does it across RabbitMQ, with the Catalog Host and `Inventory.Host` of `BrokerFixture` both in the test process: a listener sees its own process only. `HostRecipeTests` shows the Kit's activities and durations reaching an exporter the test adds to the service defaults' own providers.
+- `CrossProcessTracingTests` does it across RabbitMQ, with the Catalog Host and `Inventory.Host` of `BrokerFixture` both in the test process: a listener sees its own process only. `HostRecipeTests` shows the Kit's activities and durations, and the `Npgsql` spans of a delivery's database commands under its Operation, reaching an exporter the test adds to the service defaults' own providers.

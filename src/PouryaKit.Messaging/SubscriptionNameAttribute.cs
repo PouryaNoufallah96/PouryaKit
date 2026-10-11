@@ -8,5 +8,6 @@ namespace PouryaKit.Messaging;
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public sealed class SubscriptionNameAttribute(string name) : Attribute
 {
+    /// <summary>The stable subscription name the handler's queue and Receipts are keyed by.</summary>
     public string Name { get; } = name;
 }

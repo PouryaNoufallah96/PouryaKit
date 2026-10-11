@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Data;
 using System.Text.RegularExpressions;
@@ -28,7 +29,7 @@ public sealed class PageSql
     internal const string SizeParameter = "page_size";
     internal const string OffsetParameter = "page_offset";
 
-    private static readonly ImmutableDictionary<Type, DbType> DbTypes = new Dictionary<Type, DbType>
+    private static readonly FrozenDictionary<Type, DbType> DbTypes = new Dictionary<Type, DbType>
     {
         [typeof(string)] = DbType.String,
         [typeof(Guid)] = DbType.Guid,
@@ -37,20 +38,30 @@ public sealed class PageSql
         [typeof(decimal)] = DbType.Decimal,
         [typeof(bool)] = DbType.Boolean,
         [typeof(DateTimeOffset)] = DbType.DateTimeOffset,
-    }.ToImmutableDictionary();
+    }.ToFrozenDictionary();
 
     private readonly ImmutableDictionary<string, string> _orderBy;
     private readonly string? _thenBy;
 
     /// <summary>
     /// Throws when <paramref name="select"/> or <paramref name="count"/> does not use the parameter of every filter
-    /// <paramref name="declaration"/> declares, or when <paramref name="select"/> ends with a semicolon.
+    /// <paramref name="declaration"/> declares, when <paramref name="select"/> ends with a semicolon, and when a declared
+    /// filter's value type is one this SQL has no database type to send it as.
     /// </summary>
     public PageSql(PageDeclaration declaration, string select, string count)
     {
         ArgumentNullException.ThrowIfNull(declaration);
         ArgumentException.ThrowIfNullOrWhiteSpace(select);
         ArgumentException.ThrowIfNullOrWhiteSpace(count);
+        // FilterField keeps its own list of value types: one this table lacks fails when the Feature's SQL is built.
+        if (declaration.Filters.FirstOrDefault(field => !DbTypes.ContainsKey(field.ValueType)) is { } unmapped)
+        {
+            throw new ArgumentException(
+                $"The filter field {unmapped.Name} has values of {unmapped.ValueType.Name}, which a Dapper Page read has no database type for.",
+                nameof(declaration)
+            );
+        }
+
         Select = select.TrimEnd();
         if (Select.EndsWith(';'))
         {
@@ -85,10 +96,15 @@ public sealed class PageSql
         _thenBy = thenBy;
     }
 
+    /// <summary>The declaration whose sort keys and filters this SQL maps.</summary>
     public PageDeclaration Declaration { get; }
 
+    /// <summary>
+    /// The Feature's <c>SELECT</c> of the items, to which the page helper appends its ordering and its limit.
+    /// </summary>
     public string Select { get; }
 
+    /// <summary>The Feature's <c>COUNT</c> of the same selection, run as written.</summary>
     public string Count { get; }
 
     /// <summary>

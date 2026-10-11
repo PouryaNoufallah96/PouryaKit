@@ -11,6 +11,7 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 /// </summary>
 public static class ReceiptTable
 {
+    /// <summary>The Receipt table's name, in the Module's schema.</summary>
     public const string Name = "pouryakit_receipts";
 
     extension(MigrationBuilder migrationBuilder)
@@ -28,6 +29,7 @@ public static class ReceiptTable
                 constraints: table => table.PrimaryKey($"pk_{Name}", receipt => new { receipt.subscription, receipt.message_id })
             );
 
+        /// <summary>Drops the Receipt table from <paramref name="schema"/>, the Module's own.</summary>
         public void DropReceiptTable(string schema) => migrationBuilder.DropTable(name: Name, schema: schema);
     }
 }

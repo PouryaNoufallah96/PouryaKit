@@ -1,10 +1,14 @@
+using System.Reflection;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
+using PouryaKit.Messaging;
+using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Testing;
+using Wolverine;
 
 namespace ModularMonolith.Tests;
 
@@ -84,6 +88,48 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
         Assert.True(answering.IsTrustedContinuation);
     }
 
+    [Fact]
+    public void An_undefined_numeric_actor_kind_cannot_continue_as_a_system_actor()
+    {
+        var context = new OperationContext(Actor.System("review"));
+        var envelope = EnvelopeOf(context);
+        Assert.Equal(context.Actor, Continued(envelope).Actor);
+        envelope.Headers[OperationContextHeaders.ActorKind] = "999";
+
+        var thrown = Assert.Throws<TargetInvocationException>(() => Continued(envelope));
+
+        Assert.Contains("undefined ActorKind", Assert.IsType<InvalidOperationException>(thrown.InnerException).Message);
+    }
+
+    // Only the exact names the Outbox writes, as Web reads its own header: never a number, a combination of names or a
+    // name with spaces around it, which an enum parse accepts, and never a bare ArgumentException for an unknown name.
+    [Theory]
+    [InlineData("1")]
+    [InlineData("Person, System")]
+    [InlineData("Robot")]
+    [InlineData(" Person")]
+    [InlineData("System ")]
+    public void An_actor_kind_header_that_is_not_exactly_person_or_system_is_refused(string kind)
+    {
+        var envelope = EnvelopeOf(new OperationContext(Actor.Person("ada")));
+        envelope.Headers[OperationContextHeaders.ActorKind] = kind;
+
+        var thrown = Assert.Throws<TargetInvocationException>(() => Continued(envelope));
+
+        Assert.Equal(
+            $"The message {envelope.Id} has an undefined ActorKind header.",
+            Assert.IsType<InvalidOperationException>(thrown.InnerException).Message
+        );
+    }
+
+    [Fact]
+    public void A_person_and_a_system_actor_continue_as_themselves()
+    {
+        OperationContext person = new(Actor.Person("ada")), system = new(Actor.System("review"));
+
+        Assert.Equal([person.Actor, system.Actor], [Continued(EnvelopeOf(person)).Actor, Continued(EnvelopeOf(system)).Actor]);
+    }
+
     private async Task<Guid> CreateLampAsync()
     {
         var catalog = Fixture.Gateway<CatalogModule>();
@@ -95,6 +141,25 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
         );
         return lamp.Value;
     }
+
+    private static Envelope EnvelopeOf(OperationContext context)
+    {
+        var envelope = new Envelope();
+        foreach (var (name, value) in new DeliveryOptions().WithOperationContext(context).Headers)
+        {
+            envelope.Headers[name] = value;
+        }
+
+        return envelope;
+    }
+
+    // Exercise the transport's context reader without exposing this internal seam to Feature code.
+    private static OperationContext Continued(Envelope envelope) =>
+        Assert.IsType<(OperationContext Context, System.Diagnostics.ActivityContext TraceParent)>(
+            typeof(OperationContextHeaderExtensions)
+                .GetMethod("ContinuedOperationContext", BindingFlags.Static | BindingFlags.NonPublic)!
+                .Invoke(null, [envelope])
+        ).Context;
 
     private CatalogQuestionContexts Questions => Fixture.Host.Services.GetRequiredService<CatalogQuestionContexts>();
 }

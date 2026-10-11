@@ -2,13 +2,13 @@
 
 Adopted implementations in `PouryaKit.Templates`. Format and rules: [README](README.md).
 
-The business code the templates generate is the Proving Sample's own, packed from `samples/ModularMonolith/src` (its records are in [ModularMonolith.md](ModularMonolith.md) and the Kit packages' files). The monolith's Composition Root and `IDispatcher` endpoints, the Hosts' `Program.cs`, the smoke tests and the pack-time version step are new Kit code (ticket #53) and have no record here.
+The business code the templates generate is the Proving Sample's own, packed from `samples/ModularMonolith/src` (its records are in [ModularMonolith.md](ModularMonolith.md) and the Kit packages' files). The monolith's Composition Root and `IDispatcher` endpoints, the Hosts' `Program.cs` and, since ticket #87, `AppHost.cs`, the smoke tests and the pack-time version step are new Kit code (ticket #53) and have no record here.
 
 ## Package dependencies
 
 None shipped: the package holds template content only, with no assembly and no dependency in its nuspec. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
 
-The solutions it generates pin every Kit package at the template package's own version and every third-party package at the version the Kit's `Directory.Packages.props` pins, which `TemplateTests` asserts; each of those packages is recorded with the Kit package or Proving Sample project that already uses it. One package is new to the Kit: `Microsoft.AspNetCore.Mvc.Testing` 10.0.12, `MIT`, the latest stable version on nuget.org, checked against its nuspec on 2026-10-07, ticket #53. The generated smoke tests use its `WebApplicationFactory<Program>`; the Kit's `Directory.Packages.props` pins it so that the templates take its version from there, and no Kit project references it.
+The solutions it generates pin every Kit package at the template package's own version and every third-party package at the version the Kit's `Directory.Packages.props` pins, which `TemplateTests` asserts; each of those packages is recorded with the Kit package or Proving Sample project that already uses it. One package is new to the Kit: `Microsoft.AspNetCore.Mvc.Testing` 10.0.12, `MIT`, the latest stable version on nuget.org, checked against its nuspec on 2026-10-07, ticket #53. The generated smoke tests use its `WebApplicationFactory<Program>`; the Kit's `Directory.Packages.props` pins it so that the templates take its version from there, and no Kit project references it. Since ticket #87 (2026-10-10) the smoke tests run on `PouryaKit.Testing`'s `HostFixture` and serve the Host with `Microsoft.AspNetCore.TestHost` 10.0.12 (`MIT`, recorded in [ModularMonolith.md](ModularMonolith.md)), and the templates neither reference nor pin `Microsoft.AspNetCore.Mvc.Testing`. Since ticket #90 (2026-10-10) the Kit's `Directory.Packages.props` no longer pins it either.
 
 ## A template package whose content is a buildable solution
 

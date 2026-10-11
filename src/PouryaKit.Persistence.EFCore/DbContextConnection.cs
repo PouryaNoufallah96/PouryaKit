@@ -6,6 +6,7 @@ namespace PouryaKit.Persistence.EFCore;
 /// for each DbContext it makes a Unit of Work, with the name a database package such as <c>UsePouryaKitPostgres</c> passes,
 /// and no name for a DbContext the application registered itself. The Kit's composition checks read them when the Host's
 /// container is built: that the configuration sets each named one, and that every one's connection names the message
-/// store's database. Applications and Feature code never register one.
+/// store's database; the idempotency key cleanup cleans the table of each. Applications and Feature code never register
+/// one.
 /// </summary>
 public sealed record DbContextConnection(string? Name, Type DbContext);
