@@ -116,8 +116,8 @@ public sealed class HostTests(App app) : HostTest<App>(app)
     // With ConnectionStrings:broker the Host joins RabbitMQ under its service name, its queue on the broker, which it
     // checks as it is composed. The template derives that name from the project's name, lower-cased with a hyphen for each
     // run of other characters, so that every name gives a valid one, and writes it here and in AppHost.cs. The Host is
-    // built and never started, so nothing reaches the broker; Wolverine applies the Kit's extensions to its options only
-    // when it starts, so the test applies them.
+    // built and never started, so nothing reaches the broker; resolving Wolverine's options applies the Kit's extensions
+    // to them, the RabbitMQ one setting the service name.
     [Fact]
     public async Task The_host_joins_a_configured_broker_under_its_derived_service_name()
     {
@@ -129,10 +129,6 @@ public sealed class HostTests(App app) : HostTest<App>(app)
         );
 
         var options = withBroker.Services.GetRequiredService<WolverineOptions>();
-        foreach (var extension in withBroker.Services.GetServices<IWolverineExtension>())
-        {
-            extension.Configure(options);
-        }
 
         Assert.Equal("modular-monolith", options.ServiceName);
     }
