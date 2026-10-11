@@ -1,0 +1,28 @@
+.agents/scripts/check-docs.py
+  s_a846915d2dd93c::t_5dac11bb587879 586,589
+  s_a846915d2dd93c::t_8fc8a957dcd673 506-553
+  s_a846915d2dd93c::t_fe98cc4727adbf 54-58
+.agents/scripts/test_check_docs.py
+  s_a846915d2dd93c::t_d393f18c52da23 5
+  s_a846915d2dd93c::t_68abfdf2d7a5fa 6
+  s_a846915d2dd93c::t_5cd687026d9f7e 137-141,143-187
+  s_a846915d2dd93c::t_e570d6a42861c2 97-99,103
+  s_a846915d2dd93c::t_63da50b1469e03 86-94
+  s_a846915d2dd93c::t_9b8f3cece7c26e 95-96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bfc475cf0a5d09e05f5fea5e04b7144fa18c6442",
+  "prompts": {},
+  "sessions": {
+    "s_a846915d2dd93c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3d82c70b-8071-4ab4-bd84-7e8ad67e4d78",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
