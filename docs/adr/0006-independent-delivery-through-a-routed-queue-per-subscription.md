@@ -577,6 +577,7 @@ Each test gets two fresh databases and a RabbitMQ vhost of its own.
   `IdOnly` control.
 - **B's configuration.** One durable queue per Host, named by its `WolverineOptions.ServiceName`, bound to each
   subscribed wire name's exchange and listened to with `UseDurableInbox()`. One local route per subscription, as above.
+  *(2026-10-11, #109: "per Host" here means per kind of Host: the instances of one Host share the queue its service name names.)*
   `IdOnly`.
 
 | Point | Test (class.method, cases) | A, one queue per subscription | B, receive once then local queues |
