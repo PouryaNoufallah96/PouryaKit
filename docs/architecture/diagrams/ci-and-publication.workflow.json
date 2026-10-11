@@ -8,7 +8,7 @@
     "locale": "en",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "eb3c45c182e365dd6438c6f49377aa0893fd1603",
+      "revision": "24e49217f5cade556e283ce45c90f6fc3af99a0b",
       "provider": "github",
       "link_mode": "web"
     },
@@ -105,7 +105,7 @@
         {
           "path": ".github/workflows/ci.yml",
           "line": 18,
-          "end_line": 38,
+          "end_line": 40,
           "label": "check-ai-setup, check-docs, unit tests"
         }
       ]
@@ -122,8 +122,8 @@
       "sources": [
         {
           "path": ".github/workflows/ci.yml",
-          "line": 40,
-          "end_line": 43,
+          "line": 42,
+          "end_line": 45,
           "label": "parallel to ai-setup, no needs"
         },
         {
@@ -302,8 +302,8 @@
         },
         {
           "path": "src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/HostTests.cs",
-          "line": 141,
-          "end_line": 146,
+          "line": 137,
+          "end_line": 142,
           "label": "generated tests use HostFixture"
         }
       ]

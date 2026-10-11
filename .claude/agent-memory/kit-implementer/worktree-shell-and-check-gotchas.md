@@ -61,6 +61,7 @@ The worktree base and the one-git-command rule are in the role file; these are w
 - The Edit tool validates `.claude/settings.json` against the live schema and refuses an invalid enum, so mutation-test `check-ai-setup.py` in memory (load the module, swap `loaded[path]`).
 - No pyyaml or actionlint by default: `ruby -ryaml` parses YAML; `brew install actionlint` works.
 - `python3 -m unittest .agents/scripts/test_check_docs.py` (a brief's verify, #76) stops with `ValueError: Empty module name`: the leading dot of `.agents` makes no module name. Run the CI job's `python3 -m unittest discover -s .agents/scripts -p 'test_*.py'` and say so under deviations.
+- **git-ai writes into every repository this machine commits in** (#111, 2026-10-11): `~/.gitconfig` sets `trace2.eventTarget` to its daemon's socket, and after a commit `git-ai bg run` adds notes with `git fast-import`. A test that commits in a temporary repository and then deletes it failed seven runs in ten with `OSError: [Errno 66] Directory not empty` (a `fast_import_crash_<pid>` file in the leftover `.git` names it). Run such git calls with `GIT_CONFIG_GLOBAL=os.devnull` and `GIT_CONFIG_NOSYSTEM=1` (`test_check_docs.py`'s `ISOLATED`); `maintenance.auto=false` alone did not help. Repeat a suite several times before trusting one green run when it commits.
 
 ## Scope: allowed_files, stop_if and asking the session
 

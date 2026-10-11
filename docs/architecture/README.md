@@ -31,6 +31,10 @@ node bin/archify.mjs finalize <type> <json> <html> --repo-root <repo> --quality 
 
 A non-zero exit is a failure. The run writes its receipts beside the page. They hold local machine paths, so do not commit them.
 
+`check-docs.py` guards the citations. It fails a source whose revision is not in HEAD's history, and each cited range whose file is gone at HEAD, whose lines run past the file's end or out of order, or whose file changed between the revision and HEAD, even outside the range. CI's `ai-setup` job runs it, and so does the pre-commit hook when a Markdown file is staged. When it fails, open each range it names in the current code and correct the range, or the label where the code changed meaning. Then set `meta.repository.revision` to the commit whose bytes you verified, which must come before the commit that changes the source, and regenerate the page as above.
+
+A pinned revision must be a commit in the history of the branch that holds the source. This repository merges a pull request with a merge commit, so the commits of its branch stay in `main`'s history after the merge. A squash or a rebase of commits a source pins leaves the revision out, and the page's source links with it, so re-pin after either.
+
 ## A Host and its surroundings
 
 [What surrounds a Host built on the Kit?](diagrams/kit-context.html) A Host that serves HTTP answers callers that present a bearer token an identity provider issued, and each Host keeps its Modules' schemas and its message store in one PostgreSQL database. RabbitMQ, Redis and an OTLP collector are optional: each joins only when the Host's configuration names it. Another Host can call in as a trusted peer and continue an Operation of its own, and the Kit's packages are published to a private NuGet feed. The Reverse proxy in front of the Hosts is planned for Wave 3 and not built: the diagram labels it planned and draws its route dashed, and everything else it draws is built.
