@@ -33,7 +33,7 @@ A non-zero exit is a failure. The run writes its receipts beside the page. They 
 
 `check-docs.py` guards the citations. It fails a source whose revision is not in HEAD's history, and each cited range whose file is gone at HEAD, whose lines run past the file's end or out of order, or whose file changed between the revision and HEAD, even outside the range. CI's `ai-setup` job runs it, and so does the pre-commit hook when a Markdown file is staged. When it fails, open each range it names in the current code and correct the range, or the label where the code changed meaning. Then set `meta.repository.revision` to the commit whose bytes you verified, which must come before the commit that changes the source, and regenerate the page as above.
 
-A revision must stay a commit of `main`'s history. This repository merges a pull request with a merge commit, so the commits of its branch stay reachable after the merge. A squash or a rebase of commits a source pins would leave the revision out, and the page's source links with it.
+A pinned revision must be a commit in the history of the branch that holds the source. This repository merges a pull request with a merge commit, so the commits of its branch stay in `main`'s history after the merge. A squash or a rebase of commits a source pins leaves the revision out, and the page's source links with it, so re-pin after either.
 
 ## A Host and its surroundings
 
