@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Checks the repository's Markdown for the drift a script can catch; exits 1 on any failure.
+"""Checks the repository's Markdown, and the source ranges its diagrams cite, for the drift a script can catch; exits 1
+on any failure.
 
 Usage: python3 .agents/scripts/check-docs.py [--fences]
 
