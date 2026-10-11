@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import os
 import shutil
 import subprocess
 import sys
@@ -81,10 +83,24 @@ RECORD = "# Catalog\n\n## Money\n\n- **Kit files:** `src/Catalog/Money.cs`\n"
 # A record that cites a Kit file, and an upstream repository's paths under Upstream paths and as `repository@commit path`.
 KIT_RECORD = ("# Catalog\n\n## Product\n\n- **Kit files:** `src/Catalog/Product.cs`\n- **Upstream paths:** `src/Till/Product.cs`,"
               " `tests/Till.Tests/ProductTests.cs`\n\nIts rule is the one of `till@abc1234 tests/Till.Tests/RulesTests.cs:3`.\n")
+# An Archify diagram source citing a three-line file; `diagram` pins it to a revision with the sources given.
+DIAGRAM = "docs/architecture/diagrams/catalog.architecture.json"
+CART = {"src/Catalog/Cart.cs": "public sealed class Cart\n{\n}\n"}
+REVERIFY = "re-verify the cited ranges against the current code, refinalize the diagram, and set meta.repository.revision to the commit you verified against"
+
+
+def diagram(revision: str, *sources: dict) -> dict[str, str]:
+    source = {"meta": {"repository": {"revision": revision}}, "components": [{"id": "cart", "label": "Cart", "sources": list(sources)}]}
+    return {DIAGRAM: json.dumps(source, indent=2)}
+
+
+# The user's own git configuration stays out of the test repository: a tool it registers, such as a trace2 event target
+# that writes notes after each commit, can write into the repository while the cleanup deletes it.
+ISOLATED = {**os.environ, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}
 
 
 def git(root: Path, *args: str) -> None:
-    subprocess.run(["git", "-c", "core.hooksPath=/dev/null", *args], cwd=root, capture_output=True, check=True)
+    subprocess.run(["git", "-c", "core.hooksPath=/dev/null", *args], cwd=root, capture_output=True, check=True, env=ISOLATED)
 
 
 class CheckDocsTests(unittest.TestCase):
@@ -118,8 +134,57 @@ class CheckDocsTests(unittest.TestCase):
         self.assertEqual(code, 1, out)
         self.assertIn(f"FAIL  {line}", out)
 
+    def commit(self) -> str:
+        git(self.root, "add", "-A")
+        git(self.root, "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "-m", "change")
+        return subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.root, capture_output=True, text=True, check=True).stdout.strip()
+
     def test_a_clean_tree_passes(self) -> None:
-        self.assertEqual(self.check(), (0, "check-docs: 0 failure(s) in 6 Markdown file(s)\n"))
+        self.assertEqual(self.check(), (0, "check-docs: 0 failure(s) in 6 Markdown file(s) and 0 diagram source(s)\n"))
+
+    def test_a_diagram_whose_cited_files_are_unchanged_passes(self) -> None:
+        """A range to the file's last line and a single line, while a later commit changed only a file it does not cite."""
+        self.write(CART)
+        revision = self.commit()
+        cited = diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 1, "end_line": 3}, {"path": "src/Catalog/Product.cs", "line": 1})
+        self.write(cited | {"README.md": CLEAN["README.md"] + "More prose.\n"})
+        self.commit()
+        self.assertEqual(self.check(), (0, "check-docs: 0 failure(s) in 6 Markdown file(s) and 1 diagram source(s)\n"))
+
+    def test_a_diagram_citing_a_file_changed_since_its_revision_fails(self) -> None:
+        """Outside the cited range too: a range cannot tell a moved line from a rewritten one."""
+        self.write(CART)
+        revision = self.commit()
+        self.write(diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 1, "end_line": 2}) | {"src/Catalog/Cart.cs": CART["src/Catalog/Cart.cs"] + "// Carts.\n"})
+        self.commit()
+        self.assertFails({}, f"{DIAGRAM}: src/Catalog/Cart.cs:1-2 cites a file changed since the revision {revision[:7]}; {REVERIFY}")
+
+    def test_a_diagram_range_past_the_end_of_its_file_or_out_of_order_fails(self) -> None:
+        self.write(CART)
+        revision = self.commit()
+        self.write(diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 2, "end_line": 4}, {"path": "src/Catalog/Cart.cs", "line": 3, "end_line": 2}))
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Cart.cs:2-4 is no ordered range within the file's 3 lines; {REVERIFY}", out)
+        self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Cart.cs:3-2 is no ordered range within the file's 3 lines; {REVERIFY}", out)
+
+    def test_a_diagram_citing_a_missing_path_fails(self) -> None:
+        """A file deleted since the revision, and one that never was."""
+        self.write(CART)
+        revision = self.commit()
+        (self.root / "src/Catalog/Cart.cs").unlink()
+        self.write(diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 1}, {"path": "src/Catalog/Till.cs", "line": 1}))
+        self.commit()
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Cart.cs:1 names no file at HEAD; {REVERIFY}", out)
+        self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Till.cs:1 names no file at HEAD; {REVERIFY}", out)
+
+    def test_a_diagram_pinned_to_no_commit_of_the_clone_fails(self) -> None:
+        self.write(CART)
+        self.commit()
+        missing = "0123456789abcdef" * 2 + "01234567"
+        self.assertFails(diagram(missing, {"path": "src/Catalog/Cart.cs", "line": 1}), f"{DIAGRAM}: meta.repository.revision {missing} is no commit of this clone")
 
     def test_pre_wave_3_acceptance_sections_out_of_ticket_order_fail(self) -> None:
         """Session 5: #88's section was appended after #97's and left there until an advisor caught it."""

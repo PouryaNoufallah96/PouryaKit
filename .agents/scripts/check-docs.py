@@ -51,6 +51,11 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   `repository@commit path` and the plan as a path outside the Kit's packages; the test project of a solution
   generated from the templates (`tests/acme-shop.Tests`), which exists only during a `validate.py` run; and
   `docs/adr/`, dated records. A moved file is cited at its new path.
+- Diagram sources: each Archify diagram source, `docs/architecture/diagrams/*.json`, pins `meta.repository.revision`,
+  and every entry of a `sources` list in it (`path`, `line`, `end_line`, one line when that is absent) must still
+  describe the code: the revision is a commit of this clone, the path names a file at HEAD, `line` and `end_line` are
+  in order within its lines, and `git diff <revision> HEAD` leaves the file unchanged. A change anywhere in a cited
+  file fails, as a range cannot tell a moved line from a rewritten one. The HTML pages are not read.
 
 `--fences` only prints: for each Markdown file changed against HEAD, whether its fenced blocks changed, so an
 implementer knows whether the skill's snippet harness must run.
@@ -498,6 +503,54 @@ def check_kit_paths(docs: dict[str, Doc], files: list[str]) -> None:
             failures.append(f"{path}:{number}: `{kit_path}` names no file or folder in the repository; cite a moved file at its current path")
 
 
+DIAGRAMS = "docs/architecture/diagrams/"
+REVERIFY = "re-verify the cited ranges against the current code, refinalize the diagram, and set meta.repository.revision to the commit you verified against"
+
+
+def cited_sources(node):
+    """Each entry of every `sources` list in a diagram source, wherever its type puts one: on a component, a node, a
+    participant or a state."""
+    if isinstance(node, dict):
+        for key, value in node.items():
+            yield from (item for item in value if isinstance(item, dict)) if key == "sources" and isinstance(value, list) else cited_sources(value)
+    elif isinstance(node, list):
+        for item in node:
+            yield from cited_sources(item)
+
+
+def check_diagram_sources(files: list[str]) -> int:
+    """Fails each cited range of a diagram source that may no longer say what the code does; returns the diagrams read."""
+    diagrams = [f for f in files if f.startswith(DIAGRAMS) and f.endswith(".json") and (ROOT / f).is_file()]
+    for diagram in diagrams:
+        data = json.loads((ROOT / diagram).read_text(encoding="utf-8"))
+        sources = list(cited_sources(data))
+        revision = str(data.get("meta", {}).get("repository", {}).get("revision", ""))
+        if not sources:
+            continue
+        if not re.fullmatch(r"[0-9a-f]{40}", revision) or subprocess.run(["git", "cat-file", "-e", f"{revision}^{{commit}}"], cwd=ROOT, capture_output=True).returncode:
+            failures.append(f"{diagram}: meta.repository.revision {revision or '(none)'} is no commit of this clone (a shallow clone lacks it: fetch the history); {REVERIFY}")
+            continue
+        paths = sorted({str(source.get("path")) for source in sources})
+        # One call each for every cited file: its line count at HEAD (a path absent there is not listed), and whether it
+        # changed since the revision. Literal pathspecs, so a path is never read as a glob.
+        counts = subprocess.run(["git", "--literal-pathspecs", "grep", "-c", "", "HEAD", "--", *paths], cwd=ROOT, capture_output=True, text=True).stdout
+        lines = {path: int(count) for path, _, count in (row.removeprefix("HEAD:").rpartition(":") for row in counts.splitlines())}
+        changed = set(git("--literal-pathspecs", "diff", "--name-only", revision, "HEAD", "--", *paths).splitlines())
+        for source in sources:
+            path, first = str(source.get("path")), source.get("line")
+            last = source.get("end_line", first)
+            if path not in lines:
+                problem = "names no file at HEAD"
+            elif not all(type(n) is int for n in (first, last)) or not 1 <= first <= last <= lines[path]:
+                problem = f"is no ordered range within the file's {lines[path]} lines"
+            elif path in changed:
+                problem = f"cites a file changed since the revision {revision[:7]}"
+            else:
+                continue
+            failures.append(f"{diagram}: {path}:{first}" + (f"-{last}" if last != first else "") + f" {problem}; {REVERIFY}")
+    return len(diagrams)
+
+
 def print_fences() -> int:
     changed = git("diff", "--name-only", "HEAD").splitlines() + git("ls-files", "--others", "--exclude-standard").splitlines()
     shown = 0
@@ -530,9 +583,10 @@ def main() -> int:
     check_test_pointers(docs, files)
     check_provenance(files)
     check_kit_paths(docs, files)
+    diagrams = check_diagram_sources(files)
     for message in failures:
         print(f"FAIL  {message}")
-    print(f"check-docs: {len(failures)} failure(s) in {len(docs)} Markdown file(s)")
+    print(f"check-docs: {len(failures)} failure(s) in {len(docs)} Markdown file(s) and {diagrams} diagram source(s)")
     return 1 if failures else 0
 
 
