@@ -1,0 +1,141 @@
+spikes/marten-two-store/M2.Catalog/CatalogModule.cs
+  s_63a6f6816df045::t_41ffe53bffcfbf 1-43
+spikes/marten-two-store/M2.Catalog/M2.Catalog.csproj
+  s_63a6f6816df045::t_d606906c8a3c80 1-14
+spikes/marten-two-store/M2.Host/M2.Host.csproj
+  s_63a6f6816df045::t_653333fd7912cd 1-19
+spikes/marten-two-store/M2.Host/Program.cs
+  s_63a6f6816df045::t_cf07623cc353c2 1-34
+spikes/marten-two-store/M2.Ledger/Account.cs
+  s_63a6f6816df045::t_dfbac708626eb8 1-62
+spikes/marten-two-store/M2.Ledger/LedgerModule.cs
+  s_63a6f6816df045::t_c59aba87381e31 1-27
+spikes/marten-two-store/M2.Ledger/LedgerProbe.cs
+  s_63a6f6816df045::t_89dd9f5af9f337 1-47
+spikes/marten-two-store/M2.Ledger/M2.Ledger.csproj
+  s_63a6f6816df045::t_24c32430e644e1 1-13
+spikes/marten-two-store/M2.Marten/DocumentReceipts.cs
+  s_63a6f6816df045::t_02a6189245d52f 1-33
+spikes/marten-two-store/M2.Marten/IStreams.cs
+  s_63a6f6816df045::t_20a712c8a2292b 1-16
+spikes/marten-two-store/M2.Marten/M2.Marten.csproj
+  s_63a6f6816df045::t_5cd238bd71a19a 1-22
+spikes/marten-two-store/M2.Marten/MartenIdempotencyCleanup.cs
+  s_63a6f6816df045::t_83c8499f96d55a 1-66
+spikes/marten-two-store/M2.Marten/MartenIdempotencyStore.cs
+  s_63a6f6816df045::t_7fec039b9cf363 1-60
+spikes/marten-two-store/M2.Marten/MartenStoreDatabaseCheck.cs
+  s_8dac2cc9bb900a::t_f21e63b80e4398 1-25
+spikes/marten-two-store/M2.Marten/MartenTables.cs
+  s_63a6f6816df045::t_57e3fcd5cff9c9 1-39
+spikes/marten-two-store/M2.Marten/MartenUnitOfWork.cs
+  s_63a6f6816df045::t_1d2f9298fd0389 1-174
+spikes/marten-two-store/M2.Marten/StreamAggregate.cs
+  s_63a6f6816df045::t_205429f93dc011 1-26
+spikes/marten-two-store/M2.Offending/M2.Offending.csproj
+  s_63a6f6816df045::t_6e7cb9e57c372d 1-12
+spikes/marten-two-store/M2.Tests/AggregateHandlerWorkflowTests.cs
+  s_63a6f6816df045::t_d8dd400926cb89 1-90
+spikes/marten-two-store/M2.Tests/CrashRecoveryTests.cs
+  s_63a6f6816df045::t_ed4a7514dbdb03 1-44
+spikes/marten-two-store/M2.Tests/Infrastructure.cs
+  s_63a6f6816df045::t_388e4c40bca38c 1-193
+spikes/marten-two-store/M2.Tests/M2.Tests.csproj
+  s_63a6f6816df045::t_1ce40a0ffe9867 1-27
+spikes/marten-two-store/M2.Tests/MessageStoreTests.cs
+  s_63a6f6816df045::t_7b234fac1f7061 1-60
+spikes/marten-two-store/M2.Tests/ReceiptTests.cs
+  s_63a6f6816df045::t_34538bece56c43 1-76
+spikes/marten-two-store/M2.Tests/StoreNeutralOutboxTests.cs
+  s_63a6f6816df045::t_60fb9fcc36cba4 1-58
+spikes/marten-two-store/M2.Tests/TypedIdTests.cs
+  s_63a6f6816df045::t_b440d4afd79112 1-51
+spikes/marten-two-store/M2.Tests/xunit.runner.json
+  s_63a6f6816df045::t_dc40157412b754 1-4
+spikes/marten-two-store/Directory.Build.props
+  s_454db590ab40d3::t_ae3055f3b1fbc6 1-12
+spikes/marten-two-store/Directory.Packages.props
+  s_454db590ab40d3::t_e561863db4bf23 1-6
+spikes/marten-two-store/M2.Contracts/AccountOpenedV1.cs
+  s_454db590ab40d3::t_c045d3c5151b95 1-4
+spikes/marten-two-store/M2.Contracts/M2.Contracts.csproj
+  s_454db590ab40d3::t_0e30be1b209858 1-7
+spikes/marten-two-store/M2.Ledger/Features.cs
+  s_454db590ab40d3::t_1018cb4f92a18d 1-103
+spikes/marten-two-store/M2.Marten/StoreNeutralOutbox.cs
+  s_454db590ab40d3::t_3026ec03215e36 1-65
+spikes/marten-two-store/M2.Offending/SavesItself.cs
+  s_454db590ab40d3::t_60295e7db7e411 1-14
+spikes/marten-two-store/M2.Tests/AggregateConventionTests.cs
+  s_454db590ab40d3::t_76889cffc6a384 1-23
+spikes/marten-two-store/M2.Tests/CommitTests.cs
+  s_c8895e856d9f7e::t_262c819d0a5a3f 1-162
+spikes/marten-two-store/M2.Tests/IdempotencyRetentionTests.cs
+  s_454db590ab40d3::t_e19087d585ab76 1-82
+spikes/marten-two-store/M2.Tests/PerModuleStoreTests.cs
+  s_454db590ab40d3::t_690871cf69b5c6 1-42
+spikes/marten-two-store/M2.Tests/ReadingStateTests.cs
+  s_454db590ab40d3::t_527c0253eed8f8 1-24
+spikes/marten-two-store/M2.Tests/StoreDatabaseTests.cs
+  s_454db590ab40d3::t_7a7137e1b9e920 1-41
+spikes/marten-two-store/M2.Tests/StructureTests.cs
+  s_454db590ab40d3::t_0ab941d2f6ed6a 1-66
+spikes/marten-two-store/M2.Tests/TenancyTests.cs
+  s_454db590ab40d3::t_18498dabfd7f44 1-41
+spikes/marten-two-store/M2.slnx
+  s_765af0f1f4a34f::t_61da0ec10304d6 1-9
+spikes/marten-two-store/M2.Host/SpikeHost.cs
+  s_63a6f6816df045::t_aa22a32e537d8e 1-85
+spikes/marten-two-store/M2.Marten/MartenReceipts.cs
+  s_63a6f6816df045::t_4771533f87ec7f 1-36
+spikes/marten-two-store/M2.Marten/MartenRegistration.cs
+  s_63a6f6816df045::t_af5df54d94cbb8 1-145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "055c36f7d98bd46a22a4b6b9b2c9a8b8c13876e9",
+  "prompts": {},
+  "sessions": {
+    "s_454db590ab40d3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a533db264abc45861",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_765af0f1f4a34f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-ac598b0d191646117",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_8dac2cc9bb900a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1419c-9b96-73c1-825b-b677a0c6f406",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_c8895e856d9f7e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a8c3f328a6ed7c8e6",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
