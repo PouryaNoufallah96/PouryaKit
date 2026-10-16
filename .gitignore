@@ -27,4 +27,3 @@ samples/ModularMonolith/src/*/Internal/Generated/
 .serena/
 branch_structure.json
 temp_interactive_push.bat
-.gitignore

@@ -13,7 +13,7 @@ import sys
 
 # The top-level entries the tree holds; a new one is added here in the same change that adds it.
 TOP_LEVEL = {
-    ".agents", ".claude", ".codex", ".config", ".githooks", ".github",
+    ".agents", ".claude", ".codex", ".config", ".githooks", ".github", ".vscode",
     "docs", "samples", "scripts", "spikes", "src", "tests",
     ".editorconfig", ".gitattributes", ".gitignore", "AGENTS.md", "CLAUDE.md", "Directory.Build.props",
     "Directory.Build.targets", "Directory.Packages.props", "GLOSSARY.md", "LICENSE", "PouryaKit.slnx", "README.md",
