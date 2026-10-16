@@ -25,14 +25,14 @@ public static class WebServiceCollectionExtensions
         /// (<c>UsePouryaKitJson</c>, typed IDs as their bare values) for request and response bodies, the claims that
         /// fill the <c>OperationContext</c>, and authenticated access by default: the authorization fallback policy
         /// requires an authenticated caller wherever an endpoint states nothing, inside or outside a Module's route
-        /// group, unless the application set a fallback policy of its own. An endpoint opts out with
-        /// <c>AllowAnonymous</c>, on a Module's endpoint <c>AllowAnonymousAs(actor)</c>. It also registers the configured
+        /// group, unless the application set a fallback policy of its own. An endpoint opts out with <c>AllowAnonymous</c>,
+        /// one whose group begins the Operation, a Module's included, with <c>AllowAnonymousAs(actor)</c>. It also registers the configured
         /// defaults, each off until the Host configures it: the named CORS policies of <see cref="PouryaKitCorsOptions"/>,
         /// response compression over HTTP and HTTPS when <see cref="PouryaKitCompressionOptions"/> enables it, and the
         /// rate limit per Actor of <see cref="PouryaKitRateLimitOptions"/>, whose rejection answers 429 as a problem
         /// response. Their options are validated when the Host starts, as are the Actor and tenant claims of
         /// <see cref="PouryaKitWebOptions"/> and the peers of <see cref="PouryaKitTrustedPeerOptions"/>, however the Host
-        /// configures them: at the start, or earlier, where <c>MapPouryaKitModuleEndpoints</c> first reads them. With the Kit's checks
+        /// configures them: at the start, or earlier, where <c>MapPouryaKitModuleEndpoints</c> or <c>BeginOperationPerRequest</c> first reads them. With the Kit's checks
         /// (<c>AddPouryaKitCompositionChecks</c>, which <c>AddPouryaKitModules</c> calls), the Host's start fails, naming
         /// the call, when an <see cref="IEndpoint"/> in the Feature assemblies of a Module it composed, or of its own
         /// services, is not declared with <c>AddPouryaKitEndpoints</c> or not mapped by
