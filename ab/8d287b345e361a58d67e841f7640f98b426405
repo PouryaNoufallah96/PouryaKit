@@ -1,0 +1,35 @@
+docs/architecture/diagrams/execution-core.architecture.json
+  s_63a6f6816df045::t_e1f7059a50e13f 10
+src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs
+  s_63a6f6816df045::t_d67f526db4b095 144
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_63a6f6816df045::t_13a5bcd114197b 7
+src/PouryaKit.Cqrs/Composition/TenantRequirementCheck.cs
+  s_63a6f6816df045::t_4c829d29dc0451 1-40
+docs/architecture/README.md
+  s_63a6f6816df045::t_829d7be458cf2c 160,162
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_63a6f6816df045::t_b43b30065e2b60 346-348,353,355,500
+  s_63a6f6816df045::t_af4b9ffb0d63c2 11,341-345,349-352,354,356-375,494-499,501-502
+  s_63a6f6816df045::t_4bac86582b7de7 503-504
+.claude/agent-memory/kit-implementer/composition-check-facts.md
+  s_63a6f6816df045::t_9ea2d77fc244df 64-69
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_63a6f6816df045::t_829d7be458cf2c 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ab8d287b345e361a58d67e841f7640f98b426405",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
