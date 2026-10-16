@@ -146,9 +146,9 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
         await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
         var import = new ImportProductsCommand(category, ["Desk lamp", "Floor lamp"]);
 
-        var first = await catalog.SendAsync(import, Context("r1"), TestContext.Current.CancellationToken);
+        var first = await catalog.SendAsync(import, Context("r1", tenant: AppFixture.TestTenant), TestContext.Current.CancellationToken);
         var repeat = await Fixture.AssertNothingSentAsync(
-            () => catalog.SendAsync(import, Context("r1"), TestContext.Current.CancellationToken),
+            () => catalog.SendAsync(import, Context("r1", tenant: AppFixture.TestTenant), TestContext.Current.CancellationToken),
             TestContext.Current.CancellationToken
         );
 
@@ -160,7 +160,7 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task A_repeated_idempotency_key_answers_the_first_status_and_body_without_creating_or_sending_anything()
     {
-        using var client = Fixture.Client("ada");
+        using var client = Fixture.Client("ada", AppFixture.TestTenant);
         var category = Guid.CreateVersion7();
         await Fixture.Gateway<CatalogModule>().SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
         var product = Guid.CreateVersion7();
@@ -190,26 +190,33 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
 
     // A blank tenant claim is no tenant at the HTTP boundary, so its request and one without the claim are the same
     // caller's, with one key, and neither is a tenant that collides with the empty string the key stores for no tenant.
+    // Catalog runs no Operation without a tenant, so the request is the Stub's counted note, which needs none.
     [Fact]
     public async Task A_blank_tenant_claim_runs_without_a_tenant_and_shares_the_key_of_a_caller_without_one()
     {
         using var blank = Fixture.Client("ada", tenant: TestAuthentication.BlankTenant);
         using var noTenant = Fixture.Client("ada");
-        var category = Guid.CreateVersion7();
-        await Fixture.Gateway<CatalogModule>().SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
-        var body = new { productId = Guid.CreateVersion7(), categoryId = category, name = "Desk lamp" };
+        var text = $"note-{Guid.CreateVersion7():N}";
         var key = IdempotentRequests.NewKey();
+        HttpRequestMessage Counting()
+        {
+            var request = new HttpRequestMessage(HttpMethod.Put, $"/stub/counted-notes/{text}");
+            request.Headers.Add(IdempotentRequests.Header, key);
+            return request;
+        }
 
         var seen = await blank.GetFromJsonAsync<SeenContext>("/stub/context", TestContext.Current.CancellationToken);
-        var first = await blank.PostAsJsonAsync("/catalog/products", body, key, TestContext.Current.CancellationToken);
-        var repeat = await noTenant.PostAsJsonAsync("/catalog/products", body, key, TestContext.Current.CancellationToken);
+        var first = await blank.SendAsync(Counting(), TestContext.Current.CancellationToken);
+        var repeat = await noTenant.SendAsync(Counting(), TestContext.Current.CancellationToken);
 
         Assert.Null(seen!.Tenant);
-        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
-        Assert.Equal(HttpStatusCode.Created, repeat.StatusCode);
-        Assert.Equal(first.Headers.Location, repeat.Headers.Location);
-        Assert.Equal([[IdempotencyTable.NoTenant]], await Fixture.RowsAsync("select tenant from catalog.pouryakit_idempotency_keys"));
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
+        Assert.Equal((HttpStatusCode.OK, HttpStatusCode.OK), (first.StatusCode, repeat.StatusCode));
+        Assert.Equal(
+            await first.Content.ReadAsStringAsync(TestContext.Current.CancellationToken),
+            await repeat.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
+        );
+        Assert.Equal([[IdempotencyTable.NoTenant]], await Fixture.RowsAsync("select tenant from stub.pouryakit_idempotency_keys"));
+        Assert.Equal(1L, await Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = '{text}'"));
     }
 
     [Theory]

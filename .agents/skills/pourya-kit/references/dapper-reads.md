@@ -20,15 +20,17 @@ using PouryaKit.Persistence.Dapper;
 // Products/Features/GetProduct/
 internal sealed record ProductDto(Guid Id, Guid CategoryId, string Name);
 
-internal sealed class GetProductQueryHandler(IReadConnectionFactory connections) : QueryHandler<GetProductQuery, ProductDto>
+// Plain SQL reads no query filter, so it names the Operation's tenant itself, as it names is_deleted.
+internal sealed class GetProductQueryHandler(IReadConnectionFactory connections, OperationContext context)
+    : QueryHandler<GetProductQuery, ProductDto>
 {
     public override async Task<Result<ProductDto>> Handle(GetProductQuery query, CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var product = await connection.QuerySingleOrDefaultAsync<ProductDto>(
             new CommandDefinition(
-                "select id, category_id as categoryid, name from catalog.products where id = @Id and is_deleted = false",
-                new { Id = new ProductId(query.ProductId) },   // a typed ID as a parameter
+                "select id, category_id as categoryid, name from catalog.products where id = @Id and tenant = @Tenant and is_deleted = false",
+                new { Id = new ProductId(query.ProductId), context.Tenant },   // a typed ID as a parameter
                 cancellationToken: cancellationToken
             )
         );
@@ -39,13 +41,15 @@ internal sealed class GetProductQueryHandler(IReadConnectionFactory connections)
 // Products/Features/ListProducts/: typed IDs as results, one Page at a time
 internal sealed record ProductListItemDto(ProductId Id, CategoryId CategoryId, string Name);
 
-internal sealed class ListProductsQueryHandler(IReadConnectionFactory connections)
+internal sealed class ListProductsQueryHandler(IReadConnectionFactory connections, OperationContext context)
     : QueryHandler<ListProductsQuery, Page<ProductListItemDto>>
 {
-    // The Feature writes its WHERE; each declared filter arrives as @{field}_{operator}, null when not asked for.
+    // The Feature writes its WHERE, the Operation's tenant included, since plain SQL reads no query filter; each declared
+    // filter arrives as @{field}_{operator}, null when not asked for.
     private const string From = """
         from catalog.products p
-        where not p.is_deleted
+        where p.tenant = @Tenant
+          and not p.is_deleted
           and (@name_eq is null or p.name = @name_eq)
           and (@name_contains is null or strpos(p.name, @name_contains) > 0)
           and (@category_eq is null or p.category_id = @category_eq)
@@ -64,7 +68,7 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
     public override async Task<Result<Page<ProductListItemDto>>> Handle(ListProductsQuery query, CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        return await connection.QueryPageAsync<ProductListItemDto>(Sql, query.Page, cancellationToken: cancellationToken);
+        return await connection.QueryPageAsync<ProductListItemDto>(Sql, query.Page, new { context.Tenant }, cancellationToken);
     }
 }
 ```
@@ -81,7 +85,7 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
 - Pass the cancellation token through `new CommandDefinition(sql, parameters, cancellationToken: cancellationToken)`; Dapper's overloads that take the SQL and parameters directly take no token.
 - Name each table with its Module's schema (`catalog.products`): the read connection is the Host's, not the Module's. Read only your own Module's schema; another Module's data comes through its Contracts (see [modules.md](modules.md)).
 - Columns are in snake_case (see [persistence.md](persistence.md)); alias each to its member name (`category_id as categoryid`). Dapper matches names without regard to case.
-- Dapper runs exactly the SQL you write; no EF Core query filter reaches it. A removed soft-deletable aggregate keeps its row, marked `is_deleted = true` (see [persistence.md](persistence.md#audit-and-soft-delete)), so every read of a soft-deletable table states `is_deleted = false` (or `not is_deleted`) itself, as both reads above do. A read that leaves it out returns removed aggregates. State every other predicate the read needs in the SQL too.
+- Dapper runs exactly the SQL you write; no EF Core query filter reaches it. A removed soft-deletable aggregate keeps its row, marked `is_deleted = true` (see [persistence.md](persistence.md#audit-and-soft-delete)), so every read of a soft-deletable table states `is_deleted = false` (or `not is_deleted`) itself, as both reads above do. A read that leaves it out returns removed aggregates. In a tenant-scoped Module every read of a tenant-scoped table states `tenant = @Tenant` the same way, with the tenant of the injected `OperationContext`, as both reads above do ([multi-tenancy.md](multi-tenancy.md#reads)). State every other predicate the read needs in the SQL too.
 - Read into an `internal` DTO record declared in the Feature, as above, and return a missing row as the Business Area's `NotFound` Error.
 
 ## Reading a Page

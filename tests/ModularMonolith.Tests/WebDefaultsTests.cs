@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Testing;
@@ -99,9 +100,9 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         await using var host = Compose(("Compression:Enabled", "true"));
         await host.StartAsync(TestContext.Current.CancellationToken);
-        using var https = AppFixture.ClientOf(host);
+        using var https = AppFixture.ClientOf(host, "ada", AppFixture.TestTenant);
         https.BaseAddress = new Uri("https://localhost/");
-        using var unconfigured = Fixture.Client();
+        using var unconfigured = Fixture.Client("ada", AppFixture.TestTenant);
         unconfigured.BaseAddress = new Uri("https://localhost/");
 
         var plain = await https.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
@@ -156,11 +157,11 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         using var anonymous = AppFixture.ClientOf(host);
         using var ada = AppFixture.ClientOf(host, "ada");
 
-        // The storefront's visitors run as catalog.storefront, the Stub's as stub.visitor.
-        var first = await anonymous.SendAsync(Spoofed("/catalog/products", "198.51.100.1"), TestContext.Current.CancellationToken);
-        var second = await anonymous.SendAsync(Spoofed("/catalog/products", "198.51.100.2"), TestContext.Current.CancellationToken);
-        var otherActor = await anonymous.GetAsync("/stub/public/context", TestContext.Current.CancellationToken);
-        var person = await ada.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
+        // The public endpoint's visitors run as stub.visitor, the kiosk's as stub.kiosk.
+        var first = await anonymous.SendAsync(Spoofed("/stub/public/context", "198.51.100.1"), TestContext.Current.CancellationToken);
+        var second = await anonymous.SendAsync(Spoofed("/stub/public/context", "198.51.100.2"), TestContext.Current.CancellationToken);
+        var otherActor = await anonymous.GetAsync("/stub/kiosk/context", TestContext.Current.CancellationToken);
+        var person = await ada.GetAsync("/stub/public/context", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         await ProblemAsync(second, HttpStatusCode.TooManyRequests);
@@ -191,19 +192,19 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         await ProblemAsync(untrustedWithHeaders, HttpStatusCode.TooManyRequests);
     }
 
-    // The partition names the Actor's kind as well as its id: a person who bears the storefront's name is not one of its
-    // anonymous visitors, who run as the system Actor catalog.storefront.
+    // The partition names the Actor's kind as well as its id: a person who bears the public endpoint's name is not one of
+    // its anonymous visitors, who run as the system Actor stub.visitor.
     [Fact]
     public async Task A_person_named_as_a_public_endpoints_actor_has_a_partition_apart_from_its_anonymous_callers()
     {
         await using var host = Compose(RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0));
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var anonymous = AppFixture.ClientOf(host);
-        using var namesake = AppFixture.ClientOf(host, "catalog.storefront");
+        using var namesake = AppFixture.ClientOf(host, ReadOperationContextEndpoint.Visitor.Id);
 
-        var visitor = await anonymous.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
-        var person = await namesake.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
-        var anotherVisitor = await anonymous.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
+        var visitor = await anonymous.GetAsync("/stub/public/context", TestContext.Current.CancellationToken);
+        var person = await namesake.GetAsync("/stub/public/context", TestContext.Current.CancellationToken);
+        var anotherVisitor = await anonymous.GetAsync("/stub/public/context", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, visitor.StatusCode);
         Assert.Equal(HttpStatusCode.OK, person.StatusCode);
@@ -297,7 +298,7 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
             ("RateLimit:QueueLimit", $"{queueLimit}"),
         ];
 
-    // A browser's preflight before a cross-origin POST of JSON to the storefront's products.
+    // A browser's preflight before a cross-origin POST of JSON to Catalog's products.
     private static HttpRequestMessage Preflight(string origin)
     {
         var request = new HttpRequestMessage(HttpMethod.Options, "/catalog/products");
@@ -307,9 +308,10 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         return request;
     }
 
+    // A cross-origin GET an anonymous caller is served.
     private static HttpRequestMessage Get(string origin)
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, "/catalog/products");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/stub/public/context");
         request.Headers.Add("Origin", origin);
         return request;
     }

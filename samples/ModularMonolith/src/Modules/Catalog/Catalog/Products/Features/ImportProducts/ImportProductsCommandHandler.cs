@@ -8,7 +8,7 @@ using PouryaKit.Domain;
 
 namespace Catalog.Products.Features.ImportProducts;
 
-internal sealed class ImportProductsCommandHandler(IProductRepository products)
+internal sealed class ImportProductsCommandHandler(IProductRepository products, OperationContext context)
     : CommandHandler<ImportProductsCommand, int>
 {
     public override async Task<Result<int>> Handle(ImportProductsCommand command, CancellationToken cancellationToken)
@@ -16,7 +16,7 @@ internal sealed class ImportProductsCommandHandler(IProductRepository products)
         // Names are compared as Product stores them. A name given twice is a mistake in the request, refused before
         // anything else. A name already in use is skipped, which makes a repeated import harmless. That is a courtesy,
         // not the guard: the unique index on the name is, so a name a concurrent Operation takes first fails the import
-        // with ProductErrors.NameInUse.
+        // with ProductErrors.NameInUse. Names are a tenant's own: another tenant's products are neither read nor in use.
         var names = command.Names.Select(name => name.Trim()).ToList();
         if (names.Distinct(StringComparer.Ordinal).Count() != names.Count)
         {
@@ -29,7 +29,8 @@ internal sealed class ImportProductsCommandHandler(IProductRepository products)
         var imported = 0;
         foreach (var name in names.Where(candidate => !inUse.Contains(candidate)))
         {
-            var product = Product.Create(new ProductId(Guid.CreateVersion7()), categoryId, name);
+            // Catalog is tenant-scoped: an Operation without a tenant never reaches its handlers.
+            var product = Product.Create(new ProductId(Guid.CreateVersion7()), categoryId, name, context.Tenant!);
             if (product.IsFailure)
             {
                 return product.Errors;

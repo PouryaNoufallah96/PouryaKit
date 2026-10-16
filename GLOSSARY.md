@@ -69,6 +69,10 @@ _Avoid_: User accessor, request context, execution context
 The person or system on whose authority an Operation runs.
 _Avoid_: User, principal, caller
 
+**Tenant**:
+The customer or company an Operation runs for, carried on the Operation Context and taken only from a verified claim. A tenant-scoped Module runs no Operation without one, and its tenant-scoped aggregates are read only by Operations of the tenant they belong to.
+_Avoid_: Organization, company id, owner
+
 **Request id**:
 The id a caller gives one request, carried on the Operation Context. With the tenant, the Actor and the command it names the key an outermost idempotent command reserves in its Unit of Work, and a repeat of the request replays that command's first success from it.
 _Avoid_: Idempotency token, dedup key, idempotency marker

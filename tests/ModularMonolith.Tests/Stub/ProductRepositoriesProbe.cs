@@ -17,7 +17,8 @@ internal sealed record ProbeProductRepositoriesCommand(Guid ProductId, Guid Cate
 
 internal sealed class ProbeProductRepositoriesCommandHandler(
     IRepository<Product, ProductId> generic,
-    IProductRepository specific
+    IProductRepository specific,
+    OperationContext context
 ) : CommandHandler<ProbeProductRepositoriesCommand, bool>
 {
     public override async Task<Result<bool>> Handle(
@@ -26,7 +27,7 @@ internal sealed class ProbeProductRepositoriesCommandHandler(
     )
     {
         var id = new ProductId(command.ProductId);
-        var product = Product.Create(id, new CategoryId(command.CategoryId), "Lamp").Value;
+        var product = Product.Create(id, new CategoryId(command.CategoryId), "Lamp", context.Tenant!).Value;
         await generic.AddAsync(product, cancellationToken);
         return ReferenceEquals(product, await specific.FindAsync(id, cancellationToken));
     }

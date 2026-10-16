@@ -74,7 +74,7 @@ public sealed class UnitOfWorkTests(AppFixture app) : HostTest<AppFixture>(app)
 
 ## The Operation Context in tests
 
-- A test that does not care who runs its Operations calls the Gateway without a context, as above: `SendAsync(command, ct)` and `QueryAsync(query, ct)` are extension members in `PouryaKit.Testing` (`GatewayTestExtensions`), so the file needs `using PouryaKit.Testing;`. Each call runs as a new Operation of `GatewayTestExtensions.TestActor`, the named system Actor `Actor.System("PouryaKit.Testing")`. Application code never references `PouryaKit.Testing`, so it always names its context.
+- A test that does not care who runs its Operations calls the Gateway without a context, as above: `SendAsync(command, ct)` and `QueryAsync(query, ct)` are extension members in `PouryaKit.Testing` (`GatewayTestExtensions`), so the file needs `using PouryaKit.Testing;`. Each call runs as a new Operation of `GatewayTestExtensions.TestActor`, the named system Actor `Actor.System("PouryaKit.Testing")`. Application code never references `PouryaKit.Testing`, so it always names its context. Such an Operation has no tenant, so a tenant-scoped Module refuses it: pass a context with a tenant there ([multi-tenancy.md](multi-tenancy.md#testing)).
 - A test that needs a particular Actor, tenant or correlation creates the `OperationContext` and passes it to the Gateway's own methods:
 
 ```csharp
@@ -91,7 +91,7 @@ public async Task The_context_a_caller_passes_to_a_gateway_is_the_context_the_ha
 }
 ```
 
-- A Module's Gateway refuses a command or query that a test-only Module owns. To run a test-only probe inside an application Module's Unit of Work, open a scope from `Fixture.Host.Services`, begin it with `BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(CatalogModule))`, and send the probe through that scope's `IDispatcher`, as a delivery step would.
+- A Module's Gateway refuses a command or query that a test-only Module owns. To run a test-only probe inside an application Module's Unit of Work, open a scope from `Fixture.Host.Services`, begin it with `BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, "tests"), typeof(CatalogModule))`, with a tenant since Catalog is tenant-scoped, and send the probe through that scope's `IDispatcher`, as a delivery step would.
 
 ## Time
 

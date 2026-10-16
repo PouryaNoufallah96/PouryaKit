@@ -32,6 +32,8 @@ public static class CatalogModule
         public IServiceCollection AddCatalog()
         {
             var catalog = typeof(CatalogModule).Assembly;
+            // First, so the tenant requirement runs before every other authorizer of Catalog's commands and queries.
+            services.AddPouryaKitTenancy(catalog);
             services.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
             services.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
             services.AddPouryaKitDapper(connectionName: "app", catalog);

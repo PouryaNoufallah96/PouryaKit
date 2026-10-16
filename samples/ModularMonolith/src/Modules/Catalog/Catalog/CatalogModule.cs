@@ -27,6 +27,8 @@ public sealed class CatalogModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module)
     {
+        // First, so the tenant requirement runs before every other authorizer of Catalog's commands and queries.
+        module.AddPouryaKitTenancy();
         module.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
         module.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
         module.AddPouryaKitDapper(connectionName: "app");

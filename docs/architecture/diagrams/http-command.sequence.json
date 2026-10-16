@@ -34,8 +34,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 42,
-          "end_line": 42,
+          "line": 44,
+          "end_line": 44,
           "label": "Catalog's routes under /catalog"
         }
       ]
@@ -161,7 +161,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommandHandler.cs",
           "line": 10,
-          "end_line": 28,
+          "end_line": 30,
           "label": "returns a Result, saves nothing"
         }
       ]

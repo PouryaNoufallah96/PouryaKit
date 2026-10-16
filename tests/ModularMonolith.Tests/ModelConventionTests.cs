@@ -5,7 +5,8 @@ using PouryaKit.Persistence.EFCore;
 namespace ModularMonolith.Tests;
 
 // EF Core filters only the root of a hierarchy, never an owned type, so an ISoftDeletable mapped as either would be
-// marked deleted on removal and still be read. The model refuses to build instead. No database is needed.
+// marked deleted on removal and still be read, and an ITenantScoped one read by every tenant. The model refuses to build
+// instead. No database is needed.
 public sealed class ModelConventionTests
 {
     [Fact]
@@ -17,6 +18,16 @@ public sealed class ModelConventionTests
 
         Assert.StartsWith("Cover is ISoftDeletable but is mapped as an owned type", ownedRefused.Message);
         Assert.StartsWith("DerivedSoftDeletable is ISoftDeletable but is mapped as a type derived from HierarchyRoot", derivedRefused.Message);
+    }
+
+    [Fact]
+    public void A_tenant_scoped_type_that_no_query_filter_can_reach_fails_the_model()
+    {
+        var ownedRefused = Assert.Throws<InvalidOperationException>(() => new OwnedTenantScopedContext());
+        var derivedRefused = Assert.Throws<InvalidOperationException>(() => new DerivedTenantScopedContext());
+
+        Assert.StartsWith("Seal is ITenantScoped but is mapped as an owned type", ownedRefused.Message);
+        Assert.StartsWith("DerivedTenantScoped is ITenantScoped but is mapped as a type derived from HierarchyRoot", derivedRefused.Message);
     }
 
     // A read that must see removed rows names the filter by the public constant, whose value is published.
@@ -60,6 +71,21 @@ internal sealed class DerivedSoftDeletable : HierarchyRoot, ISoftDeletable
     public string? DeletedBy { get; private set; }
 }
 
+internal sealed class Folio : AggregateRoot<Guid>
+{
+    public Seal Seal { get; private set; } = null!;
+}
+
+internal sealed class Seal : ITenantScoped
+{
+    public string Tenant { get; private set; } = "";
+}
+
+internal sealed class DerivedTenantScoped : HierarchyRoot, ITenantScoped
+{
+    public string Tenant { get; private set; } = "";
+}
+
 internal sealed class Drawer : AggregateRoot<Guid>, ISoftDeletable
 {
     public bool IsDeleted { get; private set; }
@@ -87,6 +113,27 @@ internal sealed class DerivedSoftDeletableContext()
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<HierarchyRoot>();
         modelBuilder.Entity<DerivedSoftDeletable>().HasBaseType<HierarchyRoot>();
+    }
+}
+
+internal sealed class OwnedTenantScopedContext()
+    : PouryaKitDbContext(new DbContextOptionsBuilder<OwnedTenantScopedContext>().UseNpgsql("Host=localhost").Options)
+{
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<Folio>().OwnsOne(folio => folio.Seal);
+    }
+}
+
+internal sealed class DerivedTenantScopedContext()
+    : PouryaKitDbContext(new DbContextOptionsBuilder<DerivedTenantScopedContext>().UseNpgsql("Host=localhost").Options)
+{
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<HierarchyRoot>();
+        modelBuilder.Entity<DerivedTenantScoped>().HasBaseType<HierarchyRoot>();
     }
 }
 

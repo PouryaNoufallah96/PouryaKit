@@ -152,8 +152,8 @@
         },
         {
           "path": "GLOSSARY.md",
-          "line": 130,
-          "end_line": 132,
+          "line": 134,
+          "end_line": 136,
           "label": "Service name"
         }
       ]
@@ -282,7 +282,7 @@
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 30,
+          "line": 32,
           "label": "a schema per Module (catalog)"
         },
         {
@@ -348,8 +348,8 @@
         },
         {
           "path": "tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs",
-          "line": 53,
-          "end_line": 66,
+          "line": 52,
+          "end_line": 65,
           "label": "one database per Host in the tests"
         }
       ]

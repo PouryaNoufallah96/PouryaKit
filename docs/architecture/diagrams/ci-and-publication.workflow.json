@@ -302,8 +302,8 @@
         },
         {
           "path": "src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/HostTests.cs",
-          "line": 137,
-          "end_line": 142,
+          "line": 136,
+          "end_line": 141,
           "label": "generated tests use HostFixture"
         }
       ]

@@ -144,7 +144,7 @@ public sealed class ConflictTests(AppFixture app) : HostTest<AppFixture>(app)
         // Yields first, so both Operations start before either reaches its hold.
         await Task.Yield();
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(CatalogModule));
+        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), typeof(CatalogModule));
         return await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
             .SendAsync(new HoldChangeCommand(change, hold), cancellationToken);

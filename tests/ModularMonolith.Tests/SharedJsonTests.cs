@@ -19,7 +19,7 @@ public sealed class SharedJsonTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task A_typed_id_is_written_the_same_in_an_http_response_and_in_its_delivered_envelope()
     {
-        using var client = Fixture.Client("ada");
+        using var client = Fixture.Client("ada", AppFixture.TestTenant);
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();
         Assert.Equal(

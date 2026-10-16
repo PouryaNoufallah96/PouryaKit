@@ -103,7 +103,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
           "line": 26,
-          "end_line": 48,
+          "end_line": 50,
           "label": "declares data, Features, publications"
         },
         {
@@ -193,7 +193,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommandHandler.cs",
           "line": 1,
-          "end_line": 28,
+          "end_line": 30,
           "label": "Kit types: CommandHandler, Result"
         },
         {

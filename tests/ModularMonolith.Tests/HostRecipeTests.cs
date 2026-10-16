@@ -193,7 +193,7 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         });
         await using var catalog = await environment.StartCatalogHostAsync();
         var product = Guid.CreateVersion7();
-        var created = new OperationContext(Actor.Person("ada"));
+        var created = new OperationContext(Actor.Person("ada"), AppFixture.TestTenant);
 
         await BrokerEnvironment.CreateProductAsync(catalog, product, "Lamp", created);
         await StockedAsync(environment, product);

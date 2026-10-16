@@ -29,13 +29,13 @@
         {
           "path": "tests/ModularMonolith.Tests/Fixtures/AppFixture.cs",
           "line": 27,
-          "end_line": 72,
+          "end_line": 78,
           "label": "hosts ModularMonolith.Host"
         },
         {
           "path": "tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs",
-          "line": 95,
-          "end_line": 149,
+          "line": 94,
+          "end_line": 148,
           "label": "both Hosts on one broker"
         }
       ]
@@ -153,7 +153,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
           "line": 28,
-          "end_line": 48,
+          "end_line": 50,
           "label": "publishes v1, v2 and the Snapshot"
         },
         {

@@ -17,6 +17,9 @@ internal sealed class ComposedFeatures
 
     public List<Assembly> Application { get; } = [];
 
+    // The Modules AddPouryaKitTenancy made tenant-scoped; null is the application's own services.
+    public HashSet<Type?> TenantScoped { get; } = [];
+
     public static ComposedFeatures In(IServiceCollection services)
     {
         if (services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(ComposedFeatures)) is { } existing)

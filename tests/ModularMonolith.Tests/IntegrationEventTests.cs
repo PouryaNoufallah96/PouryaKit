@@ -35,7 +35,7 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
         using (DeliveryProbes.RecordWritten(written))
         {
             (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
-                () => CreateProductAsync(product, new OperationContext(Actor.Person("ada"))),
+                () => CreateProductAsync(product, new OperationContext(Actor.Person("ada"), AppFixture.TestTenant)),
                 TestContext.Current.CancellationToken
             );
         }
@@ -409,7 +409,7 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
         await catalog.SendAsync(new CreateCategoryCommand(category, $"Lamps {category}"), TestContext.Current.CancellationToken);
         return await catalog.SendAsync(
             new CreateProductCommand(product, category, $"Lamp {product}"),
-            context ?? new OperationContext(GatewayTestExtensions.TestActor),
+            context ?? new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant),
             TestContext.Current.CancellationToken
         );
     }

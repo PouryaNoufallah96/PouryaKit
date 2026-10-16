@@ -34,18 +34,25 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
     {
         builder.ToTable("products");
         builder.Property(product => product.Name).HasMaxLength(200);
-        // Unique among the products not removed, so a removed product's name is free again.
-        builder.HasIndex(product => product.Name).IsUnique().HasFilter("is_deleted = false").HasDatabaseName(NameIndex);
+        // Unique among the products not removed, so a removed product's name is free again, and per tenant.
+        builder
+            .HasIndex(product => new { product.Tenant, product.Name })
+            .IsUnique()
+            .HasFilter("is_deleted = false")
+            .HasDatabaseName(NameIndex);
     }
 }
 
-// Products/Entities/: auditable and soft-deletable, so the Unit of Work sets those properties and the domain never does
-internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDeletable
+// Products/Entities/: auditable and soft-deletable, so the Unit of Work sets those properties and the domain never does;
+// tenant-scoped, so it sets its own tenant (multi-tenancy.md)
+internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDeletable, ITenantScoped
 {
     // Set by Remove, not mapped: IsDeleted is set only by the Unit of Work, after every handler of the Operation ran.
     private bool _removed;
 
     private Product() { }   // for EF Core
+
+    public string Tenant { get; private set; } = "";
 
     public string Name { get; private set; } = "";
 
@@ -65,7 +72,8 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
 
     public string? DeletedBy { get; private set; }
 
-    // Create(id, categoryId, name) as in domain-primitives.md: it checks the name and raises ProductCreatedDomainEvent.
+    // Create(id, categoryId, name, tenant), as in domain-primitives.md with the tenant its handler takes from the
+    // Operation Context: it checks the name and raises ProductCreatedDomainEvent.
 
     /// <summary>
     /// Records that the product is leaving the catalog, once; the repository's Remove then removes it. Removing it
@@ -248,7 +256,7 @@ Both are opt-in, per aggregate or entity, with a contract from `PouryaKit.Domain
 - An auditable change, or the removal of a soft-deletable entity, in a scope whose Operation was never begun throws `InvalidOperationException`, and nothing commits: the stamp needs an Actor. An Operation that stamps nothing needs no context.
 - Audit: an added entity gets its creation and last change from the Operation; a changed one gets its last change. A change to anything an aggregate owns counts as a change of its root, so an auditable root is stamped then too, and a child moved from one aggregate to another stamps both.
 - Soft delete: `Remove` on the repository of a soft-deletable aggregate keeps its row. The prepare step turns the removal into `IsDeleted = true` with `DeletedAt` and `DeletedBy`, and everything the aggregate owns is kept with it. Removing an aggregate that is not soft-deletable deletes its row.
-- EF Core queries leave a removed entity out by convention, so the repository never returns one in a later Operation. The query filter is named `PouryaKitDbContext.SoftDeleteFilter` (`PouryaKit.Persistence.EFCore`, value `PouryaKit.SoftDelete`); a read that must see removed rows too, such as an audit view, passes it to EF Core: `IgnoreQueryFilters([PouryaKitDbContext.SoftDeleteFilter])`. A Dapper read must say `is_deleted = false` itself ([dapper-reads.md](dapper-reads.md)).
+- EF Core queries leave a removed entity out by convention, so the repository never returns one in a later Operation. The query filter is named `PouryaKitDbContext.SoftDeleteFilter` (`PouryaKit.Persistence.EFCore`, value `PouryaKit.SoftDelete`); a read that must see removed rows too, such as an audit view, passes it to EF Core: `IgnoreQueryFilters([PouryaKitDbContext.SoftDeleteFilter])`. A Dapper read must say `is_deleted = false` itself ([dapper-reads.md](dapper-reads.md)). A second named filter, `PouryaKitDbContext.TenantFilter`, reads an `ITenantScoped` entity only for the Operation's tenant, and setting one filter aside keeps the other ([multi-tenancy.md](multi-tenancy.md#reads)).
 - Removal raises no Domain Event of its own; an aggregate that publishes Snapshots publishes its Tombstone ([messaging.md](messaging.md#snapshots-between-modules)). When other aggregates care, give the aggregate a domain method that raises one and call it before the repository's `Remove`, as `RemoveProducts` above calls `Product.Remove()`. Guard the method so that a second call in the same Operation raises nothing more, as `Product` does.
 - Put `ISoftDeletable` on a type EF Core can filter: an aggregate or an entity that is not mapped as an owned type, at the root of its inheritance hierarchy or below a root that implements it too. An owned type, or a type derived from a root that is not soft-deletable, is refused when the model is built.
 - A soft-deletable child is kept when it is removed from its aggregate. It is deleted outright only when its parent is deleted outright and the child's key to that parent is required: its row cannot outlive the parent's. The Unit of Work resolves every such cascade in the prepare step, so the save itself changes nothing further.

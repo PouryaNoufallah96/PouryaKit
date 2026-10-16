@@ -54,12 +54,13 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
         var lamp = await CreateLampAsync();
         var questionsBefore = Questions.Seen.Count;
 
+        // Catalog is tenant-scoped, so the question is asked in the lamp's tenant.
         var noted = await Fixture
             .Gateway<StubModule>()
-            .SendAsync(new NoteProductCommand(lamp), TestContext.Current.CancellationToken);
+            .SendAsync(new NoteProductCommand(lamp), new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), TestContext.Current.CancellationToken);
         var unknown = await Fixture
             .Gateway<StubModule>()
-            .SendAsync(new NoteProductCommand(Guid.CreateVersion7()), TestContext.Current.CancellationToken);
+            .SendAsync(new NoteProductCommand(Guid.CreateVersion7()), new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), TestContext.Current.CancellationToken);
 
         Assert.True(noted.IsSuccess);
         Assert.Equal(NoteProductCommandHandler.UnknownProduct, Assert.Single(unknown.Errors));
@@ -72,7 +73,7 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
     public async Task A_question_to_another_module_continues_the_asking_operations_context()
     {
         var lamp = await CreateLampAsync();
-        var asking = new OperationContext(Actor.Person("ada"), tenant: "acme");
+        var asking = new OperationContext(Actor.Person("ada"), tenant: AppFixture.TestTenant);
 
         await Fixture
             .Gateway<StubModule>()

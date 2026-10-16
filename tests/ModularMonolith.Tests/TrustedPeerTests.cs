@@ -84,7 +84,8 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
         var name = $"Lamp {Guid.CreateVersion7():N}";
         var lamp = await CreateProductAsync(name);
         using var peer = WithContextHeaders(Fixture.Client(AppFixture.TrustedPeer));
-        using var person = WithContextHeaders(Fixture.Client("grace"));
+        // The person's own tenant claim is the one the peer's headers name, so only the permission refuses it.
+        using var person = WithContextHeaders(Fixture.Client("grace", "acme"));
 
         var refused = await RemoveAsync(person, name);
         var refusedRows = await Fixture.RowsAsync($"select is_deleted from catalog.products where id = '{lamp}'");
@@ -135,13 +136,14 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(detail, problem.GetProperty("detail").GetString());
     }
 
+    // In the tenant the peer's context headers name.
     private async Task<Guid> CreateProductAsync(string name)
     {
         var catalog = Fixture.Gateway<CatalogModule>();
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();
-        await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
-        await catalog.SendAsync(new CreateProductCommand(product, category, name), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), new OperationContext(GatewayTestExtensions.TestActor, "acme"), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(new CreateProductCommand(product, category, name), new OperationContext(GatewayTestExtensions.TestActor, "acme"), TestContext.Current.CancellationToken);
         return product;
     }
 
