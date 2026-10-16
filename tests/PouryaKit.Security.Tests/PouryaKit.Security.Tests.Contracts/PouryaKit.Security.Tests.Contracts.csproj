@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Contracts of the test Module: a command that declares a permission outside the Module's assembly. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\PouryaKit.Security\PouryaKit.Security.csproj" />
+  </ItemGroup>
+</Project>

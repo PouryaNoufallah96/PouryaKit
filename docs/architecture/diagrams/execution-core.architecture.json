@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "b86e90cd6b937e546989e7131d7b5ec4098ed2f3",
+      "revision": "aebdeaf1fc92ba6b0c9fdf6e33085a6d53018a14",
       "link_mode": "web"
     }
   },
@@ -253,9 +253,9 @@
         },
         {
           "path": "src/PouryaKit.Security/SecurityServiceCollectionExtensions.cs",
-          "line": 28,
-          "end_line": 36,
-          "label": "finds declarations with ImplementingTypes"
+          "line": 35,
+          "end_line": 40,
+          "label": "Dispatchable over ImplementingTypes"
         }
       ]
     },

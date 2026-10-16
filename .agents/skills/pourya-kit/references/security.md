@@ -34,7 +34,7 @@ internal sealed record RemoveProductsCommand(IReadOnlyList<string> Names) : Comm
 ```
 
 - Put `[RequiresPermission(name)]` on the command or query record, one permission each. Name it `<module>.<resource>.<action>` and keep the name in a constant on the record, so tests and grants name it without repeating the string.
-- `module.AddPouryaKitPermissions()` in the Module's Composition Root registers the check for every command and query of the assembly of the Module's definition that declares one, internal ones included, and for nothing else; it scans the assemblies it names instead, as an application without Modules does. Call it in every Composition Root whose Features declare one.
+- `module.AddPouryaKitPermissions()` in the Module's Composition Root registers the check for every command and query that declares one and is in the assembly of the Module's definition, internal ones included, or is handled by a handler there wherever it is declared, such as in the Module's Contracts: every command and query the Module can dispatch that declares one, and nothing else; it scans the assemblies it names instead, as an application without Modules does. Call it in every Composition Root whose Features declare one.
 - A declared permission whose check no Composition Root registered fails the Host when it is built, so it never runs unchecked, not even through a Gateway of a Host built and never started. `Build()` throws `InvalidOperationException`, one line per command or query:
 
   ```text
