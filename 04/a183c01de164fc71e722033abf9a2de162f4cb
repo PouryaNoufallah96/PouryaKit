@@ -1,0 +1,25 @@
+docs/architecture/diagrams/execution-core.html
+  s_63a6f6816df045::t_c98f893659bf0d 4985
+docs/architecture/diagrams/execution-core.architecture.json
+  s_63a6f6816df045::t_c83ac192f018fc 10
+.claude/agent-memory/kit-implementer/cqrs-and-modularity-facts.md
+  s_63a6f6816df045::t_303e9b6e74290b 72
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_63a6f6816df045::t_cf7d65d76b2f0d 89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "04a183c01de164fc71e722033abf9a2de162f4cb",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
