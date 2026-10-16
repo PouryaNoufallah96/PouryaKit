@@ -1,0 +1,24 @@
+.agents/skills/pourya-kit/references/modules.md
+  s_63a6f6816df045::t_1706d63bd72b6a 133
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_63a6f6816df045::t_5f4ee139c413b7 495-496,504,508-510
+  s_63a6f6816df045::t_16e5024206bc91 13
+  s_63a6f6816df045::t_74125e974363bb 343
+  s_63a6f6816df045::t_8c6e13660a4a41 511-512
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "95d403f4e35cb2105d4513d3888bcb852143bbb5",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
