@@ -327,11 +327,11 @@ class MergePackageTest(unittest.TestCase):
         self.main_at_the_tip()
         head = self.commit("docs/acceptance.md", "# Acceptance\n\n## #1\n\n## #2\n", "docs: a package's section")
         self.git("push", "--quiet", "origin", WAVE)
-        self.move_base({"docs/acceptance.md": "# Acceptance\n\n## #1\n\n## #3\n", ".vscode/settings.json": "{}\n"})
+        self.move_base({"docs/acceptance.md": "# Acceptance\n\n## #1\n\n## #3\n", ".idea/workspace.xml": "<project />\n"})
         done = self.merge("--ready")
         self.assertEqual(done.returncode, 1, done.stdout + done.stderr)
         self.assertIn("would conflict in 1 path(s):\n  docs/acceptance.md\n", done.stdout)
-        self.assertIn("  .vscode/settings.json: '.vscode' is not a top-level entry of this repository\n", done.stdout)
+        self.assertIn("  .idea/workspace.xml: '.idea' is not a top-level entry of this repository\n", done.stdout)
         self.assertEqual(self.summary(done), "ready=no behind=1 conflicts=1 tree=FAIL(1)")
         self.assert_nothing_changed(head)
 
