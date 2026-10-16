@@ -151,13 +151,27 @@ class CheckDocsTests(unittest.TestCase):
         self.commit()
         self.assertEqual(self.check(), (0, "check-docs: 0 failure(s) in 6 Markdown file(s) and 1 diagram source(s)\n"))
 
-    def test_a_diagram_citing_a_file_changed_since_its_revision_fails(self) -> None:
-        """Outside the cited range too: a range cannot tell a moved line from a rewritten one."""
+    def test_a_diagram_citing_lines_changed_or_moved_since_its_revision_fails(self) -> None:
+        """A rewrite inside the range, and a line added above it, which moves it: a range cannot tell the two apart."""
+        self.write(CART)
+        revision = self.commit()
+        self.write(diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 2, "end_line": 3}) | {"src/Catalog/Cart.cs": CART["src/Catalog/Cart.cs"].replace("{\n}", "{ // open\n}")})
+        self.commit()
+        self.assertFails({}, f"{DIAGRAM}: src/Catalog/Cart.cs:2-3 cites lines changed or moved since the revision {revision[:7]}; {REVERIFY}")
+        self.write({"src/Catalog/Cart.cs": "// Carts.\n" + CART["src/Catalog/Cart.cs"]})
+        self.commit()
+        self.assertFails({}, f"{DIAGRAM}: src/Catalog/Cart.cs:2-3 cites lines changed or moved since the revision {revision[:7]}; {REVERIFY}")
+
+    def test_a_diagram_citing_a_file_changed_only_below_its_range_passes(self) -> None:
+        """Session 1 of Wave 3 (2026-10-16): three one-sentence fixes below a cited range each cost a two-commit re-pin."""
         self.write(CART)
         revision = self.commit()
         self.write(diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 1, "end_line": 2}) | {"src/Catalog/Cart.cs": CART["src/Catalog/Cart.cs"] + "// Carts.\n"})
         self.commit()
-        self.assertFails({}, f"{DIAGRAM}: src/Catalog/Cart.cs:1-2 cites a file changed since the revision {revision[:7]}; {REVERIFY}")
+        self.assertEqual(self.check(), (0, "check-docs: 0 failure(s) in 6 Markdown file(s) and 1 diagram source(s)\n"))
+        self.write({"src/Catalog/Cart.cs": CART["src/Catalog/Cart.cs"].rstrip("\n").rsplit("\n", 1)[0] + "\n"})
+        self.commit()
+        self.assertEqual(self.check()[0], 0)
 
     def test_a_staged_change_to_a_cited_file_fails_only_with_the_staged_flag(self) -> None:
         """The hook's case: the commit that changes a cited file must fail itself, not the one after it (session 7, three times)."""
@@ -165,11 +179,11 @@ class CheckDocsTests(unittest.TestCase):
         revision = self.commit()
         self.write(diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 1, "end_line": 2}))
         self.commit()
-        self.write({"src/Catalog/Cart.cs": CART["src/Catalog/Cart.cs"] + "// Carts.\n"})
+        self.write({"src/Catalog/Cart.cs": "// Carts.\n" + CART["src/Catalog/Cart.cs"]})
         self.assertEqual(self.check()[0], 0)
         code, out = self.check("--staged")
         self.assertEqual(code, 1, out)
-        self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Cart.cs:1-2 cites a file changed since the revision {revision[:7]}; {REVERIFY}", out)
+        self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Cart.cs:1-2 cites lines changed or moved since the revision {revision[:7]}; {REVERIFY}", out)
 
     def test_a_cited_file_staged_with_its_diagram_passes_and_the_re_pin_passes_next(self) -> None:
         """The repair path: the code and the diagram's ranges in one commit, the pin to that commit in the next."""
@@ -216,12 +230,12 @@ class CheckDocsTests(unittest.TestCase):
         revision = self.commit()
         self.write(diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 1, "end_line": 2}))
         self.commit()
-        self.write({"src/Catalog/Cart.cs": CART["src/Catalog/Cart.cs"] + "// Carts.\n"})
+        self.write({"src/Catalog/Cart.cs": "// Carts.\n" + CART["src/Catalog/Cart.cs"]})
         git(self.root, "add", "-A")
         (self.root / DIAGRAM).write_text(json.dumps({"meta": {}}), encoding="utf-8")
         code, out = self.check("--staged", stage=False)
         self.assertEqual(code, 1, out)
-        self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Cart.cs:1-2 cites a file changed since the revision {revision[:7]}; {REVERIFY}", out)
+        self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Cart.cs:1-2 cites lines changed or moved since the revision {revision[:7]}; {REVERIFY}", out)
 
     def test_an_invalid_staged_diagram_removed_only_from_disk_still_fails(self) -> None:
         self.write(CART)
@@ -272,6 +286,21 @@ class CheckDocsTests(unittest.TestCase):
         self.assertEqual(code, 1, out)
         self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Cart.cs:1 names no file at HEAD; {REVERIFY}", out)
         self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Till.cs:1 names no file at HEAD; {REVERIFY}", out)
+
+    def test_a_diagram_pinned_to_a_commit_of_the_branch_being_merged_passes_during_the_merge(self) -> None:
+        """The #122 merge of Wave 3 (2026-10-16): the pin was reachable from MERGE_HEAD only, and the hook refused the merge commit."""
+        self.write(CART)
+        self.commit()
+        git(self.root, "checkout", "-q", "-b", "feature")
+        self.write({"src/Catalog/Cart.cs": CART["src/Catalog/Cart.cs"].replace("Cart", "Basket")})
+        code = self.commit()
+        self.write(diagram(code, {"path": "src/Catalog/Cart.cs", "line": 1, "end_line": 2}))
+        self.commit()
+        git(self.root, "checkout", "-q", "-")
+        self.write({"README.md": CLEAN["README.md"] + "More prose.\n"})
+        self.commit()
+        git(self.root, "merge", "-q", "--no-commit", "--no-ff", "feature")
+        self.assertEqual(self.check("--staged", stage=False)[0], 0)
 
     def test_a_diagram_pinned_to_a_revision_unreachable_from_head_fails(self) -> None:
         """A commit the clone lacks, and one it holds that a reset left out of HEAD's history, as a squash or rebase does;
