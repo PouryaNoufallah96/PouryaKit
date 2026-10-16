@@ -1,0 +1,50 @@
+.agents/skills/pourya-kit/references/security.md
+  s_63a6f6816df045::t_f1a42ebd5b558d 37
+docs/architecture/README.md
+  s_63a6f6816df045::t_f1a42ebd5b558d 126,161-162,190
+tests/PouryaKit.Security.Tests/RegistrationTests.cs
+  s_63a6f6816df045::t_209d30ea400a30 59
+  s_63a6f6816df045::t_889a7296afbf58 3-5,23-58,60-68
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_63a6f6816df045::t_ec0fed4ad0b5b6 6
+tests/PouryaKit.Security.Tests/PouryaKit.Security.Tests.Contracts/PouryaKit.Security.Tests.Contracts.csproj
+  s_63a6f6816df045::t_a39fcb2cea6278 1-9
+docs/architecture/diagrams/execution-core.architecture.json
+  s_63a6f6816df045::t_0271a70d6891c9 256-258
+src/PouryaKit.Cqrs/Composition/OperationTypes.cs
+  s_63a6f6816df045::t_29a75efc97ced7 51,56-60
+  s_63a6f6816df045::t_f503575018474c 49-50,52-55
+tests/PouryaKit.Security.Tests/PouryaKit.Security.Tests.Module/PouryaKit.Security.Tests.Module.csproj
+  s_63a6f6816df045::t_ce76b76c1d2f6d 1-9
+tests/PouryaKit.Security.Tests/PouryaKit.Security.Tests.Module/RevokeAccessHandler.cs
+  s_63a6f6816df045::t_7b50508f982adf 1-22
+src/PouryaKit.Security/SecurityServiceCollectionExtensions.cs
+  s_63a6f6816df045::t_f7a2e62630f5a2 52
+  s_63a6f6816df045::t_f43f5f881ddc7e 15-17,34,37-39,50-51,53-54
+  s_63a6f6816df045::t_442b4b81c629fd 18-20
+.claude/agent-memory/kit-implementer/cqrs-and-modularity-facts.md
+  s_63a6f6816df045::t_ec0fed4ad0b5b6 72
+tests/PouryaKit.Security.Tests/PouryaKit.Security.Tests.Contracts/RevokeAccessCommand.cs
+  s_63a6f6816df045::t_16a84e2a40f67f 1-11
+tests/PouryaKit.Security.Tests/PouryaKit.Security.Tests.csproj
+  s_63a6f6816df045::t_4b481dbe0e2821 14-18,21
+  s_63a6f6816df045::t_48a527be8a348f 13
+PouryaKit.slnx
+  s_63a6f6816df045::t_4b481dbe0e2821 50-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f8ac4f9f9c87574918bc3a22ee47fbd58d512b30",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
