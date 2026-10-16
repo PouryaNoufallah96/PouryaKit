@@ -8,8 +8,9 @@ namespace PouryaKit.Cqrs;
 /// What a Feature's Page read allows: the sort keys a caller may name (the first is the default), the fields a caller
 /// may filter on with their operators and value type, and the largest Page size. It holds names only; the Dapper and EF
 /// Core page helpers map each name to the Feature's own column or expression, so no text a caller sends becomes SQL. A
-/// Feature declares it once, beside its query, and checks the query's <see cref="PageRequest"/> with
-/// <see cref="Validate"/> in its validator, the pipeline's one validation step.
+/// Feature declares it once, beside its query, and checks the query's <see cref="PageRequest"/> against it in its
+/// validator, the pipeline's one validation step, with the <c>AllowedBy(declaration)</c> rule of <c>PouryaKit.Validation</c>,
+/// which adds each Error <see cref="Validate"/> returns as a failure.
 /// </summary>
 /// <example>
 /// <code>
