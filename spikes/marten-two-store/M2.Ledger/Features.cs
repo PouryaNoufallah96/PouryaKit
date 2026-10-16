@@ -61,7 +61,40 @@ internal sealed class DepositInQueryHandler(IStreams streams) : QueryHandler<Dep
     }
 }
 
-// Sends that query from a command and swallows its refusal: the Operation stays rollback-only, so nothing commits.
+// Points a tracked Stream at another stream in a query, which the reading-state guard refuses.
+internal sealed record RedirectInQuery(Guid AccountId, Guid OtherId) : Query<bool>;
+
+internal sealed class RedirectInQueryHandler(IStreams streams) : QueryHandler<RedirectInQuery, bool>
+{
+    public override async Task<Result<bool>> Handle(RedirectInQuery query, CancellationToken cancellationToken)
+    {
+        var account = (await streams.LoadAsync<Account>(query.AccountId, cancellationToken))!;
+        account.Id = query.OtherId;
+        return true;
+    }
+}
+
+// Deposits, then sends that query while the deposit is pending, and swallows its refusal.
+internal sealed record DepositThenRedirectCommand(Guid AccountId, Guid OtherId) : Command;
+
+internal sealed class DepositThenRedirectHandler(IStreams streams, IDispatcher dispatcher) : CommandHandler<DepositThenRedirectCommand>
+{
+    public override async Task<Result> Handle(DepositThenRedirectCommand command, CancellationToken cancellationToken)
+    {
+        (await streams.LoadAsync<Account>(command.AccountId, cancellationToken))!.Deposit(5);
+        try
+        {
+            await dispatcher.QueryAsync(new RedirectInQuery(command.AccountId, command.OtherId), cancellationToken);
+        }
+        catch (InvalidOperationException)
+        {
+        }
+
+        return Result.Success();
+    }
+}
+
+// Sends DepositInQuery from a command and swallows its refusal: the Operation stays rollback-only, so nothing commits.
 internal sealed record DepositThroughQueryCommand(Guid AccountId) : Command;
 
 internal sealed class DepositThroughQueryHandler(IDispatcher dispatcher) : CommandHandler<DepositThroughQueryCommand>
@@ -99,5 +132,22 @@ internal sealed class WelcomeAccountHolder(IStreams streams, IIntegrationEventPu
 [SubscriptionName("ledger.note-deposit")]
 internal sealed class NoteDeposit : INotificationHandler<Deposited>
 {
-    public Task<Result> Handle(Deposited domainEvent, CancellationToken cancellationToken) => Task.FromResult(Result.Success());
+    public Task<Result> Handle(Deposited domainEvent, CancellationToken cancellationToken)
+    {
+        LedgerProbe.Ran(domainEvent.Id);
+        return Task.FromResult(Result.Success());
+    }
+}
+
+// An idempotent command that changes no Stream: its idempotency key is the Operation's only write.
+[Idempotent]
+internal sealed record PingCommand(Guid Key) : Command;
+
+internal sealed class PingHandler : CommandHandler<PingCommand>
+{
+    public override Task<Result> Handle(PingCommand command, CancellationToken cancellationToken)
+    {
+        LedgerProbe.Ran(command.Key);
+        return Task.FromResult(Result.Success());
+    }
 }
