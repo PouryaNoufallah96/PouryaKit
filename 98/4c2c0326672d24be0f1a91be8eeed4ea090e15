@@ -56,6 +56,7 @@ docs/acceptance.md
   s_63a6f6816df045::t_7518169e3aada2 286,291,696
   s_63a6f6816df045::t_9a235cf4ff26a2 1149
   s_63a6f6816df045::t_39b12e9896be36 1856-1876
+  s_63a6f6816df045::t_4d869d30c547fb 1877
 samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryHandler.cs
   s_63a6f6816df045::t_9fd42c42013164 7,10-11,37
   s_63a6f6816df045::t_04bc99c8601f1a 14-15
@@ -125,6 +126,7 @@ samples/ModularMonolith/src/Modules/Catalog/Catalog/Categories/Features/CreateCa
   s_63a6f6816df045::t_371881ee94b369 173-174,178-186,262,335
 docs/architecture/README.md
   s_63a6f6816df045::t_6f542a0bb37759 97,107,132-133,151,161-162,274,282,330
+  s_63a6f6816df045::t_4d869d30c547fb 54
 samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Entities/Product.cs
   s_63a6f6816df045::t_605c6e3c73dcb9 9-11,18-19,38,42,51
 samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommandHandler.cs
@@ -160,6 +162,7 @@ samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProduc
   s_63a6f6816df045::t_bbe88a1cc7a388 9-10
 .claude/agent-memory/kit-implementer/MEMORY.md
   s_63a6f6816df045::t_b4536d1296ab9f 1,3,9,11
+  s_63a6f6816df045::t_e8bbf6f7c00178 10
 src/PouryaKit.Cqrs/Composition/ComposedFeatures.cs
   s_63a6f6816df045::t_0f535a9e0ecd3a 20-21
   s_63a6f6816df045::t_e59f13d731eef6 19
