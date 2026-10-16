@@ -46,6 +46,25 @@ public static class OperationTypes
         return KeyNames.GetOrAdd(operation, static type => $"{type.FullName}, {type.Assembly.GetName().Name}");
     }
 
+    // Every command and query a registration of these concrete types makes dispatchable: those among them, and each one a
+    // handler among them handles, wherever it is declared, such as a Module's Contracts.
+    internal static IEnumerable<Type> Dispatchable(IEnumerable<Type> types) =>
+        types.Where(IsOperation).Concat(types.Select(HandlerBase).OfType<Type>().Select(handler => handler.GenericTypeArguments[0])).Distinct();
+
+    // The handler service a handler class is registered as: the first base class that is one, or null.
+    internal static Type? HandlerBase(Type type)
+    {
+        for (var current = type.BaseType; current is not null; current = current.BaseType)
+        {
+            if (HandledBy(current) is not null)
+            {
+                return current;
+            }
+        }
+
+        return null;
+    }
+
     private static bool DerivesFrom(Type type, bool query)
     {
         ArgumentNullException.ThrowIfNull(type);
