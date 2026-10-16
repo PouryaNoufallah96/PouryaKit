@@ -1,0 +1,30 @@
+tests/PouryaKit.Security.Tests/PouryaKit.Security.Tests.Contracts/RevokeAccessCommand.cs
+  s_63a6f6816df045::t_cb54742dbcf8a7 12-15
+src/PouryaKit.Security/SecurityServiceCollectionExtensions.cs
+  s_63a6f6816df045::t_cb54742dbcf8a7 18,27,35-40,43,54
+.claude/agent-memory/kit-implementer/cqrs-and-modularity-facts.md
+  s_63a6f6816df045::t_3d62b9e0843191 72
+docs/architecture/diagrams/execution-core.architecture.json
+  s_63a6f6816df045::t_1993f17350cce9 256-257
+tests/PouryaKit.Security.Tests/RegistrationTests.cs
+  s_63a6f6816df045::t_257a8cbb50be14 21
+  s_63a6f6816df045::t_cb54742dbcf8a7 19-20,22-24,87-93
+docs/architecture/README.md
+  s_63a6f6816df045::t_cb54742dbcf8a7 190
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aebdeaf1fc92ba6b0c9fdf6e33085a6d53018a14",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
