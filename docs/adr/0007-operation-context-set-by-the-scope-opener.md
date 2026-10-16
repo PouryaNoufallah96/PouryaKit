@@ -202,3 +202,17 @@ deliberately: in a tenant-scoped Module the tenant requirement "runs for continu
   itself.
 - Proven by `TenancyTests.A_trusted_continuation_into_a_tenant_scoped_module_runs_for_its_tenant_and_is_refused_without_one`,
   red with the requirement letting a trusted continuation through ([acceptance](../acceptance.md#tenant-scoped-modules-ticket-116)).
+
+## Amendment (2026-10-17, ticket #119: Web's codec and convention are public for another transport)
+
+The decision above stands, and so do the #57, #48 and #116 amendments. Spec #115 ("gRPC") reuses Web's one codec and its
+begin-the-Operation convention instead of a second of each, so ticket #119 makes two members public and nothing else.
+
+- **The codec.** `OperationContextHttpHeaders`, named internal in the #48 amendment, is public with one public member,
+  `Pairs(context)`: the header names and values the outgoing handler writes, each value checked by the Kit's rule before
+  any pair is returned. The handler writes those pairs. Reading a peer's headers (`Continued`) stays internal, so the
+  restore as trusted is reached only as the #48 amendment's correction records.
+- **The convention.** `BeginOperationPerRequest()` on a `RouteGroupBuilder` is the step `MapPouryaKitModuleEndpoints`
+  applies to each Module's group. A root group outside every Module's applies it the same way, and its endpoints get the
+  same context, a trusted peer's continuation included; the trust rule and the header names are unchanged.
+- Proven by `WebConventionTests` ([acceptance](../acceptance.md#web-conventions-for-other-transports-ticket-119)).
