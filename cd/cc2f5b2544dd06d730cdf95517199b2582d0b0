@@ -1,0 +1,19 @@
+.agents/scripts/test_check_docs.py
+  s_63a6f6816df045::t_78397e0fc0762f 302
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cdcc2f5b2544dd06d730cdf95517199b2582d0b0",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
