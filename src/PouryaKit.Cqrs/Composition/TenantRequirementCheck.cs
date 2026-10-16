@@ -15,8 +15,8 @@ internal sealed class TenantRequirementCheck : ICompositionCheck
             .Registrations.Where(descriptor => !descriptor.IsKeyedService && descriptor.ImplementationType is not null)
             .Select(descriptor => (descriptor.ServiceType, descriptor.ImplementationType!))
             .ToHashSet();
-        return new Type?[] { null }
-            .Concat(composition.Modules)
+        Type?[] scopes = [null, .. composition.Modules];
+        return scopes
             .Where(composition.IsTenantScoped)
             .SelectMany(scope =>
                 composition
