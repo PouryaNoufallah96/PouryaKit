@@ -16,7 +16,12 @@ public sealed class RegistrationTests
         );
 
         Assert.Equal(
-            [typeof(AbstractCommand).FullName, typeof(GenericCommand<>).FullName, typeof(NotAnOperation).FullName],
+            [
+                typeof(AbstractCommand).FullName,
+                typeof(AbstractContractCommand).FullName,
+                typeof(GenericCommand<>).FullName,
+                typeof(NotAnOperation).FullName,
+            ],
             thrown.Message.Split(Environment.NewLine).Select(line => line.Split(' ')[0]).Order(StringComparer.Ordinal)
         );
     }
@@ -79,3 +84,10 @@ internal sealed record GenericCommand<T> : Command;
 
 [RequiresPermission("tests.not-an-operation")]
 internal sealed class NotAnOperation;
+
+// Brings an abstract command another assembly declares into the assembly's dispatchable set.
+internal sealed class AbstractContractHandler : CommandHandler<AbstractContractCommand>
+{
+    public override Task<Result> Handle(AbstractContractCommand command, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success());
+}

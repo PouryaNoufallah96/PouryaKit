@@ -253,8 +253,8 @@
         },
         {
           "path": "src/PouryaKit.Security/SecurityServiceCollectionExtensions.cs",
-          "line": 50,
-          "end_line": 54,
+          "line": 35,
+          "end_line": 40,
           "label": "Dispatchable over ImplementingTypes"
         }
       ]
