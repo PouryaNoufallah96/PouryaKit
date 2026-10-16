@@ -1,0 +1,31 @@
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_3675ccfac3f8b2::t_792f3cece537f6 338-340
+  s_3675ccfac3f8b2::t_e8d58715c03d75 377-383,385,391,396-397,402,407,412-420,425-428,431-434
+  s_3675ccfac3f8b2::t_76c7068cd02b85 430,465-467,471,545,575-580
+  s_3675ccfac3f8b2::t_f31de6d5b968c7 429,581
+tests/PouryaKit.ArchitectureTests/Sql.cs
+  s_3675ccfac3f8b2::t_4006fb74725299 80-81,87,90-91,97,106-120
+  s_3675ccfac3f8b2::t_64534e6728294c 121-122
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_3675ccfac3f8b2::t_c3073608a7ee93 89
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_3675ccfac3f8b2::t_beed46ef999beb 74-77
+.agents/skills/pourya-kit/references/testing.md
+  s_3675ccfac3f8b2::t_0e868999b42ffb 200
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ad2936fe0a354bc572a06644eac778bacb0b3743",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
