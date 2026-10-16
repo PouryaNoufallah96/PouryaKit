@@ -1,0 +1,19 @@
+global.json
+  s_63a6f6816df045::t_51af21eb8324e6 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "27e759e55ec8efa028eac800f64145e99b69616c",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
