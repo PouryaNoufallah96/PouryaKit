@@ -7,6 +7,7 @@ using Inventory.Infrastructure.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Cqrs;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -80,6 +81,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 "catalog PersistencePreparation",
                 "catalog Receipts",
                 "catalog IdempotencyKeys",
+                "catalog Tenants",
                 "stub Initial",
                 "stub NoteTallies",
                 "stub Folders",
@@ -109,6 +111,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["is_deleted", "boolean"],
                 ["last_changed_at", "timestamp with time zone"],
                 ["last_changed_by", "text"],
+                ["tenant", "text"],
             ],
             columns
         );
@@ -141,6 +144,8 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
         await Fixture.RowsAsync("update catalog.categories set version = 7");
 
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
+        // A category is tenant-scoped, so the read runs in the test tenant's Operation.
+        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), typeof(CatalogModule));
         var read = await scope
             .ServiceProvider.GetRequiredService<CatalogDbContext>()
             .Set<Category>()

@@ -33,6 +33,7 @@ The worktree base and the one-git-command rule are in the role file; these are w
 - Edit traps: `s.replace("_module", "Module")` also rewrote `_modules` (use `\b`); IDE0032 is an error for a private field read by an expression-bodied property (make it an auto property). A `cat > <scratchpad>/x.py <<'EOF'` was refused once mid-session after several passed: write scripts with the Write tool.
 - Refused (#93, 2026-10-10): `D=<path>; grep … $D; sed -n … $D` (a variable path after an option), `for n in …; do awk -v n=$n …; done`. And `grep -o '.\{0,250\}X.\{0,250\}'` fails in this machine's `ugrep` ("exceeds complexity limits"): print context with a `python3 -c` regex instead. `git show <sha>:<path> > <scratchpad file>` passes.
 - Refused (#81, 2026-10-10): `for n in ...; do sed -n "${n}p" file; done` ("sed with a program computed at runtime"), and `mkdir … && cd … && cp … && cat > x <<EOF` in one command. `awk 'NR==52||NR==230 {print}' file` prints chosen lines; write a scratch project with Write, then `cp` and `dotnet run --project <abs csproj>` as separate commands.
+- Refused (#116, 2026-10-16): any `awk` program ("can execute commands"); use `grep -n` and `sed -n`. Passed: `git clone --depth 1 --branch v3.0.1 https://github.com/tt-a1i/archify.git <scratchpad>/p116/archify` as a background command; and a scratchpad Python script run with the worktree as argument that changes one source, runs `dotnet test --filter-class` and restores in `finally` (`p116/mutate116.py`, 11 mutations).
 
 ## Git in a worktree and the moving integration branch
 

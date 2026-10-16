@@ -77,12 +77,12 @@ dotnet tool restore
 # ConnectionStrings:app in src/Acme.Shop.Host/appsettings.json names the PostgreSQL database.
 dotnet ef database update --project src/Modules/Catalog/Catalog --startup-project src/Acme.Shop.Host --context CatalogDbContext
 # The modular monolith also migrates Billing (BillingDbContext) and Inventory (InventoryDbContext) the same way.
-dotnet user-jwts create --project src/Acme.Shop.Host
+dotnet user-jwts create --project src/Acme.Shop.Host --claim tenant=acme
 dotnet run --project src/Acme.Shop.Host
 ```
 
 - The Host applies no migrations at startup; they are the Host's, as [persistence.md](persistence.md) says.
-- Without `Authentication:Schemes:Bearer` the Host does not start. `dotnet user-jwts create` fills it for development and prints a token; in production, configure the issuer, audiences and signing keys of the real identity provider.
+- Without `Authentication:Schemes:Bearer` the Host does not start. `dotnet user-jwts create --claim tenant=<name>` fills it for development and prints a token; Catalog is tenant-scoped in both templates ([multi-tenancy.md](multi-tenancy.md)), so a token without the `tenant` claim gets 403 `Tenant.Required` from every Catalog command and query; in production, configure the issuer, audiences and signing keys of the real identity provider.
 - The `http` launch profile runs in Development on `http://localhost:5080`, where `/health`, the OpenAPI documents and the Scalar reference are mapped, beside `/alive`, which every environment maps. A token's `sub` is the Actor, its `tenant` the tenant, and its `permission` claims the Actor's permissions.
 
 ## The smoke test

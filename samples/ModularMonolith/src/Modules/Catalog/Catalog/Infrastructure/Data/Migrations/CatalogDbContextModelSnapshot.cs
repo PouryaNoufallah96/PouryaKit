@@ -39,6 +39,11 @@ namespace Catalog.Infrastructure.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("product_count");
 
+                    b.Property<string>("Tenant")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tenant");
+
                     b.Property<long>("Version")
                         .IsConcurrencyToken()
                         .HasColumnType("bigint")
@@ -96,6 +101,11 @@ namespace Catalog.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
+                    b.Property<string>("Tenant")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tenant");
+
                     b.Property<long>("Version")
                         .IsConcurrencyToken()
                         .HasColumnType("bigint")
@@ -104,7 +114,7 @@ namespace Catalog.Infrastructure.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_products");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("Tenant", "Name")
                         .IsUnique()
                         .HasDatabaseName("ix_products_name")
                         .HasFilter("is_deleted = false");

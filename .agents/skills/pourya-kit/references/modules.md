@@ -19,6 +19,7 @@ public sealed class CatalogModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module)
     {
+        module.AddPouryaKitTenancy();   // first: every Operation of Catalog needs a tenant; see multi-tenancy.md
         module.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
         module.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);   // see persistence.md
         module.AddPouryaKitDapper(connectionName: "app");   // see dapper-reads.md
@@ -91,7 +92,7 @@ Starting and continuing work:
 
 - A caller that starts work creates `new OperationContext(actor, tenant)` and passes it to the Gateway. Create one for each Operation: two calls with one context share an `OperationId`.
 - Work one Operation causes runs with `context.Continue()`: the same Actor, tenant and correlation, the causing Operation's `OperationId` as its causation, and a new `OperationId`. A Module that answers another Module's question passes the asking Operation's `Continue()` to its own Gateway.
-- A continuation is trusted (G.6) when the Kit restores it for a delivery, or when a running, authorized Operation continues its own context with `Continue()`: its Actor is not authenticated again, and the Kit adds no authorization of its own for it. A context application code builds, or continues outside the Operation that ran it, is never trusted. An `IAuthorizer` registered for the command or query it runs still runs, with the original Actor, and recognises a trusted continuation by `IsTrustedContinuation`, never by `CausationId`.
+- A continuation is trusted (G.6) when the Kit restores it for a delivery, or when a running, authorized Operation continues its own context with `Continue()`: its Actor is not authenticated again, and the Kit adds no authorization of its own for it but the tenant requirement of a tenant-scoped Module, which refuses a command or query of that Module continued without a tenant ([multi-tenancy.md](multi-tenancy.md#declaring-a-tenant-scoped-module)). A context application code builds, or continues outside the Operation that ran it, is never trusted. An `IAuthorizer` registered for the command or query it runs still runs, with the original Actor, and recognises a trusted continuation by `IsTrustedContinuation`, never by `CausationId`.
 - There is no anonymous or default Actor. `Actor.Person` and `Actor.System` refuse a blank id or name, the Gateway throws `ArgumentNullException` for a null context, and resolving `OperationContext` in a scope whose Operation was never begun throws `InvalidOperationException`. Name system work with `Actor.System("...")`.
 
 Reading it:
@@ -213,7 +214,7 @@ scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("nightly-
 var written = await scope.ServiceProvider.GetRequiredService<IDispatcher>().SendAsync(new WriteNoteCommand("solo"), ct);
 ```
 
-- The one Unit of Work is the application's own, so `Operation.Module` stays null and nothing routes. Its registrations name their assembly: the application's own services are no Module's builder, so nothing is inferred, and `AddPouryaKitCqrs()` with no assembly registers the dispatcher alone. Its declarations (`Publish`, `Subscribe`) belong to the application.
+- The one Unit of Work is the application's own, so `Operation.Module` stays null and nothing routes. Its registrations name their assembly: the application's own services are no Module's builder, so nothing is inferred, and `AddPouryaKitCqrs()` with no assembly registers the dispatcher alone. Its declarations (`Publish`, `Subscribe`) belong to the application, and so does `AddPouryaKitTenancy(assembly)`, which makes it tenant-scoped ([multi-tenancy.md](multi-tenancy.md)).
 - Everything else holds as in a Host of Modules: one scope per Operation, the same pipeline, the same commit. There is no Gateway and no ownership check. `builder.AddPouryaKitCompositionChecks()` turns on what `AddPouryaKitModules` turns on for a Host of Modules: the container validated in every environment (`HostApplicationBuilder` alone validates only in Development) and the composition checks when it is built, among them a command of its Features with no Unit of Work and a declaration that names a Module, which belongs to no Module here, then the startup checks when it starts. `UsePouryaKitWolverine` calls it too. Call it after any `ConfigureContainer` of the Host's own; the monolith template does ([templates.md](templates.md#what-each-composition-composes)).
 - `dotnet new pouryakit-monolith` generates such an application: the Proving Sample's Catalog with a plain registration and `IDispatcher` endpoints behind the Kit's HTTP pipeline ([templates.md](templates.md)).
 

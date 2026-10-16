@@ -190,7 +190,7 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task An_ef_core_page_refuses_a_specification_that_sets_its_own_skip_or_take(int? skip, int? take)
     {
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(CatalogModule));
+        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), typeof(CatalogModule));
         var pages = new ProductPages(scope.ServiceProvider.GetRequiredService<IUnitOfWork>());
 
         var thrown = await Assert.ThrowsAsync<ArgumentException>(() =>
@@ -244,7 +244,7 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task The_http_page_is_read_from_the_query_string_and_answered_as_the_page_object()
     {
         var (lighting, ids) = await SeedAsync();
-        using var client = Fixture.Client();
+        using var client = Fixture.Client("ada", AppFixture.TestTenant);
 
         var response = await client.GetAsync(
             $"/catalog/products?page=1&size=2&sort=created&direction=desc&filter[category][eq]={lighting}",
@@ -261,7 +261,7 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task Http_input_outside_the_declaration_answers_400_with_its_validation_errors()
     {
-        using var client = Fixture.Client();
+        using var client = Fixture.Client("ada", AppFixture.TestTenant);
 
         var response = await client.GetAsync(
             "/catalog/products?page=0&size=51&sort=name%3B%20delete%20from%20catalog.products&filter[category][contains]=x&filter[category][eq]=nope&filter[colour][eq]=red",
@@ -296,7 +296,7 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
     [InlineData("filter[name]=lamp", "A filter query parameter is filter[field][operator], with an operator such as eq or contains.")]
     public async Task A_page_query_string_that_cannot_be_read_answers_400_as_a_problem_response(string query, string detail)
     {
-        using var client = Fixture.Client();
+        using var client = Fixture.Client("ada", AppFixture.TestTenant);
 
         var response = await client.GetAsync($"/catalog/products?{query}", TestContext.Current.CancellationToken);
 
@@ -310,7 +310,7 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task A_filter_key_whose_prefix_is_capitalised_filters_the_page()
     {
         var (lighting, _) = await SeedAsync();
-        using var client = Fixture.Client();
+        using var client = Fixture.Client("ada", AppFixture.TestTenant);
 
         var response = await client.GetAsync(
             $"/catalog/products?sort=created&Filter[category][eq]={lighting}",
@@ -368,7 +368,7 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
     private async Task<Result<Page<ProductListItemDto>>> PageThroughEfAsync(PageRequest request)
     {
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(CatalogModule));
+        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), typeof(CatalogModule));
         return await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
             .QueryAsync(new PageProductsThroughEfQuery(request), TestContext.Current.CancellationToken);

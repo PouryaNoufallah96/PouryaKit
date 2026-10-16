@@ -51,9 +51,8 @@ public sealed class HostTests(App app) : HostTest<App>(app)
         Assert.Equal("Desk lamp", read.GetProperty("name").GetString());
         Assert.Equal(category, read.GetProperty("categoryId").GetGuid());
 
-        // The list is the storefront's, open to anonymous callers. One product in the category: the repeat created none.
-        using var storefront = Fixture.ClientAs();
-        var page = await storefront.GetFromJsonAsync<JsonElement>(
+        // One product in the category: the repeat created none.
+        var page = await client.GetFromJsonAsync<JsonElement>(
             $"/catalog/products?size=10&sort=name&filter[category][eq]={category}",
             cancellationToken
         );
@@ -176,7 +175,13 @@ public sealed class App : HostFixture
         return AppHost.Build(builder);
     }
 
-    /// <summary>A client that calls API version 2.0, with a bearer token for <paramref name="person"/> when one is named.</summary>
+    /// <summary>The tenant every token names: Catalog is tenant-scoped, so each of its Operations needs one.</summary>
+    public const string Tenant = "tests";
+
+    /// <summary>
+    /// A client that calls API version 2.0, with a bearer token for <paramref name="person"/> in <see cref="Tenant"/> when
+    /// one is named.
+    /// </summary>
     public HttpClient ClientAs(string? person = null)
     {
         var client = Host.GetTestClient();
@@ -188,7 +193,7 @@ public sealed class App : HostFixture
                 {
                     Issuer = Issuer,
                     Audience = Audience,
-                    Claims = new Dictionary<string, object> { ["sub"] = person },
+                    Claims = new Dictionary<string, object> { ["sub"] = person, ["tenant"] = Tenant },
                     Expires = DateTime.UtcNow.AddMinutes(5),
                     SigningCredentials = new SigningCredentials(SigningKey, SecurityAlgorithms.HmacSha256),
                 }

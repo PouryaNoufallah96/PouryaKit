@@ -29,6 +29,12 @@ public sealed class AppFixture : HostFixture
     /// <summary>The authenticated caller the Host trusts as a peer, configured as the sample Host reads its peers.</summary>
     public const string TrustedPeer = "inventory-host";
 
+    /// <summary>
+    /// The tenant a test's Catalog Operations run for when the test does not care which: Catalog is tenant-scoped, so
+    /// every Operation of it needs one (<see cref="CatalogGatewayExtensions"/>).
+    /// </summary>
+    public const string TestTenant = "tests";
+
     protected override IHost CreateHost(string connectionString) =>
         ComposeHost("Development", connectionString, Logs);
 

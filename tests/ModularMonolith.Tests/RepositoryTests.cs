@@ -95,7 +95,7 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
         // The probe is test code, so no Gateway runs it: Catalog's Gateway refuses an operation another Module
         // registered. The test begins a scope as a Catalog Operation itself, as a delivery step does.
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(CatalogModule));
+        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), typeof(CatalogModule));
         var probed = await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
             .SendAsync(new ProbeProductRepositoriesCommand(id, category), TestContext.Current.CancellationToken);

@@ -7,7 +7,7 @@ using PouryaKit.Persistence;
 
 namespace Catalog.Products.Features.CreateProduct;
 
-internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId> products)
+internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId> products, OperationContext context)
     : CommandHandler<CreateProductCommand, Guid>
 {
     public override async Task<Result<Guid>> Handle(CreateProductCommand command, CancellationToken cancellationToken)
@@ -15,7 +15,9 @@ internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId
         var product = Product.Create(
             new ProductId(command.ProductId),
             new CategoryId(command.CategoryId),
-            command.Name
+            command.Name,
+            // Catalog is tenant-scoped: an Operation without a tenant never reaches its handlers.
+            context.Tenant!
         );
         if (product.IsFailure)
         {

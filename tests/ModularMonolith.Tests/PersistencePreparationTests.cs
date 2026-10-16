@@ -36,7 +36,7 @@ public sealed class PersistencePreparationTests(AppFixture app) : HostTest<AppFi
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();
 
-        var alice = new OperationContext(Actor.Person("alice"));
+        var alice = new OperationContext(Actor.Person("alice"), AppFixture.TestTenant);
         await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), alice, TestContext.Current.CancellationToken);
         await catalog.SendAsync(
             new CreateProductCommand(product, category, "Lamp"),
@@ -47,7 +47,7 @@ public sealed class PersistencePreparationTests(AppFixture app) : HostTest<AppFi
         clock.Time.Advance(TimeSpan.FromHours(1));
         await catalog.SendAsync(
             new RenameProductCommand(product, "Desk lamp"),
-            new OperationContext(Actor.Person("bob")),
+            new OperationContext(Actor.Person("bob"), AppFixture.TestTenant),
             TestContext.Current.CancellationToken
         );
         await host.StopAsync(TestContext.Current.CancellationToken);
@@ -241,7 +241,7 @@ public sealed class PersistencePreparationTests(AppFixture app) : HostTest<AppFi
         );
 
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(CatalogModule));
+        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), typeof(CatalogModule));
         var removed = await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
             .SendAsync(new RemoveProductsTwiceCommand("Lamp"), TestContext.Current.CancellationToken);
@@ -344,7 +344,7 @@ public sealed class PersistencePreparationTests(AppFixture app) : HostTest<AppFi
     private async Task<ProductsFound> FindInCatalogAsync(FindProductQuery query)
     {
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(CatalogModule));
+        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), typeof(CatalogModule));
         return (
             await scope.ServiceProvider.GetRequiredService<IDispatcher>().QueryAsync(query, TestContext.Current.CancellationToken)
         ).Value;

@@ -38,14 +38,16 @@ public sealed class CachingTests(AppFixture app) : HostTest<AppFixture>(app)
         await RenameBehindTheCacheAsync(lamp, "Shadow");
 
         Assert.Equal("Shadow", await NameAsync(lamp, As("bob")));
-        Assert.Equal("Shadow", await NameAsync(lamp, new OperationContext(Actor.System("ada"))));
-        Assert.Equal("Shadow", await NameAsync(lamp, As("ada", "north")));
-        await RenameBehindTheCacheAsync(lamp, "Glow");
-        Assert.Equal("Glow", await NameAsync(lamp, As("ada", "south")));
+        Assert.Equal("Shadow", await NameAsync(lamp, new OperationContext(Actor.System("ada"), AppFixture.TestTenant)));
+        // Catalog reads a product in its own tenant only, so the tenants' entries are read through the Stub's notes.
+        var text = $"note {Guid.CreateVersion7()}";
+        Assert.Equal(0, (await Stub.QueryAsync(new CountNotesQuery(text), As("ada", "north"), TestContext.Current.CancellationToken)).Value);
+        await Fixture.RowsAsync($"insert into stub.notes (text, version) values ('{text}', 0)");
+        Assert.Equal(1, (await Stub.QueryAsync(new CountNotesQuery(text), As("ada", "south"), TestContext.Current.CancellationToken)).Value);
 
         Assert.Equal("Lamp", await NameAsync(lamp, As("ada")));
         Assert.Equal("Shadow", await NameAsync(lamp, As("bob")));
-        Assert.Equal("Shadow", await NameAsync(lamp, As("ada", "north")));
+        Assert.Equal(0, (await Stub.QueryAsync(new CountNotesQuery(text), As("ada", "north"), TestContext.Current.CancellationToken)).Value);
     }
 
     [Fact]
@@ -401,7 +403,7 @@ public sealed class CachingTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal("Shadow", await NameAsync(Gateway(second), lamp, As("bob")));
     }
 
-    private static OperationContext As(string person, string? tenant = null) => new(Actor.Person(person), tenant);
+    private static OperationContext As(string person, string? tenant = AppFixture.TestTenant) => new(Actor.Person(person), tenant);
 
     private static IGatewayProcessor<CatalogModule> Gateway(IHost host) =>
         host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>();

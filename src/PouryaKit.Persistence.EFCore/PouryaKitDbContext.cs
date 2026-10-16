@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Core;
+using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Persistence.EFCore;
@@ -11,8 +13,9 @@ namespace PouryaKit.Persistence.EFCore;
 /// every typed ID in the DbContext's assembly is stored as its value, Domain Events are never mapped, every
 /// <see cref="IEntityTypeConfiguration{TEntity}"/> in the assembly is applied, and the default schema is the schema of
 /// the migrations history table. Every aggregate's <see cref="AggregateRoot{TId}.Version"/> is its concurrency token,
-/// and every <see cref="ISoftDeletable"/> entity is left out of queries by a filter named
-/// <see cref="SoftDeleteFilter"/>. Override <see cref="OnModelCreating"/> only to add to it, and call the base.
+/// every <see cref="ISoftDeletable"/> entity is left out of queries by a filter named <see cref="SoftDeleteFilter"/>, and
+/// every <see cref="ITenantScoped"/> entity of another tenant than the Operation's by a filter named
+/// <see cref="TenantFilter"/>. Override <see cref="OnModelCreating"/> only to add to it, and call the base.
 /// </summary>
 public abstract class PouryaKitDbContext : DbContext
 {
@@ -23,12 +26,25 @@ public abstract class PouryaKitDbContext : DbContext
     public const string SoftDeleteFilter = "PouryaKit.SoftDelete";
 
     /// <summary>
+    /// The name of the query filter that reads an <see cref="ITenantScoped"/> entity only when it belongs to the tenant
+    /// of the Operation running the query, <c>PouryaKit.Tenant</c>; where the Operation has no tenant, or no Operation
+    /// began, it reads none. A read that must cross tenants passes it to EF Core's
+    /// <c>IgnoreQueryFilters([PouryaKitDbContext.TenantFilter])</c>.
+    /// </summary>
+    public const string TenantFilter = "PouryaKit.Tenant";
+
+    // The scope's services, which hold its Operation, as EF Core's AddDbContext gives them to the options.
+    private readonly IServiceProvider? _applicationServices;
+
+    /// <summary>
     /// Creates the DbContext with <paramref name="options"/> and the cascade timings the Unit of Work's soft delete
     /// relies on.
     /// </summary>
     protected PouryaKitDbContext(DbContextOptions options)
         : base(options)
     {
+        ArgumentNullException.ThrowIfNull(options);
+        _applicationServices = options.FindExtension<CoreOptionsExtension>()?.ApplicationServiceProvider;
         // A removed soft-deletable aggregate is kept, so nothing it owns may be deleted with it before the Unit of Work
         // turns the removal into a mark; the Unit of Work cascades a removal that stays one when it prepares the save.
         ChangeTracker.CascadeDeleteTiming = CascadeTiming.OnSaveChanges;
@@ -37,11 +53,15 @@ public abstract class PouryaKitDbContext : DbContext
         ChangeTracker.DeleteOrphansTiming = CascadeTiming.Immediate;
     }
 
+    // Read by the tenant filter each time a query runs, never when the model is built or the DbContext created: the
+    // migration tool and the composition checks build a DbContext where no Operation began.
+    internal string? Tenant => _applicationServices?.GetService<Operation>()?.Context?.Tenant;
+
     /// <inheritdoc />
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         ArgumentNullException.ThrowIfNull(configurationBuilder);
-        configurationBuilder.Conventions.Add(_ => new PouryaKitModelConvention());
+        configurationBuilder.Conventions.Add(_ => new PouryaKitModelConvention(this));
         configurationBuilder.IgnoreAny<DomainEvent>();
         foreach (var type in ImplementingTypes.Of(typeof(TypedId<>), GetType().Assembly))
         {

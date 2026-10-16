@@ -2,6 +2,8 @@
 
 Adopted implementations in `PouryaKit.Domain`. Format and rules: [README](README.md).
 
+`ITenantScoped` (ticket #116) is new Kit code, a contract like `IAuditable` and `ISoftDeletable`; nothing was taken.
+
 ## Package dependencies
 
 None shipped. `PouryaKit.Domain` has no runtime package dependency and references no other Kit package, as plan section C lists. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).

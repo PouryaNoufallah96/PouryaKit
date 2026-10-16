@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "eb3c45c182e365dd6438c6f49377aa0893fd1603",
+      "revision": "984c2c0326672d24be0f1a91be8eeed4ea090e15",
       "link_mode": "web"
     }
   },
@@ -103,7 +103,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
           "line": 26,
-          "end_line": 48,
+          "end_line": 50,
           "label": "declares data, Features, publications"
         },
         {
@@ -193,7 +193,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommandHandler.cs",
           "line": 1,
-          "end_line": 28,
+          "end_line": 30,
           "label": "Kit types: CommandHandler, Result"
         },
         {

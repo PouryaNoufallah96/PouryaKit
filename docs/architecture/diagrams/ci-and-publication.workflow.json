@@ -8,7 +8,7 @@
     "locale": "en",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "24e49217f5cade556e283ce45c90f6fc3af99a0b",
+      "revision": "984c2c0326672d24be0f1a91be8eeed4ea090e15",
       "provider": "github",
       "link_mode": "web"
     },
@@ -302,8 +302,8 @@
         },
         {
           "path": "src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/HostTests.cs",
-          "line": 137,
-          "end_line": 142,
+          "line": 136,
+          "end_line": 141,
           "label": "generated tests use HostFixture"
         }
       ]

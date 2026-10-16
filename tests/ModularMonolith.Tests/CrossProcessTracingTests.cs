@@ -84,7 +84,7 @@ public sealed class CrossProcessTracingTests(BrokerFixture broker)
             (
                 await gateway.SendAsync(
                     new CreateProductCommand(product, category, $"Lamp {product}"),
-                    new OperationContext(Actor.Person("ada")),
+                    new OperationContext(Actor.Person("ada"), AppFixture.TestTenant),
                     TestContext.Current.CancellationToken
                 )
             ).IsSuccess

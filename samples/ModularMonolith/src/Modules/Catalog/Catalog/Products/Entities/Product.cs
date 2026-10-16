@@ -6,13 +6,16 @@ using PouryaKit.Domain;
 
 namespace Catalog.Products.Entities;
 
-// Auditable and soft-deletable: the Unit of Work sets those properties, so the domain never does.
-internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDeletable
+// Auditable and soft-deletable: the Unit of Work sets those properties, so the domain never does. Tenant-scoped: the
+// product sets its own tenant, from the Operation that creates it.
+internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDeletable, ITenantScoped
 {
     // Set by Remove, not mapped: IsDeleted is set only by the Unit of Work, after every handler of the Operation ran.
     private bool _removed;
 
     private Product() { }
+
+    public string Tenant { get; private set; } = "";
 
     public string Name { get; private set; } = "";
 
@@ -32,10 +35,11 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
 
     public string? DeletedBy { get; private set; }
 
-    public static Result<Product> Create(ProductId id, CategoryId categoryId, string name)
+    public static Result<Product> Create(ProductId id, CategoryId categoryId, string name, string tenant)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(categoryId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(tenant);
         if (string.IsNullOrWhiteSpace(name))
         {
             return ProductErrors.NameRequired;
@@ -44,6 +48,7 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
         var product = new Product
         {
             Id = id,
+            Tenant = tenant,
             CategoryId = categoryId,
             Name = name.Trim(),
         };
