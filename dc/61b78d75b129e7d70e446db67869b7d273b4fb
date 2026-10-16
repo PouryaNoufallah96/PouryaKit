@@ -1,0 +1,19 @@
+.agents/scripts/check-tree.py
+  s_63a6f6816df045::t_394b6efe1f3db4 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dc61b78d75b129e7d70e446db67869b7d273b4fb",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
