@@ -9,9 +9,12 @@ namespace PouryaKit.Persistence.Postgres;
 // locked until that transaction ends. Under read committed, when another transaction holds the row between these
 // statements: the insert waits for an uncommitted insert of the same key, then inserts nothing when that transaction
 // commits and inserts the row when it rolls back; the update waits on the row lock, then increments the value that
-// transaction committed, or the value before it when it rolled back. A transaction whose connection dies, or whose
-// caller cancels, is rolled back by the server, so its number is given back as on any rollback. The increment is
-// relative, never a value read first: a value read before the wait would give out the other transaction's number again.
+// transaction committed, or the value before it when it rolled back. An Operation whose caller cancels is rolled back,
+// so its number is given back as on any rollback, as
+// NumberSequenceTests.A_cancelled_operation_gives_its_number_back_to_the_next_operation shows. A transaction whose
+// connection drops before its commit is rolled back by the server; that is PostgreSQL's documented behaviour, not shown
+// by a Kit test. The increment is relative, never a value read first: a value read before the wait would give out the
+// other transaction's number again.
 internal sealed class PostgresNumberSequences(IUnitOfWorkConnection unitOfWorkConnection, IUnitOfWork unitOfWork)
     : INumberSequences
 {

@@ -77,6 +77,36 @@ public sealed class NumberSequenceTests(AppFixture app) : HostTest<AppFixture>(a
     }
 
     [Fact(Timeout = 60_000)]
+    public async Task A_cancelled_operation_gives_its_number_back_to_the_next_operation()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var caller = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        Hold held = new();
+        long taken = 0;
+        var cancelledRun = RunInInventoryAsync(
+            new HoldChangeCommand(
+                async (dispatcher, ct) =>
+                {
+                    var started = await dispatcher.SendAsync(new StartStockCountCommand(), ct);
+                    taken = started.Value;
+                    return started;
+                },
+                held
+            ),
+            caller.Token
+        );
+        await held.Changed.Task.WaitAsync(cancellationToken);
+
+        await caller.CancelAsync();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cancelledRun);
+        var next = await Fixture.Gateway<InventoryModule>().SendAsync(new StartStockCountCommand(), cancellationToken);
+
+        Assert.Equal(1, taken);
+        Assert.Equal(taken, next.Value);
+        Assert.Equal([[1L]], await Fixture.RowsAsync("select number from inventory.stock_counts"));
+    }
+
+    [Fact(Timeout = 60_000)]
     public async Task Two_operations_that_deadlock_on_two_scope_keys_commit_once_and_the_other_fails_with_a_conflict()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
