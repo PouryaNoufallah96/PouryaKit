@@ -1,0 +1,33 @@
+spikes/marten-two-store/M2.Tests/ReadingStateTests.cs
+  s_63a6f6816df045::t_2819211e4d921a 24-42
+spikes/marten-two-store/M2.Marten/MartenUnitOfWork.cs
+  s_63a6f6816df045::t_a9b978e2ed69fa 101
+  s_63a6f6816df045::t_07b29ac1403270 108-120
+  s_63a6f6816df045::t_b963c42c5a9d1e 5,9,15-21,33-34,37,39-43,45,54,73,75,77-78,89,94-100,102-106,137,164-166,169,173-174,177,195-206,209-210,216,229
+  s_63a6f6816df045::t_2d38ff099ad3f6 35
+  s_63a6f6816df045::t_e3b01aa8a53c13 74,76
+  s_63a6f6816df045::t_ddcaa26521c28f 107
+  s_63a6f6816df045::t_645c0ae5ff66f1 121
+spikes/marten-two-store/M2.Ledger/Features.cs
+  s_63a6f6816df045::t_cb6e8ec9cbe440 64-96
+  s_63a6f6816df045::t_589104ad285510 97
+  s_63a6f6816df045::t_011b4027b22d06 135-152
+spikes/marten-two-store/M2.Tests/CommitWithoutWorkTests.cs
+  s_63a6f6816df045::t_86d382a99bfc6d 1-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d03cc7409c9cc5e9c10520142553d473d763b68d",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
