@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using ModularMonolith.Tests.Misnamed;
 using ModularMonolith.Tests.Stub;
 using ModularMonolith.Tests.Unowned;
+using ModularMonolith.Tests.Unversioned;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
@@ -337,6 +338,41 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         );
     }
 
+    // AddPouryaKitTenancy covers only the assemblies it names (ticket #145): the Module's Cqrs scan of a second assembly
+    // would dispatch that assembly's command without a tenant.
+    [Fact]
+    public void A_tenant_scoped_module_that_dispatches_an_operation_its_tenancy_declaration_did_not_name_fails_the_host_when_built()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
+        );
+        builder.AddPouryaKitModules(modules => modules.Add<PartlyTenantScopedModule>());
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            $"PartlyTenantScopedModule is tenant-scoped, but it dispatches {typeof(UnownedCommand).FullName} without the tenant requirement, so it would run without a tenant. Name its assembly ModularMonolith.Tests.Unowned to AddPouryaKitTenancy in its Composition Root.",
+            thrown.Message
+        );
+    }
+
+    [Fact]
+    public void A_tenant_scoped_application_that_dispatches_an_operation_its_tenancy_declaration_did_not_name_fails_the_host_when_built()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.Services.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
+        builder.Services.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly, typeof(UnownedCommand).Assembly);
+        builder.AddPouryaKitCompositionChecks();
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        // Beside the Unit of Work the Host lacks, one line per problem.
+        Assert.Contains(
+            $"The application is tenant-scoped, but it dispatches {typeof(UnownedCommand).FullName} without the tenant requirement, so it would run without a tenant. Name its assembly ModularMonolith.Tests.Unowned to AddPouryaKitTenancy in the Host's own services.",
+            thrown.Message.Split(Environment.NewLine)
+        );
+    }
+
     // AddPouryaKitModules registers what a Module's Operation needs, the Domain Event drain its Unit of Work resolves
     // included, even when no Composition Root calls AddPouryaKitCqrs (#61 review finding F2).
     [Fact]
@@ -452,6 +488,17 @@ public sealed class HandRegisteredModule : IModuleDefinition
     {
         module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         module.AddScoped<CommandHandler<WriteNoteCommand>, WriteNoteCommandHandler>();
+    }
+}
+
+// Tenant-scoped for one assembly, with Cqrs scanning a second beside it.
+public sealed class PartlyTenantScopedModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module)
+    {
+        module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
+        module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        module.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly, typeof(UnownedCommand).Assembly);
     }
 }
 

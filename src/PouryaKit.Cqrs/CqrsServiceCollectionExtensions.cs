@@ -141,6 +141,7 @@ public static class CqrsServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, DeclaredAuthorizersCheck>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, QueryCacheCheck>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, UnitOfWorkCheck>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, TenantRequirementCheck>());
     }
 
     // A second call with the same assembly adds nothing; a different handler for an operation already handled is a
