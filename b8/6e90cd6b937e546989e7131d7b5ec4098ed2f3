@@ -1,0 +1,50 @@
+docs/architecture/diagrams/execution-core.architecture.json
+  s_63a6f6816df045::t_2fb2eb6f7e92fb 10
+src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs
+  s_63a6f6816df045::t_3f64febe58e9f4 48,61,69
+docs/acceptance.md
+  s_63a6f6816df045::t_52a38176296e06 1869
+tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.Contracts/PouryaKit.Cqrs.Tests.Contracts.csproj
+  s_63a6f6816df045::t_80f772a86d81a6 1-9
+src/PouryaKit.Persistence.Dapper/DapperPageExtensions.cs
+  s_63a6f6816df045::t_3f64febe58e9f4 37
+src/PouryaKit.Cqrs/Tenancy/TenancyServiceCollectionExtensions.cs
+  s_63a6f6816df045::t_3f64febe58e9f4 15,42
+  s_63a6f6816df045::t_80f772a86d81a6 16-18
+tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.Contracts/ArchiveThingCommand.cs
+  s_63a6f6816df045::t_80f772a86d81a6 1-4
+src/PouryaKit.Cqrs/Composition/OperationTypes.cs
+  s_63a6f6816df045::t_3f64febe58e9f4 49-67
+PouryaKit.slnx
+  s_63a6f6816df045::t_80f772a86d81a6 46
+tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.csproj
+  s_63a6f6816df045::t_80f772a86d81a6 17-18
+tests/PouryaKit.Cqrs.Tests/TenancyTests.cs
+  s_63a6f6816df045::t_09f039164b7201 23
+  s_63a6f6816df045::t_80f772a86d81a6 1-22,24-28
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_63a6f6816df045::t_52a38176296e06 26
+docs/architecture/README.md
+  s_63a6f6816df045::t_52a38176296e06 162
+tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.Module/PouryaKit.Cqrs.Tests.Module.csproj
+  s_63a6f6816df045::t_80f772a86d81a6 9
+tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.Module/Things.cs
+  s_63a6f6816df045::t_80f772a86d81a6 1,285-292
+  s_63a6f6816df045::t_fc33365f6cdf81 293-294
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b86e90cd6b937e546989e7131d7b5ec4098ed2f3",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
