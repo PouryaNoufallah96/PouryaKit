@@ -187,7 +187,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs",
           "line": 19,
-          "end_line": 35,
+          "end_line": 37,
           "label": "three subscriptions; a recurring command"
         },
         {
