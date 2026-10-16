@@ -908,7 +908,9 @@ a mismatch is Marten's `ConcurrencyException` mapped to `Conflict`). Appends use
 never the `Append(streamId, expectedVersion, …)` overload, which needs `EventAppendMode.Rich` and
 fails on a new stream in Marten 9's default Quick mode (`docs/events/appending.md:210-233`). A
 Stream aggregate folds with `Create`/`Apply` methods, which may be `internal` (`docs/events/projections/conventions.md:91`),
-so ADR 0001 isolation holds. Notifications and Snapshots for a Stream are built from the events
+so ADR 0001 isolation holds (*amended 2026-10-16, #120: the methods must be `public`; Marten 9's source generator takes only
+public conventional methods and an `internal` type, so the aggregate type stays `internal` and ADR 0001 still holds; ADR 0011,
+"Findings"*). Notifications and Snapshots for a Stream are built from the events
 appended in that commit and the stream version after the append, since the EF path's
 `changedAggregates` seam does not see them (`src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs:57-58`).
 Reads are projections: inline (same session) or async (Marten's daemon); `FetchLatest` for the
@@ -927,7 +929,10 @@ Delivery into a Stream Module: Wave 1 records a Receipt before the handler runs 
 `EfReceipts`, which throws for a non-EF Unit of Work (`src/PouryaKit.Messaging.Wolverine.EFCore/EfReceipts.cs:51-55`;
 `Deliver.cs:20-24`). `PouryaKit.Messaging.Wolverine.Marten` therefore supplies `MartenReceipts`
 (Receipts, Snapshot versions and the publication record as Marten documents on the same session), and
-`IReceipts` is selected per receiving Module by its write model instead of one global registration.
+`IReceipts` is selected per receiving Module by its write model instead of one global registration
+(*amended 2026-10-16, #120: not as Marten documents, which are written only at the save, so a concurrent duplicate finds no
+Receipt and runs its handler; `MartenReceipts` writes rows of the Module schema's tables, the EF tables' shapes, on the session's
+transaction, which the Marten Unit of Work begins before the command; ADR 0011, "Rejected options" and the #131 invariants*).
 The spike adds (7) a `Ledger` Notification Handler publishes an Integration Event and its Receipt
 commits with the Stream effect; (8) a concurrent duplicate delivery to `Ledger` yields one effect; (9)
 a failed `Ledger` handler rolls back its Receipt with the Stream.
