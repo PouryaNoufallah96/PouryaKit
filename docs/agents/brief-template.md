@@ -67,7 +67,7 @@ Your final message is your role's JSON report, as text, with these additions: `b
 ````markdown
 # Brief: #<n> <title>
 
-Read `common.md` beside this file first.
+Read `common.md` beside this file first. Integration branch tip at your spawn, your base and the `--since` of your validation: `<tip>`.
 
 ## objective
 
