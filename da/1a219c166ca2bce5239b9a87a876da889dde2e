@@ -1,0 +1,21 @@
+docs/architecture/diagrams/execution-core.architecture.json
+  s_63a6f6816df045::t_f6ee5d7fa59546 10
+docs/architecture/diagrams/execution-core.html
+  s_63a6f6816df045::t_f6ee5d7fa59546 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "da1a219c166ca2bce5239b9a87a876da889dde2e",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
