@@ -1,0 +1,48 @@
+docs/acceptance.md
+  s_63a6f6816df045::t_a86be5c7a5dc4a 1857-1868
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_63a6f6816df045::t_29f4e9191172da 134-141
+  s_63a6f6816df045::t_a86be5c7a5dc4a 24,27,57
+  s_63a6f6816df045::t_07a3c68e747c82 75
+  s_63a6f6816df045::t_17bcd5c2fbdac4 76
+  s_63a6f6816df045::t_bc0cd53fa485fd 246
+  s_63a6f6816df045::t_0b32830f651522 1-12,19-23,25-26,28-48,51-56,58-71,74,78-93,99-133,142-178,186-191,193,200-205,207-239,241-245,247-257
+  s_63a6f6816df045::t_7543735cd4a097 77
+  s_63a6f6816df045::t_88429e73911b5e 73
+  s_63a6f6816df045::t_b6da595e0ea936 13-18
+  s_63a6f6816df045::t_bbc7a5849399b6 258-260
+  s_63a6f6816df045::t_dd4e0fec2ded12 240
+  s_63a6f6816df045::t_1780264d16b5be 94-98
+  s_63a6f6816df045::t_fc917d86a99c14 49-50
+  s_63a6f6816df045::t_c2ee6b0083182c 72
+  s_63a6f6816df045::t_a043ec5bea52d5 179-185,192,194-199,206
+.claude/agent-memory/kit-implementer/marten-stream-write-model-facts.md
+  s_63a6f6816df045::t_a86be5c7a5dc4a 17-19,25
+  s_63a6f6816df045::t_0b32830f651522 1-16,20-24,26-28
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_63a6f6816df045::t_a86be5c7a5dc4a 19
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_63a6f6816df045::t_a86be5c7a5dc4a 541-555
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_63a6f6816df045::t_a86be5c7a5dc4a 16
+docs/adr/0003-single-commit-owner.md
+  s_63a6f6816df045::t_a86be5c7a5dc4a 203-213
+docs/foundation-review.md
+  s_63a6f6816df045::t_a86be5c7a5dc4a 877
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9318c0c8b8eeb5e838522353d6f41d94bfa24b7a",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
