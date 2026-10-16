@@ -19,6 +19,8 @@ public sealed class InventoryModule : IModuleDefinition
     public void Configure(ModuleBuilder module)
     {
         module.UsePouryaKitPostgres<InventoryDbContext>(connectionName: "app", schema: "inventory");
+        // Stock counts take gap-free numbers per year; the StockCounts migration creates the table.
+        module.AddPouryaKitNumberSequences();
         module.AddPouryaKitCqrs();
         module.Subscribe<ProductCreatedV1, OpenStockItemIntegrationEventHandler>("inventory.product-created");
         module.Subscribe<ProductCreatedV2, FileProductCategoryIntegrationEventHandler>("inventory.product-categories");

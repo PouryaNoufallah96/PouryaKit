@@ -86,5 +86,14 @@ Check the merged code before relying on a design note. Each section names its ti
 - **`WolverineOutbox` is registered once and forwarded** (`TryAddScoped<WolverineOutbox>()`, then factories for `IUnitOfWorkOutbox` and `IOutbox`), so a decorator must build the inner service through `ImplementationFactory`, not `ImplementationType`: `CommitProbe.Install` now does; `DeliveryProbes.Decorate` handles both.
 - **`EfReceipts` refuses outside a Unit of Work's transaction**, as `EfIdempotencyStore` does: a test that records Receipts by hand opens a transaction first (`StoredDeliveriesSchemaTests` does).
 
+## Number sequences (#122, 2026-10-16; Npgsql 10.0.3, EF Core 10.0.12)
+
+- **`NpgsqlBatch.ExecuteScalarAsync` skips a statement with no result set**: a batch of `insert ... on conflict do nothing` then `update ... returning last_value` returns the update's value in one round trip (proven by the tests).
+- **Prove "the second Operation waits on a row lock" deterministically** with `Fixture.WaitUntilAsync("exists (select from pg_stat_activity where wait_event_type = 'Lock' and query like '%<table>%')", ...)` while the first is held, then `Assert.False(second.IsCompleted)`. An own-connection allocation (`((ICloneable)connection).Clone()`, opened, no transaction) still gives consecutive numbers, so only the wait assertion and the rollback test go red for it.
+- **A deadlock test that is deterministic:** two held Operations each take key A resp. B, signal, wait for release, then take the other key; PostgreSQL's `deadlock_timeout` (1 s) aborts one with 40P01. `HoldChangeCommand` cannot do a step after release, so the Stub `TakeNumbersCommand` holds after its first key.
+- A failing Operation after a nested Feature: reuse `HoldChangeCommand` with a pre-released `Hold` and a `Change` that runs the Feature, captures its value and returns an Error.
+- `DapperWriteTests.No_module_writes_an_aggregate_table_with_sql...` pins Inventory's exact list of SQL-written tables: a new plain-SQL write in Inventory edits it (ArchitectureTests are in the docs-sync set).
+- A new public type in a package whose registration file a diagram cites (`PostgresServiceCollectionExtensions.cs:28-44`): put it in a new file, or the pre-commit hook asks for the diagram re-pinned in the same commit.
+
 **Why:** each cost a run, a design detour or a wrong claim in a provenance record, or would have let a test pass vacuously; #9 to #18 build on these seams.
 **How to apply:** start from these when touching Persistence.*, Persistence.Dapper, the Unit of Work seam, conflicts, test migrations, paging, Dapper parameters or EF predicates; re-verify when bumping EF/Npgsql. Related: [[cqrs-and-modularity-facts]], [[snapshot-and-scheduled-command-facts]], [[dotnet-and-test-conventions]].

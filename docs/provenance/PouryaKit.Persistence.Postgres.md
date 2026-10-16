@@ -11,6 +11,21 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
 - `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3, `PostgreSQL`; it brings `Npgsql` 10.0.3, also `PostgreSQL`.
 - `EFCore.NamingConventions` 10.0.1, `Apache-2.0`.
 
+## Number sequences in the Unit of Work
+
+- **Kit files:** `src/PouryaKit.Persistence.Postgres/PostgresNumberSequences.cs`, `src/PouryaKit.Persistence.Postgres/INumberSequences.cs`, `src/PouryaKit.Persistence.Postgres/NumberSequenceTable.cs`, `src/PouryaKit.Persistence.Postgres/NumberSequenceServiceCollectionExtensions.cs`
+- **Upstream:** Ultrabusiness (`ultrabusiness_server_microservices`, a private repository with no public URL)
+- **Commit:** a85eacd4db5e1af9b8349d49350be12397f24402
+- **Upstream paths:** `src/BuildingBlocks/MainArchitecture/Infrastructure/MainArchitecture.Persistence/Numbering/NumberSequenceAllocator.cs` (lines 11 to 47: the allocator on the current transaction)
+- **Licence:** unconfirmed
+- **Adoption:** pattern
+- **Ticket:** #122
+- **Intentional differences:**
+  - PostgreSQL, not SQL Server, and the mechanism spec #115 names: an insert of the scope row that does nothing on conflict, then an update that adds one and returns the value, on the Unit of Work's transaction. Upstream reads the row under `UPDLOCK, HOLDLOCK`, inserts it when missing and retries the read on a unique violation, then writes a value computed in C#.
+  - The increment is relative (`last_value = last_value + 1`), so a blocked update counts from the value the other transaction committed; nothing is read first.
+  - One scope key per sequence, composed by the handler; no owner, sequence kind, document gate, high-water read of the target table or smallest-free-code search.
+  - The result is a `Result<long>`, failing with `UnitOfWorkErrors.ConcurrencyConflict` on a deadlock PostgreSQL ends by aborting its own wait (a deadlock aborted in another write stays an exception); the table is created by a migration helper in the Module's schema, and a missing table is named at first use, as Receipts are.
+
 ## PostgreSQL registration with a schema per Module
 
 - **Kit files:** `src/PouryaKit.Persistence.Postgres/PostgresServiceCollectionExtensions.cs`
