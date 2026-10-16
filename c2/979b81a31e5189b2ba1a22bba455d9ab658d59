@@ -1,0 +1,116 @@
+Directory.Packages.props
+  s_3675ccfac3f8b2::t_693be2809e3af2 14,29,45
+  s_3675ccfac3f8b2::t_605e66cda43dce 44
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_3675ccfac3f8b2::t_44cc110ba6c891 20
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_554ba11dd27abf 3,40,52,220-232,234-241,564
+  s_3675ccfac3f8b2::t_2b71a25e2c18eb 233
+scripts/packaging/consumers/PouryaKit.Email.cs
+  s_3675ccfac3f8b2::t_3932ce52807a74 1-15
+src/PouryaKit.Email/PouryaKit.Email.csproj
+  s_3675ccfac3f8b2::t_91ebfc3f27a5c8 1-5
+scripts/packaging/consumers/PouryaKit.Email.MailKit.cs
+  s_3675ccfac3f8b2::t_fc7b58f77beeef 1,6-9,11-16
+  s_3675ccfac3f8b2::t_79972082420720 2-5,10
+tests/ModularMonolith.Tests/SharedStoreSchemaTests.cs
+  s_3675ccfac3f8b2::t_43e7544b0dc30a 7,55-56
+tests/ModularMonolith.Tests/Stub/StubEmail.cs
+  s_3675ccfac3f8b2::t_4d80cb6168b073 1-45
+tests/ModularMonolith.Tests/EmailTests.cs
+  s_3675ccfac3f8b2::t_d793da571952d1 1-98
+src/PouryaKit.Email.MailKit/PouryaKitMailKitOptions.cs
+  s_3675ccfac3f8b2::t_45fe8161c60dad 1-31
+docs/architecture/diagrams/http-command.sequence.json
+  s_3675ccfac3f8b2::t_21818d6d96f025 51-52
+docs/architecture/diagrams/kit-context.architecture.json
+  s_3675ccfac3f8b2::t_21818d6d96f025 81-82,109-110,115-116,122,223-224,312-313,318-319,436,442
+  s_3675ccfac3f8b2::t_2d218b155697c8 324-357,423,437,508-512,515
+  s_3675ccfac3f8b2::t_6335b9f2193653 513-514
+docs/provenance/PouryaKit.Email.md
+  s_3675ccfac3f8b2::t_f21e250180cf3e 1-24,27
+  s_3675ccfac3f8b2::t_b1486d220f6ffe 25-26
+tests/ModularMonolith.Tests/Fixtures/MailFixture.cs
+  s_3675ccfac3f8b2::t_293b510e09f22d 44-45,50
+  s_3675ccfac3f8b2::t_c6c2f4a4e728ec 1-33,37-43,46-49,51-104
+  s_3675ccfac3f8b2::t_6f637c79cb580f 34-36
+src/PouryaKit.Email/EmailMessage.cs
+  s_3675ccfac3f8b2::t_5a29aca194f9b4 1-10
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_3675ccfac3f8b2::t_44cc110ba6c891 6,102-103
+  s_3675ccfac3f8b2::t_0772a9c030cb15 100-101
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_3675ccfac3f8b2::t_bcd05961c7f5b5 22-27,106-107
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_3675ccfac3f8b2::t_6f637c79cb580f 8
+scripts/packaging/inventory.json
+  s_3675ccfac3f8b2::t_bcd05961c7f5b5 15-16,37
+src/PouryaKit.Email/EmailErrors.cs
+  s_3675ccfac3f8b2::t_089fae186c3cca 1-7,9-10,12-14
+  s_3675ccfac3f8b2::t_7b8a5a3fd31563 8,11
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_3675ccfac3f8b2::t_bcd05961c7f5b5 71-76
+samples/ModularMonolith/src/ModularMonolith.Host/appsettings.json
+  s_3675ccfac3f8b2::t_44cc110ba6c891 6-11
+docs/foundation-review.md
+  s_3675ccfac3f8b2::t_8b4a46af308eb2 276-277,883
+src/PouryaKit.Email.MailKit/MailKitEmailSender.cs
+  s_3675ccfac3f8b2::t_f916af75b61327 30,32
+  s_3675ccfac3f8b2::t_7cdc43b1cb7c63 2-13,15-16,18-21,23-28,31,33-38,43
+  s_3675ccfac3f8b2::t_7bae7dac4a704b 14,17,29
+  s_3675ccfac3f8b2::t_7b8a5a3fd31563 1,22,39-42
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_57ac9c0bc2b7f5 1942-1953
+src/PouryaKit.Email.MailKit/MailKitServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_5f42424f56295b 1-17,20-34,37-49
+  s_3675ccfac3f8b2::t_7b8a5a3fd31563 35
+  s_3675ccfac3f8b2::t_4fcb9bdb1f7e1a 18
+  s_3675ccfac3f8b2::t_7a4710421f9223 19
+  s_3675ccfac3f8b2::t_b6e36a14f134e1 36
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_3675ccfac3f8b2::t_d548c51f24767b 10,483-484
+.agents/skills/pourya-kit/references/email.md
+  s_3675ccfac3f8b2::t_7def3b4b39f8e4 1-78
+PouryaKit.slnx
+  s_3675ccfac3f8b2::t_693be2809e3af2 7-8
+.agents/skills/pourya-kit/SKILL.md
+  s_3675ccfac3f8b2::t_7d416a78518e94 3,45
+README.md
+  s_3675ccfac3f8b2::t_7d416a78518e94 24
+docs/provenance/ModularMonolith.md
+  s_3675ccfac3f8b2::t_7cc793c2e6fca0 18
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_21818d6d96f025 63,90,117-118,151-152,184-185,212,245,278-279,340-341,368-369,401,412-413,434-435,466-467,488,521-522
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_3675ccfac3f8b2::t_21818d6d96f025 73-74,95,128,161-162,183-184,217,250-251,290-291
+src/PouryaKit.Email.MailKit/PouryaKit.Email.MailKit.csproj
+  s_3675ccfac3f8b2::t_8cc4ccf7c4c6dc 1-4,8-12
+  s_3675ccfac3f8b2::t_605e66cda43dce 5-7
+docs/provenance/PouryaKit.Email.MailKit.md
+  s_3675ccfac3f8b2::t_250bd209b872ab 1-11,13-26,28-32
+  s_3675ccfac3f8b2::t_a14598bbc1df43 12
+  s_3675ccfac3f8b2::t_b1486d220f6ffe 27
+src/PouryaKit.Email/IEmailSender.cs
+  s_3675ccfac3f8b2::t_6e708b1c637bc2 1-14,17-19
+  s_3675ccfac3f8b2::t_b6e36a14f134e1 15-16
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_3675ccfac3f8b2::t_21818d6d96f025 31-32,360,387-388
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_3675ccfac3f8b2::t_21818d6d96f025 59-60,65-66,72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c2979b81a31e5189b2ba1a22bba455d9ab658d59",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
