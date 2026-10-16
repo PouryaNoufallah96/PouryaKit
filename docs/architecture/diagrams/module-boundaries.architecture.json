@@ -28,8 +28,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 77,
-          "end_line": 87,
+          "line": 78,
+          "end_line": 88,
           "label": "adds each Module"
         },
         {
@@ -357,7 +357,7 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 74,
+          "end_line": 80,
           "label": "the allowed references"
         },
         {
@@ -384,8 +384,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 49,
-          "end_line": 54,
+          "line": 55,
+          "end_line": 60,
           "label": "only the Messaging.Wolverine packages"
         },
         {

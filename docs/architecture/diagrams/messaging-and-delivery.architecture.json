@@ -70,8 +70,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 22,
-          "end_line": 32,
+          "line": 28,
+          "end_line": 38,
           "label": "its row"
         }
       ]
@@ -92,7 +92,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 48,
+          "line": 54,
           "label": "references Domain only"
         },
         {
@@ -125,7 +125,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 49,
+          "line": 55,
           "label": "references Core, Cqrs, Messaging"
         },
         {
@@ -158,8 +158,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 36,
-          "end_line": 39,
+          "line": 42,
+          "end_line": 45,
           "label": "its row"
         }
       ]
@@ -180,8 +180,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 50,
-          "end_line": 53,
+          "line": 56,
+          "end_line": 59,
           "label": "references Wolverine and Persistence.EFCore"
         },
         {
@@ -214,7 +214,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 54,
+          "line": 60,
           "label": "references Wolverine"
         },
         {
@@ -247,8 +247,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 70,
-          "end_line": 73,
+          "line": 76,
+          "end_line": 79,
           "label": "its row"
         },
         {
@@ -287,8 +287,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 90,
-          "end_line": 93,
+          "line": 96,
+          "end_line": 99,
           "label": "Wolverine and RabbitMq keep no database"
         }
       ]

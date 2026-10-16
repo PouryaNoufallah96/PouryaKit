@@ -68,6 +68,12 @@ public sealed class PackageGraphTests
             ["PouryaKit.Messaging's closure holds the packages [WolverineFx]; it must hold none."],
             PackageGraph.Violations(messaging with { Packages = [Arrived("WolverineFx")] })
         );
+        // The Email contract is the shared framework and Domain alone; MailKit and MimeKit are its provider's.
+        var email = Restored("PouryaKit.Email");
+        Assert.Equal(
+            ["PouryaKit.Email's closure holds the packages [MimeKit]; it must hold none."],
+            PackageGraph.Violations(email with { Packages = [Arrived("MimeKit")] })
+        );
         var caching = Restored("PouryaKit.Caching");
         Assert.Equal(
             ["PouryaKit.Caching's closure holds StackExchange.Redis, which section C keeps out of it."],
