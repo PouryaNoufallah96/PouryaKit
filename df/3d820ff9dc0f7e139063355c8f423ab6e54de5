@@ -1,0 +1,35 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_63a6f6816df045::t_38fcd888d48f19 16
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_63a6f6816df045::t_19016937f432c1 541-553
+docs/foundation-review.md
+  s_63a6f6816df045::t_332e5f02b3329e 877
+docs/adr/0003-single-commit-owner.md
+  s_63a6f6816df045::t_e899de25a2b8f9 203-213
+.claude/agent-memory/kit-implementer/marten-stream-write-model-facts.md
+  s_63a6f6816df045::t_0b32830f651522 1-26
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_63a6f6816df045::t_0b32830f651522 1-54,56-72,74-234
+  s_63a6f6816df045::t_25b7c32066c4b6 55
+  s_63a6f6816df045::t_07a3c68e747c82 73
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_63a6f6816df045::t_de207b05c39b1f 19
+docs/acceptance.md
+  s_63a6f6816df045::t_013b0049043878 1857-1867
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "df3d820ff9dc0f7e139063355c8f423ab6e54de5",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
