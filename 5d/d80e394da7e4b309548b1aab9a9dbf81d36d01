@@ -1,0 +1,19 @@
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_63a6f6816df045::t_032740525ae0cb 81,244
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5dd80e394da7e4b309548b1aab9a9dbf81d36d01",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
