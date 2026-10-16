@@ -67,3 +67,9 @@ Check the merged code before relying on a design note. Each section names its ti
 
 **Why:** each cost investigation or is a seam later tickets build on: #8 to #16 on Cqrs and Modularity, #11 and #15 on the drain, #44 and #48 on continuation trust; #57 cost two rounds.
 **How to apply:** when touching Cqrs, Validation, the Unit of Work, Domain Event Handlers, Modularity, Testing or the Gateway API; re-verify the licence when bumping FluentValidation; before adding a reference, check the package's nuspec dependency group. When adding another Kit attribute that requires a registration (reuse `IRequiresAuthorizer`) or testing authorizers. Delayed continuations must come back through `ContinuedOperationContext`, a trusted peer calls `RestoreTrusted`, and so does any later Kit-only cross-package seam or ambient check. Related: [[composition-check-facts]], [[persistence-and-dapper-facts]], [[web-security-and-openapi-facts]].
+
+## Page rule (#123, 2026-10-16; FluentValidation 12.1.1)
+
+- `AllowedBy(declaration)` in `PouryaKit.Validation` (`PageRuleExtensions`, C# 14 `extension<T>(IRuleBuilder<T, PageRequest>)`) returns what `Custom` returns, `IRuleBuilderOptionsConditions<T, PageRequest>`. FluentValidation's `Custom` runs for a null property unless the rule has `Cascade(Stop)` before a failing `NotNull`, and `PageDeclaration.Validate` throws for null, so the rule skips null itself.
+- `ValidationFailure.PropertyName` keeps the Error's target as given (`Size`, not `Page.Size`).
+- A red run that disables a null guard trips CS8604 (nullable warnings are errors); add `!` at the call for the run.
