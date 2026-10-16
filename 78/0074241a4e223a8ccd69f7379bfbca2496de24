@@ -1,0 +1,74 @@
+tests/ModularMonolith.Tests/Stub/StubNumberSequences.cs
+  s_63a6f6816df045::t_8bbc47097f4064 1-31
+tests/PouryaKit.ArchitectureTests/DapperWriteTests.cs
+  s_63a6f6816df045::t_8bbc47097f4064 36
+src/PouryaKit.Persistence.Postgres/NumberSequenceTable.cs
+  s_63a6f6816df045::t_8bbc47097f4064 1-41
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_63a6f6816df045::t_8bbc47097f4064 8
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_63a6f6816df045::t_8bbc47097f4064 10,190
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_63a6f6816df045::t_8bbc47097f4064 89
+src/PouryaKit.Persistence.Postgres/PostgresNumberSequences.cs
+  s_63a6f6816df045::t_8bbc47097f4064 1-55
+src/PouryaKit.Persistence.Postgres/INumberSequences.cs
+  s_63a6f6816df045::t_8bbc47097f4064 1-23
+docs/architecture/diagrams/kit-context.html
+  s_63a6f6816df045::t_8bbc47097f4064 4985
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_63a6f6816df045::t_8bbc47097f4064 42,46
+tests/ModularMonolith.Tests/NumberSequenceTests.cs
+  s_63a6f6816df045::t_8bbc47097f4064 1-124
+docs/acceptance.md
+  s_63a6f6816df045::t_312624cd0b4f7f 1870,1881
+  s_63a6f6816df045::t_8bbc47097f4064 1857-1869
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_63a6f6816df045::t_8bbc47097f4064 4985
+docs/foundation-review.md
+  s_63a6f6816df045::t_8bbc47097f4064 883
+docs/architecture/diagrams/kit-context.architecture.json
+  s_63a6f6816df045::t_8bbc47097f4064 10
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_63a6f6816df045::t_8bbc47097f4064 89-97
+samples/ModularMonolith/src/Modules/Inventory/Inventory/Infrastructure/Data/Migrations/20261016120000_StockCounts.cs
+  s_63a6f6816df045::t_8bbc47097f4064 1-27
+src/PouryaKit.Persistence.Postgres/NumberSequenceServiceCollectionExtensions.cs
+  s_63a6f6816df045::t_8bbc47097f4064 1-24
+tests/ModularMonolith.Tests/Stub/StubModule.cs
+  s_63a6f6816df045::t_8bbc47097f4064 23-24
+.agents/skills/pourya-kit/references/persistence.md
+  s_63a6f6816df045::t_8bbc47097f4064 259,271-282
+  s_63a6f6816df045::t_35963dba585ed8 283
+.agents/skills/pourya-kit/SKILL.md
+  s_63a6f6816df045::t_8bbc47097f4064 33
+docs/architecture/README.md
+  s_63a6f6816df045::t_8bbc47097f4064 54,302-303,307
+  s_63a6f6816df045::t_2561394680a299 308
+samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs
+  s_63a6f6816df045::t_8bbc47097f4064 22-23
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockCounts/Features/StartStockCount/StartStockCountCommandHandler.cs
+  s_63a6f6816df045::t_8bbc47097f4064 1-37
+docs/provenance/PouryaKit.Persistence.Postgres.md
+  s_63a6f6816df045::t_8bbc47097f4064 14-28
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockCounts/Features/StartStockCount/StartStockCountCommand.cs
+  s_63a6f6816df045::t_8bbc47097f4064 1-6
+src/PouryaKit.Persistence.EFCore/UnitOfWork/UnitOfWorkErrors.cs
+  s_63a6f6816df045::t_8bbc47097f4064 9-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "780074241a4e223a8ccd69f7379bfbca2496de24",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
