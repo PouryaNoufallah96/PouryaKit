@@ -253,9 +253,9 @@
         },
         {
           "path": "src/PouryaKit.Security/SecurityServiceCollectionExtensions.cs",
-          "line": 28,
-          "end_line": 36,
-          "label": "finds declarations with ImplementingTypes"
+          "line": 50,
+          "end_line": 54,
+          "label": "Dispatchable over ImplementingTypes"
         }
       ]
     },

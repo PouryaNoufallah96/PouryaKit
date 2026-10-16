@@ -11,6 +11,13 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Remove="PouryaKit.Security.Tests.Module\**" />
+    <None Remove="PouryaKit.Security.Tests.Module\**" />
+    <Compile Remove="PouryaKit.Security.Tests.Contracts\**" />
+    <None Remove="PouryaKit.Security.Tests.Contracts\**" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\PouryaKit.Security\PouryaKit.Security.csproj" />
+    <ProjectReference Include="PouryaKit.Security.Tests.Module\PouryaKit.Security.Tests.Module.csproj" />
   </ItemGroup>
 </Project>
