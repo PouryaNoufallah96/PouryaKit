@@ -71,6 +71,7 @@ internal static class PackageGraph
             ["PouryaKit.Modularity", "PouryaKit.Persistence.Postgres", "PouryaKit.Messaging.Wolverine.EFCore"],
             ["Testcontainers.PostgreSql", "Respawn", "xunit.v3.extensibility.core", "Microsoft.Extensions.TimeProvider.Testing", "WolverineFx.RuntimeCompilation"]
         ),
+        ["PouryaKit.Localization"] = new(["PouryaKit.Cqrs"], [], ["Microsoft.AspNetCore.App"]),
     };
 
     // What must never arrive in a package's closure, by package id prefix or project name. Every package but Testing also

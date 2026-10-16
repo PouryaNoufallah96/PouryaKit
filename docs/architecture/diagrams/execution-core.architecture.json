@@ -409,8 +409,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 94,
-          "end_line": 95,
+          "line": 95,
+          "end_line": 96,
           "label": "no exporter"
         }
       ]
@@ -463,8 +463,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 96,
-          "end_line": 97,
+          "line": 97,
+          "end_line": 98,
           "label": "never Redis"
         }
       ]
@@ -566,6 +566,39 @@
           "line": 13,
           "end_line": 32,
           "label": "SynchronizationContextScope"
+        }
+      ]
+    },
+    {
+      "id": "localization",
+      "type": "frontend",
+      "label": "PouryaKit.Localization",
+      "sublabel": "English and Persian; optional",
+      "pos": [
+        1200,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 74,
+          "label": "references Cqrs, the ASP.NET Core framework"
+        },
+        {
+          "path": "src/PouryaKit.Localization/LocalizationServiceCollectionExtensions.cs",
+          "line": 31,
+          "end_line": 43,
+          "label": "records a Module's Feature assemblies"
+        },
+        {
+          "path": "src/PouryaKit.Localization/HeaderRequestCulture.cs",
+          "line": 17,
+          "end_line": 30,
+          "label": "request culture from Accept-Language"
         }
       ]
     }
@@ -729,6 +762,13 @@
       "toSide": "top"
     },
     {
+      "id": "localization-cqrs",
+      "from": "localization",
+      "to": "cqrs",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
       "id": "dapper-database",
       "from": "dapper",
       "to": "database",
@@ -757,7 +797,8 @@
         "Persistence.Dapper reads plain SQL on the Host's pooled connection, outside the Unit of Work, and reads a Cqrs PageRequest into a Page.",
         "Web begins each HTTP request's Operation through Cqrs; Web.OpenApi, optional, versions each Module's route group.",
         "Security.JwtBearer references Security alone; the tenant claim type it writes is PouryaKitClaimTypes of PouryaKit.Cqrs, reached through Security.",
-        "Cqrs, Security, Web, Persistence.EFCore and Persistence.Dapper reference PouryaKit.Core for its helpers, such as ImplementingTypes."
+        "Cqrs, Security, Web, Persistence.EFCore and Persistence.Dapper reference PouryaKit.Core for its helpers, such as ImplementingTypes.",
+        "Localization, optional, records a Module's Feature assemblies through Cqrs and sets each request's culture, English or Persian, from its Accept-Language header; the Proving Sample's Hosts reference none of it."
       ]
     }
   ]

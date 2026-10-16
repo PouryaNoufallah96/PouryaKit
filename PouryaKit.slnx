@@ -4,6 +4,7 @@
     <Project Path="src/PouryaKit.Core/PouryaKit.Core.csproj" />
     <Project Path="src/PouryaKit.Cqrs/PouryaKit.Cqrs.csproj" />
     <Project Path="src/PouryaKit.Domain/PouryaKit.Domain.csproj" />
+    <Project Path="src/PouryaKit.Localization/PouryaKit.Localization.csproj" />
     <Project Path="src/PouryaKit.Messaging/PouryaKit.Messaging.csproj" />
     <Project Path="src/PouryaKit.Messaging.Wolverine.RabbitMq/PouryaKit.Messaging.Wolverine.RabbitMq.csproj" />
     <Project Path="src/PouryaKit.Messaging.Wolverine/PouryaKit.Messaging.Wolverine.csproj" />
