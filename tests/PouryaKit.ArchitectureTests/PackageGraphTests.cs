@@ -24,6 +24,9 @@ public sealed class PackageGraphTests
         // EF Core arrives in Postgres only through its provider, and Domain in Web only through Cqrs.
         Assert.Contains(Restored("PouryaKit.Persistence.Postgres").Packages, arrived => arrived.Id == "Microsoft.EntityFrameworkCore");
         Assert.Contains("PouryaKit.Domain", Restored("PouryaKit.Web").Projects);
+        // The S3 provider's closure is AWSSDK.S3 over AWSSDK.Core, both Apache-2.0, and the Options stack; the contract's is Domain alone.
+        Assert.Contains(Restored("PouryaKit.Storage.S3").Packages, arrived => arrived is { Id: "AWSSDK.Core", Expression: "Apache-2.0" });
+        Assert.Equal(["PouryaKit.Domain"], Restored("PouryaKit.Storage").Projects);
     }
 
     [Fact]
@@ -72,6 +75,11 @@ public sealed class PackageGraphTests
         Assert.Equal(
             ["PouryaKit.Caching's closure holds StackExchange.Redis, which section C keeps out of it."],
             PackageGraph.Violations(caching with { Packages = [.. caching.Packages, Arrived("StackExchange.Redis")] })
+        );
+        var storage = Restored("PouryaKit.Storage");
+        Assert.Equal(
+            ["PouryaKit.Storage's closure holds the packages [AWSSDK.Core]; it must hold none."],
+            PackageGraph.Violations(storage with { Packages = [Arrived("AWSSDK.Core")] })
         );
     }
 

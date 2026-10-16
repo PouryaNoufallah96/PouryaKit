@@ -16,6 +16,8 @@
     <Project Path="src/PouryaKit.Observability/PouryaKit.Observability.csproj" />
     <Project Path="src/PouryaKit.Security/PouryaKit.Security.csproj" />
     <Project Path="src/PouryaKit.Security.JwtBearer/PouryaKit.Security.JwtBearer.csproj" />
+    <Project Path="src/PouryaKit.Storage/PouryaKit.Storage.csproj" />
+    <Project Path="src/PouryaKit.Storage.S3/PouryaKit.Storage.S3.csproj" />
     <Project Path="src/PouryaKit.Templates/PouryaKit.Templates.csproj" />
     <Project Path="src/PouryaKit.Testing/PouryaKit.Testing.csproj" />
     <Project Path="src/PouryaKit.Validation/PouryaKit.Validation.csproj" />
@@ -50,6 +52,7 @@
     <Project Path="tests/PouryaKit.Security.Tests/PouryaKit.Security.Tests.Contracts/PouryaKit.Security.Tests.Contracts.csproj" />
     <Project Path="tests/PouryaKit.Security.Tests/PouryaKit.Security.Tests.Module/PouryaKit.Security.Tests.Module.csproj" />
     <Project Path="tests/PouryaKit.Security.Tests/PouryaKit.Security.Tests.csproj" />
+    <Project Path="tests/PouryaKit.Storage.Tests/PouryaKit.Storage.Tests.csproj" />
     <Project Path="tests/PouryaKit.Validation.Tests/PouryaKit.Validation.Tests.csproj" />
   </Folder>
 </Solution>

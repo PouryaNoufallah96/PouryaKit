@@ -12,6 +12,8 @@
     { "id": "PouryaKit.Security", "type": "PouryaKit.Security.IActorPermissions" },
     { "id": "PouryaKit.Observability", "type": "PouryaKit.Observability.OperationTelemetry" },
     { "id": "PouryaKit.Caching", "type": "PouryaKit.Caching.ICacheableQuery" },
+    { "id": "PouryaKit.Storage", "type": "PouryaKit.Storage.IFileStorage" },
+    { "id": "PouryaKit.Storage.S3", "type": "PouryaKit.Storage.S3.S3StorageServiceCollectionExtensions" },
     { "id": "PouryaKit.Security.JwtBearer", "type": "PouryaKit.Security.JwtBearer.PouryaKitJwtBearerOptions" },
     { "id": "PouryaKit.Messaging", "type": "PouryaKit.Messaging.WireNameAttribute" },
     { "id": "PouryaKit.Messaging.Wolverine", "type": "PouryaKit.Messaging.Wolverine.IReceipts" },

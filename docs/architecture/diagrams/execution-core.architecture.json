@@ -409,8 +409,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 94,
-          "end_line": 95,
+          "line": 96,
+          "end_line": 97,
           "label": "no exporter"
         }
       ]
@@ -463,8 +463,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 96,
-          "end_line": 97,
+          "line": 98,
+          "end_line": 99,
           "label": "never Redis"
         }
       ]
@@ -566,6 +566,66 @@
           "line": 13,
           "end_line": 32,
           "label": "SynchronizationContextScope"
+        }
+      ]
+    },
+    {
+      "id": "storages3",
+      "type": "backend",
+      "label": "PouryaKit.Storage.S3",
+      "sublabel": "S3 and MinIO provider",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 75,
+          "label": "references Storage, AWSSDK.S3, Options"
+        },
+        {
+          "path": "src/PouryaKit.Storage.S3/S3StorageServiceCollectionExtensions.cs",
+          "line": 22,
+          "end_line": 47,
+          "label": "one provider, options validated at start"
+        },
+        {
+          "path": "src/PouryaKit.Storage.S3/S3FileStorage.cs",
+          "line": 63,
+          "end_line": 66,
+          "label": "NoSuchKey is FileNotFound"
+        }
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "backend",
+      "label": "PouryaKit.Storage",
+      "sublabel": "file storage contract",
+      "pos": [
+        330,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 74,
+          "label": "references Domain"
+        },
+        {
+          "path": "src/PouryaKit.Storage/IFileStorage.cs",
+          "line": 11,
+          "end_line": 33,
+          "label": "IFileStorage"
         }
       ]
     }
@@ -729,6 +789,20 @@
       "toSide": "top"
     },
     {
+      "id": "storage-domain",
+      "from": "storage",
+      "to": "domain",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "storages3-storage",
+      "from": "storages3",
+      "to": "storage",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
       "id": "dapper-database",
       "from": "dapper",
       "to": "database",
@@ -757,7 +831,8 @@
         "Persistence.Dapper reads plain SQL on the Host's pooled connection, outside the Unit of Work, and reads a Cqrs PageRequest into a Page.",
         "Web begins each HTTP request's Operation through Cqrs; Web.OpenApi, optional, versions each Module's route group.",
         "Security.JwtBearer references Security alone; the tenant claim type it writes is PouryaKitClaimTypes of PouryaKit.Cqrs, reached through Security.",
-        "Cqrs, Security, Web, Persistence.EFCore and Persistence.Dapper reference PouryaKit.Core for its helpers, such as ImplementingTypes."
+        "Cqrs, Security, Web, Persistence.EFCore and Persistence.Dapper reference PouryaKit.Core for its helpers, such as ImplementingTypes.",
+        "Storage, the file storage contract, references Domain alone; Storage.S3, its S3 provider, references Storage and the AWS SDK, and a Host registers exactly one provider."
       ]
     }
   ]
