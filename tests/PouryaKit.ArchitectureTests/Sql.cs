@@ -77,27 +77,47 @@ internal static partial class Sql
 
     /// <summary>
     /// <paramref name="code"/>, as <see cref="Code"/> returns it, with what each pair of parentheses holds replaced by
-    /// spaces and the parentheses kept, so what is left is the statement's own clauses at the same positions.
+    /// spaces and the parentheses kept, so what is left is the statement's own clauses at the same positions. A
+    /// parenthesis inside a double-quoted identifier is part of its name.
     /// </summary>
     public static string TopLevel(string code)
     {
         var top = new StringBuilder(code.Length);
         var depth = 0;
+        var quoted = false;
         foreach (var character in code)
         {
-            if (character == ')' && depth > 0)
+            quoted ^= character == '"';
+            if (!quoted && character == ')' && depth > 0)
             {
                 depth--;
             }
 
             top.Append(depth > 0 ? ' ' : character);
-            if (character == '(')
+            if (!quoted && character == '(')
             {
                 depth++;
             }
         }
 
         return top.ToString();
+    }
+
+    /// <summary>
+    /// <paramref name="code"/>, as <see cref="Code"/> or <see cref="TopLevel"/> returns it, with the bodies of its
+    /// double-quoted identifiers replaced by spaces and the quotes kept, so a keyword is found only where it is one.
+    /// </summary>
+    public static string WithoutIdentifiers(string code)
+    {
+        var words = new StringBuilder(code.Length);
+        var quoted = false;
+        foreach (var character in code)
+        {
+            words.Append(quoted && character != '"' ? ' ' : character);
+            quoted ^= character == '"';
+        }
+
+        return words.ToString();
     }
 
     // The index just past the first `closing` at or after `from`, or the end of the text when it never closes.

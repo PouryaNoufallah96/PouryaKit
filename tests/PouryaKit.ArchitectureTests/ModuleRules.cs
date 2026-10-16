@@ -335,7 +335,9 @@ internal static partial class ModuleRules
     /// top-level <c>OR</c> and holds every tenant-scoped table it reads to the tenant with a top-level conjunct of its own:
     /// <c>p.tenant = @Tenant</c> by the table's alias, or by its name when it has none, and <c>tenant = @Tenant</c>
     /// unqualified only when its <c>FROM</c> clause reads that one table. Every other shape of such a literal is rejected,
-    /// so the predicate inside an <c>OR</c>, in one branch of a <c>UNION</c> or for one table of a join is not enough. A
+    /// so the predicate inside an <c>OR</c>, in one branch of a <c>UNION</c> or for one table of a join is not enough, and
+    /// so is a shape the rule does not parse: a <c>CASE</c> at the top level of the <c>WHERE</c>, a dollar-quoted block, or
+    /// a <c>FROM</c> item in parentheses. Keywords inside double-quoted identifiers are no keywords. A
     /// literal reads a table it names after <c>from</c>, <c>join</c> or a comma, with or without its schema, compared as
     /// <see cref="WritesToAggregateTables"/> compares names; the table of a <c>delete from</c> is a write, which that rule
     /// judges. The literals are read as that rule reads them, outside EF Core migrations, so a fragment that names such a
@@ -372,40 +374,64 @@ internal static partial class ModuleRules
             return null;
         }
 
+        // The rule judges only what it can read: a shape it cannot parse is rejected, not read further. Its keywords are
+        // looked for with the bodies of double-quoted identifiers blanked, so a column named "limit" ends no clause.
+        if (Sql.Code(sql, keepDollarQuoted: false) != code)
+        {
+            return "holds a dollar-quoted block";
+        }
+
         var top = Sql.TopLevel(code);
+        var scan = Sql.WithoutIdentifiers(top);
         if (code.Split(';').Count(statement => !string.IsNullOrWhiteSpace(statement)) != 1)
         {
             return "is not one statement";
         }
 
-        if (!SelectStatement().IsMatch(top))
+        if (!SelectStatement().IsMatch(scan))
         {
             return "is not a SELECT";
         }
 
-        if (SetOperator().Match(code) is { Success: true } setOperator)
+        var words = Sql.WithoutIdentifiers(code);
+        if (SetOperator().Match(words) is { Success: true } setOperator)
         {
             return $"has the set operator {setOperator.Value.ToLowerInvariant()}";
         }
 
-        if (SelectWord().Count(code) > 1)
+        if (SelectWord().Count(words) > 1)
         {
             return "has a subquery";
         }
 
-        if (WhereClause().Match(top) is not { Success: true } where)
+        if (WhereClause().Match(scan) is not { Success: true } where)
         {
             return "has no WHERE";
         }
 
-        if (OrWord().IsMatch(where.Groups["where"].Value))
+        var from = FromWord().Match(scan);
+        var fromClause = from.Success && from.Index < where.Index ? scan[from.Index..where.Index] : "";
+        if (ParenthesizedFromItem().IsMatch(fromClause))
+        {
+            return "has a FROM item in parentheses";
+        }
+
+        var whereSpan = where.Groups["where"];
+        if (OrWord().IsMatch(whereSpan.Value))
         {
             return "has an OR at the top level of its WHERE";
         }
 
-        var from = FromWord().Match(top);
-        var fromItems = from.Success && from.Index < where.Index ? TableReads(top[from.Index..where.Index]).Count() : 0;
-        TenantConjunct[] conjuncts = [.. Conjuncts(where.Groups["where"].Value).Select(TenantConjunct.Of).OfType<TenantConjunct>()];
+        if (CaseWord().IsMatch(whereSpan.Value))
+        {
+            return "has a CASE at the top level of its WHERE";
+        }
+
+        var fromItems = fromClause.Length > 0 ? TableReads(top[from.Index..where.Index]).Count() : 0;
+        TenantConjunct[] conjuncts =
+        [
+            .. Conjuncts(top.Substring(whereSpan.Index, whereSpan.Length), whereSpan.Value).Select(TenantConjunct.Of).OfType<TenantConjunct>(),
+        ];
         foreach (var read in reads)
         {
             var table = TenantTableOf(read, tenantTables)!;
@@ -436,12 +462,13 @@ internal static partial class ModuleRules
             ? tenantTables.ContainsKey($"{schema}.{read.Table}") ? $"{schema}.{read.Table}" : null
             : tenantTables.Keys.FirstOrDefault(table => table.EndsWith($".{read.Table}", StringComparison.Ordinal));
 
-    // The top-level conjuncts of a WHERE with no top-level OR: its text split at each AND but the one a BETWEEN takes.
-    private static IEnumerable<string> Conjuncts(string where)
+    // The top-level conjuncts of a WHERE with no top-level OR or CASE: its text split at each AND but the one a BETWEEN
+    // takes, the words found in `scan`, the same text with its double-quoted identifiers blanked.
+    private static IEnumerable<string> Conjuncts(string where, string scan)
     {
         var start = 0;
         var between = false;
-        foreach (Match word in AndOrBetween().Matches(where))
+        foreach (Match word in AndOrBetween().Matches(scan))
         {
             if (word.Value.Equals("between", StringComparison.OrdinalIgnoreCase))
             {
@@ -515,7 +542,7 @@ internal static partial class ModuleRules
     // A table a literal reads: named after `from` (not the table of a `delete from`), `join` or a comma, with its alias.
     [GeneratedRegex(
         """
-        (?:(?<!\bdelete\s+)\bfrom\b|\bjoin\b|,)\s*(?:only\s+)?
+        (?:(?<!\bdelete\s+)\bfrom\b|\bjoin\b|,)[\s(]*(?:only\s+)?
         (?:(?<schema>"?[a-z_][\w$]*"?)\s*\.\s*)?(?<table>"?[a-z_][\w$]*"?)
         (?:\s+(?:as\s+)?(?!(?:on|using|join|inner|left|right|full|cross|natural|lateral|tablesample|where|group|having|window|order|limit|offset|fetch|for|union|intersect|except|from)\b)(?<alias>"?[a-z_][\w$]*"?))?
         """,
@@ -544,6 +571,13 @@ internal static partial class ModuleRules
 
     [GeneratedRegex(@"\bor\b", RegexOptions.IgnoreCase)]
     private static partial Regex OrWord();
+
+    [GeneratedRegex(@"\bcase\b", RegexOptions.IgnoreCase)]
+    private static partial Regex CaseWord();
+
+    // A FROM item that opens a parenthesis: a parenthesized join, relation or subquery, whose relations the rule does not read.
+    [GeneratedRegex(@"(?:\bfrom\b|\bjoin\b|,)\s*(?:(?:only|lateral)\s+)?\(", RegexOptions.IgnoreCase)]
+    private static partial Regex ParenthesizedFromItem();
 
     [GeneratedRegex(@"\b(?:and|between)\b", RegexOptions.IgnoreCase)]
     private static partial Regex AndOrBetween();
