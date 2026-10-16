@@ -1,0 +1,39 @@
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_373fac84998468 35
+  s_3675ccfac3f8b2::t_15bfeff4987d0a 28-29
+src/PouryaKit.Web/PouryaKitWebOptions.cs
+  s_3675ccfac3f8b2::t_7f834569acd2cf 17
+docs/architecture/diagrams/kit-context.html
+  s_3675ccfac3f8b2::t_4a64da5d4cbc95 4985
+docs/architecture/diagrams/http-command.sequence.json
+  s_3675ccfac3f8b2::t_4a64da5d4cbc95 15
+src/PouryaKit.Web/PouryaKitTrustedPeerOptions.cs
+  s_3675ccfac3f8b2::t_6856431dd5d3c2 10
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_99bb835d020d61 446
+  s_3675ccfac3f8b2::t_5174b18dfcbac3 456
+.agents/skills/pourya-kit/references/web.md
+  s_3675ccfac3f8b2::t_8545da5815107b 261
+  s_3675ccfac3f8b2::t_4538fc0293db81 263
+  s_3675ccfac3f8b2::t_302a6ecf106029 259
+docs/architecture/diagrams/http-command.html
+  s_3675ccfac3f8b2::t_4a64da5d4cbc95 4985
+docs/architecture/diagrams/kit-context.architecture.json
+  s_3675ccfac3f8b2::t_4a64da5d4cbc95 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2b18eb79c26c79115f47a1f8e317077f2bc3424e",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
