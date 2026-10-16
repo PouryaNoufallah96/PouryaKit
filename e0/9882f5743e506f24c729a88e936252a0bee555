@@ -1,0 +1,30 @@
+docs/foundation-review.md
+  s_63a6f6816df045::t_d62054eaa27728 859
+src/PouryaKit.Validation/PageRuleExtensions.cs
+  s_63a6f6816df045::t_e07d00762e9039 33
+  s_63a6f6816df045::t_f6d49c8a1d3321 1-25,27-30,32,34-39
+  s_63a6f6816df045::t_16e68f133825cb 26,31
+tests/PouryaKit.Validation.Tests/PageRuleTests.cs
+  s_63a6f6816df045::t_c2191c2f2cbfb0 1-62
+docs/architecture/README.md
+  s_63a6f6816df045::t_d62054eaa27728 153,168,172
+  s_63a6f6816df045::t_7b9251a25e1d76 173
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryValidator.cs
+  s_63a6f6816df045::t_f6d49c8a1d3321 2,9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e09882f5743e506f24c729a88e936252a0bee555",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
