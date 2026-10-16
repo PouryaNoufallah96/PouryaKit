@@ -1,0 +1,27 @@
+.agents/skills/pourya-kit/references/web.md
+  s_63a6f6816df045::t_4be39b536fe4fd 261
+.agents/skills/pourya-kit/references/templates.md
+  s_63a6f6816df045::t_4be39b536fe4fd 80,85
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_63a6f6816df045::t_4be39b536fe4fd 26
+src/PouryaKit.Cqrs/Tenancy/TenantRequirement.cs
+  s_63a6f6816df045::t_4be39b536fe4fd 6-7
+docs/architecture/README.md
+  s_63a6f6816df045::t_4be39b536fe4fd 162
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c11cab9d09ec21aad68dd239a7955a4c3ce11f9c",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
