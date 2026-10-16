@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- One EF Module beside Ledger, so the Host has both write models. -->
+  <PropertyGroup>
+    <RootNamespace>M2.Catalog</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../M2.Contracts/M2.Contracts.csproj" />
+    <ProjectReference Include="../M2.Marten/M2.Marten.csproj" />
+    <ProjectReference Include="../../../src/PouryaKit.Persistence.Postgres/PouryaKit.Persistence.Postgres.csproj" />
+  </ItemGroup>
+
+</Project>

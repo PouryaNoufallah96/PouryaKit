@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- An offending Stream Module's Feature code: it saves through Marten's session itself. -->
+  <PropertyGroup>
+    <RootNamespace>M2.Offending</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../M2.Marten/M2.Marten.csproj" />
+  </ItemGroup>
+
+</Project>

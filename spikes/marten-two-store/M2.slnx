@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="M2.Contracts/M2.Contracts.csproj" />
+  <Project Path="M2.Marten/M2.Marten.csproj" />
+  <Project Path="M2.Ledger/M2.Ledger.csproj" />
+  <Project Path="M2.Catalog/M2.Catalog.csproj" />
+  <Project Path="M2.Host/M2.Host.csproj" />
+  <Project Path="M2.Offending/M2.Offending.csproj" />
+  <Project Path="M2.Tests/M2.Tests.csproj" />
+</Solution>

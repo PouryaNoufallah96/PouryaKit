@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The Ledger Stream Module: Feature code that sees no Marten, Weasel, Wolverine or JasperFx type. -->
+  <PropertyGroup>
+    <RootNamespace>M2.Ledger</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../M2.Contracts/M2.Contracts.csproj" />
+    <ProjectReference Include="../M2.Marten/M2.Marten.csproj" />
+  </ItemGroup>
+
+</Project>

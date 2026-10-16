@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>M2.Host</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../M2.Catalog/M2.Catalog.csproj" />
+    <ProjectReference Include="../M2.Ledger/M2.Ledger.csproj" />
+    <!-- Solo delivery at test speed, and the runtime compiler a Development Host needs (ADR 0004). -->
+    <ProjectReference Include="../../../src/PouryaKit.Testing/PouryaKit.Testing.csproj" />
+  </ItemGroup>
+
+</Project>

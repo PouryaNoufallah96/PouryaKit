@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- What the Stream write model packages (#121, #131) would hold, as a self-contained copy over the Kit's real seams. -->
+  <PropertyGroup>
+    <RootNamespace>M2.Marten</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Marten" Version="9.46.0" />
+    <PackageReference Include="WolverineFx.Marten" Version="6.48.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="M2.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../src/PouryaKit.Messaging.Wolverine.EFCore/PouryaKit.Messaging.Wolverine.EFCore.csproj" />
+    <ProjectReference Include="../../../src/PouryaKit.Modularity/PouryaKit.Modularity.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>M2.Contracts</RootNamespace>
+  </PropertyGroup>
+
+</Project>
