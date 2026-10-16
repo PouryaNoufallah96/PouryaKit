@@ -24,7 +24,7 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
   - PostgreSQL, not SQL Server, and the mechanism spec #115 names: an insert of the scope row that does nothing on conflict, then an update that adds one and returns the value, on the Unit of Work's transaction. Upstream reads the row under `UPDLOCK, HOLDLOCK`, inserts it when missing and retries the read on a unique violation, then writes a value computed in C#.
   - The increment is relative (`last_value = last_value + 1`), so a blocked update counts from the value the other transaction committed; nothing is read first.
   - One scope key per sequence, composed by the handler; no owner, sequence kind, document gate, high-water read of the target table or smallest-free-code search.
-  - The result is a `Result<long>`, failing with `UnitOfWorkErrors.ConcurrencyConflict` on a deadlock; the table is created by a migration helper in the Module's schema, and a missing table is named at first use, as Receipts are.
+  - The result is a `Result<long>`, failing with `UnitOfWorkErrors.ConcurrencyConflict` on a deadlock PostgreSQL ends by aborting its own wait (a deadlock aborted in another write stays an exception); the table is created by a migration helper in the Module's schema, and a missing table is named at first use, as Receipts are.
 
 ## PostgreSQL registration with a schema per Module
 
