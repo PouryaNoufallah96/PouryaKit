@@ -1,0 +1,19 @@
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_63a6f6816df045::t_edf1d2dd941616 60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e0db606dd263f564cb3e8b29eb4ce44bceab71cc",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
