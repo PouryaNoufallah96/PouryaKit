@@ -7,7 +7,7 @@ The two briefs a `kit-implementer` reads in a run of tickets: one common brief p
 ````markdown
 # Common brief for <batch> (spec #<spec>)
 
-Repository: `<repository root>`. Integration branch: `<integration branch>`, tip `<tip>`. Your worktree was created from that commit on a branch of its own: confirm the base as your role file says. The integration branch may move while you work; fast-forward or rebase onto it only as your role allows, and report the base you started from.
+Repository: `<repository root>`. Integration branch: `<integration branch>`. Your ticket brief names the tip your worktree was created from, on a branch of its own: confirm the base as your role file says. The integration branch may move while you work; fast-forward or rebase onto it only as your role allows, and report the base you started from. (The tip lives in the ticket brief, never here: a common brief outlives several merges, and session 1 of Wave 3 wrote "common.md's tip is stale" into five briefs.)
 
 ## Why this work matters
 
