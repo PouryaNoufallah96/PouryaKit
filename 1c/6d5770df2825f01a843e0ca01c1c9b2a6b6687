@@ -1,0 +1,78 @@
+docs/provenance/PouryaKit.Localization.md
+  s_3675ccfac3f8b2::t_0981f3375a2566 1-15,18-24
+  s_3675ccfac3f8b2::t_e0aa6dcc71598d 17
+  s_3675ccfac3f8b2::t_46e97005fd8456 16
+PouryaKit.slnx
+  s_3675ccfac3f8b2::t_b3580d7c4c8316 7
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_3675ccfac3f8b2::t_b3580d7c4c8316 21
+.agents/skills/pourya-kit/references/localization.md
+  s_3675ccfac3f8b2::t_6abe4edc078468 1-64,66-78
+  s_3675ccfac3f8b2::t_8359359b8de72b 65
+docs/architecture/diagrams/kit-context.architecture.json
+  s_3675ccfac3f8b2::t_1d20fe4aba0dbb 318-319,389,402-403,408
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_3675ccfac3f8b2::t_1d20fe4aba0dbb 360
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_3675ccfac3f8b2::t_e0e3205294d1a4 74
+tests/ModularMonolith.Tests/Stub/StubMessages.fa.resx
+  s_3675ccfac3f8b2::t_caa8e9f6f35651 1-18
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_3675ccfac3f8b2::t_bb510786799001 79-88
+  s_3675ccfac3f8b2::t_63e14a1417fb31 78
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_3675ccfac3f8b2::t_1d20fe4aba0dbb 290-291
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_7c5b270fb6ef2e 3
+  s_3675ccfac3f8b2::t_fb5165a00f03b8 44
+  s_3675ccfac3f8b2::t_b4ef1775018598 220-229
+  s_3675ccfac3f8b2::t_c9821ae8ff50be 552
+scripts/packaging/inventory.json
+  s_3675ccfac3f8b2::t_ccf04ebb433ccf 15,37
+docs/foundation-review.md
+  s_3675ccfac3f8b2::t_b16c85d6fc2ad7 274
+  s_3675ccfac3f8b2::t_7d1ef8d4559267 886
+src/PouryaKit.Localization/HeaderRequestCulture.cs
+  s_3675ccfac3f8b2::t_8a17ddbd0f0e23 9-11
+  s_3675ccfac3f8b2::t_fc371f544029ca 1-8,12-31
+tests/ModularMonolith.Tests/Stub/StubMessages.resx
+  s_3675ccfac3f8b2::t_f1991525f2d35f 1-18
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_1d20fe4aba0dbb 412-413,466-467,571-603,764-770,800-801
+tests/ModularMonolith.Tests/Stub/StubModule.cs
+  s_3675ccfac3f8b2::t_85b26502bafcbd 29
+  s_3675ccfac3f8b2::t_c4c5d4e3165da4 5
+tests/ModularMonolith.Tests/LocalizationTests.cs
+  s_3675ccfac3f8b2::t_4cdffc25822094 1-32
+scripts/packaging/consumers/PouryaKit.Localization.cs
+  s_3675ccfac3f8b2::t_6b72a36506bd20 1-15
+.agents/skills/pourya-kit/SKILL.md
+  s_3675ccfac3f8b2::t_e4a336b961c60a 3,45
+src/PouryaKit.Localization/LocalizationServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_6f3f272a143d5b 25-26
+  s_3675ccfac3f8b2::t_032f03b4bbc641 1-24,27-45
+README.md
+  s_3675ccfac3f8b2::t_e4a336b961c60a 25
+tests/ModularMonolith.Tests/Stub/StubMessages.cs
+  s_3675ccfac3f8b2::t_3b7c536804c1fc 1-30
+src/PouryaKit.Localization/PouryaKit.Localization.csproj
+  s_3675ccfac3f8b2::t_40e410405a0a96 1-8
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_3675ccfac3f8b2::t_b3580d7c4c8316 30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1c6d5770df2825f01a843e0ca01c1c9b2a6b6687",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
