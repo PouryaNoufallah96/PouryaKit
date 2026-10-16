@@ -1,0 +1,27 @@
+.agents/skills/pourya-kit/references/persistence.md
+  s_63a6f6816df045::t_da708b67d574a2 259,279
+docs/architecture/README.md
+  s_63a6f6816df045::t_424ada9f5cfce1 304
+docs/foundation-review.md
+  s_63a6f6816df045::t_2cb169bda31d64 883
+docs/provenance/PouryaKit.Persistence.Postgres.md
+  s_63a6f6816df045::t_3bcf4e5f68c58e 27
+src/PouryaKit.Persistence.EFCore/UnitOfWork/UnitOfWorkErrors.cs
+  s_63a6f6816df045::t_8b0f9380a1e9bb 9-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "481fb55d259eda043ede6ff0d8748e25deaaeaa6",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
