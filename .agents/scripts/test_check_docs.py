@@ -299,7 +299,7 @@ class CheckDocsTests(unittest.TestCase):
         git(self.root, "checkout", "-q", "-")
         self.write({"README.md": CLEAN["README.md"] + "More prose.\n"})
         self.commit()
-        git(self.root, "merge", "-q", "--no-commit", "--no-ff", "feature")
+        git(self.root, "-c", "user.name=t", "-c", "user.email=t@example.com", "merge", "-q", "--no-commit", "--no-ff", "feature")
         self.assertEqual(self.check("--staged", stage=False)[0], 0)
 
     def test_a_diagram_pinned_to_a_revision_unreachable_from_head_fails(self) -> None:
