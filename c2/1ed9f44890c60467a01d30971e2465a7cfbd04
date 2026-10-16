@@ -1,0 +1,64 @@
+src/PouryaKit.Persistence.Postgres/INumberSequences.cs
+  s_63a6f6816df045::t_a5c1c144afcf1a 1-23
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_63a6f6816df045::t_45e32b91edd569 8
+docs/architecture/diagrams/kit-context.architecture.json
+  s_63a6f6816df045::t_09bba5d368b020 10
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockCounts/Features/StartStockCount/StartStockCountCommandHandler.cs
+  s_63a6f6816df045::t_d13ae8adc5d79a 1-37
+.agents/skills/pourya-kit/references/persistence.md
+  s_63a6f6816df045::t_9f0470ed5246d4 259,271-282
+  s_63a6f6816df045::t_077295ed46f8ff 283
+samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs
+  s_63a6f6816df045::t_c76a976ca4c2b7 22-23
+tests/PouryaKit.ArchitectureTests/DapperWriteTests.cs
+  s_63a6f6816df045::t_4cf9620b15060c 36
+tests/ModularMonolith.Tests/NumberSequenceTests.cs
+  s_63a6f6816df045::t_745067f336e105 1-124
+samples/ModularMonolith/src/Modules/Inventory/Inventory/Infrastructure/Data/Migrations/20261016120000_StockCounts.cs
+  s_63a6f6816df045::t_53bce855e371dd 1-27
+docs/foundation-review.md
+  s_63a6f6816df045::t_163607f106da54 883
+src/PouryaKit.Persistence.Postgres/NumberSequenceTable.cs
+  s_63a6f6816df045::t_50133e66574513 1-41
+src/PouryaKit.Persistence.Postgres/NumberSequenceServiceCollectionExtensions.cs
+  s_63a6f6816df045::t_7867baf64b1d09 1-24
+docs/provenance/PouryaKit.Persistence.Postgres.md
+  s_63a6f6816df045::t_163607f106da54 14-28
+docs/architecture/README.md
+  s_63a6f6816df045::t_163607f106da54 299-300,304
+  s_63a6f6816df045::t_61682392a94638 54
+  s_63a6f6816df045::t_fd516f2df7db6d 305
+tests/ModularMonolith.Tests/Stub/StubNumberSequences.cs
+  s_63a6f6816df045::t_106e8896dae8af 1-31
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_63a6f6816df045::t_b487e4db24b3e4 190
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_63a6f6816df045::t_220a7d33a7af9c 89-97
+tests/ModularMonolith.Tests/Stub/StubModule.cs
+  s_63a6f6816df045::t_4cf9620b15060c 23-24
+src/PouryaKit.Persistence.Postgres/PostgresNumberSequences.cs
+  s_63a6f6816df045::t_1123c1847a922d 1-55
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockCounts/Features/StartStockCount/StartStockCountCommand.cs
+  s_63a6f6816df045::t_16f27364119681 1-6
+.agents/skills/pourya-kit/SKILL.md
+  s_63a6f6816df045::t_9f0470ed5246d4 33
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_63a6f6816df045::t_4cf9620b15060c 42,46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c21ed9f44890c60467a01d30971e2465a7cfbd04",
+  "prompts": {},
+  "sessions": {
+    "s_63a6f6816df045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f74f908d-ec7d-4a12-a791-13c4b8d4bcfa",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
