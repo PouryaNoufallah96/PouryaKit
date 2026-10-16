@@ -119,8 +119,8 @@ A query that reads a list answers one Page of it. It carries a `PageRequest` and
 
 ```csharp
 using FluentValidation;
-using FluentValidation.Results;
 using PouryaKit.Cqrs;
+using PouryaKit.Validation;
 
 // Products/Features/ListProducts/
 internal sealed record ListProductsQuery(PageRequest Page) : Query<Page<ProductListItemDto>>
@@ -140,25 +140,14 @@ internal sealed record ListProductsQuery(PageRequest Page) : Query<Page<ProductL
 internal sealed class ListProductsQueryValidator : AbstractValidator<ListProductsQuery>
 {
     public ListProductsQueryValidator() =>
-        RuleFor(query => query.Page)
-            .Cascade(CascadeMode.Stop)
-            .NotNull()
-            .Custom(
-                (page, context) =>
-                {
-                    foreach (var error in ListProductsQuery.Paging.Validate(page).Errors)
-                    {
-                        context.AddFailure(new ValidationFailure(error.Target, error.Message) { ErrorCode = error.Code });
-                    }
-                }
-            );
+        RuleFor(query => query.Page).Cascade(CascadeMode.Stop).NotNull().AllowedBy(ListProductsQuery.Paging);
 }
 ```
 
 - `PageRequest` has a 1-based `Number` (default 1), a `Size` (default 20), an optional `Sort` key (null sorts by the declaration's first), a `Direction` (`SortDirection.Ascending` by default) and `Filters`, each a `PageFilter(field, FilterOperator, value)`. A value is of the field's declared type, or text that parses to it, as HTTP sends it.
 - `Page<T>` has `Items`, `Number`, `Size`, the `Total` of the whole filtered selection, and `TotalPages`, `HasNext` and `HasPrevious`. A Page beyond the last has no items and the true total.
 - Declare sort keys and filter fields by name only: a letter followed by letters and digits. A field's value type is string, Guid, int, long, decimal, bool or DateTimeOffset (text without an offset is UTC, and every time is read as UTC, the one offset Npgsql sends, so the Dapper and EF Core reads bind the same instant). `contains` and `startswith` take text only; `gt`, `gte`, `lt` and `lte` take neither text, Guid nor bool. The declaration throws for anything else when the query's type is first used.
-- Check the request in the query's validator with `Validate`, as above, so it runs in the pipeline's one validation step and its Errors come back with the others. Its Error codes, the constants of `PageErrorCodes` (`PouryaKit.Cqrs`), are `Page.NumberOutOfRange`, `Page.SizeOutOfRange` (1 to `maxSize`, default 100; a `maxSize` below `PageRequest.DefaultSize`, 20, throws when declared, since it would refuse every request that states no size), `Page.SortUnknown`, `Page.DirectionUnknown`, `Page.FilterUnknown`, `Page.FilterOperatorUnsupported`, `Page.FilterValueInvalid` and `Page.FilterRepeated` (one field and operator given twice), with the targets `Number`, `Size`, `Sort`, `Direction` and `Filters[i]`. No message repeats what the caller sent.
+- Check the request in the query's validator with `AllowedBy(declaration)` of `PouryaKit.Validation`, as above, so it runs in the pipeline's one validation step and its Errors come back with the others: the rule adds each Error `PageDeclaration.Validate` returns as a failure with its message, its target as the property name and its code, so the validation step returns exactly those Errors. A null request adds nothing, so keep the validator's own `NotNull`. The declaration's Error codes, the constants of `PageErrorCodes` (`PouryaKit.Cqrs`), are `Page.NumberOutOfRange`, `Page.SizeOutOfRange` (1 to `maxSize`, default 100; a `maxSize` below `PageRequest.DefaultSize`, 20, throws when declared, since it would refuse every request that states no size), `Page.SortUnknown`, `Page.DirectionUnknown`, `Page.FilterUnknown`, `Page.FilterOperatorUnsupported`, `Page.FilterValueInvalid` and `Page.FilterRepeated` (one field and operator given twice), with the targets `Number`, `Size`, `Sort`, `Direction` and `Filters[i]`. No message repeats what the caller sent.
 - The handler reads the Page through Dapper ([dapper-reads.md](dapper-reads.md#reading-a-page)) or an EF Core repository ([persistence.md](persistence.md#reading-a-page)). Both map the declared names to the Feature's own columns or expressions, so no text a caller sends becomes SQL, and both throw before any SQL runs for a request that fails `Validate`: a forgotten validator is a bug that fails loudly, not an open door.
 - An endpoint binds the request from the query string with `HttpPageRequest` ([web.md](web.md#a-page-over-http)).
 
