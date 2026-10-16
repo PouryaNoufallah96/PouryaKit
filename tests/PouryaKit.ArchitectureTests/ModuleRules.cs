@@ -317,6 +317,164 @@ internal static partial class ModuleRules
         typeof(IReceipts),
     ];
 
+    /// <summary>
+    /// The tables of <paramref name="model"/> that hold one tenant's rows per row, as <c>schema.table</c>, each with its
+    /// tenant column: every table an <c>ITenantScoped</c> entity type maps.
+    /// </summary>
+    public static IEnumerable<KeyValuePair<string, string>> TenantTablesOf(IModel model) =>
+        from entityType in model.GetEntityTypes()
+        where entityType.ClrType.IsAssignableTo(typeof(ITenantScoped)) && entityType.GetTableName() is not null
+        select KeyValuePair.Create(
+            $"{entityType.GetSchema() ?? model.GetDefaultSchema()}.{entityType.GetTableName()}".ToLowerInvariant(),
+            entityType.FindProperty(nameof(ITenantScoped.Tenant))!.GetColumnName().ToLowerInvariant()
+        );
+
+    /// <summary>
+    /// Spec #115, Multi-tenancy: Dapper runs exactly the SQL a Feature writes, so in a tenant-scoped Module a string literal
+    /// that reads a tenant-scoped table is one <c>SELECT</c> with no set operator and no subquery, whose <c>WHERE</c> has no
+    /// top-level <c>OR</c> and holds every tenant-scoped table it reads to the tenant with a top-level conjunct of its own:
+    /// <c>p.tenant = @Tenant</c> by the table's alias, or by its name when it has none, and <c>tenant = @Tenant</c>
+    /// unqualified only when its <c>FROM</c> clause reads that one table. Every other shape of such a literal is rejected,
+    /// so the predicate inside an <c>OR</c>, in one branch of a <c>UNION</c> or for one table of a join is not enough. A
+    /// literal reads a table it names after <c>from</c>, <c>join</c> or a comma, with or without its schema, compared as
+    /// <see cref="WritesToAggregateTables"/> compares names; the table of a <c>delete from</c> is a write, which that rule
+    /// judges. The literals are read as that rule reads them, outside EF Core migrations, so a fragment that names such a
+    /// table and is concatenated at run time is rejected as no <c>SELECT</c>. Not seen: SQL read from a file or a resource;
+    /// a read through a view or a function; and whether <c>@Tenant</c> holds the Operation's tenant, which the Gateway
+    /// tests show.
+    /// </summary>
+    public static IEnumerable<string> ReadsBeyondTheTenant(Assembly module, IReadOnlyDictionary<string, string> tenantTables) =>
+        (
+            from literal in Il.LiteralsIn(module)
+            where !IsMigration(literal.Owner)
+            let fault = TenantReadFault(literal.Text, tenantTables)
+            where fault is not null
+            select $"{literal.Owner.FullName} reads a tenant-scoped table with SQL that {fault}: \"{literal.Text.Trim()}\"."
+        ).Distinct();
+
+    /// <summary>The tenant-scoped tables <paramref name="sql"/> reads, as <see cref="ReadsBeyondTheTenant"/> finds them.</summary>
+    public static IEnumerable<string> TenantTablesReadBy(string sql, IReadOnlyDictionary<string, string> tenantTables) =>
+        from read in TableReads(Sql.Code(sql, keepDollarQuoted: true))
+        let table = TenantTableOf(read, tenantTables)
+        where table is not null
+        select table;
+
+    /// <summary>
+    /// Why <paramref name="sql"/>, which reads a tenant-scoped table, breaks the shape <see cref="ReadsBeyondTheTenant"/>
+    /// holds it to; null when it keeps to it or reads no such table.
+    /// </summary>
+    public static string? TenantReadFault(string sql, IReadOnlyDictionary<string, string> tenantTables)
+    {
+        var code = Sql.Code(sql, keepDollarQuoted: true);
+        TableRead[] reads = [.. TableReads(code).Where(read => TenantTableOf(read, tenantTables) is not null)];
+        if (reads is [])
+        {
+            return null;
+        }
+
+        var top = Sql.TopLevel(code);
+        if (code.Split(';').Count(statement => !string.IsNullOrWhiteSpace(statement)) != 1)
+        {
+            return "is not one statement";
+        }
+
+        if (!SelectStatement().IsMatch(top))
+        {
+            return "is not a SELECT";
+        }
+
+        if (SetOperator().Match(code) is { Success: true } setOperator)
+        {
+            return $"has the set operator {setOperator.Value.ToLowerInvariant()}";
+        }
+
+        if (SelectWord().Count(code) > 1)
+        {
+            return "has a subquery";
+        }
+
+        if (WhereClause().Match(top) is not { Success: true } where)
+        {
+            return "has no WHERE";
+        }
+
+        if (OrWord().IsMatch(where.Groups["where"].Value))
+        {
+            return "has an OR at the top level of its WHERE";
+        }
+
+        var from = FromWord().Match(top);
+        var fromItems = from.Success && from.Index < where.Index ? TableReads(top[from.Index..where.Index]).Count() : 0;
+        TenantConjunct[] conjuncts = [.. Conjuncts(where.Groups["where"].Value).Select(TenantConjunct.Of).OfType<TenantConjunct>()];
+        foreach (var read in reads)
+        {
+            var table = TenantTableOf(read, tenantTables)!;
+            string[] names = read.Alias is { } alias ? [alias] : [read.Table, table];
+            if (!conjuncts.Any(conjunct =>
+                    conjunct.Column == tenantTables[table] && (conjunct.Qualifier is { } qualifier ? names.Contains(qualifier) : fromItems == 1)
+                ))
+            {
+                return $"does not hold {table}{(read.Alias is null ? "" : $" {read.Alias}")} to @Tenant with a top-level conjunct of its WHERE";
+            }
+        }
+
+        return null;
+    }
+
+    private sealed record TableRead(string? Schema, string Table, string? Alias);
+
+    private static IEnumerable<TableRead> TableReads(string code) =>
+        from match in SqlRead().Matches(code)
+        select new TableRead(
+            match.Groups["schema"].Success ? Unquoted(match.Groups["schema"].Value) : null,
+            Unquoted(match.Groups["table"].Value),
+            match.Groups["alias"].Success ? Unquoted(match.Groups["alias"].Value) : null
+        );
+
+    private static string? TenantTableOf(TableRead read, IReadOnlyDictionary<string, string> tenantTables) =>
+        read.Schema is { } schema
+            ? tenantTables.ContainsKey($"{schema}.{read.Table}") ? $"{schema}.{read.Table}" : null
+            : tenantTables.Keys.FirstOrDefault(table => table.EndsWith($".{read.Table}", StringComparison.Ordinal));
+
+    // The top-level conjuncts of a WHERE with no top-level OR: its text split at each AND but the one a BETWEEN takes.
+    private static IEnumerable<string> Conjuncts(string where)
+    {
+        var start = 0;
+        var between = false;
+        foreach (Match word in AndOrBetween().Matches(where))
+        {
+            if (word.Value.Equals("between", StringComparison.OrdinalIgnoreCase))
+            {
+                between = true;
+            }
+            else if (between)
+            {
+                between = false;
+            }
+            else
+            {
+                yield return where[start..word.Index];
+                start = word.Index + word.Length;
+            }
+        }
+
+        yield return where[start..];
+    }
+
+    // A conjunct that is exactly `[qualifier.]column = @Tenant`, the qualifier with or without its schema.
+    private sealed record TenantConjunct(string? Qualifier, string Column)
+    {
+        public static TenantConjunct? Of(string conjunct) =>
+            TenantPredicate().Match(conjunct) is { Success: true } match
+                ? new TenantConjunct(
+                    match.Groups["qualifier"].Success
+                        ? Unquoted(string.Concat(match.Groups["qualifier"].Value.Where(character => !char.IsWhiteSpace(character))))
+                        : null,
+                    Unquoted(match.Groups["column"].Value)
+                )
+                : null;
+    }
+
     private static bool IsMigration(Type type) => type.IsAssignableTo(typeof(Migration)) || type.IsAssignableTo(typeof(ModelSnapshot));
 
     private static bool IsTransport(string assemblyName) =>
@@ -353,4 +511,46 @@ internal static partial class ModuleRules
         RegexOptions.IgnoreCase
     )]
     private static partial Regex SqlWrite();
+
+    // A table a literal reads: named after `from` (not the table of a `delete from`), `join` or a comma, with its alias.
+    [GeneratedRegex(
+        """
+        (?:(?<!\bdelete\s+)\bfrom\b|\bjoin\b|,)\s*(?:only\s+)?
+        (?:(?<schema>"?[a-z_][\w$]*"?)\s*\.\s*)?(?<table>"?[a-z_][\w$]*"?)
+        (?:\s+(?:as\s+)?(?!(?:on|using|join|inner|left|right|full|cross|natural|lateral|tablesample|where|group|having|window|order|limit|offset|fetch|for|union|intersect|except|from)\b)(?<alias>"?[a-z_][\w$]*"?))?
+        """,
+        RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace
+    )]
+    private static partial Regex SqlRead();
+
+    [GeneratedRegex(@"^\s*select\b", RegexOptions.IgnoreCase)]
+    private static partial Regex SelectStatement();
+
+    [GeneratedRegex(@"\bselect\b", RegexOptions.IgnoreCase)]
+    private static partial Regex SelectWord();
+
+    [GeneratedRegex(@"\b(?:union|intersect|except)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex SetOperator();
+
+    [GeneratedRegex(@"\bfrom\b", RegexOptions.IgnoreCase)]
+    private static partial Regex FromWord();
+
+    // A top-level WHERE, up to the clause that follows it.
+    [GeneratedRegex(
+        @"\bwhere\b(?<where>.*?)(?=\b(?:group\s+by|having|window|order\s+by|limit|offset|fetch|for)\b|$)",
+        RegexOptions.IgnoreCase | RegexOptions.Singleline
+    )]
+    private static partial Regex WhereClause();
+
+    [GeneratedRegex(@"\bor\b", RegexOptions.IgnoreCase)]
+    private static partial Regex OrWord();
+
+    [GeneratedRegex(@"\b(?:and|between)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex AndOrBetween();
+
+    [GeneratedRegex(
+        """^\s*(?:(?<qualifier>"?[a-z_][\w$]*"?(?:\s*\.\s*"?[a-z_][\w$]*"?)?)\s*\.\s*)?(?<column>"?[a-z_][\w$]*"?)\s*=\s*@tenant\s*$""",
+        RegexOptions.IgnoreCase
+    )]
+    private static partial Regex TenantPredicate();
 }

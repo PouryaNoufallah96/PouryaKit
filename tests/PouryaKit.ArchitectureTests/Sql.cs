@@ -75,6 +75,31 @@ internal static partial class Sql
         return code.ToString();
     }
 
+    /// <summary>
+    /// <paramref name="code"/>, as <see cref="Code"/> returns it, with what each pair of parentheses holds replaced by
+    /// spaces and the parentheses kept, so what is left is the statement's own clauses at the same positions.
+    /// </summary>
+    public static string TopLevel(string code)
+    {
+        var top = new StringBuilder(code.Length);
+        var depth = 0;
+        foreach (var character in code)
+        {
+            if (character == ')' && depth > 0)
+            {
+                depth--;
+            }
+
+            top.Append(depth > 0 ? ' ' : character);
+            if (character == '(')
+            {
+                depth++;
+            }
+        }
+
+        return top.ToString();
+    }
+
     // The index just past the first `closing` at or after `from`, or the end of the text when it never closes.
     private static int Closed(string sql, int at, string closing, int from)
     {
