@@ -92,6 +92,7 @@ metadata:
 ## Moving cited ranges after a code change (#116, 2026-10-16)
 
 - **Re-serialising a diagram source with `json.dumps` rewrites its escaping**: some sources hold `\u201c` escapes and others raw `·`, so either `ensure_ascii` value rewrites lines of one file. Edit the `"line"`/`"end_line"` numbers with a regex anchored on the `"path"` (scratchpad `p116/reranges.py`), with `end_line` optional, as a single-line source has none. Before the commit, `check-docs.py` (HEAD mode) fails the moved ranges as past the file's end; the pre-commit hook's `--staged` mode reads the index, where they fit.
+- **Refinalizing six pages** (`p116/repin.py`: a text edit of `revision`, then `node bin/archify.mjs finalize` with `cwd` the clone's `archify/` subfolder, where v3.0.1's `bin/` and `package.json` live, not the repository root) changed one line per page and passed every gate. `finalize` also writes three receipts beside each page (`<slug>.delivery.json`, `.finalize.json`, `.finalize-summary.json`) with local paths: delete them before committing. A docs edit above a cited range moves it too: inserting a GLOSSARY term shifted two diagrams' "Service name" range, which the hook caught only for the diagram not already staged.
 
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].
