@@ -1,0 +1,51 @@
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_3675ccfac3f8b2::t_4da2c8b5fc831b 89
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_3675ccfac3f8b2::t_48e935331a9aa4 77
+  s_3675ccfac3f8b2::t_4fcc225b5b80fd 66
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_3675ccfac3f8b2::t_cfe798eeac7ab2 154-185
+  s_3675ccfac3f8b2::t_0825fd5c42162e 12
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_7c86579a7ae6bd 542
+  s_3675ccfac3f8b2::t_5ac042373c0451 330
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_3675ccfac3f8b2::t_e5fbf88d6e5ff5 320-470,472-477
+  s_3675ccfac3f8b2::t_bea30b94a881db 471
+  s_3675ccfac3f8b2::t_135d08544e4ebe 514-555
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_d5b9c2ab17cb8a 1942-1955
+.agents/skills/pourya-kit/SKILL.md
+  s_3675ccfac3f8b2::t_336235a559304f 20
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_3675ccfac3f8b2::t_b82e34eacd36d2 17
+  s_3675ccfac3f8b2::t_cdec555252958a 1-16,18-78
+tests/PouryaKit.ArchitectureTests/Sql.cs
+  s_3675ccfac3f8b2::t_cabc06f2765cd5 78-102
+.agents/skills/pourya-kit/references/testing.md
+  s_3675ccfac3f8b2::t_0f0da8ea418cf2 202,208
+  s_3675ccfac3f8b2::t_b5378180095792 200
+tests/PouryaKit.ArchitectureTests/Sample.cs
+  s_3675ccfac3f8b2::t_d1ce956f64e78e 10
+  s_3675ccfac3f8b2::t_13ee176c85d054 122,124-130,137,147-148,150-152
+docs/foundation-review.md
+  s_3675ccfac3f8b2::t_3539d9e5e41e03 876
+README.md
+  s_3675ccfac3f8b2::t_30fa20d8779551 24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "47be9541420fed162c1c4ede5cbb7e11b18e9489",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
