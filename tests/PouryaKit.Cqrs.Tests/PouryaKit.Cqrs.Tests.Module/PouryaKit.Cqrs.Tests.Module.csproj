@@ -6,5 +6,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\PouryaKit.Cqrs\PouryaKit.Cqrs.csproj" />
+    <ProjectReference Include="..\PouryaKit.Cqrs.Tests.Contracts\PouryaKit.Cqrs.Tests.Contracts.csproj" />
   </ItemGroup>
 </Project>

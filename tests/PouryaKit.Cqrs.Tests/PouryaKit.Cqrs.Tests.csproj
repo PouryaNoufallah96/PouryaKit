@@ -14,6 +14,8 @@
   <ItemGroup>
     <Compile Remove="PouryaKit.Cqrs.Tests.Module\**" />
     <None Remove="PouryaKit.Cqrs.Tests.Module\**" />
+    <Compile Remove="PouryaKit.Cqrs.Tests.Contracts\**" />
+    <None Remove="PouryaKit.Cqrs.Tests.Contracts\**" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\PouryaKit.Cqrs\PouryaKit.Cqrs.csproj" />

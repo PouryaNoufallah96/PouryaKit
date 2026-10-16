@@ -12,9 +12,10 @@ public static class TenancyServiceCollectionExtensions
     {
         /// <summary>
         /// Makes the Module whose Composition Root calls it tenant-scoped, or, on the Host's own services, the
-        /// application: every command and query in <paramref name="featureAssemblies"/>, internal types included, runs
-        /// only with a tenant, and one whose Operation has none fails with <see cref="TenantErrors.Required"/> before its
-        /// validator and handler run. The requirement is an authorizer on the pipeline's authorization hook, and unlike
+        /// application: every command and query in <paramref name="featureAssemblies"/>, internal types included, and
+        /// every one a handler there handles wherever it is declared, such as in a Module's Contracts, runs only with a
+        /// tenant, and one whose Operation has none fails with <see cref="TenantErrors.Required"/> before its validator
+        /// and handler run. The requirement is an authorizer on the pipeline's authorization hook, and unlike
         /// a permission check it runs for a trusted continuation too (spec #115): a continuation runs with the tenant it
         /// was given, or not at all. An operation's authorizers run in the order registered, so declare it before
         /// <c>AddPouryaKitCqrs</c> and <c>AddPouryaKitPermissions</c> to have it run first. The declaration is recorded
@@ -38,7 +39,7 @@ public static class TenancyServiceCollectionExtensions
             }
 
             ComposedFeatures.In(services).TenantScoped.Add(IModuleServices.ModuleOf(services));
-            foreach (var operation in ImplementingTypes.Of(typeof(object), assemblies).Where(OperationTypes.IsOperation))
+            foreach (var operation in OperationTypes.Dispatchable(ImplementingTypes.Of(typeof(object), assemblies)))
             {
                 services.TryAddEnumerable(
                     ServiceDescriptor.Scoped(
