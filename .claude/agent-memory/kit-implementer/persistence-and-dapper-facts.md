@@ -103,3 +103,9 @@ Check the merged code before relying on a design note. Each section names its ti
 
 **Why:** each cost a run, a design detour or a wrong claim in a provenance record, or would have let a test pass vacuously; #9 to #18 build on these seams.
 **How to apply:** start from these when touching Persistence.*, Persistence.Dapper, the Unit of Work seam, conflicts, test migrations, paging, Dapper parameters or EF predicates; re-verify when bumping EF/Npgsql. Related: [[cqrs-and-modularity-facts]], [[snapshot-and-scheduled-command-facts]], [[dotnet-and-test-conventions]].
+
+## Number sequences: cancellation (#146, 2026-10-16; Npgsql 10.0.3)
+
+- **Cheapest cancellation shape:** `HoldChangeCommand` with an unreleased `Hold`, run with a linked `CancellationTokenSource`'s token; wait for `Changed`, cancel, and the handler's `Released.Task.WaitAsync(ct)` throws, so the Unit of Work rolls back. Assert `ThrowsAnyAsync<OperationCanceledException>`.
+- **Red runs of held tests poison the class:** under the own-connection mutation the "second waits" test times out and never releases its held Operation, whose open transaction then blocks later tests (a 30 s Npgsql read timeout, not the intended assertion). Show a held test red alone with `--filter-method <fully qualified method>`.
+- Own-connection mutation that compiles: `((NpgsqlConnection)connection).CloneWith(connectionString)`, `OpenAsync`, then `new NpgsqlBatch(own)`.
