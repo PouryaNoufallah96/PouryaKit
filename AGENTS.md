@@ -65,6 +65,7 @@ Both reviewers apply these to the diff. Report defects the diff introduced; olde
 - A violation of a rule under "Rules", or a name that drifts from its `GLOSSARY.md` term. A contradiction of an ADR or a section G decision is severity high.
 - A test that would still pass if every collaborator returned its default or under a weaker predicate than the rule states (a prefix check where the rule says equality, a scope narrower than the ticket names), or coverage that restates another test.
 - A claimed runtime guarantee without runtime proof.
+- A registration that scans types for a check on every command or query (an authorizer, a requirement) must cover the set the dispatcher runs, `OperationTypes.Dispatchable`: an operation declared in another assembly and handled in the scanned one, or an assembly only `AddPouryaKitCqrs` scanned, is the case to open. PR #143's Codex review found it twice after six single-ticket reviews had passed it (#116, then `AddPouryaKitPermissions`).
 - Docs or AI guidance left out of sync with the change. For each sentence or message the diff changes, search its old key phrase across `src/`, the Kit's skill, `docs/architecture/` and `docs/acceptance.md`: a restatement left as it was is a finding.
 - A changed XML summary, code comment or skill sentence that states a behaviour the cited code does not have. Open the code it describes; a sentence that reads right but says the wrong thing is the finding the PR bots found 25 times in one round of PR #103 after six single reviews had passed it.
 
@@ -85,6 +86,7 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | A diagram's cited source ranges are current | `check-docs.py` (diagram sources); the pre-commit hook runs it with `--staged`, reading diagrams and cited files from the index: a change at or above a cited range requires its diagram staged too, with ranges that fit the indexed file, while a change below every cited range passes; during a merge, a revision reachable from `MERGE_HEAD` counts; CI's `ai-setup` job runs it on the committed tree |
 | A merged head's code was validated | `merge-package.py` exit 14: only Markdown may differ from the validated commit |
 | A negative test discriminates the rule's exact predicate | `kit-reviewer` (the review rule above) |
+| A check registered over scanned types covers every operation the dispatcher runs | `OperationTypes.Dispatchable` is the one discovery; `DeclaredAuthorizersCheck` (an attributed operation with no authorizer) and `TenantRequirementCheck` (a tenant-scoped scope with an unguarded operation) fail the Host when it is built; `kit-reviewer` for a new registration of that shape |
 | A brief's commands come from the environment, never from memory | `docs/agents/brief-template.md`, "Verify" |
 | A review reads the implementer's commit, never the integration branch against itself | `kit-review.js` refuses `head` equal to `base` |
 | Pre-Wave 3 acceptance sections stay in ticket order after every merge | `check-docs.py` (ordered sections), run by `merge-package.py --post-merge` |
