@@ -10,6 +10,7 @@ using ModularMonolith.Tests.Stub;
 using ModularMonolith.Tests.Unowned;
 using ModularMonolith.Tests.Unversioned;
 using PouryaKit.Cqrs;
+using PouryaKit.Domain;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
@@ -339,7 +340,7 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     }
 
     // AddPouryaKitTenancy covers only the assemblies it names (ticket #145): the Module's Cqrs scan of a second assembly
-    // would dispatch that assembly's command without a tenant.
+    // would dispatch that assembly's command without a tenant, though another authorizer of it is registered.
     [Fact]
     public void A_tenant_scoped_module_that_dispatches_an_operation_its_tenancy_declaration_did_not_name_fails_the_host_when_built()
     {
@@ -491,7 +492,8 @@ public sealed class HandRegisteredModule : IModuleDefinition
     }
 }
 
-// Tenant-scoped for one assembly, with Cqrs scanning a second beside it.
+// Tenant-scoped for one assembly, with Cqrs scanning a second beside it, whose command has an authorizer that is not the
+// tenant requirement.
 public sealed class PartlyTenantScopedModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module)
@@ -499,7 +501,13 @@ public sealed class PartlyTenantScopedModule : IModuleDefinition
         module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
         module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         module.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly, typeof(UnownedCommand).Assembly);
+        module.AddScoped<IAuthorizer<UnownedCommand>, AllowingUnownedCommandAuthorizer>();
     }
+}
+
+internal sealed class AllowingUnownedCommandAuthorizer : IAuthorizer<UnownedCommand>
+{
+    public Task<Result> AuthorizeAsync(UnownedCommand operation, CancellationToken cancellationToken) => Task.FromResult(Result.Success());
 }
 
 // Subscribes to an Integration Event the Stub publishes, and declares no data.
