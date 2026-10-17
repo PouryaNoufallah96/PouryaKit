@@ -1,8 +1,8 @@
 using System.Collections.Immutable;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Grpc.Core;
 using PouryaKit.Domain;
+using PouryaKit.Web;
 
 namespace PouryaKit.Grpc;
 
@@ -25,15 +25,6 @@ public static class ResultGrpcExtensions
     public const string ErrorsTrailer = "pouryakit-errors-bin";
 
     private static readonly JsonSerializerOptions Json = new JsonSerializerOptions().UsePouryaKitJson();
-
-    private static readonly ErrorKind[] KindsBySeverity =
-    [
-        ErrorKind.Validation,
-        ErrorKind.Conflict,
-        ErrorKind.NotFound,
-        ErrorKind.Forbidden,
-        ErrorKind.Unexpected,
-    ];
 
     extension(Result result)
     {
@@ -65,10 +56,14 @@ public static class ResultGrpcExtensions
 
     private static RpcException Failure(ImmutableArray<Error> errors)
     {
-        var deciding = errors.MaxBy(error => Array.IndexOf(KindsBySeverity, error.Kind))!;
+        // Web's choice of the deciding Error and its entry shape, so both transports rank and list Errors alike.
+        var deciding = ResultHttpExtensions.Deciding(errors);
         return new RpcException(
             new Status(StatusOf(deciding.Kind), deciding.Message),
-            new Metadata { { ErrorsTrailer, JsonSerializer.SerializeToUtf8Bytes(errors.Select(GrpcError.Of).ToList(), Json) } }
+            new Metadata
+            {
+                { ErrorsTrailer, JsonSerializer.SerializeToUtf8Bytes(errors.Select(ResultHttpExtensions.ProblemError.Of).ToList(), Json) },
+            }
         );
     }
 
@@ -81,13 +76,4 @@ public static class ResultGrpcExtensions
             ErrorKind.Forbidden => StatusCode.PermissionDenied,
             _ => StatusCode.Internal,
         };
-
-    private sealed record GrpcError(
-        string Code,
-        string Message,
-        [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Target
-    )
-    {
-        public static GrpcError Of(Error error) => new(error.Code, error.Message, error.Target);
-    }
 }

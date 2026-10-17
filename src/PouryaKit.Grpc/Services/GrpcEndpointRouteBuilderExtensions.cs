@@ -28,9 +28,11 @@ public static class GrpcEndpointRouteBuilderExtensions
 
             var group = routes.MapGroup("").RequireAuthorization().BeginOperationPerRequest();
             ((IEndpointConventionBuilder)group).Finally(AnswerRefusalsAsStatus);
+            var mapped = routes.ServiceProvider.GetService<MappedGrpcServices>();
             foreach (var service in routes.ServiceProvider.GetServices<GrpcService>())
             {
                 service.Map(group);
+                mapped?.Add(service.Type);
             }
 
             return routes;
@@ -38,10 +40,9 @@ public static class GrpcEndpointRouteBuilderExtensions
     }
 
     // Wraps the step that begins the Operation, which reads a trusted peer's headers before the gRPC delegate runs and
-    // raises a refusal as Web's BadHttpRequestException, which would otherwise answer an HTTP 400 that a gRPC client reads
-    // as a failed call with no reason. Grpc.AspNetCore's own delegate answers every exception of the service as a status,
-    // so no other BadHttpRequestException reaches here. The refusal is a trailers-only response: status and message in
-    // the headers, no message body.
+    // raises a refusal as Web's KitBadRequestException, which would otherwise answer an HTTP 400 that a gRPC client reads
+    // as a failed call with no reason. The refusal is a trailers-only response: status and message in the headers, no
+    // message body.
     private static void AnswerRefusalsAsStatus(EndpointBuilder endpoint)
     {
         var run =
@@ -53,7 +54,7 @@ public static class GrpcEndpointRouteBuilderExtensions
             {
                 await run(httpContext);
             }
-            catch (BadHttpRequestException refusal) when (!httpContext.Response.HasStarted)
+            catch (KitBadRequestException refusal) when (!httpContext.Response.HasStarted)
             {
                 httpContext.Response.StatusCode = StatusCodes.Status200OK;
                 httpContext.Response.ContentType = "application/grpc";

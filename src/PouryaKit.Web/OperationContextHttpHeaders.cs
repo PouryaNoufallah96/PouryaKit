@@ -23,7 +23,9 @@ public static class OperationContextHttpHeaders
     private const string CorrelationId = "pouryakit-correlation-id";
     private const string CausationId = "pouryakit-causation-id";
 
-    private static readonly string[] Names = [ActorId, ActorKindName, Tenant, CorrelationId, CausationId];
+    // Every name the codec writes or reads, the optional tenant's included: a writer removes them all before it adds the
+    // pairs, so no earlier value survives beside a context without it.
+    internal static readonly string[] Names = [ActorId, ActorKindName, Tenant, CorrelationId, CausationId];
 
     internal static readonly string Rule = $"1 to {MaxValueLength} visible ASCII characters, with spaces only between them";
 

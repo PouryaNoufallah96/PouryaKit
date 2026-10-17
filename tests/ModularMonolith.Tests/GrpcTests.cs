@@ -7,6 +7,7 @@ using Catalog.Categories.Features.CreateCategory;
 using Catalog.Contracts.Products;
 using Catalog.Products.Errors;
 using Catalog.Products.Features.CreateProduct;
+using Catalog.Products.Features.GetProduct;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Authorization;
@@ -186,7 +187,7 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
 
     [Theory]
     [InlineData("--urls=http://localhost:5100", "http://127.0.0.1:5100", "http://localhost:5100")]
-    [InlineData("--http_ports=5101", "http://catalog.local:5101/", "http://*:5101")]
+    [InlineData("--http_ports=5101", "http://localhost:5101/", "http://*:5101")]
     [InlineData("--Kestrel:Endpoints:Grpc:Url=https://catalog.local:5102", "https://CATALOG.local:5102", "https://catalog.local:5102")]
     public async Task A_client_addressed_at_one_of_its_own_hosts_listening_urls_fails_the_start(string listening, string address, string own)
     {
@@ -201,6 +202,68 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
 
         Assert.Contains($"The gRPC client {Client} is addressed at {new Uri(address)}, one of this Host's own listening URLs ({own}).", refused.Message, StringComparison.Ordinal);
+    }
+
+    // Review F1: a peer on the port this Host also listens on every address for, as two containers on 8080, is another Host.
+    [Fact]
+    public async Task A_client_addressed_at_another_host_on_a_port_its_own_host_listens_on_starts()
+    {
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder => AddClient(builder.Services, new Uri("http://inventory.local:8080")),
+            "--http_ports=8080"
+        );
+
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    // Review F4: a declared service no MapPouryaKitGrpcServices mapped would answer every call Unimplemented.
+    [Fact]
+    public async Task A_declared_service_that_is_never_mapped_fails_the_start()
+    {
+        var builder = WebApplication.CreateBuilder(["--environment", "Development"]);
+        builder.WebHost.UseTestServer();
+        builder.Services.AddPouryaKitCqrs();
+        builder.Services.AddPouryaKitWeb();
+        builder.Services.AddPouryaKitGrpcService<ProductGrpcService>();
+        builder.AddPouryaKitCompositionChecks();
+        await using var host = builder.Build();
+
+        var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(
+            $"The gRPC services {typeof(ProductGrpcService).FullName} are declared but never mapped, so every call to them answers Unimplemented. Call app.MapPouryaKitGrpcServices() once the Host is built.",
+            refused.Message
+        );
+    }
+
+    // Review F2: a Kit header the call already carries never survives beside the context's own; here a tenant beside a
+    // context without one, which the peer would otherwise restore.
+    [Fact]
+    public async Task A_kit_header_the_call_already_carries_is_replaced_by_the_contexts_own()
+    {
+        var product = await CreateProductAsync();
+        var services = new ServiceCollection();
+        AddClient(services, new Uri("http://peer.local"))
+            .ConfigurePrimaryHttpMessageHandler(() => new Http2(Fixture.Host.GetTestServer().CreateHandler()))
+            .AddHttpMessageHandler(() => new AsTrustedPeer([]));
+        await using var provider = services.BuildServiceProvider();
+        var client = provider.GetRequiredService<ProductService.ProductServiceClient>();
+        var options = new CallOptions(
+            headers: new Metadata { { OperationContextHeaders.Tenant, "acme" } },
+            cancellationToken: TestContext.Current.CancellationToken
+        ).WithOperationContext(new OperationContext(Actor.Person("ada")));
+
+        var refused = await Assert.ThrowsAsync<RpcException>(async () =>
+            await client.GetProductAsync(new GetProductRequest { ProductId = product.ToString() }, options)
+        );
+
+        Assert.Equal(StatusCode.PermissionDenied, refused.StatusCode);
+        Assert.Equal([TenantErrors.Required.Code], Errors(refused).Select(error => error.GetProperty("code").GetString()));
     }
 
     [Fact]

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using PouryaKit.Cqrs;
 
 namespace PouryaKit.Grpc;
 
@@ -16,7 +18,10 @@ public static class GrpcServiceCollectionExtensions
         /// service is created for each call from the request's scope, where its Operation has begun, so it injects the
         /// <c>OperationContext</c> and passes it to its Module's Gateway, and answers with <c>ToGrpcResponse</c>. It also
         /// registers ASP.NET Core's gRPC services, with no endpoint for an unknown service, so a Module's HTTP endpoints
-        /// keep routing's 405 and 415. Declaring a service again changes nothing.
+        /// keep routing's 405 and 415. Declaring a service again changes nothing. With the Kit's checks
+        /// (<c>AddPouryaKitCompositionChecks</c>), the Host's start fails, naming the service, when no
+        /// <c>MapPouryaKitGrpcServices</c> mapped it: a startup check, since the application maps its routes after the
+        /// build.
         /// </summary>
         public IServiceCollection AddPouryaKitGrpcService<TService>()
             where TService : class
@@ -27,6 +32,8 @@ public static class GrpcServiceCollectionExtensions
             // would answer a Module's 405 and 415 as 404. An unknown service's call answers HTTP 404, which a gRPC client
             // reads as Unimplemented.
             services.AddGrpc(grpc => grpc.IgnoreUnknownServices = true);
+            services.TryAddSingleton<MappedGrpcServices>();
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupCheck, UnmappedGrpcServicesCheck>());
             if (!services.Any(descriptor => descriptor.ImplementationInstance is GrpcService { Type: var type } && type == typeof(TService)))
             {
                 services.AddSingleton(new GrpcService(typeof(TService), routes => routes.MapGrpcService<TService>()));

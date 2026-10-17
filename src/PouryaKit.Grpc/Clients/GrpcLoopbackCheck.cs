@@ -15,8 +15,9 @@ namespace PouryaKit.Grpc;
 /// application adds after <c>Build</c> (<c>app.Urls</c>). Those last exist only on the built application, so this is a
 /// startup check rather than a composition check; it runs before the server binds, so an address the server chooses
 /// only as it binds, such as port 0 or a <c>Listen</c> call in code, is not seen, and the Kit's skill states the rule
-/// for it. An address matches when its scheme and port are the listening URL's and its host is the same, both are
-/// loopback, or the URL listens on every address.
+/// for it. An address matches when its scheme and port are the listening URL's and its host is the same, or is loopback
+/// while the URL is loopback or listens on every address. Another host on the same port, such as a peer container on
+/// the 8080 every ASP.NET Core image listens on, is another Host.
 /// </summary>
 internal sealed class GrpcLoopbackCheck : IStartupCheck
 {
@@ -62,8 +63,7 @@ internal sealed class GrpcLoopbackCheck : IStartupCheck
             && address.Port == listening.Port
             && (
                 string.Equals(address.IdnHost, listening.Host.Trim('[', ']'), StringComparison.OrdinalIgnoreCase)
-                || IsEveryAddress(listening.Host)
-                || (IsLoopback(address.IdnHost) && IsLoopback(listening.Host))
+                || (IsLoopback(address.IdnHost) && (IsEveryAddress(listening.Host) || IsLoopback(listening.Host)))
             );
     }
 

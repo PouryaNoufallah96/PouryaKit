@@ -61,7 +61,7 @@ public static class ResultHttpExtensions
         TypedResults.Problem(
             new ProblemDetails
             {
-                Status = Status(errors.MaxBy(error => Array.IndexOf(KindsBySeverity, error.Kind))!.Kind),
+                Status = Status(Deciding(errors).Kind),
                 Extensions = { ["errors"] = errors.Select(ProblemError.Of).ToList() },
             }
         );
@@ -76,7 +76,12 @@ public static class ResultHttpExtensions
             _ => StatusCodes.Status500InternalServerError,
         };
 
-    private sealed record ProblemError(
+    // The Error whose kind decides a failure's status on every transport: the most severe, the first of its kind.
+    internal static Error Deciding(ImmutableArray<Error> errors) =>
+        errors.MaxBy(error => Array.IndexOf(KindsBySeverity, error.Kind))!;
+
+    // An Error as every transport lists it: an HTTP problem's errors entry and gRPC's errors trailer.
+    internal sealed record ProblemError(
         string Code,
         string Message,
         [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Target

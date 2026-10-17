@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Grpc`. Format and rules: [README](README.md).
 
-The service side builds on Web's own members (`BeginOperationPerRequest`, `OperationContextHttpHeaders.Pairs`, ticket #119), the `Result` to status mapping follows Web's `ResultHttpExtensions` (ADR 0008), and the loopback check is the Kit's own `IStartupCheck` shape, so they have no record here.
+The service side builds on Web's own members (`BeginOperationPerRequest`, `OperationContextHttpHeaders.Pairs`, ticket #119), the `Result` to status mapping reuses Web's `ResultHttpExtensions`, its deciding Error and its entry shape (ADR 0008), and the loopback check is the Kit's own `IStartupCheck` shape, so they have no record here.
 
 ## Package dependencies
 

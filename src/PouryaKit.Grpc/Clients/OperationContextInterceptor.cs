@@ -4,8 +4,8 @@ using PouryaKit.Web;
 
 namespace PouryaKit.Grpc;
 
-// Writes each call's Operation Context as the pairs of Web's one codec, replacing any header of the same name, and gives
-// a call without a deadline of its own the client's. It reads no incoming request.
+// Writes each call's Operation Context as the pairs of Web's one codec, in place of every Kit header the call had, and
+// gives a call without a deadline of its own the client's. It reads no incoming request.
 internal sealed class OperationContextInterceptor(TimeSpan deadline, TimeProvider time) : Interceptor
 {
     public override AsyncUnaryCall<TResponse> AsyncUnaryCall<TRequest, TResponse>(
@@ -46,9 +46,10 @@ internal sealed class OperationContextInterceptor(TimeSpan deadline, TimeProvide
                 : throw new InvalidOperationException(
                     $"The gRPC call {call.Method.FullName} has no Operation Context, and its client sends one with every call. Give it the calling Operation's context with WithOperationContext(context) on its CallOptions."
                 );
-        var pairs = OperationContextHttpHeaders.Pairs(operation);
-        Metadata headers = [.. given.Where(entry => !pairs.Any(pair => pair.Key == entry.Key))];
-        foreach (var (name, value) in pairs)
+        // Every Kit header goes first, as Web's outgoing handler does, so an earlier tenant never survives beside a context
+        // without one.
+        Metadata headers = [.. given.Where(entry => !OperationContextHttpHeaders.Names.Contains(entry.Key))];
+        foreach (var (name, value) in OperationContextHttpHeaders.Pairs(operation))
         {
             headers.Add(name, value);
         }

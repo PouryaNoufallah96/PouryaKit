@@ -51,6 +51,7 @@ internal sealed class ProductGrpcService(IGatewayProcessor<CatalogModule> catalo
 - `MapPouryaKitGrpcServices()` maps every declared service on one route group at the root, never inside a Module's prefixed or versioned group: a gRPC method's path is its Protobuf package, service and method. The group requires an authenticated caller and carries Web's `BeginOperationPerRequest()`, so the call's Operation begins before the service is created, from the request's scope, and the service injects the `OperationContext` and passes it to its Module's Gateway, as an HTTP endpoint does ([web.md](web.md)).
 - The Actor is the authenticated caller. A caller authenticated as a peer in `PouryaKitTrustedPeerOptions.Peers` continues its own Operation from the Kit headers in its call metadata; every other caller's Kit headers are ignored, as over HTTP.
 - A service of a Module that also maps HTTP endpoints answers beside them; nothing of the HTTP pipeline changes.
+- A Host that declares a service and never calls `MapPouryaKitGrpcServices()` fails when it starts, naming the service: a startup check, as for unmapped endpoints.
 
 ## Failures
 
@@ -91,13 +92,13 @@ var reply = await products.GetProductAsync(
 ```
 
 - `PouryaKitGrpcClientOptions`: `Address`, an absolute `http` or `https` address, and `Deadline`, positive, both required. The Host fails when it starts, naming the client, when either is missing or invalid.
-- The client's interceptor writes the Operation Context each call is given with `WithOperationContext(context)` as Web's Kit header pairs (`OperationContextHttpHeaders.Pairs`): the Actor, the tenant, the correlation, and the calling Operation's `OperationId` as the causation. A call without a context throws `InvalidOperationException` before it is sent. A typed client injects the `OperationContext` of its Operation and passes it.
+- The client's interceptor writes the Operation Context each call is given with `WithOperationContext(context)` as Web's Kit header pairs (`OperationContextHttpHeaders.Pairs`): the Actor, the tenant, the correlation, and the calling Operation's `OperationId` as the causation. Every Kit header the call's metadata already held is removed first, so a tenant given beside a context without one never reaches the peer. A call without a context throws `InvalidOperationException` before it is sent. A typed client injects the `OperationContext` of its Operation and passes it.
 - The options' `Deadline` applies to every call that sets no deadline of its own.
 - Nothing of an incoming request is copied, its bearer token least of all. A peer that must authenticate this Host gets the Host's own credentials, added on the builder `AddPouryaKitGrpcClient` returns; the receiving Host lists this Host's Actor claim in its trusted peers.
 
 ## The loopback rule
 
-A gRPC client never calls its own Host: a call between Modules of one Host goes through the Gateway, synchronously and inside the asking Operation ([modules.md](modules.md)). The Host's start fails, naming the client and the URL, when a client's address is one of the Host's configured listening URLs: `urls`, `http_ports` and `https_ports`, each `Kestrel:Endpoints:{name}:Url`, and the addresses the application adds after `Build` (`app.Urls`). An address matches on its scheme and port when its host is the same, both hosts are loopback (`localhost`, `127.0.0.1`, `[::1]`), or the URL listens on every address (`*`, `+`, `0.0.0.0`, `[::]`). This is a startup check because `app.Urls` exists only on the built application; it runs before the server binds, so an address chosen only at bind, port 0 or a `Listen` call in code, and another name for the same machine are not seen and stay this rule's.
+A gRPC client never calls its own Host: a call between Modules of one Host goes through the Gateway, synchronously and inside the asking Operation ([modules.md](modules.md)). The Host's start fails, naming the client and the URL, when a client's address is one of the Host's configured listening URLs: `urls`, `http_ports` and `https_ports`, each `Kestrel:Endpoints:{name}:Url`, and the addresses the application adds after `Build` (`app.Urls`). An address matches on its scheme and port when its host is the same, or is loopback (`localhost`, `127.0.0.1`, `[::1]`) while the URL is loopback or listens on every address (`*`, `+`, `0.0.0.0`, `[::]`). Another host on the same port, such as a peer container on the 8080 every ASP.NET Core image listens on, is another Host and starts. This is a startup check because `app.Urls` exists only on the built application; it runs before the server binds, so an address chosen only at bind, port 0 or a `Listen` call in code, and another name for the same machine are not seen and stay this rule's.
 
 ## Testing
 

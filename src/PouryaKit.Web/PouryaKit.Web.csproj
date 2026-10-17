@@ -6,6 +6,10 @@
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
   </ItemGroup>
   <ItemGroup>
+    <!-- gRPC reuses the codec's header names, the Errors' severity and entry shape, and the Kit's refusal type. -->
+    <InternalsVisibleTo Include="PouryaKit.Grpc" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\PouryaKit.Core\PouryaKit.Core.csproj" />
     <ProjectReference Include="..\PouryaKit.Cqrs\PouryaKit.Cqrs.csproj" />
   </ItemGroup>

@@ -65,14 +65,16 @@ the status of its most severe Error kind, in the order above: validation `Invali
 conflict `Aborted`, forbidden `PermissionDenied`, anything else `Internal`, with the deciding Error's message as the
 status's message. Every Error, in order, is in the binary trailer `pouryakit-errors-bin`, a JSON array in the Kit's
 representation (`UsePouryaKitJson`) whose entries are the problem response's `errors` entries: `code`, `message` and,
-when set, `target`. The service raises it as gRPC's `RpcException`, the transport's own way to answer a status, from
-`ToGrpcResponse` (`src/PouryaKit.Grpc/Services/ResultGrpcExtensions.cs`). A trusted peer's context headers the Kit
-refuses as unreadable, which answer a 400 problem response with the rule as `detail` over HTTP (#86 above), answer
+when set, `target`. The deciding Error and the entry are Web's own (`ResultHttpExtensions`), which `PouryaKit.Grpc`
+reuses, so the two transports cannot rank or list Errors apart. The service raises the status as gRPC's
+`RpcException`, the transport's own way to answer one, from `ToGrpcResponse`
+(`src/PouryaKit.Grpc/Services/ResultGrpcExtensions.cs`). A trusted peer's context headers the Kit refuses as
+unreadable, which answer a 400 problem response with the rule as `detail` over HTTP (#86 above), answer
 `InvalidArgument` with the rule as the status's message, before the service runs
 (`src/PouryaKit.Grpc/Services/GrpcEndpointRouteBuilderExtensions.cs`).
 
-Pinned by `GrpcTests.The_most_severe_error_kind_decides_the_status_as_it_decides_the_http_status`, red with forbidden
-ranked below not found and with only the first Error in the trailer;
-`GrpcTests.A_failed_result_answers_its_errors_kind_with_every_error_in_the_trailer`; and
-`GrpcTests.A_trusted_peers_unreadable_context_headers_answer_invalid_argument_with_the_rule`, red without the gRPC group's
-refusal convention.
+Pinned by `GrpcTests.The_most_severe_error_kind_decides_the_status_as_it_decides_the_http_status`, red with only the
+first Error in the trailer (and, before the review moved the ranking to Web's one, with forbidden ranked below not
+found in the package's copy); `GrpcTests.A_failed_result_answers_its_errors_kind_with_every_error_in_the_trailer`; and
+`GrpcTests.A_trusted_peers_unreadable_context_headers_answer_invalid_argument_with_the_rule`, red without the gRPC
+group's refusal convention.
