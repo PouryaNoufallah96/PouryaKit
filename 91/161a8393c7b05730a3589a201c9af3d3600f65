@@ -1,0 +1,89 @@
+src/PouryaKit.Storage/FileStorageServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_0efa37e65d324b 1-28
+tests/PouryaKit.Storage.Tests/AzureBlobStorageTests.cs
+  s_b9a8adfb056e1c::t_42698ceb6f16a0 1-202
+  s_b9a8adfb056e1c::t_7473da8900ffac 203
+src/PouryaKit.Storage.AzureBlob/AzureBlobFileStorage.cs
+  s_b9a8adfb056e1c::t_5edf4a1b3572e6 1-69
+src/PouryaKit.Storage.AzureBlob/PouryaKitAzureBlobStorageOptions.cs
+  s_b9a8adfb056e1c::t_3444d513548284 1-31
+tests/PouryaKit.Storage.Tests/AzuriteFixture.cs
+  s_b9a8adfb056e1c::t_1339e8adee49d9 1-53
+  s_b9a8adfb056e1c::t_960d625d47eb2d 54-56
+src/PouryaKit.Storage.AzureBlob/AzureBlobStorageServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_0604d615491ded 1-70
+docs/provenance/PouryaKit.Storage.AzureBlob.md
+  s_b9a8adfb056e1c::t_eeccc73e2c3025 1-35
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_af2ec0ec5787f1 45
+.agents/skills/pourya-kit/references/storage.md
+  s_b9a8adfb056e1c::t_d838d57ab9b0d1 3,14-16,38-64,99,104,117-118
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_147f97ade1cdf6 17
+.claude/agent-memory/kit-implementer/storage-and-s3-facts.md
+  s_b9a8adfb056e1c::t_e11ad91a4ccb27 3,36-44
+.claude/rules/kit-code.md
+  s_b9a8adfb056e1c::t_439631f538f63c 33
+Directory.Packages.props
+  s_b9a8adfb056e1c::t_c86ef7c390de1e 12-13,48,50
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_db2a3656f0c344 23
+README.md
+  s_b9a8adfb056e1c::t_d8649089b8da9b 26
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_1c198ebe8ab211 3,44,232,238,240,244,251-262,610
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_0c498987890fef 412-413,466-467,588-589,593-594,605-638,655-662,688,879-880,885-891,929
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_185dc01fb9d59a 318-319,423,436-437,442
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_4fdb6ffcbd34d9 290-291
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_d8befaa98cc2e1 360
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_3a388cfda78dee 279,282-283,886
+docs/provenance/PouryaKit.Storage.S3.md
+  s_b9a8adfb056e1c::t_c6ee64a5d7aa53 14
+docs/provenance/PouryaKit.Storage.md
+  s_b9a8adfb056e1c::t_1438dfbed25409 7
+scripts/packaging/consumers/PouryaKit.Storage.AzureBlob.cs
+  s_b9a8adfb056e1c::t_2d50c9317ff314 1-12
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_246876ef11649f 17
+src/PouryaKit.Storage.AzureBlob/PouryaKit.Storage.AzureBlob.csproj
+  s_b9a8adfb056e1c::t_18fd0d918ce230 1-14
+src/PouryaKit.Storage.S3/S3StorageServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_dd8041de62a79c 42
+src/PouryaKit.Storage/OneFileStorageCheck.cs
+  s_b9a8adfb056e1c::t_4dd47d68e01a2f 3,26
+src/PouryaKit.Storage/PouryaKit.Storage.csproj
+  s_b9a8adfb056e1c::t_00d9aaece36726 3
+src/PouryaKit.Storage/StorageErrors.cs
+  s_b9a8adfb056e1c::t_d21b26ce0a5363 12-13
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_fa1042b83e06c5 80-88,114-115,118-119
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_b9a8adfb056e1c::t_48c41dfc2e5230 27-29,31-32,91-95
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_b9a8adfb056e1c::t_b56ed0b6337071 22
+tests/PouryaKit.Storage.Tests/PouryaKit.Storage.Tests.csproj
+  s_b9a8adfb056e1c::t_9674d1c4a0e932 9,16
+tests/PouryaKit.Storage.Tests/S3StorageTests.cs
+  s_b9a8adfb056e1c::t_1525154109a41a 178
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "91161a8393c7b05730a3589a201c9af3d3600f65",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
