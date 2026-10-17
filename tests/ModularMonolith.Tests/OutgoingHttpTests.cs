@@ -73,17 +73,16 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
         Assert.Equal(3, Journal().Count);
     }
 
+    // The call is cancelled as the first attempt's 503 comes back, before the pipeline decides on a retry. Its attempts
+    // run inside the awaited call, so once the call has ended no later attempt can arrive, and no wait is needed.
     [Fact]
     public async Task Cancelling_the_call_stops_further_attempts()
     {
         RespondInTurn("GET", 503);
-        using var services = Clients(retryDelay: TimeSpan.FromSeconds(1));
         using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        cancellation.CancelAfter(TimeSpan.FromMilliseconds(300));
+        using var services = Clients(cancelOnFirstResponse: cancellation);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => SendAsync(services, HttpMethod.Get, cancellation.Token));
-        // Long enough for the three retries a call that ignored the cancellation would still make.
-        await Task.Delay(TimeSpan.FromSeconds(3.5), TestContext.Current.CancellationToken);
 
         Assert.Single(Journal());
     }
@@ -291,8 +290,8 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
     private static ServiceProvider Clients(
         HttpReplay replay = HttpReplay.SafeMethods,
         int maxRetryAttempts = 3,
-        TimeSpan? retryDelay = null,
-        HttpReplay? replacedBy = null
+        HttpReplay? replacedBy = null,
+        CancellationTokenSource? cancelOnFirstResponse = null
     )
     {
         var services = new ServiceCollection();
@@ -304,7 +303,7 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
                 .Configure(options =>
                 {
                     options.Retry.MaxRetryAttempts = maxRetryAttempts;
-                    options.Retry.Delay = retryDelay ?? TimeSpan.FromMilliseconds(10);
+                    options.Retry.Delay = TimeSpan.FromMilliseconds(10);
                     options.Retry.BackoffType = DelayBackoffType.Constant;
                     options.Retry.UseJitter = false;
                 });
@@ -319,7 +318,26 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
         }
 
         client.AddPouryaKitOperationContext();
+        if (cancelOnFirstResponse is not null)
+        {
+            client.AddHttpMessageHandler(() => new CancelOnFirstResponse(cancelOnFirstResponse));
+        }
+
         return services.BuildServiceProvider();
+    }
+
+    // Innermost, below the resilience handler: cancels the call once the first attempt's response has arrived.
+    private sealed class CancelOnFirstResponse(CancellationTokenSource cancellation) : DelegatingHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
+        {
+            var response = await base.SendAsync(request, cancellationToken);
+            await cancellation.CancelAsync();
+            return response;
+        }
     }
 
     private async Task<HttpResponseMessage> SendAsync(
