@@ -1,0 +1,31 @@
+docs/architecture/diagrams/execution-core.html
+  s_3675ccfac3f8b2::t_ff1a31a2367791 4985
+docs/architecture/diagrams/http-command.html
+  s_3675ccfac3f8b2::t_ff1a31a2367791 4985
+docs/architecture/diagrams/module-boundaries.html
+  s_3675ccfac3f8b2::t_ff1a31a2367791 4985
+docs/architecture/diagrams/http-command.sequence.json
+  s_3675ccfac3f8b2::t_26bffa796df6ab 77-78
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_26bffa796df6ab 374-375
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_26bffa796df6ab 2211
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_3675ccfac3f8b2::t_26bffa796df6ab 173-174
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1283f943dae680e0f4850c2747d980b07b8b1a0b",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
