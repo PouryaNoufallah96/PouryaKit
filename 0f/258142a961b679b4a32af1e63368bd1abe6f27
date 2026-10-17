@@ -1,0 +1,25 @@
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_ac340a669d33c0 2038,2069
+src/PouryaKit.Storage.S3/S3FileStorage.cs
+  s_3675ccfac3f8b2::t_234114cc087116 82
+src/PouryaKit.Storage/StorageErrors.cs
+  s_3675ccfac3f8b2::t_e8f404714509fa 15,17
+tests/PouryaKit.Storage.Tests/S3StorageTests.cs
+  s_3675ccfac3f8b2::t_ffde71a6617ecb 109-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0f258142a961b679b4a32af1e63368bd1abe6f27",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
