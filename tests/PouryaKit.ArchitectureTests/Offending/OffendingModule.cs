@@ -9,6 +9,7 @@ using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence;
+using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.EFCore;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
@@ -148,6 +149,38 @@ internal sealed class PublishingCommandHandler(IMessageBus bus) : CommandHandler
 internal sealed class OffendingDbContext(DbContextOptions options) : DbContext(options)
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.MapWolverineEnvelopeStorage("wolverine");
+}
+
+internal sealed record OffendQuery : Query<int>;
+
+// Reads Catalog's tenant-scoped tables, each time naming tenant = @Tenant, in shapes that still cross tenants: the
+// predicate inside a top-level OR, in one branch of a UNION, and for one table of a join but not the other.
+internal sealed class CrossTenantReadingQueryHandler(IReadConnectionFactory connections, OperationContext context)
+    : QueryHandler<OffendQuery, int>
+{
+    public override async Task<Result<int>> Handle(OffendQuery query, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var parameters = new { context.Tenant, Name = "Lamp" };
+        var either = await connection.QueryAsync<Guid>(
+            new CommandDefinition("select id from catalog.products where tenant = @Tenant or name = @Name", parameters, cancellationToken: cancellationToken)
+        );
+        var united = await connection.QueryAsync<Guid>(
+            new CommandDefinition(
+                "select id from catalog.products where tenant = @Tenant union select id from catalog.products where name = @Name",
+                parameters,
+                cancellationToken: cancellationToken
+            )
+        );
+        var joined = await connection.QueryAsync<Guid>(
+            new CommandDefinition(
+                "select p.id from catalog.products p join catalog.categories c on c.id = p.category_id where p.tenant = @Tenant and c.name = @Name",
+                parameters,
+                cancellationToken: cancellationToken
+            )
+        );
+        return either.Count() + united.Count() + joined.Count();
+    }
 }
 
 // Writes Catalog's aggregate tables around the tracked path, once named with its schema and once without.

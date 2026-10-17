@@ -66,7 +66,7 @@ internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId
 - Every EF Core query of an `ITenantScoped` entity returns only the rows of the tenant of the Operation running it, through a named query filter, `PouryaKitDbContext.TenantFilter` (`PouryaKit.Tenant`), beside `SoftDeleteFilter`. The repository's `FindAsync`, `ListAsync`, `AnyAsync` and `CountAsync` and a specific repository's projection all read through it, so another tenant's aggregate is not found.
 - The filter reads the tenant when each query runs, from the scope's Operation, never when the model is built or the DbContext created: the migration tool and the composition checks build a DbContext where no Operation began, and a DbContext made before its scope's Operation began reads that Operation's tenant. Where the Operation has no tenant, or none began, the filter reads no rows.
 - A read that must cross tenants sets the filter aside on purpose, in an EF Core query over the DbContext: `IgnoreQueryFilters([PouryaKitDbContext.TenantFilter])`. The repository's members never do. Only that filter is set aside: a removed row stays out unless the read names `SoftDeleteFilter` too.
-- Dapper runs exactly the SQL you write, so a plain SQL read of a tenant-scoped table states `tenant = @Tenant` itself, with the tenant from the injected `OperationContext`, as Catalog's `GetProduct` and `ListProducts` do ([dapper-reads.md](dapper-reads.md#reading)).
+- Dapper runs exactly the SQL you write, so a plain SQL read of a tenant-scoped table states `tenant = @Tenant` itself, with the tenant from the injected `OperationContext`, as Catalog's `GetProduct` and `ListProducts` do, in the one shape a structure test holds every such read to: the predicate a top-level conjunct of the `WHERE` of one `SELECT`, for each tenant-scoped table it reads ([dapper-reads.md](dapper-reads.md#reading)).
 
 ## Saves
 
@@ -91,7 +91,7 @@ internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId
 ## Limits
 
 - An anonymous caller has no tenant, so no endpoint of a tenant-scoped Module serves one: Catalog's `ListProducts` is authenticated, like every Catalog endpoint. A tenant comes only from a verified claim; a tenant taken from the host name or the route is not supported.
-- Ticket #118 adds the structure rule that holds every Dapper read of a tenant-scoped table to the tenant predicate; until then the predicate is the Feature's to write. A plain SQL write is the Feature's too: no save check sees it.
+- A plain SQL write is the Feature's too: no save check sees it.
 - A copy of another Module's data written before it kept the tenant cannot learn it later, since the Snapshot versions already applied stop a replay: Inventory's `CatalogProductTenants` migration refuses a table that holds such a copy rather than guess its tenant, and the Kit has no backfill.
 - Row-level security in PostgreSQL is not used (spec #115, owner decision T2), and the Receipt and Snapshot version keys hold no tenant (T1).
 
