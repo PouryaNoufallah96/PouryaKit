@@ -71,6 +71,8 @@ internal static class PackageGraph
             ["PouryaKit.Modularity", "PouryaKit.Persistence.Postgres", "PouryaKit.Messaging.Wolverine.EFCore"],
             ["Testcontainers.PostgreSql", "Respawn", "xunit.v3.extensibility.core", "Microsoft.Extensions.TimeProvider.Testing", "WolverineFx.RuntimeCompilation"]
         ),
+        ["PouryaKit.Storage"] = new(["PouryaKit.Domain"], []),
+        ["PouryaKit.Storage.S3"] = new(["PouryaKit.Storage"], ["AWSSDK.S3", "Microsoft.Extensions.Options"]),
     };
 
     // What must never arrive in a package's closure, by package id prefix or project name. Every package but Testing also
@@ -97,8 +99,9 @@ internal static class PackageGraph
         ["PouryaKit.Caching"] = ["StackExchange.Redis", "Microsoft.Extensions.Caching.StackExchangeRedis"],
     };
 
-    // Core and Domain, and Messaging (Domain only), bring no package at all; nor do the templates.
-    private static readonly HashSet<string> NoPackages = ["PouryaKit.Core", "PouryaKit.Domain", "PouryaKit.Messaging", "PouryaKit.Templates"];
+    // Core and Domain, and Messaging and Storage (Domain only), bring no package at all; nor do the templates. A storage
+    // provider's SDK stays in its own package.
+    private static readonly HashSet<string> NoPackages = ["PouryaKit.Core", "PouryaKit.Domain", "PouryaKit.Messaging", "PouryaKit.Storage", "PouryaKit.Templates"];
 
     public static IEnumerable<string> Violations(RestoredPackage package)
     {

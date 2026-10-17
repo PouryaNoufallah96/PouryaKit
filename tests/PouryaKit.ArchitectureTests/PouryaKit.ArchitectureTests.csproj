@@ -18,6 +18,7 @@
     <ProjectReference Include="..\..\samples\ModularMonolith\src\Inventory.Host\Inventory.Host.csproj" />
     <ProjectReference Include="..\..\samples\ModularMonolith\src\ModularMonolith.Host\ModularMonolith.Host.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Core\PouryaKit.Core.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.Storage.S3\PouryaKit.Storage.S3.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Testing\PouryaKit.Testing.csproj" />
     <ProjectReference Include="Offending\Offending.csproj" />
     <ProjectReference Include="Offending.Contracts\Offending.Contracts.csproj" />

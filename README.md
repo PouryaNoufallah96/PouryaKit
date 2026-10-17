@@ -22,6 +22,7 @@ Status: Wave 1 and Wave 2 are complete. The Wave 2 set is in the private feed si
 - [Project templates](.agents/skills/pourya-kit/references/templates.md) (`PouryaKit.Templates`)
 - [RabbitMQ between Hosts](.agents/skills/pourya-kit/references/rabbitmq.md) (`PouryaKit.Messaging.Wolverine.RabbitMq`)
 - [Multi-tenancy](.agents/skills/pourya-kit/references/multi-tenancy.md) (`PouryaKit.Domain`, `PouryaKit.Cqrs`, `PouryaKit.Persistence.EFCore`; Wave 3, in progress: tenant-scoped Modules, their EF Core filter and their tenant requirement)
+- [File storage](.agents/skills/pourya-kit/references/storage.md) (`PouryaKit.Storage`, `PouryaKit.Storage.S3`; Wave 3: the contract and its S3 provider)
 
 The skill's [Capability table](.agents/skills/pourya-kit/SKILL.md#capabilities) owns this list and says when to read each reference. It folds Paging and Request idempotency into the rows of the packages they span.
 

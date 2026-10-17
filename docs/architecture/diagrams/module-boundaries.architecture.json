@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "6dc024739acd123b5d339b199a726b1f670d0fcb",
+      "revision": "d2a2687322edfc0d6a5ccc7bed9d9fc477619457",
       "link_mode": "web"
     }
   },
@@ -357,7 +357,7 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 74,
+          "end_line": 76,
           "label": "the allowed references"
         },
         {
