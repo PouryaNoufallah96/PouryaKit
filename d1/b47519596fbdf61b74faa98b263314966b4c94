@@ -1,0 +1,70 @@
+src/PouryaKit.Aspire/AspireDistributedApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_0db344e74a2ee3 1-43
+samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs
+  s_b9a8adfb056e1c::t_bb5812a149aac2 1-42
+tests/PouryaKit.Aspire.Tests/AppHostTests.cs
+  s_b9a8adfb056e1c::t_c5d017a7fcc21f 1-86
+  s_b9a8adfb056e1c::t_b2fbcefc1f75a7 87-98
+docs/provenance/PouryaKit.Aspire.md
+  s_b9a8adfb056e1c::t_77ee14e6f7206d 1-24
+scripts/packaging/consumers/PouryaKit.Aspire.cs
+  s_b9a8adfb056e1c::t_6a0b36ba69ff34 1-10
+.agents/skills/pourya-kit/references/aspire.md
+  s_b9a8adfb056e1c::t_7face3a4536905 1-127
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_48a717f9acf40f 3,48
+.claude/rules/kit-code.md
+  s_b9a8adfb056e1c::t_42f332d72276a7 33
+Directory.Packages.props
+  s_b9a8adfb056e1c::t_0428ad8993d53a 8-11,19,21
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_5bb0fab7af910e 3,34,52
+README.md
+  s_b9a8adfb056e1c::t_97d4d27194b950 28
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_7e3b70e1417666 3,44,60-61,232-241,610
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_6f3f75c0c77596 412-413,466-467,664-697,917-918
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_f56d203c9e339a 318-319,423,436-437,442
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_5a194d5a07b0f8 290-291
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_f20d5df03f8aa1 360
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_61a6952ef3ddba 296-329,349-362,507-508
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_ab1238daecbccb 283,892
+samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj
+  s_b9a8adfb056e1c::t_9271ee277fa232 1-14
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_8b8314c0566e65 20
+src/PouryaKit.Aspire/PouryaKit.Aspire.csproj
+  s_b9a8adfb056e1c::t_aa1f41b86d5293 1-13
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_053f3c2cb7f3c0 83-88,143-147
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_b9a8adfb056e1c::t_20009e02633ffa 32-33,89-93
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_b9a8adfb056e1c::t_c44faa54e83fb9 20
+tests/PouryaKit.ArchitectureTests/SampleNamespaceTests.cs
+  s_b9a8adfb056e1c::t_c06b32367683f5 24-27
+tests/PouryaKit.Aspire.Tests/PouryaKit.Aspire.Tests.csproj
+  s_b9a8adfb056e1c::t_9071eb1ab5f5c7 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d1b47519596fbdf61b74faa98b263314966b4c94",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
