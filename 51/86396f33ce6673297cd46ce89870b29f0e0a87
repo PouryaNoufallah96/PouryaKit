@@ -1,0 +1,71 @@
+.agents/skills/pourya-kit/references/realtime.md
+  s_b9a8adfb056e1c::t_57c73e7e898865 50,73,95
+.claude/agent-memory/kit-implementer/realtime-and-sse-facts.md
+  s_b9a8adfb056e1c::t_903bb31952afd1 15-16
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_c2c58d6278080c 2265,2267,2275,2281
+docs/adr/0007-operation-context-set-by-the-scope-opener.md
+  s_b9a8adfb056e1c::t_f208d269755f9c 219-234
+docs/adr/0012-realtime-through-postgresql-notifications.md
+  s_b9a8adfb056e1c::t_3ad3c19b67f202 41-47,59-60,90
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_881968f8d0f736 153,295
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_b9a8adfb056e1c::t_995e9658627890 79-80
+docs/architecture/diagrams/delivery.sequence.json
+  s_b9a8adfb056e1c::t_8dd21319a73556 83-84,115-116,135-136,169-170
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_1a2015f88dd92e 10
+docs/architecture/diagrams/host-start.workflow.json
+  s_b9a8adfb056e1c::t_ba25e977293e86 132-133
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_41ccb3d5f2521f 15
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_c8c934768fed73 10
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_abd20310a8dc45 10,345-346
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_ae9704276fe651 10
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_afe06b4dfed652 10
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_cc5cfda226227f 1034-1035,1054-1056
+src/PouryaKit.Cqrs/Operations/OperationContext.cs
+  s_b9a8adfb056e1c::t_5f23fa4ed10077 1-2,71-78,107-114
+src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs
+  s_b9a8adfb056e1c::t_e81090c6a4f4c0 4,40-41,72-73
+src/PouryaKit.Messaging.Wolverine/Subscriptions/IntegrationEventPublisher.cs
+  s_b9a8adfb056e1c::t_899baa5af06fa3 27
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_60632d27c08550 86
+src/PouryaKit.Persistence/IUnitOfWorkConnection.cs
+  s_b9a8adfb056e1c::t_eab9e424469431 9-11
+src/PouryaKit.Realtime/IRealtimePublisher.cs
+  s_b9a8adfb056e1c::t_3adb09d623642e 20-23
+src/PouryaKit.Realtime/RealtimeEndpointRouteBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_e8345790e7089c 23-24
+src/PouryaKit.Realtime/RealtimePublisher.cs
+  s_b9a8adfb056e1c::t_16111931ee8f5f 12-14,33-40
+src/PouryaKit.Web/Endpoints/IEndpoint.cs
+  s_b9a8adfb056e1c::t_cf00f4bdc61fc3 7-10
+tests/ModularMonolith.Tests/RealtimeTests.cs
+  s_b9a8adfb056e1c::t_313e67e4568d69 16-18,21,28-29,43-45,48-49,78-79,87-111,223-226,234,237-240,245,247
+tests/ModularMonolith.Tests/Stub/StubRealtime.cs
+  s_b9a8adfb056e1c::t_f3fe3ac8f9286c 2,4,7,14-15,28-29,31-69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5186396f33ce6673297cd46ce89870b29f0e0a87",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
