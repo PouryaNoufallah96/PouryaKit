@@ -1,0 +1,27 @@
+src/PouryaKit.Storage.S3/OneFileStorageCheck.cs
+  s_3675ccfac3f8b2::t_e2aeb425df04a4 7-8
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_15d996c04a952a 10
+src/PouryaKit.Email.MailKit/OneEmailSenderCheck.cs
+  s_3675ccfac3f8b2::t_6fd7970dd05321 7
+src/PouryaKit.Storage.S3/S3StorageServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_541b1c9e625e45 19-21
+src/PouryaKit.Email.MailKit/MailKitServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_63fe969c297c1c 21-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7fa8f062ae4e504a773b7012756e0b10312b5051",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
