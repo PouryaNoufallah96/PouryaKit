@@ -1,0 +1,37 @@
+.agents/skills/pourya-kit/references/reverse-proxy.md
+  s_b9a8adfb056e1c::t_0fcd585954b903 53,59
+.claude/agent-memory/kit-implementer/observability-tracing-and-http-facts.md
+  s_b9a8adfb056e1c::t_4a9bc3aa255942 87
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_82ebe47bb669f2 40,284
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_8922bff72057ff 489,614
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_45445b4bc5107a 139-140
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_1a8ac2dc22d772 869
+src/PouryaKit.ReverseProxy/LivenessProbe.cs
+  s_b9a8adfb056e1c::t_5630c0b0f6221f 2,6-9,21-25
+src/PouryaKit.ReverseProxy/ReverseProxyHostApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_b8ed1c5d972fdf 24-29
+src/PouryaKit.Templates/content/shared/src/ModularMonolith.ReverseProxy/Program.cs
+  s_b9a8adfb056e1c::t_b31ae4e66afb30 5-6
+tests/ModularMonolith.Tests/ReverseProxyTests.cs
+  s_b9a8adfb056e1c::t_88cda766638458 11,57-80,144,155,195-196,203
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "97048a811d6aeb229e15e36e6a66a7d2b577ec90",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
