@@ -33,7 +33,7 @@ using PouryaKit.Domain;
 using PouryaKit.Messaging;
 using PouryaKit.Realtime;
 
-internal sealed class AnnounceNewProductNotificationHandler(IRealtimePublisher realtime)
+internal sealed class PushNewProductNotificationHandler(IRealtimePublisher realtime)
     : INotificationHandler<ProductCreatedDomainEvent>
 {
     public Task<Result> Handle(ProductCreatedDomainEvent domainEvent, CancellationToken cancellationToken) =>

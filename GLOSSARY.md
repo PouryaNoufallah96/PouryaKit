@@ -166,7 +166,7 @@ _Avoid_: Inbox row, processed flag, idempotency marker (a repeated request is re
 
 **Channel**:
 The name a Notification Handler pushes a realtime event on, and on which a browser client of the same tenant listens through a Module's SSE endpoint whose rule admits its Actor (ADR 0012). It is no Subscription and no queue: nothing is stored for it, and a client hears it only while connected.
-_Avoid_: Topic, group, room, stream
+_Avoid_: Topic, group, room
 
 ### Delivery of the Kit
 
