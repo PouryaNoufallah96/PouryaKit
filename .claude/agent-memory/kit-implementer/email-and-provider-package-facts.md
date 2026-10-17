@@ -17,5 +17,9 @@ metadata:
 - **Validate every enum option with `Enum.IsDefined`** (#124 review F1, Codex): the configuration binder reads a numeric string (`Security=99`) into an enum, and MailKit's `ComputeDefaultValues` treats an undefined `SecureSocketOptions` as plain `smtp://` without STARTTLS.
 - **A retry test must wait for the delivery's end, not for its effects** (#124 review F2): waiting for two mails also passed with a handler that failed every attempt. Wait for the subscription's committed Receipt (`stub.pouryakit_receipts` where `subscription` and `message_id`, the Domain Event's `Id`), then count; red with a handler that fails after every send.
 
+## MailKit's disconnect (#150, 2026-10-17; MailKit 4.18.1)
+
+- **`SmtpClient.DisconnectAsync(quit: true)` already swallows `OperationCanceledException`, `SmtpProtocolException`, `SmtpCommandException` and `IOException` around the QUIT**, and `SmtpStream.FlushAsync` turns a cancelled token into an OCE there (`ilspycmd -t MailKit.Net.Smtp.SmtpClient <MailKit.dll>`). A post-accept disconnect guard cannot be shown red through a real server; the session's disposition was no code change, a skill sentence and an acceptance row. Decompile a provider's call before designing a guard a review asks for: a guard with no possible red is speculative code under the owner's guidance.
+
 **Why:** each cost a build or a full run in #124.
 **How to apply:** for the next provider package (Storage, Localization, AI), any new container module, and any change to what a Stub Notification Handler needs. Related: [[templates-packaging-and-publication-facts]], [[dotnet-and-test-conventions]], [[docs-verification-tools]].
