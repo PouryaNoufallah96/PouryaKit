@@ -4,8 +4,9 @@ namespace PouryaKit.Cqrs;
 
 // A tenant-scoped Module, or a tenant-scoped application, that dispatches a command or query without the tenant
 // requirement: AddPouryaKitTenancy covers only the assemblies it was given, so an operation of one that AddPouryaKitCqrs
-// scanned beside them would run without a tenant. One problem for each such operation, naming the recorded Feature
-// assembly that makes it dispatchable.
+// scanned beside them would run without a tenant. Only the assemblies AddPouryaKitCqrs scanned for the scope count: one
+// that only another registration named, such as AddPouryaKitLocalization, makes nothing dispatchable. One problem for each
+// such operation, naming the scanned assembly that makes it dispatchable.
 internal sealed class TenantRequirementCheck : ICompositionCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
@@ -20,7 +21,7 @@ internal sealed class TenantRequirementCheck : ICompositionCheck
             .Where(composition.IsTenantScoped)
             .SelectMany(scope =>
                 composition
-                    .FeatureAssembliesOf(scope)
+                    .DispatchingAssembliesOf(scope)
                     .SelectMany(assembly =>
                         OperationTypes
                             .Dispatchable(ImplementingTypes.Of(typeof(object), assembly))

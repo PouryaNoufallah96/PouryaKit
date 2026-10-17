@@ -33,6 +33,7 @@ public static class CqrsServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(featureAssemblies);
 
             var assemblies = IModuleServices.FeatureAssembliesOf(services, featureAssemblies);
+            ComposedFeatures.In(services).AddDispatching(IModuleServices.ModuleOf(services), assemblies);
             AddDispatcher(services);
 
             // In declaration order, assembly by assembly, which is the order an operation's authorizers run in.

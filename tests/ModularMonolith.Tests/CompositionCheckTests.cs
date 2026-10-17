@@ -12,6 +12,7 @@ using ModularMonolith.Tests.Unowned;
 using ModularMonolith.Tests.Unversioned;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using PouryaKit.Localization;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
@@ -376,6 +377,23 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         );
     }
 
+    // Only what AddPouryaKitCqrs scanned is dispatched (ticket #150): an assembly another registration of the Module named,
+    // here Localization's, is recorded for the Module, but its command never runs, so it needs no tenant requirement.
+    [Fact]
+    public void A_tenant_scoped_module_whose_localization_names_an_assembly_cqrs_did_not_scan_builds()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
+        );
+        builder.AddPouryaKitModules(modules => modules.Add<LocalizedTenantScopedModule>());
+
+        using var host = builder.Build();
+
+        var composition = host.Services.GetRequiredService<HostComposition>();
+        Assert.True(composition.IsTenantScoped(typeof(LocalizedTenantScopedModule)));
+        Assert.Contains(typeof(UnownedCommand).Assembly, composition.FeatureAssembliesOf(typeof(LocalizedTenantScopedModule)));
+    }
+
     // A recurring command runs as a system Actor with no tenant (ticket #117); a delayed command, which runs with the
     // tenant of the Operation that scheduled it, is not refused beside it.
     [Fact]
@@ -563,6 +581,18 @@ public sealed class PartlyTenantScopedModule : IModuleDefinition
         module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         module.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly, typeof(UnownedCommand).Assembly);
         module.AddScoped<IAuthorizer<UnownedCommand>, AllowingUnownedCommandAuthorizer>();
+    }
+}
+
+// Tenant-scoped for the one assembly Cqrs scans, with Localization naming a second, whose command has a handler there.
+public sealed class LocalizedTenantScopedModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module)
+    {
+        module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
+        module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        module.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly);
+        module.AddPouryaKitLocalization(typeof(UnownedCommand).Assembly);
     }
 }
 

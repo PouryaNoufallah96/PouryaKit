@@ -127,7 +127,7 @@
         {
           "path": "src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs",
           "line": 30,
-          "end_line": 42,
+          "end_line": 43,
           "label": "finds handlers with ImplementingTypes"
         }
       ]
