@@ -1,0 +1,29 @@
+.claude/agent-memory/kit-implementer/realtime-and-sse-facts.md
+  s_b9a8adfb056e1c::t_aee14fe033ac7f 1-19
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_6cb1c775debf64 1-3,19
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_b9a8adfb056e1c::t_355b9b5e0a336d 115-119
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_b9a8adfb056e1c::t_95ec102d09fefe 129-132
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_b9a8adfb056e1c::t_5f77efe6a85242 89-92
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_5db87f8045b537 2226-2245
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f5842a403416d65c5e6ec377f1b710052b6013a8",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
