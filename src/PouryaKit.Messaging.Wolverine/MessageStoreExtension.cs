@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Options;
 using Wolverine;
 
-namespace PouryaKit.Messaging.Wolverine.EFCore;
+namespace PouryaKit.Messaging.Wolverine;
 
 // Applied when Wolverine's options are first resolved, so a Host or a test can still change the settings after
 // UsePouryaKitWolverine.

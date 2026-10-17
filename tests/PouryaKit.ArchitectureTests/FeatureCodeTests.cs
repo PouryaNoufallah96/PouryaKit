@@ -51,6 +51,7 @@ public sealed class FeatureCodeTests
                 "Offending.KitStepCallingCommandHandler calls IUnitOfWorkOutbox.WriteAsync.",
                 "Offending.KitStepCallingCommandHandler calls Operation.OnlyReading.",
                 "Offending.KitStepCallingCommandHandler calls OperationContextServiceProviderExtensions.BeginOperation.",
+                "Offending.KitStepCallingCommandHandler calls OutboxWriter.WriteAsync.",
                 "Offending.KitStepCallingCommandHandler calls TrackedState.Capture.",
                 "Offending.KitStepCallingCommandHandler calls TrackedState.ThrowIfChanged.",
                 "Offending.SavingCommandHandler calls DbContext.SaveChangesAsync.",

@@ -1,6 +1,6 @@
 using Wolverine;
 
-namespace PouryaKit.Messaging.Wolverine.EFCore;
+namespace PouryaKit.Messaging.Wolverine;
 
 /// <summary>The message store settings of one Host; change them with <c>services.Configure</c>.</summary>
 public sealed class PouryaKitMessageStoreOptions

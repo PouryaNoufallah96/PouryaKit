@@ -134,6 +134,8 @@ these results. These points are inferred from source, not observed:
    - **Carry tracestate.** Seam: `src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs`, `WriteAsync`, beside
      `WithOperationContext`. It writes `Activity.Current?.TraceStateString` into a Kit header, because the stored envelope
      has none. The header name follows the Kit's header naming (`OperationContextHeaders`) and is #47's to choose.
+     *Moved 2026-10-18 (#121, ADR 0011): the write is `OutboxWriter.WriteAsync`, in
+     `src/PouryaKit.Messaging.Wolverine/OutboxWriter.cs`, which the EF Outbox calls; nothing else changed.*
    - **Parent fallback and tracestate restore.** Seam: `src/PouryaKit.Messaging.Wolverine/SubscriptionDelivery.cs`,
      `HandleAsync`, the only place that holds the `Envelope`. It parses `envelope.ParentId` and the Kit's tracestate
      header into an `ActivityContext`, and the delivery's Operation activity starts with it as its parent when no

@@ -4,8 +4,8 @@ namespace PouryaKit.Messaging.Wolverine;
 
 /// <summary>
 /// Where the commands an Operation schedules wait for its Unit of Work: they are written to the Outbox in its commit,
-/// or dropped with it. A persistence package registers it, scoped, with the Outbox that writes them; a Host without one
-/// cannot schedule commands. Feature code schedules through <see cref="IDelayedCommands"/> and never calls it.
+/// or dropped with it. <c>UsePouryaKitMessageStore</c> registers it, scoped, for the store package whose Outbox writes
+/// them; a Host without one cannot schedule commands. Feature code schedules through <see cref="IDelayedCommands"/> and never calls it.
 /// </summary>
 public interface IDelayedCommandOutbox
 {

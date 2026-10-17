@@ -113,7 +113,7 @@
       "id": "wolverine",
       "type": "messagebus",
       "label": "PouryaKit.Messaging.Wolverine",
-      "sublabel": "declarations, a local queue per subscription, delivery, retries, dead letters",
+      "sublabel": "declarations, a queue per subscription, delivery, retries, the Outbox write",
       "pos": [
         420,
         200
@@ -135,10 +135,10 @@
           "label": "each delivery an Operation, own scope"
         },
         {
-          "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/NotificationHandlerServiceCollectionExtensions.cs",
-          "line": 50,
-          "end_line": 59,
-          "label": "finds handlers with ImplementingTypes"
+          "path": "src/PouryaKit.Messaging.Wolverine/OutboxWriter.cs",
+          "line": 49,
+          "end_line": 136,
+          "label": "the store-neutral Outbox write"
         }
       ]
     },
@@ -168,7 +168,7 @@
       "id": "wolverineef",
       "type": "messagebus",
       "label": "PouryaKit.Messaging.Wolverine.EFCore",
-      "sublabel": "Outbox in the commit, message store, Receipts",
+      "sublabel": "EF Outbox, PostgreSQL message store, Receipts",
       "pos": [
         440,
         370
@@ -186,15 +186,15 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
-          "line": 16,
-          "end_line": 30,
-          "label": "the Unit of Work's Outbox"
+          "line": 10,
+          "end_line": 22,
+          "label": "the EF Outbox, written through OutboxWriter"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs",
           "line": 20,
-          "end_line": 36,
-          "label": "commit, send after, Receipts, store"
+          "end_line": 40,
+          "label": "PostgreSQL store, keyed EF Receipts"
         }
       ]
     },
@@ -432,7 +432,8 @@
       "items": [
         "A Module's Unit of Work writes its Notifications, Integration Events, Snapshots and delayed commands to the Outbox in the same commit as its change; they are sent only after the commit.",
         "Each delivery runs as an Operation of the subscribing Module, in a scope of its own, and records a Receipt in that Module's Unit of Work, so a redelivery applies its effect once.",
-        "PouryaKit.Messaging.Wolverine keeps no database: the message store, the Outbox, Receipts and Snapshot versions are PouryaKit.Messaging.Wolverine.EFCore's."
+        "PouryaKit.Messaging.Wolverine keeps no database: it holds the store-neutral half of the message store and the Outbox write, the routes, Operation Context headers and publication records; PouryaKit.Messaging.Wolverine.EFCore persists the store, enrolls the write in the EF Unit of Work and keeps Receipts and Snapshot versions.",
+        "In a Host of Modules each Module keeps its Receipts and idempotency keys in its own write model's store: the packages key them by the Module, and one resolver routes by the Operation's Module."
       ]
     },
     {
