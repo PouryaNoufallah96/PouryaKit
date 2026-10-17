@@ -14,8 +14,6 @@ namespace PouryaKit.Email.MailKit;
 // Its options were validated when the Host started, so Host and From are set.
 internal sealed class MailKitEmailSender(PouryaKitMailKitOptions options) : IEmailSender
 {
-    private readonly MailboxAddress _from = MailboxAddress.Parse(options.From!);
-
     public async Task<Result> SendAsync(EmailMessage message, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -24,7 +22,8 @@ internal sealed class MailKitEmailSender(PouryaKitMailKitOptions options) : IEma
             return EmailErrors.InvalidAddress;
         }
 
-        using var mail = new MimeMessage([_from], [to], message.Subject, new TextPart(TextFormat.Plain) { Text = message.Body });
+        // A From per mail: MimeKit chains a mail to its addresses' events, so a shared one would keep every mail alive.
+        using var mail = new MimeMessage([MailboxAddress.Parse(options.From!)], [to], message.Subject, new TextPart(TextFormat.Plain) { Text = message.Body });
         using var client = new SmtpClient();
         await client.ConnectAsync(options.Host!, options.Port, options.Security, cancellationToken);
         if (options is { UserName: { Length: > 0 } userName, Password: { } password })
