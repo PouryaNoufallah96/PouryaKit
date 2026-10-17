@@ -1,0 +1,138 @@
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 59-60,65-66,189-190,202,286-287,314
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_f75a89d099c489 360
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 31-32,105-106,202,264-265
+.agents/skills/pourya-kit/references/grpc.md
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-108
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 284,871
+tests/ModularMonolith.Tests/GrpcTests.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-448
+src/PouryaKit.Templates/PouryaKit.Templates.csproj
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 24
+tests/PouryaKit.ArchitectureTests/SharedJsonTests.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 10-12,25,46
+src/PouryaKit.Grpc/PouryaKit.Grpc.csproj
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-14
+src/PouryaKit.Grpc/Clients/GrpcLoopbackCheck.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-85
+docs/provenance/ModularMonolith.md
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 21
+README.md
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 29
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 11
+src/PouryaKit.Grpc/Clients/PouryaKitGrpcClientOptions.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-14
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 143-147
+src/PouryaKit.Web/PouryaKit.Web.csproj
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 9-11
+  s_b9a8adfb056e1c::t_b7e7257c713d76 8
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_923aeb41762185 2259
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 2260-2284
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 9,25-27
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_f75a89d099c489 290-291
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/AppHost.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 5,93-94
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 90,145
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/CatalogModule.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 10,13,51-52
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_923aeb41762185 3
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 44,52,54,550-565
+  s_b9a8adfb056e1c::t_975e0d01d8d2e6 566
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 9
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 84-85,112-113
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 9,24-26
+src/PouryaKit.Grpc/Services/ResultGrpcExtensions.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-79
+src/PouryaKit.Grpc/Clients/GrpcClientServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-71
+samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 5-13
+scripts/packaging/consumers/PouryaKit.Grpc.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-50
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_b4a6b1ffba9461 48,55
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 28,42
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 8,129-130
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 37-38,51-52
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/GetProduct/ProductGrpcService.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-25
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 12,19
+src/PouryaKit.Grpc/Clients/OperationContextInterceptor.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-60
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_99e549d6485d5b 3
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 41
+src/PouryaKit.Templates/content/modular/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 7
+src/PouryaKit.Web/ProblemResponses/ResultHttpExtensions.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 64,79-84
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_f75a89d099c489 412-413,466-467,681
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 664-680,682-696,700-707,924-925
+docs/adr/0008-one-problem-response-for-every-http-failure.md
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 59-80
+samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 13,46-47
+src/PouryaKit.Grpc/Clients/OperationContextCallOptions.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-30
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 93-94,121-122,127-128,235-236,297,324-325,352-353
+  s_b9a8adfb056e1c::t_f75a89d099c489 330-331,435,448-449,454
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/Products/Features/GetProduct/ProductGrpcService.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-23
+docs/provenance/PouryaKit.Grpc.md
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-31
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 8
+.claude/agent-memory/kit-implementer/grpc-facts.md
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-21
+src/PouryaKit.Grpc/Services/GrpcEndpointRouteBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-66
+src/PouryaKit.Templates/content/monolith/.template.config/template.json
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 70
+src/PouryaKit.Web/OperationContextHttpHeaders.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 26-28
+src/PouryaKit.Grpc/Services/GrpcServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-48
+src/PouryaKit.Grpc/Services/UnmappedGrpcServicesCheck.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-30
+src/PouryaKit.Templates/content/shared/src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-11
+samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/products.proto
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 1-22
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/AppHost.cs
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 7,98-99
+Directory.Packages.props
+  s_b9a8adfb056e1c::t_3172a4a2bc1b15 15-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1b33e076d24fe140dec2fdc64757da0ebd6e0b06",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
