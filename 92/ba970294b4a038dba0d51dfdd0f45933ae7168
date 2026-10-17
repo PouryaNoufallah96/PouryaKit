@@ -1,0 +1,35 @@
+tests/ModularMonolith.Tests/TenantOwnershipTests.cs
+  s_3675ccfac3f8b2::t_521f88839b580b 203
+  s_3675ccfac3f8b2::t_ab5dc81c0e6bb7 17-18,187-202,204-206
+  s_3675ccfac3f8b2::t_446b2b0596c8da 207-208
+tests/ModularMonolith.Tests/Stub/TenantBinders.cs
+  s_3675ccfac3f8b2::t_ab5dc81c0e6bb7 306-308
+  s_3675ccfac3f8b2::t_cd1568cfabd285 250,259-262,292-305,309-311,318,327-330
+src/PouryaKit.Persistence.EFCore/PouryaKitModelConvention.cs
+  s_3675ccfac3f8b2::t_0e7636480fad6b 3,33-37,66-68,103,108-118,120-125,127-134
+  s_3675ccfac3f8b2::t_2dfc4d6cbe8348 7,104,126
+  s_3675ccfac3f8b2::t_70e4141b05f839 17-18
+  s_3675ccfac3f8b2::t_2f24219c39d170 65
+  s_3675ccfac3f8b2::t_b5681d9080bc1c 119,136-137
+  s_3675ccfac3f8b2::t_9da65f88608a03 105-107,135
+  s_3675ccfac3f8b2::t_8e06096aece0d7 138
+src/PouryaKit.Persistence.EFCore/PouryaKitDbContext.cs
+  s_3675ccfac3f8b2::t_70e4141b05f839 20-21,33
+  s_3675ccfac3f8b2::t_9da65f88608a03 34-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "92ba970294b4a038dba0d51dfdd0f45933ae7168",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
