@@ -153,33 +153,36 @@ internal sealed class OffendingDbContext(DbContextOptions options) : DbContext(o
 
 internal sealed record OffendQuery : Query<int>;
 
-// Reads Catalog's tenant-scoped tables, each time naming tenant = @Tenant, in shapes that still cross tenants: the
-// predicate inside a top-level OR, in one branch of a UNION, and for one table of a join but not the other.
+// Reads Catalog's tenant-scoped tables in shapes that still cross tenants: the lease's tenant inside a top-level OR, in one
+// branch of a UNION, and for one table of a join but not the other; and with a tenant the handler binds itself.
 internal sealed class CrossTenantReadingQueryHandler(IReadConnectionFactory connections, OperationContext context)
     : QueryHandler<OffendQuery, int>
 {
     public override async Task<Result<int>> Handle(OffendQuery query, CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        var parameters = new { context.Tenant, Name = "Lamp" };
+        var parameters = new { Name = "Lamp" };
         var either = await connection.QueryAsync<Guid>(
-            new CommandDefinition("select id from catalog.products where tenant = @Tenant or name = @Name", parameters, cancellationToken: cancellationToken)
+            new CommandDefinition("select id from catalog.products where tenant = current_setting('pouryakit.tenant') or name = @Name", parameters, cancellationToken: cancellationToken)
         );
         var united = await connection.QueryAsync<Guid>(
             new CommandDefinition(
-                "select id from catalog.products where tenant = @Tenant union select id from catalog.products where name = @Name",
+                "select id from catalog.products where tenant = current_setting('pouryakit.tenant') union select id from catalog.products where name = @Name",
                 parameters,
                 cancellationToken: cancellationToken
             )
         );
         var joined = await connection.QueryAsync<Guid>(
             new CommandDefinition(
-                "select p.id from catalog.products p join catalog.categories c on c.id = p.category_id where p.tenant = @Tenant and c.name = @Name",
+                "select p.id from catalog.products p join catalog.categories c on c.id = p.category_id where p.tenant = current_setting('pouryakit.tenant') and c.name = @Name",
                 parameters,
                 cancellationToken: cancellationToken
             )
         );
-        return either.Count() + united.Count() + joined.Count();
+        var bound = await connection.QueryAsync<Guid>(
+            new CommandDefinition("select id from catalog.products where tenant = @Tenant", new { context.Tenant }, cancellationToken: cancellationToken)
+        );
+        return either.Count() + united.Count() + joined.Count() + bound.Count();
     }
 }
 

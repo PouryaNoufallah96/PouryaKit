@@ -282,7 +282,7 @@
         {
           "path": "src/PouryaKit.Persistence.Dapper/IReadConnectionFactory.cs",
           "line": 5,
-          "end_line": 14,
+          "end_line": 20,
           "label": "reads on the Host's pool"
         },
         {
@@ -316,7 +316,7 @@
         {
           "path": "src/PouryaKit.Persistence.Dapper/IReadConnectionFactory.cs",
           "line": 5,
-          "end_line": 11,
+          "end_line": 16,
           "label": "read connections"
         }
       ]

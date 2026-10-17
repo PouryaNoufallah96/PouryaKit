@@ -139,3 +139,11 @@ Check the merged code before relying on a design note. Each section names its ti
 - **Cheapest cancellation shape:** `HoldChangeCommand` with an unreleased `Hold`, run with a linked `CancellationTokenSource`'s token; wait for `Changed`, cancel, and the handler's `Released.Task.WaitAsync(ct)` throws, so the Unit of Work rolls back. Assert `ThrowsAnyAsync<OperationCanceledException>`.
 - **Red runs of held tests poison the class:** under the own-connection mutation the "second waits" test times out and never releases its held Operation, whose open transaction then blocks later tests (a 30 s Npgsql read timeout, not the intended assertion). Show a held test red alone with `--filter-method <fully qualified method>`.
 - Own-connection mutation that compiles: `((NpgsqlConnection)connection).CloneWith(connectionString)`, `OpenAsync`, then `new NpgsqlBatch(own)`.
+
+## The Dapper lease binds the tenant (#155, 2026-10-17; Npgsql 10.0.3)
+
+- **A singleton cannot see the scope's Operation**, so `IReadConnectionFactory` became scoped over a keyed singleton `NpgsqlDataSource` (key `typeof(ReadConnectionFactory)`, so the Host still disposes the pool and no unkeyed `NpgsqlDataSource` clashes with another package's). Development's `ValidateScopes` then refuses every root resolution: `DapperTests`, `PagingTests` and `ReadProbe` (now `AddScoped`, no disposal forwarding) moved to a scope. Never make the scoped factory disposable: the pool would die at the first scope's end.
+- **`current_setting('pouryakit.tenant')` on a physical connection that never set it throws 42704**; after Npgsql's `DISCARD ALL` it reads `''`. So a red run with `set_config` removed fails by exception or by empty rows, depending on pool reuse; the lease must set it on every open, tenant or not.
+- Red runs used: the rule over Catalog's unchanged `@Tenant` literals (three violations), `set_config` removed (Stub `ReadBindersQuery` test, 42704), Catalog's `p.tenant` conjunct removed (two `TenancyTests` red).
+
+**Why:** the lease shape and the error mode decide whether a missing binding fails closed. **How to apply:** any later read seam (gRPC, a projection reader) that must see the Operation is scoped the same way. Related: [[core-json-and-architecture-test-facts]].

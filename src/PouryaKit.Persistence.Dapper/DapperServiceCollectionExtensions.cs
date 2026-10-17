@@ -3,6 +3,7 @@ using Dapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Npgsql;
 using PouryaKit.Core;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
@@ -22,9 +23,10 @@ public static class DapperServiceCollectionExtensions
         /// configuration, and makes every typed ID in <paramref name="typedIdAssemblies"/> usable as a Dapper parameter
         /// and result. Call it from each Module's Composition Root that reads with Dapper: named with no assembly on a
         /// Module's builder (<see cref="IModuleServices"/>), it takes the typed IDs of the assembly of the Module's
-        /// definition; named assemblies replace it. The Host holds one <see cref="IReadConnectionFactory"/> and one
-        /// connection pool, shared by every Module that names the same connection, ignoring case as configuration keys
-        /// do; naming a different connection in the same Host throws here. With the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>), a connection
+        /// definition; named assemblies replace it. The Host holds one connection pool, shared by every Module that names
+        /// the same connection, ignoring case as configuration keys do, and each scope its own
+        /// <see cref="IReadConnectionFactory"/>, which binds the scope's Operation's tenant to every lease; naming a
+        /// different connection in the same Host throws here. With the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>), a connection
         /// string the Host's configuration does not set, or sets blank, fails the Host's build, before any read.
         /// </summary>
         public IServiceCollection AddPouryaKitDapper(string connectionName, params Assembly[] typedIdAssemblies)
@@ -50,11 +52,18 @@ public static class DapperServiceCollectionExtensions
 
             services.AddSingleton(new ReadConnection(connectionName));
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ReadConnectionCheck>());
-            services.AddSingleton<IReadConnectionFactory>(provider => new ReadConnectionFactory(
-                provider.GetRequiredService<IConfiguration>().GetConnectionString(connectionName)
-                    ?? throw new InvalidOperationException(
-                        $"Dapper reads need the connection string '{connectionName}' in the Host's ConnectionStrings configuration."
-                    )
+            services.AddKeyedSingleton(
+                typeof(ReadConnectionFactory),
+                (provider, _) => NpgsqlDataSource.Create(
+                    provider.GetRequiredService<IConfiguration>().GetConnectionString(connectionName)
+                        ?? throw new InvalidOperationException(
+                            $"Dapper reads need the connection string '{connectionName}' in the Host's ConnectionStrings configuration."
+                        )
+                )
+            );
+            services.AddScoped<IReadConnectionFactory>(provider => new ReadConnectionFactory(
+                provider.GetRequiredKeyedService<NpgsqlDataSource>(typeof(ReadConnectionFactory)),
+                provider.GetService<Operation>()
             ));
             return services;
         }

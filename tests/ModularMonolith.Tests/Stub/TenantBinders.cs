@@ -3,12 +3,14 @@ using Catalog.Categories.ValueObjects;
 using Catalog.Infrastructure.Data.Context;
 using Catalog.Products.Entities;
 using Catalog.Products.ValueObjects;
+using Dapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
 using PouryaKit.Persistence;
+using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.EFCore;
 
 namespace ModularMonolith.Tests.Stub;
@@ -306,6 +308,26 @@ internal sealed class ReadSheetsQueryHandler(StubDbContext dbContext) : QueryHan
         return Result.Success<IReadOnlyList<string>>(
             await sheets.OrderBy(sheet => sheet.Text).Select(sheet => sheet.Text).ToListAsync(cancellationToken)
         );
+    }
+}
+
+// Reads with Dapper which of the binders named the lease's tenant holds, by the session setting the lease bound, never
+// by a tenant the handler passes.
+internal sealed record ReadBindersQuery(Guid[] BinderIds) : Query<IReadOnlyList<Guid>>;
+
+internal sealed class ReadBindersQueryHandler(IReadConnectionFactory connections) : QueryHandler<ReadBindersQuery, IReadOnlyList<Guid>>
+{
+    public override async Task<Result<IReadOnlyList<Guid>>> Handle(ReadBindersQuery query, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var binders = await connection.QueryAsync<Guid>(
+            new CommandDefinition(
+                "select id from stub.binders where tenant = current_setting('pouryakit.tenant') and id = any(@Ids)",
+                new { Ids = query.BinderIds },
+                cancellationToken: cancellationToken
+            )
+        );
+        return Result.Success<IReadOnlyList<Guid>>([.. binders]);
     }
 }
 

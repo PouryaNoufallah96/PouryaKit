@@ -15,7 +15,8 @@ namespace ModularMonolith.Tests;
 // tenant the Operation changed, and nothing is saved. The binders are the Stub's; the products are Catalog's, saved in a
 // tenant-scoped Module. A tenant-scoped aggregate, or a part of one, attached rather than loaded is refused before the
 // save, and a loaded part's write matches its row only under the holder it was loaded with (ticket #152). A part queried
-// through its own set is read only where its holder is (ticket #153).
+// through its own set is read only where its holder is (ticket #153). A Dapper read compares the tenant its lease bound
+// (ticket #155).
 public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     private readonly Guid _north = Guid.CreateVersion7();
@@ -204,6 +205,24 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
         Assert.Equal([$"south {_south}"], southById.Value);
         Assert.Equal([$"south {_south}"], southList.Value);
         Assert.Equal([$"south {_south}"], crossing.Value);
+    }
+
+    // Each Operation's lease binds its tenant: north's reads none of south's binders, south's, leased after north's from the
+    // same pool, reads south's, and an Operation with no tenant reads none.
+    [Fact]
+    public async Task A_dapper_read_against_the_leases_tenant_reads_only_the_operations_tenants_rows()
+    {
+        await CreateBindersAsync();
+        var stub = Fixture.Gateway<StubModule>();
+        var named = new ReadBindersQuery([_north, _otherNorth, _south]);
+
+        var north = await stub.QueryAsync(named, For("north"), TestContext.Current.CancellationToken);
+        var south = await stub.QueryAsync(named, For("south"), TestContext.Current.CancellationToken);
+        var tenantless = await stub.QueryAsync(named, new OperationContext(GatewayTestExtensions.TestActor), TestContext.Current.CancellationToken);
+
+        Assert.Equal(new[] { _north, _otherNorth }.Order(), north.Value.Order());
+        Assert.Equal([_south], south.Value);
+        Assert.Empty(tenantless.Value);
     }
 
     private static OperationContext For(string tenant) => new(GatewayTestExtensions.TestActor, tenant);

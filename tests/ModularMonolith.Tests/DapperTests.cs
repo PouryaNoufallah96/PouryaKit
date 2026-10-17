@@ -28,7 +28,8 @@ internal sealed record TypedIdRow(GuidKey GuidKey, LongKey LongKey, IntKey IntKe
 
 public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
 {
-    private IReadConnectionFactory Connections => Fixture.Host.Services.GetRequiredService<IReadConnectionFactory>();
+    // A factory is the scope's, and leases bind the scope's Operation's tenant; these leases read no tenant-scoped table.
+    private IReadConnectionFactory Connections => Fixture.Host.Services.CreateScope().ServiceProvider.GetRequiredService<IReadConnectionFactory>();
 
     [Fact]
     public async Task Get_and_list_read_what_commands_committed_and_a_missing_product_is_not_found()
@@ -82,7 +83,7 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task Disposing_a_host_disposes_its_read_connection_pool()
     {
         var host = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
-        var connections = host.Services.GetRequiredService<IReadConnectionFactory>();
+        var connections = host.Services.CreateScope().ServiceProvider.GetRequiredService<IReadConnectionFactory>();
         await using (await connections.OpenAsync(TestContext.Current.CancellationToken)) { }
 
         await host.DisposeAsync();

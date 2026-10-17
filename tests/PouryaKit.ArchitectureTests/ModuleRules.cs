@@ -433,7 +433,8 @@ internal static partial class ModuleRules
     /// <c>[schema.]table [[AS] alias]</c> with nothing after it; no <c>SELECT</c>, <c>TABLE</c> or set operator appears
     /// anywhere else; a condition or a conjunct has no <c>OR</c> or <c>CASE</c> outside parentheses (a <c>BETWEEN</c> takes
     /// the <c>AND</c> after it); each item of an <c>ITenantScoped</c> table has a conjunct that is exactly
-    /// <c>alias.tenant = @Tenant</c>, or, for an item with no alias, qualified by its table with or without its schema, or
+    /// <c>alias.tenant = current_setting('pouryakit.tenant')</c>, the setting the Dapper lease binds to the Operation's
+    /// tenant (a parameter such as <c>@Tenant</c> or any other right-hand side is rejected), or, for an item with no alias, qualified by its table with or without its schema, or
     /// unqualified when the <c>FROM</c> has that one item; and each item of a part's table, which has no tenant column, is
     /// joined to an item of its holder's table that is held in turn, up to a tenant-scoped item so held: by a conjunct
     /// <c>part.column = holder.column</c>, both qualified, for every column of one of its keys to that holder, in the
@@ -445,8 +446,8 @@ internal static partial class ModuleRules
     /// <see cref="WritesToAggregateTables"/>, which rejects it, since an aggregate maps every tenant-scoped table. The
     /// literals are read outside EF Core migrations, so a fragment such as <c>from catalog.products</c>, concatenated at
     /// run time, is rejected as no <c>SELECT</c>. Not seen: SQL read from a file or a resource, or assembled from fragments
-    /// of which none holds both a SQL word and the table's name; a read through a view or a function; and whether
-    /// <c>@Tenant</c> holds the Operation's tenant, which the Gateway tests show.
+    /// of which none holds both a SQL word and the table's name; and a read through a view or a function. That the
+    /// setting holds the Operation's tenant is the lease's, which the Gateway tests show.
     /// </summary>
     public static IEnumerable<string> ReadsBeyondTheTenant(Assembly module, IReadOnlyDictionary<string, TenantTable> tenantTables) =>
         (
@@ -501,6 +502,9 @@ internal static partial class ModuleRules
     private sealed class TenantSelect
     {
         private static readonly SqlToken End = new(SqlTokenKind.Punctuation, "");
+
+        // The session setting the Dapper lease binds to the Operation's tenant.
+        private const string TenantSetting = "current_setting('pouryakit.tenant')";
 
         // Words that are no alias: what may follow a FROM item, and what starts none.
         private static readonly HashSet<string> NotAliases =
@@ -785,8 +789,8 @@ internal static partial class ModuleRules
                 {
                     var item = $"{table}{(_items[at].Alias is { } alias ? $" {alias}" : "")}";
                     return _tenantTables[table].Tenant is null
-                        ? $"does not join the part {item} on its key to its holder up to {string.Join(" or ", RootsOf(table, _tenantTables))} held to @Tenant"
-                        : $"does not hold {item} to @Tenant with a top-level conjunct of its WHERE";
+                        ? $"does not join the part {item} on its key to its holder up to {string.Join(" or ", RootsOf(table, _tenantTables))} held to {TenantSetting}"
+                        : $"does not hold {item} to the tenant with a top-level conjunct of its WHERE that is exactly {NamesOf(at)[0]}.{_tenantTables[table].Tenant} = {TenantSetting}";
                 }
             }
 
@@ -890,12 +894,15 @@ internal static partial class ModuleRules
             public override string ToString() => Alias is null ? Table : $"{Table} {Alias}";
         }
 
-        // The column of a conjunct that is exactly `column = @Tenant`.
+        // The column of a conjunct that is exactly `column = current_setting('pouryakit.tenant')`.
         private static Column? TenantColumnOf(SqlToken[] conjunct) =>
-            conjunct is [.., var equals, { Kind: SqlTokenKind.Parameter } tenant]
+            conjunct is [.., var equals, var function, var open, { Kind: SqlTokenKind.String } setting, var close]
             && equals.Is('=')
-            && tenant.Text.Equals("@Tenant", StringComparison.OrdinalIgnoreCase)
-                ? Column.Of(conjunct[..^2])
+            && function.Is("current_setting")
+            && open.Is('(')
+            && setting.Text.Equals("pouryakit.tenant", StringComparison.Ordinal)
+            && close.Is(')')
+                ? Column.Of(conjunct[..^5])
                 : null;
 
         // A column `[qualifier.]name`, the qualifier a table with or without its schema, or an alias.
