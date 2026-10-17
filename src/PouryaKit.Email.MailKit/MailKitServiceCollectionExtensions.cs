@@ -18,9 +18,9 @@ public static class MailKitServiceCollectionExtensions
         /// starts, naming the option, when <see cref="PouryaKitMailKitOptions.Host"/> is blank, the port is not one,
         /// <see cref="PouryaKitMailKitOptions.From"/> is not a mailbox address with a domain,
         /// <see cref="PouryaKitMailKitOptions.Security"/> is not a defined value, which MailKit would treat as plain SMTP,
-        /// or only one of the user name and password is set. A Host composes exactly one <see cref="IEmailSender"/>: one
-        /// that registers another, before or after this call, fails when its container is built, through the Kit's
-        /// composition checks, naming each registration's type.
+        /// or only one of the user name and password is set. A Host composes exactly one <see cref="IEmailSender"/>: its
+        /// build fails, through the Kit's composition checks, naming each registration's type when it registers another,
+        /// before or after this call, and naming the contract when it removes this one.
         /// </summary>
         public IServiceCollection AddPouryaKitMailKit()
         {

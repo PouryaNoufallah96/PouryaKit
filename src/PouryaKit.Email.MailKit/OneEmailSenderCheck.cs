@@ -4,7 +4,7 @@ namespace PouryaKit.Email.MailKit;
 
 // A Host composes exactly one IEmailSender, which its final registrations show whatever their order: with two, the
 // container would serve the last silently; with none, a removal after the provider's registration, a Notification Handler
-// would fail only when it resolves the contract. One problem for any other count, naming each registration's type, or
+// would fail only at resolution, or at build for a constructor-injected consumer. One problem for any other count, naming each registration's type, or
 // the factory that builds it.
 internal sealed class OneEmailSenderCheck : ICompositionCheck
 {

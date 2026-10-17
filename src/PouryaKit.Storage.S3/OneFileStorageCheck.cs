@@ -4,8 +4,8 @@ namespace PouryaKit.Storage.S3;
 
 // A Host composes exactly one IFileStorage, which its final registrations show whatever their order: with two, the
 // container would serve the last silently; with none, a removal after the provider's registration, a Feature would fail
-// only when it resolves the contract. One problem for any other count, naming each registration's type, or the factory
-// that builds it.
+// only at resolution, or at build for a constructor-injected consumer. One problem for any other count, naming each
+// registration's type, or the factory that builds it.
 internal sealed class OneFileStorageCheck : ICompositionCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
