@@ -323,7 +323,8 @@ internal static partial class ModuleRules
     /// tenant-scoped aggregate, a part of a part too, with its keys to the tables that hold it, as the Kit's query filter
     /// finds them (#153): a key to the part's own type, or to the table it shares with its holder, holds nothing. A type
     /// derived from a part and mapped to a table of its own (TPT) is a part of its base type's table, which its primary
-    /// key joins; a derived type that shares its base type's table adds none.
+    /// key joins; a derived type that shares its base type's table adds none. Each further table any of these entity types
+    /// splits into (<c>SplitToTable</c>) is a part of the entity type's own table, which its primary key joins.
     /// </summary>
     public static IEnumerable<KeyValuePair<string, TenantTable>> TenantTablesOf(IModel model) =>
         from entityType in model.GetEntityTypes()
@@ -331,13 +332,25 @@ internal static partial class ModuleRules
         let tenantScoped = entityType.ClrType.IsAssignableTo(typeof(ITenantScoped))
         let holders = tenantScoped ? [] : HolderKeysOf(entityType)
         where tenantScoped || holders.Count > 0
-        select KeyValuePair.Create(
-            TableOf(entityType),
-            new TenantTable(
-                tenantScoped ? entityType.FindProperty(nameof(ITenantScoped.Tenant))!.GetColumnName().ToLowerInvariant() : null,
-                holders
+        let primaryKey = entityType.FindPrimaryKey()!.Properties
+        from table in entityType
+            .GetMappingFragments(StoreObjectType.Table)
+            .Select(fragment =>
+                KeyValuePair.Create(
+                    $"{fragment.StoreObject.Schema ?? model.GetDefaultSchema()}.{fragment.StoreObject.Name}".ToLowerInvariant(),
+                    new TenantTable(null, [new HolderKey(TableOf(entityType), ColumnsIn(fragment.StoreObject, primaryKey, entityType, primaryKey)!)])
+                )
             )
-        );
+            .Prepend(
+                KeyValuePair.Create(
+                    TableOf(entityType),
+                    new TenantTable(
+                        tenantScoped ? entityType.FindProperty(nameof(ITenantScoped.Tenant))!.GetColumnName().ToLowerInvariant() : null,
+                        holders
+                    )
+                )
+            )
+        select table;
 
     /// <summary>
     /// A table that holds one tenant's rows per row: an <c>ITenantScoped</c> entity's, with its <paramref name="Tenant"/>
@@ -362,7 +375,7 @@ internal static partial class ModuleRules
                 && foreignKey.PrincipalEntityType.GetRootType() != part.GetRootType()
                 && TableOf(foreignKey.PrincipalEntityType) != TableOf(part)
                 && InTenantScopedAggregate(foreignKey.PrincipalEntityType, [])
-            let columns = ColumnsIn(part, foreignKey.Properties, foreignKey.PrincipalEntityType, foreignKey.PrincipalKey.Properties)
+            let columns = ColumnsIn(StoreOf(part), foreignKey.Properties, foreignKey.PrincipalEntityType, foreignKey.PrincipalKey.Properties)
             where columns is not null
             select new HolderKey(TableOf(foreignKey.PrincipalEntityType), columns),
         ];
@@ -371,7 +384,7 @@ internal static partial class ModuleRules
             && baseType.GetTableName() is not null
             && TableOf(baseType) != TableOf(part)
             && HolderKeysOf(baseType).Count > 0
-            && ColumnsIn(part, part.FindPrimaryKey()!.Properties, baseType, part.FindPrimaryKey()!.Properties) is { } toBase
+            && ColumnsIn(StoreOf(part), part.FindPrimaryKey()!.Properties, baseType, part.FindPrimaryKey()!.Properties) is { } toBase
         )
         {
             keys.Add(new HolderKey(TableOf(baseType), toBase));
@@ -380,16 +393,17 @@ internal static partial class ModuleRules
         return keys;
     }
 
-    // Each of `columns` in `part`'s table with its holder column in `holder`'s table; null when either table lacks one.
+    private static StoreObjectIdentifier StoreOf(IReadOnlyEntityType entityType) => StoreObjectIdentifier.Table(entityType.GetTableName()!, entityType.GetSchema());
+
+    // Each of `columns` in `partTable` with its holder column in `holder`'s table; null when either table lacks one.
     private static List<(string Column, string HolderColumn)>? ColumnsIn(
-        IReadOnlyEntityType part,
+        StoreObjectIdentifier partTable,
         IReadOnlyList<IReadOnlyProperty> columns,
         IReadOnlyEntityType holder,
         IReadOnlyList<IReadOnlyProperty> holderColumns
     )
     {
-        var partTable = StoreObjectIdentifier.Table(part.GetTableName()!, part.GetSchema());
-        var holderTable = StoreObjectIdentifier.Table(holder.GetTableName()!, holder.GetSchema());
+        var holderTable = StoreOf(holder);
         var pairs = columns.Zip(holderColumns, (column, holderColumn) => (column.GetColumnName(partTable), holderColumn.GetColumnName(holderTable))).ToList();
         return pairs.All(pair => pair is (not null, not null))
             ? [.. pairs.Select(pair => (pair.Item1!.ToLowerInvariant(), pair.Item2!.ToLowerInvariant()))]

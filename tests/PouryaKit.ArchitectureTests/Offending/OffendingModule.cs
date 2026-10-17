@@ -224,11 +224,14 @@ internal sealed class SpecialEntry : LedgerEntry
     public string Note { get; private set; } = "";
 }
 
+// A line whose note its table splits into a table of its own, which holds no key to the entry.
 internal sealed class EntryLine : Entity<EntryLineId>
 {
     private EntryLine() { }
 
     public string Text { get; private set; } = "";
+
+    public string Note { get; private set; } = "";
 }
 
 // A tenant's journal keyed by its tenant and its own code, so its lines hold it on a key of two columns.
@@ -258,7 +261,7 @@ internal sealed class LedgerDbContext(DbContextOptions options) : PouryaKitDbCon
         modelBuilder.Entity<Ledger>().ToTable("ledgers").HasMany(ledger => ledger.Entries).WithOne().IsRequired();
         modelBuilder.Entity<LedgerEntry>().UseTptMappingStrategy().ToTable("ledger_entries").HasMany(entry => entry.Lines).WithOne().IsRequired();
         modelBuilder.Entity<SpecialEntry>().ToTable("special_entries");
-        modelBuilder.Entity<EntryLine>().ToTable("entry_lines");
+        modelBuilder.Entity<EntryLine>().ToTable("entry_lines").SplitToTable("entry_line_notes", table => table.Property(line => line.Note));
         modelBuilder.Entity<Journal>().ToTable("journals").HasKey(journal => new { journal.Tenant, journal.Id });
         modelBuilder.Entity<Journal>().HasMany(journal => journal.Lines).WithOne().IsRequired();
         modelBuilder.Entity<JournalLine>().ToTable("journal_lines");
