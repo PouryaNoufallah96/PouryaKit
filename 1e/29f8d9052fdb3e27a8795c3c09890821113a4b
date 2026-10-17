@@ -1,0 +1,21 @@
+.agents/skills/pourya-kit/references/email.md
+  s_3675ccfac3f8b2::t_e1811bd32162fe 37
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_affdb1b15a25bc 2066
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1e29f8d9052fdb3e27a8795c3c09890821113a4b",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
