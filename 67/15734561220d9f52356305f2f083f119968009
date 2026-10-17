@@ -1,0 +1,28 @@
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_3675ccfac3f8b2::t_e8ea63d349ccdb 934-958
+  s_3675ccfac3f8b2::t_bc3e0594c636f6 983-989
+tests/PouryaKit.ArchitectureTests/DapperWriteTests.cs
+  s_3675ccfac3f8b2::t_6c97fd26e36ce4 56-82
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_3675ccfac3f8b2::t_299b74c9289c17 189-204
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_3675ccfac3f8b2::t_c4bfa6c6798f07 89
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_0989cd3225df4e 596
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6715734561220d9f52356305f2f083f119968009",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
