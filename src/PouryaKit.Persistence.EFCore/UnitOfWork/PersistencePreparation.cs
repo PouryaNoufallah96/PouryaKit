@@ -12,7 +12,7 @@ namespace PouryaKit.Persistence.EFCore;
 // cascades of the removals that stay deletions are resolved, a change of another tenant's entity is refused, every
 // changed aggregate's Version advances by exactly one, and auditable entities are stamped. The save then has nothing
 // left to change. It returns the changed aggregates, each once, whose Snapshots the Snapshot step builds from this final
-// state, or TenantErrors.Mismatch, which the Unit of Work rolls back.
+// state, or TenantErrors.Mismatch or TenantErrors.NotLoaded, which the Unit of Work rolls back.
 internal static class PersistencePreparation
 {
     public static Result<IReadOnlyList<EntityEntry>> Run(DbContext dbContext, Func<OperationContext> context)
@@ -56,10 +56,10 @@ internal static class PersistencePreparation
         // Read before any Version moves, so the bump below is the only change it can see.
         var holders = new Holders(entries);
         var changedEntries = entries.Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted).ToList();
-        var changed = changedEntries
-            .SelectMany(entry => AggregatesOf(entry, holders, new HashSet<object>(ReferenceEqualityComparer.Instance)))
-            .DistinctBy(entry => entry.Entity, ReferenceEqualityComparer.Instance)
+        var attributed = changedEntries
+            .Select(entry => (Entry: entry, Aggregates: AggregatesOf(entry, holders, new HashSet<object>(ReferenceEqualityComparer.Instance)).ToList()))
             .ToList();
+        var changed = attributed.SelectMany(change => change.Aggregates).DistinctBy(entry => entry.Entity, ReferenceEqualityComparer.Instance).ToList();
 
         // A tenant-scoped entity the Operation changes, or one whose part it changes, moves or deletes, both holders of a
         // moved part included, must be the Operation's tenant's: added for it, or loaded under it and left under it. The
@@ -71,6 +71,20 @@ internal static class PersistencePreparation
             if (scopedChanges.Any(scoped => scoped.Loaded is null ? scoped.Current != tenant : scoped.Loaded != tenant || scoped.Current != scoped.Loaded))
             {
                 return TenantErrors.Mismatch;
+            }
+
+            // A tenant's aggregate is loaded, never attached: an attached entity carries the key and tenant its code gave
+            // it, so neither tells whose row its write reaches. Each changed entry of a tenant-scoped aggregate, its root
+            // or a part, and each such aggregate a change is attributed to, came from a query unless it was added.
+            if (
+                attributed
+                    .Where(change => change.Entry.Entity is ITenantScoped || change.Aggregates.Any(aggregate => aggregate.Entity is ITenantScoped))
+                    .Select(change => change.Entry)
+                    .Concat(changed.Where(aggregate => aggregate.Entity is ITenantScoped))
+                    .Any(entry => entry.State != EntityState.Added && !(dbContext is PouryaKitDbContext kit && kit.WasLoaded(entry.Entity)))
+            )
+            {
+                return TenantErrors.NotLoaded;
             }
         }
 

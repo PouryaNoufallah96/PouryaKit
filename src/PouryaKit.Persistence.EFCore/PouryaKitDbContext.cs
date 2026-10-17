@@ -37,6 +37,9 @@ public abstract class PouryaKitDbContext : DbContext
     // The scope's services, which hold its Operation, as EF Core's AddDbContext gives them to the options.
     private readonly IServiceProvider? _applicationServices;
 
+    // Every entity a query of this DbContext materialized. Any other tracked entity that is not added was attached.
+    private readonly HashSet<object> _loaded = new(ReferenceEqualityComparer.Instance);
+
     /// <summary>
     /// Creates the DbContext with <paramref name="options"/> and the cascade timings the Unit of Work's soft delete
     /// relies on.
@@ -52,11 +55,21 @@ public abstract class PouryaKitDbContext : DbContext
         // An orphan is deleted as soon as changes are detected, so the Unit of Work sees it when it prepares the save,
         // and a soft-deletable one is kept; deleted later, inside the save, it would be neither.
         ChangeTracker.DeleteOrphansTiming = CascadeTiming.Immediate;
+        ChangeTracker.Tracked += (_, tracked) =>
+        {
+            if (tracked.FromQuery)
+            {
+                _loaded.Add(tracked.Entry.Entity);
+            }
+        };
     }
 
     // Read by the tenant filter each time a query runs, never when the model is built or the DbContext created: the
     // migration tool and the composition checks build a DbContext where no Operation began.
     internal string? Tenant => _applicationServices?.GetService<Operation>()?.Context?.Tenant;
+
+    // Read by the Unit of Work's prepare step, which saves a tenant's aggregate only when a query loaded it.
+    internal bool WasLoaded(object entity) => _loaded.Contains(entity);
 
     /// <inheritdoc />
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

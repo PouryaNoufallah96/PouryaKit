@@ -183,7 +183,7 @@
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/PersistencePreparation.cs",
           "line": 18,
-          "end_line": 98,
+          "end_line": 112,
           "label": "marks, cascades, tenant, Version + 1, stamps"
         },
         {
@@ -417,7 +417,7 @@
       "id": "prepareRefused",
       "from": "prepare",
       "to": "rollback",
-      "label": "another tenant's",
+      "label": "tenant refused",
       "role": "error",
       "variant": "security"
     },
@@ -444,7 +444,7 @@
       "dot": "rose",
       "title": "Rollback",
       "items": [
-        "A failed check, a change to another tenant's aggregate or a refused save rolls back and returns the command's Errors or the Operation's RollbackErrors.",
+        "A failed check, a change to another tenant's aggregate or to one attached rather than loaded, or a refused save rolls back and returns the command's Errors or the Operation's RollbackErrors.",
         "An exception at any step rolls back by disposing the transaction; one from the commit can leave the outcome unknown (ADR 0004).",
         "Nothing retries: a retry needs a new scope."
       ]

@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
-using PouryaKit.Persistence.EFCore;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -13,8 +12,8 @@ namespace ModularMonolith.Tests;
 // A tenant-scoped aggregate is saved only by its own tenant's Operation (ticket #117): one loaded across tenants, with the
 // tenant filter set aside, fails the save with a forbidden Error whatever the Operation changed of it, as does one whose
 // tenant the Operation changed, and nothing is saved. The binders are the Stub's; the products are Catalog's, saved in a
-// tenant-scoped Module. A category built with a stored key and attached, never loaded, is matched by no write of
-// another tenant's row (ticket #152).
+// tenant-scoped Module. A tenant-scoped aggregate, or a part of one, attached rather than loaded is refused before the
+// save (ticket #152).
 public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     private readonly Guid _north = Guid.CreateVersion7();
@@ -88,14 +87,14 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
         );
     }
 
-    // A category built with the key and version of a stored one and the Operation's tenant, attached rather than loaded, so
-    // the prepare step judges it by that tenant: north's own is saved, while south's row is matched by no UPDATE or
-    // DELETE, since the tenant it was attached with is a concurrency token. The Operation fails with the conflict Error.
+    // A category built with the key and version of a stored one and the Operation's tenant, attached rather than loaded:
+    // refused before the save whether the key is the Operation's own tenant's or south's, so neither row changes. With
+    // the refusal off, the tenant token still stops south's write, with the conflict Error, and north's own is saved.
     [Theory]
     [InlineData(ForgedWrite.Attach)]
     [InlineData(ForgedWrite.Update)]
     [InlineData(ForgedWrite.Remove)]
-    public async Task A_category_of_another_tenant_attached_under_the_operations_tenant_fails_and_saves_nothing(ForgedWrite write)
+    public async Task A_category_attached_rather_than_loaded_fails_forbidden_and_saves_nothing(ForgedWrite write)
     {
         var own = await CreateCategoryAsync("north");
         var south = await CreateCategoryAsync("south");
@@ -103,12 +102,34 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
         var forgedOwn = await ForgeAsync(own, write);
         var forgedSouth = await ForgeAsync(south, write);
 
-        Assert.True(forgedOwn.IsSuccess);
         Assert.Equal(
-            [["south", "Lamps", 0, 1L]],
-            await Fixture.RowsAsync($"select tenant, name, product_count, version from catalog.categories where id = '{south}'")
+            [["north", "Lamps", 0, 1L], ["south", "Lamps", 0, 1L]],
+            await Fixture.RowsAsync(
+                $"select tenant, name, product_count, version from catalog.categories where id in ('{own}', '{south}') order by tenant"
+            )
         );
-        Assert.Equal(UnitOfWorkErrors.ConcurrencyConflict, Assert.Single(forgedSouth.Errors));
+        Assert.Equal(TenantErrors.NotLoaded, Assert.Single(forgedOwn.Errors));
+        Assert.Equal(TenantErrors.NotLoaded, Assert.Single(forgedSouth.Errors));
+    }
+
+    // A sheet built with south's sheet key and attached under north's own binder, loaded through the tenant filter: the
+    // binder passes every tenant check and a sheet has no tenant of its own, so only the refusal of an attached part
+    // keeps its UPDATE or DELETE off south's row.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task A_part_attached_under_the_operations_own_aggregate_fails_forbidden_and_saves_nothing(bool remove)
+    {
+        await CreateBindersAsync();
+        var southBefore = await SouthRowsAsync();
+        var southSheet = (Guid)Assert.Single(await Fixture.RowsAsync($"select id from stub.sheets where binder_id = '{_south}'"))[0];
+
+        var forged = await Fixture
+            .Gateway<StubModule>()
+            .SendAsync(new ForgeSheetCommand(_north, southSheet, remove), For("north"), TestContext.Current.CancellationToken);
+
+        Assert.Equal(southBefore, await SouthRowsAsync());
+        Assert.Equal(TenantErrors.NotLoaded, Assert.Single(forged.Errors));
     }
 
     private static OperationContext For(string tenant) => new(GatewayTestExtensions.TestActor, tenant);

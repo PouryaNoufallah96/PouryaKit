@@ -215,6 +215,32 @@ public enum ForgedWrite
     Remove,
 }
 
+// Loads the binder named through the tenant filter, then attaches under it a sheet built with the key named, and
+// rewrites it or removes it.
+internal sealed record ForgeSheetCommand(Guid BinderId, Guid SheetId, bool Remove) : Command;
+
+internal sealed class ForgeSheetCommandHandler(StubDbContext dbContext) : CommandHandler<ForgeSheetCommand>
+{
+    public override async Task<Result> Handle(ForgeSheetCommand command, CancellationToken cancellationToken)
+    {
+        var binder = await dbContext.Set<Binder>().SingleAsync(binder => binder.Id == new BinderId(command.BinderId), cancellationToken);
+        var sheet = new Sheet(new SheetId(command.SheetId), "Attached");
+        var entry = dbContext.Entry(sheet);
+        entry.Property("BinderId").CurrentValue = binder.Id;
+        entry.State = EntityState.Unchanged;
+        if (command.Remove)
+        {
+            dbContext.Remove(sheet);
+        }
+        else
+        {
+            sheet.Rewrite("Forged");
+        }
+
+        return Result.Success();
+    }
+}
+
 // Run in a Catalog Operation: builds a category with the key and version named and the Operation's tenant, as a Feature
 // that never loads it might, then attaches it and counts a product on it, updates it, which writes every column, or
 // removes it.
