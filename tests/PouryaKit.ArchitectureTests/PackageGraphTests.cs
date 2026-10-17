@@ -90,6 +90,17 @@ public sealed class PackageGraphTests
     }
 
     [Fact]
+    public void The_sample_hosts_run_without_the_optional_localization()
+    {
+        foreach (var host in new[] { "ModularMonolith.Host", "Inventory.Host" })
+        {
+            var restored = RestoredPackage.Of(Path.Combine(Repository.Root, "samples", "ModularMonolith", "src", host, $"{host}.csproj"));
+            Assert.Contains("PouryaKit.Cqrs", restored.Projects);
+            Assert.DoesNotContain("PouryaKit.Localization", restored.Projects);
+        }
+    }
+
+    [Fact]
     public void A_direct_reference_section_c_does_not_list_is_rejected()
     {
         var cqrs = Restored("PouryaKit.Cqrs");

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,8 @@ public sealed class TypeKeyTests(AppFixture app) : HostTest<AppFixture>(app)
         var distributed = new RecordingDistributedCache();
         await using var services = Services(distributed);
         var context = new OperationContext(Actor.Person("ada"), "north");
+        // The cache key names the UI culture the query runs in (ticket #125); the test's own flow sets it.
+        CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("en");
 
         await RunAsync(services, context with { RequestId = "type-key" }, dispatcher => dispatcher.SendAsync(new NameHandlingAssemblyCommand(), TestContext.Current.CancellationToken));
         await RunAsync(services, context, dispatcher => dispatcher.QueryAsync(new HandlingAssemblyQuery("lamp"), TestContext.Current.CancellationToken));
@@ -31,7 +34,7 @@ public sealed class TypeKeyTests(AppFixture app) : HostTest<AppFixture>(app)
         );
         // HybridCache answers before its distributed write completes.
         await distributed.WrittenAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(["ModularMonolith.Tests.Stub.HandlingAssemblyQuery%2C%20ModularMonolith.Tests|north|Person|ada|lamp"], distributed.Keys);
+        Assert.Equal(["ModularMonolith.Tests.Stub.HandlingAssemblyQuery%2C%20ModularMonolith.Tests|north|Person|ada|en|lamp"], distributed.Keys);
     }
 
     // Each Operation in a scope of its own, as an application without Modules opens one.

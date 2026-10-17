@@ -409,8 +409,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 102,
-          "end_line": 103,
+          "line": 103,
+          "end_line": 104,
           "label": "no exporter"
         }
       ]
@@ -458,13 +458,13 @@
         },
         {
           "path": "src/PouryaKit.Caching/HybridQueryCache.cs",
-          "line": 14,
+          "line": 15,
           "label": "implements IQueryCache"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 104,
-          "end_line": 105,
+          "line": 105,
+          "end_line": 106,
           "label": "never Redis"
         }
       ]
@@ -626,6 +626,39 @@
           "line": 11,
           "end_line": 33,
           "label": "IFileStorage"
+        }
+      ]
+    },
+    {
+      "id": "localization",
+      "type": "frontend",
+      "label": "PouryaKit.Localization",
+      "sublabel": "English and Persian; optional",
+      "pos": [
+        1200,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 82,
+          "label": "references Cqrs, the ASP.NET Core framework"
+        },
+        {
+          "path": "src/PouryaKit.Localization/LocalizationServiceCollectionExtensions.cs",
+          "line": 32,
+          "end_line": 44,
+          "label": "records a Module's Feature assemblies"
+        },
+        {
+          "path": "src/PouryaKit.Localization/HeaderRequestCulture.cs",
+          "line": 17,
+          "end_line": 31,
+          "label": "request culture from Accept-Language"
         }
       ]
     }
@@ -803,6 +836,13 @@
       "toSide": "left"
     },
     {
+      "id": "localization-cqrs",
+      "from": "localization",
+      "to": "cqrs",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
       "id": "dapper-database",
       "from": "dapper",
       "to": "database",
@@ -832,7 +872,8 @@
         "Web begins each HTTP request's Operation through Cqrs; Web.OpenApi, optional, versions each Module's route group.",
         "Security.JwtBearer references Security alone; the tenant claim type it writes is PouryaKitClaimTypes of PouryaKit.Cqrs, reached through Security.",
         "Cqrs, Security, Web, Persistence.EFCore and Persistence.Dapper reference PouryaKit.Core for its helpers, such as ImplementingTypes.",
-        "Storage, the file storage contract, references Domain alone; Storage.S3, its S3 provider, references Storage and the AWS SDK, and a Host registers exactly one provider."
+        "Storage, the file storage contract, references Domain alone; Storage.S3, its S3 provider, references Storage and the AWS SDK, and a Host registers exactly one provider.",
+        "Localization, optional, records a Module's Feature assemblies through Cqrs and sets each request's culture, English or Persian, from its Accept-Language header; the Proving Sample's Hosts reference none of it."
       ]
     }
   ]

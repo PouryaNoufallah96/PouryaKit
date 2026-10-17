@@ -2,6 +2,7 @@ using Catalog.Products.ValueObjects;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using PouryaKit.Localization;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Dapper;
@@ -25,6 +26,7 @@ public sealed class StubModule : IModuleDefinition
         module.AddPouryaKitCqrs();
         module.AddPouryaKitValidation();
         module.AddPouryaKitPermissions();
+        module.AddPouryaKitLocalization();
         module.AddSingleton<StampAuthorizations>();
         module.AddSingleton<ContinuationProbes>();
         module.AddPouryaKitNotificationHandlers();

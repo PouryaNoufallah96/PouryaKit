@@ -79,6 +79,7 @@ internal static class PackageGraph
         ),
         ["PouryaKit.Storage"] = new(["PouryaKit.Domain"], []),
         ["PouryaKit.Storage.S3"] = new(["PouryaKit.Storage"], ["AWSSDK.S3", "Microsoft.Extensions.Options"]),
+        ["PouryaKit.Localization"] = new(["PouryaKit.Cqrs"], [], ["Microsoft.AspNetCore.App"]),
     };
 
     // What must never arrive in a package's closure, by package id prefix or project name. Every package but Testing also
