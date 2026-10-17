@@ -1,0 +1,32 @@
+.agents/skills/pourya-kit/references/email.md
+  s_3675ccfac3f8b2::t_ff990126f74818 36,66
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_6288a32f1a6993 1951-1952
+src/PouryaKit.Email.MailKit/MailKitServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_1ce6b65c231013 18-20,39-41
+  s_3675ccfac3f8b2::t_4144a231569e9b 42
+tests/ModularMonolith.Tests/EmailTests.cs
+  s_3675ccfac3f8b2::t_1ce6b65c231013 5,64-65,67,69-74,89-100
+  s_3675ccfac3f8b2::t_7606700f493ea6 101-102
+tests/ModularMonolith.Tests/Fixtures/MailFixture.cs
+  s_3675ccfac3f8b2::t_1ce6b65c231013 19,30,33,43-45
+  s_3675ccfac3f8b2::t_5ebc7ca175e592 46
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_ff990126f74818 240
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a3820252c704f73d6068f8f33c42466603aba920",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
