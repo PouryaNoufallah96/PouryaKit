@@ -1,0 +1,22 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3675ccfac3f8b2::t_f5ef9239bc4bfd 18
+.claude/agent-memory/kit-implementer/email-and-provider-package-facts.md
+  s_3675ccfac3f8b2::t_f5ef9239bc4bfd 20-28
+  s_3675ccfac3f8b2::t_be131f6bf31174 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9fe683e048e5f6f229658c21f9569d16a589d16e",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
