@@ -14,7 +14,8 @@ namespace ModularMonolith.Tests;
 // tenant filter set aside, fails the save with a forbidden Error whatever the Operation changed of it, as does one whose
 // tenant the Operation changed, and nothing is saved. The binders are the Stub's; the products are Catalog's, saved in a
 // tenant-scoped Module. A tenant-scoped aggregate, or a part of one, attached rather than loaded is refused before the
-// save, and a loaded part's write matches its row only under the holder it was loaded with (ticket #152).
+// save, and a loaded part's write matches its row only under the holder it was loaded with (ticket #152). A part queried
+// through its own set is read only where its holder is (ticket #153).
 public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     private readonly Guid _north = Guid.CreateVersion7();
@@ -181,6 +182,28 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
 
         Assert.Equal(southBefore, await SouthRowsAsync());
         Assert.Equal(UnitOfWorkErrors.ConcurrencyConflict, Assert.Single(forged.Errors));
+    }
+
+    // The tenant filter of a sheet is its binder's: a north Operation reads none of south's sheets by id or in the list,
+    // south's reads its own, and a read that sets the filter aside crosses tenants.
+    [Fact]
+    public async Task A_part_queried_through_its_own_set_is_read_only_by_its_aggregates_tenant_unless_the_filter_is_set_aside()
+    {
+        await CreateBindersAsync();
+        var southSheet = (Guid)Assert.Single(await Fixture.RowsAsync($"select id from stub.sheets where binder_id = '{_south}'"))[0];
+        var stub = Fixture.Gateway<StubModule>();
+
+        var northById = await stub.QueryAsync(new ReadSheetsQuery(southSheet, false), For("north"), TestContext.Current.CancellationToken);
+        var northList = await stub.QueryAsync(new ReadSheetsQuery(null, false), For("north"), TestContext.Current.CancellationToken);
+        var southById = await stub.QueryAsync(new ReadSheetsQuery(southSheet, false), For("south"), TestContext.Current.CancellationToken);
+        var southList = await stub.QueryAsync(new ReadSheetsQuery(null, false), For("south"), TestContext.Current.CancellationToken);
+        var crossing = await stub.QueryAsync(new ReadSheetsQuery(southSheet, true), For("north"), TestContext.Current.CancellationToken);
+
+        Assert.Empty(northById.Value);
+        Assert.Equal(new[] { $"north {_north}", $"north {_otherNorth}" }.Order(), northList.Value.Order());
+        Assert.Equal([$"south {_south}"], southById.Value);
+        Assert.Equal([$"south {_south}"], southList.Value);
+        Assert.Equal([$"south {_south}"], crossing.Value);
     }
 
     private static OperationContext For(string tenant) => new(GatewayTestExtensions.TestActor, tenant);
