@@ -1,0 +1,73 @@
+.agents/skills/pourya-kit/references/storage.md
+  s_3675ccfac3f8b2::t_9e90450cd5337d 71
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_db766d2b783df9 627,659-660
+src/PouryaKit.Localization/HeaderRequestCulture.cs
+  s_3675ccfac3f8b2::t_1d59f9ff910d5f 25
+  s_3675ccfac3f8b2::t_919a3ff81ec97f 23
+  s_3675ccfac3f8b2::t_2e875178415c27 24
+  s_3675ccfac3f8b2::t_dccbbcc4c4a68c 10
+  s_3675ccfac3f8b2::t_af3ac77f8e2065 11-12
+src/PouryaKit.Storage/IFileStorage.cs
+  s_3675ccfac3f8b2::t_6907c2e49ce9e9 29-31
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_3675ccfac3f8b2::t_a43e06794d7aca 392-398
+  s_3675ccfac3f8b2::t_7e881ecbcd80fc 561
+  s_3675ccfac3f8b2::t_378761ffab01d6 321-324,326,328-329,331,333-337,340-383
+  s_3675ccfac3f8b2::t_b28776527a48f0 330
+  s_3675ccfac3f8b2::t_54fdba24302764 590-591
+  s_3675ccfac3f8b2::t_7299c88d9f0e6d 613,619
+  s_3675ccfac3f8b2::t_b17c10c3efa8d1 408,418,438,452,480,486
+  s_3675ccfac3f8b2::t_ccf7abd0bcb3d3 710-713,715-725,733,735,737,739-741,743-746,753-765,768-781
+  s_3675ccfac3f8b2::t_e13d764bb9a393 731
+  s_3675ccfac3f8b2::t_ae7bedb397dc25 766
+  s_3675ccfac3f8b2::t_71e4dda739e72f 767
+  s_3675ccfac3f8b2::t_eaaeacea3a24c3 840,843-846,850-859,861-862,864-867,870,872-880
+  s_3675ccfac3f8b2::t_15e3178b2d93a1 727-730,732,734
+  s_3675ccfac3f8b2::t_d6f83d1f15ffee 685
+  s_3675ccfac3f8b2::t_aed4060c363817 384,782
+src/PouryaKit.Storage.S3/S3FileStorage.cs
+  s_3675ccfac3f8b2::t_d4d5a6bec09c99 106-107
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_7624ca0bd9f210 597
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_3675ccfac3f8b2::t_c2c06dcf38cfe2 89
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3675ccfac3f8b2::t_b0a8e75b583a44 5
+.agents/skills/pourya-kit/references/localization.md
+  s_3675ccfac3f8b2::t_688c659254a288 57
+.agents/skills/pourya-kit/references/testing.md
+  s_3675ccfac3f8b2::t_6d262a085d6776 200
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_3675ccfac3f8b2::t_1ba8c894632eef 70
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_3675ccfac3f8b2::t_37118bb6341950 1-2,10-11,14,17-19,21-30,36-69
+  s_3675ccfac3f8b2::t_440252afd94b93 3,20,147
+  s_3675ccfac3f8b2::t_9748df4002ce28 137-144
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_3675ccfac3f8b2::t_ee04c72fa9bb1e 29
+.claude/agent-memory/kit-implementer/core-json-and-architecture-test-facts.md
+  s_3675ccfac3f8b2::t_5f74bec1b52dbb 102-108
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_ceb8e2ef257d91 2157-2170
+tests/ModularMonolith.Tests/LocalizationTests.cs
+  s_3675ccfac3f8b2::t_bad943305392f1 20-21
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_3675ccfac3f8b2::t_f785e691acc033 186-256
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f433ea7d7a4ef4d5ec63ca7834afb060e56e3eca",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
