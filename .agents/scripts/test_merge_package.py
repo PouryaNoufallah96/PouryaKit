@@ -12,6 +12,19 @@ import unittest
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().with_name("merge-package.py")
+
+
+def _load_script():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("merge_package", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+merge_package = _load_script()
 WAVE = "feat/wave"  # the throwaway repository's integration branch
 # The machine's own git configuration (hooks, signing, identity) stays out of the throwaway repositories.
 ENV = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")} | {
@@ -361,3 +374,25 @@ class MergePackageTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HelperTests(unittest.TestCase):
+    def test_memory_duplicates_names_a_file_the_union_merge_listed_twice(self) -> None:
+        # The #124 merge of 2026-10-17 left two "Docs verification tools" lines, one per side.
+        text = (
+            "- [Docs verification tools](docs-verification-tools.md) — #116, #124: pins\n"
+            "- [Docs verification tools](docs-verification-tools.md) — #116, #117: pins\n"
+            "- [Cqrs and Modularity](cqrs-and-modularity-facts.md) — #7\n"
+        )
+        self.assertEqual(["docs-verification-tools.md"], merge_package.memory_duplicates(text))
+        self.assertEqual([], merge_package.memory_duplicates(text.splitlines()[1] + "\n" + text.splitlines()[2]))
+
+    def test_diagram_pairs_counts_a_source_and_its_page_once(self) -> None:
+        conflicted = [
+            "docs/acceptance.md",
+            "docs/architecture/diagrams/execution-core.architecture.json",
+            "docs/architecture/diagrams/execution-core.html",
+            "docs/architecture/diagrams/kit-context.architecture.json",
+        ]
+        self.assertEqual(["execution-core", "kit-context"], merge_package.diagram_pairs(conflicted))
+

@@ -182,6 +182,13 @@ def merge(top: Path, head: str, branch: str, message: str) -> None:
         lines = [f"the merge of {head[:7]} stopped on conflicts and is left in progress:", *(f"  {name}" for name in conflicted)]
         if "docs/acceptance.md" in conflicted:
             lines.append("docs/acceptance.md: both sides appended a section; keep both sections, in ticket order.")
+        if pairs := diagram_pairs(conflicted):
+            lines.append(
+                f"{len(pairs)} diagram pair(s) conflict ({', '.join(pairs)}): take both sides' nodes, edges and citations in "
+                "the source, remap each cited range to the merged file, commit the merge with --no-verify, then pin the "
+                "sources to the merge commit and refinalize the pages (docs/agents/running-a-spec.md, \"Merging with "
+                "diagram conflicts\")."
+            )
         lines.append(f"Resolve, commit, then run: python3 .agents/scripts/merge-package.py --post-merge {head[:7]} --branch {branch}")
         raise Stop(CONFLICT, "\n".join(lines))
     stopped = "\nthe merge is still in progress; `git merge --abort` drops it" if in_progress else ""
@@ -210,6 +217,38 @@ def run_check(top: Path, argv: list[str]) -> bool:
     return done.returncode == 0
 
 
+MEMORY_INDEX = Path(".claude/agent-memory/kit-implementer/MEMORY.md")
+
+
+def diagram_pairs(paths: list[str]) -> list[str]:
+    """The diagram names (one per source and page pair) among conflicted paths."""
+    names = {Path(p).name.split(".")[0] for p in paths if p.startswith("docs/architecture/diagrams/")}
+    return sorted(names)
+
+
+def memory_duplicates(text: str) -> list[str]:
+    """The memory files that the union-merged index lists more than once: a parallel merge keeps both sides' lines."""
+    seen: dict[str, int] = {}
+    for line in text.splitlines():
+        if (start := line.find("](")) > 0 and (end := line.find(")", start)) > 0:
+            target = line[start + 2 : end]
+            seen[target] = seen.get(target, 0) + 1
+    return sorted(target for target, count in seen.items() if count > 1)
+
+
+def memory_index_check(top: Path) -> bool:
+    path = top / MEMORY_INDEX
+    duplicates = memory_duplicates(path.read_text(encoding="utf-8")) if path.exists() else []
+    if duplicates:
+        print(
+            f"check memory-index: FAIL, {MEMORY_INDEX} lists {', '.join(duplicates)} more than once (the union merge kept "
+            "both sides' lines): keep one line per file with both sides' ticket numbers, then commit"
+        )
+        return False
+    print("check memory-index: ok")
+    return True
+
+
 def post_merge(top: Path, head: str, branch: str, checks: list[list[str]], push: bool) -> int:
     merged = git_out(top, "rev-parse", "--short=7", "HEAD")
     same = git(top, "diff", "--quiet", head, "HEAD")
@@ -224,6 +263,8 @@ def post_merge(top: Path, head: str, branch: str, checks: list[list[str]], push:
         print(f"tree=DIFFERS: {len(files)} file(s) of {merged} differ from {head[:7]}:", *(f"  {name}" for name in files), sep="\n")
         print("The ticket's verify must run on the merged tree; the report's verify does not prove it.")
     failed = [check_name(argv) for argv in checks if not run_check(top, argv)]
+    if not memory_index_check(top):
+        failed.append("memory-index")
     code, pushed = (CHECK_FAILED if failed else 0), "no"
     if push and failed:
         print("not pushed: a check failed")
