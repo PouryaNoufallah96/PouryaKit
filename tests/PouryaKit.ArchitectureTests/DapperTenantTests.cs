@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Offending;
+using PouryaKit.Domain;
+using PouryaKit.Persistence.EFCore;
 
 namespace PouryaKit.ArchitectureTests;
 
@@ -63,6 +65,82 @@ public sealed class DapperTenantTests
                 .Order(StringComparer.Ordinal)
         );
     }
+
+    // One cross-check closes the class #152 to #155 found one mapping shape at a time: the tables EF Core filters by tenant,
+    // the tables the Dapper rule holds to the tenant, and every table of a tenant-scoped aggregate are the same set.
+    [Fact]
+    public void The_tables_ef_core_filters_by_tenant_are_the_tables_the_dapper_rule_finds_and_every_table_of_a_tenant_scoped_aggregate()
+    {
+        IModel[] models = [.. Sample.Models.Values.SelectMany(models => models), LedgerModel()];
+        HashSet<string> filtered =
+        [
+            .. models
+                .SelectMany(model => model.GetEntityTypes())
+                .Where(entityType => entityType.GetRootType().FindDeclaredQueryFilter(PouryaKitDbContext.TenantFilter) is not null)
+                .SelectMany(TablesOf),
+        ];
+        HashSet<string> found = [.. models.SelectMany(model => ModuleRules.TenantTablesOf(model).Select(table => table.Key))];
+        HashSet<string> held = [.. models.SelectMany(TenantScopedAggregateTypes).SelectMany(TablesOf)];
+
+        Assert.Equal(
+            [
+                "books.accounts",
+                "catalog.categories",
+                "catalog.products",
+                "offending.account_notes",
+                "offending.entry_line_notes",
+                "offending.entry_lines",
+                "offending.journal_lines",
+                "offending.journals",
+                "offending.ledger_entries",
+                "offending.ledgers",
+                "offending.special_entries",
+            ],
+            held.Order(StringComparer.Ordinal)
+        );
+        Assert.Empty(
+            filtered
+                .Except(found)
+                .Select(table => $"{table}: EF Core filters it by tenant, the Dapper rule does not find it")
+                .Concat(found.Except(filtered).Select(table => $"{table}: the Dapper rule finds it, EF Core does not filter it by tenant"))
+                .Concat(held.Except(filtered).Except(found).Select(table => $"{table}: a table of a tenant-scoped aggregate in neither set"))
+                .Order(StringComparer.Ordinal)
+        );
+    }
+
+    // Each ITenantScoped type and every type a navigation of one holds, at any level, short of the parts of another
+    // aggregate, with the types derived from each: walked down from the roots, where the convention climbs up from a part.
+    private static HashSet<IEntityType> TenantScopedAggregateTypes(IModel model)
+    {
+        HashSet<IEntityType> walked = [];
+        Queue<IEntityType> next = new(model.GetEntityTypes().Where(entityType => entityType.ClrType.IsAssignableTo(typeof(ITenantScoped))));
+        while (next.TryDequeue(out var entityType))
+        {
+            if (!walked.Add(entityType))
+            {
+                continue;
+            }
+
+            foreach (var derived in entityType.GetDirectlyDerivedTypes())
+            {
+                next.Enqueue(derived);
+            }
+
+            if (entityType.ClrType.IsAssignableTo(typeof(ITenantScoped)) || !entityType.ClrType.IsAssignableTo(typeof(IAggregateRoot)))
+            {
+                foreach (var navigation in entityType.GetNavigations().Where(navigation => !navigation.IsOnDependent))
+                {
+                    next.Enqueue(navigation.TargetEntityType);
+                }
+            }
+        }
+
+        return walked;
+    }
+
+    // The store tables EF Core maps an entity type to: its own, a base type's under TPT, and each table split from it.
+    private static IEnumerable<string> TablesOf(IEntityType entityType) =>
+        entityType.GetTableMappings().Select(mapping => $"{mapping.Table.Schema ?? entityType.Model.GetDefaultSchema()}.{mapping.Table.Name}".ToLowerInvariant());
 
     [Fact]
     public void A_direct_read_of_a_part_table_and_a_join_to_its_root_without_the_tenant_conjunct_are_rejected()
