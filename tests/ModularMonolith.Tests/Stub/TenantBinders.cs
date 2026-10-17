@@ -1,3 +1,5 @@
+using Catalog.Categories.Entities;
+using Catalog.Categories.ValueObjects;
 using Catalog.Infrastructure.Data.Context;
 using Catalog.Products.Entities;
 using Catalog.Products.ValueObjects;
@@ -203,5 +205,39 @@ internal sealed class ReassignProductCommandHandler(CatalogDbContext dbContext) 
         }
 
         return Result.Success();
+    }
+}
+
+public enum ForgedWrite
+{
+    Attach,
+    Update,
+    Remove,
+}
+
+// Run in a Catalog Operation: builds a category with the key and version named and the Operation's tenant, as a Feature
+// that never loads it might, then attaches it and counts a product on it, updates it, which writes every column, or
+// removes it.
+internal sealed record ForgeCategoryCommand(Guid CategoryId, long Version, ForgedWrite Write) : Command;
+
+internal sealed class ForgeCategoryCommandHandler(CatalogDbContext dbContext, OperationContext context) : CommandHandler<ForgeCategoryCommand>
+{
+    public override Task<Result> Handle(ForgeCategoryCommand command, CancellationToken cancellationToken)
+    {
+        var category = Category.Create(new CategoryId(command.CategoryId), "Forged", context.Tenant!).Value;
+        var entry = command.Write == ForgedWrite.Update ? dbContext.Update(category) : dbContext.Attach(category);
+        entry.Property(forged => forged.Version).CurrentValue = command.Version;
+        entry.Property(forged => forged.Version).OriginalValue = command.Version;
+        switch (command.Write)
+        {
+            case ForgedWrite.Attach:
+                category.CountProduct();
+                break;
+            case ForgedWrite.Remove:
+                dbContext.Remove(category);
+                break;
+        }
+
+        return Task.FromResult(Result.Success());
     }
 }

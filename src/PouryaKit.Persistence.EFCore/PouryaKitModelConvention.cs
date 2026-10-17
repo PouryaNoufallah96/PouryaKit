@@ -9,7 +9,8 @@ namespace PouryaKit.Persistence.EFCore;
 
 // Runs when the model is finished, so it also covers entities a derived DbContext maps after calling the base: every
 // aggregate's Version is its concurrency token, every soft-deletable entity is left out of queries, and so is every
-// tenant-scoped entity of another tenant than the Operation's.
+// tenant-scoped entity of another tenant than the Operation's, whose tenant is a concurrency token too: an UPDATE or
+// DELETE matches the row only under the tenant the entity was loaded or attached with.
 internal sealed class PouryaKitModelConvention(PouryaKitDbContext dbContext) : IModelFinalizingConvention
 {
     private static readonly PropertyInfo OperationTenant = typeof(PouryaKitDbContext).GetProperty(
@@ -45,6 +46,7 @@ internal sealed class PouryaKitModelConvention(PouryaKitDbContext dbContext) : I
             if (typeof(ITenantScoped).IsAssignableFrom(entityType.ClrType))
             {
                 entityType.Builder.HasQueryFilter(PouryaKitDbContext.TenantFilter, OfTheOperationsTenant(entityType.ClrType));
+                entityType.FindProperty(nameof(ITenantScoped.Tenant))?.Builder.IsConcurrencyToken(true);
             }
         }
     }

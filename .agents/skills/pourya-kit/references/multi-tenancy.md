@@ -72,7 +72,7 @@ internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId
 
 - The Unit of Work's prepare step refuses the save with `TenantErrors.Mismatch` (`Tenant.Mismatch`, kind `Forbidden`) and rolls the Operation back when an `ITenantScoped` aggregate it added belongs to another tenant than the Operation's, or one it changed or removed was loaded under another tenant, or had its tenant changed. It judges every aggregate the step attributes a change to: one whose part changed, both holders of a part moved between aggregates, and the parts a removal deletes with it. A removed soft-deletable aggregate is judged by the tenant it was loaded under, before it becomes a mark.
 - So a read that sets `TenantFilter` aside may read another tenant's rows, but an Operation can never save a change to them: it answers 403 over HTTP. It holds wherever an `ITenantScoped` aggregate is saved, as the filter does, in a Module that is tenant-scoped or not, and an Operation without a tenant saves none.
-- What it does not see: an entity attached with `Attach` and a tenant the code invents is judged by that tenant; load aggregates through a query or the repository.
+- An entity attached or updated rather than loaded is judged by the tenant it carries, so the write itself is held to that tenant too: the model convention makes every tenant-scoped root entity's `Tenant` a concurrency token beside `Version`, and each UPDATE and DELETE matches the row only under the tenant the entity was loaded or attached with. One built with another tenant's key and the Operation's tenant matches no row, and the Operation fails with `UnitOfWork.ConcurrencyConflict` (409 over HTTP), not `Tenant.Mismatch`: telling the two apart would take a read of the stored row, and nothing is saved either way. Load aggregates through a query or the repository all the same.
 
 ## Deliveries
 
@@ -84,7 +84,7 @@ internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId
 - In a tenant-scoped Module, no command or query runs without a tenant, a trusted continuation included; it fails with `Tenant.Required` before its validator and handler.
 - An EF Core read of a tenant-scoped entity returns only the Operation's tenant's rows; a cross-tenant read names `TenantFilter`.
 - An application without Modules that declares it on its own services gets the same requirement for the commands and queries of the assemblies it names.
-- No Operation saves a change to another tenant's aggregate it loaded, or moves one between tenants; it fails with `Tenant.Mismatch` and nothing is saved. An aggregate attached with a tenant the code invents is outside this guarantee until #152 lands (see Limits).
+- No Operation saves a change to another tenant's aggregate, or moves one between tenants, and nothing is saved: one it loaded fails with `Tenant.Mismatch`, one it attached with another tenant's key fails with `UnitOfWork.ConcurrencyConflict`.
 - A tenant-scoped Module applies no delivery without a tenant; a delivery with one runs under it.
 - A tenant-scoped Module composes no recurring command and no Snapshot whose key two tenants could share.
 
@@ -101,5 +101,5 @@ internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId
 - Over HTTP the tenant is the authenticated caller's claim: the test scheme issues it from its tenant header, `AppFixture.Client(caller, tenant, permissions)`.
 - `GatewayTestExtensions`' calls without a context run with no tenant, so a tenant-scoped Module refuses them; pass a context with a tenant. The Proving Sample's tests add `CatalogGatewayExtensions`, the same calls for Catalog in a test tenant.
 - Show the requirement with a context without a tenant, and for a continuation with a context continued inside an Operation of a Module that is not tenant-scoped.
-- Show the save check with two tenants: load the other tenant's aggregate with `TenantFilter` set aside in a handler, change its root, a part, move a part in or out, remove it, and expect `TenantErrors.Mismatch` with its rows unchanged; make the same change to the Operation's own tenant's to show it saves (`TenantOwnershipTests`).
+- Show the save check with two tenants: load the other tenant's aggregate with `TenantFilter` set aside in a handler, change its root, a part, move a part in or out, remove it, and expect `TenantErrors.Mismatch` with its rows unchanged; make the same change to the Operation's own tenant's to show it saves (`TenantOwnershipTests`). Show the write's own guard the same way: build an aggregate with the other tenant's stored key and version and the Operation's tenant, attach it and change it, update it or remove it, and expect `UnitOfWork.ConcurrencyConflict` with its row unchanged.
 - Show a delivery refusal by sending to the subscription's queue with the Kit's headers and no tenant, then reading the dead letter (`TenantDeliveryTests`).

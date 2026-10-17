@@ -1,6 +1,6 @@
 ---
 name: persistence-and-dapper-facts
-description: EF Core 10, Npgsql, dotnet-ef and Ardalis facts, Module Unit of Work routing, Dapper reads and the transaction seam, persistence preparation and conflict tests, paging
+description: EF Core 10, Npgsql, dotnet-ef and Ardalis facts, the tenant concurrency token (#152), Module Unit of Work routing, Dapper reads and the transaction seam, persistence preparation and conflict tests, paging
 metadata:
   type: project
 ---
@@ -43,7 +43,7 @@ Check the merged code before relying on a design note. Each section names its ti
 - **Two-scope race technique:** a Stub command begun as a Catalog Operation (`BeginOperation(ctx, typeof(CatalogModule))` + `IDispatcher`) runs the real Feature nested, signals a `TaskCompletionSource`, then awaits a release. Wait for both signals before releasing the first, await it, then release the second. Holding *after* both nested changes ensures both Operations track the pre-commit row, so the loser conflicts at save. A spec query begun only after the winner commits may instead miss the row through the soft-delete filter.
 - **TestClock never reaches a Gateway Operation:** the dispatcher rebinds `DomainClock` with the Host's `TimeProvider`. Build a second Host with `ModularMonolithHost.CreateBuilder([...connection string])` then `builder.Services.AddSingleton<TimeProvider>(clock.Time)` (Cqrs TryAdds; last wins). It may remain unstarted only for Operations needing no running hosted service. Notification, Integration Event or Snapshot delivery paths need a started Host; stop or dispose it afterward (`PersistencePreparationTests`).
 - **`dotnet ef migrations remove` corrupted the Stub snapshot** because the last migration by ID was a hand-dated SQL-only one (no Designer). Never use remove there: delete the files and `git checkout` the snapshot. Rename a generated migration's timestamp (files + `[Migration]` id) to sort after hand-dated ones.
-- Model snapshot drift (e.g. `IsConcurrencyToken`) makes `Migrate()` throw in EF 9+, so a convention change needs a migration in every DbContext, the test-only Stub's too (temporary `IDesignTimeDbContextFactory` + temporary Design package, both removed after).
+- Model snapshot drift with a schema effect makes `Migrate()` throw in EF 9+, so such a convention change needs a migration in every DbContext, the test-only Stub's too (temporary `IDesignTimeDbContextFactory` + temporary Design package, both removed after). A concurrency token alone on an existing column is not drift (#152, EF 10.0.12): `dotnet ef migrations has-pending-model-changes` reported none and every fixture migrated with the old snapshots.
 - `Enumerable.Except` is a set operation: it silently deduplicates the left side.
 - `CascadeDeleteTiming.OnSaveChanges` is what keeps a soft-deleted aggregate's owned parts and children; with `Immediate`, `Remove` marks them Deleted before the prepare step and the save fails.
 - #11 fix round (review F1): the walk reads a child's holder from both the current and the original FK value, so a moved child bumps both aggregates and a nulled optional key bumps the one it left; an untracked holder throws (an unloaded aggregate cannot conflict). The Stub `Folder` has pages (required key), stickers (optional key) and `MovePage`; EF reparents a child moved between two tracked collections as an FK update, not an orphan delete.
@@ -107,7 +107,12 @@ Check the merged code before relying on a design note. Each section names its ti
 - **Fixtures:** the Stub's `Binder` (tenant-scoped, hard-deleted, sheets on a required key) and `Docket` (key `(Tenant, Id)`), migration `TenantBinders`; a product's reassignment runs as a Stub command in a scope begun for `CatalogModule`, setting `dbContext.Entry(product).Property(p => p.Tenant).CurrentValue`. A mutation judging only directly changed entries leaves the child and both move cases red, so the attribution is what proves them.
 - **Read the Operation's tenant only when a tenant-scoped entity changed** (#117 review F3), as the stamp reads its Actor: an unchanged tracked one must not need a context. A scope nobody began runs commands only in a bare `ServiceCollection` (`SingleModuleTests`), where the regression lives.
 - **A migration that adds a tenant to a copy refuses a populated table** (#117 review F2): a copy that kept no tenant cannot learn it, and the applied Snapshot versions stop a replay. A `do $$ ... raise exception ... $$` block in `migrationBuilder.Sql` aborts the migration's transaction; a test undoes it with `dbContext.GetService<IMigrator>().MigrateAsync("<previous migration>")`, writes a row, expects `PostgresException.MessageText`, then empties the table and migrates forward in `finally`.
-- An entity attached with a forged tenant is judged by that tenant (Codex's P1 mentioned attaching): recorded as a limit in the skill, not defended (a concurrency token on `Tenant` would need a migration in every Module).
+- An entity attached with a forged tenant is judged by that tenant; #152 closed it with `Tenant` as a concurrency token (no migration needed, see above): the write then matches no row and fails `UnitOfWork.ConcurrencyConflict`, not `Tenant.Mismatch`.
+
+## Attached-entity ownership (#152, 2026-10-17; EF Core 10.0.12)
+
+- **A forged-attach test must give the stored version**, or the `Version` token alone stops the write and the red run with the tenant token off stays green: the Stub's `ForgeCategoryCommand` sets the entry's `Version` current and original values to 1. Use Catalog's `Category` (no Domain Event on create, hard-deleted) so a removal is a real `DELETE`. Put the row assertion before the Error assertion: the red run then shows the row counted, re-tenanted and deleted.
+- `PouryaKitModelConvention.cs`, `PouryaKitDbContext.cs` and `UnitOfWorkErrors.cs` are cited by no diagram (a brief said otherwise): grep the `*.json` diagram sources before planning a pin.
 
 ## A migration test on a database of its own (#150, 2026-10-17)
 

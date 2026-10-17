@@ -15,7 +15,8 @@ namespace PouryaKit.Persistence.EFCore;
 /// the migrations history table. Every aggregate's <see cref="AggregateRoot{TId}.Version"/> is its concurrency token,
 /// every <see cref="ISoftDeletable"/> entity is left out of queries by a filter named <see cref="SoftDeleteFilter"/>, and
 /// every <see cref="ITenantScoped"/> entity of another tenant than the Operation's by a filter named
-/// <see cref="TenantFilter"/>. Override <see cref="OnModelCreating"/> only to add to it, and call the base.
+/// <see cref="TenantFilter"/>, its tenant a concurrency token too, so no write matches a row of another tenant than the
+/// one the entity was loaded or attached with. Override <see cref="OnModelCreating"/> only to add to it, and call the base.
 /// </summary>
 public abstract class PouryaKitDbContext : DbContext
 {
