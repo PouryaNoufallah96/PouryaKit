@@ -1,0 +1,38 @@
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_3675ccfac3f8b2::t_95821434f1bcbf 173-174
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_95821434f1bcbf 374-375
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_95821434f1bcbf 509
+src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs
+  s_3675ccfac3f8b2::t_08824d92247c16 119,121-125,169
+  s_3675ccfac3f8b2::t_0a5427368463ff 60-61
+  s_3675ccfac3f8b2::t_45237122c3cfd7 120
+  s_3675ccfac3f8b2::t_1a722fe594c4f2 170
+.agents/skills/pourya-kit/references/web.md
+  s_3675ccfac3f8b2::t_95821434f1bcbf 141
+tests/ModularMonolith.Tests/WebConventionTests.cs
+  s_3675ccfac3f8b2::t_0b06315ec15c1c 80
+  s_3675ccfac3f8b2::t_214f8900c8a314 3,5,8
+  s_3675ccfac3f8b2::t_dac47ce393960b 54,67,69-79,81-82,84-95
+  s_3675ccfac3f8b2::t_2ea2d20abc9463 83
+  s_3675ccfac3f8b2::t_090f0fff0c33f6 55-66,68,96-97
+docs/architecture/diagrams/http-command.sequence.json
+  s_3675ccfac3f8b2::t_95821434f1bcbf 77-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e47a147525153d97b29b228f4ec668857598af1b",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
