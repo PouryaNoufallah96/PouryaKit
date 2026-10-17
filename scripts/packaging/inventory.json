@@ -17,6 +17,7 @@
     { "id": "PouryaKit.Email", "type": "PouryaKit.Email.IEmailSender" },
     { "id": "PouryaKit.Email.MailKit", "type": "PouryaKit.Email.MailKit.PouryaKitMailKitOptions" },
     { "id": "PouryaKit.Localization", "type": "PouryaKit.Localization.LocalizationServiceCollectionExtensions" },
+    { "id": "PouryaKit.Aspire", "type": "PouryaKit.Aspire.AspireDistributedApplicationBuilderExtensions" },
     { "id": "PouryaKit.Security.JwtBearer", "type": "PouryaKit.Security.JwtBearer.PouryaKitJwtBearerOptions" },
     { "id": "PouryaKit.Messaging", "type": "PouryaKit.Messaging.WireNameAttribute" },
     { "id": "PouryaKit.Messaging.Wolverine", "type": "PouryaKit.Messaging.Wolverine.IReceipts" },

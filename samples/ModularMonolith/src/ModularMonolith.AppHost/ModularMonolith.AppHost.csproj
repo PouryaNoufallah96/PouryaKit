@@ -1,0 +1,14 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.1">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <UserSecretsId>pouryakit-modular-monolith-apphost</UserSecretsId>
+    <!-- The orchestrator comes from NuGet with this SDK, so the AppHost runs with Docker alone and no Aspire CLI. -->
+    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Inventory.Host\Inventory.Host.csproj" />
+    <ProjectReference Include="..\ModularMonolith.Host\ModularMonolith.Host.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.Aspire\PouryaKit.Aspire.csproj" IsAspireProjectResource="false" />
+  </ItemGroup>
+</Project>

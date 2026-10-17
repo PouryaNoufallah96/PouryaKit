@@ -29,6 +29,8 @@ public sealed class PackageGraphTests
         Assert.Equal(["PouryaKit.Domain"], Restored("PouryaKit.Storage").Projects);
         // The providers reference Cqrs for their one-provider composition check (#147); their contracts stay on Domain alone.
         Assert.Equal(["PouryaKit.Domain"], Restored("PouryaKit.Email").Projects);
+        // Aspire's hosting packages arrive in the AppHost-only package, where they are allowed, and there alone (#130).
+        Assert.Contains(Restored("PouryaKit.Aspire").Packages, arrived => arrived.Id == "Aspire.Hosting");
     }
 
     [Fact]
@@ -83,6 +85,11 @@ public sealed class PackageGraphTests
         Assert.Equal(
             ["PouryaKit.Caching's closure holds StackExchange.Redis, which section C keeps out of it."],
             PackageGraph.Violations(caching with { Packages = [.. caching.Packages, Arrived("StackExchange.Redis")] })
+        );
+        // Every package but the AppHost-only one keeps Aspire out, as Caching, whose row names no rule of its own for it.
+        Assert.Equal(
+            ["PouryaKit.Caching's closure holds Aspire.Hosting, which section C keeps out of it."],
+            PackageGraph.Violations(caching with { Packages = [.. caching.Packages, Arrived("Aspire.Hosting")] })
         );
         var storage = Restored("PouryaKit.Storage");
         Assert.Equal(

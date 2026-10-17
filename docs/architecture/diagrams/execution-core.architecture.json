@@ -409,8 +409,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 103,
-          "end_line": 104,
+          "line": 109,
+          "end_line": 110,
           "label": "no exporter"
         }
       ]
@@ -463,8 +463,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 105,
-          "end_line": 106,
+          "line": 111,
+          "end_line": 112,
           "label": "never Redis"
         }
       ]
@@ -659,6 +659,40 @@
           "line": 18,
           "end_line": 33,
           "label": "request culture from Accept-Language"
+        }
+      ]
+    },
+    {
+      "id": "aspire",
+      "type": "cloud",
+      "label": "PouryaKit.Aspire",
+      "sublabel": "AppHost-only containers",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 85,
+          "end_line": 88,
+          "label": "references no Kit package"
+        },
+        {
+          "path": "src/PouryaKit.Aspire/AspireDistributedApplicationBuilderExtensions.cs",
+          "line": 20,
+          "end_line": 42,
+          "label": "pinned images, named volumes"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 143,
+          "end_line": 147,
+          "label": "Aspire in no other package"
         }
       ]
     }
@@ -880,7 +914,8 @@
         "Security.JwtBearer references Security alone; the tenant claim type it writes is PouryaKitClaimTypes of PouryaKit.Cqrs, reached through Security.",
         "Cqrs, Security, Web, Persistence.EFCore and Persistence.Dapper reference PouryaKit.Core for its helpers, such as ImplementingTypes.",
         "Storage, the file storage contract, references Domain alone; Storage.S3, its S3 provider, references Storage and the AWS SDK, and a Host registers exactly one provider.",
-        "Localization, optional, records a Module's Feature assemblies through Cqrs and sets each request's culture, English or Persian, from its Accept-Language header; the Proving Sample's Hosts reference none of it."
+        "Localization, optional, records a Module's Feature assemblies through Cqrs and sets each request's culture, English or Persian, from its Accept-Language header; the Proving Sample's Hosts reference none of it.",
+        "Aspire, AppHost-only, references no Kit package: an Aspire AppHost adds PostgreSQL, Redis and RabbitMQ through it, each on a pinned image with a named volume, and no other Kit package's closure holds an Aspire package."
       ]
     }
   ]

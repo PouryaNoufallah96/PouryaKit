@@ -287,8 +287,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 99,
-          "end_line": 102,
+          "line": 105,
+          "end_line": 108,
           "label": "Wolverine and RabbitMq keep no database"
         }
       ]
