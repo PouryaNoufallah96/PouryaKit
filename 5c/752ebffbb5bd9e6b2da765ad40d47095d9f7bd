@@ -1,0 +1,129 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_bcc808dbd51e84 3,41
+.agents/skills/pourya-kit/references/grpc.md
+  s_b9a8adfb056e1c::t_1b4b98d616189f 1-108
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_046eb017ac36d9 12,19
+.claude/agent-memory/kit-implementer/grpc-facts.md
+  s_b9a8adfb056e1c::t_7165242c4cb640 1-21
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_b9a8adfb056e1c::t_9d1d51b9665235 143-147
+Directory.Packages.props
+  s_b9a8adfb056e1c::t_844a4c678750f3 15-19
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_4905f0ff9716e1 9
+README.md
+  s_b9a8adfb056e1c::t_ca727c03125b88 29
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_84f4cb3c4090cc 2259-2284
+docs/adr/0008-one-problem-response-for-every-http-failure.md
+  s_b9a8adfb056e1c::t_87ff7cf870fe08 59-80
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_ad68bd169b043a 3,44,52,54,550-566
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_c99f419cd640c2 412-413,466-467,664-696,700-707,924-925
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_993fd9510a65aa 37-38,51-52
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_37530a260306a8 93-94,121-122,127-128,235-236,297,324-325,330-331,352-353,435,448-449,454
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_2a4507a89438b5 290-291
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_10d7b2d6a8eb8c 31-32,105-106,202,264-265,360
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_8d12ed2cc0da64 59-60,65-66,189-190,202,286-287,314
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_8ad54649d9bfab 284,871
+docs/provenance/ModularMonolith.md
+  s_b9a8adfb056e1c::t_ffe73044f2da18 21
+docs/provenance/PouryaKit.Grpc.md
+  s_b9a8adfb056e1c::t_8e8895ce317219 1-31
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_b9a8adfb056e1c::t_0c444af48299ae 8,129-130
+samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj
+  s_b9a8adfb056e1c::t_fd895da45fafa7 5-13
+samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/products.proto
+  s_b9a8adfb056e1c::t_c308bb4678f76b 1-22
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_b9a8adfb056e1c::t_ae61a32d22398d 11
+samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs
+  s_b9a8adfb056e1c::t_08ee37e906e568 13,46-47
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/GetProduct/ProductGrpcService.cs
+  s_b9a8adfb056e1c::t_2484b8ac425cb7 1-25
+scripts/packaging/consumers/PouryaKit.Grpc.cs
+  s_b9a8adfb056e1c::t_881f04f78e7241 1-50
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_3fd817119558ec 28,42,48,55
+src/PouryaKit.Grpc/Clients/GrpcClientServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_2ef96fe0cff38a 1-71
+src/PouryaKit.Grpc/Clients/GrpcLoopbackCheck.cs
+  s_b9a8adfb056e1c::t_3b6361f4bd1a71 1-85
+src/PouryaKit.Grpc/Clients/OperationContextCallOptions.cs
+  s_b9a8adfb056e1c::t_3fb41a77d4d60d 1-30
+src/PouryaKit.Grpc/Clients/OperationContextInterceptor.cs
+  s_b9a8adfb056e1c::t_92cf24a3b5ad8b 1-60
+src/PouryaKit.Grpc/Clients/PouryaKitGrpcClientOptions.cs
+  s_b9a8adfb056e1c::t_2f76950b353684 1-14
+src/PouryaKit.Grpc/PouryaKit.Grpc.csproj
+  s_b9a8adfb056e1c::t_7f3b6e84a7b94d 1-14
+src/PouryaKit.Grpc/Services/GrpcEndpointRouteBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_484691918b5c61 1-66
+src/PouryaKit.Grpc/Services/GrpcServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_ac6116cda244d0 1-48
+src/PouryaKit.Grpc/Services/ResultGrpcExtensions.cs
+  s_b9a8adfb056e1c::t_64a220ca9c610f 1-79
+src/PouryaKit.Grpc/Services/UnmappedGrpcServicesCheck.cs
+  s_b9a8adfb056e1c::t_939d6a6b7457c0 1-30
+src/PouryaKit.Templates/PouryaKit.Templates.csproj
+  s_b9a8adfb056e1c::t_c37f60ad4a1a43 24
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_b9a8adfb056e1c::t_b521f018de462e 9,25-27
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/AppHost.cs
+  s_b9a8adfb056e1c::t_0636e0992092ec 7,98-99
+src/PouryaKit.Templates/content/modular/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_b9a8adfb056e1c::t_26723dd191095c 7
+src/PouryaKit.Templates/content/monolith/.template.config/template.json
+  s_b9a8adfb056e1c::t_94180a2dc67cb8 70
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_b9a8adfb056e1c::t_721241d33e58a5 9,24-26
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/AppHost.cs
+  s_b9a8adfb056e1c::t_562a8cde6ea581 5,93-94
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_b9a8adfb056e1c::t_97f78b6188c7a3 8
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/CatalogModule.cs
+  s_b9a8adfb056e1c::t_479cde76ef649f 10,13,51-52
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/Products/Features/GetProduct/ProductGrpcService.cs
+  s_b9a8adfb056e1c::t_6ed124be4dfad9 1-23
+src/PouryaKit.Templates/content/shared/src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj
+  s_b9a8adfb056e1c::t_81998bbb5b70c2 1-11
+src/PouryaKit.Web/OperationContextHttpHeaders.cs
+  s_b9a8adfb056e1c::t_e1561418b6ebc6 26-28
+src/PouryaKit.Web/PouryaKit.Web.csproj
+  s_b9a8adfb056e1c::t_f57a4e9ae816d2 8-11
+src/PouryaKit.Web/ProblemResponses/ResultHttpExtensions.cs
+  s_b9a8adfb056e1c::t_44e377f78a08e2 64,79-84
+tests/ModularMonolith.Tests/GrpcTests.cs
+  s_b9a8adfb056e1c::t_d588bf6149db78 1-448
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_6e80090ba08cb7 84-85,112-113
+tests/PouryaKit.ArchitectureTests/SharedJsonTests.cs
+  s_b9a8adfb056e1c::t_ed1fce5991478b 10-12,25,46
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_b9a8adfb056e1c::t_ea2687a4186559 90,145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5c752ebffbb5bd9e6b2da765ad40d47095d9f7bd",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
