@@ -1,8 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
+using ModularMonolith.Tests.Unversioned;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Testing;
@@ -46,6 +49,50 @@ public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(ap
         Assert.Equal(own.OperationId, own.CorrelationId);
         Assert.Null(own.CausationId);
         Assert.Equal(new SeenActor(ReadOperationContextEndpoint.Visitor.Id, ActorKind.System), visitor.Actor);
+    }
+
+    [Fact]
+    public async Task A_nested_group_that_also_begins_the_operation_serves_its_endpoints_with_one_operation()
+    {
+        await using var host = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
+        var root = host.MapGroup("/root").RequireAuthorization().BeginOperationPerRequest();
+        new ReadOperationContextEndpoint().Map(root.MapGroup("/nested").BeginOperationPerRequest());
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var person = AppFixture.ClientOf(host, "grace", "acme");
+
+        var nested = await ContextAsync(person, "/root/nested/context");
+        await host.StopAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(new SeenActor("grace", ActorKind.Person), nested.Actor);
+        Assert.Equal("acme", nested.Tenant);
+        Assert.Equal(nested.OperationId, nested.CorrelationId);
+    }
+
+    [Fact]
+    public async Task Module_endpoints_mapped_under_a_root_group_that_begins_the_operation_begin_it_once()
+    {
+        var builder = WebApplication.CreateBuilder(["--environment", "Development"]);
+        builder.WebHost.UseTestServer();
+        builder
+            .Services.AddAuthentication(TestAuthentication.SchemeName)
+            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
+        builder.Services.AddAuthorization();
+        builder.Services.AddPouryaKitCqrs();
+        builder.Services.AddPouryaKitWeb();
+        builder.Services.AddPouryaKitEndpoints("/plain", typeof(UnversionedEndpoints).Assembly);
+        builder.AddPouryaKitCompositionChecks();
+        await using var host = builder.Build();
+        host.UseRouting();
+        host.UseAuthentication();
+        host.UseAuthorization();
+        host.MapGroup("/root").BeginOperationPerRequest().MapPouryaKitModuleEndpoints();
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var person = AppFixture.ClientOf(host, "grace");
+
+        var response = await person.GetAsync("/root/plain/actor", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("grace", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
