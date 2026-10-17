@@ -10,8 +10,8 @@ namespace PouryaKit.Storage.AzureBlob;
 internal sealed class AzureBlobFileStorage(PouryaKitAzureBlobStorageOptions options) : IFileStorage
 {
     private readonly BlobContainerClient _container = (
-        options.ConnectionString is { } connectionString
-            ? new BlobServiceClient(connectionString)
+        !string.IsNullOrWhiteSpace(options.ConnectionString)
+            ? new BlobServiceClient(options.ConnectionString)
             : new BlobServiceClient(options.ServiceUrl, new StorageSharedKeyCredential(options.AccountName, options.AccountKey))
     ).GetBlobContainerClient(options.Container);
 

@@ -111,13 +111,16 @@ public sealed class AzureBlobStorageTests(AzuriteFixture fixture) : IClassFixtur
         Assert.True((await fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromDays(7), Cancel)).IsSuccess);
     }
 
-    [Fact]
-    public async Task A_host_bound_to_the_service_url_and_account_key_stores_a_file_and_signs_its_link()
+    [Theory]
+    [InlineData(null)]
+    [InlineData(" ")]
+    public async Task A_host_bound_to_the_service_url_and_account_key_stores_a_file_and_signs_its_link(string? connectionString)
     {
         using var host = AzuriteFixture.ComposeHost(
             new()
             {
                 ["PouryaKit:Storage:AzureBlob:Container"] = AzuriteFixture.Container,
+                ["PouryaKit:Storage:AzureBlob:ConnectionString"] = connectionString,
                 ["PouryaKit:Storage:AzureBlob:ServiceUrl"] = fixture.BlobEndpoint,
                 ["PouryaKit:Storage:AzureBlob:AccountName"] = AzuriteFixture.AccountName,
                 ["PouryaKit:Storage:AzureBlob:AccountKey"] = AzuriteFixture.AccountKey,
