@@ -106,7 +106,9 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
     {
         var refused = await fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromSeconds(seconds), Cancel);
 
-        Assert.Equal(StorageErrors.LinkLifetimeOutOfRange, Assert.Single(refused.Errors));
+        var error = Assert.Single(refused.Errors);
+        Assert.Equal(StorageErrors.LinkLifetimeOutOfRange(TimeSpan.FromDays(7)), error);
+        Assert.Contains("7.00:00:00", error.Message);
     }
 
     [Fact]

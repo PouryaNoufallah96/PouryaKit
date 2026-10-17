@@ -79,7 +79,7 @@ internal sealed class S3FileStorage : IFileStorage, IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         if (lifetime <= TimeSpan.Zero || lifetime > MaxLinkLifetime)
         {
-            return StorageErrors.LinkLifetimeOutOfRange;
+            return StorageErrors.LinkLifetimeOutOfRange(MaxLinkLifetime);
         }
 
         // The SDK's call takes no token and completes at once with a configured key pair, so a token cancelled already is

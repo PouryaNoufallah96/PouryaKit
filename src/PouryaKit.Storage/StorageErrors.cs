@@ -12,8 +12,8 @@ public static class StorageErrors
     /// A presigned link's lifetime is zero or less, or longer than the provider signs a link for: S3 signs one for at most
     /// seven days. No link was signed.
     /// </summary>
-    public static readonly Error LinkLifetimeOutOfRange = Error.Validation(
+    public static Error LinkLifetimeOutOfRange(TimeSpan maximum) => Error.Validation(
         "Storage.LinkLifetimeOutOfRange",
-        "The link's lifetime is zero or less, or longer than the file storage provider signs a link for."
+        $"The link's lifetime is zero or less, or longer than the {maximum} the file storage provider signs a link for."
     );
 }
