@@ -10,7 +10,8 @@ namespace PouryaKit.Aspire.Tests;
 // testing builder runs it.
 public sealed class AppHostTests
 {
-    // Fixed, so the named volumes one run initialises with these credentials serve the next.
+    // Fixed, so the volumes one run initialises with these credentials serve the next. The start test keeps its own volumes,
+    // so a developer's, initialised with the passwords the AppHost generates, are never opened with these.
     private static readonly string[] Arguments =
     [
         "Parameters:postgres-password=apphost-tests",
@@ -63,6 +64,13 @@ public sealed class AppHostTests
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         timeout.CancelAfter(TimeSpan.FromMinutes(5));
         await using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.ModularMonolith_AppHost>(Arguments, timeout.Token);
+        foreach (var container in builder.Resources.OfType<ContainerResource>())
+        {
+            var mount = container.Annotations.OfType<ContainerMountAnnotation>().Single();
+            container.Annotations.Remove(mount);
+            container.Annotations.Add(new ContainerMountAnnotation($"{mount.Source}-tests", mount.Target, mount.Type, mount.IsReadOnly));
+        }
+
         await using var app = await builder.BuildAsync(timeout.Token);
         await app.StartAsync(timeout.Token);
 

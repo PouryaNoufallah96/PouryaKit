@@ -96,7 +96,7 @@ Set the parameter to a base64 key of at least 32 bytes in the AppHost's user sec
 
 ## Running it
 
-`dotnet run --project samples/ModularMonolith/src/ModularMonolith.AppHost` starts the containers and both Hosts, and Aspire's dashboard for a developer. It needs Docker and the .NET SDK, no Aspire workload or CLI.
+`dotnet run --project samples/ModularMonolith/src/ModularMonolith.AppHost` starts the containers and both Hosts, and Aspire's dashboard for a developer, at the login URL it logs. It needs Docker and the .NET SDK, no Aspire workload or CLI, and the `bearer-signing-key` parameter set first, in the AppHost's user secrets or as the environment variable `Parameters__bearer-signing-key`.
 
 A named volume keeps the credentials it was first initialised with. Aspire generates each server's password as a parameter (`postgres-password`, `cache-password`, `broker-password`) and keeps it in the AppHost's user secrets, which is why the AppHost has a `UserSecretsId`. Set a password yourself, and the volume made with another one refuses it: remove the volume (`docker volume rm`) or keep the first password.
 
@@ -117,7 +117,7 @@ using var inventory = app.CreateHttpClient("inventory");
 
 - The model test reads the builder without starting it: every resource's name, as an allow-list, each container's image and its one volume mount, and the resources each Host references.
 - The start test runs the containers and both Hosts as processes, waits for each Host, and asks `Inventory.Host`'s `/alive` and an endpoint of `ModularMonolith.Host`, which refuses an anonymous caller with 401 once it serves; the running model is still the allow-list, so no dashboard joined it.
-- The test fixes each server's password, so the named volumes one run leaves serve the next.
+- The tests fix each server's password, and the start test moves each volume to a name ending `-tests`: its volumes serve its next run, and a developer's, made with the passwords the AppHost generated, are never opened with the test's, which would fail every health check.
 - The project lives beside `ModularMonolith.Tests` because it shares none of its fixtures: the AppHost starts the Hosts as processes, never in memory.
 
 ## Limits
