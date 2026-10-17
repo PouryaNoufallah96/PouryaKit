@@ -16,9 +16,9 @@ public static class S3StorageServiceCollectionExtensions
         /// The Host binds the options from configuration; <paramref name="configure"/> sets them in code instead. The
         /// Host fails when it starts, naming each problem, when the options name no bucket or region, a service URL
         /// that is not an absolute HTTP or HTTPS address, or an access key without its secret key or the reverse. A Host
-        /// composes exactly one <see cref="IFileStorage"/>: one that registers another, before or after this call, a
-        /// second call included, fails when its container is built, through the Kit's composition checks, naming each
-        /// registration's type.
+        /// composes exactly one <see cref="IFileStorage"/>: its build fails, through the Kit's composition checks, naming
+        /// each registration's type when it registers another, before or after this call, a second call included, and
+        /// naming the contract when it removes this one.
         /// </summary>
         public IServiceCollection AddPouryaKitS3Storage(Action<PouryaKitS3StorageOptions>? configure = null)
         {

@@ -7,7 +7,9 @@ namespace PouryaKit.Web;
 
 /// <summary>
 /// The Operation Context on a request between Kit Hosts, in the same names and format as PouryaKit.Messaging's
-/// <c>OperationContextHeaders</c>: one vocabulary, and one codec for every transport that carries it in headers.
+/// <c>OperationContextHeaders</c>: one vocabulary, and one codec for Web and the transports that reuse its reader, such
+/// as gRPC metadata. Messaging's envelopes keep their own extension, <c>WithOperationContext</c>, without this codec's
+/// value rule.
 /// </summary>
 public static class OperationContextHttpHeaders
 {

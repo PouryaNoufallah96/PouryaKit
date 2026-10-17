@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
@@ -151,6 +152,22 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
 
         Assert.Equal(
             $"The Host registers 2 IEmailSender providers, {string.Join(", ", registered)}, and composes exactly one: remove all but one of its email sender registrations.",
+            thrown.Message
+        );
+    }
+
+    [Fact]
+    public void A_host_that_removes_the_email_sender_fails_when_it_is_built_naming_the_contract()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder();
+        builder.AddPouryaKitCompositionChecks();
+        builder.Services.AddPouryaKitMailKit();
+        builder.Services.RemoveAll<IEmailSender>();
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            "The Host registers no IEmailSender provider, and composes exactly one: AddPouryaKitMailKit registered one, then it was removed.",
             thrown.Message
         );
     }

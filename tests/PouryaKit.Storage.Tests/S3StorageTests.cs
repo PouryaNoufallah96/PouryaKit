@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using PouryaKit.Cqrs;
@@ -159,6 +160,22 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
 
         Assert.Equal(
             $"The Host registers 2 IFileStorage providers, {string.Join(", ", registered)}, and composes exactly one: remove all but one of its file storage registrations.",
+            failure.Message
+        );
+    }
+
+    [Fact]
+    public void A_host_that_removes_the_file_storage_provider_fails_when_it_is_built_naming_the_contract()
+    {
+        var builder = Host.CreateApplicationBuilder();
+        builder.AddPouryaKitCompositionChecks();
+        builder.Services.AddPouryaKitS3Storage();
+        builder.Services.RemoveAll<IFileStorage>();
+
+        var failure = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            "The Host registers no IFileStorage provider, and composes exactly one: AddPouryaKitS3Storage registered one, then it was removed.",
             failure.Message
         );
     }
