@@ -2210,3 +2210,14 @@ Ticket #156 of spec #115, raised by Codex on PR #143 (thread `PRRT_kwDOU7M5js6ti
 | Checks | | `dotnet build PouryaKit.slnx`: 0 warnings, 0 errors. `WebConventionTests`: 4 passed. `ModularMonolith.Tests`: 717 passed |
 | Diagrams | execution-core, http-command and module-boundaries, whose cited range of `WebEndpointRouteBuilderExtensions.cs` moved from 149-158 to 157-166, re-ranged and pinned to `e47a147525153d97b29b228f4ec668857598af1b`, refinalized: `ok true, status pass` each | One line of each source and page changed |
 | Package validation | | `python3 scripts/packaging/validate.py --no-fetch --since f86c4474` on `62721746`: `PASS 26 packages, 29 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, template-modular-monolith (-n acme-shop) 5), negative controls and MinVer proof.` at version `0.1.0-preview.0.67`, the version its manifest records for that commit |
+
+## Quality-weighted request culture, ticket #157
+
+Ticket #157 of spec #115, raised by Codex on PR #143 (thread `PRRT_kwDOU7M5js6tjOe2`): `AddPouryaKitLocalization`'s summary, `HeaderRequestCulture`'s comment and the skill's [localization.md](../.agents/skills/pourya-kit/references/localization.md) said a request runs in the first supported culture the `Accept-Language` header lists, while the framework's `AcceptLanguageHeaderRequestCultureProvider` orders the first 16 values by quality. The three now say the supported culture with the highest quality among the first 16 values, ties in listed order. No behaviour change.
+
+| Criterion | Test or change | Evidence |
+|---|---|---|
+| A lower-quality English listed first yields to a higher-quality Persian | `LocalizationTests.The_same_key_resolves_in_the_culture_of_the_accept_language_header`, row `en;q=0.1, fa;q=1` expecting Persian | Red once with the row expecting English: the answer was Persian |
+| Docs | `AddPouryaKitLocalization`'s summary, `HeaderRequestCulture`'s comment and the skill's [localization.md](../.agents/skills/pourya-kit/references/localization.md), each with its line count kept | `check-docs.py` and `check-ai-setup.py`: 0 failures |
+| Checks | | `dotnet build PouryaKit.slnx`: 0 errors. `LocalizationTests`: 12 passed |
+| Diagram | execution-core, whose two cited Localization files changed above their unmoved ranges (32-44 and 18-33), pinned to `89b1fdf5dd9407a6f15efb11aaa868697cbc5e04`, refinalized: `ok true, status pass` | Source and HTML SHA-256: `321c0b850b10ff618abcf6c2ebf7a60e49827e2aceca8f46de010df87857a42f`, `1499ba4b6b825509b15f0057b2e4b79c56dd038eae59b3e79de6b471a2d67f9f` |

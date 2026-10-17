@@ -76,5 +76,10 @@ HybridCache decompiled with ilspycmd.
 - **`HybridQueryCache.Key` includes `CultureInfo.CurrentUICulture.Name`** (after the Actor id), so a localized cached query answers per culture. `TypeKeyTests` pins the full key literal (`...|north|Person|ada|en|lamp`) and runs outside HTTP in the process culture: it sets `CultureInfo.CurrentUICulture` to `en` in its own async flow. Any key change edits that literal; the full suite, not `CachingTests`, catches it.
 - Changing `HybridQueryCache.cs` above line 137 moves two diagrams' ranges (execution-core line 15, http-command 25-103 and 112-137 as of #125): adding a using shifts them all.
 
+## Accept-Language is quality-ordered (#157, 2026-10-17)
+
+- `AcceptLanguageHeaderRequestCultureProvider` takes the first `MaximumAcceptLanguageHeaderValuesToTry` values, then orders them by quality (stable, so ties keep listed order); the middleware picks the first supported. `en;q=0.1, fa;q=1` runs in Persian. Say "highest quality among the first 16", never "first listed".
+- A comment edit above `HeaderRequestCulture.cs` 18-33 or `LocalizationServiceCollectionExtensions.cs` 32-44 (execution-core) still needs the two-commit pin even with line counts kept: interim pin to the integration tip staged with the code, then pin to the code commit and refinalize (`scratchpad/p125/finalize125b.py <wt> <sha> execution-core:architecture`).
+
 **Why:** these decided the #42 and #43 shapes or a test of them, or cost a run.
 **How to apply:** for any Kit table written in the Unit of Work's transaction or cleaned across Modules, any race test, any endpoint opt-in, any Kit `BackgroundService` or test that drives one with the test clock, any HybridCache use, any slot that runs Feature code inside a library callback, and any single-flight or Redis test. Related: [[persistence-and-dapper-facts]], [[cqrs-and-modularity-facts]], [[web-security-and-openapi-facts]].
