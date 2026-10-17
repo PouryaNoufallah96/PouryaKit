@@ -1,0 +1,87 @@
+# Reverse proxy
+
+`PouryaKit.ReverseProxy`: a Host of its own process, on YARP, in front of a system's Hosts. It forwards each request by the routes and clusters of its configuration to a Host that service discovery resolves, probes each Host's liveness path, and runs no Operation. Namespace `PouryaKit.ReverseProxy`. It references the ASP.NET Core shared framework, `Yarp.ReverseProxy` and `Microsoft.Extensions.ServiceDiscovery.Yarp`, and no Kit package. In the glossary it is the Reverse proxy; a Gateway is a Module's own entry point.
+
+- [Composing the proxy](#composing-the-proxy)
+- [Routes, clusters and discovery](#routes-clusters-and-discovery)
+- [What the Kit guarantees](#what-the-kit-guarantees)
+- [Limits](#limits)
+- [Testing](#testing)
+
+## Composing the proxy
+
+The proxy is an application of its own, beside the Hosts it fronts. The Proving Sample's is `ModularMonolith.ReverseProxy`, and each `dotnet new` template generates `src/<name>.ReverseProxy` in front of its Host ([templates.md](templates.md)):
+
+```csharp
+using PouryaKit.ReverseProxy;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults();
+builder.AddPouryaKitReverseProxy();
+
+var app = builder.Build();
+app.MapDefaultEndpoints();
+app.MapReverseProxy();
+await app.RunAsync();
+```
+
+- `AddServiceDefaults()` is the application's service defaults ([host-recipes.md](host-recipes.md)): its OpenTelemetry records the proxy's spans, and its `AddServiceDiscovery()` registers the endpoint providers that resolve a destination. Without them, discovery has no provider to ask.
+- `AddPouryaKitReverseProxy()` loads the routes and clusters, adds the liveness probe and service discovery's destination resolver. `MapReverseProxy()` is YARP's own.
+- The proxy authenticates no one and adds no Kit pipeline; each Host it fronts authenticates its own callers.
+
+## Routes, clusters and discovery
+
+Routes and clusters are YARP's configuration, in the `ReverseProxy` section (`ReverseProxyHostApplicationBuilderExtensions.SectionName`), and change with it at run time. A destination whose address names a service resolves into one destination per endpoint the `Services` section, or another provider, lists for it:
+
+```json
+{
+  "ReverseProxy": {
+    "Routes": {
+      "shop": { "ClusterId": "shop", "Match": { "Path": "{**catch-all}" } }
+    },
+    "Clusters": {
+      "shop": { "Destinations": { "host": { "Address": "http://shop" } } }
+    }
+  },
+  "Services": {
+    "shop": { "http": ["localhost:5080"] }
+  }
+}
+```
+
+- Each cluster probes `/alive` on every destination, the liveness path a Host composing the service defaults maps in every environment, every 15 seconds; two failed probes in a row take the destination out of the cluster until a probe succeeds. A cluster's own `HealthCheck:Active` settings win: `Path` names another path, `Interval` another period, and `Enabled: false` turns the probe off for a Host that maps no `/alive`, as the Proving Sample's settings do for `ModularMonolith.Host`.
+- When every destination of a cluster is out, YARP answers its requests with 503.
+
+## What the Kit guarantees
+
+- A route's destination that names a service is resolved by service discovery into the service's endpoints, and an endpoint whose liveness probe fails drops out of its cluster while the others keep answering.
+- A request keeps the client's trace: the trace id arrives at the Host unchanged, and the parent of the Host's request is the proxy's own span, never the client's span passed through (spec #115, P1). YARP's default propagator does it, and the service defaults' HttpClient instrumentation writes the same context. A Host's Operation is a child of its request, so the whole request is one trace from the client through the proxy to the Operation.
+- Nothing is stripped: the client's bearer token reaches the Host as the client's own `Authorization` header, and the Kit's Operation Context headers as sent. A Host honours those headers only from a caller it authenticates as a trusted peer ([security.md](security.md#continuations)), so a client that is not one gains nothing by sending them through the proxy.
+- No Operation runs in the proxy: no Kit package reaches its closure.
+
+## Limits
+
+- Liveness only: no readiness probe outside Development, and `/health`, which asks each database, stays a Development endpoint of the service defaults.
+- No transform, rate limit, authentication or response cache of the proxy's own; add YARP's where the application needs them, in its own composition.
+- Routes and clusters come from configuration only; there is no code-built route.
+
+## Testing
+
+Front a Host that listens on a real port, so YARP forwards over the network as it does when deployed, and serve the proxy in memory. The Proving Sample's `ReverseProxyTests` runs `ModularMonolith.Host` on Kestrel with the service defaults' health checks and its bearer scheme, then composes the proxy with the Host's endpoint in the `Services` section:
+
+```csharp
+var builder = ReverseProxyHost.CreateBuilder(
+    [
+        "--ReverseProxy:Routes:shop:ClusterId=shop",
+        "--ReverseProxy:Routes:shop:Match:Path={**catch-all}",
+        "--ReverseProxy:Clusters:shop:Destinations:host:Address=http://shop",
+        $"--Services:shop:http:0={hostAddress}",
+    ]
+);
+builder.WebHost.UseTestServer();
+await using var proxy = ReverseProxyHost.Build(builder);
+await proxy.StartAsync(TestContext.Current.CancellationToken);
+using var client = proxy.GetTestClient();
+```
+
+Its tests read the cluster's destinations and their health from YARP's `IProxyStateLookup`, and the trace from an `ActivityListener` on the `Microsoft.AspNetCore`, `System.Net.Http` and Kit sources, since both Hosts run in the test process.

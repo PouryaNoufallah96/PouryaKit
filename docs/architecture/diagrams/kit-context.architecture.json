@@ -43,22 +43,34 @@
     {
       "id": "proxy",
       "type": "cloud",
-      "label": "Reverse proxy (planned)",
-      "sublabel": "PouryaKit.ReverseProxy, Wave 3",
+      "label": "ModularMonolith.ReverseProxy",
+      "sublabel": "the Reverse proxy, on PouryaKit.ReverseProxy",
       "pos": [
         530,
         60
       ],
       "size": [
-        200,
+        260,
         64
       ],
       "sources": [
         {
+          "path": "samples/ModularMonolith/src/ModularMonolith.ReverseProxy/ReverseProxyHost.cs",
+          "line": 16,
+          "end_line": 33,
+          "label": "service defaults, YARP routes, /alive"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 83,
+          "end_line": 83,
+          "label": "references no Kit package: runs no Operation"
+        },
+        {
           "path": "GLOSSARY.md",
           "line": 54,
           "end_line": 56,
-          "label": "planned for Wave 3, not built yet"
+          "label": "forwards by route; runs no Operation"
         }
       ]
     },
@@ -315,8 +327,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 105,
-          "end_line": 106,
+          "line": 106,
+          "end_line": 107,
           "label": "no Kit package references Redis"
         }
       ]
@@ -420,7 +432,7 @@
       "id": "kit",
       "type": "backend",
       "label": "PouryaKit packages",
-      "sublabel": "25 libraries and the templates",
+      "sublabel": "26 libraries and the templates",
       "pos": [
         700,
         650
@@ -433,13 +445,13 @@
         {
           "path": "scripts/packaging/inventory.json",
           "line": 3,
-          "end_line": 28,
-          "label": "the 26 packages"
+          "end_line": 29,
+          "label": "the 27 packages"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 83,
+          "end_line": 84,
           "label": "their allowed references"
         }
       ]
@@ -471,11 +483,10 @@
       "toSide": "bottom"
     },
     {
-      "id": "proxy-planned",
+      "id": "proxy-forwards",
       "from": "proxy",
       "to": "mmhost",
-      "label": "planned: forwards by route",
-      "variant": "dashed",
+      "label": "forwards by route, as sent",
       "fromSide": "bottom",
       "toSide": "top"
     },
@@ -598,9 +609,11 @@
     },
     {
       "dot": "slate",
-      "title": "Planned",
+      "title": "Reverse proxy",
       "items": [
-        "PouryaKit.ReverseProxy, in front of the Hosts, is planned for Wave 3 and not built."
+        "ModularMonolith.ReverseProxy forwards each request by route to a Host that service discovery resolves, every header as the client sent it, the bearer token included; it runs no Operation.",
+        "The trace id arrives unchanged, and the proxy's span is the parent of the Host's request.",
+        "It probes each Host's /alive; the sample's settings turn that off for ModularMonolith.Host, which composes no service defaults."
       ]
     }
   ]
