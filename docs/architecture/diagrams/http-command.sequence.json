@@ -174,14 +174,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Caching/HybridQueryCache.cs",
-          "line": 24,
-          "end_line": 102,
+          "line": 25,
+          "end_line": 103,
           "label": "one run per key, keyed by Actor"
         },
         {
           "path": "src/PouryaKit.Caching/HybridQueryCache.cs",
-          "line": 111,
-          "end_line": 136,
+          "line": 112,
+          "end_line": 137,
           "label": "eviction by tag"
         }
       ]
@@ -395,7 +395,7 @@
       "dot": "amber",
       "title": "A cached query",
       "items": [
-        "Only the Operation's outermost query, while it is not rollback-only, reads and stores entries, keyed by its Actor and tenant.",
+        "Only the Operation's outermost query, while it is not rollback-only, reads and stores entries, keyed by its Actor, tenant and UI culture.",
         "A command's declared tags are evicted only after its Operation commits; a rollback evicts nothing."
       ]
     }

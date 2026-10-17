@@ -19,7 +19,8 @@ internal sealed class HeaderRequestCulture : IConfigureOptions<RequestLocalizati
         options.DefaultRequestCulture = new RequestCulture(English);
         options.SupportedCultures = [English, Persian];
         options.SupportedUICultures = [English, Persian];
-        options.RequestCultureProviders = [new AcceptLanguageHeaderRequestCultureProvider()];
+        // Every value the header lists is tried, not the framework's first three, so Persian is found wherever it stands.
+        options.RequestCultureProviders = [new AcceptLanguageHeaderRequestCultureProvider { MaximumAcceptLanguageHeaderValuesToTry = 0 }];
     }
 
     public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) =>

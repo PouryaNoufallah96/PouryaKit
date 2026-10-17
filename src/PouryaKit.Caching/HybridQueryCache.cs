@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
@@ -135,8 +136,9 @@ internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<Hybrid
         }
     }
 
-    // Each part escaped, so no assembly name, tenant, Actor id or declared key can end its part early and match another
-    // entry's key. The query is named as every Kit key names a type (OperationTypes.KeyName).
+    // Each part escaped, so no assembly name, tenant, Actor id, culture or declared key can end its part early and match
+    // another entry's key. The query is named as every Kit key names a type (OperationTypes.KeyName). The current UI
+    // culture is part of the key, so a localized answer is stored per culture; a Host without localization runs in one.
     private static string Key(OperationContext context, Type query, string key) =>
         string.Join(
             '|',
@@ -144,6 +146,7 @@ internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<Hybrid
             Uri.EscapeDataString(context.Tenant ?? OperationContext.NoTenant),
             context.Actor.Kind,
             Uri.EscapeDataString(context.Actor.Id),
+            Uri.EscapeDataString(CultureInfo.CurrentUICulture.Name),
             Uri.EscapeDataString(key)
         );
 
