@@ -1,0 +1,58 @@
+src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotKeyTenancyCheck.cs
+  s_3675ccfac3f8b2::t_5ea88821012a77 15-18,23,30,35-36,38-40,42-43
+  s_3675ccfac3f8b2::t_d24abfbfd1bf75 37
+  s_3675ccfac3f8b2::t_88f0d6833f20df 14,27,29,31-33,44,46,48-52
+tests/ModularMonolith.Tests/TenantDeliveryTests.cs
+  s_3675ccfac3f8b2::t_5d27f9cc26ad6b 7-10,12
+  s_3675ccfac3f8b2::t_511e3d9e3f67ae 81-113
+src/PouryaKit.Persistence.EFCore/EfCoreServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_85169dabacc254 35-36,67-68,70
+  s_3675ccfac3f8b2::t_9ee42514bca68f 69
+tests/ModularMonolith.Tests/SingleModuleTests.cs
+  s_3675ccfac3f8b2::t_5255bb3ae4356f 70-93
+docs/provenance/PouryaKit.Messaging.Wolverine.EFCore.md
+  s_3675ccfac3f8b2::t_250ddc64def795 5
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_3675ccfac3f8b2::t_250ddc64def795 1162-1165,1169-1171
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_3675ccfac3f8b2::t_91675a32f03a9d 186
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_3675ccfac3f8b2::t_250ddc64def795 33,95
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_327b641302e89e 1959-1961
+.agents/skills/pourya-kit/references/persistence.md
+  s_3675ccfac3f8b2::t_250ddc64def795 257
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_250ddc64def795 293,420
+samples/ModularMonolith/src/Modules/Inventory/Inventory/Infrastructure/Data/Migrations/20261017120000_CatalogProductTenants.cs
+  s_3675ccfac3f8b2::t_673d11b65a83f1 8-10,17-20,22-25,29
+  s_3675ccfac3f8b2::t_5d27f9cc26ad6b 21
+tests/ModularMonolith.Tests/Stub/TenantBinders.cs
+  s_3675ccfac3f8b2::t_bfa37b6fd627f9 165-182
+.agents/skills/pourya-kit/references/messaging.md
+  s_3675ccfac3f8b2::t_250ddc64def795 416
+src/PouryaKit.Persistence.EFCore/UnitOfWork/PersistencePreparation.cs
+  s_3675ccfac3f8b2::t_e6b4ac77360ea5 65-68,71
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_3675ccfac3f8b2::t_fbb7b94a3a4248 3
+  s_3675ccfac3f8b2::t_c612435f01d345 417-437
+  s_3675ccfac3f8b2::t_357d9cabfc990f 594-620
+src/PouryaKit.Persistence.EFCore/DbContextConnection.cs
+  s_3675ccfac3f8b2::t_85169dabacc254 9-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6e1d840099334a8c22663c1508ca2d9421872bc0",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
