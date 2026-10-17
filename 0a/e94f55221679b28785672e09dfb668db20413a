@@ -1,0 +1,25 @@
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_5160797db1c2c9 160
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_249b8a5184c8e7 10
+src/PouryaKit.Storage.AzureBlob/AzureBlobFileStorage.cs
+  s_b9a8adfb056e1c::t_eed0bd1c80387f 13-14
+tests/PouryaKit.Storage.Tests/AzureBlobStorageTests.cs
+  s_b9a8adfb056e1c::t_a8c4784d2e2a28 114-117,123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0ae94f55221679b28785672e09dfb668db20413a",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
