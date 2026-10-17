@@ -69,7 +69,16 @@ internal sealed class PouryaKitModelConvention(PouryaKitDbContext dbContext) : I
             else if (toHolders.Count > 0)
             {
                 RefuseHolderCycle(entityType, []);
-                entityType.Builder.HasQueryFilter(PouryaKitDbContext.TenantFilter, WithAReadableHolder(entityType.ClrType, toHolders));
+                // EF Core reads a part's own set unfiltered in its filter, so a key to a part of its own hierarchy judges nothing.
+                List<IConventionForeignKey> toOthers = [.. toHolders.Where(foreignKey => foreignKey.PrincipalEntityType.GetRootType() != entityType)];
+                if (toOthers.Count < toHolders.Count && !toOthers.Any(foreignKey => foreignKey.IsRequired))
+                {
+                    throw new InvalidOperationException(
+                        $"{entityType.ClrType.Name} holds parts of its own type in a tenant-scoped aggregate but has no required key to another holder, and EF Core reads a part's own set unfiltered in its query filter, so no query filter can leave out the rows of other tenants. A self-held part needs a required key to its aggregate or another holder."
+                    );
+                }
+
+                entityType.Builder.HasQueryFilter(PouryaKitDbContext.TenantFilter, WithAReadableHolder(entityType.ClrType, toOthers));
             }
         }
     }

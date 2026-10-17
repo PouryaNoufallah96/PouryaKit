@@ -38,9 +38,25 @@ public sealed class ModelConventionTests
     {
         var derivedRefused = Assert.Throws<InvalidOperationException>(() => new DerivedPartContext());
         var cycleRefused = Assert.Throws<InvalidOperationException>(() => new HolderCycleContext());
+        var selfHeldRefused = Assert.Throws<InvalidOperationException>(() => new SelfHeldPartContext());
 
         Assert.StartsWith("Latch is held by Crate in a tenant-scoped aggregate but is mapped as a type derived from Fitting", derivedRefused.Message);
         Assert.StartsWith("Bay -> Tier -> Bay: these parts of a tenant-scoped aggregate hold one another", cycleRefused.Message);
+        Assert.StartsWith("Graft holds parts of its own type in a tenant-scoped aggregate but has no required key to another holder", selfHeldRefused.Message);
+    }
+
+    // EF Core reads a memo's own set unfiltered in its filter, so the reply's key to its memo judges nothing, and a memo is
+    // read only where its ledger is.
+    [Fact]
+    public void A_self_held_part_is_judged_by_its_key_to_another_holder_alone()
+    {
+        using var context = LedgerContext.For("north");
+
+        var read = context.Set<Memo>().ToQueryString();
+
+        Assert.Contains("l.\"Tenant\" = @ef_filter__Tenant AND l.\"Id\" = m.\"LedgerId\")", read, StringComparison.Ordinal);
+        Assert.Equal(2, read.Split("EXISTS").Length);
+        Assert.DoesNotContain("FROM \"Memo\" AS m0", read, StringComparison.Ordinal);
     }
 
     // A leaf reads its volume's set, which reads the ledger's, filtered by tenant and by removal; setting the soft-delete
@@ -181,6 +197,8 @@ internal sealed class Ledger : AggregateRoot<Guid>, ITenantScoped, ISoftDeletabl
     public List<Volume> Volumes { get; } = [];
 
     public List<Tab> Tabs { get; } = [];
+
+    public List<Memo> Memos { get; } = [];
 }
 
 internal sealed class Volume : Entity<Guid>
@@ -193,6 +211,23 @@ internal sealed class Volume : Entity<Guid>
 internal sealed class Leaf : Entity<Guid>;
 
 internal sealed class Tab : Entity<Guid>;
+
+internal sealed class Memo : Entity<Guid>
+{
+    public List<Memo> Replies { get; } = [];
+}
+
+internal sealed class Orchard : AggregateRoot<Guid>, ITenantScoped
+{
+    public string Tenant { get; private set; } = "";
+
+    public List<Graft> Grafts { get; } = [];
+}
+
+internal sealed class Graft : Entity<Guid>
+{
+    public List<Graft> Grafts { get; } = [];
+}
 
 internal sealed class OwnedSoftDeletableContext()
     : PouryaKitDbContext(new DbContextOptionsBuilder<OwnedSoftDeletableContext>().UseNpgsql("Host=localhost").Options)
@@ -270,6 +305,17 @@ internal sealed class HolderCycleContext()
     }
 }
 
+internal sealed class SelfHeldPartContext()
+    : PouryaKitDbContext(new DbContextOptionsBuilder<SelfHeldPartContext>().UseNpgsql("Host=localhost").Options)
+{
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<Orchard>().HasMany(orchard => orchard.Grafts).WithOne().IsRequired(false);
+        modelBuilder.Entity<Graft>().HasMany(graft => graft.Grafts).WithOne().IsRequired(false);
+    }
+}
+
 // Built in a scope whose Operation runs for the tenant named: with no tenant the filter reads no row, and EF Core folds
 // every EXISTS over the ledger into FALSE.
 internal sealed class LedgerContext(IServiceProvider scope)
@@ -289,5 +335,7 @@ internal sealed class LedgerContext(IServiceProvider scope)
         modelBuilder.Entity<Ledger>().HasMany(ledger => ledger.Tabs).WithOne().IsRequired(false);
         modelBuilder.Entity<Volume>().HasMany(volume => volume.Leaves).WithOne().IsRequired();
         modelBuilder.Entity<Volume>().HasMany(volume => volume.Tabs).WithOne().IsRequired(false);
+        modelBuilder.Entity<Ledger>().HasMany(ledger => ledger.Memos).WithOne().IsRequired();
+        modelBuilder.Entity<Memo>().HasMany(memo => memo.Replies).WithOne().IsRequired(false);
     }
 }
