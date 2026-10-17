@@ -1,0 +1,50 @@
+src/PouryaKit.Web/OperationContextHttpHeaders.cs
+  s_3675ccfac3f8b2::t_64ca5caee4561e 10-12
+tests/PouryaKit.Storage.Tests/S3StorageTests.cs
+  s_3675ccfac3f8b2::t_9caf8ca2f9eab9 167-182
+  s_3675ccfac3f8b2::t_8222809a6d0053 3
+src/PouryaKit.Email.MailKit/OneEmailSenderCheck.cs
+  s_3675ccfac3f8b2::t_49b6e07c97441e 26
+  s_3675ccfac3f8b2::t_32030b99ab395a 23-25,27-28,30-31
+  s_3675ccfac3f8b2::t_9ecd132ca1008b 6
+  s_3675ccfac3f8b2::t_53d4f7600a493b 7-8
+tests/ModularMonolith.Tests/EmailTests.cs
+  s_3675ccfac3f8b2::t_83219fa69b176f 2
+  s_3675ccfac3f8b2::t_8a2275153e6d99 159-174
+.agents/skills/pourya-kit/references/email.md
+  s_3675ccfac3f8b2::t_044191a4ad76c9 34
+.agents/skills/pourya-kit/references/web.md
+  s_3675ccfac3f8b2::t_2c201b91dfb17c 299
+.agents/skills/pourya-kit/references/storage.md
+  s_3675ccfac3f8b2::t_0a3606e0a3e3d8 36
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_9e98eae5941fcd 2093-2105
+.claude/agent-memory/kit-implementer/email-and-provider-package-facts.md
+  s_3675ccfac3f8b2::t_7d35c1d4abfbed 32
+src/PouryaKit.Storage.S3/OneFileStorageCheck.cs
+  s_3675ccfac3f8b2::t_0db138c7416905 6
+  s_3675ccfac3f8b2::t_9cc1993a6d5ae8 7-8
+  s_3675ccfac3f8b2::t_49b6e07c97441e 26
+  s_3675ccfac3f8b2::t_8516556d940148 23-25,27-28,30-31
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3675ccfac3f8b2::t_298e319a1a5863 18
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_67fb09da30f69b 160,250,272
+  s_3675ccfac3f8b2::t_ae27be8a3a9b99 512
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2c03ce0f2b792ce7740d5fcde4745468fa6ff386",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
