@@ -1,0 +1,28 @@
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_22a3bf7cc5c05f 10
+src/PouryaKit.Localization/HeaderRequestCulture.cs
+  s_3675ccfac3f8b2::t_d52a2a91127b60 12
+  s_3675ccfac3f8b2::t_10bb0ea46c5a17 10-11
+src/PouryaKit.Localization/LocalizationServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_10bb0ea46c5a17 24-26
+.agents/skills/pourya-kit/references/localization.md
+  s_3675ccfac3f8b2::t_d52a2a91127b60 57
+tests/ModularMonolith.Tests/LocalizationTests.cs
+  s_3675ccfac3f8b2::t_61a624af7399b4 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "89b1fdf5dd9407a6f15efb11aaa868697cbc5e04",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
