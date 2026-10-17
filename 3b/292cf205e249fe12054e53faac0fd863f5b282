@@ -1,0 +1,42 @@
+tests/ModularMonolith.Tests/TenantOwnershipTests.cs
+  s_3675ccfac3f8b2::t_5ea292f3503ee3 8,17,161-183
+  s_3675ccfac3f8b2::t_1d0497ebb27ed5 184-185
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_3675ccfac3f8b2::t_aa42714d3f4aee 117
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_b15f5adbf4abbe 2120,2127
+docs/foundation-review.md
+  s_3675ccfac3f8b2::t_201d93eac88ed8 881
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_201d93eac88ed8 336,348
+docs/provenance/PouryaKit.Persistence.EFCore.md
+  s_3675ccfac3f8b2::t_201d93eac88ed8 11
+src/PouryaKit.Persistence.EFCore/PouryaKitDbContext.cs
+  s_3675ccfac3f8b2::t_201d93eac88ed8 19-20
+tests/ModularMonolith.Tests/Stub/TenantBinders.cs
+  s_3675ccfac3f8b2::t_5ea292f3503ee3 289-329
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_3675ccfac3f8b2::t_201d93eac88ed8 76
+src/PouryaKit.Persistence.EFCore/PouryaKitModelConvention.cs
+  s_3675ccfac3f8b2::t_d7b1f745c3e43e 38
+  s_3675ccfac3f8b2::t_11bf6264f45c41 13-15,30-37,39-40,67-76
+  s_3675ccfac3f8b2::t_e5449b9f181dc9 77
+.agents/skills/pourya-kit/references/persistence.md
+  s_3675ccfac3f8b2::t_201d93eac88ed8 98,268
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3b292cf205e249fe12054e53faac0fd863f5b282",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
