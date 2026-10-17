@@ -949,12 +949,24 @@ internal static partial class ModuleRules
     /// statements starts with <c>SET</c> or <c>RESET</c> (<c>SET LOCAL</c> and <c>RESET ALL</c> included). Its comments
     /// and the bodies of its single-quoted strings are removed first and its dollar-quoted blocks are read as code, then
     /// it is split at its semicolons. A literal that reads as such a statement (a label reading "Reset") is read as SQL.
+    /// A literal that holds a shape this reading cannot see through, a dollar quote, an escape string (<c>E'</c>), a
+    /// backslash or a Unicode-escaped identifier (<c>U&amp;</c>), where a setter could hide in a DO body, a string or an
+    /// identifier, counts as a session write too when the literal reads as SQL (it holds a command word, <c>from</c> or
+    /// <c>join</c>): the rule fails closed, as the tenant-read rule does for those shapes.
     /// </summary>
     public static bool HoldsSessionWrite(string sql)
     {
+        if (SqlWord().IsMatch(sql) && OpaqueShape().IsMatch(sql))
+        {
+            return true;
+        }
+
         var code = Sql.Code(sql, keepDollarQuoted: true);
         return SetConfig().IsMatch(code) || code.Split(';').Any(statement => SessionStatement().IsMatch(statement.Trim()));
     }
+
+    [GeneratedRegex(@"\$|\\|\b[eE]'|\b[uU]&", RegexOptions.CultureInvariant)]
+    private static partial Regex OpaqueShape();
 
     private static bool IsMigration(Type type) => type.IsAssignableTo(typeof(Migration)) || type.IsAssignableTo(typeof(ModelSnapshot));
 

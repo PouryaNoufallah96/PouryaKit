@@ -75,6 +75,10 @@ public sealed class DapperWriteTests
     [InlineData("update catalog.products set name = @Name", false)]
     [InlineData("select id from catalog.products where tenant = current_setting('pouryakit.tenant') -- ; set x = 1", false)]
     [InlineData("insert into marks (note) values ('set_config')", false)]
+    [InlineData("do $$ begin set pouryakit.tenant = 'south'; end $$", true)]
+    [InlineData("select E'it\\'s'; set pouryakit.tenant = 'south'", true)]
+    [InlineData("select U&\"set\\005Fconfig\"('pouryakit.tenant', 'south', false)", true)]
+    [InlineData("do $$ begin execute 'select set_config(''pouryakit.tenant'', ''south'', false)'; end $$", true)]
     public void Session_writes_are_found_at_any_statement_boundary_outside_comments_and_strings(string sql, bool writesSessionState)
     {
         Assert.Equal(writesSessionState, ModuleRules.HoldsSessionWrite(sql));
