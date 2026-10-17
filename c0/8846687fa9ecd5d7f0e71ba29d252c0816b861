@@ -1,0 +1,31 @@
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_525f8d9a97f5db 2147
+  s_3675ccfac3f8b2::t_855021eded4513 2153
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_525f8d9a97f5db 336
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_3675ccfac3f8b2::t_525f8d9a97f5db 67
+src/PouryaKit.Persistence.EFCore/PouryaKitModelConvention.cs
+  s_3675ccfac3f8b2::t_9c1fb41e20dc7d 160-170
+  s_3675ccfac3f8b2::t_c2d4d1a074d652 149,171,173-175,180-184
+  s_3675ccfac3f8b2::t_e6eab5218ddc72 150-159
+  s_3675ccfac3f8b2::t_99d495fd9da283 185
+tests/ModularMonolith.Tests/ModelConventionTests.cs
+  s_3675ccfac3f8b2::t_525f8d9a97f5db 64-65,73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c08846687fa9ecd5d7f0e71ba29d252c0816b861",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
