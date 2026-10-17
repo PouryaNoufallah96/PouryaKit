@@ -16,6 +16,7 @@ public sealed class LocalizationTests(AppFixture app) : HostTest<AppFixture>(app
     [InlineData("fa", Persian)]
     [InlineData("fa-IR", Persian)]
     [InlineData("de, fa;q=0.5", Persian)]
+    [InlineData("en;q=0.1, fa;q=1", Persian)]
     [InlineData("de, fr, it, fa", Persian)]
     [InlineData("de, fr, it, es, pt, nl, sv, da, nb, fi, pl, cs, hu, ro, tr, fa", Persian)]
     [InlineData("de, fr, it, es, pt, nl, sv, da, nb, fi, pl, cs, hu, ro, tr, el, fa", English)]

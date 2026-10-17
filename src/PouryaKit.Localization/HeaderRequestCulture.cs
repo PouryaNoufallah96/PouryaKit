@@ -7,9 +7,9 @@ using Microsoft.Extensions.Options;
 namespace PouryaKit.Localization;
 
 // The request culture of every request, set by a startup filter ahead of every middleware the application adds, so its
-// exception handler and endpoints run in it: the first of English and Persian among the first 16 values the
-// Accept-Language header lists, English when they name neither or it is missing. The header is the only provider, so no
-// query string or cookie changes it.
+// exception handler and endpoints run in it: of English and Persian, the one with the highest quality among the first 16
+// values of the Accept-Language header, ties in listed order; English when they name neither or it is missing. The header
+// is the only provider, so no query string or cookie changes it.
 internal sealed class HeaderRequestCulture : IConfigureOptions<RequestLocalizationOptions>, IStartupFilter
 {
     private static readonly CultureInfo English = CultureInfo.GetCultureInfo("en");
