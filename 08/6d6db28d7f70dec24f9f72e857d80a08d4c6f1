@@ -1,0 +1,52 @@
+docs/foundation-review.md
+  s_3675ccfac3f8b2::t_50d3933b1e8953 881
+docs/provenance/PouryaKit.Persistence.EFCore.md
+  s_3675ccfac3f8b2::t_50d3933b1e8953 11
+.agents/skills/pourya-kit/references/persistence.md
+  s_3675ccfac3f8b2::t_50d3933b1e8953 247
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_3675ccfac3f8b2::t_50d3933b1e8953 75-76,88,105
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_3675ccfac3f8b2::t_48f55d651db5c0 447
+  s_3675ccfac3f8b2::t_e05cc72fc7d0cb 186
+  s_3675ccfac3f8b2::t_4a67917f2a8bbf 420
+src/PouryaKit.Cqrs/Tenancy/TenantErrors.cs
+  s_3675ccfac3f8b2::t_de9207c18b1a18 26-35
+src/PouryaKit.Persistence.EFCore/UnitOfWork/UnitOfWorkErrors.cs
+  s_3675ccfac3f8b2::t_50d3933b1e8953 10-13
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_50d3933b1e8953 75,133,347-348
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_ce7e26ac069d0b 2113,2117-2119,2121,2123
+src/PouryaKit.Persistence.EFCore/UnitOfWork/PersistencePreparation.cs
+  s_3675ccfac3f8b2::t_de9207c18b1a18 15,59-60,62,75-87
+  s_3675ccfac3f8b2::t_b25c3bd05d84c9 88
+.agents/skills/pourya-kit/SKILL.md
+  s_3675ccfac3f8b2::t_50d3933b1e8953 38
+tests/ModularMonolith.Tests/TenantOwnershipTests.cs
+  s_3675ccfac3f8b2::t_caf6dfe72b9f99 15-16,90-92,97,106-109,111-132
+src/PouryaKit.Persistence.EFCore/PouryaKitDbContext.cs
+  s_3675ccfac3f8b2::t_de9207c18b1a18 40-42,58-64,71-72
+  s_3675ccfac3f8b2::t_c30c523db5773c 73
+tests/ModularMonolith.Tests/Stub/TenantBinders.cs
+  s_3675ccfac3f8b2::t_caf6dfe72b9f99 218-226,228-243
+  s_3675ccfac3f8b2::t_7edefc3abf58f1 227
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_3675ccfac3f8b2::t_e4c6ada6baa7da 110,115-116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "086d6db28d7f70dec24f9f72e857d80a08d4c6f1",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
