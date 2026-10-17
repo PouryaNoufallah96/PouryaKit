@@ -1,0 +1,33 @@
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_3675ccfac3f8b2::t_e304d1758eb903 125-127
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_3675ccfac3f8b2::t_d69a836ea57278 61,67
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_f7fdcb88d838ff 336
+tests/ModularMonolith.Tests/ModelConventionTests.cs
+  s_3675ccfac3f8b2::t_4a302f51b8e8c5 2-3,51,68,271-274,276-282,290
+  s_3675ccfac3f8b2::t_60cf21516a6e4a 12,36-50,52-55,62-67,69-71,74-75,141-194,246-270,275,283-289,291
+  s_3675ccfac3f8b2::t_532a04af53b818 56-61,72-73
+  s_3675ccfac3f8b2::t_56359611c52c15 6
+src/PouryaKit.Persistence.EFCore/PouryaKitModelConvention.cs
+  s_3675ccfac3f8b2::t_1fe48459b1f071 170
+  s_3675ccfac3f8b2::t_92a9518c47c78b 33,44-50,71,77-110,161,168-169,171-177
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_e304d1758eb903 2146-2151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0837ddd213e5e0c9f8b7372d9e7b26053dd76574",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
