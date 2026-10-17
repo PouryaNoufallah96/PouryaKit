@@ -1,6 +1,6 @@
 ---
 name: email-and-provider-package-facts
-description: Email and MailKit (#124), Papercut in Testcontainers, NuGet audit failures from a provider's transitive packages, and the ripple of a new dependency into Stub Notification Handlers
+description: Email and MailKit (#124), Papercut in Testcontainers, NuGet audit failures from a provider's transitive packages, the ripple of a new dependency into Stub Notification Handlers, and a one-provider check at start without Cqrs (#147)
 metadata:
   type: project
 ---
@@ -17,5 +17,13 @@ metadata:
 - **Validate every enum option with `Enum.IsDefined`** (#124 review F1, Codex): the configuration binder reads a numeric string (`Security=99`) into an enum, and MailKit's `ComputeDefaultValues` treats an undefined `SecureSocketOptions` as plain `smtp://` without STARTTLS.
 - **A retry test must wait for the delivery's end, not for its effects** (#124 review F2): waiting for two mails also passed with a handler that failed every attempt. Wait for the subscription's committed Receipt (`stub.pouryakit_receipts` where `subscription` and `message_id`, the Domain Event's `Id`), then count; red with a handler that fails after every send.
 
-**Why:** each cost a build or a full run in #124.
+## One provider per Host, checked at start (#147, 2026-10-17)
+
+- **A provider package without Cqrs checks "one provider" as an options validation**: an `IValidateOptions<TProviderOptions>` instance holding the `IServiceCollection` it was registered on (`TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<T>>(new Check(services)))`, deduplicated by type), counting unkeyed descriptors at start, so order does not matter. Never resolve the providers inside it: the provider's factory reads the same options, so validation would re-enter itself.
+- **Naming a factory registration:** `descriptor.ImplementationFactory.Method.ReturnType` is the delegate's return type (the interface) for a lambda, but the concrete type for a static method group typed as the implementation (`AddSingleton<IFileStorage>(Create)` with `static S3FileStorage Create(IServiceProvider)`); `ImplementationType` throws on a keyed descriptor, so filter `!IsKeyedService` first.
+- **The sample Host registers MailKit inside `ModularMonolithHost.CreateBuilder`**, so `AppFixture.ComposeHost`'s `configure` can only add a second sender after it: an order test builds `Host.CreateApplicationBuilder()` by hand (fully qualified in `ModularMonolith.Tests`).
+- **Mutation by deleting a registration line fails the build** with IDE0005 (its `using` becomes unused): switch the check off with a runtime-true predicate (`providers.Count >= 0`) instead.
+- **Removing a test an older acceptance row names** fails `check-docs.py` (`names no test`) unless it goes in `REMOVED_TESTS` in the script; a bare backticked method name without its class passes, so the row can say the test was removed and point to the replacement.
+
+**Why:** each cost a build or a full run in #124 or #147.
 **How to apply:** for the next provider package (Storage, Localization, AI), any new container module, and any change to what a Stub Notification Handler needs. Related: [[templates-packaging-and-publication-facts]], [[dotnet-and-test-conventions]], [[docs-verification-tools]].
