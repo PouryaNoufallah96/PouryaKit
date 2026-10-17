@@ -1,0 +1,25 @@
+.agents/skills/pourya-kit/references/aspire.md
+  s_b9a8adfb056e1c::t_affe6f31a353cb 99,120
+.claude/agent-memory/kit-implementer/aspire-apphost-facts.md
+  s_b9a8adfb056e1c::t_0b5589c70c5d06 14
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_eb1724ccbcd7ae 2238
+tests/PouryaKit.Aspire.Tests/AppHostTests.cs
+  s_b9a8adfb056e1c::t_9819bd25813fa6 13-14,67-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "09e9e50700e74e39d1d9e743412e556d51e75a18",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
