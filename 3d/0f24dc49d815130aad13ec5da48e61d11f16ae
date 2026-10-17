@@ -1,0 +1,25 @@
+docs/architecture/diagrams/http-command.html
+  s_3675ccfac3f8b2::t_7cecbdc8f4a6e4 4985,5498
+docs/architecture/diagrams/http-command.sequence.json
+  s_3675ccfac3f8b2::t_7cecbdc8f4a6e4 15
+docs/architecture/diagrams/execution-core.html
+  s_3675ccfac3f8b2::t_7cecbdc8f4a6e4 4985
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_7cecbdc8f4a6e4 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3d0f24dc49d815130aad13ec5da48e61d11f16ae",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
