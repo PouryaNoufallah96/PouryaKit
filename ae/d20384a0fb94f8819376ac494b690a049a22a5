@@ -1,0 +1,50 @@
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_3e36119dd118b1 160,237,250,272
+src/PouryaKit.Storage.S3/S3StorageServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_0a88d6b14acb05 2,17-19,42-43,47-49
+src/PouryaKit.Email.MailKit/OneEmailSender.cs
+  s_3675ccfac3f8b2::t_15f3d7d0d58338 1-27
+.agents/skills/pourya-kit/references/email.md
+  s_3675ccfac3f8b2::t_3e36119dd118b1 34
+docs/foundation-review.md
+  s_3675ccfac3f8b2::t_3e36119dd118b1 885-886
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_531b5d3cb0ddf8 593-594
+src/PouryaKit.Storage.S3/OneFileStorage.cs
+  s_3675ccfac3f8b2::t_db74ebbfd941c7 1-20,22-27
+  s_3675ccfac3f8b2::t_0c2460e9cc6336 21
+src/PouryaKit.Storage/StorageErrors.cs
+  s_3675ccfac3f8b2::t_821314faba851d 10-16,18
+  s_3675ccfac3f8b2::t_5bac85af1a7e53 17
+tests/ModularMonolith.Tests/EmailTests.cs
+  s_3675ccfac3f8b2::t_d417df01333eb5 4,6,118-152,154-159
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_7e2888346732ea 2048-2059
+  s_3675ccfac3f8b2::t_78a430a0e80693 2060
+  s_3675ccfac3f8b2::t_359559789ba866 2038
+src/PouryaKit.Email.MailKit/MailKitServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_15f3d7d0d58338 20-21,49-50,54-56
+.agents/skills/pourya-kit/references/storage.md
+  s_3675ccfac3f8b2::t_3e36119dd118b1 36,71-72,77
+tests/PouryaKit.Storage.Tests/S3StorageTests.cs
+  s_3675ccfac3f8b2::t_8139046f331a5d 130-134
+  s_3675ccfac3f8b2::t_66701063e8ddd8 2,100-110,112-122,125-129,135-140,142,144-146,148-149,163-174
+src/PouryaKit.Storage.S3/S3FileStorage.cs
+  s_3675ccfac3f8b2::t_821314faba851d 80-84,105-107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aed20384a0fb94f8819376ac494b690a049a22a5",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
