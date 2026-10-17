@@ -1,0 +1,46 @@
+docs/foundation-review.md
+  s_3675ccfac3f8b2::t_3471e7f7f4925c 881
+tests/ModularMonolith.Tests/TenantOwnershipTests.cs
+  s_3675ccfac3f8b2::t_580ee86495c69b 8,16-17,91-110,112-113,139-156
+  s_3675ccfac3f8b2::t_0b5181aa5c3b4f 111
+  s_3675ccfac3f8b2::t_5a24773c057bae 157
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_3471e7f7f4925c 336,348
+.agents/skills/pourya-kit/references/persistence.md
+  s_3675ccfac3f8b2::t_3471e7f7f4925c 98,247,268
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_3675ccfac3f8b2::t_5a9be74288c599 3,46,110-115
+src/PouryaKit.Persistence.EFCore/PouryaKitDbContext.cs
+  s_3675ccfac3f8b2::t_2f4d9ab1578d81 18-19
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_ea3025b1c8d45d 2110-2122
+tests/ModularMonolith.Tests/Stub/TenantBinders.cs
+  s_3675ccfac3f8b2::t_c92d8fdbe128c6 1-2,210-241,243
+  s_3675ccfac3f8b2::t_151bd8d950fe9f 242
+src/PouryaKit.Persistence.EFCore/PouryaKitModelConvention.cs
+  s_3675ccfac3f8b2::t_14d85cf03e6fa5 12-13,49
+docs/provenance/PouryaKit.Persistence.EFCore.md
+  s_3675ccfac3f8b2::t_3471e7f7f4925c 11
+src/PouryaKit.Persistence.EFCore/UnitOfWork/UnitOfWorkErrors.cs
+  s_3675ccfac3f8b2::t_2f4d9ab1578d81 9-13
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3675ccfac3f8b2::t_5a9be74288c599 7
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_3675ccfac3f8b2::t_3471e7f7f4925c 75,87,104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "443afacf4afc4103c21ee7f64f7669a04d39513b",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
