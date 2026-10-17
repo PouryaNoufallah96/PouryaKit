@@ -1,0 +1,84 @@
+src/PouryaKit.Domain/ITenantScoped.cs
+  s_3675ccfac3f8b2::t_5d58b5d410ea9e 6-7
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_3675ccfac3f8b2::t_aee6aa43061e5a 142-149
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryHandler.cs
+  s_3675ccfac3f8b2::t_7acaef74f9d806 7,10-11
+  s_3675ccfac3f8b2::t_daee4f593f4a3c 14
+  s_3675ccfac3f8b2::t_e05580ea0253f4 37
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_3675ccfac3f8b2::t_2cc78ce6dbec0d 104
+  s_3675ccfac3f8b2::t_894599f4d63dad 11-12
+  s_3675ccfac3f8b2::t_3dd7fe9ee48b8f 123,125-129
+  s_3675ccfac3f8b2::t_9173115db4703c 74-75,103,105-106,113-118,121-122,124,130-133,135-145,147-150,152-166
+tests/ModularMonolith.Tests/TenantOwnershipTests.cs
+  s_3675ccfac3f8b2::t_c56d082f635038 18-19,210-225
+  s_3675ccfac3f8b2::t_c2c9457b3eefd0 226-227
+tests/ModularMonolith.Tests/Fixtures/ReadProbe.cs
+  s_3675ccfac3f8b2::t_376befb568286b 26,29
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_3675ccfac3f8b2::t_76ad79b2c9d06b 23-24,32-33,44,47-48,51,71,79,84,89-90
+tests/ModularMonolith.Tests/DapperTests.cs
+  s_3675ccfac3f8b2::t_376befb568286b 31-32,86
+tests/ModularMonolith.Tests/PagingTests.cs
+  s_3675ccfac3f8b2::t_376befb568286b 138-140
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_3675ccfac3f8b2::t_76ad79b2c9d06b 70
+  s_3675ccfac3f8b2::t_9be22f701627e0 103
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_76ad79b2c9d06b 377,384
+  s_3675ccfac3f8b2::t_3395768b905e18 597
+README.md
+  s_3675ccfac3f8b2::t_cc269fb655cdbc 25
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3675ccfac3f8b2::t_aee6aa43061e5a 7
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_3675ccfac3f8b2::t_7429f8740b150b 897,899,901-905
+  s_3675ccfac3f8b2::t_d62f2dfe84517d 436-437
+  s_3675ccfac3f8b2::t_1f301f29d636de 506-508
+  s_3675ccfac3f8b2::t_767f9cd168e7ee 449-450
+  s_3675ccfac3f8b2::t_244e1d51bba75e 792-793
+src/PouryaKit.Persistence.Dapper/IReadConnectionFactory.cs
+  s_3675ccfac3f8b2::t_50afc1decae5ba 9-14
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_f2e13b40c3a32e 319
+  s_3675ccfac3f8b2::t_fcdc6dcf0f0e15 285
+tests/ModularMonolith.Tests/Stub/TenantBinders.cs
+  s_3675ccfac3f8b2::t_c56d082f635038 6,13,314-330
+  s_3675ccfac3f8b2::t_74bee0c8c0dbc3 331-333
+.agents/skills/pourya-kit/references/testing.md
+  s_3675ccfac3f8b2::t_76ad79b2c9d06b 200
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/GetProduct/GetProductQueryHandler.cs
+  s_3675ccfac3f8b2::t_7acaef74f9d806 11,19-20
+  s_3675ccfac3f8b2::t_c5cd69e90f1bf9 10
+docs/foundation-review.md
+  s_3675ccfac3f8b2::t_0b2499249183fd 881
+docs/provenance/PouryaKit.Persistence.Dapper.md
+  s_3675ccfac3f8b2::t_9dd9c5f5dc9b01 29-31
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_3675ccfac3f8b2::t_9173115db4703c 166,170,177
+  s_3675ccfac3f8b2::t_2cc78ce6dbec0d 156-157,164,182-185
+src/PouryaKit.Persistence.Dapper/DapperServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_083bbc2890edf4 6
+  s_3675ccfac3f8b2::t_454d619c64dca6 55-66
+  s_3675ccfac3f8b2::t_5cae5920895a07 26-29
+src/PouryaKit.Persistence.Dapper/ReadConnectionFactory.cs
+  s_3675ccfac3f8b2::t_fb0659876c2b68 21
+  s_3675ccfac3f8b2::t_f74776007c8ab9 3,7-9,15-20,22-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ae1d255fcbfb1c11fc1585ffb5d1587e624d4e5c",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
