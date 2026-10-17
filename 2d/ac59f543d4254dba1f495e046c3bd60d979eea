@@ -1,0 +1,126 @@
+src/PouryaKit.Realtime/RealtimeEndpointRouteBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_de676d86be51a6 1-53
+tests/ModularMonolith.Tests/Stub/StubRealtime.cs
+  s_b9a8adfb056e1c::t_35f122c0dfd5cd 1-60
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/Notifications/AnnounceNewProductNotificationHandler.cs
+  s_b9a8adfb056e1c::t_c4920588dbe1df 1,5,10-11,20-24
+docs/adr/0012-realtime-through-postgresql-notifications.md
+  s_b9a8adfb056e1c::t_0d2dec843a706c 1-93
+src/PouryaKit.Realtime/RealtimeClients.cs
+  s_b9a8adfb056e1c::t_d8a057d49ce91e 80
+  s_b9a8adfb056e1c::t_c1358ea49aee7e 1-2,4-63,66-68,70,76-79,81-126
+  s_b9a8adfb056e1c::t_3a0d6a2141dc7d 3
+  s_b9a8adfb056e1c::t_3c3c35dcb6e532 64-65,69,71-75
+docs/provenance/PouryaKit.Realtime.md
+  s_b9a8adfb056e1c::t_5a0f78cd5def3b 1-27
+src/PouryaKit.Realtime/RealtimeNotification.cs
+  s_b9a8adfb056e1c::t_d22166296eb7eb 5-7,16-17,21-23
+  s_b9a8adfb056e1c::t_3b81e5f9d2cbc0 1-4,8-15,18-20,24-30
+src/PouryaKit.Realtime/RealtimeErrors.cs
+  s_b9a8adfb056e1c::t_c2ecefae96cde1 1-28
+src/PouryaKit.Realtime/PouryaKit.Realtime.csproj
+  s_b9a8adfb056e1c::t_b770212650c333 1-12
+scripts/packaging/consumers/PouryaKit.Realtime.cs
+  s_b9a8adfb056e1c::t_3df173567676cd 1-9
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/Realtime/NewProductsRealtime.cs
+  s_b9a8adfb056e1c::t_4c02393a5d8c4a 1-15
+src/PouryaKit.Realtime/RealtimePublisher.cs
+  s_b9a8adfb056e1c::t_1bfb0c21478b87 1-54
+  s_b9a8adfb056e1c::t_cf32b76c1a5b1d 55-61
+samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/Realtime/NewProduct.cs
+  s_b9a8adfb056e1c::t_beca0915757382 1-12
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_b9a8adfb056e1c::t_740091312fb602 12
+  s_b9a8adfb056e1c::t_56d1f454428472 105-108
+src/PouryaKit.Realtime/RealtimeServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_3ff5b1bcdd40ac 1-51
+tests/ModularMonolith.Tests/RealtimeTests.cs
+  s_b9a8adfb056e1c::t_ae294d6a05f3f4 1-239,242,245,248,250
+  s_b9a8adfb056e1c::t_4fd337e09299f9 240-241,243-244,246-247,249
+src/PouryaKit.Realtime/RealtimeConnectionCheck.cs
+  s_b9a8adfb056e1c::t_1bab744d534722 1-47
+.agents/skills/pourya-kit/references/realtime.md
+  s_b9a8adfb056e1c::t_16ca454a5da50d 1-81,83-98
+  s_b9a8adfb056e1c::t_d41fcbef4eb716 82
+src/PouryaKit.Realtime/IRealtimePublisher.cs
+  s_b9a8adfb056e1c::t_271dc23abf8cc3 17-20
+  s_b9a8adfb056e1c::t_00278b0825df71 1-16,21-27
+src/PouryaKit.Realtime/RealtimeListener.cs
+  s_b9a8adfb056e1c::t_a287bc7d548ca9 72
+  s_b9a8adfb056e1c::t_e0071bdb1aaa56 1-71,73-122
+  s_b9a8adfb056e1c::t_105eb2eda8cebc 123-125
+src/PouryaKit.Realtime/RealtimeEvents.cs
+  s_b9a8adfb056e1c::t_8c44c70b015fba 1-17
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_d566c6ed6549f4 3,48
+GLOSSARY.md
+  s_b9a8adfb056e1c::t_e2e50d1c6d16a3 167-170
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_83ced0004403ad 19
+README.md
+  s_b9a8adfb056e1c::t_d19f0a1b3bb8ca 28
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_6006c0f21f9649 3,46,52,274-285,610
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_36cf461499738c 412-413,466-467
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_e39416d75cc3cc 51-52
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_cb6471fff2700a 81-82,109-110,115-116,122,223-224,312-313,318-319,340-341,423,436-437,442
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_3bac6b8dbf5bd1 290-291,323-376,472-493,511-512
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_69786db1387ebb 31-32,202,360
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_895005827e07ef 59-60,65-66,72,168
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_28620fff85e693 283,885
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_b9a8adfb056e1c::t_81a28406e04f36 24
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_b9a8adfb056e1c::t_b2a9983fcda83b 15
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_6dd1531a0f3143 20,41,47,54
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_b9a8adfb056e1c::t_10a44186dd6979 15
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/AppHost.cs
+  s_b9a8adfb056e1c::t_0aaa1ace22ccf5 11,72-74
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_b9a8adfb056e1c::t_0e8d8f86defb34 10
+src/PouryaKit.Templates/content/modular/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_b9a8adfb056e1c::t_1b816ff10e74a5 11
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_b9a8adfb056e1c::t_da29c65873a0c7 14
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/AppHost.cs
+  s_b9a8adfb056e1c::t_b1ced34368eb40 9,63-65
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_b9a8adfb056e1c::t_0a66c37e4d444c 10
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_b9a8adfb056e1c::t_dbbf4414123b8a 11
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_b9a8adfb056e1c::t_1e7dc7ccd13e03 17,486
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_b9a8adfb056e1c::t_62028e9cc305d8 112,117,129,135,176
+tests/ModularMonolith.Tests/SharedStoreSchemaTests.cs
+  s_b9a8adfb056e1c::t_244cc0391e5648 12,58
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_f7d8054789297a 83,108-109
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_b9a8adfb056e1c::t_2f680dd6baf50f 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2dac59f543d4254dba1f495e046c3bd60d979eea",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
