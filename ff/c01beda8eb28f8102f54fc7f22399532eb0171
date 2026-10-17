@@ -1,0 +1,37 @@
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_05bcbd43b4aa01 285,319
+tests/ModularMonolith.Tests/TenantOwnershipTests.cs
+  s_3675ccfac3f8b2::t_5c703981c79f4a 4,9,230-264
+  s_3675ccfac3f8b2::t_2fb4482d644e80 265-266
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_3675ccfac3f8b2::t_4c22658e9eef0c 548-572
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_3675ccfac3f8b2::t_2d9896c4112b0e 84
+src/PouryaKit.Persistence.Dapper/DapperServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_2d9896c4112b0e 53-54,58-61,64-68,95-101,103-105
+  s_3675ccfac3f8b2::t_a74d6c757f71b4 102
+src/PouryaKit.Persistence.Dapper/ReadConnectionCheck.cs
+  s_3675ccfac3f8b2::t_2d9896c4112b0e 8-9,12-20,24,26
+src/PouryaKit.Persistence.Dapper/IReadConnectionFactory.cs
+  s_3675ccfac3f8b2::t_2d9896c4112b0e 14-15
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_6fa7f4b956171a 160,377
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_3675ccfac3f8b2::t_9c4def04bbcc75 147-148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ffc01beda8eb28f8102f54fc7f22399532eb0171",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
