@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Cryptography;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace PouryaKit.Aspire.Tests;
 
@@ -18,6 +19,22 @@ public sealed class AppHostTests
         $"Parameters:bearer-signing-key={Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))}",
     ];
 
+    // The whole model as an allow-list: a dashboard, tracing or logging resource, or one more of anything, is a name here.
+    // Aspire adds a hidden rebuilder beside each project.
+    private static readonly string[] Declared =
+    [
+        "bearer-signing-key",
+        "broker",
+        "cache",
+        "inventory",
+        "inventory-db",
+        "inventory-rebuilder",
+        "modular-monolith",
+        "modular-monolith-db",
+        "modular-monolith-rebuilder",
+        "postgres",
+    ];
+
     [Fact]
     public async Task The_apphost_declares_the_kits_resources_alone_each_on_a_pinned_image_with_a_named_volume()
     {
@@ -26,23 +43,7 @@ public sealed class AppHostTests
             TestContext.Current.CancellationToken
         );
 
-        // The whole model as an allow-list: a dashboard, tracing or logging resource, or one more of anything, is a name here.
-        // Aspire adds a hidden rebuilder beside each project.
-        Assert.Equal(
-            [
-                "bearer-signing-key",
-                "broker",
-                "cache",
-                "inventory",
-                "inventory-db",
-                "inventory-rebuilder",
-                "modular-monolith",
-                "modular-monolith-db",
-                "modular-monolith-rebuilder",
-                "postgres",
-            ],
-            builder.Resources.Select(resource => resource.Name).Order(StringComparer.Ordinal)
-        );
+        Assert.Equal(Declared, Names(builder.Resources));
         Assert.Equal(
             [
                 ("broker", "docker.io/library/rabbitmq:4.3.6", "/var/lib/rabbitmq"),
@@ -75,7 +76,12 @@ public sealed class AppHostTests
 
         Assert.Equal((HttpStatusCode.OK, "Healthy"), (alive.StatusCode, await alive.Content.ReadAsStringAsync(timeout.Token)));
         Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
+        // Headless: the running model is still the declared one, which a dashboard would have joined as it started.
+        Assert.Equal(Declared, Names(app.Services.GetRequiredService<DistributedApplicationModel>().Resources));
     }
+
+    private static IEnumerable<string> Names(IEnumerable<IResource> resources) =>
+        resources.Select(resource => resource.Name).Order(StringComparer.Ordinal);
 
     // The image as registry/image:tag, and the target of its one mount, which must be a volume with a name.
     private static (string, string, string) Pinned(ContainerResource container)

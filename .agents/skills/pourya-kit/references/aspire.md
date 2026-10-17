@@ -116,7 +116,7 @@ using var inventory = app.CreateHttpClient("inventory");
 ```
 
 - The model test reads the builder without starting it: every resource's name, as an allow-list, each container's image and its one volume mount, and the resources each Host references.
-- The start test runs the containers and both Hosts as processes, waits for each Host, and asks `Inventory.Host`'s `/alive` and an endpoint of `ModularMonolith.Host`, which refuses an anonymous caller with 401 once it serves.
+- The start test runs the containers and both Hosts as processes, waits for each Host, and asks `Inventory.Host`'s `/alive` and an endpoint of `ModularMonolith.Host`, which refuses an anonymous caller with 401 once it serves; the running model is still the allow-list, so no dashboard joined it.
 - The test fixes each server's password, so the named volumes one run leaves serve the next.
 - The project lives beside `ModularMonolith.Tests` because it shares none of its fixtures: the AppHost starts the Hosts as processes, never in memory.
 
