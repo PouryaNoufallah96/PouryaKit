@@ -1,0 +1,27 @@
+docs/architecture/diagrams/execution-core.html
+  s_3675ccfac3f8b2::t_532a9b9009c945 4985
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_00d9d986e09474 2213-2223
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_532a9b9009c945 10
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3675ccfac3f8b2::t_c3eda636dc108d 14
+.claude/agent-memory/kit-implementer/caching-and-idempotency-facts.md
+  s_3675ccfac3f8b2::t_4e1d88f2e22652 79-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a5b7c7b73de5bb30811c1bab44374653d529dee7",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
