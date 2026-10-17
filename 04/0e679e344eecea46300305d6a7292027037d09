@@ -1,0 +1,48 @@
+.agents/skills/pourya-kit/references/email.md
+  s_3675ccfac3f8b2::t_8b8e34ac32bacb 37
+tests/ModularMonolith.Tests/TenancyTests.cs
+  s_3675ccfac3f8b2::t_f0b89356a14165 16-17,21,194-221,223-224
+  s_3675ccfac3f8b2::t_dcf2fcfcdf404e 222
+  s_3675ccfac3f8b2::t_30fa3eff99f298 225-226
+src/PouryaKit.Cqrs/Composition/ComposedFeatures.cs
+  s_3675ccfac3f8b2::t_ee1fdc77ae7c0c 23-26,47-54
+  s_3675ccfac3f8b2::t_63afe1ab5cbb83 55-57
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_3675ccfac3f8b2::t_dd3c81c14039ee 15,380-396,587-596
+  s_3675ccfac3f8b2::t_76adfc9dbb2c8c 597-598
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_e559bc4cbb865f 2059-2066,2068-2072
+  s_3675ccfac3f8b2::t_df58019b90f4b4 2067
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261016115325_Tenants.cs
+  s_3675ccfac3f8b2::t_efc68c77383071 13-24
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_8b8e34ac32bacb 162
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_3675ccfac3f8b2::t_8b8e34ac32bacb 28,95
+src/PouryaKit.Cqrs/Composition/TenantRequirementCheck.cs
+  s_3675ccfac3f8b2::t_ee1fdc77ae7c0c 7-9,24
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_3d5ca858636e6a 130
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_3675ccfac3f8b2::t_c8703c2961c475 1,27,32
+src/PouryaKit.Cqrs/CqrsServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_ee1fdc77ae7c0c 36
+src/PouryaKit.Cqrs/Composition/HostComposition.cs
+  s_3675ccfac3f8b2::t_ee1fdc77ae7c0c 18,41,64-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "040e679e344eecea46300305d6a7292027037d09",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
