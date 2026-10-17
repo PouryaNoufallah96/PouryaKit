@@ -1,0 +1,19 @@
+tests/ModularMonolith.Tests/TypeKeyTests.cs
+  s_3675ccfac3f8b2::t_f1c97d2da0b08a 2,25-26,37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a17263180471e109b63551604306aa2baa67f1bb",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
