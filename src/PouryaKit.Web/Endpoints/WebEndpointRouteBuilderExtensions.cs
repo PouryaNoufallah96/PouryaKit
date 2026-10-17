@@ -57,7 +57,8 @@ public static class WebEndpointRouteBuilderExtensions
         /// instead, from the Kit's headers; every other caller's headers are ignored. An endpoint that requires an
         /// <c>Idempotency-Key</c> (<c>RequireIdempotencyKey</c>) adds the header's value as the context's request id. It
         /// requires no authenticated caller itself: the group states that with <c>RequireAuthorization</c>, as a
-        /// Module's group does.
+        /// Module's group does. It applies once per endpoint: called again on a nested group, a Module's included, it
+        /// adds nothing.
         /// </summary>
         public RouteGroupBuilder BeginOperationPerRequest()
         {
@@ -115,6 +116,13 @@ public static class WebEndpointRouteBuilderExtensions
     // of that context, so the Idempotency-Key header is read here too.
     private static void BeginOperationFirst(EndpointBuilder endpoint, PouryaKitWebOptions options, ISet<string> peers)
     {
+        // A nested group that also begins the Operation runs this again on the same endpoint, which one wrapper serves.
+        if (endpoint.Metadata.OfType<OperationBegunPerRequest>().Any())
+        {
+            return;
+        }
+
+        endpoint.Metadata.Add(new OperationBegunPerRequest());
         if (!endpoint.Metadata.OfType<AnonymousActor>().Any() && endpoint.Metadata.OfType<IAllowAnonymous>().Any())
         {
             throw new InvalidOperationException(
@@ -157,6 +165,8 @@ public static class WebEndpointRouteBuilderExtensions
             return run(httpContext);
         };
     }
+
+    private sealed class OperationBegunPerRequest;
 
     private static bool IsSafe(string method) =>
         HttpMethods.IsGet(method) || HttpMethods.IsHead(method) || HttpMethods.IsOptions(method) || HttpMethods.IsTrace(method);
