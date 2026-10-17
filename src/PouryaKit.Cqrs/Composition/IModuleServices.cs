@@ -31,7 +31,7 @@ public interface IModuleServices : IServiceCollection
             return null;
         }
 
-        ComposedFeatures.In(services).Compose(module.Module);
+        ComposedFeatures.In(services).Compose(services, module.Module);
         return module.Module;
     }
 
@@ -53,6 +53,35 @@ public interface IModuleServices : IServiceCollection
         }
 
         return ModuleOf(services) ?? module;
+    }
+
+    /// <summary>
+    /// Keeps <typeparamref name="TService"/> per Module, as each Module's Unit of Work is kept: in a Host that composes
+    /// Modules, the one unkeyed <typeparamref name="TService"/> resolves the one keyed by the Module the scope's Operation
+    /// runs in, null when that Module keeps none, and throws in a scope whose Operation names no Module; a Host without
+    /// Modules keeps its unkeyed registration. The resolver replaces the unkeyed registration, never tried beside it, at
+    /// once when the Host has composed a Module and whenever <c>AddPouryaKitModules</c> composes one, so the order of this
+    /// call and that one, and a repeat of either, change nothing. For a Kit package's registration of a store the Unit of
+    /// Work's transaction keeps, such as <see cref="IIdempotencyStore"/>, which it keys by the Module on a Module's
+    /// builder and registers unkeyed on the Host's own services.
+    /// </summary>
+    static void RouteByModule<TService>(IServiceCollection services)
+        where TService : class
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ComposedFeatures.In(services).Route(services, ServiceDescriptor.Scoped(typeof(TService), provider => Route<TService>(provider)!));
+    }
+
+    private static TService? Route<TService>(IServiceProvider services)
+        where TService : class
+    {
+        var module =
+            services.GetRequiredService<Operation>().Module
+            ?? throw new InvalidOperationException(
+                $"{typeof(TService).Name} was needed in a scope whose Operation names no Module. Send the Operation through IGatewayProcessor<TModule>, or begin the scope's Operation with its Module."
+            );
+        // Null when the Module keeps none: GetService then answers null, as for a service never registered.
+        return services.GetKeyedService<TService>(module);
     }
 
     /// <summary>

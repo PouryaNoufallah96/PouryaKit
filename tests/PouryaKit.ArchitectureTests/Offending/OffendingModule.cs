@@ -74,6 +74,7 @@ internal sealed class OffendingRow
 internal sealed class KitStepCallingCommandHandler(
     IUnitOfWork unitOfWork,
     IUnitOfWorkOutbox outbox,
+    OutboxWriter writer,
     IReceipts receipts,
     ISnapshotMappers snapshots,
     IIntegrationEventOutbox integrationEvents,
@@ -92,6 +93,7 @@ internal sealed class KitStepCallingCommandHandler(
         await unitOfWork.RunAsync(_ => Task.FromResult(Result.Success()), cancellationToken);
         _ = EfUnitOfWorkDbContext.Of(unitOfWork);
         await outbox.WriteAsync(dbContext, [command], [], cancellationToken);
+        _ = await writer.WriteAsync(() => null!, [command], [], cancellationToken);
         await receipts.RecordAsync("offending", Guid.CreateVersion7(), cancellationToken);
         _ = snapshots.Map(command, removed: false);
         integrationEvents.Add(Guid.CreateVersion7(), command);

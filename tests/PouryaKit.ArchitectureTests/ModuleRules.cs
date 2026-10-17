@@ -67,7 +67,7 @@ internal static partial class ModuleRules
     /// <item>beginning, committing, rolling back or releasing a transaction or savepoint on an ADO.NET connection or
     /// transaction, or an EF Core transaction; a new <c>TransactionScope</c> or <c>CommittableTransaction</c>;</item>
     /// <item>the Kit's own steps: <c>IUnitOfWork</c>, the Unit of Work's DbContext (<c>EfUnitOfWorkDbContext</c>),
-    /// <c>IUnitOfWorkOutbox</c>, <c>IReceipts</c>, <c>IIntegrationEventOutbox</c>, <c>IDelayedCommandOutbox</c>, <c>IIdempotencyStore</c>, <c>ISnapshotMappers</c>,
+    /// <c>IUnitOfWorkOutbox</c>, <c>OutboxWriter</c>, <c>IReceipts</c>, <c>IIntegrationEventOutbox</c>, <c>IDelayedCommandOutbox</c>, <c>IIdempotencyStore</c>, <c>ISnapshotMappers</c>,
     /// <c>DomainEventDrain</c>, <c>IReadingStateGuard</c>, <c>TrackedState</c>, the query cache (<c>IQueryCache</c>), whose eviction follows the commit, opening a reading step (<c>Operation.OnlyReading</c>), and beginning an Operation
     /// (<c>BeginOperation</c>). The Gateway, the Web boundary and the Kit's delivery step begin Operations; so does an
     /// application of one Module that opens its own scopes, in its own assembly, which this rule would reject if that
@@ -239,6 +239,7 @@ internal static partial class ModuleRules
     [
         typeof(IUnitOfWork),
         typeof(IUnitOfWorkOutbox),
+        typeof(OutboxWriter),
         typeof(IReceipts),
         typeof(IIntegrationEventOutbox),
         typeof(IDelayedCommandOutbox),
@@ -278,7 +279,7 @@ internal static partial class ModuleRules
     /// marks it with <c>IOutbox</c>, so an application's own marker would pass the check that a Host which
     /// publishes has an Outbox while nothing stores what it publishes;</item>
     /// <item><c>IIntegrationEventOutbox</c> and <c>IDelayedCommandOutbox</c>: the Integration Events and delayed commands
-    /// of an Operation wait in them for its commit; Messaging.Wolverine.EFCore fills them;</item>
+    /// of an Operation wait in them for its commit; Messaging.Wolverine fills them for every store;</item>
     /// <item><c>ISnapshotMappers</c>: the Outbox builds the Snapshots of changed aggregates through it; Messaging.Wolverine
     /// fills it;</item>
     /// <item><c>IReceipts</c>: the delivery step records a Receipt in the receiving Unit of Work; Messaging.Wolverine.EFCore

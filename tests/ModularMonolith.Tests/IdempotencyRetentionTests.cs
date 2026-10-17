@@ -9,7 +9,6 @@ using Microsoft.Extensions.Options;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Modularity;
-using PouryaKit.Persistence.EFCore;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;

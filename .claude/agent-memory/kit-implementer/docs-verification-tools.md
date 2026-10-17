@@ -112,5 +112,10 @@ metadata:
 
 - **Four diagrams cite `PackageGraph.cs`** (execution-core, kit-context, messaging-and-delivery, module-boundaries; kit-context also `inventory.json` lines 3 to the last package with a "the N packages" label and an "N libraries" sublabel). Put a new row at the end of `Table` (after Testing): only the 17-to-end Table ranges and the KeptOut ranges below shift, no per-package range. Commit code with the re-ranged sources staged (the hook passes), then pin the four to that commit and refinalize in a second commit (`scratchpad/p125/diagrams125.py`, `finalize125.py`). Parallel package tickets all touch the same ranges: give the post-merge values in `merge_notes`.
 
+## Code moved to another file (#121, 2026-10-18; Archify 3.0.1)
+
+- When cited code moves to a new file (the Outbox write from `WolverineOutbox.cs` to `OutboxWriter.cs`), `remap.py` flags it `CHECK` with no target: re-cite path and lines with a path-and-range-anchored regex that also rewrites the label (`scratchpad/p121/diagrams121.py`). The previous session's tools live in its scratchpad (`ac47943a…/scratchpad/p124/ranges.py`, `remap.py`, `finalize124.py` with its Archify clone): copy them before reuse.
+- A `using` swap at the top of `ModularMonolithHost.cs` changes no range but sits above every cited one: kit-context, http-command, module-boundaries and proving-sample-and-templates all need a pin. Nine diagrams for one prefactor.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].

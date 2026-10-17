@@ -4,7 +4,9 @@ namespace PouryaKit.Messaging.Wolverine;
 /// Where a handler's Receipts are kept: the record that it has applied one message, and for a Snapshot, the newest
 /// version of its aggregate. The delivery step records the Receipt in the receiving Module's Unit of Work, before the
 /// handler runs, so the Receipt commits with the handler's effect or not at all. A persistence package registers it,
-/// scoped; without one, every delivery runs its handler, and a Snapshot cannot be delivered.
+/// scoped, and keyed by each Module whose write model it keeps, which a Host of Modules routes to by the Operation's
+/// Module (<c>IModuleServices.RouteByModule</c>); without one, every delivery runs its handler, and a Snapshot cannot be
+/// delivered.
 /// The publishing Module's Outbox keeps one more kind of record here: that an Integration Event of one wire name was
 /// published for a Domain Event, under a key no subscription name can equal, so a second Notification Handler
 /// publishing the same type for that Domain Event fails.

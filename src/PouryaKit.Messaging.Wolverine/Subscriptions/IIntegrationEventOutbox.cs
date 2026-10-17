@@ -2,8 +2,8 @@ namespace PouryaKit.Messaging.Wolverine;
 
 /// <summary>
 /// Where the Integration Events an Operation publishes wait for its Unit of Work: they are written to the Outbox in its
-/// commit, or dropped with it. A persistence package registers it, scoped, with the Outbox that writes them; a Host
-/// without one cannot publish Integration Events. Feature code publishes through
+/// commit, or dropped with it. <c>UsePouryaKitMessageStore</c> registers it, scoped, for the store package whose Outbox
+/// writes them; a Host without one cannot publish Integration Events. Feature code publishes through
 /// <see cref="IIntegrationEventPublisher"/> and never calls it.
 /// </summary>
 public interface IIntegrationEventOutbox

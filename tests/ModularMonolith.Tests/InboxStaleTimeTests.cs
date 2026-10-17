@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
-using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
 using PouryaKit.Testing;
 
