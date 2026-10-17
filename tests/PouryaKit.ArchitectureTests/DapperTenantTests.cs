@@ -55,6 +55,7 @@ public sealed class DapperTenantTests
     [InlineData("select p.id from catalog.products p join categories c on c.id = p.category_id where c.tenant = @Tenant and p.tenant = @Tenant", null)]
     [InlineData("select id from \"Catalog\".\"Products\" where created_at between @From and @To and \"Catalog\".\"Products\".tenant = @Tenant", null)]
     [InlineData("select id from categories where tenant = @Tenant -- or true", null)]
+    [InlineData("select id from catalog.products where tenant = @Tenant -- x\r or true", "has an OR at the top level of its WHERE")]
     [InlineData("select id from inventory.stock_items where quantity > 0", null)]
     [InlineData("delete from catalog.products where id = @Id", null)]
     [InlineData("select id from catalog.products where name = @Name and tenant = @Tenant or name = @Other", "has an OR at the top level of its WHERE")]

@@ -20,7 +20,8 @@ internal static partial class Sql
         {
             if (sql.AsSpan(at).StartsWith("--"))
             {
-                var end = sql.IndexOf('\n', at);
+                var end = sql.AsSpan(at).IndexOfAny('\n', '\r');
+                end = end < 0 ? -1 : at + end;
                 at = end < 0 ? sql.Length : end;
                 code.Append(' ');
             }
@@ -78,7 +79,8 @@ internal static partial class Sql
             }
             else if (sql.AsSpan(at).StartsWith("--"))
             {
-                var end = sql.IndexOf('\n', at);
+                var end = sql.AsSpan(at).IndexOfAny('\n', '\r');
+                end = end < 0 ? -1 : at + end;
                 at = end < 0 ? sql.Length : end;
             }
             else if (sql.AsSpan(at).StartsWith("/*"))
