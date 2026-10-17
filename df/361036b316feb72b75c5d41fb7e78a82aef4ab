@@ -1,0 +1,33 @@
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_3675ccfac3f8b2::t_14ac134ddda94e 121-125
+docs/provenance/PouryaKit.Persistence.EFCore.md
+  s_3675ccfac3f8b2::t_f8bee3e625845a 11
+.agents/skills/pourya-kit/references/persistence.md
+  s_3675ccfac3f8b2::t_0ec7d9fd83aa5a 260
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3675ccfac3f8b2::t_14ac134ddda94e 7
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_0ec7d9fd83aa5a 336
+docs/foundation-review.md
+  s_3675ccfac3f8b2::t_0ec7d9fd83aa5a 881
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_3675ccfac3f8b2::t_0ec7d9fd83aa5a 66,86
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_7e6996b86682f0 2132-2144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "df361036b316feb72b75c5d41fb7e78a82aef4ab",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
