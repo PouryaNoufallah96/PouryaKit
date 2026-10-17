@@ -931,6 +931,31 @@ internal static partial class ModuleRules
         }
     }
 
+    /// <summary>
+    /// #155: Feature SQL writes no session state, since the Dapper lease owns the session setting
+    /// <c>pouryakit.tenant</c> and a handler that rebinds it reads another tenant's rows. The rule reads every string
+    /// literal of a Module, tenant-scoped or not, outside EF Core migrations, as <see cref="HoldsSessionWrite"/> reads
+    /// it. Not seen: SQL text assembled at run time; a setting written inside a function the literal only calls.
+    /// </summary>
+    public static IEnumerable<string> WritesSessionState(Assembly module) =>
+        (
+            from literal in Il.LiteralsIn(module)
+            where !IsMigration(literal.Owner) && HoldsSessionWrite(literal.Text)
+            select $"{literal.Owner.FullName} writes session state; the lease owns the tenant: \"{literal.Text}\"."
+        ).Distinct();
+
+    /// <summary>
+    /// Whether <paramref name="sql"/> writes session state: it holds the word <c>set_config</c>, or one of its
+    /// statements starts with <c>SET</c> or <c>RESET</c> (<c>SET LOCAL</c> and <c>RESET ALL</c> included). Its comments
+    /// and the bodies of its single-quoted strings are removed first and its dollar-quoted blocks are read as code, then
+    /// it is split at its semicolons. A literal that reads as such a statement (a label reading "Reset") is read as SQL.
+    /// </summary>
+    public static bool HoldsSessionWrite(string sql)
+    {
+        var code = Sql.Code(sql, keepDollarQuoted: true);
+        return SetConfig().IsMatch(code) || code.Split(';').Any(statement => SessionStatement().IsMatch(statement.Trim()));
+    }
+
     private static bool IsMigration(Type type) => type.IsAssignableTo(typeof(Migration)) || type.IsAssignableTo(typeof(ModelSnapshot));
 
     private static bool IsTransport(string assemblyName) =>
@@ -954,6 +979,13 @@ internal static partial class ModuleRules
         RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace
     )]
     private static partial Regex TransactionStatement();
+
+    [GeneratedRegex(@"\bset_config\b", RegexOptions.IgnoreCase)]
+    private static partial Regex SetConfig();
+
+    // A statement that writes a session setting.
+    [GeneratedRegex(@"^(?:set|reset)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex SessionStatement();
 
     // PostgreSQL's command words.
     private const string CommandWords =

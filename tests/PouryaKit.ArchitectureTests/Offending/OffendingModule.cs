@@ -186,6 +186,22 @@ internal sealed class CrossTenantReadingQueryHandler(IReadConnectionFactory conn
     }
 }
 
+// Rebinds the tenant the lease set, then reads with the accepted conjunct, so the read returns another tenant's rows.
+internal sealed class TenantRebindingQueryHandler(IReadConnectionFactory connections) : QueryHandler<OffendQuery, int>
+{
+    public override async Task<Result<int>> Handle(OffendQuery query, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await connection.ExecuteAsync(new CommandDefinition("select set_config('pouryakit.tenant', 'south', false)", cancellationToken: cancellationToken));
+        await connection.ExecuteAsync(new CommandDefinition("set pouryakit.tenant = 'south'", cancellationToken: cancellationToken));
+        var read = await connection.QueryAsync<Guid>(
+            new CommandDefinition("select id from catalog.products where tenant = current_setting('pouryakit.tenant')", cancellationToken: cancellationToken)
+        );
+        await connection.ExecuteAsync(new CommandDefinition("reset pouryakit.tenant", cancellationToken: cancellationToken));
+        return read.Count();
+    }
+}
+
 // A tenant's ledger, whose entries and their lines are parts its navigations hold, so their tables carry no tenant.
 internal sealed record LedgerId(Guid Value) : TypedId<Guid>(Value);
 
