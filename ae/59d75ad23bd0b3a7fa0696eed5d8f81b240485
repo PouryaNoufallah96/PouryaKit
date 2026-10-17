@@ -1,0 +1,35 @@
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_3675ccfac3f8b2::t_54831ae0874159 116
+tests/ModularMonolith.Tests/TenantOwnershipTests.cs
+  s_3675ccfac3f8b2::t_42bd5b52ad9379 135-159
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_b9c955007f14e9 2113,2119,2125
+tests/ModularMonolith.Tests/Stub/TenantBinders.cs
+  s_3675ccfac3f8b2::t_9a99c025b99eff 252,272-273,275
+  s_3675ccfac3f8b2::t_b3e7524e730281 244-251,253-271,274,276-288
+src/PouryaKit.Persistence.EFCore/PouryaKitDbContext.cs
+  s_3675ccfac3f8b2::t_a5d2f6652cc2d3 68
+  s_3675ccfac3f8b2::t_004989a8eafbb8 40-41,65-67
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_3675ccfac3f8b2::t_ef58592e4812f8 75
+.agents/skills/pourya-kit/references/persistence.md
+  s_3675ccfac3f8b2::t_ef58592e4812f8 247
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_ef58592e4812f8 347
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ae59d75ad23bd0b3a7fa0696eed5d8f81b240485",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
