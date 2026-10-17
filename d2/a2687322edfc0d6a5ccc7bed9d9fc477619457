@@ -1,0 +1,52 @@
+src/PouryaKit.Web/WebServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_d1bf751fca179f 28-29,35
+.agents/skills/pourya-kit/references/web.md
+  s_3675ccfac3f8b2::t_d1bf751fca179f 141,259,261,263,299
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3675ccfac3f8b2::t_d1bf751fca179f 12
+src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs
+  s_3675ccfac3f8b2::t_d1bf751fca179f 20-22,34,49-74,81-83,99-102,107-111
+  s_3675ccfac3f8b2::t_426ee95e96c933 112
+src/PouryaKit.Web/OperationContextHttpHeaders.cs
+  s_3675ccfac3f8b2::t_d1bf751fca179f 8-12,16-17,28-36,38-40,43,46-48,55-61,67,78
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_3675ccfac3f8b2::t_d1bf751fca179f 132-137
+tests/ModularMonolith.Tests/WebConventionTests.cs
+  s_3675ccfac3f8b2::t_d1bf751fca179f 1-104
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_3675ccfac3f8b2::t_d1bf751fca179f 173-174
+src/PouryaKit.Web/PouryaKitWebOptions.cs
+  s_3675ccfac3f8b2::t_d1bf751fca179f 17
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_d1bf751fca179f 374-375
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_d1bf751fca179f 460,464,468,476-479
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_6c3542fec8b34b 1943-1957
+.agents/skills/pourya-kit/SKILL.md
+  s_3675ccfac3f8b2::t_d1bf751fca179f 39
+docs/adr/0007-operation-context-set-by-the-scope-opener.md
+  s_3675ccfac3f8b2::t_d1bf751fca179f 205-218
+src/PouryaKit.Web/PouryaKitTrustedPeerOptions.cs
+  s_3675ccfac3f8b2::t_d1bf751fca179f 10
+docs/architecture/diagrams/http-command.html
+  s_3675ccfac3f8b2::t_d1bf751fca179f 4985
+docs/architecture/diagrams/http-command.sequence.json
+  s_3675ccfac3f8b2::t_d1bf751fca179f 15,77-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d2a2687322edfc0d6a5ccc7bed9d9fc477619457",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
