@@ -27,6 +27,8 @@ public sealed class PackageGraphTests
         // The S3 provider's closure is AWSSDK.S3 over AWSSDK.Core, both Apache-2.0, and the Options stack; the contract's is Domain alone.
         Assert.Contains(Restored("PouryaKit.Storage.S3").Packages, arrived => arrived is { Id: "AWSSDK.Core", Expression: "Apache-2.0" });
         Assert.Equal(["PouryaKit.Domain"], Restored("PouryaKit.Storage").Projects);
+        // The providers reference Cqrs for their one-provider composition check (#147); their contracts stay on Domain alone.
+        Assert.Equal(["PouryaKit.Domain"], Restored("PouryaKit.Email").Projects);
     }
 
     [Fact]

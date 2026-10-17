@@ -1,6 +1,8 @@
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Storage.S3;
 
@@ -96,19 +98,69 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
         );
     }
 
-    [Fact]
-    public void A_second_file_storage_provider_is_refused_when_it_is_registered()
+    [Theory]
+    [InlineData(604_801)]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task A_presigned_url_whose_lifetime_is_not_positive_or_over_seven_days_is_refused_with_its_error(int seconds)
     {
-        var builder = Host.CreateApplicationBuilder();
-        builder.Services.AddPouryaKitS3Storage();
+        var refused = await fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromSeconds(seconds), Cancel);
 
-        var refusal = Assert.Throws<InvalidOperationException>(() => builder.Services.AddPouryaKitS3Storage());
+        var error = Assert.Single(refused.Errors);
+        Assert.Equal(StorageErrors.LinkLifetimeOutOfRange(TimeSpan.FromDays(7)), error);
+        Assert.Contains("7.00:00:00", error.Message);
+    }
+
+    [Fact]
+    public async Task A_presigned_url_of_seven_days_is_signed()
+    {
+        var link = await fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromDays(7), Cancel);
+
+        Assert.True(link.IsSuccess);
+    }
+
+    [Theory]
+    [InlineData("a type, before")]
+    [InlineData("a type, after")]
+    [InlineData("a factory, after")]
+    [InlineData("a second call")]
+    public void A_host_that_registers_another_file_storage_provider_fails_when_it_is_built_naming_both(string other)
+    {
+        const string S3 = "the factory PouryaKit.Storage.S3.S3StorageServiceCollectionExtensions.Create";
+        var builder = Host.CreateApplicationBuilder();
+        builder.AddPouryaKitCompositionChecks();
+        if (other == "a type, before")
+        {
+            builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
+        }
+
+        builder.Services.AddPouryaKitS3Storage();
+        string[] registered = other switch
+        {
+            "a type, before" => [typeof(LocalFileStorage).FullName!, S3],
+            "a type, after" => [S3, typeof(LocalFileStorage).FullName!],
+            "a factory, after" => [S3, $"the factory {typeof(S3StorageTests).FullName}.{nameof(LocalFactory)}"],
+            _ => [S3, S3],
+        };
+        switch (other)
+        {
+            case "a type, after":
+                builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
+                break;
+            case "a factory, after":
+                builder.Services.AddSingleton<IFileStorage>(LocalFactory);
+                break;
+            case "a second call":
+                builder.Services.AddPouryaKitS3Storage();
+                break;
+        }
+
+        var failure = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
-            "The Host already registers a file storage provider, and a Host composes exactly one: remove one of its file storage registrations.",
-            refusal.Message
+            $"The Host registers 2 IFileStorage providers, {string.Join(", ", registered)}, and composes exactly one: remove all but one of its file storage registrations.",
+            failure.Message
         );
-        Assert.Single(builder.Services, descriptor => descriptor.ServiceType == typeof(IFileStorage));
     }
 
     private static CancellationToken Cancel => TestContext.Current.CancellationToken;
@@ -120,5 +172,20 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
         using var copy = new MemoryStream();
         await content.CopyToAsync(copy);
         return copy.ToArray();
+    }
+
+    // A factory typed as the contract, as a Host's own registration often is.
+    private static IFileStorage LocalFactory(IServiceProvider provider) => new LocalFileStorage();
+
+    // Another provider a Host could register, never called.
+    private sealed class LocalFileStorage : IFileStorage
+    {
+        public Task<Result> UploadAsync(string key, Stream content, string contentType, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<Result<StoredFile>> DownloadAsync(string key, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<Result> DeleteAsync(string key, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<Result<Uri>> GetPresignedUrlAsync(string key, TimeSpan lifetime, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }

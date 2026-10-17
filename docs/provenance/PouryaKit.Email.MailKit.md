@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Email.MailKit`. Format and rules: [README](README.md).
 
-The options validation in `src/PouryaKit.Email.MailKit/MailKitServiceCollectionExtensions.cs` follows the Kit's own options pattern (`AddOptions`, `Validate`, `ValidateOnStart`, as `PouryaKitJwtBearerOptions` does), so it has no record here.
+The options validation in `src/PouryaKit.Email.MailKit/MailKitServiceCollectionExtensions.cs` follows the Kit's own options pattern (`AddOptions`, `Validate`, `ValidateOnStart`, as `PouryaKitJwtBearerOptions` does), so it has no record here. Since ticket #147 the package also references `PouryaKit.Cqrs`, for its one-provider composition check (`src/PouryaKit.Email.MailKit/OneEmailSenderCheck.cs`, the Kit's own `ICompositionCheck` shape).
 
 ## Package dependencies
 

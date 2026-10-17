@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using PouryaKit.Cqrs;
 
 namespace PouryaKit.Email.MailKit;
 
@@ -17,7 +18,9 @@ public static class MailKitServiceCollectionExtensions
         /// starts, naming the option, when <see cref="PouryaKitMailKitOptions.Host"/> is blank, the port is not one,
         /// <see cref="PouryaKitMailKitOptions.From"/> is not a mailbox address with a domain,
         /// <see cref="PouryaKitMailKitOptions.Security"/> is not a defined value, which MailKit would treat as plain SMTP,
-        /// or only one of the user name and password is set. Call it once.
+        /// or only one of the user name and password is set. A Host composes exactly one <see cref="IEmailSender"/>: one
+        /// that registers another, before or after this call, fails when its container is built, through the Kit's
+        /// composition checks, naming each registration's type.
         /// </summary>
         public IServiceCollection AddPouryaKitMailKit()
         {
@@ -45,10 +48,12 @@ public static class MailKitServiceCollectionExtensions
                     "PouryaKitMailKitOptions.UserName and Password are set together or not at all."
                 )
                 .ValidateOnStart();
-            services.TryAddSingleton<IEmailSender>(provider =>
-                new MailKitEmailSender(provider.GetRequiredService<IOptions<PouryaKitMailKitOptions>>().Value)
-            );
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, OneEmailSenderCheck>());
+            services.AddSingleton<IEmailSender>(Create);
             return services;
         }
     }
+
+    // A named method, which the one-provider check names.
+    private static MailKitEmailSender Create(IServiceProvider provider) => new(provider.GetRequiredService<IOptions<PouryaKitMailKitOptions>>().Value);
 }

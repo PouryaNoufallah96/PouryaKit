@@ -1,6 +1,6 @@
 ---
 name: email-and-provider-package-facts
-description: Email and MailKit (#124), Papercut in Testcontainers, NuGet audit failures from a provider's transitive packages, and the ripple of a new dependency into Stub Notification Handlers
+description: Email and MailKit (#124), Papercut in Testcontainers, NuGet audit failures from a provider's transitive packages, the ripple of a new dependency into Stub Notification Handlers, and a one-provider composition check in a provider package (#147)
 metadata:
   type: project
 ---
@@ -21,5 +21,14 @@ metadata:
 
 - **`SmtpClient.DisconnectAsync(quit: true)` already swallows `OperationCanceledException`, `SmtpProtocolException`, `SmtpCommandException` and `IOException` around the QUIT**, and `SmtpStream.FlushAsync` turns a cancelled token into an OCE there (`ilspycmd -t MailKit.Net.Smtp.SmtpClient <MailKit.dll>`). A post-accept disconnect guard cannot be shown red through a real server; the session's disposition was no code change, a skill sentence and an acceptance row. Decompile a provider's call before designing a guard a review asks for: a guard with no possible red is speculative code under the owner's guidance.
 
-**Why:** each cost a build or a full run in #124.
+## One provider per Host, checked at build (#147 and its fix round, 2026-10-17)
+
+- **A check the final registrations can answer is an `ICompositionCheck` at `Build()`, never a start-time check** (#61 F1: a built Host runs Operations through its Gateways before it starts). The first round's `IValidateOptions` + `ValidateOnStart` shape, chosen because the providers referenced no Cqrs, was review finding F1 (high); the orchestrator gave `Storage.S3` and `Email.MailKit` a `PouryaKit.Cqrs` reference instead. When a brief's constraint forbids the reference a Kit rule needs, ask before building around it.
+- **A composition check runs only in a Host composed with `AddPouryaKitCompositionChecks()`**: a provider test on a bare `Host.CreateApplicationBuilder()` calls it, then asserts `Build()` throws one `InvalidOperationException` whose `Message` is the problems joined by newlines.
+- **Naming a registration honestly:** `ImplementationType ?? ImplementationInstance?.GetType()`, else `the factory {Method.DeclaringType.FullName}.{Method.Name}` (a lambda's `Method.ReturnType` is the interface); `ImplementationType` throws on a keyed descriptor, so filter `!IsKeyedService` first. A test's factory case uses a static method group so its name is stable.
+- **The sample Host registers MailKit inside `ModularMonolithHost.CreateBuilder`**, so `AppFixture.ComposeHost`'s `configure` can only add a second sender after it: an order test builds `Host.CreateApplicationBuilder()` by hand (fully qualified in `ModularMonolith.Tests`).
+- **Mutation by deleting a registration line fails the build** with IDE0005 (its `using` becomes unused): switch the check off with a runtime-true predicate (`providers.Count >= 0`) instead.
+- **Removing a test an older acceptance row names** fails `check-docs.py` (`names no test`) unless it goes in `REMOVED_TESTS` in the script; a bare backticked method name without its class passes, so the row can say the test was removed and point to the replacement.
+
+**Why:** each cost a build or a full run in #124 or #147.
 **How to apply:** for the next provider package (Storage, Localization, AI), any new container module, and any change to what a Stub Notification Handler needs. Related: [[templates-packaging-and-publication-facts]], [[dotnet-and-test-conventions]], [[docs-verification-tools]].

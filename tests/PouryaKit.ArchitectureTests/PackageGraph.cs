@@ -20,9 +20,9 @@ internal static class PackageGraph
         ["PouryaKit.Core"] = new([], []),
         ["PouryaKit.Domain"] = new([], []),
         ["PouryaKit.Email"] = new(["PouryaKit.Domain"], []),
-        // System.Security.Cryptography.Pkcs is a security floor over MimeKit's 10.0.0 (#124, owner to confirm).
+        // System.Security.Cryptography.Pkcs is a security floor over MimeKit's 10.0.0 (#124); Cqrs is for its composition check (#147).
         ["PouryaKit.Email.MailKit"] = new(
-            ["PouryaKit.Email"],
+            ["PouryaKit.Cqrs", "PouryaKit.Email"],
             ["MailKit", "Microsoft.Extensions.Options", "System.Security.Cryptography.Pkcs"]
         ),
         // Cqrs builds the Host's validated container and runs its composition checks as it starts (#61, 2026-10-07),
@@ -78,7 +78,7 @@ internal static class PackageGraph
             ["Testcontainers.PostgreSql", "Respawn", "xunit.v3.extensibility.core", "Microsoft.Extensions.TimeProvider.Testing", "WolverineFx.RuntimeCompilation"]
         ),
         ["PouryaKit.Storage"] = new(["PouryaKit.Domain"], []),
-        ["PouryaKit.Storage.S3"] = new(["PouryaKit.Storage"], ["AWSSDK.S3", "Microsoft.Extensions.Options"]),
+        ["PouryaKit.Storage.S3"] = new(["PouryaKit.Cqrs", "PouryaKit.Storage"], ["AWSSDK.S3", "Microsoft.Extensions.Options"]),
         ["PouryaKit.Localization"] = new(["PouryaKit.Cqrs"], [], ["Microsoft.AspNetCore.App"]),
     };
 

@@ -1,7 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Cqrs;
+using PouryaKit.Domain;
 using PouryaKit.Email;
+using PouryaKit.Email.MailKit;
 using PouryaKit.Messaging;
 using PouryaKit.Modularity;
 using PouryaKit.Testing;
@@ -113,5 +116,53 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
         );
     }
 
+    [Theory]
+    [InlineData("a type, before")]
+    [InlineData("a type, after")]
+    [InlineData("a factory, after")]
+    public void A_host_that_registers_another_email_sender_fails_when_it_is_built_naming_both(string other)
+    {
+        const string MailKit = "the factory PouryaKit.Email.MailKit.MailKitServiceCollectionExtensions.Create";
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder();
+        builder.AddPouryaKitCompositionChecks();
+        if (other == "a type, before")
+        {
+            builder.Services.AddSingleton<IEmailSender, LocalEmailSender>();
+        }
+
+        builder.Services.AddPouryaKitMailKit();
+        string[] registered = other switch
+        {
+            "a type, before" => [typeof(LocalEmailSender).FullName!, MailKit],
+            "a type, after" => [MailKit, typeof(LocalEmailSender).FullName!],
+            _ => [MailKit, $"the factory {typeof(EmailTests).FullName}.{nameof(LocalFactory)}"],
+        };
+        switch (other)
+        {
+            case "a type, after":
+                builder.Services.AddSingleton<IEmailSender, LocalEmailSender>();
+                break;
+            case "a factory, after":
+                builder.Services.AddSingleton<IEmailSender>(LocalFactory);
+                break;
+        }
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            $"The Host registers 2 IEmailSender providers, {string.Join(", ", registered)}, and composes exactly one: remove all but one of its email sender registrations.",
+            thrown.Message
+        );
+    }
+
     private static string Unique() => $"mail {Guid.CreateVersion7():N}";
+
+    // A factory typed as the contract, as a Host's own registration often is.
+    private static IEmailSender LocalFactory(IServiceProvider provider) => new LocalEmailSender();
+
+    // Another sender a Host could register, never called.
+    private sealed class LocalEmailSender : IEmailSender
+    {
+        public Task<Result> SendAsync(EmailMessage message, CancellationToken cancellationToken) => throw new NotSupportedException();
+    }
 }

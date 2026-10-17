@@ -33,7 +33,7 @@ builder.Services.AddPouryaKitS3Storage();
 - `Bucket` and `Region` are required. On AWS, leave `ServiceUrl` unset and credentials come from the AWS SDK's default chain (environment, profile, the instance's or task's role). For an S3-compatible store, set `ServiceUrl` (`http://minio:9000`), `ForcePathStyle` to `true` for MinIO, and `AccessKey` with `SecretKey`; `Region` is then the region requests are signed for, such as `us-east-1`.
 - The bucket must exist: the Kit creates none.
 - The options are validated when the Host starts, which fails naming each problem: no bucket or region, a service URL that is not an absolute HTTP or HTTPS address, or an access key without its secret key or the reverse. The client is built from them when `IFileStorage` is first resolved.
-- A Host composes exactly one provider. `AddPouryaKitS3Storage` throws when an `IFileStorage` is already registered, a second call of its own included. A Host whose code needs `IFileStorage` and that registers none fails when its container is built: a Kit Host validates its container then, and `IFileStorage` has no registration to resolve.
+- A Host composes exactly one provider. `AddPouryaKitS3Storage` registers a composition check, so a Host that registers another `IFileStorage`, before or after the call, a second call of its own included, fails when its container is built, naming each registration's type, or the factory that builds it. A Host whose code needs `IFileStorage` and that registers none fails when its container is built: a Kit Host validates its container then, and `IFileStorage` has no registration to resolve.
 
 ## Store, then record
 
@@ -68,13 +68,13 @@ internal sealed class AttachContractCommandHandler(IFileStorage files, IReposito
 - `UploadAsync(key, content, contentType, cancellationToken)` stores the stream from its current position to its end. The caller keeps and disposes the stream.
 - `DownloadAsync(key, cancellationToken)` returns a `StoredFile` with its `Content` stream and `ContentType`, or `StorageErrors.FileNotFound`, an `ErrorKind.NotFound` Error, when no file is stored under the key. Dispose the `StoredFile`: its stream is read from the store as the caller reads it.
 - `DeleteAsync(key, cancellationToken)` succeeds whether or not a file was stored under the key, so retention can run again.
-- `GetPresignedUrlAsync(key, lifetime, cancellationToken)` returns a link that reads the file with a plain HTTP GET, without credentials, until `lifetime` has passed. The store is not asked whether the file exists: a link to a missing file answers not found when followed. A token cancelled before the call fails it; one cancelled while the SDK resolves credentials stops the wait, though the SDK may still sign. S3 signs a link for at most seven days.
-- A blank key or content type, or a lifetime of zero or less, is a bug and throws `ArgumentException`. A failure of the store itself (a refused credential, a missing bucket, an unreachable endpoint) throws the provider's exception: it is infrastructure, not a business outcome.
+- `GetPresignedUrlAsync(key, lifetime, cancellationToken)` returns a link that reads the file with a plain HTTP GET, without credentials, until `lifetime` has passed. The store is not asked whether the file exists: a link to a missing file answers not found when followed. A token cancelled before the call fails it; one cancelled while the SDK resolves credentials stops the wait, though the SDK may still sign. A lifetime of zero or less, or longer than the provider signs a link for, fails with `StorageErrors.LinkLifetimeOutOfRange`, an `ErrorKind.Validation` Error, and signs nothing: S3 signs a link for at most seven days.
+- A blank key or content type is a bug and throws `ArgumentException`. A failure of the store itself (a refused credential, a missing bucket, an unreachable endpoint) throws the provider's exception: it is infrastructure, not a business outcome.
 
 ## What the Kit guarantees
 
 - **The contract and the provider's behaviour.** Upload, download, delete and the presigned link behave as above against a real S3-compatible store; a missing file is the not-found Error, never an exception.
-- **One provider, validated before serving.** A second provider is refused when it is registered, and invalid options stop the Host when it starts.
+- **One provider, validated before serving.** A Host that registers a second provider, in either order, fails when its container is built, naming both, and invalid options stop the Host when it starts.
 - **Not a transactional file.** The Kit never stores a file in the Unit of Work's commit, and never removes an object a failed command left behind: that is store-then-record and the application's retention.
 
 ## Limits
