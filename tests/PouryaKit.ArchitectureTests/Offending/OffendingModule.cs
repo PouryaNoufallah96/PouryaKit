@@ -253,6 +253,16 @@ internal sealed class JournalLine : Entity<JournalLineId>
     public string Text { get; private set; } = "";
 }
 
+// A tenant's account in a schema of its own, whose note its table splits into a table named with no schema.
+internal sealed class Account : AggregateRoot<string>, ITenantScoped
+{
+    private Account() { }
+
+    public string Tenant { get; private set; } = "";
+
+    public string Note { get; private set; } = "";
+}
+
 internal sealed class LedgerDbContext(DbContextOptions options) : PouryaKitDbContext(options)
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -265,6 +275,7 @@ internal sealed class LedgerDbContext(DbContextOptions options) : PouryaKitDbCon
         modelBuilder.Entity<Journal>().ToTable("journals").HasKey(journal => new { journal.Tenant, journal.Id });
         modelBuilder.Entity<Journal>().HasMany(journal => journal.Lines).WithOne().IsRequired();
         modelBuilder.Entity<JournalLine>().ToTable("journal_lines");
+        modelBuilder.Entity<Account>().ToTable("accounts", "books").SplitToTable("account_notes", table => table.Property(account => account.Note));
     }
 }
 
