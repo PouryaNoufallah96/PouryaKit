@@ -1,6 +1,6 @@
 using PouryaKit.Cqrs;
 
-namespace PouryaKit.Storage.S3;
+namespace PouryaKit.Storage;
 
 // A Host composes exactly one IFileStorage, which its final registrations show whatever their order: with two, the
 // container would serve the last silently; with none, a removal after the provider's registration, a Feature would fail
@@ -23,7 +23,7 @@ internal sealed class OneFileStorageCheck : ICompositionCheck
         return registered.Count switch
         {
             1 => [],
-            0 => ["The Host registers no IFileStorage provider, and composes exactly one: AddPouryaKitS3Storage registered one, then it was removed."],
+            0 => ["The Host registers no IFileStorage provider, and composes exactly one: AddPouryaKitFileStorage registered one, then it was removed."],
             _ =>
             [
                 $"The Host registers {registered.Count} IFileStorage providers, {string.Join(", ", registered)}, and composes exactly one: remove all but one of its file storage registrations.",

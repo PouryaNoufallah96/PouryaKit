@@ -1,7 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
-using PouryaKit.Cqrs;
 
 namespace PouryaKit.Storage.S3;
 
@@ -41,9 +39,7 @@ public static class S3StorageServiceCollectionExtensions
                 options.Configure(configure);
             }
 
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, OneFileStorageCheck>());
-            services.AddSingleton<IFileStorage>(Create);
-            return services;
+            return services.AddPouryaKitFileStorage(Create);
         }
     }
 

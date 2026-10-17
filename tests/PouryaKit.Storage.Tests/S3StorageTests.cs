@@ -175,7 +175,7 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
         var failure = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
-            "The Host registers no IFileStorage provider, and composes exactly one: AddPouryaKitS3Storage registered one, then it was removed.",
+            "The Host registers no IFileStorage provider, and composes exactly one: AddPouryaKitFileStorage registered one, then it was removed.",
             failure.Message
         );
     }

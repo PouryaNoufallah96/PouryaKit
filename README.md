@@ -23,7 +23,7 @@ Status: Wave 1 and Wave 2 are complete. The Wave 2 set is in the private feed si
 - [RabbitMQ between Hosts](.agents/skills/pourya-kit/references/rabbitmq.md) (`PouryaKit.Messaging.Wolverine.RabbitMq`)
 - [Email](.agents/skills/pourya-kit/references/email.md) (`PouryaKit.Email`, `PouryaKit.Email.MailKit`; Wave 3)
 - [Multi-tenancy](.agents/skills/pourya-kit/references/multi-tenancy.md) (`PouryaKit.Domain`, `PouryaKit.Cqrs`, `PouryaKit.Persistence.EFCore`, `PouryaKit.Messaging.Wolverine`; Wave 3, in progress: tenant-scoped Modules, their EF Core filter, their tenant requirement, the save's ownership check, the refusal of a delivery with no tenant, and the composition refusals of a recurring command and a shared Snapshot key, the Dapper tenant rule, and the Dapper lease that binds the tenant)
-- [File storage](.agents/skills/pourya-kit/references/storage.md) (`PouryaKit.Storage`, `PouryaKit.Storage.S3`; Wave 3: the contract and its S3 provider)
+- [File storage](.agents/skills/pourya-kit/references/storage.md) (`PouryaKit.Storage`, `PouryaKit.Storage.S3`, `PouryaKit.Storage.AzureBlob`; Wave 3: the contract and its S3 and Azure Blob providers)
 - [Localization](.agents/skills/pourya-kit/references/localization.md) (`PouryaKit.Localization`; Wave 3, optional: English and Persian)
 
 The skill's [Capability table](.agents/skills/pourya-kit/SKILL.md#capabilities) owns this list and says when to read each reference. It folds Paging and Request idempotency into the rows of the packages they span.

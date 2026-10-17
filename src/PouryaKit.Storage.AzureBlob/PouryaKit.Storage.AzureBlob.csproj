@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Azure.Storage.Blobs" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <!-- Licence floors: Azure.Storage.Blobs 12.30.1 depends on Apache.Arrow 22.1.0, and Azure.Core 1.60.0, through
+         Microsoft.Identity.Client.Extensions.Msal 4.84.2, on System.Security.Cryptography.ProtectedData 4.5.0; neither
+         declares a licence expression, which these versions do. -->
+    <PackageReference Include="Apache.Arrow" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PouryaKit.Storage\PouryaKit.Storage.csproj" />
+  </ItemGroup>
+</Project>

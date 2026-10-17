@@ -1,6 +1,6 @@
 ---
 name: storage-and-s3-facts
-description: AWS SDK v4 against MinIO and RustFS (path style, signing region, presign protocol, NoSuchKeyException), MinIO withdrawn and RustFS in a generic container, and what adding a Kit package moves in the diagrams
+description: AWS SDK v4 against MinIO and RustFS, Azure Blob against Azurite (API version skip, licence floors) (path style, signing region, presign protocol, NoSuchKeyException), MinIO withdrawn and RustFS in a generic container, and what adding a Kit package moves in the diagrams
 metadata:
   type: project
 ---
@@ -33,5 +33,13 @@ Check the merged code before relying on a design note. Each section names its ti
 - A headless screenshot to check a page: a scratchpad Python script that runs Playwright's Chromium with `--headless=new --screenshot` (`p127/shot.py`); the guard refuses the binary path as a computed command name in Bash.
 - `check-docs.py` fails a backticked `NoSuchKey` in `docs/architecture/README.md` as naming nothing: name the code's own type (`NoSuchKeyException`).
 
-**Why:** each cost a run or a refused command in #127.
+## The Azure Blob provider against Azurite (#128, 2026-10-18; Azure.Storage.Blobs 12.30.1, Azure.Core 1.60.0, Testcontainers.Azurite 4.15.0, Azurite 3.37.0)
+
+- **No Azurite release accepts Blobs 12.30.1's service version 2026-10-06** (3.28.0, the module's default, and 3.37.0, the latest on MCR): every call answers 400 `InvalidHeaderValue`. `AzuriteBuilder(image).WithCommand("--skipApiVersionCheck")` appends the flag. A first Testcontainers pull of an MCR image can stall past the 600 s Bash limit: `docker pull` it first, run suites with `run_in_background`.
+- **Blobs 12.30's closure fails `LicenceTests` twice:** `Apache.Arrow` 22.1.0 (new direct dependency in 12.30, licence file only) and `System.Security.Cryptography.ProtectedData` 4.5.0 (licence URL only, via Azure.Core -> MSAL extensions; MSAL arrives with Azure.Core, not Azure.Identity). Fixed with direct floor references (Arrow 23.0.0, ProtectedData 10.0.12), approved as #124's Pkcs floor. Check a nuspec's `<license type=...>` in `~/.nuget/packages` right after the first restore.
+- SDK behaviour Azurite confirmed: `BlobClient.UploadAsync(stream, BlobUploadOptions, ct)` reads from the stream's current position, leaves it open and replaces an existing blob without conditions; a missing blob throws `RequestFailedException` with `ErrorCode == BlobErrorCode.BlobNotFound`; `DeleteIfExistsAsync` of a missing blob succeeds; `GenerateSasUri(BlobSasPermissions.Read, expiresOn)` is synchronous and Azurite answers 403 after expiry; `new BlobServiceClient("garbage")` throws `FormatException`, and `CanGenerateAccountSasUri` is false for a SAS-only connection string. Azure documents no maximum for a key-signed SAS (only user delegation's seven days): the Kit's bound is a choice.
+- A `catch (X failure) when (key.Length < 0)` mutation fails the build (unused variable); use `when (failure.Status < 0)`.
+- **Sharing one internal check between two provider packages:** a public `AddPouryaKitFileStorage(Func<IServiceProvider, IFileStorage>)` in the contract package, passing the provider's method group straight to `AddSingleton(factory)` so the check still names `<Provider>Extensions.Create`; a second `InternalsVisibleTo` would contradict `IRequiresAuthorizer.cs`'s "the Kit's one InternalsVisibleTo". The contract then leaves `NoPackages` (Cqrs's closure) for a `KeptOut` entry (`AWSSDK`, `Azure`).
+
+**Why:** each cost a run or a refused command in #127 and #128.
 **How to apply:** for #128 (Azure Blob beside it, Azurite), #140 (Reporting over storage), any provider test against a container, and any ticket that adds a Kit package. Related: [[docs-verification-tools]], [[templates-packaging-and-publication-facts]], [[worktree-shell-and-check-gotchas]].
