@@ -590,8 +590,8 @@
         },
         {
           "path": "src/PouryaKit.Storage.S3/S3StorageServiceCollectionExtensions.cs",
-          "line": 22,
-          "end_line": 47,
+          "line": 24,
+          "end_line": 43,
           "label": "one provider, options validated at start"
         },
         {

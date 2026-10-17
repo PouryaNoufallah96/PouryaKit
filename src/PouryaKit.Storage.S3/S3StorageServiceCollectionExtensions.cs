@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace PouryaKit.Storage.S3;
@@ -13,19 +14,13 @@ public static class S3StorageServiceCollectionExtensions
         /// <see cref="IFileStorage"/>, a singleton built from <see cref="PouryaKitS3StorageOptions"/> when first resolved.
         /// The Host binds the options from configuration; <paramref name="configure"/> sets them in code instead. The
         /// Host fails when it starts, naming each problem, when the options name no bucket or region, a service URL
-        /// that is not an absolute HTTP or HTTPS address, or an access key without its secret key or the reverse.
-        /// Throws here when the Host already registers a file storage provider: a Host composes exactly one.
+        /// that is not an absolute HTTP or HTTPS address, or an access key without its secret key or the reverse, and
+        /// when it registers another <see cref="IFileStorage"/>, before or after this call, naming each implementation:
+        /// a Host composes exactly one.
         /// </summary>
         public IServiceCollection AddPouryaKitS3Storage(Action<PouryaKitS3StorageOptions>? configure = null)
         {
             ArgumentNullException.ThrowIfNull(services);
-            if (services.Any(descriptor => descriptor.ServiceType == typeof(IFileStorage)))
-            {
-                throw new InvalidOperationException(
-                    "The Host already registers a file storage provider, and a Host composes exactly one: remove one of its file storage registrations."
-                );
-            }
-
             var options = services
                 .AddOptions<PouryaKitS3StorageOptions>()
                 .Validate(s3 => !string.IsNullOrWhiteSpace(s3.Bucket), "PouryaKitS3StorageOptions.Bucket names no bucket to store files in.")
@@ -44,8 +39,12 @@ public static class S3StorageServiceCollectionExtensions
                 options.Configure(configure);
             }
 
-            services.AddSingleton<IFileStorage>(provider => new S3FileStorage(provider.GetRequiredService<IOptions<PouryaKitS3StorageOptions>>().Value));
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<PouryaKitS3StorageOptions>>(new OneFileStorage(services)));
+            services.AddSingleton<IFileStorage>(Create);
             return services;
         }
     }
+
+    // Typed as the implementation, so that the one-provider check names it.
+    private static S3FileStorage Create(IServiceProvider provider) => new(provider.GetRequiredService<IOptions<PouryaKitS3StorageOptions>>().Value);
 }

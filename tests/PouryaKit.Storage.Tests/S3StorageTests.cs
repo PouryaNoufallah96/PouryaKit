@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using PouryaKit.Domain;
@@ -96,19 +97,57 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
         );
     }
 
+    [Theory]
+    [InlineData(604_801)]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task A_presigned_url_whose_lifetime_is_not_positive_or_over_seven_days_is_refused_with_its_error(int seconds)
+    {
+        var refused = await fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromSeconds(seconds), Cancel);
+
+        Assert.Equal(StorageErrors.LinkLifetimeOutOfRange, Assert.Single(refused.Errors));
+    }
+
     [Fact]
-    public void A_second_file_storage_provider_is_refused_when_it_is_registered()
+    public async Task A_presigned_url_of_seven_days_is_signed()
+    {
+        var link = await fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromDays(7), Cancel);
+
+        Assert.True(link.IsSuccess);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task A_host_that_registers_another_file_storage_provider_fails_to_start_naming_both(bool registeredFirst)
     {
         var builder = Host.CreateApplicationBuilder();
-        builder.Services.AddPouryaKitS3Storage();
+        if (registeredFirst)
+        {
+            builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
+        }
 
-        var refusal = Assert.Throws<InvalidOperationException>(() => builder.Services.AddPouryaKitS3Storage());
+        builder.Services.AddPouryaKitS3Storage(s3 =>
+        {
+            s3.Bucket = "files";
+            s3.Region = "us-east-1";
+        });
+        if (!registeredFirst)
+        {
+            builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
+        }
 
+        using var host = builder.Build();
+
+        var failure = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(Cancel));
+
+        string[] providers = registeredFirst
+            ? [typeof(LocalFileStorage).FullName!, "PouryaKit.Storage.S3.S3FileStorage"]
+            : ["PouryaKit.Storage.S3.S3FileStorage", typeof(LocalFileStorage).FullName!];
         Assert.Equal(
-            "The Host already registers a file storage provider, and a Host composes exactly one: remove one of its file storage registrations.",
-            refusal.Message
+            $"The Host registers 2 file storage providers, {string.Join(", ", providers)}, and composes exactly one IFileStorage: remove all but one of its registrations.",
+            Assert.Single(failure.Failures)
         );
-        Assert.Single(builder.Services, descriptor => descriptor.ServiceType == typeof(IFileStorage));
     }
 
     private static CancellationToken Cancel => TestContext.Current.CancellationToken;
@@ -120,5 +159,17 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
         using var copy = new MemoryStream();
         await content.CopyToAsync(copy);
         return copy.ToArray();
+    }
+
+    // Another provider a Host could register, never called.
+    private sealed class LocalFileStorage : IFileStorage
+    {
+        public Task<Result> UploadAsync(string key, Stream content, string contentType, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<Result<StoredFile>> DownloadAsync(string key, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<Result> DeleteAsync(string key, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<Result<Uri>> GetPresignedUrlAsync(string key, TimeSpan lifetime, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }

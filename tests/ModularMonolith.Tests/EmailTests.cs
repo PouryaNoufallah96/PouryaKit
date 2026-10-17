@@ -1,7 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Domain;
 using PouryaKit.Email;
+using PouryaKit.Email.MailKit;
 using PouryaKit.Messaging;
 using PouryaKit.Modularity;
 using PouryaKit.Testing;
@@ -113,5 +115,46 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
         );
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task A_host_that_registers_another_email_sender_fails_to_start_naming_both(bool registeredFirst)
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder();
+        builder.Services.Configure<PouryaKitMailKitOptions>(options =>
+        {
+            options.Host = "localhost";
+            options.From = "shop@example.com";
+        });
+        if (registeredFirst)
+        {
+            builder.Services.AddSingleton<IEmailSender, LocalEmailSender>();
+        }
+
+        builder.Services.AddPouryaKitMailKit();
+        if (!registeredFirst)
+        {
+            builder.Services.AddSingleton<IEmailSender, LocalEmailSender>();
+        }
+
+        using var host = builder.Build();
+
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        string[] senders = registeredFirst
+            ? [typeof(LocalEmailSender).FullName!, "PouryaKit.Email.MailKit.MailKitEmailSender"]
+            : ["PouryaKit.Email.MailKit.MailKitEmailSender", typeof(LocalEmailSender).FullName!];
+        Assert.Equal(
+            $"The Host registers 2 email senders, {string.Join(", ", senders)}, and composes exactly one IEmailSender: remove all but one of its registrations.",
+            Assert.Single(thrown.Failures)
+        );
+    }
+
     private static string Unique() => $"mail {Guid.CreateVersion7():N}";
+
+    // Another sender a Host could register, never called.
+    private sealed class LocalEmailSender : IEmailSender
+    {
+        public Task<Result> SendAsync(EmailMessage message, CancellationToken cancellationToken) => throw new NotSupportedException();
+    }
 }

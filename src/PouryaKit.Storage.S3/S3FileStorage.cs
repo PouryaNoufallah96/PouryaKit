@@ -77,7 +77,11 @@ internal sealed class S3FileStorage : IFileStorage, IDisposable
     public async Task<Result<Uri>> GetPresignedUrlAsync(string key, TimeSpan lifetime, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(lifetime, TimeSpan.Zero);
+        if (lifetime <= TimeSpan.Zero || lifetime > MaxLinkLifetime)
+        {
+            return StorageErrors.LinkLifetimeOutOfRange;
+        }
+
         // The SDK's call takes no token and completes at once with a configured key pair, so a token cancelled already is
         // checked first; while the SDK resolves credentials from its default chain, a cancelled caller stops waiting
         // and the SDK may still sign the link it no longer returns.
@@ -98,4 +102,7 @@ internal sealed class S3FileStorage : IFileStorage, IDisposable
     }
 
     public void Dispose() => _client.Dispose();
+
+    // The longest a link signed with Signature Version 4 is valid for, and so S3's maximum.
+    private static readonly TimeSpan MaxLinkLifetime = TimeSpan.FromDays(7);
 }
