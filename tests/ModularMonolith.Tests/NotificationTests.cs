@@ -14,6 +14,7 @@ using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Postgres;
+using PouryaKit.Realtime;
 using PouryaKit.Testing;
 using Wolverine;
 using Wolverine.Runtime;
@@ -482,6 +483,7 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         builder.Services.AddSingleton<DeliveryLog>();
         builder.Services.AddPouryaKitMailKit();
         builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSection("PouryaKit:Email"));
+        builder.Services.AddPouryaKitRealtime(connectionName: "app");
         builder.Services.AddPouryaKitDapper(connectionName: "app");
         builder.Services.AddPouryaKitNotificationHandlers(typeof(StubDbContext).Assembly);
         builder.UsePouryaKitWolverine(connectionName: "app");

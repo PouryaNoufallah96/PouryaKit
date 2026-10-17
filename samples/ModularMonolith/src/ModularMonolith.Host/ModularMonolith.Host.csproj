@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Messaging.Wolverine.EFCore\PouryaKit.Messaging.Wolverine.EFCore.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Messaging.Wolverine.RabbitMq\PouryaKit.Messaging.Wolverine.RabbitMq.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Observability\PouryaKit.Observability.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.Realtime\PouryaKit.Realtime.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Security\PouryaKit.Security.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Security.JwtBearer\PouryaKit.Security.JwtBearer.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Web\PouryaKit.Web.csproj" />

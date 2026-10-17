@@ -8,6 +8,7 @@
     <PackageReference Include="PouryaKit.Modularity" />
     <PackageReference Include="PouryaKit.Persistence.Dapper" />
     <PackageReference Include="PouryaKit.Persistence.Postgres" />
+    <PackageReference Include="PouryaKit.Realtime" />
     <PackageReference Include="PouryaKit.Security" />
     <PackageReference Include="PouryaKit.Validation" />
     <PackageReference Include="PouryaKit.Web" />

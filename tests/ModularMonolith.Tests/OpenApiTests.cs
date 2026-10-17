@@ -109,10 +109,12 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         Assert.Equal(
             [
                 "/catalog/categories post",
+                "/catalog/events get",
                 "/catalog/products get",
                 "/catalog/products post",
                 "/catalog/products/{productId} get",
                 "/catalog/v1/categories post",
+                "/catalog/v1/events get",
                 "/catalog/v1/products get",
                 "/catalog/v1/products post",
                 "/catalog/v1/products/{productId} get",
@@ -124,11 +126,13 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         Assert.Equal(
             [
                 "/catalog/categories post",
+                "/catalog/events get",
                 "/catalog/products get",
                 "/catalog/products post",
                 "/catalog/products/{productId} get",
                 "/catalog/products/{productId}/name put",
                 "/catalog/v2/categories post",
+                "/catalog/v2/events get",
                 "/catalog/v2/products get",
                 "/catalog/v2/products post",
                 "/catalog/v2/products/{productId} get",
@@ -169,6 +173,7 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         Assert.Equal(
             [
                 ("/catalog/v2/categories post", true),
+                ("/catalog/v2/events get", true),
                 ("/catalog/v2/products get", true),
                 ("/catalog/v2/products post", true),
                 ("/catalog/v2/products/{productId} get", true),

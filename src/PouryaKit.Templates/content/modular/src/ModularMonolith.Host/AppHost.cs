@@ -8,6 +8,7 @@ using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
 using PouryaKit.Observability;
 using PouryaKit.Persistence.EFCore;
+using PouryaKit.Realtime;
 using PouryaKit.Security;
 using PouryaKit.Security.JwtBearer;
 using PouryaKit.Web;
@@ -68,6 +69,9 @@ public static class AppHost
             builder.Services.AddStackExchangeRedisCache(options => options.Configuration = redis);
         }
 
+        // What a Notification Handler pushes through IRealtimePublisher, such as Catalog's new products, reaches the browsers
+        // connected to Catalog's SSE endpoint on any instance of the Host, through PostgreSQL's notifications.
+        builder.Services.AddPouryaKitRealtime(connectionName: "app");
         builder.UsePouryaKitWolverine(connectionName: "app");
         // With ConnectionStrings:broker, what Catalog publishes also reaches other Hosts over RabbitMQ, from this Host's queue;
         // Inventory and Billing still receive it here.

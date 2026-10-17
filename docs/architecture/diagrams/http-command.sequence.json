@@ -48,8 +48,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 115,
-          "end_line": 127,
+          "line": 120,
+          "end_line": 132,
           "label": "the order of the Host's middleware"
         },
         {
