@@ -13,8 +13,13 @@ internal sealed record Deliver(Subscription Subscription, object Message, Guid M
 /// <summary>The aggregate a Snapshot is of, by its key, and the version of it the Snapshot carries.</summary>
 internal sealed record SnapshotOf(string AggregateId, long Version);
 
-internal sealed class DeliverHandler(IServiceProvider scope, IntegrationEventPublisher publisher, IReceipts? receipts = null)
-    : CommandHandler<Deliver>
+internal sealed class DeliverHandler(
+    IServiceProvider scope,
+    Operation operation,
+    IntegrationEventPublisher publisher,
+    IReceipts? receipts = null,
+    HostComposition? composition = null
+) : CommandHandler<Deliver>
 {
     // Set on the activity of a delivery's Operation, which the dispatcher tags with Deliver or RunDelayedCommand alone:
     // the subscription's or delayed command's declared name, one of a fixed set. The duration histogram keeps its tags.
@@ -23,6 +28,14 @@ internal sealed class DeliverHandler(IServiceProvider scope, IntegrationEventPub
     public override async Task<Result> Handle(Deliver command, CancellationToken cancellationToken)
     {
         Activity.Current?.SetTag(SubscriptionTag, command.Subscription.Name);
+        // Before the Receipt, so the delivery is retried, then set aside as a dead letter naming the Error, and before
+        // the handler, whatever it writes with: a tenant-scoped Module's rows all belong to a tenant. The tenant
+        // requirement covers the Module's own commands and queries, never this one.
+        if (operation.Context?.Tenant is null && composition?.IsTenantScoped(command.Subscription.Module) is true)
+        {
+            return TenantErrors.Required;
+        }
+
         // Recorded before the handler runs, in the same transaction: a redelivery after the commit finds it and does
         // nothing, and a concurrent one waits for this one to commit or roll back.
         if (

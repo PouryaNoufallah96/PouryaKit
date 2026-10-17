@@ -58,14 +58,18 @@ internal sealed class EfUnitOfWork(
             if (!operation.IsRollbackOnly)
             {
                 var changed = PersistencePreparation.Run(dbContext, context);
-                if (outbox is not null)
+                if (changed.IsFailure)
                 {
-                    await outbox.WriteAsync(dbContext, handled, changed, cancellationToken);
+                    result = changed.Errors;
+                }
+                else if (outbox is not null)
+                {
+                    await outbox.WriteAsync(dbContext, handled, changed.Value, cancellationToken);
                 }
 
                 // Checked again: writing the Outbox runs the Snapshot mappers, which may have ignored a nested command
                 // that failed.
-                if (!operation.IsRollbackOnly)
+                if (changed.IsSuccess && !operation.IsRollbackOnly)
                 {
                     if (await SaveAsync(cancellationToken) is { } refused)
                     {

@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "9503cf98baf3455eeacd786c2497f2a27512b8a5",
+      "revision": "6e1d840099334a8c22663c1508ca2d9421872bc0",
       "link_mode": "web"
     },
     "legend": {
@@ -182,9 +182,15 @@
         },
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/PersistencePreparation.cs",
-          "line": 17,
-          "end_line": 70,
-          "label": "marks, cascades, Version + 1, stamps"
+          "line": 18,
+          "end_line": 98,
+          "label": "marks, cascades, tenant, Version + 1, stamps"
+        },
+        {
+          "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
+          "line": 61,
+          "end_line": 64,
+          "label": "another tenant's change becomes the Result"
         }
       ]
     },
@@ -199,8 +205,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 61,
-          "end_line": 64,
+          "line": 65,
+          "end_line": 68,
           "label": "only when an Outbox is registered"
         },
         {
@@ -228,8 +234,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 66,
-          "end_line": 68,
+          "line": 70,
+          "end_line": 72,
           "label": "rollback-only after the Outbox write"
         }
       ]
@@ -245,14 +251,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 70,
-          "end_line": 73,
+          "line": 74,
+          "end_line": 77,
           "label": "a refusal becomes the Result"
         },
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 95,
-          "end_line": 112,
+          "line": 99,
+          "end_line": 116,
           "label": "concurrency or mapped unique constraint"
         }
       ],
@@ -269,8 +275,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 76,
-          "end_line": 76,
+          "line": 80,
+          "end_line": 80,
           "label": "CommitAsync"
         }
       ],
@@ -287,8 +293,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 77,
-          "end_line": 82,
+          "line": 81,
+          "end_line": 86,
           "label": "after the commit, then the Result"
         },
         {
@@ -311,8 +317,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 88,
-          "end_line": 91,
+          "line": 92,
+          "end_line": 95,
           "label": "the failure or RollbackErrors"
         }
       ]
@@ -408,6 +414,14 @@
       "variant": "security"
     },
     {
+      "id": "prepareRefused",
+      "from": "prepare",
+      "to": "rollback",
+      "label": "another tenant's",
+      "role": "error",
+      "variant": "security"
+    },
+    {
       "id": "saveRefused",
       "from": "save",
       "to": "rollback",
@@ -430,7 +444,7 @@
       "dot": "rose",
       "title": "Rollback",
       "items": [
-        "A failed check or a refused save rolls back and returns the command's Errors or the Operation's RollbackErrors.",
+        "A failed check, a change to another tenant's aggregate or a refused save rolls back and returns the command's Errors or the Operation's RollbackErrors.",
         "An exception at any step rolls back by disposing the transaction; one from the commit can leave the outcome unknown (ADR 0004).",
         "Nothing retries: a retry needs a new scope."
       ]

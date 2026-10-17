@@ -102,5 +102,11 @@ metadata:
 - **MimeKit roots a mail through a shared address:** a `MimeMessage` subscribes to its `InternetAddressList`'s `Changed` and the list to each address's, and `Dispose` removes no handler, so a `MailboxAddress` field on a singleton keeps every sent mail alive; build addresses per mail.
 - A built-in `check-docs.py` name rule fails a package id in an architecture-document code span when it names no code (`BouncyCastle.Cryptography`); provenance files may name it.
 
+## Eight diagrams from one ticket (#117, 2026-10-17)
+
+- **Keep a header comment of a cited file unchanged when the change is below it**: reverting one comment line in `EfUnitOfWork.cs` kept execution-core's range 13-22 below the change, and saved a re-pin. A GLOSSARY entry edit (line 73) still forces both diagrams that cite line 134, though nothing moves.
+- **Range moves by script:** map each cited range from the diagram's revision to the working tree with `difflib.SequenceMatcher` equal blocks, apply only ranges whose lines are identical, and print the rest to judge by hand (scratchpad `p117/remap.py`). Diagrams whose ranges stay but whose files changed get an interim pin to the integration tip, so they are staged with the code; the next commit pins all of them to the code commit.
+- **Archify 3.0.1 refuses** a source label over 48 characters (`schema/maxLength`) and a workflow whose node text grows its viewBox past the desktop budget (`composition/desktop-readability`, 1108 px against 1038): a longer `sublabel` on commit-sequence's Prepare node did it, while a new error edge to the rollback node fit. `browser-check` is skipped (and `finalize` exits 2) unless `ARCHIFY_CHROME` names a Chromium: Playwright's `~/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell` works headless. Delete `<slug>.browser-check.json` and `<slug>.delivery-pending.json` too. Copy a pinned SHA from `git rev-parse`, never retype it: a retyped suffix fails validation as `revision-unavailable`.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].

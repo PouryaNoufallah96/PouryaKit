@@ -67,6 +67,30 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.folders"));
     }
 
+    // The save's tenant check reads the Operation's tenant only for a changed tenant-scoped entity (ticket #117, review
+    // F3): a binder loaded and left unchanged beside a note's write needs no context, as the note alone does not.
+    [Fact]
+    public async Task A_tenant_scoped_aggregate_loaded_but_unchanged_in_an_operation_nobody_began_needs_no_context()
+    {
+        await using var services = SingleModuleServices();
+        var binder = Guid.CreateVersion7();
+        await using (var begun = services.CreateAsyncScope())
+        {
+            begun.ServiceProvider.BeginOperation(new OperationContext(Actor.System("single-module"), "north"));
+            Assert.True(
+                (await begun.ServiceProvider.GetRequiredService<IDispatcher>().SendAsync(new CreateBinderCommand(binder, "North", []), TestContext.Current.CancellationToken)).IsSuccess
+            );
+        }
+
+        await using var scope = services.CreateAsyncScope();
+        var written = await scope
+            .ServiceProvider.GetRequiredService<IDispatcher>()
+            .SendAsync(new WriteNoteBesideBinderCommand(binder, "beside"), TestContext.Current.CancellationToken);
+
+        Assert.True(written.IsSuccess);
+        Assert.Equal(1L, await Fixture.ScalarAsync<long>("select count(*) from stub.notes where text = 'beside'"));
+    }
+
     // No Module's router refuses a scope never begun here, so the repository itself refuses the write in both scopes.
     [Theory]
     [InlineData(true)]

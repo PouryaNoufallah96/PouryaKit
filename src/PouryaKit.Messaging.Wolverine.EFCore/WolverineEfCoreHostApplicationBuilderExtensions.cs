@@ -68,6 +68,7 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
             builder.Services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<ICompositionCheck>(new MessageStoreDatabaseCheck(connectionName, connectionString))
             );
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SnapshotKeyTenancyCheck>());
             return builder.UsePouryaKitWolverine(wolverine =>
             {
                 wolverine.PersistMessagesWithPostgresql(connectionString, schema);
