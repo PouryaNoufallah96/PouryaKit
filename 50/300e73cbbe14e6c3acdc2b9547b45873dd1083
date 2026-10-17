@@ -1,0 +1,130 @@
+src/PouryaKit.Cqrs/Pipeline/PouryaKitIdempotencyOptions.cs
+  s_b9a8adfb056e1c::t_01602bc7ff7cf7 1-18
+src/PouryaKit.Messaging.Wolverine/MessageStoreHostApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_13cf2611c38fa4 1-74
+src/PouryaKit.Messaging.Wolverine/OutboxWriter.cs
+  s_b9a8adfb056e1c::t_9eb402aeb81903 1-154
+src/PouryaKit.Cqrs/Pipeline/IdempotencyServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_b809d655169521 1-61
+tests/ModularMonolith.Tests/PerModuleStoreTests.cs
+  s_b9a8adfb056e1c::t_165777ec0a6d1e 1-160
+tests/ModularMonolith.Tests/MessageStoreWithoutEfTests.cs
+  s_b9a8adfb056e1c::t_84c1081608f8a6 1-75
+  s_b9a8adfb056e1c::t_ebf49f8e45a200 76-81
+.agents/skills/pourya-kit/references/messaging.md
+  s_b9a8adfb056e1c::t_ab62f345bfc668 681,686
+.agents/skills/pourya-kit/references/modules.md
+  s_b9a8adfb056e1c::t_f42add6e77422f 57
+.agents/skills/pourya-kit/references/persistence.md
+  s_b9a8adfb056e1c::t_7149fb18fec554 349,351
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_111070cbe7954a 3,6,9
+.claude/agent-memory/kit-implementer/cqrs-and-modularity-facts.md
+  s_b9a8adfb056e1c::t_dc42b1366386b0 75-81
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_b9a8adfb056e1c::t_6f5e7746441cfe 115-119
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_b9a8adfb056e1c::t_a37feb0e46cd98 127-132
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_b9a8adfb056e1c::t_7a0b8f2e62efae 89-93
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_c4854a583cf8ae 1212,1571
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_b9a8adfb056e1c::t_c05f77a133fdf6 493-494
+docs/adr/0009-w3c-trace-context-through-the-outbox.md
+  s_b9a8adfb056e1c::t_b91a069c898506 137-138
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_b9a8adfb056e1c::t_297dc2256158d3 233-235
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_775dc92cbcc88e 124,129,159,205,303,307,333,336,342-343,412,418-419,452-453,462,466,470-471,476,486
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_b9a8adfb056e1c::t_8335da27751ab2 10,213-215,302-303
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_b9a8adfb056e1c::t_ff30546f7f7e2d 10,49,66-68,141-143
+docs/architecture/diagrams/delivery.sequence.json
+  s_b9a8adfb056e1c::t_0976b2ad951701 18,30-32,36-38,43-44
+docs/architecture/diagrams/host-start.workflow.json
+  s_b9a8adfb056e1c::t_f995f3c13868ab 11,125-127,302-303
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_a390510ff23245 15
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_744de59c539780 10
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_04ce237a661ee7 10,116,138-141,171,189-191,196-197,435-436
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_820a919716950d 10,43-44,139-140,297-298,332,338,399-400
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_4a0a93f74a3c47 10
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_2c9e9ed75d5e94 882,920
+docs/provenance/PouryaKit.Messaging.Wolverine.md
+  s_b9a8adfb056e1c::t_c1a69d48372e6a 5,15
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_b9a8adfb056e1c::t_7d29508cd67560 6
+src/PouryaKit.Cqrs/Composition/ComposedFeatures.cs
+  s_aa564eacc177e2::t_b07df90a02c104 3,28-30,43-45,50-62
+src/PouryaKit.Cqrs/Composition/IModuleServices.cs
+  s_aa564eacc177e2::t_ff630ffaf1f9f6 34,58-86
+src/PouryaKit.Cqrs/Pipeline/IIdempotencyStore.cs
+  s_b9a8adfb056e1c::t_0ddd3be529a188 7-8
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_6af1c7437d8a30 28-31,36-38,46-50,54,56-57,59-61,64
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs
+  s_b9a8adfb056e1c::t_f8558bb61989f6 10-13,16,22,35-36,38-47
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/IDelayedCommandOutbox.cs
+  s_b9a8adfb056e1c::t_d46c8cb179d4f2 7-8
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/ScheduledDelayedCommands.cs
+  s_b9a8adfb056e1c::t_d068e133116125 3
+src/PouryaKit.Messaging.Wolverine/IReceipts.cs
+  s_b9a8adfb056e1c::t_d9a6fa787df157 7-9
+src/PouryaKit.Messaging.Wolverine/MessageStoreExtension.cs
+  s_b9a8adfb056e1c::t_0499c171d037e1 4
+src/PouryaKit.Messaging.Wolverine/PouryaKitMessageStoreOptions.cs
+  s_b9a8adfb056e1c::t_063acbcfd7870f 3
+src/PouryaKit.Messaging.Wolverine/Subscriptions/IIntegrationEventOutbox.cs
+  s_b9a8adfb056e1c::t_840ca876979737 5-6
+src/PouryaKit.Messaging.Wolverine/Subscriptions/PublishedIntegrationEvents.cs
+  s_b9a8adfb056e1c::t_2afc29d1df3ec7 1
+src/PouryaKit.Modularity/ModularityHostApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_e8073fa2826b97 17-20
+src/PouryaKit.Persistence.EFCore/EfCoreServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_de3d8d3b869970 34-37,68-69,86-95,98
+src/PouryaKit.Persistence.EFCore/Idempotency/IdempotencyKeyCleanup.cs
+  s_b9a8adfb056e1c::t_9fb91b0938c1cd 6
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/AppHost.cs
+  s_b9a8adfb056e1c::t_c4bd0520ac7287 6
+tests/ModularMonolith.Tests/Fixtures/DeliveryProbes.cs
+  s_b9a8adfb056e1c::t_ea66a65316bc3e 129-130
+tests/PouryaKit.ArchitectureTests/FeatureCodeTests.cs
+  s_b9a8adfb056e1c::t_4eb3f39f9fc6cf 54
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_b9a8adfb056e1c::t_4ed0b7947b361e 70,242,282
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_b9a8adfb056e1c::t_3897538e9b4d78 77,96
+tests/PouryaKit.ArchitectureTests/PipelineContractTests.cs
+  s_b9a8adfb056e1c::t_8d82308331ae62 25-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "50300e73cbbe14e6c3acdc2b9547b45873dd1083",
+  "prompts": {},
+  "sessions": {
+    "s_aa564eacc177e2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a149f5-dcfb-7691-84cf-0f548051f2e1",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
