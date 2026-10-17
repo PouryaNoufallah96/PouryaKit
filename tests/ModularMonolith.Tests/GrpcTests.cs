@@ -189,6 +189,10 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
     [InlineData("--urls=http://localhost:5100", "http://127.0.0.1:5100", "http://localhost:5100")]
     [InlineData("--http_ports=5101", "http://localhost:5101/", "http://*:5101")]
     [InlineData("--Kestrel:Endpoints:Grpc:Url=https://catalog.local:5102", "https://CATALOG.local:5102", "https://catalog.local:5102")]
+    // Review F6: Kestrel binds a listener's host name that is not localhost to every address.
+    [InlineData("--Kestrel:Endpoints:Grpc:Url=http://catalog.local:5102", "http://127.0.0.1:5102", "http://catalog.local:5102")]
+    // Review F5: preferHostingUrls keeps the urls over the Kestrel endpoints.
+    [InlineData("--urls=http://localhost:9000 --Kestrel:Endpoints:Grpc:Url=http://localhost:9100 --preferHostingUrls=true", "http://localhost:9000", "http://localhost:9000")]
     public async Task A_client_addressed_at_one_of_its_own_hosts_listening_urls_fails_the_start(string listening, string address, string own)
     {
         await using var host = AppFixture.ComposeHost(
@@ -196,7 +200,7 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             Fixture.ConnectionString,
             new RecordedLogs(),
             builder => AddClient(builder.Services, new Uri(address)),
-            listening
+            listening.Split(' ')
         );
 
         var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
@@ -215,6 +219,26 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             new RecordedLogs(),
             builder => AddClient(builder.Services, new Uri("http://inventory.local:8080")),
             "--http_ports=8080"
+        );
+
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    // Review F5: ASP.NET Core listens on the urls instead of the ports, and on the Kestrel endpoints instead of the urls,
+    // so a client at the overridden one, as a sidecar on the pod's localhost, calls another process.
+    [Theory]
+    [InlineData("--http_ports=8080 --urls=http://localhost:9000", "http://localhost:8080")]
+    [InlineData("--urls=http://localhost:9000 --Kestrel:Endpoints:Grpc:Url=http://localhost:9100", "http://localhost:9000")]
+    public async Task A_client_addressed_at_a_listening_url_its_host_overrides_starts(string listening, string address)
+    {
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder => AddClient(builder.Services, new Uri(address)),
+            listening.Split(' ')
         );
 
         await host.StartAsync(TestContext.Current.CancellationToken);
