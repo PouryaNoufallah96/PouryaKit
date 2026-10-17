@@ -20,8 +20,8 @@ using PouryaKit.Persistence.Dapper;
 // Products/Features/GetProduct/
 internal sealed record ProductDto(Guid Id, Guid CategoryId, string Name);
 
-// Plain SQL reads no query filter, so it names the Operation's tenant itself, as it names is_deleted.
-internal sealed class GetProductQueryHandler(IReadConnectionFactory connections, OperationContext context)
+// Plain SQL reads no query filter, so it compares the tenant the lease bound itself, as it names is_deleted.
+internal sealed class GetProductQueryHandler(IReadConnectionFactory connections)
     : QueryHandler<GetProductQuery, ProductDto>
 {
     public override async Task<Result<ProductDto>> Handle(GetProductQuery query, CancellationToken cancellationToken)
@@ -29,8 +29,8 @@ internal sealed class GetProductQueryHandler(IReadConnectionFactory connections,
         await using var connection = await connections.OpenAsync(cancellationToken);
         var product = await connection.QuerySingleOrDefaultAsync<ProductDto>(
             new CommandDefinition(
-                "select id, category_id as categoryid, name from catalog.products where id = @Id and tenant = @Tenant and is_deleted = false",
-                new { Id = new ProductId(query.ProductId), context.Tenant },   // a typed ID as a parameter
+                "select id, category_id as categoryid, name from catalog.products where id = @Id and tenant = current_setting('pouryakit.tenant') and is_deleted = false",
+                new { Id = new ProductId(query.ProductId) },   // a typed ID as a parameter
                 cancellationToken: cancellationToken
             )
         );
@@ -41,14 +41,14 @@ internal sealed class GetProductQueryHandler(IReadConnectionFactory connections,
 // Products/Features/ListProducts/: typed IDs as results, one Page at a time
 internal sealed record ProductListItemDto(ProductId Id, CategoryId CategoryId, string Name);
 
-internal sealed class ListProductsQueryHandler(IReadConnectionFactory connections, OperationContext context)
+internal sealed class ListProductsQueryHandler(IReadConnectionFactory connections)
     : QueryHandler<ListProductsQuery, Page<ProductListItemDto>>
 {
-    // The Feature writes its WHERE, the Operation's tenant included, since plain SQL reads no query filter; each declared
-    // filter arrives as @{field}_{operator}, null when not asked for.
+    // The Feature writes its WHERE, the tenant the lease bound included, since plain SQL reads no query filter; each
+    // declared filter arrives as @{field}_{operator}, null when not asked for.
     private const string From = """
         from catalog.products p
-        where p.tenant = @Tenant
+        where p.tenant = current_setting('pouryakit.tenant')
           and not p.is_deleted
           and (@name_eq is null or p.name = @name_eq)
           and (@name_contains is null or strpos(p.name, @name_contains) > 0)
@@ -68,7 +68,7 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
     public override async Task<Result<Page<ProductListItemDto>>> Handle(ListProductsQuery query, CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        return await connection.QueryPageAsync<ProductListItemDto>(Sql, query.Page, new { context.Tenant }, cancellationToken);
+        return await connection.QueryPageAsync<ProductListItemDto>(Sql, query.Page, cancellationToken: cancellationToken);
     }
 }
 ```
@@ -76,17 +76,18 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
 ## Registration
 
 - Call `module.AddPouryaKitDapper(connectionName: "app")` in the Composition Root of each Module that reads with Dapper. It reads the connection string `ConnectionStrings:{connectionName}` from the Host's configuration, and makes every typed ID in the assembly of the Module's definition usable with Dapper, or in the assemblies it names instead. An application without Modules names the assembly.
-- The Host holds one `IReadConnectionFactory` and one connection pool, shared by every Module that reads with Dapper. Every Module names the same connection, ignoring case as configuration keys do; naming a different one in the same Host throws while the Host is composed. A connection string the Host's final configuration does not set, or sets blank, fails the Host when it is built, among the composition checks, naming the connection and its key (`Dapper reads use the connection string app, which the Host's configuration does not set (ConnectionStrings:app), …`); nothing connects. In a Host without the composition checks it throws when `IReadConnectionFactory` is first resolved.
+- The Host holds one connection pool, shared by every Module that reads with Dapper, and each scope its own `IReadConnectionFactory`, so resolve it inside a scope, as a handler does. Every Module names the same connection, ignoring case as configuration keys do; naming a different one in the same Host throws while the Host is composed. A connection string the Host's final configuration does not set, or sets blank, fails the Host when it is built, among the composition checks, naming the connection and its key (`Dapper reads use the connection string app, which the Host's configuration does not set (ConnectionStrings:app), …`); nothing connects. In a Host without the composition checks it throws when `IReadConnectionFactory` is first resolved.
 
 ## Reading
 
 - Read in a query's handler. Inject `IReadConnectionFactory` and open a connection with `await using var connection = await connections.OpenAsync(cancellationToken);`. Each call leases a new open connection from the pool; the handler owns it and disposes it, which returns it to the pool. Opening with a cancelled token throws `OperationCanceledException`.
+- Each lease, as it opens, sets the PostgreSQL session setting `pouryakit.tenant` to the tenant of the scope's Operation with a parameterised `set_config`, read when the lease opens, or to the empty string, which matches no row, where the Operation has no tenant or none began. Npgsql resets a connection's session state when it returns to the pool (`DISCARD ALL`, its default), and every lease sets its own tenant either way, so a lease after another tenant's reads its own tenant's rows. A connection string that sets `Multiplexing=true` is refused, with the composition checks when the Host is built and otherwise at the first lease, since a multiplexed command does not keep the session its lease set. A connection the Kit did not lease has no such setting, and `current_setting('pouryakit.tenant')` fails there.
 - A read connection never joins the Operation's Unit of Work. It reads what is committed: inside a command it does not see the Operation's own changes, which the Unit of Work saves only after the handlers return.
 - Pass the cancellation token through `new CommandDefinition(sql, parameters, cancellationToken: cancellationToken)`; Dapper's overloads that take the SQL and parameters directly take no token.
 - Name each table with its Module's schema (`catalog.products`): the read connection is the Host's, not the Module's. Read only your own Module's schema; another Module's data comes through its Contracts (see [modules.md](modules.md)).
 - Columns are in snake_case (see [persistence.md](persistence.md)); alias each to its member name (`category_id as categoryid`). Dapper matches names without regard to case.
-- Dapper runs exactly the SQL you write; no EF Core query filter reaches it. A removed soft-deletable aggregate keeps its row, marked `is_deleted = true` (see [persistence.md](persistence.md#audit-and-soft-delete)), so every read of a soft-deletable table states `is_deleted = false` (or `not is_deleted`) itself, as both reads above do. A read that leaves it out returns removed aggregates. In a tenant-scoped Module every read of a tenant-scoped table states `tenant = @Tenant` the same way, with the tenant of the injected `OperationContext`, as both reads above do ([multi-tenancy.md](multi-tenancy.md#reads)). State every other predicate the read needs in the SQL too.
-- In a tenant-scoped Module, write each read of a tenant-scoped table in the one grammar a structure test accepts: `SELECT list FROM item ((JOIN | INNER JOIN | LEFT JOIN) item ON condition | , item)* WHERE conjunct (AND conjunct)* [ORDER BY list] [LIMIT @p | n] [OFFSET @p | n]`, one statement, each item `[schema.]table [[AS] alias]` with nothing after it, no other `SELECT` or `TABLE` and no set operator, no `OR` or `CASE` outside parentheses in a condition or a conjunct, and for each tenant-scoped item a conjunct that is exactly `p.tenant = @Tenant` by its alias, or by its name when it has none, or `tenant = @Tenant` unqualified when the `FROM` has that one item. The table of a part a navigation holds in a tenant-scoped aggregate (a part of a part too, and a type derived from a part with a table of its own, whose holder is its base type's table, joined on its primary key) has no tenant column: join each of its items to an item of its holder, itself held so, up to the root held by its conjunct, with `e.ledger_id = l.id`, both sides qualified, for every column of its key to that holder, in the part's own `ON`, or in the holder's when the holder comes later by `JOIN` or `INNER JOIN`, never `LEFT JOIN`, which keeps every row of the part, as for a ledger whose entries are its parts: `select e.amount from accounting.ledger_entries e join accounting.ledgers l on l.id = e.ledger_id where l.tenant = @Tenant`. A further table that a tenant-scoped entity or a part splits into (`SplitToTable`) is a part of the entity's own table: join it on every primary-key column, `n.id = x.id`, to an item of that table held as above. A part read with no join, joined in the `WHERE` or by a comma, or joined to a root that is not held fails, naming the part's table and its root. Group each `OR` in parentheses, as `ListProducts` does, and hold each tenant-scoped table of a join to the tenant in the `WHERE`, not only in its `ON`. Where a subquery, a set operator or a CTE would read such a table, write a join or a second read. The test rejects every other shape of a string literal that names a tenant-scoped table anywhere in its text and holds a SQL command word, `from` or `join`, a fragment concatenated at run time included, and a block comment, a `$` or a backslash in one; a literal that writes such a table is the SQL-write rule's ([testing.md](testing.md#structure-tests)).
+- Dapper runs exactly the SQL you write; no EF Core query filter reaches it. A removed soft-deletable aggregate keeps its row, marked `is_deleted = true` (see [persistence.md](persistence.md#audit-and-soft-delete)), so every read of a soft-deletable table states `is_deleted = false` (or `not is_deleted`) itself, as both reads above do. A read that leaves it out returns removed aggregates. In a tenant-scoped Module every read of a tenant-scoped table states `tenant = current_setting('pouryakit.tenant')` the same way, against the tenant the lease bound, never a tenant the handler passes, as both reads above do ([multi-tenancy.md](multi-tenancy.md#reads)). The lease owns that setting: a structure test rejects any SQL literal of a Module that writes session state, one holding `set_config` or a statement that starts with `SET` or `RESET`. State every other predicate the read needs in the SQL too.
+- In a tenant-scoped Module, write each read of a tenant-scoped table in the one grammar a structure test accepts: `SELECT list FROM item ((JOIN | INNER JOIN | LEFT JOIN) item ON condition | , item)* WHERE conjunct (AND conjunct)* [ORDER BY list] [LIMIT @p | n] [OFFSET @p | n]`, one statement, each item `[schema.]table [[AS] alias]` with nothing after it, no other `SELECT` or `TABLE` and no set operator, no `OR` or `CASE` outside parentheses in a condition or a conjunct, and for each tenant-scoped item a conjunct that is exactly `p.tenant = current_setting('pouryakit.tenant')` by its alias, or by its name when it has none, or `tenant = current_setting('pouryakit.tenant')` unqualified when the `FROM` has that one item; a parameter such as `@Tenant`, `current_setting` with a second argument or another setting, or the sides swapped is rejected, naming the conjunct it needs. The table of a part a navigation holds in a tenant-scoped aggregate (a part of a part too, and a type derived from a part with a table of its own, whose holder is its base type's table, joined on its primary key) has no tenant column: join each of its items to an item of its holder, itself held so, up to the root held by its conjunct, with `e.ledger_id = l.id`, both sides qualified, for every column of its key to that holder, in the part's own `ON`, or in the holder's when the holder comes later by `JOIN` or `INNER JOIN`, never `LEFT JOIN`, which keeps every row of the part, as for a ledger whose entries are its parts: `select e.amount from accounting.ledger_entries e join accounting.ledgers l on l.id = e.ledger_id where l.tenant = current_setting('pouryakit.tenant')`. A further table that a tenant-scoped entity or a part splits into (`SplitToTable`) is a part of the entity's own table: join it on every primary-key column, `n.id = x.id`, to an item of that table held as above. A part read with no join, joined in the `WHERE` or by a comma, or joined to a root that is not held fails, naming the part's table and its root. Group each `OR` in parentheses, as `ListProducts` does, and hold each tenant-scoped table of a join to the tenant in the `WHERE`, not only in its `ON`. Where a subquery, a set operator or a CTE would read such a table, write a join or a second read. The test rejects every other shape of a string literal that names a tenant-scoped table anywhere in its text and holds a SQL command word, `from` or `join`, a fragment concatenated at run time included, and a block comment, a `$` or a backslash in one; a literal that writes such a table is the SQL-write rule's ([testing.md](testing.md#structure-tests)).
 - Read into an `internal` DTO record declared in the Feature, as above, and return a missing row as the Business Area's `NotFound` Error.
 
 ## Reading a Page

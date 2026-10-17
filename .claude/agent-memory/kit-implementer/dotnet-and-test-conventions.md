@@ -102,6 +102,7 @@ metadata:
 
 - **A rendezvous of two Operations hangs forever when one fails** unless something cancels the wait: `[Fact(Timeout = 30_000)]` plus `WaitAsync(cancellationToken)` on the token the handler receives. At the timeout xUnit cancels `TestContext.Current.CancellationToken` and reports an `AggregateException` holding the test's own failure and `Xunit.Sdk.TestTimeoutException`. The body must name `TestContext.Current.CancellationToken` (xUnit1069), so read it there and pass it down.
 - **Showing a hang red:** run `dotnet test` from a scratchpad Python script with `subprocess.Popen(..., start_new_session=True)` and `communicate(timeout=...)`; on `TimeoutExpired`, `os.killpg(process.pid, SIGKILL)` kills the test host too, and `pgrep -fl <assembly>` afterwards shows none left.
+- **Undo a red-run mutation with the reverse edit, never `git checkout <file>`** (#155 F3, 2026-10-17): the checkout also drops the file's uncommitted implementation, silently. Mutate with `sed` to a unique marker (`|| false;`) and Edit it back, or commit first.
 - **`--filter-method` takes a full name or a wildcard:** a bare method name matches nothing and MTP exits 8 (zero tests); write `*Method_name`.
 
 ## Probes and traps (#100, 2026-10-10; SDK 10.0.401)

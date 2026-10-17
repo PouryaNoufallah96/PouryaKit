@@ -135,8 +135,9 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
         var request = new PageRequest { Sort = "name; delete from catalog.products" };
 
         var listed = await ListAsync(request);
-        await using var lease = await Fixture
-            .Host.Services.GetRequiredService<IReadConnectionFactory>()
+        await using var scope = Fixture.Host.Services.CreateAsyncScope();
+        await using var lease = await scope
+            .ServiceProvider.GetRequiredService<IReadConnectionFactory>()
             .OpenAsync(TestContext.Current.CancellationToken);
         var dapper = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             lease.QueryPageAsync<object>(

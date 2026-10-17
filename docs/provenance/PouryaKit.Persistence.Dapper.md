@@ -26,8 +26,9 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
   - In the Dapper package, which references no EF Core, instead of the EF Core PostgreSQL package (plan section B.2, "Dapper reads").
   - One method, `OpenAsync`, instead of a synchronous and an asynchronous `GetOrCreate…` pair: every call opens a new lease, so nothing is "got".
   - It checks the cancellation token before leasing: Npgsql returns an idle pooled connection without looking at the token.
-  - The factory owns its `NpgsqlDataSource` and is one singleton per Host, so the Host's container disposes the pool, and no `NpgsqlDataSource` is registered for other packages to collide with. The data source is plain: no pgvector.
-  - The connection string is named and read from the Host's configuration. A second Module naming the same connection shares the factory and its pool; one naming a different connection fails at registration.
+  - The Host's one `NpgsqlDataSource` is a singleton keyed by the factory's type, so the Host's container disposes the pool, and no unkeyed `NpgsqlDataSource` is registered for other packages to collide with. The data source is plain: no pgvector.
+  - The factory is one per scope (#155), so each lease sets the PostgreSQL session setting `pouryakit.tenant` to the tenant of the scope's Operation, which a tenant-scoped read compares against; Cybernod binds no tenant.
+  - The connection string is named and read from the Host's configuration. A second Module naming the same connection shares the pool; one naming a different connection fails at registration.
   - A write that must commit with the Operation does not use this connection; it joins the Unit of Work through `IUnitOfWorkConnection` in `PouryaKit.Persistence`, which Cybernod lacks.
 
 ## Typed-ID type handler

@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "27cf8d11e03eda52738c3c0fb06e1a6aeac51aac",
+      "revision": "ffc01beda8eb28f8102f54fc7f22399532eb0171",
       "link_mode": "web"
     }
   },
@@ -282,7 +282,7 @@
         {
           "path": "src/PouryaKit.Persistence.Dapper/IReadConnectionFactory.cs",
           "line": 5,
-          "end_line": 14,
+          "end_line": 21,
           "label": "reads on the Host's pool"
         },
         {
@@ -316,7 +316,7 @@
         {
           "path": "src/PouryaKit.Persistence.Dapper/IReadConnectionFactory.cs",
           "line": 5,
-          "end_line": 11,
+          "end_line": 17,
           "label": "read connections"
         }
       ]

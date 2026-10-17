@@ -4,14 +4,14 @@ using PouryaKit.Persistence.Dapper;
 
 namespace Catalog.Products.Features.ListProducts;
 
-internal sealed class ListProductsQueryHandler(IReadConnectionFactory connections, OperationContext context)
+internal sealed class ListProductsQueryHandler(IReadConnectionFactory connections)
     : QueryHandler<ListProductsQuery, Page<ProductListItemDto>>
 {
-    // The Feature writes its WHERE, the Operation's tenant included, since plain SQL reads no query filter; each declared
-    // filter arrives as @{field}_{operator}, null when not asked for.
+    // The Feature writes its WHERE, the tenant the lease bound included, since plain SQL reads no query filter; each
+    // declared filter arrives as @{field}_{operator}, null when not asked for.
     private const string From = """
         from catalog.products p
-        where p.tenant = @Tenant
+        where p.tenant = current_setting('pouryakit.tenant')
           and not p.is_deleted
           and (@name_eq is null or p.name = @name_eq)
           and (@name_contains is null or strpos(p.name, @name_contains) > 0)
@@ -34,6 +34,6 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
     )
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        return await connection.QueryPageAsync<ProductListItemDto>(Sql, query.Page, new { context.Tenant }, cancellationToken);
+        return await connection.QueryPageAsync<ProductListItemDto>(Sql, query.Page, cancellationToken: cancellationToken);
     }
 }

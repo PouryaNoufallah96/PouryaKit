@@ -3,6 +3,7 @@ using Dapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Npgsql;
 using PouryaKit.Core;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
@@ -22,9 +23,10 @@ public static class DapperServiceCollectionExtensions
         /// configuration, and makes every typed ID in <paramref name="typedIdAssemblies"/> usable as a Dapper parameter
         /// and result. Call it from each Module's Composition Root that reads with Dapper: named with no assembly on a
         /// Module's builder (<see cref="IModuleServices"/>), it takes the typed IDs of the assembly of the Module's
-        /// definition; named assemblies replace it. The Host holds one <see cref="IReadConnectionFactory"/> and one
-        /// connection pool, shared by every Module that names the same connection, ignoring case as configuration keys
-        /// do; naming a different connection in the same Host throws here. With the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>), a connection
+        /// definition; named assemblies replace it. The Host holds one connection pool, shared by every Module that names
+        /// the same connection, ignoring case as configuration keys do, and each scope its own
+        /// <see cref="IReadConnectionFactory"/>, which binds the scope's Operation's tenant to every lease; naming a
+        /// different connection in the same Host throws here. With the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>), a connection
         /// string the Host's configuration does not set, or sets blank, fails the Host's build, before any read.
         /// </summary>
         public IServiceCollection AddPouryaKitDapper(string connectionName, params Assembly[] typedIdAssemblies)
@@ -48,13 +50,26 @@ public static class DapperServiceCollectionExtensions
                     );
             }
 
-            services.AddSingleton(new ReadConnection(connectionName));
+            var connection = new ReadConnection(connectionName);
+            services.AddSingleton(connection);
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ReadConnectionCheck>());
-            services.AddSingleton<IReadConnectionFactory>(provider => new ReadConnectionFactory(
-                provider.GetRequiredService<IConfiguration>().GetConnectionString(connectionName)
-                    ?? throw new InvalidOperationException(
-                        $"Dapper reads need the connection string '{connectionName}' in the Host's ConnectionStrings configuration."
-                    )
+            services.AddKeyedSingleton(
+                typeof(ReadConnectionFactory),
+                (provider, _) =>
+                {
+                    var connectionString =
+                        provider.GetRequiredService<IConfiguration>().GetConnectionString(connectionName)
+                        ?? throw new InvalidOperationException(
+                            $"Dapper reads need the connection string '{connectionName}' in the Host's ConnectionStrings configuration."
+                        );
+                    return connection.Refusal(connectionString) is { } refusal
+                        ? throw new InvalidOperationException(refusal)
+                        : NpgsqlDataSource.Create(connectionString);
+                }
+            );
+            services.AddScoped<IReadConnectionFactory>(provider => new ReadConnectionFactory(
+                provider.GetRequiredKeyedService<NpgsqlDataSource>(typeof(ReadConnectionFactory)),
+                provider.GetService<Operation>()
             ));
             return services;
         }
@@ -77,4 +92,14 @@ public static class DapperServiceCollectionExtensions
 }
 
 /// <summary>The connection the Host's Dapper reads use.</summary>
-internal sealed record ReadConnection(string Name);
+internal sealed record ReadConnection(string Name)
+{
+    /// <summary>
+    /// Why <paramref name="connectionString"/> cannot serve the reads; null when it can. A multiplexed command holds a
+    /// server connection only while it runs, so a read could run in a session another lease set to another tenant.
+    /// </summary>
+    public string? Refusal(string connectionString) =>
+        new NpgsqlConnectionStringBuilder(connectionString).Multiplexing
+            ? $"Dapper reads use the connection string {Name}, which sets Multiplexing=true, so a read could run in a session another lease set to another tenant. Remove Multiplexing from ConnectionStrings:{Name}."
+            : null;
+}
