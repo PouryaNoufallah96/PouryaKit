@@ -1,0 +1,35 @@
+src/PouryaKit.Grpc/Clients/GrpcLoopbackCheck.cs
+  s_b9a8adfb056e1c::t_dea72d098cf121 13-22
+  s_b9a8adfb056e1c::t_79dc8a52c5e736 28
+  s_b9a8adfb056e1c::t_deff6034747eeb 39,42-47,50-55
+  s_b9a8adfb056e1c::t_ff030eca348a65 78-80
+  s_b9a8adfb056e1c::t_a387be448013f3 56
+.agents/skills/pourya-kit/references/grpc.md
+  s_b9a8adfb056e1c::t_b42257c398a8d4 101
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_ef55bd8156de7f 12
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_b9a8adfb056e1c::t_c1288aa578ffc1 143-147
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_fe83a7183d67d5 2249-2250
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_e01d167fa0f037 550
+tests/ModularMonolith.Tests/GrpcTests.cs
+  s_b9a8adfb056e1c::t_c60a9a69b35c6b 192-195,203,228-247
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6e3477bcb445da160409da27896c8098f98b1682",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
