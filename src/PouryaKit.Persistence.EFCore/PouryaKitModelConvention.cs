@@ -146,40 +146,42 @@ internal sealed class PouryaKitModelConvention(PouryaKitDbContext dbContext) : I
     private static LambdaExpression WithAReadableHolder(Type type, List<IConventionForeignKey> toHolders)
     {
         var part = Expression.Parameter(type, "part");
+        var judged = toHolders
+            .Select(foreignKey =>
+            {
+                var holderType = foreignKey.PrincipalEntityType.ClrType;
+                var holder = Expression.Parameter(holderType, "holder");
+                var sameKey = foreignKey
+                    .PrincipalKey.Properties.Zip(
+                        foreignKey.Properties,
+                        (key, reference) => Expression.Equal(PropertyOf(holder, key, reference.ClrType), PropertyOf(part, reference, reference.ClrType))
+                    )
+                    .Aggregate(Expression.AndAlso);
+                var held = Expression.Call(
+                    typeof(Queryable),
+                    nameof(Queryable.Any),
+                    [holderType],
+                    new EntityQueryRootExpression((IEntityType)foreignKey.PrincipalEntityType),
+                    Expression.Quote(Expression.Lambda(sameKey, holder))
+                );
+                // A part an optional key holds by nothing is not that holder's part, so that key does not judge it.
+                return foreignKey.IsRequired ? (Expression)held : Expression.OrElse(NamesNoHolder(part, foreignKey), held);
+            })
+            .Aggregate(Expression.AndAlso);
+        // A part none of whose keys names a holder belongs to no tenant, so no tenant reads it.
         return Expression.Lambda(
-            toHolders
-                .Select(foreignKey =>
-                {
-                    var holderType = foreignKey.PrincipalEntityType.ClrType;
-                    var holder = Expression.Parameter(holderType, "holder");
-                    var sameKey = foreignKey
-                        .PrincipalKey.Properties.Zip(
-                            foreignKey.Properties,
-                            (key, reference) => Expression.Equal(PropertyOf(holder, key, reference.ClrType), PropertyOf(part, reference, reference.ClrType))
-                        )
-                        .Aggregate(Expression.AndAlso);
-                    var held = Expression.Call(
-                        typeof(Queryable),
-                        nameof(Queryable.Any),
-                        [holderType],
-                        new EntityQueryRootExpression((IEntityType)foreignKey.PrincipalEntityType),
-                        Expression.Quote(Expression.Lambda(sameKey, holder))
-                    );
-                    // A part an optional key holds by nothing is not that holder's part, so that key does not judge it.
-                    return foreignKey.IsRequired
-                        ? (Expression)held
-                        : Expression.OrElse(
-                            foreignKey
-                                .Properties.Where(property => property.IsNullable)
-                                .Select(property => Expression.Equal(PropertyOf(part, property, property.ClrType), Expression.Constant(null, property.ClrType)))
-                                .Aggregate(Expression.OrElse),
-                            held
-                        );
-                })
-                .Aggregate(Expression.AndAlso),
+            toHolders.Any(foreignKey => foreignKey.IsRequired)
+                ? judged
+                : Expression.AndAlso(Expression.Not(toHolders.Select(foreignKey => NamesNoHolder(part, foreignKey)).Aggregate(Expression.AndAlso)), judged),
             part
         );
     }
+
+    private static Expression NamesNoHolder(ParameterExpression part, IConventionForeignKey foreignKey) =>
+        foreignKey
+            .Properties.Where(property => property.IsNullable)
+            .Select(property => Expression.Equal(PropertyOf(part, property, property.ClrType), Expression.Constant(null, property.ClrType)))
+            .Aggregate<Expression>(Expression.OrElse);
 
     // Both keys are read as the part's type for them: an optional one is nullable where the holder's is not.
     private static MethodCallExpression PropertyOf(ParameterExpression entity, IConventionProperty property, Type type) =>

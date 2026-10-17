@@ -61,7 +61,8 @@ public sealed class ModelConventionTests
         Assert.DoesNotContain("IsDeleted", removedToo, StringComparison.Ordinal);
     }
 
-    // A tab on optional keys to a ledger and a volume is judged by each holder its keys name, and by none a key leaves null.
+    // A tab on optional keys to a ledger and a volume is judged by each holder its keys name, and by none a key leaves null;
+    // one with neither belongs to no tenant, and no tenant reads it.
     [Fact]
     public void A_part_on_optional_keys_is_judged_only_by_the_holders_they_name()
     {
@@ -69,6 +70,7 @@ public sealed class ModelConventionTests
 
         var read = context.Set<Tab>().ToQueryString();
 
+        Assert.Contains("WHERE (t.\"LedgerId\" IS NOT NULL OR t.\"VolumeId\" IS NOT NULL) AND ", read, StringComparison.Ordinal);
         Assert.Contains("(t.\"LedgerId\" IS NULL OR EXISTS (", read, StringComparison.Ordinal);
         Assert.Contains("(t.\"VolumeId\" IS NULL OR EXISTS (", read, StringComparison.Ordinal);
     }
