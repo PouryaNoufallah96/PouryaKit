@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "086d6db28d7f70dec24f9f72e857d80a08d4c6f1",
+      "revision": "50300e73cbbe14e6c3acdc2b9547b45873dd1083",
       "link_mode": "web"
     },
     "legend": {
@@ -210,9 +210,9 @@
           "label": "only when an Outbox is registered"
         },
         {
-          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
-          "line": 34,
-          "end_line": 144,
+          "path": "src/PouryaKit.Messaging.Wolverine/OutboxWriter.cs",
+          "line": 49,
+          "end_line": 153,
           "label": "envelopes and #published records"
         },
         {
@@ -299,8 +299,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
-          "line": 146,
-          "end_line": 163,
+          "line": 50,
+          "end_line": 67,
           "label": "a failed send is logged, not thrown"
         }
       ],

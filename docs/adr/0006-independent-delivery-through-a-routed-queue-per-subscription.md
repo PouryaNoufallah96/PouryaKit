@@ -490,7 +490,8 @@ depend on, and the rules a consuming project must keep.
   the same type, the second delivery to commit fails instead of sending a second event every receiver would drop
   (`IntegrationEventTests.A_second_notification_handler_of_one_domain_event_publishing_the_same_type_fails_instead_of_being_dropped`).
 - **No subscription, nothing written.** The Outbox writes no envelope for a Notification, Integration Event or Snapshot
-  that no subscription in the Host receives: it has no route (`WolverineOutbox.cs`). This changes when brokers arrive in
+  that no subscription in the Host receives: it has no route (`WolverineOutbox.cs`; *since #121, 2026-10-18,
+  `OutboxWriter.cs` of `PouryaKit.Messaging.Wolverine`, which the EF Outbox calls*). This changes when brokers arrive in
   Wave 2: a subscriber may then live in another Host, so the publishing Host can no longer tell an unsubscribed type
   from one subscribed elsewhere. *Changed by ticket #50: a published Integration Event gets a broker route from its
   publication; see its amendment below.*

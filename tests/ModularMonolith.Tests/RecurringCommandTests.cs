@@ -11,7 +11,6 @@ using ModularMonolith.Tests.Stub;
 using Npgsql;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging.Wolverine;
-using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
 using PouryaKit.Testing;
 using Wolverine;

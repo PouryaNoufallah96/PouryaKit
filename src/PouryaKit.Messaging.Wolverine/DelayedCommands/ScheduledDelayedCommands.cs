@@ -1,6 +1,6 @@
 using PouryaKit.Cqrs;
 
-namespace PouryaKit.Messaging.Wolverine.EFCore;
+namespace PouryaKit.Messaging.Wolverine;
 
 // The commands scheduled in one scope's Operation, which the Outbox takes when the Unit of Work writes it.
 internal sealed class ScheduledDelayedCommands : IDelayedCommandOutbox

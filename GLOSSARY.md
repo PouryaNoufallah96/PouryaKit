@@ -52,7 +52,7 @@ The only entry point through which anything outside a Module asks it to run a co
 _Avoid_: Module facade, mediator, bus
 
 **Reverse proxy**:
-The deployable application in front of a system's Hosts that forwards each incoming HTTP request, by configured routes, to the Host that serves it; it runs no Operation. Planned for Wave 3, not built yet.
+The deployable application in front of a system's Hosts that forwards each incoming HTTP request, by configured routes, to the Host that serves it; it runs no Operation. Built on YARP in `PouryaKit.ReverseProxy`.
 _Avoid_: Gateway, API gateway, edge service
 
 ### Execution

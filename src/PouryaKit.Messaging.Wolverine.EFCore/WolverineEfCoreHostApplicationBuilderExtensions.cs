@@ -25,13 +25,17 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
         /// them only after the commit; the commands it scheduled with <see cref="IDelayedCommands"/> are written in the
         /// same commit, each stored until it is due. Each handler's delivery, and each delayed command's, records a Receipt in its Module's Unit of Work, so a
         /// redelivered or concurrently duplicated Notification, Integration Event or Snapshot applies its effect once, and
-        /// a Snapshot older than one already applied not at all. The store is the database of the connection string named <paramref name="connectionName"/>,
+        /// a Snapshot older than one already applied not at all. In a Host of Modules, a Module whose write model's package
+        /// keys Receipts of its own keeps them there, and every other Module's are these
+        /// (<see cref="IModuleServices.RouteByModule{TService}"/>), whichever of this call and <c>AddPouryaKitModules</c>
+        /// comes first. The store is the database of the connection string named <paramref name="connectionName"/>,
         /// in the schema <paramref name="schema"/>, where Wolverine creates its tables when the Host starts; each Outbox
         /// is written in its Unit of Work's own transaction, so the Host fails when it is built if a Module's DbContext
         /// names another database, and this call throws when the configuration has no such connection string or leaves
         /// it blank. <see cref="PouryaKitMessageStoreOptions"/> holds the durability mode and
-        /// the inbox stale time. Everything <c>UsePouryaKitWolverine()</c> of <c>PouryaKit.Messaging.Wolverine</c> does
-        /// applies too; <paramref name="configure"/> adds Host-specific Wolverine configuration, as it does there.
+        /// the inbox stale time. Everything <see cref="MessageStoreHostApplicationBuilderExtensions.UsePouryaKitMessageStore"/>,
+        /// the store-neutral half, and <c>UsePouryaKitWolverine()</c> of <c>PouryaKit.Messaging.Wolverine</c> do applies
+        /// too; <paramref name="configure"/> adds Host-specific Wolverine configuration, as it does there.
         /// </summary>
         public IHostApplicationBuilder UsePouryaKitWolverine(string connectionName, string schema = "wolverine", Action<WolverineOptions>? configure = null)
         {
@@ -39,41 +43,25 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
             ArgumentException.ThrowIfNullOrWhiteSpace(connectionName);
             ArgumentException.ThrowIfNullOrWhiteSpace(schema);
 
-            // A blank one too: Wolverine takes one of spaces, and the Host is built and fails only when it starts,
-            // naming no connection.
-            var connectionString = builder.Configuration.GetConnectionString(connectionName);
-            if (string.IsNullOrWhiteSpace(connectionString))
-            {
-                throw new InvalidOperationException(
-                    $"The configuration has no connection string named {connectionName} for the message store, or leaves it blank. Set ConnectionStrings:{connectionName}."
-                );
-            }
-
-            builder
-                .Services.AddOptions<PouryaKitMessageStoreOptions>()
-                .Validate(
-                    store => store.InboxStaleTime > TimeSpan.Zero,
-                    "PouryaKitMessageStoreOptions.InboxStaleTime is zero or negative; set it longer than zero."
-                )
-                .ValidateOnStart();
-            builder.Services.AddSingleton<IWolverineExtension, MessageStoreExtension>();
+            builder.UsePouryaKitMessageStore(
+                connectionName,
+                (wolverine, connectionString) => wolverine.PersistMessagesWithPostgresql(connectionString, schema),
+                configure
+            );
             builder.Services.TryAddScoped<WolverineOutbox>();
             builder.Services.TryAddScoped<IUnitOfWorkOutbox>(scope => scope.GetRequiredService<WolverineOutbox>());
             builder.Services.TryAddScoped<IOutbox>(scope => scope.GetRequiredService<WolverineOutbox>());
-            builder.Services.TryAddScoped<PublishedIntegrationEvents>();
-            builder.Services.TryAddScoped<IIntegrationEventOutbox>(scope => scope.GetRequiredService<PublishedIntegrationEvents>());
-            builder.Services.TryAddScoped<ScheduledDelayedCommands>();
-            builder.Services.TryAddScoped<IDelayedCommandOutbox>(scope => scope.GetRequiredService<ScheduledDelayedCommands>());
+            // The Receipts of an application without Modules, and of every Module that keys none of its own.
             builder.Services.TryAddScoped<IReceipts, EfReceipts>();
+            builder.Services.TryAddKeyedScoped<IReceipts, EfReceipts>(KeyedService.AnyKey);
+            IModuleServices.RouteByModule<IReceipts>(builder.Services);
             builder.Services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<ICompositionCheck>(new MessageStoreDatabaseCheck(connectionName, connectionString))
+                ServiceDescriptor.Singleton<ICompositionCheck>(
+                    new MessageStoreDatabaseCheck(connectionName, builder.Configuration.GetConnectionString(connectionName)!)
+                )
             );
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SnapshotKeyTenancyCheck>());
-            return builder.UsePouryaKitWolverine(wolverine =>
-            {
-                wolverine.PersistMessagesWithPostgresql(connectionString, schema);
-                configure?.Invoke(wolverine);
-            });
+            return builder;
         }
     }
 }

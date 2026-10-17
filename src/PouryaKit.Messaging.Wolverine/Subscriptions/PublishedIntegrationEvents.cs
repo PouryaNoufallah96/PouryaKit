@@ -1,4 +1,4 @@
-namespace PouryaKit.Messaging.Wolverine.EFCore;
+namespace PouryaKit.Messaging.Wolverine;
 
 // The Integration Events published in one scope's Operation, which the Outbox takes when the Unit of Work writes it.
 internal sealed class PublishedIntegrationEvents : IIntegrationEventOutbox

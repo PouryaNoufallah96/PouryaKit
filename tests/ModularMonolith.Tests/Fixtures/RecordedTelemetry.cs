@@ -7,8 +7,8 @@ namespace ModularMonolith.Tests.Fixtures;
 
 /// <summary>
 /// A test's listeners, until disposed: every activity of the Kit's Operation source and of <see cref="Upstream"/> that
-/// stopped, also Wolverine's when asked, all sampled with all data; and every Operation duration measurement with its
-/// tags. A test may leave out either listener. No exporter: what the Host emits is what the listeners see.
+/// stopped, also Wolverine's and those of the other <c>sources</c> when asked, all sampled with all data; and every
+/// Operation duration measurement with its tags. A test may leave out either listener. No exporter: what the Host emits is what the listeners see.
 /// </summary>
 internal sealed class RecordedTelemetry : IDisposable
 {
@@ -23,12 +23,14 @@ internal sealed class RecordedTelemetry : IDisposable
     private readonly ConcurrentQueue<Activity> _stopped = [];
     private readonly ConcurrentQueue<Duration> _measured = [];
 
-    public RecordedTelemetry(bool wolverine = false, bool activities = true, bool durations = true)
+    public RecordedTelemetry(bool wolverine = false, bool activities = true, bool durations = true, string[]? sources = null)
     {
         _activities = new ActivityListener
         {
             ShouldListenTo = source =>
-                source.Name is OperationTelemetry.SourceName or UpstreamName || (wolverine && source.Name == "Wolverine"),
+                source.Name is OperationTelemetry.SourceName or UpstreamName
+                || (wolverine && source.Name == "Wolverine")
+                || (sources?.Contains(source.Name) ?? false),
             Sample = static (ref _) => ActivitySamplingResult.AllDataAndRecorded,
             // Wolverine starts its spans with a string parent id, sampled here; without it they would not exist.
             SampleUsingParentId = static (ref _) => ActivitySamplingResult.AllDataAndRecorded,

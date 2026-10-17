@@ -17,6 +17,7 @@
     { "id": "PouryaKit.Email", "type": "PouryaKit.Email.IEmailSender" },
     { "id": "PouryaKit.Email.MailKit", "type": "PouryaKit.Email.MailKit.PouryaKitMailKitOptions" },
     { "id": "PouryaKit.Localization", "type": "PouryaKit.Localization.LocalizationServiceCollectionExtensions" },
+    { "id": "PouryaKit.ReverseProxy", "type": "PouryaKit.ReverseProxy.ReverseProxyHostApplicationBuilderExtensions" },
     { "id": "PouryaKit.Realtime", "type": "PouryaKit.Realtime.IRealtimePublisher" },
     { "id": "PouryaKit.Security.JwtBearer", "type": "PouryaKit.Security.JwtBearer.PouryaKitJwtBearerOptions" },
     { "id": "PouryaKit.Messaging", "type": "PouryaKit.Messaging.WireNameAttribute" },
@@ -44,14 +45,14 @@
     {
       "name": "template-monolith",
       "template": "pouryakit-monolith",
-      "packages": ["PouryaKit.Caching", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi", "PouryaKit.Realtime"],
+      "packages": ["PouryaKit.Caching", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.ReverseProxy", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi", "PouryaKit.Realtime"],
       "tests": ["PouryaKit.Testing"],
       "excluded": ["PouryaKit.Modularity", "PouryaKit.Testing"]
     },
     {
       "name": "template-modular-monolith",
       "template": "pouryakit-modular-monolith",
-      "packages": ["PouryaKit.Modularity", "PouryaKit.Caching", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi", "PouryaKit.Realtime"],
+      "packages": ["PouryaKit.Modularity", "PouryaKit.Caching", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.ReverseProxy", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi", "PouryaKit.Realtime"],
       "tests": ["PouryaKit.Testing"],
       "excluded": ["PouryaKit.Testing"]
     }

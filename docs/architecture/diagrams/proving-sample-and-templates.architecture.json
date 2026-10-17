@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "2dac59f543d4254dba1f495e046c3bd60d979eea",
+      "revision": "6f77caf35e42be46d659e1083556270ea11c586e",
       "link_mode": "web"
     }
   },
@@ -105,6 +105,40 @@
           "line": 8,
           "end_line": 27,
           "label": "its references"
+        }
+      ]
+    },
+    {
+      "id": "proxy",
+      "type": "cloud",
+      "label": "ModularMonolith.ReverseProxy",
+      "sublabel": "the Reverse proxy, with the service defaults",
+      "pos": [
+        700,
+        136
+      ],
+      "size": [
+        330,
+        52
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.ReverseProxy/ReverseProxyHost.cs",
+          "line": 16,
+          "end_line": 33,
+          "label": "service defaults, YARP routes, /alive"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.ReverseProxy/appsettings.json",
+          "line": 3,
+          "end_line": 31,
+          "label": "every path to modular-monolith, no probe"
+        },
+        {
+          "path": "src/PouryaKit.Templates/content/shared/src/ModularMonolith.ReverseProxy/Program.cs",
+          "line": 7,
+          "end_line": 17,
+          "label": "each template's own copy"
         }
       ]
     },
@@ -300,6 +334,7 @@
       "kind": "region",
       "label": "samples/ModularMonolith",
       "wraps": [
+        "proxy",
         "mmhost",
         "invhost",
         "billing",
@@ -358,6 +393,14 @@
       "from": "invhost",
       "to": "inventory",
       "label": "composes",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "proxy-mmhost",
+      "from": "proxy",
+      "to": "mmhost",
+      "label": "forwards by route",
       "fromSide": "left",
       "toSide": "top"
     },
@@ -456,6 +499,7 @@
       "items": [
         "With ConnectionStrings:broker, ModularMonolith.Host composes Catalog and Billing under the service name modular-monolith, and Inventory.Host composes Inventory under the service name inventory; what Catalog publishes then reaches Inventory over RabbitMQ.",
         "Inventory.Host composes ModularMonolith.ServiceDefaults; ModularMonolith.Host does not.",
+        "ModularMonolith.ReverseProxy composes the service defaults and PouryaKit.ReverseProxy, runs no Operation, and routes every path to ModularMonolith.Host, whose liveness probe its settings turn off.",
         "ModularMonolith.ServiceDefaults references EF Core Relational for its readiness check, OpenTelemetry, service discovery, Serilog, PouryaKit.Web and PouryaKit.Observability."
       ]
     },
@@ -464,7 +508,7 @@
       "title": "The templates",
       "items": [
         "PouryaKit.Templates keeps no copy of the business code: it packs the sample Modules' code, the service defaults recipes and two files of ModularMonolith.Host when the package is packed.",
-        "Each template's Host, project files and smoke test are the template's own; the monolith takes Catalog without Modularity."
+        "Each template's Host, Reverse proxy, project files and smoke test are the template's own; the monolith takes Catalog without Modularity."
       ]
     }
   ]

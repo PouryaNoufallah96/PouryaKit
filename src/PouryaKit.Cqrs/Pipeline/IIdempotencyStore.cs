@@ -4,7 +4,8 @@ namespace PouryaKit.Cqrs;
 /// Where the dispatcher keeps the keys of <see cref="IdempotentAttribute"/> commands: in the transaction of the Unit of
 /// Work the command runs in, so a key and its recorded success commit with the command's effect or not at all. A
 /// persistence package registers it, scoped, as <c>PouryaKit.Persistence.EFCore</c> does with a table in each Module's
-/// own schema. Feature code never calls it.
+/// own schema, keyed by the Module on a Module's builder, which a Host of Modules routes to by the Operation's Module
+/// (<see cref="IModuleServices.RouteByModule{TService}"/>). Feature code never calls it.
 /// </summary>
 public interface IIdempotencyStore
 {

@@ -80,6 +80,7 @@ internal static class PackageGraph
         ["PouryaKit.Storage"] = new(["PouryaKit.Domain"], []),
         ["PouryaKit.Storage.S3"] = new(["PouryaKit.Cqrs", "PouryaKit.Storage"], ["AWSSDK.S3", "Microsoft.Extensions.Options"]),
         ["PouryaKit.Localization"] = new(["PouryaKit.Cqrs"], [], ["Microsoft.AspNetCore.App"]),
+        ["PouryaKit.ReverseProxy"] = new([], ["Microsoft.Extensions.ServiceDiscovery.Yarp", "Yarp.ReverseProxy"], ["Microsoft.AspNetCore.App"]),
         ["PouryaKit.Realtime"] = new(["PouryaKit.Persistence.EFCore", "PouryaKit.Web"], ["Npgsql"], ["Microsoft.AspNetCore.App"]),
     };
 
@@ -105,6 +106,8 @@ internal static class PackageGraph
         ["PouryaKit.Observability"] = ["OpenTelemetry", "Serilog", "WolverineFx", "PouryaKit.Messaging"],
         // Redis is the application's own distributed cache for HybridCache, never the Kit's (I.3 Caching, #43).
         ["PouryaKit.Caching"] = ["StackExchange.Redis", "Microsoft.Extensions.Caching.StackExchangeRedis"],
+        // The Reverse proxy runs no Operation: no Kit package, the dispatcher's included, arrives in its closure (#126).
+        ["PouryaKit.ReverseProxy"] = ["PouryaKit."],
         // PostgreSQL carries a push between instances: no message store, broker or Redis, and no Messaging (#133).
         ["PouryaKit.Realtime"] = ["WolverineFx", "JasperFx", "PouryaKit.Messaging", "RabbitMQ", "StackExchange.Redis"],
     };

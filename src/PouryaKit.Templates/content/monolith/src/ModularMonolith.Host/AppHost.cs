@@ -5,7 +5,6 @@ using PouryaKit.Cqrs;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Observability;
-using PouryaKit.Persistence.EFCore;
 using PouryaKit.Realtime;
 using PouryaKit.Security;
 using PouryaKit.Security.JwtBearer;

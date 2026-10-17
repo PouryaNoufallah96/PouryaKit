@@ -89,6 +89,11 @@ public sealed class PackageGraphTests
             ["PouryaKit.Storage's closure holds the packages [AWSSDK.Core]; it must hold none."],
             PackageGraph.Violations(storage with { Packages = [Arrived("AWSSDK.Core")] })
         );
+        var reverseProxy = Restored("PouryaKit.ReverseProxy");
+        Assert.Equal(
+            ["PouryaKit.ReverseProxy's closure holds PouryaKit.Cqrs, which section C keeps out of it."],
+            PackageGraph.Violations(reverseProxy with { Projects = new HashSet<string>([.. reverseProxy.Projects, "PouryaKit.Cqrs"]) })
+        );
     }
 
     [Fact]

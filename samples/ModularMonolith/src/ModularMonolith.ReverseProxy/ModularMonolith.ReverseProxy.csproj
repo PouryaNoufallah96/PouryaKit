@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <!-- dotnet run reads appsettings.json from here; it is not copied, so no project that references this one takes it. -->
+    <RunWorkingDirectory>$(MSBuildProjectDirectory)</RunWorkingDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The Web SDK would copy appsettings.json to the output. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ModularMonolith.ServiceDefaults\ModularMonolith.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.ReverseProxy\PouryaKit.ReverseProxy.csproj" />
+  </ItemGroup>
+</Project>
