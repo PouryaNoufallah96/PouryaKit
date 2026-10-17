@@ -1,6 +1,6 @@
 ---
 name: email-and-provider-package-facts
-description: Email and MailKit (#124), Papercut in Testcontainers, NuGet audit failures from a provider's transitive packages, the ripple of a new dependency into Stub Notification Handlers, and a one-provider check at start without Cqrs (#147)
+description: Email and MailKit (#124), Papercut in Testcontainers, NuGet audit failures from a provider's transitive packages, the ripple of a new dependency into Stub Notification Handlers, and a one-provider composition check in a provider package (#147)
 metadata:
   type: project
 ---
@@ -17,10 +17,11 @@ metadata:
 - **Validate every enum option with `Enum.IsDefined`** (#124 review F1, Codex): the configuration binder reads a numeric string (`Security=99`) into an enum, and MailKit's `ComputeDefaultValues` treats an undefined `SecureSocketOptions` as plain `smtp://` without STARTTLS.
 - **A retry test must wait for the delivery's end, not for its effects** (#124 review F2): waiting for two mails also passed with a handler that failed every attempt. Wait for the subscription's committed Receipt (`stub.pouryakit_receipts` where `subscription` and `message_id`, the Domain Event's `Id`), then count; red with a handler that fails after every send.
 
-## One provider per Host, checked at start (#147, 2026-10-17)
+## One provider per Host, checked at build (#147 and its fix round, 2026-10-17)
 
-- **A provider package without Cqrs checks "one provider" as an options validation**: an `IValidateOptions<TProviderOptions>` instance holding the `IServiceCollection` it was registered on (`TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<T>>(new Check(services)))`, deduplicated by type), counting unkeyed descriptors at start, so order does not matter. Never resolve the providers inside it: the provider's factory reads the same options, so validation would re-enter itself.
-- **Naming a factory registration:** `descriptor.ImplementationFactory.Method.ReturnType` is the delegate's return type (the interface) for a lambda, but the concrete type for a static method group typed as the implementation (`AddSingleton<IFileStorage>(Create)` with `static S3FileStorage Create(IServiceProvider)`); `ImplementationType` throws on a keyed descriptor, so filter `!IsKeyedService` first.
+- **A check the final registrations can answer is an `ICompositionCheck` at `Build()`, never a start-time check** (#61 F1: a built Host runs Operations through its Gateways before it starts). The first round's `IValidateOptions` + `ValidateOnStart` shape, chosen because the providers referenced no Cqrs, was review finding F1 (high); the orchestrator gave `Storage.S3` and `Email.MailKit` a `PouryaKit.Cqrs` reference instead. When a brief's constraint forbids the reference a Kit rule needs, ask before building around it.
+- **A composition check runs only in a Host composed with `AddPouryaKitCompositionChecks()`**: a provider test on a bare `Host.CreateApplicationBuilder()` calls it, then asserts `Build()` throws one `InvalidOperationException` whose `Message` is the problems joined by newlines.
+- **Naming a registration honestly:** `ImplementationType ?? ImplementationInstance?.GetType()`, else `the factory {Method.DeclaringType.FullName}.{Method.Name}` (a lambda's `Method.ReturnType` is the interface); `ImplementationType` throws on a keyed descriptor, so filter `!IsKeyedService` first. A test's factory case uses a static method group so its name is stable.
 - **The sample Host registers MailKit inside `ModularMonolithHost.CreateBuilder`**, so `AppFixture.ComposeHost`'s `configure` can only add a second sender after it: an order test builds `Host.CreateApplicationBuilder()` by hand (fully qualified in `ModularMonolith.Tests`).
 - **Mutation by deleting a registration line fails the build** with IDE0005 (its `using` becomes unused): switch the check off with a runtime-true predicate (`providers.Count >= 0`) instead.
 - **Removing a test an older acceptance row names** fails `check-docs.py` (`names no test`) unless it goes in `REMOVED_TESTS` in the script; a bare backticked method name without its class passes, so the row can say the test was removed and point to the replacement.
