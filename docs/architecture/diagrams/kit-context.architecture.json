@@ -78,8 +78,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 45,
-          "end_line": 52,
+          "line": 46,
+          "end_line": 53,
           "label": "bearer JWT; authenticated by default"
         },
         {
@@ -106,20 +106,20 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 76,
-          "end_line": 87,
+          "line": 77,
+          "end_line": 88,
           "label": "composes the Modules; Inventory w/o broker"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 99,
-          "end_line": 103,
+          "line": 104,
+          "end_line": 108,
           "label": "message store; RabbitMQ with a broker"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
           "line": 15,
-          "end_line": 27,
+          "end_line": 28,
           "label": "references the Kit's projects"
         }
       ]
@@ -220,8 +220,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 88,
-          "end_line": 90,
+          "line": 89,
+          "end_line": 91,
           "label": "the Kit exports nothing"
         }
       ]
@@ -309,15 +309,49 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 91,
-          "end_line": 97,
+          "line": 92,
+          "end_line": 98,
           "label": "only when ConnectionStrings:cache is set"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 98,
-          "end_line": 99,
+          "line": 104,
+          "end_line": 105,
           "label": "no Kit package references Redis"
+        }
+      ]
+    },
+    {
+      "id": "smtp",
+      "type": "external",
+      "label": "SMTP server",
+      "sublabel": "a local Papercut in the sample",
+      "pos": [
+        830,
+        470
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 100,
+          "end_line": 103,
+          "label": "MailKit, options from PouryaKit:Email"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/appsettings.json",
+          "line": 6,
+          "end_line": 11,
+          "label": "localhost:2525, no TLS, the sender"
+        },
+        {
+          "path": "src/PouryaKit.Email.MailKit/MailKitEmailSender.cs",
+          "line": 26,
+          "end_line": 36,
+          "label": "a connection per send"
         }
       ]
     },
@@ -399,13 +433,13 @@
         {
           "path": "scripts/packaging/inventory.json",
           "line": 3,
-          "end_line": 25,
-          "label": "the 23 packages"
+          "end_line": 27,
+          "label": "the 25 packages"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 76,
+          "end_line": 82,
           "label": "their allowed references"
         }
       ]
@@ -468,6 +502,14 @@
       "to": "redis",
       "label": "with a cache string",
       "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mm-smtp",
+      "from": "mmhost",
+      "to": "smtp",
+      "label": "email from Notification Handlers",
       "fromSide": "bottom",
       "toSide": "top"
     },

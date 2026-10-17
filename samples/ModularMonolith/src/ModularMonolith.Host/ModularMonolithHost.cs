@@ -3,6 +3,7 @@ using Catalog;
 using Catalog.Products.Events.Notifications;
 using Inventory;
 using PouryaKit.Caching;
+using PouryaKit.Email.MailKit;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
@@ -96,6 +97,10 @@ public static class ModularMonolithHost
             builder.Services.AddStackExchangeRedisCache(options => options.Configuration = redis);
         }
 
+        // Email a Notification Handler sends through IEmailSender goes out through MailKit to the SMTP server at
+        // PouryaKit:Email; appsettings.json names a local Papercut, which keeps every mail for a developer to read.
+        builder.Services.AddPouryaKitMailKit();
+        builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSection("PouryaKit:Email"));
         builder.UsePouryaKitWolverine(connectionName: "app");
         if (broker)
         {

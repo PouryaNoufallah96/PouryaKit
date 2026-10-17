@@ -7,6 +7,7 @@ using ModularMonolith.Tests.Misnamed;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using PouryaKit.Email.MailKit;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
@@ -479,6 +480,8 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         // the Stub Module's services, and the Kit's container is validated when it is built.
         builder.Services.AddScoped<CommandHandler<WriteNoteRaisingCommand>, WriteNoteRaisingCommandHandler>();
         builder.Services.AddSingleton<DeliveryLog>();
+        builder.Services.AddPouryaKitMailKit();
+        builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSection("PouryaKit:Email"));
         builder.Services.AddPouryaKitDapper(connectionName: "app");
         builder.Services.AddPouryaKitNotificationHandlers(typeof(StubDbContext).Assembly);
         builder.UsePouryaKitWolverine(connectionName: "app");

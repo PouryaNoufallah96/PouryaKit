@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "984c2c0326672d24be0f1a91be8eeed4ea090e15",
+      "revision": "c2979b81a31e5189b2ba1a22bba455d9ab658d59",
       "link_mode": "web"
     }
   },
@@ -56,20 +56,20 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 76,
-          "end_line": 87,
+          "line": 77,
+          "end_line": 88,
           "label": "composes the Modules"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 33,
-          "end_line": 40,
+          "line": 34,
+          "end_line": 41,
           "label": "the broker and its service name"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
           "line": 5,
-          "end_line": 27,
+          "end_line": 28,
           "label": "its references"
         }
       ]

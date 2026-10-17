@@ -19,6 +19,12 @@ internal static class PackageGraph
         ["PouryaKit.Caching"] = new(["PouryaKit.Cqrs"], ["Microsoft.Extensions.Caching.Hybrid"]),
         ["PouryaKit.Core"] = new([], []),
         ["PouryaKit.Domain"] = new([], []),
+        ["PouryaKit.Email"] = new(["PouryaKit.Domain"], []),
+        // System.Security.Cryptography.Pkcs is a security floor over MimeKit's 10.0.0 (#124, owner to confirm).
+        ["PouryaKit.Email.MailKit"] = new(
+            ["PouryaKit.Email"],
+            ["MailKit", "Microsoft.Extensions.Options", "System.Security.Cryptography.Pkcs"]
+        ),
         // Cqrs builds the Host's validated container and runs its composition checks as it starts (#61, 2026-10-07),
         // which takes the container's implementation and the Hosting abstractions from Modularity.
         ["PouryaKit.Cqrs"] = new(
@@ -99,9 +105,9 @@ internal static class PackageGraph
         ["PouryaKit.Caching"] = ["StackExchange.Redis", "Microsoft.Extensions.Caching.StackExchangeRedis"],
     };
 
-    // Core and Domain, and Messaging and Storage (Domain only), bring no package at all; nor do the templates. A storage
-    // provider's SDK stays in its own package.
-    private static readonly HashSet<string> NoPackages = ["PouryaKit.Core", "PouryaKit.Domain", "PouryaKit.Messaging", "PouryaKit.Storage", "PouryaKit.Templates"];
+    // Core and Domain, and Messaging, the Email contract and Storage (Domain only), bring no package at all; nor do the
+    // templates. A storage provider's SDK stays in its own package.
+    private static readonly HashSet<string> NoPackages = ["PouryaKit.Core", "PouryaKit.Domain", "PouryaKit.Email", "PouryaKit.Messaging", "PouryaKit.Storage", "PouryaKit.Templates"];
 
     public static IEnumerable<string> Violations(RestoredPackage package)
     {
