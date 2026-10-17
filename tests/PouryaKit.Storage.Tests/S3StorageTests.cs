@@ -6,8 +6,8 @@ using PouryaKit.Storage.S3;
 
 namespace PouryaKit.Storage.Tests;
 
-// The S3 provider against a real S3-compatible store, MinIO in Testcontainers, through the contract a Feature uses.
-public sealed class S3StorageTests(MinioFixture fixture) : IClassFixture<MinioFixture>
+// The S3 provider against a real S3-compatible store, RustFS in Testcontainers, through the contract a Feature uses.
+public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3StoreFixture>
 {
     private static readonly byte[] Report = Encoding.UTF8.GetBytes("%PDF-1.7 quarterly report");
 
@@ -81,7 +81,7 @@ public sealed class S3StorageTests(MinioFixture fixture) : IClassFixture<MinioFi
     [Fact]
     public async Task A_host_with_invalid_storage_options_fails_to_start_naming_each_problem()
     {
-        using var host = MinioFixture.ComposeHost(new() { ["PouryaKit:Storage:S3:ServiceUrl"] = "minio:9000", ["PouryaKit:Storage:S3:AccessKey"] = "kit" });
+        using var host = S3StoreFixture.ComposeHost(new() { ["PouryaKit:Storage:S3:ServiceUrl"] = "minio:9000", ["PouryaKit:Storage:S3:AccessKey"] = "kit" });
 
         var failure = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(Cancel));
 
