@@ -29,6 +29,7 @@ metadata:
 - **The sample Host registers MailKit inside `ModularMonolithHost.CreateBuilder`**, so `AppFixture.ComposeHost`'s `configure` can only add a second sender after it: an order test builds `Host.CreateApplicationBuilder()` by hand (fully qualified in `ModularMonolith.Tests`).
 - **Mutation by deleting a registration line fails the build** with IDE0005 (its `using` becomes unused): switch the check off with a runtime-true predicate (`providers.Count >= 0`) instead.
 - **Removing a test an older acceptance row names** fails `check-docs.py` (`names no test`) unless it goes in `REMOVED_TESTS` in the script; a bare backticked method name without its class passes, so the row can say the test was removed and point to the replacement.
+- **A one-provider check fails every count but one** (#151, Codex): zero means the provider registered and a later `RemoveAll<T>()` (in `Microsoft.Extensions.DependencyInjection.Extensions`) took it out; a bare Host validates nothing that resolves the contract, so only the check catches it. The next provider's check copies the `registered.Count switch { 1 => [], 0 => [...], _ => [...] }` shape.
 
 **Why:** each cost a build or a full run in #124 or #147.
 **How to apply:** for the next provider package (Storage, Localization, AI), any new container module, and any change to what a Stub Notification Handler needs. Related: [[templates-packaging-and-publication-facts]], [[dotnet-and-test-conventions]], [[docs-verification-tools]].
