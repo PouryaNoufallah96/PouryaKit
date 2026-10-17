@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ModularMonolith.ReverseProxy;
@@ -51,6 +52,30 @@ public sealed class ReverseProxyTests(AppFixture app) : HostTest<AppFixture>(app
         );
         Assert.Equal([live], cluster.DestinationsState.AvailableDestinations.Select(destination => new Uri(destination.Model.Config.Address)));
         Assert.All(answers, answer => Assert.Equal(HttpStatusCode.OK, answer));
+    }
+
+    // YARP's default would forward to every destination again once all of them are out; the Kit keeps them out, so the
+    // cluster answers 503 until a probe succeeds. The Host's own liveness check is switched, so the Host itself still
+    // answers 200 throughout: a 503 is the proxy's, not the Host's.
+    [Fact]
+    public async Task A_cluster_whose_every_destination_fails_its_probe_answers_503_until_a_probe_succeeds_again()
+    {
+        var alive = true;
+        await using var host = await StartHostAsync(builder =>
+            builder.Services.AddHealthChecks().AddCheck("switch", () => alive ? HealthCheckResult.Healthy() : HealthCheckResult.Unhealthy(), ["live"])
+        );
+        await using var proxy = await StartProxyAsync([AddressOf(host)], $"--ReverseProxy:Clusters:{Service}:HealthCheck:Active:Interval=00:00:01");
+        using var client = proxy.GetTestClient();
+        await ProbedAsync(proxy, DestinationHealth.Healthy);
+
+        alive = false;
+        await ProbedAsync(proxy, DestinationHealth.Unhealthy);
+        var whileOut = (await client.GetAsync("/stub/public/context", TestContext.Current.CancellationToken)).StatusCode;
+        alive = true;
+        await ProbedAsync(proxy, DestinationHealth.Healthy);
+        var afterRecovery = (await client.GetAsync("/stub/public/context", TestContext.Current.CancellationToken)).StatusCode;
+
+        Assert.Equal((HttpStatusCode.ServiceUnavailable, HttpStatusCode.OK), (whileOut, afterRecovery));
     }
 
     // The client's W3C context arrives at the proxy; YARP's default propagator sends the Host the proxy's own span in that
@@ -116,7 +141,7 @@ public sealed class ReverseProxyTests(AppFixture app) : HostTest<AppFixture>(app
 
     // The sample Host with its own bearer scheme, as JwtBearerTests composes it, and the service defaults' health checks
     // and endpoints, served by Kestrel on a port of the system's choosing in place of AppFixture's in-memory server.
-    private async Task<WebApplication> StartHostAsync()
+    private async Task<WebApplication> StartHostAsync(Action<WebApplicationBuilder>? configure = null)
     {
         var host = AppFixture.ComposeHost(
             "Development",
@@ -127,6 +152,7 @@ public sealed class ReverseProxyTests(AppFixture app) : HostTest<AppFixture>(app
                 builder.WebHost.UseKestrel().UseUrls("http://127.0.0.1:0");
                 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
                 builder.AddDefaultHealthChecks();
+                configure?.Invoke(builder);
             }
         );
         host.MapDefaultEndpoints();
@@ -166,15 +192,15 @@ public sealed class ReverseProxyTests(AppFixture app) : HostTest<AppFixture>(app
         return new Uri($"http://127.0.0.1:{((IPEndPoint)listener.LocalEndpoint).Port}");
     }
 
-    // The proxy's cluster once its probes have judged every destination.
-    private static async Task<ClusterState> ProbedAsync(WebApplication proxy)
+    // The proxy's cluster once its probes have judged every destination, each as healthy as given when one is.
+    private static async Task<ClusterState> ProbedAsync(WebApplication proxy, DestinationHealth? health = null)
     {
         var lookup = proxy.Services.GetRequiredService<IProxyStateLookup>();
         var deadline = DateTime.UtcNow.AddSeconds(30);
         while (true)
         {
             Assert.True(lookup.TryGetCluster(Service, out var cluster));
-            if (cluster.Destinations.Values.All(destination => destination.Health.Active != DestinationHealth.Unknown))
+            if (cluster.Destinations.Values.All(destination => health is { } judged ? destination.Health.Active == judged : destination.Health.Active != DestinationHealth.Unknown))
             {
                 return cluster;
             }

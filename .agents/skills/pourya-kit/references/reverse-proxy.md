@@ -50,13 +50,13 @@ Routes and clusters are YARP's configuration, in the `ReverseProxy` section (`Re
 ```
 
 - Each cluster probes `/alive` on every destination, the liveness path a Host composing the service defaults maps in every environment, every 15 seconds; two failed probes in a row take the destination out of the cluster until a probe succeeds. A cluster's own `HealthCheck:Active` settings win: `Path` names another path, `Interval` another period, and `Enabled: false` turns the probe off for a Host that maps no `/alive`, as the Proving Sample's settings do for `ModularMonolith.Host`.
-- When every destination of a cluster is out, YARP answers its requests with 503.
+- When every destination of a cluster is out, the cluster answers its requests with 503 until a probe succeeds: the Kit sets the cluster's `HealthCheck:AvailableDestinationsPolicy` to `HealthyAndUnknown` unless its configuration names another, where YARP's default, `HealthyOrPanic`, would forward to every destination again.
 
 ## What the Kit guarantees
 
 - A route's destination that names a service is resolved by service discovery into the service's endpoints, and an endpoint whose liveness probe fails drops out of its cluster while the others keep answering.
 - A request keeps the client's trace: the trace id arrives at the Host unchanged, and the parent of the Host's request is the proxy's own span, never the client's span passed through (spec #115, P1). YARP's default propagator does it, and the service defaults' HttpClient instrumentation writes the same context. A Host's Operation is a child of its request, so the whole request is one trace from the client through the proxy to the Operation.
-- Nothing is stripped: the client's bearer token reaches the Host as the client's own `Authorization` header, and the Kit's Operation Context headers as sent. A Host honours those headers only from a caller it authenticates as a trusted peer ([security.md](security.md#continuations)), so a client that is not one gains nothing by sending them through the proxy.
+- The Kit strips no header: the client's bearer token reaches the Host as the client's own `Authorization` header, and the Kit's Operation Context headers as sent. YARP's standard transforms still set `Host` to the destination's, add the `X-Forwarded-*` headers, drop the hop-by-hop and HTTP/2 protocol headers and replace the trace context with the proxy's span. A Host honours those headers only from a caller it authenticates as a trusted peer ([security.md](security.md#continuations)), so a client that is not one gains nothing by sending them through the proxy.
 - No Operation runs in the proxy: no Kit package reaches its closure.
 
 ## Limits

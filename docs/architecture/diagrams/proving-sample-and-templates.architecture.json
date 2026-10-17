@@ -136,8 +136,8 @@
         },
         {
           "path": "src/PouryaKit.Templates/content/shared/src/ModularMonolith.ReverseProxy/Program.cs",
-          "line": 6,
-          "end_line": 16,
+          "line": 7,
+          "end_line": 17,
           "label": "each template's own copy"
         }
       ]

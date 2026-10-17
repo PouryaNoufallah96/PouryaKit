@@ -486,7 +486,7 @@
       "id": "proxy-forwards",
       "from": "proxy",
       "to": "mmhost",
-      "label": "forwards by route, as sent",
+      "label": "forwards by route",
       "fromSide": "bottom",
       "toSide": "top"
     },
@@ -611,7 +611,7 @@
       "dot": "slate",
       "title": "Reverse proxy",
       "items": [
-        "ModularMonolith.ReverseProxy forwards each request by route to a Host that service discovery resolves, every header as the client sent it, the bearer token included; it runs no Operation.",
+        "ModularMonolith.ReverseProxy forwards each request by route to a Host that service discovery resolves, the bearer token and the Kit's headers as the client sent them; it runs no Operation. YARP still sets Host and X-Forwarded-*.",
         "The trace id arrives unchanged, and the proxy's span is the parent of the Host's request.",
         "It probes each Host's /alive; the sample's settings turn that off for ModularMonolith.Host, which composes no service defaults."
       ]
