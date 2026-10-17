@@ -25,6 +25,28 @@ public sealed class S3StorageTests(MinioFixture fixture) : IClassFixture<MinioFi
     }
 
     [Fact]
+    public async Task An_upload_stores_the_stream_from_its_current_position_and_leaves_it_open()
+    {
+        var key = Key();
+        var content = new MemoryStream(Report) { Position = 9 };
+
+        await fixture.Storage.UploadAsync(key, content, "application/pdf", Cancel);
+
+        await using var file = (await fixture.Storage.DownloadAsync(key, Cancel)).Value;
+        Assert.Equal(Report[9..], await ReadAll(file.Content));
+        Assert.True(content.CanRead);
+    }
+
+    [Fact]
+    public async Task A_presigned_url_requested_with_a_cancelled_token_is_not_returned()
+    {
+        using var cancelled = new CancellationTokenSource();
+        await cancelled.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromMinutes(5), cancelled.Token));
+    }
+
+    [Fact]
     public async Task A_deleted_file_downloads_as_the_not_found_error_and_deleting_it_again_succeeds()
     {
         var key = Key();

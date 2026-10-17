@@ -68,7 +68,7 @@ internal sealed class AttachContractCommandHandler(IFileStorage files, IReposito
 - `UploadAsync(key, content, contentType, cancellationToken)` stores the stream from its current position to its end. The caller keeps and disposes the stream.
 - `DownloadAsync(key, cancellationToken)` returns a `StoredFile` with its `Content` stream and `ContentType`, or `StorageErrors.FileNotFound`, an `ErrorKind.NotFound` Error, when no file is stored under the key. Dispose the `StoredFile`: its stream is read from the store as the caller reads it.
 - `DeleteAsync(key, cancellationToken)` succeeds whether or not a file was stored under the key, so retention can run again.
-- `GetPresignedUrlAsync(key, lifetime, cancellationToken)` returns a link that reads the file with a plain HTTP GET, without credentials, until `lifetime` has passed. The store is not asked whether the file exists: a link to a missing file answers not found when followed. S3 signs a link for at most seven days.
+- `GetPresignedUrlAsync(key, lifetime, cancellationToken)` returns a link that reads the file with a plain HTTP GET, without credentials, until `lifetime` has passed. The store is not asked whether the file exists: a link to a missing file answers not found when followed. A token cancelled before the call fails it; one cancelled while the SDK resolves credentials stops the wait, though the SDK may still sign. S3 signs a link for at most seven days.
 - A blank key or content type, or a lifetime of zero or less, is a bug and throws `ArgumentException`. A failure of the store itself (a refused credential, a missing bucket, an unreachable endpoint) throws the provider's exception: it is infrastructure, not a business outcome.
 
 ## What the Kit guarantees

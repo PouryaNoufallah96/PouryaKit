@@ -46,6 +46,7 @@ internal sealed class S3FileStorage : IFileStorage, IDisposable
                 InputStream = content,
                 ContentType = contentType,
                 AutoCloseStream = false,
+                AutoResetStreamPosition = false,
             },
             cancellationToken
         );
@@ -77,6 +78,9 @@ internal sealed class S3FileStorage : IFileStorage, IDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(lifetime, TimeSpan.Zero);
+        // The SDK's call takes no token and completes at once with a configured key pair, so a token cancelled already is
+        // checked first; while the SDK resolves credentials from its default chain, a cancelled caller stops waiting
+        // and the SDK may still sign the link it no longer returns.
         cancellationToken.ThrowIfCancellationRequested();
         // The SDK signs on the system clock and counts the link's lifetime from it, so the expiry is read from that
         // clock too.
@@ -89,7 +93,7 @@ internal sealed class S3FileStorage : IFileStorage, IDisposable
                 Expires = DateTime.UtcNow.Add(lifetime),
                 Protocol = _linkProtocol,
             }
-        );
+        ).WaitAsync(cancellationToken);
         return new Uri(link);
     }
 
