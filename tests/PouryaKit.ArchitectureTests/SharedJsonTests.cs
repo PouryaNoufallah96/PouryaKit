@@ -7,8 +7,9 @@ namespace PouryaKit.ArchitectureTests;
 
 // Spec #33, user story 8: one JSON representation, owned by Domain. Web and Messaging.Wolverine apply Domain's
 // UsePouryaKitJson to the options their framework hands them, Messaging.Wolverine as UsePouryaKitWireJson, the same
-// representation read strictly (#60), Cqrs to the options it records an idempotent command's response with (#42), and
-// Caching to the options it stores a cached query's answer with (#43); no other code sets JSON options up its own way.
+// representation read strictly (#60), Cqrs to the options it records an idempotent command's response with (#42),
+// Caching to the options it stores a cached query's answer with (#43), and Grpc to the options it writes a failed Result's
+// Errors trailer with (#134); no other code sets JSON options up its own way.
 public sealed class SharedJsonTests
 {
     private static readonly Assembly Domain = typeof(TypedId).Assembly;
@@ -21,6 +22,7 @@ public sealed class SharedJsonTests
             [
                 "PouryaKit.Caching.HybridQueryCache",
                 "PouryaKit.Cqrs.Dispatcher",
+                "PouryaKit.Grpc.ResultGrpcExtensions",
                 "PouryaKit.Messaging.Wolverine.WolverineHostApplicationBuilderExtensions",
                 "PouryaKit.Web.WebServiceCollectionExtensions",
             ],
@@ -41,7 +43,7 @@ public sealed class SharedJsonTests
 
         Assert.Equal(["PouryaKit.Messaging.Wolverine.WolverineHostApplicationBuilderExtensions"], Callers(nameof(JsonSerializerOptionsExtensions.UsePouryaKitWireJson)));
         Assert.Equal(
-            ["PouryaKit.Caching.HybridQueryCache", "PouryaKit.Cqrs.Dispatcher", "PouryaKit.Web.WebServiceCollectionExtensions"],
+            ["PouryaKit.Caching.HybridQueryCache", "PouryaKit.Cqrs.Dispatcher", "PouryaKit.Grpc.ResultGrpcExtensions", "PouryaKit.Web.WebServiceCollectionExtensions"],
             Callers(nameof(JsonSerializerOptionsExtensions.UsePouryaKitJson))
         );
     }

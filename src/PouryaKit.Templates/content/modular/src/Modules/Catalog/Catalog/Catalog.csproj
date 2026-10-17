@@ -4,6 +4,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="PouryaKit.Caching" />
+    <PackageReference Include="PouryaKit.Grpc" />
     <PackageReference Include="PouryaKit.Messaging.Wolverine.EFCore" />
     <PackageReference Include="PouryaKit.Modularity" />
     <PackageReference Include="PouryaKit.Persistence.Dapper" />

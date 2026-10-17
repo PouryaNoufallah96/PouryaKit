@@ -80,6 +80,8 @@ internal static class PackageGraph
         ["PouryaKit.Storage"] = new(["PouryaKit.Domain"], []),
         ["PouryaKit.Storage.S3"] = new(["PouryaKit.Cqrs", "PouryaKit.Storage"], ["AWSSDK.S3", "Microsoft.Extensions.Options"]),
         ["PouryaKit.Localization"] = new(["PouryaKit.Cqrs"], [], ["Microsoft.AspNetCore.App"]),
+        // The server and client libraries, not the Grpc.AspNetCore metapackage, which carries Grpc.Tools to every consumer (#134).
+        ["PouryaKit.Grpc"] = new(["PouryaKit.Web"], ["Grpc.AspNetCore.Server", "Grpc.Net.ClientFactory"], ["Microsoft.AspNetCore.App"]),
     };
 
     // What must never arrive in a package's closure, by package id prefix or project name. Every package but Testing also
@@ -104,6 +106,8 @@ internal static class PackageGraph
         ["PouryaKit.Observability"] = ["OpenTelemetry", "Serilog", "WolverineFx", "PouryaKit.Messaging"],
         // Redis is the application's own distributed cache for HybridCache, never the Kit's (I.3 Caching, #43).
         ["PouryaKit.Caching"] = ["StackExchange.Redis", "Microsoft.Extensions.Caching.StackExchangeRedis"],
+        // Compiling a .proto is the project's that holds it, with private assets (#134).
+        ["PouryaKit.Grpc"] = ["Grpc.Tools"],
     };
 
     // Core and Domain, and Messaging, the Email contract and Storage (Domain only), bring no package at all; nor do the

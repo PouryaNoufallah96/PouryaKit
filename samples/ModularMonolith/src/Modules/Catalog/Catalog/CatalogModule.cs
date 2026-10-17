@@ -10,6 +10,7 @@ using Catalog.Products.Events;
 using Catalog.Products.Features.GetProduct;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
+using PouryaKit.Grpc;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Dapper;
@@ -42,6 +43,8 @@ public sealed class CatalogModule : IModuleDefinition
         module.AddScoped<IProductRepository, ProductRepository>();
         module.AddScoped<ICatalogProducts, CatalogProducts>();
         module.AddPouryaKitEndpoints("/catalog");
+        // Another Host asks for a product over gRPC, through the same Gateway as the HTTP endpoints.
+        module.AddPouryaKitGrpcService<ProductGrpcService>();
         // v2 adds renaming a product; v1 is deprecated, and the Host configures its sunset.
         module.AddPouryaKitApiVersions(
             "/catalog",

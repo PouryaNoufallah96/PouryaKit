@@ -7,8 +7,10 @@ using Catalog.Products.Data.Repository;
 using Catalog.Products.Entities;
 using Catalog.Products.Errors;
 using Catalog.Products.Events;
+using Catalog.Products.Features.GetProduct;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
+using PouryaKit.Grpc;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.EFCore;
@@ -46,6 +48,8 @@ public static class CatalogModule
             services.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1");
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddPouryaKitEndpoints("/catalog", catalog);
+            // Another Host asks for a product over gRPC, through the same dispatcher as the HTTP endpoints.
+            services.AddPouryaKitGrpcService<ProductGrpcService>();
             // v2 adds renaming a product; v1 is deprecated, and the Host configures its sunset.
             services.AddPouryaKitApiVersions(
                 "/catalog",

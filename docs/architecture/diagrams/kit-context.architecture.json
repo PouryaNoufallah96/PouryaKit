@@ -78,8 +78,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 46,
-          "end_line": 53,
+          "line": 47,
+          "end_line": 54,
           "label": "bearer JWT; authenticated by default"
         },
         {
@@ -106,14 +106,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 77,
-          "end_line": 88,
+          "line": 78,
+          "end_line": 89,
           "label": "composes the Modules; Inventory w/o broker"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 104,
-          "end_line": 108,
+          "line": 105,
+          "end_line": 109,
           "label": "message store; RabbitMQ with a broker"
         },
         {
@@ -220,8 +220,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 89,
-          "end_line": 91,
+          "line": 90,
+          "end_line": 92,
           "label": "the Kit exports nothing"
         }
       ]
@@ -282,7 +282,7 @@
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 32,
+          "line": 33,
           "label": "a schema per Module (catalog)"
         },
         {
@@ -309,14 +309,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 92,
-          "end_line": 98,
+          "line": 93,
+          "end_line": 99,
           "label": "only when ConnectionStrings:cache is set"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 105,
-          "end_line": 106,
+          "line": 107,
+          "end_line": 108,
           "label": "no Kit package references Redis"
         }
       ]
@@ -337,8 +337,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 100,
-          "end_line": 103,
+          "line": 101,
+          "end_line": 104,
           "label": "MailKit, options from PouryaKit:Email"
         },
         {
@@ -420,7 +420,7 @@
       "id": "kit",
       "type": "backend",
       "label": "PouryaKit packages",
-      "sublabel": "25 libraries and the templates",
+      "sublabel": "26 libraries and the templates",
       "pos": [
         700,
         650
@@ -433,13 +433,13 @@
         {
           "path": "scripts/packaging/inventory.json",
           "line": 3,
-          "end_line": 28,
-          "label": "the 26 packages"
+          "end_line": 29,
+          "label": "the 27 packages"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 83,
+          "end_line": 85,
           "label": "their allowed references"
         }
       ]
