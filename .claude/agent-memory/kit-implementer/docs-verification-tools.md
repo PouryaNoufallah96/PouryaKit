@@ -112,5 +112,10 @@ metadata:
 
 - **Four diagrams cite `PackageGraph.cs`** (execution-core, kit-context, messaging-and-delivery, module-boundaries; kit-context also `inventory.json` lines 3 to the last package with a "the N packages" label and an "N libraries" sublabel). Put a new row at the end of `Table` (after Testing): only the 17-to-end Table ranges and the KeptOut ranges below shift, no per-package range. Commit code with the re-ranged sources staged (the hook passes), then pin the four to that commit and refinalize in a second commit (`scratchpad/p125/diagrams125.py`, `finalize125.py`). Parallel package tickets all touch the same ranges: give the post-merge values in `merge_notes`.
 
+## A new package node with no free slot (#133, 2026-10-18; Archify 3.0.1)
+
+- **execution-core is full at 1440 × 764**: a node to the right of x 1440 fails `composition/desktop-readability`, and every free slot (x 40 at y 170 and 560) routes an arrow through Cqrs's tall node (`clean-flow/edge-through-node`). A package that references Web and Persistence.EFCore and reaches PostgreSQL fit messaging-and-delivery below `efcore`, at (40, 700), with `PouryaKit.Web` added as an external reference target at (380, 700): straight top-bottom and right-left arrows, and a bottom-to-bottom one into `database`.
+- **Trial a layout before the cited files exist at a revision**: copy the source to the scratchpad with `meta.output` there and a node citing an existing line, then `finalize … --repo-root <worktree>` from the Archify clone (`scratchpad/p133/trial2.py <worktree> <slug> <additions.json>`): the gates and the browser check run without touching the worktree.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].

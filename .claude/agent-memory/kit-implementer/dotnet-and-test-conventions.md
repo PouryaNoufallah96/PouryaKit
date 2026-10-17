@@ -126,5 +126,9 @@ metadata:
 - **Restoring a mutated file with `shutil.move(backup, file)` keeps the backup's time, older than the assembly the mutated run built, so the next build skips the project and keeps the mutation.** A later mutation of another project then failed in a way only the earlier one explained. Call `os.utime(file)` after the restore (scratchpad `p117/mutate117.py`), and touch any file restored the old way before trusting a run.
 - `if (false)` as a mutation fails CS0162 (warnings are errors), and removing a namespace's only use fails IDE0005: use a predicate that is never true (`key.Count < 0`) and keep the type named.
 
+## Mutations that do not compile (#133, 2026-10-18)
+
+- **A mutation that leaves a primary-constructor parameter unread or a `using` unused fails the build** (CS9113 and IDE0005 are errors here), and a script that reads only the exit code reports it as red. Keep the parameter used (`_ = (unitOfWork, typeof(NpgsqlParameter));`) and have the script report `BUILD FAILED` when the output holds "Build failed" (`scratchpad/p133/mutate133.py`).
+
 **Why:** Test projects run on Microsoft.Testing.Platform, chosen in ticket #4 (2026-10-05) as the plain current .NET 10 idiom; a later ticket repeating VSTest packages would create a second way of running tests. Each other fact cost a build, a run or a vacuous red in tickets #4 to #63 or retro C (2026-10-06).
 **How to apply:** before adding a test project, a test filter or an analyzer rule in `.editorconfig`; before every mutation run; when a change adds a table, a Module, a subscription or an Integration Event type to the sample. Related: [[worktree-shell-and-check-gotchas]], [[core-json-and-architecture-test-facts]].

@@ -1,0 +1,19 @@
+---
+name: realtime-and-sse-facts
+description: PouryaKit.Realtime (#133) - pg_notify bound and delivery, ServerSentEventsResult headers and flushing, SSE over TestServer, killing the listener, the JSON options rule, ripples of a pushing Stub handler and a Catalog endpoint
+metadata:
+  type: project
+---
+
+## Realtime through SSE (#133, 2026-10-18; Npgsql 10.0.3, .NET 10.0.402, postgres:18.6)
+
+- **PostgreSQL's NOTIFY payload must be "shorter than 8000 bytes"** (docs, sql-notify): 8000 itself fails with `22023 payload string too long`, counted in the server encoding. `select pg_notify(@channel, @payload)` takes Npgsql parameters; a NOTIFY in a transaction is delivered only at commit, identical payloads on one channel in one transaction fold into one.
+- **`TypedResults.ServerSentEvents`** (aspnetcore release/10.0 `ServerSentEventsResult.cs`) sets `Content-Type: text/event-stream`, `Cache-Control: no-cache,no-store`, `Content-Encoding: identity` (so response compression skips it even when the Host adds `text/event-stream` to its MIME types) and disables buffering. Headers reach the client only at the first item: yield a first event, or `ResponseHeadersRead` never returns. `SseFormatter` passes `RequestAborted` to the enumerator; with `[EnumeratorCancellation]` it combines with the token the method takes (the Host's `ApplicationStopping` here). Swallow the wait's `OperationCanceledException` with `yield break` in a `catch` (allowed; `yield return` is not).
+- **SSE over TestServer works**: `client.GetAsync(path, HttpCompletionOption.ResponseHeadersRead)`, then `SseParser.Create(stream).EnumerateAsync(ct)` (`System.Net.ServerSentEvents`, in the shared framework). A refusal test must also use `ResponseHeadersRead`: with the refusal mutated off, a plain `GetAsync` buffers the endless stream until HttpClient's 100 s timeout.
+- **Killing the listener from a test**: give its connection an `ApplicationName` and run `select pg_terminate_backend(pid) from pg_stat_activity where application_name = '…'`; Npgsql's `WaitAsync` throws at once (57P01), so the reconnect and the gap take milliseconds.
+- **`SharedJsonTests` (ArchitectureTests) fails a Kit package that creates its own `JsonSerializerOptions`**, even with `UsePouryaKitJson()`: the owners are listed by name, and two test names cited in `acceptance.md` and ADR 0006 name them. A package writing JSON for a browser takes `IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>`, which `AddPouryaKitWeb` sets to the Kit's JSON, and the rule stays untouched.
+- **"Callable only from a Notification Handler's delivery" has no exact public seam outside Messaging.Wolverine** (`IntegrationEventPublisher.Following` is internal): the Operation shows a delivery as `Context.IsTrustedContinuation && IsUnitOfWorkActive && MayChangeState`, which also admits Integration Event Handlers, delayed commands, trusted peers and `Continue()` Gateway calls; ADR 0012 records it.
+- **Ripples of the sample change**: a Stub Notification Handler that injects a Host service breaks the two generic test Hosts that scan the Stub assembly (`NotificationTests.An_application_without_modules_…`, `SharedStoreSchemaTests`), as MailKit did in #124: register the service there too. A new Catalog endpoint changes the path lists of `OpenApiTests` (two tests, v1 and v2 documents, plus the bearer list). The monolith template excludes the sample's `**/*Endpoint.cs`: an endpoint that sends through no Gateway gets a file name without that suffix, or the monolith needs a replacement (`TemplateRules.UnreplacedExclusions`).
+
+**Why:** each cost a build, a failing suite or a design detour in #133.
+**How to apply:** when touching Realtime, SSE endpoints, PostgreSQL notifications, the Kit's JSON options, or adding a Stub handler or Catalog endpoint. Related: [[web-security-and-openapi-facts]], [[templates-packaging-and-publication-facts]], [[docs-verification-tools]].
