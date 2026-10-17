@@ -1,0 +1,131 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_3675ccfac3f8b2::t_3dce2a8edb0186 38
+.agents/skills/pourya-kit/references/messaging.md
+  s_3675ccfac3f8b2::t_90f97043e8967c 348,354-357,364,366-367,369-376,385,416,532,556,572
+.agents/skills/pourya-kit/references/modules.md
+  s_3675ccfac3f8b2::t_5f01a47eb715d3 134-135
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_3675ccfac3f8b2::t_886dfc84468a35 3,8-9,33,71-81,87-89,94-95,104-105
+.agents/skills/pourya-kit/references/persistence.md
+  s_3675ccfac3f8b2::t_7ed9ec5bc03505 247,257
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3675ccfac3f8b2::t_1cf7518753cf69 1,3,7-9
+.claude/agent-memory/kit-implementer/composition-check-facts.md
+  s_3675ccfac3f8b2::t_cb1b298a689ad4 70-75
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_3675ccfac3f8b2::t_4371fc333ff289 105-110
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_3675ccfac3f8b2::t_cc634e9c3d453d 121-125
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_3675ccfac3f8b2::t_c98ad855ae3df2 104-111
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_3675ccfac3f8b2::t_4bc52ec9fffa6f 121-126
+GLOSSARY.md
+  s_3675ccfac3f8b2::t_b9d51328e83c02 73
+README.md
+  s_3675ccfac3f8b2::t_d99a2e3f3b1583 25
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_106cc31d8d0195 1943-1965
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_3675ccfac3f8b2::t_d0e7c456726e52 1148-1185
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_7d67c2a6c9f2ff 54,75,133,162,337,435,437,464
+docs/architecture/diagrams/commit-sequence.html
+  s_3675ccfac3f8b2::t_2ce49af654fbba 4985,5042-5047,5213-5216,5219-5221,5223,5443
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_3675ccfac3f8b2::t_d4bcfddc02fba7 10,185-193,208-209,237-238,254-255,260-261,278-279,296-297,320-321,416-423,447
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_3675ccfac3f8b2::t_620799586883fe 4985
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_3675ccfac3f8b2::t_9aa28256c65401 10,136-137
+docs/architecture/diagrams/delivery.html
+  s_3675ccfac3f8b2::t_df3b2b7b393228 4985,5474
+docs/architecture/diagrams/delivery.sequence.json
+  s_3675ccfac3f8b2::t_1e715f535699c9 18,135-137,363-364
+docs/architecture/diagrams/host-start.html
+  s_3675ccfac3f8b2::t_cd9fac5f703d86 4985
+docs/architecture/diagrams/host-start.workflow.json
+  s_3675ccfac3f8b2::t_37958e845e69df 11,242-243,364-365
+docs/architecture/diagrams/http-command.sequence.json
+  s_3675ccfac3f8b2::t_a2379dbe83d4fb 144
+docs/foundation-review.md
+  s_3675ccfac3f8b2::t_359a0879d615d1 354,880
+docs/provenance/PouryaKit.Messaging.Wolverine.EFCore.md
+  s_3675ccfac3f8b2::t_f80048952a2b11 5
+docs/provenance/PouryaKit.Messaging.Wolverine.md
+  s_3675ccfac3f8b2::t_2b30c8f7b2ec34 5
+docs/provenance/PouryaKit.Persistence.EFCore.md
+  s_3675ccfac3f8b2::t_064daa4c92079e 11
+samples/ModularMonolith/src/Modules/Inventory/Inventory/CatalogProducts/Features/CopyProduct/CopyProductIntegrationEventHandler.cs
+  s_3675ccfac3f8b2::t_deeaeabef5b60e 3,11-15,22,24-25,27-34
+samples/ModularMonolith/src/Modules/Inventory/Inventory/CatalogProducts/Features/FileProductCategory/FileProductCategoryIntegrationEventHandler.cs
+  s_3675ccfac3f8b2::t_c34e87c57a253f 12-13,22-23
+samples/ModularMonolith/src/Modules/Inventory/Inventory/Infrastructure/Data/Migrations/20261017120000_CatalogProductTenants.cs
+  s_3675ccfac3f8b2::t_27e4dd25a46bed 1-41
+src/PouryaKit.Cqrs/Tenancy/TenantErrors.cs
+  s_3675ccfac3f8b2::t_6f86ff6ccc92e1 5-8,16-25
+src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotKeyTenancyCheck.cs
+  s_3675ccfac3f8b2::t_be3f592a324e0f 1-61
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs
+  s_3675ccfac3f8b2::t_c3d79e63bbbca1 71
+src/PouryaKit.Messaging.Wolverine/Composition/RecurringCommandTenancyCheck.cs
+  s_3675ccfac3f8b2::t_65ca1d71bba1b8 1-16
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_04216914f3439a 69-70,117
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Deliver.cs
+  s_3675ccfac3f8b2::t_8114243f76af91 16-22,31-38
+src/PouryaKit.Messaging.Wolverine/Subscriptions/ISnapshotMappers.cs
+  s_3675ccfac3f8b2::t_ceb4b8210237ff 24-29
+src/PouryaKit.Messaging.Wolverine/Subscriptions/SnapshotMappers.cs
+  s_3675ccfac3f8b2::t_55e98ebc561202 15-20
+src/PouryaKit.Persistence.EFCore/DbContextConnection.cs
+  s_3675ccfac3f8b2::t_6f617d43a6a090 9-11
+src/PouryaKit.Persistence.EFCore/EfCoreServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_e4123e479f086e 35-36,67-70
+src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs
+  s_3675ccfac3f8b2::t_162ec1acb2a253 61,63-67,72
+src/PouryaKit.Persistence.EFCore/UnitOfWork/PersistencePreparation.cs
+  s_3675ccfac3f8b2::t_cf14a78a670f92 12-15,18,22-34,58-59,63-76,97
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_3675ccfac3f8b2::t_9b0c2500d88499 3,17,379-437,569-620
+tests/ModularMonolith.Tests/Fixtures/AppFixture.cs
+  s_3675ccfac3f8b2::t_ff3ec0bb144dcf 25,39
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_3675ccfac3f8b2::t_6e8a0cf64e94c3 53,58,70,100
+tests/ModularMonolith.Tests/SingleModuleTests.cs
+  s_3675ccfac3f8b2::t_101b6eff3cd582 70-93
+tests/ModularMonolith.Tests/SnapshotTests.cs
+  s_3675ccfac3f8b2::t_ebbaf3564b14ac 772-773
+tests/ModularMonolith.Tests/Stub/Migrations/20261016233238_TenantBinders.Designer.cs
+  s_3675ccfac3f8b2::t_5babe509061b58 1-770
+tests/ModularMonolith.Tests/Stub/Migrations/20261016233238_TenantBinders.cs
+  s_3675ccfac3f8b2::t_a40f692dd8181c 1-87
+tests/ModularMonolith.Tests/Stub/Migrations/StubDbContextModelSnapshot.cs
+  s_3675ccfac3f8b2::t_23a6957b0fdb74 71-97,211-231,445-468,718-727,736-740
+tests/ModularMonolith.Tests/Stub/TenantBinders.cs
+  s_3675ccfac3f8b2::t_957757457b7cb0 1-207
+tests/ModularMonolith.Tests/Stub/TenantProbes.cs
+  s_3675ccfac3f8b2::t_aaed299ed82a04 1-58
+tests/ModularMonolith.Tests/TenantDeliveryTests.cs
+  s_3675ccfac3f8b2::t_a46005ec9b9f7c 1-156
+tests/ModularMonolith.Tests/TenantOwnershipTests.cs
+  s_3675ccfac3f8b2::t_1a79af3546117f 1-123
+tests/PouryaKit.Cqrs.Tests/ErrorCodeTests.cs
+  s_3675ccfac3f8b2::t_0fd5ae03d4453f 11-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "65e0dfa7ec74194fe0c77bc191c970ac55a73d15",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
