@@ -331,19 +331,22 @@ internal static partial class ModuleRules
 
     /// <summary>
     /// Spec #115, Multi-tenancy: Dapper runs exactly the SQL a Feature writes, so in a tenant-scoped Module a string literal
-    /// that reads a tenant-scoped table is one <c>SELECT</c> with no set operator and no subquery, whose <c>WHERE</c> has no
-    /// top-level <c>OR</c> and holds every tenant-scoped table it reads to the tenant with a top-level conjunct of its own:
-    /// <c>p.tenant = @Tenant</c> by the table's alias, or by its name when it has none, and <c>tenant = @Tenant</c>
-    /// unqualified only when its <c>FROM</c> clause reads that one table. Every other shape of such a literal is rejected,
-    /// so the predicate inside an <c>OR</c>, in one branch of a <c>UNION</c> or for one table of a join is not enough, and
-    /// so is a shape the rule does not parse: a <c>CASE</c> at the top level of the <c>WHERE</c>, a dollar-quoted block, or
-    /// a <c>FROM</c> item in parentheses. Keywords inside double-quoted identifiers are no keywords. A
-    /// literal reads a table it names after <c>from</c>, <c>join</c> or a comma, with or without its schema, compared as
-    /// <see cref="WritesToAggregateTables"/> compares names; the table of a <c>delete from</c> is a write, which that rule
-    /// judges. The literals are read as that rule reads them, outside EF Core migrations, so a fragment that names such a
-    /// table and is concatenated at run time is rejected as no <c>SELECT</c>. Not seen: SQL read from a file or a resource;
-    /// a read through a view or a function; and whether <c>@Tenant</c> holds the Operation's tenant, which the Gateway
-    /// tests show.
+    /// that reads a tenant-scoped table keeps to one grammar over its tokens (<see cref="Sql.Tokens"/>), one statement of
+    /// <c>SELECT list FROM item ((JOIN | INNER JOIN | LEFT JOIN) item ON condition | , item)* WHERE conjunct (AND conjunct)*
+    /// [ORDER BY list] [LIMIT @p | n] [OFFSET @p | n]</c>, and every other shape is rejected. An item is
+    /// <c>[schema.]table [[AS] alias]</c> with nothing after it; no <c>SELECT</c>, <c>TABLE</c> or set operator appears
+    /// anywhere else; a condition or a conjunct has no <c>OR</c> or <c>CASE</c> outside parentheses (a <c>BETWEEN</c> takes
+    /// the <c>AND</c> after it); and each tenant-scoped item has a conjunct that is exactly <c>alias.tenant = @Tenant</c>,
+    /// or, for an item with no alias, qualified by its table with or without its schema, or unqualified when the
+    /// <c>FROM</c> has that one item. The tokeniser rejects a block comment, a <c>$</c>, a backslash and a character it
+    /// does not classify. A literal reads a tenant-scoped table when its text, comments and quotes included, names one and
+    /// holds a SQL command word, <c>from</c> or <c>join</c> (so a route or a permission named after a table is no SQL); a
+    /// <c>U&amp;</c> identifier may name any of them. A literal that writes a tenant-scoped table is left to
+    /// <see cref="WritesToAggregateTables"/>, which rejects it, since an aggregate maps every tenant-scoped table. The
+    /// literals are read outside EF Core migrations, so a fragment such as <c>from catalog.products</c>, concatenated at
+    /// run time, is rejected as no <c>SELECT</c>. Not seen: SQL read from a file or a resource, or assembled from fragments
+    /// of which none holds both a SQL word and the table's name; a read through a view or a function; and whether
+    /// <c>@Tenant</c> holds the Operation's tenant, which the Gateway tests show.
     /// </summary>
     public static IEnumerable<string> ReadsBeyondTheTenant(Assembly module, IReadOnlyDictionary<string, string> tenantTables) =>
         (
@@ -355,11 +358,21 @@ internal static partial class ModuleRules
         ).Distinct();
 
     /// <summary>The tenant-scoped tables <paramref name="sql"/> reads, as <see cref="ReadsBeyondTheTenant"/> finds them.</summary>
-    public static IEnumerable<string> TenantTablesReadBy(string sql, IReadOnlyDictionary<string, string> tenantTables) =>
-        from read in TableReads(Sql.Code(sql, keepDollarQuoted: true))
-        let table = TenantTableOf(read, tenantTables)
-        where table is not null
-        select table;
+    public static IEnumerable<string> TenantTablesReadBy(string sql, IReadOnlyDictionary<string, string> tenantTables)
+    {
+        if (!SqlWord().IsMatch(sql))
+        {
+            return [];
+        }
+
+        if (UnicodeEscape().IsMatch(sql))
+        {
+            return tenantTables.Keys;
+        }
+
+        HashSet<string> words = [.. AnyWord().Matches(sql).Select(word => word.Value.ToLowerInvariant())];
+        return tenantTables.Keys.Where(table => words.Contains(table[(table.IndexOf('.') + 1)..]));
+    }
 
     /// <summary>
     /// Why <paramref name="sql"/>, which reads a tenant-scoped table, breaks the shape <see cref="ReadsBeyondTheTenant"/>
@@ -367,139 +380,370 @@ internal static partial class ModuleRules
     /// </summary>
     public static string? TenantReadFault(string sql, IReadOnlyDictionary<string, string> tenantTables)
     {
-        var code = Sql.Code(sql, keepDollarQuoted: true);
-        TableRead[] reads = [.. TableReads(code).Where(read => TenantTableOf(read, tenantTables) is not null)];
-        if (reads is [])
+        if (!TenantTablesReadBy(sql, tenantTables).Any() || TablesWrittenBy(sql).Any(table => TenantTableNamed(table, tenantTables) is not null))
         {
             return null;
         }
 
-        // The rule judges only what it can read: a shape it cannot parse is rejected, not read further. Its keywords are
-        // looked for with the bodies of double-quoted identifiers blanked, so a column named "limit" ends no clause.
-        if (Sql.Code(sql, keepDollarQuoted: false) != code)
-        {
-            return "holds a dollar-quoted block";
-        }
+        var (tokens, fault) = Sql.Tokens(sql);
+        return fault is not null ? $"{fault}, {Unread}" : new TenantSelect(tokens, tenantTables).Fault();
+    }
 
-        var top = Sql.TopLevel(code);
-        var scan = Sql.WithoutIdentifiers(top);
-        if (code.Split(';').Count(statement => !string.IsNullOrWhiteSpace(statement)) != 1)
-        {
-            return "is not one statement";
-        }
+    private const string Unread = "a shape the rule does not read";
 
-        if (!SelectStatement().IsMatch(scan))
-        {
-            return "is not a SELECT";
-        }
+    // The tenant-scoped table `name` is, `schema.table` or a table of that name in any schema; null when it is none.
+    private static string? TenantTableNamed(string name, IReadOnlyDictionary<string, string> tenantTables) =>
+        name.Contains('.')
+            ? tenantTables.ContainsKey(name) ? name : null
+            : tenantTables.Keys.FirstOrDefault(table => table.EndsWith($".{name}", StringComparison.Ordinal));
 
-        var words = Sql.WithoutIdentifiers(code);
-        if (SetOperator().Match(words) is { Success: true } setOperator)
-        {
-            return $"has the set operator {setOperator.Value.ToLowerInvariant()}";
-        }
+    // The tokens of one literal read as the SELECT TenantReadFault admits, the rule's grammar written out as code.
+    private sealed class TenantSelect
+    {
+        private static readonly SqlToken End = new(SqlTokenKind.Punctuation, "");
 
-        if (SelectWord().Count(words) > 1)
-        {
-            return "has a subquery";
-        }
-
-        if (WhereClause().Match(scan) is not { Success: true } where)
-        {
-            return "has no WHERE";
-        }
-
-        var from = FromWord().Match(scan);
-        var fromClause = from.Success && from.Index < where.Index ? scan[from.Index..where.Index] : "";
-        if (ParenthesizedFromItem().IsMatch(fromClause))
-        {
-            return "has a FROM item in parentheses";
-        }
-
-        var whereSpan = where.Groups["where"];
-        if (OrWord().IsMatch(whereSpan.Value))
-        {
-            return "has an OR at the top level of its WHERE";
-        }
-
-        if (CaseWord().IsMatch(whereSpan.Value))
-        {
-            return "has a CASE at the top level of its WHERE";
-        }
-
-        var fromItems = fromClause.Length > 0 ? TableReads(top[from.Index..where.Index]).Count() : 0;
-        TenantConjunct[] conjuncts =
+        // Words that are no alias: what may follow a FROM item, and what starts none.
+        private static readonly HashSet<string> NotAliases =
         [
-            .. Conjuncts(top.Substring(whereSpan.Index, whereSpan.Length), whereSpan.Value).Select(TenantConjunct.Of).OfType<TenantConjunct>(),
+            "as", "on", "using", "where", "join", "inner", "left", "right", "full", "cross", "natural", "lateral", "only",
+            "tablesample", "group", "having", "window", "order", "limit", "offset", "fetch", "for", "union", "intersect",
+            "except", "select", "from",
         ];
-        foreach (var read in reads)
+
+        // Words that end a join condition outside parentheses, beside a comma.
+        private static readonly HashSet<string> ConditionEnds =
+        [
+            "join", "inner", "left", "right", "full", "cross", "natural", "where", "group", "having", "window", "order", "limit",
+            "offset", "fetch", "for",
+        ];
+
+        // Words that end a WHERE or an ORDER BY list outside parentheses.
+        private static readonly HashSet<string> WhereEnds = ["group", "having", "window", "order", "limit", "offset", "fetch", "for"];
+
+        private readonly IReadOnlyDictionary<string, string> _tenantTables;
+        private readonly SqlToken[] _tokens;
+        private readonly int[] _depths;
+        private readonly List<FromItem> _items = [];
+        private int _at;
+
+        public TenantSelect(IReadOnlyList<SqlToken> tokens, IReadOnlyDictionary<string, string> tenantTables)
         {
-            var table = TenantTableOf(read, tenantTables)!;
-            string[] names = read.Alias is { } alias ? [alias] : [read.Table, table];
-            if (!conjuncts.Any(conjunct =>
-                    conjunct.Column == tenantTables[table] && (conjunct.Qualifier is { } qualifier ? names.Contains(qualifier) : fromItems == 1)
-                ))
+            _tenantTables = tenantTables;
+            var last = tokens.Count;
+            while (last > 0 && tokens[last - 1].Is(';'))
             {
-                return $"does not hold {table}{(read.Alias is null ? "" : $" {read.Alias}")} to @Tenant with a top-level conjunct of its WHERE";
+                last--;
+            }
+
+            _tokens = [.. tokens.Take(last)];
+            _depths = new int[_tokens.Length];
+            var depth = 0;
+            for (var at = 0; at < _tokens.Length; at++)
+            {
+                depth -= _tokens[at].Is(')') ? 1 : 0;
+                _depths[at] = depth;
+                depth += _tokens[at].Is('(') ? 1 : 0;
             }
         }
 
-        return null;
-    }
+        private SqlToken Next => Peek(0);
 
-    private sealed record TableRead(string? Schema, string Table, string? Alias);
+        private bool AtEnd => _at >= _tokens.Length;
 
-    private static IEnumerable<TableRead> TableReads(string code) =>
-        from match in SqlRead().Matches(code)
-        select new TableRead(
-            match.Groups["schema"].Success ? Unquoted(match.Groups["schema"].Value) : null,
-            Unquoted(match.Groups["table"].Value),
-            match.Groups["alias"].Success ? Unquoted(match.Groups["alias"].Value) : null
-        );
+        // Whether the next token stands outside every parenthesis.
+        private bool Outside => !AtEnd && _depths[_at] == 0;
 
-    private static string? TenantTableOf(TableRead read, IReadOnlyDictionary<string, string> tenantTables) =>
-        read.Schema is { } schema
-            ? tenantTables.ContainsKey($"{schema}.{read.Table}") ? $"{schema}.{read.Table}" : null
-            : tenantTables.Keys.FirstOrDefault(table => table.EndsWith($".{read.Table}", StringComparison.Ordinal));
+        private SqlToken Peek(int ahead) => _at + ahead < _tokens.Length ? _tokens[_at + ahead] : End;
 
-    // The top-level conjuncts of a WHERE with no top-level OR or CASE: its text split at each AND but the one a BETWEEN
-    // takes, the words found in `scan`, the same text with its double-quoted identifiers blanked.
-    private static IEnumerable<string> Conjuncts(string where, string scan)
-    {
-        var start = 0;
-        var between = false;
-        foreach (Match word in AndOrBetween().Matches(scan))
+        public string? Fault()
         {
-            if (word.Value.Equals("between", StringComparison.OrdinalIgnoreCase))
+            if (_tokens.Any(token => token.Is(';')))
             {
-                between = true;
+                return "is not one statement";
             }
-            else if (between)
+
+            if (_tokens is [] || !_tokens[0].Is("select"))
             {
-                between = false;
+                return "is not a SELECT";
             }
-            else
+
+            if (_tokens.FirstOrDefault(token => token.Is("union") || token.Is("intersect") || token.Is("except")) is { Text: not null } setOperator)
             {
-                yield return where[start..word.Index];
-                start = word.Index + word.Length;
+                return $"has the set operator {setOperator.Name}";
+            }
+
+            if (_tokens.Skip(1).Any(token => token.Is("select") || token.Is("table")))
+            {
+                return "has a subquery";
+            }
+
+            if (_depths.Any(depth => depth < 0) || _tokens.Count(token => token.Is('(')) != _tokens.Count(token => token.Is(')')))
+            {
+                return $"has parentheses that do not pair, {Unread}";
+            }
+
+            _at = 1;
+            while (!AtEnd && !(Outside && Next.Is("from")))
+            {
+                _at++;
+            }
+
+            if (AtEnd)
+            {
+                return "has no FROM";
+            }
+
+            _at++;
+            return From() ?? Where();
+        }
+
+        // The FROM clause, up to and past its WHERE.
+        private string? From()
+        {
+            var joined = false;
+            while (true)
+            {
+                if (Item() is { } itemFault)
+                {
+                    return itemFault;
+                }
+
+                var item = _items[^1];
+                var after = $"the FROM item {item}";
+                if (joined)
+                {
+                    if (!Next.Is("on"))
+                    {
+                        return $"has {Shown(Next)} after {after}, {Unread}";
+                    }
+
+                    _at++;
+                    var start = _at;
+                    while (!AtEnd && !(Outside && (Next.Is(',') || (Next.Kind == SqlTokenKind.Word && ConditionEnds.Contains(Next.Name)))))
+                    {
+                        _at++;
+                    }
+
+                    after = $"the join condition of {item}";
+                    if (Unsplittable(start, _at, after) is { } conditionFault)
+                    {
+                        return conditionFault;
+                    }
+                }
+
+                if (AtEnd || (Next.Kind == SqlTokenKind.Word && WhereEnds.Contains(Next.Name)))
+                {
+                    return "has no WHERE";
+                }
+
+                if (Next.Is("where"))
+                {
+                    _at++;
+                    return null;
+                }
+
+                if (Next.Is(','))
+                {
+                    joined = false;
+                    _at++;
+                }
+                else if (Next.Is("join"))
+                {
+                    joined = true;
+                    _at++;
+                }
+                else if ((Next.Is("inner") || Next.Is("left")) && Peek(1).Is("join"))
+                {
+                    joined = true;
+                    _at += 2;
+                }
+                else
+                {
+                    return $"has {Shown(Next.Is("inner") || Next.Is("left") ? Peek(1) : Next)} after {after}, {Unread}";
+                }
             }
         }
 
-        yield return where[start..];
-    }
+        // One FROM item: `[schema.]table [[AS] alias]`.
+        private string? Item()
+        {
+            if (Next.Is('('))
+            {
+                return "has a FROM item in parentheses";
+            }
 
-    // A conjunct that is exactly `[qualifier.]column = @Tenant`, the qualifier with or without its schema.
-    private sealed record TenantConjunct(string? Qualifier, string Column)
-    {
-        public static TenantConjunct? Of(string conjunct) =>
-            TenantPredicate().Match(conjunct) is { Success: true } match
-                ? new TenantConjunct(
-                    match.Groups["qualifier"].Success
-                        ? Unquoted(string.Concat(match.Groups["qualifier"].Value.Where(character => !char.IsWhiteSpace(character))))
-                        : null,
-                    Unquoted(match.Groups["column"].Value)
-                )
-                : null;
+            if (!Next.IsName || (Next.Kind == SqlTokenKind.Word && NotAliases.Contains(Next.Name)))
+            {
+                return $"has {Shown(Next)} where a FROM item starts, {Unread}";
+            }
+
+            var table = Next.Name;
+            _at++;
+            if (Next.Is('.') && Peek(1).IsName)
+            {
+                table = $"{table}.{Peek(1).Name}";
+                _at += 2;
+            }
+
+            string? alias = null;
+            if (Next.Is("as"))
+            {
+                if (!Peek(1).IsName)
+                {
+                    return $"has {Shown(Peek(1))} after AS in the FROM item {table}, {Unread}";
+                }
+
+                alias = Peek(1).Name;
+                _at += 2;
+            }
+            else if (Next.Kind == SqlTokenKind.Quoted || (Next.Kind == SqlTokenKind.Word && !NotAliases.Contains(Next.Name)))
+            {
+                alias = Next.Name;
+                _at++;
+            }
+
+            _items.Add(new FromItem(table, alias));
+            return null;
+        }
+
+        // The WHERE and what may follow it, then each tenant-scoped item held to the tenant.
+        private string? Where()
+        {
+            var start = _at;
+            while (!AtEnd && !(Outside && Next.Kind == SqlTokenKind.Word && WhereEnds.Contains(Next.Name)))
+            {
+                _at++;
+            }
+
+            if (Unsplittable(start, _at, "its WHERE") is { } whereFault)
+            {
+                return whereFault;
+            }
+
+            var conjuncts = Conjuncts(start, _at).Select(TenantConjunct.Of).OfType<TenantConjunct>().ToArray();
+            if (Next.Is("order") && Peek(1).Is("by"))
+            {
+                _at += 2;
+                while (!AtEnd && !(Outside && Next.Kind == SqlTokenKind.Word && WhereEnds.Contains(Next.Name)))
+                {
+                    _at++;
+                }
+            }
+
+            if (Next.Is("limit") && Peek(1).Kind is SqlTokenKind.Parameter or SqlTokenKind.Number)
+            {
+                _at += 2;
+            }
+
+            if (Next.Is("offset") && Peek(1).Kind is SqlTokenKind.Parameter or SqlTokenKind.Number)
+            {
+                _at += 2;
+            }
+
+            if (!AtEnd)
+            {
+                return $"has {Shown(Next)} after its WHERE, {Unread}";
+            }
+
+            foreach (var item in _items)
+            {
+                if (TenantTableNamed(item.Table, _tenantTables) is not { } table)
+                {
+                    continue;
+                }
+
+                string[] names = item.Alias is { } alias ? [alias] : [item.Table[(item.Table.IndexOf('.') + 1)..], table];
+                if (!conjuncts.Any(conjunct =>
+                        conjunct.Column == _tenantTables[table] && (conjunct.Qualifier is { } qualifier ? names.Contains(qualifier) : _items.Count == 1)
+                    ))
+                {
+                    return $"does not hold {table}{(item.Alias is null ? "" : $" {item.Alias}")} to @Tenant with a top-level conjunct of its WHERE";
+                }
+            }
+
+            return null;
+        }
+
+        // Why the tokens from `start` to `end` cannot be split into conjuncts: an OR or a CASE outside parentheses.
+        private string? Unsplittable(int start, int end, string clause)
+        {
+            for (var at = start; at < end; at++)
+            {
+                if (_depths[at] == 0 && _tokens[at].Is("or"))
+                {
+                    return $"has an OR at the top level of {clause}";
+                }
+
+                if (_depths[at] == 0 && _tokens[at].Is("case"))
+                {
+                    return $"has a CASE at the top level of {clause}";
+                }
+            }
+
+            return null;
+        }
+
+        // The conjuncts of the WHERE from `start` to `end`: its tokens split at each AND outside parentheses but the one a
+        // BETWEEN takes.
+        private IEnumerable<SqlToken[]> Conjuncts(int start, int end)
+        {
+            var between = false;
+            for (var at = start; at < end; at++)
+            {
+                if (_depths[at] != 0)
+                {
+                    continue;
+                }
+
+                if (_tokens[at].Is("between"))
+                {
+                    between = true;
+                }
+                else if (_tokens[at].Is("and") && between)
+                {
+                    between = false;
+                }
+                else if (_tokens[at].Is("and"))
+                {
+                    yield return _tokens[start..at];
+                    start = at + 1;
+                }
+            }
+
+            yield return _tokens[start..end];
+        }
+
+        private static string Shown(SqlToken token) =>
+            token.Kind switch
+            {
+                SqlTokenKind.Quoted => $"\"{token.Text}\"",
+                SqlTokenKind.String => $"'{token.Text}'",
+                _ => token.Text.Length == 0 ? "nothing" : token.Text,
+            };
+
+        private sealed record FromItem(string Table, string? Alias)
+        {
+            public override string ToString() => Alias is null ? Table : $"{Table} {Alias}";
+        }
+
+        // A conjunct that is exactly `[qualifier.]column = @Tenant`, the qualifier a table with or without its schema, or
+        // an alias.
+        private sealed record TenantConjunct(string? Qualifier, string Column)
+        {
+            public static TenantConjunct? Of(SqlToken[] conjunct) =>
+                conjunct switch
+                {
+                    [{ IsName: true } column, var equals, var tenant] when IsTenant(equals, tenant) => new(null, column.Name),
+                    [{ IsName: true } table, var dot, { IsName: true } column, var equals, var tenant] when dot.Is('.') && IsTenant(equals, tenant) =>
+                        new(table.Name, column.Name),
+                    [{ IsName: true } schema, var dot, { IsName: true } table, var tableDot, { IsName: true } column, var equals, var tenant]
+                        when dot.Is('.') && tableDot.Is('.') && IsTenant(equals, tenant) => new($"{schema.Name}.{table.Name}", column.Name),
+                    _ => null,
+                };
+
+            private static bool IsTenant(SqlToken equals, SqlToken tenant) =>
+                equals.Is('=') && tenant is { Kind: SqlTokenKind.Parameter } && tenant.Text.Equals("@Tenant", StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     private static bool IsMigration(Type type) => type.IsAssignableTo(typeof(Migration)) || type.IsAssignableTo(typeof(ModelSnapshot));
@@ -526,11 +770,12 @@ internal static partial class ModuleRules
     )]
     private static partial Regex TransactionStatement();
 
+    // PostgreSQL's command words.
+    private const string CommandWords =
+        "abort|alter|analyze|begin|call|checkpoint|close|cluster|comment|commit|copy|create|deallocate|declare|delete|discard|do|drop|end|execute|explain|fetch|grant|import|insert|listen|load|lock|merge|move|notify|prepare|reassign|refresh|reindex|release|reset|revoke|rollback|savepoint|security|select|set|show|start|table|truncate|unlisten|update|vacuum|values|with";
+
     // A statement that starts with a PostgreSQL command word.
-    [GeneratedRegex(
-        @"^(?:abort|alter|analyze|begin|call|checkpoint|close|cluster|comment|commit|copy|create|deallocate|declare|delete|discard|do|drop|end|execute|explain|fetch|grant|import|insert|listen|load|lock|merge|move|notify|prepare|reassign|refresh|reindex|release|reset|revoke|rollback|savepoint|security|select|set|show|start|table|truncate|unlisten|update|vacuum|values|with)\b",
-        RegexOptions.IgnoreCase
-    )]
+    [GeneratedRegex($@"^(?:{CommandWords})\b", RegexOptions.IgnoreCase)]
     private static partial Regex SqlCommand();
 
     [GeneratedRegex(
@@ -539,52 +784,14 @@ internal static partial class ModuleRules
     )]
     private static partial Regex SqlWrite();
 
-    // A table a literal reads: named after `from` (not the table of a `delete from`), `join` or a comma, with its alias.
-    [GeneratedRegex(
-        """
-        (?:(?<!\bdelete\s+)\bfrom\b|\bjoin\b|,)[\s(]*(?:only\s+)?
-        (?:(?<schema>"?[a-z_][\w$]*"?)\s*\.\s*)?(?<table>"?[a-z_][\w$]*"?)
-        (?:\s+(?:as\s+)?(?!(?:on|using|join|inner|left|right|full|cross|natural|lateral|tablesample|where|group|having|window|order|limit|offset|fetch|for|union|intersect|except|from)\b)(?<alias>"?[a-z_][\w$]*"?))?
-        """,
-        RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace
-    )]
-    private static partial Regex SqlRead();
+    // A word that SQL, or a fragment of it, holds: a command word, `from` or `join`.
+    [GeneratedRegex($@"\b(?:{CommandWords}|from|join)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex SqlWord();
 
-    [GeneratedRegex(@"^\s*select\b", RegexOptions.IgnoreCase)]
-    private static partial Regex SelectStatement();
+    // A Unicode-escaped identifier, which may spell any name without its letters.
+    [GeneratedRegex(@"\bu&""", RegexOptions.IgnoreCase)]
+    private static partial Regex UnicodeEscape();
 
-    [GeneratedRegex(@"\bselect\b", RegexOptions.IgnoreCase)]
-    private static partial Regex SelectWord();
-
-    [GeneratedRegex(@"\b(?:union|intersect|except)\b", RegexOptions.IgnoreCase)]
-    private static partial Regex SetOperator();
-
-    [GeneratedRegex(@"\bfrom\b", RegexOptions.IgnoreCase)]
-    private static partial Regex FromWord();
-
-    // A top-level WHERE, up to the clause that follows it.
-    [GeneratedRegex(
-        @"\bwhere\b(?<where>.*?)(?=\b(?:group\s+by|having|window|order\s+by|limit|offset|fetch|for)\b|$)",
-        RegexOptions.IgnoreCase | RegexOptions.Singleline
-    )]
-    private static partial Regex WhereClause();
-
-    [GeneratedRegex(@"\bor\b", RegexOptions.IgnoreCase)]
-    private static partial Regex OrWord();
-
-    [GeneratedRegex(@"\bcase\b", RegexOptions.IgnoreCase)]
-    private static partial Regex CaseWord();
-
-    // A FROM item that opens a parenthesis: a parenthesized join, relation or subquery, whose relations the rule does not read.
-    [GeneratedRegex(@"(?:\bfrom\b|\bjoin\b|,)\s*(?:(?:only|lateral)\s+)?\(", RegexOptions.IgnoreCase)]
-    private static partial Regex ParenthesizedFromItem();
-
-    [GeneratedRegex(@"\b(?:and|between)\b", RegexOptions.IgnoreCase)]
-    private static partial Regex AndOrBetween();
-
-    [GeneratedRegex(
-        """^\s*(?:(?<qualifier>"?[a-z_][\w$]*"?(?:\s*\.\s*"?[a-z_][\w$]*"?)?)\s*\.\s*)?(?<column>"?[a-z_][\w$]*"?)\s*=\s*@tenant\s*$""",
-        RegexOptions.IgnoreCase
-    )]
-    private static partial Regex TenantPredicate();
+    [GeneratedRegex("[A-Za-z0-9_]+")]
+    private static partial Regex AnyWord();
 }

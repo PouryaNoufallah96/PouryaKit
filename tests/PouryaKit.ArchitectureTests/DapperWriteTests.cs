@@ -62,6 +62,7 @@ public sealed class DapperWriteTests
     [InlineData("update catalog.\nproducts set name = @Name", "catalog.products")]
     [InlineData("delete from catalog\t. \"Products\" where id = @Id", "catalog.products")]
     [InlineData("update /* c */ catalog.products set name = @Name", "catalog.products")]
+    [InlineData("/* a /* b */ ' */ delete from catalog.products --'", "catalog.products")]
     [InlineData("do $$ begin update catalog.products set name = 'x'; end $$", "catalog.products")]
     [InlineData("-- update catalog.products\ninsert into marks (id) values (@Id)", "marks")]
     [InlineData("insert into marks (note) values ('update catalog.products set name = 1')", "marks")]

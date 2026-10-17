@@ -72,9 +72,16 @@ public sealed class DapperTenantTests
     [InlineData("insert into marks (id) select id from catalog.products where tenant = @Tenant", "is not a SELECT")]
     [InlineData("select id from catalog.products where tenant = @Tenant; select id from marks", "is not one statement")]
     [InlineData("select id from catalog.products where case when true then true else true and tenant = @Tenant and true end", "has a CASE at the top level of its WHERE")]
-    [InlineData("select id from catalog.products where $$x and tenant = @Tenant and y$$ <> ''", "holds a dollar-quoted block")]
+    [InlineData("select id from catalog.products where $$x and tenant = @Tenant and y$$ <> ''", "holds a dollar sign, a shape the rule does not read")]
     [InlineData("select p.id from (catalog.products p cross join catalog.categories c) where c.tenant = @Tenant", "has a FROM item in parentheses")]
     [InlineData("select id from catalog.products where tenant = @Tenant and \"limit\" = 1 or name = @Name", "has an OR at the top level of its WHERE")]
+    [InlineData("select id from catalog.products where tenant = @Tenant and @limit = 1 or true", "has an OR at the top level of its WHERE")]
+    [InlineData("TABLE catalog.products", "is not a SELECT")]
+    [InlineData("select id from catalog.products where /* outer /* inner */ tenant = @Tenant and */ true", "holds a block comment, a shape the rule does not read")]
+    [InlineData("select c.id from catalog.categories c(id, tenant, product_count, version, real_tenant) where c.tenant = @Tenant", "has ( after the FROM item catalog.categories c, a shape the rule does not read")]
+    [InlineData("select p.id from catalog.products p where p.tenant = @Tenant order by p.name, p.id limit @Take offset 20", null)]
+    [InlineData("select p.id from catalog.products p join catalog.categories c on c.id = p.category_id or true where p.tenant = @Tenant and c.tenant = @Tenant", "has an OR at the top level of the join condition of catalog.categories c")]
+    [InlineData("select id from U&\"!0070roducts\" UESCAPE '!' where true", "holds the character &, a shape the rule does not read")]
     public void A_read_of_a_tenant_scoped_table_is_held_to_one_shape(string sql, string? fault)
     {
         Assert.Equal(fault, ModuleRules.TenantReadFault(sql, TenantTables));
