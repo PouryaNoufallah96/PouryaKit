@@ -17,7 +17,8 @@ namespace PouryaKit.Persistence.EFCore;
 /// every <see cref="ITenantScoped"/> entity of another tenant than the Operation's by a filter named
 /// <see cref="TenantFilter"/>, its tenant a concurrency token too, so no write matches a row of another tenant than the
 /// one the entity was loaded or attached with; a part's key to its holder in such an aggregate is one too, so no part's
-/// write matches its row under another holder than the one it was loaded with. Override <see cref="OnModelCreating"/> only to add to it, and call the base.
+/// write matches its row under another holder than the one it was loaded with, and none is read where its holder is not,
+/// under the same filter. Override <see cref="OnModelCreating"/> only to add to it, and call the base.
 /// </summary>
 public abstract class PouryaKitDbContext : DbContext
 {
@@ -29,9 +30,9 @@ public abstract class PouryaKitDbContext : DbContext
 
     /// <summary>
     /// The name of the query filter that reads an <see cref="ITenantScoped"/> entity only when it belongs to the tenant
-    /// of the Operation running the query, <c>PouryaKit.Tenant</c>; where the Operation has no tenant, or no Operation
-    /// began, it reads none. A read that must cross tenants passes it to EF Core's
-    /// <c>IgnoreQueryFilters([PouryaKitDbContext.TenantFilter])</c>.
+    /// of the Operation running the query, and a part of such an aggregate only when its holder is read,
+    /// <c>PouryaKit.Tenant</c>; where the Operation has no tenant, or no Operation began, it reads none. A read that must
+    /// cross tenants passes it to EF Core's <c>IgnoreQueryFilters([PouryaKitDbContext.TenantFilter])</c>.
     /// </summary>
     public const string TenantFilter = "PouryaKit.Tenant";
 

@@ -247,7 +247,7 @@ public enum SheetRelease
     Clear,
 }
 
-// Queries the sheet named, which no tenant filter reads, releases it by detaching it through its entry or by clearing the
+// Queries the sheet named with the tenant filter set aside, whichever tenant's binder holds it, releases it by detaching it through its entry or by clearing the
 // change tracker, loads the binder named through the tenant filter, tracks the same sheet again under it, through that
 // entry or a new one, with the binder as both its current and its original holder, and rewrites it or removes it.
 internal sealed record ReattachSheetCommand(Guid BinderId, Guid SheetId, SheetRelease Release, bool Remove) : Command;
@@ -256,7 +256,10 @@ internal sealed class ReattachSheetCommandHandler(StubDbContext dbContext) : Com
 {
     public override async Task<Result> Handle(ReattachSheetCommand command, CancellationToken cancellationToken)
     {
-        var sheet = await dbContext.Set<Sheet>().SingleAsync(sheet => sheet.Id == new SheetId(command.SheetId), cancellationToken);
+        var sheet = await dbContext
+            .Set<Sheet>()
+            .IgnoreQueryFilters([PouryaKitDbContext.TenantFilter])
+            .SingleAsync(sheet => sheet.Id == new SheetId(command.SheetId), cancellationToken);
         var entry = dbContext.Entry(sheet);
         if (command.Release == SheetRelease.Detach)
         {
@@ -286,13 +289,33 @@ internal sealed class ReattachSheetCommandHandler(StubDbContext dbContext) : Com
     }
 }
 
+// Reads the texts of the sheets queried through their own set: the one named, or every one when none is, through the
+// tenant filter or with it set aside.
+internal sealed record ReadSheetsQuery(Guid? SheetId, bool CrossTenants) : Query<IReadOnlyList<string>>;
+
+internal sealed class ReadSheetsQueryHandler(StubDbContext dbContext) : QueryHandler<ReadSheetsQuery, IReadOnlyList<string>>
+{
+    public override async Task<Result<IReadOnlyList<string>>> Handle(ReadSheetsQuery query, CancellationToken cancellationToken)
+    {
+        var sheets = query.CrossTenants ? dbContext.Set<Sheet>().IgnoreQueryFilters([PouryaKitDbContext.TenantFilter]) : dbContext.Set<Sheet>();
+        if (query.SheetId is { } id)
+        {
+            sheets = sheets.Where(sheet => sheet.Id == new SheetId(id));
+        }
+
+        return Result.Success<IReadOnlyList<string>>(
+            await sheets.OrderBy(sheet => sheet.Text).Select(sheet => sheet.Text).ToListAsync(cancellationToken)
+        );
+    }
+}
+
 public enum HolderForgery
 {
     OriginalValue,
     AcceptAllChanges,
 }
 
-// Queries the sheet named, which no tenant filter reads, loads the binder named through the tenant filter and makes it the
+// Queries the sheet named with the tenant filter set aside, whichever tenant's binder holds it, loads the binder named through the tenant filter and makes it the
 // sheet's holder as loaded too, by setting the key's original value or by accepting the change tracker's changes, then
 // rewrites the sheet or removes it.
 internal sealed record ForgeSheetHolderCommand(Guid BinderId, Guid SheetId, HolderForgery Forgery, bool Remove) : Command;
@@ -301,7 +324,10 @@ internal sealed class ForgeSheetHolderCommandHandler(StubDbContext dbContext) : 
 {
     public override async Task<Result> Handle(ForgeSheetHolderCommand command, CancellationToken cancellationToken)
     {
-        var sheet = await dbContext.Set<Sheet>().SingleAsync(sheet => sheet.Id == new SheetId(command.SheetId), cancellationToken);
+        var sheet = await dbContext
+            .Set<Sheet>()
+            .IgnoreQueryFilters([PouryaKitDbContext.TenantFilter])
+            .SingleAsync(sheet => sheet.Id == new SheetId(command.SheetId), cancellationToken);
         var binder = await dbContext.Set<Binder>().SingleAsync(binder => binder.Id == new BinderId(command.BinderId), cancellationToken);
         var holder = dbContext.Entry(sheet).Property("BinderId");
         holder.CurrentValue = binder.Id;

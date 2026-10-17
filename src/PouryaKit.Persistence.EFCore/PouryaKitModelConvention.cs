@@ -1,8 +1,10 @@
 using System.Linq.Expressions;
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using Microsoft.EntityFrameworkCore.Query;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Persistence.EFCore;
@@ -12,7 +14,8 @@ namespace PouryaKit.Persistence.EFCore;
 // tenant-scoped entity of another tenant than the Operation's, whose tenant is a concurrency token too: an UPDATE or
 // DELETE matches the row only under the tenant the entity was loaded or attached with. A part's key to the entity that
 // holds it in a tenant-scoped aggregate is a concurrency token as well, so its write matches the row only under the holder
-// it was loaded with, the one the prepare step judged.
+// it was loaded with, the one the prepare step judged, and the part is read, under the same named filter, only where its
+// holder is.
 internal sealed class PouryaKitModelConvention(PouryaKitDbContext dbContext) : IModelFinalizingConvention
 {
     private static readonly PropertyInfo OperationTenant = typeof(PouryaKitDbContext).GetProperty(
@@ -27,13 +30,11 @@ internal sealed class PouryaKitModelConvention(PouryaKitDbContext dbContext) : I
     {
         foreach (var entityType in modelBuilder.Metadata.GetEntityTypes())
         {
-            foreach (
-                var holderKey in entityType
-                    .GetDeclaredForeignKeys()
-                    .Where(foreignKey => foreignKey.PrincipalToDependent is not null && InTenantScopedAggregate(foreignKey.PrincipalEntityType, []))
-                    .SelectMany(foreignKey => foreignKey.Properties)
-                    .Where(property => !property.IsPrimaryKey())
-            )
+            var toHolders = entityType
+                .GetDeclaredForeignKeys()
+                .Where(foreignKey => foreignKey.PrincipalToDependent is not null && InTenantScopedAggregate(foreignKey.PrincipalEntityType, []))
+                .ToList();
+            foreach (var holderKey in toHolders.SelectMany(foreignKey => foreignKey.Properties).Where(property => !property.IsPrimaryKey()))
             {
                 holderKey.Builder.IsConcurrencyToken(true);
             }
@@ -60,6 +61,10 @@ internal sealed class PouryaKitModelConvention(PouryaKitDbContext dbContext) : I
             {
                 entityType.Builder.HasQueryFilter(PouryaKitDbContext.TenantFilter, OfTheOperationsTenant(entityType.ClrType));
                 entityType.FindProperty(nameof(ITenantScoped.Tenant))?.Builder.IsConcurrencyToken(true);
+            }
+            else if (toHolders.Count > 0)
+            {
+                entityType.Builder.HasQueryFilter(PouryaKitDbContext.TenantFilter, WithAReadableHolder(entityType.ClrType, toHolders));
             }
         }
     }
@@ -94,6 +99,42 @@ internal sealed class PouryaKitModelConvention(PouryaKitDbContext dbContext) : I
         var entity = Expression.Parameter(type, "entity");
         return Expression.Lambda(Expression.Not(Expression.Property(entity, nameof(ISoftDeletable.IsDeleted))), entity);
     }
+
+    // A part passes when each holder its keys name is in the holder's set, which carries the holder's own filters: the
+    // root's tenant filter, or, for a part of a part, its holder's filter in turn. The set is the query root EF Core's own
+    // convention makes of a DbContext's Set<T>() in a filter; that convention runs before this one, so this one writes the
+    // root itself.
+    private static LambdaExpression WithAReadableHolder(Type type, List<IConventionForeignKey> toHolders)
+    {
+        var part = Expression.Parameter(type, "part");
+        return Expression.Lambda(
+            toHolders
+                .Select(foreignKey =>
+                {
+                    var holderType = foreignKey.PrincipalEntityType.ClrType;
+                    var holder = Expression.Parameter(holderType, "holder");
+                    var sameKey = foreignKey
+                        .PrincipalKey.Properties.Zip(
+                            foreignKey.Properties,
+                            (key, reference) => Expression.Equal(PropertyOf(holder, key, reference.ClrType), PropertyOf(part, reference, reference.ClrType))
+                        )
+                        .Aggregate(Expression.AndAlso);
+                    return (Expression)Expression.Call(
+                        typeof(Queryable),
+                        nameof(Queryable.Any),
+                        [holderType],
+                        new EntityQueryRootExpression((IEntityType)foreignKey.PrincipalEntityType),
+                        Expression.Quote(Expression.Lambda(sameKey, holder))
+                    );
+                })
+                .Aggregate(Expression.AndAlso),
+            part
+        );
+    }
+
+    // Both keys are read as the part's type for them: an optional one is nullable where the holder's is not.
+    private static MethodCallExpression PropertyOf(ParameterExpression entity, IConventionProperty property, Type type) =>
+        Expression.Call(typeof(EF), nameof(EF.Property), [type], entity, Expression.Constant(property.Name));
 
     // The model is cached and shared by every instance of the DbContext's type. EF Core replaces this instance in the
     // filter with the DbContext that runs each query, so the filter reads that query's Operation, as a filter written in
