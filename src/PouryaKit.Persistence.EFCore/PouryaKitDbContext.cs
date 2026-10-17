@@ -15,7 +15,9 @@ namespace PouryaKit.Persistence.EFCore;
 /// the migrations history table. Every aggregate's <see cref="AggregateRoot{TId}.Version"/> is its concurrency token,
 /// every <see cref="ISoftDeletable"/> entity is left out of queries by a filter named <see cref="SoftDeleteFilter"/>, and
 /// every <see cref="ITenantScoped"/> entity of another tenant than the Operation's by a filter named
-/// <see cref="TenantFilter"/>. Override <see cref="OnModelCreating"/> only to add to it, and call the base.
+/// <see cref="TenantFilter"/>, its tenant a concurrency token too, so no write matches a row of another tenant than the
+/// one the entity was loaded or attached with; a part's key to its holder in such an aggregate is one too, so no part's
+/// write matches its row under another holder than the one it was loaded with. Override <see cref="OnModelCreating"/> only to add to it, and call the base.
 /// </summary>
 public abstract class PouryaKitDbContext : DbContext
 {
@@ -36,6 +38,10 @@ public abstract class PouryaKitDbContext : DbContext
     // The scope's services, which hold its Operation, as EF Core's AddDbContext gives them to the options.
     private readonly IServiceProvider? _applicationServices;
 
+    // Every entity a query of this DbContext materialized and tracked since. One detached, or cleared from the change
+    // tracker, and then tracked again was attached, as is any other tracked entity that is not added.
+    private readonly HashSet<object> _loaded = new(ReferenceEqualityComparer.Instance);
+
     /// <summary>
     /// Creates the DbContext with <paramref name="options"/> and the cascade timings the Unit of Work's soft delete
     /// relies on.
@@ -51,11 +57,25 @@ public abstract class PouryaKitDbContext : DbContext
         // An orphan is deleted as soon as changes are detected, so the Unit of Work sees it when it prepares the save,
         // and a soft-deletable one is kept; deleted later, inside the save, it would be neither.
         ChangeTracker.DeleteOrphansTiming = CascadeTiming.Immediate;
+        ChangeTracker.Tracked += (_, tracked) =>
+        {
+            if (tracked.FromQuery)
+            {
+                _loaded.Add(tracked.Entry.Entity);
+            }
+            else
+            {
+                _loaded.Remove(tracked.Entry.Entity);
+            }
+        };
     }
 
     // Read by the tenant filter each time a query runs, never when the model is built or the DbContext created: the
     // migration tool and the composition checks build a DbContext where no Operation began.
     internal string? Tenant => _applicationServices?.GetService<Operation>()?.Context?.Tenant;
+
+    // Read by the Unit of Work's prepare step, which saves a tenant's aggregate only when a query loaded it.
+    internal bool WasLoaded(object entity) => _loaded.Contains(entity);
 
     /// <inheritdoc />
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

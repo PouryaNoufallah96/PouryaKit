@@ -23,4 +23,14 @@ public static class TenantErrors
         "Tenant.Mismatch",
         "This operation changes data of another tenant than its own, or moves data between tenants, so nothing was saved."
     );
+
+    /// <summary>
+    /// The Operation would save a change to a tenant-scoped aggregate, or to a part of one, that it attached instead of
+    /// loading it through a query: a tenant-scoped aggregate is loaded, never attached, since an attached entity's key
+    /// may name another tenant's row. Nothing was saved.
+    /// </summary>
+    public static readonly Error NotLoaded = Error.Forbidden(
+        "Tenant.NotLoaded",
+        "This operation changes tenant data it did not load, so nothing was saved."
+    );
 }
