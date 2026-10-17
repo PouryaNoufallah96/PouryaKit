@@ -1,0 +1,32 @@
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_b014db746e7337 597
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_6fed66b40b6f05 2200
+.agents/skills/pourya-kit/references/testing.md
+  s_3675ccfac3f8b2::t_9974692a89f6e9 209
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3675ccfac3f8b2::t_fbd08d489431be 5
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_3675ccfac3f8b2::t_b5cc5d1d1a81c4 6-7,69-74,82-101,105-143
+  s_3675ccfac3f8b2::t_95140918785a4c 102-104
+  s_3675ccfac3f8b2::t_f77932714db5c8 75-81
+  s_3675ccfac3f8b2::t_aa97f0afce5838 144
+.claude/agent-memory/kit-implementer/core-json-and-architecture-test-facts.md
+  s_3675ccfac3f8b2::t_5f8bb6a34fb62e 109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0245cceba01057ff2c5ece5e790763a0d71219db",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
