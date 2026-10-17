@@ -1,0 +1,35 @@
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_3675ccfac3f8b2::t_cb97b3c356516a 89
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_cb97b3c356516a 1945,1953
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_3675ccfac3f8b2::t_2274119c91c789 75
+  s_3675ccfac3f8b2::t_4881ec6350bf52 82-84
+  s_3675ccfac3f8b2::t_7e61b927536132 78-81
+tests/PouryaKit.ArchitectureTests/DapperWriteTests.cs
+  s_3675ccfac3f8b2::t_424106c792fc83 65
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_3675ccfac3f8b2::t_6f592536efff63 334-349,361-375,383,388-390,392,394-398,400-403,405-411,413-429,431-446,449-458,460-497,500-501,503-564,567-568,570-606,609-610,612-613,615,618-621,623-631,633-636,638-641,643,645,647-648,650-661,663-670,672-680,682-683,686-696,698-746,773-776,778,787-789,791-793,795-796
+tests/PouryaKit.ArchitectureTests/Sql.cs
+  s_3675ccfac3f8b2::t_4cdaaec53b6026 29
+  s_3675ccfac3f8b2::t_774cf102537656 254
+  s_3675ccfac3f8b2::t_be3f2dc3fc47d1 10-13,35-37,62-65,67,69-71,73-79,81-86,88-100,102-104,106-139,143,146-162,164-166,168-179,182-211,224-253,255-261
+.agents/skills/pourya-kit/references/testing.md
+  s_3675ccfac3f8b2::t_cb97b3c356516a 200
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "78b6131d4ed85b46797928dca6ac5b464fdc9298",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
