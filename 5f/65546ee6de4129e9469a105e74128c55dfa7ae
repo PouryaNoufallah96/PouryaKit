@@ -1,0 +1,25 @@
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_3bd7f0419947dc 10
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_3125554060cd5c 4985,5033,5256-5257,5259-5261,5557
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_72ff91d4685fc0 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b9a8adfb056e1c::t_49778fb1cb2c76 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5f65546ee6de4129e9469a105e74128c55dfa7ae",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
