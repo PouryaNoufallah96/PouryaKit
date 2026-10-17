@@ -14,7 +14,7 @@ public sealed class PouryaKitWebOptions
     /// writes the configured Actor claim's value under <see cref="ClaimTypes.NameIdentifier"/>, so the default fits
     /// it; an application that authenticates another way names the claim its scheme issues. Null or blank, it would fail
     /// every authenticated request, so the Host does not start: it fails naming this option when it starts, or earlier,
-    /// where <c>MapPouryaKitModuleEndpoints</c> reads it.
+    /// where <c>MapPouryaKitModuleEndpoints</c> or <c>BeginOperationPerRequest</c> reads it.
     /// </summary>
     public string ActorClaim { get; set; } = ClaimTypes.NameIdentifier;
 

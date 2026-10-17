@@ -7,7 +7,7 @@ namespace PouryaKit.Web;
 /// the peer's Operation. A header never identifies a peer, and every other caller's headers are ignored. Empty, the
 /// default, trusts no one. A blank peer names no identity, so the Host does not start: <c>AddPouryaKitWeb</c> validates
 /// the peers however the Host configures them, and the Host fails naming this option when it starts, or earlier, where
-/// <c>MapPouryaKitModuleEndpoints</c> reads them.
+/// <c>MapPouryaKitModuleEndpoints</c> or <c>BeginOperationPerRequest</c> reads them.
 /// </summary>
 /// <remarks>
 /// A peer's identity must be one no person can hold, such as a client-credentials token's subject or a client
