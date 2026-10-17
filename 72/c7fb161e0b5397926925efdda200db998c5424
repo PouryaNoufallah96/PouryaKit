@@ -1,0 +1,69 @@
+docs/architecture/diagrams/commit-sequence.html
+  s_b9a8adfb056e1c::t_883351edb3035b 4985
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_b9a8adfb056e1c::t_28a16b57dc6a86 10
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_b9a8adfb056e1c::t_b6a0e54490dc44 4985
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_b9a8adfb056e1c::t_23706e869249ba 10
+docs/architecture/diagrams/delivery.html
+  s_b9a8adfb056e1c::t_4c8df68ec7dd81 4985
+docs/architecture/diagrams/delivery.sequence.json
+  s_b9a8adfb056e1c::t_a06bf0f321b5d4 18
+docs/architecture/diagrams/host-start.html
+  s_b9a8adfb056e1c::t_77be7d07567c21 4985
+docs/architecture/diagrams/host-start.workflow.json
+  s_b9a8adfb056e1c::t_f02f5a7755a006 11
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_9420de50421465 15
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_7f18a8c2153e7d 10
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_36f46dd64fb479 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_c70d7480301433 4985,5108-5109,5119,5134-5135,5145,5461-5462
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_1d1c43294e16f7 10
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_489f11ebb5b0aa 10
+docs/architecture/diagrams/http-command.html
+  s_bf89d62b0278fe::t_ef238d54c53fc9 4985
+docs/architecture/diagrams/kit-context.html
+  s_bf89d62b0278fe::t_b865cbdd07cb30 4985
+docs/architecture/diagrams/module-boundaries.html
+  s_cc175f0d085a1d::t_f2e9a0ee24d4e7 4985
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b9a8adfb056e1c::t_be077cfd77a9af 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "72c7fb161e0b5397926925efdda200db998c5424",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_bf89d62b0278fe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a9b96585f5ea29d11",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_cc175f0d085a1d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a105d895f1175dd11",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
