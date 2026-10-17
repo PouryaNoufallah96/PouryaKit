@@ -11,7 +11,8 @@ namespace PouryaKit.Persistence.Dapper;
 /// string, which no tenant is, where the Operation has none or none began; a read of a tenant-scoped table compares
 /// <c>tenant = current_setting('pouryakit.tenant')</c> rather than binding a tenant of its own. Npgsql resets a
 /// connection's session state when it returns to the pool (<c>DISCARD ALL</c>, unless the connection string sets
-/// <c>No Reset On Close</c>), and the next lease sets its own tenant either way.
+/// <c>No Reset On Close</c>), and the next lease sets its own tenant either way. A connection string that sets
+/// <c>Multiplexing=true</c> is refused, since a multiplexed command does not keep its lease's session.
 /// </summary>
 public interface IReadConnectionFactory
 {

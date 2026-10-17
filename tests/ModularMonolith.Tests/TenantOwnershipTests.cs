@@ -1,10 +1,12 @@
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
+using Dapper;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.EFCore;
 using PouryaKit.Testing;
 
@@ -223,6 +225,43 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
         Assert.Equal(new[] { _north, _otherNorth }.Order(), north.Value.Order());
         Assert.Equal([_south], south.Value);
         Assert.Empty(tenantless.Value);
+    }
+
+    // The lease reads the tenant when it opens, as the EF Core filter does: a factory resolved before its scope's Operation
+    // began binds that Operation's tenant, and one in a scope where no Operation began binds none and reads no rows.
+    [Fact]
+    public async Task A_lease_binds_the_tenant_of_the_operation_begun_when_it_opens_and_none_where_none_began()
+    {
+        await CreateBindersAsync();
+
+        await using var begun = Fixture.Host.Services.CreateAsyncScope();
+        var resolvedFirst = begun.ServiceProvider.GetRequiredService<IReadConnectionFactory>();
+        begun.ServiceProvider.BeginOperation(For("south"), typeof(StubModule));
+        await using var none = Fixture.Host.Services.CreateAsyncScope();
+
+        var south = await LeaseReadsAsync(resolvedFirst);
+        var tenantless = await LeaseReadsAsync(none.ServiceProvider.GetRequiredService<IReadConnectionFactory>());
+
+        Assert.Equal("south", south.Setting);
+        Assert.Equal([_south], south.Binders);
+        Assert.Equal("", tenantless.Setting);
+        Assert.Empty(tenantless.Binders);
+
+        async Task<(string Setting, Guid[] Binders)> LeaseReadsAsync(IReadConnectionFactory connections)
+        {
+            await using var connection = await connections.OpenAsync(TestContext.Current.CancellationToken);
+            var setting = await connection.ExecuteScalarAsync<string>(
+                new CommandDefinition("select current_setting('pouryakit.tenant')", cancellationToken: TestContext.Current.CancellationToken)
+            );
+            var binders = await connection.QueryAsync<Guid>(
+                new CommandDefinition(
+                    "select id from stub.binders where tenant = current_setting('pouryakit.tenant') and id = any(@Ids)",
+                    new { Ids = new[] { _north, _otherNorth, _south } },
+                    cancellationToken: TestContext.Current.CancellationToken
+                )
+            );
+            return (setting!, [.. binders]);
+        }
     }
 
     private static OperationContext For(string tenant) => new(GatewayTestExtensions.TestActor, tenant);

@@ -50,16 +50,22 @@ public static class DapperServiceCollectionExtensions
                     );
             }
 
-            services.AddSingleton(new ReadConnection(connectionName));
+            var connection = new ReadConnection(connectionName);
+            services.AddSingleton(connection);
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ReadConnectionCheck>());
             services.AddKeyedSingleton(
                 typeof(ReadConnectionFactory),
-                (provider, _) => NpgsqlDataSource.Create(
-                    provider.GetRequiredService<IConfiguration>().GetConnectionString(connectionName)
+                (provider, _) =>
+                {
+                    var connectionString =
+                        provider.GetRequiredService<IConfiguration>().GetConnectionString(connectionName)
                         ?? throw new InvalidOperationException(
                             $"Dapper reads need the connection string '{connectionName}' in the Host's ConnectionStrings configuration."
-                        )
-                )
+                        );
+                    return connection.Refusal(connectionString) is { } refusal
+                        ? throw new InvalidOperationException(refusal)
+                        : NpgsqlDataSource.Create(connectionString);
+                }
             );
             services.AddScoped<IReadConnectionFactory>(provider => new ReadConnectionFactory(
                 provider.GetRequiredKeyedService<NpgsqlDataSource>(typeof(ReadConnectionFactory)),
@@ -86,4 +92,14 @@ public static class DapperServiceCollectionExtensions
 }
 
 /// <summary>The connection the Host's Dapper reads use.</summary>
-internal sealed record ReadConnection(string Name);
+internal sealed record ReadConnection(string Name)
+{
+    /// <summary>
+    /// Why <paramref name="connectionString"/> cannot serve the reads; null when it can. A multiplexed command holds a
+    /// server connection only while it runs, so a read could run in a session another lease set to another tenant.
+    /// </summary>
+    public string? Refusal(string connectionString) =>
+        new NpgsqlConnectionStringBuilder(connectionString).Multiplexing
+            ? $"Dapper reads use the connection string {Name}, which sets Multiplexing=true, so a read could run in a session another lease set to another tenant. Remove Multiplexing from ConnectionStrings:{Name}."
+            : null;
+}
