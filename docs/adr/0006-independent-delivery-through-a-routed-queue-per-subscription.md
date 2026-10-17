@@ -1145,3 +1145,38 @@ publication record, and its one cleanup removes idempotency keys only.
 - **A bounded policy is its own spec.** If one is ever wanted, it first accounts for every redelivery path, pending
   broker envelopes, dead-letter replay and duplicate chains, before it deletes any deduplication state. Adding a time
   column is then a migration in every Module that keeps Receipts.
+
+## Amendment (2026-10-17, ticket #117: tenants at delivery and in the keys)
+
+The decision above stands, and so do the Receipt key (subscription, message id) and the Snapshot version key
+(subscription, aggregate key): spec #115's owner decision T1 keeps both as built, with no tenant column and no
+migration of any Module's Receipt or Snapshot version table.
+
+- **Why no tenant in the keys.** A Notification's and an Integration Event's message id is its Domain Event's version 7
+  Guid, unique whichever tenant raised it. A Snapshot's identity derives from its wire name, its aggregate's key and the
+  version (`SubscriptionDelivery`), and its version key holds the aggregate's key, so both are unique across tenants
+  exactly when that key is: a single Guid, or a key that includes the tenant.
+- **The check that replaces a tenant in the key.** `SnapshotKeyTenancyCheck` (`PouryaKit.Messaging.Wolverine.EFCore`,
+  registered by `UsePouryaKitWolverine(connectionName)`) fails the Host's build when a tenant-scoped Module, or a
+  tenant-scoped application, declares a Snapshot of an aggregate whose mapped primary key neither includes its
+  `ITenantScoped.Tenant` nor is a single Guid, naming the Module, the aggregate and its key. It reads the key from each
+  Unit of Work DbContext's model, created in its own scope as `MessageStoreDatabaseCheck` creates them, and the Snapshot
+  declarations through `ISnapshotMappers.DeclaredAggregates`. A composite key that holds a Guid and no tenant is refused
+  too: the whole key is the Snapshot's aggregate key
+  (`CompositionCheckTests.A_snapshot_in_a_tenant_scoped_module_of_an_aggregate_whose_key_two_tenants_could_share_fails_the_host_when_built`:
+  a shelf keyed by two codes is refused, a folder keyed by a Guid and a docket keyed by its tenant and code are not, and
+  Catalog's products, keyed by a Guid, pass in every Host).
+- **A delivery with no tenant into a tenant-scoped Module.** The delivery step (`DeliverHandler`) refuses a
+  Notification, an Integration Event or a Snapshot whose continued Operation Context carries no tenant, in a Module that
+  `HostComposition.IsTenantScoped` names, with `TenantErrors.Required`, before its Receipt and its handler, so nothing is
+  written, whatever the handler writes with, plain SQL included. The failed Result is thrown as the subscription's
+  failure, so the delivery is retried and then set aside as a dead letter whose message names `Tenant.Required`. The
+  tenant requirement `AddPouryaKitTenancy` registers covers the Module's own commands and queries, never the Kit's
+  `Deliver`, so this step is separate. A delivery that carries a tenant runs under it
+  (`TenantDeliveryTests.A_delivery_with_no_tenant_into_a_tenant_scoped_module_writes_nothing_and_is_dead_lettered_naming_the_reason`,
+  `TenantDeliveryTests.A_delivery_into_a_tenant_scoped_module_runs_under_the_tenant_it_carries`).
+- **A recurring command in a tenant-scoped Module.** An occurrence runs for its system Actor with no tenant (the #45
+  amendment), and the Kit runs no recurring command per tenant (spec #115, out of scope), so
+  `RecurringCommandTenancyCheck` fails the Host's build for such a declaration, naming the command and the Module. A
+  delayed command is not refused: it continues the tenant of the Operation that scheduled it
+  (`CompositionCheckTests.A_recurring_command_in_a_tenant_scoped_module_fails_the_host_when_built_naming_the_module`).

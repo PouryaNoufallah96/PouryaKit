@@ -50,10 +50,12 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["stub", "__EFMigrationsHistory"],
                 ["stub", "badges"],
                 ["stub", "binary_keys"],
+                ["stub", "binders"],
                 ["stub", "books"],
                 ["stub", "cards"],
                 ["stub", "cases"],
                 ["stub", "counters"],
+                ["stub", "dockets"],
                 ["stub", "drawers"],
                 ["stub", "folders"],
                 ["stub", "leaflets"],
@@ -65,6 +67,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["stub", "pouryakit_idempotency_keys"],
                 ["stub", "pouryakit_receipts"],
                 ["stub", "pouryakit_snapshot_versions"],
+                ["stub", "sheets"],
                 ["stub", "shelves"],
                 ["stub", "snapshot_key_copies"],
                 ["stub", "stickers"],
@@ -94,6 +97,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 "stub IdempotencyKeys",
                 "stub GeneratedValues",
                 "stub ClientGeneratedValues",
+                "stub TenantBinders",
             ],
             history.Select(row => $"{row[0]} {((string)row[1]).Split('_', 2)[1]}")
         );

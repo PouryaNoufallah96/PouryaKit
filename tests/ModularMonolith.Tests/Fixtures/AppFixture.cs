@@ -22,7 +22,7 @@ namespace ModularMonolith.Tests.Fixtures;
 /// authenticating callers with <see cref="TestAuthentication"/> (its bearer scheme trusts <see cref="TestIssuer"/>),
 /// trusting the caller <see cref="TrustedPeer"/> as a peer Host, granting the tests' own Actor the permissions
 /// <see cref="TestActorPermissions"/> lists, delivering at test speed, and committing through the
-/// <see cref="CommitProbe"/>.
+/// <see cref="CommitProbe"/>. The shared Host also receives <see cref="TenantProbes"/> into Catalog.
 /// </summary>
 public sealed class AppFixture : HostFixture
 {
@@ -36,7 +36,7 @@ public sealed class AppFixture : HostFixture
     public const string TestTenant = "tests";
 
     protected override IHost CreateHost(string connectionString) =>
-        ComposeHost("Development", connectionString, Logs);
+        ComposeHost("Development", connectionString, Logs, builder => TenantProbes.Receive(builder.Services));
 
     /// <summary>
     /// The application as the tests host it, in <paramref name="environment"/>, built but not started;

@@ -13,6 +13,7 @@ using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
@@ -374,6 +375,44 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         );
     }
 
+    // A recurring command runs as a system Actor with no tenant (ticket #117); a delayed command, which runs with the
+    // tenant of the Operation that scheduled it, is not refused beside it.
+    [Fact]
+    public void A_recurring_command_in_a_tenant_scoped_module_fails_the_host_when_built_naming_the_module()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
+        );
+        builder.UsePouryaKitWolverine("app");
+        builder.AddPouryaKitModules(modules => modules.Add<TenantScopedSchedulingModule>());
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            $"The recurring command tests.tenant-recurring, {typeof(WriteNoteCommand).FullName}, is declared in TenantScopedSchedulingModule, which is tenant-scoped, but its occurrences run for the system Actor tests.recurring with no tenant, and the Kit runs no recurring command per tenant. Declare it in a Module that is not tenant-scoped.",
+            thrown.Message
+        );
+    }
+
+    // A Snapshot's identity and version hold the aggregate's key and no tenant (ticket #117): a shelf's key, two codes,
+    // is refused; a folder's, one Guid, and a docket's, which includes its tenant, are not.
+    [Fact]
+    public void A_snapshot_in_a_tenant_scoped_module_of_an_aggregate_whose_key_two_tenants_could_share_fails_the_host_when_built()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
+        );
+        builder.UsePouryaKitWolverine("app");
+        builder.AddPouryaKitModules(modules => modules.Add<TenantScopedSnapshotsModule>());
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            $"TenantScopedSnapshotsModule is tenant-scoped, but it publishes the Snapshot of {typeof(Shelf).FullName}, whose key (Aisle, Bay) neither includes the tenant nor is a Guid, so two tenants' aggregates could share a Snapshot's identity and version, and a receiver would apply only one of them. Key Shelf by a Guid the application sets, such as a Guid version 7, or include its tenant in the key.",
+            thrown.Message
+        );
+    }
+
     // AddPouryaKitModules registers what a Module's Operation needs, the Domain Event drain its Unit of Work resolves
     // included, even when no Composition Root calls AddPouryaKitCqrs (#61 review finding F2).
     [Fact]
@@ -502,6 +541,31 @@ public sealed class PartlyTenantScopedModule : IModuleDefinition
         module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         module.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly, typeof(UnownedCommand).Assembly);
         module.AddScoped<IAuthorizer<UnownedCommand>, AllowingUnownedCommandAuthorizer>();
+    }
+}
+
+// Tenant-scoped, with a delayed command beside its recurring one.
+public sealed class TenantScopedSchedulingModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module)
+    {
+        module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
+        module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        module.AddPouryaKitDelayedCommand<WriteDelayedNoteCommand>("stub.delayed-note");
+        module.AddPouryaKitRecurringCommand("tests.tenant-recurring", "tests.recurring", at => new WriteNoteCommand($"at {at:O}"));
+    }
+}
+
+// Tenant-scoped, publishing the Snapshots of three aggregates the Stub's DbContext maps, under the Stub's wire names.
+public sealed class TenantScopedSnapshotsModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module)
+    {
+        module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
+        module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        module.PublishSnapshot<Folder, FolderSnapshotV1, FolderSnapshotMapper>("stub.folder-snapshot.v1");
+        module.PublishSnapshot<Docket, DocketSnapshotV1, DocketSnapshotMapper>("stub.docket-snapshot.v1");
+        module.PublishSnapshot<Shelf, ShelfSnapshotV1, ShelfSnapshotMapper>("stub.shelf-snapshot.v1");
     }
 }
 

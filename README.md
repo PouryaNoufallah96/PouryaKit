@@ -21,7 +21,7 @@ Status: Wave 1 and Wave 2 are complete. The Wave 2 set is in the private feed si
 - [API versions and OpenAPI](.agents/skills/pourya-kit/references/openapi.md) (`PouryaKit.Web.OpenApi`)
 - [Project templates](.agents/skills/pourya-kit/references/templates.md) (`PouryaKit.Templates`)
 - [RabbitMQ between Hosts](.agents/skills/pourya-kit/references/rabbitmq.md) (`PouryaKit.Messaging.Wolverine.RabbitMq`)
-- [Multi-tenancy](.agents/skills/pourya-kit/references/multi-tenancy.md) (`PouryaKit.Domain`, `PouryaKit.Cqrs`, `PouryaKit.Persistence.EFCore`; Wave 3, in progress: tenant-scoped Modules, their EF Core filter and their tenant requirement)
+- [Multi-tenancy](.agents/skills/pourya-kit/references/multi-tenancy.md) (`PouryaKit.Domain`, `PouryaKit.Cqrs`, `PouryaKit.Persistence.EFCore`, `PouryaKit.Messaging.Wolverine`; Wave 3, in progress: tenant-scoped Modules, their EF Core filter, their tenant requirement, the save's ownership check, the refusal of a delivery with no tenant, and the composition refusals of a recurring command and a shared Snapshot key)
 
 The skill's [Capability table](.agents/skills/pourya-kit/SKILL.md#capabilities) owns this list and says when to read each reference. It folds Paging and Request idempotency into the rows of the packages they span.
 

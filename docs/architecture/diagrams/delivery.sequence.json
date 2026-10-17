@@ -132,9 +132,9 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/Deliver.cs",
-          "line": 23,
-          "end_line": 53,
-          "label": "Receipt, version gate, then handler"
+          "line": 28,
+          "end_line": 66,
+          "label": "tenant refusal, Receipt, version gate, then handler"
         }
       ]
     },
@@ -360,7 +360,8 @@
       "title": "Retries and dead letters",
       "items": [
         "A thrown exception or a failed Result is retried after 1 s, 10 s and 1 min by default, each wait stored with the delivery; the next failure sets it aside as a dead letter of its subscription.",
-        "Only that subscription's envelope is retried. An envelope of an unknown type is dead-lettered at once, never marked handled."
+        "Only that subscription's envelope is retried. An envelope of an unknown type is dead-lettered at once, never marked handled.",
+        "In a tenant-scoped Module, a delivery with no tenant fails with Tenant.Required before its Receipt and its handler, and is retried and dead-lettered the same way."
       ]
     }
   ]

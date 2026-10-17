@@ -239,8 +239,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs",
-          "line": 117,
-          "end_line": 123,
+          "line": 119,
+          "end_line": 125,
           "label": "recurring cadence validated"
         },
         {
@@ -361,8 +361,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs",
-          "line": 114,
-          "end_line": 116,
+          "line": 115,
+          "end_line": 118,
           "label": "registered after DurableQueuesCheck"
         }
       ]

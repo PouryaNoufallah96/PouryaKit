@@ -769,6 +769,8 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
 
         public void CheckKeySpaces(IReadOnlyDictionary<Type, Type> mappedAggregates) { }
 
+        public IReadOnlyList<Type> DeclaredAggregates(Type? module) => [typeof(Lid)];
+
         public IReadOnlyList<object> Map(object aggregate, bool removed) => [((Lid)aggregate).Id];
     }
 

@@ -345,26 +345,35 @@ internal sealed class ProductSnapshotMapper : ISnapshotMapper<Product, ProductSn
 ```csharp
 using Catalog.Contracts.Products.Events.V1;
 using Dapper;
+using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
 using PouryaKit.Persistence;
 
 // Inventory/CatalogProducts/Features/CopyProduct/: keeps Inventory's copy of each catalog product current, in a table
-// of its own that is no aggregate. Only the effect: the Kit runs this only for a Snapshot newer than every one applied
-// of that product, so the copy simply follows each one, and is deleted on the Tombstone.
-internal sealed class CopyProductIntegrationEventHandler(IUnitOfWorkConnection unitOfWork)
+// of its own that is no aggregate, keyed by tenant and product under the tenant the Snapshot was delivered for. Only the
+// effect: the Kit runs this only for a Snapshot newer than every one applied of that product, so the copy simply follows
+// each one, and is deleted on the Tombstone.
+internal sealed class CopyProductIntegrationEventHandler(IUnitOfWorkConnection unitOfWork, OperationContext context)
     : IIntegrationEventHandler<ProductSnapshotV1>
 {
     public async Task<Result> Handle(ProductSnapshotV1 snapshot, CancellationToken cancellationToken)
     {
         var (connection, transaction) = unitOfWork.Join();
         var sql = snapshot.IsRemoved
-            ? "delete from inventory.catalog_products where product_id = @ProductId"
+            ? "delete from inventory.catalog_products where tenant = @Tenant and product_id = @ProductId"
             : """
-              insert into inventory.catalog_products (product_id, name, version) values (@ProductId, @Name, @Version)
-              on conflict (product_id) do update set name = excluded.name, version = excluded.version
+              insert into inventory.catalog_products (tenant, product_id, name, version) values (@Tenant, @ProductId, @Name, @Version)
+              on conflict (tenant, product_id) do update set name = excluded.name, version = excluded.version
               """;
-        await connection.ExecuteAsync(new CommandDefinition(sql, snapshot, transaction, cancellationToken: cancellationToken));
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                sql,
+                new { context.Tenant, snapshot.ProductId, snapshot.Name, snapshot.Version },
+                transaction,
+                cancellationToken: cancellationToken
+            )
+        );
         return Result.Success();
     }
 }
@@ -373,6 +382,7 @@ internal sealed class CopyProductIntegrationEventHandler(IUnitOfWorkConnection u
 - Keep the copy in a Module-internal table that no aggregate maps, written with plain SQL through `IUnitOfWorkConnection` in the receiving Module's Unit of Work ([dapper-reads.md](dapper-reads.md#writing-with-plain-sql-in-the-unit-of-work)), so the copy, the Receipt and the version the Kit records commit together or not at all.
 - The copy is not an aggregate. It holds what the publishing Module last published and nothing the receiving Module decides: it has no rule to guard, raises no Domain Event, and needs no version of its own, because the Kit already decides which Snapshot is applied. Inventory's own decisions about a product live in its own aggregates, such as the stock item.
 - Write only the effect: insert or update for a Snapshot, delete for a Tombstone. The handler compares no version: the Kit runs it only for a newer one, and after a Tombstone it runs for no older one, so a deleted row stays deleted.
+- A copy of a tenant-scoped Module's aggregates is keyed by tenant and aggregate, written under the tenant the delivery carries, which the injected `OperationContext` holds; the receiving Module need not be tenant-scoped ([multi-tenancy.md](multi-tenancy.md#deliveries)).
 - Inventory's project references `PouryaKit.Persistence.Dapper`, which brings Dapper for `ExecuteAsync` and `CommandDefinition`. It does not call `AddPouryaKitDapper`: that registers Dapper reads and typed-ID handlers, and the copy needs neither. `IUnitOfWorkConnection` comes with `UsePouryaKitPostgres`.
 
 The receiving Module's migration creates the copy and the table the Kit keeps the applied versions in, `CreateSnapshotVersionTable` (`PouryaKit.Messaging.Wolverine.EFCore`), beside the Receipt table it already has ([Receipts](#receipts)). Neither is in the Module's model, so the model does not change; add the migration with `dotnet ef migrations add` as for the Receipt table and fill its `Up` and `Down`:
@@ -403,6 +413,7 @@ internal sealed class CatalogProducts : Migration
 }
 ```
 
+- Inventory's later migration, `20261017120000_CatalogProductTenants`, adds the `tenant` column to the copy's key; a new copy declares it in its `create table`, `(tenant text not null, product_id uuid not null, ..., primary key (tenant, product_id))`.
 - A Module that subscribes to any Snapshot needs both tables in its schema, each created once; [Receipts](#receipts) says which Module needs which table and what fails without one.
 - A version row is not a Receipt: it holds, for each subscription and aggregate, the newest version applied, and is what keeps an older Snapshot from undoing a newer one or a Tombstone. The Kit removes no row from it, and nothing should.
 
@@ -518,7 +529,7 @@ internal sealed class ReconcileStockCommandHandler(IUnitOfWorkConnection unitOfW
 - **Declare it** in its Module's Composition Root with `module.AddPouryaKitRecurringCommand<TCommand>(name, systemActor, occurrence)`; the Module is the builder's. The name follows a delayed command's rules: its durable queue and half of its Receipts' key, so keep it; never a subscription's or another delayed command's. `systemActor` is required and names the Actor every occurrence runs as, `Actor.System(systemActor)`: nothing defaults to a system Actor. `occurrence` builds the command for each occurrence's time and must return the declared type. A command is declared once, delayed or recurring, never both.
 - **Configure its cadence.** The declaration returns the options builder of `PouryaKitRecurringCommandOptions`, named by the declaration's name, lower-cased: bind its `Every` from configuration (`BindConfiguration(section)`), or set it with `Configure`. The Host fails to start with an `OptionsValidationException` when `Every` is not longer than zero, so a missing configuration never runs it at a default. A changed cadence applies from the next occurrence stored.
 - **When it runs.** Occurrences fall on whole multiples of `Every` counted from the Unix epoch, in UTC: an hourly one runs at the top of each hour, a daily one at midnight UTC. The message store compares them with the system clock, not with the Host's `TimeProvider`, and finds one due on its scheduled-job poll (`ScheduledJobPollingTime`, 5 s by default), so a cadence shorter than the poll is not kept. A Host that starts runs the first occurrence after now.
-- **On whose authority.** Each attempt is a new Operation of the declared system Actor, in the declared Module, with no tenant, a new correlation and no causation, never a trusted continuation: it inherits nothing from the Operation that stored it, and nothing from any HTTP caller. Its trace parent is not restored either ([observability.md](observability.md)). It goes through the dispatcher with its authorizers and validator; a permission the command declares is checked for the system Actor as for any Actor, so the application grants it ([security.md](security.md#the-actors-permissions)).
+- **On whose authority.** Each attempt is a new Operation of the declared system Actor, in the declared Module, with no tenant, so a tenant-scoped Module cannot declare one (`RecurringCommandTenancyCheck` fails the Host when it is built), a new correlation and no causation, never a trusted continuation: it inherits nothing from the Operation that stored it, and nothing from any HTTP caller. Its trace parent is not restored either ([observability.md](observability.md)). It goes through the dispatcher with its authorizers and validator; a permission the command declares is checked for the system Actor as for any Actor, so the application grants it ([security.md](security.md#the-actors-permissions)).
 - **Once in the database.** Its delivery records a Receipt, the name and the occurrence's time, which the `DelayedCommandHeaders.Occurrence` header carries, not the stored delivery's identity, in the command's own Unit of Work. A redelivered, replayed or concurrently duplicated occurrence finds it and applies nothing. An effect outside the database is at least once, as for a Notification.
 - **A failure** is retried and set aside as a dead letter of its name, as a delayed command's is, and the cadence goes on, unless the occurrence no longer reads (the next bullet): the next occurrence it would have stored rolled back with its effect, so the attempt that sets it aside stores the next occurrence after now, as an Operation of the system Actor through the Module's Unit of Work, unless one already waits. That attempt is the one numbered one more than `PouryaKitMessagingOptions.RetryDelays` has delays; an attempt that fails before it stores nothing, since its retry may still succeed and store the next occurrence in its own commit. The occurrence set aside is not run again unless its dead letter is replayed, which runs it late; the next occurrence it then stores meets the waiting one at the first occurrence both reach, whose Receipt lets one apply. If storing the next occurrence fails too, the dead letter still records the occurrence's own failure, an Error entry carries both failures, the store's first, and the work waits for a replay or a Host start, each of which stores the next occurrence after now. Watch the dead letters received at `local://{name}/`.
 - **A stored occurrence that no longer reads** does not go on. An occurrence stored before a release changed its command's shape, a required member renamed or added, fails to read when it comes due, and Wolverine sets it aside as a dead letter of its name, with a `JsonException` and an Error entry naming its queue, before the Kit's delivery runs: it stores no next occurrence, and a Host that started while it waited stored none either. The work waits for the next Host start, which stores the first occurrence after now (`RecurringCommandTests`). To recover:
@@ -542,7 +553,7 @@ internal sealed class ReconcileStockCommandHandler(IUnitOfWorkConnection unitOfW
 
 - **Stored in the commit.** The Unit of Work writes each Domain Event the Operation raised that a Notification Handler subscribes to into the Outbox, once per subscription, after it prepares persistence and before it saves, in the same transaction. The Notification exists if and only if the change commits: a failed Result, a failed Domain Event Handler, a refused save or an exception leaves none. A Domain Event that no Notification Handler subscribes to stores nothing.
 - **Sent after the commit.** The Unit of Work sends what it wrote only after the commit. When the send fails, or the Host dies first, the Notification stays in the store: a Host that starts recovers it, and a live Host hands it out again after `InboxStaleTime` ([The message store](#the-message-store)). The Operation's Result is unaffected, because its change is committed; the failed send is logged as a warning.
-- **A continuation in its own scope.** Each delivery attempt runs in a new scope, as an Operation of the subscribing Module, begun with a continuation of the raising Operation's context: the same Actor, tenant and correlation, the raising Operation's `OperationId` as its causation, a new `OperationId`. It runs through the dispatcher, with the Module's Unit of Work and the Host's clock, and nothing from a failed attempt reaches the next.
+- **A continuation in its own scope.** Each delivery attempt runs in a new scope, as an Operation of the subscribing Module, begun with a continuation of the raising Operation's context: the same Actor, tenant and correlation, the raising Operation's `OperationId` as its causation, a new `OperationId`. It runs through the dispatcher, with the Module's Unit of Work and the Host's clock, and nothing from a failed attempt reaches the next. In a tenant-scoped Module a delivery whose context carries no tenant, of a Notification, an Integration Event or a Snapshot, is refused with `Tenant.Required` before its Receipt and its handler, retried, then set aside as a dead letter ([multi-tenancy.md](multi-tenancy.md#deliveries)).
 - **Each handler on its own.** Each Notification Handler of a Domain Event has its own stored delivery, retried, recorded, acknowledged and set aside as a dead letter apart from the others, so a handler that fails never makes one that succeeded run again.
 - **A database effect once.** Before the handler runs, the delivery records a Receipt, the subscription name and the Domain Event's `Id`, in the handler's transaction, so the Receipt commits with the handler's effect or not at all. A redelivery after that commit, such as after a crash before the store marked the delivery handled, finds the Receipt and does nothing. A concurrent copy of the same delivery waits until the first commits, then does nothing; if the first rolled back, the copy runs. A handler whose effect is in its Module's database needs nothing more to be safe to run again.
 - **An outside effect at least once.** An effect outside the database, such as an email, cannot roll back with the Receipt. When the attempt that sent it fails or dies before its Receipt commits, the next attempt sends it again. Make a repeat harmless where the outside system allows it, for example by passing it the Domain Event's `Id` as an idempotency key, and do the outside effect last.
@@ -558,7 +569,7 @@ An Integration Event is delivered the same way, sent after the commit, in a new 
 
 ## Receipts
 
-- A Module keeps its handlers' Receipts in a table `pouryakit_receipts` in its own schema, keyed by the subscription name, lower-cased, and the identity of what was delivered: a Notification's or Integration Event's is the Domain Event's `Id`; a Snapshot's is derived from its wire name, its aggregate's key and its version. The table is not part of the Module's model, so a migration creates it with `CreateReceiptTable` and the Module's schema.
+- A Module keeps its handlers' Receipts in a table `pouryakit_receipts` in its own schema, keyed by the subscription name, lower-cased, and the identity of what was delivered: a Notification's or Integration Event's is the Domain Event's `Id`; a Snapshot's is derived from its wire name, its aggregate's key and its version. Neither key holds a tenant (ADR 0006's #117 amendment): a tenant-scoped Module's Snapshot of an aggregate whose key two tenants could share fails the Host when it is built ([multi-tenancy.md](multi-tenancy.md#declaring-a-tenant-scoped-module)). The table is not part of the Module's model, so a migration creates it with `CreateReceiptTable` and the Module's schema.
 - Which Module needs which table:
   - `pouryakit_receipts` (`CreateReceiptTable`): every Module that declares a Notification Handler, subscribes an Integration Event Handler, publishes Integration Events or declares a delayed or recurring command. Inventory calls it in its first migration, beside its own tables. A publishing Module's table also holds one row per Domain Event and wire name it published, keyed `<wire name>#published`, which no subscription name can take: it is how the Kit refuses a second Notification Handler publishing the same type for one Domain Event, and it is not a Receipt.
   - `pouryakit_snapshot_versions` (`CreateSnapshotVersionTable`, [Keeping a copy](#keeping-a-copy)): every Module that subscribes to a Snapshot, beside its Receipt table.

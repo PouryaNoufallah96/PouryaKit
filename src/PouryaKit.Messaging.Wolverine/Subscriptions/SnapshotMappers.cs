@@ -12,8 +12,12 @@ internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation ope
 {
     private static readonly ConcurrentDictionary<SnapshotPublication, Mapping> Mappings = new();
 
-    private IEnumerable<SnapshotPublication> Declared =>
-        subscriptions.Snapshots.Where(snapshot => subscriptions.Publications[snapshot.Snapshot].Module == operation.Module);
+    private IEnumerable<SnapshotPublication> Declared => DeclaredBy(operation.Module);
+
+    public IReadOnlyList<Type> DeclaredAggregates(Type? module) => [.. DeclaredBy(module).Select(snapshot => snapshot.Aggregate)];
+
+    private IEnumerable<SnapshotPublication> DeclaredBy(Type? module) =>
+        subscriptions.Snapshots.Where(snapshot => subscriptions.Publications[snapshot.Snapshot].Module == module);
 
     public bool Declares(Type aggregateType)
     {

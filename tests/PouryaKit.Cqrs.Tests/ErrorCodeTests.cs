@@ -8,8 +8,8 @@ public sealed class ErrorCodeTests
     public void The_operation_and_page_error_codes_keep_their_published_text()
     {
         Assert.Equal(
-            ["Operation.CommandThrew", "Operation.ReadingChangedState", "Tenant.Required"],
-            [OperationErrors.CommandThrew.Code, OperationErrors.ReadingChangedState.Code, TenantErrors.Required.Code]
+            ["Operation.CommandThrew", "Operation.ReadingChangedState", "Tenant.Required", "Tenant.Mismatch"],
+            [OperationErrors.CommandThrew.Code, OperationErrors.ReadingChangedState.Code, TenantErrors.Required.Code, TenantErrors.Mismatch.Code]
         );
         Assert.Equal(
             [

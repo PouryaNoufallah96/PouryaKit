@@ -70,7 +70,7 @@ The person or system on whose authority an Operation runs.
 _Avoid_: User, principal, caller
 
 **Tenant**:
-The customer or company an Operation runs for, carried on the Operation Context and taken only from a verified claim. A tenant-scoped Module runs no Operation without one, and its tenant-scoped aggregates are read only by Operations of the tenant they belong to.
+The customer or company an Operation runs for, carried on the Operation Context and taken only from a verified claim: at the HTTP boundary `PouryaKit.Web` reads it from the claim `PouryaKit.Security.JwtBearer` writes when it validates a token, and work an Operation causes continues its tenant. A tenant-scoped Module runs no Operation and applies no delivery without one, and its tenant-scoped aggregates are read and saved only by Operations of the tenant they belong to.
 _Avoid_: Organization, company id, owner
 
 **Request id**:
