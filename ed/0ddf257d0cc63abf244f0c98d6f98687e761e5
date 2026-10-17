@@ -1,0 +1,49 @@
+.claude/agent-memory/kit-implementer/aspire-apphost-facts.md
+  s_b9a8adfb056e1c::t_ef4e182cc33fe8 1-21
+.agents/skills/pourya-kit/references/aspire.md
+  s_b9a8adfb056e1c::t_af449b79d77708 119
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_b4b5e1d576fdeb 19
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_b9a8adfb056e1c::t_0ebcca507185a9 83
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_3b54cd8f082358 2226-2239
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_0b72a90678dbc5 10,672
+docs/architecture/diagrams/execution-core.html
+  s_b9a8adfb056e1c::t_a04af6cf8063b8 4985,5378-5388,5452-5458,5460-5462,5668
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_362b33e565ee02 10
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_e31e65d496e11e 4985,5235-5236,5243
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_00aad72710130d 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_158a5fa8958004 4985
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_d2fd83526a05f3 10
+docs/architecture/diagrams/module-boundaries.html
+  s_b9a8adfb056e1c::t_2d197845ecd8d5 4985
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_b911cbc156d195 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b9a8adfb056e1c::t_44fafd09461cb1 4985,5020-5021,5024-5025,5028-5029,5032-5033,5036-5037,5040-5041,5044-5045,5048-5049,5052-5053,5056-5057,5060-5061,5064-5065,5068-5069,5072-5073,5076-5077,5080-5087,5089,5197-5207,5209-5217,5221-5223,5225,5229,5233-5235,5237,5241,5245,5249,5253,5257,5261,5265,5269,5273,5277,5505
+tests/PouryaKit.Aspire.Tests/AppHostTests.cs
+  s_b9a8adfb056e1c::t_4f3f125314c31a 5,22-37,46,79-80,83-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ed0ddf257d0cc63abf244f0c98d6f98687e761e5",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
