@@ -63,7 +63,7 @@ internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId
 
 ## Reads
 
-- Every EF Core query of an `ITenantScoped` entity returns only the rows of the tenant of the Operation running it, through a named query filter, `PouryaKitDbContext.TenantFilter` (`PouryaKit.Tenant`), beside `SoftDeleteFilter`. The repository's `FindAsync`, `ListAsync`, `AnyAsync` and `CountAsync` and a specific repository's projection all read through it, so another tenant's aggregate is not found.
+- Every EF Core query of an `ITenantScoped` entity returns only the rows of the tenant of the Operation running it, through a named query filter, `PouryaKitDbContext.TenantFilter` (`PouryaKit.Tenant`), beside `SoftDeleteFilter`. The repository's `FindAsync`, `ListAsync`, `AnyAsync` and `CountAsync` and a specific repository's projection all read through it, so another tenant's aggregate is not found. A part of a tenant-scoped aggregate, at any level, has no tenant of its own, so the same named filter reads it only where its holder is read: an EF Core query of its own set (`Set<Sheet>()`) returns only the parts whose holder the Operation's tenant reads, by id or in a list, and a part of a removed holder is left out with it.
 - The filter reads the tenant when each query runs, from the scope's Operation, never when the model is built or the DbContext created: the migration tool and the composition checks build a DbContext where no Operation began, and a DbContext made before its scope's Operation began reads that Operation's tenant. Where the Operation has no tenant, or none began, the filter reads no rows.
 - A read that must cross tenants sets the filter aside on purpose, in an EF Core query over the DbContext: `IgnoreQueryFilters([PouryaKitDbContext.TenantFilter])`. The repository's members never do. Only that filter is set aside: a removed row stays out unless the read names `SoftDeleteFilter` too.
 - Dapper runs exactly the SQL you write, so a plain SQL read of a tenant-scoped table states `tenant = @Tenant` itself, with the tenant from the injected `OperationContext`, as Catalog's `GetProduct` and `ListProducts` do, in the one shape a structure test holds every such read to: the predicate a top-level conjunct of the `WHERE` of one `SELECT`, for each tenant-scoped table it reads ([dapper-reads.md](dapper-reads.md#reading)).
@@ -83,7 +83,7 @@ internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId
 ## What the Kit guarantees
 
 - In a tenant-scoped Module, no command or query runs without a tenant, a trusted continuation included; it fails with `Tenant.Required` before its validator and handler.
-- An EF Core read of a tenant-scoped entity returns only the Operation's tenant's rows; a cross-tenant read names `TenantFilter`.
+- An EF Core read of a tenant-scoped entity, or of a part of one through its own set, returns only the Operation's tenant's rows; a cross-tenant read names `TenantFilter`.
 - An application without Modules that declares it on its own services gets the same requirement for the commands and queries of the assemblies it names.
 - No Operation saves a change to another tenant's aggregate or to a part of one, or moves one between tenants, and nothing is saved: one it loaded fails with `Tenant.Mismatch`, and a tenant-scoped aggregate or part it attached instead of loading fails with `Tenant.NotLoaded` before the save, whoever's key it carries.
 - A tenant-scoped Module applies no delivery without a tenant; a delivery with one runs under it.
