@@ -310,14 +310,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
-          "line": 8,
-          "end_line": 12,
+          "line": 9,
+          "end_line": 13,
           "label": "the containers and databases"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
-          "line": 19,
-          "end_line": 40,
+          "line": 20,
+          "end_line": 41,
           "label": "each Host on its resources"
         },
         {

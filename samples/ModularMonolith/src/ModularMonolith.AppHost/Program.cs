@@ -1,9 +1,10 @@
+using ModularMonolith.AppHost;
 using PouryaKit.Aspire;
 
 // The Proving Sample's local infrastructure, matching its composition: ModularMonolith.Host caches in Redis and sends over
 // RabbitMQ, so Inventory runs in Inventory.Host, which receives over RabbitMQ and caches nothing. Each Host takes a
 // resource as the connection string its composition reads; one it is not given turns that part of it off.
-var builder = DistributedApplication.CreateBuilder(args);
+var builder = DistributedApplication.CreateBuilder(AppHostOptions.Create(args));
 
 var postgres = builder.AddPouryaKitPostgres("postgres");
 var cache = builder.AddPouryaKitRedis("cache");

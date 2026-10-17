@@ -1,6 +1,6 @@
 # Aspire resources
 
-`PouryaKit.Aspire`: the containers a Kit Host runs on locally, for an Aspire AppHost and nothing else. PostgreSQL always, Redis for a Host that caches through Redis, RabbitMQ for a Host that sends or receives over RabbitMQ, each on a pinned image with its data in a named volume. Namespace `PouryaKit.Aspire`; it references no Kit package, and `PackageGraphTests` keeps every Aspire package out of every other Kit package's closure, so a Host never takes one.
+`PouryaKit.Aspire`: the containers a Kit Host runs on locally, for an Aspire AppHost and nothing else. PostgreSQL always, Redis for a Host that caches through Redis, RabbitMQ for a Host that sends or receives over RabbitMQ, each on a pinned image with its data in a named volume. Namespace `PouryaKit.Aspire`; it references no Kit package, and `PackageGraphTests` keeps every Aspire package out of every other Kit package's closure, so no Kit package brings one into a Host. Keeping the package itself out of a Host's own project file is the Host author's part.
 
 - [The AppHost](#the-apphost)
 - [What each registration adds](#what-each-registration-adds)
@@ -27,6 +27,8 @@ An AppHost project uses the `Aspire.AppHost.Sdk` and references the Hosts it run
 </Project>
 ```
 
+Its `Properties/launchSettings.json` has one profile that sets `DOTNET_ENVIRONMENT` to `Development` and opens no browser. The environment matters: the AppHost reads its user secrets only in Development, and without them it generates new server passwords on every run, which the volumes the first run made then refuse.
+
 The SDK adds `Aspire.Hosting.AppHost` itself: with central package management, give it no `PackageVersion`, or restore fails with NU1009. `ASPIRE010` warns that the AppHost runs without the Aspire CLI bundle; it takes its orchestrator from NuGet instead, so Docker is all it needs.
 
 Its `Program.cs` adds a resource for each part of each Host's composition and gives it to the Host under the connection name the Host reads:
@@ -34,7 +36,7 @@ Its `Program.cs` adds a resource for each part of each Host's composition and gi
 ```csharp
 using PouryaKit.Aspire;
 
-var builder = DistributedApplication.CreateBuilder(args);
+var builder = DistributedApplication.CreateBuilder(AppHostOptions.Create(args));
 
 var postgres = builder.AddPouryaKitPostgres("postgres");
 var cache = builder.AddPouryaKitRedis("cache");
@@ -65,6 +67,7 @@ builder
 builder.Build().Run();
 ```
 
+- **Headless.** `AppHostOptions.Create(args)` (`AppHostOptions.cs` beside `Program.cs`) returns `DistributedApplicationOptions` with `DisableDashboard = true`: no dashboard, under `dotnet run` or in the tests. A developer who wants Aspire's dashboard locally sets it to `false` in their copy; the AppHost then logs the dashboard's login URL.
 - **The composition decides, through its connection strings.** An AppHost cannot see a Host's registrations, so the AppHost's author adds Redis only for a Host whose composition registers a Redis cache, and RabbitMQ only for one that calls `UsePouryaKitRabbitMq`. `WithReference(resource, "app")` sets `ConnectionStrings:app`, the name `UsePouryaKitWolverine(connectionName: "app")` reads; `WithReference(cache)` sets `ConnectionStrings:cache` and `WithReference(broker)` `ConnectionStrings:broker`, the names the sample's composition reads. The sample's `ModularMonolith.Host` caches in Redis and sends over RabbitMQ when those are set, so with a broker Inventory runs in `Inventory.Host`, which receives over RabbitMQ and caches nothing.
 - **Each Host its own database** on the one server: `AddDatabase(name, databaseName)` creates it when the server is ready.
 - **Endpoints.** A Host project without `Properties/launchSettings.json` has none: `WithHttpEndpoint()` gives it one on a free port. `WithHttpHealthCheck("/alive")` waits on a Host that maps the service defaults' liveness path ([host-recipes.md](host-recipes.md#liveness-and-readiness)); the sample's `ModularMonolith.Host` maps none.
@@ -96,17 +99,18 @@ Set the parameter to a base64 key of at least 32 bytes in the AppHost's user sec
 
 ## Running it
 
-`dotnet run --project samples/ModularMonolith/src/ModularMonolith.AppHost` starts the containers and both Hosts, and Aspire's dashboard for a developer, at the login URL it logs. It needs Docker and the .NET SDK, no Aspire workload or CLI, and the `bearer-signing-key` parameter set first, in the AppHost's user secrets or as the environment variable `Parameters__bearer-signing-key`.
+`dotnet run --project samples/ModularMonolith/src/ModularMonolith.AppHost` starts the containers and both Hosts, headless. It needs Docker and the .NET SDK, no Aspire workload or CLI, and the `bearer-signing-key` parameter set first, in the AppHost's user secrets or as the environment variable `Parameters__bearer-signing-key`.
 
-A named volume keeps the credentials it was first initialised with. Aspire generates each server's password as a parameter (`postgres-password`, `cache-password`, `broker-password`) and keeps it in the AppHost's user secrets, which is why the AppHost has a `UserSecretsId`. Set a password yourself, and the volume made with another one refuses it: remove the volume (`docker volume rm`) or keep the first password.
+A named volume keeps the credentials it was first initialised with. Aspire generates each server's password as a parameter (`postgres-password`, `cache-password`, `broker-password`) and keeps it in the AppHost's user secrets, which is why the AppHost has a `UserSecretsId` and runs in Development, where it reads them back. Set a password yourself, and the volume made with another one refuses it: remove the volume (`docker volume rm`) or keep the first password.
 
 ## Testing
 
-`tests/PouryaKit.Aspire.Tests` holds `AppHostTests`, on `Aspire.Hosting.Testing`, whose `DistributedApplicationTestingBuilder` runs the AppHost with the dashboard off:
+`tests/PouryaKit.Aspire.Tests` holds `AppHostTests`, on `Aspire.Hosting.Testing`, whose `DistributedApplicationTestingBuilder` runs the AppHost. The testing builder replaces the AppHost's options with its own, dashboard off whatever the AppHost says, so the start test passes the sample's own choice, `AppHostOptions.Create([]).DisableDashboard`, to the builder's options callback:
 
 ```csharp
 await using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.ModularMonolith_AppHost>(
     ["Parameters:postgres-password=apphost-tests", "Parameters:bearer-signing-key=<base64 key>"],
+    (options, _) => options.DisableDashboard = AppHostOptions.Create([]).DisableDashboard,
     cancellationToken
 );
 await using var app = await builder.BuildAsync(cancellationToken);
@@ -116,7 +120,7 @@ using var inventory = app.CreateHttpClient("inventory");
 ```
 
 - The model test reads the builder without starting it: every resource's name, as an allow-list, each container's image and its one volume mount, and the resources each Host references.
-- The start test runs the containers and both Hosts as processes, waits for each Host, and asks `Inventory.Host`'s `/alive` and an endpoint of `ModularMonolith.Host`, which refuses an anonymous caller with 401 once it serves; the running model is still the allow-list, so no dashboard joined it.
+- The start test runs the containers and both Hosts as processes, waits for each Host, and asks `Inventory.Host`'s `/alive`, which its health check already answered, and an endpoint of `ModularMonolith.Host`, which refuses an anonymous caller with 401 once it serves; that Host has no health check, so its resource is healthy once its process runs, and the test asks again until it answers, within its timeout. The running model is still the allow-list, so no dashboard joined it.
 - The tests fix each server's password, and the start test moves each volume to a name ending `-tests`: its volumes serve its next run, and a developer's, made with the passwords the AppHost generated, are never opened with the test's, which would fail every health check.
 - The project lives beside `ModularMonolith.Tests` because it shares none of its fixtures: the AppHost starts the Hosts as processes, never in memory.
 

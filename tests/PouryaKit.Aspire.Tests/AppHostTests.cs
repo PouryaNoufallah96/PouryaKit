@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using ModularMonolith.AppHost;
 
 namespace PouryaKit.Aspire.Tests;
 
@@ -63,7 +64,13 @@ public sealed class AppHostTests
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         timeout.CancelAfter(TimeSpan.FromMinutes(5));
-        await using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.ModularMonolith_AppHost>(Arguments, timeout.Token);
+        // The testing builder replaces the AppHost's options with its own, dashboard off whatever the AppHost says: take the
+        // sample's own choice instead.
+        await using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.ModularMonolith_AppHost>(
+            Arguments,
+            (options, _) => options.DisableDashboard = AppHostOptions.Create([]).DisableDashboard,
+            timeout.Token
+        );
         foreach (var container in builder.Resources.OfType<ContainerResource>())
         {
             var mount = container.Annotations.OfType<ContainerMountAnnotation>().Single();
@@ -80,12 +87,29 @@ public sealed class AppHostTests
         using var alive = await inventory.GetAsync("/alive", timeout.Token);
         using var shop = app.CreateHttpClient("modular-monolith");
         // Started, so its bearer options validated, and serving: an anonymous caller is refused, not left unanswered.
-        using var anonymous = await shop.GetAsync("/catalog/products", timeout.Token);
+        using var anonymous = await AnsweredAsync(shop, "/catalog/products", timeout.Token);
 
         Assert.Equal((HttpStatusCode.OK, "Healthy"), (alive.StatusCode, await alive.Content.ReadAsStringAsync(timeout.Token)));
         Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
         // Headless: the running model is still the declared one, which a dashboard would have joined as it started.
         Assert.Equal(Declared, Names(app.Services.GetRequiredService<DistributedApplicationModel>().Resources));
+    }
+
+    // ModularMonolith.Host has no health check, so its resource is healthy once its process runs, which can be before Kestrel
+    // listens: ask again until it answers, within the test's timeout.
+    private static async Task<HttpResponseMessage> AnsweredAsync(HttpClient client, string path, CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            try
+            {
+                return await client.GetAsync(path, cancellationToken);
+            }
+            catch (HttpRequestException)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken);
+            }
+        }
     }
 
     private static IEnumerable<string> Names(IEnumerable<IResource> resources) =>
