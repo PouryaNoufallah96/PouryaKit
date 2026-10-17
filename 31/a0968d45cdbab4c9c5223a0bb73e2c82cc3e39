@@ -1,0 +1,22 @@
+src/PouryaKit.Email.MailKit/MailKitEmailSender.cs
+  s_3675ccfac3f8b2::t_db45f505c10335 25
+  s_3675ccfac3f8b2::t_9d9918ade6fc31 26
+docs/architecture/diagrams/kit-context.architecture.json
+  s_3675ccfac3f8b2::t_9ed68390e4ae2a 352-353
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "31a0968d45cdbab4c9c5223a0bb73e2c82cc3e39",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
