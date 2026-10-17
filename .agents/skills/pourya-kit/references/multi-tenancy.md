@@ -84,7 +84,7 @@ internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId
 - In a tenant-scoped Module, no command or query runs without a tenant, a trusted continuation included; it fails with `Tenant.Required` before its validator and handler.
 - An EF Core read of a tenant-scoped entity returns only the Operation's tenant's rows; a cross-tenant read names `TenantFilter`.
 - An application without Modules that declares it on its own services gets the same requirement for the commands and queries of the assemblies it names.
-- No Operation saves a change to another tenant's aggregate, or moves one between tenants; it fails with `Tenant.Mismatch` and nothing is saved.
+- No Operation saves a change to another tenant's aggregate it loaded, or moves one between tenants; it fails with `Tenant.Mismatch` and nothing is saved. An aggregate attached with a tenant the code invents is outside this guarantee until #152 lands (see Limits).
 - A tenant-scoped Module applies no delivery without a tenant; a delivery with one runs under it.
 - A tenant-scoped Module composes no recurring command and no Snapshot whose key two tenants could share.
 
