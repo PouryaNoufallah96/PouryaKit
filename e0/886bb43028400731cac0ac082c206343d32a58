@@ -1,0 +1,62 @@
+src/PouryaKit.Grpc/Clients/OperationContextInterceptor.cs
+  s_b9a8adfb056e1c::t_7ce64ec4d7712c 7
+  s_b9a8adfb056e1c::t_edaf88a0129fa9 8,49-52
+.agents/skills/pourya-kit/references/grpc.md
+  s_b9a8adfb056e1c::t_1b48c8e4cc9a79 54,95,101
+.claude/agent-memory/kit-implementer/grpc-facts.md
+  s_b9a8adfb056e1c::t_dfa702d2cf57e8 18
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_e3b160c0dee369 2245
+docs/adr/0008-one-problem-response-for-every-http-failure.md
+  s_b9a8adfb056e1c::t_2b284fe11b2e00 68-72,76-80
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_f9913dff91c51d 547-550
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_8dbdb7f7b87e27 687,692-693
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_2770706ff73088 283
+docs/provenance/PouryaKit.Grpc.md
+  s_b9a8adfb056e1c::t_29ba58f32d4def 5
+src/PouryaKit.Grpc/Clients/GrpcLoopbackCheck.cs
+  s_b9a8adfb056e1c::t_528ec821e96c03 18-20,66
+src/PouryaKit.Grpc/Services/GrpcServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_7461d0f1df6e9e 4-5,21-24,35-36
+src/PouryaKit.Grpc/Services/ResultGrpcExtensions.cs
+  s_b9a8adfb056e1c::t_47522ce2e5a5aa 5,59-60,63-66
+src/PouryaKit.Grpc/Services/UnmappedGrpcServicesCheck.cs
+  s_b9a8adfb056e1c::t_4e127802a28b0f 1-30
+src/PouryaKit.Web/OperationContextHttpHeaders.cs
+  s_b9a8adfb056e1c::t_4da0dc40b2c558 26-28
+src/PouryaKit.Web/PouryaKit.Web.csproj
+  s_b9a8adfb056e1c::t_34ffd902b46c9d 8-11
+src/PouryaKit.Web/ProblemResponses/ResultHttpExtensions.cs
+  s_b9a8adfb056e1c::t_ad9063a138d244 64,79-84
+tests/ModularMonolith.Tests/GrpcTests.cs
+  s_b9a8adfb056e1c::t_784c824b25d5aa 10,190,207-268
+src/PouryaKit.Grpc/Services/GrpcEndpointRouteBuilderExtensions.cs
+  s_482cdd895aebea::t_632ed55701301a 31,35,43-45,57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e0886bb43028400731cac0ac082c206343d32a58",
+  "prompts": {},
+  "sessions": {
+    "s_482cdd895aebea": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a794b85562cf5958c",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
