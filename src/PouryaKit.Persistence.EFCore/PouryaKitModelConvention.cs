@@ -30,10 +30,7 @@ internal sealed class PouryaKitModelConvention(PouryaKitDbContext dbContext) : I
     {
         foreach (var entityType in modelBuilder.Metadata.GetEntityTypes())
         {
-            var toHolders = entityType
-                .GetDeclaredForeignKeys()
-                .Where(foreignKey => foreignKey.PrincipalToDependent is not null && InTenantScopedAggregate(foreignKey.PrincipalEntityType, []))
-                .ToList();
+            var toHolders = ToHolders(entityType);
             foreach (var holderKey in toHolders.SelectMany(foreignKey => foreignKey.Properties).Where(property => !property.IsPrimaryKey()))
             {
                 holderKey.Builder.IsConcurrencyToken(true);
@@ -44,6 +41,13 @@ internal sealed class PouryaKitModelConvention(PouryaKitDbContext dbContext) : I
             {
                 EnsureFiltered(entityType, typeof(ISoftDeletable), "leave its deleted rows out");
                 EnsureFiltered(entityType, typeof(ITenantScoped), "leave out the rows of other tenants");
+                if (!entityType.IsOwned() && toHolders.Count > 0 && !typeof(ITenantScoped).IsAssignableFrom(entityType.GetRootType().ClrType))
+                {
+                    throw new InvalidOperationException(
+                        $"{entityType.ClrType.Name} is held by {toHolders[0].PrincipalEntityType.ClrType.Name} in a tenant-scoped aggregate but is mapped as a type derived from {entityType.GetRootType().ClrType.Name}, which holds no key to it, so no query filter can leave out the rows of other tenants. Map the relationship to its holder on the root of the hierarchy."
+                    );
+                }
+
                 continue;
             }
 
@@ -64,9 +68,44 @@ internal sealed class PouryaKitModelConvention(PouryaKitDbContext dbContext) : I
             }
             else if (toHolders.Count > 0)
             {
+                RefuseHolderCycle(entityType, []);
                 entityType.Builder.HasQueryFilter(PouryaKitDbContext.TenantFilter, WithAReadableHolder(entityType.ClrType, toHolders));
             }
         }
+    }
+
+    // The keys of a part to the entities that hold it in a tenant-scoped aggregate.
+    private static List<IConventionForeignKey> ToHolders(IConventionEntityType entityType) =>
+        [
+            .. entityType
+                .GetDeclaredForeignKeys()
+                .Where(foreignKey => foreignKey.PrincipalToDependent is not null && InTenantScopedAggregate(foreignKey.PrincipalEntityType, [])),
+        ];
+
+    // A part's filter reads its holder's set with the holder's own filter, except a part's own set, which EF Core reads
+    // unfiltered there. Two parts that each hold the other, directly or through others, would expand each other's filter
+    // without end, a stack overflow at the first query of either, so the model is refused instead.
+    private static void RefuseHolderCycle(IConventionEntityType part, List<IConventionEntityType> path)
+    {
+        if (path.IndexOf(part) is var start and >= 0)
+        {
+            throw new InvalidOperationException(
+                $"{string.Join(" -> ", path.Skip(start).Append(part).Select(type => type.ClrType.Name))}: these parts of a tenant-scoped aggregate hold one another, so the query filter of each would read the next one's without end. Break the cycle: hold a part by the aggregate's root, or by a part that it does not hold in turn."
+            );
+        }
+
+        path.Add(part);
+        foreach (
+            var holder in ToHolders(part)
+                .Select(foreignKey => foreignKey.PrincipalEntityType.GetRootType())
+                .Where(holder => holder != part && !typeof(ITenantScoped).IsAssignableFrom(holder.ClrType))
+                .Distinct()
+        )
+        {
+            RefuseHolderCycle(holder, path);
+        }
+
+        path.RemoveAt(path.Count - 1);
     }
 
     // The holder is tenant-scoped, or a part held, through the navigations the prepare step walks, by one that is.
@@ -119,13 +158,23 @@ internal sealed class PouryaKitModelConvention(PouryaKitDbContext dbContext) : I
                             (key, reference) => Expression.Equal(PropertyOf(holder, key, reference.ClrType), PropertyOf(part, reference, reference.ClrType))
                         )
                         .Aggregate(Expression.AndAlso);
-                    return (Expression)Expression.Call(
+                    var held = Expression.Call(
                         typeof(Queryable),
                         nameof(Queryable.Any),
                         [holderType],
                         new EntityQueryRootExpression((IEntityType)foreignKey.PrincipalEntityType),
                         Expression.Quote(Expression.Lambda(sameKey, holder))
                     );
+                    // A part an optional key holds by nothing is not that holder's part, so that key does not judge it.
+                    return foreignKey.IsRequired
+                        ? (Expression)held
+                        : Expression.OrElse(
+                            foreignKey
+                                .Properties.Where(property => property.IsNullable)
+                                .Select(property => Expression.Equal(PropertyOf(part, property, property.ClrType), Expression.Constant(null, property.ClrType)))
+                                .Aggregate(Expression.OrElse),
+                            held
+                        );
                 })
                 .Aggregate(Expression.AndAlso),
             part
