@@ -16,7 +16,8 @@ namespace PouryaKit.Persistence.EFCore;
 /// every <see cref="ISoftDeletable"/> entity is left out of queries by a filter named <see cref="SoftDeleteFilter"/>, and
 /// every <see cref="ITenantScoped"/> entity of another tenant than the Operation's by a filter named
 /// <see cref="TenantFilter"/>, its tenant a concurrency token too, so no write matches a row of another tenant than the
-/// one the entity was loaded or attached with. Override <see cref="OnModelCreating"/> only to add to it, and call the base.
+/// one the entity was loaded or attached with; a part's key to its holder in such an aggregate is one too, so no part's
+/// write matches its row under another holder than the one it was loaded with. Override <see cref="OnModelCreating"/> only to add to it, and call the base.
 /// </summary>
 public abstract class PouryaKitDbContext : DbContext
 {

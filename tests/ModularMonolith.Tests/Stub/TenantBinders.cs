@@ -286,6 +286,47 @@ internal sealed class ReattachSheetCommandHandler(StubDbContext dbContext) : Com
     }
 }
 
+public enum HolderForgery
+{
+    OriginalValue,
+    AcceptAllChanges,
+}
+
+// Queries the sheet named, which no tenant filter reads, loads the binder named through the tenant filter and makes it the
+// sheet's holder as loaded too, by setting the key's original value or by accepting the change tracker's changes, then
+// rewrites the sheet or removes it.
+internal sealed record ForgeSheetHolderCommand(Guid BinderId, Guid SheetId, HolderForgery Forgery, bool Remove) : Command;
+
+internal sealed class ForgeSheetHolderCommandHandler(StubDbContext dbContext) : CommandHandler<ForgeSheetHolderCommand>
+{
+    public override async Task<Result> Handle(ForgeSheetHolderCommand command, CancellationToken cancellationToken)
+    {
+        var sheet = await dbContext.Set<Sheet>().SingleAsync(sheet => sheet.Id == new SheetId(command.SheetId), cancellationToken);
+        var binder = await dbContext.Set<Binder>().SingleAsync(binder => binder.Id == new BinderId(command.BinderId), cancellationToken);
+        var holder = dbContext.Entry(sheet).Property("BinderId");
+        holder.CurrentValue = binder.Id;
+        if (command.Forgery == HolderForgery.OriginalValue)
+        {
+            holder.OriginalValue = binder.Id;
+        }
+        else
+        {
+            dbContext.ChangeTracker.AcceptAllChanges();
+        }
+
+        if (command.Remove)
+        {
+            dbContext.Remove(sheet);
+        }
+        else
+        {
+            sheet.Rewrite("Forged");
+        }
+
+        return Result.Success();
+    }
+}
+
 // Run in a Catalog Operation: builds a category with the key and version named and the Operation's tenant, as a Feature
 // that never loads it might, then attaches it and counts a product on it, updates it, which writes every column, or
 // removes it.

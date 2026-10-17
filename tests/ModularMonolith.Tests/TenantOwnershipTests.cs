@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using PouryaKit.Persistence.EFCore;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -13,7 +14,7 @@ namespace ModularMonolith.Tests;
 // tenant filter set aside, fails the save with a forbidden Error whatever the Operation changed of it, as does one whose
 // tenant the Operation changed, and nothing is saved. The binders are the Stub's; the products are Catalog's, saved in a
 // tenant-scoped Module. A tenant-scoped aggregate, or a part of one, attached rather than loaded is refused before the
-// save (ticket #152).
+// save, and a loaded part's write matches its row only under the holder it was loaded with (ticket #152).
 public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     private readonly Guid _north = Guid.CreateVersion7();
@@ -155,6 +156,31 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
 
         Assert.Equal(southBefore, await SouthRowsAsync());
         Assert.Equal(TenantErrors.NotLoaded, Assert.Single(reattached.Errors));
+    }
+
+    // South's sheet, which a query loaded, given north's own binder as its holder both now and as loaded: the binder passes
+    // every tenant check and the sheet was loaded, so only the holder's key, a concurrency token, keeps its UPDATE or
+    // DELETE off south's row, which still names south's binder.
+    [Theory]
+    [InlineData(HolderForgery.OriginalValue, false)]
+    [InlineData(HolderForgery.OriginalValue, true)]
+    [InlineData(HolderForgery.AcceptAllChanges, false)]
+    [InlineData(HolderForgery.AcceptAllChanges, true)]
+    public async Task A_loaded_part_given_the_operations_own_aggregate_as_its_loaded_holder_fails_with_a_conflict_and_saves_nothing(
+        HolderForgery forgery,
+        bool remove
+    )
+    {
+        await CreateBindersAsync();
+        var southBefore = await SouthRowsAsync();
+        var southSheet = (Guid)Assert.Single(await Fixture.RowsAsync($"select id from stub.sheets where binder_id = '{_south}'"))[0];
+
+        var forged = await Fixture
+            .Gateway<StubModule>()
+            .SendAsync(new ForgeSheetHolderCommand(_north, southSheet, forgery, remove), For("north"), TestContext.Current.CancellationToken);
+
+        Assert.Equal(southBefore, await SouthRowsAsync());
+        Assert.Equal(UnitOfWorkErrors.ConcurrencyConflict, Assert.Single(forged.Errors));
     }
 
     private static OperationContext For(string tenant) => new(GatewayTestExtensions.TestActor, tenant);
