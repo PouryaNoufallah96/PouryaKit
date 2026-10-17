@@ -1,28 +1,40 @@
 using Amazon.Runtime;
 using Amazon.S3;
+using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Containers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PouryaKit.Storage.S3;
-using Testcontainers.Minio;
 
 namespace PouryaKit.Storage.Tests;
 
-// One MinIO container and one started Host whose file storage is a bucket there, bound from configuration as a Host binds it.
-public sealed class MinioFixture : IAsyncLifetime
+// One RustFS container and one started Host whose file storage is a bucket there, bound from configuration as a Host binds it.
+public sealed class S3StoreFixture : IAsyncLifetime
 {
     private const string Bucket = "files";
-    private readonly MinioContainer _minio = new MinioBuilder("minio/minio:RELEASE.2025-04-22T22-12-26Z").Build();
+    private const string AccessKey = "kit-access";
+    private const string SecretKey = "kit-secret-key";
+    private const ushort S3Port = 9000;
+
+    private readonly IContainer _store = new ContainerBuilder("rustfs/rustfs:1.0.2")
+        .WithEnvironment("RUSTFS_ACCESS_KEY", AccessKey)
+        .WithEnvironment("RUSTFS_SECRET_KEY", SecretKey)
+        .WithPortBinding(S3Port, true)
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request.ForPort(S3Port).ForPath("/health/ready")))
+        .Build();
+
     private IHost? _host;
 
     public IFileStorage Storage => _host!.Services.GetRequiredService<IFileStorage>();
 
     public async ValueTask InitializeAsync()
     {
-        await _minio.StartAsync();
+        await _store.StartAsync();
+        var serviceUrl = $"http://{_store.Hostname}:{_store.GetMappedPublicPort(S3Port)}";
         using (var client = new AmazonS3Client(
-                   new BasicAWSCredentials(_minio.GetAccessKey(), _minio.GetSecretKey()),
-                   new AmazonS3Config { ServiceURL = _minio.GetConnectionString(), ForcePathStyle = true, AuthenticationRegion = "us-east-1" }
+                   new BasicAWSCredentials(AccessKey, SecretKey),
+                   new AmazonS3Config { ServiceURL = serviceUrl, ForcePathStyle = true, AuthenticationRegion = "us-east-1" }
                ))
         {
             await client.PutBucketAsync(Bucket);
@@ -33,10 +45,10 @@ public sealed class MinioFixture : IAsyncLifetime
             {
                 ["PouryaKit:Storage:S3:Bucket"] = Bucket,
                 ["PouryaKit:Storage:S3:Region"] = "us-east-1",
-                ["PouryaKit:Storage:S3:ServiceUrl"] = _minio.GetConnectionString(),
+                ["PouryaKit:Storage:S3:ServiceUrl"] = serviceUrl,
                 ["PouryaKit:Storage:S3:ForcePathStyle"] = "true",
-                ["PouryaKit:Storage:S3:AccessKey"] = _minio.GetAccessKey(),
-                ["PouryaKit:Storage:S3:SecretKey"] = _minio.GetSecretKey(),
+                ["PouryaKit:Storage:S3:AccessKey"] = AccessKey,
+                ["PouryaKit:Storage:S3:SecretKey"] = SecretKey,
             }
         );
         await _host.StartAsync();
@@ -54,6 +66,6 @@ public sealed class MinioFixture : IAsyncLifetime
     public async ValueTask DisposeAsync()
     {
         _host?.Dispose();
-        await _minio.DisposeAsync();
+        await _store.DisposeAsync();
     }
 }
