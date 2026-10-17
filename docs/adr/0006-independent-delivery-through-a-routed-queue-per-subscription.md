@@ -1159,13 +1159,16 @@ migration of any Module's Receipt or Snapshot version table.
 - **The check that replaces a tenant in the key.** `SnapshotKeyTenancyCheck` (`PouryaKit.Messaging.Wolverine.EFCore`,
   registered by `UsePouryaKitWolverine(connectionName)`) fails the Host's build when a tenant-scoped Module, or a
   tenant-scoped application, declares a Snapshot of an aggregate whose mapped primary key neither includes its
-  `ITenantScoped.Tenant` nor is a single Guid, naming the Module, the aggregate and its key. It reads the key from each
-  Unit of Work DbContext's model, created in its own scope as `MessageStoreDatabaseCheck` creates them, and the Snapshot
-  declarations through `ISnapshotMappers.DeclaredAggregates`. A composite key that holds a Guid and no tenant is refused
+  `ITenantScoped.Tenant` nor is a single Guid, naming the Module, the aggregate and its key. As at commit, a declaration
+  reaches only its own Module's aggregates: the check reads the key from the model of the DbContext `AddPouryaKitEfCore`
+  records keyed by the Module, as its Unit of Work is keyed, created in its own scope as `MessageStoreDatabaseCheck`
+  creates them, and the Snapshot declarations through `ISnapshotMappers.DeclaredAggregates`. A composite key that holds a Guid and no tenant is refused
   too: the whole key is the Snapshot's aggregate key
   (`CompositionCheckTests.A_snapshot_in_a_tenant_scoped_module_of_an_aggregate_whose_key_two_tenants_could_share_fails_the_host_when_built`:
   a shelf keyed by two codes is refused, a folder keyed by a Guid and a docket keyed by its tenant and code are not, and
-  Catalog's products, keyed by a Guid, pass in every Host).
+  Catalog's products, keyed by a Guid, pass in every Host;
+  `CompositionCheckTests.A_snapshot_in_a_tenant_scoped_module_is_judged_by_the_aggregates_of_its_own_db_context_only`:
+  a tenant-scoped Module's Snapshot of every aggregate is judged by its own DbContext's, never by another Module's).
 - **A delivery with no tenant into a tenant-scoped Module.** The delivery step (`DeliverHandler`) refuses a
   Notification, an Integration Event or a Snapshot whose continued Operation Context carries no tenant, in a Module that
   `HostComposition.IsTenantScoped` names, with `TenantErrors.Required`, before its Receipt and its handler, so nothing is

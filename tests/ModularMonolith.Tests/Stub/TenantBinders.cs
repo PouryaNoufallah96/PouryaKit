@@ -162,6 +162,24 @@ internal sealed class ChangeBinderCommandHandler(StubDbContext dbContext) : Comm
     }
 }
 
+// Loads a binder with the tenant filter set aside and leaves it unchanged, then writes a note, which is neither
+// tenant-scoped nor auditable.
+internal sealed record WriteNoteBesideBinderCommand(Guid BinderId, string Text) : Command;
+
+internal sealed class WriteNoteBesideBinderCommandHandler(StubDbContext dbContext, IRepository<Note, NoteId> notes)
+    : CommandHandler<WriteNoteBesideBinderCommand>
+{
+    public override async Task<Result> Handle(WriteNoteBesideBinderCommand command, CancellationToken cancellationToken)
+    {
+        await dbContext
+            .Set<Binder>()
+            .IgnoreQueryFilters([PouryaKitDbContext.TenantFilter])
+            .SingleAsync(binder => binder.Id == new BinderId(command.BinderId), cancellationToken);
+        await notes.AddAsync(Note.Write(command.Text), cancellationToken);
+        return Result.Success();
+    }
+}
+
 // Run in a Catalog Operation: loads a product of any tenant with the tenant filter set aside, gives it the tenant named,
 // as no Feature of Catalog does, then renames it or removes it, which keeps it marked deleted.
 internal sealed record ReassignProductCommand(Guid ProductId, string Tenant, bool Remove) : Command;

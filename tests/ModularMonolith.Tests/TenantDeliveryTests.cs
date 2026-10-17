@@ -4,7 +4,12 @@ using Catalog.Categories.ValueObjects;
 using Catalog.Products.Events.DomainEvents;
 using Catalog.Products.Features.CreateProduct;
 using Catalog.Products.ValueObjects;
+using Inventory.Infrastructure.Data.Context;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
@@ -70,6 +75,39 @@ public sealed class TenantDeliveryTests(AppFixture app) : HostTest<AppFixture>(a
         Assert.Equal(
             [["north", north], ["south", south]],
             await Fixture.RowsAsync("select tenant, product_id from inventory.product_categories order by tenant")
+        );
+    }
+
+    // A copy made before Inventory kept the tenant can never learn it (review F2), so the migration that keys the copies by
+    // tenant refuses a table that holds one, and applies to an empty one. It is undone and applied again here.
+    [Fact]
+    public async Task The_migration_that_keys_inventorys_copies_by_tenant_refuses_a_table_holding_a_copy_with_no_tenant()
+    {
+        await using var scope = Fixture.Host.Services.CreateAsyncScope();
+        var migrator = scope.ServiceProvider.GetRequiredService<InventoryDbContext>().GetService<IMigrator>();
+        await migrator.MigrateAsync("20261016120000_StockCounts", TestContext.Current.CancellationToken);
+        try
+        {
+            await Fixture.RowsAsync($"insert into inventory.catalog_products (product_id, name, version) values ('{Guid.CreateVersion7()}', 'Lamp', 1)");
+
+            var refused = await Assert.ThrowsAsync<PostgresException>(() => migrator.MigrateAsync(cancellationToken: TestContext.Current.CancellationToken));
+
+            Assert.Equal(
+                "Inventory holds copies of Catalog's products that kept no tenant, and their tenant cannot be recovered, so this migration refuses to guess one.",
+                refused.MessageText
+            );
+        }
+        finally
+        {
+            await Fixture.RowsAsync("delete from inventory.catalog_products");
+            await migrator.MigrateAsync(cancellationToken: TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal(
+            [["tenant", "product_id"]],
+            await Fixture.RowsAsync(
+                "select a.attname, b.attname from pg_index i join pg_attribute a on a.attrelid = i.indrelid and a.attnum = i.indkey[0] join pg_attribute b on b.attrelid = i.indrelid and b.attnum = i.indkey[1] where i.indrelid = 'inventory.catalog_products'::regclass and i.indisprimary"
+            )
         );
     }
 

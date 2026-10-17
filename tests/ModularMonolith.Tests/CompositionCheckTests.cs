@@ -1,5 +1,6 @@
 using Billing;
 using Catalog;
+using Catalog.Infrastructure.Data.Context;
 using Catalog.Products.Features.GetProduct;
 using Inventory;
 using Microsoft.Extensions.DependencyInjection;
@@ -413,6 +414,27 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         );
     }
 
+    // As at commit, a declaration reaches only its own Module's aggregates (#117 review F1): a tenant-scoped Module's
+    // Snapshot of every aggregate is judged by Catalog's, keyed by Guids, in its own DbContext, never by the Stub's,
+    // keyed by a long, by strings or by a time, in another Module's.
+    [Fact]
+    public void A_snapshot_in_a_tenant_scoped_module_is_judged_by_the_aggregates_of_its_own_db_context_only()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
+        );
+        builder.UsePouryaKitWolverine("app");
+        builder.AddPouryaKitModules(modules =>
+        {
+            modules.Add<TenantScopedEveryAggregateModule>();
+            modules.Add<StubDataModule>();
+        });
+
+        using var host = builder.Build();
+
+        Assert.True(host.Services.GetRequiredService<HostComposition>().IsTenantScoped(typeof(TenantScopedEveryAggregateModule)));
+    }
+
     // AddPouryaKitModules registers what a Module's Operation needs, the Domain Event drain its Unit of Work resolves
     // included, even when no Composition Root calls AddPouryaKitCqrs (#61 review finding F2).
     [Fact]
@@ -567,6 +589,33 @@ public sealed class TenantScopedSnapshotsModule : IModuleDefinition
         module.PublishSnapshot<Docket, DocketSnapshotV1, DocketSnapshotMapper>("stub.docket-snapshot.v1");
         module.PublishSnapshot<Shelf, ShelfSnapshotV1, ShelfSnapshotMapper>("stub.shelf-snapshot.v1");
     }
+}
+
+// Tenant-scoped, over Catalog's DbContext, whose aggregates are keyed by Guids, publishing the Snapshot of every
+// aggregate.
+public sealed class TenantScopedEveryAggregateModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module)
+    {
+        module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
+        module.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
+        module.PublishSnapshot<IAggregateRoot, AggregateSnapshotV1, AggregateSnapshotMapper>("tests.aggregate-snapshot.v1");
+    }
+}
+
+// Not tenant-scoped, over the Stub's DbContext, and publishing nothing.
+public sealed class StubDataModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module) => module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+}
+
+internal sealed record AggregateSnapshotV1(string Aggregate, long Version);
+
+internal sealed class AggregateSnapshotMapper : ISnapshotMapper<IAggregateRoot, AggregateSnapshotV1>
+{
+    public AggregateSnapshotV1 Map(IAggregateRoot aggregate) => new(aggregate.GetType().Name, aggregate.Version);
+
+    public AggregateSnapshotV1 Tombstone(IAggregateRoot aggregate) => new(aggregate.GetType().Name, aggregate.Version);
 }
 
 internal sealed class AllowingUnownedCommandAuthorizer : IAuthorizer<UnownedCommand>

@@ -32,7 +32,8 @@ public static class EfCoreServiceCollectionExtensions
         /// when the Host's container is built, a named connection string the Host's configuration lacks or leaves blank,
         /// and compare its connection with the message store's. A name replaces an earlier record without one; the same name
         /// again, ignoring case as configuration keys do, keeps the first spelling; a second, different name for the same
-        /// DbContext throws.
+        /// DbContext throws. On a Module's builder it also records the DbContext keyed by the Module, as its Unit of Work
+        /// is keyed, so a Kit check reads the model of the Module's own Unit of Work.
         /// A database package such as <c>PouryaKit.Persistence.Postgres</c> calls it; Feature code never does.
         /// </summary>
         public IServiceCollection AddPouryaKitEfCore<TDbContext>(string? connectionName = null)
@@ -63,6 +64,10 @@ public static class EfCoreServiceCollectionExtensions
             }
 
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, DbContextConnectionsCheck>());
+            if (IModuleServices.ModuleOf(services) is { } module)
+            {
+                services.AddKeyedSingleton<DbContextConnection>(module, new DbContextConnection(connectionName, typeof(TDbContext)));
+            }
 
             // Added, not tried: on a Module's builder it becomes that Module's own, whatever the Host already holds.
             services.AddScoped<IUnitOfWork>(provider => new EfUnitOfWork(

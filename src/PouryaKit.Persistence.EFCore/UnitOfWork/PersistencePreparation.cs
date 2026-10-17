@@ -62,18 +62,13 @@ internal static class PersistencePreparation
             .ToList();
 
         // A tenant-scoped entity the Operation changes, or one whose part it changes, moves or deletes, both holders of a
-        // moved part included, must be the Operation's tenant's: added for it, or loaded under it and left under it.
-        if (tenants.Count > 0)
+        // moved part included, must be the Operation's tenant's: added for it, or loaded under it and left under it. The
+        // Operation's tenant is read only then, as the stamp is: one that changes no such entity needs no context.
+        var scopedChanges = changedEntries.Concat(changed).Where(entry => tenants.ContainsKey(entry.Entity)).Select(entry => tenants[entry.Entity]).ToList();
+        if (scopedChanges.Count > 0)
         {
             var tenant = context().Tenant;
-            if (
-                changedEntries
-                    .Concat(changed)
-                    .Any(entry =>
-                        tenants.TryGetValue(entry.Entity, out var scoped)
-                        && (scoped.Loaded is null ? scoped.Current != tenant : scoped.Loaded != tenant || scoped.Current != scoped.Loaded)
-                    )
-            )
+            if (scopedChanges.Any(scoped => scoped.Loaded is null ? scoped.Current != tenant : scoped.Loaded != tenant || scoped.Current != scoped.Loaded))
             {
                 return TenantErrors.Mismatch;
             }
