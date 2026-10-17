@@ -1,0 +1,27 @@
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_8d0c88a077d72e 1957
+docs/architecture/diagrams/kit-context.html
+  s_3675ccfac3f8b2::t_382a902dfbeada 4985
+docs/provenance/PouryaKit.Email.MailKit.md
+  s_3675ccfac3f8b2::t_8d0c88a077d72e 27
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_3675ccfac3f8b2::t_c5744019805670 101-102
+docs/architecture/diagrams/kit-context.architecture.json
+  s_3675ccfac3f8b2::t_d3745c92662e0d 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "405965604598a680dd2a4a64c153b2e16e8fa2e6",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
