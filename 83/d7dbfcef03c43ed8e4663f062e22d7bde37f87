@@ -1,0 +1,136 @@
+docs/foundation-review.md
+  s_3675ccfac3f8b2::t_25fc478414d020 354,880
+tests/ModularMonolith.Tests/SnapshotTests.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 772-773
+src/PouryaKit.Messaging.Wolverine/Composition/RecurringCommandTenancyCheck.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 1-16
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Deliver.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 16-22,31-38
+tests/ModularMonolith.Tests/TenantOwnershipTests.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 1-123
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_3675ccfac3f8b2::t_25fc478414d020 10,185-193,208-209,237-238,254-255,260-261,278-279,296-297,320-321,416-423,447
+src/PouryaKit.Messaging.Wolverine/Subscriptions/ISnapshotMappers.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 25-29
+  s_3675ccfac3f8b2::t_d050bc1fb4bad4 24
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_3675ccfac3f8b2::t_25fc478414d020 3,8-9,33,71-81,87-89,94-95,104-105
+docs/provenance/PouryaKit.Persistence.EFCore.md
+  s_3675ccfac3f8b2::t_25fc478414d020 11
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_3675ccfac3f8b2::t_25fc478414d020 121-126
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 53,58,70,100
+src/PouryaKit.Messaging.Wolverine/Subscriptions/SnapshotMappers.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 15-20
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_3675ccfac3f8b2::t_25fc478414d020 10,136-137
+src/PouryaKit.Persistence.EFCore/UnitOfWork/PersistencePreparation.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 12-15,18,22-34,58-59,63-76,97
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_3675ccfac3f8b2::t_25fc478414d020 104-111
+docs/provenance/PouryaKit.Messaging.Wolverine.EFCore.md
+  s_3675ccfac3f8b2::t_25fc478414d020 5
+.agents/skills/pourya-kit/references/messaging.md
+  s_3675ccfac3f8b2::t_25fc478414d020 348,354-357,364,366-367,369-376,385,416,532,556,572
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_3675ccfac3f8b2::t_25fc478414d020 1148-1185
+src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 61,63-67,72
+src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotKeyTenancyCheck.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 1-61
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 3,17,379-437,569-619
+  s_3675ccfac3f8b2::t_c73c38d357afbd 620
+tests/ModularMonolith.Tests/Stub/Migrations/20261016233238_TenantBinders.Designer.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 1-770
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_3675ccfac3f8b2::t_25fc478414d020 121-125
+tests/ModularMonolith.Tests/Stub/Migrations/StubDbContextModelSnapshot.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 71-97,211-231,445-468,718-727,736-739
+  s_3675ccfac3f8b2::t_e6776311e49e5e 740
+docs/architecture/diagrams/delivery.sequence.json
+  s_3675ccfac3f8b2::t_25fc478414d020 18,135-137,363-364
+tests/ModularMonolith.Tests/Stub/TenantBinders.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 1-207
+samples/ModularMonolith/src/Modules/Inventory/Inventory/CatalogProducts/Features/FileProductCategory/FileProductCategoryIntegrationEventHandler.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 12-13,22-23
+src/PouryaKit.Persistence.EFCore/DbContextConnection.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 9-11
+tests/PouryaKit.Cqrs.Tests/ErrorCodeTests.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 11-12
+tests/ModularMonolith.Tests/Stub/TenantProbes.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 1-58
+docs/architecture/diagrams/host-start.workflow.json
+  s_3675ccfac3f8b2::t_25fc478414d020 11,242-243,364-365
+GLOSSARY.md
+  s_3675ccfac3f8b2::t_25fc478414d020 73
+samples/ModularMonolith/src/Modules/Inventory/Inventory/Infrastructure/Data/Migrations/20261017120000_CatalogProductTenants.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 1-41
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_855c15670c099f 1943-1965
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3675ccfac3f8b2::t_25fc478414d020 1,4,8-10
+.claude/agent-memory/kit-implementer/composition-check-facts.md
+  s_3675ccfac3f8b2::t_25fc478414d020 70-75
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_3675ccfac3f8b2::t_25fc478414d020 4985
+docs/architecture/diagrams/delivery.html
+  s_3675ccfac3f8b2::t_25fc478414d020 4985,5474
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_25fc478414d020 54,75,133,162,337,435,437,464
+src/PouryaKit.Persistence.EFCore/EfCoreServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 35-36,67-70
+tests/ModularMonolith.Tests/Stub/Migrations/20261016233238_TenantBinders.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 1-87
+tests/ModularMonolith.Tests/TenantDeliveryTests.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 1-156
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 69-70,117
+.agents/skills/pourya-kit/references/modules.md
+  s_3675ccfac3f8b2::t_25fc478414d020 134-135
+docs/architecture/diagrams/http-command.sequence.json
+  s_3675ccfac3f8b2::t_25fc478414d020 144
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_3675ccfac3f8b2::t_25fc478414d020 105-109
+  s_3675ccfac3f8b2::t_49a65ae442e267 110
+src/PouryaKit.Cqrs/Tenancy/TenantErrors.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 5-8,16-24
+  s_3675ccfac3f8b2::t_fc555e97d05488 25
+docs/architecture/diagrams/commit-sequence.html
+  s_3675ccfac3f8b2::t_25fc478414d020 4985,5042-5047,5213-5216,5219-5221,5223,5443
+docs/provenance/PouryaKit.Messaging.Wolverine.md
+  s_3675ccfac3f8b2::t_25fc478414d020 5
+.agents/skills/pourya-kit/references/persistence.md
+  s_3675ccfac3f8b2::t_25fc478414d020 247,257
+samples/ModularMonolith/src/Modules/Inventory/Inventory/CatalogProducts/Features/CopyProduct/CopyProductIntegrationEventHandler.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 3,11-15,22,24-25,27-34
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 71
+tests/ModularMonolith.Tests/SingleModuleTests.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 70-93
+.agents/skills/pourya-kit/SKILL.md
+  s_3675ccfac3f8b2::t_25fc478414d020 38
+tests/ModularMonolith.Tests/Fixtures/AppFixture.cs
+  s_3675ccfac3f8b2::t_25fc478414d020 25,39
+docs/architecture/diagrams/host-start.html
+  s_3675ccfac3f8b2::t_25fc478414d020 4985
+README.md
+  s_3675ccfac3f8b2::t_25fc478414d020 25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "83d7dbfcef03c43ed8e4663f062e22d7bde37f87",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
