@@ -1,0 +1,67 @@
+src/PouryaKit.Email.MailKit/PouryaKit.Email.MailKit.csproj
+  s_3675ccfac3f8b2::t_b637d4ee0dd453 10
+src/PouryaKit.Storage.S3/S3StorageServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_b637d4ee0dd453 4,18-21,44,50
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_8fd22fad75878e 160,243,250,265,272
+.agents/skills/pourya-kit/references/email.md
+  s_3675ccfac3f8b2::t_8fd22fad75878e 34
+.agents/skills/pourya-kit/references/storage.md
+  s_3675ccfac3f8b2::t_8fd22fad75878e 36,71,77
+docs/architecture/diagrams/kit-context.architecture.json
+  s_3675ccfac3f8b2::t_c14c71d34bd64c 10
+tests/ModularMonolith.Tests/EmailTests.cs
+  s_3675ccfac3f8b2::t_9dc1cf3b5caa67 4,120-123,125,127-128,134,136-147,150,153-154,160-161
+  s_3675ccfac3f8b2::t_e52d786c3b383e 162
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_3675ccfac3f8b2::t_9d0bfe4ccaa947 30-31
+docs/foundation-review.md
+  s_3675ccfac3f8b2::t_8fd22fad75878e 278,282,885-886
+src/PouryaKit.Storage/StorageErrors.cs
+  s_3675ccfac3f8b2::t_b637d4ee0dd453 17
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_e50acda7e5ea90 839-844
+  s_3675ccfac3f8b2::t_ba055d4fc94196 589,593-594,627
+  s_3675ccfac3f8b2::t_ff79c11cd20185 838
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_3675ccfac3f8b2::t_c14c71d34bd64c 10
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_3675ccfac3f8b2::t_c14c71d34bd64c 10
+src/PouryaKit.Email.MailKit/OneEmailSenderCheck.cs
+  s_3675ccfac3f8b2::t_1563511bea349c 1-27
+tests/PouryaKit.Storage.Tests/S3StorageTests.cs
+  s_3675ccfac3f8b2::t_9dc1cf3b5caa67 5,121-125,127,129-130,135-136,138-143,145-153,156,159-160,175-176
+  s_3675ccfac3f8b2::t_f909b32104613e 177
+src/PouryaKit.Storage.S3/OneFileStorageCheck.cs
+  s_3675ccfac3f8b2::t_6cf90357327f21 1-27
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_3675ccfac3f8b2::t_9d0bfe4ccaa947 23,25,81
+src/PouryaKit.Storage/IFileStorage.cs
+  s_3675ccfac3f8b2::t_b637d4ee0dd453 31-32
+docs/provenance/PouryaKit.Email.MailKit.md
+  s_3675ccfac3f8b2::t_8fd22fad75878e 5
+docs/provenance/PouryaKit.Storage.S3.md
+  s_3675ccfac3f8b2::t_8fd22fad75878e 14
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_5716804e52775f 2062,2066-2068,2074
+src/PouryaKit.Storage.S3/PouryaKit.Storage.S3.csproj
+  s_3675ccfac3f8b2::t_b637d4ee0dd453 7
+src/PouryaKit.Email.MailKit/MailKitServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_b637d4ee0dd453 4,21-23,51,57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d336763494f8ea59dae02f2dffa28c4b984d8dfe",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
