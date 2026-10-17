@@ -1,0 +1,40 @@
+src/PouryaKit.Storage.S3/S3FileStorage.cs
+  s_3675ccfac3f8b2::t_833d4534709af8 96
+  s_3675ccfac3f8b2::t_73b106dcd587bc 49
+  s_3675ccfac3f8b2::t_1a75cde85a15c9 81-83
+.agents/skills/pourya-kit/references/storage.md
+  s_3675ccfac3f8b2::t_1d9bd079f33773 71
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_1d9bd079f33773 599-600
+  s_3675ccfac3f8b2::t_de4a2b87ce07e5 10
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_3675ccfac3f8b2::t_de4a2b87ce07e5 10
+docs/architecture/diagrams/kit-context.architecture.json
+  s_3675ccfac3f8b2::t_de4a2b87ce07e5 10
+docs/architecture/diagrams/execution-core.html
+  s_3675ccfac3f8b2::t_de4a2b87ce07e5 4985
+tests/PouryaKit.Storage.Tests/S3StorageTests.cs
+  s_3675ccfac3f8b2::t_f1e4c81a760168 27-48
+docs/architecture/diagrams/kit-context.html
+  s_3675ccfac3f8b2::t_de4a2b87ce07e5 4985
+docs/architecture/diagrams/module-boundaries.html
+  s_3675ccfac3f8b2::t_de4a2b87ce07e5 4985
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_27e7e1068d3c76 1974
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "47224a5249d8778e85885bea484410400220ebef",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
