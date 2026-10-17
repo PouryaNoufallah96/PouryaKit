@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "9503cf98baf3455eeacd786c2497f2a27512b8a5",
+      "revision": "dbe2e6dac34f47f92e0c2302806aef14b8ebea3b",
       "link_mode": "web"
     },
     "legend": {
@@ -171,7 +171,7 @@
       "col": 3,
       "type": "backend",
       "label": "Prepare",
-      "sublabel": "soft delete, tenant, Version, audit",
+      "sublabel": "soft delete, Version, audit",
       "width": 150,
       "sources": [
         {
@@ -184,7 +184,7 @@
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/PersistencePreparation.cs",
           "line": 18,
           "end_line": 103,
-          "label": "marks, cascades, tenant check, Version + 1, stamps"
+          "label": "marks, cascades, tenant, Version + 1, stamps"
         },
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
