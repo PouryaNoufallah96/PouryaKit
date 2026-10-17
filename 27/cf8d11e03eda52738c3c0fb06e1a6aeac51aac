@@ -1,0 +1,39 @@
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_3675ccfac3f8b2::t_95aaef5f7b07f7 354-372,374-397
+  s_3675ccfac3f8b2::t_26ff6a8bdba93d 373
+  s_3675ccfac3f8b2::t_6d47a94f5a9a29 324-326
+  s_3675ccfac3f8b2::t_77e786052220cd 330
+.agents/skills/pourya-kit/references/dapper-reads.md
+  s_3675ccfac3f8b2::t_6c259df9b45f15 89
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_7fd319dec9b03b 2165
+  s_3675ccfac3f8b2::t_012cd87ac3499c 2173-2176
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_3675ccfac3f8b2::t_1522cf84164e29 47-48,51
+  s_3675ccfac3f8b2::t_85aad5f5624f06 42
+  s_3675ccfac3f8b2::t_4671abc1ef86d7 148-151
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3675ccfac3f8b2::t_25073d9eaca82a 10
+src/PouryaKit.Localization/LocalizationServiceCollectionExtensions.cs
+  s_3675ccfac3f8b2::t_fa3afcc92b2657 24-27
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_3675ccfac3f8b2::t_50d5ad8e558717 219-226,234-245,247-252,259-260,262-264
+  s_3675ccfac3f8b2::t_e0463e58c35db4 208,212
+  s_3675ccfac3f8b2::t_ec5503a73c2ec7 193-194,246
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "27cf8d11e03eda52738c3c0fb06e1a6aeac51aac",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
