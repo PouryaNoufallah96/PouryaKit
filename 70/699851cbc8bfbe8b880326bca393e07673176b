@@ -1,0 +1,41 @@
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_3d175ad75c12a4 4985
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_318918e0d04117 10
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_318918e0d04117 10
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_318918e0d04117 10
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_318918e0d04117 10
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_318918e0d04117 10
+docs/architecture/diagrams/execution-core.html
+  s_b9a8adfb056e1c::t_3d175ad75c12a4 4985,5020-5021,5024-5025,5028-5029,5032-5033,5036-5037,5040-5041,5044-5045,5048-5049,5052-5053,5056-5057,5060-5061,5064-5065,5068-5069,5072-5073,5076-5077,5080-5081,5084-5085,5088-5089,5092-5093,5096-5097,5100-5101,5104-5105,5108-5109,5112-5113,5116-5117,5120-5121,5124-5125,5128-5131,5133,5382-5395,5397-5401,5424,5428,5432,5440,5675
+docs/architecture/diagrams/http-command.html
+  s_b9a8adfb056e1c::t_3d175ad75c12a4 4985
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_3d175ad75c12a4 4985,5235-5236,5243
+docs/architecture/diagrams/module-boundaries.html
+  s_b9a8adfb056e1c::t_3d175ad75c12a4 4985
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_318918e0d04117 15
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b9a8adfb056e1c::t_3d175ad75c12a4 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "70699851cbc8bfbe8b880326bca393e07673176b",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
