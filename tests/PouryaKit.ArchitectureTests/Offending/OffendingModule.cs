@@ -190,6 +190,8 @@ internal sealed record LedgerEntryId(Guid Value) : TypedId<Guid>(Value);
 
 internal sealed record EntryLineId(Guid Value) : TypedId<Guid>(Value);
 
+internal sealed record JournalLineId(Guid Value) : TypedId<Guid>(Value);
+
 internal sealed class Ledger : AggregateRoot<LedgerId>, ITenantScoped
 {
     private readonly List<LedgerEntry> _entries = [];
@@ -203,20 +205,47 @@ internal sealed class Ledger : AggregateRoot<LedgerId>, ITenantScoped
     public IReadOnlyList<LedgerEntry> Entries => _entries;
 }
 
-internal sealed class LedgerEntry : Entity<LedgerEntryId>
+internal class LedgerEntry : Entity<LedgerEntryId>
 {
     private readonly List<EntryLine> _lines = [];
 
-    private LedgerEntry() { }
+    protected LedgerEntry() { }
 
     public decimal Amount { get; private set; }
 
     public IReadOnlyList<EntryLine> Lines => _lines;
 }
 
+// An entry mapped to a table of its own beside its base type's (TPT), which holds its key to the ledger.
+internal sealed class SpecialEntry : LedgerEntry
+{
+    private SpecialEntry() { }
+
+    public string Note { get; private set; } = "";
+}
+
 internal sealed class EntryLine : Entity<EntryLineId>
 {
     private EntryLine() { }
+
+    public string Text { get; private set; } = "";
+}
+
+// A tenant's journal keyed by its tenant and its own code, so its lines hold it on a key of two columns.
+internal sealed class Journal : AggregateRoot<string>, ITenantScoped
+{
+    private readonly List<JournalLine> _lines = [];
+
+    private Journal() { }
+
+    public string Tenant { get; private set; } = "";
+
+    public IReadOnlyList<JournalLine> Lines => _lines;
+}
+
+internal sealed class JournalLine : Entity<JournalLineId>
+{
+    private JournalLine() { }
 
     public string Text { get; private set; } = "";
 }
@@ -227,8 +256,12 @@ internal sealed class LedgerDbContext(DbContextOptions options) : PouryaKitDbCon
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<Ledger>().ToTable("ledgers").HasMany(ledger => ledger.Entries).WithOne().IsRequired();
-        modelBuilder.Entity<LedgerEntry>().ToTable("ledger_entries").HasMany(entry => entry.Lines).WithOne().IsRequired();
+        modelBuilder.Entity<LedgerEntry>().UseTptMappingStrategy().ToTable("ledger_entries").HasMany(entry => entry.Lines).WithOne().IsRequired();
+        modelBuilder.Entity<SpecialEntry>().ToTable("special_entries");
         modelBuilder.Entity<EntryLine>().ToTable("entry_lines");
+        modelBuilder.Entity<Journal>().ToTable("journals").HasKey(journal => new { journal.Tenant, journal.Id });
+        modelBuilder.Entity<Journal>().HasMany(journal => journal.Lines).WithOne().IsRequired();
+        modelBuilder.Entity<JournalLine>().ToTable("journal_lines");
     }
 }
 

@@ -39,13 +39,16 @@ public sealed class DapperTenantTests
     }
 
     [Fact]
-    public void A_part_table_is_found_with_its_keys_to_its_holder_as_a_navigation_holds_it_and_a_part_of_a_part_too()
+    public void A_part_table_is_found_with_its_keys_to_its_holder_as_a_navigation_holds_it_a_part_of_a_part_and_a_derived_part_too()
     {
         Assert.Equal(
             [
                 "offending.entry_lines: ledger_entry_id = offending.ledger_entries.id",
+                "offending.journal_lines: journal_tenant = offending.journals.tenant, journal_id = offending.journals.id",
+                "offending.journals: tenant",
                 "offending.ledger_entries: ledger_id = offending.ledgers.id",
                 "offending.ledgers: tenant",
+                "offending.special_entries: id = offending.ledger_entries.id",
             ],
             ModuleRules
                 .TenantTablesOf(LedgerModel())
@@ -142,6 +145,10 @@ public sealed class DapperTenantTests
     [InlineData("select e.amount from offending.ledger_entries e join offending.ledgers l on l.id = e.id where l.tenant = @Tenant", "does not join the part offending.ledger_entries e on its key to its holder up to offending.ledgers held to @Tenant")]
     [InlineData("select e.amount from offending.ledger_entries e join catalog.products p on p.id = e.ledger_id where p.tenant = @Tenant", "does not join the part offending.ledger_entries e on its key to its holder up to offending.ledgers held to @Tenant")]
     [InlineData("select x.text from offending.entry_lines x join offending.ledgers l on true left join offending.ledger_entries e on e.id = x.ledger_entry_id and e.ledger_id = l.id where l.tenant = @Tenant", "does not join the part offending.entry_lines x on its key to its holder up to offending.ledgers held to @Tenant")]
+    [InlineData("select note from offending.special_entries where id = @Id", "does not join the part offending.special_entries on its key to its holder up to offending.ledgers held to @Tenant")]
+    [InlineData("select s.note from offending.special_entries s join offending.ledger_entries e on e.id = s.id join offending.ledgers l on l.id = e.ledger_id where l.tenant = @Tenant", null)]
+    [InlineData("select x.text from offending.journal_lines x join offending.journals j on j.id = x.journal_id where j.tenant = @Tenant", "does not join the part offending.journal_lines x on its key to its holder up to offending.journals held to @Tenant")]
+    [InlineData("select x.text from offending.journal_lines x join offending.journals j on j.id = x.journal_id and j.tenant = x.journal_tenant where j.tenant = @Tenant", null)]
     public void A_read_of_a_tenant_scoped_table_is_held_to_one_shape(string sql, string? fault)
     {
         Assert.Equal(fault, ModuleRules.TenantReadFault(sql, WithParts));
