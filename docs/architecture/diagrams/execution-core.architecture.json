@@ -624,7 +624,7 @@
         {
           "path": "src/PouryaKit.Storage/IFileStorage.cs",
           "line": 11,
-          "end_line": 35,
+          "end_line": 36,
           "label": "IFileStorage"
         }
       ]
@@ -656,8 +656,8 @@
         },
         {
           "path": "src/PouryaKit.Localization/HeaderRequestCulture.cs",
-          "line": 17,
-          "end_line": 31,
+          "line": 18,
+          "end_line": 33,
           "label": "request culture from Accept-Language"
         }
       ]

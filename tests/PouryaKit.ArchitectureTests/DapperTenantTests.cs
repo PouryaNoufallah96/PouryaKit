@@ -1,22 +1,72 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Offending;
 
 namespace PouryaKit.ArchitectureTests;
 
 // Spec #115, Multi-tenancy: no query filter reaches Dapper, so in a tenant-scoped Module every SQL read of a
-// tenant-scoped table holds each such table to the Operation's tenant at the top level of its WHERE.
+// tenant-scoped table holds each such table to the Operation's tenant at the top level of its WHERE, and joins each
+// table of a part of a tenant-scoped aggregate up to a table so held (#154).
 public sealed class DapperTenantTests
 {
-    private static readonly Dictionary<string, string> TenantTables =
+    private static readonly Dictionary<string, ModuleRules.TenantTable> TenantTables =
         new(Sample.Models.SelectMany(module => module.Value.SelectMany(ModuleRules.TenantTablesOf)));
+
+    // Catalog's tables and the Offending Module's ledger, a tenant-scoped aggregate with parts, as its model maps them.
+    private static readonly Dictionary<string, ModuleRules.TenantTable> WithParts = new([.. TenantTables, .. ModuleRules.TenantTablesOf(LedgerModel())]);
+
+    private static IModel LedgerModel()
+    {
+        var options = new DbContextOptionsBuilder()
+            .UseNpgsql("Host=localhost;Database=architecture-tests", npgsql => npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "offending"))
+            .UseSnakeCaseNamingConvention()
+            .Options;
+        var contextType = typeof(OffendingModule).Assembly.GetType("Offending.LedgerDbContext", throwOnError: true)!;
+        using var context = (DbContext)Activator.CreateInstance(contextType, [options])!;
+        return context.GetService<IDesignTimeModel>().Model;
+    }
 
     [Fact]
     public void The_tenant_scoped_modules_come_from_the_host_and_their_tables_from_each_modules_model()
     {
         Assert.Equal(["Catalog"], Sample.TenantScopedModules.Select(module => module.GetName().Name));
         Assert.Equal(
-            [KeyValuePair.Create("catalog.categories", "tenant"), KeyValuePair.Create("catalog.products", "tenant")],
-            TenantTables.OrderBy(table => table.Key, StringComparer.Ordinal)
+            [KeyValuePair.Create("catalog.categories", (string?)"tenant"), KeyValuePair.Create("catalog.products", (string?)"tenant")],
+            TenantTables.OrderBy(table => table.Key, StringComparer.Ordinal).Select(table => KeyValuePair.Create(table.Key, table.Value.Tenant))
+        );
+    }
+
+    [Fact]
+    public void A_part_table_is_found_with_its_keys_to_its_holder_as_a_navigation_holds_it_and_a_part_of_a_part_too()
+    {
+        Assert.Equal(
+            [
+                "offending.entry_lines: ledger_entry_id = offending.ledger_entries.id",
+                "offending.ledger_entries: ledger_id = offending.ledgers.id",
+                "offending.ledgers: tenant",
+            ],
+            ModuleRules
+                .TenantTablesOf(LedgerModel())
+                .Select(table =>
+                    $"{table.Key}: {table.Value.Tenant ?? string.Join(", ", table.Value.Holders.SelectMany(key => key.Columns.Select(column => $"{column.Column} = {key.Holder}.{column.HolderColumn}")))}"
+                )
+                .Order(StringComparer.Ordinal)
+        );
+    }
+
+    [Fact]
+    public void A_direct_read_of_a_part_table_and_a_join_to_its_root_without_the_tenant_conjunct_are_rejected()
+    {
+        var violations = ModuleRules.ReadsBeyondTheTenant(typeof(OffendingModule).Assembly, WithParts);
+
+        Assert.Equal(
+            [
+                "Offending.PartReadingQueryHandler reads a tenant-scoped table with SQL that does not join the part offending.ledger_entries e on its key to its holder up to offending.ledgers held to @Tenant: \"select e.amount from offending.ledger_entries e join offending.ledgers l on l.id = e.ledger_id where l.name = @Name\".",
+                "Offending.PartReadingQueryHandler reads a tenant-scoped table with SQL that does not join the part offending.ledger_entries on its key to its holder up to offending.ledgers held to @Tenant: \"select amount from offending.ledger_entries where ledger_id = @Ledger\".",
+            ],
+            violations.Where(violation => violation.StartsWith("Offending.PartReadingQueryHandler ", StringComparison.Ordinal)).Order(StringComparer.Ordinal)
         );
     }
 
@@ -84,8 +134,16 @@ public sealed class DapperTenantTests
     [InlineData("select p.id from catalog.products p where p.tenant = @Tenant order by p.name, p.id limit @Take offset 20", null)]
     [InlineData("select p.id from catalog.products p join catalog.categories c on c.id = p.category_id or true where p.tenant = @Tenant and c.tenant = @Tenant", "has an OR at the top level of the join condition of catalog.categories c")]
     [InlineData("select id from U&\"!0070roducts\" UESCAPE '!' where true", "holds the character &, a shape the rule does not read")]
+    [InlineData("select e.amount from offending.ledger_entries e join offending.ledgers l on l.id = e.ledger_id where l.tenant = @Tenant", null)]
+    [InlineData("select l.name, e.amount from offending.ledgers l left join offending.ledger_entries e on e.ledger_id = l.id and e.amount > 0 where l.tenant = @Tenant", null)]
+    [InlineData("select x.text from offending.entry_lines x join offending.ledger_entries e on e.id = x.ledger_entry_id join offending.ledgers l on l.id = e.ledger_id where l.tenant = @Tenant", null)]
+    [InlineData("select e.amount from offending.ledger_entries e, offending.ledgers l where e.ledger_id = l.id and l.tenant = @Tenant", "does not join the part offending.ledger_entries e on its key to its holder up to offending.ledgers held to @Tenant")]
+    [InlineData("select e.amount from offending.ledger_entries e join offending.ledgers l on l.id = ledger_id where l.tenant = @Tenant", "does not join the part offending.ledger_entries e on its key to its holder up to offending.ledgers held to @Tenant")]
+    [InlineData("select e.amount from offending.ledger_entries e join offending.ledgers l on l.id = e.id where l.tenant = @Tenant", "does not join the part offending.ledger_entries e on its key to its holder up to offending.ledgers held to @Tenant")]
+    [InlineData("select e.amount from offending.ledger_entries e join catalog.products p on p.id = e.ledger_id where p.tenant = @Tenant", "does not join the part offending.ledger_entries e on its key to its holder up to offending.ledgers held to @Tenant")]
+    [InlineData("select x.text from offending.entry_lines x join offending.ledgers l on true left join offending.ledger_entries e on e.id = x.ledger_entry_id and e.ledger_id = l.id where l.tenant = @Tenant", "does not join the part offending.entry_lines x on its key to its holder up to offending.ledgers held to @Tenant")]
     public void A_read_of_a_tenant_scoped_table_is_held_to_one_shape(string sql, string? fault)
     {
-        Assert.Equal(fault, ModuleRules.TenantReadFault(sql, TenantTables));
+        Assert.Equal(fault, ModuleRules.TenantReadFault(sql, WithParts));
     }
 }

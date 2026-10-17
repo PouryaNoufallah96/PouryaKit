@@ -183,6 +183,77 @@ internal sealed class CrossTenantReadingQueryHandler(IReadConnectionFactory conn
     }
 }
 
+// A tenant's ledger, whose entries and their lines are parts its navigations hold, so their tables carry no tenant.
+internal sealed record LedgerId(Guid Value) : TypedId<Guid>(Value);
+
+internal sealed record LedgerEntryId(Guid Value) : TypedId<Guid>(Value);
+
+internal sealed record EntryLineId(Guid Value) : TypedId<Guid>(Value);
+
+internal sealed class Ledger : AggregateRoot<LedgerId>, ITenantScoped
+{
+    private readonly List<LedgerEntry> _entries = [];
+
+    private Ledger() { }
+
+    public string Tenant { get; private set; } = "";
+
+    public string Name { get; private set; } = "";
+
+    public IReadOnlyList<LedgerEntry> Entries => _entries;
+}
+
+internal sealed class LedgerEntry : Entity<LedgerEntryId>
+{
+    private readonly List<EntryLine> _lines = [];
+
+    private LedgerEntry() { }
+
+    public decimal Amount { get; private set; }
+
+    public IReadOnlyList<EntryLine> Lines => _lines;
+}
+
+internal sealed class EntryLine : Entity<EntryLineId>
+{
+    private EntryLine() { }
+
+    public string Text { get; private set; } = "";
+}
+
+internal sealed class LedgerDbContext(DbContextOptions options) : PouryaKitDbContext(options)
+{
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<Ledger>().ToTable("ledgers").HasMany(ledger => ledger.Entries).WithOne().IsRequired();
+        modelBuilder.Entity<LedgerEntry>().ToTable("ledger_entries").HasMany(entry => entry.Lines).WithOne().IsRequired();
+        modelBuilder.Entity<EntryLine>().ToTable("entry_lines");
+    }
+}
+
+// Reads a ledger's entries, whose table has no tenant column: once with no join to the ledger, and once joined to it
+// without holding the ledger to the tenant.
+internal sealed class PartReadingQueryHandler(IReadConnectionFactory connections) : QueryHandler<OffendQuery, int>
+{
+    public override async Task<Result<int>> Handle(OffendQuery query, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var parameters = new { Ledger = Guid.Empty, Name = "Cash" };
+        var direct = await connection.QueryAsync<decimal>(
+            new CommandDefinition("select amount from offending.ledger_entries where ledger_id = @Ledger", parameters, cancellationToken: cancellationToken)
+        );
+        var joined = await connection.QueryAsync<decimal>(
+            new CommandDefinition(
+                "select e.amount from offending.ledger_entries e join offending.ledgers l on l.id = e.ledger_id where l.name = @Name",
+                parameters,
+                cancellationToken: cancellationToken
+            )
+        );
+        return direct.Count() + joined.Count();
+    }
+}
+
 // Writes Catalog's aggregate tables around the tracked path, once named with its schema and once without.
 internal sealed class RenamingProductsCommandHandler(IUnitOfWorkConnection unitOfWork) : CommandHandler<OffendCommand>
 {
