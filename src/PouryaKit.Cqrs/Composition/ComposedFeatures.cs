@@ -20,6 +20,10 @@ internal sealed class ComposedFeatures
     // The Modules AddPouryaKitTenancy made tenant-scoped; null is the application's own services.
     public HashSet<Type?> TenantScoped { get; } = [];
 
+    // The assemblies AddPouryaKitCqrs scanned for each Module, and for the application as null, in the order first
+    // scanned: those whose commands and queries the dispatcher runs, where another registration's add none.
+    public List<(Type? Module, Assembly Assembly)> Dispatching { get; } = [];
+
     public static ComposedFeatures In(IServiceCollection services)
     {
         if (services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(ComposedFeatures)) is { } existing)
@@ -37,6 +41,17 @@ internal sealed class ComposedFeatures
         if (!Modules.Contains(module))
         {
             Modules.Add(module);
+        }
+    }
+
+    public void AddDispatching(Type? module, IEnumerable<Assembly> assemblies)
+    {
+        foreach (var assembly in assemblies)
+        {
+            if (!Dispatching.Contains((module, assembly)))
+            {
+                Dispatching.Add((module, assembly));
+            }
         }
     }
 

@@ -13,9 +13,12 @@ using Catalog.Products.Features.ListProducts;
 using Catalog.Products.Features.RemoveProducts;
 using Catalog.Products.Features.RenameProduct;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
+using Npgsql;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Persistence.EFCore;
@@ -186,6 +189,39 @@ public sealed class TenancyTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.True(composition.IsTenantScoped(typeof(CatalogModule)));
         Assert.False(composition.IsTenantScoped(typeof(StubModule)));
         Assert.False(composition.IsTenantScoped(null));
+    }
+
+    // A product or category written before Catalog was tenant-scoped has no tenant to recover (ticket #150), so the
+    // migration that adds the tenant refuses a table that holds one, on a database of its own, and applies to an empty one.
+    [Theory]
+    [InlineData("insert into catalog.products (id, name, version) values (gen_random_uuid(), 'Lamp', 1)")]
+    [InlineData("insert into catalog.categories (id, name, product_count, version) values (gen_random_uuid(), 'Lighting', 0, 1)")]
+    public async Task Catalogs_migration_that_adds_the_tenant_refuses_a_table_holding_a_row_with_no_tenant(string insert)
+    {
+        var database = $"tenants_{Guid.CreateVersion7():N}";
+        await Fixture.RowsAsync($"create database {database}");
+        var connectionString = new NpgsqlConnectionStringBuilder(Fixture.ConnectionString) { Database = database }.ConnectionString;
+        await using var host = AppFixture.ComposeHost("Development", connectionString, new RecordedLogs());
+        await using var scope = host.Services.CreateAsyncScope();
+        var migrator = scope.ServiceProvider.GetRequiredService<CatalogDbContext>().GetService<IMigrator>();
+        await migrator.MigrateAsync("20261007120000_IdempotencyKeys", TestContext.Current.CancellationToken);
+        await Sql.RowsAsync(connectionString, insert);
+
+        var refused = await Assert.ThrowsAsync<PostgresException>(() => migrator.MigrateAsync(cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Equal(
+            "Catalog holds products or categories that kept no tenant, and their tenant cannot be recovered, so this migration refuses to guess one.",
+            refused.MessageText
+        );
+        await Sql.RowsAsync(connectionString, "delete from catalog.products; delete from catalog.categories");
+        await migrator.MigrateAsync(cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Equal(
+            [["categories"], ["products"]],
+            await Sql.RowsAsync(
+                connectionString,
+                "select table_name from information_schema.columns where table_schema = 'catalog' and table_name in ('products', 'categories') and column_name = 'tenant' order by table_name"
+            )
+        );
     }
 
     private static OperationContext For(string? tenant) => new(GatewayTestExtensions.TestActor, tenant);

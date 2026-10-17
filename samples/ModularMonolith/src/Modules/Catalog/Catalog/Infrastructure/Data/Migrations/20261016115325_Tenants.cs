@@ -10,6 +10,18 @@ namespace Catalog.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // A row written before Catalog was tenant-scoped has no tenant to recover, and the empty one the column's
+            // default would give it is no Operation's, so it would stay hidden and could never be re-tenanted.
+            migrationBuilder.Sql(
+                """
+                do $$ begin
+                    if exists (select from catalog.products) or exists (select from catalog.categories) then
+                        raise exception 'Catalog holds products or categories that kept no tenant, and their tenant cannot be recovered, so this migration refuses to guess one.';
+                    end if;
+                end $$
+                """
+            );
+
             migrationBuilder.DropIndex(
                 name: "ix_products_name",
                 schema: "catalog",

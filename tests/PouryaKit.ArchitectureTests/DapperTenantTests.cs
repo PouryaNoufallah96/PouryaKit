@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore.Migrations;
 using Offending;
 
 namespace PouryaKit.ArchitectureTests;
@@ -23,12 +24,12 @@ public sealed class DapperTenantTests
     public void Every_sql_read_of_a_tenant_scoped_module_holds_each_tenant_scoped_table_to_the_tenant()
     {
         Assert.Empty(Sample.TenantScopedModules.SelectMany(module => ModuleRules.ReadsBeyondTheTenant(module, TenantTables)));
-        // The rule judged Catalog's reads: GetProduct's, and ListProducts' SELECT and COUNT.
+        // The rule judged Catalog's reads: GetProduct's, and ListProducts' SELECT and COUNT; a migration's SQL is not a read.
         var catalog = Assert.Single(Sample.TenantScopedModules);
         Assert.Equal(
             ["GetProductQueryHandler", "ListProductsQueryHandler", "ListProductsQueryHandler"],
             Il.LiteralsIn(catalog)
-                .Where(literal => ModuleRules.TenantTablesReadBy(literal.Text, TenantTables).Any())
+                .Where(literal => !literal.Owner.IsAssignableTo(typeof(Migration)) && ModuleRules.TenantTablesReadBy(literal.Text, TenantTables).Any())
                 .Select(literal => literal.Owner.Name)
                 .Order(StringComparer.Ordinal)
         );

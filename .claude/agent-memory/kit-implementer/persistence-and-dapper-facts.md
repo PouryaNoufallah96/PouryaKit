@@ -109,6 +109,10 @@ Check the merged code before relying on a design note. Each section names its ti
 - **A migration that adds a tenant to a copy refuses a populated table** (#117 review F2): a copy that kept no tenant cannot learn it, and the applied Snapshot versions stop a replay. A `do $$ ... raise exception ... $$` block in `migrationBuilder.Sql` aborts the migration's transaction; a test undoes it with `dbContext.GetService<IMigrator>().MigrateAsync("<previous migration>")`, writes a row, expects `PostgresException.MessageText`, then empties the table and migrates forward in `finally`.
 - An entity attached with a forged tenant is judged by that tenant (Codex's P1 mentioned attaching): recorded as a limit in the skill, not defended (a concurrency token on `Tenant` would need a migration in every Module).
 
+## A migration test on a database of its own (#150, 2026-10-17)
+
+- **Test a sample migration's refusal without touching the shared fixture's tables**: `create database x` through `Fixture.RowsAsync`, `AppFixture.ComposeHost("Development", <string for x>, new RecordedLogs())` built but not started (nothing migrates before start), resolve the Module's DbContext in a scope, `GetService<IMigrator>()`, `MigrateAsync("<previous migration id>")`, write a row with `Sql.RowsAsync(<string>, ...)`, then `MigrateAsync()` throws `PostgresException` whose `MessageText` is the `raise exception` text. Catalog's tables are written by parallel classes, so down and up on `Fixture.Host` (as Inventory's #117 test does on near-empty tables) would race them. `information_schema.columns` with `column_name = 'tenant'` also lists `pouryakit_idempotency_keys`: name the tables.
+
 **Why:** each cost a run, a design detour or a wrong claim in a provenance record, or would have let a test pass vacuously; #9 to #18 build on these seams.
 **How to apply:** start from these when touching Persistence.*, Persistence.Dapper, the Unit of Work seam, conflicts, test migrations, paging, Dapper parameters or EF predicates; re-verify when bumping EF/Npgsql. Related: [[cqrs-and-modularity-facts]], [[snapshot-and-scheduled-command-facts]], [[dotnet-and-test-conventions]].
 
