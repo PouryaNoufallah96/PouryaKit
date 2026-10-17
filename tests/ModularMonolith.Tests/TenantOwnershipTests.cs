@@ -132,6 +132,31 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
         Assert.Equal(TenantErrors.NotLoaded, Assert.Single(forged.Errors));
     }
 
+    // South's sheet itself, which a query loaded and the Operation then detached or cleared and attached again under
+    // north's own binder: attached that time, so refused as a sheet built with its key is, through the entry that tracked
+    // it from the query as through a new one.
+    [Theory]
+    [InlineData(SheetRelease.Detach, false)]
+    [InlineData(SheetRelease.Detach, true)]
+    [InlineData(SheetRelease.Clear, false)]
+    [InlineData(SheetRelease.Clear, true)]
+    public async Task A_loaded_part_released_and_attached_again_under_the_operations_own_aggregate_fails_forbidden_and_saves_nothing(
+        SheetRelease release,
+        bool remove
+    )
+    {
+        await CreateBindersAsync();
+        var southBefore = await SouthRowsAsync();
+        var southSheet = (Guid)Assert.Single(await Fixture.RowsAsync($"select id from stub.sheets where binder_id = '{_south}'"))[0];
+
+        var reattached = await Fixture
+            .Gateway<StubModule>()
+            .SendAsync(new ReattachSheetCommand(_north, southSheet, release, remove), For("north"), TestContext.Current.CancellationToken);
+
+        Assert.Equal(southBefore, await SouthRowsAsync());
+        Assert.Equal(TenantErrors.NotLoaded, Assert.Single(reattached.Errors));
+    }
+
     private static OperationContext For(string tenant) => new(GatewayTestExtensions.TestActor, tenant);
 
     private async Task CreateBindersAsync()

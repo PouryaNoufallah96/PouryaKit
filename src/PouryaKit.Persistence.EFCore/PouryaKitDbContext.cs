@@ -37,7 +37,8 @@ public abstract class PouryaKitDbContext : DbContext
     // The scope's services, which hold its Operation, as EF Core's AddDbContext gives them to the options.
     private readonly IServiceProvider? _applicationServices;
 
-    // Every entity a query of this DbContext materialized. Any other tracked entity that is not added was attached.
+    // Every entity a query of this DbContext materialized and tracked since. One detached, or cleared from the change
+    // tracker, and then tracked again was attached, as is any other tracked entity that is not added.
     private readonly HashSet<object> _loaded = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>
@@ -60,6 +61,10 @@ public abstract class PouryaKitDbContext : DbContext
             if (tracked.FromQuery)
             {
                 _loaded.Add(tracked.Entry.Entity);
+            }
+            else
+            {
+                _loaded.Remove(tracked.Entry.Entity);
             }
         };
     }
