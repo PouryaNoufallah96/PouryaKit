@@ -1,0 +1,23 @@
+docs/architecture/diagrams/commit-sequence.html
+  s_3675ccfac3f8b2::t_7bc97259844da8 4985,5042,5213-5215,5443
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_3675ccfac3f8b2::t_d217cb4f75acb3 10
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_edfe68bb5ed8bc 2124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "65c0db2bb7121ecfa80061826338c6a0e0baa0ee",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
