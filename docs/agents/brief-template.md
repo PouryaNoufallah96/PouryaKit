@@ -80,6 +80,7 @@ Costly guarantees:
 Design constraints:
 
 - `stop_if`: <package-specific conditions that end the work with a report, such as a new third-party package or a reference the plan forbids>. A file outside `allowed_files` and the docs-sync set is not one: ask the session and continue, as your role file says.
+- A guarantee the final registrations can answer is an `ICompositionCheck` at build, never an options validation at start; a provider package that needs one references `Cqrs`. A structure rule over text admits an allow-list grammar and faults every other shape; it never rejects the shapes it recognises. A proof against a third-party image is run once with the image removed (`docker rmi`) so a fresh pull is proven, and the brief names the registry and a fallback image.
 - <Invariants and existing tests to keep green, the seams to extend, and the parallel tickets that touch the same files.>
 
 ## allowed_files
