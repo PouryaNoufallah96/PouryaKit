@@ -1,0 +1,21 @@
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_3675ccfac3f8b2::t_62b853d7a40d4c 58
+tests/PouryaKit.ArchitectureTests/Sql.cs
+  s_3675ccfac3f8b2::t_8281eff1eab66d 23-24,82-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1193d1fec4b6fb92adb77a2d5e57b42ad28d6ff5",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
