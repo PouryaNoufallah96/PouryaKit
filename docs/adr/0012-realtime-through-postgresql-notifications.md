@@ -38,13 +38,13 @@ client of another instance.
   `OperationContext.NoTenant`. A payload of 8000 bytes or more fails the push with `RealtimeErrors.PayloadTooLarge`
   before anything is written: the documentation says the payload "must be shorter than 8000 bytes" in the default
   configuration. The handler meets it, never the transport.
-- **"Callable only from a Notification Handler's delivery" is decided from the Operation.** A delivery's Operation is a
-  trusted continuation, restored from the headers its Outbox wrote (ADR 0007), running in a Unit of Work, where it may
-  change state; the publisher throws anywhere else, as the Integration Event publisher does. The Operation does not show
-  which kind of delivery it is, so the check also admits an Integration Event Handler's or a delayed command's delivery,
-  a trusted peer's request and a command another Module's handler sends with `Continue()`. Each commits or rolls back
-  with its push, which is the guarantee; telling a Notification Handler apart would need a public seam in
-  `PouryaKit.Messaging.Wolverine`, which Realtime does not reference.
+- **Callable only from a Notification Handler's delivery, as the Integration Event publisher is.** The delivery step
+  restores a Notification's delivery with `OperationContext.Notification`, the Domain Event delivered, through the
+  trusted restore of ADR 0007, which alone sets it; a context `Continue()` gives, a trusted peer's and every other
+  carries none. The Integration Event publisher and the realtime publisher both read that one fact, so nothing outside
+  that delivery pushes: not a command an HTTP request or a Gateway call sends, nor its Domain Event Handlers, an
+  Integration Event Handler, a delayed command, a trusted peer's request or a command sent with `Continue()`. Realtime
+  reads it through Cqrs, which Web brings, and references no `PouryaKit.Messaging.Wolverine`.
 - **One listener per instance.** A hosted service opens one connection over the connection string `AddPouryaKitRealtime`
   names, outside every pool and never multiplexed, since a pooled connection is reset when it returns and a multiplexed
   one holds no session; with `KeepAlive`, so a connection the network dropped fails its wait; and runs `LISTEN` on it
@@ -56,7 +56,8 @@ client of another instance.
   rule admits each requested Channel for the Actor, or the request is refused with a problem response before anything
   streams. The response is the framework's `TypedResults.ServerSentEvents`, the shape learned from
   `Ultrabusiness@d685de6 src/BuildingBlocks/BuildingBlocks.SSE/Extensions/SseEndpointExtensions.cs:58`; it is served by
-  the request, never from inside a Gateway call, so no Operation stays open while it lasts. A client a full buffer of
+  the request, never from inside a Gateway call: streaming opens no Gateway scope and no Unit of Work, while the request's
+  scope and its Operation last until the connection ends. A client a full buffer of
   256 events behind is disconnected, since the listener never waits for one.
 - **A build-time check holds the listener and the Units of Work to one connection string.** PostgreSQL delivers a
   notification only to the listeners of its own database, so the Kit's composition checks fail the Host when the
@@ -86,7 +87,7 @@ client of another instance.
 
 `RealtimeTests` in `tests/ModularMonolith.Tests` hold each, red once with its behaviour switched off: a push committed
 on one instance reaches a client of another, with two instances of one Host on one store under Balanced durability; a
-delivery that rolls back pushes nothing; a client receives only its tenant's events and the Channels its endpoint admits
+delivery that rolls back pushes nothing; a trusted peer's command and a command sent with `Continue()` cannot push; a client receives only its tenant's events and the Channels its endpoint admits
 for its Actor; a push of 8000 bytes fails in the handler and one of 7999 is delivered; a killed listener connection
 ends in a `gap` and a listener that hears the next push; and, against the sample Host with each feature configured, the
 rate limiter counts one permit for a connection, response compression leaves the event stream alone, and status code

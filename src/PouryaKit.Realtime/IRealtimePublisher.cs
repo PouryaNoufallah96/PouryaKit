@@ -17,10 +17,10 @@ public interface IRealtimePublisher
     /// Pushes <paramref name="realtimeEvent"/>, a plain record of the Module's Contracts, on <paramref name="channel"/>
     /// for the delivery's tenant, written with the Host's HTTP JSON options, which <c>AddPouryaKitWeb</c> sets to the
     /// Kit's JSON. Fails with <see cref="RealtimeErrors.PayloadTooLarge"/>, pushing nothing, when the notification, the
-    /// Channel, the tenant and the event together, is not shorter than the 8000 bytes PostgreSQL carries. Throws when called outside a Notification Handler's delivery, as the Operation
-    /// shows it: in an Operation that is not a trusted continuation, or with no Unit of Work active, or where the
-    /// Operation only reads; and on a blank Channel, one holding a line break, or one named as the Kit's own events
-    /// (<see cref="RealtimeEvents"/>).
+    /// Channel, the tenant and the event together, is not shorter than the 8000 bytes PostgreSQL carries. Throws, as the
+    /// Integration Event publisher does, when called outside a Notification Handler's delivery, which the Operation
+    /// Context records as its <c>Notification</c>, or where the Operation only reads; and on a blank Channel, one holding a
+    /// line break, or one named as the Kit's own events (<see cref="RealtimeEvents"/>).
     /// </summary>
     Task<Result> PublishAsync<TEvent>(string channel, TEvent realtimeEvent, CancellationToken cancellationToken)
         where TEvent : class;

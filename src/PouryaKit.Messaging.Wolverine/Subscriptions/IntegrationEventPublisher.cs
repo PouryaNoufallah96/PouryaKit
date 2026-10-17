@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
-using PouryaKit.Domain;
 
 namespace PouryaKit.Messaging.Wolverine;
 
@@ -12,9 +11,6 @@ internal sealed class IntegrationEventPublisher(Subscriptions subscriptions, Ope
     : IIntegrationEventPublisher
 {
     private readonly HashSet<Type> _published = [];
-
-    /// <summary>The Domain Event whose Notification Handler runs in this scope; null in any other scope.</summary>
-    public DomainEvent? Following { get; set; }
 
     public void Publish<TIntegrationEvent>(Guid domainEventId, TIntegrationEvent integrationEvent)
         where TIntegrationEvent : class
@@ -28,7 +24,7 @@ internal sealed class IntegrationEventPublisher(Subscriptions subscriptions, Ope
             );
         }
 
-        if (Following is not { } domainEvent)
+        if (operation.Context?.Notification is not { } domainEvent)
         {
             throw new InvalidOperationException(
                 $"{type.Name} was published outside a Notification Handler's delivery. An Integration Event is published by a Notification Handler, so it is written to the Outbox with that delivery's commit."

@@ -13,15 +13,20 @@ using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using PouryaKit.Messaging;
+using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Modularity;
 using PouryaKit.Realtime;
 using PouryaKit.Testing;
+using Wolverine;
 
 namespace ModularMonolith.Tests;
 
 // Ticket #133: a Notification Handler pushes through IRealtimePublisher, written as a PostgreSQL notification on its
 // delivery's own transaction, and every instance's listener passes it to the clients of the delivery's tenant that
 // listen on its Channel, through an SSE endpoint mapped with MapPouryaKitRealtime. Two instances of one Host share one
-// store under Balanced durability, as the fixture's Host and one composed beside it do.
+// store under Balanced durability, composed beside the fixture's Host with their durability set back from the test
+// delivery's Solo.
 public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     private static readonly TimeSpan Patience = TimeSpan.FromSeconds(20);
@@ -35,12 +40,13 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task A_product_committed_on_one_instance_reaches_a_client_connected_to_another()
     {
-        await using var other = await StartAsync();
-        using var client = AppFixture.ClientOf(other, "ada", AppFixture.TestTenant);
+        await using var first = await StartAsync(Balanced);
+        await using var second = await StartAsync(Balanced);
+        using var client = AppFixture.ClientOf(second, "ada", AppFixture.TestTenant);
         await using var listening = await Listening.OpenAsync(client, NewProducts);
 
-        // Created, delivered and pushed by the fixture's Host, whose local queue holds the Notification.
-        var lamp = await CreateProductAsync(AppFixture.TestTenant, "Lamp");
+        // Created, delivered and pushed by the first instance, whose local queue holds the Notification.
+        var lamp = await CreateProductAsync(AppFixture.TestTenant, "Lamp", first.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>());
 
         Assert.Equal((NewProduct.Channel, $$"""{"productId":"{{lamp}}","name":"Lamp"}"""), Pushed(await listening.NextAsync()));
     }
@@ -69,13 +75,38 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
         using var refused = await ada.GetAsync($"/stub/realtime?channel={StubChannels.InboxOf("grace")}", HttpCompletionOption.ResponseHeadersRead, Cancellation);
         using var unnamed = await ada.GetAsync("/stub/realtime", HttpCompletionOption.ResponseHeadersRead, Cancellation);
         await using var listening = await Listening.OpenAsync(ada, $"/stub/realtime?channel={StubChannels.InboxOf("ada")}");
-        await PushAsync(new NotePushedDomainEvent(StubChannels.InboxOf("grace"), "for grace"));
-        await PushAsync(new NotePushedDomainEvent(StubChannels.Notes, "for everyone"));
+        // Delivered before the admitted push, which would come second had either reached the client.
+        await PushAsync(new NotePushedDomainEvent(StubChannels.InboxOf("grace"), "for grace"), new NotePushedDomainEvent(StubChannels.Notes, "for everyone"));
         await PushAsync(new NotePushedDomainEvent(StubChannels.InboxOf("ada"), "for ada"));
 
         Assert.Equal(RealtimeErrors.ChannelNotAdmitted.Code, Code(await ProblemResponses.ProblemAsync(refused, HttpStatusCode.Forbidden)));
         Assert.Equal(RealtimeErrors.ChannelRequired.Code, Code(await ProblemResponses.ProblemAsync(unnamed, HttpStatusCode.BadRequest)));
         Assert.Equal((StubChannels.InboxOf("ada"), """{"text":"for ada"}"""), Pushed(await listening.NextAsync()));
+    }
+
+    // A trusted continuation in a Unit of Work, which a Notification Handler's delivery also is, is not one.
+    [Fact]
+    public async Task A_trusted_peers_command_and_a_command_continued_through_the_gateway_cannot_push()
+    {
+        var fromPeer = $"peer {Guid.CreateVersion7()}";
+        var continued = $"continued {Guid.CreateVersion7()}";
+        using var peer = Fixture.Client(AppFixture.TrustedPeer);
+        peer.DefaultRequestHeaders.Add(OperationContextHeaders.ActorId, "ada");
+        peer.DefaultRequestHeaders.Add(OperationContextHeaders.ActorKind, nameof(ActorKind.Person));
+        peer.DefaultRequestHeaders.Add(OperationContextHeaders.CorrelationId, Guid.CreateVersion7().ToString());
+        peer.DefaultRequestHeaders.Add(OperationContextHeaders.CausationId, Guid.CreateVersion7().ToString());
+
+        using var sent = await peer.PostAsync($"/stub/realtime/notes/{fromPeer}", null, Cancellation);
+        var relayed = await Fixture.Gateway<StubModule>().SendAsync(new RelayPushNoteCommand(continued), Cancellation);
+
+        Assert.Equal(HttpStatusCode.NoContent, sent.StatusCode);
+        Assert.True(relayed.IsSuccess);
+        foreach (var text in new[] { fromPeer, continued })
+        {
+            var (trusted, refusal) = PushNoteCommandHandler.Pushes[text];
+            Assert.True(trusted);
+            Assert.Equal($"{nameof(PushedNote)} was pushed outside a Notification Handler's delivery. Push a realtime event from a Notification Handler, so it is sent with that delivery's commit.", refusal);
+        }
     }
 
     [Fact]
@@ -189,6 +220,10 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
     // A second instance of the Host, on the fixture's store; disposing it stops it.
     private Task<WebApplication> StartAsync(params string[] arguments) => StartAsync(null, arguments);
 
+    // Configured after the test delivery's Solo, so the composed instance runs as a Host does by default.
+    private static void Balanced(WebApplicationBuilder builder) =>
+        builder.Services.Configure<PouryaKitMessageStoreOptions>(store => store.Durability = DurabilityMode.Balanced);
+
     private async Task<WebApplication> StartAsync(Action<WebApplicationBuilder>? configure, params string[] arguments)
     {
         var host = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs, configure, arguments);
@@ -196,18 +231,20 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
         return host;
     }
 
+    // Waits for every delivery the pushes cause, so pushes of successive calls commit in their order.
     private async Task PushAsync(params DomainEvent[] raised)
     {
-        var written = await Fixture
-            .Gateway<StubModule>()
-            .SendAsync(new WriteNoteRaisingCommand($"note {Guid.CreateVersion7()}", raised), Cancellation);
+        var (written, _) = await Fixture.WaitForDeliveriesAsync(
+            () => Fixture.Gateway<StubModule>().SendAsync(new WriteNoteRaisingCommand($"note {Guid.CreateVersion7()}", raised), Cancellation),
+            Cancellation
+        );
         Assert.True(written.IsSuccess);
     }
 
     // Waits for the push's delivery, so pushes of successive calls commit in their order.
-    private async Task<Guid> CreateProductAsync(string tenant, string name)
+    private async Task<Guid> CreateProductAsync(string tenant, string name, IGatewayProcessor<CatalogModule>? through = null)
     {
-        var catalog = Fixture.Gateway<CatalogModule>();
+        var catalog = through ?? Fixture.Gateway<CatalogModule>();
         var context = new OperationContext(GatewayTestExtensions.TestActor, tenant);
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();

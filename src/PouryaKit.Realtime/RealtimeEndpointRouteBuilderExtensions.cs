@@ -20,7 +20,8 @@ public static class RealtimeEndpointRouteBuilderExtensions
         /// Kit's JSON, until the client disconnects or the Host stops. Map it from a Module's <c>IEndpoint</c>, whose route
         /// group requires an authenticated caller and begins the request's Operation: the tenant and the Actor are its
         /// <see cref="OperationContext"/>'s, and the connection is served by the request itself, never from inside a
-        /// Gateway call, so no Operation stays open while it lasts. A request that names no Channel is answered 400, and
+        /// Gateway call: streaming opens no Gateway scope and no Unit of Work, while the request's scope and its Operation
+        /// last until the connection ends. A request that names no Channel is answered 400, and
         /// one naming a Channel <paramref name="admits"/> refuses for the Actor 403, both as problem responses, before
         /// anything is streamed. A client a full buffer of 256 events behind is disconnected.
         /// </summary>

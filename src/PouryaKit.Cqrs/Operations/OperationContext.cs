@@ -1,3 +1,5 @@
+using PouryaKit.Domain;
+
 namespace PouryaKit.Cqrs;
 
 /// <summary>
@@ -67,6 +69,14 @@ public sealed record OperationContext
     public bool IsTrustedContinuation { get; private init; }
 
     /// <summary>
+    /// The Notification this Operation delivers to one Notification Handler, as the delivery step restored it with the
+    /// context; null in every other Operation, a context <see cref="Continue"/> gives included. A Kit package reads it to
+    /// allow what G.2 allows only in a Notification Handler's delivery, as the Integration Event publisher and the
+    /// realtime publisher do. The constructor never sets it.
+    /// </summary>
+    public DomainEvent? Notification { get; private init; }
+
+    /// <summary>
     /// The id the caller gave the request this Operation serves, which makes an outermost command that opts in with
     /// <see cref="IdempotentAttribute"/> idempotent; null otherwise. Whoever creates the context sets it: the HTTP
     /// boundary from the <c>Idempotency-Key</c> header of an endpoint that requires one, any other caller of a Gateway
@@ -94,7 +104,12 @@ public sealed record OperationContext
     // The one way to establish trust outside a running Operation, for Kit code that restores a context from material the
     // Kit wrote: delivery in PouryaKit.Messaging.Wolverine, and the trusted-peer binding of PouryaKit.Web, the two
     // assemblies this one's InternalsVisibleTo names. No public entry point could be callable by them and not by an
-    // application.
-    internal static OperationContext RestoreTrusted(Actor actor, string? tenant, Guid correlationId, Guid causationId) =>
-        new(actor, tenant, correlationId, causationId) { IsTrustedContinuation = true };
+    // application. A delivery to a Notification Handler restores the Notification it delivers too.
+    internal static OperationContext RestoreTrusted(
+        Actor actor,
+        string? tenant,
+        Guid correlationId,
+        Guid causationId,
+        DomainEvent? notification = null
+    ) => new(actor, tenant, correlationId, causationId) { IsTrustedContinuation = true, Notification = notification };
 }

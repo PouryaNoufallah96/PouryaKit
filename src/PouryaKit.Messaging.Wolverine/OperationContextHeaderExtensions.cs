@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using PouryaKit.Cqrs;
+using PouryaKit.Domain;
 using Wolverine;
 
 namespace PouryaKit.Messaging.Wolverine;
@@ -36,7 +37,8 @@ public static class OperationContextHeaderExtensions
     }
 
     // The context of the Operation a delivery runs: a trusted continuation of the one that published the message, with
-    // the same Actor, tenant and correlation, caused by it, and an OperationId of its own. Trusted because the Kit's
+    // the same Actor, tenant and correlation, caused by it, and an OperationId of its own, with the Notification a
+    // Notification Handler's delivery delivers, the Domain Event the envelope holds. Trusted because the Kit's
     // Outbox wrote these headers when that authorized Operation committed. Beside it, the trace context of the activity
     // current at publish: Wolverine's parent-id with the Kit's tracestate, default when the envelope names no parent. A
     // copy fanned out from another Host's message has no parent-id of its own unless Wolverine's span was current at the
@@ -67,7 +69,8 @@ public static class OperationContextHeaderExtensions
                 actor,
                 tenant,
                 Guid.Parse(Header(OperationContextHeaders.CorrelationId), CultureInfo.InvariantCulture),
-                Guid.Parse(Header(OperationContextHeaders.CausationId), CultureInfo.InvariantCulture)
+                Guid.Parse(Header(OperationContextHeaders.CausationId), CultureInfo.InvariantCulture),
+                envelope.Message as DomainEvent
             ),
             traceParent
         );

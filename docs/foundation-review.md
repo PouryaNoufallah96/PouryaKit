@@ -1031,6 +1031,8 @@ Answered by the owner on 2026-10-06:
    to any instance receives the event. Learn the `TypedResults.ServerSentEvents` endpoint shape;
    reject both references' process-local connection dictionaries. Feature code does not hold
    connections. No SignalR package and no second push channel. G.2's SSE sentence stays as it is.
+   *Built 2026-10-18 (#133): `PouryaKit.Realtime` references Web and Persistence.EFCore rather than Messaging, as
+   spec #115 places it; the I.3 Realtime row's dated note and ADR 0012 record what was built.*
 5. **Reporting and export:** follow Ultrabusiness's split into one optional renderer and one
    opt-in report Module that a Host registers once. The renderer covers layout primitives, fonts,
    branding, PDF, CSV and spreadsheets; concrete layouts stay in the adopting Module. The Module
@@ -1049,7 +1051,9 @@ Open for Wave 3 planning (recorded 2026-10-09 on the owner's word, not decided):
 written. A Notification is delivered to its handler once, on one instance, so reaching a client
 connected to another instance needs a delivery between instances that this plan does not name.
 Wave 3's spec names that mechanism, and how it fits "no second push channel", before
-`PouryaKit.Realtime` is built. Nothing of it is implemented.
+`PouryaKit.Realtime` is built. Nothing of it is implemented. *Answered 2026-10-18 (#133): spec #115's R1 named
+PostgreSQL `NOTIFY` on the delivery's own transaction, heard by one listener per instance, and read "no second push
+channel" against SignalR beside SSE; ADR 0012 records it as built.*
 
 Prerequisites for the Wave 3 spec, recorded 2026-10-10 (#89) from what Wave 2 built. Each restates I.3 rows against
 the code and names no new Capability:

@@ -216,3 +216,19 @@ begin-the-Operation convention instead of a second of each, so ticket #119 makes
   applies to each Module's group. A root group outside every Module's applies it the same way, and its endpoints get the
   same context, a trusted peer's continuation included; the trust rule and the header names are unchanged.
 - Proven by `WebConventionTests` ([acceptance](../acceptance.md#web-conventions-for-other-transports-ticket-119)).
+
+## Amendment (2026-10-18, ticket #133: the context records the Notification its delivery delivers)
+
+The decision above stands, and so do the #57, #48, #116 and #119 amendments. G.2 allows publishing an Integration Event
+and pushing a realtime event only in a Notification Handler's delivery, and `PouryaKit.Realtime` references no
+`PouryaKit.Messaging.Wolverine`, so the fact moves to the context both publishers can read.
+
+- **`OperationContext.Notification`** is the Domain Event a Notification Handler's delivery delivers, null in every other
+  context. Only `RestoreTrusted` sets it, from an optional argument the delivery step passes for a Notification, so Cqrs
+  still opens its internals for that restore alone; `Continue()` and a trusted peer's restore leave it null.
+- **One fact.** The Integration Event publisher's own record of the Domain Event it follows is gone: it and the realtime
+  publisher read `Notification`, so a command, a trusted peer's request or a command sent with `Continue()` publishes
+  and pushes nothing.
+- Proven by `RealtimeTests.A_trusted_peers_command_and_a_command_continued_through_the_gateway_cannot_push`, red with the
+  push let through for any trusted continuation in a Unit of Work, and by the Integration Event tests of the publisher's
+  refusals ([acceptance](../acceptance.md#realtime-ticket-133)).
