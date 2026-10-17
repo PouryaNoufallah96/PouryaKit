@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/PouryaKitAppName.Host/PouryaKitAppName.Host.csproj" />
+    <Project Path="src/PouryaKitAppName.ReverseProxy/PouryaKitAppName.ReverseProxy.csproj" />
     <Project Path="src/PouryaKitAppName.ServiceDefaults/PouryaKitAppName.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/src/Modules/">
