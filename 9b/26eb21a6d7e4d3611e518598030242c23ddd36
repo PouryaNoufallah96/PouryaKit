@@ -1,0 +1,107 @@
+docs/provenance/PouryaKit.ReverseProxy.md
+  s_b9a8adfb056e1c::t_12dbf0d3a4539d 1-29
+.agents/skills/pourya-kit/references/reverse-proxy.md
+  s_b9a8adfb056e1c::t_4541c9b9824443 1-87
+samples/ModularMonolith/src/ModularMonolith.ReverseProxy/Program.cs
+  s_b9a8adfb056e1c::t_93558fbca8dac4 1-7
+tests/ModularMonolith.Tests/Fixtures/RecordedTelemetry.cs
+  s_b9a8adfb056e1c::t_88cd156707b407 10-11
+  s_aa564eacc177e2::t_19ba2a1832fd04 26,31-33
+src/PouryaKit.ReverseProxy/ReverseProxyHostApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_61b4a5dfd40f31 1-41
+samples/ModularMonolith/src/ModularMonolith.ReverseProxy/appsettings.json
+  s_b9a8adfb056e1c::t_d6a0e7fb12b9ef 1-32
+samples/ModularMonolith/src/ModularMonolith.ReverseProxy/ModularMonolith.ReverseProxy.csproj
+  s_b9a8adfb056e1c::t_17105a8b24e9a0 1-16
+src/PouryaKit.ReverseProxy/LivenessProbe.cs
+  s_b9a8adfb056e1c::t_1b620446ad2cbe 1-25
+samples/ModularMonolith/src/ModularMonolith.ReverseProxy/ReverseProxyHost.cs
+  s_b9a8adfb056e1c::t_435bfaa5e97328 1-8,12-34
+  s_b9a8adfb056e1c::t_64f447c38b2f39 9-11
+src/PouryaKit.Templates/content/shared/src/ModularMonolith.ReverseProxy/ModularMonolith.ReverseProxy.csproj
+  s_b9a8adfb056e1c::t_b46526061ad9e7 1-8
+scripts/packaging/consumers/PouryaKit.ReverseProxy.cs
+  s_b9a8adfb056e1c::t_17c83c272ef8cd 1-13
+tests/ModularMonolith.Tests/ReverseProxyTests.cs
+  s_b9a8adfb056e1c::t_c363b0c4e9e544 1-41,43-44,46-49,51-56,59-202
+  s_b9a8adfb056e1c::t_af54faf05decbb 57-58
+  s_b9a8adfb056e1c::t_e969489444dc2c 42,45,50
+src/PouryaKit.Templates/content/shared/src/ModularMonolith.ReverseProxy/Program.cs
+  s_b9a8adfb056e1c::t_92b2e312fd987f 1-16
+src/PouryaKit.Templates/content/shared/src/ModularMonolith.ReverseProxy/appsettings.json
+  s_b9a8adfb056e1c::t_988ba9611e4762 1-27
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_e2c4a8b0fb586f 3,48
+.agents/skills/pourya-kit/references/observability.md
+  s_b9a8adfb056e1c::t_42b2dbabe65207 82-83
+.agents/skills/pourya-kit/references/templates.md
+  s_b9a8adfb056e1c::t_227b243ae36b58 25,105
+Directory.Packages.props
+  s_b9a8adfb056e1c::t_d3e68c06a64116 32,60
+GLOSSARY.md
+  s_b9a8adfb056e1c::t_213afc7fea39fb 55
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_033e86ff4ddfbd 20,35
+README.md
+  s_b9a8adfb056e1c::t_0f2b609ac6429f 28,32
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_b4028e3282910e 3,40,60-61,275-284
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_8db2f39b276326 412-413,466-467
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_e4c8968099f447 46-47,53,57-68,73,330-331,435,448-449,454,486,489,612,614-616
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_638114ddf9ca8d 290-291
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_51c92a2b4f1c37 360
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_83cfa8f0372fe4 111-144,337,399-406,502,511
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_23b34693335678 283,869
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_5ccca6e1a4b9d4 20,47,54
+src/PouryaKit.ReverseProxy/PouryaKit.ReverseProxy.csproj
+  s_b9a8adfb056e1c::t_e5e22c340e2c08 1-9
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_b9a8adfb056e1c::t_4927450766eb0f 15
+src/PouryaKit.Templates/content/modular/ModularMonolith.slnx
+  s_b9a8adfb056e1c::t_987ca7e3151986 4
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_b9a8adfb056e1c::t_b75513a975264a 14
+src/PouryaKit.Templates/content/monolith/ModularMonolith.slnx
+  s_b9a8adfb056e1c::t_3ab5aaab06d051 4
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_b9a8adfb056e1c::t_9adaeb5aba1622 31
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_5433cef710ea7d 83,108-109
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_b9a8adfb056e1c::t_12d55b89c7c84a 92-96
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_b9a8adfb056e1c::t_411450c6435fa0 22
+tests/PouryaKit.ArchitectureTests/SampleNamespaceTests.cs
+  s_b9a8adfb056e1c::t_369f80e02e3016 24-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9b26eb21a6d7e4d3611e518598030242c23ddd36",
+  "prompts": {},
+  "sessions": {
+    "s_aa564eacc177e2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a149f5-dcfb-7691-84cf-0f548051f2e1",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
