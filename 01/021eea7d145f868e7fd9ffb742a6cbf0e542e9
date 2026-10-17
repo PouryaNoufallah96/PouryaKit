@@ -1,0 +1,43 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3675ccfac3f8b2::t_eac65eaa1f2055 17
+.agents/skills/pourya-kit/SKILL.md
+  s_3675ccfac3f8b2::t_eac65eaa1f2055 45
+.agents/skills/pourya-kit/references/storage.md
+  s_3675ccfac3f8b2::t_eac65eaa1f2055 88
+.claude/rules/kit-code.md
+  s_3675ccfac3f8b2::t_eac65eaa1f2055 33
+.claude/agent-memory/kit-implementer/storage-and-s3-facts.md
+  s_3675ccfac3f8b2::t_eac65eaa1f2055 3,24-28
+  s_3675ccfac3f8b2::t_540358b1b9cb58 29
+docs/architecture/README.md
+  s_3675ccfac3f8b2::t_eac65eaa1f2055 250
+docs/provenance/PouryaKit.Storage.S3.md
+  s_3675ccfac3f8b2::t_eac65eaa1f2055 18
+Directory.Packages.props
+  s_3675ccfac3f8b2::t_eac65eaa1f2055 46
+tests/PouryaKit.Storage.Tests/PouryaKit.Storage.Tests.csproj
+  s_3675ccfac3f8b2::t_eac65eaa1f2055 8
+tests/PouryaKit.Storage.Tests/S3StoreFixture.cs
+  s_3675ccfac3f8b2::t_eac65eaa1f2055 1-71
+docs/acceptance.md
+  s_3675ccfac3f8b2::t_76df71cd70d591 2046-2047
+  s_3675ccfac3f8b2::t_eac65eaa1f2055 2030
+tests/PouryaKit.Storage.Tests/S3StorageTests.cs
+  s_3675ccfac3f8b2::t_eac65eaa1f2055 9-10,84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "01021eea7d145f868e7fd9ffb742a6cbf0e542e9",
+  "prompts": {},
+  "sessions": {
+    "s_3675ccfac3f8b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac47943a-b9db-418e-bbe8-b019d8372fcc",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
