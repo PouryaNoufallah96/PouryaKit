@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Email;
+using PouryaKit.Messaging;
 using PouryaKit.Modularity;
 using PouryaKit.Testing;
 
@@ -60,13 +61,17 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
     public async Task A_mail_whose_delivery_fails_after_sending_it_is_sent_again_by_the_retry()
     {
         var text = Unique();
+        var mailed = new NoteMailedThenFailingDomainEvent(Recipient, text);
+        var subscription = MessageNames.SubscriptionNameOf(typeof(MailNoteThenFailOnceNotificationHandler), typeof(NoteMailedThenFailingDomainEvent));
 
-        await Stub.SendAsync(
-            new WriteNoteRaisingCommand(text, [new NoteMailedThenFailingDomainEvent(Recipient, text)]),
-            TestContext.Current.CancellationToken
+        await Stub.SendAsync(new WriteNoteRaisingCommand(text, [mailed]), TestContext.Current.CancellationToken);
+
+        // The retry succeeded: its Receipt is committed, so the delivery is over and no further attempt sends again.
+        await mail.WaitUntilAsync(
+            $"exists (select from stub.pouryakit_receipts where subscription = '{subscription}' and message_id = '{mailed.Id}')",
+            "The retried delivery committed no Receipt."
         );
-
-        Assert.Equal(2, (await mail.WaitForMailsAsync(text, 2)).Count);
+        Assert.Equal(2, (await mail.MailsAsync(text)).Count);
     }
 
     [Fact]
@@ -79,6 +84,20 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
 
         Assert.Equal(EmailErrors.InvalidAddress, Assert.Single(sent.Errors));
         Assert.Empty(await mail.MailsAsync(text));
+    }
+
+    [Fact]
+    public async Task A_host_whose_email_security_is_not_a_secure_socket_option_fails_to_start_naming_the_option()
+    {
+        // The binder reads a number into the enum; MailKit would connect in plain SMTP for an undefined value.
+        await using var host = AppFixture.ComposeHost("Development", app.ConnectionString, new RecordedLogs(), null, "--PouryaKit:Email:Security=99");
+
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(
+            "PouryaKitMailKitOptions.Security is not a SecureSocketOptions value; set None, Auto, SslOnConnect, StartTls or StartTlsWhenAvailable.",
+            Assert.Single(thrown.Failures)
+        );
     }
 
     [Fact]

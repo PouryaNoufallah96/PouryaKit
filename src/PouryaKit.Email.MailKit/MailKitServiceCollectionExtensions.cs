@@ -15,8 +15,9 @@ public static class MailKitServiceCollectionExtensions
         /// is set, sends and disconnects. The Host binds the options from its configuration, as with
         /// <c>Configure&lt;PouryaKitMailKitOptions&gt;(configuration.GetSection("PouryaKit:Email"))</c>, and fails when it
         /// starts, naming the option, when <see cref="PouryaKitMailKitOptions.Host"/> is blank, the port is not one,
-        /// <see cref="PouryaKitMailKitOptions.From"/> is not a mailbox address with a domain, or only one of the user
-        /// name and password is set. Call it once.
+        /// <see cref="PouryaKitMailKitOptions.From"/> is not a mailbox address with a domain,
+        /// <see cref="PouryaKitMailKitOptions.Security"/> is not a defined value, which MailKit would treat as plain SMTP,
+        /// or only one of the user name and password is set. Call it once.
         /// </summary>
         public IServiceCollection AddPouryaKitMailKit()
         {
@@ -34,6 +35,10 @@ public static class MailKitServiceCollectionExtensions
                 .Validate(
                     mail => MailKitEmailSender.TryParseMailbox(mail.From, out _),
                     "PouryaKitMailKitOptions.From is not a mailbox address with a domain; set the address the Host's email is sent from."
+                )
+                .Validate(
+                    mail => Enum.IsDefined(mail.Security),
+                    "PouryaKitMailKitOptions.Security is not a SecureSocketOptions value; set None, Auto, SslOnConnect, StartTls or StartTlsWhenAvailable."
                 )
                 .Validate(
                     mail => string.IsNullOrEmpty(mail.UserName) == string.IsNullOrEmpty(mail.Password),

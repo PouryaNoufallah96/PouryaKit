@@ -16,6 +16,7 @@ public sealed class MailFixture(AppFixture app) : IAsyncLifetime
     private readonly PapercutContainer _papercut = new PapercutBuilder("changemakerstudiosus/papercut-smtp:7.8.0").Build();
     private HttpClient? _api;
     private WebApplication? _host;
+    private string? _connectionString;
 
     /// <summary>The started application, whose <c>IEmailSender</c> sends to Papercut.</summary>
     public WebApplication Host => _host ?? throw new InvalidOperationException("The Host starts in InitializeAsync.");
@@ -26,9 +27,10 @@ public sealed class MailFixture(AppFixture app) : IAsyncLifetime
         _api = new HttpClient { BaseAddress = new Uri(_papercut.GetBaseAddress()) };
         var database = $"mail_{Guid.CreateVersion7():N}";
         await app.RowsAsync($"create database {database}");
+        _connectionString = new NpgsqlConnectionStringBuilder(app.ConnectionString) { Database = database }.ConnectionString;
         _host = AppFixture.ComposeHost(
             "Development",
-            new NpgsqlConnectionStringBuilder(app.ConnectionString) { Database = database }.ConnectionString,
+            _connectionString,
             new RecordedLogs(),
             null,
             $"--PouryaKit:Email:Host={_papercut.Hostname}",
@@ -37,6 +39,10 @@ public sealed class MailFixture(AppFixture app) : IAsyncLifetime
         );
         await HostFixture.StartHostAsync(_host, TestContext.Current.CancellationToken);
     }
+
+    /// <summary>Waits until the SQL <paramref name="condition"/> holds on the application's database; fails after 30 s.</summary>
+    public Task WaitUntilAsync(string condition, string because) =>
+        Sql.WaitUntilAsync(_connectionString ?? throw new InvalidOperationException("The database is created in InitializeAsync."), condition, because, 30);
 
     /// <summary>Every mail Papercut has received with the subject <paramref name="subject"/>, read through its API.</summary>
     public async Task<IReadOnlyList<ReceivedMail>> MailsAsync(string subject)

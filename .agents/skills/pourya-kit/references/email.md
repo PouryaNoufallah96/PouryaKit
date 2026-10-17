@@ -33,7 +33,7 @@ builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSec
 
 - `AddPouryaKitMailKit()` registers the Host's one `IEmailSender`, a singleton. Call it once. A Module references only `PouryaKit.Email` and never names MailKit.
 - `PouryaKitMailKitOptions`: `Host` and `From` are required; `Port` is 587 by default; `Security` is MailKit's `SecureSocketOptions`, `StartTls` by default, which refuses a server that offers no TLS (set `None` only for a local test server such as Papercut); `UserName` and `Password` are set together, or neither to send unauthenticated.
-- The Host fails when it starts, naming the option, when `Host` is blank (`PouryaKitMailKitOptions.Host names no SMTP server; …`), the port is outside 1 to 65535, `From` is not a mailbox address with a domain, or only one of `UserName` and `Password` is set.
+- The Host fails when it starts, naming the option, when `Host` is blank (`PouryaKitMailKitOptions.Host names no SMTP server; …`), the port is outside 1 to 65535, `From` is not a mailbox address with a domain, `Security` is not a defined `SecureSocketOptions` value (a number such as `99` binds, and MailKit would connect in plain SMTP for it), or only one of `UserName` and `Password` is set.
 - Each send connects to the server, authenticates when a user name is set, sends and disconnects, on a client of its own: concurrent sends never wait for each other, and no idle connection is held for the server to drop. Spec #115 let ticket #124 choose this over one connected client guarded for one send at a time.
 
 ## Sending from a Notification Handler
@@ -63,7 +63,7 @@ internal sealed class WelcomeCustomerNotificationHandler(IEmailSender email)
 ## What the Kit guarantees
 
 - **A rolled-back Operation sends no mail.** Its Domain Events never reach the Outbox, so no Notification Handler runs for them (G.2).
-- **A committed Operation's mail is sent at least once**, by its Notification Handler's delivery, retried until it succeeds or is set aside.
+- **A committed Operation's mail is attempted by a durable delivery**: its Notification Handler's delivery is retried with the Host's bounded retries and then set aside as a dead letter. The server's acceptance is not guaranteed, and a send that succeeded may repeat (below).
 - **The options are checked before the Host serves**, not at the first send.
 
 ## Limits
