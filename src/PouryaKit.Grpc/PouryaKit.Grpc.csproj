@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Not the Grpc.AspNetCore metapackage: it carries Grpc.Tools with include="All" into every consumer. A project that
+         compiles a .proto references Grpc.Tools itself, with private assets. -->
+    <PackageReference Include="Grpc.AspNetCore.Server" />
+    <PackageReference Include="Grpc.Net.ClientFactory" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PouryaKit.Web\PouryaKit.Web.csproj" />
+  </ItemGroup>
+</Project>

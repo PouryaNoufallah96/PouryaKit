@@ -56,14 +56,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 77,
-          "end_line": 88,
+          "line": 78,
+          "end_line": 89,
           "label": "composes the Modules"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 34,
-          "end_line": 41,
+          "line": 35,
+          "end_line": 42,
           "label": "the broker and its service name"
         },
         {
@@ -186,8 +186,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 28,
-          "end_line": 50,
+          "line": 29,
+          "end_line": 53,
           "label": "publishes v1, v2 and the Snapshot"
         },
         {
@@ -199,7 +199,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj",
           "line": 8,
-          "end_line": 19,
+          "end_line": 20,
           "label": "its Contracts and Kit packages"
         }
       ]
@@ -283,8 +283,8 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj",
           "line": 1,
-          "end_line": 5,
-          "label": "plain records, no references"
+          "end_line": 14,
+          "label": "records and a .proto, no Kit"
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/ICatalogProducts.cs",
@@ -311,7 +311,7 @@
         {
           "path": "src/PouryaKit.Templates/PouryaKit.Templates.csproj",
           "line": 18,
-          "end_line": 31,
+          "end_line": 32,
           "label": "packs the sample's code when packed"
         },
         {

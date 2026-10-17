@@ -2,4 +2,13 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Core.Api" />
+    <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The contract both sides compile: Catalog's service base and another Host's client. -->
+    <Protobuf Include="Products/products.proto" />
+  </ItemGroup>
 </Project>

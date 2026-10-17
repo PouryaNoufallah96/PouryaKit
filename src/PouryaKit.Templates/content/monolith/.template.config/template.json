@@ -67,7 +67,7 @@
       "source": "../sample/",
       "target": "src/",
       "include": ["Modules/Catalog/**/*", "ModularMonolith.Host/**/*", "ModularMonolith.ServiceDefaults/**/*"],
-      "exclude": ["**/*Module.cs", "**/*Endpoint.cs", "**/CatalogProducts.cs"]
+      "exclude": ["**/*Module.cs", "**/*Endpoint.cs", "**/*GrpcService.cs", "**/CatalogProducts.cs"]
     }
   ],
   "primaryOutputs": [

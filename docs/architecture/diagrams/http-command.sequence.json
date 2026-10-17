@@ -34,8 +34,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 44,
-          "end_line": 44,
+          "line": 45,
+          "end_line": 45,
           "label": "Catalog's routes under /catalog"
         }
       ]
@@ -48,8 +48,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 115,
-          "end_line": 127,
+          "line": 116,
+          "end_line": 128,
           "label": "the order of the Host's middleware"
         },
         {

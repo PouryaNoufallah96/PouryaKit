@@ -4,6 +4,7 @@ using Catalog.Products.Events.Notifications;
 using Inventory;
 using PouryaKit.Caching;
 using PouryaKit.Cqrs;
+using PouryaKit.Grpc;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
@@ -94,6 +95,8 @@ public static class AppHost
         // After authorization: it partitions by the authenticated Actor.
         app.UseRateLimiter();
         app.MapPouryaKitModuleEndpoints();
+        // The Modules' gRPC services, at the root: authenticated, and each call an Operation, as the endpoints are.
+        app.MapPouryaKitGrpcServices();
         // /alive in every environment, for an orchestrator's liveness probe: anonymous, outside the rate limit, and with no
         // request timeout or output cache, since it asks nothing outside the process. /health, which asks each database, and
         // the OpenAPI documents with their Scalar reference are for developers: mapped in Development only, and public there.

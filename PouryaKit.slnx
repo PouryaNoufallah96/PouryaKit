@@ -6,6 +6,7 @@
     <Project Path="src/PouryaKit.Domain/PouryaKit.Domain.csproj" />
     <Project Path="src/PouryaKit.Email/PouryaKit.Email.csproj" />
     <Project Path="src/PouryaKit.Email.MailKit/PouryaKit.Email.MailKit.csproj" />
+    <Project Path="src/PouryaKit.Grpc/PouryaKit.Grpc.csproj" />
     <Project Path="src/PouryaKit.Localization/PouryaKit.Localization.csproj" />
     <Project Path="src/PouryaKit.Messaging/PouryaKit.Messaging.csproj" />
     <Project Path="src/PouryaKit.Messaging.Wolverine.RabbitMq/PouryaKit.Messaging.Wolverine.RabbitMq.csproj" />

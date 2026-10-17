@@ -87,7 +87,7 @@ public sealed class TemplateTests
             .ToList();
 
         Assert.Empty(MirrorDifferences(replacements, PackedSample));
-        Assert.Equal(6, replacements.Count);
+        Assert.Equal(7, replacements.Count);
         var module = replacements.Single(file => file.Path.EndsWith("/CatalogModule.cs", StringComparison.Ordinal));
         var create = replacements.Single(file => file.Path.EndsWith("/CreateProductEndpoint.cs", StringComparison.Ordinal));
         var rename = replacements.Single(file => file.Path.EndsWith("/RenameProductEndpoint.cs", StringComparison.Ordinal));
@@ -142,7 +142,7 @@ public sealed class TemplateTests
         var monolith = Own(Monolith).Single(file => file.Text.Contains("app.UseRouting();", StringComparison.Ordinal));
         Assert.Equal(
             [
-                $"{monolith.Path} builds its pipeline with UseExceptionHandler, UseRouting, UseCors, UseAuthorization, UseAuthentication, UseRateLimiter, MapPouryaKitModuleEndpoints, MapPouryaKitOpenApi; the sample's ModularMonolith.Host/ModularMonolithHost.cs with UseExceptionHandler, UseRouting, UseCors, UseAuthentication, UseAuthorization, UseRateLimiter, MapPouryaKitModuleEndpoints, MapPouryaKitOpenApi.",
+                $"{monolith.Path} builds its pipeline with UseExceptionHandler, UseRouting, UseCors, UseAuthorization, UseAuthentication, UseRateLimiter, MapPouryaKitModuleEndpoints, MapPouryaKitGrpcServices, MapPouryaKitOpenApi; the sample's ModularMonolith.Host/ModularMonolithHost.cs with UseExceptionHandler, UseRouting, UseCors, UseAuthentication, UseAuthorization, UseRateLimiter, MapPouryaKitModuleEndpoints, MapPouryaKitGrpcServices, MapPouryaKitOpenApi.",
             ],
             PipelineDifferences(
                 monolith with

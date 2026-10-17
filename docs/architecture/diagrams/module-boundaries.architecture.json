@@ -28,8 +28,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 78,
-          "end_line": 88,
+          "line": 79,
+          "end_line": 89,
           "label": "adds each Module"
         },
         {
@@ -102,8 +102,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 26,
-          "end_line": 50,
+          "line": 27,
+          "end_line": 53,
           "label": "declares data, Features, publications"
         },
         {
@@ -199,7 +199,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj",
           "line": 8,
-          "end_line": 19,
+          "end_line": 20,
           "label": "its Contracts and Kit packages"
         },
         {
@@ -261,8 +261,8 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj",
           "line": 1,
-          "end_line": 5,
-          "label": "no reference at all"
+          "end_line": 14,
+          "label": "Protobuf packages only, no Kit"
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/ICatalogProducts.cs",
@@ -357,7 +357,7 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 84,
+          "end_line": 86,
           "label": "the allowed references"
         },
         {
