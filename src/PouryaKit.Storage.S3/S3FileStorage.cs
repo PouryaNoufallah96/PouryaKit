@@ -103,6 +103,7 @@ internal sealed class S3FileStorage : IFileStorage, IDisposable
 
     public void Dispose() => _client.Dispose();
 
-    // The longest a link signed with Signature Version 4 is valid for, and so S3's maximum.
+    // The longest a link signed with Signature Version 4 is valid for, and so S3's maximum. A link signed with temporary
+    // credentials, an instance or task role's from the SDK's default chain, expires with them sooner, as AWS documents.
     private static readonly TimeSpan MaxLinkLifetime = TimeSpan.FromDays(7);
 }

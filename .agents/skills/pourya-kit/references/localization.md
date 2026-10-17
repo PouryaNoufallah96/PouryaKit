@@ -54,7 +54,7 @@ internal sealed class GreetQueryHandler(IStringLocalizer<GreetingMessages> messa
 
 ## What the Kit guarantees
 
-- A request whose `Accept-Language` header names Persian, `fa` or a regional variant such as `fa-IR`, first among the cultures the Host supports, wherever it stands in the header's list, runs in Persian, and its Feature's localizer reads the Persian message; a request with no header, `en` or a culture the Host does not support runs in English. The header is the only source: no query string or cookie changes the culture.
+- A request whose `Accept-Language` header names Persian, `fa` or a regional variant such as `fa-IR`, first among the cultures the Host supports in the first 16 values of the header's list, runs in Persian, and its Feature's localizer reads the Persian message; a request with no header, `en` or a culture the Host does not support runs in English, and so does one that names Persian only after 16 other values: the provider tries 16, not the framework's default of three, and the bound keeps a long header from costing a lookup per value. The header is the only source: no query string or cookie changes the culture.
 - The culture flows through the Gateway into the Operation's handlers, which run in the request's culture.
 - A cached query ([caching.md](caching.md)) is stored per UI culture, so each culture's callers read their own answer.
 - The Kit's own Error messages stay English in every culture.

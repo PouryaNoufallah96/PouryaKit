@@ -7,8 +7,9 @@ using Microsoft.Extensions.Options;
 namespace PouryaKit.Localization;
 
 // The request culture of every request, set by a startup filter ahead of every middleware the application adds, so its
-// exception handler and endpoints run in it: the first of English and Persian the Accept-Language header names, English
-// when it names neither or is missing. The header is the only provider, so no query string or cookie changes it.
+// exception handler and endpoints run in it: the first of English and Persian among the first 16 values the
+// Accept-Language header lists, English when they name neither or it is missing. The header is the only provider, so no
+// query string or cookie changes it.
 internal sealed class HeaderRequestCulture : IConfigureOptions<RequestLocalizationOptions>, IStartupFilter
 {
     private static readonly CultureInfo English = CultureInfo.GetCultureInfo("en");
@@ -19,8 +20,9 @@ internal sealed class HeaderRequestCulture : IConfigureOptions<RequestLocalizati
         options.DefaultRequestCulture = new RequestCulture(English);
         options.SupportedCultures = [English, Persian];
         options.SupportedUICultures = [English, Persian];
-        // Every value the header lists is tried, not the framework's first three, so Persian is found wherever it stands.
-        options.RequestCultureProviders = [new AcceptLanguageHeaderRequestCultureProvider { MaximumAcceptLanguageHeaderValuesToTry = 0 }];
+        // The first 16 values the header lists are tried, not the framework's first three, so Persian is found behind a
+        // browser's usual list; still a bound, as the framework's is, on the cultures a long header makes a request try.
+        options.RequestCultureProviders = [new AcceptLanguageHeaderRequestCultureProvider { MaximumAcceptLanguageHeaderValuesToTry = 16 }];
     }
 
     public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) =>

@@ -26,8 +26,9 @@ public interface IFileStorage
     Task<Result> DeleteAsync(string key, CancellationToken cancellationToken);
 
     /// <summary>
-    /// A link that reads the file under <paramref name="key"/> without credentials for <paramref name="lifetime"/>. The
-    /// store is not asked whether the file exists: a link to a missing file answers not found when it is followed.
+    /// A link that reads the file under <paramref name="key"/> without credentials for <paramref name="lifetime"/>, and
+    /// at most the lifetime of the credentials that signed it: a link signed with temporary credentials, such as an
+    /// instance role's, stops working when they expire, whatever lifetime was asked for. The store is not asked whether the file exists: a link to a missing file answers not found when it is followed.
     /// <see cref="StorageErrors.LinkLifetimeOutOfRange"/> when <paramref name="lifetime"/> is zero or less, or longer than
     /// the provider signs a link for.
     /// </summary>

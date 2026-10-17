@@ -318,16 +318,112 @@ internal static partial class ModuleRules
     ];
 
     /// <summary>
-    /// The tables of <paramref name="model"/> that hold one tenant's rows per row, as <c>schema.table</c>, each with its
-    /// tenant column: every table an <c>ITenantScoped</c> entity type maps.
+    /// The tables of <paramref name="model"/> that hold one tenant's rows per row, as <c>schema.table</c>: every table an
+    /// <c>ITenantScoped</c> entity type maps, with its tenant column, and every table of a part a navigation holds in a
+    /// tenant-scoped aggregate, a part of a part too, with its keys to the tables that hold it, as the Kit's query filter
+    /// finds them (#153): a key to the part's own type, or to the table it shares with its holder, holds nothing. A type
+    /// derived from a part and mapped to a table of its own (TPT) is a part of its base type's table, which its primary
+    /// key joins; a derived type that shares its base type's table adds none. Each further table any of these entity types
+    /// splits into (<c>SplitToTable</c>) is a part of the entity type's own table, which its primary key joins.
     /// </summary>
-    public static IEnumerable<KeyValuePair<string, string>> TenantTablesOf(IModel model) =>
+    public static IEnumerable<KeyValuePair<string, TenantTable>> TenantTablesOf(IModel model) =>
         from entityType in model.GetEntityTypes()
-        where entityType.ClrType.IsAssignableTo(typeof(ITenantScoped)) && entityType.GetTableName() is not null
-        select KeyValuePair.Create(
-            $"{entityType.GetSchema() ?? model.GetDefaultSchema()}.{entityType.GetTableName()}".ToLowerInvariant(),
-            entityType.FindProperty(nameof(ITenantScoped.Tenant))!.GetColumnName().ToLowerInvariant()
+        where entityType.GetTableName() is not null && (entityType.BaseType is null || TableOf(entityType.BaseType) != TableOf(entityType))
+        let tenantScoped = entityType.ClrType.IsAssignableTo(typeof(ITenantScoped))
+        let holders = tenantScoped ? [] : HolderKeysOf(entityType)
+        where tenantScoped || holders.Count > 0
+        let primaryKey = entityType.FindPrimaryKey()!.Properties
+        from table in entityType
+            .GetMappingFragments(StoreObjectType.Table)
+            .Select(fragment =>
+                KeyValuePair.Create(
+                    $"{fragment.StoreObject.Schema ?? model.GetDefaultSchema()}.{fragment.StoreObject.Name}".ToLowerInvariant(),
+                    new TenantTable(null, [new HolderKey(TableOf(entityType), ColumnsIn(fragment.StoreObject, primaryKey, entityType, primaryKey)!)])
+                )
+            )
+            .Prepend(
+                KeyValuePair.Create(
+                    TableOf(entityType),
+                    new TenantTable(
+                        tenantScoped ? entityType.FindProperty(nameof(ITenantScoped.Tenant))!.GetColumnName().ToLowerInvariant() : null,
+                        holders
+                    )
+                )
+            )
+        select table;
+
+    /// <summary>
+    /// A table that holds one tenant's rows per row: an <c>ITenantScoped</c> entity's, with its <paramref name="Tenant"/>
+    /// column, or a part's, with no tenant column and its keys to the tables that hold it, <paramref name="Holders"/>.
+    /// </summary>
+    internal sealed record TenantTable(string? Tenant, IReadOnlyList<HolderKey> Holders);
+
+    /// <summary>A part's key to the <paramref name="Holder"/> table: each of its columns with the holder's column it names.</summary>
+    internal sealed record HolderKey(string Holder, IReadOnlyList<(string Column, string HolderColumn)> Columns);
+
+    private static string TableOf(IReadOnlyEntityType entityType) =>
+        $"{entityType.GetSchema() ?? entityType.Model.GetDefaultSchema()}.{entityType.GetTableName()}".ToLowerInvariant();
+
+    // A part's keys to its holders whose columns its own table holds, those its base type declares included; a type
+    // mapped to a table of its own below a part (TPT) keeps them in its base type's table, which its primary key joins.
+    private static List<HolderKey> HolderKeysOf(IReadOnlyEntityType part)
+    {
+        List<HolderKey> keys =
+        [
+            .. from foreignKey in part.GetForeignKeys()
+            where foreignKey.PrincipalToDependent is not null
+                && foreignKey.PrincipalEntityType.GetRootType() != part.GetRootType()
+                && TableOf(foreignKey.PrincipalEntityType) != TableOf(part)
+                && InTenantScopedAggregate(foreignKey.PrincipalEntityType, [])
+            let columns = ColumnsIn(StoreOf(part), foreignKey.Properties, foreignKey.PrincipalEntityType, foreignKey.PrincipalKey.Properties)
+            where columns is not null
+            select new HolderKey(TableOf(foreignKey.PrincipalEntityType), columns),
+        ];
+        if (
+            part.BaseType is { } baseType
+            && baseType.GetTableName() is not null
+            && TableOf(baseType) != TableOf(part)
+            && HolderKeysOf(baseType).Count > 0
+            && ColumnsIn(StoreOf(part), part.FindPrimaryKey()!.Properties, baseType, part.FindPrimaryKey()!.Properties) is { } toBase
+        )
+        {
+            keys.Add(new HolderKey(TableOf(baseType), toBase));
+        }
+
+        return keys;
+    }
+
+    private static StoreObjectIdentifier StoreOf(IReadOnlyEntityType entityType) => StoreObjectIdentifier.Table(entityType.GetTableName()!, entityType.GetSchema());
+
+    // Each of `columns` in `partTable` with its holder column in `holder`'s table; null when either table lacks one.
+    private static List<(string Column, string HolderColumn)>? ColumnsIn(
+        StoreObjectIdentifier partTable,
+        IReadOnlyList<IReadOnlyProperty> columns,
+        IReadOnlyEntityType holder,
+        IReadOnlyList<IReadOnlyProperty> holderColumns
+    )
+    {
+        var holderTable = StoreOf(holder);
+        var pairs = columns.Zip(holderColumns, (column, holderColumn) => (column.GetColumnName(partTable), holderColumn.GetColumnName(holderTable))).ToList();
+        return pairs.All(pair => pair is (not null, not null))
+            ? [.. pairs.Select(pair => (pair.Item1!.ToLowerInvariant(), pair.Item2!.ToLowerInvariant()))]
+            : null;
+    }
+
+    // The holder is tenant-scoped, or a part held, through a navigation, by one that is: PouryaKitModelConvention's walk.
+    private static bool InTenantScopedAggregate(IReadOnlyEntityType holder, HashSet<IReadOnlyEntityType> seen) =>
+        holder.ClrType.IsAssignableTo(typeof(ITenantScoped))
+        || (
+            !holder.ClrType.IsAssignableTo(typeof(IAggregateRoot))
+            && seen.Add(holder)
+            && holder.GetForeignKeys().Any(foreignKey => foreignKey.PrincipalToDependent is not null && InTenantScopedAggregate(foreignKey.PrincipalEntityType, seen))
         );
+
+    // The tenant-scoped tables `table` is held under: itself when it is one, else those its holders are held under.
+    private static IEnumerable<string> RootsOf(string table, IReadOnlyDictionary<string, TenantTable> tenantTables) =>
+        tenantTables[table].Tenant is not null
+            ? [table]
+            : tenantTables[table].Holders.Where(key => tenantTables.ContainsKey(key.Holder)).SelectMany(key => RootsOf(key.Holder, tenantTables)).Distinct();
 
     /// <summary>
     /// Spec #115, Multi-tenancy: Dapper runs exactly the SQL a Feature writes, so in a tenant-scoped Module a string literal
@@ -336,9 +432,13 @@ internal static partial class ModuleRules
     /// [ORDER BY list] [LIMIT @p | n] [OFFSET @p | n]</c>, and every other shape is rejected. An item is
     /// <c>[schema.]table [[AS] alias]</c> with nothing after it; no <c>SELECT</c>, <c>TABLE</c> or set operator appears
     /// anywhere else; a condition or a conjunct has no <c>OR</c> or <c>CASE</c> outside parentheses (a <c>BETWEEN</c> takes
-    /// the <c>AND</c> after it); and each tenant-scoped item has a conjunct that is exactly <c>alias.tenant = @Tenant</c>,
-    /// or, for an item with no alias, qualified by its table with or without its schema, or unqualified when the
-    /// <c>FROM</c> has that one item. The tokeniser rejects a block comment, a <c>$</c>, a backslash and a character it
+    /// the <c>AND</c> after it); each item of an <c>ITenantScoped</c> table has a conjunct that is exactly
+    /// <c>alias.tenant = @Tenant</c>, or, for an item with no alias, qualified by its table with or without its schema, or
+    /// unqualified when the <c>FROM</c> has that one item; and each item of a part's table, which has no tenant column, is
+    /// joined to an item of its holder's table that is held in turn, up to a tenant-scoped item so held: by a conjunct
+    /// <c>part.column = holder.column</c>, both qualified, for every column of one of its keys to that holder, in the
+    /// <c>ON</c> condition of the part, or of the holder when the holder comes later by no <c>LEFT JOIN</c>, which would
+    /// keep every row of the part. The tokeniser rejects a block comment, a <c>$</c>, a backslash and a character it
     /// does not classify. A literal reads a tenant-scoped table when its text, comments and quotes included, names one and
     /// holds a SQL command word, <c>from</c> or <c>join</c> (so a route or a permission named after a table is no SQL); a
     /// <c>U&amp;</c> identifier may name any of them. A literal that writes a tenant-scoped table is left to
@@ -348,7 +448,7 @@ internal static partial class ModuleRules
     /// of which none holds both a SQL word and the table's name; a read through a view or a function; and whether
     /// <c>@Tenant</c> holds the Operation's tenant, which the Gateway tests show.
     /// </summary>
-    public static IEnumerable<string> ReadsBeyondTheTenant(Assembly module, IReadOnlyDictionary<string, string> tenantTables) =>
+    public static IEnumerable<string> ReadsBeyondTheTenant(Assembly module, IReadOnlyDictionary<string, TenantTable> tenantTables) =>
         (
             from literal in Il.LiteralsIn(module)
             where !IsMigration(literal.Owner)
@@ -358,7 +458,7 @@ internal static partial class ModuleRules
         ).Distinct();
 
     /// <summary>The tenant-scoped tables <paramref name="sql"/> reads, as <see cref="ReadsBeyondTheTenant"/> finds them.</summary>
-    public static IEnumerable<string> TenantTablesReadBy(string sql, IReadOnlyDictionary<string, string> tenantTables)
+    public static IEnumerable<string> TenantTablesReadBy(string sql, IReadOnlyDictionary<string, TenantTable> tenantTables)
     {
         if (!SqlWord().IsMatch(sql))
         {
@@ -378,7 +478,7 @@ internal static partial class ModuleRules
     /// Why <paramref name="sql"/>, which reads a tenant-scoped table, breaks the shape <see cref="ReadsBeyondTheTenant"/>
     /// holds it to; null when it keeps to it or reads no such table.
     /// </summary>
-    public static string? TenantReadFault(string sql, IReadOnlyDictionary<string, string> tenantTables)
+    public static string? TenantReadFault(string sql, IReadOnlyDictionary<string, TenantTable> tenantTables)
     {
         if (!TenantTablesReadBy(sql, tenantTables).Any() || TablesWrittenBy(sql).Any(table => TenantTableNamed(table, tenantTables) is not null))
         {
@@ -392,7 +492,7 @@ internal static partial class ModuleRules
     private const string Unread = "a shape the rule does not read";
 
     // The tenant-scoped table `name` is, `schema.table` or a table of that name in any schema; null when it is none.
-    private static string? TenantTableNamed(string name, IReadOnlyDictionary<string, string> tenantTables) =>
+    private static string? TenantTableNamed(string name, IReadOnlyDictionary<string, TenantTable> tenantTables) =>
         name.Contains('.')
             ? tenantTables.ContainsKey(name) ? name : null
             : tenantTables.Keys.FirstOrDefault(table => table.EndsWith($".{name}", StringComparison.Ordinal));
@@ -420,13 +520,13 @@ internal static partial class ModuleRules
         // Words that end a WHERE or an ORDER BY list outside parentheses.
         private static readonly HashSet<string> WhereEnds = ["group", "having", "window", "order", "limit", "offset", "fetch", "for"];
 
-        private readonly IReadOnlyDictionary<string, string> _tenantTables;
+        private readonly IReadOnlyDictionary<string, TenantTable> _tenantTables;
         private readonly SqlToken[] _tokens;
         private readonly int[] _depths;
         private readonly List<FromItem> _items = [];
         private int _at;
 
-        public TenantSelect(IReadOnlyList<SqlToken> tokens, IReadOnlyDictionary<string, string> tenantTables)
+        public TenantSelect(IReadOnlyList<SqlToken> tokens, IReadOnlyDictionary<string, TenantTable> tenantTables)
         {
             _tenantTables = tenantTables;
             var last = tokens.Count;
@@ -501,6 +601,7 @@ internal static partial class ModuleRules
         private string? From()
         {
             var joined = false;
+            var left = false;
             while (true)
             {
                 if (Item() is { } itemFault)
@@ -529,6 +630,8 @@ internal static partial class ModuleRules
                     {
                         return conditionFault;
                     }
+
+                    _items[^1] = item with { Left = left, On = [.. Conjuncts(start, _at)] };
                 }
 
                 if (AtEnd || (Next.Kind == SqlTokenKind.Word && WhereEnds.Contains(Next.Name)))
@@ -550,11 +653,13 @@ internal static partial class ModuleRules
                 else if (Next.Is("join"))
                 {
                     joined = true;
+                    left = false;
                     _at++;
                 }
                 else if ((Next.Is("inner") || Next.Is("left")) && Peek(1).Is("join"))
                 {
                     joined = true;
+                    left = Next.Is("left");
                     _at += 2;
                 }
                 else
@@ -620,7 +725,7 @@ internal static partial class ModuleRules
                 return whereFault;
             }
 
-            var conjuncts = Conjuncts(start, _at).Select(TenantConjunct.Of).OfType<TenantConjunct>().ToArray();
+            var conjuncts = Conjuncts(start, _at).Select(TenantColumnOf).OfType<Column>().ToArray();
             if (Next.Is("order") && Peek(1).Is("by"))
             {
                 _at += 2;
@@ -645,24 +750,78 @@ internal static partial class ModuleRules
                 return $"has {Shown(Next)} after its WHERE, {Unread}";
             }
 
-            foreach (var item in _items)
+            // Each tenant-scoped item is held by its conjunct; then each part joined to a held item of its holder, until
+            // no more parts are held, so a part of a part follows its holder.
+            var held = new bool[_items.Count];
+            for (var at = 0; at < _items.Count; at++)
             {
-                if (TenantTableNamed(item.Table, _tenantTables) is not { } table)
-                {
-                    continue;
-                }
+                held[at] = TableAt(at) is { } table
+                    && _tenantTables[table].Tenant is { } column
+                    && conjuncts.Any(conjunct =>
+                        conjunct.Name == column && (conjunct.Qualifier is { } qualifier ? NamesOf(at).Contains(qualifier) : _items.Count == 1)
+                    );
+            }
 
-                string[] names = item.Alias is { } alias ? [alias] : [item.Table[(item.Table.IndexOf('.') + 1)..], table];
-                if (!conjuncts.Any(conjunct =>
-                        conjunct.Column == _tenantTables[table] && (conjunct.Qualifier is { } qualifier ? names.Contains(qualifier) : _items.Count == 1)
-                    ))
+            for (var found = true; found;)
+            {
+                found = false;
+                for (var part = 0; part < _items.Count; part++)
                 {
-                    return $"does not hold {table}{(item.Alias is null ? "" : $" {item.Alias}")} to @Tenant with a top-level conjunct of its WHERE";
+                    if (
+                        !held[part]
+                        && TableAt(part) is { } table
+                        && _tenantTables[table].Tenant is null
+                        && Enumerable.Range(0, _items.Count).Any(holder => held[holder] && _tenantTables[table].Holders.Any(key => Joins(part, holder, key)))
+                    )
+                    {
+                        held[part] = found = true;
+                    }
+                }
+            }
+
+            for (var at = 0; at < _items.Count; at++)
+            {
+                if (!held[at] && TableAt(at) is { } table)
+                {
+                    var item = $"{table}{(_items[at].Alias is { } alias ? $" {alias}" : "")}";
+                    return _tenantTables[table].Tenant is null
+                        ? $"does not join the part {item} on its key to its holder up to {string.Join(" or ", RootsOf(table, _tenantTables))} held to @Tenant"
+                        : $"does not hold {item} to @Tenant with a top-level conjunct of its WHERE";
                 }
             }
 
             return null;
         }
+
+        // The tenant-scoped table of the FROM item at `at`; null when it is none.
+        private string? TableAt(int at) => TenantTableNamed(_items[at].Table, _tenantTables);
+
+        // The names a column of the tenant-scoped item at `at` may be qualified by: its alias, or else its table with or
+        // without its schema.
+        private string[] NamesOf(int at) =>
+            _items[at] is { Alias: { } alias } ? [alias] : [_items[at].Table[(_items[at].Table.IndexOf('.') + 1)..], TableAt(at)!];
+
+        // Whether the part at `part` is joined to the item at `holder` on every column of `key`, in the ON of the later of
+        // the two: the part's, or the holder's when it is no LEFT JOIN, which would keep every row of the part.
+        private bool Joins(int part, int holder, HolderKey key)
+        {
+            var later = _items[Math.Max(part, holder)];
+            return TableAt(holder) == key.Holder
+                && (holder < part || !later.Left)
+                && key.Columns.All(column =>
+                    later.On.Select(Equality.Of).Any(equality =>
+                        equality is not null
+                        && (
+                            (Names(equality.Left, part, column.Column) && Names(equality.Right, holder, column.HolderColumn))
+                            || (Names(equality.Left, holder, column.HolderColumn) && Names(equality.Right, part, column.Column))
+                        )
+                    )
+                );
+        }
+
+        // Whether `column` is the column `name` of the item at `at`, qualified by one of its names.
+        private bool Names(Column column, int at, string name) =>
+            column is { Qualifier: { } qualifier } && column.Name == name && NamesOf(at).Contains(qualifier);
 
         // Why the tokens from `start` to `end` cannot be split into conjuncts: an OR or a CASE outside parentheses.
         private string? Unsplittable(int start, int end, string clause)
@@ -721,28 +880,47 @@ internal static partial class ModuleRules
                 _ => token.Text.Length == 0 ? "nothing" : token.Text,
             };
 
+        // A FROM item; a joined one with whether it is a LEFT JOIN and the conjuncts of its ON condition.
         private sealed record FromItem(string Table, string? Alias)
         {
+            public bool Left { get; init; }
+
+            public SqlToken[][] On { get; init; } = [];
+
             public override string ToString() => Alias is null ? Table : $"{Table} {Alias}";
         }
 
-        // A conjunct that is exactly `[qualifier.]column = @Tenant`, the qualifier a table with or without its schema, or
-        // an alias.
-        private sealed record TenantConjunct(string? Qualifier, string Column)
+        // The column of a conjunct that is exactly `column = @Tenant`.
+        private static Column? TenantColumnOf(SqlToken[] conjunct) =>
+            conjunct is [.., var equals, { Kind: SqlTokenKind.Parameter } tenant]
+            && equals.Is('=')
+            && tenant.Text.Equals("@Tenant", StringComparison.OrdinalIgnoreCase)
+                ? Column.Of(conjunct[..^2])
+                : null;
+
+        // A column `[qualifier.]name`, the qualifier a table with or without its schema, or an alias.
+        private sealed record Column(string? Qualifier, string Name)
         {
-            public static TenantConjunct? Of(SqlToken[] conjunct) =>
-                conjunct switch
+            public static Column? Of(SqlToken[] tokens) =>
+                tokens switch
                 {
-                    [{ IsName: true } column, var equals, var tenant] when IsTenant(equals, tenant) => new(null, column.Name),
-                    [{ IsName: true } table, var dot, { IsName: true } column, var equals, var tenant] when dot.Is('.') && IsTenant(equals, tenant) =>
-                        new(table.Name, column.Name),
-                    [{ IsName: true } schema, var dot, { IsName: true } table, var tableDot, { IsName: true } column, var equals, var tenant]
-                        when dot.Is('.') && tableDot.Is('.') && IsTenant(equals, tenant) => new($"{schema.Name}.{table.Name}", column.Name),
+                    [{ IsName: true } column] => new(null, column.Name),
+                    [{ IsName: true } table, var dot, { IsName: true } column] when dot.Is('.') => new(table.Name, column.Name),
+                    [{ IsName: true } schema, var dot, { IsName: true } table, var tableDot, { IsName: true } column] when dot.Is('.') && tableDot.Is('.') =>
+                        new($"{schema.Name}.{table.Name}", column.Name),
                     _ => null,
                 };
+        }
 
-            private static bool IsTenant(SqlToken equals, SqlToken tenant) =>
-                equals.Is('=') && tenant is { Kind: SqlTokenKind.Parameter } && tenant.Text.Equals("@Tenant", StringComparison.OrdinalIgnoreCase);
+        // A conjunct that is exactly `column = column`.
+        private sealed record Equality(Column Left, Column Right)
+        {
+            public static Equality? Of(SqlToken[] conjunct) =>
+                Array.FindIndex(conjunct, token => token.Is('=')) is var at and > 0
+                && Column.Of(conjunct[..at]) is { } left
+                && Column.Of(conjunct[(at + 1)..]) is { } right
+                    ? new(left, right)
+                    : null;
         }
     }
 
