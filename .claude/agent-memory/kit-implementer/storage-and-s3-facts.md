@@ -1,6 +1,6 @@
 ---
 name: storage-and-s3-facts
-description: AWS SDK v4 against MinIO (path style, signing region, presign protocol, NoSuchKeyException), Testcontainers.Minio, and what adding a Kit package moves in the diagrams
+description: AWS SDK v4 against MinIO and RustFS (path style, signing region, presign protocol, NoSuchKeyException), MinIO withdrawn and RustFS in a generic container, and what adding a Kit package moves in the diagrams
 metadata:
   type: project
 ---
@@ -20,6 +20,12 @@ Check the merged code before relying on a design note. Each section names its ti
 - **`PutObjectRequest.AutoResetStreamPosition` defaults to true**: a stream positioned past zero is stored whole. Set it false to store from the current position (with `AutoCloseStream = false` the caller's stream stays open).
 - **`Task.WaitAsync(token)` on a task that already completed returns its result even when the token is cancelled.** `GetPreSignedURLAsync` takes no token and completes synchronously with a static key pair, so an already-cancelled token needs its own `ThrowIfCancellationRequested()` before the call; `WaitAsync` only covers a credential resolution in flight, which no test without injected credentials can hold.
 - **Merging the integration branch when a diagram cites files both sides changed** (here kit-context: `PackageGraph.cs` mine, `PouryaKitTrustedPeerOptions.cs` #119's): no revision is current for both, and the pre-commit hook only clears cited files staged against HEAD, so the merge commit cannot pass it. Committed the merge with `--no-verify` (recorded as a deviation), then pinned the affected diagrams to the merge commit itself and refinalized; `check-docs.py` on the committed tree passed.
+
+## RustFS replaces MinIO as the test store (#148, 2026-10-17; rustfs/rustfs:1.0.2, Testcontainers 4.15.0)
+
+- **MinIO's images are gone from Docker Hub** (Sept 2026) and quay.io refuses anonymous pulls; a locally cached `minio/minio` hides it until CI. Check a store image with `docker manifest inspect <image:tag>` (it lists `linux/amd64` for the runner), and prove a fresh pull with `docker rmi` before a run.
+- **RustFS through the generic `ContainerBuilder("rustfs/rustfs:1.0.2")`** (namespaces `DotNet.Testcontainers.Builders` and `.Containers`, package `Testcontainers`): `RUSTFS_ACCESS_KEY`, `RUSTFS_SECRET_KEY`, S3 on 9000 (`WithPortBinding(9000, true)`), endpoint `http://{Hostname}:{GetMappedPublicPort(9000)}`; the image defaults `RUSTFS_VOLUMES=/data`. Health paths are fixed: `/health` and `/health/ready`. Every #127 behaviour passed unchanged: path style with `AuthenticationRegion` `us-east-1`, SDK v4 default checksums, `NoSuchKeyException`, HTTP presigned link without credentials, 403 after expiry.
+- **The readiness wait cannot be shown red locally:** RustFS answers `/health/ready` 200 within ~0.03 s of `docker run` returning, so the seven pass with the wait removed. Say so instead of claiming a red run.
 
 ## What a new Kit package moves (#127, 2026-10-17; Archify 3.0.1)
 
