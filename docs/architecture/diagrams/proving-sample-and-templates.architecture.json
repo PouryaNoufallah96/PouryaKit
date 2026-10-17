@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "65e0dfa7ec74194fe0c77bc191c970ac55a73d15",
+      "revision": "9b26eb21a6d7e4d3611e518598030242c23ddd36",
       "link_mode": "web"
     }
   },
@@ -115,11 +115,11 @@
       "sublabel": "the Reverse proxy, with the service defaults",
       "pos": [
         700,
-        128
+        136
       ],
       "size": [
         330,
-        56
+        52
       ],
       "sources": [
         {
