@@ -14,6 +14,6 @@ public static class StorageErrors
     /// </summary>
     public static readonly Error LinkLifetimeOutOfRange = Error.Validation(
         "Storage.LinkLifetimeOutOfRange",
-        "The link's lifetime is zero or less, or longer than seven days, the longest S3 signs a link for."
+        "The link's lifetime is zero or less, or longer than the file storage provider signs a link for."
     );
 }

@@ -586,12 +586,12 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 81,
-          "label": "references Storage, AWSSDK.S3, Options"
+          "label": "references Cqrs, Storage, AWSSDK.S3, Options"
         },
         {
           "path": "src/PouryaKit.Storage.S3/S3StorageServiceCollectionExtensions.cs",
-          "line": 24,
-          "end_line": 43,
+          "line": 26,
+          "end_line": 45,
           "label": "one provider, options validated at start"
         },
         {
@@ -624,7 +624,7 @@
         {
           "path": "src/PouryaKit.Storage/IFileStorage.cs",
           "line": 11,
-          "end_line": 33,
+          "end_line": 35,
           "label": "IFileStorage"
         }
       ]
@@ -833,6 +833,13 @@
       "from": "storages3",
       "to": "storage",
       "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "storages3-cqrs",
+      "from": "storages3",
+      "to": "cqrs",
+      "fromSide": "bottom",
       "toSide": "left"
     },
     {

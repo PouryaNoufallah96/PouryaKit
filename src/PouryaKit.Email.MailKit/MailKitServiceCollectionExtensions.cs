@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using PouryaKit.Cqrs;
 
 namespace PouryaKit.Email.MailKit;
 
@@ -17,8 +18,9 @@ public static class MailKitServiceCollectionExtensions
         /// starts, naming the option, when <see cref="PouryaKitMailKitOptions.Host"/> is blank, the port is not one,
         /// <see cref="PouryaKitMailKitOptions.From"/> is not a mailbox address with a domain,
         /// <see cref="PouryaKitMailKitOptions.Security"/> is not a defined value, which MailKit would treat as plain SMTP,
-        /// or only one of the user name and password is set, and when it registers another <see cref="IEmailSender"/>,
-        /// before or after this call, naming each implementation: a Host composes exactly one.
+        /// or only one of the user name and password is set. A Host composes exactly one <see cref="IEmailSender"/>: one
+        /// that registers another, before or after this call, fails when its container is built, through the Kit's
+        /// composition checks, naming each registration's type.
         /// </summary>
         public IServiceCollection AddPouryaKitMailKit()
         {
@@ -46,12 +48,12 @@ public static class MailKitServiceCollectionExtensions
                     "PouryaKitMailKitOptions.UserName and Password are set together or not at all."
                 )
                 .ValidateOnStart();
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<PouryaKitMailKitOptions>>(new OneEmailSender(services)));
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, OneEmailSenderCheck>());
             services.AddSingleton<IEmailSender>(Create);
             return services;
         }
     }
 
-    // Typed as the implementation, so that the one-provider check names it.
+    // A named method, which the one-provider check names.
     private static MailKitEmailSender Create(IServiceProvider provider) => new(provider.GetRequiredService<IOptions<PouryaKitMailKitOptions>>().Value);
 }

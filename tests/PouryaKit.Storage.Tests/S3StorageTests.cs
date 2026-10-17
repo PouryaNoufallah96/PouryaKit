@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Storage.S3;
 
@@ -117,36 +118,46 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task A_host_that_registers_another_file_storage_provider_fails_to_start_naming_both(bool registeredFirst)
+    [InlineData("a type, before")]
+    [InlineData("a type, after")]
+    [InlineData("a factory, after")]
+    [InlineData("a second call")]
+    public void A_host_that_registers_another_file_storage_provider_fails_when_it_is_built_naming_both(string other)
     {
+        const string S3 = "the factory PouryaKit.Storage.S3.S3StorageServiceCollectionExtensions.Create";
         var builder = Host.CreateApplicationBuilder();
-        if (registeredFirst)
+        builder.AddPouryaKitCompositionChecks();
+        if (other == "a type, before")
         {
             builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
         }
 
-        builder.Services.AddPouryaKitS3Storage(s3 =>
+        builder.Services.AddPouryaKitS3Storage();
+        string[] registered = other switch
         {
-            s3.Bucket = "files";
-            s3.Region = "us-east-1";
-        });
-        if (!registeredFirst)
+            "a type, before" => [typeof(LocalFileStorage).FullName!, S3],
+            "a type, after" => [S3, typeof(LocalFileStorage).FullName!],
+            "a factory, after" => [S3, $"the factory {typeof(S3StorageTests).FullName}.{nameof(LocalFactory)}"],
+            _ => [S3, S3],
+        };
+        switch (other)
         {
-            builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
+            case "a type, after":
+                builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
+                break;
+            case "a factory, after":
+                builder.Services.AddSingleton<IFileStorage>(LocalFactory);
+                break;
+            case "a second call":
+                builder.Services.AddPouryaKitS3Storage();
+                break;
         }
 
-        using var host = builder.Build();
+        var failure = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
-        var failure = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(Cancel));
-
-        string[] providers = registeredFirst
-            ? [typeof(LocalFileStorage).FullName!, "PouryaKit.Storage.S3.S3FileStorage"]
-            : ["PouryaKit.Storage.S3.S3FileStorage", typeof(LocalFileStorage).FullName!];
         Assert.Equal(
-            $"The Host registers 2 file storage providers, {string.Join(", ", providers)}, and composes exactly one IFileStorage: remove all but one of its registrations.",
-            Assert.Single(failure.Failures)
+            $"The Host registers 2 IFileStorage providers, {string.Join(", ", registered)}, and composes exactly one: remove all but one of its file storage registrations.",
+            failure.Message
         );
     }
 
@@ -160,6 +171,9 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
         await content.CopyToAsync(copy);
         return copy.ToArray();
     }
+
+    // A factory typed as the contract, as a Host's own registration often is.
+    private static IFileStorage LocalFactory(IServiceProvider provider) => new LocalFileStorage();
 
     // Another provider a Host could register, never called.
     private sealed class LocalFileStorage : IFileStorage

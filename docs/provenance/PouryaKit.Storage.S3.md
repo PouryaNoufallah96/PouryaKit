@@ -11,7 +11,7 @@ Checked on nuget.org on 2026-10-17 (ticket #127); licence expressions from each 
 - `AWSSDK.S3` 4.0.104.4, `Apache-2.0`, the latest stable, with a `net8.0` asset; spec #115 verified 4.0.104.2 on 2026-10-12, and this is its patch release of 2026-10-14. It brings `AWSSDK.Core` 4.0.102.11, `Apache-2.0`, and nothing else for `net8.0` and later.
 - `Microsoft.Extensions.Options` 10.0.12, `MIT`, for the options the Host binds and their validation at start. It brings `Microsoft.Extensions.DependencyInjection.Abstractions` and `Microsoft.Extensions.Primitives` 10.0.12, both `MIT`.
 
-`PouryaKit.Storage.S3` also references `PouryaKit.Storage`, as plan section C lists since ticket #127. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
+`PouryaKit.Storage.S3` also references `PouryaKit.Storage`, as plan section C lists since ticket #127, and `PouryaKit.Cqrs`, since ticket #147, for its one-provider composition check (`src/PouryaKit.Storage.S3/OneFileStorageCheck.cs`, the Kit's own `ICompositionCheck` shape). Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
 
 ## Test dependencies
 

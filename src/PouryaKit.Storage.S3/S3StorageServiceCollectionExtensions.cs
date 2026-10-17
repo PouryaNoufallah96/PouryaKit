@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using PouryaKit.Cqrs;
 
 namespace PouryaKit.Storage.S3;
 
@@ -14,9 +15,10 @@ public static class S3StorageServiceCollectionExtensions
         /// <see cref="IFileStorage"/>, a singleton built from <see cref="PouryaKitS3StorageOptions"/> when first resolved.
         /// The Host binds the options from configuration; <paramref name="configure"/> sets them in code instead. The
         /// Host fails when it starts, naming each problem, when the options name no bucket or region, a service URL
-        /// that is not an absolute HTTP or HTTPS address, or an access key without its secret key or the reverse, and
-        /// when it registers another <see cref="IFileStorage"/>, before or after this call, naming each implementation:
-        /// a Host composes exactly one.
+        /// that is not an absolute HTTP or HTTPS address, or an access key without its secret key or the reverse. A Host
+        /// composes exactly one <see cref="IFileStorage"/>: one that registers another, before or after this call, a
+        /// second call included, fails when its container is built, through the Kit's composition checks, naming each
+        /// registration's type.
         /// </summary>
         public IServiceCollection AddPouryaKitS3Storage(Action<PouryaKitS3StorageOptions>? configure = null)
         {
@@ -39,12 +41,12 @@ public static class S3StorageServiceCollectionExtensions
                 options.Configure(configure);
             }
 
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<PouryaKitS3StorageOptions>>(new OneFileStorage(services)));
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, OneFileStorageCheck>());
             services.AddSingleton<IFileStorage>(Create);
             return services;
         }
     }
 
-    // Typed as the implementation, so that the one-provider check names it.
+    // A named method, which the one-provider check names.
     private static S3FileStorage Create(IServiceProvider provider) => new(provider.GetRequiredService<IOptions<PouryaKitS3StorageOptions>>().Value);
 }
