@@ -1,0 +1,35 @@
+samples/ModularMonolith/src/ModularMonolith.AppHost/AppHostOptions.cs
+  s_b9a8adfb056e1c::t_c8bdd80368c996 1-11
+.agents/skills/pourya-kit/references/aspire.md
+  s_b9a8adfb056e1c::t_28ba89d6825b19 3,30-31,39,70,102,104,108,113,123
+.claude/agent-memory/kit-implementer/aspire-apphost-facts.md
+  s_b9a8adfb056e1c::t_f93362efdd74eb 15
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_a3458a2b64d206 2242
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_22a46ee51f98b8 3,60
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_385931425cf85b 313-314,319-320
+samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs
+  s_b9a8adfb056e1c::t_5564cb097f8e7c 1,7
+samples/ModularMonolith/src/ModularMonolith.AppHost/Properties/launchSettings.json
+  s_b9a8adfb056e1c::t_62ccb9fcd41059 1-12
+tests/PouryaKit.Aspire.Tests/AppHostTests.cs
+  s_b9a8adfb056e1c::t_7f5a87f0a53cbf 6,67-73,90,98-114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "35d89500e5c5cfb1872300d1098dfe5a2713f11e",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
