@@ -101,6 +101,23 @@ public sealed class PackageGraphTests
             ],
             PackageGraph.Violations(storage with { Packages = [.. storage.Packages, Arrived("AWSSDK.Core"), Arrived("Azure.Core")] })
         );
+        // The renderer's libraries are E1's alone: no QuestPDF, ClosedXML or second file library (#129).
+        var reporting = Restored("PouryaKit.Reporting");
+        Assert.Equal(
+            [
+                "PouryaKit.Reporting's closure holds AWSSDK.Core, which section C keeps out of it.",
+                "PouryaKit.Reporting's closure holds ClosedXML, which section C keeps out of it.",
+                "PouryaKit.Reporting's closure holds PouryaKit.Storage, which section C keeps out of it.",
+                "PouryaKit.Reporting's closure holds QuestPDF, which section C keeps out of it.",
+            ],
+            PackageGraph.Violations(
+                reporting with
+                {
+                    Packages = [.. reporting.Packages, Arrived("QuestPDF"), Arrived("ClosedXML"), Arrived("AWSSDK.Core")],
+                    Projects = new HashSet<string>([.. reporting.Projects, "PouryaKit.Storage"]),
+                }
+            )
+        );
         var reverseProxy = Restored("PouryaKit.ReverseProxy");
         Assert.Equal(
             ["PouryaKit.ReverseProxy's closure holds PouryaKit.Cqrs, which section C keeps out of it."],

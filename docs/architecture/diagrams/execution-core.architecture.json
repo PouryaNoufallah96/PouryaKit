@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "bcb2047a4438c8775e4893579f34e85d5fd6ecdf",
+      "revision": "873cd3c5a0f92c86feede84b4ea811c6f0bb4128",
       "link_mode": "web"
     }
   },
@@ -19,7 +19,7 @@
       "sublabel": "Result, Error, typed IDs, aggregates",
       "pos": [
         620,
-        40
+        170
       ],
       "size": [
         240,
@@ -51,7 +51,7 @@
       "sublabel": "repository and specifications",
       "pos": [
         910,
-        40
+        170
       ],
       "size": [
         240,
@@ -78,7 +78,7 @@
       "sublabel": "fills the validation step",
       "pos": [
         330,
-        170
+        300
       ],
       "size": [
         240,
@@ -105,7 +105,7 @@
       "sublabel": "dispatcher, pipeline, Operation",
       "pos": [
         620,
-        170
+        300
       ],
       "size": [
         240,
@@ -139,7 +139,7 @@
       "sublabel": "Unit of Work, repository, Outbox seam",
       "pos": [
         910,
-        170
+        300
       ],
       "size": [
         240,
@@ -172,7 +172,7 @@
       "sublabel": "a Module's schema, snake_case",
       "pos": [
         1200,
-        170
+        300
       ],
       "size": [
         240,
@@ -200,7 +200,7 @@
       "sublabel": "verified JWT to Actor and tenant",
       "pos": [
         40,
-        300
+        430
       ],
       "size": [
         240,
@@ -233,7 +233,7 @@
       "sublabel": "permission checks, password hashing",
       "pos": [
         330,
-        300
+        430
       ],
       "size": [
         240,
@@ -266,7 +266,7 @@
       "sublabel": "plain-SQL reads and Page reads",
       "pos": [
         910,
-        300
+        430
       ],
       "size": [
         240,
@@ -300,7 +300,7 @@
       "sublabel": "a schema per Module",
       "pos": [
         1200,
-        300
+        430
       ],
       "size": [
         240,
@@ -328,7 +328,7 @@
       "sublabel": "API versions, OpenAPI, Scalar",
       "pos": [
         40,
-        430
+        560
       ],
       "size": [
         240,
@@ -356,7 +356,7 @@
       "sublabel": "endpoints, problem responses, HTTP",
       "pos": [
         330,
-        430
+        560
       ],
       "size": [
         240,
@@ -389,7 +389,7 @@
       "sublabel": "decorates the dispatcher",
       "pos": [
         910,
-        430
+        560
       ],
       "size": [
         240,
@@ -409,8 +409,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 120,
-          "end_line": 121,
+          "line": 125,
+          "end_line": 126,
           "label": "no exporter"
         }
       ]
@@ -422,7 +422,7 @@
       "sublabel": "messaging and delivery view",
       "pos": [
         1200,
-        430
+        560
       ],
       "size": [
         270,
@@ -444,7 +444,7 @@
       "sublabel": "fills the query cache slot",
       "pos": [
         330,
-        560
+        690
       ],
       "size": [
         240,
@@ -463,8 +463,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 122,
-          "end_line": 123,
+          "line": 127,
+          "end_line": 128,
           "label": "never Redis"
         }
       ]
@@ -476,7 +476,7 @@
       "sublabel": "Composition Root and Gateway",
       "pos": [
         910,
-        560
+        690
       ],
       "size": [
         240,
@@ -509,7 +509,7 @@
       "sublabel": "hosted app, migrations, deliveries",
       "pos": [
         1200,
-        560
+        690
       ],
       "size": [
         240,
@@ -543,7 +543,7 @@
       "sublabel": "ImplementingTypes, PredicateBuilder, SynchronizationContextScope",
       "pos": [
         40,
-        700
+        830
       ],
       "size": [
         1110,
@@ -576,7 +576,7 @@
       "sublabel": "S3 and MinIO provider",
       "pos": [
         40,
-        40
+        170
       ],
       "size": [
         240,
@@ -609,7 +609,7 @@
       "sublabel": "Azure Blob and Azurite provider",
       "pos": [
         40,
-        170
+        300
       ],
       "size": [
         240,
@@ -643,7 +643,7 @@
       "sublabel": "file storage contract",
       "pos": [
         330,
-        40
+        170
       ],
       "size": [
         240,
@@ -676,7 +676,7 @@
       "sublabel": "English and Persian; optional",
       "pos": [
         1200,
-        40
+        170
       ],
       "size": [
         240,
@@ -709,7 +709,7 @@
       "sublabel": "gRPC services and clients on Web",
       "pos": [
         40,
-        560
+        690
       ],
       "size": [
         240,
@@ -742,7 +742,7 @@
       "sublabel": "AppHost-only containers",
       "pos": [
         1200,
-        700
+        830
       ],
       "size": [
         240,
@@ -763,9 +763,43 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 161,
-          "end_line": 165,
+          "line": 169,
+          "end_line": 173,
           "label": "Aspire in no other package"
+        }
+      ]
+    },
+    {
+      "id": "reporting",
+      "type": "backend",
+      "label": "PouryaKit.Reporting",
+      "sublabel": "PDF, CSV and spreadsheets; optional",
+      "pos": [
+        620,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 100,
+          "end_line": 104,
+          "label": "references Domain and the three libraries"
+        },
+        {
+          "path": "src/PouryaKit.Reporting/ReportRenderer.cs",
+          "line": 13,
+          "end_line": 38,
+          "label": "a Result per layout, bytes per format"
+        },
+        {
+          "path": "src/PouryaKit.Reporting/Fonts/RobotoFontResolver.cs",
+          "line": 5,
+          "end_line": 21,
+          "label": "the embedded Roboto font"
         }
       ]
     }
@@ -978,6 +1012,14 @@
       "label": "reads",
       "fromSide": "right",
       "toSide": "left"
+    },
+    {
+      "id": "reporting-domain",
+      "from": "reporting",
+      "to": "domain",
+      "label": "refuses a layout with its Errors",
+      "fromSide": "bottom",
+      "toSide": "top"
     }
   ],
   "cards": [
@@ -1003,8 +1045,9 @@
         "Cqrs, Security, Web, Persistence.EFCore and Persistence.Dapper reference PouryaKit.Core for its helpers, such as ImplementingTypes.",
         "Storage, the file storage contract, references Domain, and Cqrs for its one-provider composition check; Storage.S3 and Storage.AzureBlob, its providers, reference Storage and their cloud SDK, and a Host registers exactly one of them.",
         "Localization, optional, records a Module's Feature assemblies through Cqrs and sets each request's culture, English or Persian, from its Accept-Language header; the Proving Sample's Hosts reference none of it.",
-    "Grpc maps a Module's gRPC services on Web's begin-the-Operation convention and writes a client's Operation Context through Web's one header codec; a failed Result is a status by its most severe Error kind.",
-        "Aspire, AppHost-only, references no Kit package: an Aspire AppHost adds PostgreSQL, Redis and RabbitMQ through it, each on a pinned image with a named volume, and no other Kit package's closure holds an Aspire package."
+        "Grpc maps a Module's gRPC services on Web's begin-the-Operation convention and writes a client's Operation Context through Web's one header codec; a failed Result is a status by its most severe Error kind.",
+        "Aspire, AppHost-only, references no Kit package: an Aspire AppHost adds PostgreSQL, Redis and RabbitMQ through it, each on a pinned image with a named volume, and no other Kit package's closure holds an Aspire package.",
+        "Reporting, optional, references Domain alone: it renders a Module's layout to a PDF, a CSV file or a spreadsheet and returns the file's bytes, storing nothing; QuestPDF, ClosedXML, a storage SDK and PouryaKit.Storage stay out of its closure."
       ]
     }
   ]
