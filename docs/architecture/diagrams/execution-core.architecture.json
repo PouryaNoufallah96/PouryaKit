@@ -791,8 +791,8 @@
         },
         {
           "path": "src/PouryaKit.Reporting/ReportRenderer.cs",
-          "line": 12,
-          "end_line": 37,
+          "line": 13,
+          "end_line": 38,
           "label": "a Result per layout, bytes per format"
         },
         {

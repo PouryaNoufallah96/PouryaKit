@@ -12,10 +12,13 @@ public static class ReportErrors
         nameof(ReportLayout.Table)
     );
 
-    /// <summary>The branding's logo is neither a PNG nor a JPEG image, the two formats a PDF draws.</summary>
+    /// <summary>
+    /// The branding's logo is not a PNG or JPEG image PDFsharp can load, such as another format or a file cut short; a PDF
+    /// draws those two formats only.
+    /// </summary>
     public static readonly Error LogoFormat = Error.Validation(
         "Reporting.LogoFormat",
-        "The report's logo is neither a PNG nor a JPEG image.",
+        "The report's logo is not a readable PNG or JPEG image.",
         nameof(ReportBranding.Logo)
     );
 }

@@ -1,3 +1,6 @@
+using System.Buffers;
+using System.Text;
+using System.Xml;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -8,6 +11,8 @@ namespace PouryaKit.Reporting;
 // as the Module formatted it and evaluates none as a formula.
 internal static class SpreadsheetReport
 {
+    private static readonly SearchValues<char> HexDigits = SearchValues.Create("0123456789ABCDEFabcdef");
+
     public static byte[] Render(ReportTable table)
     {
         using var content = new MemoryStream();
@@ -30,6 +35,38 @@ internal static class SpreadsheetReport
         new(cells.Select(cell => new Cell
         {
             DataType = CellValues.InlineString,
-            InlineString = new InlineString(new Text(cell) { Space = SpaceProcessingModeValues.Preserve }),
+            InlineString = new InlineString(new Text(Encoded(cell)) { Space = SpaceProcessingModeValues.Preserve }),
         }));
+
+    // A spreadsheet application reads _xHHHH_ in a string as the character HHHH (ECMA-376 Part 1, 22.9.2.19), so a
+    // literal one keeps its underscore as _x005F_, and a character XML cannot hold, such as a control character, is
+    // written in that form.
+    private static string Encoded(string text)
+    {
+        var encoded = new StringBuilder(text.Length);
+        for (var index = 0; index < text.Length; index++)
+        {
+            var character = text[index];
+            var rest = text.AsSpan(index);
+            if (rest is ['_', 'x', _, _, _, _, '_', ..] && !rest[2..6].ContainsAnyExcept(HexDigits))
+            {
+                encoded.Append("_x005F");
+            }
+
+            if (char.IsHighSurrogate(character) && index + 1 < text.Length && XmlConvert.IsXmlSurrogatePair(text[index + 1], character))
+            {
+                encoded.Append(character).Append(text[++index]);
+            }
+            else if (XmlConvert.IsXmlChar(character))
+            {
+                encoded.Append(character);
+            }
+            else
+            {
+                encoded.Append($"_x{(int)character:X4}_");
+            }
+        }
+
+        return encoded.ToString();
+    }
 }

@@ -92,7 +92,7 @@ var stored = await files.UploadAsync(key, new MemoryStream(report.Content), repo
 `Render` refuses a layout it cannot draw, renders nothing, and returns an `ErrorKind.Validation` Error:
 
 - `ReportErrors.TableShape` (`Reporting.TableShape`, target `Table`): the table has no column, or a row whose number of cells differs from its number of columns.
-- `ReportErrors.LogoFormat` (`Reporting.LogoFormat`, target `Logo`): the logo is neither a PNG nor a JPEG image, judged by its signature.
+- `ReportErrors.LogoFormat` (`Reporting.LogoFormat`, target `Logo`): the logo is not a PNG or JPEG image PDFsharp can load, its signature checked, then its header and dimensions read, so a file cut short is refused, where MigraDoc would have drawn a placeholder in the PDF. A JPEG cut inside its image data still loads, since a PDF carries a JPEG as it is.
 
 Rendering is synchronous and in memory, so the whole file is one byte array; render a large report from a background command, as the report Module of ticket #140 is to.
 
@@ -101,8 +101,8 @@ Rendering is synchronous and in memory, so the whole file is one byte array; ren
 | `ReportFormat` | Content type and extension | Holds |
 |---|---|---|
 | `Pdf` | `application/pdf`, `.pdf` | An A4 portrait document: the logo, the title, the introduction and the table, whose header row repeats on every page, with the page header, and the page footer before `page / pages`, on every page. MigraDoc and PDFsharp, the Roboto font embedded, so the file renders where no font is installed, the Linux CI runner included. |
-| `Csv` | `text/csv`, `.csv` | The table alone, headers first: RFC 4180 through CsvHelper with the invariant culture, in UTF-8 with a byte order mark, so a spreadsheet application reads non-ASCII text as written. A cell that starts with `=`, `@`, `+`, `-`, a tab or a carriage return is written with a leading apostrophe (`'-4`), so a spreadsheet application never runs it as a formula; choose the spreadsheet format for figures a reader computes with. |
-| `Spreadsheet` | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `.xlsx` | The table alone on one worksheet named `Report`, headers first, every cell an inline string exactly as the Module formatted it, never a formula. The Open XML SDK. |
+| `Csv` | `text/csv`, `.csv` | The table alone, headers first: RFC 4180 through CsvHelper with the invariant culture, in UTF-8 with a byte order mark, so a spreadsheet application reads non-ASCII text as written. A cell that starts with `=`, `+`, `-`, `@`, a tab or a carriage return is written with a leading apostrophe (`'-4+cmd`), so a spreadsheet application never runs it as a formula, unless the whole cell is a number in the invariant culture (`decimal.TryParse` with `NumberStyles.Number`), such as `-4` or `+1,250.50`, which stays as written and computable. An empty field is quoted (`""`), so the empty row of a one-column table survives a reader that skips blank lines. |
+| `Spreadsheet` | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `.xlsx` | The table alone on one worksheet named `Report`, headers first, every cell an inline string exactly as the Module formatted it: text, numbers included, never a formula. A literal `_xHHHH_` is written `_x005F_xHHHH_` and a character XML cannot hold, such as a control character, as `_xHHHH_`, so a spreadsheet application reads each cell back verbatim. The Open XML SDK. |
 
 ## Limits
 
@@ -113,4 +113,4 @@ Rendering is synchronous and in memory, so the whole file is one byte array; ren
 
 ## Testing
 
-`ReportRendererTests` in `tests/PouryaKit.Reporting.Tests` render one layout to each format and read it back with that format's standard reader: the PDF with PDFsharp's `PdfReader` (its header, page count, logo and each page's fonts embedded with their font program), the spreadsheet with the Open XML SDK's `SpreadsheetDocument.Open` and its `OpenXmlValidator` (the cells as rows), and the CSV with CsvHelper's `CsvReader` (the rows, the escaped formulas and the byte order mark). A Module's own report test renders its layout the same way: build the layout from fixed rows, render it, and read back the cells it promises.
+`ReportRendererTests` in `tests/PouryaKit.Reporting.Tests` render one layout to each format and read it back with that format's standard reader: the PDF with PDFsharp's `PdfReader` (its header, page count, logo and each page's fonts embedded with their font program), the spreadsheet with the Open XML SDK's `SpreadsheetDocument.Open` and its `OpenXmlValidator` (the cells as rows, escape-like text and control characters read back verbatim), and the CSV with CsvHelper's `CsvReader` (the rows, the escaped formulas, the numbers kept, the byte order mark and a one-column table's empty rows). A Module's own report test renders its layout the same way: build the layout from fixed rows, render it, and read back the cells it promises.
