@@ -1,0 +1,25 @@
+spikes/saga/SagaSpike.Kit/PouryaKitSaga.cs
+  s_b9a8adfb056e1c::t_15892098396976 25-28
+spikes/saga/SagaSpike.Kit/SagaSteps.cs
+  s_b9a8adfb056e1c::t_f67e754c070566 147-149,151-152,282-283,292,295-298
+spikes/saga/SagaSpike.Shipping/ProbeSagas.cs
+  s_b9a8adfb056e1c::t_c738bf015a9969 32-48
+spikes/saga/SagaSpike.Tests/EmissionTests.cs
+  s_b9a8adfb056e1c::t_659246f4eb5bef 1,4,7-8,58,79-110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "629b85a8abefd3bfb62bb7d072e30b9669992eae",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
