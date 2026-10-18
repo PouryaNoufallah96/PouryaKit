@@ -1184,3 +1184,23 @@ migration of any Module's Receipt or Snapshot version table.
   `RecurringCommandTenancyCheck` fails the Host's build for such a declaration, naming the command and the Module. A
   delayed command is not refused: it continues the tenant of the Operation that scheduled it
   (`CompositionCheckTests.A_recurring_command_in_a_tenant_scoped_module_fails_the_host_when_built_naming_the_module`).
+
+## Amendment (2026-10-18, ticket #141: a Saga beside the routed queues)
+
+The decision above stands for every subscription. A Saga is the one reaction that runs on a chain Wolverine generates
+rather than on the Kit's pre-built handler; Spike #141 recorded its extent on 6.48.3 in
+[ADR 0013](0013-a-saga-step-runs-outside-every-operation.md).
+
+- **One queue per saga, and a Kit input type per saga and event.** The handler `AddMessageHandler` registers for a
+  subscribed type is that type's handler on every queue, a saga's included (`HandlerGraph.HandlerFor`, read in
+  `JasperFx/wolverine` tag `V6.48.3`), so the Kit delivers each Integration Event a saga takes to the saga's own durable
+  local queue as `SagaInput<TSaga, TEvent>`, a type of that saga alone. The route that does it also returns the event's
+  subscription routes, which a custom route source would otherwise cut off (ADR 0013, item 1 and "Findings").
+- **A claim in place of the Receipt.** A step is no delivery through `Deliver`: the Kit claims it, keyed by the saga's
+  name, the input's wire name and the event's identity, the identity a Receipt keys by, in the step's own transaction
+  and before Wolverine loads the saga. The claims outlive the saga, as Receipts are kept (the #90 amendment above).
+- **What a step emits is an Integration Event like any other.** The Kit's adapter writes the Operation Context headers
+  and the identity header the delivery step reads, so the ordinary subscriptions of a tenant-scoped Module receive it
+  as they receive any.
+- **An Integration Event from another Host** reaches a saga only once the broker fan-out of the #50 amendment also
+  delivers the saga's input type; that is #142's.

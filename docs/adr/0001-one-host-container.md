@@ -52,3 +52,20 @@ assembly is also the convention the Kit infers from, so a Composition Root no lo
   `AddPouryaKitModules` adds counts as composed, whatever its Composition Root registers.
 - Proven by the Proving Sample, whose three Composition Roots name neither their Module nor their assembly, and by
   `CompositionCheckTests.The_host_composition_names_each_module_with_the_feature_assembly_its_builder_inferred`.
+
+## Amendment (2026-10-18, ticket #141: a Saga is the one public handler type)
+
+The decision above stands. Spike #141 recorded the one exception spec #115 approved (decision S1), a Saga, in
+[ADR 0013](0013-a-saga-step-runs-outside-every-operation.md).
+
+- **A saga's type is public.** Its state and handler type is a Wolverine `Saga` whose chain Wolverine generates, and
+  generated code names it, so it is public, as are the Kit's input type of each event it takes and its timeout
+  messages. A Module that declares a saga has that type beside its Composition Root and the ports its Host implements
+  for it; the architecture test that lists a Module's public types names it once the package exists (#142).
+- **A step reaches no Kit scoped service while the Host keeps Wolverine's default service location policy.** Under
+  `ServiceLocationPolicy.NotAllowed`, Wolverine's default, a saga's generated chain cannot take the Kit's `Operation` or a
+  Kit service whose implementation is internal (ADR 0013, item 8), so a Module's internals stay out of a step's reach. A
+  Host that allows service location gives a step both; ADR 0013 records a test that fails if the default changes, and
+  #142 keeps the policy for a Host with a saga.
+- **Isolation by assembly holds.** A saga, its timeouts and its declaration live in its Module's assembly, and another
+  Module reaches it only through Integration Events.
