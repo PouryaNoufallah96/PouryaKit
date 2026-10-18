@@ -12,6 +12,7 @@ using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -210,13 +211,17 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
 
     // PR #143: with no listener configured, Kestrel binds http://localhost:5000, so a client there calls its own Host.
     [Fact]
-    public async Task A_client_addressed_at_kestrels_default_url_in_a_host_with_no_listener_fails_the_start()
+    public async Task A_client_addressed_at_kestrels_default_url_in_a_kestrel_host_with_no_listener_fails_the_start()
     {
         await using var host = AppFixture.ComposeHost(
             "Development",
             Fixture.ConnectionString,
             new RecordedLogs(),
-            builder => AddClient(builder.Services, new Uri("http://localhost:5000"))
+            builder =>
+            {
+                builder.WebHost.UseKestrel();
+                AddClient(builder.Services, new Uri("http://localhost:5000"));
+            }
         );
 
         var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
@@ -226,6 +231,39 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             refused.Message,
             StringComparison.Ordinal
         );
+    }
+
+    // Review F1: Kestrel binds its default only when it is given no address, and a Host without a server binds none.
+    [Fact]
+    public async Task A_client_addressed_at_kestrels_default_url_starts_in_a_kestrel_host_listening_elsewhere()
+    {
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder =>
+            {
+                builder.WebHost.UseKestrel();
+                AddClient(builder.Services, new Uri("http://localhost:5000"));
+            },
+            "--urls=http://127.0.0.1:0"
+        );
+
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task A_client_addressed_at_kestrels_default_url_starts_in_a_host_without_a_server()
+    {
+        var builder = new HostApplicationBuilder(["--environment", "Development"]);
+        builder.AddPouryaKitCompositionChecks();
+        AddClient(builder.Services, new Uri("http://localhost:5000"));
+        using var host = builder.Build();
+
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
     // Review F1: a peer on the port this Host also listens on every address for, as two containers on 8080, is another Host.

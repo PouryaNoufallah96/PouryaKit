@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -13,10 +14,12 @@ namespace PouryaKit.Grpc;
 /// Refuses a gRPC client addressed at one of the Host's own listening URLs, chosen as ASP.NET Core chooses them: the
 /// server's addresses the application adds after <c>Build</c> (<c>app.Urls</c>), or else the configured <c>urls</c>, or
 /// else <c>http_ports</c> and <c>https_ports</c>; each <c>Kestrel:Endpoints:{name}:Url</c> replaces those addresses
-/// unless <c>preferHostingUrls</c> is set; with none of them, Kestrel's default <c>http://localhost:5000</c>, the one
-/// address it binds when nothing else is configured. <c>app.Urls</c> exists only on the built application, so this is a
-/// startup check rather than a composition check; it runs before the server binds, so an address the server chooses only
-/// as it binds, such as port 0 or a <c>Listen</c> call in code, is not seen, and the Kit's skill states the rule for it. An
+/// unless <c>preferHostingUrls</c> is set; with none of them, and only when the Host's server is Kestrel, Kestrel's
+/// default <c>http://localhost:5000</c>, the one address it binds when nothing else is configured. A Host without a server
+/// gets no default. <c>app.Urls</c> exists only on the built application, so this is a startup check rather than a
+/// composition check; it runs before the server binds, so an address the server chooses only as it binds, such as port 0
+/// or a <c>Listen</c> call in code, is not seen, and the Kit's skill states the rule for it: Kestrel keeps the endpoints
+/// set in code to itself, so a Host that listens only through <c>Listen</c> is checked against the default. An
 /// address matches when its scheme and port are the listening URL's and its host is the same, or is loopback while the
 /// URL is loopback or listens on every address, as Kestrel binds every host that is neither <c>localhost</c> nor an IP
 /// address. Another host on the same port, such as a peer container on the 8080 every ASP.NET Core image listens on, is
@@ -43,13 +46,17 @@ internal sealed class GrpcLoopbackCheck : IStartupCheck
     private static List<string> ListeningUrls(IServiceProvider services)
     {
         var configuration = services.GetRequiredService<IConfiguration>();
-        var server = services.GetService<IServer>()?.Features.Get<IServerAddressesFeature>();
-        var (addresses, preferHostingUrls) = server is { Addresses.Count: > 0 }
-            ? ([.. server.Addresses], server.PreferHostingUrls)
+        var server = services.GetService<IServer>();
+        var bound = server?.Features.Get<IServerAddressesFeature>();
+        var (addresses, preferHostingUrls) = bound is { Addresses.Count: > 0 }
+            ? ([.. bound.Addresses], bound.PreferHostingUrls)
             : (HostingUrls(configuration), configuration["preferHostingUrls"] is "1" || string.Equals(configuration["preferHostingUrls"], "true", StringComparison.OrdinalIgnoreCase));
         List<string> endpoints = [.. configuration.GetSection("Kestrel:Endpoints").GetChildren().Select(endpoint => endpoint["Url"]).OfType<string>()];
         var listening = endpoints.Count == 0 || (preferHostingUrls && addresses.Count > 0) ? addresses : endpoints;
-        return listening.Count > 0 ? listening : [DefaultUrl];
+        // Kestrel's server type is internal; its assembly is the one of its public options.
+        return listening.Count > 0 || server?.GetType().Assembly != typeof(KestrelServerOptions).Assembly
+            ? listening
+            : [DefaultUrl];
     }
 
     private static List<string> HostingUrls(IConfiguration configuration) =>
