@@ -129,8 +129,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
-          "line": 99,
-          "end_line": 113,
+          "line": 101,
+          "end_line": 115,
           "label": "UseWolverine lambda, then configure"
         }
       ],

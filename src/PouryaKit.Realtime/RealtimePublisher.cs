@@ -9,13 +9,18 @@ using PouryaKit.Persistence;
 
 namespace PouryaKit.Realtime;
 
-// A push is accepted only where G.2 puts it, in a Notification Handler's delivery, which the delivery step records as
-// the Operation Context's Notification, as the Integration Event publisher reads it, and which runs in a Unit of Work of
-// its own (ADR 0012). pg_notify is queued in the transaction: PostgreSQL delivers it to every listener at the commit, and drops it at a
-// rollback, a failure of the commit included. A delivery whose commit was lost before its acknowledgement is handed out
-// again, finds its Receipt and runs nothing, so it pushes nothing twice.
-internal sealed class RealtimePublisher(Operation operation, IUnitOfWorkConnection unitOfWork, IOptions<JsonOptions> json)
-    : IRealtimePublisher
+// A push is accepted only where G.2 puts it, in a Notification Handler's delivery, which the delivery step records in
+// the delivery's own scope, as the Integration Event publisher reads it, and which runs in a Unit of Work of its own
+// (ADR 0012); a Host with no delivery step records none, and pushes nothing. pg_notify is queued in the transaction:
+// PostgreSQL delivers it to every listener at the commit, and drops it at a rollback, a failure of the commit included.
+// A delivery whose commit was lost before its acknowledgement is handed out again, finds its Receipt and runs nothing,
+// so it pushes nothing twice.
+internal sealed class RealtimePublisher(
+    Operation operation,
+    IUnitOfWorkConnection unitOfWork,
+    IOptions<JsonOptions> json,
+    INotificationDelivery? delivery = null
+) : IRealtimePublisher
 {
     public async Task<Result> PublishAsync<TEvent>(string channel, TEvent realtimeEvent, CancellationToken cancellationToken)
         where TEvent : class
@@ -37,7 +42,7 @@ internal sealed class RealtimePublisher(Operation operation, IUnitOfWorkConnecti
             );
         }
 
-        if (operation.Context is not { Notification: not null } context || !operation.IsUnitOfWorkActive)
+        if (delivery?.Notification is null || operation.Context is not { } context || !operation.IsUnitOfWorkActive)
         {
             throw new InvalidOperationException(
                 $"{realtimeEvent.GetType().Name} was pushed outside a Notification Handler's delivery. Push a realtime event from a Notification Handler, so it is sent with that delivery's commit."

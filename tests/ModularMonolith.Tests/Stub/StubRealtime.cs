@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
@@ -11,8 +12,9 @@ using PouryaKit.Web;
 namespace ModularMonolith.Tests.Stub;
 
 // Realtime pushes of notes, raised by WriteNoteRaisingCommand, and the Stub's SSE endpoint: every caller may listen on
-// the notes, and a person on their own inbox only. Beside them, a command that tries to push from outside any
-// Notification Handler's delivery, sent over HTTP or through the Gateway with Continue().
+// the notes, and a person on their own inbox only. Beside them, commands that try to push from outside any
+// Notification Handler's delivery: sent over HTTP, through the Gateway with Continue(), or through the Gateway by a
+// Notification Handler with its delivery's own context.
 
 internal sealed record PushedNote(string Text);
 
@@ -100,5 +102,60 @@ internal sealed class PushNoteThenFailOnceNotificationHandler(IRealtimePublisher
         var attempt = Attempts.AddOrUpdate(domainEvent.Text, 1, (_, attempts) => attempts + 1);
         var pushed = await realtime.PublishAsync(StubChannels.Notes, new PushedNote($"{domainEvent.Text} {attempt}"), cancellationToken);
         return pushed.IsFailure || attempt > 1 ? pushed : FailedAfterPushing;
+    }
+}
+
+internal sealed record NoteRelayedThenFailingDomainEvent(string Text) : DomainEvent;
+
+// Sends PushAndShareNoteCommand through the Stub's Gateway with its delivery's own context, as it was injected, then
+// fails, so the delivery rolls back. The Gateway is resolved when it runs: the test Hosts without Modules that register
+// the Stub's Notification Handlers have none.
+internal sealed class RelayNoteThenFailNotificationHandler(IServiceProvider services, OperationContext context)
+    : INotificationHandler<NoteRelayedThenFailingDomainEvent>
+{
+    public static readonly Error FailedAfterRelaying = Error.Conflict("Note.FailedAfterRelaying", "The delivery failed after its relay.");
+
+    public async Task<Result> Handle(NoteRelayedThenFailingDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        await services
+            .GetRequiredService<IGatewayProcessor<StubModule>>()
+            .SendAsync(new PushAndShareNoteCommand(domainEvent.Text, domainEvent.Id, domainEvent.OccurredOn), context, cancellationToken);
+        return FailedAfterRelaying;
+    }
+}
+
+// Pushes the note and publishes it shared with the identity of the Domain Event named, and records, by text, what each
+// publisher threw.
+internal sealed record PushAndShareNoteCommand(string Text, Guid DomainEventId, DateTimeOffset OccurredOn) : Command;
+
+internal sealed class PushAndShareNoteCommandHandler(IRealtimePublisher realtime, IIntegrationEventPublisher events)
+    : CommandHandler<PushAndShareNoteCommand>
+{
+    public static readonly ConcurrentDictionary<string, (string? Unpushed, string? Unpublished)> Refusals = [];
+
+    public override async Task<Result> Handle(PushAndShareNoteCommand command, CancellationToken cancellationToken)
+    {
+        string? unpushed = null;
+        string? unpublished = null;
+        try
+        {
+            await realtime.PublishAsync(StubChannels.Notes, new PushedNote(command.Text), cancellationToken);
+        }
+        catch (InvalidOperationException refused)
+        {
+            unpushed = refused.Message;
+        }
+
+        try
+        {
+            events.Publish(command.DomainEventId, new NoteSharedV1(command.DomainEventId, command.OccurredOn, command.Text));
+        }
+        catch (InvalidOperationException refused)
+        {
+            unpublished = refused.Message;
+        }
+
+        Refusals[command.Text] = (unpushed, unpublished);
+        return Result.Success();
     }
 }

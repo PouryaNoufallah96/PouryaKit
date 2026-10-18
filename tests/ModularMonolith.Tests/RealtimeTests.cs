@@ -9,13 +9,17 @@ using Catalog.Contracts.Products.Realtime;
 using Catalog.Products.Features.CreateProduct;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using ModularMonolith.Tests.Stub;
+using Npgsql;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
+using PouryaKit.Persistence.Postgres;
 using PouryaKit.Realtime;
 using PouryaKit.Testing;
 using Wolverine;
@@ -107,6 +111,32 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
             Assert.True(trusted);
             Assert.Equal($"{nameof(PushedNote)} was pushed outside a Notification Handler's delivery. Push a realtime event from a Notification Handler, so it is sent with that delivery's commit.", refusal);
         }
+    }
+
+    // The delivery's own context, passed to a Gateway call as it is, carries no authority into the scope that call opens:
+    // the command it sends pushes and publishes nothing, so the delivery, which then rolls back, reaches nobody.
+    [Fact]
+    public async Task A_command_a_notification_handler_sends_through_the_gateway_with_its_own_context_cannot_push_or_publish()
+    {
+        var text = $"relayed {Guid.CreateVersion7()}";
+        using var client = Fixture.Client("ada");
+        await using var listening = await Listening.OpenAsync(client, Notes);
+
+        await PushAsync(new NoteRelayedThenFailingDomainEvent(text));
+        await PushAsync(new NotePushedDomainEvent(StubChannels.Notes, "after the relay"));
+
+        Assert.Equal(
+            (
+                $"{nameof(PushedNote)} was pushed outside a Notification Handler's delivery. Push a realtime event from a Notification Handler, so it is sent with that delivery's commit.",
+                $"{nameof(NoteSharedV1)} was published outside a Notification Handler's delivery. An Integration Event is published by a Notification Handler, so it is written to the Outbox with that delivery's commit."
+            ),
+            PushAndShareNoteCommandHandler.Refusals[text]
+        );
+        Assert.Equal("""{"text":"after the relay"}""", (await listening.NextAsync()).Data);
+        Assert.DoesNotContain(
+            Fixture.Host.Services.GetRequiredService<IntegrationEventLog>().All,
+            received => received.IntegrationEvent is NoteSharedV1 shared && shared.Text == text
+        );
     }
 
     [Fact]
@@ -210,12 +240,65 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal("data: \n\n", rest.ReplaceLineEndings("\n"));
     }
 
+    // EF Core applies a ConfigureDbContext after UsePouryaKitPostgres, so the DbContext connects as it says, whatever
+    // name it was registered over.
+    [Fact]
+    public void A_dbcontext_that_configure_db_context_moves_off_the_listeners_connection_fails_the_host_when_built()
+    {
+        var builder = ComposeListener("Host=db;Database=app");
+        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql("Host=db;Database=elsewhere"));
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(MovedOffTheListener, thrown.Message);
+    }
+
+    [Fact]
+    public void A_dbcontext_moved_onto_a_data_source_on_another_database_fails_the_host_when_built()
+    {
+        using var dataSource = NpgsqlDataSource.Create("Host=db;Database=elsewhere");
+        var builder = ComposeListener("Host=db;Database=app");
+        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql((string?)null).UseNpgsql(dataSource));
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(MovedOffTheListener, thrown.Message);
+    }
+
+    // A data source gives its connection without the password, as does EF Core's own for a DbContext that maps an enum.
+    [Fact]
+    public void A_dbcontext_moved_onto_a_data_source_over_the_listeners_connection_string_builds()
+    {
+        const string connectionString = "Host=db;Database=app;Username=catalog;Password=secret";
+        using var dataSource = NpgsqlDataSource.Create(connectionString);
+        var builder = ComposeListener(connectionString);
+        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql((string?)null).UseNpgsql(dataSource));
+
+        using var host = builder.Build();
+    }
+
     // PostgreSQL's NOTIFY carries a payload shorter than this.
     private const int RealtimeNotificationLimit = 8000;
 
     private static (string Channel, string Data) Pushed(SseItem<string> item) => (item.EventType, item.Data);
 
     private static string? Code(JsonElement problem) => problem.GetProperty("errors")[0].GetProperty("code").GetString();
+
+    private const string MovedOffTheListener =
+        "EF Core connects StubDbContext, stored over the connection string app, with other settings than the connection string app that AddPouryaKitRealtime listens over, so what its Notification Handlers push may be written in another database than the listener's, and PostgreSQL hands a notification only to the listeners of its own database. Use one connection string for Realtime and every Module's DbContext.";
+
+    // The Stub's DbContext and the listener on the connection string app, with the Kit's composition checks and no
+    // message store, whose own check would report the same move. Nothing connects while the Host is built.
+    private static HostApplicationBuilder ComposeListener(string connectionString)
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:app={connectionString}"]
+        );
+        builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        builder.Services.AddPouryaKitRealtime(connectionName: "app");
+        builder.AddPouryaKitCompositionChecks();
+        return builder;
+    }
 
     // A second instance of the Host, on the fixture's store; disposing it stops it.
     private Task<WebApplication> StartAsync(params string[] arguments) => StartAsync(null, arguments);

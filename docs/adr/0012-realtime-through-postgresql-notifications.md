@@ -39,12 +39,15 @@ client of another instance.
   before anything is written: the documentation says the payload "must be shorter than 8000 bytes" in the default
   configuration. The handler meets it, never the transport.
 - **Callable only from a Notification Handler's delivery, as the Integration Event publisher is.** The delivery step
-  restores a Notification's delivery with `OperationContext.Notification`, the Domain Event delivered, through the
-  trusted restore of ADR 0007, which alone sets it; a context `Continue()` gives, a trusted peer's and every other
-  carries none. The Integration Event publisher and the realtime publisher both read that one fact, so nothing outside
-  that delivery pushes: not a command an HTTP request or a Gateway call sends, nor its Domain Event Handlers, an
-  Integration Event Handler, a delayed command, a trusted peer's request or a command sent with `Continue()`. Realtime
-  reads it through Cqrs, which Web brings, and references no `PouryaKit.Messaging.Wolverine`.
+  records the Domain Event a Notification Handler's delivery delivers in that delivery's own scope, as
+  `INotificationDelivery` (Cqrs), which only `PouryaKit.Messaging.Wolverine` implements and sets. Every other scope
+  records none, one a Gateway call opens from the delivery included, whatever Operation Context it is given: a context
+  can be passed on, its scope cannot. The Integration Event publisher and the realtime publisher both read it, so
+  nothing outside that delivery pushes: not a command an HTTP request or a Gateway call sends, the delivery's own
+  context passed to that call included, nor its Domain Event Handlers, an Integration Event Handler, a delayed command,
+  a trusted peer's request or a command sent with `Continue()`. Realtime reads it through Cqrs, which Web brings, and
+  references no `PouryaKit.Messaging.Wolverine`. Cqrs declares only the reading side: it opens its internals for the
+  trusted restore alone (ADR 0007), and a public setter would let any code grant what the delivery records.
 - **One listener per instance.** A hosted service opens one connection over the connection string `AddPouryaKitRealtime`
   names, outside every pool and never multiplexed, since a pooled connection is reset when it returns and a multiplexed
   one holds no session; with `KeepAlive`, so a connection the network dropped fails its wait; and runs `LISTEN` on it
@@ -61,8 +64,9 @@ client of another instance.
   256 events behind is disconnected, since the listener never waits for one.
 - **A build-time check holds the listener and the Units of Work to one connection string.** PostgreSQL delivers a
   notification only to the listeners of its own database, so the Kit's composition checks fail the Host when the
-  listener's connection string is not set, or when a DbContext is stored over another connection string with another
-  value.
+  listener's connection string is not set, or when EF Core connects a DbContext that is a Unit of Work, constructed in
+  the check's own scope, with other settings than that string, the password aside: whatever configured the DbContext,
+  a `ConfigureDbContext` after `UsePouryaKitPostgres` onto another string or an Npgsql data source included.
 
 ## Considered Options
 
@@ -87,8 +91,10 @@ client of another instance.
 
 `RealtimeTests` in `tests/ModularMonolith.Tests` hold each, red once with its behaviour switched off: a push committed
 on one instance reaches a client of another, with two instances of one Host on one store under Balanced durability; a
-delivery that rolls back pushes nothing; a trusted peer's command and a command sent with `Continue()` cannot push; a client receives only its tenant's events and the Channels its endpoint admits
-for its Actor; a push of 8000 bytes fails in the handler and one of 7999 is delivered; a killed listener connection
+delivery that rolls back pushes nothing; a trusted peer's command, a command sent with `Continue()` and a command a
+Notification Handler sends through the Gateway with its delivery's own context cannot push, and the last cannot publish;
+a DbContext that `ConfigureDbContext` moves onto another database, by a string or a data source, fails the Host's
+build; a client receives only its tenant's events and the Channels its endpoint admits for its Actor; a push of 8000 bytes fails in the handler and one of 7999 is delivered; a killed listener connection
 ends in a `gap` and a listener that hears the next push; and, against the sample Host with each feature configured, the
 rate limiter counts one permit for a connection, response compression leaves the event stream alone, and status code
 pages leave a started connection as it was written.

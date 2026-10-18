@@ -19,9 +19,10 @@ public static class RealtimeServiceCollectionExtensions
         /// connected client a <see cref="RealtimeEvents.Gap"/>. Delivery to clients is at most once and not durable: the
         /// Outbox and the Receipts hold the durable state, and a client reads it through a query. With the Kit's
         /// composition checks (<c>AddPouryaKitCompositionChecks</c>), the Host's build fails when the configuration does
-        /// not set the connection string, or sets it blank, and when a DbContext is stored over another connection
-        /// string, since a push is written on its Unit of Work's own connection. Called again with the same name, it
-        /// adds nothing; with another, it throws.
+        /// not set the connection string, or sets it blank, and when EF Core connects a DbContext that is a Unit of Work
+        /// with other settings than it, the password aside, whatever configured the DbContext, since a push is written
+        /// on its Unit of Work's own connection. Called again with the same name, it adds nothing; with another, it
+        /// throws.
         /// </summary>
         public IServiceCollection AddPouryaKitRealtime(string connectionName)
         {

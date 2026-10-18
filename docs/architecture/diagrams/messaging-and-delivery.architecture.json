@@ -342,8 +342,8 @@
         },
         {
           "path": "src/PouryaKit.Realtime/RealtimePublisher.cs",
-          "line": 56,
-          "end_line": 62,
+          "line": 61,
+          "end_line": 67,
           "label": "pg_notify on the delivery's transaction"
         },
         {
