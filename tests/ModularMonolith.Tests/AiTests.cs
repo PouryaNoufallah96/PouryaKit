@@ -11,6 +11,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using ModularMonolith.Tests.Stub;
 using Npgsql;
@@ -142,11 +143,14 @@ public sealed class AiTests(AppFixture app, AiFixture ai) : IClassFixture<AiFixt
     [Fact]
     public async Task A_host_with_the_service_defaults_keeps_their_one_resilience_pipeline_on_the_provider_client()
     {
-        // The defaults' pipeline retries safe methods only, so a failed chat completion, a POST, is sent once: a retry
-        // policy of the OpenAI client's own, or a second pipeline, would send it again or refuse the client.
         await using var host = AppFixture.ComposeHost("Development", app.ConnectionString, new RecordedLogs(), builder => builder.AddServiceDefaults(), AiFixture.StubArguments(ai.Stub));
         ai.Stub.Script(ChatReply.Failure(503));
 
+        // The provider's client carries the one pipeline the defaults give every client, and none of its own.
+        var handlers = host.Services.GetRequiredService<IHttpMessageHandlerFactory>().CreateHandler(AIServiceCollectionExtensions.HttpClientName);
+        Assert.Single(Chain(handlers).OfType<ResilienceHandler>());
+        // That pipeline retries safe methods only, so a failed chat completion, a POST, is sent once: a retry policy of the
+        // OpenAI client's own would send it again.
         var thrown = await Assert.ThrowsAsync<ClientResultException>(() =>
             host.Services.GetRequiredService<IChatClient>().GetResponseAsync("Hello.", cancellationToken: TestContext.Current.CancellationToken)
         );
@@ -260,6 +264,14 @@ public sealed class AiTests(AppFixture app, AiFixture ai) : IClassFixture<AiFixt
         finally
         {
             await host.StopAsync(TestContext.Current.CancellationToken);
+        }
+    }
+
+    private static IEnumerable<HttpMessageHandler> Chain(HttpMessageHandler handler)
+    {
+        for (HttpMessageHandler? next = handler; next is not null; next = (next as DelegatingHandler)?.InnerHandler)
+        {
+            yield return next;
         }
     }
 

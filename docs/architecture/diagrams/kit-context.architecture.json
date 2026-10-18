@@ -192,8 +192,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 130,
-          "end_line": 141,
+          "line": 132,
+          "end_line": 143,
           "label": "/alive always; /health in Development"
         },
         {
@@ -220,14 +220,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 60,
-          "end_line": 82,
+          "line": 62,
+          "end_line": 84,
           "label": "Kit source and meter; OTLP when set"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 100,
-          "end_line": 117,
+          "line": 102,
+          "end_line": 119,
           "label": "Serilog's OTLP sink when set"
         },
         {
