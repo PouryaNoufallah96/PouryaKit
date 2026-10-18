@@ -36,24 +36,31 @@ public sealed class EmissionTests(Postgres postgres) : SpikeTest(postgres)
     }
 
     // A timeout carries no Operation Context headers: what its step emits takes the tenant and correlation the saga state
-    // kept from its starting event, and its identity from the timeout's stored envelope, the same in each of its deliveries.
+    // kept from its starting event, and a stable identity the state kept for the timeout when the starting step scheduled
+    // it, derived from that step's identity, not from the timeout's envelope.
     [Fact]
-    public async Task A_timeouts_emission_reaches_the_subscription_with_the_tenant_and_correlation_kept_in_the_saga_state()
+    public async Task A_timeouts_emission_reaches_the_subscription_with_the_identity_tenant_and_correlation_kept_in_the_saga_state()
     {
         var host = await StartAsync();
         var order = Guid.CreateVersion7();
         var placing = Context("tenant-a");
+        var sagaId = $"tenant-a:{order}";
+        var timeoutType = typeof(SagaSpike.Shipping.FulfilmentTimeout).FullName!;
 
-        await PlaceAsync(host, placing, order, installments: 2, payWithinSeconds: 1);
+        await PlaceAsync(host, placing, order, installments: 2, payWithinSeconds: 3);
+
+        await WaitUntilAsync("select count(*) = 1 from wolverine.fulfilmentsaga_saga where id = $1", sagaId);
+        var scheduling = SagaStorage.StepId(Fulfilment, sagaId, "orders.order-placed.v1", await ClaimedAsync(sagaId, "orders.order-placed.v1"));
+        var timeout = SagaStorage.TimeoutId(scheduling, timeoutType);
+        var envelope = await Db.ScalarAsync<Guid>(ConnectionString, "select id from wolverine.wolverine_incoming_envelopes where message_type = $1", timeoutType);
+        var kept = (await SagaAsync(sagaId))!.Value.GetProperty("Timeouts");
+        Assert.Equal([(envelope.ToString(), timeout.ToString())], kept.EnumerateObject().Select(entry => (entry.Name, entry.Value.GetString())));
+        Assert.NotEqual(envelope, timeout);
 
         await WaitUntilAsync("select count(*) = 1 from billing.pouryakit_receipts where subscription = 'billing.order-cancelled'");
-        Assert.Null(await SagaAsync($"tenant-a:{order}"));
-        var timeout = await ClaimedAsync($"tenant-a:{order}", typeof(SagaSpike.Shipping.FulfilmentTimeout).FullName!);
-        Assert.Equal(
-            timeout,
-            await Db.ScalarAsync<Guid>(ConnectionString, "select id from wolverine.wolverine_incoming_envelopes where message_type = $1", typeof(SagaSpike.Shipping.FulfilmentTimeout).FullName!)
-        );
-        var step = SagaStorage.StepId(Fulfilment, $"tenant-a:{order}", typeof(SagaSpike.Shipping.FulfilmentTimeout).FullName!, timeout);
+        Assert.Null(await SagaAsync(sagaId));
+        Assert.Equal(timeout, await ClaimedAsync(sagaId, timeoutType));
+        var step = SagaStorage.StepId(Fulfilment, sagaId, timeoutType, timeout);
         var cancelled = Assert.Single(BillingLog.Of(order), delivery => delivery.Subscription == "billing.order-cancelled").Context;
         Assert.Equal(
             (ActorKind.System, "shipping.fulfilment", "tenant-a", placing.CorrelationId, step),

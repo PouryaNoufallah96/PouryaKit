@@ -22,6 +22,9 @@ public abstract class PouryaKitSaga : Saga
     /// <summary>The correlation of the Operation that published the starting event; the Kit sets it.</summary>
     public Guid Correlation { get; set; }
 
+    /// <summary>The stable identity of each timeout a step scheduled, by the timeout's envelope; the Kit sets it.</summary>
+    public Dictionary<Guid, Guid> Timeouts { get; set; } = [];
+
     /// <summary>
     /// Emits <paramref name="integrationEvent"/> from this step through the Kit's adapter: written in the step's transaction,
     /// under the saga's declared system Actor, the starting event's tenant and correlation, the step's identity as causation,
@@ -40,7 +43,7 @@ public abstract class PouryaKitSaga : Saga
         }
 
         var saga = services.GetRequiredService<SagaDeclarations>().Of(GetType());
-        var (inputWireName, inputId, sagaId) = SagaStorage.InputOf(bus.Envelope!);
+        var (inputWireName, inputId, sagaId) = SagaStorage.InputOf(bus.Envelope!, this);
         // A starting step runs before the Kit stores the saga, so it reads what the Kit is about to store from its input.
         var (tenant, correlation) = Id.Length == 0 && bus.Envelope!.Message is ISagaInput starting
             ? (starting.Tenant, starting.Correlation)

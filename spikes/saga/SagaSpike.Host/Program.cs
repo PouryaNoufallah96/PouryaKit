@@ -79,7 +79,7 @@ static async Task PlaceAsync(IHost host, string connectionString, string tenant,
     await host
         .Services.GetRequiredService<IGatewayProcessor<OrdersModule>>()
         .SendAsync(new PlaceOrderCommand(order, Installments: 2, PayWithinSeconds: 3600), new OperationContext(Actor.System("spike.child"), tenant));
-    var sagaId = sagas.TenantInIdentity ? $"{tenant}:{order}" : order.ToString();
+    var sagaId = sagas.TenantInIdentity ? SagaStorage.SagaId(tenant, order.ToString()) : order.ToString();
     await using var connection = new NpgsqlConnection(connectionString);
     await connection.OpenAsync();
     for (var waited = 0; waited < 300; waited++)

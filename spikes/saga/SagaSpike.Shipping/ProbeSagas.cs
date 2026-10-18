@@ -19,6 +19,16 @@ public sealed class NaiveSaga : Saga
     public static NaiveSaga Start(OrderPlacedV1 placed) => new() { Id = placed.OrderId.ToString() };
 }
 
+/// <summary>A saga keyed by a text business id, which a test declares to try two tenants' identities that join alike.</summary>
+public sealed class ReferenceSaga : PouryaKitSaga
+{
+    /// <summary>The reference, as the event named it.</summary>
+    public string Reference { get; set; } = "";
+
+    /// <summary>Starts the saga.</summary>
+    public static ReferenceSaga Start(SagaInput<ReferenceSaga, ReferenceOpenedV1> opened) => new() { Reference = opened.Event.Reference };
+}
+
 /// <summary>
 /// Started beside the fulfilment saga by the same event, for the middleware test: what a step sees of the Operation, and
 /// whether the Kit's Integration Event publisher serves it.

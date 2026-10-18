@@ -1,4 +1,8 @@
+using Microsoft.Extensions.DependencyInjection;
 using SagaSpike.Contracts;
+using SagaSpike.Host;
+using SagaSpike.Kit;
+using SagaSpike.Shipping;
 
 namespace SagaSpike.Tests;
 
@@ -23,6 +27,30 @@ public sealed class TenancyTests(Postgres postgres) : SpikeTest(postgres)
         var a = (await SagaAsync($"tenant-a:{order}"))!.Value;
         Assert.Equal(("tenant-a", 2, 0), (a.GetProperty("Tenant").GetString(), a.GetProperty("Installments").GetInt32(), a.GetProperty("Paid").GetInt32()));
         Assert.Equal("tenant-b", (await SagaAsync($"tenant-b:{order}"))!.Value.GetProperty("Tenant").GetString());
+        Assert.Equal(0, await CountAsync("select count(*) from wolverine.wolverine_dead_letters"));
+    }
+
+    // Each part of the identity is escaped, so a tenant that holds the separator cannot name another tenant's saga: tenant
+    // "a:b" with the reference "c", and tenant "a" with the reference "b:c", are two sagas.
+    [Fact]
+    public async Task Two_tenants_whose_tenant_and_business_id_join_alike_are_two_sagas()
+    {
+        var host = await StartAsync(
+            new SpikeHostOptions
+            {
+                Services = services => services.AddSpikeSaga<ReferenceSaga>("shipping.reference", "shipping.reference", saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference)),
+            }
+        );
+
+        await PublishAsync(host, new ReferenceOpenedV1("c"), Guid.CreateVersion7(), Context("a:b"));
+        await PublishAsync(host, new ReferenceOpenedV1("b:c"), Guid.CreateVersion7(), Context("a"));
+
+        await SettledAsync();
+        Assert.Equal(
+            [("a", "b:c"), ("a:b", "c")],
+            (await Db.RowsAsync(ConnectionString, "select body->>'Tenant', body->>'Reference' from wolverine.referencesaga_saga order by 1"))
+                .Select(row => ((string)row[0]!, (string)row[1]!))
+        );
         Assert.Equal(0, await CountAsync("select count(*) from wolverine.wolverine_dead_letters"));
     }
 

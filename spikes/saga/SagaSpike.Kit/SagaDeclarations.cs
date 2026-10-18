@@ -41,7 +41,8 @@ public sealed class SagaInputDeclaration(Type eventType, Type inputType, Func<ob
 
     /// <summary>
     /// Wraps the event published with <paramref name="options"/>: its identity is the tenant with the business id, read
-    /// from the Operation Context headers the Outbox wrote, or the business id alone when <paramref name="tenantInIdentity"/> is false.
+    /// from the Operation Context headers the Outbox wrote (<see cref="SagaStorage.SagaId"/>), or the business id alone when
+    /// <paramref name="tenantInIdentity"/> is false.
     /// </summary>
     public object Wrap(object message, DeliveryOptions? options, bool tenantInIdentity)
     {
@@ -53,7 +54,7 @@ public sealed class SagaInputDeclaration(Type eventType, Type inputType, Func<ob
         var business = key(message);
         return wrap(
             message,
-            tenantInIdentity ? $"{tenant}:{business}" : business,
+            tenantInIdentity ? SagaStorage.SagaId(tenant, business) : business,
             tenant,
             Guid.Parse(Required(OperationContextHeaders.CorrelationId), CultureInfo.InvariantCulture),
             Guid.Parse(Required(IntegrationEventHeaders.DomainEventId), CultureInfo.InvariantCulture)

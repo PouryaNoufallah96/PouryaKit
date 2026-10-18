@@ -12,6 +12,9 @@ public sealed record PaymentReceivedV1(Guid OrderId);
 /// <summary>The second contract Orders publishes for the same payment, under the same Domain Event identity.</summary>
 public sealed record PaymentReceivedV2(Guid OrderId, string Method);
 
+/// <summary>A reference was opened; its business id is any text, so a test can try identities that join alike.</summary>
+public sealed record ReferenceOpenedV1(string Reference);
+
 // Shipping's saga emits these; Billing, a tenant-scoped Module, subscribes to them like any Integration Event.
 
 /// <summary>An order was paid in full and is fulfilled.</summary>

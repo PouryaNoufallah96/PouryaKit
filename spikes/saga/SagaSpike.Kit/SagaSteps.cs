@@ -18,6 +18,7 @@ using Wolverine.RDBMS;
 using Wolverine.RDBMS.Sagas;
 using Wolverine.Runtime;
 using Wolverine.Runtime.Handlers;
+using Wolverine.Util;
 
 namespace SagaSpike.Kit;
 
@@ -97,19 +98,27 @@ public static class SagaStorage
         try
         {
             var transaction = await connection.BeginTransactionAsync();
-            var claimed = await ClaimAsync(connection, transaction, database.SchemaName, saga.Name, envelope, options.ClaimKey);
-            await context.EnlistInOutboxAsync(new DatabaseEnvelopeTransaction(database, transaction));
             var settings = options.StoreSettings
                 ? database.Settings
                 : new DatabaseSettings { SchemaName = "public", DataSource = database.Settings.DataSource, ConnectionString = database.Settings.ConnectionString };
             var schema = (IDatabaseSagaSchema<TId, TSaga>)
                 Schemas.GetOrCreateValue(database).GetOrAdd(typeof(TSaga), _ => factory(new SagaTableDefinition(typeof(TSaga), null), settings));
+            // A timeout's identity is the one its saga's state kept when a step scheduled it, so the saga is read here, in
+            // the step's transaction, before Wolverine reads it again. A saga gone ends its timeout unread, with no claim.
+            (string WireName, Guid Id, string SagaId)? input = envelope.Message is ISagaInput
+                ? InputOf(envelope, null)
+                : await schema.LoadAsync((TId)(object)envelope.SagaId!, transaction, CancellationToken.None) is PouryaKitSaga scheduler
+                    ? InputOf(envelope, scheduler)
+                    : null;
+            var claimed = input is not { } step || await ClaimAsync(connection, transaction, database.SchemaName, saga.Name, envelope, step, options.ClaimKey);
+            await context.EnlistInOutboxAsync(new DatabaseEnvelopeTransaction(database, transaction));
             return new SagaStepStorage<TId, TSaga>(
                 new DatabaseSagaStorage<TId, TSaga>(connection, transaction, schema),
                 transaction,
                 database.SchemaName,
                 saga.Name,
-                envelope,
+                context,
+                input,
                 !claimed,
                 options
             );
@@ -134,11 +143,30 @@ public static class SagaStorage
     /// <summary>The identity of what a step emits of one type: from the step's identity and the emission's wire name.</summary>
     public static Guid EmissionId(Guid stepId, string wireName) => NameBased($"{stepId:D}\n{wireName}");
 
-    /// <summary>The input a delivery carries: an Integration Event's wire name and identity, or a timeout's type name and envelope id.</summary>
-    public static (string WireName, Guid Id, string SagaId) InputOf(Envelope envelope) =>
+    /// <summary>
+    /// The identity of a timeout a step schedules: from the scheduling step's identity and the timeout's wire name, kept
+    /// in the saga's state under the timeout's envelope.
+    /// </summary>
+    public static Guid TimeoutId(Guid schedulingStepId, string timeoutWireName) => NameBased($"{schedulingStepId:D}\n{timeoutWireName}\ntimeout");
+
+    /// <summary>
+    /// A saga's identity: the event's tenant and its business id, each escaped as a URI's data, so neither can end its part
+    /// early and name another tenant's saga.
+    /// </summary>
+    public static string SagaId(string? tenant, string businessId) => $"{Uri.EscapeDataString(tenant ?? "")}:{Uri.EscapeDataString(businessId)}";
+
+    /// <summary>
+    /// The input a delivery carries: an Integration Event's wire name and identity, or a timeout's type name and the
+    /// identity <paramref name="saga"/>'s state kept for it.
+    /// </summary>
+    public static (string WireName, Guid Id, string SagaId) InputOf(Envelope envelope, PouryaKitSaga? saga) =>
         envelope.Message is ISagaInput input
             ? (input.WireName, input.EventId, input.SagaId)
-            : (envelope.MessageType!, envelope.Id, envelope.SagaId!);
+            : saga?.Timeouts.TryGetValue(envelope.Id, out var timeout) is true
+                ? (envelope.MessageType!, timeout, envelope.SagaId!)
+                : throw new InvalidOperationException(
+                    $"The timeout {envelope.Id} has no identity in the state of the saga {envelope.SagaId}: only a step the Kit stores schedules a timeout."
+                );
 
     private static Guid NameBased(string text)
     {
@@ -157,6 +185,7 @@ public static class SagaStorage
         string schema,
         string saga,
         Envelope envelope,
+        (string WireName, Guid Id, string SagaId) input,
         SagaClaimKey key
     )
     {
@@ -165,7 +194,7 @@ public static class SagaStorage
             return true;
         }
 
-        var (wireName, id, sagaId) = InputOf(envelope);
+        var (wireName, id, sagaId) = input;
         await using var claim = new NpgsqlCommand(
             $"insert into \"{schema}\".pouryakit_saga_steps (saga, input, event_id, saga_id) values (@saga, @input, @event, @saga_id) on conflict do nothing",
             connection,
@@ -207,13 +236,15 @@ internal interface ISagaStep
 }
 
 // Wolverine's storage on the Kit's transaction: an inserted saga takes its identity, tenant and correlation from the
-// event that started it, so the saga's own Start code never sets them.
+// event that started it, so the saga's own Start code never sets them, and a stored saga keeps the identity of each
+// timeout the step scheduled.
 internal sealed class SagaStepStorage<TId, TSaga>(
     DatabaseSagaStorage<TId, TSaga> inner,
     DbTransaction transaction,
     string schema,
     string saga,
-    Envelope envelope,
+    MessageContext context,
+    (string WireName, Guid Id, string SagaId)? input,
     bool claimed,
     SagaSpikeOptions options
 ) : ISagaStorage<TId, TSaga>, ISagaStep
@@ -225,17 +256,41 @@ internal sealed class SagaStepStorage<TId, TSaga>(
 
     public Task InsertAsync(TSaga state, CancellationToken cancellationToken)
     {
-        if (state is PouryaKitSaga kit && envelope.Message is ISagaInput input)
+        if (state is PouryaKitSaga kit && context.Envelope!.Message is ISagaInput starting)
         {
-            kit.Id = input.SagaId;
-            kit.Tenant = input.Tenant;
-            kit.Correlation = input.Correlation;
+            kit.Id = starting.SagaId;
+            kit.Tenant = starting.Tenant;
+            kit.Correlation = starting.Correlation;
+            KeepTimeouts(kit);
         }
 
         return inner.InsertAsync(state, cancellationToken);
     }
 
-    public Task UpdateAsync(TSaga state, CancellationToken cancellationToken) => inner.UpdateAsync(state, cancellationToken);
+    public Task UpdateAsync(TSaga state, CancellationToken cancellationToken)
+    {
+        if (state is PouryaKitSaga kit)
+        {
+            KeepTimeouts(kit);
+        }
+
+        return inner.UpdateAsync(state, cancellationToken);
+    }
+
+    // The step's timeouts are among the envelopes it stored in this transaction, not yet sent.
+    private void KeepTimeouts(PouryaKitSaga state)
+    {
+        if (input is not { } step)
+        {
+            return;
+        }
+
+        var stepId = SagaStorage.StepId(saga, state.Id, step.WireName, step.Id);
+        foreach (var scheduled in context.Outstanding.Where(envelope => envelope.Message is TimeoutMessage))
+        {
+            state.Timeouts.TryAdd(scheduled.Id, SagaStorage.TimeoutId(stepId, scheduled.Message!.GetType().ToMessageTypeName()));
+        }
+    }
 
     public async Task DeleteAsync(TSaga state, CancellationToken cancellationToken)
     {
@@ -257,10 +312,9 @@ internal sealed class SagaStepStorage<TId, TSaga>(
     public async Task SaveChangesAsync(CancellationToken cancellationToken)
     {
         await inner.SaveChangesAsync(cancellationToken);
-        if (options.AfterCommit is { } afterCommit)
+        if (options.AfterCommit is { } afterCommit && input is { } step)
         {
-            var (wireName, id, _) = SagaStorage.InputOf(envelope);
-            await afterCommit(wireName, id);
+            await afterCommit(step.WireName, step.Id);
         }
     }
 
