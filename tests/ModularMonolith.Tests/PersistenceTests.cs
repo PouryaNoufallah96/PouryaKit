@@ -18,7 +18,8 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task Each_module_has_its_own_schema_and_migrations_history_with_snake_case_names()
     {
         var tables = await Fixture.RowsAsync(
-            "select table_schema, table_name from information_schema.tables where table_schema not in ('pg_catalog', 'information_schema', 'wolverine') order by 1, 2"
+            // Marten's own schema, events, has its event tables only once a Stream Module first appends.
+            "select table_schema, table_name from information_schema.tables where table_schema not in ('pg_catalog', 'information_schema', 'wolverine', 'events') order by 1, 2"
         );
         var history = await Fixture.RowsAsync(
             """select 'catalog', migration_id from catalog."__EFMigrationsHistory" union all select 'stub', migration_id from stub."__EFMigrationsHistory" order by 1, 2"""
@@ -47,6 +48,9 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["inventory", "stock_counts"],
                 ["inventory", "stock_items"],
                 ["inventory", "stock_reconciliations"],
+                ["ledger", "pouryakit_idempotency_keys"],
+                ["ledger", "pouryakit_receipts"],
+                ["ledger", "pouryakit_snapshot_versions"],
                 ["stub", "__EFMigrationsHistory"],
                 ["stub", "badges"],
                 ["stub", "binary_keys"],

@@ -51,7 +51,7 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     [Fact]
     public void A_marten_store_integrated_in_another_schema_than_the_message_stores_fails_the_host_when_it_is_built()
     {
-        var refused = Assert.Throws<InvalidOperationException>(() => streams.Mixed(_database, martenSchema: "marten_wolverine"));
+        var refused = Assert.Throws<InvalidOperationException>(() => streams.Joined(_database, martenSchema: "marten_wolverine"));
 
         Assert.Contains(
             "The Marten store of UsePouryaKitMarten keeps the message store's tables in the schema marten_wolverine, but UsePouryaKitWolverine keeps them in wolverine",
@@ -73,7 +73,7 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         var refused = Assert.Throws<InvalidOperationException>(() =>
             movedByALaterConfiguration
                 ? streams.Mixed(_database, configure: builder => builder.Services.ConfigureMarten(options => options.Connection(other)))
-                : streams.Mixed(_database, martenConnection: "events", arguments: $"--ConnectionStrings:events={other}")
+                : streams.Joined(_database, martenConnection: "events", arguments: $"--ConnectionStrings:events={other}")
         );
 
         Assert.Contains(

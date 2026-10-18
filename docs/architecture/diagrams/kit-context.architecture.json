@@ -90,8 +90,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 49,
-          "end_line": 56,
+          "line": 51,
+          "end_line": 58,
           "label": "bearer JWT; authenticated by default"
         },
         {
@@ -118,20 +118,20 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 80,
-          "end_line": 91,
+          "line": 82,
+          "end_line": 94,
           "label": "composes the Modules; Inventory w/o broker"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 115,
-          "end_line": 119,
-          "label": "message store; RabbitMQ with a broker"
+          "line": 118,
+          "end_line": 125,
+          "label": "message and Marten stores; RabbitMQ if a broker"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
           "line": 15,
-          "end_line": 30,
+          "end_line": 32,
           "label": "references the Kit's projects"
         }
       ]
@@ -232,8 +232,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 92,
-          "end_line": 94,
+          "line": 95,
+          "end_line": 97,
           "label": "the Kit exports nothing"
         }
       ]
@@ -321,8 +321,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 95,
-          "end_line": 101,
+          "line": 98,
+          "end_line": 104,
           "label": "only when ConnectionStrings:cache is set"
         },
         {
@@ -349,8 +349,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 103,
-          "end_line": 106,
+          "line": 106,
+          "end_line": 109,
           "label": "MailKit, options from PouryaKit:Email"
         },
         {
@@ -472,8 +472,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 107,
-          "end_line": 110,
+          "line": 110,
+          "end_line": 113,
           "label": "one chat client, options from PouryaKit:AI"
         },
         {

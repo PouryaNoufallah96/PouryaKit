@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using ModularMonolith.Tests.StreamHost;
 using ModularMonolith.Tests.Streams;
 using Npgsql;
+using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Messaging.Wolverine.Marten;
 using PouryaKit.Modularity;
 using Testcontainers.PostgreSql;
@@ -14,7 +15,7 @@ namespace ModularMonolith.Tests.Fixtures;
 /// <summary>
 /// One PostgreSQL for the Stream write model's tests, which records commit timestamps and takes many connections: each
 /// test composes its Hosts over a database of its own, one of the Stream Module Accounts alone, or the Proving Sample's with
-/// Accounts beside its EF Core Modules on one message store.
+/// Accounts beside its EF Core Modules and Ledger on one message store.
 /// </summary>
 public sealed class StreamFixture : IAsyncLifetime
 {
@@ -46,17 +47,11 @@ public sealed class StreamFixture : IAsyncLifetime
     }
 
     /// <summary>
-    /// The Proving Sample's Host with Accounts beside its EF Core Modules over <paramref name="connectionString"/>, its
-    /// Marten store over the connection string <paramref name="martenConnection"/> integrated in the schema
-    /// <paramref name="martenSchema"/>, built and not started; <paramref name="arguments"/> add to its configuration.
+    /// The Proving Sample's Host, whose Marten store already serves its Stream Module Ledger, with Accounts beside its EF
+    /// Core Modules over <paramref name="connectionString"/>, built and not started; <paramref name="arguments"/> add to its
+    /// configuration.
     /// </summary>
-    public WebApplication Mixed(
-        string connectionString,
-        string martenConnection = "app",
-        string martenSchema = "wolverine",
-        Action<WebApplicationBuilder>? configure = null,
-        params string[] arguments
-    ) =>
+    public WebApplication Mixed(string connectionString, Action<WebApplicationBuilder>? configure = null, params string[] arguments) =>
         AppFixture.ComposeHost(
             "Development",
             connectionString,
@@ -64,11 +59,27 @@ public sealed class StreamFixture : IAsyncLifetime
             builder =>
             {
                 builder.AddPouryaKitModules(modules => modules.Add<AccountsModule>());
-                builder.UsePouryaKitMarten(martenConnection, martenSchema);
                 configure?.Invoke(builder);
             },
             arguments
         );
+
+    /// <summary>
+    /// A Host of Accounts whose message store the EF Core package declares over <paramref name="connectionString"/> and
+    /// whose Marten store joins it over the connection string <paramref name="martenConnection"/>, integrated in the schema
+    /// <paramref name="martenSchema"/>, built and not started; <paramref name="arguments"/> add to its configuration.
+    /// </summary>
+    public IHost Joined(string connectionString, string martenConnection = "app", string martenSchema = "wolverine", params string[] arguments)
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", Environments.Development, $"--ConnectionStrings:app={connectionString}", .. arguments]
+        );
+        builder.Logging.AddProvider(Logs);
+        builder.AddPouryaKitModules(modules => modules.Add<AccountsModule>());
+        builder.UsePouryaKitWolverine(connectionName: "app");
+        builder.UsePouryaKitMarten(martenConnection, martenSchema);
+        return builder.Build();
+    }
 
     /// <inheritdoc />
     public async ValueTask InitializeAsync() => await _postgres.StartAsync(TestContext.Current.CancellationToken);

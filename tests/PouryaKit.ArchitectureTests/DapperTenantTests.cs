@@ -34,7 +34,7 @@ public sealed class DapperTenantTests
     [Fact]
     public void The_tenant_scoped_modules_come_from_the_host_and_their_tables_from_each_modules_model()
     {
-        Assert.Equal(["Catalog"], Sample.TenantScopedModules.Select(module => module.GetName().Name));
+        Assert.Equal(["Catalog", "Ledger"], Sample.TenantScopedModules.Select(module => module.GetName().Name));
         Assert.Equal(
             [KeyValuePair.Create("catalog.categories", (string?)"tenant"), KeyValuePair.Create("catalog.products", (string?)"tenant")],
             TenantTables.OrderBy(table => table.Key, StringComparer.Ordinal).Select(table => KeyValuePair.Create(table.Key, table.Value.Tenant))
@@ -161,7 +161,7 @@ public sealed class DapperTenantTests
     {
         Assert.Empty(Sample.TenantScopedModules.SelectMany(module => ModuleRules.ReadsBeyondTheTenant(module, TenantTables)));
         // The rule judged Catalog's reads: GetProduct's, and ListProducts' SELECT and COUNT; a migration's SQL is not a read.
-        var catalog = Assert.Single(Sample.TenantScopedModules);
+        var catalog = Assert.Single(Sample.TenantScopedModules, module => module.GetName().Name == "Catalog");
         Assert.Equal(
             ["GetProductQueryHandler", "ListProductsQueryHandler", "ListProductsQueryHandler"],
             Il.LiteralsIn(catalog)

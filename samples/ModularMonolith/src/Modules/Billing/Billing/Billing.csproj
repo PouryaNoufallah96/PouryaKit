@@ -6,8 +6,9 @@
     <InternalsVisibleTo Include="ModularMonolith.Tests" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Catalog's Contracts, never Catalog or Inventory: Billing knows only what Catalog publishes. -->
+    <!-- Catalog's and Ledger's Contracts, never another Module: Billing knows only what they publish. -->
     <ProjectReference Include="..\..\Catalog\Catalog.Contracts\Catalog.Contracts.csproj" />
+    <ProjectReference Include="..\..\Ledger\Ledger.Contracts\Ledger.Contracts.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Messaging.Wolverine.EFCore\PouryaKit.Messaging.Wolverine.EFCore.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Modularity\PouryaKit.Modularity.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Persistence.Postgres\PouryaKit.Persistence.Postgres.csproj" />

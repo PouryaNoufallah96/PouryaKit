@@ -28,8 +28,8 @@
       "sources": [
         {
           "path": "tests/ModularMonolith.Tests/Fixtures/AppFixture.cs",
-          "line": 27,
-          "end_line": 78,
+          "line": 28,
+          "end_line": 91,
           "label": "hosts ModularMonolith.Host"
         },
         {
@@ -44,7 +44,7 @@
       "id": "mmhost",
       "type": "backend",
       "label": "ModularMonolith.Host",
-      "sublabel": "the web Host: Catalog and Billing, and Inventory without a broker",
+      "sublabel": "the web Host: Catalog, Billing, Ledger, and Inventory without a broker",
       "pos": [
         40,
         200
@@ -56,20 +56,20 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 80,
-          "end_line": 91,
+          "line": 82,
+          "end_line": 94,
           "label": "composes the Modules"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 37,
-          "end_line": 44,
+          "line": 39,
+          "end_line": 46,
           "label": "the broker and its service name"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
           "line": 5,
-          "end_line": 30,
+          "end_line": 32,
           "label": "its references"
         }
       ]
@@ -152,21 +152,21 @@
         372
       ],
       "size": [
-        240,
+        220,
         80
       ],
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Modules/Billing/Billing/BillingModule.cs",
-          "line": 15,
-          "end_line": 21,
-          "label": "subscribes v1; a delayed command"
+          "line": 17,
+          "end_line": 24,
+          "label": "subscribes v1 and AccountOpenedV1; ExpireQuote"
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Billing/Billing/Billing.csproj",
           "line": 8,
-          "end_line": 14,
-          "label": "Catalog's Contracts, never Catalog"
+          "end_line": 15,
+          "label": "Catalog's and Ledger's Contracts only"
         }
       ]
     },
@@ -176,11 +176,11 @@
       "label": "Catalog",
       "sublabel": "products, categories, cached GetProduct",
       "pos": [
-        410,
+        300,
         380
       ],
       "size": [
-        260,
+        250,
         64
       ],
       "sources": [
@@ -210,7 +210,7 @@
       "label": "Inventory",
       "sublabel": "stock items, Catalog's products, ReconcileStock",
       "pos": [
-        790,
+        590,
         380
       ],
       "size": [
@@ -233,16 +233,50 @@
       ]
     },
     {
+      "id": "ledger",
+      "type": "backend",
+      "label": "Ledger",
+      "sublabel": "a Stream Module: accounts on Marten",
+      "pos": [
+        880,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Modules/Ledger/Ledger/LedgerModule.cs",
+          "line": 13,
+          "end_line": 23,
+          "label": "Streams, tenant-scoped; publishes v1"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Events/Notifications/ActivateAccountNotificationHandler.cs",
+          "line": 10,
+          "end_line": 27,
+          "label": "activates and publishes in one commit"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Ledger/Ledger/Ledger.csproj",
+          "line": 8,
+          "end_line": 14,
+          "label": "its Contracts and Kit packages, no Marten"
+        }
+      ]
+    },
+    {
       "id": "servicedefaults",
       "type": "frontend",
       "label": "ModularMonolith.ServiceDefaults",
       "sublabel": "template content, not a Kit package",
       "pos": [
-        1075,
+        1095,
         380
       ],
       "size": [
-        270,
+        255,
         64
       ],
       "sources": [
@@ -272,7 +306,7 @@
       "label": "Catalog.Contracts",
       "sublabel": "ProductCreatedV1, V2, ProductSnapshotV1, ICatalogProducts",
       "pos": [
-        480,
+        300,
         560
       ],
       "size": [
@@ -298,7 +332,7 @@
       "id": "templates",
       "type": "cloud",
       "label": "PouryaKit.Templates",
-      "sublabel": "pouryakit-monolith (Catalog) and pouryakit-modular-monolith (all three)",
+      "sublabel": "pouryakit-monolith (Catalog) and pouryakit-modular-monolith (all four)",
       "pos": [
         40,
         720
@@ -374,6 +408,7 @@
         "billing",
         "catalog",
         "inventory",
+        "ledger",
         "servicedefaults",
         "contracts"
       ],
@@ -437,6 +472,14 @@
       "toSide": "top"
     },
     {
+      "id": "mmhost-ledger",
+      "from": "mmhost",
+      "to": "ledger",
+      "label": "composes",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
       "id": "invhost-inventory",
       "from": "invhost",
       "to": "inventory",
@@ -477,6 +520,15 @@
       "variant": "emphasis",
       "fromSide": "right",
       "toSide": "left"
+    },
+    {
+      "id": "ledger-billing",
+      "from": "ledger",
+      "to": "billing",
+      "label": "AccountOpenedV1",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "bottom"
     },
     {
       "id": "catalog-contracts",
@@ -523,6 +575,12 @@
       "label": "packs"
     },
     {
+      "id": "templates-ledger",
+      "from": "templates",
+      "to": "ledger",
+      "label": "packs"
+    },
+    {
       "id": "templates-servicedefaults",
       "from": "templates",
       "to": "servicedefaults",
@@ -538,6 +596,7 @@
       "items": [
         "Green arrows are Integration Events and Snapshots, written to the Outbox in the publishing Unit of Work's commit and delivered to each subscription; no Module references another Module.",
         "Inventory and Billing reference Catalog's Contracts and never Catalog: Inventory receives ProductCreatedV1, ProductCreatedV2 and ProductSnapshotV1, Billing ProductCreatedV1 under its own subscription.",
+        "Ledger, a Stream Module, publishes AccountOpenedV1 in the commit that activates the account; Billing receives it through Ledger's Contracts and opens a welcome quote.",
         "Billing schedules ExpireQuote as a delayed command; Inventory declares ReconcileStock as a recurring command for the system Actor inventory.stock-reconciler."
       ]
     },
@@ -557,7 +616,7 @@
       "title": "The templates",
       "items": [
         "PouryaKit.Templates keeps no copy of the business code: it packs the sample Modules' code, the service defaults recipes and two files of ModularMonolith.Host when the package is packed.",
-        "Each template's Host, Reverse proxy, project files and smoke test are the template's own; the monolith takes Catalog without Modularity."
+        "Each template's Host, Reverse proxy, project files and smoke test are the template's own; the monolith takes Catalog without Modularity, and Ledger, a second write model, stays in the modular monolith."
       ]
     }
   ]

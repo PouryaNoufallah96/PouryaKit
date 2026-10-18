@@ -28,8 +28,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 81,
-          "end_line": 91,
+          "line": 83,
+          "end_line": 94,
           "label": "adds each Module"
         },
         {

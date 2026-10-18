@@ -23,6 +23,8 @@ Checked on nuget.org on 2026-10-05; licence expressions from each package's nusp
 
 The Billing Module (ticket #17) adds no package: it references what Inventory references, except `PouryaKit.Persistence.Dapper`.
 
+The Ledger Module (ticket #132) adds no package: it references the Kit's `PouryaKit.Persistence.Marten`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Modularity` and `PouryaKit.Web`, and `ModularMonolith.Host` references `PouryaKit.Messaging.Wolverine.Marten`, whose Marten 9.46.0 and WolverineFx.Marten 6.48.3, both `MIT`, [PouryaKit.Persistence.Marten's record](PouryaKit.Persistence.Marten.md) checks. `Ledger.Contracts` references nothing; Billing references it beside `Catalog.Contracts`. Ledger is the sample's own code, adopted from no reference project.
+
 ## The service defaults recipes
 
 - **Kit files:** `samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs`, which `PouryaKit.Templates` packs into both templates

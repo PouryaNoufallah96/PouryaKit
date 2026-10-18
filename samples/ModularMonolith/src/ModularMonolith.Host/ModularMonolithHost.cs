@@ -2,12 +2,14 @@ using Billing;
 using Catalog;
 using Catalog.Products.Events.Notifications;
 using Inventory;
+using Ledger;
 using PouryaKit.AI;
 using PouryaKit.Caching;
 using PouryaKit.Cqrs;
 using PouryaKit.Email.MailKit;
 using PouryaKit.Grpc;
 using PouryaKit.Messaging.Wolverine.EFCore;
+using PouryaKit.Messaging.Wolverine.Marten;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
 using PouryaKit.Observability;
@@ -88,6 +90,7 @@ public static class ModularMonolithHost
             }
 
             modules.Add<BillingModule>();
+            modules.Add<LedgerModule>();
         });
         // An activity and a duration for every command and query, around the dispatcher the Modules registered. The
         // Host's exporter, when it has one, listens to OperationTelemetry.SourceName; the Kit exports nothing.
@@ -113,6 +116,9 @@ public static class ModularMonolithHost
         // the database every Module stores in.
         builder.Services.AddPouryaKitRealtime(connectionName: "app");
         builder.UsePouryaKitWolverine(connectionName: "app");
+        // Ledger's Streams, in the Host's one Marten store on the same database, which joins the message store the EF
+        // Core Modules' registration above declared: every Stream Module's events commit with what it sends.
+        builder.UsePouryaKitMarten(connectionName: "app");
         if (broker)
         {
             builder.UsePouryaKitRabbitMq(BrokerConnection, ServiceName);

@@ -6,6 +6,7 @@
     <PackageReference Include="PouryaKit.AI" />
     <PackageReference Include="PouryaKit.Caching" />
     <PackageReference Include="PouryaKit.Messaging.Wolverine.EFCore" />
+    <PackageReference Include="PouryaKit.Messaging.Wolverine.Marten" />
     <PackageReference Include="PouryaKit.Messaging.Wolverine.RabbitMq" />
     <PackageReference Include="PouryaKit.Observability" />
     <PackageReference Include="PouryaKit.Realtime" />
@@ -23,6 +24,7 @@
     <ProjectReference Include="..\Modules\Billing\Billing\Billing.csproj" />
     <ProjectReference Include="..\Modules\Catalog\Catalog\Catalog.csproj" />
     <ProjectReference Include="..\Modules\Inventory\Inventory\Inventory.csproj" />
+    <ProjectReference Include="..\Modules\Ledger\Ledger\Ledger.csproj" />
     <ProjectReference Include="..\PouryaKitAppName.ServiceDefaults\PouryaKitAppName.ServiceDefaults.csproj" />
   </ItemGroup>
 </Project>
