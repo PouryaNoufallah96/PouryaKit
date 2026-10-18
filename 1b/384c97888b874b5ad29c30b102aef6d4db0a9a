@@ -1,0 +1,31 @@
+scripts/packaging/test_validation.py
+  s_b9a8adfb056e1c::t_778d550ac19e4e 272,277
+  s_b9a8adfb056e1c::t_34817c70bcab3b 249-271,273-276,278-280
+scripts/packaging/validate.py
+  s_b9a8adfb056e1c::t_34817c70bcab3b 490-492,502,506-512
+  s_b9a8adfb056e1c::t_3bb777643b8781 513-514
+.github/workflows/package-validation.yml
+  s_b9a8adfb056e1c::t_34817c70bcab3b 72
+AGENTS.md
+  s_b9a8adfb056e1c::t_934e894cf17a7c 97
+docs/agents/brief-template.md
+  s_b9a8adfb056e1c::t_1b3336d05fa9ae 58
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_b9a8adfb056e1c::t_d8f6b4664b007f 178
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1b384c97888b874b5ad29c30b102aef6d4db0a9a",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
