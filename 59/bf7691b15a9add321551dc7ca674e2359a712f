@@ -1,0 +1,35 @@
+src/PouryaKit.Aspire/OllamaModelHealthCheck.cs
+  s_b9a8adfb056e1c::t_1d713d4012f4ba 9-18,20-25,29,32-37,48-77
+tests/PouryaKit.Aspire.Tests/OllamaModelHealthCheckTests.cs
+  s_b9a8adfb056e1c::t_50be26ef152a5b 1-93
+.agents/skills/pourya-kit/references/aspire.md
+  s_b9a8adfb056e1c::t_22ad97ba523a18 108,110,148,150
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_7cf31de9932aa1 2438,2450
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_ab91ff5f8b1fed 62,243,345
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_ecd1b2407704ed 761
+src/PouryaKit.Aspire/AspireDistributedApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_6f6bdcbfd126a2 67-73
+src/PouryaKit.Aspire/PouryaKit.Aspire.csproj
+  s_b9a8adfb056e1c::t_e2297bc5cefece 13-16
+tests/PouryaKit.Aspire.Tests/AppHostTests.cs
+  s_b9a8adfb056e1c::t_f8b00906e0504c 7,93-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "59bf7691b15a9add321551dc7ca674e2359a712f",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
