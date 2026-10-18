@@ -94,6 +94,7 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | A brief's commands come from the environment, never from memory | `docs/agents/brief-template.md`, "Verify" |
 | A review reads the implementer's commit, never the integration branch against itself | `kit-review.js` refuses `head` equal to `base` |
 | Pre-Wave 3 acceptance sections stay in ticket order after every merge | `check-docs.py` (ordered sections), run by `merge-package.py --post-merge` |
+| A package validation leaves no evidence directory behind after a PASS | `validate.py` removes it unless `--keep` (CI passes `--keep` for its artifact); `test_validation.py`, `FinishTests` |
 | The Kit skill's description stays within the 1024 characters Claude Code loads | `check-ai-setup.py` (`SKILL_DESCRIPTION_LIMIT`); the pre-commit hook and CI's `ai-setup` job run it |
 | A docs or AI-setup edit passes its checks before it commits | `.githooks/pre-commit`: `check-docs.py --staged` on every commit, `check-ai-setup.py` when an AI-setup path is staged, a gated path staged in part refused; CI's `ai-setup` job is the gate (`docs/agents/ai-setup.md`, "Git hooks") |
 
