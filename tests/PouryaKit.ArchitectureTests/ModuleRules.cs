@@ -316,6 +316,7 @@ internal static partial class ModuleRules
         typeof(IDelayedCommandOutbox),
         typeof(ISnapshotMappers),
         typeof(IReceipts),
+        typeof(INotificationDelivery),
     ];
 
     /// <summary>

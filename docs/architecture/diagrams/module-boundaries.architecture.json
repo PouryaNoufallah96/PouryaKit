@@ -295,13 +295,13 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
           "line": 260,
-          "end_line": 319,
+          "end_line": 320,
           "label": "IDispatcher, IUnitOfWork, IQueryCache..."
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PipelineContractTests.cs",
           "line": 10,
-          "end_line": 47,
+          "end_line": 48,
           "label": "Modules and Hosts implement none"
         }
       ]

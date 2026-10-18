@@ -22,6 +22,7 @@ public sealed class PipelineContractTests
                 "PouryaKit.Messaging.Wolverine.EFCore.EfReceipts implements IReceipts, a pipeline contract only the Kit implements (PouryaKit.Messaging.Wolverine.EFCore.dll).",
                 "PouryaKit.Messaging.Wolverine.EFCore.WolverineOutbox implements IOutbox, a pipeline contract only the Kit implements (PouryaKit.Messaging.Wolverine.EFCore.dll).",
                 "PouryaKit.Messaging.Wolverine.EFCore.WolverineOutbox implements IUnitOfWorkOutbox, a pipeline contract only the Kit implements (PouryaKit.Messaging.Wolverine.EFCore.dll).",
+                "PouryaKit.Messaging.Wolverine.NotificationDelivery implements INotificationDelivery, a pipeline contract only the Kit implements (PouryaKit.Messaging.Wolverine.dll).",
                 "PouryaKit.Messaging.Wolverine.PublishedIntegrationEvents implements IIntegrationEventOutbox, a pipeline contract only the Kit implements (PouryaKit.Messaging.Wolverine.dll).",
                 "PouryaKit.Messaging.Wolverine.ScheduledDelayedCommands implements IDelayedCommandOutbox, a pipeline contract only the Kit implements (PouryaKit.Messaging.Wolverine.dll).",
                 "PouryaKit.Messaging.Wolverine.SnapshotMappers implements ISnapshotMappers, a pipeline contract only the Kit implements (PouryaKit.Messaging.Wolverine.dll).",
