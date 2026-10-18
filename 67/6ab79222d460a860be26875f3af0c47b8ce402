@@ -1,0 +1,37 @@
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_7f21ac1f3b3c9a 4985
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_7f21ac1f3b3c9a 4985,5235-5236,5243
+docs/architecture/diagrams/module-boundaries.html
+  s_b9a8adfb056e1c::t_7f21ac1f3b3c9a 4985
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_810dbb62a08741 10
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_810dbb62a08741 10
+docs/architecture/diagrams/execution-core.html
+  s_b9a8adfb056e1c::t_7f21ac1f3b3c9a 4985,5020-5021,5028-5029,5044-5045,5056-5057,5084-5085,5088-5089,5092-5093,5096-5097,5337-5338,5342-5343,5396-5406,5409-5410,5474-5480,5482-5484,5691
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_810dbb62a08741 10
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_810dbb62a08741 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b9a8adfb056e1c::t_7f21ac1f3b3c9a 4985,4990,5020-5021,5024-5025,5028-5029,5032-5033,5036-5037,5040-5041,5044-5045,5048-5049,5052-5053,5056-5057,5060-5061,5064-5065,5068-5069,5072-5073,5076-5077,5080-5081,5084-5091,5093,5212-5222,5224-5232,5236-5238,5240,5244,5248-5250,5252,5256,5260,5264,5268,5272,5276,5280,5284,5288,5292,5296,5303-5304,5525
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_810dbb62a08741 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "676ab79222d460a860be26875f3af0c47b8ce402",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
