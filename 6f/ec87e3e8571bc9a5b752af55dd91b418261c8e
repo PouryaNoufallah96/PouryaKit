@@ -1,0 +1,21 @@
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_b5a873e0e1db17 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b9a8adfb056e1c::t_d1a44f2a3b5a67 4985,4990,5024-5025,5032-5033,5036-5037,5040-5041,5044-5045,5048-5049,5052-5053,5056-5057,5060-5061,5064-5065,5068-5069,5072-5073,5076-5077,5080-5081,5084-5085,5088-5089,5092-5105,5121-5122,5129,5156-5157,5161-5162,5167-5169,5172-5173,5178-5191,5194-5195,5200-5202,5208-5209,5214-5216,5220-5221,5224-5225,5232,5248-5249,5252-5253,5260-5261,5264-5265,5268-5269,5272-5273,5275-5277,5279-5283,5287-5297,5299-5301,5303-5305,5307-5309,5311-5313,5315-5317,5319-5321,5323-5325,5327-5329,5331-5333,5338-5339,5546,5557,5572
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6fec87e3e8571bc9a5b752af55dd91b418261c8e",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
