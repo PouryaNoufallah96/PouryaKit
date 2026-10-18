@@ -16,11 +16,12 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 // configured it, a ConfigureDbContext after UsePouryaKitPostgres included: a connection string (EF Core resolves its named
 // form, Name=ConnectionStrings:app, which UsePouryaKitPostgres writes), a DbConnection or an Npgsql data source. The
 // connection is not opened: nothing connects. Another write model's store, such as Marten's, joins the check through the
-// OutboxConnection its registration records, read from the configuration. The strings are compared on the hosts, ports and database they name; nothing
-// resolves a host name, so localhost and 127.0.0.1 differ. A string that names no database names its user's, as Npgsql and
-// PostgreSQL read it; one that names neither leaves the database to the client's user, which the string does not show, so
-// it fails the build too, asking for the database to be named.
-internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, string storeConnectionString) : ICompositionCheck
+// OutboxConnection its registration records: the connection string and the schema of the store as it was built, which
+// must be the message store's database and schema, or Wolverine would keep two main stores. The strings are compared on
+// the hosts, ports and database they name; nothing resolves a host name, so localhost and 127.0.0.1 differ. A string that
+// names no database names its user's, as Npgsql and PostgreSQL read it; one that names neither leaves the database to the
+// client's user, which the string does not show, so it fails the build too, asking for the database to be named.
+internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, string storeConnectionString, string storeSchema) : ICompositionCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {
@@ -67,17 +68,21 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
             }
         }
 
-        // Another write model's store, such as Marten's, whose registration refused a missing or blank connection string.
         foreach (var outbox in services.GetServices<OutboxConnection>())
         {
-            var database = PostgresDatabase.Of(configuration.GetConnectionString(outbox.Name) ?? "");
+            var database = PostgresDatabase.Of(outbox.ConnectionString(services));
             if (database is null)
             {
-                yield return $"{outbox.Writer} writes over the connection string {outbox.Name}, which names neither a database nor a user, so its database is left to the client's user and cannot be compared with the message store's, the database {store}. Set Database, or at least Username, in the connection string {outbox.Name}.";
+                yield return $"{outbox.Writer} is built over a connection string that names neither a database nor a user, so its database is left to the client's user and cannot be compared with the message store's, the database {store}. Name its database.";
             }
             else if (!database.Matches(store))
             {
-                yield return $"{outbox.Writer} writes over the connection string {outbox.Name}, the database {database}, but UsePouryaKitWolverine keeps the message store over the connection string {storeConnectionName}, the database {store}, so its Outbox would write envelopes to its own database, where the store never delivers them. Use one database for both.";
+                yield return $"{outbox.Writer} is built over the database {database}, but UsePouryaKitWolverine keeps the message store over the connection string {storeConnectionName}, the database {store}, so its Outbox would write envelopes to its own database, where the store never delivers them. Use one database for both.";
+            }
+
+            if (outbox.Schema(services) is var schema && !string.Equals(schema, storeSchema, StringComparison.Ordinal))
+            {
+                yield return $"{outbox.Writer} keeps the message store's tables in the schema {schema ?? "of its own store"}, but UsePouryaKitWolverine keeps them in {storeSchema}, so Wolverine would find two main message stores when the Host starts. Give both the schema {storeSchema}.";
             }
         }
     }

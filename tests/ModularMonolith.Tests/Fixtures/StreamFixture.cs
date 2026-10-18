@@ -33,10 +33,13 @@ public sealed class StreamFixture : IAsyncLifetime
         return new NpgsqlConnectionStringBuilder(_postgres.GetConnectionString()) { Database = name }.ConnectionString;
     }
 
-    /// <summary>The Host of Accounts alone over <paramref name="connectionString"/>, built and not started.</summary>
-    public IHost MartenOnly(string connectionString, Action<IServiceCollection>? services = null)
+    /// <summary>
+    /// The Host of Accounts alone over <paramref name="connectionString"/>, built and not started; with
+    /// <paramref name="martenFirst"/>, its Marten store is registered before the Module.
+    /// </summary>
+    public IHost MartenOnly(string connectionString, Action<IServiceCollection>? services = null, bool martenFirst = false)
     {
-        var builder = StreamHosts.MartenOnly(connectionString);
+        var builder = StreamHosts.MartenOnly(connectionString, martenFirst);
         builder.Logging.AddProvider(Logs);
         services?.Invoke(builder.Services);
         return builder.Build();

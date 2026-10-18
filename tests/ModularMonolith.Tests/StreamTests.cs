@@ -3,6 +3,7 @@ using System.Text.Json;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
 using Catalog.Products.Features.CreateProduct;
+using Marten;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,7 +18,6 @@ using PouryaKit.Messaging.Wolverine.Marten;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence;
 using PouryaKit.Testing;
-using Wolverine.Persistence;
 using Wolverine.Persistence.Durability;
 using Wolverine.RDBMS;
 using Wolverine.Runtime;
@@ -49,24 +49,35 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     }
 
     [Fact]
-    public async Task A_marten_store_integrated_in_another_schema_than_the_message_stores_fails_the_host_when_it_starts()
+    public void A_marten_store_integrated_in_another_schema_than_the_message_stores_fails_the_host_when_it_is_built()
     {
-        var host = Keep(streams.Mixed(_database, martenSchema: "marten_wolverine"));
-
-        var refused = await Assert.ThrowsAsync<InvalidWolverineStorageConfigurationException>(() => HostFixture.StartHostAsync(host, Token));
-
-        Assert.Contains("exactly one message store tagged as the 'main' store", refused.Message, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task A_marten_store_on_another_database_than_the_message_stores_fails_the_host_when_it_is_built()
-    {
-        var other = new NpgsqlConnectionStringBuilder(await streams.CreateDatabaseAsync());
-
-        var refused = Assert.Throws<InvalidOperationException>(() => streams.Mixed(_database, martenConnection: "events", arguments: $"--ConnectionStrings:events={other}"));
+        var refused = Assert.Throws<InvalidOperationException>(() => streams.Mixed(_database, martenSchema: "marten_wolverine"));
 
         Assert.Contains(
-            $"The Marten store of UsePouryaKitMarten writes over the connection string events, the database {other.Host}:{other.Port}/{other.Database}, but UsePouryaKitWolverine keeps the message store over the connection string app",
+            "The Marten store of UsePouryaKitMarten keeps the message store's tables in the schema marten_wolverine, but UsePouryaKitWolverine keeps them in wolverine",
+            refused.Message,
+            StringComparison.Ordinal
+        );
+    }
+
+    // The database Marten's store is built with, whatever configured it: the connection string its registration names, or
+    // a later configuration of the store.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task A_marten_store_on_another_database_than_the_message_stores_fails_the_host_when_it_is_built(bool movedByALaterConfiguration)
+    {
+        var other = await streams.CreateDatabaseAsync();
+        var database = new NpgsqlConnectionStringBuilder(other);
+
+        var refused = Assert.Throws<InvalidOperationException>(() =>
+            movedByALaterConfiguration
+                ? streams.Mixed(_database, configure: builder => builder.Services.ConfigureMarten(options => options.Connection(other)))
+                : streams.Mixed(_database, martenConnection: "events", arguments: $"--ConnectionStrings:events={other}")
+        );
+
+        Assert.Contains(
+            $"The Marten store of UsePouryaKitMarten is built over the database {database.Host}:{database.Port}/{database.Database}, but UsePouryaKitWolverine keeps the message store over the connection string app",
             refused.Message,
             StringComparison.Ordinal
         );
@@ -86,6 +97,19 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         });
 
         Assert.Contains("call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore before UsePouryaKitMarten", refused.Message, StringComparison.Ordinal);
+    }
+
+    // The messaging package keys a Stream Module's Receipts when the Module is composed, whichever registration comes first.
+    [Fact]
+    public async Task A_stream_module_composed_after_the_marten_store_keeps_its_receipts_in_its_own_schema()
+    {
+        var account = Guid.CreateVersion7();
+        var host = await StartAsync(streams.MartenOnly(_database, martenFirst: true));
+
+        await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
+
+        await WaitUntilAsync("(select count(*) from accounts.pouryakit_receipts where subscription = 'accounts.welcome') = 1");
+        Assert.Equal(1L, await CountAsync(Events(account, "welcomed")));
     }
 
     [Fact]

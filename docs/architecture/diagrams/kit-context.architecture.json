@@ -300,7 +300,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs",
           "line": 10,
-          "end_line": 25,
+          "end_line": 26,
           "label": "store and DbContexts on one database"
         }
       ]

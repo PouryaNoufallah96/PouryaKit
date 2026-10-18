@@ -57,7 +57,7 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
             IModuleServices.RouteByModule<IReceipts>(builder.Services);
             builder.Services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<ICompositionCheck>(
-                    new MessageStoreDatabaseCheck(connectionName, builder.Configuration.GetConnectionString(connectionName)!)
+                    new MessageStoreDatabaseCheck(connectionName, builder.Configuration.GetConnectionString(connectionName)!, schema)
                 )
             );
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SnapshotKeyTenancyCheck>());

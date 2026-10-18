@@ -457,7 +457,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.Marten/WolverineMartenHostApplicationBuilderExtensions.cs",
           "line": 37,
-          "end_line": 82,
+          "end_line": 86,
           "label": "one store, keyed Marten Receipts"
         }
       ]
