@@ -13,7 +13,7 @@ None. The package references the ASP.NET Core shared framework (`Microsoft.AspNe
 - **Kit files:** `src/PouryaKit.Localization/LocalizationServiceCollectionExtensions.cs`, `src/PouryaKit.Localization/HeaderRequestCulture.cs`
 - **Upstream:** Ultrabusiness (`ultrabusiness_server_microservices`, a private repository with no public URL)
 - **Commit:** d685de64c22dcb9be5b49206c6d9699da4ef6302
-- **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.Core/Localization/LocalizationExtensions.cs` (lines 15 to 19: `AddLocalizationServices`), `src/BuildingBlocks/BuildingBlocks.Web/Extensions/LocalizationExtensions.cs` (lines 18 to 31: `UseLocalization`); read at the local checkout's working tree, not at this commit, where both ranges hold the calls the plan names
+- **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.Core/Localization/LocalizationExtensions.cs` (lines 15 to 19: `AddLocalizationServices`), `src/BuildingBlocks/BuildingBlocks.Web/Extensions/LocalizationExtensions.cs` (lines 18 to 31: `UseLocalization`); read at the checkout's commit `736a6589550f4cabfa4bb50cadbf9fe62a4521a2`, where both cited files are byte-identical to the pin `d685de6` (`git diff` empty, checked 2026-10-18)
 - **Licence:** unconfirmed
 - **Adoption:** pattern
 - **Ticket:** #125

@@ -15,7 +15,7 @@ The push on the delivery's transaction (`src/PouryaKit.Realtime/RealtimePublishe
 - **Kit files:** `src/PouryaKit.Realtime/RealtimeEndpointRouteBuilderExtensions.cs`, `src/PouryaKit.Realtime/RealtimeClients.cs`
 - **Upstream:** Ultrabusiness (`ultrabusiness_server_microservices`, a private repository with no public URL)
 - **Commit:** d685de64c22dcb9be5b49206c6d9699da4ef6302
-- **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.SSE/Extensions/SseEndpointExtensions.cs` (line 58: `TypedResults.ServerSentEvents` over an async stream of a channel reader; lines 73 to 110: an initial event, then a wait that ends the stream on the client's cancellation); read at the local checkout's working tree, at commit `3cca42ed1d9d2f2440cdeb18ad3ac30146218fe9`, not at this one, where line 58 holds the call the plan names
+- **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.SSE/Extensions/SseEndpointExtensions.cs` (line 58: `TypedResults.ServerSentEvents` over an async stream of a channel reader; lines 73 to 110: an initial event, then a wait that ends the stream on the client's cancellation); read at commit `3cca42ed1d9d2f2440cdeb18ad3ac30146218fe9`, where the cited file is byte-identical to the pin `d685de6` (`git diff` empty, checked 2026-10-18), line 58 holding the call the plan names
 - **Licence:** unconfirmed
 - **Adoption:** pattern
 - **Ticket:** #133

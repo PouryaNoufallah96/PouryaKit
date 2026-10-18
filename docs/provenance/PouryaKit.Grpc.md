@@ -19,7 +19,7 @@ Its private MinVer build reference is recorded in [shared private build tools](R
 - **Kit files:** `src/PouryaKit.Grpc/Clients/GrpcClientServiceCollectionExtensions.cs`, `src/PouryaKit.Grpc/Clients/OperationContextInterceptor.cs`, `src/PouryaKit.Grpc/Clients/OperationContextCallOptions.cs`
 - **Upstream:** Ultrabusiness (`ultrabusiness_server_microservices`, a private repository with no public URL)
 - **Commit:** a85eacd4db5e1af9b8349d49350be12397f24402
-- **Upstream paths:** `src/BuildingBlocks/MainArchitecture/Presentation/MainArchitecture.API/Configurations/Extensions/GrpcExtensions.cs` (lines 68 to 89: `AddGrpcClientService`); read at the local checkout's working tree, not at this commit
+- **Upstream paths:** `src/BuildingBlocks/MainArchitecture/Presentation/MainArchitecture.API/Configurations/Extensions/GrpcExtensions.cs` (lines 68 to 89: `AddGrpcClientService`); read at the checkout's commit `736a6589550f4cabfa4bb50cadbf9fe62a4521a2`, where the cited file is byte-identical to the pin `a85eacd` (`git diff` empty, checked 2026-10-18)
 - **Licence:** unconfirmed
 - **Adoption:** pattern
 - **Ticket:** #134

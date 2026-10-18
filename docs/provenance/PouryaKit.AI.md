@@ -20,7 +20,7 @@ No `OllamaSharp`, which declares a licence file and no expression, so `LicenceTe
 - **Kit files:** `src/PouryaKit.AI/AIServiceCollectionExtensions.cs`, `src/PouryaKit.AI/PouryaKitAIOptions.cs`, `src/PouryaKit.AI/AIProvider.cs`
 - **Upstream:** Ultrabusiness (`ultrabusiness_server_microservices`, a private repository with no public URL)
 - **Commit:** a85eacd (the plan's I.3 pin)
-- **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.AI/Extensions/AIServiceExtensions.cs` (lines 106 to 140: a provider switch over configuration; lines 149 to 173: `new OpenAIClient(...).GetChatClient(model).AsIChatClient()` with `UseFunctionInvocation()`, `UseOpenTelemetry(configure: otel => otel.EnableSensitiveData = false)` and `UseLogging()`); read at the local checkout's working tree, at commit `cd13e30ce4cf74825ffc6e9335906fb2d112fe00`, not at `a85eacd`
+- **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.AI/Extensions/AIServiceExtensions.cs` (lines 106 to 140: a provider switch over configuration; lines 149 to 173: `new OpenAIClient(...).GetChatClient(model).AsIChatClient()` with `UseFunctionInvocation()`, `UseOpenTelemetry(configure: otel => otel.EnableSensitiveData = false)` and `UseLogging()`); read at commit `cd13e30ce4cf74825ffc6e9335906fb2d112fe00`, where the cited file is byte-identical to the pin `a85eacd` (`git diff a85eacd cd13e30c -- <path>` is empty, checked 2026-10-18)
 - **Licence:** unconfirmed
 - **Adoption:** pattern
 - **Ticket:** #135
@@ -36,7 +36,7 @@ No `OllamaSharp`, which declares a licence file and no expression, so `LicenceTe
 - **Kit files:** `src/PouryaKit.AI/GatewayToolExtensions.cs`, `src/PouryaKit.AI/GatewayTool.cs`
 - **Upstream:** Ultrabusiness (`ultrabusiness_server_microservices`, a private repository with no public URL)
 - **Commit:** a85eacd (the plan's I.3 pin)
-- **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.AI/Services/ToolsFactoryBase.cs` (a base class whose `BuildTools` returns `AIFunctionFactory.Create` over a service's methods, cached for the factory's life); read at the local checkout's working tree, at commit `cd13e30ce4cf74825ffc6e9335906fb2d112fe00`
+- **Upstream paths:** `src/BuildingBlocks/BuildingBlocks.AI/Services/ToolsFactoryBase.cs` (a base class whose `BuildTools` returns `AIFunctionFactory.Create` over a service's methods, cached for the factory's life); read at commit `cd13e30ce4cf74825ffc6e9335906fb2d112fe00`, where the cited file is byte-identical to the pin `a85eacd` (`git diff` empty, checked 2026-10-18)
 - **Licence:** unconfirmed
 - **Adoption:** pattern
 - **Ticket:** #135
