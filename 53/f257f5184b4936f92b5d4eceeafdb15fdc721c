@@ -1,0 +1,41 @@
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_39832aca5cc2a0 10
+docs/architecture/diagrams/execution-core.html
+  s_b9a8adfb056e1c::t_597527d5c1718a 4985
+docs/architecture/diagrams/http-command.html
+  s_b9a8adfb056e1c::t_7f8eaca516fe41 4985
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_cf9076295e405f 15
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_19fe4994f5709f 10
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_8277de4cc4aca8 4985,5040-5041,5044-5045,5048-5049,5072-5073,5080-5085,5243-5244,5251,5266-5277,5300-5301,5304-5305,5308-5309,5340-5345,5577
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_5ee07480c54388 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_2104bd72e732e8 4985
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_eaf4a8df63dece 10
+docs/architecture/diagrams/module-boundaries.html
+  s_b9a8adfb056e1c::t_ac3ef69c5c1255 4985
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_c2a898ec3c8eb7 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b9a8adfb056e1c::t_3010a96ba88b32 4985,4990,5020-5021,5024-5025,5032-5033,5036-5037,5040-5041,5044-5045,5048-5049,5052-5053,5056-5057,5060-5061,5064-5065,5068-5069,5072-5073,5076-5077,5080-5081,5084-5085,5088-5089,5092-5095,5097,5124-5135,5241-5242,5245-5246,5256-5260,5264,5268-5270,5272,5276,5280,5284,5288,5292,5296,5300,5304,5308,5312,5316,5323-5324,5546
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "53f257f5184b4936f92b5d4eceeafdb15fdc721c",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
