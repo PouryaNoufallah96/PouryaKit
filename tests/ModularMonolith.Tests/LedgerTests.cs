@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Billing;
 using Billing.Quotes.Features.OpenQuote;
+using Billing.Quotes.Features.OpenWelcomeQuote;
 using Ledger;
 using Ledger.Accounts.Errors;
 using Ledger.Accounts.Events.DomainEvents;
@@ -117,25 +118,51 @@ public sealed class LedgerTests(AppFixture app) : HostTest<AppFixture>(app)
         );
         Assert.Contains(committed, row => (string)row[0] == $"local://{Activation}/" && (DateTime)row[1] == openingCommitted);
         Assert.Contains(committed, row => (string)row[0] == $"local://{BillingSubscription}/" && (DateTime)row[1] == activationCommitted);
-        // Billing's quote, its expiry and its Receipt, in one commit.
+        // Billing's quote, the expiry due when it ends and its Receipt, in one commit.
         Assert.Equal(
-            [["Open", "Scheduled", true]],
+            [["Open", "Scheduled", true, true]],
             await Fixture.RowsAsync(
                 $"""
-                select q.state, e.status, pg_xact_commit_timestamp(q.xmin) = pg_xact_commit_timestamp(r.xmin)
+                select q.state, e.status, pg_xact_commit_timestamp(q.xmin) = pg_xact_commit_timestamp(r.xmin),
+                       pg_xact_commit_timestamp(e.xmin) = pg_xact_commit_timestamp(r.xmin)
                 from billing.quotes q, wolverine.wolverine_incoming_envelopes e, billing.pouryakit_receipts r
-                where q.id = '{account}' and e.received_at = 'local://billing.expire-quote/' and r.subscription = '{BillingSubscription}'
+                where q.id = '{WelcomeQuote(account)}' and e.received_at = 'local://billing.expire-quote/' and e.execution_time = q.expires_on
+                  and r.subscription = '{BillingSubscription}'
                 """
             )
         );
     }
 
-    // Billing already has a quote of the account's id, so its handler's quote fails the delivery's commit, every time.
+    // A Ledger account is one under each tenant, so Billing opens a welcome quote for each.
+    [Fact]
+    public async Task One_account_id_opened_under_two_tenants_reaches_billing_as_two_welcome_quotes()
+    {
+        var account = Guid.CreateVersion7();
+
+        var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
+            async () =>
+            {
+                Assert.True((await Ledger.SendAsync(new OpenAccountCommand(account, "Ada"), Context(), Token)).IsSuccess);
+                return await Ledger.SendAsync(new OpenAccountCommand(account, "Grace"), Context("other"), Token);
+            },
+            Token
+        );
+
+        Assert.Equal(2, deliveries.Count(delivery => delivery == new Delivery(BillingSubscription, "ledger.account-opened.v1", DeadLettered: false)));
+        Assert.Equal(
+            2L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from billing.quotes where id in ('{WelcomeQuote(account)}', '{WelcomeQuote(account, "other")}')"
+            )
+        );
+    }
+
+    // Billing already has a quote of the welcome quote's id, so its handler's quote fails the delivery's commit, every time.
     [Fact]
     public async Task A_failed_receiving_handler_leaves_no_receipt_and_no_effect()
     {
         var account = Guid.CreateVersion7();
-        await Fixture.Gateway<BillingModule>().SendAsync(new OpenQuoteCommand(account, TimeSpan.FromHours(1)), Token);
+        await Fixture.Gateway<BillingModule>().SendAsync(new OpenQuoteCommand(WelcomeQuote(account), TimeSpan.FromHours(1)), Token);
         await Fixture.WaitUntilDeliveredAsync(Token);
 
         var (opened, deliveries) = await Fixture.WaitForDeliveriesAsync(() => Ledger.SendAsync(new OpenAccountCommand(account, "Ada"), Context(), Token), Token);
@@ -148,6 +175,9 @@ public sealed class LedgerTests(AppFixture app) : HostTest<AppFixture>(app)
             await Fixture.ScalarAsync<long>("select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://billing.expire-quote/'")
         );
     }
+
+    private static Guid WelcomeQuote(Guid account, string tenant = AppFixture.TestTenant) =>
+        OpenWelcomeQuoteIntegrationEventHandler.QuoteIdOf(tenant, account).Value;
 
     private Task<DateTime> CommittedAsync(Guid account, string type) =>
         Fixture.ScalarAsync<DateTime>($"select pg_xact_commit_timestamp(xmin) from events.mt_events where stream_id = '{account}' and type = '{type}'");

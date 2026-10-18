@@ -28,7 +28,7 @@ using Wolverine.Transports.Sending;
 namespace ModularMonolith.Tests;
 
 // Delivery between Hosts over RabbitMQ (ADR 0006, ticket #50 amendment), each row of its invariants table: the
-// Proving Sample's service composition, ModularMonolith.Host with a broker (Catalog and Billing) and Inventory.Host, each
+// Proving Sample's service composition, ModularMonolith.Host with a broker (Catalog, Billing and Ledger) and Inventory.Host, each
 // a real Host with its own database and ServiceName, joined only by the broker.
 [Collection<BrokerCollection>]
 public sealed class RabbitMqDeliveryTests(BrokerFixture broker)
@@ -783,7 +783,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker)
         Assert.Equal(Sent, waiting.Message);
     }
 
-    // ModularMonolith.Host with the broker, as a HostFixture: Catalog and Billing, with Inventory in another Host.
+    // ModularMonolith.Host with the broker, as a HostFixture: Catalog, Billing and Ledger, with Inventory in another Host.
     private sealed class BrokerHostFixture(Uri broker) : HostFixture
     {
         protected override IHost CreateHost(string connectionString) =>

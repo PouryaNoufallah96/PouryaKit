@@ -600,7 +600,7 @@
       "dot": "cyan",
       "title": "The two Hosts",
       "items": [
-        "With ConnectionStrings:broker, ModularMonolith.Host composes Catalog and Billing under the service name modular-monolith, and Inventory.Host composes Inventory under the service name inventory; what Catalog publishes then reaches Inventory over RabbitMQ.",
+        "With ConnectionStrings:broker, ModularMonolith.Host composes Catalog, Billing and Ledger under the service name modular-monolith, and Inventory.Host composes Inventory under the service name inventory; what Catalog publishes then reaches Inventory over RabbitMQ.",
         "Inventory.Host composes ModularMonolith.ServiceDefaults; ModularMonolith.Host does not.",
         "ModularMonolith.ReverseProxy composes the service defaults and PouryaKit.ReverseProxy, runs no Operation, and routes every path to ModularMonolith.Host, whose liveness probe its settings turn off.",
         "ModularMonolith.ServiceDefaults references EF Core Relational for its readiness check, OpenTelemetry, service discovery, Serilog, PouryaKit.Web and PouryaKit.Observability.",
