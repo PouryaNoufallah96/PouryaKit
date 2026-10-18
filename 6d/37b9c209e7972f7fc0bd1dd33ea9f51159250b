@@ -1,0 +1,163 @@
+.agents/skills/pourya-kit/references/messaging.md
+  s_b9a8adfb056e1c::t_821698385a1bd8 34,37,40-42,51-55
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_b9a8adfb056e1c::t_821698385a1bd8 129-132
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_b9a8adfb056e1c::t_38bb00da25075f 79-80,236-237
+  s_b9a8adfb056e1c::t_821698385a1bd8 10
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 112,117,129,135,176
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_b9a8adfb056e1c::t_821698385a1bd8 4985
+samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/Realtime/NewProduct.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-12
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_b9a8adfb056e1c::t_821698385a1bd8 10
+docs/architecture/diagrams/delivery.sequence.json
+  s_b9a8adfb056e1c::t_821698385a1bd8 18,83-84
+src/PouryaKit.Messaging.Wolverine/Subscriptions/IntegrationEventPublisher.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 10-15,31
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/Notifications/AnnounceNewProductNotificationHandler.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1,5,10-11,20-24
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 86-88
+src/PouryaKit.Realtime/RealtimeEvents.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-17
+src/PouryaKit.Realtime/RealtimePublisher.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-70
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_ecfc573b541ded 3,52,663
+  s_b9a8adfb056e1c::t_821698385a1bd8 46,131,309-319,495
+src/PouryaKit.Realtime/RealtimeEndpointRouteBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-54
+src/PouryaKit.Realtime/RealtimeNotification.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-30
+src/PouryaKit.Realtime/RealtimeServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-52
+src/PouryaKit.Persistence/IUnitOfWorkConnection.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 9-11
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_b9a8adfb056e1c::t_821698385a1bd8 15
+README.md
+  s_b9a8adfb056e1c::t_821698385a1bd8 31
+.agents/skills/pourya-kit/references/realtime.md
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-97
+src/PouryaKit.Messaging.Wolverine/Subscriptions/NotificationDelivery.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-11
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_b9a8adfb056e1c::t_821698385a1bd8 119-122
+scripts/packaging/consumers/PouryaKit.Realtime.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-9
+src/PouryaKit.Realtime/IRealtimePublisher.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-27
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-3,21
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_821698385a1bd8 134
+  s_b9a8adfb056e1c::t_38bb00da25075f 93-94,121-122,127-128,235-236,324-325,330-331,352-353,435,448-449,454
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_38bb00da25075f 412-413,466-467,766-767
+src/PouryaKit.Realtime/RealtimeListener.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-125
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/AppHost.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 9,63-65
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 99,130-131
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_821698385a1bd8 287,889,1037-1038,1057-1059
+docs/architecture/diagrams/delivery.html
+  s_b9a8adfb056e1c::t_821698385a1bd8 4985
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_b9a8adfb056e1c::t_821698385a1bd8 12
+.claude/agent-memory/kit-implementer/realtime-and-sse-facts.md
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-22
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_38bb00da25075f 59-60,65-66,202
+  s_b9a8adfb056e1c::t_821698385a1bd8 72
+src/PouryaKit.Realtime/RealtimeErrors.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-28
+tests/ModularMonolith.Tests/RealtimeTests.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-370
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_b9a8adfb056e1c::t_821698385a1bd8 23
+docs/architecture/diagrams/host-start.workflow.json
+  s_b9a8adfb056e1c::t_821698385a1bd8 11,132-133
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_b9a8adfb056e1c::t_821698385a1bd8 24
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_38bb00da25075f 31-32,202,360
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_b9a8adfb056e1c::t_821698385a1bd8 94-96
+src/PouryaKit.Templates/content/monolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_b9a8adfb056e1c::t_821698385a1bd8 10
+tests/ModularMonolith.Tests/Stub/StubRealtime.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-161
+src/PouryaKit.Web/Endpoints/IEndpoint.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 7-10
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_821698385a1bd8 21
+src/PouryaKit.Cqrs/Operations/INotificationDelivery.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-17
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Deliver.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 19,63-64
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/AppHost.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 12,73-75
+src/PouryaKit.Realtime/RealtimeClients.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-126
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_821698385a1bd8 323-339,341-376,472-493,512-513
+  s_b9a8adfb056e1c::t_38bb00da25075f 290-291,340
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_38bb00da25075f 51-52
+tests/ModularMonolith.Tests/SharedStoreSchemaTests.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 12,58
+src/PouryaKit.Realtime/RealtimeConnectionCheck.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-60
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_ecfc573b541ded 3
+  s_b9a8adfb056e1c::t_821698385a1bd8 51
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 13,106-109
+docs/provenance/PouryaKit.Realtime.md
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-27
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_821698385a1bd8 2296-2323
+  s_b9a8adfb056e1c::t_ecfc573b541ded 2324
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/Realtime/NewProductsRealtime.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-15
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_b9a8adfb056e1c::t_821698385a1bd8 17,486
+src/PouryaKit.Realtime/PouryaKit.Realtime.csproj
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-12
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_b9a8adfb056e1c::t_821698385a1bd8 16
+docs/adr/0012-realtime-through-postgresql-notifications.md
+  s_b9a8adfb056e1c::t_821698385a1bd8 1-100
+src/PouryaKit.Templates/content/modular/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_b9a8adfb056e1c::t_821698385a1bd8 12
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_821698385a1bd8 23
+  s_b9a8adfb056e1c::t_ecfc573b541ded 45,51,58
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_b9a8adfb056e1c::t_821698385a1bd8 16
+GLOSSARY.md
+  s_b9a8adfb056e1c::t_821698385a1bd8 167-170
+docs/architecture/diagrams/host-start.html
+  s_b9a8adfb056e1c::t_821698385a1bd8 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6d37b9c209e7972f7fc0bd1dd33ea9f51159250b",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
