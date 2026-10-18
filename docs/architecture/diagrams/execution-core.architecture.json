@@ -409,8 +409,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 134,
-          "end_line": 135,
+          "line": 136,
+          "end_line": 137,
           "label": "no exporter"
         }
       ]
@@ -463,8 +463,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 136,
-          "end_line": 137,
+          "line": 138,
+          "end_line": 139,
           "label": "never Redis"
         }
       ]
@@ -763,8 +763,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 185,
-          "end_line": 189,
+          "line": 189,
+          "end_line": 193,
           "label": "Aspire in no other package"
         }
       ]

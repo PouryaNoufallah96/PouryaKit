@@ -55,6 +55,13 @@ internal sealed class WireNaming : IMessageTypeNaming
         }
     }
 
+    /// <summary>
+    /// True when this process has declared each of <paramref name="wireNames"/> as its type's name, so naming the types
+    /// can fix no other: a check that resolves Wolverine's options, which names every routed type, reads it first.
+    /// </summary>
+    public static bool AllDeclared(IReadOnlyDictionary<Type, string> wireNames) =>
+        wireNames.All(named => Declared.TryGetValue(named.Key, out var name) && name == named.Value);
+
     public bool TryDetermineName(Type messageType, out string messageTypeName)
     {
         messageTypeName = Declared.TryGetValue(messageType, out var declared)

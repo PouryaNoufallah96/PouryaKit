@@ -34,10 +34,20 @@ internal sealed class Subscriptions : IWireNames
     private readonly Dictionary<Type, SnapshotPublication> _snapshots = [];
     // Every Integration Event and Snapshot another Host publishes, by its type, with its wire name and whether it is a Snapshot.
     private readonly Dictionary<Type, (string WireName, bool IsSnapshot)> _received = [];
+    // The Integration Events a Saga takes (PouryaKit.Messaging.Wolverine.Sagas), each delivered to its saga's own queue.
+    private readonly List<SagaInputRoute> _sagaInputs = [];
 
     public IEnumerable<Subscription> All => _byName.Values;
 
-    public IEnumerable<Type> MessageTypes => _byName.Values.Select(subscription => subscription.Message).Distinct();
+    // A type a Saga takes is one too: from another Host, it reaches the saga's queue through the same fan-out.
+    public IEnumerable<Type> MessageTypes =>
+        _byName.Values.Select(subscription => subscription.Message).Concat(_sagaInputs.Select(input => input.Message)).Distinct();
+
+    /// <summary>Every Integration Event a Saga of this Host takes, with the saga's queue and the input it is delivered as.</summary>
+    public IReadOnlyList<SagaInputRoute> SagaInputs => _sagaInputs;
+
+    /// <summary>Records that a Saga takes <see cref="SagaInputRoute.Message"/>; the saga package checks the declaration.</summary>
+    public void AddSagaInput(SagaInputRoute input) => _sagaInputs.Add(input);
 
     public IReadOnlyDictionary<Type, Publication> Publications => _publications;
 
@@ -357,3 +367,10 @@ internal sealed record Publication(string WireName, Type? Module);
 
 /// <summary>A Snapshot contract, the aggregate it is the Snapshot of, and the mapper that builds it.</summary>
 internal sealed record SnapshotPublication(Type Aggregate, Type Snapshot, Type Mapper);
+
+/// <summary>
+/// An Integration Event a Saga takes: delivered to the saga's own durable queue, <see cref="Queue"/>, as the input
+/// <see cref="Copy"/> builds from the event and the Kit's headers it was published with, on the Kit's route inside the Host
+/// and by the fan-out of a delivery from another Host alike.
+/// </summary>
+internal sealed record SagaInputRoute(Type Message, string Queue, Func<object, IReadOnlyDictionary<string, string?>, object> Copy);

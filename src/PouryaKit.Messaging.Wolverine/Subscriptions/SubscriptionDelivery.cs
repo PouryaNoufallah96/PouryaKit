@@ -50,7 +50,8 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
     }
 
     // An envelope from another Host arrives once, at this Host's queue on a broker (ADR 0006, ticket #50 amendment), and
-    // is sent again to the local queue of each subscription to its type, and nowhere else: through the type's routes it
+    // is sent again to the local queue of each subscription to its type, and as its input to the queue of each Saga that
+    // takes it (ADR 0013), and nowhere else: through the type's routes it
     // would also reach any broker route the type has, and an envelope that came through a binding the Kit never made would
     // go round that broker for ever, each time under a new id. Each copy is stored as an incoming delivery of its queue
     // before this returns, so recovery hands out a copy whose Host died, and a crash before this envelope is marked
@@ -64,6 +65,11 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
         foreach (var subscription in subscriptions.All.Where(subscription => subscription.Message == message.GetType()))
         {
             await copies.EndpointFor(new Uri($"local://{subscription.Name}")).SendAsync(message, CopiesOf(envelope));
+        }
+
+        foreach (var saga in subscriptions.SagaInputs.Where(input => input.Message == message.GetType()))
+        {
+            await copies.EndpointFor(new Uri($"local://{saga.Queue}")).SendAsync(saga.Copy(message, envelope.Headers), CopiesOf(envelope));
         }
     }
 

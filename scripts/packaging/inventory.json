@@ -28,6 +28,7 @@
     { "id": "PouryaKit.Messaging.Wolverine", "type": "PouryaKit.Messaging.Wolverine.IReceipts" },
     { "id": "PouryaKit.Messaging.Wolverine.EFCore", "type": "PouryaKit.Messaging.Wolverine.EFCore.ReceiptTable" },
     { "id": "PouryaKit.Messaging.Wolverine.Marten", "type": "PouryaKit.Messaging.Wolverine.Marten.WolverineMartenHostApplicationBuilderExtensions" },
+    { "id": "PouryaKit.Messaging.Wolverine.Sagas", "type": "PouryaKit.Messaging.Wolverine.Sagas.PouryaKitSaga" },
     { "id": "PouryaKit.Messaging.Wolverine.RabbitMq", "type": "PouryaKit.Messaging.Wolverine.RabbitMq.RabbitMqHostApplicationBuilderExtensions" },
     { "id": "PouryaKit.Web", "type": "PouryaKit.Web.IEndpoint" },
     { "id": "PouryaKit.Web.OpenApi", "type": "PouryaKit.Web.OpenApi.PouryaKitOpenApiOptions" },
@@ -48,6 +49,13 @@
       "entries": ["ModularMonolith.Host/ModularMonolith.Host.csproj", "Inventory.Host/Inventory.Host.csproj"],
       "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Observability", "PouryaKit.Caching", "PouryaKit.Email.MailKit", "PouryaKit.Grpc", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi", "PouryaKit.Realtime", "PouryaKit.AI"],
       "excluded": ["PouryaKit.Localization"]
+    },
+    {
+      "name": "sagas",
+      "source": "tests/ModularMonolith.Tests/Sagas",
+      "entries": ["ModularMonolith.Tests.Sagas.Host/ModularMonolith.Tests.Sagas.Host.csproj"],
+      "packages": ["PouryaKit.Messaging.Wolverine.Sagas", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Modularity", "PouryaKit.Persistence.Postgres"],
+      "excluded": ["PouryaKit.Testing"]
     },
     {
       "name": "template-monolith",

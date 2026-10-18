@@ -151,4 +151,33 @@ public sealed class OutboxWriter
             );
         }
     }
+
+    // An Integration Event a Saga's step emits (PouryaKit.Messaging.Wolverine.Sagas), through the context the Kit's saga
+    // storage enrolled in the step's own transaction: the headers WriteAsync gives an Integration Event, for an Actor,
+    // tenant, correlation and causation the step names, since no Operation runs it, and the trace context the step
+    // continues, its parent written by the Kit only when no activity is current for Wolverine to write. No publication
+    // record: the step is claimed in that transaction, and the saga refuses a second emission of one type from one step.
+    internal static ValueTask WriteEmissionAsync(
+        MessageContext outbox,
+        object integrationEvent,
+        (Actor Actor, string? Tenant, Guid CorrelationId, Guid CausationId) context,
+        Guid identity,
+        string? traceState,
+        string? traceParent
+    )
+    {
+        var options = OperationContextHeaderExtensions.WithContextHeaders(new DeliveryOptions(), context.Actor, context.Tenant, context.CorrelationId, context.CausationId);
+        options.Headers[IntegrationEventHeaders.DomainEventId] = identity.ToString();
+        if (traceState is { Length: > 0 })
+        {
+            options.Headers[OperationContextHeaders.TraceState] = traceState;
+        }
+
+        if (traceParent is not null && Activity.Current is null)
+        {
+            options.Headers[OperationContextHeaders.TraceParent] = traceParent;
+        }
+
+        return outbox.PublishAsync(integrationEvent, options);
+    }
 }

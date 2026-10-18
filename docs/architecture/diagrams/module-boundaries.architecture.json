@@ -238,8 +238,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
-          "line": 29,
-          "end_line": 40,
+          "line": 31,
+          "end_line": 42,
           "label": "read from the restored closure"
         }
       ]
@@ -294,8 +294,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
-          "line": 284,
-          "end_line": 345,
+          "line": 298,
+          "end_line": 359,
           "label": "IDispatcher, IUnitOfWork, IQueryCache..."
         },
         {
@@ -322,14 +322,14 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
-          "line": 59,
-          "end_line": 95,
+          "line": 61,
+          "end_line": 97,
           "label": "saves, commits, bulk writes, Kit steps"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
-          "line": 258,
-          "end_line": 282,
+          "line": 272,
+          "end_line": 296,
           "label": "the Kit steps Feature code never calls"
         },
         {
@@ -357,7 +357,7 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 114,
+          "end_line": 116,
           "label": "the allowed references"
         },
         {
@@ -390,8 +390,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
-          "line": 111,
-          "end_line": 165,
+          "line": 113,
+          "end_line": 175,
           "label": "no transport type in a Module"
         },
         {

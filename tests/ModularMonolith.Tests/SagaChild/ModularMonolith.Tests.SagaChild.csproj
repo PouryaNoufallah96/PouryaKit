@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The Saga tests' child process: the Saga Host at test speed, run as an OS process of its own to kill it inside a
+       step or between its commit and the mark of its envelope. It compiles Wolverine's code at run time in any build, as
+       a test Host does, which the published Saga Host never does. ModularMonolith.Tests leaves this folder out of its own
+       sources. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The shared framework the test project runs on, whose output this Host's assembly is started from. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Sagas\ModularMonolith.Tests.Sagas.Host\ModularMonolith.Tests.Sagas.Host.csproj" />
+    <ProjectReference Include="..\..\..\src\PouryaKit.Testing\PouryaKit.Testing.csproj" />
+  </ItemGroup>
+</Project>

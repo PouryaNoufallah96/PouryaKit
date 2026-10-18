@@ -15,8 +15,8 @@ public interface IWireNames
 
     /// <summary>
     /// The wire name of every Integration Event and Snapshot another Host publishes (<c>Receive</c>,
-    /// <c>ReceiveSnapshot</c>) that a subscription of this Host receives; never one a Module of this Host publishes,
-    /// which its subscriptions here receive from the publication itself.
+    /// <c>ReceiveSnapshot</c>) that a subscription or a Saga of this Host receives; never one a Module of this Host
+    /// publishes, which its subscriptions and Sagas here receive from the publication itself.
     /// </summary>
     IReadOnlyCollection<string> Received { get; }
 }

@@ -111,6 +111,8 @@ internal static class PackageGraph
         // Kit's statements it runs on its own transaction; Messaging is not needed, the Outbox step being a seam.
         ["PouryaKit.Persistence.Marten"] = new(["PouryaKit.Cqrs", "PouryaKit.Persistence"], ["Marten", "Npgsql"]),
         ["PouryaKit.Messaging.Wolverine.Marten"] = new(["PouryaKit.Messaging.Wolverine", "PouryaKit.Persistence.Marten"], ["WolverineFx.Marten"]),
+        // A Saga's state and claims are rows of the PostgreSQL message store, on Wolverine's lightweight saga storage (#142).
+        ["PouryaKit.Messaging.Wolverine.Sagas"] = new(["PouryaKit.Messaging.Wolverine"], ["WolverineFx.Postgresql"]),
     };
 
     // What must never arrive in a package's closure, by package id prefix or project name. Every package but Testing also
@@ -153,6 +155,8 @@ internal static class PackageGraph
         ["PouryaKit.Persistence.Marten"] = ["WolverineFx", "Microsoft.EntityFrameworkCore"],
         // A Host of Stream Modules alone takes no EF Core.
         ["PouryaKit.Messaging.Wolverine.Marten"] = ["Microsoft.EntityFrameworkCore", "PouryaKit.Persistence.EFCore"],
+        // A Saga runs beside either write model: its package takes neither EF Core nor Marten (#142).
+        ["PouryaKit.Messaging.Wolverine.Sagas"] = ["Microsoft.EntityFrameworkCore", "PouryaKit.Persistence", "Marten"],
     };
 
     // Core and Domain, and Messaging and the Email contract (Domain only), bring no package at all; nor do the templates.

@@ -286,3 +286,41 @@ All of them are #142's, on the delivery and Gateway seam of `ModularMonolith.Tes
   `EnrollAndFetchSagaStorageFrame` and `DatabaseSagaSchema<,>`, the route sources' precedence, and `MessageRoute.For`.
   #142's invariants are what catch a change.
 - Plan I.3's Saga row and I.4's Saga paragraph carry dated notes pointing here; the plan keeps its record.
+
+## Amendment (2026-10-18, ticket #142: the package as built)
+
+The decision above stands. `PouryaKit.Messaging.Wolverine.Sagas` builds it on the Kit's seams, and each invariant above is
+a permanent test of `ModularMonolith.Tests.SagaTests` or of the structure tests, run once with its behaviour switched off
+(the [acceptance map](../acceptance.md#saga-package-ticket-142) names each). Where the package departs from the Spike's
+shape:
+
+- **A saga's Module names no Wolverine type but the base of its timeouts.** A step emits with `PublishAsync(event)`, which
+  takes no `IMessageContext`: the Kit's guard frame, a synchronous call in the generated chain after the storage frame,
+  makes the step current, so a static `Start` reaches it too, and `MarkCompleted` is the Kit's. A timeout derives from
+  the Kit's `SagaTimeout`; the members the compiler writes for a record call its base record's own, so the Module still
+  names Wolverine's `TimeoutMessage`, which the transport rule allows only when every timeout of the assembly is the
+  Kit's. The public-types rule admits a `PouryaKitSaga` and a `SagaTimeout`; a saga or a timeout of Wolverine's own fails
+  both rules.
+- **The claims table is created with the message store.** Wolverine keeps a PostgreSQL store's list of tables internal,
+  so the Kit creates `pouryakit_saga_steps` in the store's schema as the Host starts, before Wolverine does, under the
+  advisory lock Wolverine migrates the store under, which serialises instances that start at once; a saga's state table
+  is migrated with the store from the `SagaTableDefinition` the declaration registers. No step creates either.
+- **The Kit names its refusals.** An Integration Event with no tenant, and an advancing one whose identity names a saga
+  that does not exist, another tenant's or one that completed, fail with `SagaInputRefusedException` before any step, in
+  place of Wolverine's `UnknownSagaException`. A timeout whose saga completed ends unread, with no claim, as Wolverine's
+  chain returns for it: the gap the Spike's second review recorded is now a test.
+- **One emission of each type per step**, refused at the second, since an emission's identity derives from its step and
+  wire name alone. Emissions are written through `OutboxWriter`'s emission write, which writes the headers `WriteAsync`
+  gives an Integration Event and continues the input's trace (ADR 0009): Wolverine's span of the step is the parent when
+  Wolverine's source is listened, else the Kit writes the input's own parent, and the tracestate is the input's.
+- **The service location check runs after the routing check.** Resolving Wolverine's options applies the Kit's
+  extensions, which name every routed type, so `AddPouryaKitSaga` registers `RoutingCheck` before its own check, and the
+  check reads the options only once the Host's wire names are declared and its declarations are sound.
+- **An Integration Event from another Host reaches a saga.** The Messaging package records each input a saga takes beside
+  its subscriptions; the Host's broker queue then binds its wire name and fans the event out to the saga's queue as its
+  input, as to a subscription's.
+- **The crash between commit and mark is a test of its own process.** The package has no switches, so the child process
+  is killed while a trigger the test installs refuses the mark of the payment step's envelope, in place of the Spike's
+  probe after the commit.
+- **The Release publish** is package validation's: a composition of `scripts/packaging/inventory.json` publishes the test
+  Modules' Host with codegen write, as the Proving Sample's Hosts are; the Proving Sample declares no saga.

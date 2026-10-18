@@ -160,7 +160,7 @@ An aggregate whose stored state is the ordered events it has appended, loaded by
 _Avoid_: Event-sourced entity, event stream aggregate
 
 **Saga**:
-A Module's long-running reaction across Integration Events that keeps its own state between steps: started and advanced by Integration Events, timed out by its own timeout messages, and the one reaction that runs outside an Operation, each step with no Operation Context, claimed once in its own transaction, and emitting Integration Events under its system Actor (ADR 0013). Planned for Wave 3, not built yet.
+A Module's long-running reaction across Integration Events that keeps its own state between steps: started and advanced by Integration Events, timed out by its own timeout messages, and the one reaction that runs outside an Operation, each step with no Operation Context, claimed once in its own transaction, and emitting Integration Events under its system Actor (ADR 0013). A saga's identity is the tenant of the event that started it with that event's business id; one Module declares it with `AddPouryaKitSaga` and derives it from `PouryaKitSaga` (`PouryaKit.Messaging.Wolverine.Sagas`).
 _Avoid_: Process manager, workflow, orchestration
 
 **Page**:

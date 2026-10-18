@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The Modules of the Saga tests (ticket #142, ADR 0013): Orders publishes, Billing is tenant-scoped and subscribes, and
+       Shipping runs the Sagas, whose Feature code names no Wolverine type. The Host beside them, in ModularMonolith.Tests.Sagas.Host/, is the one
+       package validation publishes in Release; ModularMonolith.Tests leaves this folder out of its own sources. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="ModularMonolith.Tests.Sagas.Host\**" />
+    <None Remove="ModularMonolith.Tests.Sagas.Host\**" />
+    <Content Remove="ModularMonolith.Tests.Sagas.Host\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ModularMonolith.Tests" />
+    <InternalsVisibleTo Include="ModularMonolith.Tests.SagaChild" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\PouryaKit.Messaging.Wolverine.Sagas\PouryaKit.Messaging.Wolverine.Sagas.csproj" />
+    <ProjectReference Include="..\..\..\src\PouryaKit.Modularity\PouryaKit.Modularity.csproj" />
+    <ProjectReference Include="..\..\..\src\PouryaKit.Persistence.Postgres\PouryaKit.Persistence.Postgres.csproj" />
+  </ItemGroup>
+</Project>

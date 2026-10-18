@@ -29,6 +29,11 @@
     <None Remove="Streams\**" />
     <Compile Remove="StreamHost\**" />
     <None Remove="StreamHost\**" />
+    <Compile Remove="Sagas\**" />
+    <None Remove="Sagas\**" />
+    <Content Remove="Sagas\**" />
+    <Compile Remove="SagaChild\**" />
+    <None Remove="SagaChild\**" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\samples\ModularMonolith\src\Inventory.Host\Inventory.Host.csproj" />
@@ -41,5 +46,7 @@
     <ProjectReference Include="Unowned\ModularMonolith.Tests.Unowned.csproj" />
     <ProjectReference Include="SameNamed\ModularMonolith.Tests.SameNamed.csproj" />
     <ProjectReference Include="StreamHost\ModularMonolith.Tests.StreamHost.csproj" />
+    <ProjectReference Include="Sagas\ModularMonolith.Tests.Sagas.Host\ModularMonolith.Tests.Sagas.Host.csproj" />
+    <ProjectReference Include="SagaChild\ModularMonolith.Tests.SagaChild.csproj" />
   </ItemGroup>
 </Project>

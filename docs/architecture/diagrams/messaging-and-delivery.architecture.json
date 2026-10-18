@@ -287,8 +287,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 130,
-          "end_line": 133,
+          "line": 132,
+          "end_line": 135,
           "label": "Wolverine and RabbitMq keep no database"
         }
       ]
@@ -461,6 +461,39 @@
           "label": "one store, keyed Marten Receipts"
         }
       ]
+    },
+    {
+      "id": "sagas",
+      "type": "messagebus",
+      "label": "PouryaKit.Messaging.Wolverine.Sagas",
+      "sublabel": "optional: Sagas outside every Operation",
+      "pos": [
+        1230,
+        540
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 115,
+          "label": "references Wolverine, WolverineFx.Postgresql"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.Sagas/Routing/SagaRouteSource.cs",
+          "line": 14,
+          "end_line": 34,
+          "label": "an event to the saga's own queue"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStorage.cs",
+          "line": 32,
+          "end_line": 79,
+          "label": "a step claimed in its own transaction"
+        }
+      ]
     }
   ],
   "boundaries": [
@@ -610,6 +643,14 @@
       "label": "writes in its Unit of Work",
       "fromSide": "right",
       "toSide": "right"
+    },
+    {
+      "id": "sagas-wolverine",
+      "from": "sagas",
+      "to": "wolverine",
+      "label": "routes, claims, emits for a Saga",
+      "fromSide": "top",
+      "toSide": "right"
     }
   ],
   "cards": [
@@ -630,7 +671,8 @@
         "PouryaKit.Messaging.Wolverine keeps no database: it holds the store-neutral half of the message store and the Outbox write, the routes, Operation Context headers and publication records; PouryaKit.Messaging.Wolverine.EFCore persists the store, enrolls the write in the EF Unit of Work and keeps Receipts and Snapshot versions.",
         "A Stream Module's Marten Unit of Work writes the same through Wolverine's Marten outbox in the transaction of its Streams' events, on the Host's one message store and durability agent, and keeps its Receipts in its own schema (ADR 0011).",
         "In a Host of Modules each Module keeps its Receipts and idempotency keys in its own write model's store: the packages key them by the Module, and one resolver routes by the Operation's Module.",
-        "PouryaKit.Realtime, optional, writes a Notification Handler's push as a PostgreSQL notification in its delivery's commit; each instance's one listener hears every push and serves its own clients over SSE (ADR 0012)."
+        "PouryaKit.Realtime, optional, writes a Notification Handler's push as a PostgreSQL notification in its delivery's commit; each instance's one listener hears every push and serves its own clients over SSE (ADR 0012).",
+        "PouryaKit.Messaging.Wolverine.Sagas, optional, runs a Saga's steps on chains Wolverine generates, outside every Operation: it routes each Integration Event to the saga's own queue, claims each step in its own transaction on the message store and writes what the step emits through the Outbox write (ADR 0013)."
       ]
     },
     {
