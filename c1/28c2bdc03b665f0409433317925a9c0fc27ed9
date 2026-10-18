@@ -1,0 +1,135 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_b03191ce24cc7e 3,52
+.agents/skills/pourya-kit/references/ai.md
+  s_b9a8adfb056e1c::t_e158c5d3289cd9 1-101
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_71ec52f8f62722 22
+Directory.Packages.props
+  s_b9a8adfb056e1c::t_01f53898c0e1b3 34-35,43,66
+GLOSSARY.md
+  s_b9a8adfb056e1c::t_4b7259f01948be 54-57
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_8cbec58dee9b13 3
+README.md
+  s_b9a8adfb056e1c::t_b82f9036620197 32
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_bc7670cb4922d0 3,40,44,52,54,321-332,653,657,672,675
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_21db1896153590 412-413,466-467,549,766-767,771-804,1015-1026,1053-1054
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_b677cbd7a1cbf4 51-52
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_f8d2a7684ffd66 71-72,93-94,121-122,127-128,134,167-168,235-236,324-325,330-331,352-353,358-359,435,448-449,454,458-485,608-616,635-636
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_fd317d73d06d9a 290-291,318-319
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_cdd121b71c1fca 31-32,202,360
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_919fd7fc5c3c79 59-60,65-66,72,202
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_85c93d9adc0501 288,889
+docs/provenance/ModularMonolith.md
+  s_b9a8adfb056e1c::t_09e09fb7879611 19
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_b9a8adfb056e1c::t_bf45a79f9b77e0 19
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_b9a8adfb056e1c::t_0e399e8f5d37a8 5,107-110
+samples/ModularMonolith/src/ModularMonolith.Host/appsettings.json
+  s_b9a8adfb056e1c::t_240c2a45be6968 6-11
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_b9a8adfb056e1c::t_e9d7c2be20bc63 10
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQueryHandler.cs
+  s_b9a8adfb056e1c::t_c45faabc3b50d7 1-33
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/ProductToFind.cs
+  s_b9a8adfb056e1c::t_71f8c7086a7fea 1-4
+scripts/packaging/consumers/PouryaKit.AI.cs
+  s_b9a8adfb056e1c::t_9a116177148394 1-28
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_b1bcc0fee0ea7e 32,46,54,59
+src/PouryaKit.AI/AIProvider.cs
+  s_b9a8adfb056e1c::t_359264e0ab8623 1-17
+src/PouryaKit.AI/AIServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_8c3c011c85efe9 1-109
+src/PouryaKit.AI/GatewayToolExtensions.cs
+  s_b9a8adfb056e1c::t_27ce03b5f18305 1-123
+src/PouryaKit.AI/OneChatClientCheck.cs
+  s_b9a8adfb056e1c::t_658162663f6b6f 1-34
+src/PouryaKit.AI/PouryaKit.AI.csproj
+  s_b9a8adfb056e1c::t_e5b506a54b4765 1-12
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_b9a8adfb056e1c::t_848509ddbf7462 8
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/AppHost.cs
+  s_b9a8adfb056e1c::t_59a6f55620e2b8 5,74-77
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_b9a8adfb056e1c::t_8b5985c045b7e3 6
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/appsettings.json
+  s_b9a8adfb056e1c::t_877b4a4141f7b7 6-11
+src/PouryaKit.Templates/content/modular/src/Modules/Catalog/Catalog/Catalog.csproj
+  s_b9a8adfb056e1c::t_f1528ce05f009e 6
+src/PouryaKit.Templates/content/monolith/.template.config/template.json
+  s_b9a8adfb056e1c::t_2e720206f5d244 70
+tests/ModularMonolith.Tests/AiTests.cs
+  s_b9a8adfb056e1c::t_ad1bfa542307ff 1-296
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_b9a8adfb056e1c::t_6a276e656ea2f6 8
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_302b4082af4e98 100-104,137-139
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_b9a8adfb056e1c::t_735de3185dbd27 104-113
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_b9a8adfb056e1c::t_bc6d2eaa15a1bb 20
+tests/PouryaKit.ArchitectureTests/SharedJsonTests.cs
+  s_b9a8adfb056e1c::t_ae3977944972e1 11-13,24,48-54
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_b9a8adfb056e1c::t_97249ffb6a90b1 11-21,176
+.claude/agent-memory/kit-implementer/ai-and-gateway-tool-facts.md
+  s_4f24ade1614bb9::t_0750132c508b2b 1-24
+docs/provenance/PouryaKit.AI.md
+  s_4f24ade1614bb9::t_66fb115820a5c7 1-46
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQuery.cs
+  s_8feab722350176::t_7656cb84a58afc 1-6
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQueryValidator.cs
+  s_8feab722350176::t_ce926530818cea 1-8
+src/PouryaKit.AI/GatewayTool.cs
+  s_4f24ade1614bb9::t_aae0ec844dd2f5 1-26
+src/PouryaKit.AI/PouryaKitAIOptions.cs
+  s_4f24ade1614bb9::t_d1639a6f296073 1-37
+src/PouryaKit.AI/ToolAllowList.cs
+  s_4f24ade1614bb9::t_4e561a9f448113 1-33
+tests/ModularMonolith.Tests/Fixtures/AiFixture.cs
+  s_4f24ade1614bb9::t_2446ae9bbc0dc0 1-63
+tests/ModularMonolith.Tests/Fixtures/ChatStub.cs
+  s_4f24ade1614bb9::t_3d15e02af267a0 1-149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c128c2bdc03b665f0409433317925a9c0fc27ed9",
+  "prompts": {},
+  "sessions": {
+    "s_4f24ade1614bb9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a65e3eaa045671995",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_8feab722350176": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-af5b27ce1369f1de5",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
