@@ -1,0 +1,29 @@
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_b9a8adfb056e1c::t_626c47429d6976 4985
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_b9a8adfb056e1c::t_9cfeb6c6e27174 10
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_f2f66e6e797f9f 10
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_dbfe660a746a12 4985,5541
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_045b0a609fbb95 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b9a8adfb056e1c::t_9889f3f2e9c9f0 4985,5557
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b92ef216798becf3838ef390c62de0f35b2cfb3d",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
