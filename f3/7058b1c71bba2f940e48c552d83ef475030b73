@@ -1,0 +1,59 @@
+src/PouryaKit.Grpc/PouryaKit.Grpc.csproj
+  s_b9a8adfb056e1c::t_11f0e9aff2a996 14-17
+.agents/scripts/check-docs.py
+  s_b9a8adfb056e1c::t_a99a73e158b62e 134-135
+.agents/skills/pourya-kit/references/grpc.md
+  s_b9a8adfb056e1c::t_1f4bf67a08d180 96,102
+.agents/skills/pourya-kit/references/realtime.md
+  s_b9a8adfb056e1c::t_326899fdeb9b9b 50,70
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_e9b7929e8d4496 2,19,21
+.claude/agent-memory/kit-implementer/grpc-facts.md
+  s_b9a8adfb056e1c::t_9d0025380864a7 22,27-32
+.claude/agent-memory/kit-implementer/realtime-and-sse-facts.md
+  s_b9a8adfb056e1c::t_0e46554ca6d7d4 21
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_b9a8adfb056e1c::t_81dba241b05cb9 102-106
+docs/adr/0012-realtime-through-postgresql-notifications.md
+  s_b9a8adfb056e1c::t_aaa62e4a33e911 101-111
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_2beaa01d9015ac 322,543,655-656,658
+docs/architecture/diagrams/delivery.sequence.json
+  s_b9a8adfb056e1c::t_68bfb9eb240ef4 136
+src/PouryaKit.Grpc/Clients/GrpcClientServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_70aad556a8ff2f 3,22-23,41
+src/PouryaKit.Grpc/Clients/GrpcLoopbackCheck.cs
+  s_b9a8adfb056e1c::t_f3b3e727141d2c 8,15-27,29,31,33-58,73,78
+src/PouryaKit.Grpc/Clients/OperationContextInterceptor.cs
+  s_b9a8adfb056e1c::t_c5de96ce32b5a0 9-10,60-66
+src/PouryaKit.Grpc/Clients/PouryaKitGrpcClientOptions.cs
+  s_b9a8adfb056e1c::t_0e59d00820ab77 12-15
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Deliver.cs
+  s_b9a8adfb056e1c::t_547ff16d6a2801 63-65,67-74
+src/PouryaKit.Realtime/RealtimeEndpointRouteBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_8323113dd39323 24-26,42
+src/PouryaKit.Realtime/RealtimeErrors.cs
+  s_b9a8adfb056e1c::t_4f03fd2bdac775 17
+tests/ModularMonolith.Tests/GrpcTests.cs
+  s_b9a8adfb056e1c::t_a35c5e3255eb7e 4,213,215,217-218,225-226,232-252,254-272,457-480,583-592
+tests/ModularMonolith.Tests/RealtimeTests.cs
+  s_b9a8adfb056e1c::t_aabc25284ed46c 142-182
+tests/ModularMonolith.Tests/Stub/StubRealtime.cs
+  s_b9a8adfb056e1c::t_25afa53b3b7998 9,18,163-221
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f37058b1c71bba2f940e48c552d83ef475030b73",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
