@@ -14,6 +14,7 @@ public sealed class TemplateTests
     private static readonly string[] Unreplaced =
     [
         "src/Modules/Catalog/Catalog/Products/Features/GetProduct/CatalogProducts.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsEndpoint.cs",
         "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQuery.cs",
         "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQueryHandler.cs",
         "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQueryValidator.cs",

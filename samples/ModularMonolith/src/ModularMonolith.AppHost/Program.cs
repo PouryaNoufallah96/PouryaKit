@@ -26,7 +26,7 @@ builder
     .WaitFor(inventory)
     .WaitFor(broker);
 
-builder
+var shopHost = builder
     .AddProject<Projects.ModularMonolith_Host>("modular-monolith")
     .WithHttpEndpoint()
     .WithReference(shop, "app")
@@ -39,5 +39,19 @@ builder
     .WaitFor(shop)
     .WaitFor(cache)
     .WaitFor(broker);
+
+// ModularMonolith.Host's agent, AskAboutProducts, calls the model its PouryaKit:AI section names. Only an AppHost run with
+// LocalAgent=true (an argument, or the environment variable LocalAgent) adds Ollama and points the agent at it: the image
+// and the model are large, and without them the Host starts all the same.
+if (bool.TryParse(builder.Configuration["LocalAgent"], out var localAgent) && localAgent)
+{
+    const string Model = "qwen2.5:0.5b";
+    var ollama = builder.AddPouryaKitOllama("ollama", Model);
+    shopHost
+        .WithEnvironment("PouryaKit__AI__Provider", "Ollama")
+        .WithEnvironment("PouryaKit__AI__Endpoint", ReferenceExpression.Create($"{ollama.GetEndpoint("http")}/v1"))
+        .WithEnvironment("PouryaKit__AI__Model", Model)
+        .WaitFor(ollama);
+}
 
 builder.Build().Run();

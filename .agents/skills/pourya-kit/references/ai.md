@@ -32,6 +32,7 @@ builder.Services.Configure<PouryaKitAIOptions>(builder.Configuration.GetSection(
 ```
 
 - `AddPouryaKitAI()` registers the Host's one `IChatClient`, a singleton. A Host that registers another unkeyed `IChatClient`, before or after the call, fails when its container is built, naming each registration, and so does one that removes it after the call, naming the contract: the registration adds a composition check, since a second client would serve runs without the allow-list and the cap.
+- Locally, an Aspire AppHost runs the model beside the Host and sets `PouryaKit__AI__Endpoint` and `PouryaKit__AI__Model` on it ([aspire.md](aspire.md#a-local-agent)).
 - `PouryaKitAIOptions.Provider` (`AIProvider`): `OpenAI` (the default; `Endpoint` may stay null for OpenAI's own API), `AzureOpenAI` (`Endpoint` is the resource's v1 endpoint, such as `https://my-resource.openai.azure.com/openai/v1/`, and `Model` the deployment's name) or `Ollama` (`Endpoint` is its OpenAI-compatible API, `http://<host>:11434/v1`, and no key). Each goes through the OpenAI client's chat completions API: no OllamaSharp and no `Azure.AI.OpenAI` (spec #115's A1).
 - `ApiKey` is required for OpenAI and Azure OpenAI. Set it from user secrets or the environment, as `PouryaKit__AI__ApiKey`, never in a committed file; the Kit never logs it.
 - `MaximumIterationsPerRun`, 10 by default, caps how many times a run calls the model and invokes the tools it asks for; `Tools` is the allow-list, the names of the tools a run may be given, empty by default.
@@ -90,12 +91,12 @@ internal sealed record ProductToFind(Guid ProductId);
 
 ## Limits
 
-- Chat completions only, one model per Host. Agent runs, sessions, workflows, a chat reducer, memory, a guardrail hook, MCP tools, embeddings and scheduled agent work are later tickets of spec #115 (#136 to #139).
+- Chat completions only, one model per Host. Agent runs, sessions, workflows, a chat reducer, memory, a guardrail hook, MCP tools, embeddings and scheduled agent work are later tickets of spec #115 (#136 to #138).
 - Each tool call is its own Operation and commits on its own: a run that fails later, or whose handler then fails, undoes no call that already committed.
 - The model decides which tools to call and with what arguments; the Kit decides only what each call may do.
 
 ## Testing
 
 - The Proving Sample's `AiTests` run the application on a database of its own with its chat client pointed at `ChatStub`, an OpenAI-compatible chat completions server in the test process on a loopback port, which answers each request with the replies a test scripts (text or tool calls) and records every request: the tools offered and what each call returned. No hosted provider key is used in any test.
-- The one real probe, `AiTests.An_ollama_model_in_a_container_completes_a_tool_call_with_no_hosted_key`, runs the sample's agent against Ollama in a container (`Testcontainers.Ollama`, `ollama/ollama:0.40.6`, the model `qwen2.5:0.5b`) only with `POURYAKIT_OLLAMA_PROBE=1`, and is skipped otherwise.
+- The one real probe, `AiTests.An_ollama_model_in_a_container_completes_a_tool_call_with_no_hosted_key`, runs the sample's agent against Ollama in a container (`Testcontainers.Ollama`, `ollama/ollama:0.40.6`, the model `qwen2.5:0.5b`) only with `POURYAKIT_OLLAMA_PROBE=1`, and is skipped otherwise. With the same variable, `AppHostTests` starts the sample's AppHost with its local agent, the same image and model through `AddPouryaKitOllama` ([aspire.md](aspire.md#a-local-agent)), and asks the agent over HTTP.
 - Observe a tool call's context as the sample's tests do: an `IAuthorizer<T>` of the test assembly for the tool's operation records the `OperationContext` it runs with.

@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "fb45dd30a75df82868b43a81ec8da2fef6e67597",
+      "revision": "0e5d9bbc0c1ffbba2bf4173f8f1b6ae00e3c46a7",
       "link_mode": "web"
     }
   },
@@ -351,8 +351,8 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
           "line": 20,
-          "end_line": 41,
-          "label": "each Host on its resources"
+          "end_line": 55,
+          "label": "each Host on its resources, Ollama opt-in"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj",
@@ -549,7 +549,7 @@
         "Inventory.Host composes ModularMonolith.ServiceDefaults; ModularMonolith.Host does not.",
         "ModularMonolith.ReverseProxy composes the service defaults and PouryaKit.ReverseProxy, runs no Operation, and routes every path to ModularMonolith.Host, whose liveness probe its settings turn off.",
         "ModularMonolith.ServiceDefaults references EF Core Relational for its readiness check, OpenTelemetry, service discovery, Serilog, PouryaKit.Web and PouryaKit.Observability.",
-        "ModularMonolith.AppHost, an Aspire AppHost, runs both Hosts as processes on PouryaKit.Aspire's containers, giving each the connection strings its composition reads: with the broker, ModularMonolith.Host leaves Inventory to Inventory.Host."
+        "ModularMonolith.AppHost, an Aspire AppHost, runs both Hosts as processes on PouryaKit.Aspire's containers, giving each the connection strings its composition reads: with the broker, ModularMonolith.Host leaves Inventory to Inventory.Host. Run with LocalAgent=true, it adds Ollama and points that Host's agent at it."
       ]
     },
     {
