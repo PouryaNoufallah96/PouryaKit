@@ -1,0 +1,33 @@
+.agents/skills/pourya-kit/references/grpc.md
+  s_b9a8adfb056e1c::t_550aab4a0e31ba 102
+.claude/agent-memory/kit-implementer/grpc-facts.md
+  s_b9a8adfb056e1c::t_f7b0d52cded73e 31
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_5875ba8f775089 2515,2521
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_9b8e0059c17c5a 322,656
+src/PouryaKit.Cqrs/Operations/INotificationDelivery.cs
+  s_b9a8adfb056e1c::t_036a3d78b8e64e 7-8,16
+src/PouryaKit.Grpc/Clients/GrpcLoopbackCheck.cs
+  s_b9a8adfb056e1c::t_8c74f939e61b37 23-24,33,40,43-50
+src/PouryaKit.Realtime/IRealtimePublisher.cs
+  s_b9a8adfb056e1c::t_52e43884753b17 22-25
+tests/ModularMonolith.Tests/GrpcTests.cs
+  s_b9a8adfb056e1c::t_8f10785a89fe9b 215,230,232-233,236,239-240
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "206b1a9056d344b0d42dd5cd3b5946841c883a56",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
