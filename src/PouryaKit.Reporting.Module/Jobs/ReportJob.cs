@@ -87,10 +87,10 @@ internal sealed class ReportJob : AggregateRoot<ReportJobId>
 
     public bool IsClaimedBy(int attempt) => State == ReportJobState.Generating && Attempt == attempt;
 
-    public string FileKeyOf(int attempt) => $"reports/{Id.Value:N}/{attempt}";
+    public static string FileKeyOf(ReportJobId id, int attempt) => $"reports/{id.Value:N}/{attempt}";
 
     // Every key an attempt of this job may have stored its file under.
-    public IEnumerable<string> FileKeys => Enumerable.Range(1, Attempt).Select(FileKeyOf);
+    public IEnumerable<string> FileKeys => Enumerable.Range(1, Attempt).Select(attempt => FileKeyOf(Id, attempt));
 
     public void Complete(int attempt, string fileKey)
     {
@@ -119,8 +119,6 @@ internal sealed class ReportJob : AggregateRoot<ReportJobId>
         FileKey = null;
         return true;
     }
-
-    public bool IsRequestedBy(Actor actor) => RequestedBy == actor.Id && RequestedByKind == actor.Kind;
 
     private void EnsureClaimedBy(int attempt)
     {

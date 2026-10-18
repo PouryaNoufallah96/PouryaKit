@@ -35,8 +35,10 @@ internal sealed class RequestReportEndpoint : IEndpoint
         );
 }
 
+// A format is required, so a body without one fails to bind and answers 400, as one naming no format does; it would
+// otherwise read as the enum's first member, Pdf.
 internal sealed record RequestReportBody(
     string? Kind,
-    [property: JsonConverter(typeof(JsonStringEnumConverter<ReportFormat>))] ReportFormat Format,
+    [property: JsonRequired, JsonConverter(typeof(JsonStringEnumConverter<ReportFormat>))] ReportFormat Format,
     Dictionary<string, string>? Parameters
 );

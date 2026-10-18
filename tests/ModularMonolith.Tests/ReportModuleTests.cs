@@ -77,11 +77,20 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
         using var bob = reports.Client("bob", Tenant);
         using var adaElsewhere = reports.Client("ada", OtherTenant);
         using var grantedElsewhere = reports.Client("carol", OtherTenant, ReportModule.ReadTenantJobsPermission);
-        foreach (var other in new[] { bob, adaElsewhere, grantedElsewhere })
+        // Each caller's answer, so a check that admits one shows which: the permission, which spec #115 lets the Host
+        // grant, reads its own tenant's jobs alone.
+        List<(string Caller, HttpStatusCode Status)> reads = [];
+        foreach (var (caller, other) in new[] { ("bob", bob), ("ada elsewhere", adaElsewhere), ("granted elsewhere", grantedElsewhere) })
         {
             var read = await other.GetAsync($"/reports/{id}", TestContext.Current.CancellationToken);
-            Assert.Equal("Reports.JobNotFound", await ErrorCodeAsync(read, HttpStatusCode.NotFound));
+            reads.Add((caller, read.StatusCode));
+            if (read.StatusCode == HttpStatusCode.NotFound)
+            {
+                Assert.Equal("Reports.JobNotFound", await ErrorCodeAsync(read, HttpStatusCode.NotFound));
+            }
         }
+
+        Assert.Equal([("bob", HttpStatusCode.NotFound), ("ada elsewhere", HttpStatusCode.NotFound), ("granted elsewhere", HttpStatusCode.NotFound)], reads);
 
         // Nothing was signed for anyone who may not read the job.
         Assert.Equal(signed, reports.Storage.Signed.Count);
@@ -117,7 +126,9 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
         var served = await CompletedAsync(ada, id);
         using var download = new HttpClient();
         Assert.Equal(Csv(TestReports.HeldLayout(2)), await download.GetByteArrayAsync(served.DownloadUrl, TestContext.Current.CancellationToken));
-        Assert.Equal(Csv(TestReports.HeldLayout(1)), await StoredAsync($"reports/{id:N}/1"));
+        // Its retry, finding the claim lost, removed the file the late upload stored under its own key.
+        Assert.Contains($"reports/{id:N}/1", reports.Storage.Uploaded);
+        await NotStoredAsync($"reports/{id:N}/1");
         Assert.Equal([[2, $"reports/{id:N}/2"]], await reports.RowsAsync($"select attempt, file_key from reports.report_jobs where id = '{id}'"));
         // Taken over once: the first claim scheduled the one takeover, and the takeover scheduled none.
         Assert.Equal([1, 2], (await ClaimsAsync()).Where(claim => claim.JobId == id).Select(claim => claim.Attempt).Order());
@@ -153,6 +164,63 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
         var served = await CompletedAsync(ada, kept);
         using var download = new HttpClient();
         Assert.NotEmpty(await download.GetByteArrayAsync(served.DownloadUrl, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task An_upload_that_outlives_its_jobs_expiry_and_removal_leaves_no_file_behind()
+    {
+        using var ada = reports.Client("ada", Tenant);
+        var id = Guid.Empty;
+        try
+        {
+            id = await RequestAsync(ada, new Request(TestReports.Stalled, "Csv", []));
+            // Both attempts wait in their layouts: the first past its claim's timeout, then the takeover past its own.
+            await reports.WaitUntilAsync(
+                $"exists (select from reports.report_jobs where id = '{id}' and attempt = 2)",
+                "The stale claim was not taken over."
+            );
+            await reports.RowsAsync($"update reports.report_jobs set expires_at = now() - interval '1 second' where id = '{id}'");
+            await reports.WaitUntilAsync(
+                $"not exists (select from reports.report_jobs where id = '{id}')",
+                "Retention did not remove the expired job."
+            );
+            Assert.Equal(2, reports.Reports.StalledCalls);
+        }
+        finally
+        {
+            reports.Reports.ReleaseStalled();
+        }
+
+        // Each attempt then stores its file under its own key, after retention deleted the job's files and the job; its
+        // settlement finds the job gone, and its retry removes the file.
+        await reports.WaitUntilAsync(
+            "not exists (select from wolverine.wolverine_incoming_envelopes where received_at = 'local://reports.render/' and status <> 'Handled')",
+            "An attempt did not finish."
+        );
+        string[] keys = [$"reports/{id:N}/1", $"reports/{id:N}/2"];
+        Assert.Equal(keys, reports.Storage.Uploaded.Where(keys.Contains).Order(StringComparer.Ordinal));
+        foreach (var key in keys)
+        {
+            await NotStoredAsync(key);
+        }
+    }
+
+    [Fact]
+    public async Task A_request_with_no_format_or_an_unknown_one_answers_400_and_stores_no_job()
+    {
+        using var ada = reports.Client("ada", Tenant);
+        var before = await reports.RowsAsync("select count(*) from reports.report_jobs");
+
+        var missing = await ada.PostAsJsonAsync(
+            "/reports",
+            new { kind = SalesReports.Kind, parameters = Sales.Parameters },
+            TestContext.Current.CancellationToken
+        );
+        var unknown = await ada.PostAsJsonAsync("/reports", Sales with { Format = "Docx" }, TestContext.Current.CancellationToken);
+
+        await ProblemResponses.ProblemAsync(missing, HttpStatusCode.BadRequest);
+        await ProblemResponses.ProblemAsync(unknown, HttpStatusCode.BadRequest);
+        Assert.Equal(before, await reports.RowsAsync("select count(*) from reports.report_jobs"));
     }
 
     private static readonly Request Sales = new(SalesReports.Kind, "Csv", new() { [SalesReports.Month] = "2026-10" });
@@ -200,12 +268,10 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
         }),
     ];
 
-    private async Task<byte[]> StoredAsync(string key)
+    private async Task NotStoredAsync(string key)
     {
-        await using var stored = (await reports.Storage.Provider.DownloadAsync(key, TestContext.Current.CancellationToken)).Value;
-        using var bytes = new MemoryStream();
-        await stored.Content.CopyToAsync(bytes, TestContext.Current.CancellationToken);
-        return bytes.ToArray();
+        var stored = await reports.Storage.Provider.DownloadAsync(key, TestContext.Current.CancellationToken);
+        Assert.Equal(StorageErrors.FileNotFound, Assert.Single(stored.Errors));
     }
 
     private sealed record Request(string Kind, string Format, Dictionary<string, string> Parameters);

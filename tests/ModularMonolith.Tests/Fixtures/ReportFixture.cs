@@ -101,6 +101,7 @@ public sealed class ReportFixture(AppFixture app) : IAsyncLifetime
     public async ValueTask DisposeAsync()
     {
         Reports.ReleaseHeld();
+        Reports.ReleaseStalled();
         try
         {
             if (_host is not null)
@@ -117,17 +118,22 @@ public sealed class ReportFixture(AppFixture app) : IAsyncLifetime
 }
 
 /// <summary>
-/// The test Host's report kinds: the sample's <see cref="SalesReports"/>, and <see cref="Held"/>, which any person of a
-/// tenant may request and whose first layout waits until <see cref="ReleaseHeld"/>, its table one cell naming the call
-/// that laid it out. It records the context of every request it was asked to authorize and every layout it gave.
+/// The test Host's report kinds: the sample's <see cref="SalesReports"/>; <see cref="Held"/>, whose first layout waits
+/// until <see cref="ReleaseHeld"/>, its table one cell naming the call that laid it out; and <see cref="Stalled"/>, every
+/// layout of which waits until <see cref="ReleaseStalled"/>. Any person of a tenant may request the two. It records the
+/// context of every request it was asked to authorize and every layout it gave.
 /// </summary>
 public sealed class TestReports : IReportRequestAuthorizer, IReportLayouts
 {
     public const string Held = "held";
 
+    public const string Stalled = "stalled";
+
     private readonly SalesReports _sales = new();
     private readonly TaskCompletionSource _release = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _releaseStalled = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private int _heldCalls;
+    private int _stalledCalls;
 
     public ConcurrentQueue<OperationContext> Authorized { get; } = [];
 
@@ -136,12 +142,17 @@ public sealed class TestReports : IReportRequestAuthorizer, IReportLayouts
     /// <summary>The number of layouts of <see cref="Held"/> asked for so far.</summary>
     public int HeldCalls => Volatile.Read(ref _heldCalls);
 
+    /// <summary>The number of layouts of <see cref="Stalled"/> asked for so far.</summary>
+    public int StalledCalls => Volatile.Read(ref _stalledCalls);
+
     public void ReleaseHeld() => _release.TrySetResult();
+
+    public void ReleaseStalled() => _releaseStalled.TrySetResult();
 
     public Task<bool> MayRequestAsync(OperationContext context, ReportRequest request, CancellationToken cancellationToken)
     {
         Authorized.Enqueue(context);
-        return request.Kind == Held
+        return request.Kind is Held or Stalled
             ? Task.FromResult(context.Actor.Kind == ActorKind.Person && context.Tenant is not null)
             : _sales.MayRequestAsync(context, request, cancellationToken);
     }
@@ -149,6 +160,13 @@ public sealed class TestReports : IReportRequestAuthorizer, IReportLayouts
     public async Task<Result<ReportLayout>> LayOutAsync(OperationContext context, ReportRequest request, CancellationToken cancellationToken)
     {
         LaidOut.Enqueue(context);
+        if (request.Kind == Stalled)
+        {
+            Interlocked.Increment(ref _stalledCalls);
+            await _releaseStalled.Task.WaitAsync(TimeSpan.FromSeconds(30), cancellationToken);
+            return HeldLayout(0);
+        }
+
         if (request.Kind != Held)
         {
             return await _sales.LayOutAsync(context, request, cancellationToken);
@@ -167,9 +185,11 @@ public sealed class TestReports : IReportRequestAuthorizer, IReportLayouts
     public static ReportLayout HeldLayout(int call) => new("Held", new ReportTable([new("Call")], [[$"call {call}"]]));
 }
 
-/// <summary>The Host's one <see cref="IFileStorage"/>, its provider's, recording every key it signs a link for.</summary>
+/// <summary>The Host's one <see cref="IFileStorage"/>, its provider's, recording every key it stores a file under or signs a link for.</summary>
 public sealed class RecordingFileStorage(IFileStorage provider) : IFileStorage
 {
+    public ConcurrentQueue<string> Uploaded { get; } = [];
+
     public ConcurrentQueue<string> Signed { get; } = [];
 
     /// <summary>The provider itself, to read what is stored under a key as no Feature does.</summary>
@@ -183,8 +203,12 @@ public sealed class RecordingFileStorage(IFileStorage provider) : IFileStorage
         services[services.IndexOf(registered)] = ServiceDescriptor.Singleton<IFileStorage>(provider => new RecordingFileStorage((IFileStorage)factory(provider)));
     }
 
-    public Task<Result> UploadAsync(string key, Stream content, string contentType, CancellationToken cancellationToken) =>
-        provider.UploadAsync(key, content, contentType, cancellationToken);
+    public async Task<Result> UploadAsync(string key, Stream content, string contentType, CancellationToken cancellationToken)
+    {
+        var stored = await provider.UploadAsync(key, content, contentType, cancellationToken);
+        Uploaded.Enqueue(key);
+        return stored;
+    }
 
     public Task<Result<StoredFile>> DownloadAsync(string key, CancellationToken cancellationToken) => provider.DownloadAsync(key, cancellationToken);
 

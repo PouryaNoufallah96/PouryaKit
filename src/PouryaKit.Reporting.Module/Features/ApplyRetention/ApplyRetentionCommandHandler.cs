@@ -12,7 +12,9 @@ namespace PouryaKit.Reporting.Module;
 // their attempts may have stored, then the jobs. When a settlement commits after this occurrence read its job, the job's
 // version refuses the expiry and the occurrence rolls back; its retry reads the settled job. When the occurrence rolls
 // back after deleting files, the next one deletes the same keys again, which succeeds for a key already gone. Each step
-// takes a batch, oldest expiry first, so a backlog drains over occurrences.
+// takes a batch, oldest expiry first, so a backlog drains over occurrences. An attempt still rendering when its job's
+// files are deleted, its claim gone stale, stores its file after them; its settlement then finds the job gone, and its
+// retry deletes that file (RenderReportCommandHandler).
 internal sealed class ApplyRetentionCommandHandler(
     IRepository<ReportJob, ReportJobId> jobs,
     IFileStorage files,
