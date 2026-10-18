@@ -147,7 +147,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/EfReceipts.cs",
           "line": 8,
-          "end_line": 40,
+          "end_line": 38,
           "label": "Receipt and version rows"
         }
       ]

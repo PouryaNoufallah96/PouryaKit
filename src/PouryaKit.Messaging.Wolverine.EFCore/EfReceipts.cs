@@ -16,13 +16,12 @@ internal sealed class EfReceipts(IUnitOfWork unitOfWork) : IReceipts
             ReceiptTable.Name,
             "Receipts",
             "CreateReceiptTable",
-            table => $"insert into {table} (subscription, message_id) values ({{0}}, {{1}}) on conflict do nothing",
+            ReceiptStatements.Record,
             [subscription, messageId],
             cancellationToken
         );
 
-    // Under read committed, a conflicting row another transaction holds makes this one wait, then decide on the row
-    // that transaction committed. Older first allows both in increasing order; newer first skips the older.
+    // Older first allows both in increasing order; newer first skips the older.
     public Task<bool> RecordVersionAsync(
         string subscription,
         string aggregateId,
@@ -33,8 +32,7 @@ internal sealed class EfReceipts(IUnitOfWork unitOfWork) : IReceipts
             SnapshotVersionTable.Name,
             "the versions of the Snapshots its handlers applied",
             "CreateSnapshotVersionTable",
-            table =>
-                $"insert into {table} as applied (subscription, aggregate_id, version) values ({{0}}, {{1}}, {{2}}) on conflict (subscription, aggregate_id) do update set version = excluded.version where applied.version < excluded.version",
+            ReceiptStatements.RecordVersion,
             [subscription, aggregateId, version],
             cancellationToken
         );

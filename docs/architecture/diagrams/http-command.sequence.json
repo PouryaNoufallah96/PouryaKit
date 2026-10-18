@@ -146,8 +146,8 @@
         },
         {
           "path": "src/PouryaKit.Persistence.EFCore/Idempotency/EfIdempotencyStore.cs",
-          "line": 23,
-          "end_line": 67,
+          "line": 21,
+          "end_line": 64,
           "label": "the key in the same transaction"
         }
       ]

@@ -31,6 +31,9 @@ public sealed class PackageGraphTests
         Assert.Contains(Restored("PouryaKit.Storage.AzureBlob").Packages, arrived => arrived is { Id: "Azure.Core", Expression: "MIT" });
         Assert.Equal(["PouryaKit.Core", "PouryaKit.Cqrs", "PouryaKit.Domain"], Restored("PouryaKit.Storage").Projects.Order(StringComparer.Ordinal));
         Assert.Equal(["PouryaKit.Domain"], Restored("PouryaKit.Email").Projects);
+        // Marten brings Weasel and NetTopologySuite, permissive, and Npgsql at the Kit's line (#131).
+        Assert.Contains(Restored("PouryaKit.Persistence.Marten").Packages, arrived => arrived is { Id: "NetTopologySuite", Expression: "BSD-3-Clause" });
+        Assert.Contains(Restored("PouryaKit.Persistence.Marten").Packages, arrived => arrived is { Id: "Weasel.Postgresql", Expression: "MIT" });
         // Aspire's hosting packages arrive in the AppHost-only package, where they are allowed, and there alone (#130).
         Assert.Contains(Restored("PouryaKit.Aspire").Packages, arrived => arrived.Id == "Aspire.Hosting");
     }

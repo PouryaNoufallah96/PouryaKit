@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A Stream Module for the Stream write model's tests: Feature code over Streams that names no Marten, Weasel,
+       Wolverine or JasperFx type, though Marten's source generator writes its evolvers into this assembly.
+       ModularMonolith.Tests leaves this folder out of its own sources. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ModularMonolith.Tests" />
+    <InternalsVisibleTo Include="ModularMonolith.Tests.StreamHost" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\samples\ModularMonolith\src\Modules\Catalog\Catalog.Contracts\Catalog.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\src\PouryaKit.Messaging.Wolverine\PouryaKit.Messaging.Wolverine.csproj" />
+    <ProjectReference Include="..\..\..\src\PouryaKit.Modularity\PouryaKit.Modularity.csproj" />
+    <ProjectReference Include="..\..\..\src\PouryaKit.Persistence.Marten\PouryaKit.Persistence.Marten.csproj" />
+  </ItemGroup>
+</Project>

@@ -18,16 +18,13 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider ti
 
     private const int ReserveAttempts = 3;
 
-    private const string Key = "tenant = {0} and actor_kind = {1} and actor_id = {2} and command = {3} and request_id = {4}";
-
     public async Task<RecordedSuccess?> ReserveAsync(IdempotencyKey key, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(key);
         for (var attempt = 1; attempt <= ReserveAttempts; attempt++)
         {
             var reserved = await ExecuteAsync(
-                table =>
-                    $"insert into {table} (tenant, actor_kind, actor_id, command, request_id, reserved_at) values ({{0}}, {{1}}, {{2}}, {{3}}, {{4}}, {{5}}) on conflict do nothing",
+                IdempotencyStatements.Reserve,
                 (database, sql) => database.ExecuteSqlRawAsync(sql, [.. Values(key), timeProvider.GetUtcNow()], cancellationToken)
             );
             if (reserved == 1)
@@ -36,7 +33,7 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider ti
             }
 
             var recorded = await ExecuteAsync(
-                table => $"select response as \"Value\" from {table} where {Key}",
+                IdempotencyStatements.Read,
                 (database, sql) => database.SqlQueryRaw<string?>(sql, Values(key)).ToListAsync(cancellationToken)
             );
             if (recorded is [var response])
@@ -55,7 +52,7 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider ti
         ArgumentNullException.ThrowIfNull(key);
         ArgumentNullException.ThrowIfNull(response);
         var recorded = await ExecuteAsync(
-            table => $"update {table} set response = {{5}} where {Key}",
+            IdempotencyStatements.Record,
             (database, sql) => database.ExecuteSqlRawAsync(sql, [.. Values(key), response], cancellationToken)
         );
         if (recorded != 1)

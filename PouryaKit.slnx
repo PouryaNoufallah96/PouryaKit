@@ -13,10 +13,12 @@
     <Project Path="src/PouryaKit.Messaging.Wolverine.RabbitMq/PouryaKit.Messaging.Wolverine.RabbitMq.csproj" />
     <Project Path="src/PouryaKit.Messaging.Wolverine/PouryaKit.Messaging.Wolverine.csproj" />
     <Project Path="src/PouryaKit.Messaging.Wolverine.EFCore/PouryaKit.Messaging.Wolverine.EFCore.csproj" />
+    <Project Path="src/PouryaKit.Messaging.Wolverine.Marten/PouryaKit.Messaging.Wolverine.Marten.csproj" />
     <Project Path="src/PouryaKit.Modularity/PouryaKit.Modularity.csproj" />
     <Project Path="src/PouryaKit.Persistence/PouryaKit.Persistence.csproj" />
     <Project Path="src/PouryaKit.Persistence.Dapper/PouryaKit.Persistence.Dapper.csproj" />
     <Project Path="src/PouryaKit.Persistence.EFCore/PouryaKit.Persistence.EFCore.csproj" />
+    <Project Path="src/PouryaKit.Persistence.Marten/PouryaKit.Persistence.Marten.csproj" />
     <Project Path="src/PouryaKit.Persistence.Postgres/PouryaKit.Persistence.Postgres.csproj" />
     <Project Path="src/PouryaKit.Realtime/PouryaKit.Realtime.csproj" />
     <Project Path="src/PouryaKit.Observability/PouryaKit.Observability.csproj" />
@@ -50,8 +52,11 @@
     <Project Path="tests/ModularMonolith.Tests/Unversioned/ModularMonolith.Tests.Unversioned.csproj" />
     <Project Path="tests/ModularMonolith.Tests/Unowned/ModularMonolith.Tests.Unowned.csproj" />
     <Project Path="tests/ModularMonolith.Tests/SameNamed/ModularMonolith.Tests.SameNamed.csproj" />
+    <Project Path="tests/ModularMonolith.Tests/StreamHost/ModularMonolith.Tests.StreamHost.csproj" />
+    <Project Path="tests/ModularMonolith.Tests/Streams/ModularMonolith.Tests.Streams.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Contracts/Offending.Contracts.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Core/Offending.Core.csproj" />
+    <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Stream/Offending.Stream.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending/Offending.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj" />
     <Project Path="tests/PouryaKit.Aspire.Tests/PouryaKit.Aspire.Tests.csproj" />

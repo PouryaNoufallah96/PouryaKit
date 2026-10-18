@@ -300,7 +300,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs",
           "line": 10,
-          "end_line": 24,
+          "end_line": 25,
           "label": "store and DbContexts on one database"
         }
       ]
@@ -327,8 +327,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 122,
-          "end_line": 123,
+          "line": 126,
+          "end_line": 127,
           "label": "no Kit package references Redis"
         }
       ]
@@ -432,7 +432,7 @@
       "id": "kit",
       "type": "backend",
       "label": "PouryaKit packages",
-      "sublabel": "30 libraries and the templates",
+      "sublabel": "32 libraries and the templates",
       "pos": [
         700,
         650
@@ -445,13 +445,13 @@
         {
           "path": "scripts/packaging/inventory.json",
           "line": 3,
-          "end_line": 33,
-          "label": "the 31 packages"
+          "end_line": 35,
+          "label": "the 33 packages"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 100,
+          "end_line": 104,
           "label": "their allowed references"
         }
       ]

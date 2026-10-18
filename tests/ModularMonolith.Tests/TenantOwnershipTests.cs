@@ -6,8 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using PouryaKit.Persistence;
 using PouryaKit.Persistence.Dapper;
-using PouryaKit.Persistence.EFCore;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;

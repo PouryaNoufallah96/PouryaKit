@@ -11,8 +11,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Offending\**;Offending.Contracts\**;Offending.Core\**" />
-    <None Remove="Offending\**;Offending.Contracts\**;Offending.Core\**" />
+    <Compile Remove="Offending\**;Offending.Contracts\**;Offending.Core\**;Offending.Stream\**" />
+    <None Remove="Offending\**;Offending.Contracts\**;Offending.Core\**;Offending.Stream\**" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\samples\ModularMonolith\src\Inventory.Host\Inventory.Host.csproj" />
@@ -20,6 +20,7 @@
     <ProjectReference Include="..\..\src\PouryaKit.Aspire\PouryaKit.Aspire.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Core\PouryaKit.Core.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Localization\PouryaKit.Localization.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.Messaging.Wolverine.Marten\PouryaKit.Messaging.Wolverine.Marten.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Realtime\PouryaKit.Realtime.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.ReverseProxy\PouryaKit.ReverseProxy.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Storage.AzureBlob\PouryaKit.Storage.AzureBlob.csproj" />
@@ -28,5 +29,7 @@
     <ProjectReference Include="Offending\Offending.csproj" />
     <ProjectReference Include="Offending.Contracts\Offending.Contracts.csproj" />
     <ProjectReference Include="Offending.Core\Offending.Core.csproj" Aliases="OffendingCore" />
+    <ProjectReference Include="Offending.Stream\Offending.Stream.csproj" />
+    <ProjectReference Include="..\ModularMonolith.Tests\Streams\ModularMonolith.Tests.Streams.csproj" />
   </ItemGroup>
 </Project>

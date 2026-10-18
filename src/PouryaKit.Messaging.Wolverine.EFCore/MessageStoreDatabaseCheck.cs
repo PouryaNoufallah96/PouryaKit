@@ -15,7 +15,8 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 // DbContext's side is the connection EF Core gives the DbContext itself, created in the check's own scope, whatever
 // configured it, a ConfigureDbContext after UsePouryaKitPostgres included: a connection string (EF Core resolves its named
 // form, Name=ConnectionStrings:app, which UsePouryaKitPostgres writes), a DbConnection or an Npgsql data source. The
-// connection is not opened: nothing connects. The strings are compared on the hosts, ports and database they name; nothing
+// connection is not opened: nothing connects. Another write model's store, such as Marten's, joins the check through the
+// OutboxConnection its registration records, read from the configuration. The strings are compared on the hosts, ports and database they name; nothing
 // resolves a host name, so localhost and 127.0.0.1 differ. A string that names no database names its user's, as Npgsql and
 // PostgreSQL read it; one that names neither leaves the database to the client's user, which the string does not show, so
 // it fails the build too, asking for the database to be named.
@@ -63,6 +64,20 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
             else if (!database.Matches(store))
             {
                 yield return $"{stored}, the database {database}, but UsePouryaKitWolverine keeps the message store over the connection string {storeConnectionName}, the database {store}, so its Unit of Work would write its Outbox to its own database, where the store never delivers it. {together}";
+            }
+        }
+
+        // Another write model's store, such as Marten's, whose registration refused a missing or blank connection string.
+        foreach (var outbox in services.GetServices<OutboxConnection>())
+        {
+            var database = PostgresDatabase.Of(configuration.GetConnectionString(outbox.Name) ?? "");
+            if (database is null)
+            {
+                yield return $"{outbox.Writer} writes over the connection string {outbox.Name}, which names neither a database nor a user, so its database is left to the client's user and cannot be compared with the message store's, the database {store}. Set Database, or at least Username, in the connection string {outbox.Name}.";
+            }
+            else if (!database.Matches(store))
+            {
+                yield return $"{outbox.Writer} writes over the connection string {outbox.Name}, the database {database}, but UsePouryaKitWolverine keeps the message store over the connection string {storeConnectionName}, the database {store}, so its Outbox would write envelopes to its own database, where the store never delivers them. Use one database for both.";
             }
         }
     }

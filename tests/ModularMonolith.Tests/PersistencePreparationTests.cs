@@ -11,7 +11,7 @@ using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Modularity;
-using PouryaKit.Persistence.EFCore;
+using PouryaKit.Persistence;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;

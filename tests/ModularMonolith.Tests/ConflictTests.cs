@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
-using PouryaKit.Persistence.EFCore;
+using PouryaKit.Persistence;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;

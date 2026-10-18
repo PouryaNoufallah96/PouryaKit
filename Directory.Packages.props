@@ -25,6 +25,7 @@
     <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.84.0" />
     <PackageVersion Include="Grpc.Tools" Version="2.84.0" />
     <PackageVersion Include="MailKit" Version="4.18.1" />
+    <PackageVersion Include="Marten" Version="9.46.0" />
     <PackageVersion Include="MessagePack" Version="2.5.307" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
@@ -67,6 +68,7 @@
     <PackageVersion Include="WireMock.Net" Version="2.18.0" />
     <PackageVersion Include="WolverineFx" Version="6.48.3" />
     <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.48.3" />
+    <PackageVersion Include="WolverineFx.Marten" Version="6.48.3" />
     <PackageVersion Include="WolverineFx.Postgresql" Version="6.48.3" />
     <PackageVersion Include="WolverineFx.RabbitMQ" Version="6.48.3" />
     <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.48.3" />
