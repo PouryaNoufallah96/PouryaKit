@@ -1,0 +1,33 @@
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_b9a8adfb056e1c::t_ba6ccac892b020 4985
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_b9a8adfb056e1c::t_f4632df9c3a4ec 10
+docs/architecture/diagrams/delivery.html
+  s_b9a8adfb056e1c::t_657824dbe85a35 4985
+docs/architecture/diagrams/delivery.sequence.json
+  s_b9a8adfb056e1c::t_cf780f8f937bed 18
+docs/architecture/diagrams/host-start.html
+  s_b9a8adfb056e1c::t_f07b636df75b44 4985
+docs/architecture/diagrams/host-start.workflow.json
+  s_b9a8adfb056e1c::t_3f55a6821be3e9 11
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_9b412684a4708f 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_008c90e9bebb18 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b9c3b77a4b709f28dac6ab58863487d8c05d8022",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
