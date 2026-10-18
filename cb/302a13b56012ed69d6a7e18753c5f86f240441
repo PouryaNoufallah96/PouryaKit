@@ -1,0 +1,151 @@
+docs/provenance/PouryaKit.Reporting.Module.md
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-25
+src/PouryaKit.Reporting.Module/Features/GetReportJob/GetReportJobQueryHandler.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-83
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_b9a8adfb056e1c::t_28b4975903f6cd 485
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 21,484,486-487
+tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 5,19-24
+  s_b9a8adfb056e1c::t_28b4975903f6cd 28,30
+tests/ModularMonolith.Tests/Fixtures/ReportFixture.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-222
+tests/PouryaKit.ArchitectureTests/FeatureCodeTests.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 135
+src/PouryaKit.Reporting.Module/IReportLayouts.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-19
+src/PouryaKit.Reporting.Module/Migrations/ReportDbContextModelSnapshot.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-110
+samples/ModularMonolith/src/ModularMonolith.Host/appsettings.json
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 18-27
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 17,20,96,113-120
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_76ece2e83dc4eb 2515
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 2494-2503,2505-2514
+  s_b9a8adfb056e1c::t_c5297b9b75a3f6 2504
+README.md
+  s_b9a8adfb056e1c::t_28b4975903f6cd 39
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 33
+GLOSSARY.md
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 179-182
+src/PouryaKit.Reporting.Module/ReportRequest.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-10
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 26
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 53
+  s_b9a8adfb056e1c::t_28b4975903f6cd 3
+src/PouryaKit.Reporting.Module/Features/RequestReport/RequestReportCommandValidator.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-20
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 28,31
+.agents/skills/pourya-kit/references/reporting-module.md
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-116
+src/PouryaKit.Reporting.Module/Features/RequestReport/RequestReportEndpoint.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-44
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 11,55-57,142,144-150
+scripts/packaging/consumers/PouryaKit.Reporting.Module.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-25
+src/PouryaKit.Reporting.Module/ReportModule.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-72
+src/PouryaKit.Reporting.Module/Features/ClaimReportJob/ClaimReportJobCommandHandler.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-38
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 412-413,466-467,766-767
+src/PouryaKit.Reporting.Module/Migrations/20261018082209_Initial.Designer.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-113
+src/PouryaKit.Reporting.Module/PouryaKit.Reporting.Module.csproj
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-16
+tests/ModularMonolith.Tests/ReportModuleTests.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-284
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 292,899
+src/PouryaKit.Reporting.Module/Features/RequestReport/RequestReportCommandHandler.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-27
+src/PouryaKit.Reporting.Module/Features/GetReportJob/GetReportJobEndpoint.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-22
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 27
+src/PouryaKit.Reporting.Module/Jobs/ReportJob.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-130
+.agents/skills/pourya-kit/references/reporting.md
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 97
+src/PouryaKit.Reporting.Module/Migrations/20261018082209_Initial.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-63
+src/PouryaKit.Reporting.Module/Features/ApplyRetention/ApplyRetentionCommandHandler.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-62
+src/PouryaKit.Reporting.Module/Features/GetReportJob/GetReportJobQuery.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-17
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 26,50
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_0e3f2317b7cca3 59-60,65-66,72,105-106
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 77-104,107-110,483-490,650
+  s_b9a8adfb056e1c::t_28b4975903f6cd 649
+src/PouryaKit.Reporting.Module/Data/ReportJobConfiguration.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-32
+.claude/agent-memory/kit-implementer/report-module-facts.md
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-33
+src/PouryaKit.Reporting.Module/Features/RequestReport/RequestReportCommand.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-9
+src/PouryaKit.Reporting.Module/IReportRequestAuthorizer.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-17
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_0e3f2317b7cca3 31-32
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 111-112,235-236,275-276,360
+src/PouryaKit.Reporting.Module/Data/ReportDbContext.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-6
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_0e3f2317b7cca3 51-52
+src/PouryaKit.Reporting.Module/Features/RenderReport/RenderReportCommand.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-7
+src/PouryaKit.Reporting.Module/Features/ApplyRetention/ApplyRetentionCommand.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-6
+src/PouryaKit.Reporting.Module/ReportOptions.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-21
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 290-291
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 304-305,307
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 114-130,173-174
+src/PouryaKit.Reporting.Module/Features/RenderReport/RenderReportCommandHandler.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-55
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 124-138
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 25
+src/PouryaKit.Reporting.Module/Features/RequestReport/RequestReportAuthorizer.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-12
+src/PouryaKit.Reporting.Module/Jobs/ReportJobErrors.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-11
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 330-331,435,448-449,454,486-502,505-519,650-657,677-678
+  s_b9a8adfb056e1c::t_0e3f2317b7cca3 93-94,121-122,127-128,134,235-236,324-325,352-353,475-476,503-504
+src/PouryaKit.Reporting.Module/Features/ClaimReportJob/ClaimReportJobCommand.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-7
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_28b4975903f6cd 52
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 40,44,50,326,337-346
+  s_b9a8adfb056e1c::t_62683965cebeba 347
+samples/ModularMonolith/src/ModularMonolith.Host/SalesReports.cs
+  s_b9a8adfb056e1c::t_9403cc4a0ed955 1-60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cb302a13b56012ed69d6a7e18753c5f86f240441",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
