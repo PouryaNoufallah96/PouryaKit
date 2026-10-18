@@ -10,7 +10,7 @@ public interface IMcpServers
 {
     /// <summary>
     /// The tools of the server named <paramref name="server"/>, which a run is given beside its Gateway tools: each calls
-    /// that server when the model asks for it, under the run's allow-list and iteration cap.
+    /// that server when the model asks for it, under the allow-list and iteration cap of the Host's chat client.
     /// </summary>
     Task<IReadOnlyList<McpClientTool>> ListToolsAsync(string server, CancellationToken cancellationToken = default);
 }
