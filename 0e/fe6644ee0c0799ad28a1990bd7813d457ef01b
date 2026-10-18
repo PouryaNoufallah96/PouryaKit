@@ -1,0 +1,165 @@
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/ValueObjects/AccountId.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-5
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 177-178
+src/PouryaKit.Templates/content/modular/.template.config/template.json
+  s_b9a8adfb056e1c::t_739a15ed5a5189 7
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/AppHost.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 5,11,66,85-87
+tests/ModularMonolith.Tests/CrossProcessTracingTests.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 15
+tests/ModularMonolith.Tests/Fixtures/AppFixture.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 25-26,39-41,43-52
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 6,483
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_b9a8adfb056e1c::t_739a15ed5a5189 10
+.claude/agent-memory/kit-implementer/marten-stream-write-model-facts.md
+  s_b9a8adfb056e1c::t_739a15ed5a5189 3,39-49
+  s_b9a8adfb056e1c::t_56bfd3637c4963 50
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_b9a8adfb056e1c::t_739a15ed5a5189 4985
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/OpenAccount/OpenAccountCommandHandler.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-16
+src/PouryaKit.Templates/content/modular/ModularMonolith.slnx
+  s_b9a8adfb056e1c::t_739a15ed5a5189 12-13
+tests/ModularMonolith.Tests/RabbitMqDeliveryTests.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 31,786
+docs/architecture/diagrams/module-boundaries.html
+  s_b9a8adfb056e1c::t_739a15ed5a5189 4985
+docs/architecture/diagrams/http-command.html
+  s_b9a8adfb056e1c::t_739a15ed5a5189 4985
+src/PouryaKit.Templates/content/modular/src/Modules/Ledger/Ledger.Contracts/Ledger.Contracts.csproj
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 21-22,51-53
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Errors/AccountErrors.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-8
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_739a15ed5a5189 52,54,56-58,693
+samples/ModularMonolith/src/Modules/Billing/Billing/BillingModule.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 4,6,22
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommands.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 19,27
+tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 95
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/GetAccount/GetAccountQueryHandler.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-17
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/PostEntry/PostEntryCommandHandler.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-24
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_739a15ed5a5189 15,51-52
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Events/Notifications/ActivateAccountNotificationHandler.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-27
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/OpenAccount/OpenAccountEndpoint.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-30
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_739a15ed5a5189 10,31-32
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Entities/Account.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-52
+samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Features/OpenWelcomeQuote/OpenWelcomeQuoteIntegrationEventHandler.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-37
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_b9a8adfb056e1c::t_739a15ed5a5189 19,24
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_739a15ed5a5189 31-32,47,59-60,65-66,72,155,161-163,168-169,179,183,213,217,235-268,275,279,309,335,411,474-481,524-530,575-580,585,595,603,615
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Events/DomainEvents/EntryPostedDomainEvent.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-6
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/PostEntry/PostEntryCommand.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-6
+samples/ModularMonolith/src/Modules/Ledger/Ledger.Contracts/Accounts/Events/V1/AccountOpenedV1.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-8
+src/PouryaKit.Templates/content/modular/src/Modules/Ledger/Ledger/Ledger.csproj
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-11
+tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 21,23-24
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/PostEntry/PostEntryEndpoint.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-24
+tests/PouryaKit.ArchitectureTests/PipelineContractTests.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 14
+tests/PouryaKit.ArchitectureTests/SampleNamespaceTests.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 24,27
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/IDelayedCommands.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 7,20-21
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_b9a8adfb056e1c::t_739a15ed5a5189 11,13,18
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_739a15ed5a5189 4985,5541
+.agents/skills/pourya-kit/references/stream.md
+  s_b9a8adfb056e1c::t_739a15ed5a5189 14,21-23,28,33,36-42,55,57,60,62-64,68-69,72-74,77,83-97,99-100,103,105,111-112,119,121-130,134,137,143-156,160-179,200-201
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_739a15ed5a5189 16
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 5,12,93,119-121
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 37,164
+tests/ModularMonolith.Tests/Fixtures/StreamFixture.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 8,18,50-52,54,67-82
+  s_b9a8adfb056e1c::t_d3b6b54eb80b4f 83
+docs/provenance/ModularMonolith.md
+  s_b9a8adfb056e1c::t_739a15ed5a5189 26-27
+tests/ModularMonolith.Tests/StreamTests.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 54,76
+.agents/skills/pourya-kit/references/messaging.md
+  s_b9a8adfb056e1c::t_739a15ed5a5189 455
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Events/DomainEvents/AccountOpenedDomainEvent.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-6
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/GetAccount/AccountDto.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-4
+samples/ModularMonolith/src/Modules/Ledger/Ledger/LedgerModule.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-24
+tests/PouryaKit.ArchitectureTests/FeatureCodeTests.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 102,108-118
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_9b45604db09174 2339-2356
+tests/ModularMonolith.Tests/DelayedCommandTests.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 395
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_b9a8adfb056e1c::t_739a15ed5a5189 9,27
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_739a15ed5a5189 10,93-94,121-122,127-129,134,235-236,324-325,352-353,475-476,623
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/GetAccount/GetAccountQuery.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-5
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/GetAccount/GetAccountEndpoint.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-22
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/OpenAccount/OpenAccountCommand.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-6
+samples/ModularMonolith/src/Modules/Billing/Billing/Billing.csproj
+  s_b9a8adfb056e1c::t_739a15ed5a5189 9,11
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1004
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Events/DomainEvents/AccountActivatedDomainEvent.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-6
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Ledger.csproj
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-15
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_b9a8adfb056e1c::t_739a15ed5a5189 248-249
+.agents/skills/pourya-kit/references/templates.md
+  s_b9a8adfb056e1c::t_739a15ed5a5189 42-43,57,65,79
+tests/ModularMonolith.Tests/LedgerTests.cs
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-186
+README.md
+  s_b9a8adfb056e1c::t_739a15ed5a5189 38
+samples/ModularMonolith/src/Modules/Ledger/Ledger.Contracts/Ledger.Contracts.csproj
+  s_b9a8adfb056e1c::t_739a15ed5a5189 1-5
+src/PouryaKit.Templates/content/modular/src/Modules/Billing/Billing/Billing.csproj
+  s_b9a8adfb056e1c::t_739a15ed5a5189 3,5
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_739a15ed5a5189 50-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0efe6644ee0c0799ad28a1990bd7813d457ef01b",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
