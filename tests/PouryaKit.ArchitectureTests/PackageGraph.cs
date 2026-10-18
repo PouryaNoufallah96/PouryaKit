@@ -77,8 +77,15 @@ internal static class PackageGraph
             ["PouryaKit.Modularity", "PouryaKit.Persistence.Postgres", "PouryaKit.Messaging.Wolverine.EFCore"],
             ["Testcontainers.PostgreSql", "Respawn", "xunit.v3.extensibility.core", "Microsoft.Extensions.TimeProvider.Testing", "WolverineFx.RuntimeCompilation"]
         ),
-        ["PouryaKit.Storage"] = new(["PouryaKit.Domain"], []),
-        ["PouryaKit.Storage.S3"] = new(["PouryaKit.Cqrs", "PouryaKit.Storage"], ["AWSSDK.S3", "Microsoft.Extensions.Options"]),
+        // Storage references Cqrs for the one-provider composition check both providers register through it (#128).
+        ["PouryaKit.Storage"] = new(["PouryaKit.Cqrs", "PouryaKit.Domain"], []),
+        ["PouryaKit.Storage.S3"] = new(["PouryaKit.Storage"], ["AWSSDK.S3", "Microsoft.Extensions.Options"]),
+        // Apache.Arrow and System.Security.Cryptography.ProtectedData are licence floors over the versions Azure.Storage.Blobs
+        // 12.30.1 brings, which declare no licence expression (#128).
+        ["PouryaKit.Storage.AzureBlob"] = new(
+            ["PouryaKit.Storage"],
+            ["Azure.Storage.Blobs", "Microsoft.Extensions.Options", "Apache.Arrow", "System.Security.Cryptography.ProtectedData"]
+        ),
         ["PouryaKit.Localization"] = new(["PouryaKit.Cqrs"], [], ["Microsoft.AspNetCore.App"]),
         ["PouryaKit.ReverseProxy"] = new([], ["Microsoft.Extensions.ServiceDiscovery.Yarp", "Yarp.ReverseProxy"], ["Microsoft.AspNetCore.App"]),
         // The server and client libraries, not the Grpc.AspNetCore metapackage, which carries Grpc.Tools to every consumer (#134).
@@ -117,11 +124,12 @@ internal static class PackageGraph
         ["PouryaKit.ReverseProxy"] = ["PouryaKit."],
         // Compiling a .proto is the project's that holds it, with private assets (#134).
         ["PouryaKit.Grpc"] = ["Grpc.Tools"],
+        // A storage provider's SDK stays in its own package: the contract takes none.
+        ["PouryaKit.Storage"] = ["AWSSDK", "Azure"],
     };
 
-    // Core and Domain, and Messaging, the Email contract and Storage (Domain only), bring no package at all; nor do the
-    // templates. A storage provider's SDK stays in its own package.
-    private static readonly HashSet<string> NoPackages = ["PouryaKit.Core", "PouryaKit.Domain", "PouryaKit.Email", "PouryaKit.Messaging", "PouryaKit.Storage", "PouryaKit.Templates"];
+    // Core and Domain, and Messaging and the Email contract (Domain only), bring no package at all; nor do the templates.
+    private static readonly HashSet<string> NoPackages = ["PouryaKit.Core", "PouryaKit.Domain", "PouryaKit.Email", "PouryaKit.Messaging", "PouryaKit.Templates"];
 
     public static IEnumerable<string> Violations(RestoredPackage package)
     {

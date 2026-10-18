@@ -14,6 +14,7 @@
     { "id": "PouryaKit.Caching", "type": "PouryaKit.Caching.ICacheableQuery" },
     { "id": "PouryaKit.Storage", "type": "PouryaKit.Storage.IFileStorage" },
     { "id": "PouryaKit.Storage.S3", "type": "PouryaKit.Storage.S3.S3StorageServiceCollectionExtensions" },
+    { "id": "PouryaKit.Storage.AzureBlob", "type": "PouryaKit.Storage.AzureBlob.AzureBlobStorageServiceCollectionExtensions" },
     { "id": "PouryaKit.Email", "type": "PouryaKit.Email.IEmailSender" },
     { "id": "PouryaKit.Email.MailKit", "type": "PouryaKit.Email.MailKit.PouryaKitMailKitOptions" },
     { "id": "PouryaKit.Localization", "type": "PouryaKit.Localization.LocalizationServiceCollectionExtensions" },

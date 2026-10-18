@@ -24,10 +24,12 @@ public sealed class PackageGraphTests
         // EF Core arrives in Postgres only through its provider, and Domain in Web only through Cqrs.
         Assert.Contains(Restored("PouryaKit.Persistence.Postgres").Packages, arrived => arrived.Id == "Microsoft.EntityFrameworkCore");
         Assert.Contains("PouryaKit.Domain", Restored("PouryaKit.Web").Projects);
-        // The S3 provider's closure is AWSSDK.S3 over AWSSDK.Core, both Apache-2.0, and the Options stack; the contract's is Domain alone.
+        // The S3 provider's closure is AWSSDK.S3 over AWSSDK.Core, both Apache-2.0, and the Options stack; Azure Blob's
+        // takes Azure.Core with Blobs. The storage contract references Cqrs for the one-provider check its providers
+        // register (#128); the Email contract stays on Domain alone, its provider taking Cqrs (#147).
         Assert.Contains(Restored("PouryaKit.Storage.S3").Packages, arrived => arrived is { Id: "AWSSDK.Core", Expression: "Apache-2.0" });
-        Assert.Equal(["PouryaKit.Domain"], Restored("PouryaKit.Storage").Projects);
-        // The providers reference Cqrs for their one-provider composition check (#147); their contracts stay on Domain alone.
+        Assert.Contains(Restored("PouryaKit.Storage.AzureBlob").Packages, arrived => arrived is { Id: "Azure.Core", Expression: "MIT" });
+        Assert.Equal(["PouryaKit.Core", "PouryaKit.Cqrs", "PouryaKit.Domain"], Restored("PouryaKit.Storage").Projects.Order(StringComparer.Ordinal));
         Assert.Equal(["PouryaKit.Domain"], Restored("PouryaKit.Email").Projects);
         // Aspire's hosting packages arrive in the AppHost-only package, where they are allowed, and there alone (#130).
         Assert.Contains(Restored("PouryaKit.Aspire").Packages, arrived => arrived.Id == "Aspire.Hosting");
@@ -93,8 +95,11 @@ public sealed class PackageGraphTests
         );
         var storage = Restored("PouryaKit.Storage");
         Assert.Equal(
-            ["PouryaKit.Storage's closure holds the packages [AWSSDK.Core]; it must hold none."],
-            PackageGraph.Violations(storage with { Packages = [Arrived("AWSSDK.Core")] })
+            [
+                "PouryaKit.Storage's closure holds AWSSDK.Core, which section C keeps out of it.",
+                "PouryaKit.Storage's closure holds Azure.Core, which section C keeps out of it.",
+            ],
+            PackageGraph.Violations(storage with { Packages = [.. storage.Packages, Arrived("AWSSDK.Core"), Arrived("Azure.Core")] })
         );
         var reverseProxy = Restored("PouryaKit.ReverseProxy");
         Assert.Equal(

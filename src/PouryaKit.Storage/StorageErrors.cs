@@ -9,8 +9,8 @@ public static class StorageErrors
     public static readonly Error FileNotFound = Error.NotFound("Storage.FileNotFound", "No file is stored under this key.");
 
     /// <summary>
-    /// A presigned link's lifetime is zero or less, or longer than the provider signs a link for: S3 signs one for at most
-    /// seven days. No link was signed.
+    /// A presigned link's lifetime is zero or less, or longer than the provider signs a link for: S3 and Azure Blob each
+    /// sign one for at most seven days. No link was signed.
     /// </summary>
     public static Error LinkLifetimeOutOfRange(TimeSpan maximum) => Error.Validation(
         "Storage.LinkLifetimeOutOfRange",
