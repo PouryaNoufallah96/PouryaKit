@@ -1,0 +1,33 @@
+spikes/saga/SagaSpike.Contracts/IntegrationEvents.cs
+  s_b9a8adfb056e1c::t_f2002e8569de12 15-17
+spikes/saga/SagaSpike.Host/Program.cs
+  s_b9a8adfb056e1c::t_356e0b14db6ab6 82
+spikes/saga/SagaSpike.Kit/PouryaKitSaga.cs
+  s_b9a8adfb056e1c::t_a6bff6dbeed94f 25-27,46
+spikes/saga/SagaSpike.Kit/SagaDeclarations.cs
+  s_b9a8adfb056e1c::t_4b3bde2b37009a 44-45,57
+spikes/saga/SagaSpike.Kit/SagaSteps.cs
+  s_b9a8adfb056e1c::t_09d0b6f1b0f1a8 21,106-114,120-121,146-162,165-169,188,197,239-240,246-247,259,261-264,270-293,315,317
+spikes/saga/SagaSpike.Shipping/ProbeSagas.cs
+  s_b9a8adfb056e1c::t_44d7609b41086b 22-31
+spikes/saga/SagaSpike.Tests/EmissionTests.cs
+  s_b9a8adfb056e1c::t_064ddfa28dbe56 39-40,42,47-48,50-58,61-63
+spikes/saga/SagaSpike.Tests/TenancyTests.cs
+  s_b9a8adfb056e1c::t_bdedec7ade2846 1,3-5,33-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c60eb7b910fd83ae7029973109b9a9891e610467",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
