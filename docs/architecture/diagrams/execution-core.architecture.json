@@ -821,7 +821,7 @@
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 106,
           "end_line": 109,
-          "label": "Cqrs, Modularity, the OpenAI client"
+          "label": "Cqrs, Modularity, OpenAI, Agent Framework"
         },
         {
           "path": "src/PouryaKit.AI/GatewayToolExtensions.cs",
@@ -831,9 +831,9 @@
         },
         {
           "path": "src/PouryaKit.AI/AIServiceCollectionExtensions.cs",
-          "line": 90,
-          "end_line": 108,
-          "label": "allow-list, cap, no retries of its own"
+          "line": 92,
+          "end_line": 119,
+          "label": "allow-list, cap, guardrails, no retries"
         }
       ]
     }
@@ -1094,7 +1094,7 @@
         "Grpc maps a Module's gRPC services on Web's begin-the-Operation convention and writes a client's Operation Context through Web's one header codec; a failed Result is a status by its most severe Error kind.",
         "Aspire, AppHost-only, references no Kit package: an Aspire AppHost adds PostgreSQL, Redis and RabbitMQ through it, each on a pinned image with a named volume, and no other Kit package's closure holds an Aspire package.",
         "Reporting, optional, references Domain alone: it renders a Module's layout to a PDF, a CSV file or a spreadsheet and returns the file's bytes, storing nothing; QuestPDF, ClosedXML, a storage SDK and PouryaKit.Storage stay out of its closure.",
-        "AI gives a Host one chat client over the OpenAI client, and makes a Module's command or query a Gateway tool: each call a model makes runs as an Operation through that Module's Gateway, which is why it references Modularity; no OllamaSharp, Azure client or resilience package reaches its closure."
+        "AI gives a Host one chat client over the OpenAI client, which the Agent Framework's agents and workflows run through, and makes a Module's command or query a Gateway tool: each call a model makes runs as an Operation through that Module's Gateway, which is why it references Modularity; no OllamaSharp, Azure client or resilience package reaches its closure."
       ]
     }
   ]

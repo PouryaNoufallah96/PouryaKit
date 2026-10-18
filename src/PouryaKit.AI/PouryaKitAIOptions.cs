@@ -31,7 +31,8 @@ public sealed class PouryaKitAIOptions
 
     /// <summary>
     /// The names of the tools a run may be given: a tool a run is given that this list does not name is withheld from the
-    /// model, so it never runs. Empty, the default, withholds every tool.
+    /// model, so it never runs. Empty, the default, withholds every tool. A declaration the client never invokes, which it
+    /// hands back to the run's caller, such as a handoff workflow's, passes unnamed.
     /// </summary>
     public ISet<string> Tools { get; } = new HashSet<string>(StringComparer.Ordinal);
 }
