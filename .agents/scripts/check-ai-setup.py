@@ -31,6 +31,7 @@ ROLE_ROUTING = {
     "kit-scout": ("claude-opus-5-5", "medium", "gpt-6.1-sol", "medium"),
 }
 OUTPUT_STYLE_KEYS = {"name", "description", "keep-coding-instructions"}  # code.claude.com/docs/en/output-styles
+SKILL_DESCRIPTION_LIMIT = 1024  # code.claude.com/docs/en/skills: a longer description is cut, and Wave 3 session 3 had four mergers trim it by hand
 AGENTS_MD_LIMIT = 32768  # Codex project_doc_max_bytes default
 GUARDED_TOOLS = {  # the tools the guard judges; each hooks file must send them to it
     ".claude/settings.json": ("Bash", "Read", "Grep", "Edit", "Write", "NotebookEdit"),
@@ -138,6 +139,11 @@ def check_skills() -> None:
         data, _ = frontmatter(skill / "SKILL.md")
         if not data.get("name") or not data.get("description"):
             failures.append(f"{rel(skill)}/SKILL.md: needs name and description (Codex skips it otherwise)")
+        elif len(data["description"]) > SKILL_DESCRIPTION_LIMIT:
+            failures.append(
+                f"{rel(skill)}/SKILL.md: description is {len(data['description'])} characters, over the "
+                f"{SKILL_DESCRIPTION_LIMIT} Claude Code loads (shorten a trigger phrase, never a Capability's name)"
+            )
         if skill.name != KIT_SKILL and skill.name not in pinned:
             failures.append(f"{rel(skill)}: no entry in skills-lock.json, so nothing pins it; only {KIT_SKILL} is this repository's own")
         link = mirror / skill.name
