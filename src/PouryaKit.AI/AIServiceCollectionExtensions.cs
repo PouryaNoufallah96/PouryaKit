@@ -45,27 +45,10 @@ public static class AIServiceCollectionExtensions
         public IServiceCollection AddPouryaKitAI()
         {
             ArgumentNullException.ThrowIfNull(services);
-            services
-                .AddOptions<PouryaKitAIOptions>()
-                .Validate(
-                    ai => Enum.IsDefined(ai.Provider),
-                    "PouryaKitAIOptions.Provider is not an AIProvider value; set OpenAI, AzureOpenAI or Ollama."
-                )
+            AddProvider(services)
                 .Validate(
                     ai => !string.IsNullOrWhiteSpace(ai.Model),
                     "PouryaKitAIOptions.Model names no model; set the model the Host's runs use, or for Azure OpenAI its deployment."
-                )
-                .Validate(
-                    ai => ai.Endpoint is null || (ai.Endpoint.IsAbsoluteUri && (ai.Endpoint.Scheme == Uri.UriSchemeHttp || ai.Endpoint.Scheme == Uri.UriSchemeHttps)),
-                    "PouryaKitAIOptions.Endpoint is not an absolute HTTP or HTTPS address."
-                )
-                .Validate(
-                    ai => ai.Endpoint is not null || ai.Provider is not (AIProvider.AzureOpenAI or AIProvider.Ollama),
-                    "PouryaKitAIOptions.Endpoint is required for Azure OpenAI, its resource's v1 endpoint, and for Ollama, its OpenAI-compatible API."
-                )
-                .Validate(
-                    ai => !string.IsNullOrWhiteSpace(ai.ApiKey) || ai.Provider is not (AIProvider.OpenAI or AIProvider.AzureOpenAI),
-                    "PouryaKitAIOptions.ApiKey is required for OpenAI and Azure OpenAI; set it from a secret store, never in source control."
                 )
                 .Validate(
                     ai => ai.MaximumIterationsPerRun >= 1,
@@ -74,19 +57,86 @@ public static class AIServiceCollectionExtensions
                 .Validate(
                     ai => !ai.Tools.Any(string.IsNullOrWhiteSpace),
                     "PouryaKitAIOptions.Tools names a blank tool; name each tool a run may be given."
-                )
-                .ValidateOnStart();
-            // The chat client is a singleton that keeps its HttpClient, so connections are renewed by their own lifetime
-            // instead of by the factory's handler rotation, as IHttpClientFactory's guidance asks of a long-lived client.
-            services
-                .AddHttpClient(HttpClientName)
-                .UseSocketsHttpHandler((handler, _) => handler.PooledConnectionLifetime = TimeSpan.FromMinutes(2))
-                .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
+                );
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, OneChatClientCheck>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SingletonGuardrailsCheck>());
             services.AddSingleton<IChatClient>(Create);
             return services;
         }
+
+        /// <summary>
+        /// Registers the Host's <see cref="IEmbeddingGenerator{TInput, TEmbedding}"/> of text, a singleton that reaches the
+        /// embeddings API of the provider of <see cref="PouryaKitAIOptions"/> for <see cref="PouryaKitAIOptions.EmbeddingModel"/>
+        /// through the same OpenAI client as the chat client of <see cref="AddPouryaKitAI"/>, over the HTTP client named
+        /// <see cref="HttpClientName"/>, with or without it; its telemetry carries no input. The Host binds the options
+        /// as for the chat client, and fails when it starts, naming the option, on the same provider, endpoint and key rules,
+        /// and when the embedding model is blank.
+        /// </summary>
+        public IServiceCollection AddPouryaKitEmbeddings()
+        {
+            ArgumentNullException.ThrowIfNull(services);
+            AddProvider(services)
+                .Validate(
+                    ai => !string.IsNullOrWhiteSpace(ai.EmbeddingModel),
+                    "PouryaKitAIOptions.EmbeddingModel names no model; set the model the Host embeds text with, or for Azure OpenAI its deployment."
+                );
+            services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(CreateEmbeddingGenerator);
+            return services;
+        }
+    }
+
+    // The provider's rules, its HTTP client and its one OpenAI client, added once whether the Host composes the chat
+    // client, the embedding generator or both.
+    private static OptionsBuilder<PouryaKitAIOptions> AddProvider(IServiceCollection services)
+    {
+        var options = services.AddOptions<PouryaKitAIOptions>();
+        if (services.Any(descriptor => descriptor.ServiceType == typeof(Provider)))
+        {
+            return options;
+        }
+
+        options
+            .Validate(
+                ai => Enum.IsDefined(ai.Provider),
+                "PouryaKitAIOptions.Provider is not an AIProvider value; set OpenAI, AzureOpenAI or Ollama."
+            )
+            .Validate(
+                ai => ai.Endpoint is null || (ai.Endpoint.IsAbsoluteUri && (ai.Endpoint.Scheme == Uri.UriSchemeHttp || ai.Endpoint.Scheme == Uri.UriSchemeHttps)),
+                "PouryaKitAIOptions.Endpoint is not an absolute HTTP or HTTPS address."
+            )
+            .Validate(
+                ai => ai.Endpoint is not null || ai.Provider is not (AIProvider.AzureOpenAI or AIProvider.Ollama),
+                "PouryaKitAIOptions.Endpoint is required for Azure OpenAI, its resource's v1 endpoint, and for Ollama, its OpenAI-compatible API."
+            )
+            .Validate(
+                ai => !string.IsNullOrWhiteSpace(ai.ApiKey) || ai.Provider is not (AIProvider.OpenAI or AIProvider.AzureOpenAI),
+                "PouryaKitAIOptions.ApiKey is required for OpenAI and Azure OpenAI; set it from a secret store, never in source control."
+            )
+            .ValidateOnStart();
+        // The OpenAI client is a singleton that keeps its HttpClient, so connections are renewed by their own lifetime
+        // instead of by the factory's handler rotation, as IHttpClientFactory's guidance asks of a long-lived client.
+        services
+            .AddHttpClient(HttpClientName)
+            .UseSocketsHttpHandler((handler, _) => handler.PooledConnectionLifetime = TimeSpan.FromMinutes(2))
+            .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
+        services.AddSingleton(CreateProvider);
+        return options;
+    }
+
+    private static Provider CreateProvider(IServiceProvider services)
+    {
+        var options = services.GetRequiredService<IOptions<PouryaKitAIOptions>>().Value;
+        return new(
+            new OpenAIClient(
+                new ApiKeyCredential(string.IsNullOrWhiteSpace(options.ApiKey) ? UnusedKey : options.ApiKey),
+                new OpenAIClientOptions
+                {
+                    Endpoint = options.Endpoint,
+                    Transport = new HttpClientPipelineTransport(services.GetRequiredService<IHttpClientFactory>().CreateClient(HttpClientName)),
+                    RetryPolicy = new ClientRetryPolicy(maxRetries: 0),
+                }
+            )
+        );
     }
 
     // A named method, which the one-client check names. Function invocation sits inside the allow-list, so it never sees
@@ -94,16 +144,7 @@ public static class AIServiceCollectionExtensions
     private static IChatClient Create(IServiceProvider services)
     {
         var options = services.GetRequiredService<IOptions<PouryaKitAIOptions>>().Value;
-        var openAI = new OpenAIClient(
-            new ApiKeyCredential(string.IsNullOrWhiteSpace(options.ApiKey) ? UnusedKey : options.ApiKey),
-            new OpenAIClientOptions
-            {
-                Endpoint = options.Endpoint,
-                Transport = new HttpClientPipelineTransport(services.GetRequiredService<IHttpClientFactory>().CreateClient(HttpClientName)),
-                RetryPolicy = new ClientRetryPolicy(maxRetries: 0),
-            }
-        );
-        var client = new ChatClientBuilder(openAI.GetChatClient(options.Model).AsIChatClient())
+        var client = new ChatClientBuilder(services.GetRequiredService<Provider>().Client.GetChatClient(options.Model).AsIChatClient())
             .Use(inner => new ToolAllowList(inner, options.Tools))
             .UseFunctionInvocation(configure: invocation => invocation.MaximumIterationsPerRequest = options.MaximumIterationsPerRun);
         IChatGuardrail[] guardrails = [.. services.GetServices<IChatGuardrail>()];
@@ -117,4 +158,18 @@ public static class AIServiceCollectionExtensions
             .UseLogging()
             .Build(services);
     }
+
+    private static IEmbeddingGenerator<string, Embedding<float>> CreateEmbeddingGenerator(IServiceProvider services)
+    {
+        var options = services.GetRequiredService<IOptions<PouryaKitAIOptions>>().Value;
+        return new EmbeddingGeneratorBuilder<string, Embedding<float>>(
+            services.GetRequiredService<Provider>().Client.GetEmbeddingClient(options.EmbeddingModel).AsIEmbeddingGenerator()
+        )
+            .UseOpenTelemetry(configure: telemetry => telemetry.EnableSensitiveData = false)
+            .UseLogging()
+            .Build(services);
+    }
+
+    // The one OpenAI client of the Host's provider, which the chat client and the embedding generator share.
+    private sealed record Provider(OpenAIClient Client);
 }

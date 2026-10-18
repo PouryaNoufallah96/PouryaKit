@@ -409,8 +409,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 134,
-          "end_line": 135,
+          "line": 136,
+          "end_line": 137,
           "label": "no exporter"
         }
       ]
@@ -463,8 +463,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 136,
-          "end_line": 137,
+          "line": 138,
+          "end_line": 139,
           "label": "never Redis"
         }
       ]
@@ -763,8 +763,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 185,
-          "end_line": 189,
+          "line": 187,
+          "end_line": 191,
           "label": "Aspire in no other package"
         }
       ]
@@ -831,9 +831,21 @@
         },
         {
           "path": "src/PouryaKit.AI/AIServiceCollectionExtensions.cs",
-          "line": 92,
-          "end_line": 119,
-          "label": "allow-list, cap, guardrails, no retries"
+          "line": 142,
+          "end_line": 160,
+          "label": "allow-list, cap, guardrails"
+        },
+        {
+          "path": "src/PouryaKit.AI/AIServiceCollectionExtensions.cs",
+          "line": 126,
+          "end_line": 140,
+          "label": "one OpenAI client, its retries off"
+        },
+        {
+          "path": "src/PouryaKit.AI/AIServiceCollectionExtensions.cs",
+          "line": 162,
+          "end_line": 172,
+          "label": "embeddings over the same client"
         }
       ]
     }

@@ -33,6 +33,7 @@
     { "id": "PouryaKit.Web.OpenApi", "type": "PouryaKit.Web.OpenApi.PouryaKitOpenApiOptions" },
     { "id": "PouryaKit.Grpc", "type": "PouryaKit.Grpc.ResultGrpcExtensions" },
     { "id": "PouryaKit.AI", "type": "PouryaKit.AI.GatewayToolExtensions" },
+    { "id": "PouryaKit.AI.Postgres", "type": "PouryaKit.AI.Postgres.IVectorStore" },
     { "id": "PouryaKit.Testing", "type": "PouryaKit.Testing.Delivery" },
     { "id": "PouryaKit.Templates", "kind": "template" }
   ],
@@ -47,7 +48,7 @@
       "source": "samples/ModularMonolith/src",
       "entries": ["ModularMonolith.Host/ModularMonolith.Host.csproj", "Inventory.Host/Inventory.Host.csproj"],
       "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Observability", "PouryaKit.Caching", "PouryaKit.Email.MailKit", "PouryaKit.Grpc", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi", "PouryaKit.Realtime", "PouryaKit.AI"],
-      "excluded": ["PouryaKit.Localization"]
+      "excluded": ["PouryaKit.Localization", "PouryaKit.AI.Postgres", "Pgvector"]
     },
     {
       "name": "template-monolith",
@@ -61,7 +62,7 @@
       "template": "pouryakit-modular-monolith",
       "packages": ["PouryaKit.Modularity", "PouryaKit.Caching", "PouryaKit.Grpc", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.ReverseProxy", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi", "PouryaKit.Realtime", "PouryaKit.AI"],
       "tests": ["PouryaKit.Testing"],
-      "excluded": ["PouryaKit.Testing"]
+      "excluded": ["PouryaKit.Testing", "PouryaKit.AI.Postgres", "Pgvector"]
     }
   ]
 }

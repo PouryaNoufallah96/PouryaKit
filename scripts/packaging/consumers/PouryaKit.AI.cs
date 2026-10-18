@@ -7,15 +7,16 @@ using PouryaKit.AI;
 using PouryaKit.Cqrs;
 using PouryaKit.Modularity;
 
-// What a Host and a Module call on the packed AI: the Host's one chat client over options it binds, a guardrail it
-// registers, a Module's query as a Gateway tool a run gives the model, and an agent whose session the application's
+// What a Host and a Module call on the packed AI: the Host's one chat client and its embedding generator over options it
+// binds, a guardrail it registers, a Module's query as a Gateway tool a run gives the model, and an agent whose session the application's
 // store keeps, alone or in a workflow. Compiled, never run.
-var services = new ServiceCollection().AddPouryaKitAI();
+var services = new ServiceCollection().AddPouryaKitAI().AddPouryaKitEmbeddings();
 services.Configure<PouryaKitAIOptions>(ai =>
 {
     ai.Provider = AIProvider.Ollama;
     ai.Endpoint = new Uri("http://localhost:11434/v1");
     ai.Model = "qwen2.5:0.5b";
+    ai.EmbeddingModel = "all-minilm:22m";
     ai.Tools.Add("GetOrder");
 });
 services.AddSingleton<IChatGuardrail, NoGuardrail>();

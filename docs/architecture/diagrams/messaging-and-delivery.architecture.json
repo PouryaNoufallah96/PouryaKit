@@ -287,8 +287,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 130,
-          "end_line": 133,
+          "line": 132,
+          "end_line": 135,
           "label": "Wolverine and RabbitMq keep no database"
         }
       ]
@@ -391,7 +391,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 112,
+          "line": 114,
           "label": "references Cqrs, Persistence, Marten, Npgsql"
         },
         {
@@ -445,7 +445,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 113,
+          "line": 115,
           "label": "references Wolverine and Persistence.Marten"
         },
         {

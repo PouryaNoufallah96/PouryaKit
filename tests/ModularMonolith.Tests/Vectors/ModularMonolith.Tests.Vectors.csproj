@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A Module whose migration creates a vector collection, for the semantic search's tests: its migrations need pgvector,
+       which the shared fixture's PostgreSQL lacks, so only VectorSearchTests composes it. ModularMonolith.Tests leaves
+       this folder out of its own sources. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ModularMonolith.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\PouryaKit.AI.Postgres\PouryaKit.AI.Postgres.csproj" />
+    <ProjectReference Include="..\..\..\src\PouryaKit.Modularity\PouryaKit.Modularity.csproj" />
+  </ItemGroup>
+</Project>

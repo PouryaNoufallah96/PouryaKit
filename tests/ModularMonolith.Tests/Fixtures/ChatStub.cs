@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Builder;
@@ -11,7 +12,7 @@ namespace ModularMonolith.Tests.Fixtures;
 /// An OpenAI-compatible chat completions server in the test process, on a loopback port, standing in for a model: it
 /// records the body of every request it receives and answers each with the next reply a test scripted, repeating the
 /// last one once they run out, as server-sent chunks when the request asks for a stream. Deterministic, so a test chooses
-/// which tools the model asks for and sees what each call sent back.
+/// which tools the model asks for and sees what each call sent back. It embeds text too, as <see cref="Embed"/> does.
 /// </summary>
 public sealed class ChatStub : IAsyncDisposable
 {
@@ -24,6 +25,9 @@ public sealed class ChatStub : IAsyncDisposable
     private int _calls;
 
     private ChatStub(WebApplication server) => _server = server;
+
+    /// <summary>The dimensions of every embedding the server returns.</summary>
+    public const int Dimensions = 8;
 
     /// <summary>The address of the server's API, which a Host's chat client is pointed at.</summary>
     public Uri Endpoint => new($"{_server.Urls.Single()}/v1");
@@ -49,6 +53,7 @@ public sealed class ChatStub : IAsyncDisposable
         var server = builder.Build();
         var stub = new ChatStub(server);
         server.MapPost("/v1/chat/completions", stub.AnswerAsync);
+        server.MapPost("/v1/embeddings", EmbedAsync);
         await server.StartAsync(cancellationToken);
         return stub;
     }
@@ -76,6 +81,22 @@ public sealed class ChatStub : IAsyncDisposable
             _requests.Clear();
             _answer = answer;
         }
+    }
+
+    /// <summary>
+    /// The embedding of <paramref name="text"/>: how many of its words begin with each group of letters, a, i, q and y
+    /// counting in the first dimension, b, j, r and z in the second, and so on to h, p and x in the eighth. Texts whose
+    /// words begin alike point the same way.
+    /// </summary>
+    public static float[] Embed(string text)
+    {
+        var embedding = new float[Dimensions];
+        foreach (var word in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            embedding[(char.ToLowerInvariant(word[0]) - 'a') % Dimensions]++;
+        }
+
+        return embedding;
     }
 
     /// <summary>The content of every tool message of the request at <paramref name="index"/>: what each tool call returned.</summary>
@@ -145,6 +166,41 @@ public sealed class ChatStub : IAsyncDisposable
                 ["model"] = "stub",
                 ["choices"] = new JsonArray(new JsonObject { ["index"] = 0, ["message"] = message, ["finish_reason"] = finish }),
                 ["usage"] = new JsonObject { ["prompt_tokens"] = 1, ["completion_tokens"] = 1, ["total_tokens"] = 2 },
+            },
+            http.RequestAborted
+        );
+    }
+
+    // The embeddings API: one embedding per input, as floats or, as the OpenAI client asks by default, as base64 of their
+    // little-endian bytes.
+    private static async Task EmbedAsync(HttpContext http)
+    {
+        var body = await JsonSerializer.DeserializeAsync<JsonElement>(http.Request.Body, cancellationToken: http.RequestAborted);
+        var input = body.GetProperty("input");
+        string[] texts = input.ValueKind == JsonValueKind.Array ? [.. input.EnumerateArray().Select(text => text.GetString()!)] : [input.GetString()!];
+        var base64 = body.TryGetProperty("encoding_format", out var format) && format.GetString() == "base64";
+        await http.Response.WriteAsJsonAsync(
+            new JsonObject
+            {
+                ["object"] = "list",
+                ["data"] = new JsonArray(
+                    [
+                        .. texts.Select((text, index) =>
+                        {
+                            var embedding = Embed(text);
+                            return new JsonObject
+                            {
+                                ["object"] = "embedding",
+                                ["index"] = index,
+                                ["embedding"] = base64
+                                    ? JsonValue.Create(Convert.ToBase64String(MemoryMarshal.AsBytes(embedding.AsSpan())))
+                                    : new JsonArray([.. embedding.Select(value => JsonValue.Create(value))]),
+                            };
+                        }),
+                    ]
+                ),
+                ["model"] = "stub",
+                ["usage"] = new JsonObject { ["prompt_tokens"] = 1, ["total_tokens"] = 1 },
             },
             http.RequestAborted
         );
