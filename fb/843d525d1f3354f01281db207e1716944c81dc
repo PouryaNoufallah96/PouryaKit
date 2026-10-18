@@ -1,0 +1,29 @@
+.claude/agent-memory/kit-implementer/ai-and-gateway-tool-facts.md
+  s_b9a8adfb056e1c::t_65b280bbed0b51 35
+tests/ModularMonolith.Tests/AgentRunTests.cs
+  s_b9a8adfb056e1c::t_4e6652fd5b8059 521-522,527-528,531-534
+  s_b9a8adfb056e1c::t_7d2b07723239ca 294-313
+src/PouryaKit.AI/ChatGuardrails.cs
+  s_b9a8adfb056e1c::t_0fabebb4a44bca 18-21,24
+src/PouryaKit.AI/IChatGuardrail.cs
+  s_b9a8adfb056e1c::t_8e4e144e521098 12-14
+.agents/skills/pourya-kit/references/ai.md
+  s_b9a8adfb056e1c::t_3549ffbc7c73ce 195
+  s_b9a8adfb056e1c::t_db7197101a2572 227
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fb843d525d1f3354f01281db207e1716944c81dc",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
