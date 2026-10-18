@@ -1,0 +1,23 @@
+.claude/agent-memory/kit-implementer/saga-spike-facts.md
+  s_b9a8adfb056e1c::t_0fed92714b4ae8 18
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_335d0467eebfed 2357,2360,2362
+docs/adr/0013-a-saga-step-runs-outside-every-operation.md
+  s_b9a8adfb056e1c::t_94c955aae8ff29 21-22,30,33-35,78,229-231,259,263,268
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e8d0b8ac58bc3d0693457385e1434fbb0fe23dae",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
