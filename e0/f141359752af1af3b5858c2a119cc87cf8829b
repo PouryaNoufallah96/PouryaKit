@@ -1,0 +1,66 @@
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_b9a8adfb056e1c::t_88b68be9d63d42 17
+tests/PouryaKit.Aspire.Tests/AppHostTests.cs
+  s_b9a8adfb056e1c::t_88b68be9d63d42 2-3,5-7,19-23,31,73,76-77,79-113,115,118-131,141,149-220,223,229
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_88b68be9d63d42 20
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_88b68be9d63d42 62,236,240-241,243,345
+samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs
+  s_b9a8adfb056e1c::t_88b68be9d63d42 29,43-55
+  s_b9a8adfb056e1c::t_f846c7c6a511b1 56
+src/PouryaKit.Aspire/AspireDistributedApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_88b68be9d63d42 3-4,10,21,45-79
+tests/PouryaKit.Aspire.Tests/OllamaModelHealthCheckTests.cs
+  s_b9a8adfb056e1c::t_88b68be9d63d42 1-93
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_88b68be9d63d42 2436-2452
+  s_b9a8adfb056e1c::t_a0b2eeb72298e1 2453
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_88b68be9d63d42 900
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_88b68be9d63d42 10,760-761
+.agents/skills/pourya-kit/references/aspire.md
+  s_b9a8adfb056e1c::t_88b68be9d63d42 3,6,88-111,119,121-122,128,148,150-151,157
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b9a8adfb056e1c::t_88b68be9d63d42 4985,5525
+README.md
+  s_b9a8adfb056e1c::t_88b68be9d63d42 30
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_88b68be9d63d42 50
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsEndpoint.cs
+  s_b9a8adfb056e1c::t_88b68be9d63d42 1-25
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_b9a8adfb056e1c::t_88b68be9d63d42 115,121,134,141,183
+.agents/skills/pourya-kit/references/ai.md
+  s_b9a8adfb056e1c::t_88b68be9d63d42 35,94,101
+src/PouryaKit.Aspire/PouryaKit.Aspire.csproj
+  s_b9a8adfb056e1c::t_88b68be9d63d42 13-16
+docs/architecture/diagrams/execution-core.html
+  s_b9a8adfb056e1c::t_88b68be9d63d42 4985
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_88b68be9d63d42 10,354-355,552
+.claude/agent-memory/kit-implementer/aspire-apphost-facts.md
+  s_b9a8adfb056e1c::t_88b68be9d63d42 3,22-30
+  s_b9a8adfb056e1c::t_3c2500453b334d 31
+src/PouryaKit.Aspire/OllamaModelHealthCheck.cs
+  s_b9a8adfb056e1c::t_88b68be9d63d42 1-79
+docs/provenance/PouryaKit.Aspire.md
+  s_b9a8adfb056e1c::t_88b68be9d63d42 5,15-16,21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e0f141359752af1af3b5858c2a119cc87cf8829b",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
