@@ -1,0 +1,157 @@
+src/PouryaKit.Messaging.Wolverine/OutboxConnection.cs
+  s_b9a8adfb056e1c::t_81908eb0084ef3 1-11
+src/PouryaKit.Messaging.Wolverine.Marten/MartenReceipts.cs
+  s_b9a8adfb056e1c::t_2a8428bdccb2ab 1-29
+src/PouryaKit.Messaging.Wolverine.Marten/ReceiptTables.cs
+  s_b9a8adfb056e1c::t_30c6b1cdf4086d 1-22
+src/PouryaKit.Persistence.Marten/IStreamOutbox.cs
+  s_b9a8adfb056e1c::t_6e96b925b6016c 1-19
+scripts/packaging/consumers/PouryaKit.Persistence.Marten.cs
+  s_b9a8adfb056e1c::t_d229b0a90963fb 1-24
+src/PouryaKit.Persistence.Marten/MartenHostApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_d9e076d52f2486 1-64
+tests/ModularMonolith.Tests/Streams/Account.cs
+  s_b9a8adfb056e1c::t_c498720ced0ee2 1-58
+src/PouryaKit.Persistence.Marten/MartenUnitOfWorkTransaction.cs
+  s_b9a8adfb056e1c::t_003d1fcce8ec61 1-37
+src/PouryaKit.Persistence.Marten/StreamAggregate.cs
+  s_b9a8adfb056e1c::t_8cc1865c7b05b7 1-33
+src/PouryaKit.Persistence/UnitOfWorkErrors.cs
+  s_b9a8adfb056e1c::t_f92e8ef4f8052c 3-14
+tests/ModularMonolith.Tests/Streams/AccountReactions.cs
+  s_b9a8adfb056e1c::t_99445fcdf5d767 1-46
+src/PouryaKit.Persistence/IdempotencyStatements.cs
+  s_b9a8adfb056e1c::t_a98ff2267c1449 1-32
+src/PouryaKit.Persistence.Marten/StreamModules.cs
+  s_b9a8adfb056e1c::t_2fccba9a505991 1-55
+tests/ModularMonolith.Tests/Streams/ModularMonolith.Tests.Streams.csproj
+  s_b9a8adfb056e1c::t_f88aa6dd0fd6fe 1-18
+tests/ModularMonolith.Tests/StreamHost/StreamHosts.cs
+  s_b9a8adfb056e1c::t_345776a8092a27 1-32
+tests/ModularMonolith.Tests/Streams/AccountFeatures.cs
+  s_b9a8adfb056e1c::t_bbd3d88267ee9c 1-130
+tests/ModularMonolith.Tests/StreamHost/Program.cs
+  s_b9a8adfb056e1c::t_c4cb5731fd3b94 1-35
+tests/ModularMonolith.Tests/Streams/AccountsModule.cs
+  s_b9a8adfb056e1c::t_e65aa25115811c 1-24
+src/PouryaKit.Messaging.Wolverine/ReceiptStatements.cs
+  s_b9a8adfb056e1c::t_effbd881120094 1-30
+src/PouryaKit.Persistence.Marten/MartenIdempotencyKeyCleanup.cs
+  s_b9a8adfb056e1c::t_1c72e827140023 1-81
+src/PouryaKit.Messaging.Wolverine.Marten/PouryaKit.Messaging.Wolverine.Marten.csproj
+  s_b9a8adfb056e1c::t_e0a355cf9973aa 1-9
+tests/PouryaKit.ArchitectureTests/Offending.Stream/SavesItself.cs
+  s_b9a8adfb056e1c::t_d6e49951c0d408 1-29
+tests/PouryaKit.ArchitectureTests/FeatureCodeTests.cs
+  s_b9a8adfb056e1c::t_87361f94b60e3b 100-124
+src/PouryaKit.Persistence.Marten/MartenUnitOfWork.cs
+  s_b9a8adfb056e1c::t_45f28441d48548 1-310
+src/PouryaKit.Persistence.Marten/PouryaKit.Persistence.Marten.csproj
+  s_b9a8adfb056e1c::t_f7630032c2fd51 1-11
+src/PouryaKit.Persistence.Marten/IdempotencyKeyTable.cs
+  s_b9a8adfb056e1c::t_58fedd2e8c3a32 1-22
+src/PouryaKit.Messaging.Wolverine.Marten/MartenStreamOutbox.cs
+  s_b9a8adfb056e1c::t_3a2a007e76710c 1-20
+tests/ModularMonolith.Tests/Streams/AccountProbe.cs
+  s_b9a8adfb056e1c::t_fd8e1fbd5f9627 1-46
+scripts/packaging/consumers/PouryaKit.Messaging.Wolverine.Marten.cs
+  s_b9a8adfb056e1c::t_98780a6c6923ca 1-8
+tests/PouryaKit.ArchitectureTests/Offending.Stream/Offending.Stream.csproj
+  s_b9a8adfb056e1c::t_f37c541f1746e4 1-11
+src/PouryaKit.Messaging.Wolverine.Marten/WolverineMartenHostApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_2eaf3f864308f1 1-84
+tests/ModularMonolith.Tests/StreamHost/ModularMonolith.Tests.StreamHost.csproj
+  s_b9a8adfb056e1c::t_6cb942bd89ac03 1-17
+  s_b9a8adfb056e1c::t_3a4039aacd54ce 18
+src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs
+  s_b9a8adfb056e1c::t_394aa889a0b1c9 18-19
+  s_b9a8adfb056e1c::t_4a0e66dc0b7aca 69-82
+src/PouryaKit.Persistence.Marten/StreamServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_d21283ec024a7c 1-67
+src/PouryaKit.Persistence.Marten/MartenIdempotencyStore.cs
+  s_b9a8adfb056e1c::t_fabff0eaa47eae 1-50
+src/PouryaKit.Persistence.Marten/IStreams.cs
+  s_b9a8adfb056e1c::t_6d8d5cf759f977 1-29
+tests/ModularMonolith.Tests/Fixtures/StreamFixture.cs
+  s_b9a8adfb056e1c::t_aec01ee3b26b76 1-75
+tests/ModularMonolith.Tests/Fixtures/StreamProbes.cs
+  s_b9a8adfb056e1c::t_74e8e86a86d51d 1-55,61-69
+  s_b9a8adfb056e1c::t_e62c02f3246215 56-60
+tests/ModularMonolith.Tests/StreamTests.cs
+  s_b9a8adfb056e1c::t_9511efbc45dce4 1-424,427-562
+  s_b9a8adfb056e1c::t_f5e5ffb1b7f782 425-426
+  s_b9a8adfb056e1c::t_90b15ff6ba68da 563-567
+.agents/skills/pourya-kit/references/stream.md
+  s_b9a8adfb056e1c::t_94dc89a87d20db 45
+  s_b9a8adfb056e1c::t_08ff3860c34ba6 1-44,46-135
+Directory.Packages.props
+  s_b9a8adfb056e1c::t_047cf0a76c4433 28,71
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_6158b6ef731574 16,21,55-56,59
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_b9a8adfb056e1c::t_4160c062de74d3 93-94
+docs/architecture/diagrams/delivery.sequence.json
+  s_b9a8adfb056e1c::t_fbd1f0185516eb 150
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_85839ab1a755de 412-413,466-467,766-767
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_4218564d676ec5 149-150
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_d37dd67d6fd0c4 303,330-331,435,448-449,454
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_f34e4a751c60cb 290-291
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_e8425c5a08a0f8 241-242,297-298,304,325-326,331-332,360,393-394
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_c6e51424ab3fb5 12,29
+src/PouryaKit.Messaging.Wolverine.EFCore/EfReceipts.cs
+  s_b9a8adfb056e1c::t_cc370ae1910674 19,24,35
+src/PouryaKit.Messaging.Wolverine.EFCore/ReceiptTable.cs
+  s_b9a8adfb056e1c::t_0229cbd7953bb5 15
+src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotVersionTable.cs
+  s_b9a8adfb056e1c::t_525551d8760808 16
+src/PouryaKit.Persistence.EFCore/Idempotency/EfIdempotencyStore.cs
+  s_b9a8adfb056e1c::t_b98c221ff9f4fa 27,36,55
+src/PouryaKit.Persistence.EFCore/Idempotency/IdempotencyKeyCleanup.cs
+  s_b9a8adfb056e1c::t_b5f5dc67356c1a 79
+src/PouryaKit.Persistence.EFCore/Idempotency/IdempotencyTable.cs
+  s_b9a8adfb056e1c::t_c70fb87b35e7b6 20
+tests/ModularMonolith.Tests/ConflictTests.cs
+  s_b9a8adfb056e1c::t_438531b8531090 12
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_b9a8adfb056e1c::t_49c1385415fd49 27-30,42
+tests/ModularMonolith.Tests/NumberSequenceTests.cs
+  s_b9a8adfb056e1c::t_50e313b5a80671 7
+tests/ModularMonolith.Tests/PersistencePreparationTests.cs
+  s_b9a8adfb056e1c::t_351c75913803ca 14
+tests/ModularMonolith.Tests/TenantOwnershipTests.cs
+  s_b9a8adfb056e1c::t_56f6bb6215795c 9
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_b9a8adfb056e1c::t_23e8ce06d398ea 18,70-71,112-118,120-138,143,155-160,264,280,302-303,338,1003-1005
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_115833ab06b6f3 100-103,136-139
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_b9a8adfb056e1c::t_f375c5dd4e1b8c 34-36
+tests/PouryaKit.ArchitectureTests/PipelineContractTests.cs
+  s_b9a8adfb056e1c::t_3b4c404be39f2c 25-27,37-39
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_b9a8adfb056e1c::t_184a393c657300 14-15,23,32-33
+tests/PouryaKit.ArchitectureTests/SharedJsonTests.cs
+  s_b9a8adfb056e1c::t_bb3f44072815d5 27,37-38,48-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ca89abf7635768d62fa656c4d9ce428ecf365c7a",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
