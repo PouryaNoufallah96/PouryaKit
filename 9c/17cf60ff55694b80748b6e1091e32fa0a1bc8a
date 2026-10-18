@@ -1,0 +1,23 @@
+tests/PouryaKit.Reporting.Tests/ReportRendererTests.cs
+  s_b9a8adfb056e1c::t_793341ad841e2c 155-157
+src/PouryaKit.Reporting/ReportRenderer.cs
+  s_b9a8adfb056e1c::t_793341ad841e2c 23-24
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_37d7c4a99c5cc4 795
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9c17cf60ff55694b80748b6e1091e32fa0a1bc8a",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
