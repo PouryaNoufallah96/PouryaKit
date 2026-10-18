@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "fb45dd30a75df82868b43a81ec8da2fef6e67597",
+      "revision": "65b9509fee32638d978595b9d00348715dacfa25",
       "link_mode": "web"
     }
   },
@@ -152,7 +152,7 @@
         372
       ],
       "size": [
-        220,
+        200,
         80
       ],
       "sources": [
@@ -176,11 +176,11 @@
       "label": "Catalog",
       "sublabel": "products, categories, cached GetProduct",
       "pos": [
-        300,
+        350,
         380
       ],
       "size": [
-        250,
+        220,
         64
       ],
       "sources": [
@@ -210,11 +210,11 @@
       "label": "Inventory",
       "sublabel": "stock items, Catalog's products, ReconcileStock",
       "pos": [
-        590,
+        680,
         380
       ],
       "size": [
-        250,
+        220,
         64
       ],
       "sources": [
@@ -238,11 +238,11 @@
       "label": "Ledger",
       "sublabel": "a Stream Module: accounts on Marten",
       "pos": [
-        880,
+        930,
         380
       ],
       "size": [
-        180,
+        160,
         64
       ],
       "sources": [
@@ -272,11 +272,11 @@
       "label": "ModularMonolith.ServiceDefaults",
       "sublabel": "template content, not a Kit package",
       "pos": [
-        1095,
+        1120,
         380
       ],
       "size": [
-        255,
+        230,
         64
       ],
       "sources": [
@@ -526,9 +526,7 @@
       "from": "ledger",
       "to": "billing",
       "label": "AccountOpenedV1",
-      "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "bottom"
+      "variant": "emphasis"
     },
     {
       "id": "catalog-contracts",
@@ -584,9 +582,7 @@
       "id": "templates-servicedefaults",
       "from": "templates",
       "to": "servicedefaults",
-      "label": "packs",
-      "fromSide": "top",
-      "toSide": "bottom"
+      "label": "packs"
     }
   ],
   "cards": [
