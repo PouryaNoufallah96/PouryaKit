@@ -108,8 +108,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
-          "line": 85,
-          "end_line": 93,
+          "line": 84,
+          "end_line": 92,
           "label": "the Module's only public type"
         }
       ]
@@ -232,8 +232,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
-          "line": 37,
-          "end_line": 61,
+          "line": 36,
+          "end_line": 60,
           "label": "no reference to another Module's code"
         },
         {
@@ -272,8 +272,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
-          "line": 63,
-          "end_line": 80,
+          "line": 62,
+          "end_line": 79,
           "label": "nothing of the Kit, no Module"
         }
       ]

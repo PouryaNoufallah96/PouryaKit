@@ -17,7 +17,7 @@ internal sealed class ApplyRetentionCommandHandler(
     IRepository<ReportJob, ReportJobId> jobs,
     IFileStorage files,
     TimeProvider time,
-    IOptions<PouryaKitReportOptions> options
+    IOptions<ReportOptions> options
 ) : CommandHandler<ApplyRetentionCommand>
 {
     private const int Batch = 100;

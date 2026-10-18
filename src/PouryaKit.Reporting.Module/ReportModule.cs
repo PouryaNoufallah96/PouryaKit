@@ -17,7 +17,12 @@ namespace PouryaKit.Reporting.Module;
 /// <see cref="IReportLayouts"/>, the renderer and the Host's one file storage provider, removes expired jobs and their
 /// files, and maps <c>POST /reports</c> and <c>GET /reports/{jobId}</c>. The Host registers its
 /// <see cref="IReportRequestAuthorizer"/>, its <see cref="IReportLayouts"/>, an <c>IFileStorage</c> provider and an
-/// <c>IActorPermissions</c>, and its container's validation fails the build without any of them.
+/// <c>IActorPermissions</c>, and its container's validation fails the build without any of them. The Module reads its
+/// settings from the Host's configuration section <c>PouryaKit:Reports</c>: <c>Retention</c>, how long after its
+/// request a job and its file are kept (seven days); <c>CleanupInterval</c>, the retention's cadence (an hour);
+/// <c>ClaimTimeout</c>, how long an attempt holds its claim before the one takeover (ten minutes); and
+/// <c>LinkLifetime</c>, how long a download link works (fifteen minutes). The Host fails to start unless each is longer
+/// than zero.
 /// </summary>
 public sealed class ReportModule : IModuleDefinition
 {
@@ -49,15 +54,16 @@ public sealed class ReportModule : IModuleDefinition
         module.AddPouryaKitDelayedCommand<RenderReportCommand>("reports.render");
         module
             .AddPouryaKitRecurringCommand("reports.retention", RetentionActor, occurrence => new ApplyRetentionCommand(occurrence))
-            .Configure<IOptions<PouryaKitReportOptions>>((retention, reports) => retention.Every = reports.Value.CleanupInterval);
+            .Configure<IOptions<ReportOptions>>((retention, reports) => retention.Every = reports.Value.CleanupInterval);
         module
-            .AddOptions<PouryaKitReportOptions>()
+            .AddOptions<ReportOptions>()
+            .BindConfiguration(ReportOptions.Section)
             .Validate(
                 reports => reports.Retention > TimeSpan.Zero
                     && reports.CleanupInterval > TimeSpan.Zero
                     && reports.ClaimTimeout > TimeSpan.Zero
                     && reports.LinkLifetime > TimeSpan.Zero,
-                "PouryaKitReportOptions.Retention, CleanupInterval, ClaimTimeout and LinkLifetime are each longer than zero."
+                $"{ReportOptions.Section}: Retention, CleanupInterval, ClaimTimeout and LinkLifetime are each longer than zero."
             )
             .ValidateOnStart();
         module.TryAddSingleton<IReportRenderer, ReportRenderer>();

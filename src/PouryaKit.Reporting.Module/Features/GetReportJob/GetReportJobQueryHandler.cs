@@ -16,7 +16,7 @@ internal sealed class GetReportJobQueryHandler(
     IActorPermissions permissions,
     IFileStorage files,
     OperationContext context,
-    IOptions<PouryaKitReportOptions> options
+    IOptions<ReportOptions> options
 ) : QueryHandler<GetReportJobQuery, ReportJobDto>
 {
     public override async Task<Result<ReportJobDto>> Handle(GetReportJobQuery query, CancellationToken cancellationToken)

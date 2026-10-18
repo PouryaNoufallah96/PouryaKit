@@ -21,7 +21,6 @@ public sealed class ModuleBoundaryTests
             typeof(IReportRequestAuthorizer),
             typeof(IReportLayouts),
             typeof(ReportRequest),
-            typeof(PouryaKitReportOptions),
         },
     };
 

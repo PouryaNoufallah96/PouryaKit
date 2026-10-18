@@ -1,6 +1,6 @@
 # Report Module
 
-`PouryaKit.Reporting.Module`: the first Module the Kit ships as a package. A Host adds it once; it stores report jobs in its own schema, generates each in the background through the renderer ([reporting.md](reporting.md)) into the Host's one file storage provider ([storage.md](storage.md)), serves each job's state and download link to its requester, and removes expired jobs and their files. The report kinds and their layouts are the Host's, through two ports it implements. Namespace `PouryaKit.Reporting.Module`, one for the whole package (ADR 0010); every type is internal but the Composition Root `ReportModule`, the two ports, the `ReportRequest` they receive and `PouryaKitReportOptions`. It references Modularity, Persistence.Postgres, Persistence.Dapper, Messaging.Wolverine.EFCore, Validation, Security, Web, Reporting and Storage, and no storage provider.
+`PouryaKit.Reporting.Module`: the first Module the Kit ships as a package. A Host adds it once; it stores report jobs in its own schema, generates each in the background through the renderer ([reporting.md](reporting.md)) into the Host's one file storage provider ([storage.md](storage.md)), serves each job's state and download link to its requester, and removes expired jobs and their files. The report kinds and their layouts are the Host's, through two ports it implements. Namespace `PouryaKit.Reporting.Module`, one for the whole package (ADR 0010); every type is internal but the Composition Root `ReportModule`, the two ports and the `ReportRequest` they receive. It references Modularity, Persistence.Postgres, Persistence.Dapper, Messaging.Wolverine.EFCore, Validation, Security, Web, Reporting and Storage, and no storage provider.
 
 - [Composing it](#composing-it)
 - [The Host's ports](#the-hosts-ports)
@@ -25,7 +25,6 @@ builder.AddPouryaKitModules(modules =>
 });
 builder.Services.Configure<PouryaKitS3StorageOptions>(builder.Configuration.GetSection("PouryaKit:Storage:S3"));
 builder.Services.AddPouryaKitS3Storage();
-builder.Services.Configure<PouryaKitReportOptions>(builder.Configuration.GetSection("PouryaKit:Reports"));
 builder.Services.AddSingleton<IReportRequestAuthorizer, SalesReports>();
 builder.Services.AddSingleton<IReportLayouts, SalesReports>();
 builder.UsePouryaKitWolverine(connectionName: "app");
@@ -33,9 +32,9 @@ builder.UsePouryaKitWolverine(connectionName: "app");
 
 - **Its database.** It stores over the connection string `app` (`ReportModule.ConnectionName`), in the schema `reports`, and reads with Dapper over the same name. A Composition Root receives no configuration, so the name is the Module's: give the Host's database that name, and keep the message store on the same database, since its delayed and recurring commands commit through its Outbox and the message store check fails the build otherwise ([messaging.md](messaging.md#the-hosts-checks)). Its migrations are in the package: `HostFixture` applies them in tests, and a deployment applies them as it applies every Module's ([persistence.md](persistence.md#migrations)). Its first migration creates its `pouryakit_receipts` table too.
 - **What the Host registers.** An `IReportRequestAuthorizer`, an `IReportLayouts`, one file storage provider and an `IActorPermissions` ([security.md](security.md#the-actors-permissions)). The Host's container is validated when it is built, so a Host that registers no service of one of them fails then, naming the service. The Module registers the renderer itself, `TryAddSingleton<IReportRenderer, ReportRenderer>()`.
-- **Its options.** `PouryaKitReportOptions`, bound by the Host from configuration and validated when the Host starts, which fails unless each is longer than zero:
+- **Its settings.** The Module reads them from the Host's configuration section `PouryaKit:Reports`, as a Module reads its own settings ([modules.md](modules.md#the-composition-root)), into an options type of its own, validated when the Host starts, which fails unless each is longer than zero:
 
-| Option | Default | What it sets |
+| Key | Default | What it sets |
 |---|---|---|
 | `Retention` | 7 days | How long after its request a job and its file are kept. |
 | `CleanupInterval` | 1 hour | The cadence of the retention, the Module's recurring command `reports.retention`. |

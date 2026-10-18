@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
+using PouryaKit.Reporting.Module;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -134,8 +135,15 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
             .Select(options => (DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType))
             .ToDictionary(dbContext => dbContext.GetType(), dbContext => dbContext.Database.CreateExecutionStrategy());
 
+        // The report Module's DbContext is internal to its package.
         Assert.Equal(
-            [typeof(BillingDbContext), typeof(CatalogDbContext), typeof(InventoryDbContext), typeof(StubDbContext)],
+            [
+                typeof(BillingDbContext),
+                typeof(CatalogDbContext),
+                typeof(InventoryDbContext),
+                typeof(ReportModule).Assembly.GetType("PouryaKit.Reporting.Module.ReportDbContext", throwOnError: true),
+                typeof(StubDbContext),
+            ],
             strategies.Keys.OrderBy(type => type.Name)
         );
         Assert.All(strategies.Values, strategy => Assert.False(strategy.RetriesOnFailure));

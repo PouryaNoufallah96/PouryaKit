@@ -90,8 +90,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Reporting.Module/ReportModule.cs",
-          "line": 41,
-          "end_line": 65,
+          "line": 46,
+          "end_line": 71,
           "label": "schema reports, endpoints, three commands"
         },
         {
@@ -103,7 +103,7 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
           "line": 110,
-          "end_line": 118,
+          "end_line": 117,
           "label": "S3 storage and the Host's two ports"
         }
       ]

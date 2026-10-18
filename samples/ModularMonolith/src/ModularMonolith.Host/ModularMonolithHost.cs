@@ -111,9 +111,8 @@ public static class ModularMonolithHost
         builder.Services.Configure<PouryaKitS3StorageOptions>(builder.Configuration.GetSection("PouryaKit:Storage:S3"));
         builder.Services.AddPouryaKitS3Storage();
         // The report Module answers POST /reports with a job, generated in the background and stored there: the Host
-        // decides who may request which report and lays each kind out (SalesReports), and PouryaKit:Reports sets how long
-        // a job is kept. Nothing is configured: seven days, cleaned up every hour.
-        builder.Services.Configure<PouryaKitReportOptions>(builder.Configuration.GetSection("PouryaKit:Reports"));
+        // decides who may request which report and lays each kind out (SalesReports), and the Module reads how long a job
+        // is kept from PouryaKit:Reports. Nothing is configured: seven days, cleaned up every hour.
         builder.Services.AddSingleton<IReportRequestAuthorizer, SalesReports>();
         builder.Services.AddSingleton<IReportLayouts, SalesReports>();
         // Catalog's agent asks the model of PouryaKit:AI through the Host's one chat client; appsettings.json names a local

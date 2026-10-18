@@ -124,8 +124,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 127,
-          "end_line": 131,
+          "line": 126,
+          "end_line": 130,
           "label": "message store; RabbitMQ with a broker"
         },
         {
@@ -472,8 +472,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 119,
-          "end_line": 122,
+          "line": 118,
+          "end_line": 121,
           "label": "one chat client, options from PouryaKit:AI"
         },
         {

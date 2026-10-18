@@ -13,7 +13,7 @@ internal sealed class RequestReportCommandHandler(
     IDelayedCommands later,
     OperationContext context,
     TimeProvider time,
-    IOptions<PouryaKitReportOptions> options
+    IOptions<ReportOptions> options
 ) : CommandHandler<RequestReportCommand, Guid>
 {
     public override async Task<Result<Guid>> Handle(RequestReportCommand command, CancellationToken cancellationToken)

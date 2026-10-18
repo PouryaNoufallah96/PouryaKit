@@ -15,7 +15,7 @@ internal sealed class ClaimReportJobCommandHandler(
     IRepository<ReportJob, ReportJobId> jobs,
     IDelayedCommands later,
     TimeProvider time,
-    IOptions<PouryaKitReportOptions> options
+    IOptions<ReportOptions> options
 ) : CommandHandler<ClaimReportJobCommand>
 {
     public override async Task<Result> Handle(ClaimReportJobCommand command, CancellationToken cancellationToken)
