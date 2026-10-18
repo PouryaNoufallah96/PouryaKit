@@ -21,4 +21,4 @@
 - [Realtime and SSE](realtime-and-sse-facts.md) — #133: pg_notify's bound, SSE headers and flushing, SSE over TestServer, killing the listener, JSON options, the scoped publish marker, effective connection strings, ripples
 - [PDF and file rendering](pdf-and-file-rendering-facts.md) — #129: PDFsharp's AGPL 6.5, set-once font resolver and Linux fonts, MigraDoc and Open XML traps, CSV injection, PackagePath, a full diagram
 - [AI and the Gateway tool](ai-and-gateway-tool-facts.md) — #135: invocation cap, OpenAI client retries, three providers, tool-call trust, stub, Ollama probe
-- [Saga spike](saga-spike-facts.md) — #141 (2026-10-18): pre-built handler shadowing, the wrapper input, route sources that end the search, the storage helper hook, Wolverine's own logical dedup
+- [Saga spike and package](saga-spike-facts.md) — #141, #142 (2026-10-18): handler shadowing, the wrapper input, route sources, the storage helper, the internal store, TimeoutMessage TypeRefs, check order, crash trigger
