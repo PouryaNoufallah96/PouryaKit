@@ -1,0 +1,89 @@
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 330-363,384-397,551-552
+tests/PouryaKit.Aspire.Tests/PouryaKit.Aspire.Tests.csproj
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 1-16
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 32-33,89-92
+  s_b9a8adfb056e1c::t_22c77d7211f05b 93
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 86-91,150-154
+samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 1-14
+samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 1-43
+.claude/agent-memory/kit-implementer/aspire-apphost-facts.md
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 1-22
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 20
+.claude/rules/kit-code.md
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 33
+scripts/packaging/consumers/PouryaKit.Aspire.cs
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 1-10
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 83
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_8ed91fe0469b61 3
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 50
+.agents/skills/pourya-kit/references/aspire.md
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 1-131
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 285,894
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 3,36,55
+README.md
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 30
+samples/ModularMonolith/src/ModularMonolith.AppHost/Properties/launchSettings.json
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 1-12
+samples/ModularMonolith/src/ModularMonolith.AppHost/AppHostOptions.cs
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 1-11
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 21
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_8ed91fe0469b61 3,44
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 62-63,234-243,640
+docs/provenance/PouryaKit.Aspire.md
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 1-24
+src/PouryaKit.Aspire/AspireDistributedApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 1-43
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_8ed91fe0469b61 2260-2276
+  s_b9a8adfb056e1c::t_29aae7e0a99da7 2259
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_fb7072f7822e5d 549,704-705
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 716-725,728,960
+  s_b9a8adfb056e1c::t_907d46344ebf01 697-703,706-713,959
+  s_b9a8adfb056e1c::t_386db69e253059 412-413,466-467,714-715,726-727,729-730
+src/PouryaKit.Aspire/PouryaKit.Aspire.csproj
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 1-13
+Directory.Packages.props
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 8-11,26
+  s_b9a8adfb056e1c::t_8ed91fe0469b61 19
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 20
+tests/PouryaKit.ArchitectureTests/SampleNamespaceTests.cs
+  s_b9a8adfb056e1c::t_8ed91fe0469b61 24-27
+tests/PouryaKit.Aspire.Tests/AppHostTests.cs
+  s_b9a8adfb056e1c::t_ba6e5afe50bf2a 1-136
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_dd465c09064160 330-331,435,448-449,454
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_09fa6b82aec10c 290-291
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_9f147a564db685 360
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "69809a52297e7a1a66888f550ab9d5b9bf7fbc44",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
