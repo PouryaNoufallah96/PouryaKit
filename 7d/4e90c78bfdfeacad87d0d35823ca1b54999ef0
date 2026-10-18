@@ -1,0 +1,75 @@
+docs/provenance/PouryaKit.Messaging.Wolverine.Marten.md
+  s_b9a8adfb056e1c::t_794cf66d33ebca 1-13
+docs/provenance/PouryaKit.Persistence.Marten.md
+  s_b9a8adfb056e1c::t_a8dfd834470f8d 1-14
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_54f3f724d9f932 3,52
+.agents/skills/pourya-kit/references/messaging.md
+  s_b9a8adfb056e1c::t_9a2ea39fc5c8a7 693
+.agents/skills/pourya-kit/references/persistence.md
+  s_b9a8adfb056e1c::t_f46e8df1b7e588 269
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_12742ccf4c1611 3,16
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_b9a8adfb056e1c::t_8906b41794b4d5 124-127
+.claude/agent-memory/kit-implementer/marten-stream-write-model-facts.md
+  s_b9a8adfb056e1c::t_65fbf13e300ec6 27-37
+GLOSSARY.md
+  s_b9a8adfb056e1c::t_e91cb247249449 155
+README.md
+  s_b9a8adfb056e1c::t_0f154df0c50237 32
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_e989cced379265 2296-2316
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_b9a8adfb056e1c::t_1b133edbd0cf1f 236-248,261-300
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_e3eaccd47f7c35 3,44,46,364-365,381,435-448,541-550
+docs/architecture/diagrams/commit-sequence.html
+  s_b9a8adfb056e1c::t_b75e695290733a 4985
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_b9a8adfb056e1c::t_26e2b884802b9a 10
+docs/architecture/diagrams/delivery.html
+  s_b9a8adfb056e1c::t_d3fbf9853dfdeb 4985
+docs/architecture/diagrams/delivery.sequence.json
+  s_b9a8adfb056e1c::t_6fc535e94e56a3 18
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_20d9fbda80486e 10
+docs/architecture/diagrams/execution-core.html
+  s_b9a8adfb056e1c::t_973b912e66fdf0 4985
+docs/architecture/diagrams/http-command.html
+  s_b9a8adfb056e1c::t_ea94f8661ea971 4985
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_353d09f26997a5 15
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_75ab9091aa7f84 10
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_5b99c641dad74e 4985,5235-5236,5243
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_c1bde0083905f6 10,377-463,581-612,621,631
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_b9834d2c89d6cd 4985,4990,5016,5071-5086,5251-5287,5335-5350,5354-5355,5565,5578
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_d345dd41fe47e1 10
+docs/architecture/diagrams/module-boundaries.html
+  s_b9a8adfb056e1c::t_37d1e18c98fdc1 4985
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_44896cfefb4076 288-289,889
+docs/provenance/PouryaKit.Persistence.EFCore.md
+  s_b9a8adfb056e1c::t_296ecfaf65f738 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7d4e90c78bfdfeacad87d0d35823ca1b54999ef0",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
