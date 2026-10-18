@@ -1,0 +1,39 @@
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_b9a8adfb056e1c::t_3f3ea6a39ba2bb 104-120
+Directory.Packages.props
+  s_b9a8adfb056e1c::t_004822e38e1f99 18,20,56
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_b94a8f1ba5893d 22
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_6929f092674af6 412-413,466-467,766-767
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_503791dc1b8798 330-331,448-449,454
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_133c45e721a033 290-291
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_03643e16fdb64d 360
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_4022277ff77d04 24
+src/PouryaKit.Reporting/PouryaKit.Reporting.csproj
+  s_b9a8adfb056e1c::t_333feb40c730ba 1-13
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_b21847e93e1ba9 100-104,137-139
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_b9a8adfb056e1c::t_466d0cf394b60b 24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d2583f27604af2d2ceac38d1f0baa5d274b545e1",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
