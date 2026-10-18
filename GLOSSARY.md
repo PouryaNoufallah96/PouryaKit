@@ -152,7 +152,7 @@ A Module's share of its Host's durable message store: the Integration Events and
 _Avoid_: Queue, message table
 
 **Stream**:
-An aggregate whose stored state is the ordered events it has appended, loaded by folding them; the Kit's second write model. Planned for Wave 3, not built yet.
+An aggregate whose stored state is the ordered events it has appended, loaded by folding them; the Kit's second write model, whose Unit of Work commits its events with the Operation's Notifications and Integration Events through Wolverine's Marten outbox (ADR 0011). A Stream belongs to the tenant of the Operation that wrote it.
 _Avoid_: Event-sourced entity, event stream aggregate
 
 **Page**:
