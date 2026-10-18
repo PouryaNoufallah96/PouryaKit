@@ -1,0 +1,59 @@
+.agents/skills/pourya-kit/references/realtime.md
+  s_b9a8adfb056e1c::t_374c7d78ff3877 23,50
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_3e58c4067ef22f 19
+.claude/agent-memory/kit-implementer/realtime-and-sse-facts.md
+  s_b9a8adfb056e1c::t_fb0a788ba91185 3,15-17,22
+docs/adr/0012-realtime-through-postgresql-notifications.md
+  s_b9a8adfb056e1c::t_35bd20e28a0378 42-50,67-69,94-97
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_05000110b2804d 129,153,295,471
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_b9a8adfb056e1c::t_db57e4237573c3 79-80,236-237
+docs/architecture/diagrams/delivery.sequence.json
+  s_b9a8adfb056e1c::t_ddf48ff4aba337 83-84,115-116,135-136,169-170
+docs/architecture/diagrams/host-start.workflow.json
+  s_b9a8adfb056e1c::t_d1187f04087a4e 132-133
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_7d279866bbb5d9 345-346
+src/PouryaKit.Cqrs/Operations/INotificationDelivery.cs
+  s_b9a8adfb056e1c::t_36e60433ffb76e 1-17
+src/PouryaKit.Cqrs/Operations/OperationContext.cs
+  s_b9a8adfb056e1c::t_7bc9b4ae7e73ad 97-99
+src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs
+  s_b9a8adfb056e1c::t_7fb8821262f56f 39,70
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Deliver.cs
+  s_b9a8adfb056e1c::t_5a2ecd91cc0f03 19,63-64
+src/PouryaKit.Messaging.Wolverine/Subscriptions/IntegrationEventPublisher.cs
+  s_b9a8adfb056e1c::t_becdd5731d98a8 10-15,31
+src/PouryaKit.Messaging.Wolverine/Subscriptions/NotificationDelivery.cs
+  s_b9a8adfb056e1c::t_936b46e07d663f 1-11
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_5e55fc0a8ac47a 86-87
+src/PouryaKit.Realtime/RealtimeConnectionCheck.cs
+  s_b9a8adfb056e1c::t_ebcb746e18ee61 1,4,11-18,37-38,41-42,44-53,57-59
+src/PouryaKit.Realtime/RealtimePublisher.cs
+  s_b9a8adfb056e1c::t_67bbb985be2164 12-23,45
+src/PouryaKit.Realtime/RealtimeServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_13016448308cdc 22-25
+tests/ModularMonolith.Tests/RealtimeTests.cs
+  s_b9a8adfb056e1c::t_4f7d5e78f005d0 12,14,16,22,116-141,243-279,287-302
+tests/ModularMonolith.Tests/Stub/StubRealtime.cs
+  s_b9a8adfb056e1c::t_88c81fb8eeffc6 4,15-17,107-161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5b2bc68a9cc5729f24eb119b2669d73401ebb6d1",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
