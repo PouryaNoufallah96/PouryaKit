@@ -1,0 +1,33 @@
+.claude/agent-memory/kit-implementer/saga-spike-facts.md
+  s_b9a8adfb056e1c::t_19e7999df29e4d 35
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_c29899a68c2cef 2473-2475
+docs/architecture/diagrams/delivery.html
+  s_b9a8adfb056e1c::t_6ac49445d75bd9 4985
+docs/architecture/diagrams/delivery.sequence.json
+  s_b9a8adfb056e1c::t_e3cb5feebd63e1 18
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_c05d895665e334 10
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_2a2505ded9e790 4985
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_8e1c83b5ffea78 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_33ef626bc4c055 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5c193a1b05c8df06f7b8255f05c4dc937f5189eb",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
