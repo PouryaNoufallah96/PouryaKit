@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "6d37b9c209e7972f7fc0bd1dd33ea9f51159250b",
+      "revision": "c128c2bdc03b665f0409433317925a9c0fc27ed9",
       "link_mode": "web"
     }
   },
@@ -612,8 +612,7 @@
       "to": "model",
       "label": "chat completions",
       "fromSide": "bottom",
-      "toSide": "top",
-      "labelSegment": 1
+      "toSide": "top"
     }
   ],
   "cards": [
