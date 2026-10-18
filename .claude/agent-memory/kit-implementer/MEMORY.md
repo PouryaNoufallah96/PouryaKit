@@ -19,3 +19,4 @@
 - [gRPC](grpc-facts.md) — #134, #158: the metapackage and Grpc.Tools, the unknown-service catch-all vs 405/415, gRPC over TestServer, convention order, per-call context, loopback check, Kestrel's default, repeated AddGrpcClient
 - [Aspire AppHost](aspire-apphost-facts.md) — #130: SDK implicit package and CPM, ASPIRE010, MessagePack and Fractions floors, testing model, passwords on volumes
 - [Realtime and SSE](realtime-and-sse-facts.md) — #133: pg_notify's bound, SSE headers and flushing, SSE over TestServer, killing the listener, JSON options, the scoped publish marker, effective connection strings, ripples
+- [AI and the Gateway tool](ai-and-gateway-tool-facts.md) — #135: invocation cap, OpenAI client retries, three providers, tool-call trust, stub, Ollama probe

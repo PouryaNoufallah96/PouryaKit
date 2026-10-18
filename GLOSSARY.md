@@ -51,6 +51,10 @@ _Avoid_: Health check, startup filter, composition check
 The only entry point through which anything outside a Module asks it to run a command or query.
 _Avoid_: Module facade, mediator, bus
 
+**Gateway tool**:
+A Module's command or query offered to a model as a tool: each call the model makes runs as an Operation through the Module's Gateway, continuing the Operation Context of the run that offered the tool. Built in `PouryaKit.AI`.
+_Avoid_: Function, plugin, agent tool
+
 **Reverse proxy**:
 The deployable application in front of a system's Hosts that forwards each incoming HTTP request, by configured routes, to the Host that serves it; it runs no Operation. Built on YARP in `PouryaKit.ReverseProxy`.
 _Avoid_: Gateway, API gateway, edge service

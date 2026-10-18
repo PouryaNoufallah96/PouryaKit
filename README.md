@@ -29,6 +29,7 @@ Status: Wave 1 and Wave 2 are complete. The Wave 2 set is in the private feed si
 - [gRPC](.agents/skills/pourya-kit/references/grpc.md) (`PouryaKit.Grpc`; Wave 3: services and clients on Web's conventions)
 - [Aspire resources](.agents/skills/pourya-kit/references/aspire.md) (`PouryaKit.Aspire`; Wave 3, AppHost-only: PostgreSQL, Redis and RabbitMQ on pinned images, and the Proving Sample's AppHost)
 - [Realtime](.agents/skills/pourya-kit/references/realtime.md) (`PouryaKit.Realtime`; Wave 3, optional: server-sent events from Notification Handlers, heard on every instance through PostgreSQL's notifications)
+- [AI](.agents/skills/pourya-kit/references/ai.md) (`PouryaKit.AI`; Wave 3, in progress: the chat client for OpenAI, Azure OpenAI and Ollama, and the Gateway tool that runs a model's call as an Operation)
 
 The skill's [Capability table](.agents/skills/pourya-kit/SKILL.md#capabilities) owns this list and says when to read each reference. It folds Paging and Request idempotency into the rows of the packages they span.
 

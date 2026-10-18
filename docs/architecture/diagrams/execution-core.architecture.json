@@ -409,8 +409,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 120,
-          "end_line": 121,
+          "line": 125,
+          "end_line": 126,
           "label": "no exporter"
         }
       ]
@@ -463,8 +463,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 122,
-          "end_line": 123,
+          "line": 127,
+          "end_line": 128,
           "label": "never Redis"
         }
       ]
@@ -546,7 +546,7 @@
         700
       ],
       "size": [
-        1110,
+        820,
         64
       ],
       "sources": [
@@ -763,9 +763,43 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 161,
-          "end_line": 165,
+          "line": 169,
+          "end_line": 173,
           "label": "Aspire in no other package"
+        }
+      ]
+    },
+    {
+      "id": "ai",
+      "type": "backend",
+      "label": "PouryaKit.AI",
+      "sublabel": "chat client, Gateway tool",
+      "pos": [
+        910,
+        700
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 101,
+          "end_line": 104,
+          "label": "Cqrs, Modularity, the OpenAI client"
+        },
+        {
+          "path": "src/PouryaKit.AI/GatewayToolExtensions.cs",
+          "line": 78,
+          "end_line": 96,
+          "label": "each call through the Gateway, continued"
+        },
+        {
+          "path": "src/PouryaKit.AI/AIServiceCollectionExtensions.cs",
+          "line": 90,
+          "end_line": 108,
+          "label": "allow-list, cap, no retries of its own"
         }
       ]
     }
@@ -978,6 +1012,18 @@
       "label": "reads",
       "fromSide": "right",
       "toSide": "left"
+    },
+    {
+      "id": "ai-modularity",
+      "from": "ai",
+      "to": "modularity",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "ai-cqrs",
+      "from": "ai",
+      "to": "cqrs"
     }
   ],
   "cards": [
@@ -1004,7 +1050,8 @@
         "Storage, the file storage contract, references Domain, and Cqrs for its one-provider composition check; Storage.S3 and Storage.AzureBlob, its providers, reference Storage and their cloud SDK, and a Host registers exactly one of them.",
         "Localization, optional, records a Module's Feature assemblies through Cqrs and sets each request's culture, English or Persian, from its Accept-Language header; the Proving Sample's Hosts reference none of it.",
     "Grpc maps a Module's gRPC services on Web's begin-the-Operation convention and writes a client's Operation Context through Web's one header codec; a failed Result is a status by its most severe Error kind.",
-        "Aspire, AppHost-only, references no Kit package: an Aspire AppHost adds PostgreSQL, Redis and RabbitMQ through it, each on a pinned image with a named volume, and no other Kit package's closure holds an Aspire package."
+        "Aspire, AppHost-only, references no Kit package: an Aspire AppHost adds PostgreSQL, Redis and RabbitMQ through it, each on a pinned image with a named volume, and no other Kit package's closure holds an Aspire package.",
+        "AI gives a Host one chat client over the OpenAI client, and makes a Module's command or query a Gateway tool: each call a model makes runs as an Operation through that Module's Gateway, which is why it references Modularity; no OllamaSharp, Azure client or resilience package reaches its closure."
       ]
     }
   ]

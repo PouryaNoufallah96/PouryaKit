@@ -16,6 +16,7 @@
     <ProjectReference Include="..\Modules\Billing\Billing\Billing.csproj" />
     <ProjectReference Include="..\Modules\Catalog\Catalog\Catalog.csproj" />
     <ProjectReference Include="..\Modules\Inventory\Inventory\Inventory.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.AI\PouryaKit.AI.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Caching\PouryaKit.Caching.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Email.MailKit\PouryaKit.Email.MailKit.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Messaging.Wolverine.EFCore\PouryaKit.Messaging.Wolverine.EFCore.csproj" />
