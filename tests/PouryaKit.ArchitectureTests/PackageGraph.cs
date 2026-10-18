@@ -107,6 +107,10 @@ internal static class PackageGraph
             ["PouryaKit.Cqrs", "PouryaKit.Modularity"],
             ["Microsoft.Extensions.AI", "Microsoft.Extensions.AI.OpenAI", "Microsoft.Extensions.Http", "Microsoft.Extensions.Options"]
         ),
+        // The Stream write model's Unit of Work (#131): Npgsql is the Kit's line over the 9.0.4 Marten 9.46.0 brings, for the
+        // Kit's statements it runs on its own transaction; Messaging is not needed, the Outbox step being a seam.
+        ["PouryaKit.Persistence.Marten"] = new(["PouryaKit.Cqrs", "PouryaKit.Persistence"], ["Marten", "Npgsql"]),
+        ["PouryaKit.Messaging.Wolverine.Marten"] = new(["PouryaKit.Messaging.Wolverine", "PouryaKit.Persistence.Marten"], ["WolverineFx.Marten"]),
     };
 
     // What must never arrive in a package's closure, by package id prefix or project name. Every package but Testing also
@@ -145,6 +149,10 @@ internal static class PackageGraph
         // One client for three providers, OllamaSharp and the Azure client dropped (A1), and no resilience of its own:
         // the provider's HTTP client keeps the Host's one pipeline (#135).
         ["PouryaKit.AI"] = ["OllamaSharp", "Azure.AI.OpenAI", "Microsoft.Extensions.Http.Resilience", "Microsoft.Extensions.Resilience", "Polly"],
+        // A Stream's commit owner takes no message store and no EF Core: Wolverine's Marten outbox is its messaging package's (#131).
+        ["PouryaKit.Persistence.Marten"] = ["WolverineFx", "Microsoft.EntityFrameworkCore"],
+        // A Host of Stream Modules alone takes no EF Core.
+        ["PouryaKit.Messaging.Wolverine.Marten"] = ["Microsoft.EntityFrameworkCore", "PouryaKit.Persistence.EFCore"],
     };
 
     // Core and Domain, and Messaging and the Email contract (Domain only), bring no package at all; nor do the templates.

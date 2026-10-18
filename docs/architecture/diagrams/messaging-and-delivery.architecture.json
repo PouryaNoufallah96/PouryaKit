@@ -287,8 +287,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 126,
-          "end_line": 129,
+          "line": 130,
+          "end_line": 133,
           "label": "Wolverine and RabbitMq keep no database"
         }
       ]
@@ -372,6 +372,93 @@
           "line": 64,
           "end_line": 68,
           "label": "its row"
+        }
+      ]
+    },
+    {
+      "id": "persistencemarten",
+      "type": "backend",
+      "label": "PouryaKit.Persistence.Marten",
+      "sublabel": "Streams, the Marten Unit of Work",
+      "pos": [
+        1230,
+        40
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 112,
+          "label": "references Cqrs, Persistence, Marten, Npgsql"
+        },
+        {
+          "path": "src/PouryaKit.Persistence.Marten/MartenUnitOfWork.cs",
+          "line": 16,
+          "end_line": 21,
+          "label": "a Stream's commit sequence"
+        },
+        {
+          "path": "src/PouryaKit.Persistence.Marten/MartenUnitOfWork.cs",
+          "line": 95,
+          "end_line": 132,
+          "label": "append, Outbox, save, own commit"
+        }
+      ]
+    },
+    {
+      "id": "persistence",
+      "type": "external",
+      "label": "PouryaKit.Persistence",
+      "sublabel": "execution core view",
+      "pos": [
+        1230,
+        200
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 41,
+          "label": "its row"
+        }
+      ]
+    },
+    {
+      "id": "wolverinemarten",
+      "type": "messagebus",
+      "label": "PouryaKit.Messaging.Wolverine.Marten",
+      "sublabel": "Marten outbox, a Stream Module's Receipts",
+      "pos": [
+        1230,
+        370
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 113,
+          "label": "references Wolverine and Persistence.Marten"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.Marten/MartenStreamOutbox.cs",
+          "line": 8,
+          "end_line": 20,
+          "label": "the Marten outbox, through OutboxWriter"
+        },
+        {
+          "path": "src/PouryaKit.Messaging.Wolverine.Marten/WolverineMartenHostApplicationBuilderExtensions.cs",
+          "line": 37,
+          "end_line": 86,
+          "label": "one store, keyed Marten Receipts"
         }
       ]
     }
@@ -491,6 +578,38 @@
       "label": "notifies, listens",
       "fromSide": "bottom",
       "toSide": "bottom"
+    },
+    {
+      "id": "persistencemarten-cqrs",
+      "from": "persistencemarten",
+      "to": "cqrs",
+      "label": "runs its Operations",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "persistencemarten-persistence",
+      "from": "persistencemarten",
+      "to": "persistence",
+      "label": "its Errors and statements",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "wolverinemarten-wolverine",
+      "from": "wolverinemarten",
+      "to": "wolverine",
+      "label": "adds the Marten outbox",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "wolverinemarten-persistencemarten",
+      "from": "wolverinemarten",
+      "to": "persistencemarten",
+      "label": "writes in its Unit of Work",
+      "fromSide": "right",
+      "toSide": "right"
     }
   ],
   "cards": [
@@ -499,7 +618,7 @@
       "title": "Arrows",
       "items": [
         "An arrow between two packages is a project reference that PackageGraph allows; these are all of this view's references.",
-        "The packages of the execution core view appear here only as reference targets."
+        "The packages of the execution core view appear here only as reference targets; the Stream write model's PouryaKit.Persistence.Marten is drawn here, beside its messaging package."
       ]
     },
     {
@@ -509,6 +628,7 @@
         "A Module's Unit of Work writes its Notifications, Integration Events, Snapshots and delayed commands to the Outbox in the same commit as its change; they are sent only after the commit.",
         "Each delivery runs as an Operation of the subscribing Module, in a scope of its own, and records a Receipt in that Module's Unit of Work, so a redelivery applies its effect once.",
         "PouryaKit.Messaging.Wolverine keeps no database: it holds the store-neutral half of the message store and the Outbox write, the routes, Operation Context headers and publication records; PouryaKit.Messaging.Wolverine.EFCore persists the store, enrolls the write in the EF Unit of Work and keeps Receipts and Snapshot versions.",
+        "A Stream Module's Marten Unit of Work writes the same through Wolverine's Marten outbox in the transaction of its Streams' events, on the Host's one message store and durability agent, and keeps its Receipts in its own schema (ADR 0011).",
         "In a Host of Modules each Module keeps its Receipts and idempotency keys in its own write model's store: the packages key them by the Module, and one resolver routes by the Operation's Module.",
         "PouryaKit.Realtime, optional, writes a Notification Handler's push as a PostgreSQL notification in its delivery's commit; each instance's one listener hears every push and serves its own clients over SSE (ADR 0012)."
       ]

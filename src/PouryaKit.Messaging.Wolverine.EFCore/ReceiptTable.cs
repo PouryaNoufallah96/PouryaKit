@@ -12,7 +12,7 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 public static class ReceiptTable
 {
     /// <summary>The Receipt table's name, in the Module's schema.</summary>
-    public const string Name = "pouryakit_receipts";
+    public const string Name = ReceiptStatements.ReceiptTable;
 
     extension(MigrationBuilder migrationBuilder)
     {

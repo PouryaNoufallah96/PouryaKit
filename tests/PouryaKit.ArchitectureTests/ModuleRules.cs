@@ -15,6 +15,7 @@ using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.EFCore;
+using PouryaKit.Persistence.Marten;
 
 namespace PouryaKit.ArchitectureTests;
 
@@ -66,8 +67,8 @@ internal static partial class ModuleRules
     /// at once, outside the tracked changes the Unit of Work prepares;</item>
     /// <item>beginning, committing, rolling back or releasing a transaction or savepoint on an ADO.NET connection or
     /// transaction, or an EF Core transaction; a new <c>TransactionScope</c> or <c>CommittableTransaction</c>;</item>
-    /// <item>the Kit's own steps: <c>IUnitOfWork</c>, the Unit of Work's DbContext (<c>EfUnitOfWorkDbContext</c>),
-    /// <c>IUnitOfWorkOutbox</c>, <c>OutboxWriter</c>, <c>IReceipts</c>, <c>IIntegrationEventOutbox</c>, <c>IDelayedCommandOutbox</c>, <c>IIdempotencyStore</c>, <c>ISnapshotMappers</c>,
+    /// <item>the Kit's own steps: <c>IUnitOfWork</c>, the Unit of Work's DbContext (<c>EfUnitOfWorkDbContext</c>), the
+    /// Marten Unit of Work's transaction (<c>MartenUnitOfWorkTransaction</c>), <c>IUnitOfWorkOutbox</c>, <c>IStreamOutbox</c>, <c>OutboxWriter</c>, <c>IReceipts</c>, <c>IIntegrationEventOutbox</c>, <c>IDelayedCommandOutbox</c>, <c>IIdempotencyStore</c>, <c>ISnapshotMappers</c>,
     /// <c>DomainEventDrain</c>, <c>IReadingStateGuard</c>, <c>TrackedState</c>, the query cache (<c>IQueryCache</c>), whose eviction follows the commit, opening a reading step (<c>Operation.OnlyReading</c>), and beginning an Operation
     /// (<c>BeginOperation</c>). The Gateway, the Web boundary and the Kit's delivery step begin Operations; so does an
     /// application of one Module that opens its own scopes, in its own assembly, which this rule would reject if that
@@ -108,18 +109,38 @@ internal static partial class ModuleRules
     }
 
     /// <summary>
-    /// ADR 0004 and 0006: no type from Wolverine or JasperFx, so never <c>IMessageBus</c>, <c>IMessageContext</c>,
-    /// <c>IDbContextOutbox&lt;&gt;</c> or <c>EndpointFor</c>. Read from the assembly's type references, which hold
-    /// every type its code, signatures and attributes name, including through a Kit method that exposes one. Not seen:
-    /// a transport type reached by name at run time (reflection, <c>Type.GetType</c>, a service resolved by a
-    /// <c>Type</c> built from a string) or held only as <c>object</c> or <c>dynamic</c>.
+    /// ADR 0004, 0006 and 0011: no type from Wolverine, JasperFx, Marten or Weasel, so never <c>IMessageBus</c>,
+    /// <c>IMessageContext</c>, <c>IDbContextOutbox&lt;&gt;</c>, <c>EndpointFor</c>, Marten's <c>IDocumentSession</c> or its
+    /// store, but the types the evolver Marten's source generator writes into a Stream Module's assembly names
+    /// (<see cref="GeneratedEvolverTypes"/>). Read from the assembly's type references, which hold every type its code,
+    /// signatures and attributes name, including through a Kit method that exposes one. Not seen: a transport or store
+    /// type reached by name at run time (reflection, <c>Type.GetType</c>, a service resolved by a <c>Type</c> built from a
+    /// string) or held only as <c>object</c> or <c>dynamic</c>; Feature code that names one of the generator's types itself.
     /// </summary>
-    public static IEnumerable<string> TransportTypesUsedBy(Assembly assembly)
+    public static IEnumerable<string> TransportTypesUsedBy(Assembly assembly) =>
+        from type in TypesReferencedBy(assembly)
+        where IsStoreOrTransport(type.Assembly) && !GeneratedEvolverTypes.Contains(type.Name)
+        select $"{Name(assembly)} uses {type.Name} from {type.Assembly}.";
+
+    /// <summary>
+    /// The types of JasperFx's event store that Marten's source generator names in the evolver it writes into every
+    /// assembly with a Stream, and in the marker it puts on every assembly it runs over (ADR 0011, item 13).
+    /// </summary>
+    public static readonly IReadOnlySet<string> GeneratedEvolverTypes = new HashSet<string>
+    {
+        "JasperFx.Events.Aggregation.GeneratedEvolverAttribute",
+        "JasperFx.Events.Aggregation.IGeneratedSyncEvolver`2",
+        "JasperFx.Events.Aggregation.JasperFxSourceGeneratorAppliedAttribute",
+        "JasperFx.Events.IEvent",
+    };
+
+    /// <summary>Every type <paramref name="assembly"/> references in another assembly, by its full name and that assembly's.</summary>
+    public static IEnumerable<(string Name, string Assembly)> TypesReferencedBy(Assembly assembly)
     {
         using var stream = File.OpenRead(assembly.Location);
         using var pe = new PEReader(stream);
         var metadata = pe.GetMetadataReader();
-        List<string> found = [];
+        List<(string, string)> found = [];
         foreach (var handle in metadata.TypeReferences)
         {
             var type = metadata.GetTypeReference(handle);
@@ -131,11 +152,12 @@ internal static partial class ModuleRules
 
             if (scope.Kind == HandleKind.AssemblyReference)
             {
-                var from = metadata.GetString(metadata.GetAssemblyReference((AssemblyReferenceHandle)scope).Name);
-                if (IsTransport(from))
-                {
-                    found.Add($"{Name(assembly)} uses {metadata.GetString(type.Namespace)}.{metadata.GetString(type.Name)} from {from}.");
-                }
+                found.Add(
+                    (
+                        $"{metadata.GetString(type.Namespace)}.{metadata.GetString(type.Name)}",
+                        metadata.GetString(metadata.GetAssemblyReference((AssemblyReferenceHandle)scope).Name)
+                    )
+                );
             }
         }
 
@@ -239,6 +261,7 @@ internal static partial class ModuleRules
     [
         typeof(IUnitOfWork),
         typeof(IUnitOfWorkOutbox),
+        typeof(IStreamOutbox),
         typeof(OutboxWriter),
         typeof(IReceipts),
         typeof(IIntegrationEventOutbox),
@@ -254,6 +277,7 @@ internal static partial class ModuleRules
     private static bool IsKitStep(MethodBase callee) =>
         KitSteps.Any(step => callee.DeclaringType!.IsAssignableTo(step))
         || callee.DeclaringType == typeof(EfUnitOfWorkDbContext)
+        || callee.DeclaringType == typeof(MartenUnitOfWorkTransaction)
         || (callee.DeclaringType == typeof(OperationContextServiceProviderExtensions) && callee.Name == "BeginOperation")
         || (callee.DeclaringType == typeof(Operation) && callee.Name == nameof(Operation.OnlyReading));
 
@@ -275,8 +299,8 @@ internal static partial class ModuleRules
     /// of Work turns into the Module's Error; Persistence.Postgres fills it;</item>
     /// <item><c>IIdempotencyStore</c> and <c>IQueryCache</c>: the pipeline's two optional slots; Persistence.EFCore and
     /// Caching fill them;</item>
-    /// <item><c>IUnitOfWorkOutbox</c>: the Unit of Work's Outbox write and send; Messaging.Wolverine.EFCore fills it and
-    /// marks it with <c>IOutbox</c>, so an application's own marker would pass the check that a Host which
+    /// <item><c>IUnitOfWorkOutbox</c> and <c>IStreamOutbox</c>: the EF Core and the Marten Unit of Work's Outbox write and
+    /// send; Messaging.Wolverine.EFCore and Messaging.Wolverine.Marten fill them and mark each with <c>IOutbox</c>, so an application's own marker would pass the check that a Host which
     /// publishes has an Outbox while nothing stores what it publishes;</item>
     /// <item><c>IIntegrationEventOutbox</c> and <c>IDelayedCommandOutbox</c>: the Integration Events and delayed commands
     /// of an Operation wait in them for its commit; Messaging.Wolverine fills them for every store;</item>
@@ -311,6 +335,7 @@ internal static partial class ModuleRules
         typeof(IIdempotencyStore),
         typeof(IQueryCache),
         typeof(IUnitOfWorkOutbox),
+        typeof(IStreamOutbox),
         typeof(IOutbox),
         typeof(IIntegrationEventOutbox),
         typeof(IDelayedCommandOutbox),
@@ -974,6 +999,9 @@ internal static partial class ModuleRules
 
     private static bool IsTransport(string assemblyName) =>
         assemblyName.StartsWith("Wolverine", StringComparison.Ordinal) || assemblyName.StartsWith("JasperFx", StringComparison.Ordinal);
+
+    private static bool IsStoreOrTransport(string assemblyName) =>
+        IsTransport(assemblyName) || assemblyName.StartsWith("Marten", StringComparison.Ordinal) || assemblyName.StartsWith("Weasel", StringComparison.Ordinal);
 
     private static string Name(Assembly assembly) => assembly.GetName().Name!;
 

@@ -97,6 +97,31 @@ public sealed class FeatureCodeTests
         Assert.Empty(ModuleRules.TransportTypesUsedBy(typeof(OffendingCreatedV1).Assembly));
     }
 
+    // ADR 0011: Marten's source generator writes an evolver into every Stream Module's assembly, naming JasperFx's event
+    // types, so the rule allows exactly those; a Stream Module that names Marten's session, or runs the Marten Unit of
+    // Work's own steps, is rejected.
+    [Fact]
+    public void Feature_code_of_a_stream_module_names_no_marten_weasel_wolverine_or_jasperfx_type_but_the_generated_evolvers()
+    {
+        var streams = typeof(ModularMonolith.Tests.Streams.AccountsModule).Assembly;
+        var offending = typeof(Offending.Stream.SavesItself).Assembly;
+
+        Assert.Equal(
+            ModuleRules.GeneratedEvolverTypes.Order(StringComparer.Ordinal),
+            ModuleRules.TypesReferencedBy(streams).Where(type => type.Assembly.StartsWith("JasperFx", StringComparison.Ordinal)).Select(type => type.Name).Order(StringComparer.Ordinal)
+        );
+        Assert.Empty(ModuleRules.TransportTypesUsedBy(streams));
+        Assert.Empty(ModuleRules.SavesOrCommits(streams));
+        Assert.Equal(
+            ["Offending.Stream uses Marten.IDocumentOperations from Marten.", "Offending.Stream uses Marten.IDocumentSession from Marten."],
+            ModuleRules.TransportTypesUsedBy(offending).Order(StringComparer.Ordinal)
+        );
+        Assert.Equal(
+            ["Offending.Stream.RunsMartenSteps calls IStreamOutbox.WriteAsync.", "Offending.Stream.RunsMartenSteps calls MartenUnitOfWorkTransaction.ExecuteAsync."],
+            ModuleRules.SavesOrCommits(offending).Order(StringComparer.Ordinal)
+        );
+    }
+
     [Fact]
     public void No_module_dbcontext_maps_the_message_stores_envelopes()
     {

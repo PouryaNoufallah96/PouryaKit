@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A Stream Module whose Feature code saves through Marten's session itself and runs the Marten Unit of Work's own
+       steps, so the structure rules are seen to reject it. It is never part of the sample, and PouryaKit.ArchitectureTests
+       leaves this folder out of its own sources. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\PouryaKit.Persistence.Marten\PouryaKit.Persistence.Marten.csproj" />
+  </ItemGroup>
+</Project>

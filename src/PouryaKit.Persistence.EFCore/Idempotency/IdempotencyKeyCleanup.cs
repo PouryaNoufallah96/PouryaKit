@@ -76,7 +76,7 @@ internal sealed partial class IdempotencyKeyCleanup(
             return;
         }
 
-        var delete = $"delete from {table} where ctid in (select ctid from {table} where reserved_at < {{0}} limit {{1}})";
+        var delete = IdempotencyStatements.RemoveExpired(table);
         var (removed, batches, batch) = (0, 0, 0);
         do
         {

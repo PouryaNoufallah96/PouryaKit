@@ -31,6 +31,7 @@ Status: Wave 1 and Wave 2 are complete. The Wave 2 set is in the private feed si
 - [Realtime](.agents/skills/pourya-kit/references/realtime.md) (`PouryaKit.Realtime`; Wave 3, optional: server-sent events from Notification Handlers, heard on every instance through PostgreSQL's notifications)
 - [Reporting](.agents/skills/pourya-kit/references/reporting.md) (`PouryaKit.Reporting`; Wave 3, optional: a Module's report layout rendered to PDF, CSV and a spreadsheet)
 - [AI](.agents/skills/pourya-kit/references/ai.md) (`PouryaKit.AI`; Wave 3, in progress: the chat client for OpenAI, Azure OpenAI and Ollama, and the Gateway tool that runs a model's call as an Operation)
+- [Streams](.agents/skills/pourya-kit/references/stream.md) (`PouryaKit.Persistence.Marten`, `PouryaKit.Messaging.Wolverine.Marten`; Wave 3: the Stream write model on Marten, committed with its Notifications and Integration Events through Wolverine's Marten outbox)
 
 The skill's [Capability table](.agents/skills/pourya-kit/SKILL.md#capabilities) owns this list and says when to read each reference. It folds Paging and Request idempotency into the rows of the packages they span.
 

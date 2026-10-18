@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "50300e73cbbe14e6c3acdc2b9547b45873dd1083",
+      "revision": "ca89abf7635768d62fa656c4d9ce428ecf365c7a",
       "link_mode": "web"
     },
     "legend": {
@@ -90,8 +90,8 @@
         },
         {
           "path": "src/PouryaKit.Persistence.EFCore/Idempotency/EfIdempotencyStore.cs",
-          "line": 23,
-          "end_line": 67,
+          "line": 21,
+          "end_line": 64,
           "label": "the key on the Unit of Work's transaction"
         },
         {

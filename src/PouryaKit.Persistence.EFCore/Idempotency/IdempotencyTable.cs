@@ -17,7 +17,7 @@ namespace PouryaKit.Persistence.EFCore;
 public static class IdempotencyTable
 {
     /// <summary>The idempotency key table's name, in the Module's schema.</summary>
-    public const string Name = "pouryakit_idempotency_keys";
+    public const string Name = IdempotencyStatements.Table;
 
     /// <summary>The tenant column of an Operation without a tenant: <see cref="OperationContext.NoTenant"/>.</summary>
     public const string NoTenant = OperationContext.NoTenant;
