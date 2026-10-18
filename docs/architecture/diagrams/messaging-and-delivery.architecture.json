@@ -287,8 +287,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 115,
-          "end_line": 118,
+          "line": 116,
+          "end_line": 119,
           "label": "Wolverine and RabbitMq keep no database"
         }
       ]
@@ -318,6 +318,60 @@
           "line": 134,
           "end_line": 136,
           "label": "Service name"
+        }
+      ]
+    },
+    {
+      "id": "realtime",
+      "type": "frontend",
+      "label": "PouryaKit.Realtime",
+      "sublabel": "SSE pushes; optional",
+      "pos": [
+        40,
+        700
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 99,
+          "label": "references Web, Persistence.EFCore, Npgsql"
+        },
+        {
+          "path": "src/PouryaKit.Realtime/RealtimePublisher.cs",
+          "line": 61,
+          "end_line": 67,
+          "label": "pg_notify on the delivery's transaction"
+        },
+        {
+          "path": "src/PouryaKit.Realtime/RealtimeListener.cs",
+          "line": 89,
+          "end_line": 108,
+          "label": "one LISTEN connection per instance"
+        }
+      ]
+    },
+    {
+      "id": "web",
+      "type": "external",
+      "label": "PouryaKit.Web",
+      "pos": [
+        380,
+        700
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 64,
+          "end_line": 68,
+          "label": "its row"
         }
       ]
     }
@@ -415,6 +469,28 @@
       "label": "sends, receives",
       "fromSide": "bottom",
       "toSide": "top"
+    },
+    {
+      "id": "realtime-efcore",
+      "from": "realtime",
+      "to": "efcore",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "realtime-web",
+      "from": "realtime",
+      "to": "web",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "realtime-database",
+      "from": "realtime",
+      "to": "database",
+      "label": "notifies, listens",
+      "fromSide": "bottom",
+      "toSide": "bottom"
     }
   ],
   "cards": [
@@ -433,7 +509,8 @@
         "A Module's Unit of Work writes its Notifications, Integration Events, Snapshots and delayed commands to the Outbox in the same commit as its change; they are sent only after the commit.",
         "Each delivery runs as an Operation of the subscribing Module, in a scope of its own, and records a Receipt in that Module's Unit of Work, so a redelivery applies its effect once.",
         "PouryaKit.Messaging.Wolverine keeps no database: it holds the store-neutral half of the message store and the Outbox write, the routes, Operation Context headers and publication records; PouryaKit.Messaging.Wolverine.EFCore persists the store, enrolls the write in the EF Unit of Work and keeps Receipts and Snapshot versions.",
-        "In a Host of Modules each Module keeps its Receipts and idempotency keys in its own write model's store: the packages key them by the Module, and one resolver routes by the Operation's Module."
+        "In a Host of Modules each Module keeps its Receipts and idempotency keys in its own write model's store: the packages key them by the Module, and one resolver routes by the Operation's Module.",
+        "PouryaKit.Realtime, optional, writes a Notification Handler's push as a PostgreSQL notification in its delivery's commit; each instance's one listener hears every push and serves its own clients over SSE (ADR 0012)."
       ]
     },
     {

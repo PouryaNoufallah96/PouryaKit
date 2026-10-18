@@ -20,6 +20,7 @@
     <ProjectReference Include="..\..\src\PouryaKit.Aspire\PouryaKit.Aspire.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Core\PouryaKit.Core.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Localization\PouryaKit.Localization.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.Realtime\PouryaKit.Realtime.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.ReverseProxy\PouryaKit.ReverseProxy.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Storage.AzureBlob\PouryaKit.Storage.AzureBlob.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Storage.S3\PouryaKit.Storage.S3.csproj" />

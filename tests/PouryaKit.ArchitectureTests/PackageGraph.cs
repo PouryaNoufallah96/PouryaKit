@@ -96,6 +96,7 @@ internal static class PackageGraph
             [],
             ["Aspire.Hosting.PostgreSQL", "Aspire.Hosting.RabbitMQ", "Aspire.Hosting.Redis", "Fractions", "MessagePack"]
         ),
+        ["PouryaKit.Realtime"] = new(["PouryaKit.Persistence.EFCore", "PouryaKit.Web"], ["Npgsql"], ["Microsoft.AspNetCore.App"]),
     };
 
     // What must never arrive in a package's closure, by package id prefix or project name. Every package but Testing also
@@ -126,6 +127,8 @@ internal static class PackageGraph
         ["PouryaKit.Grpc"] = ["Grpc.Tools"],
         // A storage provider's SDK stays in its own package: the contract takes none.
         ["PouryaKit.Storage"] = ["AWSSDK", "Azure"],
+        // PostgreSQL carries a push between instances: no message store, broker or Redis, and no Messaging (#133).
+        ["PouryaKit.Realtime"] = ["WolverineFx", "JasperFx", "PouryaKit.Messaging", "RabbitMQ", "StackExchange.Redis"],
     };
 
     // Core and Domain, and Messaging and the Email contract (Domain only), bring no package at all; nor do the templates.

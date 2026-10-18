@@ -116,6 +116,10 @@ metadata:
 
 - When cited code moves to a new file (the Outbox write from `WolverineOutbox.cs` to `OutboxWriter.cs`), `remap.py` flags it `CHECK` with no target: re-cite path and lines with a path-and-range-anchored regex that also rewrites the label (`scratchpad/p121/diagrams121.py`). The previous session's tools live in its scratchpad (`ac47943a…/scratchpad/p124/ranges.py`, `remap.py`, `finalize124.py` with its Archify clone): copy them before reuse.
 - A `using` swap at the top of `ModularMonolithHost.cs` changes no range but sits above every cited one: kit-context, http-command, module-boundaries and proving-sample-and-templates all need a pin. Nine diagrams for one prefactor.
+## A new package node with no free slot (#133, 2026-10-18; Archify 3.0.1)
+
+- **execution-core is full at 1440 × 764**: a node to the right of x 1440 fails `composition/desktop-readability`, and every free slot (x 40 at y 170 and 560) routes an arrow through Cqrs's tall node (`clean-flow/edge-through-node`). A package that references Web and Persistence.EFCore and reaches PostgreSQL fit messaging-and-delivery below `efcore`, at (40, 700), with `PouryaKit.Web` added as an external reference target at (380, 700): straight top-bottom and right-left arrows, and a bottom-to-bottom one into `database`.
+- **Trial a layout before the cited files exist at a revision**: copy the source to the scratchpad with `meta.output` there and a node citing an existing line, then `finalize … --repo-root <worktree>` from the Archify clone (`scratchpad/p133/trial2.py <worktree> <slug> <additions.json>`): the gates and the browser check run without touching the worktree.
 
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].

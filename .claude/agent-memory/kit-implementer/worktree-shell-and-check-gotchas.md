@@ -91,6 +91,9 @@ The worktree base and the one-git-command rule are in the role file; these are w
 
 - Spawned with the main checkout as cwd, on the integration branch, with no worktree of my own: `EnterWorktree` refuses both a new name ("a subagent with a cwd override") and an existing path ("the repository root, not an isolated worktree"). `git -C <main> worktree add <main>/.claude/worktrees/ticket-<n> -b ticket-<n> <tip>` and absolute paths for every call worked; name the branch in the report.
 - Moving a public type to another namespace strands a `using` in every file that named only it (IDE0005 fails the build), `src/PouryaKit.Testing` and the templates' `AppHost.cs` included; ask for files outside `allowed_files` before the build tells you.
+## A brief that expects a worktree the harness did not create (#133, 2026-10-18)
+
+- **Spawned with the main checkout as cwd and no worktree**: `EnterWorktree` refuses to create one ("a subagent with a cwd override") and to enter one ("the repository root, not an isolated worktree"). `git -C <main checkout> worktree add -b ticket-<n> <main checkout>/.claude/worktrees/ticket-<n> <tip>` works; then every command takes absolute paths (`cd <worktree> && …` per call passes) and the base check runs as the role file says.
 
 **Why:** each cost a retry in tickets #4 to #63 or the retro packages.
 **How to apply:** when a shell command is refused, when the integration branch moves, when a brief's scope misses a file, or when touching skills, settings, the check script or this memory. Related: [[merge-ci-and-workflow-tooling-facts]], [[dotnet-and-test-conventions]], [[templates-packaging-and-publication-facts]].

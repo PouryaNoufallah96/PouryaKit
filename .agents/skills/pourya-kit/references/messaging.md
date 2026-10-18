@@ -31,12 +31,15 @@
 A Notification Handler and the port it reaches outside the Module through, from the Proving Sample's Products Business Area:
 
 ```csharp
+using Catalog.Contracts.Products.Realtime;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
+using PouryaKit.Realtime;
 
 // Products/Events/Notifications/: runs after the product is committed, never inside its transaction, because an
-// announcement of a product that was then rolled back could not be taken back
-internal sealed class AnnounceNewProductNotificationHandler(INewProductAnnouncer announcer)
+// announcement of a product that was then rolled back could not be taken back. It also pushes the new product to the
+// browsers of its tenant when this delivery commits (realtime.md).
+internal sealed class AnnounceNewProductNotificationHandler(INewProductAnnouncer announcer, IRealtimePublisher realtime)
     : INotificationHandler<ProductCreatedDomainEvent>
 {
     public async Task<Result> Handle(ProductCreatedDomainEvent domainEvent, CancellationToken cancellationToken)
@@ -45,7 +48,11 @@ internal sealed class AnnounceNewProductNotificationHandler(INewProductAnnouncer
             new NewProductAnnouncement(domainEvent.ProductId.Value, domainEvent.Name),
             cancellationToken
         );
-        return Result.Success();
+        return await realtime.PublishAsync(
+            NewProduct.Channel,
+            new NewProduct(domainEvent.ProductId.Value, domainEvent.Name),
+            cancellationToken
+        );
     }
 }
 

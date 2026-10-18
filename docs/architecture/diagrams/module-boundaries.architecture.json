@@ -28,8 +28,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 79,
-          "end_line": 89,
+          "line": 80,
+          "end_line": 90,
           "label": "adds each Module"
         },
         {
@@ -199,7 +199,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj",
           "line": 8,
-          "end_line": 20,
+          "end_line": 21,
           "label": "its Contracts and Kit packages"
         },
         {
@@ -357,7 +357,7 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 99,
+          "end_line": 100,
           "label": "the allowed references"
         },
         {

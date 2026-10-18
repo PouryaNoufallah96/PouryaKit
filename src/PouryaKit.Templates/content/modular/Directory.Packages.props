@@ -13,6 +13,7 @@
     <PackageVersion Include="PouryaKit.Observability" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Persistence.Dapper" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Persistence.Postgres" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Realtime" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.ReverseProxy" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Security" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Security.JwtBearer" Version="$(PouryaKitVersion)" />

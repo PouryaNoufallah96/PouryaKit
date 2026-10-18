@@ -16,7 +16,7 @@ internal sealed record SnapshotOf(string AggregateId, long Version);
 internal sealed class DeliverHandler(
     IServiceProvider scope,
     Operation operation,
-    IntegrationEventPublisher publisher,
+    NotificationDelivery delivery,
     IReceipts? receipts = null,
     HostComposition? composition = null
 ) : CommandHandler<Deliver>
@@ -60,8 +60,8 @@ internal sealed class DeliverHandler(
             return Result.Success();
         }
 
-        // What a Notification Handler publishes follows from the Domain Event it handles.
-        publisher.Following = command.Message as DomainEvent;
+        // What a Notification Handler publishes or pushes follows from the Domain Event it handles, in this scope alone.
+        delivery.Notification = command.Message as DomainEvent;
         return await command.Subscription.InvokeAsync(scope, command.Message, cancellationToken);
     }
 }

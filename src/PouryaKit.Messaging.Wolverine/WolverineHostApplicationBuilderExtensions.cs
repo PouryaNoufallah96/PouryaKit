@@ -83,8 +83,9 @@ public static class WolverineHostApplicationBuilderExtensions
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, RoutingCheck>());
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SubscriptionUnitOfWorkCheck>());
             builder.Services.TryAddScoped<CommandHandler<Deliver>, DeliverHandler>();
-            builder.Services.TryAddScoped<IntegrationEventPublisher>();
-            builder.Services.TryAddScoped<IIntegrationEventPublisher>(scope => scope.GetRequiredService<IntegrationEventPublisher>());
+            builder.Services.TryAddScoped<NotificationDelivery>();
+            builder.Services.TryAddScoped<INotificationDelivery>(scope => scope.GetRequiredService<NotificationDelivery>());
+            builder.Services.TryAddScoped<IIntegrationEventPublisher, IntegrationEventPublisher>();
             builder.Services.TryAddScoped<ISnapshotMappers, SnapshotMappers>();
             DelayedCommandDeclarations.In(builder.Services);
             builder.Services.TryAddScoped<IDelayedCommands, DelayedCommands>();

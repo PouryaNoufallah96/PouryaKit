@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "50300e73cbbe14e6c3acdc2b9547b45873dd1083",
+      "revision": "5b2bc68a9cc5729f24eb119b2669d73401ebb6d1",
       "link_mode": "web"
     }
   },
@@ -76,8 +76,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
-          "line": 111,
-          "end_line": 111,
+          "line": 112,
+          "end_line": 112,
           "label": "every local queue durable"
         }
       ]
@@ -233,8 +233,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
-          "line": 110,
-          "end_line": 110,
+          "line": 111,
+          "end_line": 111,
           "label": "an unknown type is dead-lettered"
         },
         {

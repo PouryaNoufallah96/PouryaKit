@@ -56,20 +56,20 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 78,
-          "end_line": 89,
+          "line": 79,
+          "end_line": 90,
           "label": "composes the Modules"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 35,
-          "end_line": 42,
+          "line": 36,
+          "end_line": 43,
           "label": "the broker and its service name"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
           "line": 5,
-          "end_line": 28,
+          "end_line": 29,
           "label": "its references"
         }
       ]
@@ -199,7 +199,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj",
           "line": 8,
-          "end_line": 20,
+          "end_line": 21,
           "label": "its Contracts and Kit packages"
         }
       ]

@@ -10,6 +10,7 @@ using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
 using PouryaKit.Observability;
+using PouryaKit.Realtime;
 using PouryaKit.Security;
 using PouryaKit.Security.JwtBearer;
 using PouryaKit.Web;
@@ -102,6 +103,10 @@ public static class ModularMonolithHost
         // PouryaKit:Email; appsettings.json names a local Papercut, which keeps every mail for a developer to read.
         builder.Services.AddPouryaKitMailKit();
         builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSection("PouryaKit:Email"));
+        // What a Notification Handler pushes through IRealtimePublisher, such as Catalog's new products, reaches the
+        // browsers connected to Catalog's SSE endpoint on any instance of the Host, through PostgreSQL's notifications in
+        // the database every Module stores in.
+        builder.Services.AddPouryaKitRealtime(connectionName: "app");
         builder.UsePouryaKitWolverine(connectionName: "app");
         if (broker)
         {
