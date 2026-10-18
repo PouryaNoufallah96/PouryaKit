@@ -1,0 +1,32 @@
+.claude/agent-memory/kit-implementer/saga-spike-facts.md
+  s_b9a8adfb056e1c::t_e6ea00f65fc192 14
+  s_b9a8adfb056e1c::t_267618373cd863 19-21
+GLOSSARY.md
+  s_b9a8adfb056e1c::t_73b967bbf384f8 158-161
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_706cf5ab6e0e96 2350-2360
+docs/adr/0001-one-host-container.md
+  s_b9a8adfb056e1c::t_c1b2eeccd6c591 55-69
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_b9a8adfb056e1c::t_53e96e1b6f46e1 1187-1206
+docs/adr/0013-a-saga-step-runs-outside-every-operation.md
+  s_b9a8adfb056e1c::t_02a9894f605270 1-275
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_de9aa67861d603 892,983-987
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "85331f29e716e6f10f7525ac4c1a2c0e532d6d8e",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
