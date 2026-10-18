@@ -1,0 +1,94 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 17
+src/PouryaKit.Storage/FileStorageServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 1-28
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_116e5e3c8d0b7e 3,44,652
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 164,246,252,254,258,265-276
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_116e5e3c8d0b7e 1004
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 588-589,593-594,605-638,655-662,688,721,754-755,766-767,954-955,960-965
+  s_b9a8adfb056e1c::t_187a939446fd80 412-413,466-467,966
+.agents/skills/pourya-kit/references/storage.md
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 3,14-16,38-64,99,104,117-118
+src/PouryaKit.Storage/OneFileStorageCheck.cs
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 1-33
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 24
+Directory.Packages.props
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 16-17,60,62
+src/PouryaKit.Storage/PouryaKit.Storage.csproj
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 3
+src/PouryaKit.Storage.AzureBlob/AzureBlobFileStorage.cs
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 1-69
+.claude/rules/kit-code.md
+  s_b9a8adfb056e1c::t_116e5e3c8d0b7e 33
+src/PouryaKit.Storage.AzureBlob/PouryaKit.Storage.AzureBlob.csproj
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 1-14
+README.md
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 26
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 80-88,127-128,131-132
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 27-29,31-32,98-102
+src/PouryaKit.Storage/StorageErrors.cs
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 12-13
+tests/PouryaKit.Storage.Tests/PouryaKit.Storage.Tests.csproj
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 9,16
+docs/provenance/PouryaKit.Storage.md
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 7
+tests/PouryaKit.Storage.Tests/AzureBlobStorageTests.cs
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 1-206
+docs/provenance/PouryaKit.Storage.AzureBlob.md
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 1-35
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_116e5e3c8d0b7e 2260-2276
+  s_b9a8adfb056e1c::t_cf2d25e6cc4703 2259
+tests/PouryaKit.Storage.Tests/S3StorageTests.cs
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 178
+scripts/packaging/consumers/PouryaKit.Storage.AzureBlob.cs
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 1-12
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 46
+  s_b9a8adfb056e1c::t_116e5e3c8d0b7e 3
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 26
+docs/provenance/PouryaKit.Storage.S3.md
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 14
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 279,282-283,889
+src/PouryaKit.Storage.S3/S3StorageServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 42
+.claude/agent-memory/kit-implementer/storage-and-s3-facts.md
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 3,36-44
+tests/PouryaKit.Storage.Tests/AzuriteFixture.cs
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 1-56
+src/PouryaKit.Storage.AzureBlob/AzureBlobStorageServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 1-70
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 17
+src/PouryaKit.Storage.AzureBlob/PouryaKitAzureBlobStorageOptions.cs
+  s_b9a8adfb056e1c::t_074ba7cc0eff4d 1-31
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_f64a812181d65d 65-66,330-331,435,448-449,454
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_44eb4cefa1ebdf 290-291
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_396377865b68e1 360
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cffd8638a9eaa465d565652fd424969ebce14113",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
