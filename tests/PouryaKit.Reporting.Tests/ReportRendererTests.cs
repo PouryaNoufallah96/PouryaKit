@@ -152,6 +152,9 @@ public sealed class ReportRendererTests
         }
 
         Assert.True(_renderer.Render(Sales with { Branding = new() { Logo = Jpeg } }, ReportFormat.Pdf).IsSuccess);
+        // A CSV and a spreadsheet hold the table alone, so the same logo stops neither.
+        Assert.True(_renderer.Render(Sales with { Branding = new() { Logo = unreadable[0] } }, ReportFormat.Csv).IsSuccess);
+        Assert.True(_renderer.Render(Sales with { Branding = new() { Logo = unreadable[0] } }, ReportFormat.Spreadsheet).IsSuccess);
     }
 
     [Fact]

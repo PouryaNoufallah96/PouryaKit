@@ -20,7 +20,8 @@ public sealed class ReportRenderer : IReportRenderer
             return ReportErrors.TableShape;
         }
 
-        if (layout.Branding.Logo is { } logo && !IsReadablePngOrJpeg(logo))
+        // Only the PDF draws the logo: a CSV or a spreadsheet holds the table alone, so an unreadable logo is no failure there.
+        if (format is ReportFormat.Pdf && layout.Branding.Logo is { } logo && !IsReadablePngOrJpeg(logo))
         {
             return ReportErrors.LogoFormat;
         }
