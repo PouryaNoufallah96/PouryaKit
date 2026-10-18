@@ -144,10 +144,12 @@ public static class SagaStorage
     public static Guid EmissionId(Guid stepId, string wireName) => NameBased($"{stepId:D}\n{wireName}");
 
     /// <summary>
-    /// The identity of a timeout a step schedules: from the scheduling step's identity and the timeout's wire name, kept
-    /// in the saga's state under the timeout's envelope.
+    /// The identity of a timeout a step schedules: from the scheduling step's identity, the timeout's wire name and its
+    /// <paramref name="ordinal"/>, its place from 0 among the step's timeouts of that type in the order the step scheduled
+    /// them, kept in the saga's state under the timeout's envelope; so two timeouts of one type from one step are two.
     /// </summary>
-    public static Guid TimeoutId(Guid schedulingStepId, string timeoutWireName) => NameBased($"{schedulingStepId:D}\n{timeoutWireName}\ntimeout");
+    public static Guid TimeoutId(Guid schedulingStepId, string timeoutWireName, int ordinal) =>
+        NameBased($"{schedulingStepId:D}\n{timeoutWireName}\n{ordinal}\ntimeout");
 
     /// <summary>
     /// A saga's identity: the event's tenant and its business id, each escaped as a URI's data, so neither can end its part
@@ -277,7 +279,8 @@ internal sealed class SagaStepStorage<TId, TSaga>(
         return inner.UpdateAsync(state, cancellationToken);
     }
 
-    // The step's timeouts are among the envelopes it stored in this transaction, not yet sent.
+    // The step's timeouts are among the envelopes it stored in this transaction, not yet sent, in the order it scheduled
+    // them (Wolverine's MessageBus appends each to its list).
     private void KeepTimeouts(PouryaKitSaga state)
     {
         if (input is not { } step)
@@ -286,9 +289,13 @@ internal sealed class SagaStepStorage<TId, TSaga>(
         }
 
         var stepId = SagaStorage.StepId(saga, state.Id, step.WireName, step.Id);
+        Dictionary<string, int> ordinals = [];
         foreach (var scheduled in context.Outstanding.Where(envelope => envelope.Message is TimeoutMessage))
         {
-            state.Timeouts.TryAdd(scheduled.Id, SagaStorage.TimeoutId(stepId, scheduled.Message!.GetType().ToMessageTypeName()));
+            var wireName = scheduled.Message!.GetType().ToMessageTypeName();
+            var ordinal = ordinals.GetValueOrDefault(wireName);
+            ordinals[wireName] = ordinal + 1;
+            state.Timeouts.TryAdd(scheduled.Id, SagaStorage.TimeoutId(stepId, wireName, ordinal));
         }
     }
 

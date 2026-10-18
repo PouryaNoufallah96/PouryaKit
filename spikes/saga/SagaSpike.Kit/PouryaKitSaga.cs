@@ -22,7 +22,10 @@ public abstract class PouryaKitSaga : Saga
     /// <summary>The correlation of the Operation that published the starting event; the Kit sets it.</summary>
     public Guid Correlation { get; set; }
 
-    /// <summary>The stable identity of each timeout a step scheduled, by the timeout's envelope; the Kit sets it.</summary>
+    /// <summary>
+    /// The stable identity of each timeout a step scheduled, by the timeout's envelope, one for each timeout, two of one type
+    /// included; the Kit sets it.
+    /// </summary>
     public Dictionary<Guid, Guid> Timeouts { get; set; } = [];
 
     /// <summary>

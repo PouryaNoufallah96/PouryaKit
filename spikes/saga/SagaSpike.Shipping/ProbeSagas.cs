@@ -29,6 +29,23 @@ public sealed class ReferenceSaga : PouryaKitSaga
     public static ReferenceSaga Start(SagaInput<ReferenceSaga, ReferenceOpenedV1> opened) => new() { Reference = opened.Event.Reference };
 }
 
+/// <summary>A saga whose starting step schedules two timeouts of one type, which a test declares to see both apply.</summary>
+public sealed class ReminderSaga : PouryaKitSaga
+{
+    /// <summary>The delays of the reminders that applied, in seconds.</summary>
+    public List<int> Reminded { get; set; } = [];
+
+    /// <summary>Starts the saga, and schedules two reminders.</summary>
+    public static (ReminderSaga, ReminderTimeout, ReminderTimeout) Start(SagaInput<ReminderSaga, ReferenceOpenedV1> opened) =>
+        (new ReminderSaga(), new ReminderTimeout(TimeSpan.FromSeconds(1)), new ReminderTimeout(TimeSpan.FromSeconds(2)));
+
+    /// <summary>A reminder is due.</summary>
+    public void Handle(ReminderTimeout reminder) => Reminded.Add((int)reminder.Within.TotalSeconds);
+}
+
+/// <summary>The reminder saga's timeout, of which one step schedules two.</summary>
+public sealed record ReminderTimeout(TimeSpan Within) : TimeoutMessage(Within);
+
 /// <summary>
 /// Started beside the fulfilment saga by the same event, for the middleware test: what a step sees of the Operation, and
 /// whether the Kit's Integration Event publisher serves it.

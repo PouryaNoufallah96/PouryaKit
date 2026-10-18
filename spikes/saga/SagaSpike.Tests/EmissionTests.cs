@@ -1,7 +1,11 @@
+using System.Text.Json;
 using PouryaKit.Cqrs;
 using SagaSpike.Billing;
+using SagaSpike.Contracts;
 using SagaSpike.Host;
 using SagaSpike.Kit;
+using SagaSpike.Shipping;
+using Wolverine.Util;
 
 namespace SagaSpike.Tests;
 
@@ -51,7 +55,7 @@ public sealed class EmissionTests(Postgres postgres) : SpikeTest(postgres)
 
         await WaitUntilAsync("select count(*) = 1 from wolverine.fulfilmentsaga_saga where id = $1", sagaId);
         var scheduling = SagaStorage.StepId(Fulfilment, sagaId, "orders.order-placed.v1", await ClaimedAsync(sagaId, "orders.order-placed.v1"));
-        var timeout = SagaStorage.TimeoutId(scheduling, timeoutType);
+        var timeout = SagaStorage.TimeoutId(scheduling, timeoutType, 0);
         var envelope = await Db.ScalarAsync<Guid>(ConnectionString, "select id from wolverine.wolverine_incoming_envelopes where message_type = $1", timeoutType);
         var kept = (await SagaAsync(sagaId))!.Value.GetProperty("Timeouts");
         Assert.Equal([(envelope.ToString(), timeout.ToString())], kept.EnumerateObject().Select(entry => (entry.Name, entry.Value.GetString())));
@@ -70,6 +74,38 @@ public sealed class EmissionTests(Postgres postgres) : SpikeTest(postgres)
             SagaStorage.EmissionId(step, "shipping.order-cancelled.v1"),
             await Db.ScalarAsync<Guid>(ConnectionString, "select message_id from billing.pouryakit_receipts where subscription = 'billing.order-cancelled'")
         );
+    }
+
+    // One step schedules two timeouts of one type: each keeps an identity of its own, from its place among the step's
+    // timeouts of that type, so each claims its own step and both apply.
+    [Fact]
+    public async Task Two_timeouts_of_one_type_from_one_step_each_keep_their_own_identity_and_both_apply()
+    {
+        var host = await StartAsync(
+            new SpikeHostOptions
+            {
+                Services = services => services.AddSpikeSaga<ReminderSaga>("shipping.reminder", "shipping.reminder", saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference).Timeout<ReminderTimeout>()),
+            }
+        );
+        var sagaId = SagaStorage.SagaId("tenant-a", "r-1");
+        var (openedType, timeoutType) = (typeof(ReferenceOpenedV1).ToMessageTypeName(), typeof(ReminderTimeout).FullName!);
+
+        await PublishAsync(host, new ReferenceOpenedV1("r-1"), Guid.CreateVersion7(), Context("tenant-a"));
+
+        await WaitUntilAsync("select count(*) = 1 from wolverine.remindersaga_saga where id = $1", sagaId);
+        await SettledAsync();
+        var state = JsonDocument.Parse(await Db.ScalarAsync<string>(ConnectionString, "select body::text from wolverine.remindersaga_saga where id = $1", sagaId)).RootElement;
+        Assert.Equal([1, 2], state.GetProperty("Reminded").EnumerateArray().Select(delay => delay.GetInt32()).Order());
+        var scheduling = SagaStorage.StepId("shipping.reminder", sagaId, openedType, await ClaimedAsync(sagaId, openedType));
+        Guid[] identities = [.. new[] { SagaStorage.TimeoutId(scheduling, timeoutType, 0), SagaStorage.TimeoutId(scheduling, timeoutType, 1) }.Order()];
+        Assert.Equal(identities, state.GetProperty("Timeouts").EnumerateObject().Select(entry => entry.Value.GetGuid()).Order());
+        Assert.Equal(
+            identities,
+            (await Db.RowsAsync(ConnectionString, "select event_id from wolverine.pouryakit_saga_steps where saga_id = $1 and input = $2", sagaId, timeoutType))
+                .Select(row => (Guid)row[0]!)
+                .Order()
+        );
+        Assert.Equal(0, await CountAsync("select count(*) from wolverine.wolverine_dead_letters"));
     }
 
     // The rejected option, one honest attempt: the saga publishes as Wolverine publishes from a saga, which carries
