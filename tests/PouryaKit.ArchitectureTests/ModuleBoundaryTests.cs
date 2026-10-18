@@ -18,10 +18,10 @@ public sealed class ModuleBoundaryTests
     };
 
     [Fact]
-    public void The_host_composes_the_three_sample_modules_and_catalog_has_contracts()
+    public void The_host_composes_the_four_sample_modules_and_catalog_and_ledger_have_contracts()
     {
-        Assert.Equal(["Billing", "Catalog", "Inventory"], Sample.Modules.Select(module => module.GetName().Name));
-        Assert.Equal(["Catalog.Contracts"], Sample.Contracts.Select(contracts => contracts.GetName().Name));
+        Assert.Equal(["Billing", "Catalog", "Inventory", "Ledger"], Sample.Modules.Select(module => module.GetName().Name));
+        Assert.Equal(["Catalog.Contracts", "Ledger.Contracts"], Sample.Contracts.Select(contracts => contracts.GetName().Name));
     }
 
     private static readonly HashSet<string> ModuleNames = [.. Sample.Modules.Select(module => module.GetName().Name!), "Offending"];

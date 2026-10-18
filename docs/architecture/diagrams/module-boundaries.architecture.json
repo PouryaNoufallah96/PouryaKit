@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "0bdda9e4efa28a69de1e15c038161c69246a17a4",
+      "revision": "65b9509fee32638d978595b9d00348715dacfa25",
       "link_mode": "web"
     }
   },
@@ -28,8 +28,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 81,
-          "end_line": 91,
+          "line": 83,
+          "end_line": 94,
           "label": "adds each Module"
         },
         {

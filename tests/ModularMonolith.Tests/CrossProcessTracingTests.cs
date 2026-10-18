@@ -12,7 +12,7 @@ using PouryaKit.Testing;
 namespace ModularMonolith.Tests;
 
 // The trace of an Operation continues across RabbitMQ into the deliveries it causes in another Host (ADR 0009, #52
-// amendment): ModularMonolith.Host with a broker (Catalog and Billing) and Inventory.Host, each observing its
+// amendment): ModularMonolith.Host with a broker (Catalog, Billing and Ledger) and Inventory.Host, each observing its
 // Operations, joined only by the broker. An ActivityListener sees its own process only, so both Hosts run in this one.
 [Collection<BrokerCollection>]
 public sealed class CrossProcessTracingTests(BrokerFixture broker)

@@ -8,11 +8,14 @@
     <PackageVersion Include="PouryaKit.AI" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Caching" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Grpc" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Messaging.Wolverine" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Messaging.Wolverine.EFCore" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Messaging.Wolverine.Marten" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Messaging.Wolverine.RabbitMq" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Modularity" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Observability" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Persistence.Dapper" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Persistence.Marten" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Persistence.Postgres" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Realtime" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.ReverseProxy" Version="$(PouryaKitVersion)" />

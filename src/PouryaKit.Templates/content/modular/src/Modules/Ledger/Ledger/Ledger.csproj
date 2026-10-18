@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Ledger.Contracts\Ledger.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PouryaKit.Messaging.Wolverine" />
+    <PackageReference Include="PouryaKit.Modularity" />
+    <PackageReference Include="PouryaKit.Persistence.Marten" />
+    <PackageReference Include="PouryaKit.Web" />
+  </ItemGroup>
+</Project>

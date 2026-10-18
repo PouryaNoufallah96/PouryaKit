@@ -11,32 +11,35 @@
 
 ## Registering
 
-A Stream Module declares its write model in its Composition Root, with its own schema:
+The Proving Sample's Ledger (`samples/ModularMonolith/src/Modules/Ledger/`) is a Stream Module beside the EF Core Modules Catalog, Inventory and Billing: it keeps accounts, posts entries to them, reads an account's balance, and publishes `AccountOpenedV1`, which Billing receives. A Stream Module declares its write model in its Composition Root, with its own schema:
 
 ```csharp
-using PouryaKit.Messaging.Wolverine;
-using PouryaKit.Modularity;
-using PouryaKit.Persistence.Marten;
-
 public sealed class LedgerModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module)
     {
+        // First, so the tenant requirement runs before every other authorizer: the Host's Marten store keeps every
+        // account under the tenant of the Operation that wrote it.
+        module.AddPouryaKitTenancy();
         module.AddPouryaKitStreams(schema: "ledger");
         module.AddPouryaKitCqrs();
         module.AddPouryaKitNotificationHandlers();
         module.Publish<AccountOpenedV1>("ledger.account-opened.v1");
+        module.AddPouryaKitEndpoints("/ledger");
     }
 }
 ```
 
-The Host registers its one Marten store with `UsePouryaKitMarten` of `PouryaKit.Messaging.Wolverine.Marten`, over a connection string of its configuration:
+Its project references `PouryaKit.Persistence.Marten`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Modularity`, `PouryaKit.Web` and its own Contracts, never Marten. The Host registers its one Marten store with `UsePouryaKitMarten` of `PouryaKit.Messaging.Wolverine.Marten`, over a connection string of its configuration, as `ModularMonolithHost` does:
 
 ```csharp
-using PouryaKit.Messaging.Wolverine.EFCore;
-using PouryaKit.Messaging.Wolverine.Marten;
-
-builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>().Add<LedgerModule>());
+builder.AddPouryaKitModules(modules =>
+{
+    modules.Add<CatalogModule>();
+    modules.Add<InventoryModule>();
+    modules.Add<BillingModule>();
+    modules.Add<LedgerModule>();
+});
 builder.UsePouryaKitWolverine(connectionName: "app"); // the message store, when the Host also has EF Core Modules
 builder.UsePouryaKitMarten(connectionName: "app");
 ```
@@ -49,69 +52,131 @@ builder.UsePouryaKitMarten(connectionName: "app");
 
 ## Writing a Stream
 
-```csharp
-using PouryaKit.Domain;
-using PouryaKit.Persistence.Marten;
+Ledger's account, with its typed ID and its Domain Events:
 
+```csharp
 internal sealed record AccountId(Guid Value) : TypedId<Guid>(Value);
 
-internal sealed record AccountOpened(Guid AccountId, CustomerId Customer) : DomainEvent;
+internal sealed record AccountOpenedDomainEvent(AccountId AccountId, string Holder) : DomainEvent;
 
-internal sealed record Deposited(Guid AccountId, decimal Amount) : DomainEvent;
+internal sealed record EntryPostedDomainEvent(AccountId AccountId, decimal Amount) : DomainEvent;
+
+internal sealed record AccountActivatedDomainEvent(AccountId AccountId) : DomainEvent;
 
 internal sealed class Account : StreamAggregate
 {
+    public string Holder { get; private set; } = "";
+
     public decimal Balance { get; private set; }
 
-    public static Account Open(AccountId id, CustomerId customer)
+    public bool IsActive { get; private set; }
+
+    public static Account Open(AccountId id, string holder)
     {
         var account = new Account();
-        var opened = new AccountOpened(id.Value, customer);
+        var opened = new AccountOpenedDomainEvent(id, holder);
         account.Apply(opened);
         account.Raise(opened);
         return account;
     }
 
-    public void Deposit(decimal amount)
+    public void Post(decimal amount)
     {
-        var deposited = new Deposited(Id, amount);
-        Apply(deposited);
-        Raise(deposited);
+        var posted = new EntryPostedDomainEvent(new AccountId(Id), amount);
+        Apply(posted);
+        Raise(posted);
     }
 
-    public void Apply(AccountOpened opened) => Id = opened.AccountId;
+    public void Activate()
+    {
+        var activated = new AccountActivatedDomainEvent(new AccountId(Id));
+        Apply(activated);
+        Raise(activated);
+    }
 
-    public void Apply(Deposited deposited) => Balance += deposited.Amount;
+    public void Apply(AccountOpenedDomainEvent opened)
+    {
+        Id = opened.AccountId.Value;
+        Holder = opened.Holder;
+    }
+
+    public void Apply(EntryPostedDomainEvent posted) => Balance += posted.Amount;
+
+    public void Apply(AccountActivatedDomainEvent activated) => IsActive = true;
 }
 ```
 
 - The Stream type is `internal`; its `Create` and `Apply` methods, and a should-delete method, are `public`. Marten folds a stream through a dispatcher its source generator writes at compile time, which takes public methods only: with an internal `Apply`, loading the Stream throws Marten's invalid-projection exception ("No source-generated dispatcher found") when the Operation runs, not at build.
 - A behaviour applies its event to the Stream, then raises it; the Unit of Work appends what was raised, in order. Each event is a Domain Event, so a Notification Handler subscribes to it as to any other.
-- A Stream's identity is a `Guid`, `StreamAggregate.Id`, which the first event's `Apply` sets; a typed ID wraps it in Feature code and in `IStreams`. Marten takes no class as a stream identity, so a Stream has no typed `Id` of its own.
+- A Stream's identity is a `Guid`, `StreamAggregate.Id`, which the first event's `Apply` sets; a typed ID wraps it in Feature code, in `IStreams` and in an event, where the Kit's JSON stores its value. Marten takes no class as a stream identity, so a Stream has no typed `Id` of its own.
+- Marten stores an event under its type's name, snake-cased, without its namespace: `account_opened_domain_event` in `events.mt_events.type`. Give each event type of the Host's Stream Modules a name of its own; the sample's `DomainEvent` suffix keeps Ledger's apart from the tests' Stream Module's `AccountOpened`.
 
 ## Reading and changing Streams
 
 A command's handler, a Domain Event Handler or a Notification Handler loads and starts Streams through `IStreams`:
 
 ```csharp
-internal sealed class DepositHandler(IStreams streams) : CommandHandler<DepositCommand>
+internal sealed class OpenAccountCommandHandler(IStreams streams) : CommandHandler<OpenAccountCommand, Guid>
 {
-    public override async Task<Result> Handle(DepositCommand command, CancellationToken cancellationToken)
+    public override Task<Result<Guid>> Handle(OpenAccountCommand command, CancellationToken cancellationToken)
+    {
+        streams.Start(Account.Open(new AccountId(command.AccountId), command.Holder));
+        return Task.FromResult<Result<Guid>>(command.AccountId);
+    }
+}
+
+internal sealed class PostEntryCommandHandler(IStreams streams) : CommandHandler<PostEntryCommand>
+{
+    public override async Task<Result> Handle(PostEntryCommand command, CancellationToken cancellationToken)
     {
         if (await streams.LoadAsync<Account>(new AccountId(command.AccountId), cancellationToken) is not { } account)
         {
-            return LedgerErrors.AccountNotFound;
+            return AccountErrors.NotFound;
         }
 
-        account.Deposit(command.Amount);
+        account.Post(command.Amount);
         return Result.Success();
     }
 }
 ```
 
+A query's projection is the Stream's fold, read through the same `LoadAsync`, Marten's live aggregation of the stream's events; the Kit keeps no projected document:
+
+```csharp
+internal sealed class GetAccountQueryHandler(IStreams streams) : QueryHandler<GetAccountQuery, AccountDto>
+{
+    public override async Task<Result<AccountDto>> Handle(GetAccountQuery query, CancellationToken cancellationToken) =>
+        await streams.LoadAsync<Account>(new AccountId(query.AccountId), cancellationToken) is { } account
+            ? new AccountDto(account.Id, account.Holder, account.Balance, account.IsActive, account.Version)
+            : AccountErrors.NotFound;
+}
+```
+
+Ledger's endpoints send these through its Gateway as any Module's do ([web.md](web.md#endpoints)): `POST /ledger/accounts` answers 201 with the account's location, `POST /ledger/accounts/{accountId}/entries` 204, and `GET /ledger/accounts/{accountId}` the folded account; an account opened twice answers 409 with `UnitOfWork.ConcurrencyConflict`.
+
 - `LoadAsync` folds the stream of the Operation's tenant, null when it has none; a second load of one id in the Operation is the same instance. `Start` starts a new stream with what the Stream raised. Neither saves: the Unit of Work does, once.
 - A query may load a Stream, but a change there is refused when the query ends, as a change to a tracked aggregate is: an event raised, a Stream started, or a loaded Stream's `Id` changed. The query fails, and the command that sent it fails too, even when it catches the refusal.
 - Feature code never names Marten's `IDocumentSession`, its store or any Marten, Weasel, Wolverine or JasperFx type: the structure test fails the Module ([testing.md](testing.md)), which allows the types Marten's generator writes into the Module's assembly.
+- A Notification Handler of a Stream Module changes Streams and publishes its Integration Events in one commit with its Receipt ([messaging.md](messaging.md#publishing-from-a-notification-handler)). Ledger's activates each new account and publishes `AccountOpenedV1`, which Billing's `OpenWelcomeQuoteIntegrationEventHandler` receives with a Receipt in Billing's schema:
+
+```csharp
+internal sealed class ActivateAccountNotificationHandler(IStreams streams, IIntegrationEventPublisher events)
+    : INotificationHandler<AccountOpenedDomainEvent>
+{
+    public async Task<Result> Handle(AccountOpenedDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var account = (await streams.LoadAsync<Account>(domainEvent.AccountId, cancellationToken))!;
+        account.Activate();
+        events.Publish(
+            domainEvent.Id,
+            new AccountOpenedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.AccountId.Value, domainEvent.Holder)
+        );
+        return Result.Success();
+    }
+}
+```
+
+- A Notification Handler that appends to the Stream whose event it handles races any command that appends to it meanwhile: one of the two is the Kit's conflict. A failed delivery is retried; a client that posts an entry right after opening an account may receive 409 and send it again.
 
 ## What the Kit guarantees
 
@@ -132,4 +197,5 @@ internal sealed class DepositHandler(IStreams streams) : CommandHandler<DepositC
 ## Testing
 
 - A Stream Module's Operations go through its Gateway as any Module's do ([testing.md](testing.md)); a test reads the events from `events.mt_events` and the Module's tables from its schema.
-- The Kit's own proof is `tests/ModularMonolith.Tests/StreamTests.cs`, over the test Module `tests/ModularMonolith.Tests/Streams`: a Host of the Module alone, and the Proving Sample's Host with it beside the EF Core Modules.
+- The Kit's own proof is `tests/ModularMonolith.Tests/StreamTests.cs`, over the test Module `tests/ModularMonolith.Tests/Streams`: a Host of the Module alone, and the Proving Sample's Host with it beside the EF Core Modules and Ledger.
+- `tests/ModularMonolith.Tests/LedgerTests.cs` proves Ledger in the Proving Sample's Host: its entries append and its projection folds them through the Gateway and over HTTP, a second opening is the Kit's conflict, the command's commit holds the account's opening with the envelope of its Notification and the Notification Handler's commit the activation, its Receipt and the Integration Event's envelope, and a delivery to Billing that fails leaves no Receipt and no quote. A test reads a commit through a Marten store listener installed on the Host (`StreamCommitProbe` in its fixtures), since an envelope's row changes once it is delivered.

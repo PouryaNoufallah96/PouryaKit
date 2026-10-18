@@ -3,6 +3,7 @@ using Catalog;
 using Catalog.Infrastructure.Data.Context;
 using Catalog.Products.Features.GetProduct;
 using Inventory;
+using Ledger;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -479,7 +480,7 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     {
         var composition = Fixture.Host.Services.GetRequiredService<HostComposition>();
 
-        Assert.Equal([typeof(CatalogModule), typeof(InventoryModule), typeof(BillingModule), typeof(StubModule)], composition.Modules);
+        Assert.Equal([typeof(CatalogModule), typeof(InventoryModule), typeof(BillingModule), typeof(LedgerModule), typeof(StubModule)], composition.Modules);
         Assert.All(composition.Modules, module => Assert.Equal([module.Assembly], composition.FeatureAssembliesOf(module)));
         Assert.Empty(composition.FeatureAssembliesOf(null));
     }

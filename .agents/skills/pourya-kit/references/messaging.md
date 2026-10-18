@@ -452,7 +452,7 @@ A feature author keeps these rules, or the copies in other Modules go wrong:
 
 ## Delayed commands
 
-A command's handler, a Domain Event Handler or a Notification Handler schedules one of its own Module's commands to run later with `IDelayedCommands` (`PouryaKit.Messaging.Wolverine`). The Unit of Work writes it to the Outbox in the same commit as the change, with the time it is due, and the message store keeps it until then. It is not a recurring job: work that recurs on a cadence, with no Operation to continue, is a recurring command ([Recurring commands](#recurring-commands)). From the Proving Sample's Billing Module:
+A command's handler, a Domain Event Handler, or a Notification or Integration Event Handler, whose delivery runs in a Unit of Work, schedules one of its own Module's commands to run later with `IDelayedCommands` (`PouryaKit.Messaging.Wolverine`), as Billing's `OpenWelcomeQuoteIntegrationEventHandler` schedules a welcome quote's `ExpireQuote`. The Unit of Work writes it to the Outbox in the same commit as the change, with the time it is due, and the message store keeps it until then. It is not a recurring job: work that recurs on a cadence, with no Operation to continue, is a recurring command ([Recurring commands](#recurring-commands)). From the Proving Sample's Billing Module:
 
 ```csharp
 using PouryaKit.Cqrs;

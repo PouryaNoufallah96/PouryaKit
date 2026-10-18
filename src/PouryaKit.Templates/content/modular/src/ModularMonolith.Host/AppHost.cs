@@ -2,11 +2,13 @@ using Billing;
 using Catalog;
 using Catalog.Products.Events.Notifications;
 using Inventory;
+using Ledger;
 using PouryaKit.AI;
 using PouryaKit.Caching;
 using PouryaKit.Cqrs;
 using PouryaKit.Grpc;
 using PouryaKit.Messaging.Wolverine.EFCore;
+using PouryaKit.Messaging.Wolverine.Marten;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
 using PouryaKit.Observability;
@@ -61,6 +63,7 @@ public static class AppHost
             modules.Add<CatalogModule>();
             modules.Add<InventoryModule>();
             modules.Add<BillingModule>();
+            modules.Add<LedgerModule>();
         });
         // An activity and a duration for every command and query, around the dispatcher the Modules registered.
         builder.Services.AddPouryaKitObservability();
@@ -79,6 +82,9 @@ public static class AppHost
         // connected to Catalog's SSE endpoint on any instance of the Host, through PostgreSQL's notifications.
         builder.Services.AddPouryaKitRealtime(connectionName: "app");
         builder.UsePouryaKitWolverine(connectionName: "app");
+        // Ledger's Streams, in the Host's one Marten store on the same database, which joins the message store the EF Core
+        // Modules' registration above declared: every Stream Module's events commit with what it sends.
+        builder.UsePouryaKitMarten(connectionName: "app");
         // With ConnectionStrings:broker, what Catalog publishes also reaches other Hosts over RabbitMQ, from this Host's queue;
         // Inventory and Billing still receive it here.
         if (builder.Configuration.GetConnectionString("broker") is not null)

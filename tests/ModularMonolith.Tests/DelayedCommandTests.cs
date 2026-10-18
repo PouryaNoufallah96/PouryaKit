@@ -392,7 +392,7 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
     }
 
     private const string NoUnitOfWork =
-        "WriteDelayedNoteCommand was scheduled while no Unit of Work is active, so no commit would write it to the Outbox and it would never be stored. Schedule a command from a command's handler, a Domain Event Handler or a Notification Handler.";
+        "WriteDelayedNoteCommand was scheduled while no Unit of Work is active, so no commit would write it to the Outbox and it would never be stored. Schedule a command from a command's handler, a Domain Event Handler, or a Notification or Integration Event Handler.";
 
     // A command the scope's Host declares, scheduled as a handler would schedule it.
     private static void ScheduleNote(IServiceProvider scope) =>

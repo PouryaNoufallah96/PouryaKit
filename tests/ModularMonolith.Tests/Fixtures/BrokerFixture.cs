@@ -92,7 +92,7 @@ public sealed class BrokerFixture : IAsyncLifetime
 
 /// <summary>
 /// One test's broker vhost and databases, and the two Hosts of the Proving Sample's service composition on them:
-/// <c>ModularMonolith.Host</c> with a broker, which hosts Catalog and Billing, and <c>Inventory.Host</c>.
+/// <c>ModularMonolith.Host</c> with a broker, which hosts Catalog, Billing and Ledger, and <c>Inventory.Host</c>.
 /// </summary>
 public sealed class BrokerEnvironment(BrokerFixture fixture, string catalog, string inventory, Uri broker)
 {

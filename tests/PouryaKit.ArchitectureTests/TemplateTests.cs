@@ -174,6 +174,8 @@ public sealed class TemplateTests
             (Modular, "src/Modules/Billing/Billing/Billing.csproj", "Modules/Billing/Billing/Billing.csproj", []),
             (Modular, "src/Modules/Catalog/Catalog/Catalog.csproj", "Modules/Catalog/Catalog/Catalog.csproj", []),
             (Modular, "src/Modules/Inventory/Inventory/Inventory.csproj", "Modules/Inventory/Inventory/Inventory.csproj", []),
+            (Modular, "src/Modules/Ledger/Ledger/Ledger.csproj", "Modules/Ledger/Ledger/Ledger.csproj", []),
+            (Modular, "src/Modules/Ledger/Ledger.Contracts/Ledger.Contracts.csproj", "Modules/Ledger/Ledger.Contracts/Ledger.Contracts.csproj", []),
             (Monolith, "src/Modules/Catalog/Catalog/Catalog.csproj", "Modules/Catalog/Catalog/Catalog.csproj", ["PouryaKit.AI", "PouryaKit.Modularity"]),
             (Shared, "src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj", "Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj", []),
             (Shared, "src/ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj", "ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj", []),
