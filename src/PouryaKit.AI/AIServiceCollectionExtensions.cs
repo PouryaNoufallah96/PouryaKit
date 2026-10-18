@@ -28,10 +28,12 @@ public static class AIServiceCollectionExtensions
         /// <see cref="PouryaKitAIOptions"/> through the OpenAI client and its chat completions API, over the HTTP client
         /// named <see cref="HttpClientName"/>. The package adds no resilience to that client, and the OpenAI client retries
         /// nothing, so a Host whose defaults give every client one resilience pipeline keeps exactly that one. Each run of
-        /// the client, one <c>GetResponseAsync</c> or <c>GetStreamingResponseAsync</c> call, is given only the tools
-        /// <see cref="PouryaKitAIOptions.Tools"/> names, invokes those the model asks for, a Gateway tool as an Operation,
-        /// and calls the model at most <see cref="PouryaKitAIOptions.MaximumIterationsPerRun"/> times with tools; its
-        /// telemetry carries no message content. The Host binds the options from its configuration, as with
+        /// the client, one <c>GetResponseAsync</c> or <c>GetStreamingResponseAsync</c> call, as each agent's run makes, is
+        /// given only the tools <see cref="PouryaKitAIOptions.Tools"/> names and the declarations it never invokes, invokes
+        /// those the model asks for, a Gateway tool as an Operation, calls the model at most
+        /// <see cref="PouryaKitAIOptions.MaximumIterationsPerRun"/> times with tools, and checks each call to the model with
+        /// every <see cref="IChatGuardrail"/> the Host registers, none by default; its telemetry carries no message
+        /// content. The Host binds the options from its configuration, as with
         /// <c>Configure&lt;PouryaKitAIOptions&gt;(configuration.GetSection("PouryaKit:AI"))</c>, and fails when it starts,
         /// naming the option, when the provider is not an <see cref="AIProvider"/> value, the model is blank, the endpoint
         /// is not an absolute HTTP or HTTPS address or is missing for Azure OpenAI or Ollama, the key is missing for
@@ -86,7 +88,7 @@ public static class AIServiceCollectionExtensions
     }
 
     // A named method, which the one-client check names. Function invocation sits inside the allow-list, so it never sees
-    // a withheld tool, and outside telemetry and logging, which record each call to the model.
+    // a withheld tool, and outside the guardrails, telemetry and logging, which see each call to the model.
     private static IChatClient Create(IServiceProvider services)
     {
         var options = services.GetRequiredService<IOptions<PouryaKitAIOptions>>().Value;
@@ -99,9 +101,16 @@ public static class AIServiceCollectionExtensions
                 RetryPolicy = new ClientRetryPolicy(maxRetries: 0),
             }
         );
-        return new ChatClientBuilder(openAI.GetChatClient(options.Model).AsIChatClient())
+        var client = new ChatClientBuilder(openAI.GetChatClient(options.Model).AsIChatClient())
             .Use(inner => new ToolAllowList(inner, options.Tools))
-            .UseFunctionInvocation(configure: invocation => invocation.MaximumIterationsPerRequest = options.MaximumIterationsPerRun)
+            .UseFunctionInvocation(configure: invocation => invocation.MaximumIterationsPerRequest = options.MaximumIterationsPerRun);
+        IChatGuardrail[] guardrails = [.. services.GetServices<IChatGuardrail>()];
+        if (guardrails is not [])
+        {
+            client.Use(inner => new ChatGuardrails(inner, guardrails));
+        }
+
+        return client
             .UseOpenTelemetry(configure: telemetry => telemetry.EnableSensitiveData = false)
             .UseLogging()
             .Build(services);

@@ -10,8 +10,8 @@ namespace ModularMonolith.Tests.Fixtures;
 /// <summary>
 /// An OpenAI-compatible chat completions server in the test process, on a loopback port, standing in for a model: it
 /// records the body of every request it receives and answers each with the next reply a test scripted, repeating the
-/// last one once they run out. Deterministic, so a test chooses which tools the model asks for and sees what each call
-/// sent back.
+/// last one once they run out, as server-sent chunks when the request asks for a stream. Deterministic, so a test chooses
+/// which tools the model asks for and sees what each call sent back.
 /// </summary>
 public sealed class ChatStub : IAsyncDisposable
 {
@@ -20,6 +20,7 @@ public sealed class ChatStub : IAsyncDisposable
     private readonly List<JsonElement> _requests = [];
     private Queue<ChatReply> _replies = new([ChatReply.Text("No reply was scripted.")]);
     private ChatReply _last = ChatReply.Text("No reply was scripted.");
+    private Func<JsonElement, ChatReply>? _answer;
     private int _calls;
 
     private ChatStub(WebApplication server) => _server = server;
@@ -27,7 +28,7 @@ public sealed class ChatStub : IAsyncDisposable
     /// <summary>The address of the server's API, which a Host's chat client is pointed at.</summary>
     public Uri Endpoint => new($"{_server.Urls.Single()}/v1");
 
-    /// <summary>The body of every chat completions request received since the last <see cref="Script"/>, in order.</summary>
+    /// <summary>The body of every chat completions request received since the last <c>Script</c>, in order.</summary>
     public IReadOnlyList<JsonElement> Requests
     {
         get
@@ -60,6 +61,20 @@ public sealed class ChatStub : IAsyncDisposable
             _requests.Clear();
             _replies = new(replies);
             _last = replies[^1];
+            _answer = null;
+        }
+    }
+
+    /// <summary>
+    /// Forgets every request received and answers each next one with what <paramref name="answer"/> makes of its body, as
+    /// runs that call the model at once need: their requests arrive in no set order.
+    /// </summary>
+    public void Script(Func<JsonElement, ChatReply> answer)
+    {
+        lock (_lock)
+        {
+            _requests.Clear();
+            _answer = answer;
         }
     }
 
@@ -87,7 +102,7 @@ public sealed class ChatStub : IAsyncDisposable
         lock (_lock)
         {
             _requests.Add(body);
-            reply = _replies.TryDequeue(out var next) ? next : _last;
+            reply = _answer?.Invoke(body) ?? (_replies.TryDequeue(out var next) ? next : _last);
             call = ++_calls;
         }
 
@@ -105,12 +120,20 @@ public sealed class ChatStub : IAsyncDisposable
                 [
                     .. calls.Select((tool, index) => new JsonObject
                     {
+                        ["index"] = index,
                         ["id"] = $"call_{call}_{index}",
                         ["type"] = "function",
                         ["function"] = new JsonObject { ["name"] = tool.Name, ["arguments"] = JsonSerializer.Serialize(tool.Arguments) },
                     }),
                 ]
             );
+        }
+
+        var finish = reply.ToolCalls is { Length: > 0 } ? "tool_calls" : "stop";
+        if (body.TryGetProperty("stream", out var stream) && stream.GetBoolean())
+        {
+            await StreamAsync(http, call, message, finish);
+            return;
         }
 
         await http.Response.WriteAsJsonAsync(
@@ -120,13 +143,47 @@ public sealed class ChatStub : IAsyncDisposable
                 ["object"] = "chat.completion",
                 ["created"] = 0,
                 ["model"] = "stub",
-                ["choices"] = new JsonArray(
-                    new JsonObject { ["index"] = 0, ["message"] = message, ["finish_reason"] = reply.ToolCalls is { Length: > 0 } ? "tool_calls" : "stop" }
-                ),
+                ["choices"] = new JsonArray(new JsonObject { ["index"] = 0, ["message"] = message, ["finish_reason"] = finish }),
                 ["usage"] = new JsonObject { ["prompt_tokens"] = 1, ["completion_tokens"] = 1, ["total_tokens"] = 2 },
             },
             http.RequestAborted
         );
+    }
+
+    // A streamed answer as server-sent chunks: the text in two halves, so a run sees it arrive in parts, then the tool calls
+    // and the finish reason, then the end of the stream.
+    private static async Task StreamAsync(HttpContext http, int call, JsonObject message, string finish)
+    {
+        http.Response.ContentType = "text/event-stream";
+        var content = message["content"]?.GetValue<string>();
+        List<JsonObject> deltas = content is { Length: > 1 }
+            ? [new() { ["role"] = "assistant", ["content"] = content[..(content.Length / 2)] }, new() { ["content"] = content[(content.Length / 2)..] }]
+            : [new() { ["role"] = "assistant", ["content"] = content }];
+        if (message["tool_calls"] is JsonArray calls)
+        {
+            deltas.Add(new() { ["tool_calls"] = calls.DeepClone() });
+        }
+
+        foreach (var (delta, last) in deltas.Select((delta, index) => (delta, index == deltas.Count - 1)))
+        {
+            await WriteChunkAsync(http, call, delta, last ? finish : null);
+        }
+
+        await http.Response.WriteAsync("data: [DONE]\n\n", http.RequestAborted);
+    }
+
+    private static async Task WriteChunkAsync(HttpContext http, int call, JsonObject delta, string? finish)
+    {
+        var chunk = new JsonObject
+        {
+            ["id"] = $"chatcmpl-{call}",
+            ["object"] = "chat.completion.chunk",
+            ["created"] = 0,
+            ["model"] = "stub",
+            ["choices"] = new JsonArray(new JsonObject { ["index"] = 0, ["delta"] = delta, ["finish_reason"] = finish }),
+        };
+        await http.Response.WriteAsync($"data: {chunk.ToJsonString()}\n\n", http.RequestAborted);
+        await http.Response.Body.FlushAsync(http.RequestAborted);
     }
 
     public async ValueTask DisposeAsync() => await _server.DisposeAsync();
