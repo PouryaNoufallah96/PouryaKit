@@ -21,7 +21,8 @@ public static class MessageStoreHostApplicationBuilderExtensions
         /// <see cref="PouryaKitMessageStoreOptions"/>, checked when the Host starts, set its durability mode and inbox
         /// stale time; the Integration Events an Operation publishes and the commands it schedules wait in its scope for
         /// its Unit of Work, which writes them with <see cref="OutboxWriter"/>. Throws when the configuration has no such
-        /// connection string or leaves it blank. Everything <c>UsePouryaKitWolverine()</c> does applies too, and
+        /// connection string or leaves it blank, and when a store package's registration already declared the store: a
+        /// Host declares one. Everything <c>UsePouryaKitWolverine()</c> does applies too, and
         /// <paramref name="configure"/> adds Host-specific Wolverine configuration, as it does there. For a store
         /// package's registration, such as <c>UsePouryaKitWolverine(connectionName)</c> of
         /// <c>PouryaKit.Messaging.Wolverine.EFCore</c>, which also registers its Outbox and Receipts; a Host calls that one.
@@ -43,6 +44,14 @@ public static class MessageStoreHostApplicationBuilderExtensions
             {
                 throw new InvalidOperationException(
                     $"The configuration has no connection string named {connectionName} for the message store, or leaves it blank. Set ConnectionStrings:{connectionName}."
+                );
+            }
+
+            // Wolverine's UseWolverine runs once per Host, so a second store package's registration would fail on it.
+            if (builder.Services.Any(descriptor => descriptor.ServiceType == typeof(OutboxWriter)))
+            {
+                throw new InvalidOperationException(
+                    "The Host's message store is already declared by a store package's registration, such as UsePouryaKitMarten of PouryaKit.Messaging.Wolverine.Marten, which declares it when it comes first. Declare it once: in a Host of EF Core and Stream Modules, call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore before UsePouryaKitMarten, which then joins that store."
                 );
             }
 

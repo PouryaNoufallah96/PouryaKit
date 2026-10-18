@@ -281,7 +281,7 @@ The decision above stands. `PouryaKit.Persistence.Marten` and `PouryaKit.Messagi
   from Persistence.EFCore to Persistence, so both Units of Work fail a conflict with the one Error.
 - **One message store.** `UsePouryaKitMarten(connectionName, schema)` registers the Host's one Marten store, integrated
   with the message store in `schema`. In a Host with EF Core Modules it joins the store `UsePouryaKitWolverine(connectionName)`
-  of the EF package declared, which comes first, since Wolverine's `UseWolverine` runs once; in a Host of Stream Modules
+  of the EF package declared, which comes first, since Wolverine's `UseWolverine` runs once, and `UsePouryaKitMessageStore` refuses a second declaration, naming that order; in a Host of Stream Modules
   alone it declares the store itself through `UsePouryaKitMessageStore` and `PersistMessagesWithPostgresql`, which
   WolverineFx.Marten brings, as the note on the third #121 row foresaw. The Marten store's connection joins the EF
   package's `MessageStoreDatabaseCheck` as an `OutboxConnection` of Messaging.Wolverine; in a Host of Stream Modules

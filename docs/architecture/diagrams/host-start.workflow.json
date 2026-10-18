@@ -123,8 +123,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/MessageStoreHostApplicationBuilderExtensions.cs",
-          "line": 39,
-          "end_line": 47,
+          "line": 40,
+          "end_line": 48,
           "label": "store connection string checked"
         },
         {

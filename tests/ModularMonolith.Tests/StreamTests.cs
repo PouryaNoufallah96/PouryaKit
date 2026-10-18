@@ -12,6 +12,8 @@ using Npgsql;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Messaging.Wolverine.EFCore;
+using PouryaKit.Messaging.Wolverine.Marten;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence;
 using PouryaKit.Testing;
@@ -68,6 +70,22 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
             refused.Message,
             StringComparison.Ordinal
         );
+    }
+
+    // The EF package's registration declares the store and the Marten one joins it; in the other order Wolverine would be
+    // registered twice.
+    [Fact]
+    public void A_host_that_registers_its_marten_store_before_the_ef_message_store_fails_naming_the_order()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Development", $"--ConnectionStrings:app={_database}"]);
+        builder.UsePouryaKitMarten(connectionName: "app");
+
+        var refused = Assert.Throws<InvalidOperationException>(() =>
+        {
+            builder.UsePouryaKitWolverine(connectionName: "app");
+        });
+
+        Assert.Contains("call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore before UsePouryaKitMarten", refused.Message, StringComparison.Ordinal);
     }
 
     [Fact]
