@@ -102,6 +102,11 @@ internal static class PackageGraph
             ["PouryaKit.Domain"],
             ["CsvHelper", "DocumentFormat.OpenXml", "PDFsharp-MigraDoc", "System.Security.Cryptography.Pkcs"]
         ),
+        // The OpenAI client reaches all three providers (spec #115's A1); Modularity is for the Gateway tool (#135).
+        ["PouryaKit.AI"] = new(
+            ["PouryaKit.Cqrs", "PouryaKit.Modularity"],
+            ["Microsoft.Extensions.AI", "Microsoft.Extensions.AI.OpenAI", "Microsoft.Extensions.Http", "Microsoft.Extensions.Options"]
+        ),
     };
 
     // What must never arrive in a package's closure, by package id prefix or project name. Every package but Testing also
@@ -137,6 +142,9 @@ internal static class PackageGraph
         // The libraries of spec #115's E1 are the one renderer: QuestPDF and ClosedXML fail the licence test, and no second
         // file library arrives beside them, a storage SDK included: the renderer returns bytes and stores nothing (#129).
         ["PouryaKit.Reporting"] = ["QuestPDF", "ClosedXML", "PouryaKit.Storage", "AWSSDK", "Azure"],
+        // One client for three providers, OllamaSharp and the Azure client dropped (A1), and no resilience of its own:
+        // the provider's HTTP client keeps the Host's one pipeline (#135).
+        ["PouryaKit.AI"] = ["OllamaSharp", "Azure.AI.OpenAI", "Microsoft.Extensions.Http.Resilience", "Microsoft.Extensions.Resilience", "Polly"],
     };
 
     // Core and Domain, and Messaging and the Email contract (Domain only), bring no package at all; nor do the templates.

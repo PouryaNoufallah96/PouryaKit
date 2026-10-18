@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "6d37b9c209e7972f7fc0bd1dd33ea9f51159250b",
+      "revision": "fb45dd30a75df82868b43a81ec8da2fef6e67597",
       "link_mode": "web"
     }
   },
@@ -56,20 +56,20 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 79,
-          "end_line": 90,
+          "line": 80,
+          "end_line": 91,
           "label": "composes the Modules"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 36,
-          "end_line": 43,
+          "line": 37,
+          "end_line": 44,
           "label": "the broker and its service name"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
           "line": 5,
-          "end_line": 29,
+          "end_line": 30,
           "label": "its references"
         }
       ]
@@ -96,8 +96,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 130,
-          "end_line": 141,
+          "line": 132,
+          "end_line": 143,
           "label": "/alive always; /health in Development"
         },
         {
@@ -199,7 +199,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj",
           "line": 8,
-          "end_line": 21,
+          "end_line": 22,
           "label": "its Contracts and Kit packages"
         }
       ]
@@ -249,7 +249,7 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
           "line": 16,
-          "end_line": 47,
+          "end_line": 48,
           "label": "the service defaults recipes"
         },
         {
@@ -260,8 +260,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 87,
-          "end_line": 95,
+          "line": 89,
+          "end_line": 97,
           "label": "liveness and readiness checks"
         }
       ]

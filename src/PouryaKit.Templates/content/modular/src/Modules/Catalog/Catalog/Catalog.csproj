@@ -3,6 +3,7 @@
     <ProjectReference Include="..\Catalog.Contracts\Catalog.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="PouryaKit.AI" />
     <PackageReference Include="PouryaKit.Caching" />
     <PackageReference Include="PouryaKit.Grpc" />
     <PackageReference Include="PouryaKit.Messaging.Wolverine.EFCore" />

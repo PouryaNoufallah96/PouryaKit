@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/PouryaKit.AI/PouryaKit.AI.csproj" />
     <Project Path="src/PouryaKit.Aspire/PouryaKit.Aspire.csproj" />
     <Project Path="src/PouryaKit.Caching/PouryaKit.Caching.csproj" />
     <Project Path="src/PouryaKit.Core/PouryaKit.Core.csproj" />

@@ -95,5 +95,9 @@ The worktree base and the one-git-command rule are in the role file; these are w
 
 - **Spawned with the main checkout as cwd and no worktree**: `EnterWorktree` refuses to create one ("a subagent with a cwd override") and to enter one ("the repository root, not an isolated worktree"). `git -C <main checkout> worktree add -b ticket-<n> <main checkout>/.claude/worktrees/ticket-<n> <tip>` works; then every command takes absolute paths (`cd <worktree> && …` per call passes) and the base check runs as the role file says.
 
+## The integration branch moved before the first commit (#135, 2026-10-18)
+
+- With nothing committed yet and the tip touching files I had changed (a diagram source, the architecture document, `MEMORY.md`), `git stash push`, `git merge --ff-only <branch>`, `git stash pop` (three separate commands) auto-merged every file; the base became the new tip. Do not rerun a range remapper afterwards: the popped sources already hold the moved ranges, and the remapper reads them as HEAD's.
+
 **Why:** each cost a retry in tickets #4 to #63 or the retro packages.
 **How to apply:** when a shell command is refused, when the integration branch moves, when a brief's scope misses a file, or when touching skills, settings, the check script or this memory. Related: [[merge-ci-and-workflow-tooling-facts]], [[dotnet-and-test-conventions]], [[templates-packaging-and-publication-facts]].

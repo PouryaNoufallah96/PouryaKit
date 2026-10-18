@@ -118,6 +118,16 @@ public sealed class PackageGraphTests
                 }
             )
         );
+        // One client for every provider, and the provider's HTTP client with the Host's pipeline alone (#135).
+        var ai = Restored("PouryaKit.AI");
+        Assert.Equal(
+            [
+                "PouryaKit.AI's closure holds Azure.AI.OpenAI, which section C keeps out of it.",
+                "PouryaKit.AI's closure holds OllamaSharp, which section C keeps out of it.",
+                "PouryaKit.AI's closure holds Polly.Core, which section C keeps out of it.",
+            ],
+            PackageGraph.Violations(ai with { Packages = [.. ai.Packages, Arrived("OllamaSharp"), Arrived("Azure.AI.OpenAI"), Arrived("Polly.Core")] })
+        );
         var reverseProxy = Restored("PouryaKit.ReverseProxy");
         Assert.Equal(
             ["PouryaKit.ReverseProxy's closure holds PouryaKit.Cqrs, which section C keeps out of it."],

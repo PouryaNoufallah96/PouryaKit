@@ -2,6 +2,7 @@ using Billing;
 using Catalog;
 using Catalog.Products.Events.Notifications;
 using Inventory;
+using PouryaKit.AI;
 using PouryaKit.Caching;
 using PouryaKit.Cqrs;
 using PouryaKit.Email.MailKit;
@@ -103,6 +104,10 @@ public static class ModularMonolithHost
         // PouryaKit:Email; appsettings.json names a local Papercut, which keeps every mail for a developer to read.
         builder.Services.AddPouryaKitMailKit();
         builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSection("PouryaKit:Email"));
+        // Catalog's agent asks the model of PouryaKit:AI through the Host's one chat client; appsettings.json names a local
+        // Ollama, and GetProduct as the one tool a run may be given.
+        builder.Services.AddPouryaKitAI();
+        builder.Services.Configure<PouryaKitAIOptions>(builder.Configuration.GetSection("PouryaKit:AI"));
         // What a Notification Handler pushes through IRealtimePublisher, such as Catalog's new products, reaches the
         // browsers connected to Catalog's SSE endpoint on any instance of the Host, through PostgreSQL's notifications in
         // the database every Module stores in.

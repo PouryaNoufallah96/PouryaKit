@@ -24,6 +24,7 @@ public static class Extensions
     private const string LiveTag = "live";
     private const string OtlpEndpoint = "OTEL_EXPORTER_OTLP_ENDPOINT";
     private const string NpgsqlSource = "Npgsql";
+    private const string ChatClientSource = "Experimental.Microsoft.Extensions.AI";
 
     extension<TBuilder>(TBuilder builder)
         where TBuilder : IHostApplicationBuilder
@@ -46,10 +47,11 @@ public static class Extensions
             return builder;
         }
 
-        // The Kit's source and meter (OperationTelemetry.SourceName) beside ASP.NET Core, HttpClient and the runtime, and
+        // The Kit's source and meter (OperationTelemetry.SourceName) beside ASP.NET Core, HttpClient and the runtime,
         // Npgsql's own source, a span for each database command under the Operation that sends it (what AddNpgsql() of
-        // Npgsql.OpenTelemetry adds, without that package); add "Wolverine" to the sources to export Wolverine's spans
-        // too. OTLP export only when the endpoint is set.
+        // Npgsql.OpenTelemetry adds, without that package), and Microsoft.Extensions.AI's source and meter, a span and a
+        // duration for each call PouryaKit.AI's chat client makes to its model; add "Wolverine" to the sources to export
+        // Wolverine's spans too. OTLP export only when the endpoint is set.
         public TBuilder ConfigureOpenTelemetry()
         {
             builder.Logging.AddOpenTelemetry(logging =>
@@ -61,14 +63,14 @@ public static class Extensions
                 .Services.AddOpenTelemetry()
                 .WithMetrics(metrics =>
                     metrics
-                        .AddMeter(OperationTelemetry.SourceName)
+                        .AddMeter(OperationTelemetry.SourceName, ChatClientSource)
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddRuntimeInstrumentation()
                 )
                 .WithTracing(tracing =>
                     tracing
-                        .AddSource(builder.Environment.ApplicationName, OperationTelemetry.SourceName, NpgsqlSource)
+                        .AddSource(builder.Environment.ApplicationName, OperationTelemetry.SourceName, NpgsqlSource, ChatClientSource)
                         .AddAspNetCoreInstrumentation(aspNetCore =>
                             aspNetCore.Filter = context =>
                                 !context.Request.Path.StartsWithSegments(HealthEndpointPath)

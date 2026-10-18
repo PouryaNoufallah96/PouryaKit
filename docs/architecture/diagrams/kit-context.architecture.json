@@ -68,8 +68,8 @@
         },
         {
           "path": "GLOSSARY.md",
-          "line": 54,
-          "end_line": 56,
+          "line": 58,
+          "end_line": 60,
           "label": "forwards by route; runs no Operation"
         }
       ]
@@ -90,8 +90,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 48,
-          "end_line": 55,
+          "line": 49,
+          "end_line": 56,
           "label": "bearer JWT; authenticated by default"
         },
         {
@@ -118,20 +118,20 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 79,
-          "end_line": 90,
+          "line": 80,
+          "end_line": 91,
           "label": "composes the Modules; Inventory w/o broker"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 110,
-          "end_line": 114,
+          "line": 115,
+          "end_line": 119,
           "label": "message store; RabbitMQ with a broker"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
           "line": 15,
-          "end_line": 29,
+          "end_line": 30,
           "label": "references the Kit's projects"
         }
       ]
@@ -164,8 +164,8 @@
         },
         {
           "path": "GLOSSARY.md",
-          "line": 134,
-          "end_line": 136,
+          "line": 138,
+          "end_line": 140,
           "label": "Service name"
         }
       ]
@@ -192,8 +192,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 130,
-          "end_line": 141,
+          "line": 132,
+          "end_line": 143,
           "label": "/alive always; /health in Development"
         },
         {
@@ -220,20 +220,20 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 60,
-          "end_line": 82,
+          "line": 62,
+          "end_line": 84,
           "label": "Kit source and meter; OTLP when set"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 100,
-          "end_line": 117,
+          "line": 102,
+          "end_line": 119,
           "label": "Serilog's OTLP sink when set"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 91,
-          "end_line": 93,
+          "line": 92,
+          "end_line": 94,
           "label": "the Kit exports nothing"
         }
       ]
@@ -321,14 +321,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 94,
-          "end_line": 100,
+          "line": 95,
+          "end_line": 101,
           "label": "only when ConnectionStrings:cache is set"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 127,
-          "end_line": 128,
+          "line": 132,
+          "end_line": 133,
           "label": "no Kit package references Redis"
         }
       ]
@@ -349,14 +349,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 102,
-          "end_line": 105,
+          "line": 103,
+          "end_line": 106,
           "label": "MailKit, options from PouryaKit:Email"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/appsettings.json",
-          "line": 6,
-          "end_line": 11,
+          "line": 12,
+          "end_line": 17,
           "label": "localhost:2525, no TLS, the sender"
         },
         {
@@ -432,7 +432,7 @@
       "id": "kit",
       "type": "backend",
       "label": "PouryaKit packages",
-      "sublabel": "31 libraries and the templates",
+      "sublabel": "32 libraries and the templates",
       "pos": [
         700,
         650
@@ -445,14 +445,42 @@
         {
           "path": "scripts/packaging/inventory.json",
           "line": 3,
-          "end_line": 34,
-          "label": "the 32 packages"
+          "end_line": 35,
+          "label": "the 33 packages"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 105,
+          "end_line": 110,
           "label": "their allowed references"
+        }
+      ]
+    },
+    {
+      "id": "model",
+      "type": "external",
+      "label": "Model provider",
+      "sublabel": "Ollama in the sample; OpenAI, Azure",
+      "pos": [
+        1070,
+        470
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 107,
+          "end_line": 110,
+          "label": "one chat client, options from PouryaKit:AI"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/appsettings.json",
+          "line": 6,
+          "end_line": 11,
+          "label": "local Ollama, GetProduct the one tool"
         }
       ]
     }
@@ -577,6 +605,14 @@
       "label": "published to",
       "fromSide": "left",
       "toSide": "right"
+    },
+    {
+      "id": "mm-model",
+      "from": "mmhost",
+      "to": "model",
+      "label": "chat completions",
+      "fromSide": "bottom",
+      "toSide": "top"
     }
   ],
   "cards": [
@@ -595,7 +631,8 @@
       "items": [
         "RabbitMQ only with ConnectionStrings:broker: one durable queue per kind of Host, named by its service name.",
         "Redis only with ConnectionStrings:cache; no Kit package references Redis.",
-        "OTLP only through the ServiceDefaults recipes, when OTEL_EXPORTER_OTLP_ENDPOINT is set; PouryaKit.Observability exports nothing, and ModularMonolith.Host composes no exporter."
+        "OTLP only through the ServiceDefaults recipes, when OTEL_EXPORTER_OTLP_ENDPOINT is set; PouryaKit.Observability exports nothing, and ModularMonolith.Host composes no exporter.",
+        "A model provider for Catalog's agent: Ollama's OpenAI-compatible API at localhost:11434 in the sample's settings, or OpenAI or Azure OpenAI through the same client; the provider's HTTP client keeps the Host's resilience pipeline."
       ]
     },
     {

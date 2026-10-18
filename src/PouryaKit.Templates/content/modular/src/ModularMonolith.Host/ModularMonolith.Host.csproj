@@ -3,6 +3,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
     <!-- The application's optional distributed cache for HybridCache; a Kit package never references Redis. -->
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+    <PackageReference Include="PouryaKit.AI" />
     <PackageReference Include="PouryaKit.Caching" />
     <PackageReference Include="PouryaKit.Messaging.Wolverine.EFCore" />
     <PackageReference Include="PouryaKit.Messaging.Wolverine.RabbitMq" />

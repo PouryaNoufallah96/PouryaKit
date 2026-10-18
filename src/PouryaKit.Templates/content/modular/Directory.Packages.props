@@ -5,6 +5,7 @@
     <PouryaKitVersion>0.0.0-pouryakit</PouryaKitVersion>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="PouryaKit.AI" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Caching" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Grpc" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Messaging.Wolverine.EFCore" Version="$(PouryaKitVersion)" />

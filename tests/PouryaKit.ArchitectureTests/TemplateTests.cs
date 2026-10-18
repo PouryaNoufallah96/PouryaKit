@@ -8,9 +8,17 @@ namespace PouryaKit.ArchitectureTests;
 // from the packed package is scripts/packaging/validate.py's.
 public sealed class TemplateTests
 {
-    // The excluded sample file the monolith needs nothing in place of: ICatalogProducts answers other Modules, and the
-    // monolith has none.
-    private static readonly string[] Unreplaced = ["src/Modules/Catalog/Catalog/Products/Features/GetProduct/CatalogProducts.cs"];
+    // The excluded sample files the monolith needs nothing in place of: ICatalogProducts answers other Modules, and the
+    // monolith has none; the agent's tool runs through Catalog's Gateway, and PouryaKit.AI's Gateway tool needs
+    // Modularity (#135).
+    private static readonly string[] Unreplaced =
+    [
+        "src/Modules/Catalog/Catalog/Products/Features/GetProduct/CatalogProducts.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQuery.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQueryHandler.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQueryValidator.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/ProductToFind.cs",
+    ];
 
     [Fact]
     public void The_template_content_holds_no_copy_of_a_proving_sample_file()
@@ -165,7 +173,7 @@ public sealed class TemplateTests
             (Modular, "src/Modules/Billing/Billing/Billing.csproj", "Modules/Billing/Billing/Billing.csproj", []),
             (Modular, "src/Modules/Catalog/Catalog/Catalog.csproj", "Modules/Catalog/Catalog/Catalog.csproj", []),
             (Modular, "src/Modules/Inventory/Inventory/Inventory.csproj", "Modules/Inventory/Inventory/Inventory.csproj", []),
-            (Monolith, "src/Modules/Catalog/Catalog/Catalog.csproj", "Modules/Catalog/Catalog/Catalog.csproj", ["PouryaKit.Modularity"]),
+            (Monolith, "src/Modules/Catalog/Catalog/Catalog.csproj", "Modules/Catalog/Catalog/Catalog.csproj", ["PouryaKit.AI", "PouryaKit.Modularity"]),
             (Shared, "src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj", "Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj", []),
             (Shared, "src/ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj", "ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj", []),
         ];
