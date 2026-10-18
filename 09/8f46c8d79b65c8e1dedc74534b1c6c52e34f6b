@@ -1,0 +1,63 @@
+src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs
+  s_b9a8adfb056e1c::t_5e7a0ed74d0a42 20-23
+  s_b9a8adfb056e1c::t_e4f2ade0ddfe3e 19
+  s_b9a8adfb056e1c::t_36ba478392c41d 24
+  s_68b9e2588464dc::t_e2b75daf074ab6 73,76,80-85
+src/PouryaKit.Messaging.Wolverine/OutboxConnection.cs
+  s_b9a8adfb056e1c::t_c54b8129fc2ad2 4-10,12
+src/PouryaKit.Persistence.Marten/MartenHostApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_10e5df7bbcde56 23
+  s_b9a8adfb056e1c::t_f03188ef50bd48 24-26
+.agents/skills/pourya-kit/references/stream.md
+  s_b9a8adfb056e1c::t_f7167f7a86e867 44,123
+.agents/skills/pourya-kit/references/testing.md
+  s_b9a8adfb056e1c::t_80cdc36d89827e 194-196
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_38e3c16ea1d7c0 2302,2317
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_b9a8adfb056e1c::t_d0487ed1b6f447 236-237,285-290
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_5a38c737e40736 445,549,684-685
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_da2650d0337f09 303
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_221cd39f03cee0 460
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_e564e5fae63b6e 289
+docs/provenance/PouryaKit.Messaging.Wolverine.Marten.md
+  s_b9a8adfb056e1c::t_9cbe8b127ea432 11
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_3aa9383775b5f7 60
+src/PouryaKit.Messaging.Wolverine.Marten/WolverineMartenHostApplicationBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_e003cb388ff3d8 7,29-35,43-44,47,78-84
+tests/ModularMonolith.Tests/Fixtures/StreamFixture.cs
+  s_b9a8adfb056e1c::t_a0d4a99be21276 36-40,42
+tests/ModularMonolith.Tests/StreamHost/StreamHosts.cs
+  s_b9a8adfb056e1c::t_f4363c909deb12 17-18,20,26-30,34-38
+tests/ModularMonolith.Tests/StreamTests.cs
+  s_b9a8adfb056e1c::t_c491ed50de9834 6,52,54,56-60,63-68,70-71,73-77,80,102-114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "098f46c8d79b65c8e1dedc74534b1c6c52e34f6b",
+  "prompts": {},
+  "sessions": {
+    "s_68b9e2588464dc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a38316e3c65472b7a",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
