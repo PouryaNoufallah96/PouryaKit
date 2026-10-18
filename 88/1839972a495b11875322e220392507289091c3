@@ -1,0 +1,55 @@
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_55ea7bbf0de711 2282
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_b9a8adfb056e1c::t_2cb3efae0b2889 4985
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_b9a8adfb056e1c::t_2ee4abd67719b8 10
+docs/architecture/diagrams/delivery.html
+  s_b9a8adfb056e1c::t_7225d696bcb9f0 4985
+docs/architecture/diagrams/delivery.sequence.json
+  s_b9a8adfb056e1c::t_200da36698ec5e 18
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_41987f1607920b 10
+docs/architecture/diagrams/execution-core.html
+  s_b9a8adfb056e1c::t_203d09ad5e3c92 4985
+docs/architecture/diagrams/host-start.html
+  s_b9a8adfb056e1c::t_677ac152d6f04c 4985
+docs/architecture/diagrams/host-start.workflow.json
+  s_b9a8adfb056e1c::t_01bbc335c864f1 11
+docs/architecture/diagrams/http-command.html
+  s_b9a8adfb056e1c::t_016940cf3332d0 4985
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_15c8c94a2b7dbe 15
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_44a0ebf2c334db 10
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_636168daae79fa 4985,5235-5236,5243
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_f214247542f75e 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_8133e9bdc0faaf 4985,4990,5059-5070,5210-5234,5277-5282,5291-5298,5300-5302,5304-5306,5308-5310,5510
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_a6b3f310a6480f 10
+docs/architecture/diagrams/module-boundaries.html
+  s_b9a8adfb056e1c::t_5712f1402f7c8b 4985
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_c5570e13dc36e7 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b9a8adfb056e1c::t_76bb707f8f628b 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "881839972a495b11875322e220392507289091c3",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
