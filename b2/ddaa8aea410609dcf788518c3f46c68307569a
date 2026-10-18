@@ -1,0 +1,96 @@
+src/PouryaKit.Reporting/Pdf/PdfReport.cs
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-116
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 24
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 4985,5235-5236,5243
+src/PouryaKit.Reporting/ReportLayout.cs
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-79
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 100-104,137-139
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 22
+scripts/packaging/consumers/PouryaKit.Reporting.cs
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-14
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 24
+src/PouryaKit.Reporting/Fonts/RobotoFontResolver.cs
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-31
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 10,360
+src/PouryaKit.Reporting/Csv/CsvReport.cs
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-55
+src/PouryaKit.Reporting/IReportRenderer.cs
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-17
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 10,22,54,81,108,142,175,203,236,269,303,331,359,392,412-413,425,447,466-467,479,512,546,579,612,646,679,712,745,766-767,771-804,1015-1022,1048-1050
+docs/provenance/PouryaKit.Reporting.md
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-29
+src/PouryaKit.Reporting/ReportRenderer.cs
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-61
+src/PouryaKit.Reporting/Spreadsheet/SpreadsheetReport.cs
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-72
+Directory.Packages.props
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 18,20,56
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 10,290-291
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 3,44,321-333,676
+.claude/rules/kit-code.md
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 33
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 288,369,895
+src/PouryaKit.Reporting/ReportFormat.cs
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-20
+THIRD-PARTY-NOTICES.md
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 5,66-275
+  s_b9a8adfb056e1c::t_b6f08b2271f997 276
+src/PouryaKit.Reporting/Fonts/LICENSE.txt
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-201
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 4985
+docs/architecture/diagrams/execution-core.html
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 4985,4990,5020-5021,5024-5025,5028-5029,5032-5033,5036-5037,5040-5041,5044-5045,5048-5049,5052-5053,5056-5057,5060-5061,5064-5065,5068-5069,5072-5073,5076-5077,5080-5081,5084-5085,5088-5089,5092-5093,5096-5097,5100-5101,5104-5105,5108-5109,5112-5113,5116-5117,5120-5121,5124-5125,5128-5129,5132-5133,5136-5141,5147-5149,5152-5153,5158-5160,5163-5164,5169-5171,5174-5175,5180-5182,5185-5186,5191-5193,5196-5197,5202-5204,5207-5208,5213-5215,5219-5220,5225-5227,5231-5232,5237-5239,5242-5243,5248-5250,5254-5255,5260-5262,5268-5269,5274-5276,5282-5283,5288-5290,5293-5294,5299-5301,5305-5306,5311-5313,5316-5317,5322-5324,5327-5328,5333-5335,5339-5340,5345-5347,5350-5351,5356-5358,5361-5362,5367-5369,5372-5373,5378-5380,5383-5384,5389-5391,5397-5398,5403-5405,5411-5412,5417-5419,5422-5434,5439-5440,5443-5444,5466-5467,5470-5471,5474-5475,5483-5488,5496-5499,5501-5503,5505-5507,5509-5511,5513-5515,5517-5519,5727
+.claude/agent-memory/kit-implementer/pdf-and-file-rendering-facts.md
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-24
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 22,64
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 104-120
+README.md
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 32
+docs/architecture/diagrams/module-boundaries.html
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 4985
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 10,330-331,435,448-449,454
+src/PouryaKit.Reporting/PouryaKit.Reporting.csproj
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-19
+src/PouryaKit.Reporting/ReportErrors.cs
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-24
+tests/PouryaKit.Reporting.Tests/PouryaKit.Reporting.Tests.csproj
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-15
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 2278-2295
+tests/PouryaKit.Reporting.Tests/ReportRendererTests.cs
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-188
+.agents/skills/pourya-kit/references/reporting.md
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 1-116
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_705a6b36cf32d8 3,52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b2ddaa8aea410609dcf788518c3f46c68307569a",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
