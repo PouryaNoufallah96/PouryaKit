@@ -20,8 +20,8 @@ namespace PouryaKit.Grpc;
 /// rather than a composition check. Kestrel keeps the listeners set in code (<c>ConfigureKestrel</c> with
 /// <c>Listen</c> or <c>ListenLocalhost</c>) to itself, and chooses its default <c>http://localhost:5000</c> and a port 0
 /// only as it binds, so once every hosted service has started, and only when the Host's server is Kestrel, it compares
-/// the addresses Kestrel bound, which cover all three; a Host refused then had already bound them, and its start
-/// fails. A Host without a server, or with another server, gets only the first comparison. An address matches when its
+/// the addresses Kestrel bound, which cover all three; a Host refused then had already bound them and started its
+/// hosted services, so it is stopped before its start fails. A Host without a server, or with another server, gets only the first comparison. An address matches when its
 /// scheme and port are the listening URL's and its host is the same, or is loopback while the URL is loopback or listens
 /// on every address, as Kestrel binds every host that is neither <c>localhost</c> nor an IP address. Another host on
 /// the same port, such as a peer container on the 8080 every ASP.NET Core image listens on, is another Host.
@@ -30,18 +30,24 @@ internal sealed class GrpcLoopbackCheck(IServiceProvider root) : IStartupCheck, 
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services) => Refusals(ListeningUrls(services), services);
 
-    public Task StartedAsync(CancellationToken cancellationToken)
+    public async Task StartedAsync(CancellationToken cancellationToken)
     {
         // Kestrel's server type is internal; its assembly is the one of its public options. Any other server, the test
         // server included, holds only the configured URLs, which the startup check compared.
         var server = root.GetService<IServer>();
         if (server?.GetType().Assembly != typeof(KestrelServerOptions).Assembly || server.Features.Get<IServerAddressesFeature>() is not { } bound)
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        List<string> refused = [.. Refusals(bound.Addresses, root).Select(refusal => $"{refusal} The server had already bound it, so the Host listened before its start failed.")];
-        return refused.Count == 0 ? Task.CompletedTask : throw new InvalidOperationException(string.Join(Environment.NewLine, refused));
+        List<string> refused = [.. Refusals(bound.Addresses, root).Select(refusal => $"{refusal} The server had already bound it, so the Host listened, and stopped, before its start failed.")];
+        if (refused.Count > 0)
+        {
+            // The Host rethrows this without stopping what started, and StopApplication alone stops nothing for a caller
+            // that never waits for the shutdown, so the Host is stopped here: the server unbinds, every hosted service stops.
+            await root.GetRequiredService<IHost>().StopAsync(CancellationToken.None);
+            throw new InvalidOperationException(string.Join(Environment.NewLine, refused));
+        }
     }
 
     public Task StartingAsync(CancellationToken cancellationToken) => Task.CompletedTask;

@@ -212,7 +212,7 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
 
     // Ticket #159: Kestrel keeps a listener set in code to itself until it binds, so the check compares what it bound.
     [Fact]
-    public async Task A_client_addressed_at_a_listener_kestrel_binds_from_code_fails_the_start_once_bound()
+    public async Task A_client_addressed_at_a_listener_kestrel_binds_from_code_stops_the_host_and_fails_its_start()
     {
         var port = FreePort();
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
@@ -227,12 +227,17 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             }
         );
 
+        // Caught, as a caller that goes on would: the Host it leaves behind has stopped, and nothing listens on the port.
         var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        using var probe = new TcpClient();
+        var connecting = await Record.ExceptionAsync(() => probe.ConnectAsync(IPAddress.Loopback, port, TestContext.Current.CancellationToken).AsTask());
 
         Assert.Equal(
-            $"The gRPC client {Client} is addressed at http://localhost:{port}/, one of this Host's own listening URLs (http://localhost:{port}). A call between Modules of one Host goes through the Gateway, never a loopback; address the client at another Host. The server had already bound it, so the Host listened before its start failed.",
+            $"The gRPC client {Client} is addressed at http://localhost:{port}/, one of this Host's own listening URLs (http://localhost:{port}). A call between Modules of one Host goes through the Gateway, never a loopback; address the client at another Host. The server had already bound it, so the Host listened, and stopped, before its start failed.",
             refused.Message
         );
+        Assert.True(host.Lifetime.ApplicationStopped.IsCancellationRequested);
+        Assert.IsType<SocketException>(connecting);
     }
 
     // Ticket #159: Kestrel binds no default beside a listener set in code, so a client at the default calls another process.
