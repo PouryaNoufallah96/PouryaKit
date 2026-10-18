@@ -155,6 +155,10 @@ _Avoid_: Queue, message table
 An aggregate whose stored state is the ordered events it has appended, loaded by folding them; the Kit's second write model. Planned for Wave 3, not built yet.
 _Avoid_: Event-sourced entity, event stream aggregate
 
+**Saga**:
+A Module's long-running reaction across Integration Events that keeps its own state between steps: started and advanced by Integration Events, timed out by its own timeout messages, and the one reaction that runs outside an Operation, each step with no Operation Context, claimed once in its own transaction, and emitting Integration Events under its system Actor (ADR 0013). Planned for Wave 3, not built yet.
+_Avoid_: Process manager, workflow, orchestration
+
 **Page**:
 One bounded slice of a read result, with its position and the total count.
 _Avoid_: Paged list, list result, page list

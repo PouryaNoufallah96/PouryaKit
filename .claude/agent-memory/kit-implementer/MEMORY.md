@@ -19,3 +19,4 @@
 - [gRPC](grpc-facts.md) — #134: the metapackage and Grpc.Tools, the unknown-service catch-all vs 405/415, gRPC over TestServer, convention order, per-call context, loopback check
 - [Aspire AppHost](aspire-apphost-facts.md) — #130: SDK implicit package and CPM, ASPIRE010, MessagePack and Fractions floors, testing model, passwords on volumes
 - [Realtime and SSE](realtime-and-sse-facts.md) — #133: pg_notify's bound, SSE headers and flushing, SSE over TestServer, killing the listener, JSON options, the scoped publish marker, effective connection strings, ripples
+- [Saga spike](saga-spike-facts.md) — #141 (2026-10-18): pre-built handler shadowing, the wrapper input, route sources that end the search, the storage helper hook, Wolverine's own logical dedup
