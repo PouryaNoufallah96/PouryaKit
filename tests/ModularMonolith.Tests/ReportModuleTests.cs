@@ -41,10 +41,12 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
         );
         using var download = new HttpClient();
         Assert.Equal(Csv(layout.Value), await download.GetByteArrayAsync(job.DownloadUrl, TestContext.Current.CancellationToken));
-        // The layout was asked for under a continuation of the request: its Actor, tenant and correlation.
+        // The layout was asked for under a continuation of the request, its Actor, tenant and correlation, by every attempt,
+        // a takeover's included should a slow machine let the claim go stale.
         var request = reports.Reports.Authorized.Last();
-        var laidOut = Assert.Single(reports.Reports.LaidOut, context => context.CorrelationId == request.CorrelationId);
-        Assert.Equal((Actor.Person("ada"), Tenant, true), (laidOut.Actor, laidOut.Tenant, laidOut.IsTrustedContinuation));
+        var laidOut = reports.Reports.LaidOut.Where(context => context.CorrelationId == request.CorrelationId).ToList();
+        Assert.NotEmpty(laidOut);
+        Assert.All(laidOut, context => Assert.Equal((Actor.Person("ada"), Tenant, true), (context.Actor, context.Tenant, context.IsTrustedContinuation)));
     }
 
     [Fact]
