@@ -1,0 +1,21 @@
+src/PouryaKit.Grpc/Clients/GrpcClientServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_4abfa963714952 47
+src/PouryaKit.Grpc/Clients/OperationContextInterceptor.cs
+  s_b9a8adfb056e1c::t_9586a30163668a 8-10,59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d0b0dfe6d78b39e5a4d78e85e8533431ffe34dfd",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
