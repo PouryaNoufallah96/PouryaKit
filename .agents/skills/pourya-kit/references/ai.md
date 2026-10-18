@@ -91,7 +91,7 @@ internal sealed record ProductToFind(Guid ProductId);
 
 ## Limits
 
-- Chat completions only, one model per Host. Agent runs, sessions, workflows, a chat reducer, memory, a guardrail hook, MCP tools, embeddings and scheduled agent work are later tickets of spec #115 (#136 to #139).
+- Chat completions only, one model per Host. Agent runs, sessions, workflows, a chat reducer, memory, a guardrail hook, MCP tools, embeddings and scheduled agent work are later tickets of spec #115 (#136 to #138).
 - Each tool call is its own Operation and commits on its own: a run that fails later, or whose handler then fails, undoes no call that already committed.
 - The model decides which tools to call and with what arguments; the Kit decides only what each call may do.
 
