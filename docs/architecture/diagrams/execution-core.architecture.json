@@ -409,8 +409,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 106,
-          "end_line": 107,
+          "line": 112,
+          "end_line": 113,
           "label": "no exporter"
         }
       ]
@@ -463,8 +463,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 108,
-          "end_line": 109,
+          "line": 114,
+          "end_line": 115,
           "label": "never Redis"
         }
       ]
@@ -546,7 +546,7 @@
         700
       ],
       "size": [
-        1400,
+        1110,
         64
       ],
       "sources": [
@@ -692,6 +692,40 @@
           "line": 57,
           "end_line": 68,
           "label": "a failed Result as a status and trailer"
+        }
+      ]
+    },
+    {
+      "id": "aspire",
+      "type": "cloud",
+      "label": "PouryaKit.Aspire",
+      "sublabel": "AppHost-only containers",
+      "pos": [
+        1200,
+        700
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 88,
+          "end_line": 91,
+          "label": "references no Kit package"
+        },
+        {
+          "path": "src/PouryaKit.Aspire/AspireDistributedApplicationBuilderExtensions.cs",
+          "line": 20,
+          "end_line": 42,
+          "label": "pinned images, named volumes"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 150,
+          "end_line": 154,
+          "label": "Aspire in no other package"
         }
       ]
     }
@@ -922,7 +956,8 @@
         "Cqrs, Security, Web, Persistence.EFCore and Persistence.Dapper reference PouryaKit.Core for its helpers, such as ImplementingTypes.",
         "Storage, the file storage contract, references Domain alone; Storage.S3, its S3 provider, references Storage and the AWS SDK, and a Host registers exactly one provider.",
         "Localization, optional, records a Module's Feature assemblies through Cqrs and sets each request's culture, English or Persian, from its Accept-Language header; the Proving Sample's Hosts reference none of it.",
-    "Grpc maps a Module's gRPC services on Web's begin-the-Operation convention and writes a client's Operation Context through Web's one header codec; a failed Result is a status by its most severe Error kind."
+    "Grpc maps a Module's gRPC services on Web's begin-the-Operation convention and writes a client's Operation Context through Web's one header codec; a failed Result is a status by its most severe Error kind.",
+        "Aspire, AppHost-only, references no Kit package: an Aspire AppHost adds PostgreSQL, Redis and RabbitMQ through it, each on a pinned image with a named volume, and no other Kit package's closure holds an Aspire package."
       ]
     }
   ]

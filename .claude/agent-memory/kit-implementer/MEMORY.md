@@ -17,3 +17,4 @@
 - [Storage and S3](storage-and-s3-facts.md) — #127 and its fix round, #148: AWS SDK v4 against S3-compatible stores (path style, signing region, presign protocol, NoSuchKeyException), RustFS in a generic container, what a new package moves in four diagrams
 - [Email and provider packages](email-and-provider-package-facts.md) — #124 #147 #150 #151: NuGet audit on a provider's transitive packages, MimeKit address parsing, Papercut in Testcontainers, Stub handler ripples, a class fixture over AppFixture, MailKit's own disconnect catches, one-provider composition check
 - [gRPC](grpc-facts.md) — #134: the metapackage and Grpc.Tools, the unknown-service catch-all vs 405/415, gRPC over TestServer, convention order, per-call context, loopback check
+- [Aspire AppHost](aspire-apphost-facts.md) — #130: SDK implicit package and CPM, ASPIRE010, MessagePack and Fractions floors, testing model, passwords on volumes

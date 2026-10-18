@@ -327,6 +327,40 @@
           "label": "modular: every sample Module"
         }
       ]
+    },
+    {
+      "id": "apphost",
+      "type": "cloud",
+      "label": "ModularMonolith.AppHost",
+      "sublabel": "Aspire: PostgreSQL, Redis, RabbitMQ",
+      "pos": [
+        1035,
+        40
+      ],
+      "size": [
+        320,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
+          "line": 9,
+          "end_line": 13,
+          "label": "the containers and databases"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
+          "line": 20,
+          "end_line": 41,
+          "label": "each Host on its resources"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj",
+          "line": 1,
+          "end_line": 14,
+          "label": "Aspire.AppHost.Sdk, both Hosts"
+        }
+      ]
     }
   ],
   "boundaries": [
@@ -347,6 +381,20 @@
     }
   ],
   "connections": [
+    {
+      "id": "apphost-invhost",
+      "from": "apphost",
+      "to": "invhost",
+      "label": "runs on PostgreSQL, RabbitMQ",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "apphost-mmhost",
+      "from": "apphost",
+      "to": "mmhost",
+      "label": "runs on PostgreSQL, Redis, RabbitMQ"
+    },
     {
       "id": "tests-mmhost",
       "from": "tests",
@@ -500,7 +548,8 @@
         "With ConnectionStrings:broker, ModularMonolith.Host composes Catalog and Billing under the service name modular-monolith, and Inventory.Host composes Inventory under the service name inventory; what Catalog publishes then reaches Inventory over RabbitMQ.",
         "Inventory.Host composes ModularMonolith.ServiceDefaults; ModularMonolith.Host does not.",
         "ModularMonolith.ReverseProxy composes the service defaults and PouryaKit.ReverseProxy, runs no Operation, and routes every path to ModularMonolith.Host, whose liveness probe its settings turn off.",
-        "ModularMonolith.ServiceDefaults references EF Core Relational for its readiness check, OpenTelemetry, service discovery, Serilog, PouryaKit.Web and PouryaKit.Observability."
+        "ModularMonolith.ServiceDefaults references EF Core Relational for its readiness check, OpenTelemetry, service discovery, Serilog, PouryaKit.Web and PouryaKit.Observability.",
+        "ModularMonolith.AppHost, an Aspire AppHost, runs both Hosts as processes on PouryaKit.Aspire's containers, giving each the connection strings its composition reads: with the broker, ModularMonolith.Host leaves Inventory to Inventory.Host."
       ]
     },
     {

@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/PouryaKit.Aspire/PouryaKit.Aspire.csproj" />
     <Project Path="src/PouryaKit.Caching/PouryaKit.Caching.csproj" />
     <Project Path="src/PouryaKit.Core/PouryaKit.Core.csproj" />
     <Project Path="src/PouryaKit.Cqrs/PouryaKit.Cqrs.csproj" />
@@ -32,6 +33,7 @@
   <Folder Name="/samples/" />
   <Folder Name="/samples/ModularMonolith/">
     <Project Path="samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj" />
+    <Project Path="samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj" />
     <Project Path="samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj" />
     <Project Path="samples/ModularMonolith/src/ModularMonolith.ReverseProxy/ModularMonolith.ReverseProxy.csproj" />
     <Project Path="samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj" />
@@ -50,6 +52,7 @@
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Core/Offending.Core.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending/Offending.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj" />
+    <Project Path="tests/PouryaKit.Aspire.Tests/PouryaKit.Aspire.Tests.csproj" />
     <Project Path="tests/PouryaKit.Core.Tests/PouryaKit.Core.Tests.csproj" />
     <Project Path="tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.Contracts/PouryaKit.Cqrs.Tests.Contracts.csproj" />
     <Project Path="tests/PouryaKit.Cqrs.Tests/PouryaKit.Cqrs.Tests.Module/PouryaKit.Cqrs.Tests.Module.csproj" />

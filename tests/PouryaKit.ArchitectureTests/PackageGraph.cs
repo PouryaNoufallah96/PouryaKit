@@ -83,6 +83,12 @@ internal static class PackageGraph
         ["PouryaKit.ReverseProxy"] = new([], ["Microsoft.Extensions.ServiceDiscovery.Yarp", "Yarp.ReverseProxy"], ["Microsoft.AspNetCore.App"]),
         // The server and client libraries, not the Grpc.AspNetCore metapackage, which carries Grpc.Tools to every consumer (#134).
         ["PouryaKit.Grpc"] = new(["PouryaKit.Web"], ["Grpc.AspNetCore.Server", "Grpc.Net.ClientFactory"], ["Microsoft.AspNetCore.App"]),
+        // AppHost-only: the containers of a Host's local infrastructure. MessagePack is a security floor over Aspire.Hosting's
+        // 2.5.302, Fractions a licence-expression floor over KubernetesClient's 7.3.0 (#130).
+        ["PouryaKit.Aspire"] = new(
+            [],
+            ["Aspire.Hosting.PostgreSQL", "Aspire.Hosting.RabbitMQ", "Aspire.Hosting.Redis", "Fractions", "MessagePack"]
+        ),
     };
 
     // What must never arrive in a package's closure, by package id prefix or project name. Every package but Testing also
@@ -141,7 +147,11 @@ internal static class PackageGraph
         var closure = package.RuntimePackages.Select(arrived => arrived.Id).Concat(package.Projects).Distinct();
         foreach (var arrived in closure.Order(StringComparer.Ordinal))
         {
-            var keptOut = KeptOut.GetValueOrDefault(package.Name, []).Concat(package.Name == "PouryaKit.Testing" ? [] : ["WolverineFx.RuntimeCompilation"]);
+            // Every package but the AppHost-only one keeps Aspire's packages out: they run in an AppHost, never in a Host (#130).
+            var keptOut = KeptOut
+                .GetValueOrDefault(package.Name, [])
+                .Concat(package.Name == "PouryaKit.Testing" ? [] : ["WolverineFx.RuntimeCompilation"])
+                .Concat(package.Name == "PouryaKit.Aspire" ? [] : ["Aspire"]);
             if (keptOut.Any(prefix => arrived.StartsWith(prefix, StringComparison.Ordinal)))
             {
                 yield return $"{package.Name}'s closure holds {arrived}, which section C keeps out of it.";
