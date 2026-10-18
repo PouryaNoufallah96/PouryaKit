@@ -139,6 +139,47 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
         );
     }
 
+    // Ticket #159: the delivery step clears its record once the Notification Handler returns, before the Unit of Work
+    // runs the Domain Event Handlers of what the handler changed in the same scope.
+    [Fact]
+    public async Task A_domain_event_handler_of_a_notification_handlers_change_cannot_push_or_publish_while_the_handler_can()
+    {
+        var text = $"handed on {Guid.CreateVersion7()}";
+        using var client = Fixture.Client("ada");
+        await using var listening = await Listening.OpenAsync(client, Notes);
+
+        await PushAsync(new NoteHandedOnDomainEvent(text));
+        await PushAsync(new NotePushedDomainEvent(StubChannels.Notes, "after the reaction"));
+
+        Assert.Equal(
+            (
+                $"{nameof(PushedNote)} was pushed outside a Notification Handler's delivery. Push a realtime event from a Notification Handler, so it is sent with that delivery's commit.",
+                $"{nameof(NoteSharedV1)} was published outside a Notification Handler's delivery. An Integration Event is published by a Notification Handler, so it is written to the Outbox with that delivery's commit."
+            ),
+            PushAndShareWrittenNoteReaction.Refusals[text]
+        );
+        Assert.Equal($$"""{"text":"{{text}}"}""", (await listening.NextAsync()).Data);
+        Assert.Equal("""{"text":"after the reaction"}""", (await listening.NextAsync()).Data);
+        Assert.DoesNotContain(
+            Fixture.Host.Services.GetRequiredService<IntegrationEventLog>().All,
+            received => received.IntegrationEvent is NoteSharedV1 shared && shared.Text == text
+        );
+    }
+
+    // Ticket #159: a blank value names no Channel, whatever else the request names, and the endpoint's rule never sees it.
+    [Theory]
+    [InlineData("?channel=")]
+    [InlineData("?channel=%20")]
+    [InlineData("?channel=stub.notes&channel=")]
+    public async Task A_request_naming_a_blank_channel_is_refused_as_naming_none(string query)
+    {
+        using var ada = Fixture.Client("ada");
+
+        using var blank = await ada.GetAsync($"/stub/realtime{query}", HttpCompletionOption.ResponseHeadersRead, Cancellation);
+
+        Assert.Equal(RealtimeErrors.ChannelRequired.Code, Code(await ProblemResponses.ProblemAsync(blank, HttpStatusCode.BadRequest)));
+    }
+
     [Fact]
     public async Task A_push_whose_delivery_rolls_back_reaches_no_client()
     {

@@ -98,3 +98,14 @@ build; a client receives only its tenant's events and the Channels its endpoint 
 ends in a `gap` and a listener that hears the next push; and, against the sample Host with each feature configured, the
 rate limiter counts one permit for a connection, response compression leaves the event stream alone, and status code
 pages leave a started connection as it was written.
+
+## Amendment (2026-10-18, ticket #159: the record lasts for the Notification Handler's run alone)
+
+The decision stands. As built in #133, `DeliverHandler` set `INotificationDelivery` before the Notification Handler
+ran and left it set, and the Unit of Work drains the Domain Events the handler's own change raised in that same scope
+once the handler returns, so a Domain Event Handler of that change passed both publishers' gate, although the decision
+above excludes the delivery's Domain Event Handlers. The delivery step now sets the record before the handler runs and
+clears it when the handler returns, whether it succeeded, failed or threw, before the drain: the Notification Handler
+pushes and publishes, and a Domain Event Handler of what it changed throws at either publisher, as it would anywhere
+else. `RealtimeTests.A_domain_event_handler_of_a_notification_handlers_change_cannot_push_or_publish_while_the_handler_can`
+holds it, red once with the record left set.

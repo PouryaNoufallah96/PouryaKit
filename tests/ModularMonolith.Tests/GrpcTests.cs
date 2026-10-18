@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Net;
+using System.Net.Sockets;
 using System.Text.Json;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
@@ -209,28 +210,66 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Contains($"The gRPC client {Client} is addressed at {new Uri(address)}, one of this Host's own listening URLs ({own}).", refused.Message, StringComparison.Ordinal);
     }
 
-    // PR #143: with no listener configured, Kestrel binds http://localhost:5000, so a client there calls its own Host.
+    // Ticket #159: Kestrel keeps a listener set in code to itself until it binds, so the check compares what it bound.
     [Fact]
-    public async Task A_client_addressed_at_kestrels_default_url_in_a_kestrel_host_with_no_listener_fails_the_start()
+    public async Task A_client_addressed_at_a_listener_kestrel_binds_from_code_fails_the_start_once_bound()
     {
+        var port = FreePort();
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
         await using var host = AppFixture.ComposeHost(
             "Development",
             Fixture.ConnectionString,
             new RecordedLogs(),
             builder =>
             {
-                builder.WebHost.UseKestrel();
-                AddClient(builder.Services, new Uri("http://localhost:5000"));
+                builder.WebHost.UseKestrel().ConfigureKestrel(kestrel => kestrel.ListenLocalhost(port));
+                AddClient(builder.Services, new Uri($"http://localhost:{port}"));
             }
         );
 
         var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
 
-        Assert.Contains(
-            $"The gRPC client {Client} is addressed at http://localhost:5000/, one of this Host's own listening URLs (http://localhost:5000).",
-            refused.Message,
-            StringComparison.Ordinal
+        Assert.Equal(
+            $"The gRPC client {Client} is addressed at http://localhost:{port}/, one of this Host's own listening URLs (http://localhost:{port}). A call between Modules of one Host goes through the Gateway, never a loopback; address the client at another Host. The server had already bound it, so the Host listened before its start failed.",
+            refused.Message
         );
+    }
+
+    // Ticket #159: Kestrel binds no default beside a listener set in code, so a client at the default calls another process.
+    [Fact]
+    public async Task A_client_addressed_at_kestrels_default_url_starts_beside_a_listener_kestrel_binds_from_code()
+    {
+        var port = FreePort();
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder =>
+            {
+                builder.WebHost.UseKestrel().ConfigureKestrel(kestrel => kestrel.ListenLocalhost(port));
+                AddClient(builder.Services, new Uri("http://localhost:5000"));
+            }
+        );
+
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    // Kestrel's default, as Kestrel lists it once bound, compared without binding its port, which the machine may hold.
+    [Theory]
+    [InlineData("http://localhost:5000", true)]
+    [InlineData("http://127.0.0.1:5000", true)]
+    [InlineData("http://localhost:5001", false)]
+    public void Kestrels_default_among_the_bound_addresses_refuses_a_client_there_and_no_other(string address, bool refused)
+    {
+        var services = new ServiceCollection();
+        AddClient(services, new Uri(address));
+        using var provider = services.BuildServiceProvider();
+
+        var refusals = GrpcLoopbackCheck.Refusals(["http://localhost:5000"], provider).ToList();
+
+        Assert.Equal(refused, refusals.Count == 1);
     }
 
     // Review F1: Kestrel binds its default only when it is given no address, and a Host without a server binds none.
@@ -415,6 +454,30 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal([$"PouryaKitGrpcClientOptions.Deadline of the gRPC client {Client} is not positive."], refused.Failures);
     }
 
+    // Ticket #159: a deadline the clock cannot reach is none.
+    [Fact]
+    public async Task A_client_whose_deadline_ends_after_the_latest_time_sends_its_call_with_no_deadline()
+    {
+        var product = await CreateProductAsync();
+        var services = new ServiceCollection();
+        List<HttpRequestMessage> sent = [];
+        AddClient(services, new Uri("http://peer.local"))
+            .ConfigurePrimaryHttpMessageHandler(() => new Http2(Fixture.Host.GetTestServer().CreateHandler()))
+            .AddHttpMessageHandler(() => new AsTrustedPeer(sent));
+        services.Configure<PouryaKitGrpcClientOptions>(Client, options => options.Deadline = TimeSpan.MaxValue);
+        await using var provider = services.BuildServiceProvider();
+        var options = new CallOptions(cancellationToken: TestContext.Current.CancellationToken).WithOperationContext(
+            new OperationContext(Actor.Person("ada"), "acme")
+        );
+
+        var reply = await provider
+            .GetRequiredService<ProductService.ProductServiceClient>()
+            .GetProductAsync(new GetProductRequest { ProductId = product.ToString() }, options);
+
+        Assert.Equal(Name(product), reply.Name);
+        Assert.False(Assert.Single(sent).Headers.Contains("grpc-timeout"));
+    }
+
     // A Host of the application whose Catalog client calls the peer Host's in-memory server, authenticated as the peer the
     // Hosts trust; the requests it sends are recorded.
     private WebApplication ComposeHost(Func<IHost> peer, List<HttpRequestMessage> sent) =>
@@ -515,6 +578,16 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             'u' => TimeSpan.FromMicroseconds(value),
             _ => TimeSpan.FromTicks(value / 100),
         };
+    }
+
+    // A loopback port nothing listens on now, for a Kestrel listener set in code, which cannot ask for port 0 on localhost.
+    private static int FreePort()
+    {
+        var probe = new TcpListener(IPAddress.Loopback, 0);
+        probe.Start();
+        var port = ((IPEndPoint)probe.LocalEndpoint).Port;
+        probe.Stop();
+        return port;
     }
 
     private static string Name(Guid product) => $"Lamp {product:N}";

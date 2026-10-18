@@ -6,6 +6,7 @@ using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
 using PouryaKit.Modularity;
+using PouryaKit.Persistence;
 using PouryaKit.Realtime;
 using PouryaKit.Web;
 
@@ -14,7 +15,7 @@ namespace ModularMonolith.Tests.Stub;
 // Realtime pushes of notes, raised by WriteNoteRaisingCommand, and the Stub's SSE endpoint: every caller may listen on
 // the notes, and a person on their own inbox only. Beside them, commands that try to push from outside any
 // Notification Handler's delivery: sent over HTTP, through the Gateway with Continue(), or through the Gateway by a
-// Notification Handler with its delivery's own context.
+// Notification Handler with its delivery's own context; and a Domain Event Handler of a Notification Handler's change.
 
 internal sealed record PushedNote(string Text);
 
@@ -156,6 +157,65 @@ internal sealed class PushAndShareNoteCommandHandler(IRealtimePublisher realtime
         }
 
         Refusals[command.Text] = (unpushed, unpublished);
+        return Result.Success();
+    }
+}
+
+internal sealed record NoteHandedOnDomainEvent(string Text) : DomainEvent;
+
+// Pushes the note, then writes one in its delivery's Unit of Work that raises NoteWrittenInDeliveryDomainEvent, whose
+// Domain Event Handler the Unit of Work runs in the same scope once this returns. The repository is resolved when it
+// runs: the test Hosts without Modules that register the Stub's Notification Handlers have none.
+internal sealed class PushThenWriteNoteNotificationHandler(IRealtimePublisher realtime, IServiceProvider services)
+    : INotificationHandler<NoteHandedOnDomainEvent>
+{
+    public async Task<Result> Handle(NoteHandedOnDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var pushed = await realtime.PublishAsync(StubChannels.Notes, new PushedNote(domainEvent.Text), cancellationToken);
+        if (pushed.IsFailure)
+        {
+            return pushed;
+        }
+
+        await services
+            .GetRequiredService<IRepository<Note, NoteId>>()
+            .AddAsync(Note.Write(domainEvent.Text).Raising(new NoteWrittenInDeliveryDomainEvent(domainEvent.Text, domainEvent.Id, domainEvent.OccurredOn)), cancellationToken);
+        return Result.Success();
+    }
+}
+
+internal sealed record NoteWrittenInDeliveryDomainEvent(string Text, Guid DeliveredId, DateTimeOffset DeliveredOn) : DomainEvent;
+
+// Pushes the note again and publishes it shared with the delivered Domain Event's identity, and records, by text, what
+// each publisher threw.
+internal sealed class PushAndShareWrittenNoteReaction(IRealtimePublisher realtime, IIntegrationEventPublisher events)
+    : IDomainEventHandler<NoteWrittenInDeliveryDomainEvent>
+{
+    public static readonly ConcurrentDictionary<string, (string? Unpushed, string? Unpublished)> Refusals = [];
+
+    public async Task<Result> Handle(NoteWrittenInDeliveryDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        string? unpushed = null;
+        string? unpublished = null;
+        try
+        {
+            await realtime.PublishAsync(StubChannels.Notes, new PushedNote($"{domainEvent.Text} again"), cancellationToken);
+        }
+        catch (InvalidOperationException refused)
+        {
+            unpushed = refused.Message;
+        }
+
+        try
+        {
+            events.Publish(domainEvent.DeliveredId, new NoteSharedV1(domainEvent.DeliveredId, domainEvent.DeliveredOn, domainEvent.Text));
+        }
+        catch (InvalidOperationException refused)
+        {
+            unpublished = refused.Message;
+        }
+
+        Refusals[domainEvent.Text] = (unpushed, unpublished);
         return Result.Success();
     }
 }

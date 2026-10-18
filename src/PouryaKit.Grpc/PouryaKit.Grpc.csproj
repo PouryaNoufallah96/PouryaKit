@@ -11,4 +11,8 @@
   <ItemGroup>
     <ProjectReference Include="..\PouryaKit.Web\PouryaKit.Web.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- The loopback check's comparison of bound addresses, proven against Kestrel's default without binding its port. -->
+    <InternalsVisibleTo Include="ModularMonolith.Tests" />
+  </ItemGroup>
 </Project>

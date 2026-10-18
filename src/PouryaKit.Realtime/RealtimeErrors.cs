@@ -14,7 +14,7 @@ public static class RealtimeErrors
         "The realtime event, with its channel and tenant, is 8000 bytes or more, which PostgreSQL does not carry. Push a small fact or a reference, and let the client read the rest through a query."
     );
 
-    /// <summary>The request names no Channel to listen on. No connection was opened.</summary>
+    /// <summary>The request names no Channel to listen on, or a blank one. No connection was opened.</summary>
     public static readonly Error ChannelRequired = Error.Validation(
         "Realtime.ChannelRequired",
         "Name at least one channel to listen on, with the channel query parameter."

@@ -131,6 +131,8 @@ REMOVED_TESTS = {
         "removed by #61: its row names it as the test that the composition check's test replaces",
     "SnapshotTests.A_snapshot_declared_with_a_module_in_an_application_without_modules_fails_the_operation_that_would_publish_it":
         "removed by #62, as its row says: the refusal at commit that it proved is only a backstop now",
+    "GrpcTests.A_client_addressed_at_kestrels_default_url_in_a_kestrel_host_with_no_listener_fails_the_start":
+        "removed by #159: the default is compared once Kestrel has bound it, and no test binds port 5000; its section names the replacements",
 }
 ADOPTED = re.compile(r"//.*\b(shaped like|adapted from|ported from|taken from)\b", re.IGNORECASE)
 KIT_FILES = "- **Kit files:**"
