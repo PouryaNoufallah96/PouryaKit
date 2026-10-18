@@ -1,3 +1,4 @@
+using Azure.Storage;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -15,10 +16,11 @@ public static class AzureBlobStorageServiceCollectionExtensions
         /// resolved. The Host binds the options from configuration; <paramref name="configure"/> sets them in code
         /// instead. The Host fails when it starts, naming each problem, when the options name no container, set both or
         /// neither of the connection string and the service URL, a connection string that does not parse or carries no
-        /// account key, a service URL that is not an absolute HTTP or HTTPS address, or an account name or key without the
-        /// service URL or the reverse. A Host composes exactly one <see cref="IFileStorage"/>: its build fails, through
-        /// the Kit's composition checks, naming each registration's type when it registers another, before or after this
-        /// call, a second call included, and naming the contract when it removes this one.
+        /// account key, a service URL that is not an absolute HTTP or HTTPS address, an account name or key without the
+        /// service URL or the reverse, or an account key that is not base64. A Host composes exactly one
+        /// <see cref="IFileStorage"/>: its build fails, through the Kit's composition checks, naming each registration's
+        /// type when it registers another, before or after this call, a second call included, and naming the contract
+        /// when it removes this one.
         /// </summary>
         public IServiceCollection AddPouryaKitAzureBlobStorage(Action<PouryaKitAzureBlobStorageOptions>? configure = null)
         {
@@ -42,6 +44,10 @@ public static class AzureBlobStorageServiceCollectionExtensions
                     blob => blob.ServiceUrl is null == string.IsNullOrWhiteSpace(blob.AccountName) && blob.ServiceUrl is null == string.IsNullOrWhiteSpace(blob.AccountKey),
                     "PouryaKitAzureBlobStorageOptions.AccountName and AccountKey are set with ServiceUrl, and only with it."
                 )
+                .Validate(
+                    blob => string.IsNullOrWhiteSpace(blob.AccountKey) || IsAccountKey(blob.AccountKey),
+                    "PouryaKitAzureBlobStorageOptions.AccountKey is not a base64 account key."
+                )
                 .ValidateOnStart();
             if (configure is not null)
             {
@@ -58,6 +64,20 @@ public static class AzureBlobStorageServiceCollectionExtensions
         try
         {
             return new BlobServiceClient(connectionString).CanGenerateAccountSasUri;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
+    // The credential the provider signs with decodes the key as it is built, as the client parses its connection string.
+    private static bool IsAccountKey(string accountKey)
+    {
+        try
+        {
+            _ = new StorageSharedKeyCredential("account", accountKey);
+            return true;
         }
         catch (FormatException)
         {

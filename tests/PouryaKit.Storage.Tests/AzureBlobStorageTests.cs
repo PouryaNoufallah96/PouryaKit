@@ -165,6 +165,25 @@ public sealed class AzureBlobStorageTests(AzuriteFixture fixture) : IClassFixtur
         );
     }
 
+    // PR #143: a key that is not base64 fails the start, not the first resolution of the file storage.
+    [Fact]
+    public async Task A_host_whose_account_key_is_not_base64_fails_to_start_naming_the_option()
+    {
+        using var host = AzuriteFixture.ComposeHost(
+            new()
+            {
+                ["PouryaKit:Storage:AzureBlob:Container"] = AzuriteFixture.Container,
+                ["PouryaKit:Storage:AzureBlob:ServiceUrl"] = fixture.BlobEndpoint,
+                ["PouryaKit:Storage:AzureBlob:AccountName"] = AzuriteFixture.AccountName,
+                ["PouryaKit:Storage:AzureBlob:AccountKey"] = "not-a-base64-key!",
+            }
+        );
+
+        var failure = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(Cancel));
+
+        Assert.Equal(["PouryaKitAzureBlobStorageOptions.AccountKey is not a base64 account key."], failure.Failures);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]

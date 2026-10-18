@@ -41,5 +41,9 @@ Check the merged code before relying on a design note. Each section names its ti
 - A `catch (X failure) when (key.Length < 0)` mutation fails the build (unused variable); use `when (failure.Status < 0)`.
 - **Sharing one internal check between two provider packages:** a public `AddPouryaKitFileStorage(Func<IServiceProvider, IFileStorage>)` in the contract package, passing the provider's method group straight to `AddSingleton(factory)` so the check still names `<Provider>Extensions.Create`; a second `InternalsVisibleTo` would contradict `IRequiresAuthorizer.cs`'s "the Kit's one InternalsVisibleTo". The contract then leaves `NoPackages` (Cqrs's closure) for a `KeptOut` entry (`AWSSDK`, `Azure`).
 
+## Azure key at start (#158, 2026-10-18; Azure.Storage.Common 12.29.0)
+
+- `new StorageSharedKeyCredential(name, key)` is `Convert.FromBase64String(key)` and nothing else: building it in a `try/catch (FormatException)` validation is the exact predicate the provider's first resolution applies.
+
 **Why:** each cost a run or a refused command in #127 and #128.
 **How to apply:** for #128 (Azure Blob beside it, Azurite), #140 (Reporting over storage), any provider test against a container, and any ticket that adds a Kit package. Related: [[docs-verification-tools]], [[templates-packaging-and-publication-facts]], [[worktree-shell-and-check-gotchas]].
