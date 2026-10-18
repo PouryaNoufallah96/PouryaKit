@@ -1,0 +1,22 @@
+.claude/workflows/kit-review.js
+  s_b9a8adfb056e1c::t_26e6cca15e42bc 182
+  s_b9a8adfb056e1c::t_28347ffa880cfa 181
+docs/agents/ai-setup.md
+  s_b9a8adfb056e1c::t_538b3a9e8ba1ff 68,74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "48accce2ee819a433aea33f1d48ccddf21eea91f",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
