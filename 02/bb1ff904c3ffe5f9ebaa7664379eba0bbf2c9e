@@ -1,0 +1,51 @@
+src/PouryaKit.Reporting.Module/ReportOptions.cs
+  s_b9a8adfb056e1c::t_d1ccb64aba13d0 3-19
+.agents/skills/pourya-kit/references/reporting-module.md
+  s_b9a8adfb056e1c::t_b3b93cd16aba1a 3,35,37
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_745b691a014335 343
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_6204b88d2cad91 51-52
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_6272a85c930e09 127-128,475-476
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_b0b150704f6cd8 111-112,235-236,275-276
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_0aa445a9a67b80 93-94,106
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_b9a8adfb056e1c::t_18ff348959e0db 114-115
+scripts/packaging/consumers/PouryaKit.Reporting.Module.cs
+  s_b9a8adfb056e1c::t_f0799bab247f89 9-10,13
+src/PouryaKit.Reporting.Module/Features/ApplyRetention/ApplyRetentionCommandHandler.cs
+  s_b9a8adfb056e1c::t_e38174e3a3ff1e 20
+src/PouryaKit.Reporting.Module/Features/ClaimReportJob/ClaimReportJobCommandHandler.cs
+  s_b9a8adfb056e1c::t_fdde11fd1525c4 18
+src/PouryaKit.Reporting.Module/Features/GetReportJob/GetReportJobQueryHandler.cs
+  s_b9a8adfb056e1c::t_0dfc137b250fb8 19
+src/PouryaKit.Reporting.Module/Features/RequestReport/RequestReportCommandHandler.cs
+  s_b9a8adfb056e1c::t_248a43c40a11cb 16
+src/PouryaKit.Reporting.Module/ReportModule.cs
+  s_b9a8adfb056e1c::t_c44684ffce8143 20-25,57,59-60,66
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_b9a8adfb056e1c::t_d6066b9640d24a 20,483-486
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_b9a8adfb056e1c::t_2d33900839fea1 304-305,307
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_b9a8adfb056e1c::t_bfdd2a3004a794 11,138,140-146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "02bb1ff904c3ffe5f9ebaa7664379eba0bbf2c9e",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
