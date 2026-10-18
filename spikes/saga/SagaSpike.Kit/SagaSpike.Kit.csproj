@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- What #142's Messaging.Wolverine.Sagas would ship, as a self-contained copy: the saga base class, the Kit's route to
+       a saga's own queue, the step's deduplication in the saga's transaction, and the emission adapter. -->
+  <PropertyGroup>
+    <RootNamespace>SagaSpike.Kit</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../src/PouryaKit.Messaging.Wolverine.EFCore/PouryaKit.Messaging.Wolverine.EFCore.csproj" />
+  </ItemGroup>
+
+</Project>

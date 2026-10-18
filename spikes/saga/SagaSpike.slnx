@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="SagaSpike.Contracts/SagaSpike.Contracts.csproj" />
+  <Project Path="SagaSpike.Kit/SagaSpike.Kit.csproj" />
+  <Project Path="SagaSpike.Orders/SagaSpike.Orders.csproj" />
+  <Project Path="SagaSpike.Billing/SagaSpike.Billing.csproj" />
+  <Project Path="SagaSpike.Shipping/SagaSpike.Shipping.csproj" />
+  <Project Path="SagaSpike.Host/SagaSpike.Host.csproj" />
+  <Project Path="SagaSpike.Tests/SagaSpike.Tests.csproj" />
+</Solution>

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The Module that holds the saga, a public Wolverine Saga type, and declares what it emits. -->
+  <PropertyGroup>
+    <RootNamespace>SagaSpike.Shipping</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../SagaSpike.Contracts/SagaSpike.Contracts.csproj" />
+    <ProjectReference Include="../../../src/PouryaKit.Modularity/PouryaKit.Modularity.csproj" />
+    <ProjectReference Include="../SagaSpike.Kit/SagaSpike.Kit.csproj" />
+  </ItemGroup>
+
+</Project>

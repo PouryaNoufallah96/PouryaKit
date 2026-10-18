@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Integration Events as a Module's Contracts declare them: plain records with no Kit or transport reference. -->
+  <PropertyGroup>
+    <RootNamespace>SagaSpike.Contracts</RootNamespace>
+  </PropertyGroup>
+
+</Project>

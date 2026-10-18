@@ -1,0 +1,2 @@
+# What codegen write produces in the Release publish test; the test deletes it when it ends.
+SagaSpike.Host/Internal/Generated/

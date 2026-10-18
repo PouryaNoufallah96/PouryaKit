@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>SagaSpike.Host</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+  </ItemGroup>
+
+  <!-- Development compiles Wolverine's handler code at run time; a Release publish loads what codegen write generated and
+       carries no runtime compiler (ADR 0004), as the Proving Sample's Hosts do. -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <PackageReference Include="WolverineFx.RuntimeCompilation" Version="6.48.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../SagaSpike.Orders/SagaSpike.Orders.csproj" />
+    <ProjectReference Include="../SagaSpike.Billing/SagaSpike.Billing.csproj" />
+    <ProjectReference Include="../SagaSpike.Shipping/SagaSpike.Shipping.csproj" />
+  </ItemGroup>
+
+</Project>

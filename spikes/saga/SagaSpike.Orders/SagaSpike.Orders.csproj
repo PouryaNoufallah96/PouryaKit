@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- An EF Module that publishes the saga's Integration Events through the Kit's own Notification Handler path. -->
+  <PropertyGroup>
+    <RootNamespace>SagaSpike.Orders</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../SagaSpike.Contracts/SagaSpike.Contracts.csproj" />
+    <ProjectReference Include="../../../src/PouryaKit.Modularity/PouryaKit.Modularity.csproj" />
+    <ProjectReference Include="../../../src/PouryaKit.Messaging.Wolverine.EFCore/PouryaKit.Messaging.Wolverine.EFCore.csproj" />
+    <ProjectReference Include="../../../src/PouryaKit.Persistence.Postgres/PouryaKit.Persistence.Postgres.csproj" />
+  </ItemGroup>
+
+</Project>

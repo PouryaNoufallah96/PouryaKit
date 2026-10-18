@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- A tenant-scoped EF Module with ordinary subscriptions: to the event that starts the saga, and to what the saga emits. -->
+  <PropertyGroup>
+    <RootNamespace>SagaSpike.Billing</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../SagaSpike.Contracts/SagaSpike.Contracts.csproj" />
+    <ProjectReference Include="../../../src/PouryaKit.Modularity/PouryaKit.Modularity.csproj" />
+    <ProjectReference Include="../../../src/PouryaKit.Messaging.Wolverine.EFCore/PouryaKit.Messaging.Wolverine.EFCore.csproj" />
+    <ProjectReference Include="../../../src/PouryaKit.Persistence.Postgres/PouryaKit.Persistence.Postgres.csproj" />
+  </ItemGroup>
+
+</Project>
