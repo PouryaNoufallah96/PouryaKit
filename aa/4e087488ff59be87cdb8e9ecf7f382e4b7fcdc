@@ -1,0 +1,25 @@
+docs/provenance/PouryaKit.AI.md
+  s_b9a8adfb056e1c::t_a14870f447d540 23,39
+docs/provenance/PouryaKit.Grpc.md
+  s_b9a8adfb056e1c::t_6738eb19a0b37e 22
+docs/provenance/PouryaKit.Localization.md
+  s_b9a8adfb056e1c::t_a14870f447d540 16
+docs/provenance/PouryaKit.Realtime.md
+  s_b9a8adfb056e1c::t_ea4639d19fa3e2 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aa4e087488ff59be87cdb8e9ecf7f382e4b7fcdc",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
