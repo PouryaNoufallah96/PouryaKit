@@ -1,0 +1,21 @@
+tests/ModularMonolith.Tests/ReportModuleTests.cs
+  s_b9a8adfb056e1c::t_8d686b82e4af0d 44-45,47-49
+.agents/skills/pourya-kit/references/reporting-module.md
+  s_b9a8adfb056e1c::t_d07c5ca7eb9d33 102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0728113a5b70c085593edd4d5b6d95c3806a1e92",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
