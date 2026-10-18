@@ -1,0 +1,29 @@
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_db590dac89ef32 10
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_db590dac89ef32 10
+docs/architecture/diagrams/execution-core.html
+  s_b9a8adfb056e1c::t_0a2547656b1495 4985,5749
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_db590dac89ef32 10
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_0a2547656b1495 4985
+docs/architecture/diagrams/module-boundaries.html
+  s_b9a8adfb056e1c::t_0a2547656b1495 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c580df39d304efab58a037177c9e4808f23085fe",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
