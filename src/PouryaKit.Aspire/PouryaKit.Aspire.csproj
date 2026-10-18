@@ -10,4 +10,8 @@
          patched floor until Aspire raises its own. -->
     <PackageReference Include="MessagePack" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- The model check's deadlines, proven against a server that never answers. -->
+    <InternalsVisibleTo Include="PouryaKit.Aspire.Tests" />
+  </ItemGroup>
 </Project>

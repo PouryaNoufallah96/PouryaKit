@@ -758,7 +758,7 @@
         {
           "path": "src/PouryaKit.Aspire/AspireDistributedApplicationBuilderExtensions.cs",
           "line": 23,
-          "end_line": 74,
+          "end_line": 80,
           "label": "pinned images, named volumes"
         },
         {

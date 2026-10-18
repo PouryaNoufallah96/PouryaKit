@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -89,6 +90,37 @@ public sealed class AppHostTests
             builder.Resources.Single(resource => resource.Name == "inventory").Annotations.OfType<WaitAnnotation>(),
             wait => wait.Resource == ollama
         );
+        // The agent's PouryaKit:AI section points at the container's OpenAI-compatible API and the model it serves.
+        Assert.Equal(
+            [
+                new("PouryaKit__AI__Endpoint", "{ollama.bindings.http.url}/v1"),
+                new("PouryaKit__AI__Model", "qwen2.5:0.5b"),
+                new("PouryaKit__AI__Provider", "Ollama"),
+            ],
+            await AgentSettingsAsync(builder, "modular-monolith")
+        );
+        Assert.Empty(await AgentSettingsAsync(builder, "inventory"));
+    }
+
+    private static async Task<IEnumerable<KeyValuePair<string, string>>> AgentSettingsAsync(
+        IDistributedApplicationTestingBuilder builder,
+        string project
+    )
+    {
+        // As the publish manifest reads it: an endpoint is its expression, allocated only when the AppHost runs.
+        var host = builder.Resources.Single(resource => resource.Name == project);
+        var context = new EnvironmentCallbackContext(new(DistributedApplicationOperation.Publish), host, []);
+        foreach (var callback in host.Annotations.OfType<EnvironmentCallbackAnnotation>())
+        {
+            await callback.Callback(context);
+        }
+
+        return context
+            .EnvironmentVariables.Where(variable => variable.Key.StartsWith("PouryaKit__AI__", StringComparison.Ordinal))
+            .Select(variable =>
+                KeyValuePair.Create(variable.Key, variable.Value is IManifestExpressionProvider value ? value.ValueExpression : $"{variable.Value}")
+            )
+            .OrderBy(variable => variable.Key, StringComparer.Ordinal);
     }
 
     [Fact]
@@ -98,7 +130,6 @@ public sealed class AppHostTests
         timeout.CancelAfter(TimeSpan.FromMinutes(5));
         await using var builder = await StartingAsync(Arguments, timeout.Token);
         await using var app = await builder.BuildAsync(timeout.Token);
-        await app.StartAsync(timeout.Token);
         await app.StartAsync(timeout.Token);
 
         await app.ResourceNotifications.WaitForResourceHealthyAsync("inventory", timeout.Token);

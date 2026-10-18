@@ -64,7 +64,13 @@ public static class AspireDistributedApplicationBuilderExtensions
                 .Add(
                     new HealthCheckRegistration(
                         check,
-                        services => new OllamaModelHealthCheck(endpoint, model, services.GetRequiredService<IHttpClientFactory>()),
+                        services => new OllamaModelHealthCheck(
+                            endpoint,
+                            model,
+                            services.GetRequiredService<IHttpClientFactory>(),
+                            OllamaModelHealthCheck.ShowWithin,
+                            OllamaModelHealthCheck.PullWithin
+                        ),
                         failureStatus: null,
                         tags: null
                     )
