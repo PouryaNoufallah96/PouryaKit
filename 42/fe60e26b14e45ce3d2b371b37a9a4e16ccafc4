@@ -1,0 +1,29 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_223163ecd130db 17,19
+.claude/agent-memory/kit-implementer/grpc-facts.md
+  s_b9a8adfb056e1c::t_40bf9d21de3297 20-26
+.claude/agent-memory/kit-implementer/storage-and-s3-facts.md
+  s_b9a8adfb056e1c::t_4ee4c053dc86e5 44-47
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_72b2c4e2191af9 2350-2363
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_a3e4f48b298c31 10
+docs/architecture/diagrams/execution-core.html
+  s_b9a8adfb056e1c::t_73d3ecd9805438 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "42fe60e26b14e45ce3d2b371b37a9a4e16ccafc4",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
