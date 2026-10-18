@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\PouryaKit.Messaging.Wolverine.Marten\PouryaKit.Messaging.Wolverine.Marten.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Realtime\PouryaKit.Realtime.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Reporting\PouryaKit.Reporting.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.Reporting.Module\PouryaKit.Reporting.Module.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.ReverseProxy\PouryaKit.ReverseProxy.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Storage.AzureBlob\PouryaKit.Storage.AzureBlob.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Storage.S3\PouryaKit.Storage.S3.csproj" />

@@ -14,8 +14,10 @@ using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
 using PouryaKit.Observability;
 using PouryaKit.Realtime;
+using PouryaKit.Reporting.Module;
 using PouryaKit.Security;
 using PouryaKit.Security.JwtBearer;
+using PouryaKit.Storage.S3;
 using PouryaKit.Web;
 using PouryaKit.Web.OpenApi;
 
@@ -91,6 +93,7 @@ public static class ModularMonolithHost
 
             modules.Add<BillingModule>();
             modules.Add<LedgerModule>();
+            modules.Add<ReportModule>();
         });
         // An activity and a duration for every command and query, around the dispatcher the Modules registered. The
         // Host's exporter, when it has one, listens to OperationTelemetry.SourceName; the Kit exports nothing.
@@ -107,6 +110,14 @@ public static class ModularMonolithHost
         // PouryaKit:Email; appsettings.json names a local Papercut, which keeps every mail for a developer to read.
         builder.Services.AddPouryaKitMailKit();
         builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSection("PouryaKit:Email"));
+        // Files go to the S3 bucket of PouryaKit:Storage:S3; appsettings.json names one of a local S3-compatible store.
+        builder.Services.Configure<PouryaKitS3StorageOptions>(builder.Configuration.GetSection("PouryaKit:Storage:S3"));
+        builder.Services.AddPouryaKitS3Storage();
+        // The report Module answers POST /reports with a job, generated in the background and stored there: the Host
+        // decides who may request which report and lays each kind out (SalesReports), and the Module reads how long a job
+        // is kept from PouryaKit:Reports. Nothing is configured: seven days, cleaned up every hour.
+        builder.Services.AddSingleton<IReportRequestAuthorizer, SalesReports>();
+        builder.Services.AddSingleton<IReportLayouts, SalesReports>();
         // Catalog's agent asks the model of PouryaKit:AI through the Host's one chat client; appsettings.json names a local
         // Ollama, and GetProduct as the one tool a run may be given.
         builder.Services.AddPouryaKitAI();

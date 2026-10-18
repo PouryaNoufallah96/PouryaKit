@@ -176,6 +176,10 @@ _Avoid_: Inbox row, processed flag, idempotency marker (a repeated request is re
 The name a Notification Handler pushes a realtime event on, and on which a browser client of the same tenant listens through a Module's SSE endpoint whose rule admits its Actor (ADR 0012). It is no Subscription and no queue: nothing is stored for it, and a client hears it only while connected.
 _Avoid_: Topic, group, room
 
+**Report job**:
+One report an Actor requested from the report Module, stored with its requester and tenant, generated in the background by attempts that each claim it and store their file under a key of their own, and served within its tenant to its requester, or an Actor the Host grants the tenant's jobs, until its retention removes it. Built in `PouryaKit.Reporting.Module`.
+_Avoid_: Report task, export job, report run
+
 ### Delivery of the Kit
 
 **Wave**:

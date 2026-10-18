@@ -28,8 +28,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 83,
-          "end_line": 94,
+          "line": 85,
+          "end_line": 97,
           "label": "adds each Module"
         },
         {
@@ -108,8 +108,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
-          "line": 77,
-          "end_line": 85,
+          "line": 84,
+          "end_line": 92,
           "label": "the Module's only public type"
         }
       ]
@@ -232,8 +232,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
-          "line": 29,
-          "end_line": 53,
+          "line": 36,
+          "end_line": 60,
           "label": "no reference to another Module's code"
         },
         {
@@ -272,8 +272,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
-          "line": 55,
-          "end_line": 72,
+          "line": 62,
+          "end_line": 79,
           "label": "nothing of the Kit, no Module"
         }
       ]
@@ -357,7 +357,7 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 114,
+          "end_line": 131,
           "label": "the allowed references"
         },
         {

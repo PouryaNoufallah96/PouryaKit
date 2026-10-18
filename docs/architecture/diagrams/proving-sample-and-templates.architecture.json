@@ -56,21 +56,55 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 82,
-          "end_line": 94,
+          "line": 84,
+          "end_line": 97,
           "label": "composes the Modules"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 39,
-          "end_line": 46,
+          "line": 41,
+          "end_line": 48,
           "label": "the broker and its service name"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
           "line": 5,
-          "end_line": 32,
+          "end_line": 34,
           "label": "its references"
+        }
+      ]
+    },
+    {
+      "id": "reportmodule",
+      "type": "external",
+      "label": "PouryaKit.Reporting.Module",
+      "sublabel": "the Kit's report Module, a package",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        400,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/PouryaKit.Reporting.Module/ReportModule.cs",
+          "line": 46,
+          "end_line": 71,
+          "label": "schema reports, endpoints, three commands"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/SalesReports.cs",
+          "line": 14,
+          "end_line": 60,
+          "label": "the Host's one report kind"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 113,
+          "end_line": 120,
+          "label": "S3 storage and the Host's two ports"
         }
       ]
     },
@@ -447,6 +481,14 @@
       "toSide": "top"
     },
     {
+      "id": "mmhost-reportmodule",
+      "from": "mmhost",
+      "to": "reportmodule",
+      "label": "composes, as a package",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
       "id": "mmhost-billing",
       "from": "mmhost",
       "to": "billing",
@@ -604,7 +646,8 @@
         "Inventory.Host composes ModularMonolith.ServiceDefaults; ModularMonolith.Host does not.",
         "ModularMonolith.ReverseProxy composes the service defaults and PouryaKit.ReverseProxy, runs no Operation, and routes every path to ModularMonolith.Host, whose liveness probe its settings turn off.",
         "ModularMonolith.ServiceDefaults references EF Core Relational for its readiness check, OpenTelemetry, service discovery, Serilog, PouryaKit.Web and PouryaKit.Observability.",
-        "ModularMonolith.AppHost, an Aspire AppHost, runs both Hosts as processes on PouryaKit.Aspire's containers, giving each the connection strings its composition reads: with the broker, ModularMonolith.Host leaves Inventory to Inventory.Host. Run with LocalAgent=true, it adds Ollama and points that Host's agent at it."
+        "ModularMonolith.AppHost, an Aspire AppHost, runs both Hosts as processes on PouryaKit.Aspire's containers, giving each the connection strings its composition reads: with the broker, ModularMonolith.Host leaves Inventory to Inventory.Host. Run with LocalAgent=true, it adds Ollama and points that Host's agent at it.",
+        "ModularMonolith.Host also composes PouryaKit.Reporting.Module, a Kit package no template packs, with its one report kind, SalesReports, and stores the reports in an S3 bucket."
       ]
     },
     {

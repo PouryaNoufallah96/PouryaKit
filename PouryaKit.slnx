@@ -23,6 +23,7 @@
     <Project Path="src/PouryaKit.Persistence.Postgres/PouryaKit.Persistence.Postgres.csproj" />
     <Project Path="src/PouryaKit.Realtime/PouryaKit.Realtime.csproj" />
     <Project Path="src/PouryaKit.Reporting/PouryaKit.Reporting.csproj" />
+    <Project Path="src/PouryaKit.Reporting.Module/PouryaKit.Reporting.Module.csproj" />
     <Project Path="src/PouryaKit.Observability/PouryaKit.Observability.csproj" />
     <Project Path="src/PouryaKit.ReverseProxy/PouryaKit.ReverseProxy.csproj" />
     <Project Path="src/PouryaKit.Security/PouryaKit.Security.csproj" />

@@ -2,6 +2,7 @@ using System.Reflection;
 using Catalog.Products.Events.Notifications;
 using Offending;
 using Offending.Contracts;
+using PouryaKit.Reporting.Module;
 
 namespace PouryaKit.ArchitectureTests;
 
@@ -15,12 +16,18 @@ public sealed class ModuleBoundaryTests
     private static readonly Dictionary<string, IReadOnlySet<Type>> HostPorts = new()
     {
         ["Catalog"] = new HashSet<Type> { typeof(INewProductAnnouncer), typeof(NewProductAnnouncement) },
+        ["PouryaKit.Reporting.Module"] = new HashSet<Type>
+        {
+            typeof(IReportRequestAuthorizer),
+            typeof(IReportLayouts),
+            typeof(ReportRequest),
+        },
     };
 
     [Fact]
-    public void The_host_composes_the_four_sample_modules_and_catalog_and_ledger_have_contracts()
+    public void The_host_composes_the_four_sample_modules_and_the_report_module_and_catalog_and_ledger_have_contracts()
     {
-        Assert.Equal(["Billing", "Catalog", "Inventory", "Ledger"], Sample.Modules.Select(module => module.GetName().Name));
+        Assert.Equal(["Billing", "Catalog", "Inventory", "Ledger", "PouryaKit.Reporting.Module"], Sample.Modules.Select(module => module.GetName().Name));
         Assert.Equal(["Catalog.Contracts", "Ledger.Contracts"], Sample.Contracts.Select(contracts => contracts.GetName().Name));
     }
 

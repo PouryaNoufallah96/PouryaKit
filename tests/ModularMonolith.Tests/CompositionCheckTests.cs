@@ -18,6 +18,7 @@ using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
+using PouryaKit.Reporting.Module;
 using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
 
@@ -480,7 +481,10 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     {
         var composition = Fixture.Host.Services.GetRequiredService<HostComposition>();
 
-        Assert.Equal([typeof(CatalogModule), typeof(InventoryModule), typeof(BillingModule), typeof(LedgerModule), typeof(StubModule)], composition.Modules);
+        Assert.Equal(
+            [typeof(CatalogModule), typeof(InventoryModule), typeof(BillingModule), typeof(LedgerModule), typeof(ReportModule), typeof(StubModule)],
+            composition.Modules
+        );
         Assert.All(composition.Modules, module => Assert.Equal([module.Assembly], composition.FeatureAssembliesOf(module)));
         Assert.Empty(composition.FeatureAssembliesOf(null));
     }
