@@ -1,0 +1,33 @@
+docs/architecture/diagrams/http-command.html
+  s_b9a8adfb056e1c::t_471ea4944990dd 4985
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_39887ac2bc9e45 15
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_5cb90a90236d78 10
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_b84f1c634f7612 4985
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_c99ae19546a93e 10
+docs/architecture/diagrams/module-boundaries.html
+  s_b9a8adfb056e1c::t_3b29e55ec84452 4985
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_8543b49f11c45b 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b9a8adfb056e1c::t_d9d9706c126bc8 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f116d5890e8beb2f06ed9a351f11c874b93e03d1",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
