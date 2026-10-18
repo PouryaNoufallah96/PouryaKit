@@ -1,0 +1,29 @@
+.claude/agent-memory/kit-implementer/marten-stream-write-model-facts.md
+  s_b9a8adfb056e1c::t_a46b0990c8ff71 36
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_b1e98a0f09aba1 2317
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_b3896d93e95b02 10
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_faaa360bb086e6 4985
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_0d85659d1e87fd 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_f829a5d5bc495c 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ae52cc8e958095bedffdef4d3bd26cd50c3364ef",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
