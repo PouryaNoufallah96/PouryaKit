@@ -1,0 +1,33 @@
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_ccc1b8207a4c41 10
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_ccc1b8207a4c41 10
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_ccc1b8207a4c41 10
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_ccc1b8207a4c41 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_5f7716ed2695cd 4985
+docs/architecture/diagrams/execution-core.html
+  s_b9a8adfb056e1c::t_5f7716ed2695cd 4985,5020-5021,5028-5029,5052-5053,5084-5085,5088-5089,5092-5093,5096-5097,5143-5150,5353-5354,5358-5359,5445-5455,5458-5459,5510-5511,5749
+docs/architecture/diagrams/module-boundaries.html
+  s_b9a8adfb056e1c::t_5f7716ed2695cd 4985
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_5f7716ed2695cd 4985,5040-5041,5044-5045,5048-5049,5068-5069,5072-5073,5079-5082,5239-5240,5247-5259,5284-5285,5288-5289,5292-5293,5312-5313,5316-5317,5323-5326,5556
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1d4444640e82f752c149f3ba92f14ceffae30d27",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
