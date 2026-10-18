@@ -1,0 +1,31 @@
+.agents/skills/pourya-kit/references/ai.md
+  s_b9a8adfb056e1c::t_726db65b2b27fc 40
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_b9a8adfb056e1c::t_2d4a2e5775fcd0 57,64
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_0c46ba99d0742d 195-196,223-224,229-230
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_861175e38fe118 99-100,252,263-264
+docs/provenance/ModularMonolith.md
+  s_b9a8adfb056e1c::t_5af2ba18326de6 37
+samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs
+  s_b9a8adfb056e1c::t_c38e0c3dd7cb46 27,50,52-54,66,73
+tests/ModularMonolith.Tests/AiTests.cs
+  s_b9a8adfb056e1c::t_37fb5144137323 14,149-153,270-277
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fb45dd30a75df82868b43a81ec8da2fef6e67597",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
