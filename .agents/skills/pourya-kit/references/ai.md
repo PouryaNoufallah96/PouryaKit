@@ -192,7 +192,7 @@ internal sealed class CardNumberGuardrail : IChatGuardrail
 }
 ```
 
-- Each guardrail is called before every call to the model, with the messages it sends, and after it, with the response, before any tool call the response asks for runs: every run of the Host's client, every agent of a workflow and a summarizing reducer's summary included. Null lets the call through. A refusal ends that call as the provider's content filter would, with the refusal as its text and `ChatFinishReason.ContentFilter`: refused before, the model is not called; refused after, the response is replaced and no tool it asked for runs. The first refusal, in registration order, wins.
+- Each guardrail is called before every call to the model, with the messages it sends, the call's instructions, an agent's and its context providers', first as the system message the model is given, and after it, with the response, before any tool call the response asks for runs: every run of the Host's client, every agent of a workflow and a summarizing reducer's summary included. Null lets the call through. A refusal ends that call as the provider's content filter would, with the refusal as its text and `ChatFinishReason.ContentFilter`: refused before, the model is not called; refused after, the response is replaced and no tool it asked for runs. The first refusal, in registration order, wins.
 - With a guardrail registered, a streamed call is checked whole: the client takes the model's complete response, checks it, then gives it to the caller as updates.
 
 ## Scheduled agent work
@@ -224,7 +224,7 @@ internal sealed class WriteDigestCommandHandler(IChatClient chat, IGatewayProces
 
 - **A tool call is an Operation through the Module's Gateway under the run's continued context**, in every run shape and in every agent of a workflow, trusted only when the run executes inside the authorized Operation the context belongs to.
 - **A failed Result is a failed tool result**, never an exception to the model.
-- **The allow-list and the cap hold for every run** of the Host's client, each agent's included: a tool `Tools` does not name is withheld from the model, and a call it asks for anyway is answered as a function that does not exist and never runs; the call after the last allowed iteration offers no tool, so the run ends with the model's answer.
+- **The allow-list and the cap hold for every run** of the Host's client, each agent's included: a function `Tools` does not name is withheld from the model, and a call it asks for anyway is answered as a function that does not exist and never runs; a declaration-only tool, such as a handoff's, passes unnamed, since the client never invokes it and hands its call back to the run's caller; the call after the last allowed iteration offers no tool, so the run ends with the model's answer.
 - **A guardrail is called before and after every call to the model**, and a refusal stops the call or the tool calls its response asked for; the Kit refuses nothing itself.
 - **The Kit keeps no session and no memory**: they live in the application's stores, through `IAgentSessionStore` and its context providers.
 - **One resilience pipeline**: the provider's HTTP client is the Host's, with nothing added.

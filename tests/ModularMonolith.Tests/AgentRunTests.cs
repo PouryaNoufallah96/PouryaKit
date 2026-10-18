@@ -291,6 +291,26 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
         Assert.Empty(SeenBy(host, run));
     }
 
+    // An agent's instructions reach the model as a system message, not among the run's messages, so the guardrail checks
+    // them as that message.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task A_request_whose_instructions_the_guardrail_refuses_never_reaches_the_model(bool streaming)
+    {
+        const string CardNumber = "4111111111111111";
+        await using var host = GuardedHost(new Guardrail { RefusesSending = CardNumber });
+        ai.Stub.Script(ChatReply.Text("Hello."));
+        var agent = host.Services.GetRequiredService<IChatClient>().AsAIAgent($"The customer's card is {CardNumber}.");
+
+        var answer = streaming
+            ? string.Concat(await agent.RunStreamingAsync("Hello.", cancellationToken: TestContext.Current.CancellationToken).Select(update => update.Text).ToListAsync(TestContext.Current.CancellationToken))
+            : (await agent.RunAsync("Hello.", cancellationToken: TestContext.Current.CancellationToken)).Text;
+
+        Assert.Equal(Refusal, answer);
+        Assert.Empty(ai.Stub.Requests);
+    }
+
     [Fact]
     public void A_host_that_registers_a_guardrail_that_is_not_a_singleton_fails_when_it_is_built_naming_it()
     {
@@ -498,14 +518,20 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
         }
     }
 
-    // A guardrail with no policy but the test's: it records each check and refuses the first one of the named kind, once.
+    // A guardrail with no policy but the test's: it records each check and refuses the first one of the named kind, once,
+    // and every request that sends the model the text it names.
     private sealed class Guardrail : IChatGuardrail
     {
         public string? Refuses { get; set; }
 
+        public string? RefusesSending { get; init; }
+
         public List<string> Checks { get; } = [];
 
-        public Task<string?> CheckRequestAsync(IReadOnlyList<ChatMessage> messages, CancellationToken cancellationToken) => Check("request");
+        public Task<string?> CheckRequestAsync(IReadOnlyList<ChatMessage> messages, CancellationToken cancellationToken) =>
+            RefusesSending is { } text && messages.Any(message => message.Text.Contains(text, StringComparison.Ordinal))
+                ? Task.FromResult<string?>(Refusal)
+                : Check("request");
 
         public Task<string?> CheckResponseAsync(ChatResponse response, CancellationToken cancellationToken) => Check("response");
 

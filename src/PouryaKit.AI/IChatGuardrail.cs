@@ -9,8 +9,9 @@ namespace PouryaKit.AI;
 public interface IChatGuardrail
 {
     /// <summary>
-    /// Checks the messages about to be sent to the model: null lets the call go, and a refusal is the answer the run gets
-    /// instead, as a response the model's content filter ended, without the model being called.
+    /// Checks the messages about to be sent to the model, the call's instructions first as the system message the model
+    /// is given, such as an agent's and its context providers': null lets the call go, and a refusal is the answer the run
+    /// gets instead, as a response the model's content filter ended, without the model being called.
     /// </summary>
     Task<string?> CheckRequestAsync(IReadOnlyList<ChatMessage> messages, CancellationToken cancellationToken);
 

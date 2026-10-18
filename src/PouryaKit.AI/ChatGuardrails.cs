@@ -15,9 +15,13 @@ internal sealed class ChatGuardrails(IChatClient inner, IChatGuardrail[] guardra
     )
     {
         IReadOnlyList<ChatMessage> request = [.. messages];
+        // What the model is sent: the options' instructions first, as the system message the OpenAI client makes of them.
+        IReadOnlyList<ChatMessage> sent = string.IsNullOrWhiteSpace(options?.Instructions)
+            ? request
+            : [new ChatMessage(ChatRole.System, options.Instructions), .. request];
         foreach (var guardrail in guardrails)
         {
-            if (await guardrail.CheckRequestAsync(request, cancellationToken) is { } refusal)
+            if (await guardrail.CheckRequestAsync(sent, cancellationToken) is { } refusal)
             {
                 return Refused(refusal);
             }
