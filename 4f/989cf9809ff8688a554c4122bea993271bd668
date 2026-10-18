@@ -1,0 +1,23 @@
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_293bae98a96200 2315-2316
+docs/architecture/diagrams/host-start.html
+  s_b9a8adfb056e1c::t_5b6ee4e18aa558 4985
+docs/architecture/diagrams/host-start.workflow.json
+  s_b9a8adfb056e1c::t_b6c84e72e9bedd 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4f989cf9809ff8688a554c4122bea993271bd668",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
