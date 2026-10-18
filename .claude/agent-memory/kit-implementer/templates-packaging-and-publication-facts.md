@@ -76,5 +76,9 @@ Check `.github/workflows/package-publication.yml` before relying on it.
 - **`validate.py`'s closure split:** `check_consumer` reads a project under a `tests` path segment as a test project, whose closure may hold `excluded` packages; `inventory.json`'s `tests` key adds the test-only packages to the evidence's expected list; `check_production_publish(host, published, refused)` refuses a published `*.dll` whose stem starts with a refused prefix.
 - **A local probe of both templates:** `scratchpad/p87/probe.py` imports `validate` (`consumer_feed`, `template_consumer`, `isolated_env`), packs the dirty tree, installs into a hive and builds and tests both generated solutions (about 4 minutes). Generating both templates with one `-n` and `diff -rq` shows the growth path's file count.
 
+## Disk (#142, 2026-10-18)
+
+- **One `validate.py` evidence directory takes about 8 GB** (a NuGet cache per consumer). With several implementers validating at once the disk filled, the restore failed with "No space left on device", and Docker Desktop stopped and would not start again ("unable to start"), failing every container test of the next run. Delete an evidence directory once its PASS line is recorded, and check `df -h` before a run.
+
 **Why:** each cost a probe or a validation run; the credential rule is not testable without the hosted feed.
 **How to apply:** for a new template or any package that is not a library, any `validate.py` run, any clean consumer, any change to the publication workflow, and a hosted proof of the private feed. Related: [[core-json-and-architecture-test-facts]], [[observability-tracing-and-http-facts]], [[worktree-shell-and-check-gotchas]].
