@@ -38,17 +38,13 @@ public static class GrpcClientServiceCollectionExtensions
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<PouryaKitGrpcClientOptions>, ClientOptionsValidation>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupCheck, GrpcLoopbackCheck>());
             services.AddSingleton(new GrpcClient(name, typeof(TClient)));
-            services.TryAddSingleton(TimeProvider.System);
             return services
                 .AddGrpcClient<TClient>(
                     name,
                     (provider, client) => client.Address = provider.GetRequiredService<IOptionsMonitor<PouryaKitGrpcClientOptions>>().Get(name).Address
                 )
                 .AddInterceptor(provider =>
-                    new OperationContextInterceptor(
-                        provider.GetRequiredService<IOptionsMonitor<PouryaKitGrpcClientOptions>>().Get(name).Deadline,
-                        provider.GetRequiredService<TimeProvider>()
-                    )
+                    new OperationContextInterceptor(provider.GetRequiredService<IOptionsMonitor<PouryaKitGrpcClientOptions>>().Get(name).Deadline)
                 );
         }
     }

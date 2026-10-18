@@ -5,8 +5,9 @@ using PouryaKit.Web;
 namespace PouryaKit.Grpc;
 
 // Writes each call's Operation Context as the pairs of Web's one codec, in place of every Kit header the call had, and
-// gives a call without a deadline of its own the client's. It reads no incoming request.
-internal sealed class OperationContextInterceptor(TimeSpan deadline, TimeProvider time) : Interceptor
+// gives a call without a deadline of its own the client's, measured on the system clock: gRPC judges a deadline against
+// real UTC, so the Operation's replaceable TimeProvider plays no part here. It reads no incoming request.
+internal sealed class OperationContextInterceptor(TimeSpan deadline) : Interceptor
 {
     public override AsyncUnaryCall<TResponse> AsyncUnaryCall<TRequest, TResponse>(
         TRequest request,
@@ -55,6 +56,6 @@ internal sealed class OperationContextInterceptor(TimeSpan deadline, TimeProvide
         }
 
         var options = call.Options.WithHeaders(headers);
-        return new(call.Method, call.Host, options.Deadline is null ? options.WithDeadline(time.GetUtcNow().UtcDateTime + deadline) : options);
+        return new(call.Method, call.Host, options.Deadline is null ? options.WithDeadline(DateTime.UtcNow + deadline) : options);
     }
 }
