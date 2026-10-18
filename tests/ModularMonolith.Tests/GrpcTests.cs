@@ -208,6 +208,26 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Contains($"The gRPC client {Client} is addressed at {new Uri(address)}, one of this Host's own listening URLs ({own}).", refused.Message, StringComparison.Ordinal);
     }
 
+    // PR #143: with no listener configured, Kestrel binds http://localhost:5000, so a client there calls its own Host.
+    [Fact]
+    public async Task A_client_addressed_at_kestrels_default_url_in_a_host_with_no_listener_fails_the_start()
+    {
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder => AddClient(builder.Services, new Uri("http://localhost:5000"))
+        );
+
+        var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Contains(
+            $"The gRPC client {Client} is addressed at http://localhost:5000/, one of this Host's own listening URLs (http://localhost:5000).",
+            refused.Message,
+            StringComparison.Ordinal
+        );
+    }
+
     // Review F1: a peer on the port this Host also listens on every address for, as two containers on 8080, is another Host.
     [Fact]
     public async Task A_client_addressed_at_another_host_on_a_port_its_own_host_listens_on_starts()
@@ -288,6 +308,54 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.Equal(StatusCode.PermissionDenied, refused.StatusCode);
         Assert.Equal([TenantErrors.Required.Code], Errors(refused).Select(error => error.GetProperty("code").GetString()));
+    }
+
+    // PR #143: a second interceptor would look for the context on the first one's copy of the metadata and find none.
+    [Fact]
+    public async Task A_client_registered_twice_adds_nothing_the_second_time_and_its_call_carries_its_context()
+    {
+        var product = await CreateProductAsync();
+        var services = new ServiceCollection();
+        List<HttpRequestMessage> sent = [];
+        AddClient(services, new Uri("http://peer.local"))
+            .ConfigurePrimaryHttpMessageHandler(() => new Http2(Fixture.Host.GetTestServer().CreateHandler()))
+            .AddHttpMessageHandler(() => new AsTrustedPeer(sent));
+        var registrations = services.Count;
+        services.AddPouryaKitGrpcClient<ProductService.ProductServiceClient>(Client);
+        var registrationsAfter = services.Count;
+        await using var provider = services.BuildServiceProvider();
+        var options = new CallOptions(cancellationToken: TestContext.Current.CancellationToken).WithOperationContext(
+            new OperationContext(Actor.Person("ada"), "acme")
+        );
+
+        var reply = await provider
+            .GetRequiredService<ProductService.ProductServiceClient>()
+            .GetProductAsync(new GetProductRequest { ProductId = product.ToString() }, options);
+
+        Assert.Equal(Name(product), reply.Name);
+        Assert.Equal(["acme"], Assert.Single(sent).Headers.GetValues(OperationContextHeaders.Tenant));
+        Assert.Equal(registrations, registrationsAfter);
+    }
+
+    // PR #143: a service mapped twice would have two identical endpoints, and every call to it would be ambiguous.
+    [Fact]
+    public async Task A_second_mapping_of_the_services_maps_none_again_and_a_call_reaches_the_service()
+    {
+        var product = await CreateProductAsync();
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+        await using var host = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
+        host.MapPouryaKitGrpcServices();
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var channel = Channel(host);
+
+        var reply = await new ProductService.ProductServiceClient(channel).GetProductAsync(
+            new GetProductRequest { ProductId = product.ToString() },
+            Caller("grace", new Metadata { { TestAuthentication.TenantHeader, "acme" } }),
+            cancellationToken: TestContext.Current.CancellationToken
+        );
+        await host.StopAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(Name(product), reply.Name);
     }
 
     [Fact]

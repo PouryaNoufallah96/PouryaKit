@@ -57,7 +57,7 @@ builder.Services.AddPouryaKitAzureBlobStorage();
 
 - `Container` is required, and must exist: the Kit creates none.
 - Reach the account with `ConnectionString`, which must carry the account key, or with `ServiceUrl` (`https://acme.blob.core.windows.net`) and `AccountName` with `AccountKey`; set one form, never both. The account key signs every presigned link, so a connection string with only a SAS token, or Microsoft Entra credentials, are not options: the package takes no `Azure.Identity`.
-- The options are validated when the Host starts, which fails naming each problem: no container, both or neither of the two forms, a connection string that does not parse or holds no account key, a service URL that is not an absolute HTTP or HTTPS address, or an account name or key without the service URL or the reverse. The client is built from them when `IFileStorage` is first resolved.
+- The options are validated when the Host starts, which fails naming each problem: no container, both or neither of the two forms, a connection string that does not parse or holds no account key, a service URL that is not an absolute HTTP or HTTPS address, an account name or key without the service URL or the reverse, or an account key that is not base64, which the `StorageSharedKeyCredential` the client signs with decodes. The client is built from them when `IFileStorage` is first resolved.
 
 ### One provider
 

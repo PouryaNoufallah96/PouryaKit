@@ -19,7 +19,9 @@ public static class GrpcClientServiceCollectionExtensions
         /// without a context throws before it is sent. Nothing of an incoming request is copied, its bearer token least
         /// of all: a client that must authenticate to the peer adds its own credentials on the builder it returns. The
         /// Host's start fails when the address is one of the Host's own listening URLs: a call between Modules of one
-        /// Host goes through the Gateway, never a loopback.
+        /// Host goes through the Gateway, never a loopback. Called again with the same name and client, it adds nothing
+        /// and returns the builder of the client already registered, so the client's interceptor runs once; with the
+        /// same name and another client, gRPC's client factory throws.
         /// </summary>
         public IHttpClientBuilder AddPouryaKitGrpcClient<TClient>(string name)
             where TClient : class
@@ -27,10 +29,15 @@ public static class GrpcClientServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(services);
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
+            if (services.Any(descriptor => descriptor.ImplementationInstance is GrpcClient(var registered, var client) && registered == name && client == typeof(TClient)))
+            {
+                return new ClientBuilder(name, services);
+            }
+
             services.AddOptions<PouryaKitGrpcClientOptions>(name).ValidateOnStart();
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<PouryaKitGrpcClientOptions>, ClientOptionsValidation>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupCheck, GrpcLoopbackCheck>());
-            services.AddSingleton(new GrpcClient(name));
+            services.AddSingleton(new GrpcClient(name, typeof(TClient)));
             services.TryAddSingleton(TimeProvider.System);
             return services
                 .AddGrpcClient<TClient>(
@@ -45,6 +52,9 @@ public static class GrpcClientServiceCollectionExtensions
                 );
         }
     }
+
+    // The builder of a client already registered; the factory's own AddHttpClient would register its services again.
+    private sealed record ClientBuilder(string Name, IServiceCollection Services) : IHttpClientBuilder;
 
     // The message names the client, so it is a validator of its own rather than a chained Validate.
     private sealed class ClientOptionsValidation : IValidateOptions<PouryaKitGrpcClientOptions>
@@ -67,5 +77,5 @@ public static class GrpcClientServiceCollectionExtensions
     }
 }
 
-/// <summary>A registered gRPC client, by its name.</summary>
-internal sealed record GrpcClient(string Name);
+/// <summary>A registered gRPC client, by its name and generated client type.</summary>
+internal sealed record GrpcClient(string Name, Type Client);

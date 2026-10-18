@@ -13,9 +13,10 @@ namespace PouryaKit.Grpc;
 /// Refuses a gRPC client addressed at one of the Host's own listening URLs, chosen as ASP.NET Core chooses them: the
 /// server's addresses the application adds after <c>Build</c> (<c>app.Urls</c>), or else the configured <c>urls</c>, or
 /// else <c>http_ports</c> and <c>https_ports</c>; each <c>Kestrel:Endpoints:{name}:Url</c> replaces those addresses
-/// unless <c>preferHostingUrls</c> is set. <c>app.Urls</c> exists only on the built application, so this is a startup
-/// check rather than a composition check; it runs before the server binds, so an address the server chooses only as it
-/// binds, such as port 0 or a <c>Listen</c> call in code, is not seen, and the Kit's skill states the rule for it. An
+/// unless <c>preferHostingUrls</c> is set; with none of them, Kestrel's default <c>http://localhost:5000</c>, the one
+/// address it binds when nothing else is configured. <c>app.Urls</c> exists only on the built application, so this is a
+/// startup check rather than a composition check; it runs before the server binds, so an address the server chooses only
+/// as it binds, such as port 0 or a <c>Listen</c> call in code, is not seen, and the Kit's skill states the rule for it. An
 /// address matches when its scheme and port are the listening URL's and its host is the same, or is loopback while the
 /// URL is loopback or listens on every address, as Kestrel binds every host that is neither <c>localhost</c> nor an IP
 /// address. Another host on the same port, such as a peer container on the 8080 every ASP.NET Core image listens on, is
@@ -23,6 +24,9 @@ namespace PouryaKit.Grpc;
 /// </summary>
 internal sealed class GrpcLoopbackCheck : IStartupCheck
 {
+    // What Kestrel binds when it is given no address and no endpoint (its DefaultAddressStrategy); no HTTPS default.
+    private const string DefaultUrl = "http://localhost:5000";
+
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {
         var listening = ListeningUrls(services);
@@ -44,7 +48,8 @@ internal sealed class GrpcLoopbackCheck : IStartupCheck
             ? ([.. server.Addresses], server.PreferHostingUrls)
             : (HostingUrls(configuration), configuration["preferHostingUrls"] is "1" || string.Equals(configuration["preferHostingUrls"], "true", StringComparison.OrdinalIgnoreCase));
         List<string> endpoints = [.. configuration.GetSection("Kestrel:Endpoints").GetChildren().Select(endpoint => endpoint["Url"]).OfType<string>()];
-        return endpoints.Count == 0 || (preferHostingUrls && addresses.Count > 0) ? addresses : endpoints;
+        var listening = endpoints.Count == 0 || (preferHostingUrls && addresses.Count > 0) ? addresses : endpoints;
+        return listening.Count > 0 ? listening : [DefaultUrl];
     }
 
     private static List<string> HostingUrls(IConfiguration configuration) =>

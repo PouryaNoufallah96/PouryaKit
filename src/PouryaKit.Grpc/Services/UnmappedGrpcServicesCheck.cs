@@ -24,7 +24,7 @@ internal sealed class MappedGrpcServices
 {
     private readonly HashSet<Type> _types = [];
 
-    public void Add(Type service) => _types.Add(service);
+    public bool Add(Type service) => _types.Add(service);
 
     public bool Contains(Type service) => _types.Contains(service);
 }

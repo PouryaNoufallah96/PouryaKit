@@ -20,7 +20,8 @@ public static class GrpcEndpointRouteBuilderExtensions
         /// HTTP endpoints do (<c>BeginOperationPerRequest</c>): the Actor is the authenticated person, and only a trusted
         /// peer's Kit headers, in call metadata, continue an Operation of its own. A peer's headers the Kit refuses as
         /// unreadable answer the status <see cref="StatusCode.InvalidArgument"/> with the rule they broke as its message,
-        /// before the service runs, where an HTTP endpoint answers a 400 problem response.
+        /// before the service runs, where an HTTP endpoint answers a 400 problem response. Called again, it maps no
+        /// service twice, since two identical endpoints would make every call to it ambiguous.
         /// </summary>
         public IEndpointRouteBuilder MapPouryaKitGrpcServices()
         {
@@ -31,8 +32,12 @@ public static class GrpcEndpointRouteBuilderExtensions
             var mapped = routes.ServiceProvider.GetService<MappedGrpcServices>();
             foreach (var service in routes.ServiceProvider.GetServices<GrpcService>())
             {
+                if (mapped?.Add(service.Type) is false)
+                {
+                    continue;
+                }
+
                 service.Map(group);
-                mapped?.Add(service.Type);
             }
 
             return routes;
