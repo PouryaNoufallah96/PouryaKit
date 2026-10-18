@@ -1,0 +1,36 @@
+src/PouryaKit.Reporting.Module/Features/RenderReport/RenderReportCommandHandler.cs
+  s_b9a8adfb056e1c::t_66053e9a98942b 12-14
+  s_b9a8adfb056e1c::t_84abf90740ddb6 9-11,25-27,30
+.agents/skills/pourya-kit/references/reporting-module.md
+  s_b9a8adfb056e1c::t_dc143281539f95 84,86,93,100,110
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_dcc3c0dc12d8c1 343
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_959750820b24ad 515-516
+src/PouryaKit.Reporting.Module/Features/ApplyRetention/ApplyRetentionCommandHandler.cs
+  s_b9a8adfb056e1c::t_a874423c52c0e2 15-17
+src/PouryaKit.Reporting.Module/Features/RequestReport/RequestReportEndpoint.cs
+  s_b9a8adfb056e1c::t_5ab7bf73001353 38-39,42
+src/PouryaKit.Reporting.Module/Jobs/ReportJob.cs
+  s_b9a8adfb056e1c::t_a965b1ece94ae0 90,93
+tests/ModularMonolith.Tests/Fixtures/ReportFixture.cs
+  s_b9a8adfb056e1c::t_475936d24c9d28 104,121-124,130-131,134,136,145-147,150-151,155,163-169,188,191-192,206-211
+tests/ModularMonolith.Tests/ReportModuleTests.cs
+  s_b9a8adfb056e1c::t_c125869c4b7f1d 80-83,86-90,93-94,129-131,169-225,271,273-274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8b2e3fcabda01baa94f902fee98cc4342e947ca8",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
