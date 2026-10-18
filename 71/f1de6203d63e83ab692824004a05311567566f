@@ -1,0 +1,64 @@
+src/PouryaKit.Reporting/ReportErrors.cs
+  s_b9a8adfb056e1c::t_d756ca6b27c91a 1-21
+src/PouryaKit.Reporting/IReportRenderer.cs
+  s_b9a8adfb056e1c::t_62d8c193378d1c 1-17
+src/PouryaKit.Reporting/ReportFormat.cs
+  s_b9a8adfb056e1c::t_2338cbc66ae880 1-20
+src/PouryaKit.Reporting/Fonts/RobotoFontResolver.cs
+  s_b9a8adfb056e1c::t_9814f12635bd53 1-31
+src/PouryaKit.Reporting/ReportLayout.cs
+  s_b9a8adfb056e1c::t_279548c55649af 1-79
+src/PouryaKit.Reporting/ReportRenderer.cs
+  s_b9a8adfb056e1c::t_762560165e111f 1-43
+tests/PouryaKit.Reporting.Tests/ReportRendererTests.cs
+  s_b9a8adfb056e1c::t_435e25331a06d8 1-135
+  s_b9a8adfb056e1c::t_35d11d2efba59a 136-140
+src/PouryaKit.Reporting/Csv/CsvReport.cs
+  s_b9a8adfb056e1c::t_da214942368546 1-43
+src/PouryaKit.Reporting/PouryaKit.Reporting.csproj
+  s_b9a8adfb056e1c::t_2f610816b2a49f 13-18
+src/PouryaKit.Reporting/Pdf/PdfReport.cs
+  s_b9a8adfb056e1c::t_a0d6adada5022c 1-114
+  s_b9a8adfb056e1c::t_2a2727e4fa48cc 115-116
+src/PouryaKit.Reporting/Spreadsheet/SpreadsheetReport.cs
+  s_b9a8adfb056e1c::t_92d70c26ec5b58 1-29,35
+  s_b9a8adfb056e1c::t_ff7484147d0c6c 30-34
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_b5d7cb43fff110 64
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_6244b5270a6fd4 10
+docs/architecture/diagrams/execution-core.html
+  s_b9a8adfb056e1c::t_293df2be22b9bd 4985
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_04e0058762b37e 10,435
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_0bcc3c8589563d 4985,5235-5236,5243
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_0f74c218c76bbe 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_e28704674e190a 4985
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_76572f8b308580 10
+docs/architecture/diagrams/module-boundaries.html
+  s_b9a8adfb056e1c::t_cde79023c36bb6 4985
+src/PouryaKit.Reporting/Fonts/LICENSE
+  s_b9a8adfb056e1c::t_b9fdb3574d939b 1-201
+tests/PouryaKit.Reporting.Tests/PouryaKit.Reporting.Tests.csproj
+  s_b9a8adfb056e1c::t_de9c91801f440d 1-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "71f1de6203d63e83ab692824004a05311567566f",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
