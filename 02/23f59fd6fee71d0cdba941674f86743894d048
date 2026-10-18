@@ -1,0 +1,93 @@
+scripts/packaging/consumers/PouryaKit.AI.Postgres.cs
+  s_b9a8adfb056e1c::t_6dcedd0a06f23e 1-15
+tests/ModularMonolith.Tests/Vectors/PassageFeatures.cs
+  s_b9a8adfb056e1c::t_96e6124b299fd3 1-40
+  s_b9a8adfb056e1c::t_e9ae6766cff838 41-53
+tests/ModularMonolith.Tests/Fixtures/VectorFixture.cs
+  s_b9a8adfb056e1c::t_ad7de74aa0b25f 1-87
+src/PouryaKit.AI.Postgres/IVectorStore.cs
+  s_b9a8adfb056e1c::t_db812d70e30c17 1-39
+src/PouryaKit.AI.Postgres/VectorStoreServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_ce36e8e35b0fbc 1-25
+tests/ModularMonolith.Tests/Vectors/Migrations/20261018120000_Passages.cs
+  s_b9a8adfb056e1c::t_63b782b467c3f4 1-18
+src/PouryaKit.AI.Postgres/VectorCollectionTable.cs
+  s_b9a8adfb056e1c::t_0891ebb5343d6c 1-68
+tests/ModularMonolith.Tests/Vectors/ModularMonolith.Tests.Vectors.csproj
+  s_b9a8adfb056e1c::t_e5bb167ed2683c 1-15
+tests/ModularMonolith.Tests/Vectors/VectorsModule.cs
+  s_b9a8adfb056e1c::t_59bac48c83cafd 1-24
+tests/ModularMonolith.Tests/Vectors/VectorsDbContext.cs
+  s_b9a8adfb056e1c::t_b550792b492361 1-7
+src/PouryaKit.AI.Postgres/PouryaKit.AI.Postgres.csproj
+  s_b9a8adfb056e1c::t_ca49bdbe25aa93 1-6
+src/PouryaKit.AI.Postgres/VectorCollection.cs
+  s_b9a8adfb056e1c::t_700a7d5367e572 1-32
+docs/provenance/PouryaKit.AI.Postgres.md
+  s_b9a8adfb056e1c::t_2bf99efc9ccbf0 1-18
+tests/ModularMonolith.Tests/VectorSearchTests.cs
+  s_b9a8adfb056e1c::t_a465e648279bbd 87-88
+  s_b9a8adfb056e1c::t_0762fa1c58a2f7 1-86,89-181
+  s_b9a8adfb056e1c::t_5a80fe0a27a666 182-194
+src/PouryaKit.AI.Postgres/PostgresVectorStore.cs
+  s_b9a8adfb056e1c::t_ed7a92c2d144de 1-130
+  s_b9a8adfb056e1c::t_9eada2b38d9bb8 131
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_0ee3f71c24b9ea 53
+.agents/skills/pourya-kit/references/ai.md
+  s_b9a8adfb056e1c::t_b4416abe5144ef 3,14,225-284,294,298,308
+PouryaKit.slnx
+  s_b9a8adfb056e1c::t_a2e56a2289aaea 4,62
+README.md
+  s_b9a8adfb056e1c::t_8c8a48a56fca7e 33
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_42f332a64e4241 3,44,339,343-344,349-351,355-366,735
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_d49f465245cc48 412-413,466-467,766-767,834-848
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_476f021c03ba1f 330-331,435,448-449,454
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_83b16ffc59fb20 290-291,394,448
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_306ab75762ab50 360
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_dade8bca84deae 290,893
+docs/provenance/ModularMonolith.md
+  s_b9a8adfb056e1c::t_2223f75caa00b9 20
+docs/provenance/PouryaKit.AI.md
+  s_b9a8adfb056e1c::t_ea9a99988b9048 5
+scripts/packaging/consumers/PouryaKit.AI.cs
+  s_b9a8adfb056e1c::t_b266f4c2b2e151 10-11,13,19
+scripts/packaging/inventory.json
+  s_b9a8adfb056e1c::t_cf23795574372b 36,51,65
+src/PouryaKit.AI/AIServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_2477bfc499a8bc 48,60,66-139,147,161-174
+src/PouryaKit.AI/PouryaKitAIOptions.cs
+  s_b9a8adfb056e1c::t_c3d9d5d03d6631 21-26
+tests/ModularMonolith.Tests/Fixtures/ChatStub.cs
+  s_b9a8adfb056e1c::t_1acf2ae00d0b61 1,15,29-31,56,86-101,174-208
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_b9a8adfb056e1c::t_d276b85ad8c2fc 32-33,46
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_69f6b34de62512 110-111,191-193
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_b9a8adfb056e1c::t_36578fb047100f 134-148
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_b9a8adfb056e1c::t_4132a91cb7b0a6 21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0223f59fd6fee71d0cdba941674f86743894d048",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
