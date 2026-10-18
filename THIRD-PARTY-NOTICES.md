@@ -69,7 +69,7 @@ SOFTWARE.
 - **Upstream:** https://github.com/googlefonts/roboto-2 (release v2.138)
 - **Licence:** Apache-2.0
 
-Its regular and bold font files are embedded in `PouryaKit.Reporting`, whose package also ships this licence text at `fonts/Roboto-LICENSE`.
+Its regular and bold font files are embedded in `PouryaKit.Reporting`, whose package also ships this licence text at `fonts/Roboto-LICENSE.txt`.
 
 ```text
                                  Apache License

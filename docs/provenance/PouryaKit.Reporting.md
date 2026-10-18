@@ -17,7 +17,7 @@ QuestPDF and ClosedXML fail the licence test and are not selected (spec #115, E1
 
 ## Roboto font
 
-- **Kit files:** `src/PouryaKit.Reporting/Fonts/Roboto-Regular.ttf`, `src/PouryaKit.Reporting/Fonts/Roboto-Bold.ttf`, `src/PouryaKit.Reporting/Fonts/LICENSE`
+- **Kit files:** `src/PouryaKit.Reporting/Fonts/Roboto-Regular.ttf`, `src/PouryaKit.Reporting/Fonts/Roboto-Bold.ttf`, `src/PouryaKit.Reporting/Fonts/LICENSE.txt`
 - **Upstream:** https://github.com/googlefonts/roboto-2
 - **Commit:** ab4876f650a4aeb9b661c83fee47f908c739bb70
 - **Upstream paths:** `Roboto-Regular.ttf` (SHA-256 `f3edb8058e523f5612bfd99d0745e661568ad85e1b6217bc62f786fabae624c6`), `Roboto-Bold.ttf` (SHA-256 `2ca2b3bfc2c2d43fa8f2b7227982d735fd537ecf113a4c56cc2d292bcc3106c8`) and `LICENSE`, from the `roboto-unhinted.zip` asset of release `v2.138`, the tag at that commit
@@ -25,5 +25,5 @@ QuestPDF and ClosedXML fail the licence test and are not selected (spec #115, E1
 - **Adoption:** copied
 - **Ticket:** #129
 - **Intentional differences:**
-  - Two of the release's faces only, regular and bold; `src/PouryaKit.Reporting/Fonts/RobotoFontResolver.cs` resolves every family a PDF names to them and has PDFsharp simulate an italic. The files are unchanged, embedded as resources of the assembly, and the package ships the licence at `fonts/Roboto-LICENSE`.
+  - Two of the release's faces only, regular and bold; `src/PouryaKit.Reporting/Fonts/RobotoFontResolver.cs` resolves every family a PDF names to them and has PDFsharp simulate an italic. The files' bytes are unchanged, the licence renamed `LICENSE.txt`; the fonts are embedded as resources of the assembly, and the package ships the licence at `fonts/Roboto-LICENSE.txt`.
   - Roboto 2.x, the last line under Apache-2.0: Roboto 3 is under the SIL Open Font License, which is not on the Kit's permissive list. PDFsharp's own Segoe WP faces (`PdfSharp.WPFonts`) are not used: PDFsharp's documentation offers them as a demonstration, not for production, and states no licence for them.
