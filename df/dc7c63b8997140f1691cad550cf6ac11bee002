@@ -1,0 +1,45 @@
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_d1333e2dce9457 4985,4990,5059-5070,5210-5234,5277-5282,5291-5298,5300-5302,5304-5306,5308-5310,5510
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_02a8e58d568864 10
+docs/architecture/diagrams/module-boundaries.html
+  s_b9a8adfb056e1c::t_d1333e2dce9457 4985
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_02a8e58d568864 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b9a8adfb056e1c::t_d1333e2dce9457 4985
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_b9a8adfb056e1c::t_02a8e58d568864 10
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b9a8adfb056e1c::t_02a8e58d568864 10
+docs/architecture/diagrams/http-command.html
+  s_b9a8adfb056e1c::t_d1333e2dce9457 4985
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_02a8e58d568864 10
+docs/architecture/diagrams/http-command.sequence.json
+  s_b9a8adfb056e1c::t_02a8e58d568864 15
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_d1333e2dce9457 4985,5235-5236,5243
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_02a8e58d568864 10
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_b9a8adfb056e1c::t_d1333e2dce9457 4985
+docs/architecture/diagrams/execution-core.html
+  s_b9a8adfb056e1c::t_d1333e2dce9457 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dfdc7c63b8997140f1691cad550cf6ac11bee002",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
