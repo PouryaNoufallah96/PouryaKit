@@ -327,8 +327,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 122,
-          "end_line": 123,
+          "line": 127,
+          "end_line": 128,
           "label": "no Kit package references Redis"
         }
       ]
@@ -445,13 +445,13 @@
         {
           "path": "scripts/packaging/inventory.json",
           "line": 3,
-          "end_line": 33,
-          "label": "the 31 packages"
+          "end_line": 34,
+          "label": "the 32 packages"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 100,
+          "end_line": 105,
           "label": "their allowed references"
         }
       ]

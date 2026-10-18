@@ -21,6 +21,7 @@
     { "id": "PouryaKit.ReverseProxy", "type": "PouryaKit.ReverseProxy.ReverseProxyHostApplicationBuilderExtensions" },
     { "id": "PouryaKit.Aspire", "type": "PouryaKit.Aspire.AspireDistributedApplicationBuilderExtensions" },
     { "id": "PouryaKit.Realtime", "type": "PouryaKit.Realtime.IRealtimePublisher" },
+    { "id": "PouryaKit.Reporting", "type": "PouryaKit.Reporting.IReportRenderer" },
     { "id": "PouryaKit.Security.JwtBearer", "type": "PouryaKit.Security.JwtBearer.PouryaKitJwtBearerOptions" },
     { "id": "PouryaKit.Messaging", "type": "PouryaKit.Messaging.WireNameAttribute" },
     { "id": "PouryaKit.Messaging.Wolverine", "type": "PouryaKit.Messaging.Wolverine.IReceipts" },
