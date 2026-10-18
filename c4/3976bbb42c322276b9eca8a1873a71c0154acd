@@ -1,0 +1,27 @@
+THIRD-PARTY-NOTICES.md
+  s_b9a8adfb056e1c::t_edcbf9c991c763 72
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_30fd21b0d1f589 2289
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_921a5807cc86fc 369
+docs/provenance/PouryaKit.Reporting.md
+  s_b9a8adfb056e1c::t_6d87423ec3d905 20,28
+src/PouryaKit.Reporting/PouryaKit.Reporting.csproj
+  s_b9a8adfb056e1c::t_ed650efadfa7c2 17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c43976bbb42c322276b9eca8a1873a71c0154acd",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
