@@ -121,6 +121,21 @@ public sealed class PackageGraphTests
                 }
             )
         );
+        // The report Module stores through the contract: a provider is the Host's (#140).
+        var reportModule = Restored("PouryaKit.Reporting.Module");
+        Assert.Equal(
+            [
+                "PouryaKit.Reporting.Module's closure holds AWSSDK.Core, which section C keeps out of it.",
+                "PouryaKit.Reporting.Module's closure holds PouryaKit.Storage.S3, which section C keeps out of it.",
+            ],
+            PackageGraph.Violations(
+                reportModule with
+                {
+                    Packages = [.. reportModule.Packages, Arrived("AWSSDK.Core")],
+                    Projects = new HashSet<string>([.. reportModule.Projects, "PouryaKit.Storage.S3"]),
+                }
+            )
+        );
         // One client for every provider, and the provider's HTTP client with the Host's pipeline alone (#135).
         var ai = Restored("PouryaKit.AI");
         Assert.Equal(

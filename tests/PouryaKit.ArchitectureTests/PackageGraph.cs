@@ -111,6 +111,23 @@ internal static class PackageGraph
         // Kit's statements it runs on its own transaction; Messaging is not needed, the Outbox step being a seam.
         ["PouryaKit.Persistence.Marten"] = new(["PouryaKit.Cqrs", "PouryaKit.Persistence"], ["Marten", "Npgsql"]),
         ["PouryaKit.Messaging.Wolverine.Marten"] = new(["PouryaKit.Messaging.Wolverine", "PouryaKit.Persistence.Marten"], ["WolverineFx.Marten"]),
+        // The first Module the Kit ships as a package (#140, spec #115's E2): a sample Module's stack, Persistence.Dapper for
+        // its job read, Security for the tenant-wide read the Host grants, the renderer and the storage contract.
+        ["PouryaKit.Reporting.Module"] = new(
+            [
+                "PouryaKit.Messaging.Wolverine.EFCore",
+                "PouryaKit.Modularity",
+                "PouryaKit.Persistence.Dapper",
+                "PouryaKit.Persistence.Postgres",
+                "PouryaKit.Reporting",
+                "PouryaKit.Security",
+                "PouryaKit.Storage",
+                "PouryaKit.Validation",
+                "PouryaKit.Web",
+            ],
+            [],
+            ["Microsoft.AspNetCore.App"]
+        ),
     };
 
     // What must never arrive in a package's closure, by package id prefix or project name. Every package but Testing also
@@ -153,6 +170,8 @@ internal static class PackageGraph
         ["PouryaKit.Persistence.Marten"] = ["WolverineFx", "Microsoft.EntityFrameworkCore"],
         // A Host of Stream Modules alone takes no EF Core.
         ["PouryaKit.Messaging.Wolverine.Marten"] = ["Microsoft.EntityFrameworkCore", "PouryaKit.Persistence.EFCore"],
+        // The Module stores through the contract the Host's one provider fills: no provider or its SDK (#140).
+        ["PouryaKit.Reporting.Module"] = ["PouryaKit.Storage.", "AWSSDK", "Azure"],
     };
 
     // Core and Domain, and Messaging and the Email contract (Domain only), bring no package at all; nor do the templates.

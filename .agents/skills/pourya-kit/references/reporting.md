@@ -94,7 +94,7 @@ var stored = await files.UploadAsync(key, new MemoryStream(report.Content), repo
 - `ReportErrors.TableShape` (`Reporting.TableShape`, target `Table`): the table has no column, or a row whose number of cells differs from its number of columns.
 - `ReportErrors.LogoFormat` (`Reporting.LogoFormat`, target `Logo`): the logo is not a PNG or JPEG image PDFsharp can load, its signature checked, then its header and dimensions read, so a file cut short is refused, where MigraDoc would have drawn a placeholder in the PDF. A JPEG cut inside its image data still loads, since a PDF carries a JPEG as it is.
 
-Rendering is synchronous and in memory, so the whole file is one byte array; render a large report from a background command, as the report Module of ticket #140 is to.
+Rendering is synchronous and in memory, so the whole file is one byte array; render a large report from a background command, as the report Module does ([reporting-module.md](reporting-module.md)).
 
 ## The three formats
 

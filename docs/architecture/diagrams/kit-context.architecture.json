@@ -90,8 +90,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 49,
-          "end_line": 56,
+          "line": 51,
+          "end_line": 58,
           "label": "bearer JWT; authenticated by default"
         },
         {
@@ -118,20 +118,20 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 80,
-          "end_line": 91,
+          "line": 82,
+          "end_line": 94,
           "label": "composes the Modules; Inventory w/o broker"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 115,
-          "end_line": 119,
+          "line": 127,
+          "end_line": 131,
           "label": "message store; RabbitMQ with a broker"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
           "line": 15,
-          "end_line": 30,
+          "end_line": 32,
           "label": "references the Kit's projects"
         }
       ]
@@ -232,8 +232,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 92,
-          "end_line": 94,
+          "line": 95,
+          "end_line": 97,
           "label": "the Kit exports nothing"
         }
       ]
@@ -321,14 +321,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 95,
-          "end_line": 101,
+          "line": 98,
+          "end_line": 104,
           "label": "only when ConnectionStrings:cache is set"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 136,
-          "end_line": 137,
+          "line": 153,
+          "end_line": 154,
           "label": "no Kit package references Redis"
         }
       ]
@@ -349,8 +349,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 103,
-          "end_line": 106,
+          "line": 106,
+          "end_line": 109,
           "label": "MailKit, options from PouryaKit:Email"
         },
         {
@@ -432,7 +432,7 @@
       "id": "kit",
       "type": "backend",
       "label": "PouryaKit packages",
-      "sublabel": "34 libraries and the templates",
+      "sublabel": "35 libraries and the templates",
       "pos": [
         700,
         650
@@ -445,13 +445,13 @@
         {
           "path": "scripts/packaging/inventory.json",
           "line": 3,
-          "end_line": 37,
-          "label": "the 35 packages"
+          "end_line": 38,
+          "label": "the 36 packages"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 114,
+          "end_line": 131,
           "label": "their allowed references"
         }
       ]
@@ -472,8 +472,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 107,
-          "end_line": 110,
+          "line": 119,
+          "end_line": 122,
           "label": "one chat client, options from PouryaKit:AI"
         },
         {
@@ -481,6 +481,40 @@
           "line": 6,
           "end_line": 11,
           "label": "local Ollama, GetProduct the one tool"
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "S3-compatible store",
+      "sublabel": "report files; a local RustFS in the sample",
+      "pos": [
+        1000,
+        650
+      ],
+      "size": [
+        250,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 110,
+          "end_line": 112,
+          "label": "S3, options from PouryaKit:Storage:S3"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/appsettings.json",
+          "line": 18,
+          "end_line": 27,
+          "label": "localhost:9000, the bucket, keys"
+        },
+        {
+          "path": "src/PouryaKit.Reporting.Module/Features/RenderReport/RenderReportCommandHandler.cs",
+          "line": 38,
+          "end_line": 50,
+          "label": "each attempt stores its file"
         }
       ]
     }
@@ -613,6 +647,14 @@
       "label": "chat completions",
       "fromSide": "bottom",
       "toSide": "top"
+    },
+    {
+      "id": "mm-s3",
+      "from": "mmhost",
+      "to": "s3",
+      "label": "report files",
+      "fromSide": "bottom",
+      "toSide": "top"
     }
   ],
   "cards": [
@@ -632,7 +674,8 @@
         "RabbitMQ only with ConnectionStrings:broker: one durable queue per kind of Host, named by its service name.",
         "Redis only with ConnectionStrings:cache; no Kit package references Redis.",
         "OTLP only through the ServiceDefaults recipes, when OTEL_EXPORTER_OTLP_ENDPOINT is set; PouryaKit.Observability exports nothing, and ModularMonolith.Host composes no exporter.",
-        "A model provider for Catalog's agent: Ollama's OpenAI-compatible API at localhost:11434 in the sample's settings, or OpenAI or Azure OpenAI through the same client; the provider's HTTP client keeps the Host's resilience pipeline."
+        "A model provider for Catalog's agent: Ollama's OpenAI-compatible API at localhost:11434 in the sample's settings, or OpenAI or Azure OpenAI through the same client; the provider's HTTP client keeps the Host's resilience pipeline.",
+        "An S3-compatible store for the report Module's files: a local RustFS at localhost:9000 in the sample's settings, or AWS S3 through the same provider."
       ]
     },
     {

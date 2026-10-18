@@ -127,7 +127,7 @@ public sealed class FeatureCodeTests
     {
         var models = Sample.Models.Values.SelectMany(models => models).ToList();
 
-        Assert.Equal(3, models.Count);
+        Assert.Equal(4, models.Count);
         Assert.Empty(models.SelectMany(model => ModuleRules.EnvelopeStorageIn("a Module's DbContext", model)));
     }
 
