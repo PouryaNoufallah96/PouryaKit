@@ -1,0 +1,51 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b9a8adfb056e1c::t_8cf52faca2a65b 24
+.claude/agent-memory/kit-implementer/saga-spike-facts.md
+  s_b9a8adfb056e1c::t_28a6710410ef86 3,25-37
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_d6f55c82438e18 2468-2471
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_b9a8adfb056e1c::t_c00f611cc766e6 4985
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_b9a8adfb056e1c::t_2aa1801f29395e 10
+docs/architecture/diagrams/delivery.html
+  s_b9a8adfb056e1c::t_7a9a7f8be1622a 4985
+docs/architecture/diagrams/delivery.sequence.json
+  s_b9a8adfb056e1c::t_b54c8b2d5cff57 18
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_a68ed212cb5532 10
+docs/architecture/diagrams/execution-core.html
+  s_b9a8adfb056e1c::t_1da4de1f41c97c 4985
+docs/architecture/diagrams/host-start.html
+  s_b9a8adfb056e1c::t_da29e88d5fef9f 4985
+docs/architecture/diagrams/host-start.workflow.json
+  s_b9a8adfb056e1c::t_bd8e2b6766aef4 11
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_ca980580f3a04c 10
+docs/architecture/diagrams/kit-context.html
+  s_b9a8adfb056e1c::t_94a3fb498fb8c7 4985,5239-5240,5247
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_12c940e2f92776 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b9a8adfb056e1c::t_6a5e8a14a5d856 4985,5080-5081,5087-5090,5292-5305,5362-5363,5369-5372,5603
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_cfce3967192c94 10
+docs/architecture/diagrams/module-boundaries.html
+  s_b9a8adfb056e1c::t_adb5ed94ad4d8a 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c8820ca11c807c2aa7eeb7960f2cd805f5c34d28",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
