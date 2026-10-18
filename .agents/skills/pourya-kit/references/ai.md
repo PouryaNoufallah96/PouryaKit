@@ -177,7 +177,7 @@ var answer = await sequential.AsAIAgent().RunAsync(question, cancellationToken: 
 
 ## Guardrails
 
-A guardrail is the application's `IChatGuardrail`, registered as a singleton on the Host, which the client resolves when it is built; the Kit has no policy and registers none:
+A guardrail is the application's `IChatGuardrail`, registered as a singleton on the Host, which the client resolves when it is built; a Host that registers one with another lifetime fails when its container is built, naming it. The Kit has no policy and registers none:
 
 ```csharp
 builder.Services.AddSingleton<IChatGuardrail, CardNumberGuardrail>();

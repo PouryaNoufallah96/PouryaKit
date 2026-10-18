@@ -39,7 +39,8 @@ public static class AIServiceCollectionExtensions
         /// is not an absolute HTTP or HTTPS address or is missing for Azure OpenAI or Ollama, the key is missing for
         /// OpenAI or Azure OpenAI, the iteration cap is below 1 or a tool name is blank. A Host composes exactly one
         /// <see cref="IChatClient"/>: its build fails, through the Kit's composition checks, naming each registration
-        /// when it registers another, before or after this call, and naming the contract when it removes this one.
+        /// when it registers another, before or after this call, and naming the contract when it removes this one; it fails
+        /// too, naming each, when it registers an <see cref="IChatGuardrail"/> that is not a singleton.
         /// </summary>
         public IServiceCollection AddPouryaKitAI()
         {
@@ -82,6 +83,7 @@ public static class AIServiceCollectionExtensions
                 .UseSocketsHttpHandler((handler, _) => handler.PooledConnectionLifetime = TimeSpan.FromMinutes(2))
                 .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, OneChatClientCheck>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SingletonGuardrailsCheck>());
             services.AddSingleton<IChatClient>(Create);
             return services;
         }

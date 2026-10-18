@@ -292,6 +292,22 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
     }
 
     [Fact]
+    public void A_host_that_registers_a_guardrail_that_is_not_a_singleton_fails_when_it_is_built_naming_it()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder();
+        builder.AddPouryaKitCompositionChecks();
+        builder.Services.AddPouryaKitAI();
+        builder.Services.AddScoped<IChatGuardrail, Guardrail>();
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            $"The Host registers the IChatGuardrail {typeof(Guardrail).FullName} as Scoped, and the chat client resolves its guardrails once, when it is built: register each IChatGuardrail as a singleton.",
+            thrown.Message
+        );
+    }
+
+    [Fact]
     public async Task A_scheduled_run_executes_as_its_named_system_actor_and_its_tool_calls_carry_that_actor()
     {
         const string Digest = "stub.agent-digest";
