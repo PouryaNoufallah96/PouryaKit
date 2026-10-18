@@ -1,0 +1,35 @@
+src/PouryaKit.Reporting/Csv/CsvReport.cs
+  s_b9a8adfb056e1c::t_e5aa733d6be670 1,10-13,16-17,20,31,39,48-54
+src/PouryaKit.Reporting/Spreadsheet/SpreadsheetReport.cs
+  s_b9a8adfb056e1c::t_2c9b8d8f9e4844 1-3,14-15,38,40-71
+.agents/skills/pourya-kit/references/reporting.md
+  s_b9a8adfb056e1c::t_4825e9a9326023 95,104-105,116
+docs/acceptance.md
+  s_b9a8adfb056e1c::t_4b7567fffa04a6 2285-2287,2292
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_287905b6e47974 332
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_cbebbfd0add15d 794-795
+src/PouryaKit.Reporting/ReportErrors.cs
+  s_b9a8adfb056e1c::t_5fe405c00c7ac9 15-18,21
+src/PouryaKit.Reporting/ReportRenderer.cs
+  s_b9a8adfb056e1c::t_93a6f24eece51f 1,23,41-60
+tests/PouryaKit.Reporting.Tests/ReportRendererTests.cs
+  s_b9a8adfb056e1c::t_1d5695ff99ee61 3,21-25,30,84,93-95,97-126,136,140,145,147-152,154,167-178
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "873cd3c5a0f92c86feede84b4ea811c6f0bb4128",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
