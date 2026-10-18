@@ -1054,7 +1054,7 @@ Open for Wave 3 planning (recorded 2026-10-09 on the owner's word, not decided):
 written. A Notification is delivered to its handler once, on one instance, so reaching a client
 connected to another instance needs a delivery between instances that this plan does not name.
 Wave 3's spec names that mechanism, and how it fits "no second push channel", before
-`PouryaKit.Realtime` is built. Nothing of it is implemented. *Answered 2026-10-18 (#133): spec #115's R1 named
+`PouryaKit.Realtime` is built. Nothing of it was implemented when this note was recorded (2026-10-09; built 2026-10-18 by #133, the answer that follows). *Answered 2026-10-18 (#133): spec #115's R1 named
 PostgreSQL `NOTIFY` on the delivery's own transaction, heard by one listener per instance, and read "no second push
 channel" against SignalR beside SSE; ADR 0012 records it as built.*
 

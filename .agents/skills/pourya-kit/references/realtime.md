@@ -85,7 +85,7 @@ internal sealed class NewProductsRealtime : IEndpoint
 ## Limits
 
 - **Delivery to clients is at most once and not durable.** A client receives a push only while it is connected; one that connects later, or loses its connection, receives nothing of what it missed: on `connected` after a reconnect and on `gap`, it reads its state through a query. The Outbox and the Receipts hold the durable state; there is no replayed or stored push.
-- **A slow client is disconnected.** Each client has a buffer of 256 events, which the listener fills without waiting; a client a full buffer behind is disconnected, rather than handed some events and not others, and `EventSource` reconnects.
+- **A slow client is disconnected.** Each client has a buffer of 256 events, which the listener fills without waiting; a client a full buffer behind is disconnected: its stream drains the events its buffer already holds, drops the overflow event and every later one, and closes, and `EventSource` reconnects, so the client re-reads its state.
 - **Identical pushes in one transaction arrive once**: PostgreSQL folds notifications of one channel with identical payloads in one transaction.
 - One Channel namespace per database: the Hosts of one database share the PostgreSQL channel `pouryakit_realtime`, so two applications on one database name their Channels apart.
 - A Marten Unit of Work does not push (spec #115, "Out of Scope"); no SignalR and no second push channel to the client.

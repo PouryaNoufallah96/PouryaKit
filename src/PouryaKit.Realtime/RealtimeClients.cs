@@ -8,7 +8,8 @@ namespace PouryaKit.Realtime;
 // The clients connected to this instance, keyed by tenant and Channel. It holds no event: every instance's listener
 // receives every push, so a client is served by the instance it is connected to and by no other. The listener writes
 // on the thread that reads notifications, without waiting, into each client's bounded buffer: a client a full buffer
-// behind is disconnected, rather than handed some events and not others, and its browser's EventSource reconnects.
+// behind is disconnected once its buffer has drained, the overflow event and every later one dropped, and its
+// browser's EventSource reconnects and re-reads the state.
 internal sealed class RealtimeClients
 {
     private const int Buffered = 256;
