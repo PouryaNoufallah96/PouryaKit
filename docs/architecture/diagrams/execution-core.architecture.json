@@ -831,8 +831,8 @@
         },
         {
           "path": "src/PouryaKit.AI/AIServiceCollectionExtensions.cs",
-          "line": 92,
-          "end_line": 119,
+          "line": 115,
+          "end_line": 142,
           "label": "allow-list, cap, guardrails, no retries"
         }
       ]

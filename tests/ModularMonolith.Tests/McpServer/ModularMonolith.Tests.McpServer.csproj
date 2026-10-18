@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The MCP servers the MCP tests reach: this assembly started as an OS process is the server over stdio, and
+       McpHttpServer, in the test process, the server over HTTP. ModularMonolith.Tests leaves this folder out of its own
+       sources. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The shared framework the test project runs on, whose output this server's assembly is started from. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
+  </ItemGroup>
+</Project>

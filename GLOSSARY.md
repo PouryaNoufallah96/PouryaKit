@@ -55,6 +55,10 @@ _Avoid_: Module facade, mediator, bus
 A Module's command or query offered to a model as a tool: each call the model makes runs as an Operation through the Module's Gateway, continuing the Operation Context of the run that offered the tool. Built in `PouryaKit.AI`.
 _Avoid_: Function, plugin, agent tool
 
+**MCP tool**:
+A tool of an MCP server the Host's AI options name, offered to a model beside its Gateway tools under the same allow-list and iteration cap: the call runs on that server, never as an Operation, and the Host, not the run, owns the server's client. Built in `PouryaKit.AI`.
+_Avoid_: Plugin, external tool, remote function
+
 **Reverse proxy**:
 The deployable application in front of a system's Hosts that forwards each incoming HTTP request, by configured routes, to the Host that serves it; it runs no Operation. Built on YARP in `PouryaKit.ReverseProxy`.
 _Avoid_: Gateway, API gateway, edge service

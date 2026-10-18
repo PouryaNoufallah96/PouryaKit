@@ -102,10 +102,10 @@ internal static class PackageGraph
             ["PouryaKit.Domain"],
             ["CsvHelper", "DocumentFormat.OpenXml", "PDFsharp-MigraDoc", "System.Security.Cryptography.Pkcs"]
         ),
-        // The OpenAI client serves all three providers (A1); Modularity is the Gateway tool's (#135), the Agent Framework the agents' (#136).
+        // The OpenAI client serves all three providers (A1); Modularity is the Gateway tool's (#135), the Agent Framework the agents' (#136), MCP's client SDK the MCP servers' (#137).
         ["PouryaKit.AI"] = new(
             ["PouryaKit.Cqrs", "PouryaKit.Modularity"],
-            ["Microsoft.Agents.AI", "Microsoft.Agents.AI.Workflows", "Microsoft.Extensions.AI", "Microsoft.Extensions.AI.OpenAI", "Microsoft.Extensions.Http", "Microsoft.Extensions.Options"]
+            ["Microsoft.Agents.AI", "Microsoft.Agents.AI.Workflows", "Microsoft.Extensions.AI", "Microsoft.Extensions.AI.OpenAI", "Microsoft.Extensions.Http", "Microsoft.Extensions.Options", "ModelContextProtocol.Core"]
         ),
         // The Stream write model's Unit of Work (#131): Npgsql is the Kit's line over the 9.0.4 Marten 9.46.0 brings, for the
         // Kit's statements it runs on its own transaction; Messaging is not needed, the Outbox step being a seam.

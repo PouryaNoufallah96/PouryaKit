@@ -57,6 +57,7 @@
     <Project Path="tests/ModularMonolith.Tests/Unowned/ModularMonolith.Tests.Unowned.csproj" />
     <Project Path="tests/ModularMonolith.Tests/SameNamed/ModularMonolith.Tests.SameNamed.csproj" />
     <Project Path="tests/ModularMonolith.Tests/StreamHost/ModularMonolith.Tests.StreamHost.csproj" />
+    <Project Path="tests/ModularMonolith.Tests/McpServer/ModularMonolith.Tests.McpServer.csproj" />
     <Project Path="tests/ModularMonolith.Tests/Streams/ModularMonolith.Tests.Streams.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Contracts/Offending.Contracts.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Core/Offending.Core.csproj" />
