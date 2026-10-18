@@ -1,0 +1,40 @@
+tests/ModularMonolith.Tests/GrpcTests.cs
+  s_b9a8adfb056e1c::t_0f66b90c82cad6 211-230
+  s_b9a8adfb056e1c::t_412ce0631eef3e 313-360
+tests/PouryaKit.Storage.Tests/AzureBlobStorageTests.cs
+  s_b9a8adfb056e1c::t_1b1ec89666f5b8 168-186
+.agents/skills/pourya-kit/references/grpc.md
+  s_b9a8adfb056e1c::t_fa18747d2735cf 51,97,102
+.agents/skills/pourya-kit/references/storage.md
+  s_b9a8adfb056e1c::t_9aa0357c20b0d0 60
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_3092610fc9dfcc 276,595,597-598,600
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_4c5fb60d6dbc86 627-628,726-727
+src/PouryaKit.Grpc/Clients/GrpcClientServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_1e42045d761a0a 22-24,32-36,40,56-58,80-81
+src/PouryaKit.Grpc/Clients/GrpcLoopbackCheck.cs
+  s_b9a8adfb056e1c::t_a8bd1acee9eb7e 16-19,27-29,51-52
+src/PouryaKit.Grpc/Services/GrpcEndpointRouteBuilderExtensions.cs
+  s_b9a8adfb056e1c::t_a7f88c0fd4c660 23-24,35-39
+src/PouryaKit.Grpc/Services/UnmappedGrpcServicesCheck.cs
+  s_b9a8adfb056e1c::t_57991b1ad276f8 27
+src/PouryaKit.Storage.AzureBlob/AzureBlobStorageServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_b4d778858bb94c 1,19-23,47-50,74-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bcb2047a4438c8775e4893579f34e85d5fd6ecdf",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
