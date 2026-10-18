@@ -1,0 +1,93 @@
+.agents/skills/pourya-kit/references/ai.md
+  s_b9a8adfb056e1c::t_ca0a0f4bbdd803 107
+  s_b9a8adfb056e1c::t_53ffffb1553074 92
+  s_b9a8adfb056e1c::t_b8448bbcfd41bf 180
+  s_b9a8adfb056e1c::t_072bc06e9a840b 3,7-13,44,47,51,90-91,93-106,108-139,141-179,181-222,225,227-229,235,237,242-243
+  s_b9a8adfb056e1c::t_5d55dfbbed03fb 140
+README.md
+  s_b9a8adfb056e1c::t_f616e55b95aee2 33
+docs/architecture/README.md
+  s_b9a8adfb056e1c::t_3ddaa516228f59 348
+  s_b9a8adfb056e1c::t_04b80c27c1d06b 346
+  s_b9a8adfb056e1c::t_76796d94557b0a 336
+  s_b9a8adfb056e1c::t_ad0223634dcc89 343-344
+  s_b9a8adfb056e1c::t_a6e23d59b82039 347
+tests/ModularMonolith.Tests/AgentRunTests.cs
+  s_b9a8adfb056e1c::t_1e11f14c57d884 334,337
+  s_b9a8adfb056e1c::t_5f3d200df29d89 413,415-417
+  s_b9a8adfb056e1c::t_36a312a17b9a72 1-333,335-336,338-412,414,418-508
+docs/provenance/PouryaKit.AI.md
+  s_b9a8adfb056e1c::t_b2e00f9a8a9a1a 5
+  s_b9a8adfb056e1c::t_0d22154f269444 15-16,18
+src/PouryaKit.AI/AgentSessionExtensions.cs
+  s_b9a8adfb056e1c::t_e10bb753633ae1 1-37
+tests/ModularMonolith.Tests/Stub/StubContextOperations.cs
+  s_b9a8adfb056e1c::t_acaf0a3e90ffa5 54-59
+tests/ModularMonolith.Tests/Fixtures/ChatStub.cs
+  s_b9a8adfb056e1c::t_55f2af07d510fb 23
+  s_b9a8adfb056e1c::t_51e41c430de29b 31
+  s_b9a8adfb056e1c::t_e2035bceda1e4c 105
+  s_b9a8adfb056e1c::t_07f85f32fbe324 13-14
+  s_b9a8adfb056e1c::t_53edfa6eb870ed 64-77
+  s_b9a8adfb056e1c::t_08cee5b4342f71 123,132-136
+  s_b9a8adfb056e1c::t_044e11c341f084 137,146,152-187
+  s_b9a8adfb056e1c::t_631282fa08ea56 138
+src/PouryaKit.AI/PouryaKit.AI.csproj
+  s_b9a8adfb056e1c::t_c29de1dbe16171 3-4
+scripts/packaging/consumers/PouryaKit.AI.cs
+  s_b9a8adfb056e1c::t_bbe9d0d0a49101 28,30
+  s_b9a8adfb056e1c::t_91d61e2a307378 1-3,10-12,21,24-27,29,31-32,42-55
+.agents/skills/pourya-kit/SKILL.md
+  s_b9a8adfb056e1c::t_de4cd6913a8a4f 53
+  s_b9a8adfb056e1c::t_befc96af93b524 3
+src/PouryaKit.AI/ToolAllowList.cs
+  s_b9a8adfb056e1c::t_9757b12e563282 7-8,25,31,34-35
+docs/foundation-review.md
+  s_b9a8adfb056e1c::t_c8317aac0eb1a1 289
+  s_b9a8adfb056e1c::t_328425ae206f9f 892
+src/PouryaKit.AI/PouryaKitAIOptions.cs
+  s_b9a8adfb056e1c::t_494184da3ff7d7 34-35
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b9a8adfb056e1c::t_1f261d3946bbb5 105,108
+src/PouryaKit.AI/AIServiceCollectionExtensions.cs
+  s_b9a8adfb056e1c::t_59619cc1578f32 107
+  s_b9a8adfb056e1c::t_6d2a4479cd6ee0 91
+  s_b9a8adfb056e1c::t_a5ae03d5beacec 104,106,108-113
+  s_b9a8adfb056e1c::t_25bd33b04011c2 31-36
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b9a8adfb056e1c::t_a29e9af7059182 835-836
+  s_b9a8adfb056e1c::t_e673905dfc1f8a 1097
+  s_b9a8adfb056e1c::t_b491a495a2c0e8 824
+src/PouryaKit.AI/IChatGuardrail.cs
+  s_b9a8adfb056e1c::t_56b07135518a4c 1-22
+src/PouryaKit.AI/ChatGuardrails.cs
+  s_b9a8adfb056e1c::t_03b5f191912148 1-52
+tests/ModularMonolith.Tests/Stub/StubAgents.cs
+  s_b9a8adfb056e1c::t_2035e4f599d7cd 1-34
+Directory.Packages.props
+  s_b9a8adfb056e1c::t_5c2ecc20b75d07 32-33
+src/PouryaKit.AI/IAgentSessionStore.cs
+  s_b9a8adfb056e1c::t_27ffcd7fa46a42 1-16
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b9a8adfb056e1c::t_f6cf70559d520b 10
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b9a8adfb056e1c::t_326f13c8aa0c75 10
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b9a8adfb056e1c::t_87899655011aae 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "158f677f8802ecc1058997a877bd6dcdbd7c6fd7",
+  "prompts": {},
+  "sessions": {
+    "s_b9a8adfb056e1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fab13bc7-ab3e-4d29-8f89-d15acdb4ff9f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
