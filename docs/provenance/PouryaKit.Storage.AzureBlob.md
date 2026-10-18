@@ -13,7 +13,7 @@ Checked on nuget.org on 2026-10-18 (ticket #128); licence expressions from each 
 - `Apache.Arrow` 23.0.0, `Apache-2.0`: a direct reference that raises the 22.1.0 `Azure.Storage.Blobs` asks for, whose nuspec gives a licence file (the Apache 2.0 text) and no expression, which `LicenceTests` refuses. Nothing in the provider calls it: Blobs uses it for query results in Arrow format.
 - `System.Security.Cryptography.ProtectedData` 10.0.12, `MIT`: a direct reference that raises the 4.5.0 `Microsoft.Identity.Client.Extensions.Msal` asks for, whose nuspec gives only a licence URL.
 
-Both floors are references outside plan section C's standing rule, approved by the session for #128 on 2026-10-18 as #124's `System.Security.Cryptography.Pkcs` floor was, for the owner to confirm. Delete each once an `Azure.Storage.Blobs` release depends on a version that declares an expression. `PouryaKit.Storage.AzureBlob` also references `PouryaKit.Storage`. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
+Both floors are references outside plan section C's standing rule, approved by the session for #128 on 2026-10-18 as #124's `System.Security.Cryptography.Pkcs` floor was, approved by the owner on 2026-10-18 (spec #115). Delete each once an `Azure.Storage.Blobs` release depends on a version that declares an expression. `PouryaKit.Storage.AzureBlob` also references `PouryaKit.Storage`. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
 
 ## Test dependencies
 
