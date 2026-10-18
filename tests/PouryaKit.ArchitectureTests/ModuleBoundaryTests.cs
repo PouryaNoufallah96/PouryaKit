@@ -100,6 +100,7 @@ public sealed class ModuleBoundaryTests
                 typeof(ModularMonolith.Tests.Sagas.PaymentReceivedV1).FullName,
                 typeof(ModularMonolith.Tests.Sagas.PaymentReceivedV2).FullName,
                 typeof(ModularMonolith.Tests.Sagas.ReferenceOpenedV1).FullName,
+                typeof(ModularMonolith.Tests.Sagas.ShelfSnapshotV1).FullName,
             ],
             ModuleRules.PublicTypesOf(sagas, new HashSet<Type>()).Order(StringComparer.Ordinal)
         );

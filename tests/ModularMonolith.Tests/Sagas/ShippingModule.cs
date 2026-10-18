@@ -31,6 +31,7 @@ public sealed class ShippingModule : IModuleDefinition
             "shipping.reminder",
             saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference).Timeout<ReminderTimeout>()
         );
+        module.AddPouryaKitSaga<TallySaga>("shipping.tally", "shipping.tally", saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference));
     }
 }
 
@@ -116,6 +117,21 @@ public sealed class ReminderSaga : PouryaKitSaga
 
     /// <summary>A reminder is due.</summary>
     public void Handle(ReminderTimeout reminder) => Reminded.Add((int)reminder.Within.TotalSeconds);
+}
+
+/// <summary>A saga whose one step, under Wolverine's Async name, both starts it and advances it.</summary>
+public sealed class TallySaga : PouryaKitSaga
+{
+    /// <summary>How many references were opened.</summary>
+    public int Count { get; set; }
+
+    /// <summary>Starts the saga, or advances it.</summary>
+    public Task StartOrHandleAsync(SagaInput<TallySaga, ReferenceOpenedV1> opened)
+    {
+        ArgumentNullException.ThrowIfNull(opened);
+        Count++;
+        return Task.CompletedTask;
+    }
 }
 
 /// <summary>The reminder saga's timeout, of which one step schedules two.</summary>

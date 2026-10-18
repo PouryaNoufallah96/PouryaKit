@@ -34,6 +34,13 @@ internal sealed class SagaStep(SagaDeclaration saga, MessageContext delivery, Sa
     {
         var type = integrationEvent.GetType();
         var subscriptions = Delivery.Runtime.Services.GetRequiredService<Subscriptions>();
+        if (subscriptions.IsSnapshot(type))
+        {
+            throw new InvalidOperationException(
+                $"The Saga {Saga.Name} emitted {type.FullName}, a Snapshot. A Saga emits Integration Events only; the Kit publishes a Snapshot whenever a Unit of Work commits a change of its aggregate."
+            );
+        }
+
         if (!subscriptions.Publications.TryGetValue(type, out var publication) || publication.Module != Saga.Module)
         {
             throw new InvalidOperationException(

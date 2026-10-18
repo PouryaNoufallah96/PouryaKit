@@ -59,12 +59,12 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
         await PublishAsync(host, new ReferenceOpenedV1("r-1"), Guid.CreateVersion7(), "tenant-a");
 
         var reference = SagaStorage.SagaId("tenant-a", "r-1");
-        await WaitUntilAsync($"exists (select from wolverine.fulfilmentsaga_saga where id = '{FulfilmentOf("tenant-a", order)}')");
+        await WaitUntilAsync($"exists (select from wolverine.shipping_fulfilment_saga where id = '{FulfilmentOf("tenant-a", order)}')");
         await WaitUntilAsync(
-            $"exists (select from wolverine.referencesaga_saga where id = '{reference}') and exists (select from wolverine.remindersaga_saga where id = '{reference}')"
+            $"exists (select from wolverine.shipping_reference_saga where id = '{reference}') and exists (select from wolverine.shipping_reminder_saga where id = '{reference}')"
         );
         await SettledAsync();
-        Assert.Equal(3, (await SagaAsync("fulfilmentsaga", FulfilmentOf("tenant-a", order)))!.Value.GetProperty("Installments").GetInt32());
+        Assert.Equal(3, (await SagaAsync("shipping_fulfilment", FulfilmentOf("tenant-a", order)))!.Value.GetProperty("Installments").GetInt32());
         Assert.Equal(1L, await CountAsync("select count(*) from billing.pouryakit_receipts where subscription = 'billing.order-placed'"));
         Assert.Equal("billing.order-placed", Assert.Single(BillingLog.Of(order)).Subscription);
         Assert.Equal(0L, await CountAsync("select count(*) from wolverine.wolverine_dead_letters"));
@@ -80,17 +80,17 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
         var sagaId = FulfilmentOf("tenant-a", order);
 
         Assert.Equal(["kitstore"], await SchemasOfAsync(SagaStepTable));
-        Assert.Equal(["kitstore"], await SchemasOfAsync("fulfilmentsaga_saga"));
+        Assert.Equal(["kitstore"], await SchemasOfAsync("shipping_fulfilment_saga"));
         await PlaceAsync(host, "tenant-a", order, installments: 2);
-        await WaitUntilAsync($"exists (select from kitstore.fulfilmentsaga_saga where id = '{sagaId}')");
+        await WaitUntilAsync($"exists (select from kitstore.shipping_fulfilment_saga where id = '{sagaId}')");
         var first = Guid.CreateVersion7();
         await PublishAsync(host, new PaymentReceivedV1(order), first, "tenant-a");
-        await WaitUntilAsync($"(select (body->>'Paid')::int from kitstore.fulfilmentsaga_saga where id = '{sagaId}') = 1");
+        await WaitUntilAsync($"(select (body->>'Paid')::int from kitstore.shipping_fulfilment_saga where id = '{sagaId}') = 1");
 
         Assert.Single(
             await RowsAsync(
                 $"""
-                select from kitstore.fulfilmentsaga_saga s, kitstore.{SagaStepTable} c
+                select from kitstore.shipping_fulfilment_saga s, kitstore.{SagaStepTable} c
                 where s.id = '{sagaId}' and c.event_id = '{first}' and pg_xact_commit_timestamp(s.xmin) = pg_xact_commit_timestamp(c.xmin)
                 """
             )
@@ -110,7 +110,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
                     """
                 )
             );
-            Assert.Null(await SagaAsync("fulfilmentsaga", sagaId, "kitstore"));
+            Assert.Null(await SagaAsync("shipping_fulfilment", sagaId, "kitstore"));
         }
         finally
         {
@@ -149,7 +149,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
 
         var sagaId = FulfilmentOf("tenant-a", order);
         await WaitUntilAsync(
-            $"(select (body->>'Paid')::int = 1 and body->'Methods' = '[\"card\"]'::jsonb from wolverine.fulfilmentsaga_saga where id = '{sagaId}')"
+            $"(select (body->>'Paid')::int = 1 and body->'Methods' = '[\"card\"]'::jsonb from wolverine.shipping_fulfilment_saga where id = '{sagaId}')"
         );
         Assert.Equal(await ClaimedAsync(sagaId, "orders.payment-received.v1"), await ClaimedAsync(sagaId, "orders.payment-received.v2"));
     }
@@ -165,12 +165,12 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
         var placed = await ClaimedAsync(sagaId, "orders.order-placed.v1");
         await PayAsync(host, "tenant-a", order);
         await WaitUntilAsync("exists (select from billing.pouryakit_receipts where subscription = 'billing.order-fulfilled')");
-        Assert.Null(await SagaAsync("fulfilmentsaga", sagaId));
+        Assert.Null(await SagaAsync("shipping_fulfilment", sagaId));
 
         await PublishAsync(host, new OrderPlacedV1(order, 1, 3600), placed, "tenant-a");
 
-        await WaitUntilAsync($"{HandledAt(Fulfilment, "message_type like '%OrderPlacedV1%'")} = 2");
-        Assert.Null(await SagaAsync("fulfilmentsaga", sagaId));
+        await WaitUntilAsync($"{HandledAt(Fulfilment, "message_type = 'shipping.fulfilment.orders.order-placed.v1'")} = 2");
+        Assert.Null(await SagaAsync("shipping_fulfilment", sagaId));
         Assert.Equal(1L, await CountAsync("select count(*) from billing.pouryakit_receipts where subscription = 'billing.order-fulfilled'"));
     }
 
@@ -182,14 +182,14 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
 
         await PublishAsync(host, new OrderPlacedV1(order, 2, 3600), Guid.CreateVersion7(), "tenant-a");
         await PublishAsync(host, new OrderPlacedV1(order, 3, 3600), Guid.CreateVersion7(), "tenant-b");
-        await WaitUntilAsync($"(select count(*) from wolverine.fulfilmentsaga_saga where body->>'Order' = '{order}') = 2");
+        await WaitUntilAsync($"(select count(*) from wolverine.shipping_fulfilment_saga where body->>'Order' = '{order}') = 2");
         await PublishAsync(host, new PaymentReceivedV1(order), Guid.CreateVersion7(), "tenant-b");
 
-        await WaitUntilAsync($"(select (body->>'Paid')::int from wolverine.fulfilmentsaga_saga where id = '{FulfilmentOf("tenant-b", order)}') = 1");
+        await WaitUntilAsync($"(select (body->>'Paid')::int from wolverine.shipping_fulfilment_saga where id = '{FulfilmentOf("tenant-b", order)}') = 1");
         await SettledAsync();
-        var a = (await SagaAsync("fulfilmentsaga", FulfilmentOf("tenant-a", order)))!.Value;
+        var a = (await SagaAsync("shipping_fulfilment", FulfilmentOf("tenant-a", order)))!.Value;
         Assert.Equal(("tenant-a", 2, 0), (a.GetProperty("Tenant").GetString(), a.GetProperty("Installments").GetInt32(), a.GetProperty("Paid").GetInt32()));
-        Assert.Equal("tenant-b", (await SagaAsync("fulfilmentsaga", FulfilmentOf("tenant-b", order)))!.Value.GetProperty("Tenant").GetString());
+        Assert.Equal("tenant-b", (await SagaAsync("shipping_fulfilment", FulfilmentOf("tenant-b", order)))!.Value.GetProperty("Tenant").GetString());
         Assert.Equal(0L, await CountAsync("select count(*) from wolverine.wolverine_dead_letters"));
     }
 
@@ -202,10 +202,10 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
         await PublishAsync(host, new ReferenceOpenedV1("c"), Guid.CreateVersion7(), "a:b");
         await PublishAsync(host, new ReferenceOpenedV1("b:c"), Guid.CreateVersion7(), "a");
 
-        await WaitUntilAsync("(select count(*) from wolverine.referencesaga_saga) = 2");
+        await WaitUntilAsync("(select count(*) from wolverine.shipping_reference_saga) = 2");
         Assert.Equal(
             [["a", "b:c"], ["a:b", "c"]],
-            await RowsAsync("select body->>'Tenant', body->>'Reference' from wolverine.referencesaga_saga order by 1")
+            await RowsAsync("select body->>'Tenant', body->>'Reference' from wolverine.shipping_reference_saga order by 1")
         );
         Assert.Equal(0L, await CountAsync("select count(*) from wolverine.wolverine_dead_letters where received_at = 'local://shipping.reference/'"));
     }
@@ -218,7 +218,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
         var host = await StartAsync();
         var order = Guid.CreateVersion7();
         await PublishAsync(host, new OrderPlacedV1(order, 1, 3600), Guid.CreateVersion7(), "tenant-a");
-        await WaitUntilAsync($"exists (select from wolverine.fulfilmentsaga_saga where id = '{FulfilmentOf("tenant-a", order)}')");
+        await WaitUntilAsync($"exists (select from wolverine.shipping_fulfilment_saga where id = '{FulfilmentOf("tenant-a", order)}')");
         var payment = Guid.CreateVersion7();
 
         await PublishAsync(host, new PaymentReceivedV1(order), payment, "tenant-c");
@@ -245,7 +245,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
         var refused = Assert.Single(await RowsAsync($"select exception_type, exception_message from wolverine.wolverine_dead_letters where received_at = 'local://{Fulfilment}/'"));
         Assert.Equal(typeof(SagaInputRefusedException).FullName, refused[0]);
         Assert.Contains("with no tenant", (string)refused[1], StringComparison.Ordinal);
-        Assert.Equal(0L, await CountAsync("select count(*) from wolverine.fulfilmentsaga_saga"));
+        Assert.Equal(0L, await CountAsync("select count(*) from wolverine.shipping_fulfilment_saga"));
         Assert.Equal(0L, await CountAsync($"select count(*) from wolverine.{SagaStepTable}"));
     }
 
@@ -257,7 +257,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
         var sagaId = FulfilmentOf("tenant-a", order);
         var (placing, paying) = (Context("tenant-a"), Context("tenant-a"));
         await PlaceAsync(host, placing, order, installments: 1);
-        await WaitUntilAsync($"exists (select from wolverine.fulfilmentsaga_saga where id = '{sagaId}')");
+        await WaitUntilAsync($"exists (select from wolverine.shipping_fulfilment_saga where id = '{sagaId}')");
 
         await PayAsync(host, paying, order);
 
@@ -288,16 +288,16 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
 
         await PlaceAsync(host, placing, order, installments: 2, payWithinSeconds: 3);
 
-        await WaitUntilAsync($"exists (select from wolverine.fulfilmentsaga_saga where id = '{sagaId}')");
+        await WaitUntilAsync($"exists (select from wolverine.shipping_fulfilment_saga where id = '{sagaId}')");
         var scheduling = SagaStorage.StepId(Fulfilment, sagaId, "orders.order-placed.v1", await ClaimedAsync(sagaId, "orders.order-placed.v1"));
         var timeout = SagaStorage.TimeoutId(scheduling, timeoutType, 0);
         var envelope = (Guid)Assert.Single(await RowsAsync($"select id from wolverine.wolverine_incoming_envelopes where message_type = '{timeoutType}'"))[0];
-        var kept = (await SagaAsync("fulfilmentsaga", sagaId))!.Value.GetProperty("Timeouts");
+        var kept = (await SagaAsync("shipping_fulfilment", sagaId))!.Value.GetProperty("Timeouts");
         Assert.Equal([(envelope.ToString(), timeout.ToString())], kept.EnumerateObject().Select(entry => (entry.Name, entry.Value.GetString())));
         Assert.NotEqual(envelope, timeout);
 
         await WaitUntilAsync("exists (select from billing.pouryakit_receipts where subscription = 'billing.order-cancelled')");
-        Assert.Null(await SagaAsync("fulfilmentsaga", sagaId));
+        Assert.Null(await SagaAsync("shipping_fulfilment", sagaId));
         Assert.Equal(timeout, await ClaimedAsync(sagaId, timeoutType));
         var step = SagaStorage.StepId(Fulfilment, sagaId, timeoutType, timeout);
         var cancelled = Assert.Single(BillingLog.Of(order), delivery => delivery.Subscription == "billing.order-cancelled").Context;
@@ -320,8 +320,8 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
 
         await PublishAsync(host, new ReferenceOpenedV1("r-1"), Guid.CreateVersion7(), "tenant-a");
 
-        await WaitUntilAsync($"exists (select from wolverine.remindersaga_saga where id = '{sagaId}' and jsonb_array_length(body->'Reminded') = 2)");
-        var state = (await SagaAsync("remindersaga", sagaId))!.Value;
+        await WaitUntilAsync($"exists (select from wolverine.shipping_reminder_saga where id = '{sagaId}' and jsonb_array_length(body->'Reminded') = 2)");
+        var state = (await SagaAsync("shipping_reminder", sagaId))!.Value;
         Assert.Equal([1, 2], state.GetProperty("Reminded").EnumerateArray().Select(delay => delay.GetInt32()).Order());
         var scheduling = SagaStorage.StepId("shipping.reminder", sagaId, "orders.reference-opened.v1", await ClaimedAsync(sagaId, "orders.reference-opened.v1", "shipping.reminder"));
         Guid[] identities = [.. new[] { SagaStorage.TimeoutId(scheduling, timeoutType, 0), SagaStorage.TimeoutId(scheduling, timeoutType, 1) }.Order()];
@@ -350,7 +350,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
             (string)Assert.Single(await RowsAsync($"select exception_message from wolverine.wolverine_dead_letters where received_at = 'local://{Fulfilment}/'"))[0],
             StringComparison.Ordinal
         );
-        Assert.Equal(0, (await SagaAsync("fulfilmentsaga", FulfilmentOf("tenant-a", order)))!.Value.GetProperty("Methods").GetArrayLength());
+        Assert.Equal(0, (await SagaAsync("shipping_fulfilment", FulfilmentOf("tenant-a", order)))!.Value.GetProperty("Methods").GetArrayLength());
         Assert.Equal(0L, await CountAsync($"select count(*) from wolverine.{SagaStepTable} where event_id = '{payment}'"));
         Assert.Equal(0L, await CountAsync("select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://billing.order-fulfilled/'"));
     }
@@ -409,7 +409,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
             """
             create function wolverine.refuse_payment_mark() returns trigger language plpgsql as $$
             begin
-                if new.status = 'Handled' and old.message_type like '%PaymentReceivedV1%' then
+                if new.status = 'Handled' and old.message_type = 'shipping.fulfilment.orders.payment-received.v1' then
                     raise exception 'the test refuses the mark of a payment step';
                 end if;
                 return new;
@@ -422,7 +422,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
 
         using (var child = await ChildAsync("PAID", order))
         {
-            await WaitUntilAsync($"(select (body->>'Paid')::int from wolverine.fulfilmentsaga_saga where id = '{FulfilmentOf("tenant-a", order)}') = 1");
+            await WaitUntilAsync($"(select (body->>'Paid')::int from wolverine.shipping_fulfilment_saga where id = '{FulfilmentOf("tenant-a", order)}') = 1");
             child.Kill(entireProcessTree: true);
             await child.WaitForExitAsync(Token);
         }
@@ -488,11 +488,11 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
 
         await Sql.WaitUntilAsync(
             environment.Inventory,
-            $"exists (select from wolverine.fulfilmentsaga_saga where id = '{FulfilmentOf("tenant-a", order)}')",
+            $"exists (select from wolverine.shipping_fulfilment_saga where id = '{FulfilmentOf("tenant-a", order)}')",
             "The saga in the receiving Host never started.",
             seconds: 30
         );
-        Assert.Equal([["tenant-a", 2]], await Sql.RowsAsync(environment.Inventory, "select body->>'Tenant', (body->>'Installments')::int from wolverine.fulfilmentsaga_saga"));
+        Assert.Equal([["tenant-a", 2]], await Sql.RowsAsync(environment.Inventory, "select body->>'Tenant', (body->>'Installments')::int from wolverine.shipping_fulfilment_saga"));
     }
 
     // ADR 0013: under any other policy, a step could reach the Kit's scoped services, the Operation and its publisher among
@@ -512,17 +512,88 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
     [Fact]
     public async Task A_step_that_takes_the_kits_operation_is_refused_when_wolverine_generates_its_chain()
     {
-        var host = await StartAsync(
-            configure: builder =>
-                builder.Services.AddPouryaKitSaga<ContextProbeSaga>("shipping.context-probe", "shipping.context-probe", saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId))
-        );
+        var host = await StartAsync(configure: WithProbes);
 
         await PlaceAsync(host, "tenant-a", Guid.CreateVersion7());
 
-        await WaitUntilAsync("exists (select from wolverine.wolverine_dead_letters where received_at = 'local://shipping.context-probe/')");
+        await WaitUntilAsync("exists (select from wolverine.wolverine_dead_letters where received_at = 'local://probes.context/')");
         Assert.Equal(
             [["Wolverine.Configuration.InvalidServiceLocationException"]],
-            await RowsAsync("select exception_type from wolverine.wolverine_dead_letters where received_at = 'local://shipping.context-probe/'")
+            await RowsAsync("select exception_type from wolverine.wolverine_dead_letters where received_at = 'local://probes.context/'")
+        );
+    }
+
+    // A Saga takes and emits Integration Events only (ADR 0013): a Snapshot its Module publishes is refused at the step,
+    // before anything commits.
+    [Fact]
+    public async Task A_step_that_emits_a_snapshot_is_refused_and_commits_nothing()
+    {
+        var host = await StartAsync(configure: WithProbes);
+
+        await PublishAsync(host, new ReferenceOpenedV1("s-1"), Guid.CreateVersion7(), "tenant-a");
+
+        await WaitUntilAsync("exists (select from wolverine.wolverine_dead_letters where received_at = 'local://probes.snapshot/')");
+        Assert.Contains(
+            $"emitted {typeof(ShelfSnapshotV1).FullName}, a Snapshot",
+            (string)Assert.Single(await RowsAsync("select exception_message from wolverine.wolverine_dead_letters where received_at = 'local://probes.snapshot/'"))[0],
+            StringComparison.Ordinal
+        );
+        Assert.Equal(0L, await CountAsync("select count(*) from wolverine.probes_snapshot_saga"));
+    }
+
+    // What a step returns is cascaded by Wolverine without the Kit's headers, so the step fails before its commit and
+    // nothing it returned is sent: a step emits with PublishAsync.
+    [Fact]
+    public async Task A_step_that_returns_an_integration_event_is_refused_and_sends_nothing()
+    {
+        var host = await StartAsync(configure: WithProbes);
+
+        await PublishAsync(host, new ReferenceOpenedV1("c-1"), Guid.CreateVersion7(), "tenant-a");
+
+        await WaitUntilAsync("exists (select from wolverine.wolverine_dead_letters where received_at = 'local://probes.cascade/')");
+        var refused = (string)Assert.Single(await RowsAsync("select exception_message from wolverine.wolverine_dead_letters where received_at = 'local://probes.cascade/'"))[0];
+        Assert.Contains($"returned {typeof(OrderFulfilledV1).FullName}", refused, StringComparison.Ordinal);
+        Assert.Contains("PublishAsync", refused, StringComparison.Ordinal);
+        Assert.Equal(0L, await CountAsync("select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://billing.order-fulfilled/'"));
+        Assert.Equal(0L, await CountAsync("select count(*) from wolverine.probes_cascade_saga"));
+    }
+
+    // Wolverine takes each step name with an Async suffix: one StartOrHandleAsync starts the saga, then advances it.
+    [Fact]
+    public async Task A_step_named_start_or_handle_async_starts_the_saga_and_then_advances_it()
+    {
+        var host = await StartAsync();
+        var sagaId = SagaStorage.SagaId("tenant-a", "t-1");
+
+        await PublishAsync(host, new ReferenceOpenedV1("t-1"), Guid.CreateVersion7(), "tenant-a");
+        await WaitUntilAsync($"exists (select from wolverine.shipping_tally_saga where id = '{sagaId}')");
+        await PublishAsync(host, new ReferenceOpenedV1("t-1"), Guid.CreateVersion7(), "tenant-a");
+
+        await WaitUntilAsync($"exists (select from wolverine.shipping_tally_saga where id = '{sagaId}' and (body->>'Count')::int = 2)");
+        Assert.Equal(0L, await CountAsync("select count(*) from wolverine.wolverine_dead_letters where received_at = 'local://shipping.tally/'"));
+    }
+
+    // Wolverine names a saga's table after its type's simple name and an input after its arguments' simple names: the Kit
+    // names both after the saga, so two sagas of one simple name in two namespaces keep their states and inputs apart.
+    [Fact]
+    public async Task Two_sagas_of_one_simple_name_in_two_namespaces_keep_their_states_and_their_inputs_apart()
+    {
+        var host = await StartAsync(configure: builder => builder.AddPouryaKitModules(modules => modules.Add<TwinsModule>()));
+        var sagaId = SagaStorage.SagaId("tenant-a", "w-1");
+
+        await PublishAsync(host, new ReferenceOpenedV1("w-1"), Guid.CreateVersion7(), "tenant-a");
+
+        await WaitUntilAsync(
+            $"{HandledAt("tests.twin")} + {HandledAt("tests.other-twin")} + (select count(*) from wolverine.wolverine_dead_letters where received_at like 'local://tests.%') >= 2"
+        );
+        Assert.Equal(0L, await CountAsync("select count(*) from wolverine.wolverine_dead_letters where received_at like 'local://tests.%'"));
+        Assert.Equal(
+            [["local://tests.other-twin/", "tests.other-twin.orders.reference-opened.v1"], ["local://tests.twin/", "tests.twin.orders.reference-opened.v1"]],
+            await RowsAsync("select received_at, message_type from wolverine.wolverine_incoming_envelopes where received_at like 'local://tests.%' order by 1")
+        );
+        Assert.Equal(
+            [["this", "other"]],
+            await RowsAsync($"select (select body->>'Twin' from wolverine.tests_twin_saga where id = '{sagaId}'), (select body->>'Twin' from wolverine.tests_other_twin_saga where id = '{sagaId}')")
         );
     }
 
@@ -531,6 +602,10 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
     [InlineData("unpublished", "The Saga tests.unpublished takes ModularMonolith.Tests.UnpublishedV1, which no Module of this Host publishes and no Receive declares")]
     [InlineData("identified", "The timeout ModularMonolith.Tests.IdentifiedTimeout of the Saga tests.identified has the member SagaId")]
     [InlineData("queue", "The Saga ModularMonolith.Tests.QueueSaga and a subscription or a delayed command have the name billing.order-placed")]
+    [InlineData("unowned", "The Saga tests.unowned, ModularMonolith.Tests.QueueSaga, is declared without a Module in a Host of Modules")]
+    [InlineData("table", "would keep their states in one table, tests_twin_saga")]
+    [InlineData("input", "would be named orders.orders.order-placed.v1, ignoring case, which they share")]
+    [InlineData("snapshot", "The Saga tests.snapshot takes ModularMonolith.Tests.Sagas.ShelfSnapshotV1, a Snapshot")]
     public void A_host_whose_saga_declaration_wolverine_cannot_run_as_declared_fails_when_it_is_built(string declaration, string problem)
     {
         var refused = Assert.Throws<InvalidOperationException>(() =>
@@ -545,7 +620,18 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
                         "tests.identified",
                         saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId).Timeout<IdentifiedTimeout>()
                     ),
-                    _ => builder.Services.AddPouryaKitSaga<QueueSaga>("billing.order-placed", "tests.queue", saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)),
+                    "queue" => builder.Services.AddPouryaKitSaga<QueueSaga>("billing.order-placed", "tests.queue", saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)),
+                    "unowned" => builder.Services.AddPouryaKitSaga<QueueSaga>("tests.unowned", "tests.unowned", saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)),
+                    "table" => builder
+                        .Services.AddPouryaKitSaga<QueueSaga>("tests.twin", "tests.twin", saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId))
+                        .AddPouryaKitSaga<TwinSaga>("tests-twin", "tests.twin", saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)),
+                    "input" => builder
+                        .Services.Receive<PlacedV1>("order-placed.v1")
+                        .AddPouryaKitSaga<QueueSaga>("orders", "tests.orders", saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId))
+                        .AddPouryaKitSaga<TwinSaga>("orders.orders", "tests.orders", saga => saga.Input<PlacedV1>(placed => placed.Id)),
+                    _ => builder
+                        .Services.ReceiveSnapshot<ShelfSnapshotV1>("tests.shelf-snapshot.v1")
+                        .AddPouryaKitSaga<QueueSaga>("tests.snapshot", "tests.snapshot", saga => saga.Input<ShelfSnapshotV1>(shelf => shelf.ShelfId)),
                 };
             })
         );
@@ -568,7 +654,9 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
 
     private const string SagaStepTable = "pouryakit_saga_steps";
 
-    private const string PaymentStep = "received_at = 'local://shipping.fulfilment/' and message_type like '%PaymentReceivedV1%'";
+    private static readonly Action<HostApplicationBuilder> WithProbes = builder => builder.AddPouryaKitModules(modules => modules.Add<ProbesModule>());
+
+    private const string PaymentStep = "received_at = 'local://shipping.fulfilment/' and message_type = 'shipping.fulfilment.orders.payment-received.v1'";
 
     private static string HandledAt(string queue, string condition = "true") =>
         $"(select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://{queue}/' and status = 'Handled' and {condition})";
@@ -640,7 +728,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
     private async Task StartedAsync(IHost host, Guid order, int installments = 3, int payWithinSeconds = 3600)
     {
         await PlaceAsync(host, "tenant-a", order, installments, payWithinSeconds);
-        await WaitUntilAsync($"exists (select from wolverine.fulfilmentsaga_saga where id = '{FulfilmentOf("tenant-a", order)}')");
+        await WaitUntilAsync($"exists (select from wolverine.shipping_fulfilment_saga where id = '{FulfilmentOf("tenant-a", order)}')");
     }
 
     // As the Kit's Outbox writes it for an Operation of the tenant: its Operation Context headers and the identity
@@ -683,7 +771,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
         return rows.Count == 0 ? null : JsonDocument.Parse((string)rows[0][0]).RootElement.Clone();
     }
 
-    private async Task<int?> PaidAsync(string tenant, Guid order) => (await SagaAsync("fulfilmentsaga", FulfilmentOf(tenant, order)))?.GetProperty("Paid").GetInt32();
+    private async Task<int?> PaidAsync(string tenant, Guid order) => (await SagaAsync("shipping_fulfilment", FulfilmentOf(tenant, order)))?.GetProperty("Paid").GetInt32();
 
     private async Task<Guid> ClaimedAsync(string sagaId, string wireName, string saga = Fulfilment) =>
         (Guid)Assert.Single(await RowsAsync($"select event_id from wolverine.{SagaStepTable} where saga = '{saga}' and saga_id = '{sagaId}' and input = '{wireName}'"))[0];
@@ -745,4 +833,27 @@ public sealed class IdentifiedSaga : PouryaKitSaga
 public sealed class QueueSaga : PouryaKitSaga
 {
     public static QueueSaga Start(SagaInput<QueueSaga, OrderPlacedV1> placed) => new() { Id = placed.SagaId };
+}
+
+public sealed record PlacedV1(Guid Id);
+
+// Two sagas of one simple name in two namespaces, declared by a Module of their own.
+public sealed class TwinsModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module)
+    {
+        module.AddPouryaKitSaga<TwinSaga>("tests.twin", "tests.twin", saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference));
+        module.AddPouryaKitSaga<Twins.TwinSaga>("tests.other-twin", "tests.other-twin", saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference));
+    }
+}
+
+public sealed class TwinSaga : PouryaKitSaga
+{
+    public string Twin { get; set; } = "";
+
+    public static TwinSaga Start(SagaInput<TwinSaga, ReferenceOpenedV1> opened)
+    {
+        ArgumentNullException.ThrowIfNull(opened);
+        return new() { Twin = "this" };
+    }
 }

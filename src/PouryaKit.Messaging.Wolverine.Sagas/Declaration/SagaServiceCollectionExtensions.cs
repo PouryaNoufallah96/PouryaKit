@@ -14,11 +14,13 @@ public static class SagaServiceCollectionExtensions
     {
         /// <summary>
         /// Declares that the Module whose Composition Root calls it on its builder (<see cref="IModuleServices"/>) runs the
-        /// Saga <typeparamref name="TSaga"/> under <paramref name="name"/>: its durable queue and the first part of each
-        /// step's claim, so it is stable; keep it when the type is renamed. Each step runs outside every Operation, with no
-        /// Operation Context, on Wolverine's own chain, which the Kit opens on a transaction of the message store's
-        /// database: the step's claim, keyed by the saga's name, the input's wire name and the event's identity, its state
-        /// in Wolverine's saga table of the message store's schema, and what it emits and schedules commit in it together,
+        /// Saga <typeparamref name="TSaga"/> under <paramref name="name"/>: its durable queue, the first part of each step's
+        /// claim and of each input's stored message type name (<c>{name}.{event wire name}</c>), and its state table's name,
+        /// <c>{name}_saga</c> with dots and hyphens as underscores, so it is stable; keep it when the type is renamed. Each
+        /// step runs outside every Operation, with no Operation Context, on Wolverine's own chain, which the Kit opens on a
+        /// transaction of the message store's database: the step's claim, keyed by the saga's name, the input's wire name
+        /// and the event's identity, its state in that table of the message store's schema, and what it emits and schedules
+        /// commit in it together,
         /// so a second delivery of one event, or a redelivery after a crash between the commit and the mark of its
         /// envelope, applies nothing (ADR 0013). The saga's identity is the event's tenant with its business id; an event
         /// with no tenant, or one whose identity names no saga it does not start, is refused before any step, retried,
@@ -27,9 +29,11 @@ public static class SagaServiceCollectionExtensions
         /// saga takes and the timeouts it schedules. Throws here, while the Host is composed, when the name is missing,
         /// invalid, a queue Wolverine keeps for itself or another saga's, when the saga is declared twice, and when it
         /// takes no event or one event twice. The Host then fails when it is built if the saga type is not a public
-        /// concrete class, if an event it takes has no wire name in the Host, if a timeout names an identity member of its
-        /// own, if a subscription or delayed command has its name, or if Wolverine's service location policy is not
-        /// <c>NotAllowed</c>; it fails to start when the saga's queue is not durable. The saga's claims table and state table
+        /// concrete class, if the declaration belongs to no Module in a Host of Modules or to one the Host does not compose,
+        /// if an event it takes is a Snapshot, is not public or has no wire name in the Host, if a timeout names an identity
+        /// member of its own, if a subscription or delayed command has its name, if another saga's name gives the same
+        /// state table or input name, or if Wolverine's service location policy is not <c>NotAllowed</c>; it fails to start
+        /// when the saga's queue is not durable. The saga's claims table and state table
         /// are created with the message store when the Host starts; the claims are kept after the saga completes.
         /// </summary>
         public IServiceCollection AddPouryaKitSaga<TSaga>(string name, string systemActor, Action<SagaBuilder<TSaga>> declare)
@@ -49,7 +53,7 @@ public static class SagaServiceCollectionExtensions
             }
 
             // Wolverine creates the state table of each saga it knows with the message store, not at the saga's first step.
-            services.AddSingleton(new SagaTableDefinition(typeof(TSaga), null));
+            services.AddSingleton(new SagaTableDefinition(typeof(TSaga), declaration.Table));
             DelayedCommandDeclarations.In(services);
             DurableQueuesCheck.AddTo(services);
             // The routing check declares the Host's wire names; the saga check after it resolves Wolverine's options, which

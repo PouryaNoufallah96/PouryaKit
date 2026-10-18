@@ -37,9 +37,10 @@ public sealed class ShippingModule : IModuleDefinition
 }
 ```
 
-- The name is the saga's durable queue and the first part of each step's claim, so it is stable: keep it when the type is renamed. It follows the rule of a subscription's name, and no subscription or delayed command may have it.
-- Each input is an Integration Event the Host publishes, from any Module, or receives from another Host (`Receive<T>`); its wire name is the second part of each claim. The business id is written as invariant text; the saga it names is the one of the event's tenant.
-- The saga emits only Integration Events its own Module declares with `Publish<T>`.
+- The name is the saga's durable queue, the first part of each step's claim, the name each input's stored envelopes carry, `{name}.{event wire name}`, and its state table's, `{name}_saga` with dots and hyphens as underscores, so it is stable: keep it when the type is renamed. It follows the rule of a subscription's name, and no subscription or delayed command may have it. Two saga types of one simple name are two sagas, since nothing of Wolverine's names them by their types.
+- A saga belongs to the Module whose Composition Root declares it; in a Host of Modules, one declared on the Host's own services, or for a Module the Host does not compose, fails the build.
+- Each input is an Integration Event the Host publishes, from any Module, or receives from another Host (`Receive<T>`); its wire name is the second part of each claim. A Snapshot is no input: a saga that takes one fails the build. The business id is written as invariant text; the saga it names is the one of the event's tenant.
+- The saga emits only Integration Events its own Module declares with `Publish<T>`, never a Snapshot.
 
 ## Writing a Saga
 
@@ -79,7 +80,7 @@ public sealed record FulfilmentTimeout(TimeSpan Within) : SagaTimeout(Within);
 ```
 
 - A saga derives from `PouryaKitSaga` and is public, with a public parameterless constructor, since the code Wolverine generates for its steps names and creates it; so are its timeouts, each a public record derived from `SagaTimeout`, and the Integration Events it takes, as a Module's Contracts are. These are the Module's only public types beside its Composition Root and its Host's ports, and through the Kit's base types its code names no Wolverine type: the structure tests reject a saga of Wolverine's own `Saga`, or a timeout of its `TimeoutMessage` ([testing.md](testing.md#structure-tests)).
-- A step takes a `SagaInput<TSaga, TEvent>`, the event as the Kit delivers it to this saga (`Event`, with the saga's identity, the event's tenant, correlation, wire name and identity), or one of its timeouts. A starting step is named `Start` and may be static, returning the new saga and the timeouts it schedules; an advancing step is named `Handle`; Wolverine's other names (`Starts`, `StartOrHandle`, `NotFound`) work too. A step schedules a timeout by returning it.
+- A step takes a `SagaInput<TSaga, TEvent>`, the event as the Kit delivers it to this saga (`Event`, with the saga's identity, the event's tenant, correlation, wire name and identity), or one of its timeouts. A starting step is named `Start` and may be static, returning the new saga and the timeouts it schedules; an advancing step is named `Handle`; Wolverine's other names (`Starts`, `StartOrHandle`, `NotFound`) work too, each with or without an `Async` suffix. A step schedules a timeout by returning it, and returns nothing else: what else it returns Wolverine would send without the Kit's headers, so the step fails before its commit, naming `PublishAsync`.
 - `PublishAsync` emits an Integration Event from the running step; `MarkCompleted` completes the saga, whose state is deleted with the step's commit. The Kit sets `Id`, `Tenant` and `Correlation`; a step never does.
 - A timeout names no identity member of its own (`Id`, `SagaId`, `{Saga}Id`, or one marked `[SagaIdentity]`): Wolverine would read it in place of the identity the timeout was scheduled under.
 
@@ -97,7 +98,8 @@ public sealed record FulfilmentTimeout(TimeSpan Within) : SagaTimeout(Within);
 
 - **Reach outside its transaction.** A step that dies before its commit runs again, so an effect outside the transaction, a call to another service or a file written, would repeat. A step changes the saga's state, emits and schedules; anything else is the work of a subscription that receives what the saga emits.
 - **Take a Kit scoped service.** A Host with a saga keeps Wolverine's `ServiceLocationPolicy.NotAllowed`, so a step that takes the Kit's `Operation`, its Integration Event publisher or a Module's internal service is refused when Wolverine generates its chain, at its first message, and its delivery is set aside with `InvalidServiceLocationException`.
-- **Emit two events of one type**, as above.
+- **Emit two events of one type**, as above, or a Snapshot.
+- **Return an Integration Event** for Wolverine to send; it emits with `PublishAsync`.
 
 ## The Host
 
@@ -106,18 +108,18 @@ builder.AddPouryaKitModules(modules => modules.Add<OrdersModule>().Add<ShippingM
 builder.UsePouryaKitWolverine(connectionName: "app"); // the PostgreSQL message store
 ```
 
-- The saga's state is a row of Wolverine's saga table, `{saga type, lower-cased}_saga`, and its claims rows of `pouryakit_saga_steps`, both in the message store's schema; both tables are created with the store when the Host starts, the claims table under the advisory lock Wolverine migrates the store under. The claims are never deleted.
-- The Host fails when it is built if a saga type is not a public concrete class, if an event it takes has no wire name in the Host or is not public, if a timeout is not public or names an identity member, if a subscription or delayed command has the saga's name, or if Wolverine's service location policy is not `NotAllowed`; it fails to start if the saga's queue is not durable.
+- The saga's state is a row of Wolverine's saga table, named after the saga, `{name}_saga` with dots and hyphens as underscores, and its claims rows of `pouryakit_saga_steps`, both in the message store's schema; both tables are created with the store when the Host starts, the claims table under the advisory lock Wolverine migrates the store under. The claims are never deleted.
+- The Host fails when it is built if a saga type is not a public concrete class, if the saga belongs to no Module in a Host of Modules or to one the Host does not compose, if an event it takes is a Snapshot, has no wire name in the Host or is not public, if a timeout is not public or names an identity member, if a subscription or delayed command has the saga's name, if two sagas' names give one state table, longer than 63 characters too, or one input name, or if Wolverine's service location policy is not `NotAllowed`; it fails to start if the saga's queue is not durable.
 - Outside Development, Wolverine loads the saga's chains from the Host's assembly, where `dotnet run -- codegen write` generated them before the Release build ([templates.md](templates.md)); without them the Host does not start (`MissingPreBuiltTypesException`). The package validation path publishes a Host with Sagas this way.
 
 ## Limits
 
 - A saga runs on the PostgreSQL message store of `UsePouryaKitWolverine(connectionName)`; another store is refused at the first step.
 - An advancing event that arrives after its saga completed is refused and set aside as a dead letter, as one for another tenant is: complete a saga only once every event it waits for has arrived, or give it a `NotFound` step.
-- The stored input's type name is Wolverine's name of `SagaInput<TSaga, TEvent>`, and a timeout's its full name: renaming a saga type, an event type it takes or a timeout type strands the deliveries stored under the old name as dead letters.
+- A stored input's name derives from the saga's name and the event's wire name, so renaming the saga type or the event type changes nothing; a stored timeout's name is its type's full name, so renaming a timeout type strands the timeouts stored under the old name as dead letters.
 - Wolverine's own logical deduplication is not used: it claims outside the step's transaction (ADR 0013, "Rejected options").
 
 ## Testing
 
-- Publish the events a saga takes through the Modules that publish them, through their Gateways ([testing.md](testing.md)), and read the saga's state from `wolverine.{saga}_saga` and its claims from `wolverine.pouryakit_saga_steps`.
+- Publish the events a saga takes through the Modules that publish them, through their Gateways ([testing.md](testing.md)), and read the saga's state from its table, `wolverine.shipping_fulfilment_saga` for the saga `shipping.fulfilment`, and its claims from `wolverine.pouryakit_saga_steps`.
 - The Kit's own proof is `tests/ModularMonolith.Tests/SagaTests.cs`, over the test Modules `tests/ModularMonolith.Tests/Sagas` and their Host, a child process of it for the crash cases, and two Hosts on one broker for the fan-out.

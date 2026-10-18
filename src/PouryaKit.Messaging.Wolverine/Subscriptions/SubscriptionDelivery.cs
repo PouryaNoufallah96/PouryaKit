@@ -1,6 +1,4 @@
 using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
@@ -99,8 +97,7 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
             );
 
     // A Snapshot's identity is a function of what it is, the contract's wire name, the aggregate's key and the version,
-    // so every delivery of it repeats it and two versions of one aggregate never share it: a name-based UUID (RFC 9562
-    // version 8) from their SHA-256.
+    // so every delivery of it repeats it and two versions of one aggregate never share it: a name-based identity of them.
     private static Deliver SnapshotDelivery(Subscription subscription, Envelope envelope)
     {
         string Header(string name) =>
@@ -114,13 +111,7 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
             Header(SnapshotHeaders.AggregateId),
             long.Parse(Header(SnapshotHeaders.Version), CultureInfo.InvariantCulture)
         );
-        Span<byte> hash = stackalloc byte[SHA256.HashSizeInBytes];
-        SHA256.HashData(
-            Encoding.UTF8.GetBytes($"{envelope.MessageType!.ToLowerInvariant()}\n{of.AggregateId}\n{of.Version.ToString(CultureInfo.InvariantCulture)}"),
-            hash
-        );
-        hash[6] = (byte)((hash[6] & 0x0F) | 0x80);
-        hash[8] = (byte)((hash[8] & 0x3F) | 0x80);
-        return new Deliver(subscription, envelope.Message!, new Guid(hash[..16], bigEndian: true), of);
+        var identity = NameBasedIdentity.Of($"{envelope.MessageType!.ToLowerInvariant()}\n{of.AggregateId}\n{of.Version.ToString(CultureInfo.InvariantCulture)}");
+        return new Deliver(subscription, envelope.Message!, identity, of);
     }
 }

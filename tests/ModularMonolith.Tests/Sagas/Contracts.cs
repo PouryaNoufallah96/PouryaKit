@@ -21,3 +21,6 @@ public sealed record OrderFulfilledV1(Guid OrderId, int Payments);
 
 /// <summary>An order was not paid in time and is cancelled.</summary>
 public sealed record OrderCancelledV1(Guid OrderId, int Payments);
+
+/// <summary>The Snapshot of a shelf, which the Probes Module publishes and a probe saga tries to emit.</summary>
+public sealed record ShelfSnapshotV1(Guid ShelfId, bool Removed);

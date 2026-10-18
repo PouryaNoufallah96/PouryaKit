@@ -1,8 +1,6 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Wolverine;
@@ -57,7 +55,7 @@ public static class SagaStorage
         {
             var transaction = await connection.BeginTransactionAsync();
             var schema = (IDatabaseSagaSchema<TId, TSaga>)
-                Schemas.GetOrCreateValue(database).GetOrAdd(typeof(TSaga), _ => factory(new SagaTableDefinition(typeof(TSaga), null), database.Settings));
+                Schemas.GetOrCreateValue(database).GetOrAdd(typeof(TSaga), _ => factory(new SagaTableDefinition(typeof(TSaga), saga.Table), database.Settings));
             var input = envelope.Message is ISagaInput delivered
                 ? Input(saga, delivered.WireName, delivered.EventId, delivered.SagaId)
                 : await schema.LoadAsync((TId)(object)envelope.SagaId!, transaction, CancellationToken.None) is PouryaKitSaga scheduler
@@ -105,10 +103,10 @@ public static class SagaStorage
     /// identity, the input's wire name and the input's identity, so every delivery of one input repeats it.
     /// </summary>
     public static Guid StepId(string saga, string sagaId, string inputWireName, Guid inputId) =>
-        NameBased($"{saga}\n{sagaId}\n{inputWireName}\n{inputId:D}");
+        NameBasedIdentity.Of($"{saga}\n{sagaId}\n{inputWireName}\n{inputId:D}");
 
     /// <summary>The identity of what a step emits of one type: from the step's identity and the emission's wire name.</summary>
-    public static Guid EmissionId(Guid stepId, string wireName) => NameBased($"{stepId:D}\n{wireName}");
+    public static Guid EmissionId(Guid stepId, string wireName) => NameBasedIdentity.Of($"{stepId:D}\n{wireName}");
 
     /// <summary>
     /// The identity of a timeout a step schedules: from the scheduling step's identity, the timeout's wire name and its
@@ -116,7 +114,7 @@ public static class SagaStorage
     /// scheduled them, so two timeouts of one type from one step are two.
     /// </summary>
     public static Guid TimeoutId(Guid schedulingStepId, string timeoutWireName, int ordinal) =>
-        NameBased($"{schedulingStepId:D}\n{timeoutWireName}\n{ordinal.ToString(CultureInfo.InvariantCulture)}\ntimeout");
+        NameBasedIdentity.Of($"{schedulingStepId:D}\n{timeoutWireName}\n{ordinal.ToString(CultureInfo.InvariantCulture)}\ntimeout");
 
     private static SagaStepInput Input(SagaDeclaration saga, string wireName, Guid id, string sagaId) =>
         new(wireName, id, sagaId, StepId(saga.Name, sagaId, wireName, id));
@@ -143,14 +141,5 @@ public static class SagaStorage
             Parameters = { new() { Value = saga }, new() { Value = step.WireName }, new() { Value = step.Id }, new() { Value = step.SagaId } },
         };
         return await claim.ExecuteNonQueryAsync() == 1;
-    }
-
-    private static Guid NameBased(string text)
-    {
-        Span<byte> hash = stackalloc byte[SHA256.HashSizeInBytes];
-        SHA256.HashData(Encoding.UTF8.GetBytes(text), hash);
-        hash[6] = (byte)((hash[6] & 0x0F) | 0x80);
-        hash[8] = (byte)((hash[8] & 0x3F) | 0x80);
-        return new Guid(hash[..16], bigEndian: true);
     }
 }

@@ -159,7 +159,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqHostApplicationBuilderExtensions.cs",
           "line": 21,
-          "end_line": 33,
+          "end_line": 34,
           "label": "queue unique to one kind of Host"
         },
         {

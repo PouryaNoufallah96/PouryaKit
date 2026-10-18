@@ -20,8 +20,9 @@ public static class RabbitMqHostApplicationBuilderExtensions
         /// name, written to the Outbox in the Unit of Work's commit whether or not a subscription of this Host receives it.
         /// The Host has one durable queue named <paramref name="serviceName"/>, which also becomes Wolverine's
         /// <c>ServiceName</c>, with a durable Inbox, bound to the exchange of each wire name the Host receives
-        /// (<c>Receive</c>, <c>ReceiveSnapshot</c>) and a subscription of it subscribes to. Each envelope received there is
-        /// sent again to the local queue of every subscription to it, and nowhere else, with its Operation Context,
+        /// (<c>Receive</c>, <c>ReceiveSnapshot</c>) and a subscription or a Saga of it takes. Each envelope received there
+        /// is sent again to the local queue of every subscription to it and, as its input, to the queue of each Saga that
+        /// takes it, and nowhere else, with its Operation Context,
         /// its identity and its trace state, and from there it is delivered, retried, dead-lettered and kept to one effect
         /// by its Receipt, as a delivery from a Module of the Host is. A delivery that fails before that, such as one of a
         /// wire name the Host no longer receives, is set aside in the message store as received at

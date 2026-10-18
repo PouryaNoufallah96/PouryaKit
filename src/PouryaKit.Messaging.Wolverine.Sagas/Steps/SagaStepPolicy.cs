@@ -26,8 +26,10 @@ internal sealed class SagaStepPolicy(SagaDeclarations sagas) : IHandlerPolicy
             var codegen = new SagaSchemaCodegen(typeof(DatabaseSagaSchema<,>).MakeGenericType(chain.SagaType, typeof(string)), typeof(SagaStorage));
             chain.Middleware.Insert(0, new EnrollAndFetchSagaStorageFrame(typeof(string), chain.SagaType, codegen));
             // An input whose saga is missing starts one, or reaches its NotFound step; any other is the Kit's refusal.
+            // Wolverine takes each step name with an Async suffix too.
             var startsSaga = chain.Handlers.Any(handler =>
-                handler.Method.Name is SagaChain.Start or SagaChain.Starts or SagaChain.StartOrHandle or SagaChain.StartsOrHandles or SagaChain.NotFound
+                (handler.Method.Name.EndsWith("Async", StringComparison.Ordinal) ? handler.Method.Name[..^5] : handler.Method.Name)
+                    is SagaChain.Start or SagaChain.Starts or SagaChain.StartOrHandle or SagaChain.StartsOrHandles or SagaChain.NotFound
             );
             chain.Middleware.Insert(1, new EnterStepFrame(chain.SagaType, startsSaga));
         }

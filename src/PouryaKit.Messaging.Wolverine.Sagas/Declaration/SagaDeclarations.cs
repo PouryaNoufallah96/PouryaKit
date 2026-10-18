@@ -3,13 +3,19 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace PouryaKit.Messaging.Wolverine.Sagas;
 
-// One saga a Composition Root declared: its name, which is its queue and the first part of each claim's key, its system
-// Actor, the Module that declared it, its inputs and its timeouts.
+// One saga a Composition Root declared: its name, which is its queue, the first part of each claim's key and of each
+// input's message type name, and its state table's name, its system Actor, the Module that declared it, its inputs and
+// its timeouts.
 internal sealed class SagaDeclaration(Type sagaType, string name, string systemActor, Type? module)
 {
     public Type SagaType { get; } = sagaType;
 
     public string Name { get; } = name;
+
+    // Wolverine names a saga's table after the type's simple name and keys it by the saga's identity alone, so two sagas
+    // of one simple name would share their states: the Kit names it after the saga's name, which outlives a rename of the
+    // type. Dots and hyphens become underscores, so two names can still map to one table; SagaCheck refuses that.
+    public string Table { get; } = $"{name.Replace('.', '_').Replace('-', '_')}_saga";
 
     public string SystemActor { get; } = systemActor;
 

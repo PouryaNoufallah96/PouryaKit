@@ -8,8 +8,9 @@ namespace PouryaKit.Messaging.Wolverine.Sagas;
 /// take a <see cref="SagaInput{TSaga, TEvent}"/> or one of its <see cref="SagaTimeout"/>s, a static <c>Start</c> returning
 /// the new saga, and the timeouts it schedules, or an instance <c>Handle</c>; Wolverine generates each step's chain. A step
 /// changes the saga's state, emits through <see cref="PublishAsync"/> and completes the saga with
-/// <see cref="MarkCompleted"/>; it never saves, commits or sends anything itself, and has no effect outside its
-/// transaction, since a step that dies before its commit runs again (ADR 0013). The Kit keeps the saga's identity, the
+/// <see cref="MarkCompleted"/>; it returns only the saga and its timeouts, never saves, commits or sends anything itself,
+/// and has no effect outside its transaction, since a step that dies before its commit runs again (ADR 0013); a step that
+/// returns anything else fails, as one that emits a Snapshot does. The Kit keeps the saga's identity, the
 /// tenant and correlation of the event that started it, and the identity of each timeout it scheduled.
 /// </summary>
 public abstract class PouryaKitSaga : Saga

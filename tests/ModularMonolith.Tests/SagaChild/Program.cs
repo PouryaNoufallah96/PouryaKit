@@ -39,7 +39,7 @@ await orders.SendAsync(new PlaceOrderCommand(Guid.Parse(order), Installments: 2,
 await using (var connection = new NpgsqlConnection(connectionString))
 {
     await connection.OpenAsync();
-    await using var started = new NpgsqlCommand("select count(*) from wolverine.fulfilmentsaga_saga where id = $1", connection)
+    await using var started = new NpgsqlCommand("select count(*) from wolverine.shipping_fulfilment_saga where id = $1", connection)
     {
         Parameters = { new() { Value = SagaStorage.SagaId(tenant, order) } },
     };

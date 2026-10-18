@@ -66,7 +66,19 @@ internal sealed class SagaStepStorage<TId, TSaga>(DatabaseSagaStorage<TId, TSaga
 
     public Task DeleteAsync(TSaga state, CancellationToken cancellationToken) => inner.DeleteAsync(state, cancellationToken);
 
-    public Task SaveChangesAsync(CancellationToken cancellationToken) => inner.SaveChangesAsync(cancellationToken);
+    // Before the commit: what the step returned and Wolverine cascaded, beside its timeouts, would be sent without the
+    // Kit's headers, so the step fails and its transaction rolls back.
+    public Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        if (step.Delivery.Outstanding.FirstOrDefault(envelope => envelope.Message is not TimeoutMessage && !envelope.Headers.ContainsKey(IntegrationEventHeaders.DomainEventId)) is { } returned)
+        {
+            throw new InvalidOperationException(
+                $"A step of the Saga {step.Saga.Name} returned {returned.Message!.GetType().FullName}, which Wolverine would send without the Kit's headers. A step returns only its saga and its timeouts; it emits an Integration Event with PublishAsync."
+            );
+        }
+
+        return inner.SaveChangesAsync(cancellationToken);
+    }
 
     public ValueTask DisposeAsync() => inner.DisposeAsync();
 

@@ -313,6 +313,16 @@ shape:
   wire name alone. Emissions are written through `OutboxWriter`'s emission write, which writes the headers `WriteAsync`
   gives an Integration Event and continues the input's trace (ADR 0009): Wolverine's span of the step is the parent when
   Wolverine's source is listened, else the Kit writes the input's own parent, and the tracestate is the input's.
+- **Names of the saga's own.** Wolverine names a saga's table after its type's simple name and keys it by the saga's
+  identity alone, and names a generic input type after its arguments' simple names, so two sagas or events of one
+  simple name would share states or stored inputs. The Kit names the table `{saga name}_saga`, dots and hyphens as
+  underscores, and each input `{saga name}.{event wire name}`, declared as wire names are, and the Host fails when it is
+  built for two sagas that would still share a table or an input name. Both names outlive a rename of the types.
+- **A Saga takes and emits Integration Events only**, as the record above says: a Snapshot input fails the build and a
+  Snapshot emission fails the step. A step returns only its saga and its timeouts: an Integration Event it returned would
+  go out without the Kit's headers, so the step fails before its commit, naming `PublishAsync`.
+- **A saga belongs to its Module.** In a Host of Modules, one declared without a Module, or for a Module the Host does
+  not compose, fails the build, as every other declaration of a Module's messages does.
 - **The service location check runs after the routing check.** Resolving Wolverine's options applies the Kit's
   extensions, which name every routed type, so `AddPouryaKitSaga` registers `RoutingCheck` before its own check, and the
   check reads the options only once the Host's wire names are declared and its declarations are sound.

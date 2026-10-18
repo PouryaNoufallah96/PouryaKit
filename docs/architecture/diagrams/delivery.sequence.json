@@ -61,7 +61,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqHostApplicationBuilderExtensions.cs",
           "line": 21,
-          "end_line": 30,
+          "end_line": 31,
           "label": "one queue per kind of Host, its instances share"
         }
       ]
@@ -100,14 +100,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/SubscriptionDelivery.cs",
-          "line": 21,
-          "end_line": 50,
+          "line": 19,
+          "end_line": 48,
           "label": "subscription by queue, new scope"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/SubscriptionDelivery.cs",
-          "line": 52,
-          "end_line": 92,
+          "line": 50,
+          "end_line": 90,
           "label": "a broker envelope fanned out"
         },
         {
