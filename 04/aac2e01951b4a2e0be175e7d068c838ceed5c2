@@ -1,0 +1,65 @@
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_c8d06efa41a1cb::t_21214aa6e5077d 132-135
+.claude/agent-memory/kit-implementer/grpc-facts.md
+  s_c8d06efa41a1cb::t_e26a64b7e3c733 41-44
+.claude/agent-memory/kit-implementer/marten-stream-write-model-facts.md
+  s_c8d06efa41a1cb::t_e307cb97c0f7ba 51-56
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_c8d06efa41a1cb::t_247dbd9d96b43e 83-88
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_c8d06efa41a1cb::t_fbd121d4ba60fc 148-152
+docs/architecture/diagrams/ci-and-publication.html
+  s_c8d06efa41a1cb::t_ddd29b1e611b67 4985
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_c8d06efa41a1cb::t_b06b0a1e5dcb2d 11
+docs/architecture/diagrams/commit-sequence.html
+  s_c8d06efa41a1cb::t_73c5a02d02e8f9 4985,5443
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_c8d06efa41a1cb::t_31e2e122725214 10
+docs/architecture/diagrams/execution-core.architecture.json
+  s_c8d06efa41a1cb::t_6b429430f4eb3e 10
+docs/architecture/diagrams/execution-core.html
+  s_c8d06efa41a1cb::t_cdd56801b47347 4985
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_c8d06efa41a1cb::t_f6076c7540e77c 4985
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_c8d06efa41a1cb::t_56472e5eefa697 10
+docs/architecture/diagrams/module-boundaries.html
+  s_c8d06efa41a1cb::t_cbd6b4d3181e2e 4985
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_c8d06efa41a1cb::t_cefbabbec9b4ca 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_c8d06efa41a1cb::t_5ea4948af5e863 4985
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_c8d06efa41a1cb::t_00d3e6dc8f6c3c 3,7,12,15-16
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_c8d06efa41a1cb::t_4d37e45d7eb633 134-137
+docs/architecture/diagrams/http-command.html
+  s_c8d06efa41a1cb::t_0476701473e943 4985
+docs/architecture/diagrams/http-command.sequence.json
+  s_c8d06efa41a1cb::t_b1a2c3cbbc3988 15
+docs/architecture/diagrams/kit-context.architecture.json
+  s_c8d06efa41a1cb::t_15f37842d517d0 10
+docs/architecture/diagrams/kit-context.html
+  s_c8d06efa41a1cb::t_c282556d69862f 4985
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_c8d06efa41a1cb::t_35259cf790bc8f 10
+tests/ModularMonolith.Tests/Stub/HeldChange.cs
+  s_c8d06efa41a1cb::t_be322dfabb707e 23-25,28,39-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "04aac2e01951b4a2e0be175e7d068c838ceed5c2",
+  "prompts": {},
+  "sessions": {
+    "s_c8d06efa41a1cb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a1b1aa057a22856de",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
