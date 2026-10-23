@@ -409,8 +409,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 151,
-          "end_line": 152,
+          "line": 153,
+          "end_line": 154,
           "label": "no exporter"
         }
       ]
@@ -463,8 +463,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 153,
-          "end_line": 154,
+          "line": 155,
+          "end_line": 156,
           "label": "never Redis"
         }
       ]
@@ -742,7 +742,7 @@
       "sublabel": "AppHost-only containers",
       "pos": [
         1200,
-        830
+        40
       ],
       "size": [
         240,
@@ -763,8 +763,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 204,
-          "end_line": 208,
+          "line": 206,
+          "end_line": 210,
           "label": "Aspire in no other package"
         }
       ]
@@ -807,7 +807,7 @@
       "id": "ai",
       "type": "backend",
       "label": "PouryaKit.AI",
-      "sublabel": "chat client, Gateway tool",
+      "sublabel": "chat, embeddings, Gateway tool",
       "pos": [
         910,
         830
@@ -831,9 +831,42 @@
         },
         {
           "path": "src/PouryaKit.AI/AIServiceCollectionExtensions.cs",
-          "line": 92,
-          "end_line": 119,
-          "label": "allow-list, cap, guardrails, no retries"
+          "line": 128,
+          "end_line": 174,
+          "label": "one OpenAI client: guarded chat, embeddings"
+        }
+      ]
+    },
+    {
+      "id": "aipostgres",
+      "type": "backend",
+      "label": "PouryaKit.AI.Postgres",
+      "sublabel": "semantic search over pgvector",
+      "pos": [
+        1200,
+        830
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 111,
+          "label": "references AI and Persistence.Postgres"
+        },
+        {
+          "path": "src/PouryaKit.AI.Postgres/PostgresVectorStore.cs",
+          "line": 28,
+          "end_line": 43,
+          "label": "stores on the Unit of Work, in the tenant"
+        },
+        {
+          "path": "src/PouryaKit.AI.Postgres/VectorCollectionTable.cs",
+          "line": 46,
+          "end_line": 64,
+          "label": "schema ai, the extension, a table each"
         }
       ]
     }
@@ -1066,6 +1099,20 @@
       "id": "ai-cqrs",
       "from": "ai",
       "to": "cqrs"
+    },
+    {
+      "id": "aipostgres-ai",
+      "from": "aipostgres",
+      "to": "ai",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "aipostgres-postgres",
+      "from": "aipostgres",
+      "to": "postgres",
+      "fromSide": "right",
+      "toSide": "right"
     }
   ],
   "cards": [
@@ -1094,7 +1141,8 @@
         "Grpc maps a Module's gRPC services on Web's begin-the-Operation convention and writes a client's Operation Context through Web's one header codec; a failed Result is a status by its most severe Error kind.",
         "Aspire, AppHost-only, references no Kit package: an Aspire AppHost adds PostgreSQL, Redis and RabbitMQ through it, each on a pinned image with a named volume, and no other Kit package's closure holds an Aspire package.",
         "Reporting, optional, references Domain alone: it renders a Module's layout to a PDF, a CSV file or a spreadsheet and returns the file's bytes, storing nothing; QuestPDF, ClosedXML, a storage SDK and PouryaKit.Storage stay out of its closure.",
-        "AI gives a Host one chat client over the OpenAI client, which the Agent Framework's agents and workflows run through, and makes a Module's command or query a Gateway tool: each call a model makes runs as an Operation through that Module's Gateway, which is why it references Modularity; no OllamaSharp, Azure client or resilience package reaches its closure."
+        "AI gives a Host one chat client over the OpenAI client, which the Agent Framework's agents and workflows run through, and makes a Module's command or query a Gateway tool: each call a model makes runs as an Operation through that Module's Gateway, which is why it references Modularity; no OllamaSharp, Azure client or resilience package reaches its closure. Its embedding generator rides the same OpenAI client.",
+        "AI.Postgres, optional, stores a Module's embeddings on its Unit of Work's connection, in tables of its own schema ai that a migration helper creates with the vector extension, and searches them by cosine distance within the Operation's tenant; no other Kit package's closure holds it or a pgvector client."
       ]
     }
   ]

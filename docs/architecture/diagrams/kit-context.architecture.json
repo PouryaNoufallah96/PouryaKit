@@ -327,8 +327,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 153,
-          "end_line": 154,
+          "line": 155,
+          "end_line": 156,
           "label": "no Kit package references Redis"
         }
       ]
@@ -432,7 +432,7 @@
       "id": "kit",
       "type": "backend",
       "label": "PouryaKit packages",
-      "sublabel": "35 libraries and the templates",
+      "sublabel": "36 libraries and the templates",
       "pos": [
         700,
         650
@@ -445,13 +445,13 @@
         {
           "path": "scripts/packaging/inventory.json",
           "line": 3,
-          "end_line": 38,
-          "label": "the 36 packages"
+          "end_line": 39,
+          "label": "the 37 packages"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 131,
+          "end_line": 133,
           "label": "their allowed references"
         }
       ]

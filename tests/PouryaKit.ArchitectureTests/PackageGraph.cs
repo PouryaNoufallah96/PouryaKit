@@ -107,6 +107,8 @@ internal static class PackageGraph
             ["PouryaKit.Cqrs", "PouryaKit.Modularity"],
             ["Microsoft.Agents.AI", "Microsoft.Agents.AI.Workflows", "Microsoft.Extensions.AI", "Microsoft.Extensions.AI.OpenAI", "Microsoft.Extensions.Http", "Microsoft.Extensions.Options"]
         ),
+        // Semantic search on the Unit of Work's connection, sending embeddings as real[], which the server's pgvector casts (#138).
+        ["PouryaKit.AI.Postgres"] = new(["PouryaKit.AI", "PouryaKit.Persistence.Postgres"], []),
         // The Stream write model's Unit of Work (#131): Npgsql is the Kit's line over the 9.0.4 Marten 9.46.0 brings, for the
         // Kit's statements it runs on its own transaction; Messaging is not needed, the Outbox step being a seam.
         ["PouryaKit.Persistence.Marten"] = new(["PouryaKit.Cqrs", "PouryaKit.Persistence"], ["Marten", "Npgsql"]),
@@ -205,7 +207,9 @@ internal static class PackageGraph
             var keptOut = KeptOut
                 .GetValueOrDefault(package.Name, [])
                 .Concat(package.Name == "PouryaKit.Testing" ? [] : ["WolverineFx.RuntimeCompilation"])
-                .Concat(package.Name == "PouryaKit.Aspire" ? [] : ["Aspire"]);
+                .Concat(package.Name == "PouryaKit.Aspire" ? [] : ["Aspire"])
+                // and every package but AI.Postgres keeps pgvector out, its client and the package that creates it (#138).
+                .Concat(package.Name == "PouryaKit.AI.Postgres" ? [] : ["Pgvector", "PouryaKit.AI.Postgres"]);
             if (keptOut.Any(prefix => arrived.StartsWith(prefix, StringComparison.Ordinal)))
             {
                 yield return $"{package.Name}'s closure holds {arrived}, which section C keeps out of it.";

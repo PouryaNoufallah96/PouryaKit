@@ -146,6 +146,21 @@ public sealed class PackageGraphTests
             ],
             PackageGraph.Violations(ai with { Packages = [.. ai.Packages, Arrived("OllamaSharp"), Arrived("Azure.AI.OpenAI"), Arrived("Polly.Core")] })
         );
+        // pgvector stays in AI.Postgres: a Host without it takes neither a pgvector client nor the package (#138).
+        var postgres = Restored("PouryaKit.Persistence.Postgres");
+        Assert.Equal(
+            [
+                "PouryaKit.Persistence.Postgres's closure holds Pgvector, which section C keeps out of it.",
+                "PouryaKit.Persistence.Postgres's closure holds PouryaKit.AI.Postgres, which section C keeps out of it.",
+            ],
+            PackageGraph.Violations(
+                postgres with
+                {
+                    Packages = [.. postgres.Packages, Arrived("Pgvector")],
+                    Projects = new HashSet<string>([.. postgres.Projects, "PouryaKit.AI.Postgres"]),
+                }
+            )
+        );
         var reverseProxy = Restored("PouryaKit.ReverseProxy");
         Assert.Equal(
             ["PouryaKit.ReverseProxy's closure holds PouryaKit.Cqrs, which section C keeps out of it."],

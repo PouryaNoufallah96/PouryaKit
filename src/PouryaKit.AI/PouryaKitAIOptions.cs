@@ -18,6 +18,12 @@ public sealed class PouryaKitAIOptions
     public string Model { get; set; } = "";
 
     /// <summary>
+    /// The model the embedding generator of <c>AddPouryaKitEmbeddings</c> embeds text with, or for Azure OpenAI the
+    /// deployment's name; required with it, unused without it.
+    /// </summary>
+    public string? EmbeddingModel { get; set; }
+
+    /// <summary>
     /// The provider's API key, required for OpenAI and Azure OpenAI and unused by Ollama. Keep it out of source control,
     /// as with user secrets or an environment variable; the Kit never logs it.
     /// </summary>

@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/PouryaKit.AI/PouryaKit.AI.csproj" />
+    <Project Path="src/PouryaKit.AI.Postgres/PouryaKit.AI.Postgres.csproj" />
     <Project Path="src/PouryaKit.Aspire/PouryaKit.Aspire.csproj" />
     <Project Path="src/PouryaKit.Caching/PouryaKit.Caching.csproj" />
     <Project Path="src/PouryaKit.Core/PouryaKit.Core.csproj" />
@@ -59,6 +60,7 @@
     <Project Path="tests/ModularMonolith.Tests/SameNamed/ModularMonolith.Tests.SameNamed.csproj" />
     <Project Path="tests/ModularMonolith.Tests/StreamHost/ModularMonolith.Tests.StreamHost.csproj" />
     <Project Path="tests/ModularMonolith.Tests/Streams/ModularMonolith.Tests.Streams.csproj" />
+    <Project Path="tests/ModularMonolith.Tests/Vectors/ModularMonolith.Tests.Vectors.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Contracts/Offending.Contracts.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Core/Offending.Core.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Stream/Offending.Stream.csproj" />

@@ -1,6 +1,6 @@
 # AI
 
-`PouryaKit.AI`: the Host's one chat client, `IChatClient` of Microsoft.Extensions.AI, built from validated options for OpenAI, Azure OpenAI or Ollama through the OpenAI client alone; the Gateway tool, which offers a Module's command or query to a model and runs each call as an Operation through the Module's Gateway; and agents of the Microsoft Agent Framework over that client, in plain, streaming and structured runs and in sequential, concurrent and handoff workflows, with sessions and memory over the application's stores, a chat reducer and a guardrail hook. It references `PouryaKit.Cqrs` and `PouryaKit.Modularity`. Namespace `PouryaKit.AI`. MCP tools and embeddings are not built yet.
+`PouryaKit.AI`: the Host's one chat client, `IChatClient` of Microsoft.Extensions.AI, built from validated options for OpenAI, Azure OpenAI or Ollama through the OpenAI client alone; the Gateway tool, which offers a Module's command or query to a model and runs each call as an Operation through the Module's Gateway; and agents of the Microsoft Agent Framework over that client, in plain, streaming and structured runs and in sequential, concurrent and handoff workflows, with sessions and memory over the application's stores, a chat reducer and a guardrail hook; and the Host's embedding generator over the same client. It references `PouryaKit.Cqrs` and `PouryaKit.Modularity`. Namespace `PouryaKit.AI`. The optional `PouryaKit.AI.Postgres` (namespace `PouryaKit.AI.Postgres`) stores text by its embedding in PostgreSQL with pgvector and searches it ([Embeddings and semantic search](#embeddings-and-semantic-search)). MCP tools are not built yet.
 
 - [Registering](#registering)
 - [A Gateway tool](#a-gateway-tool)
@@ -11,6 +11,7 @@
 - [Workflows](#workflows)
 - [Guardrails](#guardrails)
 - [Scheduled agent work](#scheduled-agent-work)
+- [Embeddings and semantic search](#embeddings-and-semantic-search)
 - [What the Kit guarantees](#what-the-kit-guarantees)
 - [Limits](#limits)
 - [Testing](#testing)
@@ -45,7 +46,7 @@ builder.Services.Configure<PouryaKitAIOptions>(builder.Configuration.GetSection(
 - `MaximumIterationsPerRun`, 10 by default, caps how many times a run calls the model and invokes the tools it asks for; `Tools` is the allow-list, the names of the tools a run may be given, empty by default. A declaration that is no function, which the client never invokes and hands back to its caller, such as a handoff workflow's `handoff_to_1`, passes unnamed.
 - The Host fails when it starts, naming the option, when the provider is not an `AIProvider` value (a number such as `99` binds), `Model` is blank, `Endpoint` is not an absolute HTTP or HTTPS address or is missing for Azure OpenAI or Ollama, `ApiKey` is missing for OpenAI or Azure OpenAI, the cap is below 1, or a tool name is blank.
 - The client sends through the HTTP client named `AIServiceCollectionExtensions.HttpClientName` (`PouryaKit.AI`). The package adds no resilience handler and turns the OpenAI client's own retries off, so the client keeps whatever the Host's defaults give every client: with the service defaults ([host-recipes.md](host-recipes.md)), their one pipeline, which retries safe methods only, so a chat completion, a POST, is sent once. That pipeline's attempt timeout is 10 seconds; give the client its own limits by replacing it, as for any client: `builder.Services.AddHttpClient(AIServiceCollectionExtensions.HttpClientName).RemoveAllResilienceHandlers()`, then `AddPouryaKitResilience().Configure(...)` ([web.md](web.md)). Adding a second pipeline instead is refused when the client is created.
-- The client's pipeline, outermost first: the allow-list, function invocation with the cap, the application's guardrails when it registers any ([Guardrails](#guardrails)), OpenTelemetry with sensitive data off, and logging. The telemetry step writes a span and duration and token metrics for each call to the model, on the activity source and meter Experimental.Microsoft.Extensions.AI, which the service defaults' tracing and metrics export ([host-recipes.md](host-recipes.md#what-each-recipe-does)); a Host with an exporter of its own adds that name.
+- The client's pipeline, outermost first: the allow-list, function invocation with the cap, the application's guardrails when it registers any ([Guardrails](#guardrails)), OpenTelemetry with sensitive data off, and logging. The telemetry step writes a span and duration and token metrics for each call to the model, on the activity source and meter Experimental.Microsoft.Extensions.AI, which the service defaults' tracing and metrics export ([host-recipes.md](host-recipes.md#what-each-recipe-does)); a Host with an exporter of its own adds that name. The telemetry carries no message content; the logging step records the messages and options when the Host's logger enables Trace, as Microsoft.Extensions.AI documents, which says never to enable Trace in production.
 
 ## A Gateway tool
 
@@ -221,6 +222,66 @@ internal sealed class WriteDigestCommandHandler(IChatClient chat, IGatewayProces
 
 - Each tool call carries the system Actor, as a trusted continuation of the occurrence, and no tenant: a recurring command's Module is not tenant-scoped, and a tenant-scoped Module's tool refuses a call with no tenant.
 
+## Embeddings and semantic search
+
+On the Host, beside or without the chat client:
+
+```csharp
+using PouryaKit.AI;
+
+builder.Services.AddPouryaKitEmbeddings();
+builder.Services.Configure<PouryaKitAIOptions>(builder.Configuration.GetSection("PouryaKit:AI"));
+```
+
+```json
+"PouryaKit": {
+  "AI": {
+    "Provider": "Ollama",
+    "Endpoint": "http://localhost:11434/v1",
+    "EmbeddingModel": "all-minilm:22m"
+  }
+}
+```
+
+In the Module that stores text, `PouryaKit.AI.Postgres`, and a migration of that Module for each collection:
+
+```csharp
+using PouryaKit.AI.Postgres;
+
+module.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
+module.AddPouryaKitVectorStore();
+
+// In a migration of the Module; 384 is the dimensions the embedding model returns.
+migrationBuilder.CreateVectorCollection("products", dimensions: 384);
+```
+
+A command's handler stores, and a query searches, as an agent's Gateway tool may:
+
+```csharp
+internal sealed class DescribeProductCommandHandler(IVectorStore vectors) : CommandHandler<DescribeProductCommand>
+{
+    public override async Task<Result> Handle(DescribeProductCommand command, CancellationToken cancellationToken)
+    {
+        await vectors.StoreAsync("products", command.ProductId.ToString(), command.Description, cancellationToken);
+        return Result.Success();
+    }
+}
+
+internal sealed class FindProductsQueryHandler(IVectorStore vectors) : QueryHandler<FindProductsQuery, IReadOnlyList<VectorMatch>>
+{
+    public override async Task<Result<IReadOnlyList<VectorMatch>>> Handle(FindProductsQuery query, CancellationToken cancellationToken) =>
+        Result.Success(await vectors.SearchAsync("products", query.Question, top: 5, cancellationToken));
+}
+```
+
+- `AddPouryaKitEmbeddings()` registers the Host's `IEmbeddingGenerator<string, Embedding<float>>`, a singleton over the same OpenAI client, HTTP client and provider rules as the chat client, wrapped in OpenTelemetry and logging as the chat client is: the telemetry carries no input, and the logging step records the input and options when the Host's logger enables Trace. The Host fails when it starts, naming the option, on the provider rules of [Registering](#registering) and on a blank `EmbeddingModel`; for Azure OpenAI it is the embedding deployment's name. With both registrations the provider is checked once. Each provider serves the model through its embeddings API; an Ollama chat model may not: `qwen2.5:0.5b` on `ollama/ollama:0.40.6` answers 501, so name an embedding model such as `all-minilm:22m`.
+- `AddPouryaKitVectorStore()` on a Module stored with `UsePouryaKitPostgres` adds the scoped `IVectorStore`. `CreateVectorCollection(name, dimensions)` creates the pgvector extension where the database has none, the package's schema `ai` and the table `ai.<name>`: tenant, key, the stored text and its `vector(<dimensions>)`. A name is a lower-case ASCII letter, then up to 59 lower-case letters, digits and underscores; any other is refused. A database that has no vector extension and cannot create it fails the migration, naming the fix: install pgvector on the server, or have a role that may create extensions run `create extension vector`. An installed extension is used where it is, and its schema must be on the Host role's `search_path`, as `public`, the default, is: the column's `vector` type and the search's `::vector` cast are unqualified, so with the extension in another schema the migration, or a search, fails with PostgreSQL's `type "vector" does not exist` instead.
+- `StoreAsync` embeds the text and writes it under the key, replacing what the key held, on the Unit of Work's transaction: a rolled-back command stores nothing. Like any write it runs only in a command's handler or a Domain Event Handler, and it calls the model inside the transaction, so a slow model holds the Operation's locks. `RemoveAsync` deletes a key the same way.
+- `SearchAsync` embeds the question and returns at most `top` `VectorMatch` (`Key`, `Content`, `Distance`), nearest first by cosine distance, from 0 to 2. In a command it reads on the Unit of Work's connection and so sees what the command stored.
+- Every row carries the Operation's tenant, `OperationContext.NoTenant` without one, and every call reads and writes only its own Operation's tenant: a caller never passes a tenant.
+- The search is exact, over the tenant's rows, with no approximate index: a Host whose collection grows adds an HNSW index with `vector_cosine_ops` in a migration of its own, and pgvector's iterative scan where a tenant's rows are few among many.
+- A Host without `PouryaKit.AI.Postgres` takes no pgvector: `PackageGraphTests` keeps the `Pgvector` client and the package out of every other Kit package's closure, and the package itself sends each embedding as a `real[]`, which pgvector casts to its `vector`, so it needs no client of its own.
+
 ## What the Kit guarantees
 
 - **A tool call is an Operation through the Module's Gateway under the run's continued context**, in every run shape and in every agent of a workflow, trusted only when the run executes inside the authorized Operation the context belongs to.
@@ -230,10 +291,11 @@ internal sealed class WriteDigestCommandHandler(IChatClient chat, IGatewayProces
 - **The Kit keeps no session and no memory**: they live in the application's stores, through `IAgentSessionStore` and its context providers.
 - **One resilience pipeline**: the provider's HTTP client is the Host's, with nothing added.
 - **The options are checked before the Host serves**, not at the first run, and one provider serves the Host: no switch at run time.
+- **A stored embedding commits with its Operation and is found within its tenant**: `IVectorStore` writes on the Unit of Work's transaction in the package's own schema, and every read and write filters by the Operation's tenant.
 
 ## Limits
 
-- Chat completions only, one model per Host. MCP tools and embeddings are later tickets of spec #115 (#137 and #138).
+- Chat completions and embeddings only, one chat model and one embedding model per Host. MCP tools are a later ticket of spec #115 (#137).
 - Each tool call is its own Operation and commits on its own: a run that fails later, or whose handler then fails, undoes no call that already committed.
 - The reducers are experimental in Microsoft.Extensions.AI 10.11 (`MEAI001`), and a streamed call is not streamed while a guardrail is registered.
 - The model decides which tools to call and with what arguments; the Kit decides only what each call may do.
@@ -243,4 +305,5 @@ internal sealed class WriteDigestCommandHandler(IChatClient chat, IGatewayProces
 - The Proving Sample's `AiTests` and `AgentRunTests` run the application on a database of their own with its chat client pointed at `ChatStub`, an OpenAI-compatible chat completions server in the test process on a loopback port, which answers each request with the replies a test scripts (text or tool calls, streamed when the request asks for a stream, or chosen from each request's body when agents call the model at once) and records every request: the tools offered and what each call returned. No hosted provider key is used in any test.
 - `AgentRunTests` runs each agent that calls a tool inside an authorized Operation, through a test Module's query that hands the test its context, and asserts each call's context as `AiTests` does; a guardrail registered on a Host of its own, and scheduled work on a Host with a database and a `ChatStub` of its own.
 - The one real probe, `AiTests.An_ollama_model_in_a_container_completes_a_tool_call_with_no_hosted_key`, runs the sample's agent against Ollama in a container (`Testcontainers.Ollama`, `ollama/ollama:0.40.6`, the model `qwen2.5:0.5b`) only with `POURYAKIT_OLLAMA_PROBE=1`, and is skipped otherwise. With the same variable, `AppHostTests` starts the sample's AppHost with its local agent, the same image and model through `AddPouryaKitOllama` ([aspire.md](aspire.md#a-local-agent)), and asks the agent over HTTP.
+- `VectorSearchTests` runs a test Module, `VectorsModule`, alone on PostgreSQL with pgvector in a container (`docker.io/pgvector/pgvector:0.8.7-pg18`), its embeddings `ChatStub`'s deterministic ones, and proves the nearest neighbours, the package's schema, the migration's refusal on a server without pgvector, the tenant filter with two tenants, the rollback with a failed command and the search inside a command. Its opt-in probe, with `POURYAKIT_OLLAMA_PROBE=1`, embeds a text through Ollama with `all-minilm:22m`.
 - Observe a tool call's context as the sample's tests do: an `IAuthorizer<T>` of the test assembly for the tool's operation records the `OperationContext` it runs with.
