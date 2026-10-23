@@ -10,12 +10,16 @@ namespace PouryaKit.Reporting.Module;
 
 // A job is read only within the Operation's tenant, the one the lease bound, and only by its requester or an Actor the
 // Host grants every job of the tenant; anyone else is answered as for a job that does not exist. The link is signed
-// only after both checks pass.
+// only after both checks pass, and never past the job's expiry, after which the retention may delete its file. A job
+// read at or past its expiry reads as Expired, with no link, whatever its row still says: the retention stores that
+// state for every such job, for one whose attempt holds a fresh claim once the claim goes stale or the attempt
+// settles, and the job never serves a file again.
 internal sealed class GetReportJobQueryHandler(
     IReadConnectionFactory connections,
     IActorPermissions permissions,
     IFileStorage files,
     OperationContext context,
+    TimeProvider time,
     IOptions<ReportOptions> options
 ) : QueryHandler<GetReportJobQuery, ReportJobDto>
 {
@@ -44,10 +48,14 @@ internal sealed class GetReportJobQueryHandler(
             return ReportJobErrors.NotFound;
         }
 
+        var expiresAt = new DateTimeOffset(job.ExpiresAt, TimeSpan.Zero);
+        var left = expiresAt - time.GetUtcNow();
+        var state = left > TimeSpan.Zero ? job.State : ReportJobState.Expired;
         Uri? link = null;
-        if (job.State == ReportJobState.Completed)
+        if (state == ReportJobState.Completed)
         {
-            var signed = await files.GetPresignedUrlAsync(job.FileKey!, options.Value.LinkLifetime, cancellationToken);
+            var lifetime = left < options.Value.LinkLifetime ? left : options.Value.LinkLifetime;
+            var signed = await files.GetPresignedUrlAsync(job.FileKey!, lifetime, cancellationToken);
             if (signed.IsFailure)
             {
                 return signed.Errors;
@@ -56,7 +64,7 @@ internal sealed class GetReportJobQueryHandler(
             link = signed.Value;
         }
 
-        return new ReportJobDto(job.Id, job.Kind, job.Format, job.State, link, job.Failure, new DateTimeOffset(job.ExpiresAt, TimeSpan.Zero));
+        return new ReportJobDto(job.Id, job.Kind, job.Format, state, link, job.Failure, expiresAt);
     }
 
     // Read by Dapper, which sets each property from its column and parses an enum from its text.

@@ -41,6 +41,7 @@ public sealed class ReportFixture(AppFixture app) : IAsyncLifetime
 
     private WebApplication? _host;
     private string? _connectionString;
+    private string? _serviceUrl;
 
     /// <summary>The started application.</summary>
     public WebApplication Host => _host ?? throw new InvalidOperationException("The Host starts in InitializeAsync.");
@@ -48,16 +49,16 @@ public sealed class ReportFixture(AppFixture app) : IAsyncLifetime
     /// <summary>The Host's report kinds.</summary>
     public TestReports Reports { get; } = new();
 
-    /// <summary>The Host's one file storage, which records the keys it signed a link for.</summary>
+    /// <summary>The Host's one file storage, which records the keys it signed a link for and each link's lifetime.</summary>
     public RecordingFileStorage Storage => (RecordingFileStorage)Host.Services.GetRequiredService<IFileStorage>();
 
     public async ValueTask InitializeAsync()
     {
         await _store.StartAsync(TestContext.Current.CancellationToken);
-        var serviceUrl = $"http://{_store.Hostname}:{_store.GetMappedPublicPort(S3Port)}";
+        _serviceUrl = $"http://{_store.Hostname}:{_store.GetMappedPublicPort(S3Port)}";
         using (var client = new AmazonS3Client(
                    new BasicAWSCredentials(AccessKey, SecretKey),
-                   new AmazonS3Config { ServiceURL = serviceUrl, ForcePathStyle = true, AuthenticationRegion = "us-east-1" }
+                   new AmazonS3Config { ServiceURL = _serviceUrl, ForcePathStyle = true, AuthenticationRegion = "us-east-1" }
                ))
         {
             await client.PutBucketAsync(Bucket, TestContext.Current.CancellationToken);
@@ -66,9 +67,15 @@ public sealed class ReportFixture(AppFixture app) : IAsyncLifetime
         var database = $"reports_{Guid.CreateVersion7():N}";
         await app.RowsAsync($"create database {database}");
         _connectionString = new NpgsqlConnectionStringBuilder(app.ConnectionString) { Database = database }.ConnectionString;
-        _host = AppFixture.ComposeHost(
+        _host = Compose();
+        await HostFixture.StartHostAsync(_host, TestContext.Current.CancellationToken);
+    }
+
+    /// <summary>A Host composed as the fixture's, with <paramref name="arguments"/> after its own, and not started.</summary>
+    public WebApplication Compose(params string[] arguments) =>
+        AppFixture.ComposeHost(
             "Development",
-            _connectionString,
+            _connectionString ?? throw new InvalidOperationException("The database is created in InitializeAsync."),
             new RecordedLogs(),
             builder =>
             {
@@ -76,15 +83,16 @@ public sealed class ReportFixture(AppFixture app) : IAsyncLifetime
                 builder.Services.Replace(ServiceDescriptor.Singleton<IReportLayouts>(Reports));
                 RecordingFileStorage.Install(builder.Services);
             },
-            $"--PouryaKit:Storage:S3:Bucket={Bucket}",
-            $"--PouryaKit:Storage:S3:ServiceUrl={serviceUrl}",
-            $"--PouryaKit:Storage:S3:AccessKey={AccessKey}",
-            $"--PouryaKit:Storage:S3:SecretKey={SecretKey}",
-            $"--PouryaKit:Reports:ClaimTimeout={ClaimTimeout}",
-            "--PouryaKit:Reports:CleanupInterval=00:00:01"
+            [
+                $"--PouryaKit:Storage:S3:Bucket={Bucket}",
+                $"--PouryaKit:Storage:S3:ServiceUrl={_serviceUrl}",
+                $"--PouryaKit:Storage:S3:AccessKey={AccessKey}",
+                $"--PouryaKit:Storage:S3:SecretKey={SecretKey}",
+                $"--PouryaKit:Reports:ClaimTimeout={ClaimTimeout}",
+                "--PouryaKit:Reports:CleanupInterval=00:00:01",
+                .. arguments,
+            ]
         );
-        await HostFixture.StartHostAsync(_host, TestContext.Current.CancellationToken);
-    }
 
     /// <summary>A client of the Host's HTTP pipeline, as <see cref="AppFixture.Client"/> makes one.</summary>
     public HttpClient Client(string caller, string tenant, params string[] permissions) =>
@@ -97,6 +105,21 @@ public sealed class ReportFixture(AppFixture app) : IAsyncLifetime
     /// <summary>Waits until the SQL <paramref name="condition"/> holds on the application's database; fails after 30 s.</summary>
     public Task WaitUntilAsync(string condition, string because) =>
         Sql.WaitUntilAsync(_connectionString ?? throw new InvalidOperationException("The database is created in InitializeAsync."), condition, because, 30);
+
+    /// <summary>
+    /// Holds every delivery of the Module, the retention's included, until the returned hold is disposed: its transaction
+    /// locks the Module's Receipt table against writes, and a delivery records its Receipt before its command runs. A
+    /// query records none, so the Host still answers reads. Closing the connection rolls the transaction back.
+    /// </summary>
+    public async Task<IAsyncDisposable> HoldDeliveriesAsync()
+    {
+        var connection = new NpgsqlConnection(_connectionString ?? throw new InvalidOperationException("The database is created in InitializeAsync."));
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
+        var transaction = await connection.BeginTransactionAsync(TestContext.Current.CancellationToken);
+        await using var hold = new NpgsqlCommand("lock table reports.pouryakit_receipts in share mode", connection, transaction);
+        await hold.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
+        return connection;
+    }
 
     public async ValueTask DisposeAsync()
     {
@@ -185,12 +208,15 @@ public sealed class TestReports : IReportRequestAuthorizer, IReportLayouts
     public static ReportLayout HeldLayout(int call) => new("Held", new ReportTable([new("Call")], [[$"call {call}"]]));
 }
 
-/// <summary>The Host's one <see cref="IFileStorage"/>, its provider's, recording every key it stores a file under or signs a link for.</summary>
+/// <summary>
+/// The Host's one <see cref="IFileStorage"/>, its provider's, recording every key it stores a file under, and every key
+/// it signs a link for with the link's lifetime.
+/// </summary>
 public sealed class RecordingFileStorage(IFileStorage provider) : IFileStorage
 {
     public ConcurrentQueue<string> Uploaded { get; } = [];
 
-    public ConcurrentQueue<string> Signed { get; } = [];
+    public ConcurrentQueue<(string Key, TimeSpan Lifetime)> Signed { get; } = [];
 
     /// <summary>The provider itself, to read what is stored under a key as no Feature does.</summary>
     public IFileStorage Provider => provider;
@@ -216,7 +242,7 @@ public sealed class RecordingFileStorage(IFileStorage provider) : IFileStorage
 
     public Task<Result<Uri>> GetPresignedUrlAsync(string key, TimeSpan lifetime, CancellationToken cancellationToken)
     {
-        Signed.Enqueue(key);
+        Signed.Enqueue((key, lifetime));
         return provider.GetPresignedUrlAsync(key, lifetime, cancellationToken);
     }
 }

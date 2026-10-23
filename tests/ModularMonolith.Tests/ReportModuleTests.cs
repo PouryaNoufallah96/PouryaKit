@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
 using ModularMonolith.Host;
 using PouryaKit.Cqrs;
 using PouryaKit.Reporting;
@@ -14,8 +15,8 @@ namespace ModularMonolith.Tests;
 // bucket. A request is authorized by the Host's port before any job exists; generation runs in the background as a
 // continuation of the request, through the renderer into the storage contract; claims are fenced, so a stale attempt
 // is taken over once and its late settlement changes nothing the job serves; only the requester within the job's
-// tenant, or an Actor granted the tenant's jobs, reads it; retention removes expired jobs' files in every tenant and
-// never the file a job serves.
+// tenant, or an Actor granted the tenant's jobs, reads it; a link never outlives its job's expiry; retention removes
+// expired jobs' files in every tenant and never the file a job serves; and a setting out of range fails the start.
 public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<ReportFixture>
 {
     private const string Tenant = "acme";
@@ -206,6 +207,73 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
     }
 
     [Fact]
+    public async Task A_link_is_signed_for_the_link_lifetime_and_near_the_jobs_expiry_for_no_longer_than_its_retention_left()
+    {
+        using var ada = reports.Client("ada", Tenant);
+        var id = await RequestAsync(ada, Sales);
+        await CompletedAsync(ada, id);
+        var fresh = LastLifetime(id);
+
+        // Two minutes left: far longer than the retention's cadence, and shorter than the default LinkLifetime.
+        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(2);
+        await reports.RowsAsync($"update reports.report_jobs set expires_at = '{expiresAt:O}' where id = '{id}'");
+        var near = await CompletedAsync(ada, id);
+
+        Assert.Equal(TimeSpan.FromMinutes(15), fresh);
+        Assert.NotNull(near.DownloadUrl);
+        Assert.InRange(LastLifetime(id), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(2));
+    }
+
+    [Fact]
+    public async Task A_job_read_past_its_expiry_reads_as_expired_with_no_link_before_the_retention_stores_that()
+    {
+        using var ada = reports.Client("ada", Tenant);
+        var id = await RequestAsync(ada, Sales);
+        await CompletedAsync(ada, id);
+        var signed = reports.Storage.Signed.Count;
+        Job read;
+        List<object[]> stored;
+        // The retention is held, so the job's row still says Completed when it is read past its expiry.
+        await using (await reports.HoldDeliveriesAsync())
+        {
+            await reports.RowsAsync($"update reports.report_jobs set expires_at = '{DateTimeOffset.UtcNow.AddSeconds(-1):O}' where id = '{id}'");
+            read = (await ada.GetFromJsonAsync<Job>($"/reports/{id}", TestContext.Current.CancellationToken))!;
+            stored = await reports.RowsAsync($"select state from reports.report_jobs where id = '{id}'");
+        }
+
+        Assert.Equal([["Completed"]], stored);
+        Assert.Equal(("Expired", null), (read.State, read.DownloadUrl));
+        Assert.Equal(signed, reports.Storage.Signed.Count);
+    }
+
+    public static TheoryData<string, TimeSpan> OutOfRange() =>
+        new()
+        {
+            { "LinkLifetime", TimeSpan.FromDays(8) },
+            { "Retention", TimeSpan.MaxValue },
+            { "ClaimTimeout", TimeSpan.MaxValue },
+            { "CleanupInterval", TimeSpan.MaxValue },
+        };
+
+    [Theory]
+    [MemberData(nameof(OutOfRange))]
+    public async Task A_host_whose_report_setting_is_out_of_range_fails_to_start_naming_the_bounds(string setting, TimeSpan value)
+    {
+        await using var host = reports.Compose($"--PouryaKit:Reports:{setting}={value}");
+
+        // The settings are validated themselves and again when the retention's cadence reads them, so the start fails
+        // with the one failure twice.
+        var failure = await Assert.ThrowsAsync<AggregateException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal(
+            [
+                "PouryaKit:Reports: Retention, CleanupInterval and ClaimTimeout must each be positive and at most 36500.00:00:00, and LinkLifetime positive and at most 7.00:00:00, the longest link S3 and Azure Blob sign.",
+            ],
+            failure.InnerExceptions.SelectMany(inner => Assert.IsType<OptionsValidationException>(inner).Failures).Distinct()
+        );
+    }
+
+    [Fact]
     public async Task A_request_with_no_format_or_an_unknown_one_answers_400_and_stores_no_job()
     {
         using var ada = reports.Client("ada", Tenant);
@@ -267,6 +335,10 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
             return new Claim(claim.RootElement.GetProperty("jobId").GetGuid(), claim.RootElement.GetProperty("attempt").GetInt32());
         }),
     ];
+
+    // The lifetime of the last link signed for a file of the job.
+    private TimeSpan LastLifetime(Guid id) =>
+        reports.Storage.Signed.Last(signed => signed.Key.StartsWith($"reports/{id:N}/", StringComparison.Ordinal)).Lifetime;
 
     private async Task NotStoredAsync(string key)
     {
