@@ -1,0 +1,41 @@
+src/PouryaKit.Messaging.Wolverine.Sagas/Declaration/SagaServiceCollectionExtensions.cs
+  s_4ca4bb3f6215ac::t_306a0471f99d4a 34-35
+src/PouryaKit.Messaging.Wolverine.Sagas/Steps/PouryaKitSaga.cs
+  s_4ca4bb3f6215ac::t_65369badc17976 46-49
+src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStorage.cs
+  s_4ca4bb3f6215ac::t_9341bb7fef317f 68-69
+tests/ModularMonolith.Tests/SagaTests.cs
+  s_4ca4bb3f6215ac::t_e1d06004e4c094 402-470,676,698,739-753
+.agents/skills/pourya-kit/references/sagas.md
+  s_4ca4bb3f6215ac::t_16b40e9f0e90b1 40,84,92,113
+docs/acceptance.md
+  s_4ca4bb3f6215ac::t_d524d1368d2d4f 2477
+docs/adr/0013-a-saga-step-runs-outside-every-operation.md
+  s_4ca4bb3f6215ac::t_ca2058a7dd39a3 337-348
+docs/architecture/README.md
+  s_4ca4bb3f6215ac::t_ab626c7a21105f 586
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_4ca4bb3f6215ac::t_c424bbdb593c8c 493
+src/PouryaKit.Messaging.Wolverine.Sagas/Declaration/SagaCheck.cs
+  s_4ca4bb3f6215ac::t_25e472db8e75dc 112-119
+src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStepStatements.cs
+  s_4ca4bb3f6215ac::t_901629ca8bdb14 3-5,16-21
+src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStepStorage.cs
+  s_4ca4bb3f6215ac::t_9abc82b2eaccdb 1-2,19-27,75-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e13f9864330b372a48ae99d75a6a6b3f1336d123",
+  "prompts": {},
+  "sessions": {
+    "s_4ca4bb3f6215ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aimpl-142-fix2-323d17f854db4cd4",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
