@@ -129,5 +129,9 @@ metadata:
 
 - `check-docs.py` fails a code span that names no Kit code, such as `Protocols` or `Http1AndHttp2` in a skill reference or the architecture document, while `docs/acceptance.md` rows pass it: write the configuration key instead (`Kestrel:Endpoints:Grpc:Protocols`), which it admits, or the words.
 
+## Eight diagrams from one fix package (PR #143 review, 2026-10-24; Archify 3.0.1)
+
+- `scratchpad/p143/remap143.py <worktree> [--write]` maps every citation of a file changed against HEAD through a `difflib` line map and edits the numbers with a path-anchored regex; run `--write` once only, since a second run maps the new numbers as HEAD's. A range whose cited code grew (a nested provider class below `HeaderRequestCulture`'s methods) needs its end set by hand. `scratchpad/p143/cites.py <worktree> <substring> ...` lists citations by path before editing; the session-4 `tools/m142/repin.py` pins and refinalizes with the surviving Archify clone.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].
