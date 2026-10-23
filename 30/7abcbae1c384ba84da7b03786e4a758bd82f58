@@ -1,0 +1,23 @@
+docs/acceptance.md
+  s_4ca4bb3f6215ac::t_45c02c4fa05913 2478-2479
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_4ca4bb3f6215ac::t_5a9c706c27879f 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_4ca4bb3f6215ac::t_579eefee7b5e18 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "307abcbae1c384ba84da7b03786e4a758bd82f58",
+  "prompts": {},
+  "sessions": {
+    "s_4ca4bb3f6215ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aimpl-142-fix2-323d17f854db4cd4",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
