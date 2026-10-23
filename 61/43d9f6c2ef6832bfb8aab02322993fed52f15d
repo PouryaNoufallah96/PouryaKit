@@ -1,0 +1,19 @@
+docs/acceptance.md
+  s_4ca4bb3f6215ac::t_fc447ae382aee4 2499
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6143d9f6c2ef6832bfb8aab02322993fed52f15d",
+  "prompts": {},
+  "sessions": {
+    "s_4ca4bb3f6215ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aimpl-142-fix2-323d17f854db4cd4",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
