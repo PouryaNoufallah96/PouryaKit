@@ -1,0 +1,33 @@
+docs/architecture/diagrams/execution-core.architecture.json
+  s_1bd9e64d5be5ed::t_dda575a625d377 10
+docs/architecture/diagrams/execution-core.html
+  s_1bd9e64d5be5ed::t_1db971bd72edb3 4985,4990,5108-5109,5151-5158,5433-5435,5438-5439,5453-5454,5461-5472,5508-5509,5531-5532,5770-5771
+docs/architecture/diagrams/kit-context.architecture.json
+  s_1bd9e64d5be5ed::t_bf5debc31153e5 10
+docs/architecture/diagrams/kit-context.html
+  s_1bd9e64d5be5ed::t_a4463c73e2d946 4985,5243-5244,5251
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_1bd9e64d5be5ed::t_199f9b74d8d34e 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_1bd9e64d5be5ed::t_5b76aaa27aa28b 4985
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_1bd9e64d5be5ed::t_ce76c0e2f54954 10
+docs/architecture/diagrams/module-boundaries.html
+  s_1bd9e64d5be5ed::t_6b8ef8d465fb7f 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3682fc64c840f5a501e109ba4e382c249b910a5c",
+  "prompts": {},
+  "sessions": {
+    "s_1bd9e64d5be5ed": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-amerge-138-7ff31a3a756f114d",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
