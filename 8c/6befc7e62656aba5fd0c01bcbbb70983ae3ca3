@@ -1,0 +1,19 @@
+src/PouryaKit.Grpc/Clients/GrpcLoopbackCheck.cs
+  s_2dcdc620d4a460::t_b164bd25e997f8 48-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8c6befc7e62656aba5fd0c01bcbbb70983ae3ca3",
+  "prompts": {},
+  "sessions": {
+    "s_2dcdc620d4a460": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "72319d05-5ed9-4ea9-9a95-a4e4866af4ea",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
