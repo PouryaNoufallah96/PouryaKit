@@ -125,5 +125,9 @@ metadata:
 
 - **`meta.output` must be a POSIX path relative to the Archify clone's working directory, with no `..`** (`output/meta-absolute`, `output/meta-path-syntax`): a trial copy writes into a folder inside the clone (`trial131/<slug>.html`), as #133's `trial133.py` did. `scratchpad/p131/finalize131.py <worktree> <revision> <slug.type> ... [--trial <dir>]` pins and finalizes, or trials, and prints both SHA-256. messaging-and-delivery took a fourth column at x 1230 (nodes 260 wide, to x 1490) and passed every gate: execution-core stays full.
 
+## Framework names in code spans (final quality pass, 2026-10-23)
+
+- `check-docs.py` fails a code span that names no Kit code, such as `Protocols` or `Http1AndHttp2` in a skill reference or the architecture document, while `docs/acceptance.md` rows pass it: write the configuration key instead (`Kestrel:Endpoints:Grpc:Protocols`), which it admits, or the words.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].

@@ -452,6 +452,8 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
             $"The queues of these subscriptions, Sagas or delayed commands do not store what they receive, so their deliveries would not survive a restart: local://{subscription}/ (Application, BufferedInMemory).",
             thrown.Message
         );
+        // Refused once every hosted service had started: the Host the caller is left with has stopped.
+        Assert.True(host.Lifetime.ApplicationStopped.IsCancellationRequested);
     }
 
     [Fact]

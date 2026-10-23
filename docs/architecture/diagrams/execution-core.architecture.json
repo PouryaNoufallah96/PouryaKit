@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "226b0bb07590bba541a23ef9ce99ef00b7578a37",
+      "revision": "8cc8261dab070f0709cf00d6e1a9dbc63e7468e1",
       "link_mode": "web"
     }
   },
@@ -723,8 +723,8 @@
         },
         {
           "path": "src/PouryaKit.Grpc/Services/GrpcEndpointRouteBuilderExtensions.cs",
-          "line": 26,
-          "end_line": 44,
+          "line": 29,
+          "end_line": 47,
           "label": "a root group on Web's conventions"
         },
         {
@@ -831,8 +831,8 @@
         },
         {
           "path": "src/PouryaKit.AI/AIServiceCollectionExtensions.cs",
-          "line": 154,
-          "end_line": 200,
+          "line": 163,
+          "end_line": 209,
           "label": "one OpenAI client: guarded chat, embeddings"
         }
       ]

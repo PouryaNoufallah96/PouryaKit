@@ -130,5 +130,9 @@ metadata:
 
 - **A mutation that leaves a primary-constructor parameter unread or a `using` unused fails the build** (CS9113 and IDE0005 are errors here), and a script that reads only the exit code reports it as red. Keep the parameter used (`_ = (unitOfWork, typeof(NpgsqlParameter));`) and have the script report `BUILD FAILED` when the output holds "Build failed" (`scratchpad/p133/mutate133.py`).
 
+## Options read in a test (final quality pass, 2026-10-23)
+
+- `IOptions<T>.Value` runs every `Validate` the registration added, so a test that resolves options to check one value set in code fails on the others with `OptionsValidationException`: set the required ones in the same `configure` and assert them all.
+
 **Why:** Test projects run on Microsoft.Testing.Platform, chosen in ticket #4 (2026-10-05) as the plain current .NET 10 idiom; a later ticket repeating VSTest packages would create a second way of running tests. Each other fact cost a build, a run or a vacuous red in tickets #4 to #63 or retro C (2026-10-06).
 **How to apply:** before adding a test project, a test filter or an analyzer rule in `.editorconfig`; before every mutation run; when a change adds a table, a Module, a subscription or an Integration Event type to the sample. Related: [[worktree-shell-and-check-gotchas]], [[core-json-and-architecture-test-facts]].

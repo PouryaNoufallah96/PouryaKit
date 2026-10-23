@@ -21,7 +21,10 @@ public static class GrpcEndpointRouteBuilderExtensions
         /// peer's Kit headers, in call metadata, continue an Operation of its own. A peer's headers the Kit refuses as
         /// unreadable answer the status <see cref="StatusCode.InvalidArgument"/> with the rule they broke as its message,
         /// before the service runs, where an HTTP endpoint answers a 400 problem response. Called again, it maps no
-        /// service twice, since two identical endpoints would make every call to it ambiguous.
+        /// service twice, since two identical endpoints would make every call to it ambiguous. Over TLS one Kestrel
+        /// listener serves both; over plain HTTP, for development only, a listener of both versions negotiates none and
+        /// speaks HTTP/1.1, so a call needs a listener of its own whose protocols are HTTP/2 alone, such as a
+        /// <c>Kestrel:Endpoints:Grpc</c> entry beside the HTTP/1.1 one.
         /// </summary>
         public IEndpointRouteBuilder MapPouryaKitGrpcServices()
         {

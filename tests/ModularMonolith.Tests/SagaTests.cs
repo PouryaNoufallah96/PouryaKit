@@ -10,6 +10,7 @@ using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
+using PouryaKit.Messaging.Wolverine.Marten;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Messaging.Wolverine.Sagas;
 using PouryaKit.Modularity;
@@ -708,6 +709,38 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
         );
 
         Assert.Contains(problem, refused.Message, StringComparison.Ordinal);
+    }
+
+    // Wolverine gives a saga to the first saga storage that keeps every type, and Marten's integration puts its own first,
+    // alone or beside the EF Core store, where Marten's session would keep the state and the Kit's claim never commit.
+    [Theory]
+    [InlineData("marten")]
+    [InlineData("both")]
+    public void A_host_whose_saga_state_wolverine_would_keep_with_marten_fails_when_it_is_built(string stores)
+    {
+        var refused = Assert.Throws<InvalidOperationException>(() =>
+        {
+            if (stores == "both")
+            {
+                Compose(configure: builder => builder.UsePouryaKitMarten(connectionName: "app"));
+                return;
+            }
+
+            var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+                ["--environment", Environments.Development, $"--ConnectionStrings:app={_database}"]
+            );
+            builder
+                .Services.Receive<OrderPlacedV1>("orders.order-placed.v1")
+                .AddPouryaKitSaga<QueueSaga>("tests.marten", "tests.marten", saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId));
+            builder.UsePouryaKitMarten(connectionName: "app");
+            using var host = builder.Build();
+        });
+
+        var sagas = stores == "both" ? "shipping.fulfilment, shipping.reference, shipping.reminder, shipping.tally" : "tests.marten";
+        Assert.Equal(
+            $"The Host runs the Sagas {sagas}, but Wolverine would keep their state with MartenPersistenceFrameProvider, not with its lightweight saga storage in the PostgreSQL message store, where the Kit claims each step in the step's own transaction: the claims would never commit, so a step delivered again would apply again. A Host with a Saga stores its messages with UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore and composes no Marten store (UsePouryaKitMarten), alone or beside it.",
+            refused.Message
+        );
     }
 
     // A saga's steps are code Wolverine generates: outside Development a Host loads it from its own assembly, where

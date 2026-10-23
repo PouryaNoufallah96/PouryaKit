@@ -41,22 +41,25 @@ public static class AIServiceCollectionExtensions
         /// every <see cref="IChatGuardrail"/> the Host registers, none by default. Its OpenTelemetry step carries no message
         /// content, and its logging step records the messages and options when the Host's logger enables Trace, as
         /// Microsoft.Extensions.AI documents. The Host binds the options from its configuration, as with
-        /// <c>Configure&lt;PouryaKitAIOptions&gt;(configuration.GetSection("PouryaKit:AI"))</c>, and fails when it starts,
+        /// <c>Configure&lt;PouryaKitAIOptions&gt;(configuration.GetSection("PouryaKit:AI"))</c>; <paramref name="configure"/>
+        /// sets them in code instead, and with <see cref="AddPouryaKitEmbeddings"/> too, each call's applies, in the order
+        /// of the calls. The Host fails when it starts,
         /// naming the option, when the provider is not an <see cref="AIProvider"/> value, the model is blank, the endpoint
         /// is not an absolute HTTP or HTTPS address or is missing for Azure OpenAI or Ollama, the key is missing for
         /// OpenAI or Azure OpenAI, the iteration cap is below 1 or a tool name is blank. A Host composes exactly one
         /// <see cref="IChatClient"/>: its build fails, through the Kit's composition checks, naming each registration
-        /// when it registers another, before or after this call, and naming the contract when it removes this one; it fails
+        /// when it registers another, before or after this call, a second call included, and naming the contract when it
+        /// removes this one; it fails
         /// too, naming each, when it registers an <see cref="IChatGuardrail"/> that is not a singleton. It registers
         /// <see cref="IMcpServers"/>, the Host's clients of the MCP servers <see cref="PouryaKitAIOptions.McpServers"/> names,
         /// over stdio or over the HTTP client named <see cref="McpHttpClientName"/>, which the Host's services own and dispose,
         /// and the Host fails when it starts when a server has neither or both of a command and an endpoint, or an endpoint
         /// that is not an absolute HTTP or HTTPS address.
         /// </summary>
-        public IServiceCollection AddPouryaKitAI()
+        public IServiceCollection AddPouryaKitAI(Action<PouryaKitAIOptions>? configure = null)
         {
             ArgumentNullException.ThrowIfNull(services);
-            AddProvider(services)
+            AddProvider(services, configure)
                 .Validate(
                     ai => !string.IsNullOrWhiteSpace(ai.Model),
                     "PouryaKitAIOptions.Model names no model; set the model the Host's runs use, or for Azure OpenAI its deployment."
@@ -97,13 +100,14 @@ public static class AIServiceCollectionExtensions
         /// through the same OpenAI client as the chat client of <see cref="AddPouryaKitAI"/>, over the HTTP client named
         /// <see cref="HttpClientName"/>, with or without it. Its OpenTelemetry step carries no input, and its logging step
         /// records the input and options when the Host's logger enables Trace, as Microsoft.Extensions.AI documents. The
-        /// Host binds the options as for the chat client, and fails when it starts, naming the option, on the same provider,
-        /// endpoint and key rules, and when the embedding model is blank.
+        /// Host binds the options as for the chat client; <paramref name="configure"/> sets them in code instead, and with
+        /// <see cref="AddPouryaKitAI"/> too, each call's applies, in the order of the calls. The Host fails when it starts,
+        /// naming the option, on the same provider, endpoint and key rules, and when the embedding model is blank.
         /// </summary>
-        public IServiceCollection AddPouryaKitEmbeddings()
+        public IServiceCollection AddPouryaKitEmbeddings(Action<PouryaKitAIOptions>? configure = null)
         {
             ArgumentNullException.ThrowIfNull(services);
-            AddProvider(services)
+            AddProvider(services, configure)
                 .Validate(
                     ai => !string.IsNullOrWhiteSpace(ai.EmbeddingModel),
                     "PouryaKitAIOptions.EmbeddingModel names no model; set the model the Host embeds text with, or for Azure OpenAI its deployment."
@@ -114,10 +118,15 @@ public static class AIServiceCollectionExtensions
     }
 
     // The provider's rules, its HTTP client and its one OpenAI client, added once whether the Host composes the chat
-    // client, the embedding generator or both.
-    private static OptionsBuilder<PouryaKitAIOptions> AddProvider(IServiceCollection services)
+    // client, the embedding generator or both; each registration's configure is added, the second's too.
+    private static OptionsBuilder<PouryaKitAIOptions> AddProvider(IServiceCollection services, Action<PouryaKitAIOptions>? configure)
     {
         var options = services.AddOptions<PouryaKitAIOptions>();
+        if (configure is not null)
+        {
+            options.Configure(configure);
+        }
+
         if (services.Any(descriptor => descriptor.ServiceType == typeof(Provider)))
         {
             return options;

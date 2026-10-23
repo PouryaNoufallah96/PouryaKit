@@ -8,12 +8,16 @@ namespace PouryaKit.Messaging.Wolverine.Sagas;
 
 // What the Host's sagas need of its final registrations, read when it is built: a saga Wolverine can generate the steps
 // of, owned by a Module the Host composes, Integration Events for inputs the Host has wire names for, timeouts that keep
-// the identity they were scheduled under, a queue, a state table and input names of its own, and Wolverine's service
-// location policy at its default, so no step reaches a Kit scoped service such as the Operation (ADR 0013). The policy is
-// a value of Wolverine's options, whose extensions resolving them applies, naming every type Wolverine routes: the
-// routing check registered before this one has declared the Host's wire names by then, this one declares its inputs'
-// names, and it reads the options only once all are declared and its own declarations are sound, so a Host whose routes
-// fail fixes no name for the process.
+// the identity they were scheduled under, a queue, a state table and input names of its own, Wolverine's service
+// location policy at its default, so no step reaches a Kit scoped service such as the Operation, and Wolverine's
+// lightweight saga storage keeping the sagas, the one whose transaction the Kit opens and claims each step in (ADR 0013).
+// Wolverine gives a saga to the first storage in its order that keeps every type: PersistMessagesWithPostgresql, which
+// the EF Core package's UsePouryaKitWolverine calls, adds the lightweight one as it registers, and Marten's integration
+// puts its own first when Wolverine's options are resolved, beside the EF Core store too, where Marten's session would
+// keep the saga and the Kit's claim never commit. The policy and the storages are values of Wolverine's options, whose
+// extensions resolving them applies, naming every type Wolverine routes: the routing check registered before this one
+// has declared the Host's wire names by then, this one declares its inputs' names, and it reads the options only once
+// all are declared and its own declarations are sound, so a Host whose routes fail fixes no name for the process.
 internal sealed class SagaCheck : ICompositionCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
@@ -137,16 +141,24 @@ internal sealed class SagaCheck : ICompositionCheck
         }
 
         // Resolving the options includes each saga in Wolverine's discovery, which throws for one it cannot generate.
-        if (
-            sagas.Count > 0
-            && problems.Count == 0
-            && WireNaming.AllDeclared(wireNames)
-            && services.GetService<WolverineOptions>()?.ServiceLocationPolicy is { } policy and not ServiceLocationPolicy.NotAllowed
-        )
+        if (sagas.Count > 0 && problems.Count == 0 && WireNaming.AllDeclared(wireNames) && services.GetService<WolverineOptions>() is { } wolverine)
         {
-            problems.Add(
-                $"The Host runs the Sagas {string.Join(", ", sagas.Select(saga => saga.Name))}, but Wolverine's ServiceLocationPolicy is {policy}, so a Saga's step could reach the Kit's scoped services, the Operation and its publisher among them, outside every Operation. Remove the configuration that sets it: a Host with a Saga keeps Wolverine's default, NotAllowed."
-            );
+            var names = string.Join(", ", sagas.Select(saga => saga.Name));
+            if (wolverine.ServiceLocationPolicy is not ServiceLocationPolicy.NotAllowed)
+            {
+                problems.Add(
+                    $"The Host runs the Sagas {names}, but Wolverine's ServiceLocationPolicy is {wolverine.ServiceLocationPolicy}, so a Saga's step could reach the Kit's scoped services, the Operation and its publisher among them, outside every Operation. Remove the configuration that sets it: a Host with a Saga keeps Wolverine's default, NotAllowed."
+                );
+            }
+
+            // A selective storage, such as EF Core's, keeps only the types it maps; the first that keeps every type keeps the sagas.
+            var storage = wolverine.CodeGeneration.OrderedPersistenceProviders().FirstOrDefault(provider => provider.IsCatchAll);
+            if (storage is not LightweightSagaPersistenceFrameProvider)
+            {
+                problems.Add(
+                    $"The Host runs the Sagas {names}, but Wolverine would keep their state with {storage?.GetType().Name ?? "no saga storage"}, not with its lightweight saga storage in the PostgreSQL message store, where the Kit claims each step in the step's own transaction: the claims would never commit, so a step delivered again would apply again. A Host with a Saga stores its messages with UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore and composes no Marten store (UsePouryaKitMarten), alone or beside it."
+                );
+            }
         }
 
         return problems;
