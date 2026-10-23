@@ -1,0 +1,23 @@
+docs/acceptance.md
+  s_2dcdc620d4a460::t_bf8f92c3c58eab 2516
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_2dcdc620d4a460::t_f3c76c64f63a05 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_2dcdc620d4a460::t_9f76b6cf31b315 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "623c07279b1102c88b4a87c86ab41441e10c6a49",
+  "prompts": {},
+  "sessions": {
+    "s_2dcdc620d4a460": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "72319d05-5ed9-4ea9-9a95-a4e4866af4ea",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
