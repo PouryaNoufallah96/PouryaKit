@@ -104,6 +104,7 @@ A gRPC client never calls its own Host: a call between Modules of one Host goes 
 ## Testing
 
 - Two Hosts of the application run in one test process, each built with `AppFixture.ComposeHost` and a client of the other: `ConfigurePrimaryHttpMessageHandler(() => new Http2(peer.GetTestServer().CreateHandler()))`, where `Http2` is a `DelegatingHandler` that sets the response's `Version` to the request's, since the in-memory server answers HTTP/1.1 and a gRPC client refuses that. Add the peer credentials with `AddHttpMessageHandler`.
+- Across a process boundary, `ModularMonolithProcess` runs the sample Host with `dotnet run` in Production, configured through its environment, and a Host of the test process calls the address it logs, authenticated with the peer's own bearer token. A Kestrel listener without TLS serves gRPC only with HTTP/2 alone (`Kestrel:EndpointDefaults:Protocols` set to `Http2`): without TLS no negotiation picks HTTP/2, so Kestrel's default listener of both versions speaks HTTP/1.1 and refuses the call with `HTTP_1_1_REQUIRED`. Read what the process ran from its JSON log entries with scopes (`Logging:Console:FormatterName` `json`, `IncludeScopes`): the dispatcher's scope names each Operation's id, correlation and Module.
 - A plain `GrpcChannel` over the same handler sends exactly the metadata a call names, such as a raw peer's unreadable headers.
 - Read a failure's Errors with `JsonDocument.Parse(failure.Trailers.Get(ResultGrpcExtensions.ErrorsTrailer)!.ValueBytes)`.
 - `GrpcTests` in the Proving Sample's tests holds each case.

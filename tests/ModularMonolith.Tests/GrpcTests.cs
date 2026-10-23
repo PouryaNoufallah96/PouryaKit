@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Text.Json;
 using Catalog;
@@ -30,7 +31,8 @@ using PouryaKit.Web;
 namespace ModularMonolith.Tests;
 
 // Catalog's gRPC service on Web's conventions, through the Host's real pipeline: two Hosts of the application in this
-// process, each with a client of the other's ProductService, and plain channels standing in for callers of any kind.
+// process, each with a client of the other's ProductService, the sample Host as its own process called over Kestrel, and
+// plain channels standing in for callers of any kind.
 public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     private const string Client = "catalog";
@@ -84,6 +86,39 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             );
             Assert.Equal(2, fromFirst.Count + fromSecond.Count);
         }
+    }
+
+    // PR #143: the same call across a process boundary, to ModularMonolith.Host run with `dotnet run` in Production on the
+    // fixture's database and listening with Kestrel on a loopback port, which authenticates the peer's own bearer token.
+    // The product is found only in acme, which the peer's token does not name, and the process's log scope shows the
+    // Operation that answered: Catalog's, an Operation of its own in the caller's correlation.
+    [Fact]
+    public async Task A_call_to_the_host_running_as_its_own_process_over_kestrel_continues_the_callers_operation_as_a_trusted_peer()
+    {
+        var product = await CreateProductAsync();
+        // Nothing left pending that the process, another node on the fixture's message store, could take up.
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+        using var peer = ModularMonolithProcess.Start(Fixture.ConnectionString);
+        var address = await peer.ListeningAsync(TestContext.Current.CancellationToken);
+        var credentials = new AuthenticationHeaderValue("Bearer", TestIssuer.Token(new() { ["sub"] = AppFixture.TrustedPeer }));
+        List<HttpRequestMessage> sent = [];
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            Fixture.Logs,
+            builder => AddClient(builder.Services, address).AddHttpMessageHandler(() => new AsTrustedPeer(sent, credentials))
+        );
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        var ada = new OperationContext(Actor.Person("ada"), "acme");
+
+        var reply = await GetProductAsync(host, product, ada);
+        await host.StopAsync(TestContext.Current.CancellationToken);
+        var answered = await OperationsLoggedAsync(peer, nameof(GetProductQuery), ada.CorrelationId);
+
+        Assert.Equal((product.ToString(), Name(product)), (reply.Id, reply.Name));
+        Assert.All(answered, operation => Assert.Equal("CatalogModule", operation.Module));
+        Assert.DoesNotContain(ada.OperationId, answered.Select(operation => operation.OperationId));
+        Assert.Equal(credentials.ToString(), Assert.Single(sent).Headers.Authorization?.ToString());
     }
 
     // The same Kit headers from a caller the Host does not trust are ignored: Grace runs as herself with no tenant, which
@@ -520,6 +555,42 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         );
     }
 
+    // The id and Module of each Operation named operation that the process logged in correlation, from the scope the
+    // dispatcher writes on its JSON log entries, once one is there: the console writes an entry after the Operation ends.
+    private static async Task<List<(Guid OperationId, string? Module)>> OperationsLoggedAsync(HostProcess process, string operation, Guid correlation)
+    {
+        var dispatcher = typeof(IDispatcher).Namespace + ".Dispatcher";
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(30));
+        while (true)
+        {
+            List<(Guid, string?)> logged = [];
+            foreach (var line in process.Output.Split(Environment.NewLine).Where(line => line.StartsWith('{')))
+            {
+                var entry = JsonSerializer.Deserialize<JsonElement>(line);
+                if (Text(entry, "Category") == dispatcher && entry.TryGetProperty("Scopes", out var scopes))
+                {
+                    logged.AddRange(
+                        from scope in scopes.EnumerateArray()
+                        where Text(scope, "Operation") == operation && Text(scope, "CorrelationId") == correlation.ToString()
+                        select (Guid.Parse(Text(scope, "OperationId")!), Text(scope, "Module"))
+                    );
+                }
+            }
+
+            if (logged.Count > 0)
+            {
+                return logged;
+            }
+
+            Assert.False(timeout.IsCancellationRequested, $"The process logged no {operation} in the correlation {correlation}:{Environment.NewLine}{process.Output}");
+            await Task.Delay(100, TestContext.Current.CancellationToken);
+        }
+    }
+
+    private static string? Text(JsonElement element, string name) =>
+        element.ValueKind == JsonValueKind.Object && element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+
     private static void AssertContinued(OperationContext caller, OperationContext continued)
     {
         Assert.Equal(
@@ -620,11 +691,12 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         }
     }
 
-    private sealed class AsTrustedPeer(List<HttpRequestMessage> sent) : DelegatingHandler
+    // Authenticates as the trusted peer: in the test scheme, or with the credentials a peer Host of another scheme reads.
+    private sealed class AsTrustedPeer(List<HttpRequestMessage> sent, AuthenticationHeaderValue? credentials = null) : DelegatingHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            request.Headers.Authorization = new(TestAuthentication.SchemeName, AppFixture.TrustedPeer);
+            request.Headers.Authorization = credentials ?? new(TestAuthentication.SchemeName, AppFixture.TrustedPeer);
             sent.Add(request);
             return base.SendAsync(request, cancellationToken);
         }
