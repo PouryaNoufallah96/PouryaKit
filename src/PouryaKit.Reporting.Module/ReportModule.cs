@@ -21,8 +21,8 @@ namespace PouryaKit.Reporting.Module;
 /// settings from the Host's configuration section <c>PouryaKit:Reports</c>: <c>Retention</c>, how long after its
 /// request a job and its file are kept (seven days); <c>CleanupInterval</c>, the retention's cadence (an hour);
 /// <c>ClaimTimeout</c>, how long an attempt holds its claim before the one takeover (ten minutes); and
-/// <c>LinkLifetime</c>, how long a download link works (fifteen minutes). The Host fails to start unless each is longer
-/// than zero.
+/// <c>LinkLifetime</c>, how long a download link works (fifteen minutes), never past the job's expiry. The Host fails
+/// to start unless each is longer than zero, the first three at most 36500 days and <c>LinkLifetime</c> at most seven days.
 /// </summary>
 public sealed class ReportModule : IModuleDefinition
 {
@@ -59,11 +59,11 @@ public sealed class ReportModule : IModuleDefinition
             .AddOptions<ReportOptions>()
             .BindConfiguration(ReportOptions.Section)
             .Validate(
-                reports => reports.Retention > TimeSpan.Zero
-                    && reports.CleanupInterval > TimeSpan.Zero
-                    && reports.ClaimTimeout > TimeSpan.Zero
-                    && reports.LinkLifetime > TimeSpan.Zero,
-                $"{ReportOptions.Section}: Retention, CleanupInterval, ClaimTimeout and LinkLifetime are each longer than zero."
+                reports => reports.Retention > TimeSpan.Zero && reports.Retention <= ReportOptions.MaxDuration
+                    && reports.CleanupInterval > TimeSpan.Zero && reports.CleanupInterval <= ReportOptions.MaxDuration
+                    && reports.ClaimTimeout > TimeSpan.Zero && reports.ClaimTimeout <= ReportOptions.MaxDuration
+                    && reports.LinkLifetime > TimeSpan.Zero && reports.LinkLifetime <= ReportOptions.MaxLinkLifetime,
+                $"{ReportOptions.Section}: Retention, CleanupInterval and ClaimTimeout must each be positive and at most {ReportOptions.MaxDuration}, and LinkLifetime positive and at most {ReportOptions.MaxLinkLifetime}, the longest link S3 and Azure Blob sign."
             )
             .ValidateOnStart();
         module.TryAddSingleton<IReportRenderer, ReportRenderer>();

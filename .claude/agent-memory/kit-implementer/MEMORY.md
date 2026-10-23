@@ -22,4 +22,4 @@
 - [PDF and file rendering](pdf-and-file-rendering-facts.md) — #129: PDFsharp's AGPL 6.5, set-once font resolver and Linux fonts, MigraDoc and Open XML traps, CSV injection, PackagePath, a full diagram
 - [AI and the Gateway tool](ai-and-gateway-tool-facts.md) — #135 #136: agents and workflows over the Host client, handoff declarations, invocation cap, OpenAI client retries, three providers, tool-call trust, stub, Ollama probe
 - [Saga spike](saga-spike-facts.md) — #141 (2026-10-18): pre-built handler shadowing, the wrapper input, route sources that end the search, the storage helper hook, Wolverine's own logical dedup
-- [Report Module](report-module-facts.md) — #140: a Module in a Kit package, its connection name, migrations in a package, the structure tests it joins, fenced claims over HTTP, refused .md writes
+- [Report Module](report-module-facts.md) — #140, PR #143: a Module in a Kit package, its connection name, migrations in a package, the structure tests it joins, fenced claims over HTTP, holding the retention, refused .md writes
