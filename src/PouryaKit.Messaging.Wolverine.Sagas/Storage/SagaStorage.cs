@@ -65,6 +65,8 @@ public static class SagaStorage
             await context.EnlistInOutboxAsync(new DatabaseEnvelopeTransaction(database, transaction));
             return new SagaStepStorage<TId, TSaga>(
                 new DatabaseSagaStorage<TId, TSaga>(connection, transaction, schema),
+                transaction,
+                $"\"{database.SchemaName}\".{saga.Table}",
                 new SagaStep(saga, context, input),
                 alreadyApplied: !claimed
             );

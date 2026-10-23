@@ -334,3 +334,15 @@ shape:
   probe after the commit.
 - **The Release publish** is package validation's: a composition of `scripts/packaging/inventory.json` publishes the test
   Modules' Host with codegen write, as the Proving Sample's Hosts are; the Proving Sample declares no saga.
+
+## Amendment (2026-10-23, ticket #142's second review: a completion at the version it loaded)
+
+The finding "Two steps of one saga at once" holds for an update only. Wolverine's lightweight storage deletes a completed
+saga by its identity alone and ignores the count of rows deleted (`Wolverine.Postgresql.Internals.DatabaseSagaSchema`,
+decompiled from `WolverineFx.Postgresql` 6.48.3), so two steps that loaded one state could both complete it and both
+commit what they emitted: a final payment's fulfilment beside the timeout's cancellation. The Kit's storage deletes the
+state at the version the step loaded and throws Wolverine's `SagaConcurrencyException` otherwise, the exception of its
+update, so the losing step rolls back and the Kit's retries run it on the committed state: a payment whose saga a timeout
+completed meanwhile is set aside as a dead letter, and a completing step whose state another step changed completes on
+the new state (`SagaTests`, the [acceptance map](../acceptance.md#saga-package-ticket-142)). A saga's name also starts
+with a letter, or the Host fails when it is built: Wolverine writes its state table's name into its statements unquoted.

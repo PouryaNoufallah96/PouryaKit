@@ -399,6 +399,75 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
         Assert.DoesNotContain(BillingLog.Of(order), delivery => delivery.Subscription == "billing.order-cancelled");
     }
 
+    // The final payment and the timeout load one state, and the timeout completes the saga first: the payment's delete
+    // finds no state at the version it loaded, so it rolls back with Wolverine's concurrency exception, and its retries
+    // find no saga. One terminal emission commits, never two that contradict each other.
+    [Fact]
+    public async Task Of_two_steps_that_complete_one_saga_from_one_state_only_the_first_to_commit_emits()
+    {
+        var logs = new RecordedLogs();
+        var host = await StartAsync(configure: builder => builder.Logging.AddProvider(logs));
+        var order = Guid.CreateVersion7();
+        var sagaId = FulfilmentOf("tenant-a", order);
+        await StartedAsync(host, order, installments: 1, payWithinSeconds: 3);
+        var held = HoldFirstPaymentStep($"not exists (select from wolverine.shipping_fulfilment_saga where id = '{sagaId}')");
+        try
+        {
+            await PublishAsync(host, new PaymentReceivedV1(order), Guid.CreateVersion7(), "tenant-a");
+            await held.WaitAsync(TimeSpan.FromSeconds(15), Token);
+            await WaitUntilAsync(
+                $"exists (select from wolverine.wolverine_dead_letters where received_at = 'local://{Fulfilment}/') or exists (select from billing.pouryakit_receipts where subscription = 'billing.order-fulfilled')",
+                seconds: 30
+            );
+        }
+        finally
+        {
+            SagaProbes.InPaymentStep = null;
+        }
+
+        await SettledAsync();
+        Assert.Equal(
+            [["billing.order-cancelled"]],
+            await RowsAsync("select subscription from billing.pouryakit_receipts where subscription in ('billing.order-fulfilled', 'billing.order-cancelled')")
+        );
+        Assert.Equal(
+            [[typeof(SagaInputRefusedException).FullName!]],
+            await RowsAsync($"select exception_type from wolverine.wolverine_dead_letters where received_at = 'local://{Fulfilment}/'")
+        );
+        Assert.Contains(logs.Entries, entry => entry.Exception is SagaConcurrencyException);
+    }
+
+    // The second payment contract changes the state a completing payment loaded and commits first: the payment's delete
+    // finds another version, so it rolls back with Wolverine's concurrency exception, and its retry completes the saga on
+    // the state the other step committed.
+    [Fact]
+    public async Task A_completing_step_whose_state_another_step_changed_since_it_loaded_it_rolls_back_and_completes_on_the_new_state()
+    {
+        var logs = new RecordedLogs();
+        var host = await StartAsync(configure: builder => builder.Logging.AddProvider(logs));
+        var order = Guid.CreateVersion7();
+        var sagaId = FulfilmentOf("tenant-a", order);
+        await StartedAsync(host, order, installments: 1);
+        var held = HoldFirstPaymentStep($"exists (select from wolverine.shipping_fulfilment_saga where id = '{sagaId}' and body->'Methods' = '[\"card\"]'::jsonb)");
+        try
+        {
+            await PublishAsync(host, new PaymentReceivedV1(order), Guid.CreateVersion7(), "tenant-a");
+            await held.WaitAsync(TimeSpan.FromSeconds(15), Token);
+            await PublishAsync(host, new PaymentReceivedV2(order, "card"), Guid.CreateVersion7(), "tenant-a");
+            await WaitUntilAsync("exists (select from billing.pouryakit_receipts where subscription = 'billing.order-fulfilled')", seconds: 30);
+        }
+        finally
+        {
+            SagaProbes.InPaymentStep = null;
+        }
+
+        await SettledAsync();
+        Assert.Null(await SagaAsync("shipping_fulfilment", sagaId));
+        Assert.Equal(1L, await CountAsync("select count(*) from billing.pouryakit_receipts where subscription = 'billing.order-fulfilled'"));
+        Assert.Equal(0L, await CountAsync("select count(*) from wolverine.wolverine_dead_letters"));
+        Assert.Contains(logs.Entries, entry => entry.Exception is SagaConcurrencyException);
+    }
+
     // Killed after the step's commit and before Wolverine marked its envelope handled, which a trigger refuses until the
     // child dies: the redelivery finds the step's claim.
     [Fact]
@@ -604,6 +673,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
     [InlineData("queue", "The Saga ModularMonolith.Tests.QueueSaga and a subscription or a delayed command have the name billing.order-placed")]
     [InlineData("unowned", "The Saga tests.unowned, ModularMonolith.Tests.QueueSaga, is declared without a Module in a Host of Modules")]
     [InlineData("table", "would keep their states in one table, tests_twin_saga")]
+    [InlineData("digit", "The Saga 2fa.enrolment's state table, 2fa_enrolment_saga, does not start with a letter")]
     [InlineData("input", "would be named orders.orders.order-placed.v1, ignoring case, which they share")]
     [InlineData("snapshot", "The Saga tests.snapshot takes ModularMonolith.Tests.Sagas.ShelfSnapshotV1, a Snapshot")]
     public void A_host_whose_saga_declaration_wolverine_cannot_run_as_declared_fails_when_it_is_built(string declaration, string problem)
@@ -625,6 +695,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
                     "table" => builder
                         .Services.AddPouryaKitSaga<QueueSaga>("tests.twin", "tests.twin", saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId))
                         .AddPouryaKitSaga<TwinSaga>("tests-twin", "tests.twin", saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)),
+                    "digit" => builder.Services.AddPouryaKitSaga<QueueSaga>("2fa.enrolment", "tests.digit", saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)),
                     "input" => builder
                         .Services.Receive<PlacedV1>("order-placed.v1")
                         .AddPouryaKitSaga<QueueSaga>("orders", "tests.orders", saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId))
@@ -664,6 +735,21 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
     private static string FulfilmentOf(string tenant, Guid order) => SagaStorage.SagaId(tenant, order.ToString());
 
     private static OperationContext Context(string tenant) => new(Actor.Person("saga-tests"), tenant);
+
+    // Holds the first payment step to enter, which has loaded the saga's state, until condition holds; the returned task
+    // completes when it entered. Every later entry, its retry's among them, runs on.
+    private Task HoldFirstPaymentStep(string condition)
+    {
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        SagaProbes.InPaymentStep = async () =>
+        {
+            if (entered.TrySetResult())
+            {
+                await WaitUntilAsync(condition, seconds: 30);
+            }
+        };
+        return entered.Task;
+    }
 
     private async Task<string> DatabaseAsync()
     {

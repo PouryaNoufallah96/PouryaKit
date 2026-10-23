@@ -109,6 +109,14 @@ internal sealed class SagaCheck : ICompositionCheck
                     $"The Saga {saga.Name}'s state table, {saga.Table}, is longer than the 63 characters of a PostgreSQL identifier. Give it a shorter name."
                 )
         );
+        // Wolverine writes the table's name into its statements unquoted, where PostgreSQL takes one starting with a letter.
+        problems.AddRange(
+            sagas
+                .Where(saga => !char.IsAsciiLetter(saga.Name[0]))
+                .Select(saga =>
+                    $"The Saga {saga.Name}'s state table, {saga.Table}, does not start with a letter, which PostgreSQL needs of a name Wolverine's statements leave unquoted. Give the saga a name that starts with a letter."
+                )
+        );
 
         // Each input's stored envelopes carry a name of the saga's own, never Wolverine's, which names a generic type by
         // its arguments' simple names: two sagas or events of one simple name would share it.

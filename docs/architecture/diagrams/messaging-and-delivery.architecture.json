@@ -490,7 +490,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStorage.cs",
           "line": 30,
-          "end_line": 77,
+          "end_line": 79,
           "label": "a step claimed in its own transaction"
         }
       ]

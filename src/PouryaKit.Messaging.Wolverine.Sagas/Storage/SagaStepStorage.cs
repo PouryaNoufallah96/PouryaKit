@@ -1,3 +1,5 @@
+using System.Globalization;
+using Npgsql;
 using Wolverine;
 using Wolverine.Persistence.Sagas;
 using Wolverine.RDBMS.Sagas;
@@ -14,9 +16,15 @@ internal interface ISagaStepStorage
 
 // Wolverine's storage on the Kit's transaction. A saga inserted takes its identity, tenant and correlation from the event
 // that started it, so its own Start never sets them, and a saga stored keeps the identity of each timeout the step
-// scheduled. An advancing input whose identity names no saga is the Kit's refusal, where Wolverine would throw its own.
-internal sealed class SagaStepStorage<TId, TSaga>(DatabaseSagaStorage<TId, TSaga> inner, SagaStep step, bool alreadyApplied)
-    : ISagaStorage<TId, TSaga>,
+// scheduled. An advancing input whose identity names no saga is the Kit's refusal, where Wolverine would throw its own. A
+// completed saga's state, in the qualified state table, is deleted only at the version the step loaded.
+internal sealed class SagaStepStorage<TId, TSaga>(
+    DatabaseSagaStorage<TId, TSaga> inner,
+    NpgsqlTransaction transaction,
+    string table,
+    SagaStep step,
+    bool alreadyApplied
+) : ISagaStorage<TId, TSaga>,
         ISagaStepStorage
     where TSaga : Saga
 {
@@ -64,7 +72,27 @@ internal sealed class SagaStepStorage<TId, TSaga>(DatabaseSagaStorage<TId, TSaga
         return inner.UpdateAsync(state, cancellationToken);
     }
 
-    public Task DeleteAsync(TSaga state, CancellationToken cancellationToken) => inner.DeleteAsync(state, cancellationToken);
+    // Wolverine deletes by identity alone, so two steps that loaded one state would both complete it and both commit what
+    // they emitted. The Kit deletes at the loaded version, as Wolverine updates, and otherwise throws Wolverine's
+    // exception of an update: the step rolls back, and its retry runs on the state another step committed.
+    public async Task DeleteAsync(TSaga state, CancellationToken cancellationToken)
+    {
+        var saga = (PouryaKitSaga)(Saga)state;
+        await using var delete = new NpgsqlCommand(
+            string.Format(CultureInfo.InvariantCulture, SagaStepStatements.Complete(table), "$1", "$2"),
+            transaction.Connection,
+            transaction
+        )
+        {
+            Parameters = { new() { Value = saga.Id }, new() { Value = saga.Version } },
+        };
+        if (await delete.ExecuteNonQueryAsync(cancellationToken) != 1)
+        {
+            throw new SagaConcurrencyException(
+                $"The Saga {step.Saga.Name} {saga.Id} cannot complete at version {saga.Version}, the one its step loaded: another step changed or completed it since."
+            );
+        }
+    }
 
     // Before the commit: what the step returned and Wolverine cascaded, beside its timeouts, would be sent without the
     // Kit's headers, so the step fails and its transaction rolls back.

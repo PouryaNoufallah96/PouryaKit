@@ -31,7 +31,8 @@ public static class SagaServiceCollectionExtensions
         /// takes no event or one event twice. The Host then fails when it is built if the saga type is not a public
         /// concrete class, if the declaration belongs to no Module in a Host of Modules or to one the Host does not compose,
         /// if an event it takes is a Snapshot, is not public or has no wire name in the Host, if a timeout names an identity
-        /// member of its own, if a subscription or delayed command has its name, if another saga's name gives the same
+        /// member of its own, if a subscription or delayed command has its name, if its name, and so its state table's,
+        /// does not start with a letter, if another saga's name gives the same
         /// state table or input name, or if Wolverine's service location policy is not <c>NotAllowed</c>; it fails to start
         /// when the saga's queue is not durable. The saga's claims table and state table
         /// are created with the message store when the Host starts; the claims are kept after the saga completes.

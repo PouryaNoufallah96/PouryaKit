@@ -43,6 +43,9 @@ public abstract class PouryaKitSaga : Saga
         return SagaStep.Running(this).EmitAsync(this, integrationEvent);
     }
 
-    /// <summary>Completes the saga: the Kit deletes its state with the step's commit, and keeps its claims.</summary>
+    /// <summary>
+    /// Completes the saga: the Kit deletes its state with the step's commit, only at the version the step loaded, and
+    /// keeps its claims; a step that finds the state changed or deleted by another rolls back and is retried.
+    /// </summary>
     protected new void MarkCompleted() => base.MarkCompleted();
 }
