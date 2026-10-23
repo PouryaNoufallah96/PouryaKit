@@ -1,0 +1,45 @@
+.claude/agent-memory/kit-implementer/caching-and-idempotency-facts.md
+  s_067424b212e979::t_3b6c535da4f1b9 82
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_067424b212e979::t_629957196ac966 113
+.claude/agent-memory/kit-implementer/pdf-and-file-rendering-facts.md
+  s_067424b212e979::t_9b6915fd7eb867 15
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_067424b212e979::t_96a70d9a9aaf7d 81
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_067424b212e979::t_e089793fd748b0 129
+.claude/agents/kit-implementer.md
+  s_067424b212e979::t_fdcf330ca14558 24
+.codex/agents/kit-implementer.toml
+  s_067424b212e979::t_128fedd1ed2fce 23
+docs/agents/running-a-spec.md
+  s_067424b212e979::t_c4032e98a754f2 19
+docs/packages.md
+  s_067424b212e979::t_0f9f05985c6cbb 41,51
+docs/provenance/PouryaKit.Grpc.md
+  s_067424b212e979::t_3a7e0d38883903 31
+docs/provenance/PouryaKit.Messaging.Wolverine.Marten.md
+  s_067424b212e979::t_aa610c336b1b71 11
+docs/provenance/PouryaKit.Messaging.Wolverine.Sagas.md
+  s_067424b212e979::t_c7b2ba61a3c71a 5
+docs/provenance/PouryaKit.Persistence.Marten.md
+  s_067424b212e979::t_794015232ea845 11
+docs/provenance/PouryaKit.Reporting.Module.md
+  s_067424b212e979::t_6878d071352d32 15-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d66cd3254289750c2455d7f53e723a7aed572a99",
+  "prompts": {},
+  "sessions": {
+    "s_067424b212e979": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b3b69ca-8b5c-4c58-b18c-05594cfed649",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
