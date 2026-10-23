@@ -1,0 +1,36 @@
+.agents/skills/pourya-kit/references/ai.md
+  s_2dcdc620d4a460::t_508d1a4b6a6ec0 49
+  s_2dcdc620d4a460::t_c9e74c045f1de3 277
+  s_2dcdc620d4a460::t_246e88fd0b4c03 278
+docs/acceptance.md
+  s_2dcdc620d4a460::t_e891b1d2f69d5e 2496
+  s_2dcdc620d4a460::t_931ce891aa0daf 2486
+tests/ModularMonolith.Tests/VectorSearchTests.cs
+  s_2dcdc620d4a460::t_afc76ec5da6e86 97,102
+docs/architecture/README.md
+  s_2dcdc620d4a460::t_ca68f3ff230e7a 365
+src/PouryaKit.AI.Postgres/VectorCollectionTable.cs
+  s_2dcdc620d4a460::t_83c1d4a583bc40 41-44
+  s_2dcdc620d4a460::t_1d58be7c0418a5 18-21
+src/PouryaKit.AI/AIServiceCollectionExtensions.cs
+  s_2dcdc620d4a460::t_5e006456462e92 35-37
+  s_2dcdc620d4a460::t_07b3cce4662d16 72-75
+docs/architecture/diagrams/execution-core.architecture.json
+  s_2dcdc620d4a460::t_e69e758a79477e 834-835,867-868
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8c4455663ef0ba1fece03837ae654c73c419369d",
+  "prompts": {},
+  "sessions": {
+    "s_2dcdc620d4a460": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "72319d05-5ed9-4ea9-9a95-a4e4866af4ea",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
