@@ -1,0 +1,23 @@
+.agents/skills/pourya-kit/references/sagas.md
+  s_067424b212e979::t_49a64df05f1276 118
+docs/adr/0013-a-saga-step-runs-outside-every-operation.md
+  s_067424b212e979::t_bdca51336b2dcd 356-373
+src/PouryaKit.Messaging.Wolverine.Sagas/Declaration/SagaServiceCollectionExtensions.cs
+  s_067424b212e979::t_e6f29eb29e256e 42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8322011f9ec832bf661528fac7be1547217e362f",
+  "prompts": {},
+  "sessions": {
+    "s_067424b212e979": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b3b69ca-8b5c-4c58-b18c-05594cfed649",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
