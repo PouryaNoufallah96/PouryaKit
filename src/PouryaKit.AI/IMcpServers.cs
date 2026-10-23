@@ -4,7 +4,8 @@ namespace PouryaKit.AI;
 
 /// <summary>
 /// The Host's MCP servers, those <see cref="PouryaKitAIOptions.McpServers"/> names, whose clients the Host owns: each is
-/// connected at its first listing and stays connected until the Host's services are disposed, whatever runs its tools.
+/// connected at its first listing and stays connected until the Host's services are disposed, whatever runs its tools, or
+/// until a listing finds its session ended, after which the next listing connects it again.
 /// </summary>
 public interface IMcpServers
 {

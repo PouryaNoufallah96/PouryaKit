@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ModelContextProtocol;
 using ModelContextProtocol.Client;
 
 namespace PouryaKit.AI;
@@ -7,8 +8,10 @@ namespace PouryaKit.AI;
 // The Host's clients of its MCP servers, a singleton the container creates and disposes: no run owns a client, so none
 // ends one. Concurrent first listings of a server share its one connection, which runs under the Host's lifetime alone: a
 // caller that cancels stops waiting for it and leaves it connecting for the others, and a connection that failed is tried
-// again by the next listing. Disposal ends every client, a connection still under way included: a stdio server's process
-// is told to exit, then killed, and an HTTP server's session is ended with a DELETE.
+// again by the next listing. A listing the server does not answer, its process gone or its session lost, drops that
+// client, so the next listing connects again; one the server answers with an error keeps it. Disposal ends every client,
+// a connection still under way included: the SDK kills a stdio server's process once its shutdown timeout has passed,
+// 5 seconds by default, without closing the server's input first, and ends an HTTP server's session with a DELETE.
 internal sealed class McpServerConnections(IOptions<PouryaKitAIOptions> options, IHttpClientFactory http, ILoggerFactory loggers)
     : IMcpServers,
         IAsyncDisposable
@@ -20,8 +23,17 @@ internal sealed class McpServerConnections(IOptions<PouryaKitAIOptions> options,
 
     public async Task<IReadOnlyList<McpClientTool>> ListToolsAsync(string server, CancellationToken cancellationToken = default)
     {
-        var client = await Connect(server).WaitAsync(cancellationToken);
-        return [.. await client.ListToolsAsync(cancellationToken: cancellationToken)];
+        var connecting = Connect(server);
+        var client = await connecting.WaitAsync(cancellationToken);
+        try
+        {
+            return [.. await client.ListToolsAsync(cancellationToken: cancellationToken)];
+        }
+        catch (Exception exception) when (exception is not McpProtocolException && !cancellationToken.IsCancellationRequested)
+        {
+            await DropAsync(server, connecting, client);
+            throw;
+        }
     }
 
     public async ValueTask DisposeAsync()
@@ -64,8 +76,26 @@ internal sealed class McpServerConnections(IOptions<PouryaKitAIOptions> options,
         }
     }
 
+    // Only a listing whose connection is still the cached one drops it: of listings that failed together, one disposes the
+    // client, and none drops a newer connection that took its place.
+    private async Task DropAsync(string server, Task<McpClient> connecting, McpClient client)
+    {
+        lock (_lock)
+        {
+            if (!_clients.TryGetValue(server, out var cached) || cached != connecting)
+            {
+                return;
+            }
+
+            _clients.Remove(server);
+        }
+
+        await client.DisposeAsync();
+    }
+
     // The HTTP transport opens no standing GET stream for messages the server sends unasked: its tools answer each call on
     // the call's own response, and a standing request would be cut by the attempt timeout of a Host's resilience pipeline.
+    // It does not own the factory's HttpClient, which needs no disposal, so it holds nothing for the Host to dispose.
     private IClientTransport Transport(string name, PouryaKitMcpServerOptions server) =>
         server.Endpoint is { } endpoint
             ? new HttpClientTransport(
@@ -76,8 +106,7 @@ internal sealed class McpServerConnections(IOptions<PouryaKitAIOptions> options,
                     EnableStandaloneGetStream = false,
                 },
                 http.CreateClient(AIServiceCollectionExtensions.McpHttpClientName),
-                loggers,
-                ownsHttpClient: true
+                loggers
             )
             : new StdioClientTransport(
                 new()

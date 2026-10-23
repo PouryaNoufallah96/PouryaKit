@@ -5,6 +5,7 @@ using Catalog.Products.Features.AskAboutProducts;
 using Catalog.Products.Features.CreateProduct;
 using Catalog.Products.Features.GetProduct;
 using Microsoft.Agents.AI;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -19,8 +20,10 @@ namespace ModularMonolith.Tests;
 
 // Ticket #137: the Host's clients of the MCP servers its options name, over stdio and over HTTP, owned by its services:
 // their tools join a run beside the Gateway tools, under the one allow-list and the one iteration cap of the Host's chat
-// client, and disposing the Host's services ends the stdio server's process and the HTTP server's session. Against the
-// in-process ChatStub and two test servers, a process this test assembly starts and one in the test process: no network.
+// client, and disposing the Host's services ends the stdio server's process and the HTTP server's session. Concurrent
+// first listings share one connection, which a listing that cancels leaves to the others; a connection that failed, or
+// whose server died, is made again by a later listing; disposal ends one still under way. Against the in-process ChatStub
+// and two test servers, a process this test assembly starts and one in the test process: no network.
 public sealed class McpTests(AppFixture app, McpFixture mcp) : IClassFixture<McpFixture>
 {
     private IChatClient Chat => mcp.Host.Services.GetRequiredService<IChatClient>();
@@ -132,7 +135,7 @@ public sealed class McpTests(AppFixture app, McpFixture mcp) : IClassFixture<Mcp
 
             // The run is over and owned neither client: both servers are still connected.
             Assert.True(IsRunning(process), "The stdio server's process ended with the run.");
-            Assert.DoesNotContain(session, mcp.Server.Ended);
+            Assert.True(await mcp.Server.KeepsAsync(session, TestContext.Current.CancellationToken), "The HTTP server's session ended with the run.");
         }
         finally
         {
@@ -140,7 +143,105 @@ public sealed class McpTests(AppFixture app, McpFixture mcp) : IClassFixture<Mcp
         }
 
         Assert.False(IsRunning(process), "The stdio server's process outlived the Host's services.");
-        Assert.Contains(session, mcp.Server.Ended);
+        Assert.False(await mcp.Server.KeepsAsync(session, TestContext.Current.CancellationToken), "The HTTP server kept the session after the Host's services were disposed.");
+    }
+
+    [Fact]
+    public async Task Concurrent_first_listings_of_a_server_share_one_process()
+    {
+        using var starts = new ServerStarts();
+        await using var host = Compose(starts.Arguments(held: false));
+        var servers = host.Services.GetRequiredService<IMcpServers>();
+
+        var listings = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => servers.ListToolsAsync(McpFixture.Stdio, TestContext.Current.CancellationToken)));
+
+        var process = Assert.Single(starts.Processes);
+        Assert.All(await Task.WhenAll(listings.Select(ProcessIdAsync)), reached => Assert.Equal(process, reached));
+    }
+
+    [Fact]
+    public async Task A_listing_that_cancels_leaves_the_connection_under_way_to_the_listing_that_shares_it()
+    {
+        using var starts = new ServerStarts();
+        await using var host = Compose(starts.Arguments(held: true));
+        var servers = host.Services.GetRequiredService<IMcpServers>();
+        using var leaving = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        var left = servers.ListToolsAsync(McpFixture.Stdio, leaving.Token);
+        var staying = servers.ListToolsAsync(McpFixture.Stdio, TestContext.Current.CancellationToken);
+        var process = await starts.StartedAsync(TestContext.Current.CancellationToken);
+
+        await leaving.CancelAsync();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => left);
+        starts.Release();
+
+        Assert.Equal(process, await ProcessIdAsync(await staying));
+        Assert.Equal([process], starts.Processes);
+    }
+
+    [Fact]
+    public async Task A_listing_after_a_connection_that_failed_connects_again()
+    {
+        var workingDirectory = Path.Combine(Path.GetTempPath(), $"mcp-{Guid.CreateVersion7():N}");
+        try
+        {
+            await using var host = Compose($"--PouryaKit:AI:McpServers:{McpFixture.Stdio}:WorkingDirectory={workingDirectory}");
+            var servers = host.Services.GetRequiredService<IMcpServers>();
+
+            // The server's working directory does not exist yet, so its process cannot start.
+            await Assert.ThrowsAnyAsync<IOException>(() => servers.ListToolsAsync(McpFixture.Stdio, TestContext.Current.CancellationToken));
+            Directory.CreateDirectory(workingDirectory);
+
+            Assert.Contains("process_id", (await servers.ListToolsAsync(McpFixture.Stdio, TestContext.Current.CancellationToken)).Select(tool => tool.Name));
+        }
+        finally
+        {
+            if (Directory.Exists(workingDirectory))
+            {
+                Directory.Delete(workingDirectory);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task A_listing_after_the_stdio_servers_process_died_connects_again_to_a_new_process()
+    {
+        await using var host = Compose();
+        var servers = host.Services.GetRequiredService<IMcpServers>();
+        var died = await ProcessIdAsync(await servers.ListToolsAsync(McpFixture.Stdio, TestContext.Current.CancellationToken));
+        using (var process = Process.GetProcessById(died))
+        {
+            process.Kill();
+            await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        }
+
+        await Assert.ThrowsAnyAsync<IOException>(() => servers.ListToolsAsync(McpFixture.Stdio, TestContext.Current.CancellationToken));
+        var started = await ProcessIdAsync(await servers.ListToolsAsync(McpFixture.Stdio, TestContext.Current.CancellationToken));
+
+        Assert.NotEqual(died, started);
+        Assert.True(IsRunning(started), "The new stdio server's process is not running.");
+    }
+
+    [Fact]
+    public async Task Disposing_the_hosts_services_ends_a_connection_still_under_way_without_waiting_for_it()
+    {
+        using var starts = new ServerStarts();
+        var host = Compose(starts.Arguments(held: true));
+        Task<IReadOnlyList<McpClientTool>> listing;
+        int process;
+        try
+        {
+            listing = host.Services.GetRequiredService<IMcpServers>().ListToolsAsync(McpFixture.Stdio, TestContext.Current.CancellationToken);
+            process = await starts.StartedAsync(TestContext.Current.CancellationToken);
+        }
+        finally
+        {
+            // The held server never answers, so a disposal that waited for its connection would wait out the SDK's
+            // 60 second initialization timeout.
+            await host.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
+        }
+
+        Assert.False(IsRunning(process), "The stdio server's process outlived the Host's services.");
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => listing);
     }
 
     [Fact]
@@ -198,6 +299,15 @@ public sealed class McpTests(AppFixture app, McpFixture mcp) : IClassFixture<Mcp
         Assert.Equal(failure, Assert.Single(thrown.Failures));
     }
 
+    private WebApplication Compose(params string[] arguments) =>
+        AppFixture.ComposeHost("Development", app.ConnectionString, new RecordedLogs(), null, [.. mcp.Arguments, .. arguments]);
+
+    private static async Task<int> ProcessIdAsync(IReadOnlyList<McpClientTool> tools)
+    {
+        var called = await tools.Single(tool => tool.Name == "process_id").CallAsync(cancellationToken: TestContext.Current.CancellationToken);
+        return int.Parse(Assert.IsType<TextContentBlock>(Assert.Single(called.Content)).Text, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
     private static bool IsRunning(int id)
     {
         try
@@ -208,6 +318,41 @@ public sealed class McpTests(AppFixture app, McpFixture mcp) : IClassFixture<Mcp
         catch (ArgumentException)
         {
             return false;
+        }
+    }
+
+    // The stdio server's hooks: the directory each of its starts is recorded in, and the file a held start waits for.
+    private sealed class ServerStarts : IDisposable
+    {
+        private readonly DirectoryInfo _directory = Directory.CreateTempSubdirectory("mcp-starts-");
+
+        private string Hold => $"{_directory.FullName}.hold";
+
+        public int[] Processes => [.. _directory.GetFiles().Select(file => int.Parse(file.Name, System.Globalization.CultureInfo.InvariantCulture))];
+
+        public string[] Arguments(bool held) =>
+            held
+                ? [$"--PouryaKit:AI:McpServers:{McpFixture.Stdio}:Environment:MCP_STARTS={_directory.FullName}", $"--PouryaKit:AI:McpServers:{McpFixture.Stdio}:Environment:MCP_HOLD={Hold}"]
+                : [$"--PouryaKit:AI:McpServers:{McpFixture.Stdio}:Environment:MCP_STARTS={_directory.FullName}"];
+
+        public async Task<int> StartedAsync(CancellationToken cancellationToken)
+        {
+            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            deadline.CancelAfter(TimeSpan.FromSeconds(30));
+            while (Processes is [])
+            {
+                await Task.Delay(20, deadline.Token);
+            }
+
+            return Assert.Single(Processes);
+        }
+
+        public void Release() => File.WriteAllText(Hold, "");
+
+        public void Dispose()
+        {
+            File.Delete(Hold);
+            _directory.Delete(recursive: true);
         }
     }
 }
