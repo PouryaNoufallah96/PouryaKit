@@ -62,7 +62,8 @@ def annotations(repo: str, job_id: int) -> list[str]:
     """The failure-level annotations of a job's check run, where GitHub puts a refusal that produced no log."""
     try:
         raw = gh("api", f"repos/{repo}/check-runs/{job_id}/annotations", "--jq", '.[] | select(.annotation_level == "failure") | .message')
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as error:
+        print(f"{' '.join(error.cmd)}: {error.stderr.strip()}", file=sys.stderr)
         return []
     return [line for line in raw.splitlines() if line.strip()]
 

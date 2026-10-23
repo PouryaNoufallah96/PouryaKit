@@ -139,6 +139,8 @@ def check_skills() -> None:
         data, _ = frontmatter(skill / "SKILL.md")
         if not data.get("name") or not data.get("description"):
             failures.append(f"{rel(skill)}/SKILL.md: needs name and description (Codex skips it otherwise)")
+        elif not isinstance(data["description"], str):
+            failures.append(f"{rel(skill)}/SKILL.md: description must be one string, not a list")
         elif len(data["description"]) > SKILL_DESCRIPTION_LIMIT:
             failures.append(
                 f"{rel(skill)}/SKILL.md: description is {len(data['description'])} characters, over the "
