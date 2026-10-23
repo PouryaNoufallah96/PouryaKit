@@ -353,3 +353,21 @@ The decision above stands. A Host with a Saga fails when it is built unless Wolv
 the first that keeps every type, since Marten's integration puts its own first, alone or beside the EF Core store,
 where the step's claim would never commit (`SagaCheck`; the probe is in the
 [acceptance map](../acceptance.md#saga-package-ticket-142)): a saga and a Stream (Marten) cannot share one Host yet; making the Kit's sagas keep the lightweight provider beside Marten's is a later package.
+
+## Amendment (2026-10-24, a Saga beside Marten researched)
+
+The refusal of the amendment above stands, and the way out is not a Kit package. Wolverine documents that "If the
+Marten integration is active, Marten will take precedence for the `Saga` storage for each type"
+(`JasperFx/wolverine`, tag `V6.48.3`, commit `c1eab2a7f04de7350c3b54741ae00351c6c303d1`,
+`docs/guide/durability/sagas.md`), and it fixed the opposite order as a bug (issue 3443, recorded in
+`src/Wolverine/Persistence/Sagas/LightweightSagaPersistenceFrameProvider.cs` at that tag): neither 6.48.3 nor 6.52.0
+offers a supported way to keep one saga type on the lightweight storage while Marten's integration is active. A probe on
+`619ad6b4` showed that moving the lightweight provider first in Wolverine's list of providers, which is not a documented
+extension point, makes it work: in a Host with the EF Core and the Marten stores, each step claimed, saved its state and
+emitted in one commit; a Marten-only Host also needed its saga tables created at start and its message store given a
+data source. Keeping the state in Marten documents instead would put it outside the message store's schema and add a
+second saga storage, both refused above. Two ways forward, each a decision of its own: an option in Wolverine's Marten
+integration to leave sagas alone, or a per-type storage choice, requested upstream with the probe as its reproducer; or,
+by the owner's decision against that upstream intent, the reorder in `UsePouryaKitMarten`, with `SagaCheck` asking
+Wolverine which storage each saga chain gets, shipped only with the Marten-only pieces and a test of each Host shown red
+once.

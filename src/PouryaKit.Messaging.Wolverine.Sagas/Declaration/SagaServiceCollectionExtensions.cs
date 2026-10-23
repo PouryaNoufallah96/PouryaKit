@@ -39,7 +39,7 @@ public static class SagaServiceCollectionExtensions
         /// <c>PouryaKit.Messaging.Wolverine.EFCore</c>, as with a Marten store (<c>UsePouryaKitMarten</c>), alone or beside
         /// it; it fails to start when the saga's queue is not durable. The saga's claims table and state table
         /// are created with the message store when the Host starts; the claims are kept after the saga completes. So
-        /// a saga and a Stream (Marten) cannot share one Host yet; making the Kit's sagas keep the lightweight provider beside Marten's is a later package.
+        /// a saga and a Stream (Marten) cannot share one Host yet: Wolverine gives Marten's saga storage precedence and offers no supported way to keep the lightweight one beside it (ADR 0013).
         /// </summary>
         public IServiceCollection AddPouryaKitSaga<TSaga>(string name, string systemActor, Action<SagaBuilder<TSaga>> declare)
             where TSaga : PouryaKitSaga
