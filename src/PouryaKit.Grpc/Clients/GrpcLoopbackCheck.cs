@@ -45,7 +45,16 @@ internal sealed class GrpcLoopbackCheck(IServiceProvider root) : IStartupCheck, 
         {
             // The Host rethrows this without stopping what started, and StopApplication alone stops nothing for a caller
             // that never waits for the shutdown, so the Host is stopped here: the server unbinds, every hosted service stops.
-            await root.GetRequiredService<IHost>().StopAsync(CancellationToken.None);
+            // A stop that fails must not hide the refusal: it travels as the inner exception.
+            try
+            {
+                await root.GetRequiredService<IHost>().StopAsync(CancellationToken.None);
+            }
+            catch (Exception stop)
+            {
+                throw new InvalidOperationException(string.Join(Environment.NewLine, refused), stop);
+            }
+
             throw new InvalidOperationException(string.Join(Environment.NewLine, refused));
         }
     }
