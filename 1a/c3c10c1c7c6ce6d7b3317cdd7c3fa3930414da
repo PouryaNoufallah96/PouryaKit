@@ -1,0 +1,37 @@
+tests/ModularMonolith.Tests/McpServer/Program.cs
+  s_2dcdc620d4a460::t_4ef540ee953f6d 6-21
+src/PouryaKit.AI/IMcpServers.cs
+  s_2dcdc620d4a460::t_0f585704093338 7-8
+src/PouryaKit.AI/McpServerConnections.cs
+  s_2dcdc620d4a460::t_1ffe6dca7c8dd2 109
+  s_2dcdc620d4a460::t_d8930f6d38d055 98
+  s_2dcdc620d4a460::t_deb2e11631c03b 79-80
+  s_2dcdc620d4a460::t_b79ea70170cd01 3,11-14,26-36
+  s_2dcdc620d4a460::t_27b0fa9d00d15e 81-95
+.agents/skills/pourya-kit/references/ai.md
+  s_2dcdc620d4a460::t_6c6ed4bef953bd 124-125,216,265,277-278,287
+docs/acceptance.md
+  s_2dcdc620d4a460::t_7235e3bf92a92d 2524
+docs/architecture/README.md
+  s_2dcdc620d4a460::t_5050104709074c 352,354
+tests/ModularMonolith.Tests/McpServer/McpHttpServer.cs
+  s_2dcdc620d4a460::t_41a36b7e22782a 1-2,14,63-85
+tests/ModularMonolith.Tests/McpTests.cs
+  s_2dcdc620d4a460::t_c4ad13e9631e77 8,23-26,138,146-244,302-310,323-357
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1ac3c10c1c7c6ce6d7b3317cdd7c3fa3930414da",
+  "prompts": {},
+  "sessions": {
+    "s_2dcdc620d4a460": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "72319d05-5ed9-4ea9-9a95-a4e4866af4ea",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
