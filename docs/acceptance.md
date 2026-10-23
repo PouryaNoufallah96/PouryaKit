@@ -1918,7 +1918,7 @@ Ticket #123 of spec #115. Environment: macOS (Darwin 27.0.0, arm64), .NET SDK 10
 
 ## Permission check covers handler-discovered operations, ticket #144
 
-Ticket #144 of spec #115, the permission twin of #116's PR #143 fix. `AddPouryaKitPermissions` registered `PermissionAuthorizer<T>` only for the attributed commands and queries the scanned assemblies declare, while `AddPouryaKitCqrs` also dispatches one a scanned handler handles that another assembly declares, such as a Module's Contracts. It now registers over `OperationTypes.Dispatchable`, the one discovery `AddPouryaKitCqrs` and `AddPouryaKitTenancy` read, made public: the Kit's one `InternalsVisibleTo` between packages is recorded as opening Cqrs for a trusted restore only. Environment: macOS (Darwin 27.0.0, arm64), .NET SDK 10.0.402, Docker 29.8.2, Archify 3.0.1 with Playwright's Chromium headless.
+Ticket #144 of spec #115, the permission twin of #116's PR #143 fix. `AddPouryaKitPermissions` registered `PermissionAuthorizer<T>` only for the attributed commands and queries the scanned assemblies declare, while `AddPouryaKitCqrs` also dispatches one a scanned handler handles that another assembly declares, such as a Module's Contracts. It now registers over `OperationTypes.Dispatchable`, the one discovery `AddPouryaKitCqrs` and `AddPouryaKitTenancy` read, made public: Cqrs's one `InternalsVisibleTo` is recorded as opening Cqrs for a trusted restore only. Environment: macOS (Darwin 27.0.0, arm64), .NET SDK 10.0.402, Docker 29.8.2, Archify 3.0.1 with Playwright's Chromium headless.
 
 | Item | Result | Evidence |
 |---|---|---|
