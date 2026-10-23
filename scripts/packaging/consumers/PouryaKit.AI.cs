@@ -24,9 +24,9 @@ services.Configure<PouryaKitAIOptions>(ai =>
 services.AddSingleton<IChatGuardrail, NoGuardrail>();
 Func<IGatewayProcessor<OrdersModule>, OperationContext, AIFunction> getOrder = (orders, run) =>
     orders.Tool("GetOrder", "Finds one order by its id.", run, (OrderToFind order) => new GetOrderQuery(order.OrderId));
-Func<IChatClient, IAgentSessionStore, IMcpServers, Task<string>> ask = async (chat, sessions, mcp) =>
+Func<IChatClient, IAgentSessionStore, IMcpServers, AIFunction, Task<string>> ask = async (chat, sessions, mcp, findOrder) =>
 {
-    var agent = chat.AsAIAgent("You answer questions about orders.", tools: [.. await mcp.ListToolsAsync("files")]);
+    var agent = chat.AsAIAgent("You answer questions about orders.", tools: [findOrder, .. await mcp.ListToolsAsync("files")]);
     var session = await agent.LoadSessionAsync(sessions, "conversation");
     var answer = await agent.RunAsync("Which order is late?", session);
     await agent.SaveSessionAsync(sessions, "conversation", session);

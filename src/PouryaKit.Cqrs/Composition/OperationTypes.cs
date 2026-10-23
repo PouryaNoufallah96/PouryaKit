@@ -56,7 +56,8 @@ public static class OperationTypes
     public static IEnumerable<Type> Dispatchable(IEnumerable<Type> types)
     {
         ArgumentNullException.ThrowIfNull(types);
-        return types.Where(IsOperation).Concat(types.Select(HandlerBase).OfType<Type>().Select(handler => handler.GenericTypeArguments[0])).Distinct();
+        Type[] all = [.. types];
+        return all.Where(IsOperation).Concat(all.Select(HandlerBase).OfType<Type>().Select(handler => handler.GenericTypeArguments[0])).Distinct();
     }
 
     // The handler service a handler class is registered as: the first base class that is one, or null.

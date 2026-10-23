@@ -19,7 +19,8 @@ public static class WebEndpointRouteBuilderExtensions
         /// <summary>
         /// Maps every Module's endpoints under its own route group, which requires an authenticated caller and begins
         /// each request's Operation before the endpoint binds (<see cref="BeginOperationPerRequest"/>). The endpoint
-        /// injects that <see cref="OperationContext"/> and passes it to its Module's Gateway.
+        /// injects that <see cref="OperationContext"/> and passes it to its Module's Gateway. Called again, it maps no
+        /// endpoint twice, since two identical endpoints would make every request to its route ambiguous.
         /// </summary>
         public IEndpointRouteBuilder MapPouryaKitModuleEndpoints()
         {
@@ -31,15 +32,22 @@ public static class WebEndpointRouteBuilderExtensions
             var mapped = routes.ServiceProvider.GetService<MappedEndpoints>();
             foreach (var module in routes.ServiceProvider.GetServices<ModuleEndpoints>())
             {
+                // Recorded once every route builder of the Module has its endpoints, a versioned Module's two included.
+                if (module.Endpoints.Where(endpoint => mapped?.Contains(endpoint.GetType()) is not true).ToList() is not [_, ..] endpoints)
+                {
+                    continue;
+                }
+
                 var group = BeginOperationOn(routes.MapGroup(module.RoutePrefix).RequireAuthorization(), options, peers);
                 foreach (var target in moduleRouteGroups?.Map(module.RoutePrefix, group) ?? [group])
                 {
-                    foreach (var endpoint in module.Endpoints)
+                    foreach (var endpoint in endpoints)
                     {
                         endpoint.Map(target);
-                        mapped?.Add(endpoint.GetType());
                     }
                 }
+
+                endpoints.ForEach(endpoint => mapped?.Add(endpoint.GetType()));
             }
 
             return routes;

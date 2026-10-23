@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
@@ -14,7 +15,7 @@ using PouryaKit.Web;
 namespace ModularMonolith.Tests;
 
 // Web's two members another transport builds on: the begin-the-Operation convention on a route group outside every
-// Module's, and the header pairs of its one Operation Context codec.
+// Module's, and the header pairs of its one Operation Context codec; and the Module endpoints' mapping, called twice.
 public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     [Fact]
@@ -71,20 +72,7 @@ public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(ap
     [Fact]
     public async Task Module_endpoints_mapped_under_a_root_group_that_begins_the_operation_begin_it_once()
     {
-        var builder = WebApplication.CreateBuilder(["--environment", "Development"]);
-        builder.WebHost.UseTestServer();
-        builder
-            .Services.AddAuthentication(TestAuthentication.SchemeName)
-            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
-        builder.Services.AddAuthorization();
-        builder.Services.AddPouryaKitCqrs();
-        builder.Services.AddPouryaKitWeb();
-        builder.Services.AddPouryaKitEndpoints("/plain", typeof(UnversionedEndpoints).Assembly);
-        builder.AddPouryaKitCompositionChecks();
-        await using var host = builder.Build();
-        host.UseRouting();
-        host.UseAuthentication();
-        host.UseAuthorization();
+        await using var host = PlainEndpointsHost();
         host.MapGroup("/root").BeginOperationPerRequest().MapPouryaKitModuleEndpoints();
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var person = AppFixture.ClientOf(host, "grace");
@@ -93,6 +81,26 @@ public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(ap
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("grace", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+    }
+
+    // Two identical endpoints would make every request to their route ambiguous, as MapPouryaKitGrpcServices avoids too.
+    [Fact]
+    public async Task A_second_mapping_of_the_module_endpoints_maps_none_again_and_a_request_reaches_the_endpoint()
+    {
+        await using var host = PlainEndpointsHost();
+        host.MapPouryaKitModuleEndpoints();
+        host.MapPouryaKitModuleEndpoints();
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var person = AppFixture.ClientOf(host, "grace");
+
+        var response = await person.GetAsync("/plain/actor", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("grace", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Single(
+            host.Services.GetRequiredService<EndpointDataSource>().Endpoints,
+            endpoint => endpoint is RouteEndpoint { RoutePattern.RawText: "/plain/actor" }
+        );
     }
 
     [Fact]
@@ -124,6 +132,26 @@ public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(ap
         Assert.Equal(pairs, sent.Headers);
         // A value the receiving Host would refuse is refused before any pair is returned.
         Assert.Throws<InvalidOperationException>(() => OperationContextHttpHeaders.Pairs(new OperationContext(Actor.Person("ada"), "acmé")));
+    }
+
+    // A Host of the endpoints of the Unversioned assembly under /plain, with the test scheme and the Kit's checks.
+    private static WebApplication PlainEndpointsHost()
+    {
+        var builder = WebApplication.CreateBuilder(["--environment", "Development"]);
+        builder.WebHost.UseTestServer();
+        builder
+            .Services.AddAuthentication(TestAuthentication.SchemeName)
+            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
+        builder.Services.AddAuthorization();
+        builder.Services.AddPouryaKitCqrs();
+        builder.Services.AddPouryaKitWeb();
+        builder.Services.AddPouryaKitEndpoints("/plain", typeof(UnversionedEndpoints).Assembly);
+        builder.AddPouryaKitCompositionChecks();
+        var host = builder.Build();
+        host.UseRouting();
+        host.UseAuthentication();
+        host.UseAuthorization();
+        return host;
     }
 
     private static async Task<SeenContext> ContextAsync(HttpClient client, string path)

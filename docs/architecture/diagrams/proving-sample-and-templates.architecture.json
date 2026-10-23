@@ -282,8 +282,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Modules/Ledger/Ledger/LedgerModule.cs",
-          "line": 13,
-          "end_line": 23,
+          "line": 14,
+          "end_line": 25,
           "label": "Streams, tenant-scoped; publishes v1"
         },
         {
@@ -295,7 +295,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Ledger/Ledger/Ledger.csproj",
           "line": 8,
-          "end_line": 14,
+          "end_line": 15,
           "label": "its Contracts and Kit packages, no Marten"
         }
       ]
@@ -412,14 +412,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
-          "line": 9,
-          "end_line": 13,
+          "line": 13,
+          "end_line": 17,
           "label": "the containers and databases"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
-          "line": 20,
-          "end_line": 55,
+          "line": 24,
+          "end_line": 59,
           "label": "each Host on its resources, Ollama opt-in"
         },
         {

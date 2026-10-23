@@ -300,3 +300,21 @@ The decision above stands. `PouryaKit.Persistence.Marten` and `PouryaKit.Messagi
 - **Limits recorded.** A Stream publishes no Snapshot: the Marten Outbox passes `OutboxWriter` none. Marten creates its
   own event tables when an event is first appended, and the Module tables when the Host starts. Realtime, `IUnitOfWorkConnection`
   and number sequences stay the EF Unit of Work's (spec #115, "Out of Scope").
+
+## Amendment (2026-10-24, PR #143 review: the commit known first, and no Snapshot of a Stream)
+
+The decision above stands; two limits the #131 amendment recorded are closed.
+
+- **An application's store listener no longer hides the commit.** Marten 9.46.0 (`JasperFx/marten` at tag `V9.46.0`,
+  `b2f530ec`) copies the store's listeners into each session first and the session options' after them
+  (`src/Marten/Internal/Sessions/QuerySession.cs:122,130`), and after its commit calls them in that order with no catch
+  (`src/Marten/Internal/Sessions/DocumentSessionBase.SaveChanges.cs:87-90`), so a store listener that threw stopped the
+  loop before the Unit of Work's own, and a committed change was reported as a failure. The Unit of Work now inserts its
+  listener first in the session's listeners once the session is open, ahead of the store's and of the outbox's send: an
+  exception from any listener after it is logged as `NotSent` and the Operation returns its success.
+  `StreamTests.A_store_listener_that_fails_after_martens_commit_is_not_the_operations_failure_and_the_store_delivers_it`
+  proves it.
+- **A Snapshot declared for a Stream fails the Host when it is built.** The Marten Outbox still passes `OutboxWriter` no
+  Snapshot; `UsePouryaKitMarten` registers the composition check `StreamSnapshotCheck`, which names the Stream and its
+  Module, so such a declaration no longer publishes nothing silently.
+  `StreamTests.A_snapshot_declared_for_a_stream_fails_the_host_when_it_is_built_naming_the_stream_and_its_module` proves it.

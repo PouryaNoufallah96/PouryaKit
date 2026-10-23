@@ -6,7 +6,7 @@ Run from a clean committed checkout with the SDK in `global.json`, Python 3.11 o
 python3 scripts/packaging/validate.py
 ```
 
-To preserve evidence at a chosen location, pass `--output /absolute/path/to/new-evidence-directory`. Use a fresh directory outside the checkout. The default is a new system temporary directory. The command fetches origin's tags, completes shallow history, evaluates packability, builds Release once with `ContinuousIntegrationBuild=true`, runs the existing tests with `--no-build`, and packs that output with `--no-build`. A failure stops the path before a manifest is written. The command never publishes packages or creates a tag in the Kit repository.
+To preserve evidence at a chosen location, pass `--output /absolute/path/to/new-evidence-directory`. Use a fresh directory outside the checkout: one that already holds files is refused before any work unless `--keep` is passed, since a PASS removes the directory with everything in it. The default is a new system temporary directory. The command fetches origin's tags, completes shallow history, evaluates packability, builds Release once with `ContinuousIntegrationBuild=true`, runs the existing tests with `--no-build`, and packs that output with `--no-build`. A failure stops the path before a manifest is written. The command never publishes packages or creates a tag in the Kit repository.
 
 CI passes `--no-fetch` after authenticated checkout has fetched full history and tags and removed its credentials. This option rejects shallow repositories and uses the checkout's history without network Git access. `history.json` records fetch mode, source SHA and available tags. Use it only when the caller has already fetched the complete history and tags; see [CI guidance](ci.md).
 

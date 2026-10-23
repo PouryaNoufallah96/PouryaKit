@@ -2,7 +2,7 @@
 
 Read [the package guide](../../../../docs/packages.md) before changing package metadata, inventory, versions or consumer checks. The explicit inventory and existing `PackageGraph` are the owners of the package set and dependency rules. MinVer is the sole version engine; select one manifest version for all Kit references.
 
-Run `python3 scripts/packaging/validate.py` from the Kit checkout with the pinned SDK, Python and Docker. It prints a system-temporary evidence directory with one nupkg per package in `scripts/packaging/inventory.json`, source SHA/version/checksum manifest, separate PostgreSQL test logs and isolated consumer results. `--output` accepts a fresh evidence directory outside the checkout.
+Run `python3 scripts/packaging/validate.py` from the Kit checkout with the pinned SDK, Python and Docker. It prints a system-temporary evidence directory with one nupkg per package in `scripts/packaging/inventory.json`, source SHA/version/checksum manifest, separate PostgreSQL test logs and isolated consumer results. `--output` accepts a fresh evidence directory outside the checkout; one that already holds files only with `--keep`, since a PASS removes the directory otherwise.
 
 For a consuming project, use that directory's `packages/` as a local feed, map `PouryaKit.*` to it, and keep nuget.org for third-party packages. Use the version recorded in `manifest.json`. The shared proof builds each library package alone, the documented single-Module set, the copied Proving Sample and the solutions both project templates generate from the produced `PouryaKit.Templates`, using only package references for Kit dependencies, and runs the generated solutions' smoke tests, so it needs Docker ([templates.md](templates.md)).
 

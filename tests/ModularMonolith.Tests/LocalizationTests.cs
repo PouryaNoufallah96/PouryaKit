@@ -21,6 +21,8 @@ public sealed class LocalizationTests(AppFixture app) : HostTest<AppFixture>(app
     [InlineData("de, fr, it, es, pt, nl, sv, da, nb, fi, pl, cs, hu, ro, tr, fa", Persian)]
     [InlineData("de, fr, it, es, pt, nl, sv, da, nb, fi, pl, cs, hu, ro, tr, el, fa", English)]
     [InlineData("de", English)]
+    [InlineData("fa;q=0", English)]
+    [InlineData("fa;q=0, en;q=0", English)]
     public async Task The_same_key_resolves_in_the_culture_of_the_accept_language_header(string? acceptLanguage, string expected)
     {
         using var client = Fixture.Client("localized-caller");

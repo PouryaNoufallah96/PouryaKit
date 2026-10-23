@@ -3,6 +3,7 @@ using PouryaKit.Cqrs;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Marten;
+using PouryaKit.Validation;
 using PouryaKit.Web;
 
 namespace Ledger;
@@ -17,6 +18,7 @@ public sealed class LedgerModule : IModuleDefinition
         module.AddPouryaKitTenancy();
         module.AddPouryaKitStreams(schema: "ledger");
         module.AddPouryaKitCqrs();
+        module.AddPouryaKitValidation();
         module.AddPouryaKitNotificationHandlers();
         module.Publish<AccountOpenedV1>("ledger.account-opened.v1");
         module.AddPouryaKitEndpoints("/ledger");

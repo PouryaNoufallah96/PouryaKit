@@ -64,6 +64,7 @@ Routes and clusters are YARP's configuration, in the `ReverseProxy` section (`Re
 - Liveness only: no readiness probe outside Development, and `/health`, which asks each database, stays a Development endpoint of the service defaults.
 - No transform, rate limit, authentication or response cache of the proxy's own; add YARP's where the application needs them, in its own composition.
 - Routes and clusters come from configuration only; there is no code-built route.
+- As shipped, the proxy carries no gRPC: it listens without TLS and forwards to `http://` destinations, where YARP sends HTTP/1.1. A Host's gRPC client calls the other Host directly ([grpc.md](grpc.md)); to proxy gRPC, follow YARP's gRPC guidance.
 
 ## Testing
 

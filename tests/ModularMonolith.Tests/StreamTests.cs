@@ -12,6 +12,7 @@ using ModularMonolith.Tests.Streams;
 using Npgsql;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Messaging.Wolverine.Marten;
@@ -97,6 +98,23 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         });
 
         Assert.Contains("call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore before UsePouryaKitMarten", refused.Message, StringComparison.Ordinal);
+    }
+
+    // A Stream's Unit of Work builds no Snapshot, so a declaration for one would never be sent.
+    [Fact]
+    public void A_snapshot_declared_for_a_stream_fails_the_host_when_it_is_built_naming_the_stream_and_its_module()
+    {
+        var refused = Assert.Throws<InvalidOperationException>(() =>
+            streams.MartenOnly(
+                _database,
+                services => services.PublishSnapshot<Account, AccountSnapshotV1, AccountSnapshotMapper>("tests.account-snapshot.v1", typeof(AccountsModule))
+            )
+        );
+
+        Assert.Contains(
+            $"AccountsModule declares a Snapshot of {typeof(Account).FullName}, a Stream, which would never be sent: a Stream's Unit of Work publishes the Notifications and Integration Events of its events, and no Snapshot. Remove the PublishSnapshot declaration, and publish what the Stream's events tell other Modules as Notifications or Integration Events.",
+            refused.Message.Split(Environment.NewLine)
+        );
     }
 
     // The messaging package keys a Stream Module's Receipts when the Module is composed, whichever registration comes first.
@@ -403,6 +421,31 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         await WaitUntilAsync($"({Events(account, "welcomed")}) = 1");
     }
 
+    // Marten runs the store's listeners after its commit before the session's, and stops at the first that throws; the
+    // Unit of Work's own listener runs first of all, so the commit is known and the Operation succeeds.
+    [Fact]
+    public async Task A_store_listener_that_fails_after_martens_commit_is_not_the_operations_failure_and_the_store_delivers_it()
+    {
+        var account = Guid.CreateVersion7();
+        var host = await StartAsync(
+            streams.MartenOnly(
+                _database,
+                services =>
+                {
+                    StaleAfter(TimeSpan.FromSeconds(1))(services);
+                    services.ConfigureMarten(options => options.Listeners.Add(new FailingStoreListener(account)));
+                }
+            )
+        );
+
+        var opened = await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
+
+        Assert.True(opened.IsSuccess);
+        Assert.Equal(1L, await CountAsync(Events(account, "account_opened")));
+        Assert.Contains(streams.Logs.Entries, entry => entry.Level == LogLevel.Warning && entry.Exception?.Message == "A store listener failed after the commit.");
+        await WaitUntilAsync($"({Events(account, "welcomed")}) = 1");
+    }
+
     [Fact]
     public async Task A_typed_id_is_stored_as_the_kits_json_writes_it_and_a_stream_is_the_guid_its_typed_id_wraps()
     {
@@ -606,4 +649,13 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     private async Task<long> CountAsync(string sql) => (long)(await RowsAsync(sql))[0][0];
 
     private Task WaitUntilAsync(string condition) => Sql.WaitUntilAsync(_database, condition, seconds: 30);
+}
+
+internal sealed record AccountSnapshotV1(Guid AccountId, long Version);
+
+internal sealed class AccountSnapshotMapper : ISnapshotMapper<Account, AccountSnapshotV1>
+{
+    public AccountSnapshotV1 Map(Account aggregate) => new(aggregate.Id, aggregate.Version);
+
+    public AccountSnapshotV1 Tombstone(Account aggregate) => new(aggregate.Id, aggregate.Version);
 }

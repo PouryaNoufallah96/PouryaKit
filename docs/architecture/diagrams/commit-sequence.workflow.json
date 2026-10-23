@@ -444,7 +444,7 @@
       "dot": "rose",
       "title": "Rollback",
       "items": [
-        "A failed check, a change to another tenant's aggregate or to one attached rather than loaded, or a refused save rolls back and returns the command's Errors or the Operation's RollbackErrors.",
+        "A failed command or check rolls back and returns the command's Errors or the Operation's RollbackErrors; a change to another tenant's aggregate or to one attached rather than loaded, or a refused save, rolls back and returns its own Error.",
         "An exception at any step rolls back by disposing the transaction; one from the commit can leave the outcome unknown (ADR 0004).",
         "Nothing retries: a retry needs a new scope."
       ]

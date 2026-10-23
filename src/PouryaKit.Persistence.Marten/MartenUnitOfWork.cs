@@ -86,9 +86,10 @@ internal sealed partial class MartenUnitOfWork(
             options.TenantId = tenant;
         }
 
-        // Before the listener Wolverine's outbox adds, so the commit is known when that listener sends.
-        options.Listeners.Add(new Committed(this));
         _session = store.LightweightSession(options);
+        // First, ahead of the store's listeners (StoreOptions.Listeners) and the one Wolverine's outbox adds: Marten runs
+        // them in order after its commit and stops at the first that throws, so the commit is known whatever fails after it.
+        _session.Listeners.Insert(0, new Committed(this));
         _committed = false;
     }
 
@@ -116,8 +117,9 @@ internal sealed partial class MartenUnitOfWork(
         }
         catch (Exception exception) when (_committed)
         {
-            // A listener after Marten's commit failed, such as Wolverine's send: the change committed, and reporting a
-            // failure now would invite the caller to make it twice. What was not sent stays in the message store.
+            // A listener after Marten's commit failed, such as Wolverine's send or an application's store listener: the
+            // change committed, and reporting a failure now would invite the caller to make it twice. What was not sent
+            // stays in the message store.
             LogNotSent(logger, exception);
         }
 
