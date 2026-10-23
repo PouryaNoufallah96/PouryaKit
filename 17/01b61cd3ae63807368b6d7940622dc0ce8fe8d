@@ -1,0 +1,25 @@
+.agents/skills/pourya-kit/references/sagas.md
+  s_3b8f93cb2a04a9::t_bd84184449f456 118
+docs/acceptance.md
+  s_3b8f93cb2a04a9::t_d6e0909576b044 2615
+docs/adr/0013-a-saga-step-runs-outside-every-operation.md
+  s_3b8f93cb2a04a9::t_bd4f6753e02278 349-355
+src/PouryaKit.Messaging.Wolverine.Sagas/Declaration/SagaServiceCollectionExtensions.cs
+  s_3b8f93cb2a04a9::t_2d27d1aaeae128 41-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1701b61cd3ae63807368b6d7940622dc0ce8fe8d",
+  "prompts": {},
+  "sessions": {
+    "s_3b8f93cb2a04a9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aimpl-final-074981c5bc99b657",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
