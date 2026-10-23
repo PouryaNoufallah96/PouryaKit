@@ -193,6 +193,7 @@ internal sealed class ActivateAccountNotificationHandler(IStreams streams, IInte
 - Realtime pushes, `IUnitOfWorkConnection` and number sequences are the EF Unit of Work's; a Stream Module has none of them.
 - A Stream's projections are folds of one stream; Marten's projection daemon and its documents are not part of the Kit.
 - Wolverine's own aggregate-handler workflow is not used: the Kit's dispatcher runs every Operation (ADR 0011, "Rejected options").
+- A Stream Module and a Saga cannot share one Host yet: Marten's integration puts its saga storage before Wolverine's lightweight one, so a Host with `UsePouryaKitMarten` and `AddPouryaKitSaga` is refused when it is built ([sagas.md](sagas.md#limits)).
 
 ## Testing
 
