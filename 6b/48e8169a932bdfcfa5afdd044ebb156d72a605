@@ -1,0 +1,181 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_2dcdc620d4a460::t_63e9dd094d8aab 3,20,56
+.agents/skills/pourya-kit/references/messaging.md
+  s_2dcdc620d4a460::t_92a6e3530749a1 728
+.agents/skills/pourya-kit/references/modules.md
+  s_2dcdc620d4a460::t_acdf916dcefdf8 138
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_2dcdc620d4a460::t_f417e248423fdc 21,23,82,138
+.agents/skills/pourya-kit/references/sagas.md
+  s_2dcdc620d4a460::t_8e883ff57357c4 1-126
+.agents/skills/pourya-kit/references/testing.md
+  s_2dcdc620d4a460::t_9708ebf6ee79c4 193,196
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_2dcdc620d4a460::t_ba3e1947d9d1d2 15,24
+.claude/agent-memory/kit-implementer/saga-spike-facts.md
+  s_2dcdc620d4a460::t_7e95a73f7d8742 3,25-45
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_2dcdc620d4a460::t_7ad2c967a8a262 79-82
+.gitignore
+  s_2dcdc620d4a460::t_266899decd02b4 26
+GLOSSARY.md
+  s_2dcdc620d4a460::t_e359f2e4471ca6 167
+PouryaKit.slnx
+  s_2dcdc620d4a460::t_2545d09de890d5 19,66-68
+README.md
+  s_2dcdc620d4a460::t_ab41f65d8fad16 36
+docs/acceptance.md
+  s_2dcdc620d4a460::t_2043b2732bf6c5 2577-2609
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_2dcdc620d4a460::t_c49835b7ec7dc8 1207-1214
+docs/adr/0013-a-saga-step-runs-outside-every-operation.md
+  s_2dcdc620d4a460::t_ce7ebe626e7a3a 289-348
+docs/architecture/README.md
+  s_2dcdc620d4a460::t_7acd2280369063 3,46,568,611-622,755-756
+docs/architecture/diagrams/delivery.sequence.json
+  s_2dcdc620d4a460::t_5ebf1cdfdcf172 64,103-104,109-110,115-116
+docs/architecture/diagrams/execution-core.architecture.json
+  s_2dcdc620d4a460::t_f688c2b6658095 412-413,466-467,766-767
+docs/architecture/diagrams/host-start.html
+  s_2dcdc620d4a460::t_dfa46a9b101b25 4985
+docs/architecture/diagrams/host-start.workflow.json
+  s_2dcdc620d4a460::t_e761f0ea1fe457 11,328-329,333-334
+docs/architecture/diagrams/kit-context.architecture.json
+  s_2dcdc620d4a460::t_1977cbdb3b2c6f 162,330-331,435,448-449,454
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_2dcdc620d4a460::t_9f15c79244501f 133-134,229,290-291,464-496,646-653,674-675
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_2dcdc620d4a460::t_02f5d079c440b3 241-242,297-298,325-326,331-332,360,393-394
+docs/foundation-review.md
+  s_2dcdc620d4a460::t_79055829289122 294,899
+docs/provenance/PouryaKit.Messaging.Wolverine.Sagas.md
+  s_2dcdc620d4a460::t_1bd2015d370af3 1-13
+scripts/packaging/consumers/PouryaKit.Messaging.Wolverine.Sagas.cs
+  s_2dcdc620d4a460::t_5befb01fcc266d 1-21
+scripts/packaging/inventory.json
+  s_2dcdc620d4a460::t_08408258216603 32,55-61
+src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqHostApplicationBuilderExtensions.cs
+  s_2dcdc620d4a460::t_b23fba07d9f79c 23-25
+src/PouryaKit.Messaging.Wolverine.Sagas/Declaration/SagaBuilder.cs
+  s_2dcdc620d4a460::t_ea9aba50378cf9 1-47
+src/PouryaKit.Messaging.Wolverine.Sagas/Declaration/SagaCheck.cs
+  s_2dcdc620d4a460::t_b41fe0c14f8029 1-154
+src/PouryaKit.Messaging.Wolverine.Sagas/Declaration/SagaDeclarations.cs
+  s_2dcdc620d4a460::t_e026b78ced5a05 1-126
+src/PouryaKit.Messaging.Wolverine.Sagas/Declaration/SagaServiceCollectionExtensions.cs
+  s_2dcdc620d4a460::t_3b992436316778 1-69
+src/PouryaKit.Messaging.Wolverine.Sagas/PouryaKit.Messaging.Wolverine.Sagas.csproj
+  s_2dcdc620d4a460::t_ab53c90b51f08e 1-8
+src/PouryaKit.Messaging.Wolverine.Sagas/Routing/SagaRouteSource.cs
+  s_2dcdc620d4a460::t_5f1b09e4299144 1-47
+src/PouryaKit.Messaging.Wolverine.Sagas/Routing/SagaWolverineExtension.cs
+  s_2dcdc620d4a460::t_7045172886c4b0 1-30
+src/PouryaKit.Messaging.Wolverine.Sagas/Steps/PouryaKitSaga.cs
+  s_2dcdc620d4a460::t_fef9b106e2cfb0 1-51
+src/PouryaKit.Messaging.Wolverine.Sagas/Steps/SagaInput.cs
+  s_2dcdc620d4a460::t_b715351d047943 1-40
+src/PouryaKit.Messaging.Wolverine.Sagas/Steps/SagaInputRefusedException.cs
+  s_2dcdc620d4a460::t_2d186b4b564f36 1-13
+src/PouryaKit.Messaging.Wolverine.Sagas/Steps/SagaStep.cs
+  s_2dcdc620d4a460::t_07fc0e52eb3b34 1-80
+src/PouryaKit.Messaging.Wolverine.Sagas/Steps/SagaStepPolicy.cs
+  s_2dcdc620d4a460::t_7a3fae41e0fc39 1-58
+src/PouryaKit.Messaging.Wolverine.Sagas/Steps/SagaTimeout.cs
+  s_2dcdc620d4a460::t_e53cf78f7ade36 1-12
+src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStepStatements.cs
+  s_2dcdc620d4a460::t_a62a3c284483e0 1-37
+src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStepStorage.cs
+  s_2dcdc620d4a460::t_9983ae657e2aab 1-131
+src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStepTable.cs
+  s_2dcdc620d4a460::t_7c887a8cb558e6 1-50
+src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStorage.cs
+  s_2dcdc620d4a460::t_dbd65842a1581f 1-147
+src/PouryaKit.Messaging.Wolverine/Composition/DurableQueuesCheck.cs
+  s_2dcdc620d4a460::t_b7c06428138e12 29,40,51
+src/PouryaKit.Messaging.Wolverine/Composition/RoutingCheck.cs
+  s_2dcdc620d4a460::t_be3d47f3adba24 28
+src/PouryaKit.Messaging.Wolverine/NameBasedIdentity.cs
+  s_2dcdc620d4a460::t_ebe7474b719ac8 1-19
+src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs
+  s_2dcdc620d4a460::t_442c21dabd1f01 25-27,29-37,39-42
+src/PouryaKit.Messaging.Wolverine/OutboxWriter.cs
+  s_2dcdc620d4a460::t_acb8f18e1ef2a4 154-182
+src/PouryaKit.Messaging.Wolverine/PouryaKit.Messaging.Wolverine.csproj
+  s_2dcdc620d4a460::t_25e14a1c5e5ac7 5-8
+src/PouryaKit.Messaging.Wolverine/Subscriptions/IWireNames.cs
+  s_2dcdc620d4a460::t_af3f9f84427abe 18-19
+src/PouryaKit.Messaging.Wolverine/Subscriptions/IntegrationEventServiceCollectionExtensions.cs
+  s_2dcdc620d4a460::t_d83b619a4d5c99 54
+src/PouryaKit.Messaging.Wolverine/Subscriptions/SubscriptionDelivery.cs
+  s_2dcdc620d4a460::t_7b41dd7a786269 51-52,67-71,100,114-115
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Subscriptions.cs
+  s_2dcdc620d4a460::t_f73b32b7a2d5fa 37-38,42-50,370-376
+src/PouryaKit.Messaging.Wolverine/WireNaming.cs
+  s_2dcdc620d4a460::t_3ec97db72c92bf 22-30,32-33,41,60,66-72
+src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs
+  s_2dcdc620d4a460::t_c91cd041bad823 46
+tests/ModularMonolith.Tests/IntegrationEventWiringTests.cs
+  s_2dcdc620d4a460::t_01b0c29ec84c22 184
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_2dcdc620d4a460::t_dfcb981d83eafb 36-40,55-56
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_2dcdc620d4a460::t_e2e3de55555b51 452
+tests/ModularMonolith.Tests/SagaChild/ModularMonolith.Tests.SagaChild.csproj
+  s_2dcdc620d4a460::t_f2ccf9cfe78a7c 1-18
+tests/ModularMonolith.Tests/SagaChild/Program.cs
+  s_2dcdc620d4a460::t_468e9ea2125c14 1-56
+tests/ModularMonolith.Tests/SagaTests.cs
+  s_2dcdc620d4a460::t_ffa5eb2dc2b37a 1-945
+tests/ModularMonolith.Tests/Sagas/BillingModule.cs
+  s_2dcdc620d4a460::t_5db4a7b42ce315 1-94
+tests/ModularMonolith.Tests/Sagas/Contracts.cs
+  s_2dcdc620d4a460::t_b13a73dbc3aabd 1-26
+tests/ModularMonolith.Tests/Sagas/ModularMonolith.Tests.Sagas.Host/ModularMonolith.Tests.Sagas.Host.csproj
+  s_2dcdc620d4a460::t_f9859a7c339455 1-23
+tests/ModularMonolith.Tests/Sagas/ModularMonolith.Tests.Sagas.Host/Program.cs
+  s_2dcdc620d4a460::t_0e63c587ed03e6 1-6
+tests/ModularMonolith.Tests/Sagas/ModularMonolith.Tests.Sagas.Host/SagaHost.cs
+  s_2dcdc620d4a460::t_c33ef9c7a8360a 1-26
+tests/ModularMonolith.Tests/Sagas/ModularMonolith.Tests.Sagas.Host/appsettings.json
+  s_2dcdc620d4a460::t_a93ee60b31707d 1-10
+tests/ModularMonolith.Tests/Sagas/ModularMonolith.Tests.Sagas.csproj
+  s_2dcdc620d4a460::t_f741dea6b34793 1-22
+tests/ModularMonolith.Tests/Sagas/OrdersModule.cs
+  s_2dcdc620d4a460::t_6e4effe850fb69 1-105
+tests/ModularMonolith.Tests/Sagas/ProbesModule.cs
+  s_2dcdc620d4a460::t_3b188787c89202 1-69
+tests/ModularMonolith.Tests/Sagas/ShippingModule.cs
+  s_2dcdc620d4a460::t_7d43a91266e6f5 1-145
+tests/ModularMonolith.Tests/Twins/TwinSaga.cs
+  s_2dcdc620d4a460::t_aa61a9b447f391 1-18
+tests/PouryaKit.ArchitectureTests/FeatureCodeTests.cs
+  s_2dcdc620d4a460::t_dcdf1eaf6f6797 130-145
+tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs
+  s_2dcdc620d4a460::t_50663030ab43ce 94-121
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_2dcdc620d4a460::t_8fd3909bb41209 16,20,117-123,127-129,132-134,241-243,248,251-252
+tests/PouryaKit.ArchitectureTests/Offending.Saga/Offending.Saga.csproj
+  s_2dcdc620d4a460::t_8638d89f43b3a7 1-11
+tests/PouryaKit.ArchitectureTests/Offending.Saga/OwnSaga.cs
+  s_2dcdc620d4a460::t_f14d902a9939b9 1-13
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_2dcdc620d4a460::t_c274605e6e5590 133-134,179-180
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_2dcdc620d4a460::t_191f1f71f5f0d2 14-15,37,39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6b48e8169a932bdfcfa5afdd044ebb156d72a605",
+  "prompts": {},
+  "sessions": {
+    "s_2dcdc620d4a460": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "72319d05-5ed9-4ea9-9a95-a4e4866af4ea",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
