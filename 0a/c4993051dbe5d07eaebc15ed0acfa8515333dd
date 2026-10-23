@@ -1,0 +1,41 @@
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_f3bfecb8a3007f::t_1fe4c937262c2b 4985
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_f3bfecb8a3007f::t_dc77be869c3c2b 10
+docs/architecture/diagrams/delivery.html
+  s_f3bfecb8a3007f::t_36147bf0305f5e 4985
+docs/architecture/diagrams/delivery.sequence.json
+  s_f3bfecb8a3007f::t_0e59fd5ae954a2 18
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_f3bfecb8a3007f::t_376522dd55c9e8 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_f3bfecb8a3007f::t_6f1219b301b2a0 4985,5080-5081,5087-5090,5292-5305,5362-5363,5369-5372,5603
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_f3bfecb8a3007f::t_45038165fc6bc1 10
+docs/architecture/diagrams/module-boundaries.html
+  s_f3bfecb8a3007f::t_7c2650eeadad3a 4985
+docs/architecture/diagrams/execution-core.architecture.json
+  s_f3bfecb8a3007f::t_d13b6e7f7e6f58 10
+docs/architecture/diagrams/execution-core.html
+  s_f3bfecb8a3007f::t_876ed3398655a6 4985
+docs/architecture/diagrams/kit-context.architecture.json
+  s_f3bfecb8a3007f::t_555b0e3d4febcd 10
+docs/architecture/diagrams/kit-context.html
+  s_f3bfecb8a3007f::t_ff47fc13a22b9b 4985,5243-5244,5251
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0ac4993051dbe5d07eaebc15ed0acfa8515333dd",
+  "prompts": {},
+  "sessions": {
+    "s_f3bfecb8a3007f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-amerge-142-4b9e6c1eb8f337d9",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
