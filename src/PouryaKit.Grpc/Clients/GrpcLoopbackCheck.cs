@@ -5,34 +5,73 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using PouryaKit.Cqrs;
 
 namespace PouryaKit.Grpc;
 
 /// <summary>
-/// Refuses a gRPC client addressed at one of the Host's own listening URLs, chosen as ASP.NET Core chooses them: the
-/// server's addresses the application adds after <c>Build</c> (<c>app.Urls</c>), or else the configured <c>urls</c>, or
-/// else <c>http_ports</c> and <c>https_ports</c>; each <c>Kestrel:Endpoints:{name}:Url</c> replaces those addresses
-/// unless <c>preferHostingUrls</c> is set; with none of them, and only when the Host's server is Kestrel, Kestrel's
-/// default <c>http://localhost:5000</c>, the one address it binds when nothing else is configured. A Host without a server
-/// gets no default. <c>app.Urls</c> exists only on the built application, so this is a startup check rather than a
-/// composition check; it runs before the server binds, so an address the server chooses only as it binds, such as port 0
-/// or a <c>Listen</c> call in code, is not seen, and the Kit's skill states the rule for it: Kestrel keeps the endpoints
-/// set in code to itself, so a Host that listens only through <c>Listen</c> is checked against the default. An
-/// address matches when its scheme and port are the listening URL's and its host is the same, or is loopback while the
-/// URL is loopback or listens on every address, as Kestrel binds every host that is neither <c>localhost</c> nor an IP
-/// address. Another host on the same port, such as a peer container on the 8080 every ASP.NET Core image listens on, is
-/// another Host.
+/// Refuses a gRPC client addressed at one of the Host's own listening URLs, at two moments. Before any hosted service
+/// starts, it compares the URLs configuration decides, chosen as ASP.NET Core chooses them: the server's addresses the
+/// application adds after <c>Build</c> (<c>app.Urls</c>), or else the configured <c>urls</c>, or else
+/// <c>http_ports</c> and <c>https_ports</c>; each <c>Kestrel:Endpoints:{name}:Url</c> replaces those addresses unless
+/// <c>preferHostingUrls</c> is set. <c>app.Urls</c> exists only on the built application, so this is a startup check
+/// rather than a composition check. Kestrel keeps the listeners set in code (<c>ConfigureKestrel</c> with
+/// <c>Listen</c> or <c>ListenLocalhost</c>) to itself, and chooses its default <c>http://localhost:5000</c> and a port 0
+/// only as it binds, so once every hosted service has started, and only when the Host's server is Kestrel, it compares
+/// the addresses Kestrel bound, which cover all three; a Host refused then had already bound them and started its
+/// hosted services, so it is stopped before its start fails. A Host without a server, or with another server, gets only the first comparison. An address matches when its
+/// scheme and port are the listening URL's and its host is the same, or is loopback while the URL is loopback or listens
+/// on every address, as Kestrel binds every host that is neither <c>localhost</c> nor an IP address. Another host on
+/// the same port, such as a peer container on the 8080 every ASP.NET Core image listens on, is another Host.
 /// </summary>
-internal sealed class GrpcLoopbackCheck : IStartupCheck
+internal sealed class GrpcLoopbackCheck(IServiceProvider root) : IStartupCheck, IHostedLifecycleService
 {
-    // What Kestrel binds when it is given no address and no endpoint (its DefaultAddressStrategy); no HTTPS default.
-    private const string DefaultUrl = "http://localhost:5000";
+    public IEnumerable<string> Check(HostComposition composition, IServiceProvider services) => Refusals(ListeningUrls(services), services);
 
-    public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
+    public async Task StartedAsync(CancellationToken cancellationToken)
     {
-        var listening = ListeningUrls(services);
+        // Kestrel's server type is internal; its assembly is the one of its public options. Any other server, the test
+        // server included, holds only the configured URLs, which the startup check compared.
+        var server = root.GetService<IServer>();
+        if (server?.GetType().Assembly != typeof(KestrelServerOptions).Assembly || server.Features.Get<IServerAddressesFeature>() is not { } bound)
+        {
+            return;
+        }
+
+        List<string> refused = [.. Refusals(bound.Addresses, root).Select(refusal => $"{refusal} The server had already bound it, so the Host listened, and stopped, before its start failed.")];
+        if (refused.Count > 0)
+        {
+            // The Host rethrows this without stopping what started, and StopApplication alone stops nothing for a caller
+            // that never waits for the shutdown, so the Host is stopped here: the server unbinds, every hosted service stops.
+            // A stop that fails must not hide the refusal: it travels as the inner exception.
+            try
+            {
+                await root.GetRequiredService<IHost>().StopAsync(CancellationToken.None);
+            }
+            catch (Exception stop)
+            {
+                throw new InvalidOperationException(string.Join(Environment.NewLine, refused), stop);
+            }
+
+            throw new InvalidOperationException(string.Join(Environment.NewLine, refused));
+        }
+    }
+
+    public Task StartingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StoppingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    // One line for each client addressed at one of the listening URLs.
+    internal static IEnumerable<string> Refusals(IEnumerable<string> listening, IServiceProvider services)
+    {
         var options = services.GetRequiredService<IOptionsMonitor<PouryaKitGrpcClientOptions>>();
         foreach (var client in services.GetServices<GrpcClient>())
         {
@@ -46,17 +85,12 @@ internal sealed class GrpcLoopbackCheck : IStartupCheck
     private static List<string> ListeningUrls(IServiceProvider services)
     {
         var configuration = services.GetRequiredService<IConfiguration>();
-        var server = services.GetService<IServer>();
-        var bound = server?.Features.Get<IServerAddressesFeature>();
+        var bound = services.GetService<IServer>()?.Features.Get<IServerAddressesFeature>();
         var (addresses, preferHostingUrls) = bound is { Addresses.Count: > 0 }
             ? ([.. bound.Addresses], bound.PreferHostingUrls)
             : (HostingUrls(configuration), configuration["preferHostingUrls"] is "1" || string.Equals(configuration["preferHostingUrls"], "true", StringComparison.OrdinalIgnoreCase));
         List<string> endpoints = [.. configuration.GetSection("Kestrel:Endpoints").GetChildren().Select(endpoint => endpoint["Url"]).OfType<string>()];
-        var listening = endpoints.Count == 0 || (preferHostingUrls && addresses.Count > 0) ? addresses : endpoints;
-        // Kestrel's server type is internal; its assembly is the one of its public options.
-        return listening.Count > 0 || server?.GetType().Assembly != typeof(KestrelServerOptions).Assembly
-            ? listening
-            : [DefaultUrl];
+        return endpoints.Count == 0 || (preferHostingUrls && addresses.Count > 0) ? addresses : endpoints;
     }
 
     private static List<string> HostingUrls(IConfiguration configuration) =>

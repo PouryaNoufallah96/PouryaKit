@@ -19,9 +19,10 @@ public interface IRealtimePublisher
     /// Kit's JSON. Fails with <see cref="RealtimeErrors.PayloadTooLarge"/>, pushing nothing, when the notification, the
     /// Channel, the tenant and the event together, is not shorter than the 8000 bytes PostgreSQL carries. Throws, as the
     /// Integration Event publisher does, when called outside a Notification Handler's delivery, the scoped
-    /// <see cref="PouryaKit.Cqrs.INotificationDelivery"/> marker the delivery step sets in that delivery's scope alone (so a
-    /// command the handler sends through the Gateway, in a scope of its own, cannot push), or where the Operation only
-    /// reads; and on a blank Channel, one holding a
+    /// <see cref="PouryaKit.Cqrs.INotificationDelivery"/> marker the delivery step sets in that delivery's scope alone, and
+    /// only while the Notification Handler runs (so a command the handler sends through the Gateway, in a scope of its own,
+    /// and a Domain Event Handler of the handler's own change, which the Unit of Work runs after it returns, cannot push),
+    /// or where the Operation only reads; and on a blank Channel, one holding a
     /// line break, or one named as the Kit's own events (<see cref="RealtimeEvents"/>).
     /// </summary>
     Task<Result> PublishAsync<TEvent>(string channel, TEvent realtimeEvent, CancellationToken cancellationToken)

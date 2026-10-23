@@ -60,8 +60,17 @@ internal sealed class DeliverHandler(
             return Result.Success();
         }
 
-        // What a Notification Handler publishes or pushes follows from the Domain Event it handles, in this scope alone.
+        // What a Notification Handler publishes or pushes follows from the Domain Event it handles, in this scope alone, and
+        // while it runs alone: the Unit of Work drains the Domain Events it raised in this scope once it returns, and their
+        // Domain Event Handlers publish and push nothing.
         delivery.Notification = command.Message as DomainEvent;
-        return await command.Subscription.InvokeAsync(scope, command.Message, cancellationToken);
+        try
+        {
+            return await command.Subscription.InvokeAsync(scope, command.Message, cancellationToken);
+        }
+        finally
+        {
+            delivery.Notification = null;
+        }
     }
 }

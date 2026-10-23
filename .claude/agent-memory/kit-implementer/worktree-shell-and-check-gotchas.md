@@ -99,5 +99,10 @@ The worktree base and the one-git-command rule are in the role file; these are w
 
 - With nothing committed yet and the tip touching files I had changed (a diagram source, the architecture document, `MEMORY.md`), `git stash push`, `git merge --ff-only <branch>`, `git stash pop` (three separate commands) auto-merged every file; the base became the new tip. Do not rerun a range remapper afterwards: the popped sources already hold the moved ranges, and the remapper reads them as HEAD's.
 
+## Mutation runs leave stale binaries (#159, 2026-10-18)
+
+- A mutation script that restores a source with `shutil.copyfile` to a backup and `shutil.move` back gives the restored file the backup's older mtime, so MSBuild sees the mutated build as current and the next run tests the mutation: five "red" tests in a full run. `touch` every restored file (or `copy2` then `os.utime`) before the next build.
+- A test that removes a test cited in `docs/acceptance.md` needs a `REMOVED_TESTS` entry in `.agents/scripts/check-docs.py` (outside most briefs: ask), since the acceptance rows are records.
+
 **Why:** each cost a retry in tickets #4 to #63 or the retro packages.
 **How to apply:** when a shell command is refused, when the integration branch moves, when a brief's scope misses a file, or when touching skills, settings, the check script or this memory. Related: [[merge-ci-and-workflow-tooling-facts]], [[dotnet-and-test-conventions]], [[templates-packaging-and-publication-facts]].

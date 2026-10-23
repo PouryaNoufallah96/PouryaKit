@@ -21,9 +21,9 @@ public static class RealtimeEndpointRouteBuilderExtensions
         /// group requires an authenticated caller and begins the request's Operation: the tenant and the Actor are its
         /// <see cref="OperationContext"/>'s, and the connection is served by the request itself, never from inside a
         /// Gateway call: streaming opens no Gateway scope and no Unit of Work, while the request's scope and its Operation
-        /// last until the connection ends. A request that names no Channel is answered 400, and
-        /// one naming a Channel <paramref name="admits"/> refuses for the Actor 403, both as problem responses, before
-        /// anything is streamed. A client a full buffer of 256 events behind is disconnected.
+        /// last until the connection ends. A request that names no Channel, or a blank one, is answered 400 before
+        /// <paramref name="admits"/> runs, and one naming a Channel <paramref name="admits"/> refuses for the Actor 403,
+        /// both as problem responses, before anything is streamed. A client a full buffer of 256 events behind is disconnected.
         /// </summary>
         public RouteHandlerBuilder MapPouryaKitRealtime(string pattern, Func<Actor, string, bool> admits)
         {
@@ -39,6 +39,7 @@ public static class RealtimeEndpointRouteBuilderExtensions
                     Result refused = channels switch
                     {
                         [] => RealtimeErrors.ChannelRequired,
+                        _ when channels.Any(string.IsNullOrWhiteSpace) => RealtimeErrors.ChannelRequired,
                         _ when !channels.All(channel => admits(context.Actor, channel)) => RealtimeErrors.ChannelNotAdmitted,
                         _ => Result.Success(),
                     };

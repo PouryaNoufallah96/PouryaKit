@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using PouryaKit.Cqrs;
 
@@ -18,8 +19,8 @@ public static class GrpcClientServiceCollectionExtensions
         /// and the options' <see cref="PouryaKitGrpcClientOptions.Deadline"/> when it sets none of its own; a call
         /// without a context throws before it is sent. Nothing of an incoming request is copied, its bearer token least
         /// of all: a client that must authenticate to the peer adds its own credentials on the builder it returns. The
-        /// Host's start fails when the address is one of the Host's own listening URLs: a call between Modules of one
-        /// Host goes through the Gateway, never a loopback. Called again with the same name and client, it adds nothing
+        /// Host's start fails when the address is one of the Host's own listening URLs, configured or bound by Kestrel:
+        /// a call between Modules of one Host goes through the Gateway, never a loopback. Called again with the same name and client, it adds nothing
         /// and returns the builder of the client already registered, so the client's interceptor runs once; with the
         /// same name and another client, gRPC's client factory throws.
         /// </summary>
@@ -37,6 +38,7 @@ public static class GrpcClientServiceCollectionExtensions
             services.AddOptions<PouryaKitGrpcClientOptions>(name).ValidateOnStart();
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<PouryaKitGrpcClientOptions>, ClientOptionsValidation>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupCheck, GrpcLoopbackCheck>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, GrpcLoopbackCheck>());
             services.AddSingleton(new GrpcClient(name, typeof(TClient)));
             return services
                 .AddGrpcClient<TClient>(
