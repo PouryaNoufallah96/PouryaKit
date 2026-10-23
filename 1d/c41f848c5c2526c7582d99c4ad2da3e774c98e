@@ -1,0 +1,111 @@
+samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs
+  s_c8d06efa41a1cb::t_5f3f68d4abf5b4 6-10
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_c8d06efa41a1cb::t_355a6c86065197 110,113
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261016115325_Tenants.cs
+  s_c8d06efa41a1cb::t_8ed8dc3d18d79a 13-14,35,42
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/OpenAccount/OpenAccountCommandValidator.cs
+  s_c8d06efa41a1cb::t_97cf910afb06c1 1-12
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/PostEntry/PostEntryCommandValidator.cs
+  s_c8d06efa41a1cb::t_bb8fb12d8849b4 1-12
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Ledger.csproj
+  s_c8d06efa41a1cb::t_6b1bc83aa8a55e 13
+scripts/packaging/consumers/PouryaKit.AI.cs
+  s_c8d06efa41a1cb::t_a3206187e14dff 27,29
+scripts/packaging/test_validation.py
+  s_c8d06efa41a1cb::t_02d8b01ee9ceb8 281-295
+src/PouryaKit.Cqrs/Composition/OperationTypes.cs
+  s_c8d06efa41a1cb::t_890921b7fe5f62 59-60
+src/PouryaKit.Localization/LocalizationServiceCollectionExtensions.cs
+  s_c8d06efa41a1cb::t_6f4f5bb296eb23 25-26
+src/PouryaKit.Messaging.Wolverine.Marten/MartenStreamOutbox.cs
+  s_c8d06efa41a1cb::t_b86ad293fd4be9 11-12
+src/PouryaKit.Messaging.Wolverine.Marten/StreamSnapshotCheck.cs
+  s_c8d06efa41a1cb::t_f9cac6ab24f047 1-25
+src/PouryaKit.Templates/content/modular/src/Modules/Ledger/Ledger/Ledger.csproj
+  s_c8d06efa41a1cb::t_141247b8eb6a06 9
+tests/ModularMonolith.Tests/Fixtures/StreamProbes.cs
+  s_c8d06efa41a1cb::t_bac19387395cbb 10-11,71-84
+tests/ModularMonolith.Tests/LedgerTests.cs
+  s_c8d06efa41a1cb::t_c6c86e178e864e 91-106,195-202
+tests/ModularMonolith.Tests/LocalizationTests.cs
+  s_c8d06efa41a1cb::t_165b89b62c9e8d 24-25
+tests/ModularMonolith.Tests/StreamTests.cs
+  s_c8d06efa41a1cb::t_b7fe28ee9cea1b 15,103-119,424-448,653-661
+tests/ModularMonolith.Tests/WebConventionTests.cs
+  s_c8d06efa41a1cb::t_4a73c92672a713 5,18,75,86-105,137-156
+.agents/skills/pourya-kit/references/aspire.md
+  s_c8d06efa41a1cb::t_7c6530a46a8ba5 160
+.agents/skills/pourya-kit/references/grpc.md
+  s_c8d06efa41a1cb::t_792ab38708c2cc 54-56
+.agents/skills/pourya-kit/references/localization.md
+  s_c8d06efa41a1cb::t_80538d72baa352 57
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_c8d06efa41a1cb::t_220ceddd843288 96
+.agents/skills/pourya-kit/references/packages.md
+  s_c8d06efa41a1cb::t_7b69f2850ca492 5
+.agents/skills/pourya-kit/references/reverse-proxy.md
+  s_c8d06efa41a1cb::t_f9b2065c50c12a 67
+.agents/skills/pourya-kit/references/stream.md
+  s_c8d06efa41a1cb::t_059ab13da05986 26,34,186,193,203
+.agents/skills/pourya-kit/references/templates.md
+  s_c8d06efa41a1cb::t_d88831713ccff2 81-82,88
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_c8d06efa41a1cb::t_1314f969ae766f 303-320
+docs/architecture/README.md
+  s_c8d06efa41a1cb::t_f1787fdf5ef3d9 56,234,507,609,653,693
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_c8d06efa41a1cb::t_e61de576d89195 178
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_c8d06efa41a1cb::t_32a1e28f19543e 447
+docs/architecture/diagrams/execution-core.architecture.json
+  s_c8d06efa41a1cb::t_c45c20e97af5d1 374-375,699-700,835
+docs/architecture/diagrams/http-command.sequence.json
+  s_c8d06efa41a1cb::t_ad6a901d771a43 77-78
+docs/architecture/diagrams/kit-context.architecture.json
+  s_c8d06efa41a1cb::t_259ed844336ef3 10
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_c8d06efa41a1cb::t_2f29c9203fee69 405-406,454,459-460
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_c8d06efa41a1cb::t_f50e7c2afb2709 173-174
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_c8d06efa41a1cb::t_407f2f82727fd6 285-286,298,415-416,421-422
+docs/ci.md
+  s_c8d06efa41a1cb::t_565c07ba367808 12,15
+docs/foundation-review.md
+  s_c8d06efa41a1cb::t_50fe8542d1c283 880,1060-1061,1110-1112,1119-1120
+docs/packages.md
+  s_c8d06efa41a1cb::t_6e04821257a16e 9
+samples/ModularMonolith/src/Modules/Ledger/Ledger/LedgerModule.cs
+  s_c8d06efa41a1cb::t_d171f6de791a41 6,21
+scripts/packaging/validate.py
+  s_c8d06efa41a1cb::t_93e2254b999252 486-487,496-500
+src/PouryaKit.Grpc/Services/GrpcEndpointRouteBuilderExtensions.cs
+  s_c8d06efa41a1cb::t_4dffb3cc90c151 25-27
+src/PouryaKit.Localization/HeaderRequestCulture.cs
+  s_c8d06efa41a1cb::t_719c766c792c14 4,7-8,14-15,26,35-59
+src/PouryaKit.Messaging.Wolverine.Marten/WolverineMartenHostApplicationBuilderExtensions.cs
+  s_c8d06efa41a1cb::t_0b7171df6e3a0e 34-36,55
+src/PouryaKit.Persistence.Marten/MartenUnitOfWork.cs
+  s_c8d06efa41a1cb::t_f2377ee0900838 90-92,120-122
+src/PouryaKit.Templates/content/shared/src/ModularMonolith.Host/Properties/launchSettings.json
+  s_c8d06efa41a1cb::t_2d327c8bf9e158 4,6
+src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs
+  s_c8d06efa41a1cb::t_b64a43c81d1d11 22-23,35-40,44,49-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1dc41f848c5c2526c7582d99c4ad2da3e774c98e",
+  "prompts": {},
+  "sessions": {
+    "s_c8d06efa41a1cb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a1b1aa057a22856de",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
