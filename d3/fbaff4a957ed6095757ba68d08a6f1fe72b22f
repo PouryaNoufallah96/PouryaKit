@@ -1,0 +1,23 @@
+docs/acceptance.md
+  s_067424b212e979::t_2afd850c1e27b0 2648
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/GetAccount/GetAccountQueryValidator.cs
+  s_067424b212e979::t_9a81e268158a93 1-8
+tests/ModularMonolith.Tests/LedgerTests.cs
+  s_067424b212e979::t_0fd18113648ce1 101,106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d3fbaff4a957ed6095757ba68d08a6f1fe72b22f",
+  "prompts": {},
+  "sessions": {
+    "s_067424b212e979": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b3b69ca-8b5c-4c58-b18c-05594cfed649",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
