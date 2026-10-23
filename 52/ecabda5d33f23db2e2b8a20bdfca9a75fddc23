@@ -1,0 +1,25 @@
+.agents/skills/pourya-kit/references/ai.md
+  s_2dcdc620d4a460::t_1e33aaa98f3242 278
+docs/architecture/README.md
+  s_2dcdc620d4a460::t_e663689d2ffcf7 365
+src/PouryaKit.AI.Postgres/VectorCollectionTable.cs
+  s_2dcdc620d4a460::t_7f8456faec07b2 19,43
+docs/architecture/diagrams/execution-core.architecture.json
+  s_2dcdc620d4a460::t_eba5a8da2f9e56 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "52ecabda5d33f23db2e2b8a20bdfca9a75fddc23",
+  "prompts": {},
+  "sessions": {
+    "s_2dcdc620d4a460": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "72319d05-5ed9-4ea9-9a95-a4e4866af4ea",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
