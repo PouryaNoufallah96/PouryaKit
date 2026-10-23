@@ -1,0 +1,35 @@
+.agents/skills/pourya-kit/references/grpc.md
+  s_36118bb0158c22::t_98137f66f11f8f 107
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_36118bb0158c22::t_8cb31b074ea2f0 19
+.claude/agent-memory/kit-implementer/grpc-facts.md
+  s_36118bb0158c22::t_a9858948ae46ee 3,34-40
+docs/acceptance.md
+  s_36118bb0158c22::t_064298d6c242b2 2411
+docs/architecture/README.md
+  s_36118bb0158c22::t_195df6a73b29db 669
+tests/ModularMonolith.Tests/Fixtures/HostProcess.cs
+  s_36118bb0158c22::t_fffc9c91de235b 1-95
+tests/ModularMonolith.Tests/Fixtures/InventoryProcess.cs
+  s_36118bb0158c22::t_7ec2c33e28b983 5-6,8-11,16
+tests/ModularMonolith.Tests/Fixtures/ModularMonolithProcess.cs
+  s_36118bb0158c22::t_bccecdde478363 1-28
+tests/ModularMonolith.Tests/GrpcTests.cs
+  s_36118bb0158c22::t_e58eec44db0c23 4,34-35,91-123,558-593,694-695,699
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d045dc8d817106e5996e2d2c1717af7bc2e22a6f",
+  "prompts": {},
+  "sessions": {
+    "s_36118bb0158c22": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aimpl-pr143-grpc-bc9e86f081a7a6e7",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
