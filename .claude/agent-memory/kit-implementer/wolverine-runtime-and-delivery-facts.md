@@ -126,7 +126,7 @@ Decompiled under the session scratchpad `decomp58/wolverine`.
 
 ## The store-neutral Outbox and message store (#121, 2026-10-18; WolverineFx 6.48.3)
 
-- `OutboxWriter` (Messaging.Wolverine) is a public class with an internal constructor, registered by factory in `UsePouryaKitMessageStore`: DI needs a public constructor, and the scope buffers it takes are internal. IDE0290 does not ask for a primary constructor there.
+- `OutboxWriter` (Messaging.Wolverine) is a public class with an internal constructor, registered by factory in `UsePouryaKitMessageStore`, because DI's own activation needs a public constructor and the scope buffers the constructor takes are internal; the factory calls the internal constructor. IDE0290 does not ask for a primary constructor there.
 - Section C keeps `WolverineFx.Postgresql`, Npgsql and Weasel out of Messaging.Wolverine (`PackageGraph.KeptOut`) and Wolverine out of Persistence.Postgres, which references Persistence.EFCore anyway: `PersistMessagesWithPostgresql` stays a delegate the store package passes (`persistMessages`), and the store database check stays in the EF package (owner question for #131).
 - A test that starts a Wolverine store on the shared AppFixture database in a schema of its own breaks `PersistenceTests`' table list: give it `create database <name>_<guid>` (as `CodeGenerationTests`). A Host whose start must fail on options validation gets `Host=db.invalid` so a red run never starts a node on the shared store.
 

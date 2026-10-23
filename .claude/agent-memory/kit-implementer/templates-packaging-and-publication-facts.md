@@ -78,7 +78,7 @@ Check `.github/workflows/package-publication.yml` before relying on it.
 
 ## Disk (#142, 2026-10-18)
 
-- **One `validate.py` evidence directory takes about 8 GB** (a NuGet cache per consumer). With several implementers validating at once the disk filled, the restore failed with "No space left on device", and Docker Desktop stopped and would not start again ("unable to start"), failing every container test of the next run. Delete an evidence directory once its PASS line is recorded, and check `df -h` before a run.
+- **One `validate.py` evidence directory takes about 8 GB** (a NuGet cache per consumer). With several implementers validating at once the disk filled, the restore failed with "No space left on device", and Docker Desktop stopped and would not start again ("unable to start"), failing every container test of the next run. `validate.py` deletes it itself after a PASS unless `--keep`; pass `--keep` only when the run's `manifest.json` and `packages/` are needed afterwards (a local feed or a publication probe), delete that directory once they are used, and check `df -h` before a run.
 
 **Why:** each cost a probe or a validation run; the credential rule is not testable without the hosted feed.
 **How to apply:** for a new template or any package that is not a library, any `validate.py` run, any clean consumer, any change to the publication workflow, and a hosted proof of the private feed. Related: [[core-json-and-architecture-test-facts]], [[observability-tracing-and-http-facts]], [[worktree-shell-and-check-gotchas]].

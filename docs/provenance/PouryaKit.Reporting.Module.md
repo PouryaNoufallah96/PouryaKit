@@ -12,8 +12,8 @@ None. The package references Kit packages only: `PouryaKit.Modularity`, `PouryaK
 
 - **Kit files:** `src/PouryaKit.Reporting.Module/Jobs/ReportJob.cs`, `src/PouryaKit.Reporting.Module/Features/ClaimReportJob/ClaimReportJobCommandHandler.cs`, `src/PouryaKit.Reporting.Module/Features/RenderReport/RenderReportCommandHandler.cs`, `src/PouryaKit.Reporting.Module/Features/ApplyRetention/ApplyRetentionCommandHandler.cs`
 - **Upstream:** Ultrabusiness (`ultrabusiness_server_microservices`, a private repository with no public URL)
-- **Commit:** a85eacd (the plan's I.3 pin)
-- **Upstream paths:** `src/BuildingBlocks/MainArchitecture/Core/MainArchitecture.Domain/Aggregates/ReportJobAggregate/Entities/ReportJob.cs` (`TryClaimForGeneration`, `MarkCompleted`, `MarkFailed`, `MarkExpired` and the private `CanClaimForGeneration` and `CanSettleAttempt`: a claim stamps an attempt id and the claim time, only a stale claim is taken again, only the claiming attempt settles, and an expiry refuses a job whose claim is fresh); read at the local checkout's working tree, at commit `766bc57741ca6b78171c9c83e56bc1a14f2dc430`
+- **Commit:** a85eacd4db5e1af9b8349d49350be12397f24402 (the plan's I.3 pin)
+- **Upstream paths:** `src/BuildingBlocks/MainArchitecture/Core/MainArchitecture.Domain/Aggregates/ReportJobAggregate/Entities/ReportJob.cs` (`TryClaimForGeneration`, `MarkCompleted`, `MarkFailed`, `MarkExpired` and the private `CanClaimForGeneration` and `CanSettleAttempt`: a claim stamps an attempt id and the claim time, only a stale claim is taken again, only the claiming attempt settles, and an expiry refuses a job whose claim is fresh); read at the checkout's commit `766bc57741ca6b78171c9c83e56bc1a14f2dc430`, where the cited file is byte-identical to the pin `a85eacd` (`git diff` empty, checked 2026-10-24)
 - **Licence:** unconfirmed
 - **Adoption:** pattern
 - **Ticket:** #140

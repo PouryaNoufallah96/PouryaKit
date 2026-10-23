@@ -38,7 +38,7 @@ Every consumer lives outside the checkout, has its own empty NuGet package and H
 
 ## Consume a verified local set
 
-Use the `packages/` directory printed by the validator as a local NuGet source. Select the version in its `manifest.json`, and use that same version for every Kit PackageReference or central PackageVersion. Keep `nuget.org` available for third-party dependencies. Under package source mapping, map `PouryaKit.*` to the local feed and `*` to nuget.org. The more specific Kit pattern keeps its dependencies in the verified set.
+Run the validator with `--keep`, since after a PASS it removes its output directory otherwise, and use the `packages/` directory it prints as a local NuGet source. Select the version in its `manifest.json`, and use that same version for every Kit PackageReference or central PackageVersion. Keep `nuget.org` available for third-party dependencies. Under package source mapping, map `PouryaKit.*` to the local feed and `*` to nuget.org. The more specific Kit pattern keeps its dependencies in the verified set.
 
 ```xml
 <PackageReference Include="PouryaKit.Web" Version="0.1.0-preview.0.HEIGHT" />
@@ -48,6 +48,6 @@ Replace the example version with the manifest's actual MinVer version. The share
 
 ## Evidence
 
-The output directory retains `build.log`, `runtime-tests.log`, `pack.log`, `evaluated-projects.json`, `package-evidence.json`, `template-install.log`, individual consumer restore/build logs and each template consumer's smoke test, `codegen write` and publish logs, `consumer-closures.log`, negative-control logs and `minver.json`. `manifest.json` records the source commit, shared version and each package's filename and SHA-256. [CI](ci.md) preserves this directory as the original tested artifact set for the [private publisher](private-packages.md).
+With `--keep`, the output directory retains `build.log`, `runtime-tests.log`, `pack.log`, `evaluated-projects.json`, `package-evidence.json`, `template-install.log`, individual consumer restore/build logs and each template consumer's smoke test, `codegen write` and publish logs, `consumer-closures.log`, negative-control logs and `minver.json`. `manifest.json` records the source commit, shared version and each package's filename and SHA-256. [CI](ci.md) preserves this directory as the original tested artifact set for the [private publisher](private-packages.md).
 
 Package restore/build evidence is separate from the Proving Sample's PostgreSQL runtime suite. The latter still executes against the source projects' shared Release output. Consumer builds do not start PostgreSQL, the Host or its deliveries, but for the template consumers: each generated solution's smoke test hosts its generated Host in memory against PostgreSQL in a container, so the validation needs Docker. This command proves local packaging and consumption; hosted PR isolation, private-feed publication, compatibility with a named baseline and recovery require their own evidence.

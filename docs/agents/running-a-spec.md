@@ -16,7 +16,7 @@ The vendored skill holds in shape: an integration branch, a frontier computed fr
 
 ## Worktrees
 
-- Implementer worktrees start from the orchestrator's commit (`docs/agents/ai-setup.md`, "Subagent worktrees"); the role file's pre-flight is the backstop.
+- Implementer worktrees start from the orchestrator's commit (`docs/agents/ai-setup.md`, "Subagent worktrees"); the role file's pre-flight is the backstop. After the merge, the orchestrator removes the worktree and its branch (`git worktree remove .claude/worktrees/<n>`, `git branch -d ticket-<n>`); a fix-round brief names the existing worktree instead.
 - The orchestrator stays in its checkout and reaches a worktree with `git -C <path>`; a `cd` would move the session's working directory.
 - A worktree nested in the checkout inherits `global.json` and `Directory.*.props` from above when its own branch lacks them. A self-contained folder needs stoppers: see `docs/agents/spikes.md`.
 - The review `base` is the `base` the implementer's report names, not the orchestrator's tip: implementers fast-forward or rebase onto a moving integration branch, and a Spike's branch starts from an older tip. A Spike record lands by `git cherry-pick` of its record commit after the `spike/<name>` tag is pushed; the code commit is never merged.

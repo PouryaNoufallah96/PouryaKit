@@ -110,7 +110,7 @@ metadata:
 
 ## A new package's row and the diagrams (#125, 2026-10-17; Archify 3.0.1)
 
-- **Four diagrams cite `PackageGraph.cs`** (execution-core, kit-context, messaging-and-delivery, module-boundaries; kit-context also `inventory.json` lines 3 to the last package with a "the N packages" label and an "N libraries" sublabel). Put a new row at the end of `Table` (after Testing): only the 17-to-end Table ranges and the KeptOut ranges below shift, no per-package range. Commit code with the re-ranged sources staged (the hook passes), then pin the four to that commit and refinalize in a second commit (`scratchpad/p125/diagrams125.py`, `finalize125.py`). Parallel package tickets all touch the same ranges: give the post-merge values in `merge_notes`.
+- **Four diagrams cite `PackageGraph.cs`** (execution-core, kit-context, messaging-and-delivery, module-boundaries; kit-context also `inventory.json` lines 3 to the last package with a "the N packages" label and an "N libraries" sublabel). Put a new row at the end of `Table` (after Testing): only the 17-to-end Table ranges and the KeptOut ranges below shift, no per-package range. Commit code with the re-ranged sources staged (the hook passes), then pin the four to that commit and refinalize in a second commit with Archify's `finalize` (`docs/architecture/README.md`, "Diagrams"). Parallel package tickets all touch the same ranges: give the post-merge values in `merge_notes`.
 
 ## Code moved to another file (#121, 2026-10-18; Archify 3.0.1)
 
