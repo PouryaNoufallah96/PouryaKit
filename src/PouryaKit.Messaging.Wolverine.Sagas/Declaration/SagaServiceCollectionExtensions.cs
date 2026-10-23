@@ -15,7 +15,7 @@ public static class SagaServiceCollectionExtensions
         /// <summary>
         /// Declares that the Module whose Composition Root calls it on its builder (<see cref="IModuleServices"/>) runs the
         /// Saga <typeparamref name="TSaga"/> under <paramref name="name"/>: its durable queue, the first part of each step's
-        /// claim and of each input's stored message type name (<c>{name}.{event wire name}</c>), and its state table's name,
+        /// claim and of each input's stored message type (<c>{name}.{event wire name}</c>), and its state table's name,
         /// <c>{name}_saga</c> with dots and hyphens as underscores, so it is stable; keep it when the type is renamed. Each
         /// step runs outside every Operation, with no Operation Context, on Wolverine's own chain, which the Kit opens on a
         /// transaction of the message store's database: the step's claim, keyed by the saga's name, the input's wire name
@@ -32,9 +32,12 @@ public static class SagaServiceCollectionExtensions
         /// concrete class, if the declaration belongs to no Module in a Host of Modules or to one the Host does not compose,
         /// if an event it takes is a Snapshot, is not public or has no wire name in the Host, if a timeout names an identity
         /// member of its own, if a subscription or delayed command has its name, if its name, and so its state table's,
-        /// does not start with a letter, if another saga's name gives the same
-        /// state table or input name, or if Wolverine's service location policy is not <c>NotAllowed</c>; it fails to start
-        /// when the saga's queue is not durable. The saga's claims table and state table
+        /// does not start with a letter, if its state table's name is longer than PostgreSQL's 63 characters, if another
+        /// saga's name gives the same state table or input name, if Wolverine's service location policy is not
+        /// <c>NotAllowed</c>, or if Wolverine would keep the saga's state with another saga storage than its lightweight
+        /// one in the message store of <c>UsePouryaKitWolverine(connectionName)</c> of
+        /// <c>PouryaKit.Messaging.Wolverine.EFCore</c>, as with a Marten store (<c>UsePouryaKitMarten</c>), alone or beside
+        /// it; it fails to start when the saga's queue is not durable. The saga's claims table and state table
         /// are created with the message store when the Host starts; the claims are kept after the saga completes.
         /// </summary>
         public IServiceCollection AddPouryaKitSaga<TSaga>(string name, string systemActor, Action<SagaBuilder<TSaga>> declare)

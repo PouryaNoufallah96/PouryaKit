@@ -172,6 +172,23 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
         );
     }
 
+    // Read as the sender reads them, validated: the settings in code are the required ones.
+    [Fact]
+    public void The_options_the_registration_sets_in_code_apply()
+    {
+        var services = new ServiceCollection();
+        services.AddPouryaKitMailKit(options =>
+        {
+            options.Host = "smtp.example.com";
+            options.From = "shop@example.com";
+        });
+        using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<PouryaKitMailKitOptions>>().Value;
+
+        Assert.Equal(("smtp.example.com", "shop@example.com"), (options.Host, options.From));
+    }
+
     private static string Unique() => $"mail {Guid.CreateVersion7():N}";
 
     // A factory typed as the contract, as a Host's own registration often is.

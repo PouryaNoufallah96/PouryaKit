@@ -223,6 +223,26 @@ public sealed class AiTests(AppFixture app, AiFixture ai) : IClassFixture<AiFixt
         Assert.Equal("The Host registers no IChatClient, and composes exactly one: AddPouryaKitAI registered one, then it was removed.", thrown.Message);
     }
 
+    // The second registration adds no provider of its own, and its settings in code still apply. Read validated, as the
+    // clients read them: OpenAI's key is required.
+    [Fact]
+    public void The_options_each_registration_sets_in_code_apply()
+    {
+        var services = new ServiceCollection();
+        services
+            .AddPouryaKitAI(options =>
+            {
+                options.Model = "chat-model";
+                options.ApiKey = "key";
+            })
+            .AddPouryaKitEmbeddings(options => options.EmbeddingModel = "embedding-model");
+        using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<PouryaKitAIOptions>>().Value;
+
+        Assert.Equal(("chat-model", "embedding-model"), (options.Model, options.EmbeddingModel));
+    }
+
     [Fact]
     public async Task An_ollama_model_in_a_container_completes_a_tool_call_with_no_hosted_key()
     {

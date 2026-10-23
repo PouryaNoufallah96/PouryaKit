@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace PouryaKit.Messaging.Wolverine.Sagas;
 
 // One saga a Composition Root declared: its name, which is its queue, the first part of each claim's key and of each
-// input's message type name, and its state table's name, its system Actor, the Module that declared it, its inputs and
+// input's stored message type, and its state table's name, its system Actor, the Module that declared it, its inputs and
 // its timeouts.
 internal sealed class SagaDeclaration(Type sagaType, string name, string systemActor, Type? module)
 {

@@ -48,7 +48,7 @@ public static class SagaStorage
         var database =
             context.Storage as IMessageDatabase
             ?? throw new InvalidOperationException(
-                $"The Saga {saga.Name} keeps its state in the Host's message store, but the store is {context.Storage.GetType().Name}, not a PostgreSQL database. Call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore, or UsePouryaKitMarten."
+                $"The Saga {saga.Name} keeps its state in the Host's message store, but the store is {context.Storage.GetType().Name}, not a PostgreSQL database. Call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore."
             );
         var connection = (NpgsqlConnection)await database.DataSource.OpenConnectionAsync();
         try
