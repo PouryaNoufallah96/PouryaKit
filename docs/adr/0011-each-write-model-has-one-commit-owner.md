@@ -277,7 +277,7 @@ The decision above stands. `PouryaKit.Persistence.Marten` and `PouryaKit.Messagi
 - **The packages' references.** Persistence.Marten references Cqrs and Persistence, and `Marten` and `Npgsql`: the Outbox
   step is a seam, `IStreamOutbox`, which Messaging.Wolverine.Marten fills with `OutboxWriter` over a `MartenOutbox`, so
   the I.3 row's `→ Messaging` is not taken; `Npgsql` 10.0.3 is the Kit's line over the 9.0.4 Marten brings, since the
-  Unit of Work runs the Kit's statements on Npgsql itself, recorded for the owner to confirm. `UnitOfWorkErrors` moved
+  Unit of Work runs the Kit's statements on Npgsql itself, recorded and approved by the owner on 2026-10-23 (spec #115). `UnitOfWorkErrors` moved
   from Persistence.EFCore to Persistence, so both Units of Work fail a conflict with the one Error.
 - **One message store.** `UsePouryaKitMarten(connectionName, schema)` registers the Host's one Marten store, integrated
   with the message store in `schema`. In a Host with EF Core Modules it joins the store `UsePouryaKitWolverine(connectionName)`

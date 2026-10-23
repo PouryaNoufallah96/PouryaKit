@@ -1,6 +1,6 @@
 ---
 name: ai-and-gateway-tool-facts
-description: PouryaKit.AI (#135, #136, #137) - MCP clients over stdio and HTTP, agents of the Agent Framework over the Host client, handoff declarations and the allow-list, experimental surface, Microsoft.Extensions.AI 10.11 function invocation (cap, errors, not-found text), the OpenAI client's own retries, IHttpClientFactory in a singleton, Azure v1 and Ollama through one client, schema options under SharedJsonTests, the trust of a tool call, a stub chat server, the Ollama probe, the template and diagram ripples
+description: PouryaKit.AI and AI.Postgres (#135, #136, #137, #138) - the pgvector store on the Unit of Work, MCP clients over stdio and HTTP, agents of the Agent Framework over the Host client, handoff declarations and the allow-list, experimental surface, Microsoft.Extensions.AI 10.11 function invocation (cap, errors, not-found text), the OpenAI client's own retries, IHttpClientFactory in a singleton, Azure v1 and Ollama through one client, schema options under SharedJsonTests, the trust of a tool call, a stub chat server, the Ollama probe, the template and diagram ripples
 metadata:
   type: project
 ---
