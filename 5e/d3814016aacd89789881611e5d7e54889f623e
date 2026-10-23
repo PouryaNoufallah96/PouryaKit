@@ -1,0 +1,21 @@
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_4ca4bb3f6215ac::t_697a1ea6181de1 10
+src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStorage.cs
+  s_4ca4bb3f6215ac::t_6e6a5acf044f7b 69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5ed3814016aacd89789881611e5d7e54889f623e",
+  "prompts": {},
+  "sessions": {
+    "s_4ca4bb3f6215ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aimpl-142-fix2-323d17f854db4cd4",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
