@@ -1,0 +1,21 @@
+.agents/skills/pourya-kit/references/ai.md
+  s_2dcdc620d4a460::t_f210e3dc5dba58 316
+.agents/skills/pourya-kit/references/stream.md
+  s_2dcdc620d4a460::t_38ca3a27c019c6 196
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ac782420fa0dda5c6c12c3192056e678198be800",
+  "prompts": {},
+  "sessions": {
+    "s_2dcdc620d4a460": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "72319d05-5ed9-4ea9-9a95-a4e4866af4ea",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
