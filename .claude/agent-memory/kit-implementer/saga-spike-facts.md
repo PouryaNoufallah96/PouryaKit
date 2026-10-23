@@ -1,6 +1,6 @@
 ---
 name: saga-spike-facts
-description: WolverineFx 6.48.3 sagas beside the Kit (#141 spike, #142 package) - pre-built handler shadowing, the wrapper input type, route sources that end the search, the storage helper hook, the claim in the step's transaction, timeouts, Wolverine's own logical dedup, the internal store, record TypeRefs, check order, harness traps
+description: WolverineFx 6.48.3 sagas beside the Kit (#141 spike, #142 package) - pre-built handler shadowing, the wrapper input type, route sources that end the search, the storage helper hook, the claim in the step's transaction, timeouts, Wolverine's own logical dedup, the internal store, record TypeRefs, check order, the id-only delete and its two races, harness traps
 metadata:
   type: project
 ---
@@ -34,6 +34,13 @@ The authoritative record is `docs/adr/0013-*.md`; the code is tag `spike/saga`. 
 - **Two contracts of one Domain Event and a saga that completes on the first**: the second arrives after completion and is refused (dead letter), a race in any test that counts dead letters; publish one contract there.
 - **Review of the package (F1, F2): name what Wolverine names from simple type names.** Its saga table (`{simple name}_saga`, keyed by id alone) and a generic input's message type (`SagaInputA_B` from the arguments' simple names) collide across namespaces: name the table `{saga name}_saga` through `SagaTableDefinition(type, table)` at both the registration and the helper's factory, and declare each input `{saga name}.{event wire name}` through `WireNaming` before Wolverine's options are resolved; check both for collisions at build. Wolverine also takes every saga step name with an `Async` suffix. A step's cascaded return shows in `MessageContext.Outstanding` before the storage's `SaveChangesAsync`: an envelope that is no `TimeoutMessage` and has no Kit identity header is a returned message, refused there.
 - Mutation traps: `if (false)` fails the build (CS0162 is an error), use a runtime-false condition; inside `namespace PouryaKit.Messaging.Wolverine.*`, `Wolverine.RDBMS.X` resolves under the Kit's namespace, write `global::Wolverine...`; `x ? a : throw` makes the branch type non-nullable, cast `(T?)(true ? throw … : default(T))`.
+
+## Second review fix round (#142, 2026-10-23; WolverineFx 6.48.3)
+
+- **Wolverine's lightweight saga delete matches the id alone and ignores the row count**; only its update checks the version and throws `Wolverine.SagaConcurrencyException`, which Wolverine handles like any exception (the Kit's catch-all retry). It double-quotes the schema (an internal `QuoteIdentifier`) and leaves the table, `id` and `version` bare, so a name starting with a digit breaks every statement. Neither `DatabaseSagaStorage` nor `DatabaseEnvelopeTransaction` exposes its transaction: pass the `NpgsqlTransaction` to the Kit's wrapper where the helper builds it.
+- **A version-checked delete has two halves, each needing its own race**: two completing steps (the late delete finds no row, so only the count check refuses it; removing the version predicate stays green) and a completion after another step's committed update (only the predicate refuses it). A brief that names one mutation for both is wrong; run both reds.
+- **Holding a step after its load in-process**: `SagaProbes.InPaymentStep` (internal, visible to the test project) awaits a DB condition on the first entry only; the saga's durable local queue runs the timeout step meanwhile. `Sql.WaitUntilAsync` casts the select to bool, so a condition must be `exists (...)`, never a scalar subquery that can be NULL. `RecordedLogs` through `builder.Logging.AddProvider` records Wolverine's handler failure with its exception.
+- A crash child from an aborted run survives as an orphan (PPID 1) and ignores SIGTERM: `pgrep -fl SagaChild` at the end, `kill -9`.
 
 **Why:** each cost a failed run in #141 or #142, and the Saga package builds on the same seams.
 **How to apply:** before writing #142's Saga package or any Kit route or handler beside a Wolverine-generated chain. Related: [[wolverine-runtime-and-delivery-facts]], [[marten-stream-write-model-facts]], [[worktree-shell-and-check-gotchas]].
