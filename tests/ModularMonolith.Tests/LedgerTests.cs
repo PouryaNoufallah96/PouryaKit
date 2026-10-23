@@ -98,10 +98,12 @@ public sealed class LedgerTests(AppFixture app) : HostTest<AppFixture>(app)
         var opened = await client.PostAsJsonAsync("/ledger/accounts", new { accountId = Guid.Empty, holder = " " }, Token);
         var withoutAmount = await client.PostAsJsonAsync($"/ledger/accounts/{Guid.CreateVersion7()}/entries", new { }, Token);
         var zero = await client.PostAsJsonAsync($"/ledger/accounts/{Guid.Empty}/entries", new { amount = 0m }, Token);
+        var read = await client.GetAsync($"/ledger/accounts/{Guid.Empty}", Token);
 
         Assert.Equal([("NotEmptyValidator", "AccountId"), ("NotEmptyValidator", "Holder")], await ValidationErrorsAsync(opened));
         Assert.Equal([("NotEqualValidator", "Amount")], await ValidationErrorsAsync(withoutAmount));
         Assert.Equal([("NotEmptyValidator", "AccountId"), ("NotEqualValidator", "Amount")], await ValidationErrorsAsync(zero));
+        Assert.Equal([("NotEmptyValidator", "AccountId")], await ValidationErrorsAsync(read));
     }
 
     // Two commits publish, each read right after it, before anything is sent: the command's holds the account's opening
