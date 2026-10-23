@@ -346,3 +346,10 @@ update, so the losing step rolls back and the Kit's retries run it on the commit
 completed meanwhile is set aside as a dead letter, and a completing step whose state another step changed completes on
 the new state (`SagaTests`, the [acceptance map](../acceptance.md#saga-package-ticket-142)). A saga's name also starts
 with a letter, or the Host fails when it is built: Wolverine writes its state table's name into its statements unquoted.
+
+## Amendment (2026-10-24, the Wave 3 final quality pass: one saga storage)
+
+The decision above stands. A Host with a Saga fails when it is built unless Wolverine's lightweight saga storage is
+the first that keeps every type, since Marten's integration puts its own first, alone or beside the EF Core store,
+where the step's claim would never commit (`SagaCheck`; the probe is in the
+[acceptance map](../acceptance.md#saga-package-ticket-142)): a saga and a Stream (Marten) cannot share one Host yet; making the Kit's sagas keep the lightweight provider beside Marten's is a later package.
