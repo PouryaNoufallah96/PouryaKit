@@ -16,6 +16,7 @@
     <Project Path="src/PouryaKit.Messaging.Wolverine/PouryaKit.Messaging.Wolverine.csproj" />
     <Project Path="src/PouryaKit.Messaging.Wolverine.EFCore/PouryaKit.Messaging.Wolverine.EFCore.csproj" />
     <Project Path="src/PouryaKit.Messaging.Wolverine.Marten/PouryaKit.Messaging.Wolverine.Marten.csproj" />
+    <Project Path="src/PouryaKit.Messaging.Wolverine.Sagas/PouryaKit.Messaging.Wolverine.Sagas.csproj" />
     <Project Path="src/PouryaKit.Modularity/PouryaKit.Modularity.csproj" />
     <Project Path="src/PouryaKit.Persistence/PouryaKit.Persistence.csproj" />
     <Project Path="src/PouryaKit.Persistence.Dapper/PouryaKit.Persistence.Dapper.csproj" />
@@ -62,6 +63,9 @@
     <Project Path="tests/ModularMonolith.Tests/McpServer/ModularMonolith.Tests.McpServer.csproj" />
     <Project Path="tests/ModularMonolith.Tests/Streams/ModularMonolith.Tests.Streams.csproj" />
     <Project Path="tests/ModularMonolith.Tests/Vectors/ModularMonolith.Tests.Vectors.csproj" />
+    <Project Path="tests/ModularMonolith.Tests/Sagas/ModularMonolith.Tests.Sagas.csproj" />
+    <Project Path="tests/ModularMonolith.Tests/Sagas/ModularMonolith.Tests.Sagas.Host/ModularMonolith.Tests.Sagas.Host.csproj" />
+    <Project Path="tests/ModularMonolith.Tests/SagaChild/ModularMonolith.Tests.SagaChild.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Contracts/Offending.Contracts.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Core/Offending.Core.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Stream/Offending.Stream.csproj" />

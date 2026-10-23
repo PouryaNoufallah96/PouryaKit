@@ -1204,3 +1204,11 @@ rather than on the Kit's pre-built handler; Spike #141 recorded its extent on 6.
   as they receive any.
 - **An Integration Event from another Host** reaches a saga only once the broker fan-out of the #50 amendment also
   delivers the saga's input type; that is #142's.
+
+## Amendment (2026-10-18, ticket #142: a Saga's input from another Host)
+
+The decision above stands. The Messaging package records each Integration Event a Saga takes beside its subscriptions
+(`Subscriptions.SagaInputs`), so a Host whose saga takes an event another Host publishes binds that wire name to its broker
+queue, and `SubscriptionDelivery` fans the envelope out to the saga's queue as the saga's input, beside each
+subscription's copy, by queue and never through the type's routes ([ADR 0013](0013-a-saga-step-runs-outside-every-operation.md),
+#142 amendment).

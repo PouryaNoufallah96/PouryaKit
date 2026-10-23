@@ -130,6 +130,8 @@ internal static class PackageGraph
             [],
             ["Microsoft.AspNetCore.App"]
         ),
+        // A Saga's state and claims are rows of the PostgreSQL message store, on Wolverine's lightweight saga storage (#142).
+        ["PouryaKit.Messaging.Wolverine.Sagas"] = new(["PouryaKit.Messaging.Wolverine"], ["WolverineFx.Postgresql"]),
     };
 
     // What must never arrive in a package's closure, by package id prefix or project name. Every package but Testing also
@@ -174,6 +176,8 @@ internal static class PackageGraph
         ["PouryaKit.Messaging.Wolverine.Marten"] = ["Microsoft.EntityFrameworkCore", "PouryaKit.Persistence.EFCore"],
         // The Module stores through the contract the Host's one provider fills: no provider or its SDK (#140).
         ["PouryaKit.Reporting.Module"] = ["PouryaKit.Storage.", "AWSSDK", "Azure"],
+        // A Saga runs beside either write model: its package takes neither EF Core nor Marten (#142).
+        ["PouryaKit.Messaging.Wolverine.Sagas"] = ["Microsoft.EntityFrameworkCore", "PouryaKit.Persistence", "Marten"],
     };
 
     // Core and Domain, and Messaging and the Email contract (Domain only), bring no package at all; nor do the templates.

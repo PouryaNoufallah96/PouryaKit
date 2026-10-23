@@ -449,7 +449,7 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
 
         Assert.StartsWith(
-            $"The queues of these subscriptions or delayed commands do not store what they receive, so their deliveries would not survive a restart: local://{subscription}/ (Application, BufferedInMemory).",
+            $"The queues of these subscriptions, Sagas or delayed commands do not store what they receive, so their deliveries would not survive a restart: local://{subscription}/ (Application, BufferedInMemory).",
             thrown.Message
         );
     }

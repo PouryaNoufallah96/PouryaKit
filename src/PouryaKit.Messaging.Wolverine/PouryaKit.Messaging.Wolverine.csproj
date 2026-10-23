@@ -3,6 +3,10 @@
     <PackageReference Include="WolverineFx" />
   </ItemGroup>
   <ItemGroup>
+    <!-- A Saga's route, fan-out, checks and emissions use the registry, the routing check and the Outbox's header write. -->
+    <InternalsVisibleTo Include="PouryaKit.Messaging.Wolverine.Sagas" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\PouryaKit.Core\PouryaKit.Core.csproj" />
     <ProjectReference Include="..\PouryaKit.Cqrs\PouryaKit.Cqrs.csproj" />
     <ProjectReference Include="..\PouryaKit.Messaging\PouryaKit.Messaging.csproj" />

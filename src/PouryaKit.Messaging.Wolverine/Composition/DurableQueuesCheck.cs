@@ -26,7 +26,7 @@ internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServicePr
     public Task StartedAsync(CancellationToken cancellationToken)
     {
         var delayedCommands = services.GetService<DelayedCommandDeclarations>()?.All ?? [];
-        if (!subscriptions.All.Any() && subscriptions.Publications.Count == 0 && !delayedCommands.Any())
+        if (!subscriptions.All.Any() && subscriptions.Publications.Count == 0 && subscriptions.SagaInputs.Count == 0 && !delayedCommands.Any())
         {
             return Task.CompletedTask;
         }
@@ -37,6 +37,7 @@ internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServicePr
             .. subscriptions
                 .All.Select(subscription => subscription.Name)
                 .Concat(delayedCommands.Select(delayed => delayed.Name))
+                .Concat(subscriptions.SagaInputs.Select(saga => saga.Queue).Distinct())
                 .Select(name => new Uri($"local://{name}"))
                 .Select(address => (Address: address, Queue: transports.TryGetEndpoint(address)))
                 .Where(queue =>
@@ -47,7 +48,7 @@ internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServicePr
         if (notDurable.Count > 0)
         {
             throw new InvalidOperationException(
-                $"The queues of these subscriptions or delayed commands do not store what they receive, so their deliveries would not survive a restart: {string.Join(", ", notDurable)}. Each must be a durable application queue; rename the subscription or delayed command, or remove the configuration that changed its queue."
+                $"The queues of these subscriptions, Sagas or delayed commands do not store what they receive, so their deliveries would not survive a restart: {string.Join(", ", notDurable)}. Each must be a durable application queue; rename the subscription, Saga or delayed command, or remove the configuration that changed its queue."
             );
         }
 

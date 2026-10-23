@@ -11,8 +11,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Offending\**;Offending.Contracts\**;Offending.Core\**;Offending.Stream\**" />
-    <None Remove="Offending\**;Offending.Contracts\**;Offending.Core\**;Offending.Stream\**" />
+    <Compile Remove="Offending\**;Offending.Contracts\**;Offending.Core\**;Offending.Stream\**;Offending.Saga\**" />
+    <None Remove="Offending\**;Offending.Contracts\**;Offending.Core\**;Offending.Stream\**;Offending.Saga\**" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\samples\ModularMonolith\src\Inventory.Host\Inventory.Host.csproj" />
@@ -34,6 +34,8 @@
     <ProjectReference Include="Offending.Contracts\Offending.Contracts.csproj" />
     <ProjectReference Include="Offending.Core\Offending.Core.csproj" Aliases="OffendingCore" />
     <ProjectReference Include="Offending.Stream\Offending.Stream.csproj" />
+    <ProjectReference Include="Offending.Saga\Offending.Saga.csproj" />
     <ProjectReference Include="..\ModularMonolith.Tests\Streams\ModularMonolith.Tests.Streams.csproj" />
+    <ProjectReference Include="..\ModularMonolith.Tests\Sagas\ModularMonolith.Tests.Sagas.csproj" />
   </ItemGroup>
 </Project>

@@ -13,9 +13,11 @@ using Microsoft.EntityFrameworkCore.Storage;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Messaging.Wolverine.Sagas;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.EFCore;
 using PouryaKit.Persistence.Marten;
+using Wolverine;
 
 namespace PouryaKit.ArchitectureTests;
 
@@ -112,15 +114,23 @@ internal static partial class ModuleRules
     /// ADR 0004, 0006 and 0011: no type from Wolverine, JasperFx, Marten or Weasel, so never <c>IMessageBus</c>,
     /// <c>IMessageContext</c>, <c>IDbContextOutbox&lt;&gt;</c>, <c>EndpointFor</c>, Marten's <c>IDocumentSession</c> or its
     /// store, but the types the evolver Marten's source generator writes into a Stream Module's assembly names
-    /// (<see cref="GeneratedEvolverTypes"/>). Read from the assembly's type references, which hold every type its code,
-    /// signatures and attributes name, including through a Kit method that exposes one. Not seen: a transport or store
-    /// type reached by name at run time (reflection, <c>Type.GetType</c>, a service resolved by a <c>Type</c> built from a
-    /// string) or held only as <c>object</c> or <c>dynamic</c>; Feature code that names one of the generator's types itself.
+    /// (<see cref="GeneratedEvolverTypes"/>), and Wolverine's <c>TimeoutMessage</c> when every record of the assembly
+    /// derived from it is a Saga's timeout of the Kit's <see cref="SagaTimeout"/>: the members the compiler writes for a
+    /// record call the base record's own (ADR 0013). Read from the assembly's type references, which hold every type its
+    /// code, signatures and attributes name, including through a Kit method that exposes one. Not seen: a transport or
+    /// store type reached by name at run time (reflection, <c>Type.GetType</c>, a service resolved by a <c>Type</c> built
+    /// from a string) or held only as <c>object</c> or <c>dynamic</c>; Feature code that names one of the generator's
+    /// types itself, or names <c>TimeoutMessage</c> in an assembly whose timeouts are all the Kit's.
     /// </summary>
     public static IEnumerable<string> TransportTypesUsedBy(Assembly assembly) =>
         from type in TypesReferencedBy(assembly)
-        where IsStoreOrTransport(type.Assembly) && !GeneratedEvolverTypes.Contains(type.Name)
+        where IsStoreOrTransport(type.Assembly)
+            && !GeneratedEvolverTypes.Contains(type.Name)
+            && !(type.Name == typeof(TimeoutMessage).FullName && TimeoutsAreTheKits(assembly))
         select $"{Name(assembly)} uses {type.Name} from {type.Assembly}.";
+
+    private static bool TimeoutsAreTheKits(Assembly assembly) =>
+        assembly.GetTypes().Where(type => type.IsAssignableTo(typeof(TimeoutMessage))).All(type => type.IsAssignableTo(typeof(SagaTimeout)));
 
     /// <summary>
     /// The types of JasperFx's event store that Marten's source generator names in the evolver it writes into every
@@ -228,13 +238,17 @@ internal static partial class ModuleRules
     /// <summary>
     /// ADR 0001: a Module's only public types are its Composition Root and the types its Host implements for it, listed
     /// by name; its Contracts project holds everything other Modules see. EF Core migrations and model snapshots are
-    /// exempt by base type, since <c>dotnet ef migrations add</c> writes them public every time. Not seen:
+    /// exempt by base type, since <c>dotnet ef migrations add</c> writes them public every time, and so are a Saga and its
+    /// timeouts, by the Kit's base types <see cref="PouryaKitSaga"/> and <see cref="SagaTimeout"/>, since the code
+    /// Wolverine generates for each step names them (ADR 0013); a saga of Wolverine's own <c>Saga</c> is not. Not seen:
     /// <c>InternalsVisibleTo</c>, which opens a Module's internal types to the assemblies it names.
     /// </summary>
     public static IEnumerable<string> PublicTypesOf(Assembly module, IReadOnlySet<Type> hostPorts) =>
         from type in module.GetExportedTypes()
-        where !type.IsAssignableTo(typeof(IModuleDefinition)) && !IsMigration(type) && !hostPorts.Contains(type)
+        where !type.IsAssignableTo(typeof(IModuleDefinition)) && !IsMigration(type) && !hostPorts.Contains(type) && !IsSaga(type)
         select type.FullName!;
+
+    private static bool IsSaga(Type type) => type.IsAssignableTo(typeof(PouryaKitSaga)) || type.IsAssignableTo(typeof(SagaTimeout));
 
     private static bool IsSaveOrCommit(MethodBase callee)
     {

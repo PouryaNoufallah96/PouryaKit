@@ -127,6 +127,22 @@ public sealed class FeatureCodeTests
         );
     }
 
+    // ADR 0013: a Saga's Module names no Wolverine type, though Wolverine generates its steps' chains: its sagas derive from
+    // the Kit's PouryaKitSaga, which emits and completes for them, and its timeouts from SagaTimeout. A Module whose saga
+    // and timeout are Wolverine's own names both.
+    [Fact]
+    public void Feature_code_of_a_saga_module_names_no_wolverine_type_through_the_kits_saga_types_and_wolverines_own_saga_is_rejected()
+    {
+        var sagas = typeof(ModularMonolith.Tests.Sagas.ShippingModule).Assembly;
+
+        Assert.Empty(ModuleRules.TransportTypesUsedBy(sagas));
+        Assert.Empty(ModuleRules.SavesOrCommits(sagas));
+        Assert.Equal(
+            ["Offending.Saga uses Wolverine.Saga from Wolverine.", "Offending.Saga uses Wolverine.TimeoutMessage from Wolverine."],
+            ModuleRules.TransportTypesUsedBy(typeof(Offending.Saga.OwnSaga).Assembly).Order(StringComparer.Ordinal)
+        );
+    }
+
     [Fact]
     public void No_module_dbcontext_maps_the_message_stores_envelopes()
     {

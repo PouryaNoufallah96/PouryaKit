@@ -25,7 +25,7 @@ internal sealed class RoutingCheck : ICompositionCheck
             .. subscriptions
                 .ReceivedTypes.Except(subscriptions.MessageTypes)
                 .Select(received =>
-                    $"{received.FullName} is declared received from another Host as {wireNames[received]}, but no subscription of this Host handles it, so nothing would receive it. Subscribe<{received.Name}, THandler>(subscriptionName) in the Composition Root of the Module that receives it, or remove the {(subscriptions.IsSnapshot(received) ? "ReceiveSnapshot" : "Receive")} declaration."
+                    $"{received.FullName} is declared received from another Host as {wireNames[received]}, but no subscription or Saga of this Host handles it, so nothing would receive it. Subscribe<{received.Name}, THandler>(subscriptionName) in the Composition Root of the Module that receives it, or remove the {(subscriptions.IsSnapshot(received) ? "ReceiveSnapshot" : "Receive")} declaration."
                 ),
             .. subscriptions.RoutingCollisions(),
             .. services

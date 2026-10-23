@@ -33,6 +33,11 @@
     <None Remove="McpServer\**" />
     <Compile Remove="Vectors\**" />
     <None Remove="Vectors\**" />
+    <Compile Remove="Sagas\**" />
+    <None Remove="Sagas\**" />
+    <Content Remove="Sagas\**" />
+    <Compile Remove="SagaChild\**" />
+    <None Remove="SagaChild\**" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\samples\ModularMonolith\src\Inventory.Host\Inventory.Host.csproj" />
@@ -47,5 +52,7 @@
     <ProjectReference Include="StreamHost\ModularMonolith.Tests.StreamHost.csproj" />
     <ProjectReference Include="McpServer\ModularMonolith.Tests.McpServer.csproj" />
     <ProjectReference Include="Vectors\ModularMonolith.Tests.Vectors.csproj" />
+    <ProjectReference Include="Sagas\ModularMonolith.Tests.Sagas.Host\ModularMonolith.Tests.Sagas.Host.csproj" />
+    <ProjectReference Include="SagaChild\ModularMonolith.Tests.SagaChild.csproj" />
   </ItemGroup>
 </Project>
