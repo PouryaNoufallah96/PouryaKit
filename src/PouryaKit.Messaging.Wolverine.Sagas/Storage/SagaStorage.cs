@@ -66,7 +66,7 @@ public static class SagaStorage
             return new SagaStepStorage<TId, TSaga>(
                 new DatabaseSagaStorage<TId, TSaga>(connection, transaction, schema),
                 transaction,
-                $"\"{database.SchemaName}\".{saga.Table}",
+                $"\"{database.Settings.SchemaName}\".{saga.Table}",
                 new SagaStep(saga, context, input),
                 alreadyApplied: !claimed
             );
