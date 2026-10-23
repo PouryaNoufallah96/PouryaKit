@@ -1,0 +1,33 @@
+docs/architecture/diagrams/execution-core.architecture.json
+  s_ac23a781eb105b::t_8fbda5ec8c22a4 10
+docs/architecture/diagrams/execution-core.html
+  s_ac23a781eb105b::t_a871c1aefa9215 4985
+docs/architecture/diagrams/kit-context.architecture.json
+  s_ac23a781eb105b::t_fcf07573d3cffb 10
+docs/architecture/diagrams/kit-context.html
+  s_ac23a781eb105b::t_e0b1ddbc2e2c8f 4985
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_ac23a781eb105b::t_d32b055eb14847 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_ac23a781eb105b::t_2a1be8bda12ec4 4985
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_ac23a781eb105b::t_b866039a767fe6 10
+docs/architecture/diagrams/module-boundaries.html
+  s_ac23a781eb105b::t_39efe474b9db45 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d68c5d7bbd2f02a7be35954d748a32f7e83dd50e",
+  "prompts": {},
+  "sessions": {
+    "s_ac23a781eb105b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-amerge-137-4cbdd11e457c8fa2",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
