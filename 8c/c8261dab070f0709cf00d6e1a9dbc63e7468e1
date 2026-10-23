@@ -1,0 +1,83 @@
+src/PouryaKit.Grpc/Services/GrpcEndpointRouteBuilderExtensions.cs
+  s_3b8f93cb2a04a9::t_fa77ff4a0dacf0 24-27
+src/PouryaKit.Messaging.Wolverine.Sagas/Declaration/SagaDeclarations.cs
+  s_3b8f93cb2a04a9::t_bb7eaefaa05195 7
+src/PouryaKit.Messaging.Wolverine.Sagas/Declaration/SagaServiceCollectionExtensions.cs
+  s_3b8f93cb2a04a9::t_da994e61c4ff36 18,35-40
+src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStorage.cs
+  s_3b8f93cb2a04a9::t_c469d81a39df28 51
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/PouryaKitRecurringCommandOptions.cs
+  s_3b8f93cb2a04a9::t_98a1f71df2fa0c 10-17
+tests/ModularMonolith.Tests/AiTests.cs
+  s_3b8f93cb2a04a9::t_1f43e2c1706b54 226-245
+tests/ModularMonolith.Tests/EmailTests.cs
+  s_3b8f93cb2a04a9::t_618faa7137d006 175-191
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_3b8f93cb2a04a9::t_2eba188d1e2d6a 455-456
+tests/ModularMonolith.Tests/RecurringCommandTests.cs
+  s_3b8f93cb2a04a9::t_c61506caadf703 37,626-627,629,631-658,663
+tests/ModularMonolith.Tests/SagaTests.cs
+  s_3b8f93cb2a04a9::t_0157967da62af3 13,714-745
+.agents/skills/pourya-kit/references/ai.md
+  s_3b8f93cb2a04a9::t_4b33fc114d4ca0 43
+.agents/skills/pourya-kit/references/email.md
+  s_3b8f93cb2a04a9::t_c0305a3c2cd67a 34
+.agents/skills/pourya-kit/references/grpc.md
+  s_3b8f93cb2a04a9::t_1c3612e6dd1691 54
+.agents/skills/pourya-kit/references/messaging.md
+  s_3b8f93cb2a04a9::t_2992290c0d9180 537,729-730
+.agents/skills/pourya-kit/references/sagas.md
+  s_3b8f93cb2a04a9::t_38beeb31c4959a 113,118
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3b8f93cb2a04a9::t_64c3b36cef636b 24
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_3b8f93cb2a04a9::t_ddc7601c6c4687 128-131
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_3b8f93cb2a04a9::t_56e118bdda15d7 133-136
+.claude/agent-memory/kit-implementer/grpc-facts.md
+  s_3b8f93cb2a04a9::t_3de53994af2ba1 31
+.claude/agent-memory/kit-implementer/saga-spike-facts.md
+  s_3b8f93cb2a04a9::t_2f412077419d89 45-49
+docs/acceptance.md
+  s_3b8f93cb2a04a9::t_97237da253a369 350-351,2015,2415,2458,2615
+docs/adr/0013-a-saga-step-runs-outside-every-operation.md
+  s_3b8f93cb2a04a9::t_fe10eebca93199 75
+docs/architecture/README.md
+  s_3b8f93cb2a04a9::t_848ff6ffb3115b 301,361,363,556,570,573,621,693
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_3b8f93cb2a04a9::t_f3eb0cae36aedb 186-187,198-199
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3b8f93cb2a04a9::t_cc47141a367fd5 726-727,834-835
+docs/architecture/diagrams/host-start.workflow.json
+  s_3b8f93cb2a04a9::t_b2556ebde57c46 242-243,327-328,333-334,353,358-359,364-365
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_3b8f93cb2a04a9::t_b474146c45bdac 10
+src/PouryaKit.AI/AIServiceCollectionExtensions.cs
+  s_3b8f93cb2a04a9::t_f5e362991b1678 44-46,51-52,59,62,103-105,107,110,121-122,125-129
+src/PouryaKit.Email.MailKit/MailKitServiceCollectionExtensions.cs
+  s_3b8f93cb2a04a9::t_1bb132aa75c057 17-19,24,26,29,52-56
+src/PouryaKit.Messaging.Wolverine.Sagas/Declaration/SagaCheck.cs
+  s_3b8f93cb2a04a9::t_bdffa039fa3adb 11-20,144,146-161
+src/PouryaKit.Messaging.Wolverine/Composition/DurableQueuesCheck.cs
+  s_3b8f93cb2a04a9::t_eb794831184f4a 16-18,28-47,52,71,87-88
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs
+  s_3b8f93cb2a04a9::t_694138870602ca 70-71,123-124
+src/PouryaKit.Messaging.Wolverine/DelayedCommands/RecurringCommandStart.cs
+  s_3b8f93cb2a04a9::t_40ba227e16e4a7 16-19,25,27-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8cc8261dab070f0709cf00d6e1a9dbc63e7468e1",
+  "prompts": {},
+  "sessions": {
+    "s_3b8f93cb2a04a9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aimpl-final-074981c5bc99b657",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
