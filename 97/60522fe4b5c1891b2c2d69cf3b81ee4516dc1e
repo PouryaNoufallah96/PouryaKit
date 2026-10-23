@@ -1,0 +1,105 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_1bd9e64d5be5ed::t_f99d9e6cb6f5a6 54
+.agents/skills/pourya-kit/references/ai.md
+  s_2dcdc620d4a460::t_caacca9f4f73b8 3,14,49,225-284,294,298,308
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_2dcdc620d4a460::t_afebf72cb40e8e 23
+.claude/agent-memory/kit-implementer/ai-and-gateway-tool-facts.md
+  s_2dcdc620d4a460::t_98e5b26ff712e2 38-51
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_2dcdc620d4a460::t_caa1cdcf7a7e78 101
+PouryaKit.slnx
+  s_2dcdc620d4a460::t_e4f1c55cf9a672 4,63
+README.md
+  s_1bd9e64d5be5ed::t_3faac69125a1a6 34
+docs/acceptance.md
+  s_2dcdc620d4a460::t_eb45b79d4fc632 2476-2500
+docs/architecture/README.md
+  s_1bd9e64d5be5ed::t_346fde720c0600 3,44,350,354-355,360-362,366-377,746
+docs/foundation-review.md
+  s_2dcdc620d4a460::t_5a11d5079a4956 290,894
+docs/provenance/ModularMonolith.md
+  s_2dcdc620d4a460::t_19ad4578629b6f 20
+docs/provenance/PouryaKit.AI.Postgres.md
+  s_2dcdc620d4a460::t_98917a69acf60c 1-18
+docs/provenance/PouryaKit.AI.md
+  s_2dcdc620d4a460::t_0ceae90e173a26 5
+scripts/packaging/consumers/PouryaKit.AI.Postgres.cs
+  s_2dcdc620d4a460::t_7c56897618109d 1-15
+scripts/packaging/consumers/PouryaKit.AI.cs
+  s_2dcdc620d4a460::t_3c1e3b73c87e8b 10-11,13,19
+scripts/packaging/inventory.json
+  s_1bd9e64d5be5ed::t_c7db4453d6cd6d 37,52,66
+src/PouryaKit.AI.Postgres/IVectorStore.cs
+  s_2dcdc620d4a460::t_60124e12096052 1-39
+src/PouryaKit.AI.Postgres/PostgresVectorStore.cs
+  s_2dcdc620d4a460::t_46f3824db9317d 1-131
+src/PouryaKit.AI.Postgres/PouryaKit.AI.Postgres.csproj
+  s_2dcdc620d4a460::t_75951289fc691f 1-6
+src/PouryaKit.AI.Postgres/VectorCollection.cs
+  s_2dcdc620d4a460::t_ea28ada7f90db9 1-32
+src/PouryaKit.AI.Postgres/VectorCollectionTable.cs
+  s_2dcdc620d4a460::t_facd0a63ab3d51 1-73
+src/PouryaKit.AI.Postgres/VectorStoreServiceCollectionExtensions.cs
+  s_2dcdc620d4a460::t_ab79301f8d3482 1-25
+src/PouryaKit.AI/AIServiceCollectionExtensions.cs
+  s_2dcdc620d4a460::t_851086ae9dd383 35-37,49,61,67-141,149,163-176
+src/PouryaKit.AI/PouryaKitAIOptions.cs
+  s_2dcdc620d4a460::t_5c20f2c07712d6 21-26
+tests/ModularMonolith.Tests/Fixtures/ChatStub.cs
+  s_2dcdc620d4a460::t_ab1250112ac253 1,15,29-31,56,86-101,174-208
+tests/ModularMonolith.Tests/Fixtures/VectorFixture.cs
+  s_2dcdc620d4a460::t_b7199c0a614585 1-87
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_2dcdc620d4a460::t_5a9141053ca65b 32-33,46
+tests/ModularMonolith.Tests/VectorSearchTests.cs
+  s_2dcdc620d4a460::t_9798bcd6abfe6a 1-195
+tests/ModularMonolith.Tests/Vectors/Migrations/20261018120000_Passages.cs
+  s_2dcdc620d4a460::t_d68e622a42d4a4 1-18
+tests/ModularMonolith.Tests/Vectors/ModularMonolith.Tests.Vectors.csproj
+  s_2dcdc620d4a460::t_1fa024cd57b6db 1-15
+tests/ModularMonolith.Tests/Vectors/PassageFeatures.cs
+  s_2dcdc620d4a460::t_c27c9300fa4925 1-53
+tests/ModularMonolith.Tests/Vectors/VectorsDbContext.cs
+  s_2dcdc620d4a460::t_7103f9f4d56125 1-7
+tests/ModularMonolith.Tests/Vectors/VectorsModule.cs
+  s_2dcdc620d4a460::t_cc0b1de7111b8b 1-24
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_2dcdc620d4a460::t_14c66b4c33e0c5 110-111,210-212
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_2dcdc620d4a460::t_899513d0b2d730 149-163
+tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
+  s_2dcdc620d4a460::t_23fc07f750c851 21
+docs/architecture/diagrams/execution-core.architecture.json
+  s_2dcdc620d4a460::t_a030be9db175be 412-413,466-467,745,766-767,810,834-869,1102-1115,1144-1145
+docs/architecture/diagrams/kit-context.architecture.json
+  s_2dcdc620d4a460::t_e768fc55a4707e 330-331,435,448-449,454
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_2dcdc620d4a460::t_a0b4b14d152841 290-291,394,448
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_2dcdc620d4a460::t_3cbc6619f0d882 360
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9760522fe4b5c1891b2c2d69cf3b81ee4516dc1e",
+  "prompts": {},
+  "sessions": {
+    "s_1bd9e64d5be5ed": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-amerge-138-7ff31a3a756f114d",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_2dcdc620d4a460": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "72319d05-5ed9-4ea9-9a95-a4e4866af4ea",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
