@@ -1,0 +1,23 @@
+docs/acceptance.md
+  s_2dcdc620d4a460::t_8433bd9311c3d5 1921
+docs/architecture/README.md
+  s_2dcdc620d4a460::t_3296fbfab1a50e 153
+src/PouryaKit.Cqrs/Composition/IRequiresAuthorizer.cs
+  s_2dcdc620d4a460::t_f556d3e3755879 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "13b0e63657850bd6e8c27b9a62a9007c56143c64",
+  "prompts": {},
+  "sessions": {
+    "s_2dcdc620d4a460": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "72319d05-5ed9-4ea9-9a95-a4e4866af4ea",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
