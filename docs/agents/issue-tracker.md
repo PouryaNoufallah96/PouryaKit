@@ -11,7 +11,7 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 - **Every issue created during a spec implementation run is a direct sub-issue of that spec**, flat: a work package, a fix round and a tracking or record issue all sit beside the spec's tickets, never nested under one another. Create it with `--parent <spec>`, and verify the relation before reporting (owner's rule, 2026-10-10). A Wayfinder map's tickets are the map's children instead ([Wayfinding operations](#wayfinding-operations)).
 - **Comment on an issue**: `gh issue comment <number> --body "..."`
 - **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
-- **Close**: `gh issue close <number> --comment "..."`
+- **Close**: `gh issue close <number> --comment "..."`; a record kept in a file goes in as `--comment "$(cat <file>)"`, since `gh issue close` has no `--comment-file`
 
 Infer the repo from `git remote -v`; `gh` does this automatically when run inside a clone.
 

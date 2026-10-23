@@ -4,12 +4,14 @@ The `CI` workflow runs on pushes to `main` and to integration branches (`feat/**
 
 An integration branch push runs CI by itself. For hosted proof on another topic branch before a PR, run `gh workflow run ci.yml --ref <branch>`. The manual run tests the selected branch SHA through the same validation path; a non-main run cannot authorize private publication. The orchestrator's local checks on the merged tree remain part of [spec execution](agents/running-a-spec.md). To read a failed run, `python3 .agents/scripts/ci-failures.py <run-id>` prints only its failed tests, each with the lines around its assertion.
 
+While hosted runs are unavailable, reproduce the two jobs locally on the commit: every `run:` step of `ci.yml`'s `ai-setup` job, and of `package-validation.yml`'s job with an `--output` directory outside the checkout, except its two `scripts/ci/evidence.py` steps, which read the Actions run (`GITHUB_SHA`, the event payload) and have no local substitute. Report it as a local reproduction, never as a CI result.
+
 ## Checkout and credentials
 
 Checkout explicitly selects `github.sha` with `fetch-depth: 0`, `fetch-tags: true` and `persist-credentials: false`. The checkout action uses the read-only repository token to fetch the private repository, then removes its credentials. The shared command receives no token:
 
 ```bash
-python3 scripts/packaging/validate.py --no-fetch --output "$EVIDENCE_DIR"
+python3 scripts/packaging/validate.py --no-fetch --keep --output "$EVIDENCE_DIR"
 ```
 
 `EVIDENCE_DIR` is a fresh directory under the runner's temporary directory, outside the checkout. `--no-fetch` uses history already fetched by authenticated checkout and rejects shallow repositories. `history.json` records that mode, the checkout SHA and available tags. The ordinary local command still fetches origin. CI passes no `--since`, the flag with which a local run skips itself when only documentation or AI setup changed, so every CI run is the full validation. No version is supplied by CI; MinVer derives the shared build/package version from this history.
