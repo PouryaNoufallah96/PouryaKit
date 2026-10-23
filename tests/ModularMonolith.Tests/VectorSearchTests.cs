@@ -94,11 +94,12 @@ public sealed class VectorSearchTests(AppFixture app, VectorFixture vectors) : I
     public async Task A_passage_a_failed_command_stored_rolls_back_with_it()
     {
         var run = new OperationContext(Ada, Tenant());
+        await StoreAsync(run, "kept", "apple banana");
 
         var stored = await Vectors.SendAsync(new StorePassageCommand("refused", "apple banana", Fail: true), run, TestContext.Current.CancellationToken);
 
         Assert.Equal(StorePassageCommandHandler.Refused, Assert.Single(stored.Errors));
-        Assert.Empty(await SearchAsync(run, "apple banana", 5));
+        Assert.Equal(["kept"], (await SearchAsync(run, "apple banana", 5)).Select(match => match.Key));
     }
 
     [Fact]

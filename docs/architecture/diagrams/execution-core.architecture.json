@@ -831,8 +831,8 @@
         },
         {
           "path": "src/PouryaKit.AI/AIServiceCollectionExtensions.cs",
-          "line": 126,
-          "end_line": 172,
+          "line": 128,
+          "end_line": 174,
           "label": "one OpenAI client: guarded chat, embeddings"
         }
       ]
@@ -864,8 +864,8 @@
         },
         {
           "path": "src/PouryaKit.AI.Postgres/VectorCollectionTable.cs",
-          "line": 41,
-          "end_line": 59,
+          "line": 46,
+          "end_line": 64,
           "label": "schema ai, the extension, a table each"
         }
       ]

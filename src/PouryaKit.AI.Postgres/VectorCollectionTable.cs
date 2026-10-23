@@ -15,8 +15,10 @@ public static class VectorCollectionTable
     /// <summary>The package's schema, which holds every vector collection.</summary>
     public const string Schema = "ai";
 
-    // Taking the extension where a DBA already installed it needs no privilege; creating it needs one, and the server's
-    // pgvector, and either failure stops the migration naming both fixes.
+    // Taking the extension where a DBA already installed it needs no privilege, but its schema must be on the role's
+    // search_path, as public, the default, is: the vector type here and the search's <=> operator are unqualified, so an
+    // extension in another schema fails with PostgreSQL's type "vector" does not exist, not this message. Creating it
+    // needs a privilege and the server's pgvector, and either failure stops the migration naming both fixes.
     private const string CreateExtension = """
         do $$
         begin
@@ -36,7 +38,10 @@ public static class VectorCollectionTable
         /// collection <paramref name="name"/> in it, whose embeddings have <paramref name="dimensions"/> dimensions, the
         /// number the Host's embedding model returns. The name is a lower-case ASCII letter, then up to 59 lower-case ASCII
         /// letters, digits and underscores. The migration fails, naming the fix, when the database has no vector
-        /// extension and cannot create it.
+        /// extension and cannot create it. An installed extension is used where it is, and its schema must be on the Host
+        /// role's <c>search_path</c>, as <c>public</c>, the default, is: the column's <c>vector</c> type and the search's
+        /// <c>&lt;=&gt;</c> operator are unqualified, so with the extension in another schema the migration, or a search,
+        /// fails with PostgreSQL's <c>type "vector" does not exist</c> instead.
         /// </summary>
         public void CreateVectorCollection(string name, int dimensions)
         {

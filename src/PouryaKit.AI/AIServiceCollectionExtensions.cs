@@ -32,8 +32,9 @@ public static class AIServiceCollectionExtensions
         /// given only the tools <see cref="PouryaKitAIOptions.Tools"/> names and the declarations it never invokes, invokes
         /// those the model asks for, a Gateway tool as an Operation, calls the model at most
         /// <see cref="PouryaKitAIOptions.MaximumIterationsPerRun"/> times with tools, and checks each call to the model with
-        /// every <see cref="IChatGuardrail"/> the Host registers, none by default; its telemetry carries no message
-        /// content. The Host binds the options from its configuration, as with
+        /// every <see cref="IChatGuardrail"/> the Host registers, none by default. Its OpenTelemetry step carries no message
+        /// content, and its logging step records the messages and options when the Host's logger enables Trace, as
+        /// Microsoft.Extensions.AI documents. The Host binds the options from its configuration, as with
         /// <c>Configure&lt;PouryaKitAIOptions&gt;(configuration.GetSection("PouryaKit:AI"))</c>, and fails when it starts,
         /// naming the option, when the provider is not an <see cref="AIProvider"/> value, the model is blank, the endpoint
         /// is not an absolute HTTP or HTTPS address or is missing for Azure OpenAI or Ollama, the key is missing for
@@ -68,9 +69,10 @@ public static class AIServiceCollectionExtensions
         /// Registers the Host's <see cref="IEmbeddingGenerator{TInput, TEmbedding}"/> of text, a singleton that reaches the
         /// embeddings API of the provider of <see cref="PouryaKitAIOptions"/> for <see cref="PouryaKitAIOptions.EmbeddingModel"/>
         /// through the same OpenAI client as the chat client of <see cref="AddPouryaKitAI"/>, over the HTTP client named
-        /// <see cref="HttpClientName"/>, with or without it; its telemetry carries no input. The Host binds the options
-        /// as for the chat client, and fails when it starts, naming the option, on the same provider, endpoint and key rules,
-        /// and when the embedding model is blank.
+        /// <see cref="HttpClientName"/>, with or without it. Its OpenTelemetry step carries no input, and its logging step
+        /// records the input and options when the Host's logger enables Trace, as Microsoft.Extensions.AI documents. The
+        /// Host binds the options as for the chat client, and fails when it starts, naming the option, on the same provider,
+        /// endpoint and key rules, and when the embedding model is blank.
         /// </summary>
         public IServiceCollection AddPouryaKitEmbeddings()
         {
