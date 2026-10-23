@@ -3,7 +3,11 @@ using PouryaKit.Aspire;
 
 // The Proving Sample's local infrastructure, matching its composition: ModularMonolith.Host caches in Redis and sends over
 // RabbitMQ, so Inventory runs in Inventory.Host, which receives over RabbitMQ and caches nothing. Each Host takes a
-// resource as the connection string its composition reads; one it is not given turns that part of it off.
+// resource as the connection string its composition reads; one it is not given turns that part of it off. Email and files
+// are not among them: ModularMonolith.Host always sends mail to the SMTP server and stores files in the S3 bucket its
+// settings name, a local Papercut on port 2525 and a local RustFS on port 9000 with the bucket modular-monolith, which the
+// Kit does not create. This AppHost provisions neither, so a developer runs both, and without the store a report job
+// cannot store its file.
 var builder = DistributedApplication.CreateBuilder(AppHostOptions.Create(args));
 
 var postgres = builder.AddPouryaKitPostgres("postgres");

@@ -107,10 +107,10 @@ public static class ModularMonolithHost
         }
 
         // Email a Notification Handler sends through IEmailSender goes out through MailKit to the SMTP server at
-        // PouryaKit:Email; appsettings.json names a local Papercut, which keeps every mail for a developer to read.
+        // PouryaKit:Email; appsettings.json names a local Papercut, which keeps every mail and which a developer runs.
         builder.Services.AddPouryaKitMailKit();
         builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSection("PouryaKit:Email"));
-        // Files go to the S3 bucket of PouryaKit:Storage:S3; appsettings.json names one of a local S3-compatible store.
+        // Files go to the S3 bucket of PouryaKit:Storage:S3; appsettings.json names a local RustFS, which a developer runs too.
         builder.Services.Configure<PouryaKitS3StorageOptions>(builder.Configuration.GetSection("PouryaKit:Storage:S3"));
         builder.Services.AddPouryaKitS3Storage();
         // The report Module answers POST /reports with a job, generated in the background and stored there: the Host

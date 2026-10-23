@@ -10,8 +10,8 @@ namespace Catalog.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // A row written before Catalog was tenant-scoped has no tenant to recover, and the empty one the column's
-            // default would give it is no Operation's, so it would stay hidden and could never be re-tenanted.
+            // A row written before Catalog was tenant-scoped has no tenant to recover, and any tenant given to it, such as an
+            // empty one, would be no Operation's, so it would stay hidden and could never be re-tenanted: the columns take no default.
             migrationBuilder.Sql(
                 """
                 do $$ begin
@@ -32,16 +32,14 @@ namespace Catalog.Infrastructure.Data.Migrations
                 schema: "catalog",
                 table: "products",
                 type: "text",
-                nullable: false,
-                defaultValue: "");
+                nullable: false);
 
             migrationBuilder.AddColumn<string>(
                 name: "tenant",
                 schema: "catalog",
                 table: "categories",
                 type: "text",
-                nullable: false,
-                defaultValue: "");
+                nullable: false);
 
             migrationBuilder.CreateIndex(
                 name: "ix_products_name",

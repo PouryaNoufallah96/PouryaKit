@@ -78,12 +78,14 @@ dotnet tool restore
 dotnet ef database update --project src/Modules/Catalog/Catalog --startup-project src/Acme.Shop.Host --context CatalogDbContext
 # The modular monolith also migrates Billing (BillingDbContext) and Inventory (InventoryDbContext) the same way; Ledger needs no migration.
 dotnet user-jwts create --project src/Acme.Shop.Host --claim tenant=acme
+# Once per machine: trusts ASP.NET Core's development certificate, which the https URL uses.
+dotnet dev-certs https --trust
 dotnet run --project src/Acme.Shop.Host
 ```
 
 - The Host applies no migrations at startup; they are the Host's, as [persistence.md](persistence.md) says.
 - Without `Authentication:Schemes:Bearer` the Host does not start. `dotnet user-jwts create --claim tenant=<name>` fills it for development and prints a token; Catalog is tenant-scoped in both templates ([multi-tenancy.md](multi-tenancy.md)), so a token without the `tenant` claim gets 403 `Tenant.Required` from every Catalog command and query; in production, configure the issuer, audiences and signing keys of the real identity provider.
-- The `http` launch profile runs in Development on `http://localhost:5080`, where `/health`, the OpenAPI documents and the Scalar reference are mapped, beside `/alive`, which every environment maps. A token's `sub` is the Actor, its `tenant` the tenant, and its `permission` claims the Actor's permissions.
+- The `https` launch profile runs in Development on `https://localhost:7080` and `http://localhost:5080`, where `/health`, the OpenAPI documents and the Scalar reference are mapped, beside `/alive`, which every environment maps. The https URL serves REST and gRPC; on the http URL a gRPC call fails with `HTTP_1_1_REQUIRED`, since a listener without TLS negotiates no HTTP/2 ([grpc.md](grpc.md)). A token's `sub` is the Actor, its `tenant` the tenant, and its `permission` claims the Actor's permissions.
 
 ## The smoke test
 

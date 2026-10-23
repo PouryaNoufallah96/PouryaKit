@@ -23,6 +23,7 @@ public sealed class LedgerModule : IModuleDefinition
         module.AddPouryaKitTenancy();
         module.AddPouryaKitStreams(schema: "ledger");
         module.AddPouryaKitCqrs();
+        module.AddPouryaKitValidation();
         module.AddPouryaKitNotificationHandlers();
         module.Publish<AccountOpenedV1>("ledger.account-opened.v1");
         module.AddPouryaKitEndpoints("/ledger");
@@ -30,7 +31,7 @@ public sealed class LedgerModule : IModuleDefinition
 }
 ```
 
-Its project references `PouryaKit.Persistence.Marten`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Modularity`, `PouryaKit.Web` and its own Contracts, never Marten. The Host registers its one Marten store with `UsePouryaKitMarten` of `PouryaKit.Messaging.Wolverine.Marten`, over a connection string of its configuration, as `ModularMonolithHost` does:
+Its project references `PouryaKit.Persistence.Marten`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Modularity`, `PouryaKit.Validation`, `PouryaKit.Web` and its own Contracts, never Marten. Its commands are validated as Catalog's are ([commands-queries-validation.md](commands-queries-validation.md)): an empty account id, a blank holder or an entry of zero answers 400 with its validation Errors. The Host registers its one Marten store with `UsePouryaKitMarten` of `PouryaKit.Messaging.Wolverine.Marten`, over a connection string of its configuration, as `ModularMonolithHost` does:
 
 ```csharp
 builder.AddPouryaKitModules(modules =>
@@ -182,14 +183,14 @@ internal sealed class ActivateAccountNotificationHandler(IStreams streams, IInte
 
 - **One commit.** The Marten Unit of Work begins its own transaction before the command, opens Marten's session over it, runs the command, drains the Domain Events, appends each Stream's events with `FetchForWriting` at the version it read (0 for a new stream), writes the handled Domain Events and the Integration Events its Notification Handlers published into the message store through Wolverine's Marten outbox, and saves. The events, the envelopes, the Module's Receipts and its idempotency keys commit in that one transaction or not at all, and the envelopes are sent after it. When the Operation wrote no event and no envelope, as a delivery whose handler only reads, or an idempotent command that changes no Stream, the Unit of Work commits its transaction itself, so its Receipt or key is kept.
 - **Concurrency.** A stream another Operation appended to after this one read it, or one another Operation started too, fails the Operation with `UnitOfWorkErrors.ConcurrencyConflict` (`PouryaKit.Persistence`), whether it moved before the append or during the save; nothing is appended and nothing is sent. Nothing retries.
-- **A send that fails after the commit** is logged as a warning and is not the Operation's failure: the change committed, and what was not sent stays in the message store, which delivers it after the inbox stale time or when a Host starts. A Host that dies between Marten's commit and the send leaves its envelopes with its node; a Host that starts on the store delivers them.
+- **A send that fails after the commit**, or an application's Marten store listener (`StoreOptions.Listeners`) that throws there, is logged as a warning and is not the Operation's failure: the Unit of Work's own session listener, which Marten runs first after its commit, ahead of the store's listeners and Wolverine's send, has noted the commit. The change committed, and what was not sent stays in the message store, which delivers it after the inbox stale time or when a Host starts. A Host that dies between Marten's commit and the send leaves its envelopes with its node; a Host that starts on the store delivers them.
 - **Receipts.** Each delivery into a Stream Module, Notification, Integration Event, Snapshot or delayed command, records its Receipt in the Module's `pouryakit_receipts` before its handler runs, in the Unit of Work's transaction, with the EF Module's statement: a concurrent duplicate waits for the first one's row, then records nothing and never runs its handler, and a failed handler leaves no Receipt, no Stream effect and no Integration Event. A Snapshot's version goes to `pouryakit_snapshot_versions` the same way; a publication record to `pouryakit_receipts`.
 - **Tenancy.** The store is conjoined: every stream belongs to the tenant of the Operation that wrote it, and one id is a stream of its own under each tenant. An Operation reads and writes its own tenant's streams only; one with no tenant reads and writes Marten's tenantless streams, `*DEFAULT*`, so an Operation whose tenant is `*DEFAULT*` is refused, command or query, with an `InvalidOperationException`. A delivery appends under the tenant it was delivered with.
 - **One message store.** The Marten store integrates with the Kit's message store, one store and one durability agent for both write models. A Marten store on another database than the message store, or integrated in another schema, fails the Host when it is built, naming both, whatever configured the Marten store, a later `ConfigureMarten` included.
 
 ## Limits
 
-- A Stream publishes no Snapshot: what it publishes are the Notifications and the Integration Events of its events. A Snapshot declared for a Stream type is never sent.
+- A Stream publishes no Snapshot: what it publishes are the Notifications and the Integration Events of its events. A Snapshot declared for a Stream type, which would never be sent, fails the Host when it is built, naming the Stream and the Module.
 - Realtime pushes, `IUnitOfWorkConnection` and number sequences are the EF Unit of Work's; a Stream Module has none of them.
 - A Stream's projections are folds of one stream; Marten's projection daemon and its documents are not part of the Kit.
 - Wolverine's own aggregate-handler workflow is not used: the Kit's dispatcher runs every Operation (ADR 0011, "Rejected options").
@@ -199,4 +200,4 @@ internal sealed class ActivateAccountNotificationHandler(IStreams streams, IInte
 
 - A Stream Module's Operations go through its Gateway as any Module's do ([testing.md](testing.md)); a test reads the events from `events.mt_events` and the Module's tables from its schema.
 - The Kit's own proof is `tests/ModularMonolith.Tests/StreamTests.cs`, over the test Module `tests/ModularMonolith.Tests/Streams`: a Host of the Module alone, and the Proving Sample's Host with it beside the EF Core Modules and Ledger.
-- `tests/ModularMonolith.Tests/LedgerTests.cs` proves Ledger in the Proving Sample's Host: its entries append and its projection folds them through the Gateway and over HTTP, a second opening is the Kit's conflict, the command's commit holds the account's opening with the envelope of its Notification and the Notification Handler's commit the activation, its Receipt and the Integration Event's envelope, and a delivery to Billing that fails leaves no Receipt and no quote. A test reads a commit through a Marten store listener installed on the Host (`StreamCommitProbe` in its fixtures), since an envelope's row changes once it is delivered.
+- `tests/ModularMonolith.Tests/LedgerTests.cs` proves Ledger in the Proving Sample's Host: its entries append and its projection folds them through the Gateway and over HTTP, a second opening is the Kit's conflict, the command's commit holds the account's opening with the envelope of its Notification and the Notification Handler's commit the activation, its Receipt and the Integration Event's envelope, a delivery to Billing that fails leaves no Receipt and no quote, and an empty account id, a blank holder or an entry of zero answers 400 with its validation Errors. A test reads a commit through a Marten store listener installed on the Host (`StreamCommitProbe` in its fixtures), since an envelope's row changes once it is delivered.

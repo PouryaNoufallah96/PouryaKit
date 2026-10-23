@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "8cc8261dab070f0709cf00d6e1a9dbc63e7468e1",
+      "revision": "1dc41f848c5c2526c7582d99c4ad2da3e774c98e",
       "link_mode": "web"
     }
   },
@@ -371,8 +371,8 @@
         },
         {
           "path": "src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs",
-          "line": 157,
-          "end_line": 166,
+          "line": 165,
+          "end_line": 174,
           "label": "begins each request's Operation"
         },
         {
@@ -696,8 +696,8 @@
         },
         {
           "path": "src/PouryaKit.Localization/HeaderRequestCulture.cs",
-          "line": 18,
-          "end_line": 33,
+          "line": 21,
+          "end_line": 59,
           "label": "request culture from Accept-Language"
         }
       ]
@@ -832,7 +832,7 @@
         {
           "path": "src/PouryaKit.AI/AIServiceCollectionExtensions.cs",
           "line": 163,
-          "end_line": 209,
+          "end_line": 211,
           "label": "one OpenAI client: guarded chat, embeddings"
         }
       ]

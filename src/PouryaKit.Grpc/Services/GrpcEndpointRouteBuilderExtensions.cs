@@ -22,9 +22,9 @@ public static class GrpcEndpointRouteBuilderExtensions
         /// unreadable answer the status <see cref="StatusCode.InvalidArgument"/> with the rule they broke as its message,
         /// before the service runs, where an HTTP endpoint answers a 400 problem response. Called again, it maps no
         /// service twice, since two identical endpoints would make every call to it ambiguous. Over TLS one Kestrel
-        /// listener serves both; over plain HTTP, for development only, a listener of both versions negotiates none and
-        /// speaks HTTP/1.1, so a call needs a listener of its own whose protocols are HTTP/2 alone, such as a
-        /// <c>Kestrel:Endpoints:Grpc</c> entry beside the HTTP/1.1 one.
+        /// listener serves both; without TLS a listener of both versions negotiates none and speaks HTTP/1.1, so a call
+        /// needs a listener of its own whose protocols are HTTP/2 alone, a <c>Kestrel:Endpoints:Grpc</c> entry, and since
+        /// <c>Kestrel:Endpoints</c> replace <c>urls</c> and the ports, the HTTP/1.1 listener becomes an entry of its own beside it.
         /// </summary>
         public IEndpointRouteBuilder MapPouryaKitGrpcServices()
         {

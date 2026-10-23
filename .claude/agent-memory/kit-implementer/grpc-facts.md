@@ -38,5 +38,9 @@ metadata:
 - **What a plain sample Host process shows**: `Logging__Console__FormatterName=json` plus `Logging__Console__FormatterOptions__IncludeScopes=true` give one JSON line per entry, the dispatcher's scope an object with `Operation`, `OperationId`, `CorrelationId`, `Module` (Guids as strings). In JSON the "Now listening on: " line ends the URL at a quote. No output shows a continued Operation's Actor or causation; a tenant-scoped answer the peer's token names no tenant for proves the trusted continuation.
 - A peer's bearer token for the trusted peer: `TestIssuer.Token(new() { ["sub"] = AppFixture.TrustedPeer })`.
 
+## Cleartext HTTP/2 and the template profile (PR #143 review, 2026-10-24)
+
+- **A lone `Kestrel:Endpoints:Grpc` entry replaces `urls`**: Kestrel logs "Overriding address(es)" and REST on the old URL is refused, so cleartext gRPC needs two entries (HTTP/1.1 and an `Http2`-only one). The templates' `https` profile serves REST and gRPC on `https://localhost:7080` with no entry; the http URL answers gRPC with `HTTP_1_1_REQUIRED`. Don't call cleartext HTTP/2 "development only": ASP.NET Core's troubleshooting page says an insecure service must be on an HTTP/2-only port, and its security page treats a TLS-terminating proxy as a considered choice.
+
 **Why:** each cost a full-suite run or would have shipped a broken HTTP pipeline or package closure.
 **How to apply:** any ticket that touches PouryaKit.Grpc, adds a transport on Web's convention, or tests a second Host over an in-memory server. Related: [[web-security-and-openapi-facts]], [[templates-packaging-and-publication-facts]], [[docs-verification-tools]].

@@ -278,3 +278,18 @@ class FinishTests(unittest.TestCase):
             self.assertEqual(validate.main(), 0)
             self.assertFalse(Path(parent, "gone").exists())
 
+    def test_an_output_that_holds_files_is_refused_before_any_work_unless_kept(self):
+        with tempfile.TemporaryDirectory() as parent, patch.object(validate, "validate", return_value=None) as full:
+            output = Path(parent, "evidence")
+            output.mkdir()
+            (output / "revision.json").write_text("{}")
+            with patch("sys.argv", ["validate.py", "--no-fetch", "--output", str(output)]):
+                self.assertEqual(validate.main(), 1)
+            full.assert_not_called()
+            self.assertTrue((output / "revision.json").exists())
+            # CI's flow: its revision record is written into the directory first, and it passes --keep.
+            with patch("sys.argv", ["validate.py", "--no-fetch", "--keep", "--output", str(output)]):
+                self.assertEqual(validate.main(), 0)
+            full.assert_called_once()
+            self.assertTrue((output / "revision.json").exists())
+

@@ -131,6 +131,10 @@ Check the merged code before relying on a design note. Each section names its ti
 
 - **Test a sample migration's refusal without touching the shared fixture's tables**: `create database x` through `Fixture.RowsAsync`, `AppFixture.ComposeHost("Development", <string for x>, new RecordedLogs())` built but not started (nothing migrates before start), resolve the Module's DbContext in a scope, `GetService<IMigrator>()`, `MigrateAsync("<previous migration id>")`, write a row with `Sql.RowsAsync(<string>, ...)`, then `MigrateAsync()` throws `PostgresException` whose `MessageText` is the `raise exception` text. Catalog's tables are written by parallel classes, so down and up on `Fixture.Host` (as Inventory's #117 test does on near-empty tables) would race them. `information_schema.columns` with `column_name = 'tenant'` also lists `pouryakit_idempotency_keys`: name the tables.
 
+## A dropped column default and the tests that leaned on it (PR #143 review, 2026-10-24)
+
+- **Dropping a migration's `defaultValue` can break a test's plain SQL insert** that left the column out: the Stub's `HoldChangeCommandHandler` inserted into `catalog.categories` without `tenant`, so `ConflictTests`' two races hit `ReportNotNullViolationError` and timed out at 60 s (the race waits on a hold the failed insert never released). Grep every `insert into <schema>.<table>` in `tests/` before dropping a default, and run the class that uses it, not only the targeted ones.
+
 **Why:** each cost a run, a design detour or a wrong claim in a provenance record, or would have let a test pass vacuously; #9 to #18 build on these seams.
 **How to apply:** start from these when touching Persistence.*, Persistence.Dapper, the Unit of Work seam, conflicts, test migrations, paging, Dapper parameters or EF predicates; re-verify when bumping EF/Npgsql. Related: [[cqrs-and-modularity-facts]], [[snapshot-and-scheduled-command-facts]], [[dotnet-and-test-conventions]].
 

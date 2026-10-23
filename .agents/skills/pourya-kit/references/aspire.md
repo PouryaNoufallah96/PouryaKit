@@ -157,3 +157,4 @@ using var inventory = app.CreateHttpClient("inventory");
 - The model is pulled only when the resource starts, by the health check; a model the AppHost stops serving stays in the volume until it is removed.
 - The registrations know nothing of a Host's composition: an AppHost that adds Redis for a Host that registers no Redis cache runs a container nothing uses.
 - `ModularMonolith.Host` maps no liveness path, so the AppHost waits on it only until its process runs.
+- The Proving Sample's AppHost provisions no SMTP server and no S3 store: `ModularMonolith.Host` sends mail to the SMTP server and stores files in the bucket its settings name, a local Papercut on port 2525 and a local RustFS on port 9000 with the bucket modular-monolith, which the Kit does not create. A developer runs both; without the store, a report job cannot store its file.

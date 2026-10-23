@@ -88,6 +88,22 @@ public sealed class LedgerTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(1L, await Fixture.ScalarAsync<long>($"select count(*) from events.mt_events where stream_id = '{account}' and type = 'account_opened_domain_event'"));
     }
 
+    // Without validation an empty id would throw in AccountId, a 500, a blank holder would be stored, and a body without an
+    // amount would post an entry of zero.
+    [Fact]
+    public async Task Over_http_an_empty_account_id_a_blank_holder_and_an_amount_of_zero_answer_400_with_their_validation_errors()
+    {
+        var client = Fixture.Client("ada", AppFixture.TestTenant);
+
+        var opened = await client.PostAsJsonAsync("/ledger/accounts", new { accountId = Guid.Empty, holder = " " }, Token);
+        var withoutAmount = await client.PostAsJsonAsync($"/ledger/accounts/{Guid.CreateVersion7()}/entries", new { }, Token);
+        var zero = await client.PostAsJsonAsync($"/ledger/accounts/{Guid.Empty}/entries", new { amount = 0m }, Token);
+
+        Assert.Equal([("NotEmptyValidator", "AccountId"), ("NotEmptyValidator", "Holder")], await ValidationErrorsAsync(opened));
+        Assert.Equal([("NotEqualValidator", "Amount")], await ValidationErrorsAsync(withoutAmount));
+        Assert.Equal([("NotEmptyValidator", "AccountId"), ("NotEqualValidator", "Amount")], await ValidationErrorsAsync(zero));
+    }
+
     // Two commits publish, each read right after it, before anything is sent: the command's holds the account's opening
     // and the envelope of its Notification; the Notification Handler's holds the activation, its Receipt and the envelope
     // of the Integration Event to Billing.
@@ -175,6 +191,14 @@ public sealed class LedgerTests(AppFixture app) : HostTest<AppFixture>(app)
             await Fixture.ScalarAsync<long>("select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://billing.expire-quote/'")
         );
     }
+
+    private static async Task<(string?, string?)[]> ValidationErrorsAsync(HttpResponseMessage response) =>
+    [
+        .. (await ProblemAsync(response, HttpStatusCode.BadRequest))
+            .GetProperty("errors")
+            .EnumerateArray()
+            .Select(error => (error.GetProperty("code").GetString(), error.GetProperty("target").GetString())),
+    ];
 
     private static Guid WelcomeQuote(Guid account, string tenant = AppFixture.TestTenant) =>
         OpenWelcomeQuoteIntegrationEventHandler.QuoteIdOf(tenant, account).Value;

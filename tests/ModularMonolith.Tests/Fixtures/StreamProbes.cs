@@ -7,7 +7,8 @@ namespace ModularMonolith.Tests.Fixtures;
 
 /// <summary>
 /// A Marten store listener: it runs before each save's batch, and after Marten's commit, before every listener of the
-/// session, Wolverine's send included, so a test reads the store between the commit and the send there.
+/// session but the Unit of Work's own, which notes the commit, so Wolverine's send included, and a test reads the store
+/// between the commit and the send there.
 /// </summary>
 internal sealed class StreamCommitProbe : DocumentSessionListenerBase
 {
@@ -66,4 +67,18 @@ internal static class FailingStreamSend
         public override Task AfterCommitAsync(IDocumentSession session, IChangeSet commit, CancellationToken token) =>
             throw new InvalidOperationException("The send after the commit failed.");
     }
+}
+
+/// <summary>
+/// An application's Marten store listener that throws after the first commit that appends to <paramref name="stream"/>,
+/// and does nothing after any other; Marten runs a store's listeners before the session's and stops at the first that throws.
+/// </summary>
+internal sealed class FailingStoreListener(Guid stream) : DocumentSessionListenerBase
+{
+    private int _failed;
+
+    public override Task AfterCommitAsync(IDocumentSession session, IChangeSet commit, CancellationToken token) =>
+        commit.GetStreams().Any(action => action.Id == stream) && Interlocked.Exchange(ref _failed, 1) == 0
+            ? throw new InvalidOperationException("A store listener failed after the commit.")
+            : Task.CompletedTask;
 }
