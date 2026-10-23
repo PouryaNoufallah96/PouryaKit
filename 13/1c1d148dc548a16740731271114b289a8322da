@@ -1,0 +1,35 @@
+.agents/skills/pourya-kit/references/grpc.md
+  s_f3bfecb8a3007f::t_19e0aad236d6d5 107
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_f3bfecb8a3007f::t_91a679776606f1 19
+.claude/agent-memory/kit-implementer/grpc-facts.md
+  s_f3bfecb8a3007f::t_003b71e4f9d759 3,34-40
+docs/acceptance.md
+  s_f3bfecb8a3007f::t_0b0dd181bf1339 2411
+docs/architecture/README.md
+  s_f3bfecb8a3007f::t_a4bfafefb0206b 698
+tests/ModularMonolith.Tests/Fixtures/HostProcess.cs
+  s_f3bfecb8a3007f::t_f74c97a4e85c75 1-95
+tests/ModularMonolith.Tests/Fixtures/InventoryProcess.cs
+  s_f3bfecb8a3007f::t_6c4674c0d907ca 5-6,8-11,16
+tests/ModularMonolith.Tests/Fixtures/ModularMonolithProcess.cs
+  s_f3bfecb8a3007f::t_350b7fda0ae4a6 1-28
+tests/ModularMonolith.Tests/GrpcTests.cs
+  s_f3bfecb8a3007f::t_4581fe7855c6e5 4,34-35,91-123,558-593,694-695,699
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "131c1d148dc548a16740731271114b289a8322da",
+  "prompts": {},
+  "sessions": {
+    "s_f3bfecb8a3007f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-amerge-142-4b9e6c1eb8f337d9",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
