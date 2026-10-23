@@ -1,0 +1,35 @@
+docs/acceptance.md
+  s_3b8f93cb2a04a9::t_c08c1e03d7b763 2616
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_3b8f93cb2a04a9::t_873b05d8fb8afc 4985
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_3b8f93cb2a04a9::t_0029f964c2c212 10
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3b8f93cb2a04a9::t_fb157a054af82e 10
+docs/architecture/diagrams/execution-core.html
+  s_3b8f93cb2a04a9::t_fe17b3bbb73764 4985
+docs/architecture/diagrams/host-start.html
+  s_3b8f93cb2a04a9::t_6d93bb5fd670e1 4985
+docs/architecture/diagrams/host-start.workflow.json
+  s_3b8f93cb2a04a9::t_97f275415491be 11
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_3b8f93cb2a04a9::t_b2f5b2ad860b47 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_3b8f93cb2a04a9::t_af77f151d8ef61 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9679b40a08fbed972e9e77e30c7c8217038a308a",
+  "prompts": {},
+  "sessions": {
+    "s_3b8f93cb2a04a9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aimpl-final-074981c5bc99b657",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
