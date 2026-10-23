@@ -1,0 +1,27 @@
+.claude/agents/kit-reviewer.md
+  s_067424b212e979::t_28409b35322596 30
+.codex/agents/kit-reviewer.toml
+  s_067424b212e979::t_51f91d13dc909c 31
+docs/agents/issue-tracker.md
+  s_067424b212e979::t_b1171e3ec0d1ec 14
+docs/agents/running-a-spec.md
+  s_067424b212e979::t_6d44db5b2c7661 31,34
+docs/ci.md
+  s_067424b212e979::t_9eff75d4fe5241 7-8,14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "990cde3e072f9368184e4100dd8680e2d1424a40",
+  "prompts": {},
+  "sessions": {
+    "s_067424b212e979": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b3b69ca-8b5c-4c58-b18c-05594cfed649",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
