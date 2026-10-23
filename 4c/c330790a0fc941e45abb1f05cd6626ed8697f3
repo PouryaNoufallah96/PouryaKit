@@ -1,0 +1,33 @@
+.claude/agent-memory/kit-implementer/ai-and-gateway-tool-facts.md
+  s_2dcdc620d4a460::t_44b5b44b7a05ba 3
+docs/acceptance.md
+  s_2dcdc620d4a460::t_ae2f034168e197 2008,2290,2305
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_2dcdc620d4a460::t_f0d9df5fbf757d 280
+docs/architecture/README.md
+  s_2dcdc620d4a460::t_d57dc42f06abf7 3
+docs/foundation-review.md
+  s_2dcdc620d4a460::t_174aa17f895c79 288,291,293,903,972-973
+docs/provenance/PouryaKit.Email.MailKit.md
+  s_2dcdc620d4a460::t_d233e822fa894d 13
+docs/provenance/PouryaKit.Persistence.Marten.md
+  s_2dcdc620d4a460::t_fc4485bb046e52 12
+docs/provenance/PouryaKit.Reporting.md
+  s_2dcdc620d4a460::t_3dfe81e144872a 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4cc330790a0fc941e45abb1f05cd6626ed8697f3",
+  "prompts": {},
+  "sessions": {
+    "s_2dcdc620d4a460": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "72319d05-5ed9-4ea9-9a95-a4e4866af4ea",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
