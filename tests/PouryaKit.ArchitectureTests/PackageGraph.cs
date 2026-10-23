@@ -102,10 +102,10 @@ internal static class PackageGraph
             ["PouryaKit.Domain"],
             ["CsvHelper", "DocumentFormat.OpenXml", "PDFsharp-MigraDoc", "System.Security.Cryptography.Pkcs"]
         ),
-        // The OpenAI client serves all three providers (A1); Modularity is the Gateway tool's (#135), the Agent Framework the agents' (#136).
+        // The OpenAI client serves all three providers (A1); Modularity is the Gateway tool's (#135), the Agent Framework the agents' (#136), MCP's client SDK the MCP servers' (#137).
         ["PouryaKit.AI"] = new(
             ["PouryaKit.Cqrs", "PouryaKit.Modularity"],
-            ["Microsoft.Agents.AI", "Microsoft.Agents.AI.Workflows", "Microsoft.Extensions.AI", "Microsoft.Extensions.AI.OpenAI", "Microsoft.Extensions.Http", "Microsoft.Extensions.Options"]
+            ["Microsoft.Agents.AI", "Microsoft.Agents.AI.Workflows", "Microsoft.Extensions.AI", "Microsoft.Extensions.AI.OpenAI", "Microsoft.Extensions.Http", "Microsoft.Extensions.Options", "ModelContextProtocol.Core"]
         ),
         // Semantic search on the Unit of Work's connection, sending embeddings as real[], which the server's pgvector casts (#138).
         ["PouryaKit.AI.Postgres"] = new(["PouryaKit.AI", "PouryaKit.Persistence.Postgres"], []),

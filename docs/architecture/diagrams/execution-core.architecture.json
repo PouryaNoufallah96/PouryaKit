@@ -831,8 +831,8 @@
         },
         {
           "path": "src/PouryaKit.AI/AIServiceCollectionExtensions.cs",
-          "line": 128,
-          "end_line": 174,
+          "line": 154,
+          "end_line": 200,
           "label": "one OpenAI client: guarded chat, embeddings"
         }
       ]

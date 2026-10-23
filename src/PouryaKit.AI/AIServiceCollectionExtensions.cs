@@ -18,6 +18,12 @@ public static class AIServiceCollectionExtensions
     /// </summary>
     public const string HttpClientName = "PouryaKit.AI";
 
+    /// <summary>
+    /// The name of the HTTP client the Host's MCP servers over HTTP are reached through, apart from the model's, so the Host
+    /// configures it by this name, as with an authentication handler, without sending what it adds to the model's provider.
+    /// </summary>
+    public const string McpHttpClientName = "PouryaKit.AI.Mcp";
+
     // Ollama ignores the key, but the OpenAI client sends one with every request.
     private const string UnusedKey = "unused";
 
@@ -41,7 +47,11 @@ public static class AIServiceCollectionExtensions
         /// OpenAI or Azure OpenAI, the iteration cap is below 1 or a tool name is blank. A Host composes exactly one
         /// <see cref="IChatClient"/>: its build fails, through the Kit's composition checks, naming each registration
         /// when it registers another, before or after this call, and naming the contract when it removes this one; it fails
-        /// too, naming each, when it registers an <see cref="IChatGuardrail"/> that is not a singleton.
+        /// too, naming each, when it registers an <see cref="IChatGuardrail"/> that is not a singleton. It registers
+        /// <see cref="IMcpServers"/>, the Host's clients of the MCP servers <see cref="PouryaKitAIOptions.McpServers"/> names,
+        /// over stdio or over the HTTP client named <see cref="McpHttpClientName"/>, which the Host's services own and dispose,
+        /// and the Host fails when it starts when a server has neither or both of a command and an endpoint, or an endpoint
+        /// that is not an absolute HTTP or HTTPS address.
         /// </summary>
         public IServiceCollection AddPouryaKitAI()
         {
@@ -58,10 +68,26 @@ public static class AIServiceCollectionExtensions
                 .Validate(
                     ai => !ai.Tools.Any(string.IsNullOrWhiteSpace),
                     "PouryaKitAIOptions.Tools names a blank tool; name each tool a run may be given."
+                )
+                .Validate(
+                    ai => ai.McpServers.Values.All(server => string.IsNullOrWhiteSpace(server.Command) != (server.Endpoint is null)),
+                    "PouryaKitAIOptions.McpServers names a server with neither or both of Command and Endpoint; give each a Command to start it over stdio or an Endpoint to reach it over HTTP."
+                )
+                .Validate(
+                    ai => ai.McpServers.Values.All(server => server.Endpoint is null || IsHttp(server.Endpoint)),
+                    "PouryaKitAIOptions.McpServers names a server whose Endpoint is not an absolute HTTP or HTTPS address."
                 );
+            // An MCP server's client keeps its HttpClient as the OpenAI client keeps the model's, so connections are renewed
+            // by their own lifetime instead of by the factory's handler rotation, as IHttpClientFactory's guidance asks of a
+            // long-lived client.
+            services
+                .AddHttpClient(McpHttpClientName)
+                .UseSocketsHttpHandler((handler, _) => handler.PooledConnectionLifetime = TimeSpan.FromMinutes(2))
+                .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, OneChatClientCheck>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SingletonGuardrailsCheck>());
             services.AddSingleton<IChatClient>(Create);
+            services.AddSingleton<IMcpServers, McpServerConnections>();
             return services;
         }
 
@@ -103,7 +129,7 @@ public static class AIServiceCollectionExtensions
                 "PouryaKitAIOptions.Provider is not an AIProvider value; set OpenAI, AzureOpenAI or Ollama."
             )
             .Validate(
-                ai => ai.Endpoint is null || (ai.Endpoint.IsAbsoluteUri && (ai.Endpoint.Scheme == Uri.UriSchemeHttp || ai.Endpoint.Scheme == Uri.UriSchemeHttps)),
+                ai => ai.Endpoint is null || IsHttp(ai.Endpoint),
                 "PouryaKitAIOptions.Endpoint is not an absolute HTTP or HTTPS address."
             )
             .Validate(
@@ -174,4 +200,6 @@ public static class AIServiceCollectionExtensions
 
     // The one OpenAI client of the Host's provider, which the chat client and the embedding generator share.
     private sealed record Provider(OpenAIClient Client);
+
+    private static bool IsHttp(Uri endpoint) => endpoint.IsAbsoluteUri && (endpoint.Scheme == Uri.UriSchemeHttp || endpoint.Scheme == Uri.UriSchemeHttps);
 }

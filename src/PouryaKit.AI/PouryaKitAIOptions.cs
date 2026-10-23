@@ -41,4 +41,11 @@ public sealed class PouryaKitAIOptions
     /// hands back to the run's caller, such as a handoff workflow's, passes unnamed.
     /// </summary>
     public ISet<string> Tools { get; } = new HashSet<string>(StringComparer.Ordinal);
+
+    /// <summary>
+    /// The MCP servers whose tools a run may be given, by name, which <see cref="IMcpServers"/> lists: empty by default.
+    /// <see cref="Tools"/> names each of their tools a run may be given as its server names it.
+    /// </summary>
+    public IDictionary<string, PouryaKitMcpServerOptions> McpServers { get; } =
+        new Dictionary<string, PouryaKitMcpServerOptions>(StringComparer.OrdinalIgnoreCase);
 }
