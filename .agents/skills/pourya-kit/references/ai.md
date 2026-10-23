@@ -237,7 +237,7 @@ internal sealed class CardNumberGuardrail : IChatGuardrail
 
 ## Scheduled agent work
 
-Agent work on a cadence is a recurring command whose handler runs the agent ([messaging.md](messaging.md#recurring-commands)): each occurrence is an Operation of its own for the named system Actor, and the agent's tool calls continue it.
+Agent work on a cadence is a recurring command whose handler runs the agent ([messaging.md](messaging.md#recurring-commands)): each occurrence is an Operation of its own for the named system Actor, and the agent's Gateway tool calls continue it.
 
 ```csharp
 // In the Composition Root:
