@@ -1,0 +1,87 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_ac23a781eb105b::t_cb6044c695b5cd 54
+.agents/skills/pourya-kit/references/ai.md
+  s_ac23a781eb105b::t_c667c1f81547f7 3,7,93-130,217,241,326,328,331,338-340,349
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_ac23a781eb105b::t_0b067afa21448b 23
+.claude/agent-memory/kit-implementer/ai-and-gateway-tool-facts.md
+  s_ac23a781eb105b::t_0716f36ee21d95 3,38-57,71
+Directory.Packages.props
+  s_2dcdc620d4a460::t_95e63deb053654 55-56
+GLOSSARY.md
+  s_2dcdc620d4a460::t_0116cf8254ff7a 58-61
+PouryaKit.slnx
+  s_2dcdc620d4a460::t_6276bc841c1b86 62
+README.md
+  s_ac23a781eb105b::t_d78dc0c796e399 34
+docs/acceptance.md
+  s_ac23a781eb105b::t_a6d2877feeaee3 2476-2495
+docs/architecture/README.md
+  s_ac23a781eb105b::t_983c3c043a7045 350,354-356,361,365-367
+docs/foundation-review.md
+  s_ac23a781eb105b::t_62436e01e6b575 289,894
+docs/provenance/ModularMonolith.md
+  s_ac23a781eb105b::t_839eabfda3ee90 20
+docs/provenance/PouryaKit.AI.md
+  s_ac23a781eb105b::t_9a6be85168c253 5,17
+scripts/packaging/consumers/PouryaKit.AI.cs
+  s_ac23a781eb105b::t_d853cf973e89b3 10-12,21-22,27,29,35
+src/PouryaKit.AI/AIServiceCollectionExtensions.cs
+  s_ac23a781eb105b::t_4552edef93bcc5 21-26,50-54,71-78,80-86,90,132,203-204
+src/PouryaKit.AI/IMcpServers.cs
+  s_2dcdc620d4a460::t_a9731e34d4c9a4 1-17
+src/PouryaKit.AI/McpServerConnections.cs
+  s_2dcdc620d4a460::t_45d090abb6e1e5 1-150
+src/PouryaKit.AI/PouryaKit.AI.csproj
+  s_2dcdc620d4a460::t_f422a5d980fb1b 9
+src/PouryaKit.AI/PouryaKitAIOptions.cs
+  s_2dcdc620d4a460::t_5cc5c97657bbe3 44-50
+src/PouryaKit.AI/PouryaKitMcpServerOptions.cs
+  s_2dcdc620d4a460::t_50dbd965724250 1-26
+tests/ModularMonolith.Tests/Fixtures/McpFixture.cs
+  s_2dcdc620d4a460::t_fdd7d62a617c4b 1-81
+tests/ModularMonolith.Tests/McpServer/McpHttpServer.cs
+  s_2dcdc620d4a460::t_3ac9d2bed279a5 1-101
+tests/ModularMonolith.Tests/McpServer/McpTools.cs
+  s_2dcdc620d4a460::t_8af13e67aa9bc9 1-70
+tests/ModularMonolith.Tests/McpServer/ModularMonolith.Tests.McpServer.csproj
+  s_2dcdc620d4a460::t_92a8770d121d09 1-16
+tests/ModularMonolith.Tests/McpServer/Program.cs
+  s_2dcdc620d4a460::t_688608eef20b2b 1-24
+tests/ModularMonolith.Tests/McpTests.cs
+  s_2dcdc620d4a460::t_971c8054daf2e7 1-358
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_ac23a781eb105b::t_6ffa0c41e3216a 32-33,48
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_2dcdc620d4a460::t_38d67b6a33e1fe 105,108
+docs/architecture/diagrams/execution-core.architecture.json
+  s_2dcdc620d4a460::t_c7e2a3d1f6b2a4 834-835
+docs/architecture/diagrams/kit-context.architecture.json
+  s_2dcdc620d4a460::t_6ab47242fadb35 71-72,167-168
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_2dcdc620d4a460::t_32af7b9045d449 318-319
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aca454e3f88db2d6f2a06fbe8dead088234a0997",
+  "prompts": {},
+  "sessions": {
+    "s_2dcdc620d4a460": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "72319d05-5ed9-4ea9-9a95-a4e4866af4ea",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_ac23a781eb105b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-amerge-137-4cbdd11e457c8fa2",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
