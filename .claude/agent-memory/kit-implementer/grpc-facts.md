@@ -1,6 +1,6 @@
 ---
 name: grpc-facts
-description: PouryaKit.Grpc on Grpc.AspNetCore.Server and Grpc.Net.ClientFactory 2.84.0 - the metapackage trap, the unknown-service catch-all, gRPC over TestServer, convention order, per-call context, the loopback check's moment
+description: PouryaKit.Grpc on Grpc.AspNetCore.Server and Grpc.Net.ClientFactory 2.84.0 - the metapackage trap, the unknown-service catch-all, gRPC over TestServer, convention order, per-call context, the loopback check's moment, cleartext HTTP/2 and a sample Host as an OS process
 metadata:
   type: project
 ---
@@ -30,6 +30,13 @@ metadata:
 - **Port 5000 is unusable on this Mac**: ControlCenter (AirPlay Receiver) listens on `*:5000`, and an orphan Aspire `dcp` held `127.0.0.1:5000`; a Kestrel default bind fails `address already in use`. No test binds 5000: Kestrel's default is proven by feeding the comparison a bound-address list (`InternalsVisibleTo ModularMonolith.Tests` in the Grpc csproj).
 - **A refusal in `StartedAsync` must stop the Host itself** (#159 review F1): `Host.StartAsync` rethrows it without calling `StopAsync`, so a caller that catches it keeps Kestrel and every started hosted service; `StopApplication()` only signals, which stops nothing unless someone waits for the shutdown. `await services.GetRequiredService<IHost>().StopAsync(CancellationToken.None)` from `StartedAsync` works (the Host's `_hostStarting` is already true, so it stops every hosted service and notifies `ApplicationStopped`); prove it with `host.Lifetime.ApplicationStopped.IsCancellationRequested` and a refused `TcpClient` connect. `DurableQueuesCheck` still only throws.
 - `DateTime.UtcNow + TimeSpan.MaxValue` throws `ArgumentOutOfRangeException`; `deadline < DateTime.MaxValue - now ? now + deadline : DateTime.MaxValue` caps it, and gRPC sends no `grpc-timeout` for `DateTime.MaxValue`.
+
+## A call across an OS process boundary (PR #143 thread, 2026-10-23; ASP.NET Core 10.0.13, Grpc 2.84.0)
+
+- **Kestrel without TLS refuses gRPC on its default listener**: `Http1AndHttp2` with no ALPN answers the client's HTTP/2 with `HTTP_1_1_REQUIRED` (RpcException `Internal`). `Kestrel__EndpointDefaults__Protocols=Http2` in the environment also applies to the `ASPNETCORE_URLS` listener. The sample Host sets none, so as shipped it serves gRPC only over TLS.
+- **Running `ModularMonolith.Host` as a process** (`ModularMonolithProcess` on `HostProcess`, the mechanism `InventoryProcess` shares): environment only, since `RunJasperFxCommands` reads arguments as its own ([[wolverine-runtime-and-delivery-facts]]); translate `TestIssuer.HostArguments` `--A:B=v` to `A__B=v` (split on the first `=` only: the base64 key ends in `=`). A Web SDK Host's content root is the working directory, so `HostProcess` starts `dotnet run` in the project's directory. Production on the fixture's migrated database starts in about 2 s from a Debug build: no pre-generated code needed, and it is a Balanced node beside the fixture's Solo one, so the test waits for deliveries before starting it.
+- **What a plain sample Host process shows**: `Logging__Console__FormatterName=json` plus `Logging__Console__FormatterOptions__IncludeScopes=true` give one JSON line per entry, the dispatcher's scope an object with `Operation`, `OperationId`, `CorrelationId`, `Module` (Guids as strings). In JSON the "Now listening on: " line ends the URL at a quote. No output shows a continued Operation's Actor or causation; a tenant-scoped answer the peer's token names no tenant for proves the trusted continuation.
+- A peer's bearer token for the trusted peer: `TestIssuer.Token(new() { ["sub"] = AppFixture.TrustedPeer })`.
 
 **Why:** each cost a full-suite run or would have shipped a broken HTTP pipeline or package closure.
 **How to apply:** any ticket that touches PouryaKit.Grpc, adds a transport on Web's convention, or tests a second Host over an in-memory server. Related: [[web-security-and-openapi-facts]], [[templates-packaging-and-publication-facts]], [[docs-verification-tools]].
