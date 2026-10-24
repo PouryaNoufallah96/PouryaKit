@@ -1,0 +1,165 @@
+.agents/scripts/check-docs.py
+  s_b933d9add4e23e::t_1669f1e3970be5 139-140
+.agents/skills/pourya-kit/references/aspire.md
+  s_b933d9add4e23e::t_c42be7077d0085 17
+.agents/skills/pourya-kit/references/email.md
+  s_b933d9add4e23e::t_1c5f5a8c7014a3 37
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_b933d9add4e23e::t_3d888ed64c0ec8 65,99
+.agents/skills/pourya-kit/references/messaging.md
+  s_b933d9add4e23e::t_f9115128a0f51e 487,689,696,698,700
+.agents/skills/pourya-kit/references/stream.md
+  s_b933d9add4e23e::t_67ae079e853a4e 3
+.agents/skills/pourya-kit/references/testing.md
+  s_b933d9add4e23e::t_8431d5556f1a68 71,143
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b933d9add4e23e::t_ec5ff5fb619343 9,15,20
+.claude/agent-memory/kit-implementer/aspire-apphost-facts.md
+  s_b933d9add4e23e::t_42ed71f36b3fd6 11
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_b933d9add4e23e::t_346cc539602f6f 102-108
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_b933d9add4e23e::t_ddd769352a302f 133-138
+Directory.Packages.props
+  s_b933d9add4e23e::t_19e0aca83caecc 8-11,15,22,29-37,40-55,58-62,65,70-86
+docs/acceptance.md
+  s_b933d9add4e23e::t_2aed852ba95a4e 2734-2814
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_b933d9add4e23e::t_f42125067941c0 556-591
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_b933d9add4e23e::t_46fb106ab0ed33 1215-1238
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_b933d9add4e23e::t_35985b8fde028d 325-333
+docs/adr/0013-a-saga-step-runs-outside-every-operation.md
+  s_b933d9add4e23e::t_3ad124222d3e3f 379-387
+docs/architecture/README.md
+  s_b933d9add4e23e::t_a07f9213e6f4a7 64,238,261,272,294,305,350,497,550,570,572-573,589,595,603,613,625,667
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_b933d9add4e23e::t_698a960e5b77f7 4985
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_b933d9add4e23e::t_5befa48fb76c60 10,170-171
+docs/architecture/diagrams/delivery.html
+  s_b933d9add4e23e::t_ada7ec47916aae 4985
+docs/architecture/diagrams/delivery.sequence.json
+  s_b933d9add4e23e::t_d185a4607f11e4 18,90
+docs/architecture/diagrams/execution-core.architecture.json
+  s_b933d9add4e23e::t_dbf121c91fe599 63,90,117-118,151-152,184-185,212,245,278-279,340-341,368-369,401,412-413,434-435,466-467,488,521-522,588,621-622,655,688,721,754,765-766,787-788,821-822,855
+docs/architecture/diagrams/host-start.html
+  s_b933d9add4e23e::t_1febfcedc2bb0e 4985
+docs/architecture/diagrams/host-start.workflow.json
+  s_b933d9add4e23e::t_dc5aabd8ddeca0 11
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b933d9add4e23e::t_799eaf532d5095 65-66,330-331,454
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_b933d9add4e23e::t_20fa2832931776 10,73-74,95,128,161-162,183-184,217,250-251,290-291,340,372-373,394,427,448,481
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_b933d9add4e23e::t_ad8fb5e676963a 4985
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b933d9add4e23e::t_15b33ee13ca110 360,387-388
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b933d9add4e23e::t_d10a8c09d1afe4 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b933d9add4e23e::t_047699700aeed9 4985
+docs/foundation-review.md
+  s_b933d9add4e23e::t_ce7791161d752d 279-280,285,287,290,292-293,295,832-833,875-876,880,882,888,890-891,893-894,899
+docs/provenance/ModularMonolith.md
+  s_b933d9add4e23e::t_17a9c7a6a050d1 9-13,15-20,22-23,28
+docs/provenance/PouryaKit.AI.md
+  s_b933d9add4e23e::t_346c9bd4ef02b2 11,13-17,19
+docs/provenance/PouryaKit.Aspire.md
+  s_b933d9add4e23e::t_99a317d56440ca 11-12,21,25-26
+docs/provenance/PouryaKit.Caching.md
+  s_b933d9add4e23e::t_189c2a5015abb4 11
+docs/provenance/PouryaKit.Cqrs.md
+  s_b933d9add4e23e::t_5d0e7f205349ef 11-13
+docs/provenance/PouryaKit.Email.MailKit.md
+  s_b933d9add4e23e::t_2d00adeb08ddf1 11-13
+docs/provenance/PouryaKit.Messaging.Wolverine.EFCore.md
+  s_b933d9add4e23e::t_2db261f0cf8085 11-13
+docs/provenance/PouryaKit.Messaging.Wolverine.Marten.md
+  s_b933d9add4e23e::t_a66751de165ebd 11
+docs/provenance/PouryaKit.Messaging.Wolverine.RabbitMq.md
+  s_b933d9add4e23e::t_d22d9136c4d9cb 9,11,13
+docs/provenance/PouryaKit.Messaging.Wolverine.Sagas.md
+  s_b933d9add4e23e::t_3dbe9814b23301 11
+docs/provenance/PouryaKit.Messaging.Wolverine.md
+  s_b933d9add4e23e::t_285583957d8072 11
+docs/provenance/PouryaKit.Modularity.md
+  s_b933d9add4e23e::t_bce0c168cdbd82 7
+docs/provenance/PouryaKit.Observability.md
+  s_b933d9add4e23e::t_545f419001b538 9
+docs/provenance/PouryaKit.Persistence.Dapper.md
+  s_b933d9add4e23e::t_eaa24d3e413849 13-14
+docs/provenance/PouryaKit.Persistence.EFCore.md
+  s_b933d9add4e23e::t_d9567c718f11ca 21-23
+docs/provenance/PouryaKit.Persistence.Marten.md
+  s_b933d9add4e23e::t_27ef6938c31199 11
+docs/provenance/PouryaKit.ReverseProxy.md
+  s_b933d9add4e23e::t_e4317b786b439e 12
+docs/provenance/PouryaKit.Security.JwtBearer.md
+  s_b933d9add4e23e::t_4554d6bb923809 11
+docs/provenance/PouryaKit.Storage.AzureBlob.md
+  s_b933d9add4e23e::t_db999d141fa182 12,14,20
+docs/provenance/PouryaKit.Storage.S3.md
+  s_b933d9add4e23e::t_1a36748438aa8d 11-12,18
+docs/provenance/PouryaKit.Templates.md
+  s_b933d9add4e23e::t_37dc2ec6f89ee1 11
+docs/provenance/PouryaKit.Testing.md
+  s_b933d9add4e23e::t_43f7974dae9d2a 11,13-14,16
+docs/provenance/PouryaKit.Validation.md
+  s_b933d9add4e23e::t_898716deaf8b25 7
+docs/provenance/PouryaKit.Web.OpenApi.md
+  s_b933d9add4e23e::t_303462e70afcc9 13-14
+docs/provenance/PouryaKit.Web.md
+  s_b933d9add4e23e::t_053f7b58c87f21 11
+samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj
+  s_b933d9add4e23e::t_ba164f176cf724 1
+src/PouryaKit.Messaging.Wolverine.Sagas/Routing/SagaRouteSource.cs
+  s_b933d9add4e23e::t_f6f45ece8ef024 11
+src/PouryaKit.Messaging.Wolverine/PouryaKitMessageStoreOptions.cs
+  s_b933d9add4e23e::t_ce339e9da0d64a 18-26
+src/PouryaKit.Messaging.Wolverine/PouryaKitMessagingOptions.cs
+  s_b933d9add4e23e::t_3d5c4fbb329740 9-11
+src/PouryaKit.Messaging.Wolverine/PouryaKitWolverineExtension.cs
+  s_b933d9add4e23e::t_f1f8d49f63f4d3 27
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Subscriptions.cs
+  s_b933d9add4e23e::t_e617c7d3e736c2 15,293
+src/PouryaKit.Persistence.Marten/PouryaKit.Persistence.Marten.csproj
+  s_b933d9add4e23e::t_43bf8e247d8c23 4
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_b933d9add4e23e::t_66835e37adad18 33-42,46-47
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_b933d9add4e23e::t_b5f9d309e1a6a8 28-37,41-42
+tests/ModularMonolith.Tests/InboxStaleTimeTests.cs
+  s_b933d9add4e23e::t_3d0f9273d6f63e 12-15,27,44,46-47,50-51,60-61,63-64,68,78,86-87
+tests/ModularMonolith.Tests/IntegrationEventTests.cs
+  s_b933d9add4e23e::t_ae7a8ab9ff41a2 117-118
+tests/ModularMonolith.Tests/RecurringCommandTests.cs
+  s_b933d9add4e23e::t_50da31a693a351 394-396,428,449
+tests/ModularMonolith.Tests/StreamTests.cs
+  s_b933d9add4e23e::t_50b2c2b1ac5fca 363-364,369-370,373-376
+tests/ModularMonolith.Tests/Streams/AccountProbe.cs
+  s_b933d9add4e23e::t_41187227a8e303 10,27-40,42-44
+tests/PouryaKit.ArchitectureTests/NamespaceTests.cs
+  s_b933d9add4e23e::t_4ab81c612ae6ed 50-52,60-61
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_b933d9add4e23e::t_936c2ce9af69fc 23-24,90-92,106
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_b933d9add4e23e::t_6a9cddba32ea7d 340
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c853388d6868847b33789fe9fd289762f2ca7db1",
+  "prompts": {},
+  "sessions": {
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
