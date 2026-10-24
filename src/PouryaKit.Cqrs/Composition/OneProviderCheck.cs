@@ -3,9 +3,10 @@ namespace PouryaKit.Cqrs;
 /// <summary>
 /// The composition check that a Host composes exactly one <typeparamref name="TService"/>, which its final registrations
 /// show whatever their order: with two, the container would serve the last silently; with none, a removal after the
-/// provider's registration, a consumer would fail only at resolution. It reports one problem for any other count of
-/// unkeyed registrations, naming each registration's type, or the factory that builds it, or, for none, the contract and
-/// <paramref name="registration"/>. A provider package registers it for its contract with <c>TryAddEnumerable</c>.
+/// provider's registration, a consumer would fail only at resolution, or at build for a constructor-injected one. It
+/// reports one problem for any other count of unkeyed registrations, naming each registration's type, or the factory that
+/// builds it, or, for none, the contract and <paramref name="registration"/>. A provider package registers it for its
+/// contract with <c>TryAddEnumerable</c>.
 /// </summary>
 /// <typeparam name="TService">The contract the Host composes exactly one provider of.</typeparam>
 /// <param name="registration">The registration call that registers the provider, such as <c>AddPouryaKitFileStorage</c>.</param>
@@ -16,7 +17,8 @@ public sealed class OneProviderCheck<TService>(string registration, string noun)
     /// <inheritdoc />
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {
-        // A keyed descriptor's ImplementationType throws, and a consumer resolves the contract unkeyed.
+        // Keyed registrations are left out: a consumer resolves the contract unkeyed, and a keyed descriptor's
+        // ImplementationType is null.
         List<string> registered =
         [
             .. composition
