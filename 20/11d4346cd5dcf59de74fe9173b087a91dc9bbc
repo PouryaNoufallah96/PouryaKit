@@ -1,0 +1,47 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_b933d9add4e23e::t_57a75b0b3c0f76 50
+.agents/skills/pourya-kit/references/aspire.md
+  s_b933d9add4e23e::t_ca8efae785e67a 14,26,49,59,70-78,99-113,154,174-176,186
+.agents/skills/pourya-kit/references/reverse-proxy.md
+  s_b933d9add4e23e::t_0328d56775a645 54,89
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b933d9add4e23e::t_c4ebe71f37eca4 3,20
+.claude/agent-memory/kit-implementer/aspire-apphost-facts.md
+  s_b933d9add4e23e::t_8cbd86faa103c0 3,32-41
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_b933d9add4e23e::t_7245565d9058e5 158-161
+docs/acceptance.md
+  s_b933d9add4e23e::t_9575748011f931 2846-2861
+docs/architecture/README.md
+  s_b933d9add4e23e::t_6ae2484a6a678d 62,64,311
+docs/foundation-review.md
+  s_b933d9add4e23e::t_569a0ce7db154a 899
+samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj
+  s_b933d9add4e23e::t_59ca808ed4a268 12
+samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs
+  s_b933d9add4e23e::t_8af5a73f8bc3d4 24,65-80
+samples/ModularMonolith/src/ModularMonolith.ReverseProxy/Properties/launchSettings.json
+  s_b933d9add4e23e::t_32a6c2023aae1b 1-10
+tests/ModularMonolith.Tests/ReverseProxyTests.cs
+  s_b933d9add4e23e::t_dc0c6a8c09a5a5 1,7,28-31,35-36,45,73,94,129,148-191,213-215,221-224,237-270
+tests/PouryaKit.Aspire.Tests/AppHostTests.cs
+  s_b933d9add4e23e::t_6829d4fe675e65 10,49-50,73-108,147-154,163-165,179,185-194,198-200,254
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b933d9add4e23e::t_442e37ee56af9d 167-168,428-429,434-435,546-553,661,663
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2011d4346cd5dcf59de74fe9173b087a91dc9bbc",
+  "prompts": {},
+  "sessions": {
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
