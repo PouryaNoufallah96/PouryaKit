@@ -10,7 +10,7 @@
 
 ## Composing the proxy
 
-The proxy is an application of its own, beside the Hosts it fronts. The Proving Sample's is `ModularMonolith.ReverseProxy`, and each `dotnet new` template generates `src/<name>.ReverseProxy` in front of its Host ([templates.md](templates.md)):
+The proxy is an application of its own, beside the Hosts it fronts. The Proving Sample's is `ModularMonolith.ReverseProxy`, and the monolith and modular monolith templates generate `src/<name>.ReverseProxy` in front of their Host, the service template none ([templates.md](templates.md)):
 
 ```csharp
 using PouryaKit.ReverseProxy;

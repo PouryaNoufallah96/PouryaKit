@@ -82,6 +82,14 @@
       "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.Security.JwtBearer", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
       "tests": ["PouryaKit.Testing"],
       "excluded": ["PouryaKit.Testing", "PouryaKit.ReverseProxy"]
+    },
+    {
+      "name": "template-service-kebab",
+      "template": "pouryakit-service",
+      "generated": "acme-stock",
+      "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.Security.JwtBearer", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
+      "tests": ["PouryaKit.Testing"],
+      "excluded": ["PouryaKit.Testing", "PouryaKit.ReverseProxy"]
     }
   ]
 }
