@@ -1,6 +1,6 @@
 ---
 name: aspire-apphost-facts
-description: Aspire 13.6.1 AppHost traps (#130, #139 Ollama): the SDK's implicit package and CPM, ASPIRE010, the MessagePack and Fractions floors, what the testing builder's model holds, endpoints, passwords on named volumes, the namespace shadow, validate.py and the skill description limit
+description: Aspire 13.6 AppHost traps (#130, #139 Ollama, #170 the proxy): the SDK's implicit package and CPM, ASPIRE010, the MessagePack and Fractions floors, what the testing builder's model holds, endpoints, passwords on named volumes, the namespace shadow, validate.py and the skill description limit
 metadata:
   type: project
 ---
@@ -28,5 +28,15 @@ Learned building `PouryaKit.Aspire` and `ModularMonolith.AppHost` (#130, 2026-10
 - **Aspire's `ResourceHealthCheckService` awaits each check with no deadline** (#139 review F1): a custom check's every request needs its own linked `CancellationTokenSource` deadline, returning Unhealthy on expiry; prove it against a `TcpListener` that accepts and never answers, building an `EndpointReference` from a `ContainerResource` whose `EndpointAnnotation.AllocatedEndpoint` is set by hand.
 - **Reading a resource's environment in a model test**: `GetEnvironmentVariableValuesAsync` is obsolete in 13.6 (CS0618 is an error); invoke each `EnvironmentCallbackAnnotation` with `new EnvironmentCallbackContext(new(DistributedApplicationOperation.Publish), resource, [])` and render an `IManifestExpressionProvider` value by `ValueExpression` (`{ollama.bindings.http.url}/v1`).
 - **qwen2.5:0.5b through the Host answered in about 25 s** with the image and model cached; a run without the endpoint wiring, or without the pull on a fresh volume, returns 500 from the agent.
+
+## The Reverse proxy in the AppHost (#170, 2026-10-24; Aspire 13.6.4, YARP 2.3.0)
+
+- **A `Urls` key in a project's `appsettings.json` beats the `ASPNETCORE_URLS` Aspire passes** (WebApplication loads `ASPNETCORE_`-prefixed variables before `appsettings.json`): the proxy listened on its own 5100 and `WaitForResourceHealthyAsync` timed out after 5 min, "Request to http://localhost:<allocated>/alive timed out". Put the URL in `Properties/launchSettings.json` (`applicationUrl`); Aspire derives the `http` endpoint from the profile, so no `WithHttpEndpoint()`, and the testing builder randomizes the port.
+- Aspire runs a project resource with its project directory as content root, so an `appsettings.json` the csproj does not copy still loads (the proxy's `RunWorkingDirectory` setup).
+- **The AppHost's databases hold no Module tables**: no Host migrates at start, so an Operation through the AppHost answers 500 (`42P01 relation "inventory.stock_items" does not exist`). Prove a route under the AppHost with an answer given before any query: Inventory's unversioned path with a token answers 400 `ApiVersionUnspecified`, where `ModularMonolith.Host` (no Inventory beside a broker) answers 404.
+- **A project's effective configuration in a model test**: `ProjectResource.GetProjectMetadata().ProjectPath` gives the directory for `ConfigurationBuilder().AddJsonFile`, then the rendered environment with `__` replaced by `:` through `AddInMemoryCollection`. `WithReference(project)` renders `services__<name>__http__0` as `{<name>.bindings.http.url}`. A JSON `false` reads back as `"False"`; an environment `"true"` stays `"true"`.
+- A route's configuration belongs where the topology is decided: the sample's `ModularMonolith.Host` hosts Inventory without a broker, so a `/inventory` route in the proxy's own settings would break its standalone run; the AppHost (broker on) adds it as environment.
+- `ReverseProxyTests` joined `BrokerCollection` (constructor `(AppFixture app, BrokerFixture broker)`) to start `Inventory.Host`, which needs RabbitMQ; `StartInventoryHostAsync(configure: b => b.WebHost.UseKestrel().UseUrls("http://127.0.0.1:0"))` overrides the fixture's test server. An `IStartupFilter` added in `configure` records what the Host's pipeline receives.
+- `dotnet test --filter-method A --filter-method B` runs several methods in one call.
 
 Related: [[templates-packaging-and-publication-facts]], [[docs-verification-tools]].

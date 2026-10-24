@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "a3dce9de943a8fc722651e1e662720473ef644a3",
+      "revision": "39a89f36e2fd8ae961d5cdbc473442aad4c1796c",
       "link_mode": "web"
     }
   },
@@ -541,16 +541,8 @@
       "id": "proxy-invhost",
       "from": "proxy",
       "to": "invhost",
-      "label": "Inventory's paths, under the AppHost",
+      "label": "Inventory's paths",
       "fromSide": "right",
-      "toSide": "left"
-    },
-    {
-      "id": "apphost-proxy",
-      "from": "apphost",
-      "to": "proxy",
-      "label": "runs it, adds the service route",
-      "fromSide": "left",
       "toSide": "top"
     },
     {
