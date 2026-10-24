@@ -54,17 +54,19 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   `docs/adr/`, dated records. A moved file is cited at its new path.
 - Diagram sources: each Archify diagram source, `docs/architecture/diagrams/*.json`, pins `meta.repository.revision`,
   and every entry of a `sources` list in it (`path`, `line`, `end_line`, one line when that is absent) must still
-  describe the code: the revision is in HEAD's history, the path names a file at HEAD, `line` and `end_line` are
-  in order within its lines, and no hunk of `git diff <revision> HEAD` starts at or above the range's last line: a
-  change below a cited range leaves its lines where they were, while one inside or above it rewrites or moves them,
-  and a range cannot tell the two apart. The HTML pages are not read.
+  describe the code: the revision is in HEAD's history (during a merge, one reachable from `MERGE_HEAD` counts), the
+  path names a file at HEAD, `line` and `end_line` are in order within its lines, and no hunk of
+  `git diff <revision> HEAD` starts at or above the range's last line: a change below a cited range leaves its lines
+  where they were, while one inside or above it rewrites or moves them, and a range cannot tell the two apart. The
+  HTML pages are not read.
 
 `--staged` reads the diagram sources and their cited files from the index, and compares those files with the pinned
 revision (the default compares HEAD). A cited file staged together with its diagram passes if the ranges fit the indexed
 file, so the repair path is two commits: the code and the diagram's ranges and labels first, then the diagram re-pinned
-to that commit. A cited file staged without its diagram is refused. The other rules still read the working tree: the hook
-refuses docs and AI-setup paths staged in part, but a source file staged in part can make those rules see different names
-or test declarations from the commit. CI's check on the committed tree is the gate.
+to that commit. A change at or above a cited range staged without its diagram is refused; a change below every cited
+range passes. The other rules still read the working tree: the hook refuses docs and AI-setup paths staged in part, but
+a source file staged in part can make those rules see different names or test declarations from the commit. CI's check
+on the committed tree is the gate.
 
 `--fences` only prints: for each Markdown file changed against HEAD, whether its fenced blocks changed, so an
 implementer knows whether the skill's snippet harness must run.
