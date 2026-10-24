@@ -16,7 +16,7 @@ var broker = builder.AddPouryaKitRabbitMq("broker");
 var shop = postgres.AddDatabase("modular-monolith-db", "modular_monolith");
 var inventory = postgres.AddDatabase("inventory-db", "inventory");
 
-// ModularMonolith.Host refuses to start without a bearer issuer, audience and signing key: the key is the base64 value of
+// Each Host refuses to start without a bearer issuer, audience and signing key: the key is the base64 value of
 // the AppHost parameter bearer-signing-key (user secrets, or Parameters__bearer-signing-key), which signs a caller's token.
 const string Issuer = "modular-monolith-apphost";
 var signingKey = builder.AddParameter("bearer-signing-key", secret: true);
@@ -27,6 +27,10 @@ builder
     .WithHttpHealthCheck("/alive")
     .WithReference(inventory, "app")
     .WithReference(broker)
+    .WithEnvironment("Authentication__Schemes__Bearer__ValidIssuer", Issuer)
+    .WithEnvironment("Authentication__Schemes__Bearer__ValidAudiences__0", "modular-monolith")
+    .WithEnvironment("Authentication__Schemes__Bearer__SigningKeys__0__Issuer", Issuer)
+    .WithEnvironment("Authentication__Schemes__Bearer__SigningKeys__0__Value", signingKey)
     .WaitFor(inventory)
     .WaitFor(broker);
 

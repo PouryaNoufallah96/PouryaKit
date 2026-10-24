@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "52dbc13f6dba89a9e16b3a918b3b3df795ff04c9",
+      "revision": "a3dce9de943a8fc722651e1e662720473ef644a3",
       "link_mode": "web"
     }
   },
@@ -35,7 +35,7 @@
         {
           "path": "tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs",
           "line": 94,
-          "end_line": 148,
+          "end_line": 149,
           "label": "both Hosts on one broker"
         }
       ]
@@ -124,8 +124,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/InventoryHost.cs",
-          "line": 13,
-          "end_line": 47,
+          "line": 17,
+          "end_line": 62,
           "label": "Inventory alone, Catalog's wire names"
         },
         {
@@ -137,7 +137,7 @@
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj",
           "line": 8,
-          "end_line": 27,
+          "end_line": 30,
           "label": "its references"
         }
       ]
@@ -254,14 +254,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs",
-          "line": 19,
-          "end_line": 37,
+          "line": 23,
+          "end_line": 46,
           "label": "three subscriptions; a recurring command"
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/Inventory.csproj",
           "line": 8,
-          "end_line": 15,
+          "end_line": 17,
           "label": "Catalog's Contracts, never Catalog"
         }
       ]
@@ -419,7 +419,7 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
           "line": 24,
-          "end_line": 59,
+          "end_line": 63,
           "label": "each Host on its resources, Ollama opt-in"
         },
         {

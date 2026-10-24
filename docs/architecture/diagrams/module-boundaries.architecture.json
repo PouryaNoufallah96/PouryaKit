@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "c853388d6868847b33789fe9fd289762f2ca7db1",
+      "revision": "a3dce9de943a8fc722651e1e662720473ef644a3",
       "link_mode": "web"
     }
   },
@@ -227,7 +227,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/Inventory.csproj",
           "line": 8,
-          "end_line": 15,
+          "end_line": 17,
           "label": "Catalog's Contracts, never Catalog"
         },
         {

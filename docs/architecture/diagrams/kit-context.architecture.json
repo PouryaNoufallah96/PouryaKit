@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "c853388d6868847b33789fe9fd289762f2ca7db1",
+      "revision": "a3dce9de943a8fc722651e1e662720473ef644a3",
       "link_mode": "web"
     }
   },
@@ -186,8 +186,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/InventoryHost.cs",
-          "line": 31,
-          "end_line": 55,
+          "line": 40,
+          "end_line": 82,
           "label": "Inventory alone, receives over RabbitMQ"
         },
         {
@@ -199,7 +199,7 @@
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj",
           "line": 20,
-          "end_line": 27,
+          "end_line": 30,
           "label": "references the Kit's projects"
         }
       ]
@@ -389,7 +389,7 @@
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs",
-          "line": 21,
+          "line": 25,
           "label": "schema inventory"
         },
         {

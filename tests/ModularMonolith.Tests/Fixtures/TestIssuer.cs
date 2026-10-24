@@ -30,6 +30,15 @@ internal static class TestIssuer
     ];
 
     /// <summary>
+    /// <see cref="HostArguments"/> in the environment's spelling, for a Host run as its own process: JasperFx reads the
+    /// Host's arguments as its own.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> HostEnvironment { get; } =
+        HostArguments
+            .Select(argument => argument.TrimStart('-').Split('=', 2))
+            .ToDictionary(setting => setting[0].Replace(":", "__", StringComparison.Ordinal), setting => setting[1]);
+
+    /// <summary>
     /// A token for the caller <paramref name="claims"/> describe, valid now for five minutes unless
     /// <paramref name="change"/> says otherwise.
     /// </summary>

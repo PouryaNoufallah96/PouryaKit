@@ -8,7 +8,7 @@ internal static class ModularMonolithProcess
 {
     public static HostProcess Start(string connectionString)
     {
-        Dictionary<string, string> environment = new()
+        Dictionary<string, string> environment = new(TestIssuer.HostEnvironment)
         {
             ["ConnectionStrings__app"] = connectionString,
             ["PouryaKit__TrustedPeers__Peers__0"] = AppFixture.TrustedPeer,
@@ -16,13 +16,6 @@ internal static class ModularMonolithProcess
             ["Logging__Console__FormatterName"] = "json",
             ["Logging__Console__FormatterOptions__IncludeScopes"] = "true",
         };
-        // The issuer's command-line settings in the environment's spelling: JasperFx reads the Host's arguments as its own.
-        foreach (var argument in TestIssuer.HostArguments)
-        {
-            var setting = argument.TrimStart('-').Split('=', 2);
-            environment[setting[0].Replace(":", "__", StringComparison.Ordinal)] = setting[1];
-        }
-
         return HostProcess.Start("ModularMonolith.Host", environment);
     }
 }
