@@ -134,5 +134,9 @@ metadata:
 
 - `IOptions<T>.Value` runs every `Validate` the registration added, so a test that resolves options to check one value set in code fails on the others with `OptionsValidationException`: set the required ones in the same `configure` and assert them all.
 
+## Test order follows the checkout path (PR #143 audit X1, 2026-10-24; xunit.v3, MTP)
+
+- **The order of a class's tests differs per worktree path and is stable in one path**: the same commit ran `SagaTests` 39 of 39 in one worktree and 3 failures in another, every run. A test that leaves process-wide state (the Kit's wire-name registry, `WireNaming`: a type keeps one wire name in a process) breaks a later one only in some paths. Before calling a red "mine", rerun the base in the same path (`git switch --detach <base>` in the worktree, rebuild, run, `git switch` back), not in a second worktree.
+
 **Why:** Test projects run on Microsoft.Testing.Platform, chosen in ticket #4 (2026-10-05) as the plain current .NET 10 idiom; a later ticket repeating VSTest packages would create a second way of running tests. Each other fact cost a build, a run or a vacuous red in tickets #4 to #63 or retro C (2026-10-06).
 **How to apply:** before adding a test project, a test filter or an analyzer rule in `.editorconfig`; before every mutation run; when a change adds a table, a Module, a subscription or an Integration Event type to the sample. Related: [[worktree-shell-and-check-gotchas]], [[core-json-and-architecture-test-facts]].
