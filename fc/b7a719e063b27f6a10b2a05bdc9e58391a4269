@@ -1,0 +1,76 @@
+src/PouryaKit.Persistence.EFCore/EfCoreServiceCollectionExtensions.cs
+  s_067424b212e979::t_abadc3cc534af4 70
+  s_067424b212e979::t_e5300488d27b18 28-30
+src/PouryaKit.Persistence.Marten/MartenHostApplicationBuilderExtensions.cs
+  s_067424b212e979::t_9e590fd1ec94e6 28-30
+tests/ModularMonolith.Tests/IntegrationEventWiringTests.cs
+  s_067424b212e979::t_f7ebfe561c7518 6
+src/PouryaKit.Persistence.Marten/StreamOutboxCheck.cs
+  s_067424b212e979::t_fefef290fbb39c 1-24
+src/PouryaKit.Messaging.Wolverine.Marten/MartenStreamOutbox.cs
+  s_067424b212e979::t_3d9803c39ec65d 2
+src/PouryaKit.Persistence.Marten/StreamServiceCollectionExtensions.cs
+  s_067424b212e979::t_aafb7de7a9a9a5 63
+  s_067424b212e979::t_c6405d7c3a0798 25-27
+tests/ModularMonolith.Tests/StreamTests.cs
+  s_067424b212e979::t_9da82f4226f449 3,6
+  s_067424b212e979::t_469df55edd66c1 23
+  s_067424b212e979::t_40506c422aa33b 124-174
+  s_067424b212e979::t_8596ddcb66cb1a 709-714
+  s_067424b212e979::t_4a8b0eb7037fb6 28
+src/PouryaKit.Persistence.EFCore/UnitOfWorkOutboxCheck.cs
+  s_067424b212e979::t_a8f0c83a969225 1-28
+src/PouryaKit.Cqrs/Pipeline/IOutbox.cs
+  s_067424b212e979::t_d91677cb9ef5a5 11-12
+  s_067424b212e979::t_a26a3e7230c5c2 1-10
+src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs
+  s_067424b212e979::t_23312e2a7b51e1 4
+.agents/skills/pourya-kit/references/messaging.md
+  s_067424b212e979::t_f4829e929f2fca 727
+.agents/skills/pourya-kit/references/modules.md
+  s_067424b212e979::t_f8c5bf5cd257a1 140
+.agents/skills/pourya-kit/references/stream.md
+  s_067424b212e979::t_e18c0999d2ea5c 51,193-194
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_067424b212e979::t_b6e9095f97f2f4 8
+.claude/agent-memory/kit-implementer/composition-check-facts.md
+  s_067424b212e979::t_8b23aec5863374 81-87
+docs/acceptance.md
+  s_067424b212e979::t_ef45520dd13e34 2298,2344
+docs/adr/0002-no-mediator-dependency.md
+  s_067424b212e979::t_827fd345ff01ab 405-407
+docs/architecture/README.md
+  s_067424b212e979::t_c1da9b7c184b5a 128,166,450,505,542,575
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_067424b212e979::t_aa2bba69d54c47 302-303
+docs/architecture/diagrams/delivery.sequence.json
+  s_067424b212e979::t_c1e40c346f8b47 43-44
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_067424b212e979::t_f6834d10db6820 189-190,453-454
+docs/provenance/PouryaKit.Cqrs.md
+  s_067424b212e979::t_059874262b5de1 21-22
+docs/provenance/PouryaKit.Messaging.Wolverine.md
+  s_067424b212e979::t_7699608323f047 5
+docs/provenance/PouryaKit.Persistence.EFCore.md
+  s_067424b212e979::t_a1bd8f48ba0636 5
+docs/provenance/PouryaKit.Persistence.Marten.md
+  s_067424b212e979::t_8ecdf1c0cada6e 5
+src/PouryaKit.Persistence.Marten/StreamModules.cs
+  s_067424b212e979::t_1d6a1759990010 7-8,19-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fcb7a719e063b27f6a10b2a05bdc9e58391a4269",
+  "prompts": {},
+  "sessions": {
+    "s_067424b212e979": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b3b69ca-8b5c-4c58-b18c-05594cfed649",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
