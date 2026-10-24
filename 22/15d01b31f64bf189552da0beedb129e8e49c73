@@ -1,0 +1,19 @@
+README.md
+  s_d25075ecfddc3d::t_cc19b8a96ef6de 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2215d01b31f64bf189552da0beedb129e8e49c73",
+  "prompts": {},
+  "sessions": {
+    "s_d25075ecfddc3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c2faa7bc-43e4-49f1-ba67-db6d73ce0e91",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
