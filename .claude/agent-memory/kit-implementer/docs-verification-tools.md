@@ -133,5 +133,12 @@ metadata:
 
 - `scratchpad/p143/remap143.py <worktree> [--write]` maps every citation of a file changed against HEAD through a `difflib` line map and edits the numbers with a path-anchored regex; run `--write` once only, since a second run maps the new numbers as HEAD's. A range whose cited code grew (a nested provider class below `HeaderRequestCulture`'s methods) needs its end set by hand. `scratchpad/p143/cites.py <worktree> <substring> ...` lists citations by path before editing; the session-4 `tools/m142/repin.py` pins and refinalizes with the surviving Archify clone.
 
+## Status and record markers (#164, 2026-10-24)
+
+- **A brief that asks to reword a clause inside an owner-decision paragraph while its `stop_if` forbids a decision text change:** keep the decision's words and insert an italic dated parenthetical (`asks for *(drafted 2026-10-24, not posted)*`); list the tension under deviations. A sentence an amendment closed gets ADR 0002's `*Superseded on <date> by …; see the amendment below.*` after it.
+- **A stale phrase often has a third copy in a dated plan note** (I.3's Project template row restated the templates' "Wave 2" label from #53): it was true when dated, so add a dated clause after it rather than editing it.
+- Evidence for a publication status: `gh run list --repo PouryaNoufallah96/PouryaKit --branch main --limit 6` shows each CI run on `main` and whether `Private main publication` ran or was skipped.
+- `check-docs.py` passes package names in backticks in `docs/acceptance.md` (`PouryaKit.AI.Postgres`); only a span shaped like a test pointer is resolved as one.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].
