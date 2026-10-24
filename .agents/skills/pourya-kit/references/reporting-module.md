@@ -106,6 +106,7 @@ Under the route group `/reports`, authenticated as every Module's endpoints are 
 ## Limits
 
 - One connection string name, `app`, which the Host cannot change: `IModuleDefinition` takes no parameters.
+- A setting out of range fails the start with its one failure reported twice in the `AggregateException` the start throws: the settings are validated themselves, and again when the retention's cadence reads `CleanupInterval` from them. Accepted (2026-10-23): the start fails as it should, naming the bounds, and only the report repeats (`ReportModuleTests.A_host_whose_report_setting_is_out_of_range_fails_to_start_naming_the_bounds`).
 - The file is rendered in memory, as one byte array, inside the attempt's Unit of Work, whose transaction stays open while the layout, the renderer and the store run: keep a kind to what fits in memory and within `ClaimTimeout`.
 - A job taken over whose second attempt also stalls stays `Generating` until its expiry; the retention then removes it.
 - A late attempt's file goes when its delivery is retried; a delivery whose every retry fails to delete it is set aside as a dead letter of `reports.render`, and the file stays until that dead letter is replayed.

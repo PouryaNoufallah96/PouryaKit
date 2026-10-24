@@ -129,6 +129,9 @@ internal sealed class OwnQueryCache : IQueryCache
     public Task EvictAsync(IReadOnlyCollection<string> tags) => Task.CompletedTask;
 }
 
+// Says the Host has an Outbox, as only a messaging package registers it: a pipeline step by another name.
+internal sealed class OwnOutbox : IOutbox;
+
 internal sealed class ConnectingCommandHandler(OffendingDbContext dbContext) : CommandHandler<OffendCommand>
 {
     public override Task<Result> Handle(OffendCommand command, CancellationToken cancellationToken)

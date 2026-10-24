@@ -48,7 +48,10 @@ public sealed class PipelineContractTests
     public void An_application_type_that_implements_a_pipeline_contract_is_rejected()
     {
         Assert.Equal(
-            ["Offending.OwnQueryCache implements IQueryCache, a pipeline contract only the Kit implements (Offending.dll)."],
+            [
+                "Offending.OwnQueryCache implements IQueryCache, a pipeline contract only the Kit implements (Offending.dll).",
+                "Offending.OwnOutbox implements IOutbox, a pipeline contract only the Kit implements (Offending.dll).",
+            ],
             ModuleRules.ImplementsPipelineContracts(typeof(OffendingModule).Assembly)
         );
     }

@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "1dc41f848c5c2526c7582d99c4ad2da3e774c98e",
+      "revision": "22580047f51ed2119d02c597ee26431f09f5d42b",
       "link_mode": "web"
     }
   },
@@ -301,7 +301,7 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/PipelineContractTests.cs",
           "line": 10,
-          "end_line": 54,
+          "end_line": 57,
           "label": "Modules and Hosts implement none"
         }
       ]
