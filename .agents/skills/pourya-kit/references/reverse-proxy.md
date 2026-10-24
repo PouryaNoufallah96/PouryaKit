@@ -61,10 +61,10 @@ Routes and clusters are YARP's configuration, in the `ReverseProxy` section (`Re
 
 ## Limits
 
-- Liveness only: no readiness probe outside Development, and `/health`, which asks each database, stays a Development endpoint of the service defaults.
+- Liveness only, by decision: the proxy probes `/alive`, the recipe's liveness path, and no readiness path, since readiness outside Development is the platform's probe (spec #74's D13, closed on 2026-10-24 by owner decision W5 of spec #161). A Kit readiness option would duplicate what the platform's probe does over the Host's liveness path and dependencies; `/health`, which asks each database, stays a Development endpoint of the service defaults ([host-recipes.md](host-recipes.md#liveness-and-readiness)).
 - No transform, rate limit, authentication or response cache of the proxy's own; add YARP's where the application needs them, in its own composition.
 - Routes and clusters come from configuration only; there is no code-built route.
-- As shipped, the proxy carries no gRPC: it listens without TLS and forwards to `http://` destinations, where YARP sends HTTP/1.1. A Host's gRPC client calls the other Host directly ([grpc.md](grpc.md)); to proxy gRPC, follow YARP's gRPC guidance.
+- As shipped, the proxy carries no gRPC: it listens without TLS and forwards to `http://` destinations, where YARP sends HTTP/1.1. The limit stays, and the Kit adds no HTTP/2 destination option (owner decision W7 of spec #161, 2026-10-24): a Host's gRPC client targets the other Host directly, at the address its `PouryaKitGrpcClientOptions` name ([grpc.md](grpc.md#calling-another-host)), so the proxy fronts the HTTP API alone. An application that must proxy gRPC follows YARP's gRPC guidance in its own composition.
 
 ## Testing
 
