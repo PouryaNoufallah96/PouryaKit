@@ -191,6 +191,7 @@ internal sealed class ActivateAccountNotificationHandler(IStreams streams, IInte
 ## Limits
 
 - A Stream publishes no Snapshot: what it publishes are the Notifications and the Integration Events of its events. A Snapshot declared for a Stream type, which would never be sent, fails the Host when it is built, naming the Stream and the Module.
+- A Host with deliveries calls `UsePouryaKitMarten`; nothing refuses one that calls `AddPouryaKitMarten` beside the EF message store (`UsePouryaKitWolverine`) instead. There, a Stream Module's Notifications and Integration Events are never written, while its Operations commit and nothing is logged; a delivery into it fails on its Receipt at run time; and a Snapshot declared for a Stream is not refused, since `UsePouryaKitMarten` registers that check. A refusal at build needs a seam between the Marten and the messaging packages that plan section C does not have (spec #115, owner decision pending).
 - Realtime pushes, `IUnitOfWorkConnection` and number sequences are the EF Unit of Work's; a Stream Module has none of them.
 - A Stream's projections are folds of one stream; Marten's projection daemon and its documents are not part of the Kit.
 - Wolverine's own aggregate-handler workflow is not used: the Kit's dispatcher runs every Operation (ADR 0011, "Rejected options").
