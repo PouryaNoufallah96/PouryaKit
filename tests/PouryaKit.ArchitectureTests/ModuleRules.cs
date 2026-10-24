@@ -828,10 +828,10 @@ internal static partial class ModuleRules
             {
                 if (!held[at] && TableAt(at) is { } table)
                 {
-                    var item = $"{table}{(_items[at].Alias is { } alias ? $" {alias}" : "")}";
+                    var item = $"{table}{(_items[at].Alias is { } alias ? $" {Written(alias)}" : "")}";
                     return _tenantTables[table].Tenant is null
                         ? $"does not join the part {item} on its key to its holder up to {string.Join(" or ", RootsOf(table, _tenantTables))} held to {TenantSetting}"
-                        : $"does not hold {item} to the tenant with a top-level conjunct of its WHERE that is exactly {NamesOf(at)[0]}.{_tenantTables[table].Tenant} = {TenantSetting}";
+                        : $"does not hold {item} to the tenant with a top-level conjunct of its WHERE that is exactly {Written(NamesOf(at)[0])}.{_tenantTables[table].Tenant} = {TenantSetting}";
                 }
             }
 
@@ -916,6 +916,10 @@ internal static partial class ModuleRules
 
             yield return _tokens[start..end];
         }
+
+        // A name as SQL must write it to resolve to it: a name with an upper-case letter came from a double-quoted
+        // identifier (a word's Name is lower case), so it is written quoted; every other name is written bare.
+        private static string Written(string name) => name == name.ToLowerInvariant() ? name : $"\"{name}\"";
 
         private static string Shown(SqlToken token) =>
             token.Kind switch
