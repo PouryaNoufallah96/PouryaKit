@@ -1,0 +1,24 @@
+.agents/scripts/check-tree.py
+  s_dc235343aadb31::t_ad319fe2918d6d 16
+docs/acceptance.md
+  s_dc235343aadb31::t_ad319fe2918d6d 2660-2671
+  s_dc235343aadb31::t_b56983f97687fc 2672
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_dc235343aadb31::t_ad319fe2918d6d 65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "beca33d970215659e216727310d61e1a35cb8a3b",
+  "prompts": {},
+  "sessions": {
+    "s_dc235343aadb31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c959058c-fafb-418d-968e-8aae07d692ee",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
