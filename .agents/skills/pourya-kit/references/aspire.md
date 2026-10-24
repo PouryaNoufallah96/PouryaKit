@@ -11,7 +11,7 @@
 
 ## The AppHost
 
-An AppHost project uses the `Aspire.AppHost.Sdk` and references the Hosts it runs and the package. This is the Proving Sample's `samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj`:
+An AppHost project uses the `Aspire.AppHost.Sdk` and references the Hosts and the Reverse proxy it runs, and the package. This is the Proving Sample's `samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj`:
 
 ```xml
 <Project Sdk="Aspire.AppHost.Sdk/13.6.4">
@@ -23,6 +23,7 @@ An AppHost project uses the `Aspire.AppHost.Sdk` and references the Hosts it run
   <ItemGroup>
     <ProjectReference Include="..\Inventory.Host\Inventory.Host.csproj" />
     <ProjectReference Include="..\ModularMonolith.Host\ModularMonolith.Host.csproj" />
+    <ProjectReference Include="..\ModularMonolith.ReverseProxy\ModularMonolith.ReverseProxy.csproj" />
     <PackageReference Include="PouryaKit.Aspire" />
   </ItemGroup>
 </Project>
@@ -45,7 +46,7 @@ var broker = builder.AddPouryaKitRabbitMq("broker");
 var shop = postgres.AddDatabase("modular-monolith-db", "modular_monolith");
 var inventory = postgres.AddDatabase("inventory-db", "inventory");
 
-builder
+var inventoryHost = builder
     .AddProject<Projects.Inventory_Host>("inventory")
     .WithHttpEndpoint()
     .WithHttpHealthCheck("/alive")
@@ -55,7 +56,7 @@ builder
     .WaitFor(inventory)
     .WaitFor(broker);
 
-builder
+var shopHost = builder
     .AddProject<Projects.ModularMonolith_Host>("modular-monolith")
     .WithHttpEndpoint()
     .WithReference(shop, "app")
@@ -65,6 +66,15 @@ builder
     .WaitFor(shop)
     .WaitFor(cache)
     .WaitFor(broker);
+
+builder
+    .AddProject<Projects.ModularMonolith_ReverseProxy>("reverse-proxy")
+    .WithHttpHealthCheck("/alive")
+    .WithReference(inventoryHost)
+    .WithReference(shopHost)
+    // ...the service route, below...
+    .WaitFor(inventoryHost)
+    .WaitFor(shopHost);
 
 builder.Build().Run();
 ```
@@ -85,6 +95,21 @@ var signingKey = builder.AddParameter("bearer-signing-key", secret: true);
 ```
 
 Set the parameter to a base64 key of at least 32 bytes in the AppHost's user secrets (`Parameters:bearer-signing-key`), and sign a caller's token with it, that issuer and that audience.
+
+The Reverse proxy ([reverse-proxy.md](reverse-proxy.md)) runs in front of both Hosts. Each `WithReference(host)` gives it the Host's endpoint as `services__<resource>__http__0`, the `Services` entry service discovery reads, so a destination `http://<resource>` resolves to that Host in place of the `localhost` address of the proxy's own settings. Those settings route every path to `modular-monolith` with that cluster's probe off, since `ModularMonolith.Host` maps no liveness path (owner decision W11 of spec #161); the AppHost adds the service route, Inventory's paths to `Inventory.Host`, whose `/alive` the proxy probes:
+
+```csharp
+// on the proxy project, between its references and its waits:
+    .WithEnvironment("ReverseProxy__Routes__inventory__ClusterId", "inventory")
+    .WithEnvironment("ReverseProxy__Routes__inventory__Match__Path", "/inventory/{**catch-all}")
+    .WithEnvironment("ReverseProxy__Clusters__inventory__Destinations__host__Address", "http://inventory")
+    .WithEnvironment("ReverseProxy__Clusters__inventory__HealthCheck__Active__Enabled", "true")
+```
+
+- A path that starts with a literal segment outranks the catch-all, so Inventory's paths reach `Inventory.Host` and every other path `ModularMonolith.Host`.
+- The route is the AppHost's, not the proxy's settings', because only beside a broker does Inventory run in a Host of its own: without one, `ModularMonolith.Host` hosts Inventory and serves its paths, which the settings' catch-all route sends it when the proxy runs alone.
+- The Kit turns each cluster's probe on unless its configuration says otherwise ([reverse-proxy.md](reverse-proxy.md#routes-clusters-and-discovery)); the AppHost sets it on beside the settings' `false`, so the recipe states both.
+- The proxy's endpoint is its launch profile's, `http://localhost:5100` in its `Properties/launchSettings.json`, so it takes no `WithHttpEndpoint()`. Its `appsettings.json` names no listening URL: a `Urls` setting there overrides the `ASPNETCORE_URLS` Aspire passes, and the proxy listens where neither the AppHost's health check nor a client calls it.
 
 ## A local agent
 
@@ -126,7 +151,7 @@ if (bool.TryParse(builder.Configuration["LocalAgent"], out var localAgent) && lo
 
 ## Running it
 
-`dotnet run --project samples/ModularMonolith/src/ModularMonolith.AppHost` starts the containers and both Hosts, headless. It needs Docker and the .NET SDK, no Aspire workload or CLI, and the `bearer-signing-key` parameter set first, in the AppHost's user secrets or as the environment variable `Parameters__bearer-signing-key`. Add `LocalAgent=true` after `--` for Ollama and the agent's model.
+`dotnet run --project samples/ModularMonolith/src/ModularMonolith.AppHost` starts the containers, both Hosts and the Reverse proxy, headless; the proxy answers on `http://localhost:5100`. It needs Docker and the .NET SDK, no Aspire workload or CLI, and the `bearer-signing-key` parameter set first, in the AppHost's user secrets or as the environment variable `Parameters__bearer-signing-key`. Add `LocalAgent=true` after `--` for Ollama and the agent's model.
 
 A named volume keeps the credentials it was first initialised with. Aspire generates each server's password as a parameter (`postgres-password`, `cache-password`, `broker-password`) and keeps it in the AppHost's user secrets, which is why the AppHost has a `UserSecretsId` and runs in Development, where it reads them back. Set a password yourself, and the volume made with another one refuses it: remove the volume (`docker volume rm`) or keep the first password.
 
@@ -146,8 +171,9 @@ await app.ResourceNotifications.WaitForResourceHealthyAsync("inventory", cancell
 using var inventory = app.CreateHttpClient("inventory");
 ```
 
-- The model test reads the builder without starting it: every resource's name, as an allow-list, each container's image and its one volume mount, and the resources each Host references; with no `LocalAgent`, no Ollama. A second model test builds it with `LocalAgent=true`: the allow-list gains `ollama` alone, on its pinned image and named volume, with its model check, and `ModularMonolith.Host` waits for it with its `PouryaKit__AI__Provider`, `__Endpoint` and `__Model` set, which `Inventory.Host` is not given. Neither starts anything, so no image or model is downloaded.
-- The start test runs the containers and both Hosts as processes, waits for each Host, and asks `Inventory.Host`'s `/alive`, which its health check already answered, and an endpoint of `ModularMonolith.Host`, which refuses an anonymous caller with 401 once it serves; that Host has no health check, so its resource is healthy once its process runs, and the test asks again until it answers, within its timeout. The running model is still the allow-list, so no dashboard joined it.
+- The model test reads the builder without starting it: every resource's name, as an allow-list, each container's image and its one volume mount, the resources each Host references, and the two Hosts the proxy references; with no `LocalAgent`, no Ollama. A second model test builds it with `LocalAgent=true`: the allow-list gains `ollama` alone, on its pinned image and named volume, with its model check, and `ModularMonolith.Host` waits for it with its `PouryaKit__AI__Provider`, `__Endpoint` and `__Model` set, which `Inventory.Host` is not given. Neither starts anything, so no image or model is downloaded.
+- The route test reads the proxy's configuration as it runs under the AppHost: its `appsettings.json`, then the environment the AppHost gives it, each endpoint as its expression. Inventory's route goes to the cluster `inventory`, whose destination `http://inventory` has its probe `true` and resolves through `Services:inventory:http:0`, the endpoint of the `inventory` resource; the catch-all route goes to `http://modular-monolith`, with its probe `False` and its own reference.
+- The start test runs the containers, both Hosts and the proxy as processes, waits for each Host and for the proxy's `/alive`, and asks `Inventory.Host`'s `/alive`, which its health check already answered, and an endpoint of `ModularMonolith.Host`, which refuses an anonymous caller with 401 once it serves; that Host has no health check, so its resource is healthy once its process runs, and the test asks again until it answers, within its timeout. Through the proxy, the anonymous caller gets the same 401 from `ModularMonolith.Host`, and a caller with a bearer token signed with the test's key, on Inventory's unversioned path, gets `Inventory.Host`'s 400 `ApiVersionUnspecified`, where `ModularMonolith.Host`, which hosts no Inventory beside a broker, answers 404. The running model is still the allow-list, so no dashboard joined it.
 - `OllamaModelHealthCheckTests` run the model check against a loopback server that accepts and never answers, once for `/api/show` and once for the pull after a 404: each check returns unhealthy when its deadline passes.
 - The local agent's start test runs only with `POURYAKIT_OLLAMA_PROBE=1`, the variable of `AiTests`' Ollama probe: it starts the AppHost with `LocalAgent=true`, waits for Ollama's model and the Host, and posts a question to the agent with a bearer token it signs with the test's key, expecting 200 and the model's text. A first run pulls the 7 GB image and the model; its timeout is 30 minutes.
 - The tests fix each server's password, and the start test moves each volume to a name ending `-tests`: its volumes serve its next run, and a developer's, made with the passwords the AppHost generated, are never opened with the test's, which would fail every health check.
@@ -157,5 +183,6 @@ using var inventory = app.CreateHttpClient("inventory");
 
 - The model is pulled only when the resource starts, by the health check; a model the AppHost stops serving stays in the volume until it is removed.
 - The registrations know nothing of a Host's composition: an AppHost that adds Redis for a Host that registers no Redis cache runs a container nothing uses.
+- The AppHost applies no EF Core migration, and no Host applies one at start ([persistence.md](persistence.md#migrations)): the databases it creates hold no table of an EF Core Module (Catalog, Billing, Inventory) until a developer applies each one's migrations to them, with the connection string Aspire gives the Host, so until then an Operation that reads or writes them fails; Ledger's Marten schema is the exception, applied when the Host starts (`UsePouryaKitMarten`). The start test asks `Inventory.Host` through the proxy for an answer it gives before any query.
 - `ModularMonolith.Host` maps no liveness path, so the AppHost waits on it only until its process runs. This is by design (owner decision W11 of spec #161, 2026-10-24): the sample composes the service defaults in `Inventory.Host` and `ModularMonolith.ReverseProxy`, not in `ModularMonolith.Host`, which keeps the Kit's outgoing HTTP proven without the recipes ([host-recipes.md](host-recipes.md#composing-a-host-with-them)). Every Host the project templates generate composes them and maps `/alive`.
 - The Proving Sample's AppHost provisions no SMTP server and no S3 store: `ModularMonolith.Host` sends mail to the SMTP server and stores files in the bucket its settings name, a local Papercut on port 2525 and a local RustFS on port 9000 with the bucket modular-monolith, which the Kit does not create. A developer runs both; without the store, a report job cannot store its file. This is by decision too (W11): the recipe shows the Kit's own resources, those of `PouryaKit.Aspire`, and a project adds the SMTP server and the file store of the providers it chose. The MailKit and S3 providers are proven against Papercut and RustFS in Testcontainers (`EmailTests`, `S3StorageTests`).

@@ -51,6 +51,7 @@ Routes and clusters are YARP's configuration, in the `ReverseProxy` section (`Re
 
 - Each cluster probes `/alive` on every destination, the liveness path a Host composing the service defaults maps in every environment, every 15 seconds; two failed probes in a row take the destination out of the cluster until a probe succeeds. A cluster's own `HealthCheck:Active` settings win: `Path` names another path, `Interval` another period, and `Enabled: false` turns the probe off for a Host that maps no `/alive`, as the Proving Sample's settings do for `ModularMonolith.Host`.
 - When every destination of a cluster is out, the cluster answers its requests with 503 until a probe succeeds: the Kit sets the cluster's `HealthCheck:AvailableDestinationsPolicy` to `HealthyAndUnknown` unless its configuration names another, where YARP's default, `HealthyOrPanic`, would forward to every destination again.
+- A route whose path starts with a literal segment outranks a catch-all route, with no `Order`. The Proving Sample's settings route every path to `ModularMonolith.Host`; its AppHost adds the service route through the proxy's environment, `/inventory/{**catch-all}` to the cluster `inventory`, whose destination `http://inventory` resolves to `Inventory.Host` through the endpoint the AppHost's reference gives the proxy, with the probe on, since that Host maps `/alive` ([aspire.md](aspire.md#the-apphost)).
 
 ## What the Kit guarantees
 
@@ -85,4 +86,4 @@ await proxy.StartAsync(TestContext.Current.CancellationToken);
 using var client = proxy.GetTestClient();
 ```
 
-Its tests read the cluster's destinations and their health from YARP's `IProxyStateLookup`, and the trace from an `ActivityListener` on the `Microsoft.AspNetCore`, `System.Net.Http` and Kit sources, since both Hosts run in the test process.
+Its tests read the cluster's destinations and their health from YARP's `IProxyStateLookup`, and the trace from an `ActivityListener` on the `Microsoft.AspNetCore`, `System.Net.Http` and Kit sources, since both Hosts run in the test process. The service route's test fronts `Inventory.Host` the same way, on the broker fixture: its `GetStockItem` answers the stock item a delivery opened for the token's tenant, and an `IStartupFilter` of the test records the token and the Kit's headers as the Host's pipeline receives them.

@@ -155,5 +155,9 @@ metadata:
 - **Archify shrinks a node's sublabel to fit its width** (8 px to 7.5 px), and at ci-and-publication's 1232 px viewBox the projection fell below 6 px: `composition/desktop-readability` on the trigger node for 36 characters in a 170-wide node. A 31-character text passed; shorten the text before widening a node, which moves the viewBox. Trial with the old revision first (`repin.py <worktree> <current revision> <slug.type>` only refinalizes), then pin.
 - A diagram that only needs a re-pin (kit-context cites `docs/private-packages.md:64-83`; an edit at line 11 is above it) must be staged with the cited file: give it an interim pin to the integration tip in the code commit, then pin it to that commit.
 
+## A new edge in a dense diagram (#170, 2026-10-24; Archify 3.0.1)
+
+- **One new edge re-plans its neighbours:** `proxy -> invhost` entering `invhost`'s left (or with no sides) made the router send the old `tests-invhost` straight through `apphost` (`clean-flow/edge-through-node`) and stack two corridors (`composition/ambiguous-corridor`); an `apphost -> proxy` edge did the same. `right -> top` passed once its label was 17 characters: a 36-character label failed `composition/label-route-clearance` against the two edges already entering that top. Trial each variant by finalizing in place (the pinned commit must already hold the cited ranges), keep the original source to restore, and drop an edge the layout cannot take. `scratchpad/p170/diag.py <worktree>` prints every diagnostic untruncated; the session-6 `tools/repin.py` cuts its JSON at 1500 characters.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].
