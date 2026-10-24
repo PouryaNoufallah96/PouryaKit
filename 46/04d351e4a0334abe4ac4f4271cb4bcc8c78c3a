@@ -1,0 +1,29 @@
+docs/architecture/diagrams/ci-and-publication.html
+  s_b933d9add4e23e::t_e008e783cf4eaf 4985,5173-5174,5181-5182,5520
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_b933d9add4e23e::t_383dc9f347fcd6 11
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b933d9add4e23e::t_9211ac5e3b6341 10
+docs/architecture/diagrams/kit-context.html
+  s_b933d9add4e23e::t_f06ba0696a4d8c 4985,5562
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b933d9add4e23e::t_d380cceeae90cc 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b933d9add4e23e::t_76b4ae0588b06f 4985,5240-5241,5248,5593
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4604d351e4a0334abe4ac4f4271cb4bcc8c78c3a",
+  "prompts": {},
+  "sessions": {
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
