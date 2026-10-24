@@ -138,5 +138,12 @@ metadata:
 - A decision deferred by an earlier spec (spec #74's D13) is restated in more places than the brief names: the acceptance row the brief points at, a second "Out of scope" row of the same section (left as history: it records that ticket's scope, not the deferral), and the plan's I.3 row, whose dated `restated` clause carried the deferral and needed a dated `closed` clause (the docs-sync set allows one). Search the decision id (`D13`) across `docs/` as well as the key phrases the brief lists.
 - Linking the replaced row to the new section (`#wave-4-...-ticket-175`) makes `check-docs.py` check the new heading's slug for free; a reason sentence that names test classes or tests must name only what they prove (the MailKit and S3 providers, not "the providers": Azure Blob runs on Azurite).
 
+## Status and record markers (#164, 2026-10-24)
+
+- **A brief that asks to reword a clause inside an owner-decision paragraph while its `stop_if` forbids a decision text change:** keep the decision's words and insert an italic dated parenthetical (`asks for *(drafted 2026-10-24, not posted)*`); list the tension under deviations. A sentence an amendment closed gets ADR 0002's `*Superseded on <date> by …; see the amendment below.*` after it.
+- **A stale phrase often has a third copy in a dated plan note** (I.3's Project template row restated the templates' "Wave 2" label from #53): it was true when dated, so add a dated clause after it rather than editing it.
+- Evidence for a publication status: `gh run list --repo PouryaNoufallah96/PouryaKit --branch main --limit 6` shows each CI run on `main` and whether `Private main publication` ran or was skipped.
+- `check-docs.py` passes package names in backticks in `docs/acceptance.md` (`PouryaKit.AI.Postgres`); only a span shaped like a test pointer is resolved as one.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].

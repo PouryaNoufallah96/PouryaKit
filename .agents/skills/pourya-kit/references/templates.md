@@ -32,10 +32,10 @@ dotnet new pouryakit-modular-monolith -n Acme.Shop
 | | `pouryakit-monolith` | `pouryakit-modular-monolith` |
 |---|---|---|
 | Role | The single-Module start: one Module's data and rules, which grows into the modular monolith when a second Module arrives | Several Modules in one Host, each reached through its Gateway |
-| Business code | Catalog and `Catalog.Contracts` | Catalog, `Catalog.Contracts`, Billing and Inventory |
+| Business code | Catalog and `Catalog.Contracts` | Catalog, `Catalog.Contracts`, Billing, Inventory, and Ledger with `Ledger.Contracts` |
 | Composition Root | `CatalogModule`, a static class whose `services.AddCatalog()` is a plain registration on the Host's services | Each Module's `IModuleDefinition`, added with `AddPouryaKitModules` |
 | Endpoint adapters | Each Feature's endpoint sends through `IDispatcher` | Each Feature's endpoint sends through `IGatewayProcessor<CatalogModule>` |
-| Kit packages | Every Wave 2 Capability that applies, without `PouryaKit.Modularity` | Every Wave 2 Capability, with `PouryaKit.Modularity` |
+| Kit packages | Every Capability its projects reference: Wave 2's that apply, [gRPC](grpc.md), [Realtime](realtime.md) and the [Reverse proxy](reverse-proxy.md); no `PouryaKit.Modularity` | The monolith's, with [Streams](stream.md), [AI](ai.md) and `PouryaKit.Modularity` |
 | The Host's checks | Container validation, the composition checks and the startup checks from `AddPouryaKitCompositionChecks` | The same, from `AddPouryaKitModules` and `UsePouryaKitWolverine`, both of which call it |
 
 - **The same business code.** Aggregates, commands, queries, handlers, validators, the repository, Dapper reads and every event handler are the sample's own files in both. Only the Composition Root and the endpoint adapters differ, and in the modular monolith they are the sample's own too.
