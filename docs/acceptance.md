@@ -2710,3 +2710,83 @@ Ticket #175 of spec #161 (spec ticket 12, owner decisions W5, W7 and W11 of 2026
 | The reverse proxy carries no gRPC and the Kit adds no HTTP/2 destination option, since a Host's gRPC client targets the other Host directly (W7) | The gRPC bullet of reverse-proxy.md's Limits, pointing at grpc.md's Calling another Host, where `PouryaKitGrpcClientOptions` names each client's address | Docs only |
 | The sample AppHost provisions no SMTP server or S3 store, since the recipe shows the Kit's own resources and a project adds those of the providers it chose; `ModularMonolith.Host` maps no liveness path, since the sample composes the service defaults in `Inventory.Host` and the proxy by design (W11) | Two bullets of [aspire.md](../.agents/skills/pourya-kit/references/aspire.md#limits)'s Limits and the skill's Aspire resources row. Read in the sample: `samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs` adds PostgreSQL, Redis, RabbitMQ and, with `LocalAgent=true`, Ollama, nothing else; `samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj` references no service defaults project, and `ModularMonolithHost` maps no health endpoint and gives its `downstream` client `AddPouryaKitResilience()` itself; `Inventory.Host` and `ModularMonolith.ReverseProxy` call `AddServiceDefaults()` and `MapDefaultEndpoints()`, as both templates' Hosts do. `EmailTests` runs Papercut and `S3StorageTests` RustFS in Testcontainers | Docs only |
 | Checks | `python3 .agents/scripts/check-ai-setup.py` and `python3 .agents/scripts/check-docs.py` on the ticket's tree | 0 failures each |
+
+## Wave 4 dependency refresh, ticket #167
+
+Ticket #167 of spec #161 (its ticket 6, owner decision W8): every pin in `Directory.Packages.props` at its latest stable version on nuget.org on 2026-10-24, read from each package's flat-container index with pre-releases left out, the Microsoft 10.0.12 family at the 10.0.13 security servicing release among them. Of the 83 pins, 54 move, 27 were already at their latest, `PDFsharp-MigraDoc` stays because its latest is not permissive, and `MessagePack` is no longer pinned, its floor retired. Both templates' `Directory.Packages.props` and the Proving Sample AppHost's `Aspire.AppHost.Sdk` move with them. `global.json` is unchanged: its SDK 10.0.402 is the one the 10.0.13 runtime ships with (the .NET 10 release metadata lists 10.0.402 and 10.0.113 for 10.0.13), and it builds the tree.
+
+| Package | Before | After |
+|---|---|---|
+| `Aspire.Hosting.PostgreSQL` | 13.6.1 | 13.6.4 |
+| `Aspire.Hosting.RabbitMQ` | 13.6.1 | 13.6.4 |
+| `Aspire.Hosting.Redis` | 13.6.1 | 13.6.4 |
+| `Aspire.Hosting.Testing` | 13.6.1 | 13.6.4 |
+| `AWSSDK.S3` | 4.0.104.4 | 4.0.104.6 |
+| `FluentValidation` | 12.1.1 | 12.2.0 |
+| `MailKit` | 4.18.1 | 4.18.2 |
+| `Marten` | 9.46.0 | 9.53.0 |
+| `MessagePack` | 2.5.307 | removed: the floor retired, `Aspire.Hosting` 13.6.4 asks for 2.5.307 itself |
+| `Microsoft.Agents.AI` | 1.25.0 | 1.26.0 |
+| `Microsoft.Agents.AI.Workflows` | 1.25.0 | 1.26.0 |
+| `Microsoft.AspNetCore.Authentication.JwtBearer` | 10.0.12 | 10.0.13 |
+| `Microsoft.AspNetCore.OpenApi` | 10.0.12 | 10.0.13 |
+| `Microsoft.AspNetCore.TestHost` | 10.0.12 | 10.0.13 |
+| `Microsoft.EntityFrameworkCore.Design` | 10.0.12 | 10.0.13 |
+| `Microsoft.EntityFrameworkCore.Relational` | 10.0.12 | 10.0.13 |
+| `Microsoft.Extensions.Caching.Hybrid` | 10.10.0 | 10.11.0 |
+| `Microsoft.Extensions.Caching.StackExchangeRedis` | 10.0.12 | 10.0.13 |
+| `Microsoft.Extensions.Configuration.Abstractions` | 10.0.12 | 10.0.13 |
+| `Microsoft.Extensions.DependencyInjection` | 10.0.12 | 10.0.13 |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | 10.0.12 | 10.0.13 |
+| `Microsoft.Extensions.Hosting` | 10.0.12 | 10.0.13 |
+| `Microsoft.Extensions.Hosting.Abstractions` | 10.0.12 | 10.0.13 |
+| `Microsoft.Extensions.Http` | 10.0.12 | 10.0.13 |
+| `Microsoft.Extensions.Http.Resilience` | 10.10.0 | 10.11.0 |
+| `Microsoft.Extensions.Logging.Abstractions` | 10.0.12 | 10.0.13 |
+| `Microsoft.Extensions.Options` | 10.0.12 | 10.0.13 |
+| `Microsoft.Extensions.ServiceDiscovery` | 10.10.0 | 10.11.0 |
+| `Microsoft.Extensions.ServiceDiscovery.Yarp` | 10.10.0 | 10.11.0 |
+| `Microsoft.Extensions.TimeProvider.Testing` | 10.10.0 | 10.11.0 |
+| `ModelContextProtocol.AspNetCore` | 2.2.0 | 2.3.0 |
+| `ModelContextProtocol.Core` | 2.2.0 | 2.3.0 |
+| `OpenTelemetry.Exporter.OpenTelemetryProtocol` | 1.19.1 | 1.20.1 |
+| `OpenTelemetry.Extensions.Hosting` | 1.19.1 | 1.20.1 |
+| `OpenTelemetry.Instrumentation.AspNetCore` | 1.19.0 | 1.20.1 |
+| `OpenTelemetry.Instrumentation.Http` | 1.19.0 | 1.20.1 |
+| `OpenTelemetry.Instrumentation.Runtime` | 1.19.0 | 1.20.1 |
+| `PDFsharp-MigraDoc` | 6.2.4 | 6.2.4, held: 6.5.0 is `AGPL-3.0-only` |
+| `Scalar.AspNetCore` | 2.17.14 | 2.18.3 |
+| `System.Security.Cryptography.ProtectedData` | 10.0.12 | 10.0.13 |
+| `Testcontainers` | 4.15.0 | 4.16.0 |
+| `Testcontainers.Azurite` | 4.15.0 | 4.16.0 |
+| `Testcontainers.Ollama` | 4.15.0 | 4.16.0 |
+| `Testcontainers.Papercut` | 4.15.0 | 4.16.0 |
+| `Testcontainers.PostgreSql` | 4.15.0 | 4.16.0 |
+| `Testcontainers.RabbitMq` | 4.15.0 | 4.16.0 |
+| `Testcontainers.Redis` | 4.15.0 | 4.16.0 |
+| `WireMock.Net` | 2.18.0 | 2.20.0 |
+| `WolverineFx` | 6.48.3 | 6.52.0 |
+| `WolverineFx.EntityFrameworkCore` | 6.48.3 | 6.52.0 |
+| `WolverineFx.Marten` | 6.48.3 | 6.52.0 |
+| `WolverineFx.Postgresql` | 6.48.3 | 6.52.0 |
+| `WolverineFx.RabbitMQ` | 6.48.3 | 6.52.0 |
+| `WolverineFx.RuntimeCompilation` | 6.48.3 | 6.52.0 |
+| `xunit.v3` | 4.0.1 | 4.0.2 |
+| `xunit.v3.extensibility.core` | 4.0.1 | 4.0.2 |
+
+Unchanged at their latest stable: `Apache.Arrow` 23.0.0, `Ardalis.Specification` and `.EntityFrameworkCore` 9.3.1, `Asp.Versioning.Http` and `.OpenApi` 10.2.3, `Azure.Storage.Blobs` 12.30.1, `CsvHelper` 33.1.0, `Dapper` 2.1.89, `DocumentFormat.OpenXml` 3.5.1, `EFCore.NamingConventions` 10.0.1, `Fractions` 8.3.2, `Google.Protobuf` 3.36.2, the four `Grpc.*` 2.84.0, `Microsoft.Extensions.AI` and `.OpenAI` 10.11.0, `MinVer` 8.0.0, `Npgsql` and `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3, `Respawn` 7.0.0, `Serilog.AspNetCore` 10.0.0, `Serilog.Sinks.Console` 6.1.1, `Serilog.Sinks.OpenTelemetry` 4.2.0, `System.Security.Cryptography.Pkcs` 10.0.13 and `Yarp.ReverseProxy` 2.3.0.
+
+| Behaviour | Proof | Check result |
+|---|---|---|
+| Every moved pin keeps a permissive licence; the one whose latest does not stays | Each moved package's nuspec at both versions, licence and `net10.0` dependencies compared. `PDFsharp-MigraDoc` 6.5.0 declares `AGPL-3.0-only`, the brief's stop condition, so it stays at 6.2.4, its last MIT release, as the plan's Reporting row already records; the Reporting `System.Security.Cryptography.Pkcs` floor over the 8.0.1 it asks for stays with it | `LicenceTests.Every_package_in_every_kit_closure_carries_a_permissive_licence_expression` and its negative case pass on the bumped tree |
+| Two floors retire, as their records said they would | `Aspire.Hosting` 13.6.4 asks for `MessagePack` 2.5.307 (Aspire 13.6.2's release pinned it for the same advisory), and `MailKit` 4.18.2's `MimeKit` 4.18.2 asks for `System.Security.Cryptography.Pkcs` 10.0.13 on `net10.0`: `PouryaKit.Aspire` drops its `MessagePack` reference and the pin goes, and `PouryaKit.Email.MailKit` drops its `Pkcs` reference while the pin stays for Reporting. Both closures keep the patched versions, at the same counts (83 and 14). `PackageGraph`'s two rows and the plan's section C rows follow | `PackageGraphTests` pass; restore diff below |
+| Restore moved what the pins say and one package is new | Every `project.assets.json` before and after: 450 package versions before, 485 after (both lines of a moved package are restored where Aspire still brings the older one). New: `System.Linq.Dynamic.Core` 1.7.4, `Apache-2.0`, through `JasperFx` 2.91.0, in the closure of `PouryaKit.Messaging.Wolverine` and the six packages over it and of `PouryaKit.Persistence.Marten`; the provenance records with a closure count say so. `WireMock.Net` 2.20.0 takes `Json.More.Net` and `JsonPath.Net` back to 2.2.0, test-only, now `MIT` expressions. No package left | `LicenceTests` reads every Kit closure, the new package included |
+| Wolverine 6.49.0 to 6.52.0, release notes read | 6.52.0 states no breaking API change; its timer agents serve Wolverine's own recurring schedules, which the Kit's recurring commands are not, and its dead-lettering of unmappable envelopes is on Azure Service Bus, SNS and Kafka, not RabbitMQ; `ClassicCombineIntoOneLogicalHandler`, now obsolete, is named nowhere in the Kit; 6.50.0's HTTP body binding and 6.49.0's SQL Server envelope ids do not reach a Kit Host. The source each Kit comment cites, read again at tag `V6.52.0`: the local queue names (`TransportConstants.cs`, `LocalTransport.cs`), the wire-name routing (`Subscription.cs`) and the scheduled-message API are unchanged, and the route search `SagaRouteSource` relies on is unchanged for a source that is not pass-through, now at `WolverineRuntime.Routing.cs:315-335` | The whole `ModularMonolith.Tests` suite passes, `SagaTests` and `RabbitMqDeliveryTests` included |
+| The one breaking change on a Kit seam is fixed: since Wolverine 6.51.0 (GH-5022) a node restarts a row's stale clock when it claims it and while it holds it | The tests that relied on the stale sweep for a concurrent copy now release the held row themselves, as `IntegrationEventTests.Concurrent_deliveries_of_one_integration_event_apply_its_effect_once` always did: `StreamTests.A_concurrent_duplicate_delivery_waits_for_the_first_receipt_and_never_runs_its_handler` and `RecurringCommandTests.A_delayed_command_and_an_occurrence_due_after_the_stale_time_and_handed_out_again_while_they_run_apply_one_effect_each_and_store_one_next_occurrence`. `InboxStaleTimeTests.A_retry_due_after_the_stale_time_is_not_handed_out_again_while_it_runs` replaces `InboxStaleTimeTests.A_retry_that_runs_after_the_stale_time_is_handed_out_again_while_it_runs_and_its_receipt_keeps_one_effect`, which row 9 of the Wave 1 map above still names: that copy no longer comes on 6.52.0, and row 9's concurrent copy stays proven by the `IntegrationEventTests` test. The stale-time rule is rewritten where it was stated: the two options' summaries, the skill's [messaging.md](../.agents/skills/pourya-kit/references/messaging.md#the-stale-time-rule), the architecture document, and the dated amendments of ADR 0004 and ADR 0006 | Red on the bump, before the fix: the old test ("No copy of the held retry was handed out") and the `StreamTests` test (no lock wait within 30 s). The new test red once with the claim's restart switched off, the held row's clock set back a minute ("Expected: 2, Actual: 3"). A first version held a retry six seconds under a two-second stale time and was copied twice in the loaded full run, so the test pins the claim's restart and the docs keep the stale time well above a loaded Host's delay |
+| JasperFx's generated manifest stays out of the namespace rule | `JasperFx.SourceGenerator` 2.91.0 writes an internal `JasperFx.Generated.DiscoveredEventModels`, with no generated-code attribute, into every assembly that sees `JasperFx.Events`; `NamespaceTests` leaves it out by its full name | `NamespaceTests.Every_type_of_a_kit_package_is_in_the_namespace_named_after_it` and `NamespaceTests.A_type_outside_its_packages_namespace_is_rejected` red on the bump without it, green with it |
+| Marten 9.47.0 to 9.53.0, release notes read | The snapshot bracket and the caller-owned transaction fix of 9.47.0 concern an aggregate projected asynchronously, and a Stream is folded from its events at load; 9.52.0's `mt_event_projection_floors` is one more object of the schema Marten applies at start; 9.50.3's name shortening touches no Kit object name over 63 characters ([ADR 0011](adr/0011-each-write-model-has-one-commit-owner.md), amendment for #167) | `StreamTests` and `LedgerTests` pass |
+| Aspire 13.6.2 to 13.6.4 | The `MessagePack` pin above, DCP watch and create-timeout fixes, a TypeScript AppHost fix and owner-only CLI log permissions: nothing the AppHost recipe configures | `PouryaKit.Aspire.Tests` pass (5, the opt-in Ollama probe skipped) |
+| Agent Framework 1.26.0 and MCP 2.3.0 | 1.26.0's .NET changes: `DeleteSessionAsync` on the framework's `AgentSessionStore`, which the Kit does not derive from (its `IAgentSessionStore` is its own), a renamed Docker parameter of a hosted tool the Kit does not use, and workflow fixes (fan-out targets run once, compiled state reset between runs). MCP 2.3.0 makes `McpClient.ServerInfo` nullable, which the Kit never reads, holds modern Streamable HTTP headers until the first message, and preserves the order of listed tools | `AiTests`, `AgentRunTests` and `McpTests` pass |
+| OpenTelemetry 1.20.1 | The OTLP exporter's own `HttpClient` no longer follows redirects, `byte[]` attributes are truncated to the value limit, the event and link count limits fall back to the attribute limit, and `AddRuntimeInstrumentation`'s configuring overload is obsolete: the service defaults call the plain `AddRuntimeInstrumentation()` and set none of these limits | The build, warnings as errors, has no warning; `ObservabilityTests` pass |
+| The other families | Testcontainers 4.16.0 removes the MinIO module, which the Kit replaced with RustFS in ticket #148, and fixes PostgreSQL SSL on Alpine images; xunit v3 4.0.2 fixes its parallelization and `ITestOutputHelper` escaping; .NET Extensions 10.11.0 renames the experimental `AddHttpLatencyTelemetry`, unused, and fixes deferred `HybridCache` tag invalidation; FluentValidation 12.2.0 adds languages and fixes; Scalar 2.18.x adds options only; WireMock.Net 2.19.0 and 2.20.0 add admin API features; `AWSSDK.S3` 4.0.104.6 is a patch release; `MailKit` 4.18.2 publishes no release notes, and its decompiled `SmtpClient` is identical to 4.18.1's, so the skill's disconnect sentence stands; the 10.0.13 family is the security servicing release of 2026-10-13 | `CachingTests`, `EmailTests`, the Storage, Reporting, Validation, Security, Cqrs, Core and Domain test projects pass |
+| No ADR, plan, architecture, provenance or skill sentence states an old pin as current | Each old version string searched across the tracked tree. Updated: every sentence that states a current pin, in the plan's rows (each with a dated clause), the architecture document, the provenance records (with the version it replaced) and the skill (`aspire.md`, `email.md`, `host-recipes.md`, `stream.md`, `testing.md`), and the four code comments that cite a version (`Subscriptions.cs` twice, `SagaRouteSource.cs`, the Marten csproj). Kept, as records: what a Spike ran on and the source it read in ADRs 0003, 0004, 0006, 0009, 0011 and 0013, each now with its dated amendment line where a pin it rests on moved; the plan's dated build and spike notes and I.4's 2026-10-06 package research; provenance sentences of what was checked on a date; the rows of this record; the `dotnet-ef` 10.0.12 tool pinned in `.config/dotnet-tools.json`, outside the central package file and this ticket; the EF migrations' generated `ProductVersion`; and the fixture versions inside `PackageGraphTests` and `validate.py` | `check-docs.py` and `check-ai-setup.py` at 0 failures |

@@ -376,3 +376,12 @@ Owner decision (2026-10-24): the reorder is rejected, since it would depend on a
 Wolverine's stated intent. The refusal stays until Wolverine's Marten integration offers a supported way to keep a
 saga on the lightweight storage, which a feature request to `JasperFx/wolverine` asks for *(drafted 2026-10-24, not
 posted)*.
+
+## Amendment (2026-10-24, ticket #167: WolverineFx 6.52.0)
+
+The decision above stands, and so does the refusal of a Saga beside Marten: the Kit's pins move to WolverineFx 6.52.0,
+which session 6's research had already found to offer no supported option for it (the amendment above). The Spike's
+"Pinned versions and licences" and the source readings at `V6.48.3` stay as the record of what they ran on. At tag
+`V6.52.0` the route search the Kit's `SagaRouteSource` relies on is unchanged for a source that is not pass-through
+(`src/Wolverine/Runtime/WolverineRuntime.Routing.cs:315-335`; 6.49.0 added `IPassThroughMessageRouteSource`, which the
+Kit does not implement), and `SagaTests` passes.

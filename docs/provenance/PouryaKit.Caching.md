@@ -8,7 +8,7 @@ The caching slot is new Kit code, built to the plan's own rule (I.3 Caching, I.6
 
 Checked on nuget.org on 2026-10-07; licence expressions from each package's nuspec. Neither is reciprocal or commercial (ADR 0002).
 
-- `Microsoft.Extensions.Caching.Hybrid` 10.10.0, `MIT`, the latest stable, with a `net10.0` asset. It brings `Microsoft.Extensions.Caching.Abstractions`, `Microsoft.Extensions.Caching.Memory`, `Microsoft.Extensions.Logging.Abstractions` and `Microsoft.Extensions.Options` 10.0.12, all `MIT`.
+- `Microsoft.Extensions.Caching.Hybrid` 10.11.0, `MIT`, the latest stable (10.10.0 until ticket #167, 2026-10-24), with a `net10.0` asset. It brings `Microsoft.Extensions.Caching.Abstractions`, `Microsoft.Extensions.Caching.Memory`, `Microsoft.Extensions.Logging.Abstractions` and `Microsoft.Extensions.Options` 10.0.13, all `MIT`.
 - No distributed cache. Redis is the application's `IDistributedCache`, through `Microsoft.Extensions.Caching.StackExchangeRedis`, which the Proving Sample's Host references ([ModularMonolith.md](ModularMonolith.md)); `PackageGraphTests` keeps `StackExchange.Redis` and that package out of this package's closure.
 
 Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).

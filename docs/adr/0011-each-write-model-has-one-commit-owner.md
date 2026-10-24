@@ -322,3 +322,12 @@ The decision above stands; two limits the #131 amendment recorded are closed.
   `StreamTests.A_snapshot_declared_for_a_stream_fails_the_host_when_it_is_built_naming_the_stream_and_its_module` proves it.
   *Later in the same review, a Snapshot a Stream Module declares of any aggregate type fails the same way: the check
   reads the Stream Modules `UsePouryaKitMarten` records through `StreamModules.ForEach`.*
+
+## Amendment (2026-10-24, ticket #167: Marten 9.53.0 and WolverineFx.Marten 6.52.0)
+
+The decision above stands. `Marten` moves from 9.46.0 to 9.53.0 and `WolverineFx.Marten` from 6.48.3 to 6.52.0, the
+latest stable on 2026-10-24; the Spike's "Pinned versions and licences" and the source readings at `V9.46.0` and
+`V6.48.3` stay as the record of what they ran on. Marten's release notes from 9.47.0 to 9.53.0 change nothing a Stream
+relies on: the snapshot bracket and caller-owned transaction fix of 9.47.0 concern an aggregate projected
+asynchronously, and a Stream is folded from its events at load; 9.52.0's `mt_event_projection_floors` table is one
+more object of the schema Marten applies at start; and `StreamTests` and `LedgerTests` pass on the bumped tree.

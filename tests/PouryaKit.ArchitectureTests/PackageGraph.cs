@@ -20,11 +20,8 @@ internal static class PackageGraph
         ["PouryaKit.Core"] = new([], []),
         ["PouryaKit.Domain"] = new([], []),
         ["PouryaKit.Email"] = new(["PouryaKit.Domain"], []),
-        // System.Security.Cryptography.Pkcs is a security floor over MimeKit's 10.0.0 (#124); Cqrs is for its composition check (#147).
-        ["PouryaKit.Email.MailKit"] = new(
-            ["PouryaKit.Cqrs", "PouryaKit.Email"],
-            ["MailKit", "Microsoft.Extensions.Options", "System.Security.Cryptography.Pkcs"]
-        ),
+        // Cqrs is for its composition check (#147).
+        ["PouryaKit.Email.MailKit"] = new(["PouryaKit.Cqrs", "PouryaKit.Email"], ["MailKit", "Microsoft.Extensions.Options"]),
         // Cqrs builds the Host's validated container and runs its composition checks as it starts (#61, 2026-10-07),
         // which takes the container's implementation and the Hosting abstractions from Modularity.
         ["PouryaKit.Cqrs"] = new(
@@ -90,12 +87,9 @@ internal static class PackageGraph
         ["PouryaKit.ReverseProxy"] = new([], ["Microsoft.Extensions.ServiceDiscovery.Yarp", "Yarp.ReverseProxy"], ["Microsoft.AspNetCore.App"]),
         // The server and client libraries, not the Grpc.AspNetCore metapackage, which carries Grpc.Tools to every consumer (#134).
         ["PouryaKit.Grpc"] = new(["PouryaKit.Web"], ["Grpc.AspNetCore.Server", "Grpc.Net.ClientFactory"], ["Microsoft.AspNetCore.App"]),
-        // AppHost-only: the containers of a Host's local infrastructure. MessagePack is a security floor over Aspire.Hosting's
-        // 2.5.302, Fractions a licence-expression floor over KubernetesClient's 7.3.0 (#130).
-        ["PouryaKit.Aspire"] = new(
-            [],
-            ["Aspire.Hosting.PostgreSQL", "Aspire.Hosting.RabbitMQ", "Aspire.Hosting.Redis", "Fractions", "MessagePack"]
-        ),
+        // AppHost-only: the containers of a Host's local infrastructure. Fractions is a licence-expression floor over
+        // KubernetesClient's 7.3.0 (#130).
+        ["PouryaKit.Aspire"] = new([], ["Aspire.Hosting.PostgreSQL", "Aspire.Hosting.RabbitMQ", "Aspire.Hosting.Redis", "Fractions"]),
         ["PouryaKit.Realtime"] = new(["PouryaKit.Persistence.EFCore", "PouryaKit.Web"], ["Npgsql"], ["Microsoft.AspNetCore.App"]),
         // System.Security.Cryptography.Pkcs is a security floor over the 8.0.1 PDFsharp 6.2.4 asks for (#129).
         ["PouryaKit.Reporting"] = new(
@@ -109,7 +103,7 @@ internal static class PackageGraph
         ),
         // Semantic search on the Unit of Work's connection, sending embeddings as real[], which the server's pgvector casts (#138).
         ["PouryaKit.AI.Postgres"] = new(["PouryaKit.AI", "PouryaKit.Persistence.Postgres"], []),
-        // The Stream write model's Unit of Work (#131): Npgsql is the Kit's line over the 9.0.4 Marten 9.46.0 brings, for the
+        // The Stream write model's Unit of Work (#131): Npgsql is the Kit's line over the 9.0.4 Marten 9.53.0 brings, for the
         // Kit's statements it runs on its own transaction; Messaging is not needed, the Outbox step being a seam.
         ["PouryaKit.Persistence.Marten"] = new(["PouryaKit.Cqrs", "PouryaKit.Persistence"], ["Marten", "Npgsql"]),
         ["PouryaKit.Messaging.Wolverine.Marten"] = new(["PouryaKit.Messaging.Wolverine", "PouryaKit.Persistence.Marten"], ["WolverineFx.Marten"]),

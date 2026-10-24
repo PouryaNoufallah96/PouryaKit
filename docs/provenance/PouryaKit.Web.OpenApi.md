@@ -10,8 +10,8 @@ Checked on nuget.org on 2026-10-07 (ticket #41), from each package's nuspec in t
 
 - `Asp.Versioning.Http` 10.2.3, `MIT`. API versions on minimal APIs: version sets, the URL segment and header readers, sunset policies and the reported-versions headers. It brings `Asp.Versioning.Abstractions` 10.2.1, `MIT`.
 - `Asp.Versioning.OpenApi` 10.2.3, `MIT`. One ASP.NET Core OpenAPI document per API version (`AddOpenApi` on the versioning builder, `WithDocumentPerVersion`), with each version's deprecation and sunset in its document. It brings `Asp.Versioning.Mvc.ApiExplorer` and `Asp.Versioning.Mvc` 10.2.1, `MIT`, the API explorer that describes the versions (`IApiVersionDescriptionProvider`).
-- `Microsoft.AspNetCore.OpenApi` 10.0.12, `MIT`. ASP.NET Core's own OpenAPI document generation and its transformers. It brings `Microsoft.OpenApi` 2.x, `MIT`.
-- `Scalar.AspNetCore` 2.17.14, `MIT`. The Scalar API reference over the documents; no further package.
+- `Microsoft.AspNetCore.OpenApi` 10.0.13, `MIT` (10.0.12 until ticket #167, 2026-10-24). ASP.NET Core's own OpenAPI document generation and its transformers. It brings `Microsoft.OpenApi` 2.x, `MIT`.
+- `Scalar.AspNetCore` 2.18.3, `MIT` (2.17.14 until ticket #167, 2026-10-24). The Scalar API reference over the documents; no further package.
 
 `LicenceTests` checks the whole restored closure. No Swagger generator, Swashbuckle, NSwag or AsyncAPI package is referenced; `PackageGraphTests` keeps Swashbuckle and NSwag out of the closure, and API versioning, OpenAPI and Scalar out of `PouryaKit.Web`'s. `PouryaKit.Web.OpenApi` also references `PouryaKit.Web` and the ASP.NET Core shared framework (`FrameworkReference Microsoft.AspNetCore.App`), as plan section C lists since ticket #41. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
 

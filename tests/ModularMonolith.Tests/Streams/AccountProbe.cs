@@ -7,7 +7,7 @@ namespace ModularMonolith.Tests.Streams;
 internal static class AccountProbe
 {
     private static readonly ConcurrentDictionary<Guid, Gate> Gates = new();
-    private static readonly ConcurrentDictionary<Guid, TimeSpan> Holds = new();
+    private static readonly ConcurrentDictionary<Guid, (TimeSpan Time, TaskCompletionSource Reached)> Holds = new();
     private static readonly ConcurrentDictionary<Guid, bool> Failures = new();
     private static readonly ConcurrentDictionary<Guid, int> Runs = new();
 
@@ -24,10 +24,24 @@ internal static class AccountProbe
         return gate.Opened.Task;
     }
 
-    public static void Hold(Guid account, TimeSpan time) => Holds[account] = time;
+    // Completes when the welcome reaches the hold, with its Receipt recorded and its transaction open.
+    public static Task Hold(Guid account, TimeSpan time)
+    {
+        var reached = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Holds[account] = (time, reached);
+        return reached.Task;
+    }
 
-    public static Task HoldAsync(Guid account, CancellationToken cancellationToken) =>
-        Holds.TryGetValue(account, out var time) ? Task.Delay(time, cancellationToken) : Task.CompletedTask;
+    public static Task HoldAsync(Guid account, CancellationToken cancellationToken)
+    {
+        if (!Holds.TryGetValue(account, out var hold))
+        {
+            return Task.CompletedTask;
+        }
+
+        hold.Reached.TrySetResult();
+        return Task.Delay(hold.Time, cancellationToken);
+    }
 
     public static void Fail(Guid account) => Failures[account] = true;
 

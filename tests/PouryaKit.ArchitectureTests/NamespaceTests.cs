@@ -47,7 +47,9 @@ public sealed class NamespaceTests
     // Today these are the compiler's <PrivateImplementationDetails>, anonymous types and collection-expression types in
     // the global namespace, the GeneratedRegex output in System.Text.RegularExpressions.Generated (Messaging), and the
     // OpenAPI XML comment generator's output in Microsoft.AspNetCore.OpenApi.Generated and
-    // System.Runtime.CompilerServices (Web.OpenApi).
+    // System.Runtime.CompilerServices (Web.OpenApi). The one exception is JasperFx's event model manifest, which
+    // JasperFx.SourceGenerator 2.91.0 (WolverineFx 6.52.0's) writes into every assembly that sees JasperFx.Events,
+    // marked only by an auto-generated comment, so it is left out by its full name.
     private static IEnumerable<string> Violations(Assembly package) =>
         from type in package.GetTypes()
         where !type.IsNested && !IsGenerated(type) && type.Namespace != package.GetName().Name
@@ -55,5 +57,6 @@ public sealed class NamespaceTests
 
     private static bool IsGenerated(Type type) =>
         type.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false)
-        || type.IsDefined(typeof(GeneratedCodeAttribute), inherit: false);
+        || type.IsDefined(typeof(GeneratedCodeAttribute), inherit: false)
+        || type.FullName == "JasperFx.Generated.DiscoveredEventModels";
 }
