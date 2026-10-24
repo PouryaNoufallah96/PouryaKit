@@ -1,0 +1,39 @@
+docs/acceptance.md
+  s_dc235343aadb31::t_2e2da2c167791d 2673-2689
+  s_dc235343aadb31::t_9361b4e3b36813 2690
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_dc235343aadb31::t_2e2da2c167791d 141-146
+  s_dc235343aadb31::t_f8e63cefb0208c 147
+docs/architecture/README.md
+  s_dc235343aadb31::t_2e2da2c167791d 743
+README.md
+  s_dc235343aadb31::t_2e2da2c167791d 5
+docs/adr/0013-a-saga-step-runs-outside-every-operation.md
+  s_dc235343aadb31::t_2e2da2c167791d 355,377-378
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_dc235343aadb31::t_2e2da2c167791d 276-278
+.agents/skills/pourya-kit/references/templates.md
+  s_dc235343aadb31::t_2e2da2c167791d 35,38
+.agents/skills/pourya-kit/references/sagas.md
+  s_dc235343aadb31::t_2e2da2c167791d 118
+docs/foundation-review.md
+  s_dc235343aadb31::t_2e2da2c167791d 6-7,792-794,866,900,982-987,1132-1133
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_dc235343aadb31::t_8e9870de59736f 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bcc90915c938a1fd3a3cad72eda55cb8042c5bb6",
+  "prompts": {},
+  "sessions": {
+    "s_dc235343aadb31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c959058c-fafb-418d-968e-8aae07d692ee",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
