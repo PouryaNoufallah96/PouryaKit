@@ -135,6 +135,57 @@ class InventoryTests(unittest.TestCase):
                 "IsPackable": "true", "PackageId": "Sample", "EnablePackageValidation": "false"}})
 
 
+def validation(folder, templates):
+    """Runs `validate()` over an inventory of the template package and one consumer per `templates` entry, `{consumer name:
+    (template, generated name)}`, its `dotnet` and `git` steps stubbed and the steps whose result it does not use mocked;
+    `consumer_feed`, `template_consumer`, `isolated_env` and `test_totals` run as they are. Returns the commands it ran, the
+    mocked production step and the PASS line."""
+    summary = "Test run summary: Passed!\n  total: 72\n  failed: 0\n  succeeded: 69\n  skipped: 3\n"
+    commands = []
+
+    def run(command, **_):
+        commands.append(command)
+        if command[:2] == ["dotnet", "pack"]:
+            (command[-1] / "PouryaKit.Templates.1.0.0.nupkg").write_bytes(b"package")
+        if command[:2] == ["dotnet", "test"]:
+            return summary if "PouryaKit.slnx" in command else "  failed: 0\n  succeeded: 4\n"
+        return "commit\n" if "rev-parse" in command else ""
+
+    root = Path(folder) / "repo"
+    (root / "scripts/packaging").mkdir(parents=True)
+    (root / "scripts/packaging/inventory.json").write_text(json.dumps({
+        "packages": [{"id": "PouryaKit.Templates", "kind": "template"}],
+        "compositions": [{"name": name, "template": template, "generated": generated, "packages": [], "excluded": []}
+                         for name, (template, generated) in templates.items()]}))
+    with patch("builtins.print") as printed, patch.multiple(
+            validate, ROOT=root, run=run, prepare_history=lambda *_, **__: "commit",
+            properties=lambda *_, **__: {"MinVerVersion": "1.0.0", "PackageVersion": "1.0.0"},
+            check_inventory=DEFAULT, inventory_controls=DEFAULT, production_publish=DEFAULT,
+            check_consumer=lambda *_: [], artifact_controls=DEFAULT, version_proof=DEFAULT) as mocked:
+        validate.validate(Path(folder) / "evidence", fetch=False)
+    return commands, mocked["production_publish"], printed.call_args.args[0]
+
+
+class TemplateConsumerTests(unittest.TestCase):
+    """A template the inventory lists is validated with no change to the script, under the name its consumer gives (#168)."""
+
+    def test_each_template_consumer_is_generated_built_tested_and_published_under_the_name_its_entry_gives(self):
+        templates = {"template-monolith": ("pouryakit-monolith", "Acme.Shop"),
+                     "template-modular-monolith": ("pouryakit-modular-monolith", "acme-shop"),
+                     "template-service": ("pouryakit-service", "Acme.Stock")}
+        with tempfile.TemporaryDirectory() as folder:
+            commands, production, _ = validation(folder, templates)
+            solutions = {name: Path(folder) / "evidence/consumers" / name / generated for name, (_, generated) in templates.items()}
+        self.assertEqual([["dotnet", "new", template, "-n", generated, "-o", solutions[name]] for name, (template, generated) in templates.items()],
+                         [command[:7] for command in commands if command[:2] == ["dotnet", "new"] and command[2] != "install"])
+        self.assertEqual([solutions[name] / f"{generated}.slnx" for name, (_, generated) in templates.items()],
+                         [command[2] for command in commands if command[:2] == ["dotnet", "build"] and command[2] != "PouryaKit.slnx"])
+        self.assertEqual([solutions[name] / "tests" / f"{generated}.Tests" / f"{generated}.Tests.csproj" for name, (_, generated) in templates.items()],
+                         [command[3] for command in commands if command[:3] == ["dotnet", "test", "--project"]])
+        self.assertEqual([solutions[name] / "src" / f"{generated}.Host" for name, (_, generated) in templates.items()],
+                         [call.args[0] for call in production.call_args_list])
+
+
 class ConsumerCacheTests(unittest.TestCase):
     def test_isolated_caches_are_outside_the_consumer_source_glob(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -308,34 +359,14 @@ class TestTotalsTests(unittest.TestCase):
 
     def test_the_pass_line_carries_the_totals_after_the_template_consumers_ran(self) -> None:
         """The template consumers' loop once rebound the totals' name to a generated test project's path."""
-        summary = "Test run summary: Passed!\n  total: 72\n  failed: 0\n  succeeded: 69\n  skipped: 3\n"
-
-        def run(command, **_):
-            if command[:2] == ["dotnet", "pack"]:
-                (command[-1] / "PouryaKit.Templates.1.0.0.nupkg").write_bytes(b"package")
-            if command[:2] == ["dotnet", "test"]:
-                return summary if "PouryaKit.slnx" in command else "  failed: 0\n  succeeded: 4\n"
-            return "commit\n" if "rev-parse" in command else ""
-
         with tempfile.TemporaryDirectory() as folder:
-            root = Path(folder) / "repo"
-            output = Path(folder) / "evidence"
-            (root / "scripts/packaging").mkdir(parents=True)
-            (root / "scripts/packaging/inventory.json").write_text(json.dumps({
-                "packages": [{"id": "PouryaKit.Templates", "kind": "template"}],
-                "compositions": [{"name": f"template-{name}", "template": f"pouryakit-{name}", "packages": [], "excluded": []}
-                                 for name in ("monolith", "modular-monolith")]}))
-            with patch("builtins.print") as printed, patch.multiple(
-                    validate, ROOT=root, run=run, prepare_history=lambda *_, **__: "commit",
-                    properties=lambda *_, **__: {"MinVerVersion": "1.0.0", "PackageVersion": "1.0.0"},
-                    check_inventory=DEFAULT, inventory_controls=DEFAULT, production_publish=DEFAULT,
-                    check_consumer=lambda *_: [], artifact_controls=DEFAULT, version_proof=DEFAULT):
-                validate.validate(output, fetch=False)
+            _, _, line = validation(folder, {"template-monolith": ("pouryakit-monolith", "Acme.Shop"),
+                                             "template-modular-monolith": ("pouryakit-modular-monolith", "acme-shop")})
         self.assertEqual(
             "PASS 1 packages, 2 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, "
             "template-modular-monolith (-n acme-shop) 4), negative controls and MinVer proof; "
-            f"Release tests total 72, succeeded 69, failed 0, skipped 3. Manifest: {output / 'manifest.json'}",
-            printed.call_args.args[0])
+            f"Release tests total 72, succeeded 69, failed 0, skipped 3. Manifest: {Path(folder) / 'evidence/manifest.json'}",
+            line)
 
 
 if __name__ == "__main__":
