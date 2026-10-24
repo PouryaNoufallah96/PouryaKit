@@ -1,0 +1,21 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_dc235343aadb31::t_4d1aabec3722b1 2
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_dc235343aadb31::t_c29d5a45fd6d9a 108-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "28f7dc425624fe08a93b1b602a19ab4d3f2c10a6",
+  "prompts": {},
+  "sessions": {
+    "s_dc235343aadb31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c959058c-fafb-418d-968e-8aae07d692ee",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
