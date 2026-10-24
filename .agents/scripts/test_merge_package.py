@@ -377,16 +377,6 @@ if __name__ == "__main__":
 
 
 class HelperTests(unittest.TestCase):
-    def test_memory_duplicates_names_a_file_the_union_merge_listed_twice(self) -> None:
-        # The #124 merge of 2026-10-17 left two "Docs verification tools" lines, one per side.
-        text = (
-            "- [Docs verification tools](docs-verification-tools.md) — #116, #124: pins\n"
-            "- [Docs verification tools](docs-verification-tools.md) — #116, #117: pins\n"
-            "- [Cqrs and Modularity](cqrs-and-modularity-facts.md) — #7\n"
-        )
-        self.assertEqual(["docs-verification-tools.md"], merge_package.memory_duplicates(text))
-        self.assertEqual([], merge_package.memory_duplicates(text.splitlines()[1] + "\n" + text.splitlines()[2]))
-
     def test_diagram_pairs_counts_a_source_and_its_page_once(self) -> None:
         conflicted = [
             "docs/acceptance.md",

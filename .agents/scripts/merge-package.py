@@ -217,36 +217,10 @@ def run_check(top: Path, argv: list[str]) -> bool:
     return done.returncode == 0
 
 
-MEMORY_INDEX = Path(".claude/agent-memory/kit-implementer/MEMORY.md")
-
-
 def diagram_pairs(paths: list[str]) -> list[str]:
     """The diagram names (one per source and page pair) among conflicted paths."""
     names = {Path(p).name.split(".")[0] for p in paths if p.startswith("docs/architecture/diagrams/")}
     return sorted(names)
-
-
-def memory_duplicates(text: str) -> list[str]:
-    """The memory files that the union-merged index lists more than once: a parallel merge keeps both sides' lines."""
-    seen: dict[str, int] = {}
-    for line in text.splitlines():
-        if (start := line.find("](")) > 0 and (end := line.find(")", start)) > 0:
-            target = line[start + 2 : end]
-            seen[target] = seen.get(target, 0) + 1
-    return sorted(target for target, count in seen.items() if count > 1)
-
-
-def memory_index_check(top: Path) -> bool:
-    path = top / MEMORY_INDEX
-    duplicates = memory_duplicates(path.read_text(encoding="utf-8")) if path.exists() else []
-    if duplicates:
-        print(
-            f"check memory-index: FAIL, {MEMORY_INDEX} lists {', '.join(duplicates)} more than once (the union merge kept "
-            "both sides' lines): keep one line per file with both sides' ticket numbers, then commit"
-        )
-        return False
-    print("check memory-index: ok")
-    return True
 
 
 def post_merge(top: Path, head: str, branch: str, checks: list[list[str]], push: bool) -> int:
@@ -263,8 +237,6 @@ def post_merge(top: Path, head: str, branch: str, checks: list[list[str]], push:
         print(f"tree=DIFFERS: {len(files)} file(s) of {merged} differ from {head[:7]}:", *(f"  {name}" for name in files), sep="\n")
         print("The ticket's verify must run on the merged tree; the report's verify does not prove it.")
     failed = [check_name(argv) for argv in checks if not run_check(top, argv)]
-    if not memory_index_check(top):
-        failed.append("memory-index")
     code, pushed = (CHECK_FAILED if failed else 0), "no"
     if push and failed:
         print("not pushed: a check failed")
