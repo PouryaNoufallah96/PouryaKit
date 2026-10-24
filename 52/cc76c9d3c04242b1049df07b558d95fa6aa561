@@ -1,0 +1,29 @@
+docs/architecture/diagrams/commit-sequence.html
+  s_067424b212e979::t_5103924d62bb1d 4985
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_067424b212e979::t_74d4ae3137b5bd 10
+docs/architecture/diagrams/delivery.html
+  s_067424b212e979::t_44beb0cff936ec 4985
+docs/architecture/diagrams/delivery.sequence.json
+  s_067424b212e979::t_eb2949bba85e3c 18
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_067424b212e979::t_f8222fb838e70c 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_067424b212e979::t_19856a5937a7cd 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "52cc76c9d3c04242b1049df07b558d95fa6aa561",
+  "prompts": {},
+  "sessions": {
+    "s_067424b212e979": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b3b69ca-8b5c-4c58-b18c-05594cfed649",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
