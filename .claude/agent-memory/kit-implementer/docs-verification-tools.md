@@ -133,5 +133,10 @@ metadata:
 
 - `scratchpad/p143/remap143.py <worktree> [--write]` maps every citation of a file changed against HEAD through a `difflib` line map and edits the numbers with a path-anchored regex; run `--write` once only, since a second run maps the new numbers as HEAD's. A range whose cited code grew (a nested provider class below `HeaderRequestCulture`'s methods) needs its end set by hand. `scratchpad/p143/cites.py <worktree> <substring> ...` lists citations by path before editing; the session-4 `tools/m142/repin.py` pins and refinalizes with the surviving Archify clone.
 
+## Closing a deferred decision in prose (#175, 2026-10-24)
+
+- A decision deferred by an earlier spec (spec #74's D13) is restated in more places than the brief names: the acceptance row the brief points at, a second "Out of scope" row of the same section (left as history: it records that ticket's scope, not the deferral), and the plan's I.3 row, whose dated `restated` clause carried the deferral and needed a dated `closed` clause (the docs-sync set allows one). Search the decision id (`D13`) across `docs/` as well as the key phrases the brief lists.
+- Linking the replaced row to the new section (`#wave-4-...-ticket-175`) makes `check-docs.py` check the new heading's slug for free; a reason sentence that names test classes or tests must name only what they prove (the MailKit and S3 providers, not "the providers": Azure Blob runs on Azurite).
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].
