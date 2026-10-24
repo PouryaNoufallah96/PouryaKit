@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
+using PouryaKit.Cqrs;
 using PouryaKit.Persistence.EFCore;
 using Wolverine.EntityFrameworkCore;
 using Wolverine.Runtime;

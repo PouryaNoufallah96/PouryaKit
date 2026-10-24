@@ -25,7 +25,9 @@ public static class EfCoreServiceCollectionExtensions
         /// table, the DbContext of a Module with no <c>[Idempotent]</c> command. The store, its cleanup and the table
         /// are PostgreSQL-only, as the Kit is: <c>on conflict</c>, <c>ctid</c>, <c>to_regclass</c>, PostgreSQL's
         /// SQLSTATE codes and a <c>timestamp with time zone</c> column.
-        /// When a messaging package registered an <see cref="IUnitOfWorkOutbox"/>, the Unit of Work commits through it.
+        /// When a messaging package registered an <see cref="IUnitOfWorkOutbox"/>, the Unit of Work commits through it; a
+        /// Host with an Outbox (<see cref="IOutbox"/>) but no <see cref="IUnitOfWorkOutbox"/>, as one whose only message
+        /// store is <c>UsePouryaKitMarten</c>'s, fails when it is built, naming its EF Core Modules, or the application when no Module has one.
         /// It records the DbContext, once, as a <see cref="DbContextConnection"/> with <paramref name="connectionName"/>,
         /// the connection string it stores over when its registration names one, so the Kit's composition checks refuse,
         /// when the Host's container is built, a named connection string the Host's configuration lacks or leaves blank,
@@ -65,6 +67,7 @@ public static class EfCoreServiceCollectionExtensions
             }
 
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, DbContextConnectionsCheck>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, UnitOfWorkOutboxCheck>());
             var module = IModuleServices.ModuleOf(services);
             if (module is not null)
             {

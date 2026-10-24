@@ -22,7 +22,9 @@ public static class StreamServiceCollectionExtensions
         /// included. Marten creates that table with the store when the Host starts. On a Module's builder the Unit of Work
         /// and the store are the Module's own, keyed by it (<see cref="IModuleServices.RouteByModule{TService}"/>), and the
         /// Module is recorded among the Host's <see cref="StreamModules"/>, whose Receipts a messaging package keeps in the
-        /// same schema. Feature code never calls it.
+        /// same schema. A Host with an Outbox (<see cref="IOutbox"/>) but none for the Marten Unit of Work
+        /// (<see cref="IStreamOutbox"/>), as when the EF Core message store sits beside <c>AddPouryaKitMarten</c>, fails
+        /// when it is built, naming its Stream Modules. Feature code never calls it.
         /// </summary>
         public IServiceCollection AddPouryaKitStreams(string schema)
         {
@@ -58,6 +60,7 @@ public static class StreamServiceCollectionExtensions
             IModuleServices.RouteByModule<IIdempotencyStore>(services);
             services.ConfigureMarten(options => options.Storage.ExtendedSchemaObjects.Add(IdempotencyKeyTable.In(schema)));
             StreamModules.In(services).Add(module, schema);
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, StreamOutboxCheck>());
             return services;
         }
     }

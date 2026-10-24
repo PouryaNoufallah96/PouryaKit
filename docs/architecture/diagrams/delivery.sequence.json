@@ -15,7 +15,7 @@
     },
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "226b0bb07590bba541a23ef9ce99ef00b7578a37",
+      "revision": "fcb7a719e063b27f6a10b2a05bdc9e58391a4269",
       "link_mode": "web"
     }
   },
@@ -40,8 +40,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
-          "line": 50,
-          "end_line": 67,
+          "line": 51,
+          "end_line": 68,
           "label": "sent after the commit"
         }
       ]

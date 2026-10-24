@@ -4,7 +4,8 @@ namespace PouryaKit.Persistence.Marten;
 
 /// <summary>
 /// The Stream Modules of one Host, each with its schema, as <c>AddPouryaKitStreams</c> records them: the Host's idempotency
-/// key cleanup cleans each one's table, and a messaging package's registration keys each one's Receipts through
+/// key cleanup cleans each one's table, the check that their Unit of Work has an Outbox names them, and a messaging
+/// package's registration keys each one's Receipts through
 /// <see cref="ForEach"/>, whichever is called first. It lives in the Host's service collection, not in a static, so every
 /// Composition Root adds to the same one and two Hosts in one process never share it. Applications never use it.
 /// </summary>
@@ -14,6 +15,8 @@ public sealed class StreamModules
     private readonly List<Action<Type?, string>> _registrations = [];
 
     internal IEnumerable<string> Schemas => _modules.Select(module => module.Schema).Distinct();
+
+    internal IEnumerable<Type?> Modules => _modules.Select(module => module.Module);
 
     /// <summary>The Stream Modules of the Host whose services <paramref name="services"/> are, recorded there on first use.</summary>
     public static StreamModules In(IServiceCollection services)

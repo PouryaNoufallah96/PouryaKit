@@ -1,4 +1,5 @@
 using Marten;
+using PouryaKit.Cqrs;
 using PouryaKit.Persistence.Marten;
 using Wolverine.Marten;
 using Wolverine.Runtime;
