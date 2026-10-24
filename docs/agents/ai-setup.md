@@ -102,6 +102,8 @@ python3 .agents/skills/claudex-loop/scripts/runner.py review --host claude --bui
 
 Its `result.json` is kept as above, under `.claude/reviews/` beside the stable result file.
 
+For the Claude leg over a diff of that size, one `kit-reviewer` cannot read every file, and a leg counts only with none of the diff unread: run several `kit-reviewer`s in parallel on disjoint path slices (Wave 3's audit used four: the write-model core, the capability packages, the sample with its tests and templates, docs with scripts and the AI setup), each on its own detached worktree of the same commit, with one common brief and one slice brief naming its paths, and judge the union. Name the per-shard read counts in the record, never a total that hides a shard's partial coverage.
+
 From a Codex-hosted session, spawn the `kit-reviewer` agent for the Codex review and run the Claude inspection through the same runner, on a worktree of the commit as above, with the ticket saved as a spec file outside the checkout:
 
 ```bash
