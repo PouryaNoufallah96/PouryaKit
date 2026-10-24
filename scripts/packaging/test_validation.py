@@ -8,7 +8,7 @@ import subprocess
 from unittest.mock import patch
 
 import validate
-from validate import check_inventory, check_cache_folders, check_consumer, check_production_publish, isolated_env, prepare_history
+from validate import check_inventory, check_cache_folders, check_consumer, check_production_publish, isolated_env, prepare_history, test_totals
 
 
 class HistoryTests(unittest.TestCase):
@@ -288,6 +288,23 @@ class FinishTests(unittest.TestCase):
                 self.assertEqual(validate.main(), 0)
             full.assert_called_once()
             self.assertTrue((output / "revision.json").exists())
+
+
+class TestTotalsTests(unittest.TestCase):
+    """The PASS line carries the Release test totals, which otherwise live only in evidence the script removes."""
+
+    def test_totals_are_summed_over_every_projects_summary_block(self) -> None:
+        output = (
+            "Test run summary: Passed! - tests/A/bin/Release/net10.0/A.dll (net10.0|arm64)\n"
+            "  total: 62\n  failed: 0\n  succeeded: 62\n  skipped: 0\n  duration: 2s 744ms\n"
+            "Test run summary: Passed! - tests/B/bin/Release/net10.0/B.dll (net10.0|arm64)\n"
+            "  total: 10\n  failed: 0\n  succeeded: 7\n  skipped: 3\n  duration: 1s 1ms\n"
+        )
+        self.assertEqual("Release tests total 72, succeeded 69, failed 0, skipped 3", test_totals(output))
+
+    def test_an_output_without_totals_is_refused(self) -> None:
+        with self.assertRaises(RuntimeError):
+            test_totals("Build succeeded.\n")
 
 
 if __name__ == "__main__":

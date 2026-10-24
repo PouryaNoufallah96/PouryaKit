@@ -168,14 +168,14 @@
       "sources": [
         {
           "path": "scripts/packaging/validate.py",
-          "line": 350,
-          "end_line": 357,
+          "line": 365,
+          "end_line": 372,
           "label": "clean checkout, evidence outside it"
         },
         {
           "path": "scripts/packaging/validate.py",
-          "line": 484,
-          "end_line": 509,
+          "line": 499,
+          "end_line": 524,
           "label": "local run fetches history"
         }
       ]
@@ -191,8 +191,8 @@
       "sources": [
         {
           "path": "scripts/packaging/validate.py",
-          "line": 368,
-          "end_line": 369,
+          "line": 383,
+          "end_line": 384,
           "label": "Release build, tests without rebuild"
         }
       ]
@@ -208,8 +208,8 @@
       "sources": [
         {
           "path": "scripts/packaging/validate.py",
-          "line": 370,
-          "end_line": 379,
+          "line": 385,
+          "end_line": 394,
           "label": "MinVer version, pack --no-build"
         },
         {
@@ -220,8 +220,8 @@
         },
         {
           "path": "scripts/packaging/validate.py",
-          "line": 269,
-          "end_line": 332,
+          "line": 284,
+          "end_line": 347,
           "label": "negative controls"
         }
       ]
@@ -238,20 +238,20 @@
       "sources": [
         {
           "path": "scripts/packaging/validate.py",
-          "line": 380,
-          "end_line": 447,
+          "line": 395,
+          "end_line": 462,
           "label": "library, sample and template consumers"
         },
         {
           "path": "scripts/packaging/validate.py",
-          "line": 201,
-          "end_line": 236,
+          "line": 216,
+          "end_line": 251,
           "label": "own caches, produced bytes only"
         },
         {
           "path": "scripts/packaging/validate.py",
-          "line": 164,
-          "end_line": 176,
+          "line": 179,
+          "end_line": 191,
           "label": "codegen write, Release publish"
         }
       ]
@@ -267,8 +267,8 @@
       "sources": [
         {
           "path": "scripts/packaging/validate.py",
-          "line": 448,
-          "end_line": 456,
+          "line": 463,
+          "end_line": 471,
           "label": "closures, controls, manifest"
         },
         {
@@ -279,8 +279,8 @@
         },
         {
           "path": "scripts/packaging/validate.py",
-          "line": 239,
-          "end_line": 266,
+          "line": 254,
+          "end_line": 281,
           "label": "MinVer proof"
         }
       ]
