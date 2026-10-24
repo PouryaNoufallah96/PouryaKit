@@ -1,0 +1,25 @@
+docs/agents/running-a-spec.md
+  s_d25075ecfddc3d::t_36da8fbe1bfcad 12
+AGENTS.md
+  s_d25075ecfddc3d::t_36da8fbe1bfcad 72,98
+docs/agents/ai-setup.md
+  s_d25075ecfddc3d::t_36da8fbe1bfcad 105-106
+docs/agents/brief-template.md
+  s_d25075ecfddc3d::t_36da8fbe1bfcad 83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c7d77bbb0d5e9982fe5004bda65065e4af115e5c",
+  "prompts": {},
+  "sessions": {
+    "s_d25075ecfddc3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c2faa7bc-43e4-49f1-ba67-db6d73ce0e91",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
