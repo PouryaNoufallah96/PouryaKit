@@ -1,0 +1,40 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_dc235343aadb31::t_a2363ee1e1e534 2
+  s_dc235343aadb31::t_5e4bb6d511bdb3 3
+.agents/skills/pourya-kit/references/grpc.md
+  s_dc235343aadb31::t_3c472e34064dbe 10,108-111
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_dc235343aadb31::t_239a34b5d6c5f9 97
+.agents/skills/pourya-kit/references/reporting-module.md
+  s_dc235343aadb31::t_79f894f6da29f8 109
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_dc235343aadb31::t_ed91cead8d94b7 148-152
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_dc235343aadb31::t_8d3a9a1064cc52 108-111
+docs/acceptance.md
+  s_dc235343aadb31::t_ee1125c8e71dd2 2703-2718
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_dc235343aadb31::t_2e974160ca1a01 10,304
+docs/architecture/diagrams/module-boundaries.html
+  s_dc235343aadb31::t_89fceab269e445 4985
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_dc235343aadb31::t_027bd941c9c398 132-134
+tests/PouryaKit.ArchitectureTests/PipelineContractTests.cs
+  s_dc235343aadb31::t_f9a22bed72235d 51-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1e17a21962e0d045554e0eb5341bafd929f264e4",
+  "prompts": {},
+  "sessions": {
+    "s_dc235343aadb31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c959058c-fafb-418d-968e-8aae07d692ee",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": null
+    }
+  }
+}
