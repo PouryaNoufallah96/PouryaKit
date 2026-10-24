@@ -244,10 +244,6 @@ class ProductionPublishTests(unittest.TestCase):
                 check_production_publish(host, published)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class FinishTests(unittest.TestCase):
     """A PASS leaves no 8 GB evidence directory behind unless asked (Wave 3 session 3: 61 of them filled the disk)."""
 
@@ -293,3 +289,6 @@ class FinishTests(unittest.TestCase):
             full.assert_called_once()
             self.assertTrue((output / "revision.json").exists())
 
+
+if __name__ == "__main__":
+    unittest.main()

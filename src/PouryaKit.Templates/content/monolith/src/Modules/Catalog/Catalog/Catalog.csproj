@@ -3,7 +3,8 @@
     <ProjectReference Include="..\Catalog.Contracts\Catalog.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <!-- What the Proving Sample's Catalog references but Modularity: in a monolith, the Host is its one Module. -->
+    <!-- What the Proving Sample's Catalog references but Modularity and AI: in a monolith the Host is its one Module, and
+         the agent's Gateway tool needs Modularity. -->
     <PackageReference Include="PouryaKit.Caching" />
     <PackageReference Include="PouryaKit.Grpc" />
     <PackageReference Include="PouryaKit.Messaging.Wolverine.EFCore" />

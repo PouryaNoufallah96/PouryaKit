@@ -212,7 +212,7 @@ public sealed class TestReports : IReportRequestAuthorizer, IReportLayouts
 /// The Host's one <see cref="IFileStorage"/>, its provider's, recording every key it stores a file under, and every key
 /// it signs a link for with the link's lifetime.
 /// </summary>
-public sealed class RecordingFileStorage(IFileStorage provider) : IFileStorage
+public sealed class RecordingFileStorage(IFileStorage provider) : IFileStorage, IDisposable
 {
     public ConcurrentQueue<string> Uploaded { get; } = [];
 
@@ -245,4 +245,7 @@ public sealed class RecordingFileStorage(IFileStorage provider) : IFileStorage
         Signed.Enqueue((key, lifetime));
         return provider.GetPresignedUrlAsync(key, lifetime, cancellationToken);
     }
+
+    /// <summary>Disposes the provider, which the container sees only through this registration.</summary>
+    public void Dispose() => (provider as IDisposable)?.Dispose();
 }

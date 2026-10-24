@@ -4,7 +4,7 @@ Adopted implementations in `PouryaKit.Storage`. Format and rules: [README](READM
 
 ## Package dependencies
 
-None of its own. The package references `PouryaKit.Domain`, for `Result` and `Error`, as plan section C lists since ticket #127, and `PouryaKit.Cqrs`, since ticket #128, for the one-provider composition check (`src/PouryaKit.Storage/OneFileStorageCheck.cs`, the Kit's own `ICompositionCheck` shape, moved from `PouryaKit.Storage.S3`) that `src/PouryaKit.Storage/FileStorageServiceCollectionExtensions.cs` registers for every provider. Its closure holds Cqrs's Microsoft.Extensions packages, and `PackageGraphTests` keeps every AWS and Azure package out of it, so a provider's SDK stays in the provider's package. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
+None of its own. The package references `PouryaKit.Domain`, for `Result` and `Error`, as plan section C lists since ticket #127, and `PouryaKit.Cqrs`, since ticket #128, for the one-provider composition check (moved from `PouryaKit.Storage.S3`, and since the PR #143 audit Cqrs's `OneProviderCheck<IFileStorage>`, `src/PouryaKit.Cqrs/Composition/OneProviderCheck.cs`) that `src/PouryaKit.Storage/FileStorageServiceCollectionExtensions.cs` registers for every provider. Its closure holds Cqrs's Microsoft.Extensions packages, and `PackageGraphTests` keeps every AWS and Azure package out of it, so a provider's SDK stays in the provider's package. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
 
 ## File storage contract
 

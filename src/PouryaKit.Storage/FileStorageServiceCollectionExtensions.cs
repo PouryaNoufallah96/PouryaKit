@@ -20,7 +20,7 @@ public static class FileStorageServiceCollectionExtensions
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(factory);
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, OneFileStorageCheck>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck>(new OneProviderCheck<IFileStorage>("AddPouryaKitFileStorage", "file storage")));
             services.AddSingleton(factory);
             return services;
         }

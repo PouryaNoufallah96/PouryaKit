@@ -68,15 +68,20 @@ public sealed class VectorFixture : IAsyncLifetime
     {
         try
         {
-            if (_host is not null)
+            try
             {
-                await _host.StopAsync(TestContext.Current.CancellationToken);
-                _host.Dispose();
+                if (_host is not null)
+                {
+                    await _host.StopAsync(TestContext.Current.CancellationToken);
+                    _host.Dispose();
+                }
             }
-
-            if (_stub is not null)
+            finally
             {
-                await _stub.DisposeAsync();
+                if (_stub is not null)
+                {
+                    await _stub.DisposeAsync();
+                }
             }
         }
         finally

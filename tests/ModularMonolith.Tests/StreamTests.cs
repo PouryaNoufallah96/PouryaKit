@@ -295,10 +295,11 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
                    }
                )!)
         {
-            child.ErrorDataReceived += (_, _) => { };
-            child.BeginErrorReadLine();
-            using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(Token))
+            try
             {
+                child.ErrorDataReceived += (_, _) => { };
+                child.BeginErrorReadLine();
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(Token);
                 timeout.CancelAfter(TimeSpan.FromSeconds(120));
                 string? line;
                 do
@@ -308,8 +309,15 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
 
                 Assert.Equal("COMMITTED", line);
             }
+            finally
+            {
+                // Disposing a process does not kill it: a child left running stays a Wolverine node on the test database.
+                if (!child.HasExited)
+                {
+                    child.Kill(entireProcessTree: true);
+                }
+            }
 
-            child.Kill(entireProcessTree: true);
             await child.WaitForExitAsync(Token);
         }
 

@@ -54,7 +54,7 @@ public static class MailKitServiceCollectionExtensions
                 options.Configure(configure);
             }
 
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, OneEmailSenderCheck>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck>(new OneProviderCheck<IEmailSender>("AddPouryaKitMailKit", "email sender")));
             services.AddSingleton<IEmailSender>(Create);
             return services;
         }

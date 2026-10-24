@@ -68,6 +68,7 @@
     <Project Path="tests/ModularMonolith.Tests/SagaChild/ModularMonolith.Tests.SagaChild.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Contracts/Offending.Contracts.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Core/Offending.Core.csproj" />
+    <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Saga/Offending.Saga.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending.Stream/Offending.Stream.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/Offending/Offending.csproj" />
     <Project Path="tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj" />

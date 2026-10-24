@@ -89,7 +89,7 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | A merged head's code was validated | `merge-package.py` exit 14: only Markdown may differ from the validated commit |
 | A negative test discriminates the rule's exact predicate | `kit-reviewer` (the review rule above) |
 | A registration-answerable guarantee is a build-time composition check; a structure rule over text admits a grammar | `kit-reviewer` (the two review rules above); `docs/agents/brief-template.md` carries both as design constraints |
-| A parallel merge leaves one line per memory file in the implementer index | `merge-package.py --post-merge` (`memory-index` check); `check-docs.py` in CI |
+| A parallel merge leaves one line per memory file in the implementer index | `check-docs.py` (union duplicates), run by `merge-package.py --post-merge` and CI |
 | A check registered over scanned types covers every operation the dispatcher runs | `OperationTypes.Dispatchable` is the one discovery; `DeclaredAuthorizersCheck` (an attributed operation with no authorizer) and `TenantRequirementCheck` (a tenant-scoped scope with an unguarded operation) fail the Host when it is built; `kit-reviewer` for a new registration of that shape |
 | A brief's commands come from the environment, never from memory | `docs/agents/brief-template.md`, "Verify" |
 | A review reads the implementer's commit, never the integration branch against itself | `kit-review.js` refuses `head` equal to `base` |
