@@ -712,7 +712,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
                         .AddPouryaKitSaga<QueueSaga>("orders", "tests.orders", saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId))
                         .AddPouryaKitSaga<TwinSaga>("orders.orders", "tests.orders", saga => saga.Input<PlacedV1>(placed => placed.Id)),
                     _ => builder
-                        .Services.ReceiveSnapshot<ShelfSnapshotV1>("tests.shelf-snapshot.v1")
+                        .Services.ReceiveSnapshot<ShelfSnapshotV1>("probes.shelf-snapshot.v1")
                         .AddPouryaKitSaga<QueueSaga>("tests.snapshot", "tests.snapshot", saga => saga.Input<ShelfSnapshotV1>(shelf => shelf.ShelfId)),
                 };
             })
