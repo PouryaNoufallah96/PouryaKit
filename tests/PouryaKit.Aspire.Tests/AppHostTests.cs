@@ -7,6 +7,7 @@ using System.Text.Json;
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.AppHost;
 
@@ -45,6 +46,8 @@ public sealed class AppHostTests
         "modular-monolith-db",
         "modular-monolith-rebuilder",
         "postgres",
+        "reverse-proxy",
+        "reverse-proxy-rebuilder",
     ];
 
     [Fact]
@@ -67,6 +70,42 @@ public sealed class AppHostTests
         // Each Host is given the resources its composition uses: Inventory.Host caches nothing.
         Assert.Equal(["bearer-signing-key", "broker", "inventory-db"], References(builder, "inventory"));
         Assert.Equal(["bearer-signing-key", "broker", "cache", "modular-monolith-db"], References(builder, "modular-monolith"));
+        Assert.Equal(["inventory", "modular-monolith"], References(builder, "reverse-proxy"));
+    }
+
+    // Story 20 of spec #161: the proxy's own settings route every path to ModularMonolith.Host with its probe off, and the
+    // AppHost adds Inventory's paths, routed to Inventory.Host by its resource name with the probe on. Discovery resolves
+    // each name through the endpoint the proxy's reference to that Host gives it.
+    [Fact]
+    public async Task The_apphost_routes_inventorys_paths_through_the_proxy_to_the_service_by_discovery_with_its_probe_on()
+    {
+        await using var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.ModularMonolith_AppHost>(
+            Arguments,
+            TestContext.Current.CancellationToken
+        );
+        var proxy = builder.Resources.OfType<ProjectResource>().Single(project => project.Name == "reverse-proxy");
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile(Path.Combine(Path.GetDirectoryName(proxy.GetProjectMetadata().ProjectPath)!, "appsettings.json"))
+            .AddInMemoryCollection(
+                (await EnvironmentAsync(builder, "reverse-proxy")).Select(variable =>
+                    KeyValuePair.Create(variable.Key.Replace("__", ":", StringComparison.Ordinal), (string?)variable.Value)
+                )
+            )
+            .Build();
+        (string Key, string? Value)[] expected =
+        [
+            ("ReverseProxy:Routes:inventory:ClusterId", "inventory"),
+            ("ReverseProxy:Routes:inventory:Match:Path", "/inventory/{**catch-all}"),
+            ("ReverseProxy:Clusters:inventory:Destinations:host:Address", "http://inventory"),
+            ("ReverseProxy:Clusters:inventory:HealthCheck:Active:Enabled", "true"),
+            ("Services:inventory:http:0", "{inventory.bindings.http.url}"),
+            ("ReverseProxy:Routes:modular-monolith:Match:Path", "{**catch-all}"),
+            ("ReverseProxy:Clusters:modular-monolith:Destinations:host:Address", "http://modular-monolith"),
+            ("ReverseProxy:Clusters:modular-monolith:HealthCheck:Active:Enabled", "False"),
+            ("Services:modular-monolith:http:0", "{modular-monolith.bindings.http.url}"),
+        ];
+
+        Assert.Equal(expected, expected.Select(setting => (setting.Key, configuration[setting.Key])));
     }
 
     [Fact]
@@ -105,9 +144,15 @@ public sealed class AppHostTests
     private static async Task<IEnumerable<KeyValuePair<string, string>>> AgentSettingsAsync(
         IDistributedApplicationTestingBuilder builder,
         string project
-    )
+    ) =>
+        (await EnvironmentAsync(builder, project))
+            .Where(variable => variable.Key.StartsWith("PouryaKit__AI__", StringComparison.Ordinal))
+            .OrderBy(variable => variable.Key, StringComparer.Ordinal);
+
+    // The environment the AppHost gives a resource, as the publish manifest reads it: an endpoint is its expression,
+    // allocated only when the AppHost runs.
+    private static async Task<IEnumerable<KeyValuePair<string, string>>> EnvironmentAsync(IDistributedApplicationTestingBuilder builder, string project)
     {
-        // As the publish manifest reads it: an endpoint is its expression, allocated only when the AppHost runs.
         var host = builder.Resources.Single(resource => resource.Name == project);
         var context = new EnvironmentCallbackContext(new(DistributedApplicationOperation.Publish), host, []);
         foreach (var callback in host.Annotations.OfType<EnvironmentCallbackAnnotation>())
@@ -115,12 +160,9 @@ public sealed class AppHostTests
             await callback.Callback(context);
         }
 
-        return context
-            .EnvironmentVariables.Where(variable => variable.Key.StartsWith("PouryaKit__AI__", StringComparison.Ordinal))
-            .Select(variable =>
-                KeyValuePair.Create(variable.Key, variable.Value is IManifestExpressionProvider value ? value.ValueExpression : $"{variable.Value}")
-            )
-            .OrderBy(variable => variable.Key, StringComparer.Ordinal);
+        return context.EnvironmentVariables.Select(variable =>
+            KeyValuePair.Create(variable.Key, variable.Value is IManifestExpressionProvider value ? value.ValueExpression : $"{variable.Value}")
+        );
     }
 
     [Fact]
@@ -134,14 +176,28 @@ public sealed class AppHostTests
 
         await app.ResourceNotifications.WaitForResourceHealthyAsync("inventory", timeout.Token);
         await app.ResourceNotifications.WaitForResourceHealthyAsync("modular-monolith", timeout.Token);
+        await app.ResourceNotifications.WaitForResourceHealthyAsync("reverse-proxy", timeout.Token);
         using var inventory = app.CreateHttpClient("inventory");
         using var alive = await inventory.GetAsync("/alive", timeout.Token);
         using var shop = app.CreateHttpClient("modular-monolith");
         // Started, so its bearer options validated, and serving: an anonymous caller is refused, not left unanswered.
         using var anonymous = await AnsweredAsync(() => shop.GetAsync("/catalog/products", timeout.Token), timeout.Token);
+        // Through the proxy, every path reaches ModularMonolith.Host but Inventory's, which reach Inventory.Host: its API
+        // versioning refuses a verified caller that names no version, where ModularMonolith.Host, which hosts no Inventory
+        // beside a broker, answers 404. No query runs: no Host applies its migrations, and the AppHost applies none.
+        using var proxy = app.CreateHttpClient("reverse-proxy");
+        using var unversioned = new HttpRequestMessage(HttpMethod.Get, $"/inventory/stock-items/{Guid.CreateVersion7()}")
+        {
+            Headers = { Authorization = new AuthenticationHeaderValue("Bearer", Token()) },
+        };
+        using var proxiedUnversioned = await proxy.SendAsync(unversioned, timeout.Token);
+        using var proxiedAnonymous = await proxy.GetAsync("/catalog/products", timeout.Token);
 
         Assert.Equal((HttpStatusCode.OK, "Healthy"), (alive.StatusCode, await alive.Content.ReadAsStringAsync(timeout.Token)));
         Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, proxiedUnversioned.StatusCode);
+        Assert.Contains("\"ApiVersionUnspecified\"", await proxiedUnversioned.Content.ReadAsStringAsync(timeout.Token), StringComparison.Ordinal);
+        Assert.Equal(HttpStatusCode.Unauthorized, proxiedAnonymous.StatusCode);
         // Headless: the running model is still the declared one, which a dashboard would have joined as it started.
         Assert.Equal(Declared, Names(app.Services.GetRequiredService<DistributedApplicationModel>().Resources));
     }
@@ -195,7 +251,7 @@ public sealed class AppHostTests
         return builder;
     }
 
-    // A caller's bearer token as the AppHost's ModularMonolith.Host verifies it: its issuer, audience and the parameter's key.
+    // A caller's bearer token as the AppHost's Hosts verify it: its issuer, audience and the parameter's key.
     private static string Token()
     {
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
