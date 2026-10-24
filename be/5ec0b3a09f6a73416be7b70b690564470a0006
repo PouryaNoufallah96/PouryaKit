@@ -1,0 +1,46 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_dc235343aadb31::t_35df4db5994118 8
+  s_dc235343aadb31::t_f5de5b0b7dff3a 15
+docs/acceptance.md
+  s_dc235343aadb31::t_9c27102548ace6 2759
+  s_dc235343aadb31::t_eff8122454294f 2760
+  s_dc235343aadb31::t_70e1c566ac9682 2747-2748,2750-2753,2755-2757
+  s_dc235343aadb31::t_ffd1781f212add 2754
+  s_dc235343aadb31::t_b4d7e51f91a450 2749,2758
+.agents/skills/pourya-kit/references/ai.md
+  s_dc235343aadb31::t_e378def1c1fd0b 316,334,339,351
+.claude/agent-memory/kit-implementer/composition-check-facts.md
+  s_dc235343aadb31::t_0d509d20c4d637 92
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_dc235343aadb31::t_e0f574c5195db7 25
+docs/architecture/README.md
+  s_dc235343aadb31::t_9aca6c1e4cda8a 166,363
+docs/architecture/diagrams/execution-core.architecture.json
+  s_dc235343aadb31::t_8586eb4951218c 10,834-835
+docs/architecture/diagrams/execution-core.html
+  s_dc235343aadb31::t_d5e51586571949 4985
+docs/provenance/PouryaKit.AI.md
+  s_dc235343aadb31::t_fddf3fdbdda194 5
+src/PouryaKit.AI/AIServiceCollectionExtensions.cs
+  s_dc235343aadb31::t_a5c5ebcdc6d796 105-107,117-121
+src/PouryaKit.Cqrs/Composition/OneProviderCheck.cs
+  s_dc235343aadb31::t_42c03c86d3954c 31,41-43
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_dc235343aadb31::t_5a084cc8c0d352 7,15,493-536
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "be5ec0b3a09f6a73416be7b70b690564470a0006",
+  "prompts": {},
+  "sessions": {
+    "s_dc235343aadb31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c959058c-fafb-418d-968e-8aae07d692ee",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": null
+    }
+  }
+}
