@@ -1,0 +1,21 @@
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b933d9add4e23e::t_5dc5a404ce50c6 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_b933d9add4e23e::t_071212ee16c6df 4985,5020-5021,5032-5033,5064-5065,5068-5069,5072-5073,5076-5077,5080-5081,5084-5085,5088-5089,5092-5093,5096-5097,5100-5101,5104-5105,5108-5111,5113,5268-5269,5280-5281,5311-5315,5319,5323,5327,5331,5335,5339,5343,5347,5351,5355,5359,5587,5589
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6ffd52da135d45748bb1a5aadf394530db83b78e",
+  "prompts": {},
+  "sessions": {
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
