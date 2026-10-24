@@ -370,7 +370,7 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         var host = await StartAsync(streams.MartenOnly(_database));
 
         await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
-        await held;
+        await held.WaitAsync(TimeSpan.FromSeconds(30), Token);
         // While the first delivery runs, the test releases its row as the store's stale sweep releases one whose holder
         // stopped restarting its clock, and the store hands it out again.
         await RowsAsync("update wolverine.wolverine_incoming_envelopes set owner_id = 0 where received_at = 'local://accounts.welcome/' and status = 'Incoming' returning 1");
