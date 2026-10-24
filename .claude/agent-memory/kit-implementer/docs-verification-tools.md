@@ -133,5 +133,10 @@ metadata:
 
 - `scratchpad/p143/remap143.py <worktree> [--write]` maps every citation of a file changed against HEAD through a `difflib` line map and edits the numbers with a path-anchored regex; run `--write` once only, since a second run maps the new numbers as HEAD's. A range whose cited code grew (a nested provider class below `HeaderRequestCulture`'s methods) needs its end set by hand. `scratchpad/p143/cites.py <worktree> <substring> ...` lists citations by path before editing; the session-4 `tools/m142/repin.py` pins and refinalizes with the surviving Archify clone.
 
+## Limits into the skill (#165, 2026-10-24; Archify 3.0.1)
+
+- **Two references per area can split one Capability:** `reporting.md` is the renderer (`PouryaKit.Reporting`, no options) and `reporting-module.md` the Report Module (`PouryaKit.Reporting.Module`, `ReportOptions`). A brief naming the first for a Report Module limit was a slip; the docs-sync set (`references/*.md`) covered the right file, recorded as a deviation. Check which package owns the code before writing into a reference, and that a Limits section exists (`grpc.md` had none: add `## Limits` before Testing and a TOC line).
+- **A change inside a cited range fails the pin like one above it:** one entry added to an expected list in `PipelineContractTests.cs` (module-boundaries cites 10-54) needed `end_line` moved, the diagram staged with the code, then a pin commit. The session-6 `tools/repin.py` (copied to the ticket's scratchpad folder) still pointed at a live Archify clone and Chrome; it changed one line per file and deleted its receipts.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].
