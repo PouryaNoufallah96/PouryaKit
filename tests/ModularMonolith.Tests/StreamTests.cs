@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using System.Text.Json;
+using Billing;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
+using Catalog.Contracts.Products.Events.V1;
 using Catalog.Products.Features.CreateProduct;
 using Marten;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,10 +20,12 @@ using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Messaging.Wolverine.Marten;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence;
+using PouryaKit.Persistence.Marten;
 using PouryaKit.Testing;
 using Wolverine.Persistence.Durability;
 using Wolverine.RDBMS;
 using Wolverine.Runtime;
+using LedgerAccountOpenedV1 = Ledger.Contracts.Accounts.Events.V1.AccountOpenedV1;
 
 namespace ModularMonolith.Tests;
 
@@ -115,6 +119,57 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
             $"AccountsModule declares a Snapshot of {typeof(Account).FullName}, a Stream, which would never be sent: a Stream's Unit of Work publishes the Notifications and Integration Events of its events, and no Snapshot. Remove the PublishSnapshot declaration, and publish what the Stream's events tell other Modules as Notifications or Integration Events.",
             refused.Message.Split(Environment.NewLine)
         );
+    }
+
+    // The EF Core package's Outbox marks the Host, and the persistence-only Marten store gives the Stream Unit of Work none:
+    // without the refusal the Host builds, the command commits and its Notification is never written.
+    [Fact]
+    public void A_stream_module_beside_the_ef_core_outbox_and_the_persistence_only_marten_store_fails_the_host_when_it_is_built()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Development", $"--ConnectionStrings:app={_database}"]);
+        builder.AddPouryaKitModules(modules => modules.Add<AccountsModule>());
+        builder.Services.ReceiveSnapshot<ProductSnapshotV1>("catalog.product-snapshot.v1");
+        builder.UsePouryaKitWolverine(connectionName: "app");
+        builder.AddPouryaKitMarten(connectionName: "app");
+
+        var refused = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            "The Operations of AccountsModule would commit their Streams' events and never write what they publish: the Host has an Outbox, but none in the Marten Unit of Work. Call UsePouryaKitMarten(connectionName) of PouryaKit.Messaging.Wolverine.Marten on the Host instead of AddPouryaKitMarten.",
+            refused.Message
+        );
+    }
+
+    // The mirror: the Marten registration's Outbox marks the Host, and the EF Core Unit of Work has none; without the
+    // refusal the quote commits and its scheduled expiry is never written.
+    [Fact]
+    public void An_ef_core_module_in_a_host_whose_only_message_store_is_the_marten_registrations_fails_the_host_when_it_is_built()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Development", $"--ConnectionStrings:app={_database}"]);
+        builder.AddPouryaKitModules(modules => modules.Add<BillingModule>());
+        builder.Services.Receive<ProductCreatedV1>("catalog.product-created.v1");
+        builder.Services.Receive<LedgerAccountOpenedV1>("ledger.account-opened.v1");
+        builder.UsePouryaKitMarten(connectionName: "app");
+
+        var refused = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            "The Operations of BillingModule would commit their changes and never write what they publish or schedule: the Host has an Outbox, but none in the EF Core Unit of Work. Call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore on the Host, before UsePouryaKitMarten.",
+            refused.Message
+        );
+    }
+
+    // With no messaging there is no Outbox to miss: the persistence-only store is the one a Stream Module needs.
+    [Fact]
+    public void A_stream_module_in_a_host_with_no_messaging_builds_on_the_persistence_only_marten_store()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Development", $"--ConnectionStrings:app={_database}"]);
+        builder.AddPouryaKitModules(modules => modules.Add<UnpublishingStreamModule>());
+        builder.AddPouryaKitMarten(connectionName: "app");
+
+        using var host = builder.Build();
+
+        Assert.False(host.Services.GetRequiredService<IServiceProviderIsService>().IsService(typeof(IOutbox)));
     }
 
     // The messaging package keys a Stream Module's Receipts when the Module is composed, whichever registration comes first.
@@ -649,6 +704,12 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     private async Task<long> CountAsync(string sql) => (long)(await RowsAsync(sql))[0][0];
 
     private Task WaitUntilAsync(string condition) => Sql.WaitUntilAsync(_database, condition, seconds: 30);
+}
+
+// A Stream Module that publishes and receives nothing.
+public sealed class UnpublishingStreamModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module) => module.AddPouryaKitStreams("unpublishing");
 }
 
 internal sealed record AccountSnapshotV1(Guid AccountId, long Version);

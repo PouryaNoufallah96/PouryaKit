@@ -40,8 +40,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
-          "line": 50,
-          "end_line": 67,
+          "line": 51,
+          "end_line": 68,
           "label": "sent after the commit"
         }
       ]

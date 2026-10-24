@@ -186,8 +186,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
-          "line": 10,
-          "end_line": 22,
+          "line": 11,
+          "end_line": 23,
           "label": "the EF Outbox, written through OutboxWriter"
         },
         {
@@ -450,8 +450,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.Marten/MartenStreamOutbox.cs",
-          "line": 8,
-          "end_line": 21,
+          "line": 9,
+          "end_line": 22,
           "label": "the Marten outbox, through OutboxWriter"
         },
         {
