@@ -1,0 +1,93 @@
+src/PouryaKit.Templates/content/service/ModularMonolith.slnx
+  s_b933d9add4e23e::t_798aa4f21ede4f 1-13
+src/PouryaKit.Templates/content/service/src/ModularMonolith.Host/appsettings.json
+  s_b933d9add4e23e::t_614364130d18ce 1-11
+scripts/packaging/inventory.json
+  s_b933d9add4e23e::t_27a223af9a54bb 77-84
+src/PouryaKit.Templates/content/service/src/ModularMonolith.Host/Properties/launchSettings.json
+  s_b933d9add4e23e::t_40047a86f08823 1-12
+src/PouryaKit.Templates/content/monolith/.template.config/template.json
+  s_b933d9add4e23e::t_9efc09d31e5eae 64-65
+src/PouryaKit.Templates/content/service/tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_b933d9add4e23e::t_76e87905365696 1-21
+src/PouryaKit.Templates/content/service/.template.config/template.json
+  s_b933d9add4e23e::t_5c249cbff97405 1-97
+src/PouryaKit.Templates/content/service/tests/ModularMonolith.Tests/HostTests.cs
+  s_b933d9add4e23e::t_e920f3f1ce0613 1-195
+src/PouryaKit.Templates/content/service/Directory.Packages.props
+  s_b933d9add4e23e::t_bc8e63f45af6a4 1-39
+src/PouryaKit.Templates/content/service/src/ModularMonolith.Host/ModularMonolith.Host.csproj
+  s_b933d9add4e23e::t_1f8cf3ab413333 1-20
+src/PouryaKit.Templates/content/service/src/ModularMonolith.Host/AppHost.cs
+  s_b933d9add4e23e::t_1f0d17aade4c63 1-40,43-71
+  s_b933d9add4e23e::t_c80f014b754c97 41-42
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_b933d9add4e23e::t_c64d89791ad08c 243
+  s_b933d9add4e23e::t_be1be52445febd 240-242
+  s_b933d9add4e23e::t_ebfe2f13af5839 244-246
+  s_7c72b42486c599::t_ce496691ed0266 6-8,141-143,146-147,149-150,183,217,219,235-239,247-263,320,322,326,364
+.agents/skills/pourya-kit/SKILL.md
+  s_b933d9add4e23e::t_6a61a55ab36801 44
+.agents/skills/pourya-kit/references/grpc.md
+  s_b933d9add4e23e::t_5eb4864d182b26 56
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_b933d9add4e23e::t_92d96275a9b8af 53,143
+.agents/skills/pourya-kit/references/templates.md
+  s_b933d9add4e23e::t_20a9bfcccec0d2 3,8,23,27,34-41,43,45,47,57,74-83,92,101,105-107,115-120,128,131,156-158
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b933d9add4e23e::t_f189f91ef4eaa7 15
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_b933d9add4e23e::t_83d5b83cc77782 109-118
+GLOSSARY.md
+  s_b933d9add4e23e::t_e68820c4f38e30 206
+README.md
+  s_b933d9add4e23e::t_4de4cfabd95177 22,42
+docs/acceptance.md
+  s_b933d9add4e23e::t_0514c22d42ad45 2840
+docs/architecture/README.md
+  s_b933d9add4e23e::t_39e068c7a7faa2 58,60,738,740-741,743-744,748,769
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_b933d9add4e23e::t_904df13dedd396 293,308-313,608
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b933d9add4e23e::t_30232bafd977b4 666
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b933d9add4e23e::t_2c1a672b891e1c 175,266-271,375,394,664
+docs/foundation-review.md
+  s_b933d9add4e23e::t_93d4e31954b75b 900
+docs/packages.md
+  s_b933d9add4e23e::t_6e596ffcf5e095 32,34
+docs/provenance/ModularMonolith.md
+  s_b933d9add4e23e::t_d5553e0aba732d 32
+src/PouryaKit.Templates/PouryaKit.Templates.csproj
+  s_b933d9add4e23e::t_29e12783ebe28c 4,22,29-31
+src/PouryaKit.Templates/content/service/.template.config/dotnetcli.host.json
+  s_b933d9add4e23e::t_557e29d4d39750 1-9
+src/PouryaKit.Templates/content/service/src/ModularMonolith.Host/Program.cs
+  s_b933d9add4e23e::t_51d833dc156fbf 1-6
+tests/PouryaKit.ArchitectureTests/TemplateRules.cs
+  s_b933d9add4e23e::t_ed7dec1b8d338f 16,22,236-238,243,375-394
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6eed88321c63f56b32ab4110a2c4d78c31655daf",
+  "prompts": {},
+  "sessions": {
+    "s_7c72b42486c599": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a4cc7247c3577db79",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
