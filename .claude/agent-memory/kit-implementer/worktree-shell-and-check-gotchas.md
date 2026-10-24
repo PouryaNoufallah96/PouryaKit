@@ -59,6 +59,7 @@ The worktree base and the one-git-command rule are in the role file; these are w
 
 ## check-ai-setup.py and other tools
 
+- **The pre-commit hook runs `check-ai-setup.py` only when an AI-setup path is staged** (PR #143 audit, 2026-10-24), yet the script also fails a package count ("Wave 3 packages", any `<number> packages`) in `README.md`, the skill's `SKILL.md` and `docs/architecture/README.md`: a README-only commit passes and the next `.agents/` or memory commit fails. Run `check-ai-setup.py` after any edit of those three files.
 - `check-ai-setup.py` parses frontmatter with a small YAML subset: a plain scalar containing `": "` or `" #"`, or ending in `:`, fails. It reads frontmatter in skills' `SKILL.md` files, output styles, Claude roles and rules.
 - `check-ai-setup.py` fails a new `docs/agents/*.md` that no `AGENTS.md`, rule, output style or role file names; a pointer from another `docs/agents/` file does not count. When `AGENTS.md` and the role files are outside `allowed_files`, the output style is the place.
 - The Edit tool validates `.claude/settings.json` against the live schema and refuses an invalid enum, so mutation-test `check-ai-setup.py` in memory (load the module, swap `loaded[path]`).
