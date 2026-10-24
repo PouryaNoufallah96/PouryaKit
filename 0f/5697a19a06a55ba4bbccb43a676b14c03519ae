@@ -1,0 +1,21 @@
+.codex/agents/kit-scout.toml
+  s_d25075ecfddc3d::t_36da8fbe1bfcad 4
+.claude/agents/kit-scout.md
+  s_d25075ecfddc3d::t_36da8fbe1bfcad 3-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0f5697a19a06a55ba4bbccb43a676b14c03519ae",
+  "prompts": {},
+  "sessions": {
+    "s_d25075ecfddc3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c2faa7bc-43e4-49f1-ba67-db6d73ce0e91",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
