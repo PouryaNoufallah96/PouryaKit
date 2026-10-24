@@ -5058,8 +5058,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <path data-edge-from="download" data-edge-to="verify" data-edge-key="19" data-edge-id="e-verify" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="840,607;812,607" d="M 840 607 L 812 607" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Nodes -->
-        <g id="node-trigger" data-node-id="trigger" data-node-label="Push, PR or manual run" tabindex="0" role="button" aria-label="Focus Push, PR or manual run, main, feat/**, tags, any PR, CI run · ci.yml" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="main, feat/**, tags, any PR" data-node-context="CI run · ci.yml">
-          <title>Push, PR or manual run · main, feat/**, tags, any PR · CI run · ci.yml</title>
+        <g id="node-trigger" data-node-id="trigger" data-node-label="Push, PR or manual run" tabindex="0" role="button" aria-label="Focus Push, PR or manual run, main, feat/**, wave-**, tags, PR, CI run · ci.yml" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="main, feat/**, wave-**, tags, PR" data-node-context="CI run · ci.yml">
+          <title>Push, PR or manual run · main, feat/**, wave-**, tags, PR · CI run · ci.yml</title>
           <rect x="48" y="146" width="170" height="52" rx="6" class="c-mask"/>
           <rect x="48" y="146" width="170" height="52" rx="6" class="c-frontend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(54 152) scale(0.6875)">
@@ -5069,7 +5069,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="133" y="178" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Push, PR or manual run</text>
-          <text data-detail="context" x="133" y="190.3" class="t-muted" font-size="8" text-anchor="middle">main, feat/**, tags, any PR</text>
+          <text data-detail="context" x="133" y="190.3" class="t-muted" font-size="8" text-anchor="middle">main, feat/**, wave-**, tags, PR</text>
         </g>
 
         <g id="node-ai_setup" data-node-id="ai_setup" data-node-label="ai-setup" tabindex="0" role="button" aria-label="Focus ai-setup, AI setup, docs, script tests, CI run · ci.yml" aria-pressed="false" data-node-kind="backend" data-node-sublabel="AI setup, docs, script tests" data-node-context="CI run · ci.yml">
@@ -5530,7 +5530,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <ul>
           <li>Checkout fetches full history with the read-only token, then removes it; validate.py tests that exact SHA with no token and fetches nothing.</li>
           <li>The artifact keeps the tested SHA and result, the original packages and manifest, logs and consumer assets, never caches, on failure too.</li>
-          <li>A pull request, tag, feat/** or failed run never authorizes publication; only 0.x preview and rc versions are published.</li>
+          <li>A pull request, tag, feat/**, wave-** or failed run never authorizes publication; only 0.x preview and rc versions are published.</li>
           <li>Only the publish job may write packages: it pushes and restores with its own job token.</li>
           <li>Its concurrency group has cancel-in-progress: false, so GitHub keeps one run going and one pending: serialization, not a queue.</li>
         </ul>

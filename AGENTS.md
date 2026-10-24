@@ -93,7 +93,7 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | A check registered over scanned types covers every operation the dispatcher runs | `OperationTypes.Dispatchable` is the one discovery; `DeclaredAuthorizersCheck` (an attributed operation with no authorizer) and `TenantRequirementCheck` (a tenant-scoped scope with an unguarded operation) fail the Host when it is built; `kit-reviewer` for a new registration of that shape |
 | A brief's commands come from the environment, never from memory | `docs/agents/brief-template.md`, "Verify" |
 | A review reads the implementer's commit, never the integration branch against itself | `kit-review.js` refuses `head` equal to `base` |
-| Pre-Wave 3 acceptance sections stay in ticket order after every merge | `check-docs.py` (ordered sections), run by `merge-package.py --post-merge` |
+| Pre-Wave 3 and Wave 4 acceptance sections stay in ticket order after every merge | `check-docs.py` (ordered sections), run by `merge-package.py --post-merge` |
 | A package validation leaves no evidence directory behind after a PASS | `validate.py` removes it unless `--keep` (CI passes `--keep` for its artifact); `test_validation.py`, `FinishTests` |
 | A local CI reproduction keeps what it proved: each step's output and the Release test totals | `validate.py` prints the totals in its PASS line (`test_totals`, `TestTotalsTests`); `.agents/scripts/ci-local.sh` keeps every step's output and the validation log |
 | The Kit skill's description stays within the 1024 characters Claude Code loads | `check-ai-setup.py` (`SKILL_DESCRIPTION_LIMIT`); the pre-commit hook and CI's `ai-setup` job run it |

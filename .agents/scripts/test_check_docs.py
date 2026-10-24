@@ -323,6 +323,14 @@ class CheckDocsTests(unittest.TestCase):
         # Earlier waves' records are not held to it: their sections sit in the order the Phases ran.
         self.assertPasses({"docs/acceptance.md": "# Acceptance\n\n## Wave 2 caching, ticket #43\n\nx\n\n## Wave 2 messaging, ticket #42\n\nx\n"})
 
+    def test_wave_4_acceptance_sections_out_of_ticket_order_fail(self) -> None:
+        """Wave 4 is ordered from its first merge (#166); Wave 3's sections carry no prefix and stay as they merged."""
+        ordered = "# Acceptance\n\n## Wave 4 the validation fix, ticket #162\n\nx\n\n## Wave 4 the CI trigger, ticket #166\n\nx\n"
+        self.assertPasses({"docs/acceptance.md": ordered})
+        disordered = "# Acceptance\n\n## Wave 4 the CI trigger, ticket #166\n\nx\n\n## Wave 4 the validation fix, ticket #162\n\nx\n"
+        self.assertFails({"docs/acceptance.md": disordered}, "docs/acceptance.md:7: the Wave 4 section of ticket #162 comes after ticket #166's (line 3); keep these sections in ticket order")
+        self.assertPasses({"docs/acceptance.md": "# Acceptance\n\n## Email, ticket #124\n\nx\n\n## Tenancy at save and delivery, ticket #117\n\nx\n"})
+
     def test_a_renamed_kit_symbol_fails(self) -> None:
         self.assertFails({"docs/guide.md": "# Guide\n\nCall `Product.Retitle()`.\n"}, "docs/guide.md:3: `Retitle` names nothing in the code")
 

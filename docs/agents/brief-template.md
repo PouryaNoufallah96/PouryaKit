@@ -35,6 +35,10 @@ Follow the last package added (`<package>`, #<ticket>): csproj metadata as its s
 
 `.agents/skills/pourya-kit/SKILL.md` and `references/*.md`, `README.md` (the status list), `docs/architecture/README.md`, `docs/acceptance.md`, `docs/provenance/*.md`, `docs/adr/*.md` (a dated amendment of an ADR the ticket touches, never a rewrite of its record), `docs/foundation-review.md` (only your Capability's section C row and I.3 row, with a dated "Built" note), `docs/*.md` (a top-level doc, such as `docs/packages.md` or `docs/private-packages.md`, where a line restates the behaviour you change), `src/PouryaKit.Templates/content/**` (the monolith's replacement of a changed sample Composition Root or Gateway endpoint, and the template csproj that matches a changed sample csproj, as `.claude/rules/kit-code.md` couples them), `scripts/packaging/consumers/<package>.cs`, `scripts/packaging/inventory.json` (a ticket that adds or removes a package), `Directory.Packages.props`, `PouryaKit.slnx`, `tests/PouryaKit.ArchitectureTests/**` (package graph and structure tests), `GLOSSARY.md` (a term the ticket introduces), and your agent memory directory. A `stop_if` never narrows this set.
 
+## Acceptance record (every ticket)
+
+Append one section at the end of `docs/acceptance.md` headed `## <Wave prefix> <short title>, ticket #<n>`: the Wave's prefix in `check-docs.py`'s `ORDERED_SECTIONS` (`Wave 4`), then text, then `, ticket #<n>` ending the line, the shape its ordered-section rule reads. Append at the end; the orchestrator keeps the sections in ticket order at each merge. Rows: behaviour · proof (test or check, with its pointer) · red-once or check result.
+
 ## Tests
 
 `.claude/rules/kit-code.md`, "Tests": one test per behaviour that matters, and red once for each guarantee the ticket states, listed under `shown_red`. Gateway and HTTP seams run through `AppFixture` or `HostFixture` against PostgreSQL in Testcontainers. One class runs with `dotnet test --project <csproj> --filter-class <fully qualified class> --output Detailed`. A test fails when its collaborators return defaults or the promised effect never occurs.

@@ -28,8 +28,9 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
 - Union duplicates: in a file `.gitattributes` merges with `merge=union`, a line twice or two lines linking the same
   target fails. A union merge keeps both sides of a line both branches changed.
 - Ordered sections: in `docs/acceptance.md`, the `## <prefix> ..., ticket #N` headings of each prefix in ORDERED_SECTIONS
-  run in ascending ticket order. Parallel tickets append at the end and conflict there by design, and the owner asked
-  for ticket order after every merge (session 5 missed one until an advisor caught it).
+  (`Pre-Wave 3`, `Wave 4`) run in ascending ticket order. Parallel tickets append at the end and conflict there by
+  design, and the owner asked for ticket order after every merge (session 5 missed one until an advisor caught it).
+  The earlier Waves' sections, and Wave 3's, which carry no prefix, are not held to it.
 - Test pointers: in `docs/acceptance.md`, which the Names rule leaves out, a span that is exactly `Class.Method`
   with a class ending in `Tests` must name a declared test: a method that the body of a class of that name declares,
   in a `.cs` file under `tests/` or the templates' generated tests, or in a `test_*.py`. Python is read with `ast`;
@@ -436,7 +437,7 @@ def csharp_tests(text: str) -> dict[str, set[str]]:
     return found
 
 
-ORDERED_SECTIONS = ("Pre-Wave 3",)
+ORDERED_SECTIONS = ("Pre-Wave 3", "Wave 4")
 ORDERED_HEADING = re.compile(r"## (?P<prefix>" + "|".join(map(re.escape, ORDERED_SECTIONS)) + r") .*, ticket #(?P<ticket>\d+)\s*$")
 
 
