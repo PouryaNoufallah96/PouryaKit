@@ -1,0 +1,23 @@
+.agents/skills/pourya-kit/references/ai.md
+  s_dc235343aadb31::t_42f61ebc8ca1af 351
+docs/acceptance.md
+  s_dc235343aadb31::t_b4d7e51f91a450 2662,2667,2671
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_dc235343aadb31::t_e56f1b4e89ef9a 495-496
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bb083e45cab2f868808bb78afb0276ad5152980f",
+  "prompts": {},
+  "sessions": {
+    "s_dc235343aadb31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c959058c-fafb-418d-968e-8aae07d692ee",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
