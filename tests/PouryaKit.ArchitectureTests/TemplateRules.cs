@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Microsoft.Extensions.FileSystemGlobbing;
+using PouryaKit.AI;
 using PouryaKit.Modularity;
 
 namespace PouryaKit.ArchitectureTests;
@@ -42,7 +43,7 @@ internal static class TemplateRules
 
     /// <summary>
     /// The Proving Sample's files the package packs under <c>content/sample/</c>, as its project file packs them: every
-    /// Module's C# files, the Host's permission source and announcer, and the service defaults.
+    /// Module's C# files, the Host's permission source, announcer and guardrail, and the service defaults.
     /// </summary>
     public static IReadOnlyList<TextFile> PackedSample { get; } =
         [
@@ -52,6 +53,7 @@ internal static class TemplateRules
                     || file.Path
                         is "ModularMonolith.Host/CallerPermissions.cs"
                             or "ModularMonolith.Host/LoggedNewProductAnnouncer.cs"
+                            or "ModularMonolith.Host/CardNumberGuardrail.cs"
                             or "ModularMonolith.ServiceDefaults/Extensions.cs"
                 ),
         ];
@@ -117,27 +119,41 @@ internal static class TemplateRules
     /// registrations, in a project file or in code. Its test project reaches Modularity only through PouryaKit.Testing,
     /// which <c>validate.py</c> allows in that project's closure alone (ticket #87).
     /// </summary>
-    public static IEnumerable<string> ModularityIn(IEnumerable<TextFile> generated) =>
-        from file in generated
-        from name in ModularityNames
-        where Regex.IsMatch(file.Text, $@"(?<!\w){Regex.Escape(name)}(?!\w)")
-        select $"{file.Path} names {name}, but the monolith composes no Modularity.";
+    public static IEnumerable<string> ModularityIn(IEnumerable<TextFile> generated) => Naming(generated, ModularityNames, "Modularity");
 
-    private static readonly string[] ModularityNames =
-    [
-        typeof(IModuleDefinition).Assembly.GetName().Name!,
-        .. typeof(IModuleDefinition)
-            .Assembly.GetExportedTypes()
-            .Where(type => !type.Name.StartsWith('<'))
-            .SelectMany(type =>
-                type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
-                    .Where(method => !method.IsSpecialName)
-                    .Select(method => method.Name)
-                    .Prepend(type.Name.Split('`')[0])
-            )
-            .Distinct()
-            .Order(StringComparer.Ordinal),
-    ];
+    /// <summary>
+    /// The monolith runs without AI either: no file it generates names PouryaKit.AI, one of its public types or
+    /// registrations, or the Agent Framework it brings, so the sample's agent and the Host's guardrail stay out of it
+    /// (ticket #173).
+    /// </summary>
+    public static IEnumerable<string> AIIn(IEnumerable<TextFile> generated) => Naming(generated, AINames, "AI");
+
+    private static IEnumerable<string> Naming(IEnumerable<TextFile> generated, string[] names, string capability) =>
+        from file in generated
+        from name in names
+        where Regex.IsMatch(file.Text, $@"(?<!\w){Regex.Escape(name)}(?!\w)")
+        select $"{file.Path} names {name}, but the monolith composes no {capability}.";
+
+    private static readonly string[] ModularityNames = NamesOf(typeof(IModuleDefinition).Assembly);
+
+    private static readonly string[] AINames = [.. NamesOf(typeof(IChatGuardrail).Assembly), "Microsoft.Agents.AI"];
+
+    // The package's name, and each public type's and each public static method's, such as a registration.
+    private static string[] NamesOf(Assembly package) =>
+        [
+            package.GetName().Name!,
+            .. package
+                .GetExportedTypes()
+                .Where(type => !type.Name.StartsWith('<'))
+                .SelectMany(type =>
+                    type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                        .Where(method => !method.IsSpecialName)
+                        .Select(method => method.Name)
+                        .Prepend(type.Name.Split('`')[0])
+                )
+                .Distinct()
+                .Order(StringComparer.Ordinal),
+        ];
 
     /// <summary>
     /// Every sample file the monolith excludes, a Composition Root or Gateway endpoint, has the monolith's own file at

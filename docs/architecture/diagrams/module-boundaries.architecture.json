@@ -102,8 +102,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 27,
-          "end_line": 53,
+          "line": 28,
+          "end_line": 55,
           "label": "declares data, Features, publications"
         },
         {

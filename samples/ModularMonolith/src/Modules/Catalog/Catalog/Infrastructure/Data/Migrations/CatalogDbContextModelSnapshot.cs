@@ -18,7 +18,7 @@ namespace Catalog.Infrastructure.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("catalog")
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -40,6 +40,7 @@ namespace Catalog.Infrastructure.Data.Migrations
                         .HasColumnName("product_count");
 
                     b.Property<string>("Tenant")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("tenant");
@@ -102,6 +103,7 @@ namespace Catalog.Infrastructure.Data.Migrations
                         .HasColumnName("name");
 
                     b.Property<string>("Tenant")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("tenant");
@@ -120,6 +122,46 @@ namespace Catalog.Infrastructure.Data.Migrations
                         .HasFilter("is_deleted = false");
 
                     b.ToTable("products", "catalog");
+                });
+
+            modelBuilder.Entity("Catalog.Products.Entities.ProductConversation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("key");
+
+                    b.Property<string>("Memory")
+                        .HasColumnType("json")
+                        .HasColumnName("memory");
+
+                    b.Property<string>("Session")
+                        .HasColumnType("json")
+                        .HasColumnName("session");
+
+                    b.Property<string>("Tenant")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tenant");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_product_conversations");
+
+                    b.HasIndex("Key")
+                        .IsUnique()
+                        .HasDatabaseName("ix_product_conversations_key");
+
+                    b.ToTable("product_conversations", "catalog");
                 });
 #pragma warning restore 612, 618
         }

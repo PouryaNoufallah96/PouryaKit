@@ -1,13 +1,16 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
+using PouryaKit.AI;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests.Fixtures;
 
 /// <summary>
 /// The <see cref="ChatStub"/> and the application started on a database of its own with its chat client pointed at it:
-/// a run there may be given GetProduct, CreateProduct and RemoveProducts, and calls the model at most
-/// <see cref="MaximumIterations"/> times with tools.
+/// a run there may be given GetProduct, CreateProduct, RemoveProducts and Stub's ReadStampLedger, and calls the model at
+/// most <see cref="MaximumIterations"/> times with tools. It has none of the application's guardrails, so a streamed
+/// run streams; a test that needs one composes a Host of its own.
 /// </summary>
 public sealed class AiFixture(AppFixture app) : IAsyncLifetime
 {
@@ -29,6 +32,7 @@ public sealed class AiFixture(AppFixture app) : IAsyncLifetime
             $"--PouryaKit:AI:Endpoint={stub.Endpoint}",
             "--PouryaKit:AI:Tools:1=CreateProduct",
             "--PouryaKit:AI:Tools:2=RemoveProducts",
+            "--PouryaKit:AI:Tools:4=ReadStampLedger",
             $"--PouryaKit:AI:MaximumIterationsPerRun={MaximumIterations}",
         ];
 
@@ -38,7 +42,13 @@ public sealed class AiFixture(AppFixture app) : IAsyncLifetime
         var database = $"ai_{Guid.CreateVersion7():N}";
         await app.RowsAsync($"create database {database}");
         var connectionString = new NpgsqlConnectionStringBuilder(app.ConnectionString) { Database = database }.ConnectionString;
-        _host = AppFixture.ComposeHost("Development", connectionString, new RecordedLogs(), null, StubArguments(_stub));
+        _host = AppFixture.ComposeHost(
+            "Development",
+            connectionString,
+            new RecordedLogs(),
+            builder => builder.Services.RemoveAll<IChatGuardrail>(),
+            StubArguments(_stub)
+        );
         await HostFixture.StartHostAsync(_host, TestContext.Current.CancellationToken);
     }
 

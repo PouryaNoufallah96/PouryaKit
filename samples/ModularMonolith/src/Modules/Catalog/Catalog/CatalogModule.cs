@@ -13,6 +13,7 @@ using PouryaKit.Cqrs;
 using PouryaKit.Grpc;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
+using PouryaKit.Persistence;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.EFCore;
 using PouryaKit.Persistence.Postgres;
@@ -32,6 +33,7 @@ public sealed class CatalogModule : IModuleDefinition
         module.AddPouryaKitTenancy();
         module.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
         module.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
+        module.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConversationConfiguration.KeyIndex, UnitOfWorkErrors.ConcurrencyConflict);
         module.AddPouryaKitDapper(connectionName: "app");
         module.AddPouryaKitCqrs();
         module.AddPouryaKitValidation();

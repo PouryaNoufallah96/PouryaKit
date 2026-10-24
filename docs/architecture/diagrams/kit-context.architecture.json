@@ -124,8 +124,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 129,
-          "end_line": 136,
+          "line": 131,
+          "end_line": 138,
           "label": "message and Marten stores; RabbitMQ if a broker"
         },
         {
@@ -294,7 +294,7 @@
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 33,
+          "line": 34,
           "label": "a schema per Module (catalog)"
         },
         {

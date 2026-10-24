@@ -10,15 +10,19 @@ public sealed class TemplateTests
 {
     // The excluded sample files the monolith needs nothing in place of: ICatalogProducts answers other Modules, and the
     // monolith has none; the agent's tool runs through Catalog's Gateway, and PouryaKit.AI's Gateway tool needs
-    // Modularity (#135).
+    // Modularity (#135); the agent's store and memory, and the Host's guardrail, are PouryaKit.AI's, which the monolith
+    // composes none of (#173).
     private static readonly string[] Unreplaced =
     [
         "src/Modules/Catalog/Catalog/Products/Features/GetProduct/CatalogProducts.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsCommand.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsCommandHandler.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsCommandValidator.cs",
         "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsEndpoint.cs",
-        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQuery.cs",
-        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQueryHandler.cs",
-        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQueryValidator.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/ProductConversations.cs",
         "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/ProductToFind.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/ProductsAskedAbout.cs",
+        "src/ModularMonolith.Host/CardNumberGuardrail.cs",
     ];
 
     [Fact]
@@ -59,6 +63,26 @@ public sealed class TemplateTests
                     new("src/Program.cs", "builder.AddPouryaKitModules(modules => modules.Add<CatalogModule>());"),
                 ]
             ).Order(StringComparer.Ordinal)
+        );
+    }
+
+    // Ticket #173: the sample's agent and the Host's guardrail name PouryaKit.AI, which only the monolith's exclusions keep
+    // out of it, as its Catalog project drops the package; the modular monolith takes both.
+    [Fact]
+    public void Nothing_the_monolith_generates_names_ai_and_the_modular_monolith_packs_the_agent()
+    {
+        var modular = Generated(Modular);
+
+        Assert.Empty(AIIn(Generated(Monolith)));
+        Assert.Contains(modular, file => file.Path == "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsCommandHandler.cs");
+        Assert.Contains(modular, file => file.Path == "src/ModularMonolith.Host/CardNumberGuardrail.cs");
+        var guardrail = PackedSample.Single(file => file.Path == "ModularMonolith.Host/CardNumberGuardrail.cs");
+        Assert.Equal(
+            [
+                "src/ModularMonolith.Host/CardNumberGuardrail.cs names IChatGuardrail, but the monolith composes no AI.",
+                "src/ModularMonolith.Host/CardNumberGuardrail.cs names PouryaKit.AI, but the monolith composes no AI.",
+            ],
+            AIIn([guardrail with { Path = "src/" + guardrail.Path }]).Order(StringComparer.Ordinal)
         );
     }
 

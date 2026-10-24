@@ -106,5 +106,10 @@ Check `.github/workflows/package-publication.yml` before relying on it.
 - **What a bump breaks that tests show:** a new source generator output (`JasperFx.Generated.DiscoveredEventModels`, no `[GeneratedCode]`) fails `NamespaceTests`; `TemplateTests` has the Kit's xunit version in an expected message; the AppHost's `Aspire.AppHost.Sdk/<version>` sits in its csproj, outside the props.
 - **A `PackageGraph.cs` row change re-pins four to six diagrams**, and any edit of a cited file re-pins its diagram even when no range moves: stage the remapped sources (`remap167.py --write`, once) and an interim `--pin-only` to the base for the unmoved ones, commit, then `repinall.py <worktree> <commit>` pins and refinalizes (one line per page, no receipts left).
 
+## A packed Host file (#173, 2026-10-24)
+
+- **A new sample Host file both templates should take** needs four edits: `_SampleCode` in `PouryaKit.Templates.csproj` (outside most briefs: ask), `TemplateRules.PackedSample`, the monolith's `template.json` exclude when it names a package the monolith lacks (its `include` takes `ModularMonolith.Host/**/*`), and `TemplateTests.Unreplaced`. `TemplateRules.AIIn`, the AI twin of `ModularityIn`, reads comments too: the shared service defaults' comment that named `PouryaKit.AI` was its one hit.
+- `docs/acceptance.md`'s Wave 4 sections run in ticket order under `check-docs.py`: insert a section before the first higher ticket's, never after it.
+
 **Why:** each cost a probe or a validation run; the credential rule is not testable without the hosted feed.
 **How to apply:** for a new template or any package that is not a library, any `validate.py` run, any clean consumer, any change to the publication workflow, and a hosted proof of the private feed. Related: [[core-json-and-architecture-test-facts]], [[observability-tracing-and-http-facts]], [[worktree-shell-and-check-gotchas]].

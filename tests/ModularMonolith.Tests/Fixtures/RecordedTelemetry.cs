@@ -1,6 +1,9 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 using PouryaKit.Observability;
 
 namespace ModularMonolith.Tests.Fixtures;
@@ -79,4 +82,31 @@ internal sealed class RecordedTelemetry : IDisposable
     }
 
     public sealed record Duration(double Seconds, IReadOnlyDictionary<string, object?> Tags);
+}
+
+/// <summary>
+/// An in-process exporter of a Host's OpenTelemetry tracing: every activity its tracer provider exports, as an OTLP
+/// exporter would receive it, so a test sees what the provider's sources select, where <see cref="RecordedTelemetry"/>
+/// listens to its sources itself.
+/// </summary>
+internal sealed class ExportedActivities : BaseExporter<Activity>
+{
+    private readonly ConcurrentQueue<Activity> _exported = [];
+
+    /// <summary>Adds this exporter to the tracer provider the Host's OpenTelemetry builds.</summary>
+    public void AddTo(IServiceCollection services) =>
+        services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddProcessor(new SimpleActivityExportProcessor(this)));
+
+    /// <summary>Every exported activity of <paramref name="trace"/>.</summary>
+    public IReadOnlyList<Activity> Of(ActivityTraceId trace) => [.. _exported.Where(activity => activity.TraceId == trace)];
+
+    public override ExportResult Export(in Batch<Activity> batch)
+    {
+        foreach (var activity in batch)
+        {
+            _exported.Enqueue(activity);
+        }
+
+        return ExportResult.Success;
+    }
 }
