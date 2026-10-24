@@ -38,6 +38,9 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
     private const string Instructions = "You answer questions about the shop.";
     private const string Refusal = "The guardrail refused.";
 
+    // A card number the application's guardrail refuses.
+    private const string CardNumber = "4111 1111 1111 1111";
+
     // Microsoft.Extensions.AI's activity source, which the service defaults' tracing exports.
     private const string ChatSource = "Experimental.Microsoft.Extensions.AI";
 
@@ -472,6 +475,37 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
         );
     }
 
+    // Review F1: a card number in what a tool answered, here a product named with one, is refused before it reaches the
+    // model, so the turn fails and keeps nothing, the memory's note of that product included, and a later turn is answered.
+    [Fact]
+    public async Task A_card_number_in_a_tool_result_never_reaches_the_model_and_a_later_turn_of_the_conversation_is_answered()
+    {
+        await using var host = ApplicationHost();
+        var catalog = host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>();
+        var shared = app.Host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>();
+        var (carded, _) = await CreateProductAsync(shared, $"{Unique("Lamp")} {CardNumber}");
+        var (product, name) = await CreateProductAsync(shared);
+        var asker = new OperationContext(Actor.Person($"ada-{Guid.CreateVersion7():N}"), AppFixture.TestTenant);
+        // The refused call never reaches the stub, so the next reply scripted is the later turn's.
+        ai.Stub.Script(ChatReply.Calls(GetProduct(carded)), ChatReply.Calls(GetProduct(product)), ChatReply.Text($"It is the {name}."));
+
+        var refused = await catalog.SendAsync(new AskAboutProductsCommand($"What is {carded} called?"), asker, TestContext.Current.CancellationToken);
+
+        var error = Assert.Single(refused.Errors);
+        Assert.Equal(("Product.QuestionRefused", CardNumberGuardrail.Refusal), (error.Code, error.Message));
+        Assert.Equal(
+            0L,
+            await app.ScalarAsync<long>($"select count(*) from catalog.product_conversations where key = '{ProductConversations.KeyOf(asker)}'")
+        );
+        var answered = await catalog.SendAsync(
+            new AskAboutProductsCommand($"What is {product} called?"),
+            new OperationContext(asker.Actor, asker.Tenant),
+            TestContext.Current.CancellationToken
+        );
+        Assert.Equal($"It is the {name}.", answered.Value);
+        Assert.DoesNotContain(ai.Stub.Requests, request => request.GetRawText().Contains(CardNumber, StringComparison.Ordinal));
+    }
+
     // Two first turns of one conversation at once: each read no conversation as it started, so the turn that commits
     // second conflicts on the conversation's key instead of overwriting the first's row, and keeps nothing.
     [Fact]
@@ -667,9 +701,9 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
 
     private Task<(Guid Product, string Name)> CreateProductAsync() => CreateProductAsync(Catalog);
 
-    private static async Task<(Guid Product, string Name)> CreateProductAsync(IGatewayProcessor<CatalogModule> catalog)
+    private static async Task<(Guid Product, string Name)> CreateProductAsync(IGatewayProcessor<CatalogModule> catalog, string? named = null)
     {
-        var (category, product, name) = (Guid.CreateVersion7(), Guid.CreateVersion7(), Unique("Lamp"));
+        var (category, product, name) = (Guid.CreateVersion7(), Guid.CreateVersion7(), named ?? Unique("Lamp"));
         Assert.True((await catalog.SendAsync(new CreateCategoryCommand(category, Unique("Lamps")), TestContext.Current.CancellationToken)).IsSuccess);
         Assert.True((await catalog.SendAsync(new CreateProductCommand(product, category, name), TestContext.Current.CancellationToken)).IsSuccess);
         return (product, name);

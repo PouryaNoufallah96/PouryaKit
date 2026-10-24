@@ -247,10 +247,23 @@ public sealed partial class CardNumberGuardrail : IChatGuardrail
     public const string Refusal = "Card numbers are not taken here: ask again without one.";
 
     public Task<string?> CheckRequestAsync(IReadOnlyList<ChatMessage> messages, CancellationToken cancellationToken) =>
-        Task.FromResult(messages.Any(message => CardNumber().IsMatch(message.Text)) ? Refusal : null);
+        Task.FromResult(HoldsCardNumber(messages) ? Refusal : null);
 
     public Task<string?> CheckResponseAsync(ChatResponse response, CancellationToken cancellationToken) =>
-        Task.FromResult(CardNumber().IsMatch(response.Text) ? Refusal : null);
+        Task.FromResult(HoldsCardNumber(response.Messages) ? Refusal : null);
+
+    private static bool HoldsCardNumber(IEnumerable<ChatMessage> messages) =>
+        messages.SelectMany(message => message.Contents).Any(content => CardNumber().IsMatch(TextOf(content)));
+
+    // A message's Text is its TextContent alone: a tool call's arguments and a tool's answer are read as their JSON.
+    private static string TextOf(AIContent content) =>
+        content switch
+        {
+            TextContent text => text.Text,
+            FunctionCallContent call => JsonSerializer.Serialize(call.Arguments),
+            FunctionResultContent result => JsonSerializer.Serialize(result.Result),
+            _ => "",
+        };
 
     [GeneratedRegex(@"(?<![\w-])\d{4}(?:[ -]?\d{4}){3}(?![\w-])")]
     private static partial Regex CardNumber();
@@ -258,6 +271,7 @@ public sealed partial class CardNumberGuardrail : IChatGuardrail
 ```
 
 - Each guardrail is called before every call to the model, with the messages it sends, the call's instructions, an agent's and its context providers', first as the system message the model is given, and after it, with the response, before any tool call the response asks for runs: every run of the Host's client, every agent of a workflow and a summarizing reducer's summary included. Null lets the call through. A refusal ends that call as the provider's content filter would, with the refusal as its text and `ChatFinishReason.ContentFilter`: refused before, the model is not called; refused after, the response is replaced and no tool it asked for runs. The first refusal, in registration order, wins.
+- **Read every content, not only the text.** `ChatMessage.Text` and `ChatResponse.Text` join a message's `TextContent` alone, so a policy over what reaches the model reads a tool call's arguments (`FunctionCallContent`) and what a tool answered (`FunctionResultContent`) too, as the sample's does: a product named with a card number is refused before its look-up reaches the model (`AgentRunTests.A_card_number_in_a_tool_result_never_reaches_the_model_and_a_later_turn_of_the_conversation_is_answered`). What a provider context gives the agent, such as memory, is checked as the instructions it becomes, so a policy that let a value into memory would refuse every later turn.
 - A handler decides what a refused run means to its caller. The sample's agent fails the turn with `Product.QuestionRefused`, the refusal its message, so its conversation keeps nothing of it ([Sessions](#sessions)).
 - With a guardrail registered, a streamed call is checked whole: the client takes the model's complete response, checks it, then gives it to the caller as updates.
 
