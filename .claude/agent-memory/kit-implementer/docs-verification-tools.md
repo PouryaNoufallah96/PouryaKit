@@ -150,5 +150,10 @@ metadata:
 - **Two references per area can split one Capability:** `reporting.md` is the renderer (`PouryaKit.Reporting`, no options) and `reporting-module.md` the Report Module (`PouryaKit.Reporting.Module`, `ReportOptions`). A brief naming the first for a Report Module limit was a slip; the docs-sync set (`references/*.md`) covered the right file, recorded as a deviation. Check which package owns the code before writing into a reference, and that a Limits section exists (`grpc.md` had none: add `## Limits` before Testing and a TOC line).
 - **A change inside a cited range fails the pin like one above it:** one entry added to an expected list in `PipelineContractTests.cs` (module-boundaries cites 10-54) needed `end_line` moved, the diagram staged with the code, then a pin commit. The session-6 `tools/repin.py` (copied to the ticket's scratchpad folder) still pointed at a live Archify clone and Chrome; it changed one line per file and deleted its receipts.
 
+## A longer node text and an unchanged diagram (#166, 2026-10-24; Archify 3.0.1)
+
+- **Archify shrinks a node's sublabel to fit its width** (8 px to 7.5 px), and at ci-and-publication's 1232 px viewBox the projection fell below 6 px: `composition/desktop-readability` on the trigger node for 36 characters in a 170-wide node. A 31-character text passed; shorten the text before widening a node, which moves the viewBox. Trial with the old revision first (`repin.py <worktree> <current revision> <slug.type>` only refinalizes), then pin.
+- A diagram that only needs a re-pin (kit-context cites `docs/private-packages.md:64-83`; an edit at line 11 is above it) must be staged with the cited file: give it an interim pin to the integration tip in the code commit, then pin it to that commit.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].

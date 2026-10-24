@@ -81,7 +81,7 @@
       "col": 0,
       "type": "frontend",
       "label": "Push, PR or manual run",
-      "sublabel": "main, feat/**, tags, any PR",
+      "sublabel": "main, feat/**, wave-**, tags, PR",
       "width": 170,
       "sources": [
         {
@@ -609,7 +609,7 @@
       "items": [
         "Checkout fetches full history with the read-only token, then removes it; validate.py tests that exact SHA with no token and fetches nothing.",
         "The artifact keeps the tested SHA and result, the original packages and manifest, logs and consumer assets, never caches, on failure too.",
-        "A pull request, tag, feat/** or failed run never authorizes publication; only 0.x preview and rc versions are published.",
+        "A pull request, tag, feat/**, wave-** or failed run never authorizes publication; only 0.x preview and rc versions are published.",
         "Only the publish job may write packages: it pushes and restores with its own job token.",
         "Its concurrency group has cancel-in-progress: false, so GitHub keeps one run going and one pending: serialization, not a queue."
       ]
