@@ -1,0 +1,19 @@
+docs/acceptance.md
+  s_b933d9add4e23e::t_a82bd7fdcda254 2793
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e81a97d90d3e36cea556e1c3614411fed3b65b7e",
+  "prompts": {},
+  "sessions": {
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
