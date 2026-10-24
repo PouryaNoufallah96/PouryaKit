@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "a3dce9de943a8fc722651e1e662720473ef644a3",
+      "revision": "e4b2103477cf72fbff208ceed743420eb0154dad",
       "link_mode": "web"
     }
   },
@@ -102,8 +102,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 27,
-          "end_line": 53,
+          "line": 28,
+          "end_line": 55,
           "label": "declares data, Features, publications"
         },
         {

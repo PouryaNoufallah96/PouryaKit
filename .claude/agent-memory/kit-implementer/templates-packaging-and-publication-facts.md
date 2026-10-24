@@ -116,5 +116,10 @@ Check `.github/workflows/package-publication.yml` before relying on it.
 - **Moving a template file breaks an older acceptance row** that cites it (`check-docs.py`: "cite a moved file at its current path"): update that row's path, a note that the ticket moved it.
 - **Diagram citations of the templates:** proving-sample-and-templates cites `PouryaKit.Templates.csproj` 18-32 and the monolith's and modular's `template.json` sources; ci-and-publication cites the shared `HostTests.cs`. A component holds three sources at most, so a new citation goes on a component with room.
 
+## A packed Host file (#173, 2026-10-24)
+
+- **A new sample Host file both templates should take** needs four edits: `_SampleCode` in `PouryaKit.Templates.csproj` (outside most briefs: ask), `TemplateRules.PackedSample`, the monolith's `template.json` exclude when it names a package the monolith lacks (its `include` takes `ModularMonolith.Host/**/*`), and `TemplateTests.Unreplaced`. `TemplateRules.AIIn`, the AI twin of `ModularityIn`, reads comments too: the shared service defaults' comment that named `PouryaKit.AI` was its one hit.
+- `docs/acceptance.md`'s Wave 4 sections run in ticket order under `check-docs.py`: insert a section before the first higher ticket's, never after it.
+
 **Why:** each cost a probe or a validation run; the credential rule is not testable without the hosted feed.
 **How to apply:** for a new template or any package that is not a library, any `validate.py` run, any clean consumer, any change to the publication workflow, and a hosted proof of the private feed. Related: [[core-json-and-architecture-test-facts]], [[observability-tracing-and-http-facts]], [[worktree-shell-and-check-gotchas]].

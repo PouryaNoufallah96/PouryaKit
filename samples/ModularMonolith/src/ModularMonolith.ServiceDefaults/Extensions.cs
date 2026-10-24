@@ -50,7 +50,7 @@ public static class Extensions
         // The Kit's source and meter (OperationTelemetry.SourceName) beside ASP.NET Core, HttpClient and the runtime,
         // Npgsql's own source, a span for each database command under the Operation that sends it (what AddNpgsql() of
         // Npgsql.OpenTelemetry adds, without that package), and Microsoft.Extensions.AI's source and meter, a span and a
-        // duration for each call PouryaKit.AI's chat client makes to its model; add "Wolverine" to the sources to export
+        // duration for each call the Host's chat client makes to its model; add "Wolverine" to the sources to export
         // Wolverine's spans too. OTLP export only when the endpoint is set.
         public TBuilder ConfigureOpenTelemetry()
         {

@@ -22,7 +22,7 @@
     <!-- The business code the templates generate, packed from the Proving Sample: no copy of it is kept here. -->
     <_SampleCode Include="$(_Sample)Modules/**/*.cs" Exclude="$(_Sample)**/bin/**;$(_Sample)**/obj/**" />
     <_SampleCode Include="$(_Sample)Modules/**/*.proto" Exclude="$(_Sample)**/bin/**;$(_Sample)**/obj/**" />
-    <_SampleCode Include="$(_Sample)ModularMonolith.Host/CallerPermissions.cs;$(_Sample)ModularMonolith.Host/LoggedNewProductAnnouncer.cs" />
+    <_SampleCode Include="$(_Sample)ModularMonolith.Host/CallerPermissions.cs;$(_Sample)ModularMonolith.Host/LoggedNewProductAnnouncer.cs;$(_Sample)ModularMonolith.Host/CardNumberGuardrail.cs" />
     <_SampleCode Include="$(_Sample)ModularMonolith.ServiceDefaults/Extensions.cs" />
     <None Include="@(_TemplateContent)" Pack="true" PackagePath="content/%(RecursiveDir)%(Filename)%(Extension)" />
     <None Include="@(_SampleCode)" Pack="true" PackagePath="content/sample/$([MSBuild]::MakeRelative('$(_Sample)', '%(FullPath)'))" />

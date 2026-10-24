@@ -220,8 +220,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 29,
-          "end_line": 53,
+          "line": 30,
+          "end_line": 55,
           "label": "publishes v1, v2 and the Snapshot"
         },
         {

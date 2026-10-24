@@ -16,4 +16,7 @@ internal static class ProductErrors
         "The same product name is given more than once.",
         "Names"
     );
+
+    // The Host's guardrail refused a question about the products, or the answer to it: the refusal is the message.
+    public static Error QuestionRefused(string refusal) => Error.Validation("Product.QuestionRefused", refusal);
 }

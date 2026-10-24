@@ -6,8 +6,8 @@ using PouryaKit.Web;
 
 namespace Catalog.Products.Features.AskAboutProducts;
 
-// The sample's agent over HTTP, as the caller and in the caller's tenant. A POST, since a question is no resource to get;
-// it changes nothing, so it carries no Idempotency-Key.
+// The sample's agent over HTTP, as the caller and in the caller's tenant. Each request is the next turn of the caller's
+// conversation, so a repeat is another turn: it carries no Idempotency-Key.
 internal sealed class AskAboutProductsEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder routes) =>
@@ -18,7 +18,7 @@ internal sealed class AskAboutProductsEndpoint : IEndpoint
                 OperationContext context,
                 IGatewayProcessor<CatalogModule> catalog,
                 CancellationToken cancellationToken
-            ) => (await catalog.QueryAsync(new AskAboutProductsQuery(body.Question), context, cancellationToken)).ToHttpResult()
+            ) => (await catalog.SendAsync(new AskAboutProductsCommand(body.Question), context, cancellationToken)).ToHttpResult()
         );
 }
 

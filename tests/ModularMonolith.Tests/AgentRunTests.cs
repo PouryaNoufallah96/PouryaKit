@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
@@ -11,12 +12,18 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ModularMonolith.Host;
 using ModularMonolith.Tests.Stub;
 using Npgsql;
+using OpenTelemetry.Trace;
 using PouryaKit.AI;
 using PouryaKit.Cqrs;
+using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
+using PouryaKit.Observability;
+using PouryaKit.Persistence;
+using PouryaKit.Security;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -30,6 +37,12 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
 {
     private const string Instructions = "You answer questions about the shop.";
     private const string Refusal = "The guardrail refused.";
+
+    // A card number the application's guardrail refuses.
+    private const string CardNumber = "4111 1111 1111 1111";
+
+    // Microsoft.Extensions.AI's activity source, which the service defaults' tracing exports.
+    private const string ChatSource = "Experimental.Microsoft.Extensions.AI";
 
     private static readonly Actor Ada = Actor.Person("ada");
 
@@ -298,10 +311,10 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
     [InlineData(true)]
     public async Task A_request_whose_instructions_the_guardrail_refuses_never_reaches_the_model(bool streaming)
     {
-        const string CardNumber = "4111111111111111";
-        await using var host = GuardedHost(new Guardrail { RefusesSending = CardNumber });
+        const string Password = "swordfish";
+        await using var host = GuardedHost(new Guardrail { RefusesSending = Password });
         ai.Stub.Script(ChatReply.Text("Hello."));
-        var agent = host.Services.GetRequiredService<IChatClient>().AsAIAgent($"The customer's card is {CardNumber}.");
+        var agent = host.Services.GetRequiredService<IChatClient>().AsAIAgent($"The customer's password is {Password}.");
 
         var answer = streaming
             ? string.Concat(await agent.RunStreamingAsync("Hello.", cancellationToken: TestContext.Current.CancellationToken).Select(update => update.Text).ToListAsync(TestContext.Current.CancellationToken))
@@ -378,6 +391,238 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
         );
     }
 
+    // Ticket #173 and the #135 gap: a Gateway tool over a query that declares a permission Ada does not hold. Run inside
+    // the authorized Operation it continues, the call is a trusted continuation, so the permission is not checked again
+    // (G.6) and the query answers; run outside one, the call is checked for Ada and denied, and the model is told so.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task A_gateway_tool_over_a_permission_declared_query_runs_on_the_authority_of_the_run_it_continues(bool insideTheRun)
+    {
+        ai.Stub.Script(ChatReply.Calls(new ToolCall("ReadStampLedger", new { })), ChatReply.Text("Read."));
+        var stub = ai.Host.Services.GetRequiredService<IGatewayProcessor<StubModule>>();
+        AIAgent Reader(OperationContext run) =>
+            Chat.AsAIAgent(Instructions, tools: [stub.Tool("ReadStampLedger", "Reads the stamp ledger.", run, (NoArguments _) => new ReadStampLedgerQuery())]);
+
+        if (insideTheRun)
+        {
+            await RunInsideAsync(async (context, cancellationToken) => (await Reader(context).RunAsync("Read the ledger.", cancellationToken: cancellationToken)).Text);
+        }
+        else
+        {
+            await Reader(new OperationContext(Ada, AppFixture.TestTenant)).RunAsync("Read the ledger.", cancellationToken: TestContext.Current.CancellationToken);
+        }
+
+        var answered = Assert.Single(ai.Stub.ToolResultsOf(1));
+        if (insideTheRun)
+        {
+            Assert.Equal(JsonSerializer.Serialize(ReadStampLedgerQuery.Ledger), answered);
+        }
+        else
+        {
+            var denied = Assert.Single(JsonDocument.Parse(answered).RootElement.GetProperty("errors").EnumerateArray());
+            Assert.Equal(PermissionErrors.Denied.Code, denied.GetProperty("code").GetString());
+        }
+    }
+
+    // Ticket #173: the sample's agent, Catalog's AskAboutProducts, a command whose handler runs an agent over the Host's
+    // client in the Actor's conversation in the tenant, its session and its memory, which the command's Unit of Work writes.
+    [Theory]
+    [InlineData("the same Actor in the same tenant", true)]
+    [InlineData("another Actor", false)]
+    [InlineData("the same Actor in another tenant", false)]
+    public async Task The_samples_agent_continues_a_conversation_only_for_the_same_actor_in_the_same_tenant(string asker, bool continues)
+    {
+        var (product, name) = await CreateProductAsync();
+        var first = Actor.Person($"ada-{Guid.CreateVersion7():N}");
+        var (actor, tenant) = asker switch
+        {
+            "another Actor" => (Actor.Person($"bob-{Guid.CreateVersion7():N}"), AppFixture.TestTenant),
+            "the same Actor in another tenant" => (first, $"tenant-{Guid.CreateVersion7():N}"),
+            _ => (first, AppFixture.TestTenant),
+        };
+        ai.Stub.Script(ChatReply.Calls(GetProduct(product)), ChatReply.Text($"It is the {name}."), ChatReply.Text("Yes."));
+
+        Assert.Equal($"It is the {name}.", (await AskAsync(ai.Host, first, AppFixture.TestTenant, $"What is {product} called?")).Value);
+        Assert.Equal("Yes.", (await AskAsync(ai.Host, actor, tenant, "Is it the one I asked about?")).Value);
+
+        // The conversation's second turn sends the first's question and answer, the tool call between them left out of its
+        // history, and its memory names what GetProduct found; another conversation sends neither.
+        IReadOnlyList<string> history = continues ? [$"What is {product} called?", $"It is the {name}.", "Is it the one I asked about?"] : ["Is it the one I asked about?"];
+        Assert.Equal(history, TextsOf(2));
+        Assert.Equal(continues, SystemOf(2).Contains($"{name} ({product})", StringComparison.Ordinal));
+    }
+
+    // GetProduct finds the product, which the memory notes, then the answer carries a card number, which the application's
+    // guardrail refuses: the turn fails, and the Unit of Work keeps none of it, the memory's note included.
+    [Fact]
+    public async Task A_turn_of_the_samples_agent_the_applications_guardrail_refuses_fails_and_keeps_no_conversation()
+    {
+        await using var host = ApplicationHost();
+        var catalog = host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>();
+        var (product, _) = await CreateProductAsync(app.Host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>());
+        var asker = new OperationContext(Actor.Person($"ada-{Guid.CreateVersion7():N}"), AppFixture.TestTenant);
+        ai.Stub.Script(ChatReply.Calls(GetProduct(product)), ChatReply.Text("Pay with 4111 1111 1111 1111."));
+
+        var refused = await catalog.SendAsync(new AskAboutProductsCommand($"What is {product} called?"), asker, TestContext.Current.CancellationToken);
+
+        var error = Assert.Single(refused.Errors);
+        Assert.Equal(("Product.QuestionRefused", CardNumberGuardrail.Refusal), (error.Code, error.Message));
+        Assert.Single(SeenBy(host, asker));
+        Assert.Equal(
+            0L,
+            await app.ScalarAsync<long>($"select count(*) from catalog.product_conversations where key = '{ProductConversations.KeyOf(asker)}'")
+        );
+    }
+
+    // Review F1: a card number in what a tool answered, here a product named with one, is refused before it reaches the
+    // model, so the turn fails and keeps nothing, the memory's note of that product included, and a later turn is answered.
+    [Fact]
+    public async Task A_card_number_in_a_tool_result_never_reaches_the_model_and_a_later_turn_of_the_conversation_is_answered()
+    {
+        await using var host = ApplicationHost();
+        var catalog = host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>();
+        var shared = app.Host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>();
+        var (carded, _) = await CreateProductAsync(shared, $"{Unique("Lamp")} {CardNumber}");
+        var (product, name) = await CreateProductAsync(shared);
+        var asker = new OperationContext(Actor.Person($"ada-{Guid.CreateVersion7():N}"), AppFixture.TestTenant);
+        // The refused call never reaches the stub, so the next reply scripted is the later turn's.
+        ai.Stub.Script(ChatReply.Calls(GetProduct(carded)), ChatReply.Calls(GetProduct(product)), ChatReply.Text($"It is the {name}."));
+
+        var refused = await catalog.SendAsync(new AskAboutProductsCommand($"What is {carded} called?"), asker, TestContext.Current.CancellationToken);
+
+        var error = Assert.Single(refused.Errors);
+        Assert.Equal(("Product.QuestionRefused", CardNumberGuardrail.Refusal), (error.Code, error.Message));
+        Assert.Equal(
+            0L,
+            await app.ScalarAsync<long>($"select count(*) from catalog.product_conversations where key = '{ProductConversations.KeyOf(asker)}'")
+        );
+        var answered = await catalog.SendAsync(
+            new AskAboutProductsCommand($"What is {product} called?"),
+            new OperationContext(asker.Actor, asker.Tenant),
+            TestContext.Current.CancellationToken
+        );
+        Assert.Equal($"It is the {name}.", answered.Value);
+        Assert.DoesNotContain(ai.Stub.Requests, request => request.GetRawText().Contains(CardNumber, StringComparison.Ordinal));
+    }
+
+    // Two first turns of one conversation at once: each read no conversation as it started, so the turn that commits
+    // second conflicts on the conversation's key instead of overwriting the first's row, and keeps nothing.
+    [Fact]
+    public async Task Of_two_first_turns_of_one_conversation_at_once_the_second_to_commit_fails_with_a_conflict_and_keeps_nothing()
+    {
+        var asker = Actor.Person($"ada-{Guid.CreateVersion7():N}");
+        using var held = new ManualResetEventSlim();
+        // The held turn's call to the model waits until the other turn has committed.
+        ai.Stub.Script(body =>
+        {
+            if (body.GetRawText().Contains("Held question.", StringComparison.Ordinal))
+            {
+                held.Wait(TimeSpan.FromSeconds(30));
+            }
+
+            return ChatReply.Text("Answered.");
+        });
+
+        Result<string> conflicted;
+        try
+        {
+            var first = AskAsync(ai.Host, asker, AppFixture.TestTenant, "Held question.");
+            using (var waiting = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken))
+            {
+                waiting.CancelAfter(TimeSpan.FromSeconds(30));
+                while (ai.Stub.Requests.Count == 0)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(20), waiting.Token);
+                }
+            }
+
+            Assert.True((await AskAsync(ai.Host, asker, AppFixture.TestTenant, "Second question.")).IsSuccess);
+            held.Set();
+            conflicted = await first;
+        }
+        finally
+        {
+            held.Set();
+        }
+
+        Assert.Equal(UnitOfWorkErrors.ConcurrencyConflict.Code, Assert.Single(conflicted.Errors).Code);
+        // The conversation holds the second turn alone.
+        ai.Stub.Script(ChatReply.Text("Third answer."));
+        Assert.True((await AskAsync(ai.Host, asker, AppFixture.TestTenant, "Third question.")).IsSuccess);
+        Assert.Equal(["Second question.", "Answered.", "Third question."], TextsOf(0));
+    }
+
+    [Fact]
+    public async Task Each_model_call_of_the_samples_agent_is_checked_before_and_after_and_its_tool_calls_stop_at_the_cap()
+    {
+        var guardrail = new Guardrail();
+        await using var host = GuardedHost(guardrail);
+        var catalog = host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>();
+        var (product, _) = await CreateProductAsync(app.Host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>());
+        ai.Stub.Script(ChatReply.Calls(GetProduct(product)));
+        var run = new OperationContext(Actor.Person($"ada-{Guid.CreateVersion7():N}"), AppFixture.TestTenant);
+
+        Assert.True((await catalog.SendAsync(new AskAboutProductsCommand($"Look {product} up."), run, TestContext.Current.CancellationToken)).IsSuccess);
+
+        Assert.Equal(AiFixture.MaximumIterations, SeenBy(host, run).Count);
+        Assert.Equal(
+            [.. Enumerable.Repeat<IReadOnlyList<string>>(["GetProduct"], AiFixture.MaximumIterations), []],
+            Enumerable.Range(0, ai.Stub.Requests.Count).Select(ai.Stub.ToolsOf)
+        );
+        Assert.Equal([.. Enumerable.Range(0, AiFixture.MaximumIterations + 1).SelectMany(_ => new[] { "request", "response" })], guardrail.Checks);
+    }
+
+    [Fact]
+    public async Task The_allow_list_withholds_the_samples_agents_tool_when_it_does_not_name_it()
+    {
+        await using var host = ApplicationHost(null, "--PouryaKit:AI:Tools:0=ListProducts");
+        var catalog = host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>();
+        var (product, _) = await CreateProductAsync(app.Host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>());
+        ai.Stub.Script(ChatReply.Calls(GetProduct(product)), ChatReply.Text("I cannot look it up."));
+        var run = new OperationContext(Actor.Person($"ada-{Guid.CreateVersion7():N}"), AppFixture.TestTenant);
+
+        var answered = await catalog.SendAsync(new AskAboutProductsCommand($"What is {product} called?"), run, TestContext.Current.CancellationToken);
+
+        Assert.Equal("I cannot look it up.", answered.Value);
+        Assert.Empty(ai.Stub.ToolsOf(0));
+        Assert.Equal(["Error: Requested function \"GetProduct\" not found."], ai.Stub.ToolResultsOf(1));
+        Assert.Empty(SeenBy(host, run));
+    }
+
+    // The #135 gap: with the service defaults' tracing, the agent's call to the model is exported under its command's
+    // activity, on an exporter of the Host's own tracer provider, which exports only the sources it names.
+    [Fact]
+    public async Task The_samples_agents_call_to_the_model_is_exported_as_a_span_under_its_commands_activity()
+    {
+        var exported = new ExportedActivities();
+        await using var host = ApplicationHost(builder =>
+        {
+            builder.AddServiceDefaults();
+            exported.AddTo(builder.Services);
+        });
+        // The provider listens once it is built, as the Host's start builds it.
+        host.Services.GetRequiredService<TracerProvider>();
+        ai.Stub.Script(ChatReply.Text("Hello."));
+        var run = new OperationContext(Actor.Person($"ada-{Guid.CreateVersion7():N}"), AppFixture.TestTenant);
+        // The incoming request's activity, sampled, as the service defaults' sampler follows its parent's decision.
+        using var upstream = new Activity("ask") { ActivityTraceFlags = ActivityTraceFlags.Recorded }.Start();
+
+        Assert.True(
+            (await host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>().SendAsync(new AskAboutProductsCommand("Hello."), run, TestContext.Current.CancellationToken)).IsSuccess
+        );
+
+        // The call to the model is a chat span inside function invocation's, which the command's activity holds.
+        var trace = exported.Of(upstream.TraceId);
+        var command = Assert.Single(
+            trace,
+            activity => activity.Source.Name == OperationTelemetry.SourceName && Equals(activity.GetTagItem(OperationTelemetry.OperationTag), nameof(AskAboutProductsCommand))
+        );
+        var invocation = Assert.Single(trace, activity => activity.Source.Name == ChatSource && activity.OperationName == "orchestrate_tools");
+        var call = Assert.Single(trace, activity => activity.Source.Name == ChatSource && activity.OperationName.StartsWith("chat ", StringComparison.Ordinal));
+        Assert.Equal((command.SpanId, invocation.SpanId), (invocation.ParentSpanId, call.ParentSpanId));
+    }
+
     // Runs the agents inside an authorized Operation of Ada's, as a handler does, and returns that Operation's context.
     private async Task<(OperationContext Run, string Answer)> RunInsideAsync(Func<OperationContext, CancellationToken, Task<string>> agents)
     {
@@ -428,14 +673,16 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
     private static AIFunction GetProductTool(IGatewayProcessor<CatalogModule> catalog, OperationContext run) =>
         catalog.Tool("GetProduct", "Finds one product by its id.", run, (ProductToFind product) => new GetProductQuery(product.ProductId));
 
-    private WebApplication GuardedHost(Guardrail guardrail) =>
-        AppFixture.ComposeHost(
-            "Development",
-            app.ConnectionString,
-            new RecordedLogs(),
-            builder => builder.Services.AddSingleton<IChatGuardrail>(guardrail),
-            AiFixture.StubArguments(ai.Stub)
-        );
+    private WebApplication GuardedHost(Guardrail guardrail) => ApplicationHost(builder => builder.Services.AddSingleton<IChatGuardrail>(guardrail));
+
+    // The application on the shared database, not started, with the application's guardrail, its chat client pointed at
+    // the stub as the AI fixture's is.
+    private WebApplication ApplicationHost(Action<WebApplicationBuilder>? configure = null, params string[] arguments) =>
+        AppFixture.ComposeHost("Development", app.ConnectionString, new RecordedLogs(), configure, [.. AiFixture.StubArguments(ai.Stub), .. arguments]);
+
+    private static Task<Result<string>> AskAsync(IHost host, Actor actor, string tenant, string question) =>
+        host.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>()
+            .SendAsync(new AskAboutProductsCommand(question), new OperationContext(actor, tenant), TestContext.Current.CancellationToken);
 
     private static IEnumerable<JsonElement> Messages(JsonElement request) => request.GetProperty("messages").EnumerateArray();
 
@@ -452,11 +699,13 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
             ? string.Concat(content.EnumerateArray().Select(part => part.GetProperty("text").GetString()))
             : content.ValueKind is JsonValueKind.String ? content.GetString()! : "";
 
-    private async Task<(Guid Product, string Name)> CreateProductAsync()
+    private Task<(Guid Product, string Name)> CreateProductAsync() => CreateProductAsync(Catalog);
+
+    private static async Task<(Guid Product, string Name)> CreateProductAsync(IGatewayProcessor<CatalogModule> catalog, string? named = null)
     {
-        var (category, product, name) = (Guid.CreateVersion7(), Guid.CreateVersion7(), Unique("Lamp"));
-        Assert.True((await Catalog.SendAsync(new CreateCategoryCommand(category, Unique("Lamps")), TestContext.Current.CancellationToken)).IsSuccess);
-        Assert.True((await Catalog.SendAsync(new CreateProductCommand(product, category, name), TestContext.Current.CancellationToken)).IsSuccess);
+        var (category, product, name) = (Guid.CreateVersion7(), Guid.CreateVersion7(), named ?? Unique("Lamp"));
+        Assert.True((await catalog.SendAsync(new CreateCategoryCommand(category, Unique("Lamps")), TestContext.Current.CancellationToken)).IsSuccess);
+        Assert.True((await catalog.SendAsync(new CreateProductCommand(product, category, name), TestContext.Current.CancellationToken)).IsSuccess);
         return (product, name);
     }
 
