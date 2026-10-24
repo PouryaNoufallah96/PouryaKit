@@ -1,0 +1,47 @@
+.agents/scripts/check-docs.py
+  s_dc235343aadb31::t_3bb2b23a43c4ff 31-33,440
+.agents/scripts/test_check_docs.py
+  s_dc235343aadb31::t_ef4ea26add430c 326-333
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_dc235343aadb31::t_ec1258a5258d49 3,15
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_dc235343aadb31::t_ad5034f6c0f616 153-157
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_dc235343aadb31::t_6131ce5ae6841e 65
+.github/workflows/ci.yml
+  s_dc235343aadb31::t_d98a9dc0947451 5
+AGENTS.md
+  s_dc235343aadb31::t_ad34c0d36b2c85 96
+docs/acceptance.md
+  s_dc235343aadb31::t_c19f4fdb25a23e 2719,2721,2723,2725-2732,2746-2756
+docs/agents/ai-setup.md
+  s_dc235343aadb31::t_0d104cef3baa43 28-29
+docs/agents/brief-template.md
+  s_dc235343aadb31::t_276f889eab912d 38-41
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_dc235343aadb31::t_d875636eb4324b 84,612
+docs/architecture/diagrams/kit-context.architecture.json
+  s_dc235343aadb31::t_63984099b50b06 10
+docs/architecture/diagrams/kit-context.html
+  s_dc235343aadb31::t_df2b23168d32bd 4985
+docs/ci.md
+  s_dc235343aadb31::t_9052aa4ab7c2c9 3
+docs/private-packages.md
+  s_dc235343aadb31::t_d627b66f89a8c9 11,16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "882fe63b87b9eef516a1fca3940f4b863c7f272a",
+  "prompts": {},
+  "sessions": {
+    "s_dc235343aadb31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c959058c-fafb-418d-968e-8aae07d692ee",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
