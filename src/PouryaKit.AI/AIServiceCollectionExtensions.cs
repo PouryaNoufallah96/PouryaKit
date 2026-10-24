@@ -102,7 +102,9 @@ public static class AIServiceCollectionExtensions
         /// records the input and options when the Host's logger enables Trace, as Microsoft.Extensions.AI documents. The
         /// Host binds the options as for the chat client; <paramref name="configure"/> sets them in code instead, and with
         /// <see cref="AddPouryaKitAI"/> too, each call's applies, in the order of the calls. The Host fails when it starts,
-        /// naming the option, on the same provider, endpoint and key rules, and when the embedding model is blank.
+        /// naming the option, on the same provider, endpoint and key rules, and when the embedding model is blank. A Host
+        /// composes exactly one <see cref="IEmbeddingGenerator{TInput, TEmbedding}"/> of text: its build fails, through the
+        /// Kit's composition checks, naming each registration when it registers another, before or after this call.
         /// </summary>
         public IServiceCollection AddPouryaKitEmbeddings(Action<PouryaKitAIOptions>? configure = null)
         {
@@ -112,6 +114,11 @@ public static class AIServiceCollectionExtensions
                     ai => !string.IsNullOrWhiteSpace(ai.EmbeddingModel),
                     "PouryaKitAIOptions.EmbeddingModel names no model; set the model the Host embeds text with, or for Azure OpenAI its deployment."
                 );
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ICompositionCheck>(
+                    new OneProviderCheck<IEmbeddingGenerator<string, Embedding<float>>>("AddPouryaKitEmbeddings", "embedding generator")
+                )
+            );
             services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(CreateEmbeddingGenerator);
             return services;
         }

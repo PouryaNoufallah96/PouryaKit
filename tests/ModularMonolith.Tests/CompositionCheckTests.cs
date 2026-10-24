@@ -4,6 +4,7 @@ using Catalog.Infrastructure.Data.Context;
 using Catalog.Products.Features.GetProduct;
 using Inventory;
 using Ledger;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -11,6 +12,7 @@ using ModularMonolith.Tests.Misnamed;
 using ModularMonolith.Tests.Stub;
 using ModularMonolith.Tests.Unowned;
 using ModularMonolith.Tests.Unversioned;
+using PouryaKit.AI;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Localization;
@@ -488,6 +490,39 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         Assert.All(composition.Modules, module => Assert.Equal([module.Assembly], composition.FeatureAssembliesOf(module)));
         Assert.Empty(composition.FeatureAssembliesOf(null));
     }
+
+    // Ticket #174: the Host composes one embedding generator, as it composes one chat client (AiTests). One generator
+    // builds: every VectorSearchTests Host is composed with the checks and AddPouryaKitEmbeddings alone.
+    [Theory]
+    [InlineData("before")]
+    [InlineData("after")]
+    public void A_host_that_registers_another_embedding_generator_fails_when_it_is_built_naming_both(string order)
+    {
+        const string Kit = "the factory PouryaKit.AI.AIServiceCollectionExtensions.CreateEmbeddingGenerator";
+        var other = $"the factory {typeof(CompositionCheckTests).FullName}.{nameof(OtherEmbeddingGenerator)}";
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.AddPouryaKitCompositionChecks();
+        if (order == "before")
+        {
+            builder.Services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(OtherEmbeddingGenerator);
+        }
+
+        builder.Services.AddPouryaKitEmbeddings();
+        if (order == "after")
+        {
+            builder.Services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(OtherEmbeddingGenerator);
+        }
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            $"The Host registers 2 IEmbeddingGenerator<String, Embedding<Single>> providers, {string.Join(", ", order == "before" ? [other, Kit] : new[] { Kit, other })}, and composes exactly one: remove all but one of its embedding generator registrations.",
+            thrown.Message
+        );
+    }
+
+    // A Host's own embedding generator, never called.
+    private static IEmbeddingGenerator<string, Embedding<float>> OtherEmbeddingGenerator(IServiceProvider services) => throw new NotSupportedException();
 }
 
 /// <summary>An Integration Event no Module publishes.</summary>
