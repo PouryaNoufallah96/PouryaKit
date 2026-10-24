@@ -1,0 +1,21 @@
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_d25075ecfddc3d::t_5b4df3de5a9b5b 210
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_d25075ecfddc3d::t_604a3782e99ad9 831,834,920-923
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ca02a1faa09a07219d6f941afdc37d1877b9615d",
+  "prompts": {},
+  "sessions": {
+    "s_d25075ecfddc3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c2faa7bc-43e4-49f1-ba67-db6d73ce0e91",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
