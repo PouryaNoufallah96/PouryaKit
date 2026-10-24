@@ -1,0 +1,35 @@
+.agents/skills/pourya-kit/references/ai.md
+  s_dc235343aadb31::t_446b57575be6ba 316,334,339,351
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_dc235343aadb31::t_35df4db5994118 8
+.claude/agent-memory/kit-implementer/composition-check-facts.md
+  s_dc235343aadb31::t_5b49ccfd6f9cb4 92
+docs/architecture/README.md
+  s_dc235343aadb31::t_e0d9a11ea8e112 166,363
+docs/architecture/diagrams/execution-core.architecture.json
+  s_dc235343aadb31::t_8c2cd715aacd50 834-835
+docs/provenance/PouryaKit.AI.md
+  s_dc235343aadb31::t_a791a4bd61c62e 5
+src/PouryaKit.AI/AIServiceCollectionExtensions.cs
+  s_dc235343aadb31::t_5cf3c565bde0e7 105-107,117-121
+src/PouryaKit.Cqrs/Composition/OneProviderCheck.cs
+  s_dc235343aadb31::t_ff2df6619b40c5 31,41-43
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_dc235343aadb31::t_2af4f51c174dc1 7,15,493-525
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "82ab7341263b127ef0a8626143293bf26c542e8a",
+  "prompts": {},
+  "sessions": {
+    "s_dc235343aadb31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c959058c-fafb-418d-968e-8aae07d692ee",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
