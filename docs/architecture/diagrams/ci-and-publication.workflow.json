@@ -8,7 +8,7 @@
     "locale": "en",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "882fe63b87b9eef516a1fca3940f4b863c7f272a",
+      "revision": "6eed88321c63f56b32ab4110a2c4d78c31655daf",
       "provider": "github",
       "link_mode": "web"
     },
@@ -290,7 +290,7 @@
       "lane": "evidence",
       "col": 2,
       "type": "external",
-      "label": "PostgreSQL",
+      "label": "PostgreSQL, RabbitMQ",
       "sublabel": "Testcontainers",
       "width": 170,
       "sources": [
@@ -305,6 +305,12 @@
           "line": 136,
           "end_line": 141,
           "label": "generated tests use HostFixture"
+        },
+        {
+          "path": "src/PouryaKit.Templates/content/service/tests/ModularMonolith.Tests/HostTests.cs",
+          "line": 112,
+          "end_line": 125,
+          "label": "the service's tests start RabbitMQ first"
         }
       ]
     },
@@ -599,7 +605,7 @@
         "validate.py runs on Python with the .NET SDK; MinVer derives one version from the full history.",
         "One nupkg per inventory package, one MinVer version and source commit, the MIT license, third-party notices, SourceLink, and only the references PackageGraph allows.",
         "Clean .NET 10 consumers, each with its own NuGet caches, restore Kit packages only from the produced set: each library package alone, a single Module, the copied Proving Sample, and each template the inventory lists, generated from the produced template package.",
-        "Each generated solution builds and passes its HTTP smoke tests against PostgreSQL; each generated Host and sample Host publishes for Release with the code codegen write generated.",
+        "Each generated solution builds and passes its smoke tests against PostgreSQL, the service's against RabbitMQ too; each generated Host and sample Host publishes for Release with the code codegen write generated.",
         "Consumer closures, negative controls and a MinVer proof pass, and the manifest records each package's SHA-256."
       ]
     },

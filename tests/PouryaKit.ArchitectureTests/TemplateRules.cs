@@ -13,12 +13,13 @@ internal sealed record TextFile(string Path, string Text);
 /// <summary>
 /// The template package's rules (ticket #53), each a function from files to violations, so the same function judges
 /// the package and an offending set. A template generates what its <c>template.json</c> sources select: its own folder,
-/// the folder both templates share, and the Proving Sample's files the package packs.
+/// the folder the templates share, and the Proving Sample's files the package packs.
 /// </summary>
 internal static class TemplateRules
 {
     public const string Monolith = "monolith";
     public const string Modular = "modular";
+    public const string Service = "service";
     public const string Shared = "shared";
 
     /// <summary>The folder of the package's template content, as the package's <c>content/</c> holds it.</summary>
@@ -232,14 +233,14 @@ internal static class TemplateRules
 
     /// <summary>
     /// A template Host builds its request pipeline as the Proving Sample's Host does: the same <c>app.Use…</c> and
-    /// <c>app.Map…</c> calls in the same order, with <c>MapDefaultEndpoints</c> allowed, as only a generated Host has the
-    /// service defaults' endpoints. Middleware runs in the order it is added, so a template Host whose order or middleware
-    /// differs serves differently from the Host the Kit's tests run (ticket #87).
+    /// <c>app.Map…</c> calls in the same order, with <c>MapDefaultEndpoints</c> allowed where the sample's Host maps no
+    /// service defaults' endpoints, as <c>ModularMonolith.Host</c> does not. Middleware runs in the order it is added, so a
+    /// template Host whose order or middleware differs serves differently from the Host the Kit's tests run (ticket #87).
     /// </summary>
     public static IEnumerable<string> PipelineDifferences(TextFile host, TextFile sample)
     {
         var expected = Pipeline(sample.Text);
-        var actual = Pipeline(host.Text).Where(call => call != "MapDefaultEndpoints").ToList();
+        var actual = Pipeline(host.Text).Where(call => call != "MapDefaultEndpoints" || expected.Contains(call)).ToList();
         if (!actual.SequenceEqual(expected))
         {
             yield return $"{host.Path} builds its pipeline with {string.Join(", ", actual)}; the sample's {sample.Path} with {string.Join(", ", expected)}.";
@@ -369,6 +370,26 @@ internal static class TemplateRules
                 yield return $"{file.Path} names {path}, which is no project the template generates.";
             }
         }
+    }
+
+    /// <summary>
+    /// Every file a template generates sits at its solution's root or in the folder of a project its solution names: a
+    /// project or a source file its sources select but its solution leaves out, such as the shared Inventory in the
+    /// monolith or the reverse proxy in the service, lands in the generated folder unbuilt (ticket #171). A path in the
+    /// solution names its project through <paramref name="token"/>, read as the <paramref name="sourceName"/> the files carry.
+    /// </summary>
+    public static IEnumerable<string> FilesOutsideTheSolution(IReadOnlyList<TextFile> generated, string sourceName, string token)
+    {
+        var solution = generated.Single(file => file.Path.EndsWith(".slnx", StringComparison.Ordinal));
+        var folders = XDocument
+            .Parse(solution.Text)
+            .Descendants("Project")
+            .Select(project => Path.GetDirectoryName(project.Attribute("Path")!.Value.Replace(token, sourceName, StringComparison.Ordinal))!.Replace('\\', '/') + "/")
+            .ToList();
+        return generated
+            .Select(file => file.Path)
+            .Where(path => path.Contains('/', StringComparison.Ordinal) && !folders.Any(folder => path.StartsWith(folder, StringComparison.Ordinal)))
+            .Select(path => $"{path} is in no project of the solution the template generates.");
     }
 
     // A relative path from a generated file's folder, as a generated path with forward slashes.

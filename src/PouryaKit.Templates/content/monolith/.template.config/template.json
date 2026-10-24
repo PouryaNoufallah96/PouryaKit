@@ -61,7 +61,8 @@
     },
     {
       "source": "../shared/",
-      "target": "./"
+      "target": "./",
+      "exclude": ["src/Modules/Inventory/**/*"]
     },
     {
       "source": "../sample/",

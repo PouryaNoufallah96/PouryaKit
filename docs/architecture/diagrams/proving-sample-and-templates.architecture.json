@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "a3dce9de943a8fc722651e1e662720473ef644a3",
+      "revision": "6eed88321c63f56b32ab4110a2c4d78c31655daf",
       "link_mode": "web"
     }
   },
@@ -172,7 +172,7 @@
           "path": "src/PouryaKit.Templates/content/shared/src/ModularMonolith.ReverseProxy/Program.cs",
           "line": 7,
           "end_line": 17,
-          "label": "each template's own copy"
+          "label": "the two Catalog templates' own copy"
         }
       ]
     },
@@ -263,6 +263,12 @@
           "line": 8,
           "end_line": 17,
           "label": "Catalog's Contracts, never Catalog"
+        },
+        {
+          "path": "src/PouryaKit.Templates/content/service/.template.config/template.json",
+          "line": 57,
+          "end_line": 76,
+          "label": "pouryakit-service takes it with the Contracts"
         }
       ]
     },
@@ -366,7 +372,7 @@
       "id": "templates",
       "type": "cloud",
       "label": "PouryaKit.Templates",
-      "sublabel": "pouryakit-monolith (Catalog) and pouryakit-modular-monolith (all four)",
+      "sublabel": "pouryakit-monolith (Catalog), pouryakit-modular-monolith (all four), pouryakit-service (Inventory)",
       "pos": [
         40,
         720
@@ -385,7 +391,7 @@
         {
           "path": "src/PouryaKit.Templates/content/monolith/.template.config/template.json",
           "line": 57,
-          "end_line": 71,
+          "end_line": 72,
           "label": "monolith: Catalog only"
         },
         {
@@ -655,7 +661,7 @@
       "title": "The templates",
       "items": [
         "PouryaKit.Templates keeps no copy of the business code: it packs the sample Modules' code, the service defaults recipes and two files of ModularMonolith.Host when the package is packed.",
-        "Each template's Host, Reverse proxy, project files and smoke test are the template's own; the monolith takes Catalog without Modularity, and Ledger, a second write model, stays in the modular monolith."
+        "Each template's Host, project files and smoke test are the template's own; the monolith takes Catalog without Modularity, and Ledger, a second write model, stays in the modular monolith; the service takes Inventory and Catalog's Contracts alone, with Inventory.Host's composition and no Reverse proxy."
       ]
     }
   ]

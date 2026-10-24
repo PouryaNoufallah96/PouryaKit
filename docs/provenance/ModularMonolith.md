@@ -29,7 +29,7 @@ The Ledger Module (ticket #132) adds no package: it references the Kit's `Pourya
 
 ## The service defaults recipes
 
-- **Kit files:** `samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs`, which `PouryaKit.Templates` packs into both templates
+- **Kit files:** `samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs`, which `PouryaKit.Templates` packs into every template
 - **Upstream:** https://github.com/microsoft/aspire
 - **Commit:** 3751e615ad660621f2a7aa4c390ef48e08a0eed8
 - **Upstream paths:** `src/Aspire.ProjectTemplates/templates/aspire-servicedefaults/Extensions.cs`
