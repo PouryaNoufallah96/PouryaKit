@@ -1,0 +1,37 @@
+src/PouryaKit.Storage/FileStorageServiceCollectionExtensions.cs
+  s_d25075ecfddc3d::t_e69eefb9602cdf 23
+src/PouryaKit.AI/AIServiceCollectionExtensions.cs
+  s_d25075ecfddc3d::t_a2ab24bb86da8c 90
+src/PouryaKit.Cqrs/Composition/OneProviderCheck.cs
+  s_d25075ecfddc3d::t_1dfcb644cb1fde 1-40
+tests/ModularMonolith.Tests/AiTests.cs
+  s_d25075ecfddc3d::t_d8c6932687e756 223
+src/PouryaKit.Email.MailKit/MailKitServiceCollectionExtensions.cs
+  s_d25075ecfddc3d::t_3da3c4763caae7 57
+docs/architecture/README.md
+  s_d25075ecfddc3d::t_8d7d3171cb45f0 166,257,301,361
+docs/architecture/diagrams/execution-core.architecture.json
+  s_d25075ecfddc3d::t_f2f44223080ee9 10
+docs/provenance/PouryaKit.AI.md
+  s_d25075ecfddc3d::t_1692789222a075 5
+docs/provenance/PouryaKit.Email.MailKit.md
+  s_d25075ecfddc3d::t_a33cec8a5c48a6 5
+docs/provenance/PouryaKit.Storage.md
+  s_d25075ecfddc3d::t_97a8e14ad2f564 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "548f4ab8c5384f7590322f4b32d7577b91c4633c",
+  "prompts": {},
+  "sessions": {
+    "s_d25075ecfddc3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c2faa7bc-43e4-49f1-ba67-db6d73ce0e91",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
