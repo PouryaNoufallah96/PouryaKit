@@ -227,7 +227,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/Inventory.csproj",
           "line": 8,
-          "end_line": 15,
+          "end_line": 17,
           "label": "Catalog's Contracts, never Catalog"
         },
         {

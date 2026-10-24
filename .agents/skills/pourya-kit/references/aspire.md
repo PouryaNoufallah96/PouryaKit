@@ -51,6 +51,7 @@ builder
     .WithHttpHealthCheck("/alive")
     .WithReference(inventory, "app")
     .WithReference(broker)
+    // ...its bearer settings, below...
     .WaitFor(inventory)
     .WaitFor(broker);
 
@@ -76,7 +77,7 @@ builder.Build().Run();
 
 ```csharp
 var signingKey = builder.AddParameter("bearer-signing-key", secret: true);
-// on the ModularMonolith.Host project:
+// on each Host project, Inventory.Host and ModularMonolith.Host:
     .WithEnvironment("Authentication__Schemes__Bearer__ValidIssuer", "modular-monolith-apphost")
     .WithEnvironment("Authentication__Schemes__Bearer__ValidAudiences__0", "modular-monolith")
     .WithEnvironment("Authentication__Schemes__Bearer__SigningKeys__0__Issuer", "modular-monolith-apphost")

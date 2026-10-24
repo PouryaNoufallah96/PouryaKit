@@ -6,7 +6,7 @@
     <RunWorkingDirectory>$(MSBuildProjectDirectory)</RunWorkingDirectory>
   </PropertyGroup>
   <ItemGroup>
-    <!-- A web Host only to serve /health and /alive; the Web SDK would copy appsettings.json to the output. -->
+    <!-- A web Host of Inventory's endpoints, /health and /alive; the Web SDK would copy appsettings.json to the output. -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
@@ -24,5 +24,8 @@
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Messaging.Wolverine.RabbitMq\PouryaKit.Messaging.Wolverine.RabbitMq.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Modularity\PouryaKit.Modularity.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Observability\PouryaKit.Observability.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.Security.JwtBearer\PouryaKit.Security.JwtBearer.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.Web\PouryaKit.Web.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.Web.OpenApi\PouryaKit.Web.OpenApi.csproj" />
   </ItemGroup>
 </Project>

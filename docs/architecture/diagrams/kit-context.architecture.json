@@ -186,8 +186,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/InventoryHost.cs",
-          "line": 31,
-          "end_line": 55,
+          "line": 40,
+          "end_line": 82,
           "label": "Inventory alone, receives over RabbitMQ"
         },
         {
@@ -199,7 +199,7 @@
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj",
           "line": 20,
-          "end_line": 27,
+          "end_line": 30,
           "label": "references the Kit's projects"
         }
       ]
@@ -389,7 +389,7 @@
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs",
-          "line": 21,
+          "line": 25,
           "label": "schema inventory"
         },
         {

@@ -8,5 +8,7 @@
     <PackageReference Include="PouryaKit.Modularity" />
     <PackageReference Include="PouryaKit.Persistence.Dapper" />
     <PackageReference Include="PouryaKit.Persistence.Postgres" />
+    <PackageReference Include="PouryaKit.Web" />
+    <PackageReference Include="PouryaKit.Web.OpenApi" />
   </ItemGroup>
 </Project>

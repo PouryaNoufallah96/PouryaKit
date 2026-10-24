@@ -160,8 +160,9 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         );
     }
 
-    // Inventory.Host composes the recipe without the Web defaults, so nothing authenticates its endpoints: as its own
-    // process in Production, /alive answers a caller with no credentials and no endpoint serves /health.
+    // As its own process in Production, Inventory.Host answers /alive to a probe that carries no token, authenticates every
+    // other path by default, and has no endpoint at /health: an authenticated caller gets 404 there, where an anonymous one
+    // would get the authorization fallback policy's 401.
     [Fact]
     public async Task Inventory_host_running_as_its_own_process_in_production_answers_liveness_and_serves_no_readiness()
     {
@@ -169,9 +170,13 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         await environment.MigrateInventoryAsync();
         using var process = InventoryProcess.Start(environment);
         using var anonymous = new HttpClient { BaseAddress = await process.ListeningAsync(TestContext.Current.CancellationToken) };
+        using var readiness = new HttpRequestMessage(HttpMethod.Get, "/health")
+        {
+            Headers = { Authorization = new("Bearer", TestIssuer.Token(new() { ["sub"] = "ada" })) },
+        };
 
         using var alive = await anonymous.GetAsync("/alive", TestContext.Current.CancellationToken);
-        using var health = await anonymous.GetAsync("/health", TestContext.Current.CancellationToken);
+        using var health = await anonymous.SendAsync(readiness, TestContext.Current.CancellationToken);
 
         Assert.Equal(
             (HttpStatusCode.OK, "Healthy", HttpStatusCode.NotFound),

@@ -236,18 +236,20 @@ internal sealed class PublishProductCreatedNotificationHandler(IIntegrationEvent
 using Catalog.Contracts.Products.Events.V1;
 using Inventory.StockItems.Entities;
 using Inventory.StockItems.ValueObjects;
+using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
 using PouryaKit.Persistence;
 
-// Inventory/StockItems/Features/OpenStockItem/: only the effect. The Kit records the Receipt, commits and acknowledges,
-// so a redelivered or concurrently duplicated ProductCreatedV1 opens one stock item.
-internal sealed class OpenStockItemIntegrationEventHandler(IRepository<StockItem, StockItemId> stockItems)
+// Inventory/StockItems/Features/OpenStockItem/: only the effect, for the tenant the event was delivered for. The Kit
+// records the Receipt, commits and acknowledges, so a redelivered or concurrently duplicated ProductCreatedV1 opens one
+// stock item.
+internal sealed class OpenStockItemIntegrationEventHandler(IRepository<StockItem, StockItemId> stockItems, OperationContext context)
     : IIntegrationEventHandler<ProductCreatedV1>
 {
     public async Task<Result> Handle(ProductCreatedV1 integrationEvent, CancellationToken cancellationToken)
     {
-        await stockItems.AddAsync(StockItem.Open(integrationEvent.ProductId, integrationEvent.OccurredOn), cancellationToken);
+        await stockItems.AddAsync(StockItem.Open(integrationEvent.ProductId, integrationEvent.OccurredOn, context.Tenant), cancellationToken);
         return Result.Success();
     }
 }
@@ -255,7 +257,7 @@ internal sealed class OpenStockItemIntegrationEventHandler(IRepository<StockItem
 
 - Implement `IIntegrationEventHandler<TIntegrationEvent>` (`PouryaKit.Messaging`) in an `internal sealed` class of the receiving Module, beside the Feature it serves, and subscribe it in the Composition Root (above).
 - Hold only the business effect, through the Module's repositories, and return a Result. A failed Result is a failure like an exception: the delivery is retried ([Retries](#retries)), then set aside as a dead letter of its subscription ([Dead letters](#dead-letters)), and nothing the attempt changed commits, its Receipt included.
-- Inject what a command handler may: the `OperationContext`, the Module's repositories, `IDispatcher`. Read when the fact happened from the Integration Event, as `StockItem.Open` takes `OccurredOn`; the Operation's own clock gives the time of the delivery.
+- Inject what a command handler may: the `OperationContext`, the Module's repositories, `IDispatcher`. Read when the fact happened from the Integration Event, as `StockItem.Open` takes `OccurredOn`; the Operation's own clock gives the time of the delivery. Read the tenant the delivery carries from the `OperationContext`, as `StockItem.Open` takes `context.Tenant` in a Module that is not tenant-scoped ([multi-tenancy.md](multi-tenancy.md#deliveries)).
 - Never save, commit, begin a transaction, record a Receipt, acknowledge or reference a Wolverine type, and never publish: an Integration Event is published only from a Notification Handler.
 
 ### A new version of an Integration Event

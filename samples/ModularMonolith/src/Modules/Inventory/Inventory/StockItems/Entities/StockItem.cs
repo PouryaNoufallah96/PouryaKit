@@ -11,6 +11,12 @@ internal sealed class StockItem : AggregateRoot<StockItemId>, IAuditable
 
     public Guid ProductId { get; private set; }
 
+    /// <summary>
+    /// The tenant of the delivery that opened the stock item, none when it carried none. A plain property: Inventory is
+    /// not tenant-scoped, so its recurring reconciliation counts every tenant's stock.
+    /// </summary>
+    public string? Tenant { get; private set; }
+
     public int QuantityOnHand { get; private set; }
 
     /// <summary>When stock keeping began: the moment the product was created in the catalog.</summary>
@@ -24,11 +30,12 @@ internal sealed class StockItem : AggregateRoot<StockItemId>, IAuditable
 
     public string LastChangedBy { get; private set; } = "";
 
-    public static StockItem Open(Guid productId, DateTimeOffset openedOn) =>
+    public static StockItem Open(Guid productId, DateTimeOffset openedOn, string? tenant) =>
         new()
         {
             Id = new StockItemId(Guid.CreateVersion7()),
             ProductId = productId,
+            Tenant = tenant,
             OpenedOn = openedOn,
         };
 }

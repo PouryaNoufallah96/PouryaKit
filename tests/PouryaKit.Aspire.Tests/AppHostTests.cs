@@ -65,7 +65,7 @@ public sealed class AppHostTests
             builder.Resources.OfType<ContainerResource>().OrderBy(container => container.Name, StringComparer.Ordinal).Select(Pinned)
         );
         // Each Host is given the resources its composition uses: Inventory.Host caches nothing.
-        Assert.Equal(["broker", "inventory-db"], References(builder, "inventory"));
+        Assert.Equal(["bearer-signing-key", "broker", "inventory-db"], References(builder, "inventory"));
         Assert.Equal(["bearer-signing-key", "broker", "cache", "modular-monolith-db"], References(builder, "modular-monolith"));
     }
 
