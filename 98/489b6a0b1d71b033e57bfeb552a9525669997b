@@ -1,0 +1,23 @@
+.agents/hooks/guard.py
+  s_d4a812621ab0ca::t_f240abe8bcd92c 10-13,290-292
+.agents/scripts/check-ai-setup.py
+  s_d4a812621ab0ca::t_002eb93f47af49 330-332,334,461-462
+docs/agents/ai-setup.md
+  s_d4a812621ab0ca::t_9f724248f80a1d 165-166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "98489b6a0b1d71b033e57bfeb552a9525669997b",
+  "prompts": {},
+  "sessions": {
+    "s_d4a812621ab0ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cca06d5b-8f58-45b9-8233-b126095f1377",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
