@@ -35,4 +35,4 @@ When the path is clear, go ahead without asking and without extra review rounds.
 ## Long runs
 
 - Under `/chief-of-staff`, `AGENTS.md` and this file still size the process: a quick change stays in your hands, and review rounds keep their caps. Treat its environment duty as a list. Note each improvement in `HANDOFF.md` as it shows up, and fix one at once only when it blocks the goal; the rest waits for `/retro` at the batch's end, where `/correct` picks the level each fix belongs at.
-- Say when the session should roll: at the handoff point `docs/agents/running-a-spec.md` names, with `HANDOFF.md` written first.
+- Roll the session at the handoff point `docs/agents/running-a-spec.md` names, with `HANDOFF.md` written first: say so and stop spawning, even when the owner's last instruction lists more work; the next session takes the list from the handoff. Session 3 of Wave 3 ran fifteen tickets past that point and ended in context rot.

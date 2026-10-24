@@ -8,9 +8,18 @@ namespace PouryaKit.ArchitectureTests;
 // from the packed package is scripts/packaging/validate.py's.
 public sealed class TemplateTests
 {
-    // The excluded sample file the monolith needs nothing in place of: ICatalogProducts answers other Modules, and the
-    // monolith has none.
-    private static readonly string[] Unreplaced = ["src/Modules/Catalog/Catalog/Products/Features/GetProduct/CatalogProducts.cs"];
+    // The excluded sample files the monolith needs nothing in place of: ICatalogProducts answers other Modules, and the
+    // monolith has none; the agent's tool runs through Catalog's Gateway, and PouryaKit.AI's Gateway tool needs
+    // Modularity (#135).
+    private static readonly string[] Unreplaced =
+    [
+        "src/Modules/Catalog/Catalog/Products/Features/GetProduct/CatalogProducts.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsEndpoint.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQuery.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQueryHandler.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsQueryValidator.cs",
+        "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/ProductToFind.cs",
+    ];
 
     [Fact]
     public void The_template_content_holds_no_copy_of_a_proving_sample_file()
@@ -87,7 +96,7 @@ public sealed class TemplateTests
             .ToList();
 
         Assert.Empty(MirrorDifferences(replacements, PackedSample));
-        Assert.Equal(6, replacements.Count);
+        Assert.Equal(7, replacements.Count);
         var module = replacements.Single(file => file.Path.EndsWith("/CatalogModule.cs", StringComparison.Ordinal));
         var create = replacements.Single(file => file.Path.EndsWith("/CreateProductEndpoint.cs", StringComparison.Ordinal));
         var rename = replacements.Single(file => file.Path.EndsWith("/RenameProductEndpoint.cs", StringComparison.Ordinal));
@@ -142,7 +151,7 @@ public sealed class TemplateTests
         var monolith = Own(Monolith).Single(file => file.Text.Contains("app.UseRouting();", StringComparison.Ordinal));
         Assert.Equal(
             [
-                $"{monolith.Path} builds its pipeline with UseExceptionHandler, UseRouting, UseCors, UseAuthorization, UseAuthentication, UseRateLimiter, MapPouryaKitModuleEndpoints, MapPouryaKitOpenApi; the sample's ModularMonolith.Host/ModularMonolithHost.cs with UseExceptionHandler, UseRouting, UseCors, UseAuthentication, UseAuthorization, UseRateLimiter, MapPouryaKitModuleEndpoints, MapPouryaKitOpenApi.",
+                $"{monolith.Path} builds its pipeline with UseExceptionHandler, UseRouting, UseCors, UseAuthorization, UseAuthentication, UseRateLimiter, MapPouryaKitModuleEndpoints, MapPouryaKitGrpcServices, MapPouryaKitOpenApi; the sample's ModularMonolith.Host/ModularMonolithHost.cs with UseExceptionHandler, UseRouting, UseCors, UseAuthentication, UseAuthorization, UseRateLimiter, MapPouryaKitModuleEndpoints, MapPouryaKitGrpcServices, MapPouryaKitOpenApi.",
             ],
             PipelineDifferences(
                 monolith with
@@ -165,7 +174,9 @@ public sealed class TemplateTests
             (Modular, "src/Modules/Billing/Billing/Billing.csproj", "Modules/Billing/Billing/Billing.csproj", []),
             (Modular, "src/Modules/Catalog/Catalog/Catalog.csproj", "Modules/Catalog/Catalog/Catalog.csproj", []),
             (Modular, "src/Modules/Inventory/Inventory/Inventory.csproj", "Modules/Inventory/Inventory/Inventory.csproj", []),
-            (Monolith, "src/Modules/Catalog/Catalog/Catalog.csproj", "Modules/Catalog/Catalog/Catalog.csproj", ["PouryaKit.Modularity"]),
+            (Modular, "src/Modules/Ledger/Ledger/Ledger.csproj", "Modules/Ledger/Ledger/Ledger.csproj", []),
+            (Modular, "src/Modules/Ledger/Ledger.Contracts/Ledger.Contracts.csproj", "Modules/Ledger/Ledger.Contracts/Ledger.Contracts.csproj", []),
+            (Monolith, "src/Modules/Catalog/Catalog/Catalog.csproj", "Modules/Catalog/Catalog/Catalog.csproj", ["PouryaKit.AI", "PouryaKit.Modularity"]),
             (Shared, "src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj", "Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj", []),
             (Shared, "src/ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj", "ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj", []),
         ];

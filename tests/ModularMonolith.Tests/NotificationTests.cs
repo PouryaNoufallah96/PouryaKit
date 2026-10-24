@@ -7,12 +7,14 @@ using ModularMonolith.Tests.Misnamed;
 using ModularMonolith.Tests.Stub;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using PouryaKit.Email.MailKit;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Postgres;
+using PouryaKit.Realtime;
 using PouryaKit.Testing;
 using Wolverine;
 using Wolverine.Runtime;
@@ -299,9 +301,10 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
                 // A bounded wait for something that must not happen: the fixture's Host, alive throughout, polls the
                 // store several times and leaves the dead Host's delivery where it is.
                 await Task.Delay(TestDeliveryServiceCollectionExtensions.PollingTime * 5, TestContext.Current.CancellationToken);
-                // Beside the first occurrence of Inventory's recurring ReconcileStock, which the dying Host stored as it started.
+                // Beside the first occurrences of Inventory's recurring ReconcileStock and the report Module's retention,
+                // which the dying Host stored as it started.
                 afterDeath = await Fixture.RowsAsync(
-                    "select status, owner_id <> 0 from wolverine.wolverine_incoming_envelopes where received_at <> 'local://inventory.reconcile-stock/'"
+                    "select status, owner_id <> 0 from wolverine.wolverine_incoming_envelopes where received_at not in ('local://inventory.reconcile-stock/', 'local://reports.retention/')"
                 );
 
                 await HostFixture.StartHostAsync(starting, TestContext.Current.CancellationToken);
@@ -446,9 +449,11 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
 
         Assert.StartsWith(
-            $"The queues of these subscriptions or delayed commands do not store what they receive, so their deliveries would not survive a restart: local://{subscription}/ (Application, BufferedInMemory).",
+            $"The queues of these subscriptions, Sagas or delayed commands do not store what they receive, so their deliveries would not survive a restart: local://{subscription}/ (Application, BufferedInMemory).",
             thrown.Message
         );
+        // Refused once every hosted service had started: the Host the caller is left with has stopped.
+        Assert.True(host.Lifetime.ApplicationStopped.IsCancellationRequested);
     }
 
     [Fact]
@@ -479,6 +484,9 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         // the Stub Module's services, and the Kit's container is validated when it is built.
         builder.Services.AddScoped<CommandHandler<WriteNoteRaisingCommand>, WriteNoteRaisingCommandHandler>();
         builder.Services.AddSingleton<DeliveryLog>();
+        builder.Services.AddPouryaKitMailKit();
+        builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSection("PouryaKit:Email"));
+        builder.Services.AddPouryaKitRealtime(connectionName: "app");
         builder.Services.AddPouryaKitDapper(connectionName: "app");
         builder.Services.AddPouryaKitNotificationHandlers(typeof(StubDbContext).Assembly);
         builder.UsePouryaKitWolverine(connectionName: "app");

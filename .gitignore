@@ -23,8 +23,8 @@ __pycache__/
 .claude-plugin/types/
 # Wolverine code `codegen write` generates in a Proving Sample Host; the Kit commits none (ADR 0004).
 samples/ModularMonolith/src/*/Internal/Generated/
+tests/ModularMonolith.Tests/Sagas/*/Internal/Generated/
 # Serena's project folder: a local tool's, like the entries above. The Kit tracks none of it.
 .serena/
 branch_structure.json
 temp_interactive_push.bat
-.gitignore

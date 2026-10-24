@@ -51,7 +51,12 @@ internal sealed class RecordCatalogQuestionContext(OperationContext context, Cat
 {
     public Task<Result> AuthorizeAsync(GetProductQuery operation, CancellationToken cancellationToken)
     {
-        contexts.Seen.Add(context);
+        // A concurrent workflow's agents look products up at once.
+        lock (contexts.Seen)
+        {
+            contexts.Seen.Add(context);
+        }
+
         return Task.FromResult(Result.Success());
     }
 }

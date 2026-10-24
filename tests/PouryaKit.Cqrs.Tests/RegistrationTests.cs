@@ -88,6 +88,15 @@ internal sealed class AnyEventHandler<TDomainEvent> : IDomainEventHandler<TDomai
 public sealed class RegistrationTests
 {
     [Fact]
+    public void A_tenancy_declaration_on_the_hosts_services_that_names_no_assembly_fails()
+    {
+        // No Module's assembly can be inferred there, so it would make no command or query need a tenant.
+        var thrown = Assert.Throws<ArgumentException>(() => new ServiceCollection().AddPouryaKitTenancy());
+
+        Assert.Equal("featureAssemblies", thrown.ParamName);
+    }
+
+    [Fact]
     public void An_authorizer_for_a_marker_interface_fails_registration()
     {
         var error = Assert.Throws<InvalidOperationException>(() =>

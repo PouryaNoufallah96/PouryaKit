@@ -2,14 +2,22 @@ using Billing;
 using Catalog;
 using Catalog.Products.Events.Notifications;
 using Inventory;
+using Ledger;
+using PouryaKit.AI;
 using PouryaKit.Caching;
+using PouryaKit.Cqrs;
+using PouryaKit.Email.MailKit;
+using PouryaKit.Grpc;
 using PouryaKit.Messaging.Wolverine.EFCore;
+using PouryaKit.Messaging.Wolverine.Marten;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
 using PouryaKit.Observability;
-using PouryaKit.Persistence.EFCore;
+using PouryaKit.Realtime;
+using PouryaKit.Reporting.Module;
 using PouryaKit.Security;
 using PouryaKit.Security.JwtBearer;
+using PouryaKit.Storage.S3;
 using PouryaKit.Web;
 using PouryaKit.Web.OpenApi;
 
@@ -84,6 +92,8 @@ public static class ModularMonolithHost
             }
 
             modules.Add<BillingModule>();
+            modules.Add<LedgerModule>();
+            modules.Add<ReportModule>();
         });
         // An activity and a duration for every command and query, around the dispatcher the Modules registered. The
         // Host's exporter, when it has one, listens to OperationTelemetry.SourceName; the Kit exports nothing.
@@ -96,7 +106,30 @@ public static class ModularMonolithHost
             builder.Services.AddStackExchangeRedisCache(options => options.Configuration = redis);
         }
 
+        // Email a Notification Handler sends through IEmailSender goes out through MailKit to the SMTP server at
+        // PouryaKit:Email; appsettings.json names a local Papercut, which keeps every mail and which a developer runs.
+        builder.Services.AddPouryaKitMailKit();
+        builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSection("PouryaKit:Email"));
+        // Files go to the S3 bucket of PouryaKit:Storage:S3; appsettings.json names a local RustFS, which a developer runs too.
+        builder.Services.Configure<PouryaKitS3StorageOptions>(builder.Configuration.GetSection("PouryaKit:Storage:S3"));
+        builder.Services.AddPouryaKitS3Storage();
+        // The report Module answers POST /reports with a job, generated in the background and stored there: the Host
+        // decides who may request which report and lays each kind out (SalesReports), and the Module reads how long a job
+        // is kept from PouryaKit:Reports. Nothing is configured: seven days, cleaned up every hour.
+        builder.Services.AddSingleton<IReportRequestAuthorizer, SalesReports>();
+        builder.Services.AddSingleton<IReportLayouts, SalesReports>();
+        // Catalog's agent asks the model of PouryaKit:AI through the Host's one chat client; appsettings.json names a local
+        // Ollama, and GetProduct as the one tool a run may be given.
+        builder.Services.AddPouryaKitAI();
+        builder.Services.Configure<PouryaKitAIOptions>(builder.Configuration.GetSection("PouryaKit:AI"));
+        // What a Notification Handler pushes through IRealtimePublisher, such as Catalog's new products, reaches the
+        // browsers connected to Catalog's SSE endpoint on any instance of the Host, through PostgreSQL's notifications in
+        // the database every Module stores in.
+        builder.Services.AddPouryaKitRealtime(connectionName: "app");
         builder.UsePouryaKitWolverine(connectionName: "app");
+        // Ledger's Streams, in the Host's one Marten store on the same database, which joins the message store the EF
+        // Core Modules' registration above declared: every Stream Module's events commit with what it sends.
+        builder.UsePouryaKitMarten(connectionName: "app");
         if (broker)
         {
             builder.UsePouryaKitRabbitMq(BrokerConnection, ServiceName);
@@ -120,6 +153,8 @@ public static class ModularMonolithHost
         // After authorization: it partitions by the authenticated Actor.
         app.UseRateLimiter();
         app.MapPouryaKitModuleEndpoints();
+        // The Modules' gRPC services, at the root: authenticated, and each call an Operation, as the endpoints are.
+        app.MapPouryaKitGrpcServices();
         // The documents and their Scalar reference are for developers, and public there.
         if (app.Environment.IsDevelopment())
         {

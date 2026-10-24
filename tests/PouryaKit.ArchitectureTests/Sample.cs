@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyModel;
 using ModularMonolith.Host;
+using PouryaKit.Cqrs;
 using PouryaKit.Modularity;
 
 namespace PouryaKit.ArchitectureTests;
@@ -118,16 +119,22 @@ internal static class Sample
     /// Each Module's EF Core models, from the Host built (not started) as it composes itself: naming conventions and
     /// schemas come from the Composition Root, so the tables are the ones the database has. Nothing connects.
     /// </summary>
-    public static readonly IReadOnlyDictionary<Assembly, IReadOnlyList<IModel>> Models = BuildModels();
+    public static readonly IReadOnlyDictionary<Assembly, IReadOnlyList<IModel>> Models;
 
-    private static Dictionary<Assembly, IReadOnlyList<IModel>> BuildModels()
+    /// <summary>
+    /// The Modules whose Composition Root declares them tenant-scoped, as the same Host records it
+    /// (<see cref="HostComposition.IsTenantScoped"/>).
+    /// </summary>
+    public static readonly IReadOnlyList<Assembly> TenantScopedModules;
+
+    static Sample()
     {
         var builder = ModularMonolithHost.CreateBuilder(
             ["--environment", "Production", "--ConnectionStrings:app=Host=localhost;Database=architecture-tests"]
         );
         using var host = ModularMonolithHost.Build(builder);
         using var scope = host.Services.CreateScope();
-        return Modules.ToDictionary(
+        Models = Modules.ToDictionary(
             module => module,
             IReadOnlyList<IModel> (module) =>
             [
@@ -137,7 +144,12 @@ internal static class Sample
                     .Select(type => ((DbContext)scope.ServiceProvider.GetRequiredService(type)).GetService<IDesignTimeModel>().Model),
             ]
         );
+        var composition = host.Services.GetRequiredService<HostComposition>();
+        TenantScopedModules = [.. Modules.Where(module => composition.IsTenantScoped(DefinitionOf(module)))];
     }
+
+    private static Type DefinitionOf(Assembly module) =>
+        module.GetTypes().Single(type => type is { IsClass: true, IsAbstract: false } && type.IsAssignableTo(typeof(IModuleDefinition)));
 }
 
 internal static class Repository

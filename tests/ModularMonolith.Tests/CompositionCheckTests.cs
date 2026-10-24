@@ -1,17 +1,24 @@
 using Billing;
 using Catalog;
+using Catalog.Infrastructure.Data.Context;
 using Catalog.Products.Features.GetProduct;
 using Inventory;
+using Ledger;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using ModularMonolith.Tests.Misnamed;
 using ModularMonolith.Tests.Stub;
 using ModularMonolith.Tests.Unowned;
+using ModularMonolith.Tests.Unversioned;
 using PouryaKit.Cqrs;
+using PouryaKit.Domain;
+using PouryaKit.Localization;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
+using PouryaKit.Reporting.Module;
 using PouryaKit.Persistence.Postgres;
 using PouryaKit.Testing;
 
@@ -337,6 +344,117 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         );
     }
 
+    // AddPouryaKitTenancy covers only the assemblies it names (ticket #145): the Module's Cqrs scan of a second assembly
+    // would dispatch that assembly's command without a tenant, though another authorizer of it is registered.
+    [Fact]
+    public void A_tenant_scoped_module_that_dispatches_an_operation_its_tenancy_declaration_did_not_name_fails_the_host_when_built()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
+        );
+        builder.AddPouryaKitModules(modules => modules.Add<PartlyTenantScopedModule>());
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            $"PartlyTenantScopedModule is tenant-scoped, but it dispatches {typeof(UnownedCommand).FullName} without the tenant requirement, so it would run without a tenant. Name its assembly ModularMonolith.Tests.Unowned to AddPouryaKitTenancy in its Composition Root.",
+            thrown.Message
+        );
+    }
+
+    [Fact]
+    public void A_tenant_scoped_application_that_dispatches_an_operation_its_tenancy_declaration_did_not_name_fails_the_host_when_built()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.Services.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
+        builder.Services.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly, typeof(UnownedCommand).Assembly);
+        builder.AddPouryaKitCompositionChecks();
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        // Beside the Unit of Work the Host lacks, one line per problem.
+        Assert.Contains(
+            $"The application is tenant-scoped, but it dispatches {typeof(UnownedCommand).FullName} without the tenant requirement, so it would run without a tenant. Name its assembly ModularMonolith.Tests.Unowned to AddPouryaKitTenancy in the Host's own services.",
+            thrown.Message.Split(Environment.NewLine)
+        );
+    }
+
+    // Only what AddPouryaKitCqrs scanned is dispatched (ticket #150): an assembly another registration of the Module named,
+    // here Localization's, is recorded for the Module, but its command never runs, so it needs no tenant requirement.
+    [Fact]
+    public void A_tenant_scoped_module_whose_localization_names_an_assembly_cqrs_did_not_scan_builds()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
+        );
+        builder.AddPouryaKitModules(modules => modules.Add<LocalizedTenantScopedModule>());
+
+        using var host = builder.Build();
+
+        var composition = host.Services.GetRequiredService<HostComposition>();
+        Assert.True(composition.IsTenantScoped(typeof(LocalizedTenantScopedModule)));
+        Assert.Contains(typeof(UnownedCommand).Assembly, composition.FeatureAssembliesOf(typeof(LocalizedTenantScopedModule)));
+    }
+
+    // A recurring command runs as a system Actor with no tenant (ticket #117); a delayed command, which runs with the
+    // tenant of the Operation that scheduled it, is not refused beside it.
+    [Fact]
+    public void A_recurring_command_in_a_tenant_scoped_module_fails_the_host_when_built_naming_the_module()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
+        );
+        builder.UsePouryaKitWolverine("app");
+        builder.AddPouryaKitModules(modules => modules.Add<TenantScopedSchedulingModule>());
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            $"The recurring command tests.tenant-recurring, {typeof(WriteNoteCommand).FullName}, is declared in TenantScopedSchedulingModule, which is tenant-scoped, but its occurrences run for the system Actor tests.recurring with no tenant, and the Kit runs no recurring command per tenant. Declare it in a Module that is not tenant-scoped.",
+            thrown.Message
+        );
+    }
+
+    // A Snapshot's identity and version hold the aggregate's key and no tenant (ticket #117): a shelf's key, two codes,
+    // is refused; a folder's, one Guid, and a docket's, which includes its tenant, are not.
+    [Fact]
+    public void A_snapshot_in_a_tenant_scoped_module_of_an_aggregate_whose_key_two_tenants_could_share_fails_the_host_when_built()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
+        );
+        builder.UsePouryaKitWolverine("app");
+        builder.AddPouryaKitModules(modules => modules.Add<TenantScopedSnapshotsModule>());
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.Equal(
+            $"TenantScopedSnapshotsModule is tenant-scoped, but it publishes the Snapshot of {typeof(Shelf).FullName}, whose key (Aisle, Bay) neither includes the tenant nor is a Guid, so two tenants' aggregates could share a Snapshot's identity and version, and a receiver would apply only one of them. Key Shelf by a Guid the application sets, such as a Guid version 7, or include its tenant in the key.",
+            thrown.Message
+        );
+    }
+
+    // As at commit, a declaration reaches only its own Module's aggregates (#117 review F1): a tenant-scoped Module's
+    // Snapshot of every aggregate is judged by Catalog's, keyed by Guids, in its own DbContext, never by the Stub's,
+    // keyed by a long, by strings or by a time, in another Module's.
+    [Fact]
+    public void A_snapshot_in_a_tenant_scoped_module_is_judged_by_the_aggregates_of_its_own_db_context_only()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
+            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
+        );
+        builder.UsePouryaKitWolverine("app");
+        builder.AddPouryaKitModules(modules =>
+        {
+            modules.Add<TenantScopedEveryAggregateModule>();
+            modules.Add<StubDataModule>();
+        });
+
+        using var host = builder.Build();
+
+        Assert.True(host.Services.GetRequiredService<HostComposition>().IsTenantScoped(typeof(TenantScopedEveryAggregateModule)));
+    }
+
     // AddPouryaKitModules registers what a Module's Operation needs, the Domain Event drain its Unit of Work resolves
     // included, even when no Composition Root calls AddPouryaKitCqrs (#61 review finding F2).
     [Fact]
@@ -363,7 +481,10 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     {
         var composition = Fixture.Host.Services.GetRequiredService<HostComposition>();
 
-        Assert.Equal([typeof(CatalogModule), typeof(InventoryModule), typeof(BillingModule), typeof(StubModule)], composition.Modules);
+        Assert.Equal(
+            [typeof(CatalogModule), typeof(InventoryModule), typeof(BillingModule), typeof(LedgerModule), typeof(ReportModule), typeof(StubModule)],
+            composition.Modules
+        );
         Assert.All(composition.Modules, module => Assert.Equal([module.Assembly], composition.FeatureAssembliesOf(module)));
         Assert.Empty(composition.FeatureAssembliesOf(null));
     }
@@ -453,6 +574,88 @@ public sealed class HandRegisteredModule : IModuleDefinition
         module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         module.AddScoped<CommandHandler<WriteNoteCommand>, WriteNoteCommandHandler>();
     }
+}
+
+// Tenant-scoped for one assembly, with Cqrs scanning a second beside it, whose command has an authorizer that is not the
+// tenant requirement.
+public sealed class PartlyTenantScopedModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module)
+    {
+        module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
+        module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        module.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly, typeof(UnownedCommand).Assembly);
+        module.AddScoped<IAuthorizer<UnownedCommand>, AllowingUnownedCommandAuthorizer>();
+    }
+}
+
+// Tenant-scoped for the one assembly Cqrs scans, with Localization naming a second, whose command has a handler there.
+public sealed class LocalizedTenantScopedModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module)
+    {
+        module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
+        module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        module.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly);
+        module.AddPouryaKitLocalization(typeof(UnownedCommand).Assembly);
+    }
+}
+
+// Tenant-scoped, with a delayed command beside its recurring one.
+public sealed class TenantScopedSchedulingModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module)
+    {
+        module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
+        module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        module.AddPouryaKitDelayedCommand<WriteDelayedNoteCommand>("stub.delayed-note");
+        module.AddPouryaKitRecurringCommand("tests.tenant-recurring", "tests.recurring", at => new WriteNoteCommand($"at {at:O}"));
+    }
+}
+
+// Tenant-scoped, publishing the Snapshots of three aggregates the Stub's DbContext maps, under the Stub's wire names.
+public sealed class TenantScopedSnapshotsModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module)
+    {
+        module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
+        module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        module.PublishSnapshot<Folder, FolderSnapshotV1, FolderSnapshotMapper>("stub.folder-snapshot.v1");
+        module.PublishSnapshot<Docket, DocketSnapshotV1, DocketSnapshotMapper>("stub.docket-snapshot.v1");
+        module.PublishSnapshot<Shelf, ShelfSnapshotV1, ShelfSnapshotMapper>("stub.shelf-snapshot.v1");
+    }
+}
+
+// Tenant-scoped, over Catalog's DbContext, whose aggregates are keyed by Guids, publishing the Snapshot of every
+// aggregate.
+public sealed class TenantScopedEveryAggregateModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module)
+    {
+        module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
+        module.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
+        module.PublishSnapshot<IAggregateRoot, AggregateSnapshotV1, AggregateSnapshotMapper>("tests.aggregate-snapshot.v1");
+    }
+}
+
+// Not tenant-scoped, over the Stub's DbContext, and publishing nothing.
+public sealed class StubDataModule : IModuleDefinition
+{
+    public void Configure(ModuleBuilder module) => module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+}
+
+internal sealed record AggregateSnapshotV1(string Aggregate, long Version);
+
+internal sealed class AggregateSnapshotMapper : ISnapshotMapper<IAggregateRoot, AggregateSnapshotV1>
+{
+    public AggregateSnapshotV1 Map(IAggregateRoot aggregate) => new(aggregate.GetType().Name, aggregate.Version);
+
+    public AggregateSnapshotV1 Tombstone(IAggregateRoot aggregate) => new(aggregate.GetType().Name, aggregate.Version);
+}
+
+internal sealed class AllowingUnownedCommandAuthorizer : IAuthorizer<UnownedCommand>
+{
+    public Task<Result> AuthorizeAsync(UnownedCommand operation, CancellationToken cancellationToken) => Task.FromResult(Result.Success());
 }
 
 // Subscribes to an Integration Event the Stub publishes, and declares no data.

@@ -66,7 +66,9 @@ public static class DelayedCommandServiceCollectionExtensions
         /// supported. Feature code never schedules it with <see cref="IDelayedCommands"/>. Declare it once: declaring it again with another system Actor
         /// or occurrence factory, or as a delayed command too, throws, naming the declaration it already has. Throws here as
         /// <c>AddPouryaKitDelayedCommand</c> does; the Host fails when it is built or starts as for
-        /// a delayed command, and fails to start when the cadence is not longer than zero.
+        /// a delayed command, fails when it is built when the Module, or the application, is tenant-scoped, since an
+        /// occurrence has no tenant and none runs per tenant, and fails to start when the cadence is not longer than zero
+        /// or is longer than <see cref="PouryaKitRecurringCommandOptions.MaxEvery"/>.
         /// </summary>
         public OptionsBuilder<PouryaKitRecurringCommandOptions> AddPouryaKitRecurringCommand<TCommand>(
             string name,
@@ -113,12 +115,13 @@ public static class DelayedCommandServiceCollectionExtensions
         DelayedCommandDeclarations.In(services).Add(name, typeof(TCommand), module, new Recurrence(systemActor, occurrence));
         DurableQueuesCheck.AddTo(services);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, RecurringCommandTenancyCheck>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, RecurringCommandStart>());
         return services
             .AddOptions<PouryaKitRecurringCommandOptions>(name.ToLowerInvariant())
             .Validate(
-                options => options.Every > TimeSpan.Zero,
-                $"The recurring command {name} has no cadence: set PouryaKitRecurringCommandOptions.Every, named {name.ToLowerInvariant()}, longer than zero, as its declaration's options builder binds it."
+                options => options.Every > TimeSpan.Zero && options.Every <= PouryaKitRecurringCommandOptions.MaxEvery,
+                $"The recurring command {name} has no cadence: set PouryaKitRecurringCommandOptions.Every, named {name.ToLowerInvariant()}, longer than zero and at most {PouryaKitRecurringCommandOptions.MaxEvery} (MaxEvery), as its declaration's options builder binds it."
             )
             .ValidateOnStart();
     }

@@ -2,12 +2,17 @@ using Billing;
 using Catalog;
 using Catalog.Products.Events.Notifications;
 using Inventory;
+using Ledger;
+using PouryaKit.AI;
 using PouryaKit.Caching;
+using PouryaKit.Cqrs;
+using PouryaKit.Grpc;
 using PouryaKit.Messaging.Wolverine.EFCore;
+using PouryaKit.Messaging.Wolverine.Marten;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
 using PouryaKit.Observability;
-using PouryaKit.Persistence.EFCore;
+using PouryaKit.Realtime;
 using PouryaKit.Security;
 using PouryaKit.Security.JwtBearer;
 using PouryaKit.Web;
@@ -58,6 +63,7 @@ public static class AppHost
             modules.Add<CatalogModule>();
             modules.Add<InventoryModule>();
             modules.Add<BillingModule>();
+            modules.Add<LedgerModule>();
         });
         // An activity and a duration for every command and query, around the dispatcher the Modules registered.
         builder.Services.AddPouryaKitObservability();
@@ -68,7 +74,17 @@ public static class AppHost
             builder.Services.AddStackExchangeRedisCache(options => options.Configuration = redis);
         }
 
+        // Catalog's agent asks the model of PouryaKit:AI through the Host's one chat client; appsettings.json names a local
+        // Ollama, and GetProduct as the one tool a run may be given.
+        builder.Services.AddPouryaKitAI();
+        builder.Services.Configure<PouryaKitAIOptions>(builder.Configuration.GetSection("PouryaKit:AI"));
+        // What a Notification Handler pushes through IRealtimePublisher, such as Catalog's new products, reaches the browsers
+        // connected to Catalog's SSE endpoint on any instance of the Host, through PostgreSQL's notifications.
+        builder.Services.AddPouryaKitRealtime(connectionName: "app");
         builder.UsePouryaKitWolverine(connectionName: "app");
+        // Ledger's Streams, in the Host's one Marten store on the same database, which joins the message store the EF Core
+        // Modules' registration above declared: every Stream Module's events commit with what it sends.
+        builder.UsePouryaKitMarten(connectionName: "app");
         // With ConnectionStrings:broker, what Catalog publishes also reaches other Hosts over RabbitMQ, from this Host's queue;
         // Inventory and Billing still receive it here.
         if (builder.Configuration.GetConnectionString("broker") is not null)
@@ -94,6 +110,8 @@ public static class AppHost
         // After authorization: it partitions by the authenticated Actor.
         app.UseRateLimiter();
         app.MapPouryaKitModuleEndpoints();
+        // The Modules' gRPC services, at the root: authenticated, and each call an Operation, as the endpoints are.
+        app.MapPouryaKitGrpcServices();
         // /alive in every environment, for an orchestrator's liveness probe: anonymous, outside the rate limit, and with no
         // request timeout or output cache, since it asks nothing outside the process. /health, which asks each database, and
         // the OpenAPI documents with their Scalar reference are for developers: mapped in Development only, and public there.

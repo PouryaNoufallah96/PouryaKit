@@ -34,18 +34,25 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
     {
         builder.ToTable("products");
         builder.Property(product => product.Name).HasMaxLength(200);
-        // Unique among the products not removed, so a removed product's name is free again.
-        builder.HasIndex(product => product.Name).IsUnique().HasFilter("is_deleted = false").HasDatabaseName(NameIndex);
+        // Unique among the products not removed, so a removed product's name is free again, and per tenant.
+        builder
+            .HasIndex(product => new { product.Tenant, product.Name })
+            .IsUnique()
+            .HasFilter("is_deleted = false")
+            .HasDatabaseName(NameIndex);
     }
 }
 
-// Products/Entities/: auditable and soft-deletable, so the Unit of Work sets those properties and the domain never does
-internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDeletable
+// Products/Entities/: auditable and soft-deletable, so the Unit of Work sets those properties and the domain never does;
+// tenant-scoped, so it sets its own tenant (multi-tenancy.md)
+internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDeletable, ITenantScoped
 {
     // Set by Remove, not mapped: IsDeleted is set only by the Unit of Work, after every handler of the Operation ran.
     private bool _removed;
 
     private Product() { }   // for EF Core
+
+    public string Tenant { get; private set; } = "";
 
     public string Name { get; private set; } = "";
 
@@ -65,7 +72,8 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
 
     public string? DeletedBy { get; private set; }
 
-    // Create(id, categoryId, name) as in domain-primitives.md: it checks the name and raises ProductCreatedDomainEvent.
+    // Create(id, categoryId, name, tenant), as in domain-primitives.md with the tenant its handler takes from the
+    // Operation Context: it checks the name and raises ProductCreatedDomainEvent.
 
     /// <summary>
     /// Records that the product is leaving the catalog, once; the repository's Remove then removes it. Removing it
@@ -87,7 +95,7 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
 
 ## The DbContext and its mappings
 
-- One DbContext per Module, `internal sealed`, deriving from `PouryaKitDbContext`, with an empty body. Its conventions store every typed ID declared in its assembly as its value, never map Domain Events, apply every `IEntityTypeConfiguration<T>` in its assembly, and make the Module's schema the default. They also make every aggregate's `Version` its concurrency token and leave every removed soft-deletable entity out of queries. Override `OnModelCreating` only to add to it, and call the base.
+- One DbContext per Module, `internal sealed`, deriving from `PouryaKitDbContext`, with an empty body. Its conventions store every typed ID declared in its assembly as its value, never map Domain Events, apply every `IEntityTypeConfiguration<T>` in its assembly, and make the Module's schema the default. They also make every aggregate's `Version` its concurrency token, and every tenant-scoped entity's `Tenant` one too, with each part's key to its holder in a tenant-scoped aggregate ([multi-tenancy.md](multi-tenancy.md#saves)), and leave every removed soft-deletable entity out of queries. Override `OnModelCreating` only to add to it, and call the base.
 - Write one mapping per aggregate, beside its Business Area, stating only what is specific: table name, lengths, unique indexes, owned types and children, keys the database generates. Write no ID converter, no schema, no concurrency token, no query filter and nothing for the audit or soft-delete properties.
 - A Guid typed ID created by the application (`TypedId.New<ProductId>()`) needs nothing more. A numeric typed ID the database generates needs `builder.Property(note => note.Id).ValueGeneratedOnAdd();` in its mapping, because conventions never make a converted key database-generated. Its `Id` stays null until the Unit of Work saves, after the handler has returned, so such an aggregate cannot publish Snapshots, and neither can one holding a child whose declared key the database generates ([messaging.md](messaging.md#the-rules-of-a-mapper-and-a-key)).
 - What an aggregate owns is an owned type (`OwnsOne`, `OwnsMany`) or a child entity it holds in a navigation, mapped with a foreign key from that navigation: `builder.HasMany(folder => folder.Pages).WithOne().IsRequired();`. That key is how the Unit of Work finds the aggregate a changed child belongs to. A child the aggregate reaches by no navigation is not part of it, and neither is another aggregate referenced by its typed ID, as `Product.CategoryId` is.
@@ -236,6 +244,7 @@ The commit is the Unit of Work's. Each guarantee below is proven by the Proving 
 - **Nothing changes after the prepare step.** A Snapshot mapper that changes its aggregate fails the Operation, and nothing commits: `SnapshotTests.A_snapshot_mapper_that_changes_its_aggregate_fails_the_operation_and_commits_nothing`.
 - **One version step per Operation.** An aggregate's `Version` advances by exactly one for each Operation that changes it or anything it owns ([Versions and conflicts](#versions-and-conflicts)): `PersistencePreparationTests.The_version_advances_exactly_once_for_each_operation_that_changes_any_part_of_the_aggregate`.
 - **A refused save is an Error.** A save the database refuses for a concurrent change, or for a unique index the Module mapped, rolls everything back and fails the Operation with an Error ([Versions and conflicts](#versions-and-conflicts), [Unique values](#unique-values)). Any other database error stays an exception: `ConflictTests.Two_operations_that_rename_the_same_product_commit_once_and_the_other_fails_with_a_conflict`, `ConflictTests.A_duplicate_product_name_fails_with_the_error_the_module_mapped_and_writes_nothing`, `ConflictTests.A_violated_constraint_with_no_mapped_error_stays_an_exception_and_writes_nothing`.
+- **Another tenant's aggregate is never saved.** The prepare step refuses a save that adds an `ITenantScoped` aggregate for another tenant than the Operation's, or changes or removes one loaded under another tenant, or one whose tenant changed, judging every aggregate a change is attributed to, with `TenantErrors.Mismatch`, and nothing commits ([multi-tenancy.md](multi-tenancy.md#saves)): `TenantOwnershipTests.A_change_to_another_tenants_binder_loaded_with_the_tenant_filter_set_aside_fails_forbidden_and_saves_nothing`, `TenantOwnershipTests.A_product_whose_tenant_an_operation_changed_fails_forbidden_whether_then_renamed_or_removed`, `TenantOwnershipTests.An_aggregate_added_for_another_tenant_than_the_operations_fails_forbidden_and_saves_nothing`. A tenant-scoped aggregate, or a part of one, that the Operation attached instead of loading through a query is refused with `TenantErrors.NotLoaded`, whoever's key it carries: `TenantOwnershipTests.A_category_attached_rather_than_loaded_fails_forbidden_and_saves_nothing`, `TenantOwnershipTests.A_part_attached_under_the_operations_own_aggregate_fails_forbidden_and_saves_nothing`, `TenantOwnershipTests.A_loaded_part_released_and_attached_again_under_the_operations_own_aggregate_fails_forbidden_and_saves_nothing`.
 - **Nothing retries.** No Module DbContext has a retrying execution strategy: `PersistenceTests.No_module_db_context_has_a_retrying_execution_strategy`. The Unit of Work has no retry path of its own (a design fact, not a tested one): to retry, send the command again through the Gateway, which runs a new Operation in a new scope.
 - **No write without a Unit of Work.** A repository write where no Unit of Work runs throws and saves nothing ([The repository](#the-repository)): `SingleModuleTests.A_repository_write_in_a_scope_that_runs_no_unit_of_work_throws_and_saves_nothing`.
 
@@ -245,10 +254,10 @@ Both are opt-in, per aggregate or entity, with a contract from `PouryaKit.Domain
 
 - `IAuditable`: `CreatedAt`, `CreatedBy`, `LastChangedAt`, `LastChangedBy`. `ISoftDeletable`: `IsDeleted`, `DeletedAt`, `DeletedBy`. Declare each as a property with a private setter and never set it: the Unit of Work does. They map by convention to snake_case columns; add a migration.
 - The Unit of Work sets them in its prepare step, once per Operation, after the Domain Event Handlers and before the save. Every stamp of an Operation has one time, from the Operation's clock (the Host's `TimeProvider`, the same clock its Domain Events read), and one Actor, the `Actor.Id` of its Operation Context.
-- An auditable change, or the removal of a soft-deletable entity, in a scope whose Operation was never begun throws `InvalidOperationException`, and nothing commits: the stamp needs an Actor. An Operation that stamps nothing needs no context.
+- An auditable change, or the removal of a soft-deletable entity, in a scope whose Operation was never begun throws `InvalidOperationException`, and nothing commits: the stamp needs an Actor. So does a change to a tenant-scoped entity, which the save judges by the Operation's tenant. An Operation that stamps nothing and changes no tenant-scoped entity needs no context.
 - Audit: an added entity gets its creation and last change from the Operation; a changed one gets its last change. A change to anything an aggregate owns counts as a change of its root, so an auditable root is stamped then too, and a child moved from one aggregate to another stamps both.
 - Soft delete: `Remove` on the repository of a soft-deletable aggregate keeps its row. The prepare step turns the removal into `IsDeleted = true` with `DeletedAt` and `DeletedBy`, and everything the aggregate owns is kept with it. Removing an aggregate that is not soft-deletable deletes its row.
-- EF Core queries leave a removed entity out by convention, so the repository never returns one in a later Operation. The query filter is named `PouryaKitDbContext.SoftDeleteFilter` (`PouryaKit.Persistence.EFCore`, value `PouryaKit.SoftDelete`); a read that must see removed rows too, such as an audit view, passes it to EF Core: `IgnoreQueryFilters([PouryaKitDbContext.SoftDeleteFilter])`. A Dapper read must say `is_deleted = false` itself ([dapper-reads.md](dapper-reads.md)).
+- EF Core queries leave a removed entity out by convention, so the repository never returns one in a later Operation. The query filter is named `PouryaKitDbContext.SoftDeleteFilter` (`PouryaKit.Persistence.EFCore`, value `PouryaKit.SoftDelete`); a read that must see removed rows too, such as an audit view, passes it to EF Core: `IgnoreQueryFilters([PouryaKitDbContext.SoftDeleteFilter])`. A Dapper read must say `is_deleted = false` itself ([dapper-reads.md](dapper-reads.md)). A second named filter, `PouryaKitDbContext.TenantFilter`, reads an `ITenantScoped` entity only for the Operation's tenant, and a part of such an aggregate only where its holder is read, and setting one filter aside keeps the other ([multi-tenancy.md](multi-tenancy.md#reads)).
 - Removal raises no Domain Event of its own; an aggregate that publishes Snapshots publishes its Tombstone ([messaging.md](messaging.md#snapshots-between-modules)). When other aggregates care, give the aggregate a domain method that raises one and call it before the repository's `Remove`, as `RemoveProducts` above calls `Product.Remove()`. Guard the method so that a second call in the same Operation raises nothing more, as `Product` does.
 - Put `ISoftDeletable` on a type EF Core can filter: an aggregate or an entity that is not mapped as an owned type, at the root of its inheritance hierarchy or below a root that implements it too. An owned type, or a type derived from a root that is not soft-deletable, is refused when the model is built.
 - A soft-deletable child is kept when it is removed from its aggregate. It is deleted outright only when its parent is deleted outright and the child's key to that parent is required: its row cannot outlive the parent's. The Unit of Work resolves every such cascade in the prepare step, so the save itself changes nothing further.
@@ -256,8 +265,8 @@ Both are opt-in, per aggregate or entity, with a contract from `PouryaKit.Domain
 ## Versions and conflicts
 
 - Every aggregate's `Version` (`AggregateRoot<TId>`) is its concurrency token by convention. It is 0 until saved, 1 after its first commit, and exactly one more for each later Operation that changes the aggregate or anything it owns, however many times that Operation changed it. A removal counts, and so does a part changed, added or removed. A child moved from one aggregate to another changes both, and a child detached from its parent changes the parent it left; each must be loaded in the Operation ([mappings](#the-dbcontext-and-its-mappings)). An Operation that changes nothing leaves it as it was, and raising a Domain Event alone does not move it.
-- Feature code never sets `Version` and adds no other concurrency token or row lock: the version is the one concurrency mechanism.
-- The save checks that each changed aggregate still has the version the Operation read. When another Operation committed a change to it first, the Unit of Work rolls everything back and the Operation fails with `UnitOfWorkErrors.ConcurrencyConflict` (`PouryaKit.Persistence.EFCore`, kind `Conflict`, code `UnitOfWork.ConcurrencyConflict`). That holds for a change with or without Domain Events.
+- Feature code never sets `Version` and adds no other concurrency token or row lock of its own: the version is the one concurrency mechanism for aggregates, and the tenant and holder-key tokens the convention adds beside it are ownership guards, not a second one. The Kit's own row waits are two: an idempotency key's reservation ([web.md](web.md), idempotent requests; retention under [idempotency key retention](#idempotency-key-retention)) and a [number sequence](#number-sequences)'s row.
+- The save checks that each changed aggregate still has the version the Operation read. When another Operation committed a change to it first, the Unit of Work rolls everything back and the Operation fails with `UnitOfWorkErrors.ConcurrencyConflict` (`PouryaKit.Persistence`, kind `Conflict`, code `UnitOfWork.ConcurrencyConflict`), the Error a Stream's conflict fails with too ([stream.md](stream.md)). That holds for a change with or without Domain Events.
 - Nothing retries the Operation. Its caller decides: send the command again through the Gateway, which runs a new Operation on the current state, or report the conflict, which answers 409 over HTTP ([web.md](web.md)).
 
 ## Unique values
@@ -267,6 +276,19 @@ Both are opt-in, per aggregate or entity, with a contract from `PouryaKit.Domain
 - The mapping covers a unique index or constraint the database checks when the row is written. A constraint declared `DEFERRABLE INITIALLY DEFERRED` is checked at commit, and its violation is an exception, not the mapped Error.
 - When the save violates a mapped index, the Unit of Work rolls everything back and the Operation fails with that Error. Any other database error, such as an unmapped constraint, a duplicate primary key or a foreign key, stays an exception: it rolls back and reaches the Gateway's caller.
 - A check before the write may still make the common case friendlier, as the import above skips names already in use; the index stays the guard.
+
+## Number sequences
+
+A gap-free number per scope key, such as one sequence of invoice or stock count numbers per year, taken inside the command's Unit of Work (`PouryaKit.Persistence.Postgres`).
+
+- Register it on the Module's builder with `module.AddPouryaKitNumberSequences()`, beside `UsePouryaKitPostgres`, and create its table `pouryakit_number_sequences` in the Module's schema with a migration that calls `migrationBuilder.CreateNumberSequenceTable("inventory")` in `Up` and `DropNumberSequenceTable` in `Down`, as the Proving Sample's Inventory does in its `StockCounts` migration ([Migrations](#migrations)). Without the table the first number throws an `InvalidOperationException` that names `CreateNumberSequenceTable`, and nothing commits.
+- In a command's handler or a Domain Event Handler, inject `INumberSequences` and ask `await sequences.NextAsync($"stock-count:{year}", cancellationToken)`. It returns a `Result<long>`; return it when it failed, as Inventory's `StartStockCountCommandHandler` does. Numbers of a scope key start at 1. Compose the scope key yourself from what the numbering restarts by, such as the year, or the tenant in a Module whose numbers are per tenant; it is any non-blank text.
+- **Operations on one scope key run one at a time until commit.** The number is taken on the Operation's own transaction and its row stays locked until that transaction commits or rolls back: a second Operation that asks for a number of the same scope key waits, then receives the next one. Ask for the number late in the handler, after the checks that may fail, so the lock is held only as long as it must be. Operations on different scope keys do not wait for each other.
+- **A rollback gives the number back.** An Operation that fails, throws or is cancelled after taking a number consumes nothing; the next Operation receives the same number. A transaction whose connection drops before its commit gives its number back too, as PostgreSQL rolls it back; that case rests on PostgreSQL's documented behaviour, not on a Kit test.
+- **A deadlock is a conflict.** Two Operations that take numbers of two scope keys in opposite orders, or that take a number and change rows in opposite orders, can wait on each other. PostgreSQL then aborts one of them. When the aborted wait is `NextAsync`'s, it fails with `UnitOfWorkErrors.ConcurrencyConflict`; nothing of that Operation commits, and its caller may send the command again in a new Operation. When PostgreSQL aborts the other Operation's wait instead, the one in its save or in a plain-SQL write, that deadlock stays an exception: only `NextAsync` maps it. Take numbers of several scope keys in one fixed order.
+- Put the number on the aggregate or table that holds it, with a unique index on it if you want the database to guard it too. The sequence itself never raises a unique violation. A violation of a unique index on the number when the Unit of Work saves an aggregate is the Module's mapped Error, as for any [unique value](#unique-values); a plain-SQL write through `IUnitOfWorkConnection` is outside that mapping, so its violation stays an exception.
+- Code that only reads, such as a query or a validator, cannot take a number: `NextAsync` throws there, as `IUnitOfWorkConnection` does, and wherever no Unit of Work is active.
+- Proven by `NumberSequenceTests`: `Two_operations_on_one_scope_key_get_consecutive_numbers_and_the_second_waits_for_the_first_to_commit`, `A_rolled_back_operation_gives_its_number_back_to_the_next_operation`, `A_cancelled_operation_gives_its_number_back_to_the_next_operation`, `Two_operations_that_deadlock_on_two_scope_keys_commit_once_and_the_other_fails_with_a_conflict` and `A_module_without_the_table_is_told_to_add_the_migration_that_creates_it`.
 
 ## Domain Event Handlers
 
@@ -324,9 +346,9 @@ dotnet ef migrations add Initial \
 
 ## Idempotency key retention
 
-- The Host keeps an idempotency key for its retention, then removes it, and a repeat of its request runs as a new one. One background service, which `AddPouryaKitEfCore` adds once to every Host whatever the number of Modules, removes from every Module's `pouryakit_idempotency_keys` the keys reserved longer ago than the retention, every cleanup interval, a batch of keys per statement until a batch is short. It runs on the Host's `TimeProvider`, in a scope and on connections of its own, never inside a request or a Unit of Work. It walks every DbContext `AddPouryaKitEfCore` made a Unit of Work, probes each schema with PostgreSQL's `to_regclass`, and returns silently for a Module with no `[Idempotent]` command, which has no table.
+- The Host keeps an idempotency key for its retention, then removes it, and a repeat of its request runs as a new one. One background service, which `AddPouryaKitEfCore` adds once to every Host whatever the number of Modules, removes from every Module's `pouryakit_idempotency_keys` the keys reserved longer ago than the retention, every cleanup interval, a batch of keys per statement until a batch is short. It runs on the Host's `TimeProvider`, in a scope and on connections of its own, never inside a request or a Unit of Work. It walks every DbContext `AddPouryaKitEfCore` made a Unit of Work, probes each schema with PostgreSQL's `to_regclass`, and returns silently for a Module with no `[Idempotent]` command, which has no table. On a Module's builder `AddPouryaKitEfCore` keys the Module's idempotency store by the Module, so a command keeps its key in its own Module's store, beside a Module of another write model.
 - The store, its cleanup and its table are PostgreSQL-only, as the Receipts are and as the Kit is: `on conflict do nothing`, `ctid`, `to_regclass`, PostgreSQL's SQLSTATE codes and a `timestamp with time zone` column.
-- `PouryaKitIdempotencyOptions` (`PouryaKit.Persistence.EFCore`) sets it for the whole Host: `Retention` 24 hours, `CleanupInterval` 1 hour and `BatchSize` 1000 by default. A key replays for at least its retention and is removed by the first cleanup after it, so choose a retention longer than any client keeps retrying. Configure it in the Host, for example from configuration:
+- `PouryaKitIdempotencyOptions` (`PouryaKit.Cqrs`) sets it for the whole Host, whichever write model keeps the keys: `Retention` 24 hours, `CleanupInterval` 1 hour and `BatchSize` 1000 by default. A key replays for at least its retention and is removed by the first cleanup after it, so choose a retention longer than any client keeps retrying. Configure it in the Host, for example from configuration:
 
 ```csharp
 builder.Services.Configure<PouryaKitIdempotencyOptions>(builder.Configuration.GetSection("PouryaKit:Idempotency"));

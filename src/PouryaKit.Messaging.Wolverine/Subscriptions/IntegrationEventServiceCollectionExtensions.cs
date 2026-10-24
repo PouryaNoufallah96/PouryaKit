@@ -51,7 +51,7 @@ public static class IntegrationEventServiceCollectionExtensions
         /// Throws here, while the Host is composed, when the type is not a concrete class or is a Domain Event, when the wire name is
         /// missing, invalid or equal ignoring case to another's, when the type is already received under another name or as
         /// a Snapshot, and when a Module of this Host publishes it. Declaring it again adds nothing. The Host then fails when
-        /// it is built if no subscription of the Host handles the type, since nothing would receive it.
+        /// it is built if no subscription or Saga of the Host handles the type, since nothing would receive it.
         /// </summary>
         public IServiceCollection Receive<TIntegrationEvent>(string wireName)
             where TIntegrationEvent : class

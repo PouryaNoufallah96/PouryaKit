@@ -490,7 +490,8 @@ depend on, and the rules a consuming project must keep.
   the same type, the second delivery to commit fails instead of sending a second event every receiver would drop
   (`IntegrationEventTests.A_second_notification_handler_of_one_domain_event_publishing_the_same_type_fails_instead_of_being_dropped`).
 - **No subscription, nothing written.** The Outbox writes no envelope for a Notification, Integration Event or Snapshot
-  that no subscription in the Host receives: it has no route (`WolverineOutbox.cs`). This changes when brokers arrive in
+  that no subscription in the Host receives: it has no route (`WolverineOutbox.cs`; *since #121, 2026-10-18,
+  `OutboxWriter.cs` of `PouryaKit.Messaging.Wolverine`, which the EF Outbox calls*). This changes when brokers arrive in
   Wave 2: a subscriber may then live in another Host, so the publishing Host can no longer tell an unsubscribed type
   from one subscribed elsewhere. *Changed by ticket #50: a published Integration Event gets a broker route from its
   publication; see its amendment below.*
@@ -1145,3 +1146,69 @@ publication record, and its one cleanup removes idempotency keys only.
 - **A bounded policy is its own spec.** If one is ever wanted, it first accounts for every redelivery path, pending
   broker envelopes, dead-letter replay and duplicate chains, before it deletes any deduplication state. Adding a time
   column is then a migration in every Module that keeps Receipts.
+
+## Amendment (2026-10-17, ticket #117: tenants at delivery and in the keys)
+
+The decision above stands, and so do the Receipt key (subscription, message id) and the Snapshot version key
+(subscription, aggregate key): spec #115's owner decision T1 keeps both as built, with no tenant column and no
+migration of any Module's Receipt or Snapshot version table.
+
+- **Why no tenant in the keys.** A Notification's and an Integration Event's message id is its Domain Event's version 7
+  Guid, unique whichever tenant raised it. A Snapshot's identity derives from its wire name, its aggregate's key and the
+  version (`SubscriptionDelivery`), and its version key holds the aggregate's key, so both are unique across tenants
+  exactly when that key is: a single Guid, or a key that includes the tenant.
+- **The check that replaces a tenant in the key.** `SnapshotKeyTenancyCheck` (`PouryaKit.Messaging.Wolverine.EFCore`,
+  registered by `UsePouryaKitWolverine(connectionName)`) fails the Host's build when a tenant-scoped Module, or a
+  tenant-scoped application, declares a Snapshot of an aggregate whose mapped primary key neither includes its
+  `ITenantScoped.Tenant` nor is a single Guid, naming the Module, the aggregate and its key. As at commit, a declaration
+  reaches only its own Module's aggregates: the check reads the key from the model of the DbContext `AddPouryaKitEfCore`
+  records keyed by the Module, as its Unit of Work is keyed, created in its own scope as `MessageStoreDatabaseCheck`
+  creates them, and the Snapshot declarations through `ISnapshotMappers.DeclaredAggregates`. A composite key that holds a Guid and no tenant is refused
+  too: the whole key is the Snapshot's aggregate key
+  (`CompositionCheckTests.A_snapshot_in_a_tenant_scoped_module_of_an_aggregate_whose_key_two_tenants_could_share_fails_the_host_when_built`:
+  a shelf keyed by two codes is refused, a folder keyed by a Guid and a docket keyed by its tenant and code are not, and
+  Catalog's products, keyed by a Guid, pass in every Host;
+  `CompositionCheckTests.A_snapshot_in_a_tenant_scoped_module_is_judged_by_the_aggregates_of_its_own_db_context_only`:
+  a tenant-scoped Module's Snapshot of every aggregate is judged by its own DbContext's, never by another Module's).
+- **A delivery with no tenant into a tenant-scoped Module.** The delivery step (`DeliverHandler`) refuses a
+  Notification, an Integration Event or a Snapshot whose continued Operation Context carries no tenant, in a Module that
+  `HostComposition.IsTenantScoped` names, with `TenantErrors.Required`, before its Receipt and its handler, so nothing is
+  written, whatever the handler writes with, plain SQL included. The failed Result is thrown as the subscription's
+  failure, so the delivery is retried and then set aside as a dead letter whose message names `Tenant.Required`. The
+  tenant requirement `AddPouryaKitTenancy` registers covers the Module's own commands and queries, never the Kit's
+  `Deliver`, so this step is separate. A delivery that carries a tenant runs under it
+  (`TenantDeliveryTests.A_delivery_with_no_tenant_into_a_tenant_scoped_module_writes_nothing_and_is_dead_lettered_naming_the_reason`,
+  `TenantDeliveryTests.A_delivery_into_a_tenant_scoped_module_runs_under_the_tenant_it_carries`).
+- **A recurring command in a tenant-scoped Module.** An occurrence runs for its system Actor with no tenant (the #45
+  amendment), and the Kit runs no recurring command per tenant (spec #115, out of scope), so
+  `RecurringCommandTenancyCheck` fails the Host's build for such a declaration, naming the command and the Module. A
+  delayed command is not refused: it continues the tenant of the Operation that scheduled it
+  (`CompositionCheckTests.A_recurring_command_in_a_tenant_scoped_module_fails_the_host_when_built_naming_the_module`).
+
+## Amendment (2026-10-18, ticket #141: a Saga beside the routed queues)
+
+The decision above stands for every subscription. A Saga is the one reaction that runs on a chain Wolverine generates
+rather than on the Kit's pre-built handler; Spike #141 recorded its extent on 6.48.3 in
+[ADR 0013](0013-a-saga-step-runs-outside-every-operation.md).
+
+- **One queue per saga, and a Kit input type per saga and event.** The handler `AddMessageHandler` registers for a
+  subscribed type is that type's handler on every queue, a saga's included (`HandlerGraph.HandlerFor`, read in
+  `JasperFx/wolverine` tag `V6.48.3`), so the Kit delivers each Integration Event a saga takes to the saga's own durable
+  local queue as `SagaInput<TSaga, TEvent>`, a type of that saga alone. The route that does it also returns the event's
+  subscription routes, which a custom route source would otherwise cut off (ADR 0013, item 1 and "Findings").
+- **A claim in place of the Receipt.** A step is no delivery through `Deliver`: the Kit claims it, keyed by the saga's
+  name, the input's wire name and the event's identity, the identity a Receipt keys by, in the step's own transaction
+  and before Wolverine loads the saga. The claims outlive the saga, as Receipts are kept (the #90 amendment above).
+- **What a step emits is an Integration Event like any other.** The Kit's adapter writes the Operation Context headers
+  and the identity header the delivery step reads, so the ordinary subscriptions of a tenant-scoped Module receive it
+  as they receive any.
+- **An Integration Event from another Host** reaches a saga only once the broker fan-out of the #50 amendment also
+  delivers the saga's input type; that is #142's.
+
+## Amendment (2026-10-18, ticket #142: a Saga's input from another Host)
+
+The decision above stands. The Messaging package records each Integration Event a Saga takes beside its subscriptions
+(`Subscriptions.SagaInputs`), so a Host whose saga takes an event another Host publishes binds that wire name to its broker
+queue, and `SubscriptionDelivery` fans the envelope out to the saga's queue as the saga's input, beside each
+subscription's copy, by queue and never through the type's routes ([ADR 0013](0013-a-saga-step-runs-outside-every-operation.md),
+#142 amendment).

@@ -124,8 +124,8 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
         // fixture's Host is waiting for.
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
         await using var host = await StartHostAsync();
-        using var other = ClientOf(host, TestIssuer.Token(new() { ["sub"] = "ada", [CallerPermissions.ClaimType] = "catalog.products.other" }));
-        using var holder = ClientOf(host, TestIssuer.Token(new() { ["sub"] = "bob", [CallerPermissions.ClaimType] = RemoveProductsCommand.Permission }));
+        using var other = ClientOf(host, TestIssuer.Token(new() { ["sub"] = "ada", [ModularMonolithHost.TenantClaim] = AppFixture.TestTenant, [CallerPermissions.ClaimType] = "catalog.products.other" }));
+        using var holder = ClientOf(host, TestIssuer.Token(new() { ["sub"] = "bob", [ModularMonolithHost.TenantClaim] = AppFixture.TestTenant, [CallerPermissions.ClaimType] = RemoveProductsCommand.Permission }));
 
         var refused = await RemoveLampAsync(other);
         var unchanged = await Fixture.RowsAsync($"select is_deleted, version from catalog.products where id = '{lamp}'");

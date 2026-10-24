@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\PouryaKit.Cqrs\PouryaKit.Cqrs.csproj" />
+    <ProjectReference Include="..\PouryaKit.Domain\PouryaKit.Domain.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ModularMonolith.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ledger.Contracts\Ledger.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Messaging.Wolverine\PouryaKit.Messaging.Wolverine.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Modularity\PouryaKit.Modularity.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Persistence.Marten\PouryaKit.Persistence.Marten.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Validation\PouryaKit.Validation.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\src\PouryaKit.Web\PouryaKit.Web.csproj" />
+  </ItemGroup>
+</Project>

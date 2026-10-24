@@ -33,7 +33,7 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
     public async Task A_version_is_selected_by_its_url_segment_or_by_the_api_version_header()
     {
         var lamp = await CreateLampAsync();
-        using var client = Unversioned(Fixture.Client("ada"));
+        using var client = Unversioned(Fixture.Client("ada", AppFixture.TestTenant));
 
         var renamedByUrl = await RenameAsync(client, $"/catalog/v2/products/{lamp}/name", null, "Desk lamp");
         var refusedByUrl = await RenameAsync(client, $"/catalog/v1/products/{lamp}/name", null, "Floor lamp");
@@ -69,7 +69,7 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
     [Fact]
     public async Task A_deprecated_version_reports_its_configured_sunset_in_its_responses_and_its_document()
     {
-        using var client = Unversioned(Fixture.Client());
+        using var client = Unversioned(Fixture.Client("ada", AppFixture.TestTenant));
 
         var deprecated = await SendAsync(client, HttpMethod.Get, "/catalog/v1/products", null);
         var current = await SendAsync(client, HttpMethod.Get, "/catalog/v2/products", null);
@@ -109,12 +109,16 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         Assert.Equal(
             [
                 "/catalog/categories post",
+                "/catalog/events get",
                 "/catalog/products get",
                 "/catalog/products post",
+                "/catalog/products/ask post",
                 "/catalog/products/{productId} get",
                 "/catalog/v1/categories post",
+                "/catalog/v1/events get",
                 "/catalog/v1/products get",
                 "/catalog/v1/products post",
+                "/catalog/v1/products/ask post",
                 "/catalog/v1/products/{productId} get",
             ],
             CatalogOperations(v1).Select(operation => operation.Name)
@@ -124,13 +128,17 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         Assert.Equal(
             [
                 "/catalog/categories post",
+                "/catalog/events get",
                 "/catalog/products get",
                 "/catalog/products post",
+                "/catalog/products/ask post",
                 "/catalog/products/{productId} get",
                 "/catalog/products/{productId}/name put",
                 "/catalog/v2/categories post",
+                "/catalog/v2/events get",
                 "/catalog/v2/products get",
                 "/catalog/v2/products post",
+                "/catalog/v2/products/ask post",
                 "/catalog/v2/products/{productId} get",
                 "/catalog/v2/products/{productId}/name put",
             ],
@@ -159,8 +167,8 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         using var anonymous = Unversioned(AppFixture.ClientOf(host));
 
         var v2 = await DocumentAsync(anonymous, "v2");
-        var listed = await SendAsync(anonymous, HttpMethod.Get, "/catalog/v2/products", null);
         var read = await SendAsync(anonymous, HttpMethod.Get, $"/catalog/v2/products/{lamp}", null);
+        var visited = await SendAsync(anonymous, HttpMethod.Get, "/stub/public/context", "2.0");
 
         Assert.Equal(
             """{"type":"http","scheme":"bearer"}""",
@@ -169,19 +177,23 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         Assert.Equal(
             [
                 ("/catalog/v2/categories post", true),
-                ("/catalog/v2/products get", false),
+                ("/catalog/v2/events get", true),
+                ("/catalog/v2/products get", true),
                 ("/catalog/v2/products post", true),
+                ("/catalog/v2/products/ask post", true),
                 ("/catalog/v2/products/{productId} get", true),
                 ("/catalog/v2/products/{productId}/name put", true),
                 ("/stub/context get", true),
+                ("/stub/kiosk/context get", false),
                 ("/stub/public/context get", false),
             ],
             Operations(v2)
                 .Where(operation => operation.Name.StartsWith("/catalog/v2/") || operation.Name.Contains("/context "))
                 .Select(operation => (operation.Name, RequiresBearer(operation.Body)))
         );
-        // The document says what the pipeline does: the list is public, reading one product is not.
-        Assert.Equal(HttpStatusCode.OK, listed.StatusCode);
+        // The document says what the pipeline does: the Stub's public endpoint serves an anonymous caller, reading a
+        // product does not.
+        Assert.Equal(HttpStatusCode.OK, visited.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, read.StatusCode);
     }
 
@@ -273,7 +285,7 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
     {
         var category = Guid.CreateVersion7();
         await Fixture.Gateway<CatalogModule>().SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
-        using var client = Unversioned(Fixture.Client("ada"));
+        using var client = Unversioned(Fixture.Client("ada", AppFixture.TestTenant));
         var byUrl = Guid.CreateVersion7();
         var byHeader = Guid.CreateVersion7();
 

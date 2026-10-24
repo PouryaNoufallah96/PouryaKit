@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/PouryaKitAppName.Host/PouryaKitAppName.Host.csproj" />
+    <Project Path="src/PouryaKitAppName.ReverseProxy/PouryaKitAppName.ReverseProxy.csproj" />
     <Project Path="src/PouryaKitAppName.ServiceDefaults/PouryaKitAppName.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/src/Modules/">
@@ -8,6 +9,8 @@
     <Project Path="src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj" />
     <Project Path="src/Modules/Catalog/Catalog/Catalog.csproj" />
     <Project Path="src/Modules/Inventory/Inventory/Inventory.csproj" />
+    <Project Path="src/Modules/Ledger/Ledger.Contracts/Ledger.Contracts.csproj" />
+    <Project Path="src/Modules/Ledger/Ledger/Ledger.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/PouryaKitAppName.Tests/PouryaKitAppName.Tests.csproj" />

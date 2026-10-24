@@ -9,6 +9,7 @@ using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence;
+using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.EFCore;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
@@ -73,6 +74,7 @@ internal sealed class OffendingRow
 internal sealed class KitStepCallingCommandHandler(
     IUnitOfWork unitOfWork,
     IUnitOfWorkOutbox outbox,
+    OutboxWriter writer,
     IReceipts receipts,
     ISnapshotMappers snapshots,
     IIntegrationEventOutbox integrationEvents,
@@ -91,6 +93,7 @@ internal sealed class KitStepCallingCommandHandler(
         await unitOfWork.RunAsync(_ => Task.FromResult(Result.Success()), cancellationToken);
         _ = EfUnitOfWorkDbContext.Of(unitOfWork);
         await outbox.WriteAsync(dbContext, [command], [], cancellationToken);
+        _ = await writer.WriteAsync(() => null!, [command], [], cancellationToken);
         await receipts.RecordAsync("offending", Guid.CreateVersion7(), cancellationToken);
         _ = snapshots.Map(command, removed: false);
         integrationEvents.Add(Guid.CreateVersion7(), command);
@@ -148,6 +151,175 @@ internal sealed class PublishingCommandHandler(IMessageBus bus) : CommandHandler
 internal sealed class OffendingDbContext(DbContextOptions options) : DbContext(options)
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.MapWolverineEnvelopeStorage("wolverine");
+}
+
+internal sealed record OffendQuery : Query<int>;
+
+// Reads Catalog's tenant-scoped tables in shapes that still cross tenants: the lease's tenant inside a top-level OR, in one
+// branch of a UNION, and for one table of a join but not the other; and with a tenant the handler binds itself.
+internal sealed class CrossTenantReadingQueryHandler(IReadConnectionFactory connections, OperationContext context)
+    : QueryHandler<OffendQuery, int>
+{
+    public override async Task<Result<int>> Handle(OffendQuery query, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var parameters = new { Name = "Lamp" };
+        var either = await connection.QueryAsync<Guid>(
+            new CommandDefinition("select id from catalog.products where tenant = current_setting('pouryakit.tenant') or name = @Name", parameters, cancellationToken: cancellationToken)
+        );
+        var united = await connection.QueryAsync<Guid>(
+            new CommandDefinition(
+                "select id from catalog.products where tenant = current_setting('pouryakit.tenant') union select id from catalog.products where name = @Name",
+                parameters,
+                cancellationToken: cancellationToken
+            )
+        );
+        var joined = await connection.QueryAsync<Guid>(
+            new CommandDefinition(
+                "select p.id from catalog.products p join catalog.categories c on c.id = p.category_id where p.tenant = current_setting('pouryakit.tenant') and c.name = @Name",
+                parameters,
+                cancellationToken: cancellationToken
+            )
+        );
+        var bound = await connection.QueryAsync<Guid>(
+            new CommandDefinition("select id from catalog.products where tenant = @Tenant", new { context.Tenant }, cancellationToken: cancellationToken)
+        );
+        return either.Count() + united.Count() + joined.Count() + bound.Count();
+    }
+}
+
+// Rebinds the tenant the lease set, then reads with the accepted conjunct, so the read returns another tenant's rows.
+internal sealed class TenantRebindingQueryHandler(IReadConnectionFactory connections) : QueryHandler<OffendQuery, int>
+{
+    public override async Task<Result<int>> Handle(OffendQuery query, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await connection.ExecuteAsync(new CommandDefinition("select set_config('pouryakit.tenant', 'south', false)", cancellationToken: cancellationToken));
+        await connection.ExecuteAsync(new CommandDefinition("set pouryakit.tenant = 'south'", cancellationToken: cancellationToken));
+        var read = await connection.QueryAsync<Guid>(
+            new CommandDefinition("select id from catalog.products where tenant = current_setting('pouryakit.tenant')", cancellationToken: cancellationToken)
+        );
+        await connection.ExecuteAsync(new CommandDefinition("reset pouryakit.tenant", cancellationToken: cancellationToken));
+        return read.Count();
+    }
+}
+
+// A tenant's ledger, whose entries and their lines are parts its navigations hold, so their tables carry no tenant.
+internal sealed record LedgerId(Guid Value) : TypedId<Guid>(Value);
+
+internal sealed record LedgerEntryId(Guid Value) : TypedId<Guid>(Value);
+
+internal sealed record EntryLineId(Guid Value) : TypedId<Guid>(Value);
+
+internal sealed record JournalLineId(Guid Value) : TypedId<Guid>(Value);
+
+internal sealed class Ledger : AggregateRoot<LedgerId>, ITenantScoped
+{
+    private readonly List<LedgerEntry> _entries = [];
+
+    private Ledger() { }
+
+    public string Tenant { get; private set; } = "";
+
+    public string Name { get; private set; } = "";
+
+    public IReadOnlyList<LedgerEntry> Entries => _entries;
+}
+
+internal class LedgerEntry : Entity<LedgerEntryId>
+{
+    private readonly List<EntryLine> _lines = [];
+
+    protected LedgerEntry() { }
+
+    public decimal Amount { get; private set; }
+
+    public IReadOnlyList<EntryLine> Lines => _lines;
+}
+
+// An entry mapped to a table of its own beside its base type's (TPT), which holds its key to the ledger.
+internal sealed class SpecialEntry : LedgerEntry
+{
+    private SpecialEntry() { }
+
+    public string Note { get; private set; } = "";
+}
+
+// A line whose note its table splits into a table of its own, which holds no key to the entry.
+internal sealed class EntryLine : Entity<EntryLineId>
+{
+    private EntryLine() { }
+
+    public string Text { get; private set; } = "";
+
+    public string Note { get; private set; } = "";
+}
+
+// A tenant's journal keyed by its tenant and its own code, so its lines hold it on a key of two columns.
+internal sealed class Journal : AggregateRoot<string>, ITenantScoped
+{
+    private readonly List<JournalLine> _lines = [];
+
+    private Journal() { }
+
+    public string Tenant { get; private set; } = "";
+
+    public IReadOnlyList<JournalLine> Lines => _lines;
+}
+
+internal sealed class JournalLine : Entity<JournalLineId>
+{
+    private JournalLine() { }
+
+    public string Text { get; private set; } = "";
+}
+
+// A tenant's account in a schema of its own, whose note its table splits into a table named with no schema.
+internal sealed class Account : AggregateRoot<string>, ITenantScoped
+{
+    private Account() { }
+
+    public string Tenant { get; private set; } = "";
+
+    public string Note { get; private set; } = "";
+}
+
+internal sealed class LedgerDbContext(DbContextOptions options) : PouryaKitDbContext(options)
+{
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<Ledger>().ToTable("ledgers").HasMany(ledger => ledger.Entries).WithOne().IsRequired();
+        modelBuilder.Entity<LedgerEntry>().UseTptMappingStrategy().ToTable("ledger_entries").HasMany(entry => entry.Lines).WithOne().IsRequired();
+        modelBuilder.Entity<SpecialEntry>().ToTable("special_entries");
+        modelBuilder.Entity<EntryLine>().ToTable("entry_lines").SplitToTable("entry_line_notes", table => table.Property(line => line.Note));
+        modelBuilder.Entity<Journal>().ToTable("journals").HasKey(journal => new { journal.Tenant, journal.Id });
+        modelBuilder.Entity<Journal>().HasMany(journal => journal.Lines).WithOne().IsRequired();
+        modelBuilder.Entity<JournalLine>().ToTable("journal_lines");
+        modelBuilder.Entity<Account>().ToTable("accounts", "books").SplitToTable("account_notes", table => table.Property(account => account.Note));
+    }
+}
+
+// Reads a ledger's entries, whose table has no tenant column: once with no join to the ledger, and once joined to it
+// without holding the ledger to the tenant.
+internal sealed class PartReadingQueryHandler(IReadConnectionFactory connections) : QueryHandler<OffendQuery, int>
+{
+    public override async Task<Result<int>> Handle(OffendQuery query, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var parameters = new { Ledger = Guid.Empty, Name = "Cash" };
+        var direct = await connection.QueryAsync<decimal>(
+            new CommandDefinition("select amount from offending.ledger_entries where ledger_id = @Ledger", parameters, cancellationToken: cancellationToken)
+        );
+        var joined = await connection.QueryAsync<decimal>(
+            new CommandDefinition(
+                "select e.amount from offending.ledger_entries e join offending.ledgers l on l.id = e.ledger_id where l.name = @Name",
+                parameters,
+                cancellationToken: cancellationToken
+            )
+        );
+        return direct.Count() + joined.Count();
+    }
 }
 
 // Writes Catalog's aggregate tables around the tracked path, once named with its schema and once without.

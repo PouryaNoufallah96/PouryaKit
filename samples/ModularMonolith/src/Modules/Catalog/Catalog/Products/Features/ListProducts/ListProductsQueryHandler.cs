@@ -7,10 +7,12 @@ namespace Catalog.Products.Features.ListProducts;
 internal sealed class ListProductsQueryHandler(IReadConnectionFactory connections)
     : QueryHandler<ListProductsQuery, Page<ProductListItemDto>>
 {
-    // The Feature writes its WHERE; each declared filter arrives as @{field}_{operator}, null when not asked for.
+    // The Feature writes its WHERE, the tenant the lease bound included, since plain SQL reads no query filter; each
+    // declared filter arrives as @{field}_{operator}, null when not asked for.
     private const string From = """
         from catalog.products p
-        where not p.is_deleted
+        where p.tenant = current_setting('pouryakit.tenant')
+          and not p.is_deleted
           and (@name_eq is null or p.name = @name_eq)
           and (@name_contains is null or strpos(p.name, @name_contains) > 0)
           and (@category_eq is null or p.category_id = @category_eq)

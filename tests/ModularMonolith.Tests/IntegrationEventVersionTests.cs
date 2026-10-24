@@ -38,7 +38,7 @@ public sealed class IntegrationEventVersionTests(AppFixture app) : HostTest<AppF
                 () =>
                     catalog.SendAsync(
                         new CreateProductCommand(product, category, $"Lamp {product}"),
-                        new OperationContext(Actor.Person("ada")),
+                        new OperationContext(Actor.Person("ada"), AppFixture.TestTenant),
                         TestContext.Current.CancellationToken
                     ),
                 TestContext.Current.CancellationToken

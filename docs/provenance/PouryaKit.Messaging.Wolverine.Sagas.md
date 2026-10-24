@@ -1,0 +1,13 @@
+# PouryaKit.Messaging.Wolverine.Sagas provenance
+
+Adopted implementations in `PouryaKit.Messaging.Wolverine.Sagas`. Format and rules: [README](README.md).
+
+The package has no adopted implementation. It is the shape Spike #141 proved and ADR 0013 records (`spikes/saga/SagaSpike.Kit/` at `629b85a8abefd3bfb62bb7d072e30b9669992eae`, tag `spike/saga`, not merged; ticket #142), rebuilt on the Kit's seams: the Kit's route, `SagaRouteSource`, returns an Integration Event's subscription routes and each saga's input route as Wolverine's `ExplicitRouting` and `TransformedMessageRouteSource` do (`JasperFx/wolverine` tag `V6.48.3`, commit `c1eab2a7f04de7350c3b54741ae00351c6c303d1`, `src/Wolverine/Runtime/WolverineRuntime.Routing.cs`, `src/Wolverine/Runtime/Routing/IMessageRoute.cs`); the step policy, `SagaStepPolicy`, puts Wolverine's own `EnrollAndFetchSagaStorageFrame` first in a declared saga's chain with the Kit's `SagaStorage` as its helper type (`src/Wolverine/Persistence/Sagas/EnrollAndFetchSagaStorageFrame.cs`), which opens Wolverine's `DatabaseSagaStorage` on a transaction of its own as Wolverine's `MessageDatabase` does (`src/Persistence/Wolverine.RDBMS/MessageDatabase.cs`); and each emission is written through the Messaging package's `OutboxWriter` with the Operation Context headers `WithOperationContext` writes. The claim statement follows `ReceiptStatements`' shape, and the claims table is created under the advisory lock Wolverine migrates the store under, `DatabaseSettings.MigrationLockId`.
+
+## Package dependencies
+
+Checked on nuget.org and in the restored nuspecs on 2026-10-18 (ticket #142). None is reciprocal or commercial (ADR 0002), and `LicenceTests` checks the whole closure.
+
+- `WolverineFx.Postgresql` 6.48.3, `MIT`, the Kit's WolverineFx line (owner decision M1; 6.51.0 is current), already pinned for `PouryaKit.Messaging.Wolverine.EFCore`, so `Directory.Packages.props` gains nothing. It brings `WolverineFx.RDBMS` 6.48.3 and `Weasel.Postgresql` and `Weasel.Core` 9.41.0, `MIT`, `Npgsql` 9.0.4 and `Npgsql.NetTopologySuite` 9.0.4, `PostgreSQL`, `NetTopologySuite` 2.5.0 and `NetTopologySuite.IO.PostGis` 2.1.0, `BSD-3-Clause`, and `Patched.DistributedLock.Core` 1.0.11 and `Patched.DistributedLock.Postgres` 1.3.3, `MIT`. A Host that also composes `PouryaKit.Persistence.Postgres` resolves `Npgsql` at the Kit's 10.0.3.
+
+`PouryaKit.Messaging.Wolverine.Sagas` also references `PouryaKit.Messaging.Wolverine`, which opens its internals to it with `InternalsVisibleTo` for the subscription registry, the routing check, the wire names and the Outbox's header write, as plan section C lists since ticket #142. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).

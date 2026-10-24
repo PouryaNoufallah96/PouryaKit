@@ -149,7 +149,7 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task A_caller_holding_the_declared_permission_commits_the_command()
     {
         var lamp = await CreateLampAsync();
-        using var client = Fixture.Client("ada", permissions: RemoveProductsCommand.Permission);
+        using var client = Fixture.Client("ada", AppFixture.TestTenant, RemoveProductsCommand.Permission);
 
         var response = await client.PostAsJsonAsync(
             "/stub/catalog-products/removal",
@@ -166,7 +166,7 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task A_caller_without_the_declared_permission_is_forbidden_with_a_403_problem_response_and_nothing_changes()
     {
         var lamp = await CreateLampAsync();
-        using var client = Fixture.Client("ada", permissions: "catalog.products.other");
+        using var client = Fixture.Client("ada", AppFixture.TestTenant, "catalog.products.other");
 
         var response = await client.PostAsJsonAsync(
             "/stub/catalog-products/removal",

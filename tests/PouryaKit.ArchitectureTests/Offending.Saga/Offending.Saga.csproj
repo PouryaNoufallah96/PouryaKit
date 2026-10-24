@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A Module whose saga is Wolverine's own, with a timeout of Wolverine's own, outside the Kit's base types, so the
+       structure rules are seen to reject both. It is never part of the sample, and PouryaKit.ArchitectureTests leaves
+       this folder out of its own sources. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\PouryaKit.Messaging.Wolverine.Sagas\PouryaKit.Messaging.Wolverine.Sagas.csproj" />
+  </ItemGroup>
+</Project>

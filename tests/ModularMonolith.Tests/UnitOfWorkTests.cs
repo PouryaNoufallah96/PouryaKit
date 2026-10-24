@@ -20,7 +20,7 @@ public sealed class UnitOfWorkTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task A_command_that_raises_no_domain_event_is_committed_though_its_handler_never_saves()
     {
         var id = Guid.CreateVersion7();
-        Assert.Empty(Category.Create(new CategoryId(id), "Lamps").Value.DomainEvents);
+        Assert.Empty(Category.Create(new CategoryId(id), "Lamps", AppFixture.TestTenant).Value.DomainEvents);
 
         var created = await Fixture
             .Gateway<CatalogModule>()

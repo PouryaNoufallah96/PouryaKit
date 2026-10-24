@@ -22,6 +22,12 @@ public interface ISnapshotMappers
     void CheckKeySpaces(IReadOnlyDictionary<Type, Type> mappedAggregates);
 
     /// <summary>
+    /// The aggregate type of every Snapshot <paramref name="module"/> declared, or the application when it is null,
+    /// whatever Operation runs: for a composition check that judges the keys those aggregates are mapped with.
+    /// </summary>
+    IReadOnlyList<Type> DeclaredAggregates(Type? module);
+
+    /// <summary>
     /// The Snapshot of <paramref name="aggregate"/> under each contract the running Operation's Module declared for it,
     /// or its Tombstone when <paramref name="removed"/>, each built by the contract's mapper; none when nothing is
     /// declared for it.

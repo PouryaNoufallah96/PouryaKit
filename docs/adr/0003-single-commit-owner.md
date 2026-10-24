@@ -200,3 +200,14 @@ state it commits (spec #74, finding P1).
   (a computed column on an owned part), each red with the refusal off: the Snapshot published no value while the row
   committed the database's. `SnapshotTests.A_snapshot_of_an_aggregate_whose_value_a_client_side_generator_sets_carries_the_value_committed`
   shows a client-side generator's value is not refused.
+
+## Amendment (2026-10-16, ticket #120: each write model has one commit owner)
+
+The decision above stands, for each write model: each write model has one commit owner; the EF Unit of Work owns rows
+and commits through the EF outbox; the Marten Unit of Work owns a Stream and commits through Wolverine's Marten outbox;
+no Operation commits through both. A Module declares one write model, and the Unit of Work its Composition Root
+registers, which `AddPouryaKitModules` keys by the Module, decides every Operation of that Module in the order above.
+The steps that read EF Core's tracked rows, preparing persistence and building the Snapshots of the changed aggregates,
+are the EF Unit of Work's; the Marten Unit of Work appends the Domain Events it drained to each Stream at the version it
+read. The spike that proved it on Marten 9.46.0 and WolverineFx.Marten 6.48.3, the commit shape and the invariants for
+the package tickets are in [ADR 0011](0011-each-write-model-has-one-commit-owner.md).

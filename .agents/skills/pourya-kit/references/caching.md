@@ -50,7 +50,7 @@ internal sealed record GetProductQuery(Guid ProductId) : Query<ProductDto>, ICac
 }
 ```
 
-- `CacheKey` names only what the query asks. The Kit adds the query's type, as its full name and its assembly's simple name, the Operation's tenant (an Operation without one as `OperationContext.NoTenant`) and its Actor, by kind and id, so an entry answers only the query, the Actor and the tenant that stored it. Renaming the query's type, or the assembly that holds it, starts new entries.
+- `CacheKey` names only what the query asks. The Kit adds the query's type, as its full name and its assembly's simple name, the Operation's tenant (an Operation without one as `OperationContext.NoTenant`), its Actor, by kind and id, and the current UI culture's name, so an entry answers only the query, the Actor, the tenant and the culture that stored it: a localized answer ([localization.md](localization.md)) is kept per culture, and a Host without localization runs in one. Renaming the query's type, or the assembly that holds it, starts new entries.
 - `CacheTags` name the resources the answer reads. A tag spans Actors and tenants: one eviction reaches every Actor's entry.
 - The response is stored as JSON in the Kit's representation (`UsePouryaKitJson`), so it must round-trip through it; every answer, the first included, is read back from that JSON.
 - The handler is written as for any query, and runs inside its Operation as usual: a `Continue()` it calls is a trusted continuation.

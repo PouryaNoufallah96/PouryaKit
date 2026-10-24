@@ -13,7 +13,9 @@ namespace PouryaKit.Messaging.Wolverine;
 // endpoint policies, such as UseDurableLocalQueues, then a Host's own queue configuration), so a composition check at
 // the build, or a startup check before any hosted service starts, would read every queue's default. A Notification, an
 // Integration Event, a Snapshot or a delayed command is durable only when its queue stores it (and an Outbox writes it,
-// OutboxCheck); otherwise the business change would commit with nothing behind it, so the Host does not start.
+// OutboxCheck); otherwise the business change would commit with nothing behind it, so the Host does not start. By then
+// every hosted service has started, and the Host rethrows the refusal without stopping them, so the check stops the Host
+// before it throws; a stop that fails travels as the refusal's inner exception.
 internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServiceProvider services) : IHostedLifecycleService
 {
     // Every declaration registers both.
@@ -23,12 +25,31 @@ internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServicePr
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, DurableQueuesCheck>());
     }
 
-    public Task StartedAsync(CancellationToken cancellationToken)
+    public async Task StartedAsync(CancellationToken cancellationToken)
+    {
+        if (Refusal() is not { } refusal)
+        {
+            return;
+        }
+
+        try
+        {
+            await services.GetRequiredService<IHost>().StopAsync(CancellationToken.None);
+        }
+        catch (Exception stop)
+        {
+            throw new InvalidOperationException(refusal, stop);
+        }
+
+        throw new InvalidOperationException(refusal);
+    }
+
+    private string? Refusal()
     {
         var delayedCommands = services.GetService<DelayedCommandDeclarations>()?.All ?? [];
-        if (!subscriptions.All.Any() && subscriptions.Publications.Count == 0 && !delayedCommands.Any())
+        if (!subscriptions.All.Any() && subscriptions.Publications.Count == 0 && subscriptions.SagaInputs.Count == 0 && !delayedCommands.Any())
         {
-            return Task.CompletedTask;
+            return null;
         }
 
         var transports = services.GetRequiredService<IWolverineRuntime>().Options.Transports;
@@ -37,6 +58,7 @@ internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServicePr
             .. subscriptions
                 .All.Select(subscription => subscription.Name)
                 .Concat(delayedCommands.Select(delayed => delayed.Name))
+                .Concat(subscriptions.SagaInputs.Select(saga => saga.Queue).Distinct())
                 .Select(name => new Uri($"local://{name}"))
                 .Select(address => (Address: address, Queue: transports.TryGetEndpoint(address)))
                 .Where(queue =>
@@ -46,9 +68,7 @@ internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServicePr
         ];
         if (notDurable.Count > 0)
         {
-            throw new InvalidOperationException(
-                $"The queues of these subscriptions or delayed commands do not store what they receive, so their deliveries would not survive a restart: {string.Join(", ", notDurable)}. Each must be a durable application queue; rename the subscription or delayed command, or remove the configuration that changed its queue."
-            );
+            return $"The queues of these subscriptions, Sagas or delayed commands do not store what they receive, so their deliveries would not survive a restart: {string.Join(", ", notDurable)}. Each must be a durable application queue; rename the subscription, Saga or delayed command, or remove the configuration that changed its queue.";
         }
 
         // What arrives from another Host, at the Host's own queue on a broker, is stored before it is acknowledged, and a
@@ -64,10 +84,8 @@ internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServicePr
                 .Select(endpoint => $"{endpoint.Uri} ({endpoint.Mode}, dead letters {endpoint.DeadLetterStorage})"),
         ];
         return brokerListeners.Count == 0
-            ? Task.CompletedTask
-            : throw new InvalidOperationException(
-                $"These broker listeners receive from other Hosts but do not store what they receive in a durable Inbox, or set dead letters aside outside the message store: {string.Join(", ", brokerListeners)}. Each must be Durable with dead letters Durable; remove the configuration that changed it, such as BufferedInMemory() or a broker dead-letter queue."
-            );
+            ? null
+            : $"These broker listeners receive from other Hosts but do not store what they receive in a durable Inbox, or set dead letters aside outside the message store: {string.Join(", ", brokerListeners)}. Each must be Durable with dead letters Durable; remove the configuration that changed it, such as BufferedInMemory() or a broker dead-letter queue.";
     }
 
     public Task StartingAsync(CancellationToken cancellationToken) => Task.CompletedTask;

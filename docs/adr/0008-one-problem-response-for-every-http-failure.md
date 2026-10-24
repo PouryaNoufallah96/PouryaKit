@@ -56,3 +56,25 @@ Pinned by `PagingTests.A_page_query_string_that_cannot_be_read_answers_400_as_a_
 the refusing sites threw the bare `BadHttpRequestException`, and by
 `WebTests.A_request_that_cannot_be_read_answers_400_as_a_problem_response_and_is_not_logged_as_an_error`, red when the
 handler wrote every such message.
+
+## Amendment (2026-10-18, ticket #134: one failure shape per transport)
+
+The decision above stands for HTTP. Since #134 a Kit Host also answers over gRPC (`PouryaKit.Grpc`), and each
+transport has one failure shape of its own: HTTP the problem response above, gRPC a status. A failed `Result` answers
+the status of its most severe Error kind, in the order above: validation `InvalidArgument`, not found `NotFound`,
+conflict `Aborted`, forbidden `PermissionDenied`, anything else `Internal`, with the deciding Error's message as the
+status's message. Every Error, in order, is in the binary trailer `pouryakit-errors-bin`, a JSON array in the Kit's
+representation (`UsePouryaKitJson`) whose entries are the problem response's `errors` entries: `code`, `message` and,
+when set, `target`. The deciding Error and the entry are Web's own (`ResultHttpExtensions`), which `PouryaKit.Grpc`
+reuses, so the two transports cannot rank or list Errors apart. The service raises the status as gRPC's
+`RpcException`, the transport's own way to answer one, from `ToGrpcResponse`
+(`src/PouryaKit.Grpc/Services/ResultGrpcExtensions.cs`). A trusted peer's context headers the Kit refuses as
+unreadable, which answer a 400 problem response with the rule as `detail` over HTTP (#86 above), answer
+`InvalidArgument` with the rule as the status's message, before the service runs
+(`src/PouryaKit.Grpc/Services/GrpcEndpointRouteBuilderExtensions.cs`).
+
+Pinned by `GrpcTests.The_most_severe_error_kind_decides_the_status_as_it_decides_the_http_status`, red with only the
+first Error in the trailer (and, before the review moved the ranking to Web's one, with forbidden ranked below not
+found in the package's copy); `GrpcTests.A_failed_result_answers_its_errors_kind_with_every_error_in_the_trailer`; and
+`GrpcTests.A_trusted_peers_unreadable_context_headers_answer_invalid_argument_with_the_rule`, red without the gRPC
+group's refusal convention.

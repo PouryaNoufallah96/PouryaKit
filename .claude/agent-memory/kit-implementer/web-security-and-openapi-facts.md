@@ -129,5 +129,26 @@ Verified by decompiling the shared framework with `ilspycmd -t <Type> <dll>` (wr
 
 - **`RequireCors(name)` answers preflights once the CORS middleware runs:** `RouteEndpointBuilder` sets `AcceptCorsPreflight` on the endpoint's method metadata whenever it carries `ICorsMetadata`, so routing matches the `OPTIONS` request. Alone it adds no middleware. Decompile the shared framework from `~/.dotnet/shared/Microsoft.AspNetCore.App/10.0.12/`; this machine has no `/usr/local/share/dotnet` copy of it.
 
+## Public convention and codec for other transports (#119, 2026-10-17; ASP.NET Core 10.0.12)
+
+- **A private static helper named like a C# 14 extension-block member breaks every `<see cref>` to it** (CS0419, ambiguous, an error under TreatWarningsAsErrors): extension members compile to static methods of the class, so they overload. Give the helper another name (`BeginOperationOn`).
+- **A root group in a test Host:** `AppFixture.ComposeHost` returns the built `WebApplication`; `host.MapGroup("/outside")...` before `StartAsync` adds routes beside the Module groups, and mapping a Stub `IEndpoint` there a second time is harmless (no `WithName`). The client's `api-version` header did not disturb the unversioned root group.
+- **"Same codec" red needs a fixed vocabulary:** when the handler writes the public reader's pairs, a renamed header changes both sides, so the test also asserts the pairs against Messaging's `OperationContextHeaders` names; that assertion is what goes red.
+
+## The convention once per endpoint (#156, 2026-10-17; ASP.NET Core 10.0.12)
+
+- A `Finally` convention on a group runs once per group on each endpoint below it, so a nested group's call runs it again on the same `EndpointBuilder`: an idempotent convention marks `endpoint.Metadata` and returns where its marker is there. Whichever group's `Finally` runs first installs the wrapper; the outcome is the same.
+- `ModularMonolithHost.Build` (so `AppFixture.ComposeHost`) already calls `MapPouryaKitModuleEndpoints`; mapping the Modules again under another group fails at the first request of any route with "Duplicate endpoint name 'GetProduct'" (500), not at start. Test a re-mapping on a plain `WebApplication` with `AddPouryaKitCqrs`, `AddPouryaKitWeb`, `AddPouryaKitEndpoints("/plain", typeof(UnversionedEndpoints).Assembly)` and `AddPouryaKitCompositionChecks()` (start refuses a Host without it).
+
+## Which URLs a Host listens on (#134 fix 2, 2026-10-18; ASP.NET Core 10.0)
+
+- The sources are alternatives, never a union: `GenericWebHostService` fills the server addresses only when they are empty (so `app.Urls` wins), from `urls`, else from `http_ports`/`https_ports` (expanded to `scheme://*:port`), and sets `PreferHostingUrls` from config only in that branch; Kestrel's `AddressBinder` then binds configured endpoints (`Kestrel:Endpoints`, `Listen`) instead of the addresses unless `PreferHostingUrls` and there are addresses. A `localhost` listener binds loopback, an IP literal binds that IP, and every other host (`*`, `+`, any name) binds every address.
+- An `IStartupCheck` runs before any hosted service, so before `GenericWebHostService` fills the addresses: the feature's addresses there are only `app.Urls`. `AppFixture.ComposeHost` uses TestServer, which ignores all of these, so a listening-URL test passes arguments split on spaces into `ComposeHost`'s `params`.
+
+## A second MapPouryaKitModuleEndpoints (PR #143 review, 2026-10-24)
+
+- **A Module's endpoints map once per route builder**: a versioned Module gets two builders from `IModuleRouteGroups.Map`, so gRPC's `if (mapped?.Add(type) is false) continue` inside the target loop would skip the second builder on the first call. Filter the Module's unmapped types before `MapGroup`, skip a Module with none (no second version set), record them after every builder. Proof: map twice on a `WebApplication`, then `Assert.Single(host.Services.GetRequiredService<EndpointDataSource>().Endpoints, e => e is RouteEndpoint { RoutePattern.RawText: "/plain/actor" })`; with the skip off the request is a 500 `AmbiguousMatchException`.
+- **Accept-Language quality 0**: ASP.NET Core's `AcceptLanguageHeaderRequestCultureProvider` takes the first N values and orders them by `StringWithQualityHeaderValueComparer.QualityComparer` but never drops `q=0`, so `fa;q=0` ran in Persian. The Kit's own `RequestCultureProvider` (nested in `HeaderRequestCulture`) filters `Quality is null or > 0` after `Take(16)` and returns `NullProviderCultureResult` when nothing is left.
+
 **Why:** each decided a Web or Security design point or cost a round or a full-suite run.
 **How to apply:** when touching PouryaKit.Web, Web.OpenApi, Security, the sample Host's authentication or route groups, or options validation on start; for any CORS, compression or limiter change, any test that asserts a problem response's `type`, starts a second Host or crosses the permission check, any Kit-only trust mark, and any ticket that parses stored credentials or tokens or cites external guidance. Related: [[cqrs-and-modularity-facts]], [[composition-check-facts]], [[observability-tracing-and-http-facts]].

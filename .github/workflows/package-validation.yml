@@ -69,7 +69,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          python3 scripts/packaging/validate.py --no-fetch --output "$EVIDENCE_DIR" 2>&1 | tee "$EVIDENCE_DIR/validation.log"
+          python3 scripts/packaging/validate.py --no-fetch --keep --output "$EVIDENCE_DIR" 2>&1 | tee "$EVIDENCE_DIR/validation.log"
 
       - name: Collect validation receipt and bounded artifacts
         id: evidence

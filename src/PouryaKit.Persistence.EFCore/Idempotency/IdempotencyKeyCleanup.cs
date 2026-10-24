@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using PouryaKit.Cqrs;
 
 namespace PouryaKit.Persistence.EFCore;
 
@@ -17,11 +18,6 @@ internal sealed partial class IdempotencyKeyCleanup(
     ILogger<IdempotencyKeyCleanup> logger
 ) : BackgroundService
 {
-    // What PeriodicTimer accepts, and a retention whose cutoff stays far from DateTimeOffset.MinValue.
-    internal static readonly TimeSpan MinCleanupInterval = TimeSpan.FromMilliseconds(1);
-    internal static readonly TimeSpan MaxCleanupInterval = TimeSpan.FromMilliseconds(uint.MaxValue - 1);
-    internal static readonly TimeSpan MaxRetention = TimeSpan.FromDays(36500);
-
     private PeriodicTimer? _timer;
 
     // The timer starts with the Host, not in ExecuteAsync, which .NET 10 runs on the thread pool: a tick due after the
@@ -80,7 +76,7 @@ internal sealed partial class IdempotencyKeyCleanup(
             return;
         }
 
-        var delete = $"delete from {table} where ctid in (select ctid from {table} where reserved_at < {{0}} limit {{1}})";
+        var delete = IdempotencyStatements.RemoveExpired(table);
         var (removed, batches, batch) = (0, 0, 0);
         do
         {
@@ -108,33 +104,4 @@ internal sealed partial class IdempotencyKeyCleanup(
         Message = "Removing the expired idempotency keys of {DbContext} failed; the next cleanup tries again"
     )]
     private static partial void LogFailed(ILogger logger, Exception exception, string dbContext);
-
-    // Once for the Host, however many Modules register the store.
-    internal sealed class Validation : IValidateOptions<PouryaKitIdempotencyOptions>
-    {
-        public ValidateOptionsResult Validate(string? name, PouryaKitIdempotencyOptions options)
-        {
-            List<string> failures = [];
-            if ((options.Retention <= TimeSpan.Zero || options.Retention > MaxRetention) && options.Retention != Timeout.InfiniteTimeSpan)
-            {
-                failures.Add(
-                    $"The idempotency key Retention is {options.Retention}; it must be positive and at most {MaxRetention}, or Timeout.InfiniteTimeSpan to keep every key."
-                );
-            }
-
-            if (options.CleanupInterval < MinCleanupInterval || options.CleanupInterval > MaxCleanupInterval)
-            {
-                failures.Add(
-                    $"The idempotency key CleanupInterval is {options.CleanupInterval}; it must be from {MinCleanupInterval} to {MaxCleanupInterval}."
-                );
-            }
-
-            if (options.BatchSize < 1)
-            {
-                failures.Add($"The idempotency key BatchSize is {options.BatchSize}; it must be at least 1.");
-            }
-
-            return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
-        }
-    }
 }

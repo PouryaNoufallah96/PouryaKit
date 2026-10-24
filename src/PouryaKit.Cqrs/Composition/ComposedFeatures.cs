@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace PouryaKit.Cqrs;
 
@@ -17,6 +18,16 @@ internal sealed class ComposedFeatures
 
     public List<Assembly> Application { get; } = [];
 
+    // The Modules AddPouryaKitTenancy made tenant-scoped; null is the application's own services.
+    public HashSet<Type?> TenantScoped { get; } = [];
+
+    // The assemblies AddPouryaKitCqrs scanned for each Module, and for the application as null, in the order first
+    // scanned: those whose commands and queries the dispatcher runs, where another registration's add none.
+    public List<(Type? Module, Assembly Assembly)> Dispatching { get; } = [];
+
+    // The unkeyed resolver of each service the Modules keep their own of (IModuleServices.RouteByModule), by its type.
+    private readonly Dictionary<Type, ServiceDescriptor> _routes = [];
+
     public static ComposedFeatures In(IServiceCollection services)
     {
         if (services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(ComposedFeatures)) is { } existing)
@@ -29,11 +40,37 @@ internal sealed class ComposedFeatures
         return features;
     }
 
-    public void Compose(Type module)
+    // Replaced, never tried: before the Host-level registration its TryAdd finds the resolver, after it the resolver
+    // takes its place, and a repeat replaces the resolver with itself.
+    public void Compose(IServiceCollection services, Type module)
     {
         if (!Modules.Contains(module))
         {
             Modules.Add(module);
+            foreach (var route in _routes.Values)
+            {
+                services.Replace(route);
+            }
+        }
+    }
+
+    public void Route(IServiceCollection services, ServiceDescriptor route)
+    {
+        _routes[route.ServiceType] = route;
+        if (Modules.Count > 0)
+        {
+            services.Replace(route);
+        }
+    }
+
+    public void AddDispatching(Type? module, IEnumerable<Assembly> assemblies)
+    {
+        foreach (var assembly in assemblies)
+        {
+            if (!Dispatching.Contains((module, assembly)))
+            {
+                Dispatching.Add((module, assembly));
+            }
         }
     }
 

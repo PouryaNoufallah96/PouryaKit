@@ -2,7 +2,7 @@
 
 Adopted implementations in `PouryaKit.Cqrs`. Format and rules: [README](README.md).
 
-The dispatcher, its fixed pipeline, `Operation` and `IUnitOfWork` are new Kit code (plan section B.2, "Dispatcher + pipeline"; ADR 0002), and so are `OperationContext` and `Actor` (plan section B.2, "Background context"; ADR 0007), so they have no record here. The steps that only read (`Operation.OnlyReading`, ticket #18) and their persistence seam (`IReadingStateGuard`) are new Kit code too. So is request idempotency (`IdempotentAttribute`, `OperationContext.RequestId`, `IIdempotencyStore` and the dispatcher's slot, ticket #42), built to the plan's own rule (I.3, I.4) because both reference implementations its I.3 row cites were rejected there: each writes its marker after the handler on a connection of its own and replays a default success. Nothing was taken from either. The query cache slot is new Kit code too (`IQueryCache`, the cache tags collected on `Operation`, `OperationContext.NoTenant` and the dispatcher's slot, ticket #43); what `PouryaKit.Caching` took from its reference is recorded in [PouryaKit.Caching.md](PouryaKit.Caching.md).
+The dispatcher, its fixed pipeline, `Operation` and `IUnitOfWork` are new Kit code (plan section B.2, "Dispatcher + pipeline"; ADR 0002), and so are `OperationContext` and `Actor` (plan section B.2, "Background context"; ADR 0007), so they have no record here. The steps that only read (`Operation.OnlyReading`, ticket #18) and their persistence seam (`IReadingStateGuard`) are new Kit code too. So is request idempotency (`IdempotentAttribute`, `OperationContext.RequestId`, `IIdempotencyStore` and the dispatcher's slot, ticket #42), built to the plan's own rule (I.3, I.4) because both reference implementations its I.3 row cites were rejected there: each writes its marker after the handler on a connection of its own and replays a default success. Nothing was taken from either. The query cache slot is new Kit code too (`IQueryCache`, the cache tags collected on `Operation`, `OperationContext.NoTenant` and the dispatcher's slot, ticket #43); what `PouryaKit.Caching` took from its reference is recorded in [PouryaKit.Caching.md](PouryaKit.Caching.md). The tenant requirement (`AddPouryaKitTenancy`, the internal `TenantRequirement<T>`, `TenantErrors` and `HostComposition.IsTenantScoped`, ticket #116) is new Kit code too, built to spec #115; the plan's I.3 row cites Ultrabusiness's request context (`a85eacd`, `src/BuildingBlocks/MainArchitecture/Infrastructure/MainArchitecture.Infrastructure/Identity/InternalRequestContext.cs:13-34`) as an idea only, and nothing was taken from it.
 
 ## Package dependencies
 
@@ -18,7 +18,8 @@ Checked against the NuGet cache on 2026-10-06; licence expressions from each pac
 The Module seam (`IModuleServices`), the composition checks (`AddPouryaKitCompositionChecks`, `ICompositionCheck`,
 `HostComposition`, `IRequiresQueryCache`) and `OperationTypes` are new Kit code (ticket #61), and so is
 `PouryaKitClaimTypes`, which ticket #62 moved here from `PouryaKit.Security` so that Web reads the tenant claim the
-Kit's bearer scheme writes by default. The convention that a
+Kit's bearer scheme writes by default, and the Outbox marker `IOutbox`, which the PR #143 review moved here from
+`PouryaKit.Messaging.Wolverine` so that each persistence package's composition check reads it. The convention that a
 Module's Features live in its definition's assembly follows Cybernod's lookup of a Module by its definition's assembly
 (`cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.Web/Modules/ModuleRegistry.cs:38-41`); no code was taken, and its
 static registry was rejected: the Kit records Modules in the Host's service collection.

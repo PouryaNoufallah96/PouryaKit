@@ -24,6 +24,18 @@ public sealed class PackageGraphTests
         // EF Core arrives in Postgres only through its provider, and Domain in Web only through Cqrs.
         Assert.Contains(Restored("PouryaKit.Persistence.Postgres").Packages, arrived => arrived.Id == "Microsoft.EntityFrameworkCore");
         Assert.Contains("PouryaKit.Domain", Restored("PouryaKit.Web").Projects);
+        // The S3 provider's closure is AWSSDK.S3 over AWSSDK.Core, both Apache-2.0, and the Options stack; Azure Blob's
+        // takes Azure.Core with Blobs. The storage contract references Cqrs for the one-provider check its providers
+        // register (#128); the Email contract stays on Domain alone, its provider taking Cqrs (#147).
+        Assert.Contains(Restored("PouryaKit.Storage.S3").Packages, arrived => arrived is { Id: "AWSSDK.Core", Expression: "Apache-2.0" });
+        Assert.Contains(Restored("PouryaKit.Storage.AzureBlob").Packages, arrived => arrived is { Id: "Azure.Core", Expression: "MIT" });
+        Assert.Equal(["PouryaKit.Core", "PouryaKit.Cqrs", "PouryaKit.Domain"], Restored("PouryaKit.Storage").Projects.Order(StringComparer.Ordinal));
+        Assert.Equal(["PouryaKit.Domain"], Restored("PouryaKit.Email").Projects);
+        // Marten brings Weasel and NetTopologySuite, permissive, and Npgsql at the Kit's line (#131).
+        Assert.Contains(Restored("PouryaKit.Persistence.Marten").Packages, arrived => arrived is { Id: "NetTopologySuite", Expression: "BSD-3-Clause" });
+        Assert.Contains(Restored("PouryaKit.Persistence.Marten").Packages, arrived => arrived is { Id: "Weasel.Postgresql", Expression: "MIT" });
+        // Aspire's hosting packages arrive in the AppHost-only package, where they are allowed, and there alone (#130).
+        Assert.Contains(Restored("PouryaKit.Aspire").Packages, arrived => arrived.Id == "Aspire.Hosting");
     }
 
     [Fact]
@@ -68,11 +80,103 @@ public sealed class PackageGraphTests
             ["PouryaKit.Messaging's closure holds the packages [WolverineFx]; it must hold none."],
             PackageGraph.Violations(messaging with { Packages = [Arrived("WolverineFx")] })
         );
+        // The Email contract is the shared framework and Domain alone; MailKit and MimeKit are its provider's.
+        var email = Restored("PouryaKit.Email");
+        Assert.Equal(
+            ["PouryaKit.Email's closure holds the packages [MimeKit]; it must hold none."],
+            PackageGraph.Violations(email with { Packages = [Arrived("MimeKit")] })
+        );
         var caching = Restored("PouryaKit.Caching");
         Assert.Equal(
             ["PouryaKit.Caching's closure holds StackExchange.Redis, which section C keeps out of it."],
             PackageGraph.Violations(caching with { Packages = [.. caching.Packages, Arrived("StackExchange.Redis")] })
         );
+        // Every package but the AppHost-only one keeps Aspire out, as Caching, whose row names no rule of its own for it.
+        Assert.Equal(
+            ["PouryaKit.Caching's closure holds Aspire.Hosting, which section C keeps out of it."],
+            PackageGraph.Violations(caching with { Packages = [.. caching.Packages, Arrived("Aspire.Hosting")] })
+        );
+        var storage = Restored("PouryaKit.Storage");
+        Assert.Equal(
+            [
+                "PouryaKit.Storage's closure holds AWSSDK.Core, which section C keeps out of it.",
+                "PouryaKit.Storage's closure holds Azure.Core, which section C keeps out of it.",
+            ],
+            PackageGraph.Violations(storage with { Packages = [.. storage.Packages, Arrived("AWSSDK.Core"), Arrived("Azure.Core")] })
+        );
+        // The renderer's libraries are E1's alone: no QuestPDF, ClosedXML or second file library (#129).
+        var reporting = Restored("PouryaKit.Reporting");
+        Assert.Equal(
+            [
+                "PouryaKit.Reporting's closure holds AWSSDK.Core, which section C keeps out of it.",
+                "PouryaKit.Reporting's closure holds ClosedXML, which section C keeps out of it.",
+                "PouryaKit.Reporting's closure holds PouryaKit.Storage, which section C keeps out of it.",
+                "PouryaKit.Reporting's closure holds QuestPDF, which section C keeps out of it.",
+            ],
+            PackageGraph.Violations(
+                reporting with
+                {
+                    Packages = [.. reporting.Packages, Arrived("QuestPDF"), Arrived("ClosedXML"), Arrived("AWSSDK.Core")],
+                    Projects = new HashSet<string>([.. reporting.Projects, "PouryaKit.Storage"]),
+                }
+            )
+        );
+        // The report Module stores through the contract: a provider is the Host's (#140).
+        var reportModule = Restored("PouryaKit.Reporting.Module");
+        Assert.Equal(
+            [
+                "PouryaKit.Reporting.Module's closure holds AWSSDK.Core, which section C keeps out of it.",
+                "PouryaKit.Reporting.Module's closure holds PouryaKit.Storage.S3, which section C keeps out of it.",
+            ],
+            PackageGraph.Violations(
+                reportModule with
+                {
+                    Packages = [.. reportModule.Packages, Arrived("AWSSDK.Core")],
+                    Projects = new HashSet<string>([.. reportModule.Projects, "PouryaKit.Storage.S3"]),
+                }
+            )
+        );
+        // One client for every provider, and the provider's HTTP client with the Host's pipeline alone (#135).
+        var ai = Restored("PouryaKit.AI");
+        Assert.Equal(
+            [
+                "PouryaKit.AI's closure holds Azure.AI.OpenAI, which section C keeps out of it.",
+                "PouryaKit.AI's closure holds OllamaSharp, which section C keeps out of it.",
+                "PouryaKit.AI's closure holds Polly.Core, which section C keeps out of it.",
+            ],
+            PackageGraph.Violations(ai with { Packages = [.. ai.Packages, Arrived("OllamaSharp"), Arrived("Azure.AI.OpenAI"), Arrived("Polly.Core")] })
+        );
+        // pgvector stays in AI.Postgres: a Host without it takes neither a pgvector client nor the package (#138).
+        var postgres = Restored("PouryaKit.Persistence.Postgres");
+        Assert.Equal(
+            [
+                "PouryaKit.Persistence.Postgres's closure holds Pgvector, which section C keeps out of it.",
+                "PouryaKit.Persistence.Postgres's closure holds PouryaKit.AI.Postgres, which section C keeps out of it.",
+            ],
+            PackageGraph.Violations(
+                postgres with
+                {
+                    Packages = [.. postgres.Packages, Arrived("Pgvector")],
+                    Projects = new HashSet<string>([.. postgres.Projects, "PouryaKit.AI.Postgres"]),
+                }
+            )
+        );
+        var reverseProxy = Restored("PouryaKit.ReverseProxy");
+        Assert.Equal(
+            ["PouryaKit.ReverseProxy's closure holds PouryaKit.Cqrs, which section C keeps out of it."],
+            PackageGraph.Violations(reverseProxy with { Projects = new HashSet<string>([.. reverseProxy.Projects, "PouryaKit.Cqrs"]) })
+        );
+    }
+
+    [Fact]
+    public void The_sample_hosts_run_without_the_optional_localization()
+    {
+        foreach (var host in new[] { "ModularMonolith.Host", "Inventory.Host" })
+        {
+            var restored = RestoredPackage.Of(Path.Combine(Repository.Root, "samples", "ModularMonolith", "src", host, $"{host}.csproj"));
+            Assert.Contains("PouryaKit.Cqrs", restored.Projects);
+            Assert.DoesNotContain("PouryaKit.Localization", restored.Projects);
+        }
     }
 
     [Fact]

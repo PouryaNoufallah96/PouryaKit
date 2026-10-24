@@ -538,3 +538,18 @@ owns the command line. A generated solution's test project references `PouryaKit
 `WolverineFx.RuntimeCompilation`, instead of the package itself, and hosts the Host through `AppHost` with
 `HostFixture`, never through `Program`, so it sets nothing for JasperFx. The Testing package's exception stands as
 recorded: no other Kit package references the compiler.
+
+## Amendment (2026-10-16, ticket #120: a Stream commits through Wolverine's Marten outbox)
+
+The decision above stands for the EF write model. Each write model has one commit owner; the EF Unit of Work owns rows
+and commits through the EF outbox; the Marten Unit of Work owns a Stream and commits through Wolverine's Marten outbox;
+no Operation commits through both. The Marten Unit of Work keeps this record's shape with Wolverine's Marten outbox: it
+owns a connection and a transaction from before the command, as this record's Unit of Work owns its DbContext's, opens
+its session over them, writes the envelopes through a new `MartenOutbox` enrolled in the session for each commit
+attempt, as the EF Unit of Work builds a new `DbContextOutbox`, and saves, which commits and then flushes in the listener
+`MartenOutbox` adds to the session. When the session holds no work, as when a Receipt or an idempotency key is the
+Operation's only write, Marten's save commits nothing, and the Unit of Work commits the transaction itself. Marten's Wolverine integration registers a second main
+message store, which Wolverine keeps as this one store, with one durability agent, only when it names this store's
+database and schema; otherwise the Host fails when it starts. A Notification committed by a process killed between
+Marten's commit and the flush is delivered after a restart, as recorded above for the EF outbox. The evidence and the
+invariants for #121, #131 and #132 are in [ADR 0011](0011-each-write-model-has-one-commit-owner.md).

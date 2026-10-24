@@ -17,14 +17,10 @@ public static class WebEndpointRouteBuilderExtensions
     extension(IEndpointRouteBuilder routes)
     {
         /// <summary>
-        /// Maps every Module's endpoints under its own route group, which requires an authenticated caller. Before an
-        /// endpoint runs, the request's Operation is begun with an <see cref="OperationContext"/> built once from the
-        /// caller: the Actor is the person the <see cref="PouryaKitWebOptions.ActorClaim"/> names, and the Operation
-        /// starts a new chain of work. Only a caller authenticated as a peer in
-        /// <see cref="PouryaKitTrustedPeerOptions.Peers"/> continues an Operation of its own instead, from the Kit's
-        /// headers; every other caller's headers are ignored. An endpoint that requires an <c>Idempotency-Key</c>
-        /// (<c>RequireIdempotencyKey</c>) adds the header's value as the context's request id. The endpoint injects that
-        /// <see cref="OperationContext"/> and passes it to its Module's Gateway.
+        /// Maps every Module's endpoints under its own route group, which requires an authenticated caller and begins
+        /// each request's Operation before the endpoint binds (<see cref="BeginOperationPerRequest"/>). The endpoint
+        /// injects that <see cref="OperationContext"/> and passes it to its Module's Gateway. Called again, it maps no
+        /// endpoint twice, since two identical endpoints would make every request to its route ambiguous.
         /// </summary>
         public IEndpointRouteBuilder MapPouryaKitModuleEndpoints()
         {
@@ -36,19 +32,52 @@ public static class WebEndpointRouteBuilderExtensions
             var mapped = routes.ServiceProvider.GetService<MappedEndpoints>();
             foreach (var module in routes.ServiceProvider.GetServices<ModuleEndpoints>())
             {
-                var group = routes.MapGroup(module.RoutePrefix).RequireAuthorization();
-                ((IEndpointConventionBuilder)group).Finally(endpoint => BeginOperationFirst(endpoint, options, peers));
+                // Recorded once every route builder of the Module has its endpoints, a versioned Module's two included.
+                if (module.Endpoints.Where(endpoint => mapped?.Contains(endpoint.GetType()) is not true).ToList() is not [_, ..] endpoints)
+                {
+                    continue;
+                }
+
+                var group = BeginOperationOn(routes.MapGroup(module.RoutePrefix).RequireAuthorization(), options, peers);
                 foreach (var target in moduleRouteGroups?.Map(module.RoutePrefix, group) ?? [group])
                 {
-                    foreach (var endpoint in module.Endpoints)
+                    foreach (var endpoint in endpoints)
                     {
                         endpoint.Map(target);
-                        mapped?.Add(endpoint.GetType());
                     }
                 }
+
+                endpoints.ForEach(endpoint => mapped?.Add(endpoint.GetType()));
             }
 
             return routes;
+        }
+    }
+
+    extension(RouteGroupBuilder group)
+    {
+        /// <summary>
+        /// Begins each request's Operation on every endpoint of this route group before the endpoint binds its
+        /// parameters, so an endpoint outside a Module's route group injects the <see cref="OperationContext"/> as a
+        /// Module's endpoint does. The context is built once from the caller: the Actor is the person the
+        /// <see cref="PouryaKitWebOptions.ActorClaim"/> names, and the Operation starts a new chain of work. Only a caller
+        /// authenticated as a peer in <see cref="PouryaKitTrustedPeerOptions.Peers"/> continues an Operation of its own
+        /// instead, from the Kit's headers; every other caller's headers are ignored. An endpoint that requires an
+        /// <c>Idempotency-Key</c> (<c>RequireIdempotencyKey</c>) adds the header's value as the context's request id. It
+        /// requires no authenticated caller itself: the group states that with <c>RequireAuthorization</c>, as a
+        /// Module's group does. It applies once per endpoint: called again on a nested group, a Module's included, it
+        /// adds nothing.
+        /// </summary>
+        public RouteGroupBuilder BeginOperationPerRequest()
+        {
+            ArgumentNullException.ThrowIfNull(group);
+
+            var services = ((IEndpointRouteBuilder)group).ServiceProvider;
+            return BeginOperationOn(
+                group,
+                services.GetRequiredService<IOptions<PouryaKitWebOptions>>().Value,
+                services.GetRequiredService<IOptions<PouryaKitTrustedPeerOptions>>().Value.Peers
+            );
         }
     }
 
@@ -58,9 +87,9 @@ public static class WebEndpointRouteBuilderExtensions
         /// <summary>
         /// States that the endpoint is public: it answers a caller who is not authenticated, and that caller's
         /// Operation runs as <paramref name="actor"/>, which the Feature names, such as
-        /// <c>Actor.System("catalog.storefront")</c>. An authenticated caller still runs as themselves. Plain
-        /// <c>AllowAnonymous</c> on a Module's endpoint fails when the endpoint is built: no Operation runs as an
-        /// unnamed Actor.
+        /// <c>Actor.System("shop.visitor")</c>. An authenticated caller still runs as themselves. Plain
+        /// <c>AllowAnonymous</c> on an endpoint whose group begins the Operation (<see cref="BeginOperationPerRequest"/>),
+        /// a Module's included, fails when the endpoint is built: no Operation runs as an unnamed Actor.
         /// </summary>
         public TBuilder AllowAnonymousAs(Actor actor)
         {
@@ -76,12 +105,18 @@ public static class WebEndpointRouteBuilderExtensions
         /// command again. A request without a single header of 1 to 256 visible ASCII characters, with spaces only
         /// between them, is answered 400 as a problem response whose detail states that rule, before its body is read.
         /// The requirement is the endpoint's <see cref="IdempotencyKeyRequirement"/> metadata, which the endpoint's OpenAPI
-        /// operation states. On a Module's endpoint mapped for GET, HEAD, OPTIONS or TRACE, whose query ignores the key,
-        /// or mapped for no method, which answers every method, GET included, it throws when the endpoint is built, which
-        /// fails the Host's start; a command that does not opt in is refused when it is dispatched, since only then is it
-        /// known.
+        /// operation states. On an endpoint whose group begins the Operation, a Module's included, mapped for GET, HEAD,
+        /// OPTIONS or TRACE, whose query ignores the key, or mapped for no method, which answers every method, GET
+        /// included, it throws when the endpoint is built, which fails the Host's start; a command that does not opt in is
+        /// refused when it is dispatched, since only then is it known.
         /// </summary>
         public TBuilder RequireIdempotencyKey() => builder.WithMetadata(new IdempotencyKeyRequirement());
+    }
+
+    private static RouteGroupBuilder BeginOperationOn(RouteGroupBuilder group, PouryaKitWebOptions options, ISet<string> peers)
+    {
+        ((IEndpointConventionBuilder)group).Finally(endpoint => BeginOperationFirst(endpoint, options, peers));
+        return group;
     }
 
     // Runs as the endpoint's own first step, after authorization and before the endpoint binds its parameters, which
@@ -89,6 +124,13 @@ public static class WebEndpointRouteBuilderExtensions
     // of that context, so the Idempotency-Key header is read here too.
     private static void BeginOperationFirst(EndpointBuilder endpoint, PouryaKitWebOptions options, ISet<string> peers)
     {
+        // A nested group that also begins the Operation runs this again on the same endpoint, which one wrapper serves.
+        if (endpoint.Metadata.OfType<OperationBegunPerRequest>().Any())
+        {
+            return;
+        }
+
+        endpoint.Metadata.Add(new OperationBegunPerRequest());
         if (!endpoint.Metadata.OfType<AnonymousActor>().Any() && endpoint.Metadata.OfType<IAllowAnonymous>().Any())
         {
             throw new InvalidOperationException(
@@ -131,6 +173,8 @@ public static class WebEndpointRouteBuilderExtensions
             return run(httpContext);
         };
     }
+
+    private sealed class OperationBegunPerRequest;
 
     private static bool IsSafe(string method) =>
         HttpMethods.IsGet(method) || HttpMethods.IsHead(method) || HttpMethods.IsOptions(method) || HttpMethods.IsTrace(method);

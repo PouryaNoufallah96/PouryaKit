@@ -12,7 +12,7 @@ namespace PouryaKit.Cqrs;
 /// never called the attribute's registration, so that registration cannot carry the check, and the Host's permission
 /// source is a plain registration that runs no Kit code. The check reads the Host's final registrations, which only
 /// the container build sees, and the composition checks run from Cqrs, which may not reference the attribute's package;
-/// the Kit's one <c>InternalsVisibleTo</c> between packages opens Cqrs to delivery and Web for restoring a trusted
+/// Cqrs's one <c>InternalsVisibleTo</c> opens it to delivery and Web for restoring a trusted
 /// continuation only.
 /// </remarks>
 public interface IRequiresAuthorizer

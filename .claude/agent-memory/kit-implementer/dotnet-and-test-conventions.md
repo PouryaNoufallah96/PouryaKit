@@ -67,6 +67,8 @@ metadata:
 - Mutation runs: a python script in the scratchpad, run with the worktree as argument, copies the file, replaces one string, runs `dotnet test --filter-class` with `cwd=` the worktree, prints the red tests, and copies back in `finally`. A combined `python3 - <<EOF` plus `dotnet test` in one Bash call was refused; write the script with Write first.
 - Runner: `scratchpad/mutate42.py` (one `dotnet test --filter-method` per mutation, file restored in `finally`, files backed up first). 15 mutations took about 8 minutes.
 - Mutation script `scratchpad/mutate17.py` (apply, run filtered classes or `m:` methods, restore). A mutated constant used in `Task.Delay` made one run take 5 min: filter to the target method.
+- **Restore a mutated file with `shutil.copy` plus `touch`, never `shutil.copy2` (#125, 2026-10-17):** `copy2` puts back the original mtime, older than the mutated build's output, so MSBuild's incremental build keeps the mutated dll and the next full suite fails as if the mutation were still on (three `fa` rows of `LocalizationTests` red in a "green" tree). `touch` the file and rebuild if it happened.
+- **`.resx` beside a type, no designer (#125):** the SDK names the compiled resources after the first class in the same-named `.cs` file (DependentUpon convention), so `IStringLocalizer<StubMessages>` finds `Stub/StubMessages.resx` and `StubMessages.fa.resx` (satellite `bin/.../fa/ModularMonolith.Tests.resources.dll`) with no `ResourcesPath`. `class StubMessages;` with a file-scoped namespace works on SDK 10.0.402.
 - **Mutation script regex:** a Theory case name contains spaces; parse `^failed (.*) \(\d[^)]*\)$`, not `\S+`.
 - A mutation script that runs `dotnet test --filter-class` must use the worktree as cwd: from the scratchpad there is no `global.json` with the MTP runner, so VSTest mode answers `MSB1001: Unknown switch` (exit 1, no tests).
 - **Harness: the VSTest fallback.** A `dotnet test --project` launched with a working directory that has no `global.json` above it runs VSTest and fails with MSB1001. Run mutation scripts with `cwd` inside the repository.
@@ -100,6 +102,7 @@ metadata:
 
 - **A rendezvous of two Operations hangs forever when one fails** unless something cancels the wait: `[Fact(Timeout = 30_000)]` plus `WaitAsync(cancellationToken)` on the token the handler receives. At the timeout xUnit cancels `TestContext.Current.CancellationToken` and reports an `AggregateException` holding the test's own failure and `Xunit.Sdk.TestTimeoutException`. The body must name `TestContext.Current.CancellationToken` (xUnit1069), so read it there and pass it down.
 - **Showing a hang red:** run `dotnet test` from a scratchpad Python script with `subprocess.Popen(..., start_new_session=True)` and `communicate(timeout=...)`; on `TimeoutExpired`, `os.killpg(process.pid, SIGKILL)` kills the test host too, and `pgrep -fl <assembly>` afterwards shows none left.
+- **Undo a red-run mutation with the reverse edit, never `git checkout <file>`** (#155 F3, 2026-10-17): the checkout also drops the file's uncommitted implementation, silently. Mutate with `sed` to a unique marker (`|| false;`) and Edit it back, or commit first.
 - **`--filter-method` takes a full name or a wildcard:** a bare method name matches nothing and MTP exits 8 (zero tests); write `*Method_name`.
 
 ## Probes and traps (#100, 2026-10-10; SDK 10.0.401)
@@ -112,6 +115,28 @@ metadata:
 
 - A test of the fixture's lifecycle derives a private fixture whose `CreateHost` returns an `IHost` double with `Services = new ServiceCollection().BuildServiceProvider()`: `StartHostAsync` then finds no `DbContextOptions` and only calls `StartAsync`. Call `InitializeAsync` and `DisposeAsync` from the test (a real container, about 1.3 s). The class needs no `AppFixture`, but the assembly fixture still starts with it.
 - **Observe the container's disposal by a connection**, with `Pooling = false` on the captured connection string: a pooled idle connector can open after the server is gone. After disposal the open throws an `NpgsqlException`.
+
+## Defaulting a context for one Module in tests (#116, 2026-10-16; SDK 10.0.402)
+
+- **A test-local extension block on `IGatewayProcessor<CatalogModule>` takes the place of `PouryaKit.Testing`'s generic `GatewayTestExtensions` overloads** for every `catalog.SendAsync(cmd, ct)` call: in a file of namespace `ModularMonolith.Tests.Fixtures` it is found in an inner scope first, and from root-namespace files the non-generic receiver wins the tie with the generic one. It made `using Wolverine;` in `BrokerFixture.cs` unnecessary (IDE0005), so check IDE0005 after adding one.
+- A Module that starts requiring a tenant broke 90 of 633 tests in `ModularMonolith.Tests`: clients without a tenant header, explicit contexts without a tenant, other Modules' questions continued from a tenantless context, helpers that create a category in the default tenant and a product in a context's tenant (`CategoryNotFound` from the Domain Event Handler, seen as a 30 s delivery timeout), and anonymous calls to a public endpoint that had to become authenticated. Run the whole suite once, list failures per class from the log, fix by file.
+
+## A mutation restore that the build does not see (#117, 2026-10-17; SDK 10.0.402)
+
+- **Restoring a mutated file with `shutil.move(backup, file)` keeps the backup's time, older than the assembly the mutated run built, so the next build skips the project and keeps the mutation.** A later mutation of another project then failed in a way only the earlier one explained. Call `os.utime(file)` after the restore (scratchpad `p117/mutate117.py`), and touch any file restored the old way before trusting a run.
+- `if (false)` as a mutation fails CS0162 (warnings are errors), and removing a namespace's only use fails IDE0005: use a predicate that is never true (`key.Count < 0`) and keep the type named.
+
+## Mutations that do not compile (#133, 2026-10-18)
+
+- **A mutation that leaves a primary-constructor parameter unread or a `using` unused fails the build** (CS9113 and IDE0005 are errors here), and a script that reads only the exit code reports it as red. Keep the parameter used (`_ = (unitOfWork, typeof(NpgsqlParameter));`) and have the script report `BUILD FAILED` when the output holds "Build failed" (`scratchpad/p133/mutate133.py`).
+
+## Options read in a test (final quality pass, 2026-10-23)
+
+- `IOptions<T>.Value` runs every `Validate` the registration added, so a test that resolves options to check one value set in code fails on the others with `OptionsValidationException`: set the required ones in the same `configure` and assert them all.
+
+## Test order follows the checkout path (PR #143 audit X1, 2026-10-24; xunit.v3, MTP)
+
+- **The order of a class's tests differs per worktree path and is stable in one path**: the same commit ran `SagaTests` 39 of 39 in one worktree and 3 failures in another, every run. A test that leaves process-wide state (the Kit's wire-name registry, `WireNaming`: a type keeps one wire name in a process) breaks a later one only in some paths. Before calling a red "mine", rerun the base in the same path (`git switch --detach <base>` in the worktree, rebuild, run, `git switch` back), not in a second worktree.
 
 **Why:** Test projects run on Microsoft.Testing.Platform, chosen in ticket #4 (2026-10-05) as the plain current .NET 10 idiom; a later ticket repeating VSTest packages would create a second way of running tests. Each other fact cost a build, a run or a vacuous red in tickets #4 to #63 or retro C (2026-10-06).
 **How to apply:** before adding a test project, a test filter or an analyzer rule in `.editorconfig`; before every mutation run; when a change adds a table, a Module, a subscription or an Integration Event type to the sample. Related: [[worktree-shell-and-check-gotchas]], [[core-json-and-architecture-test-facts]].

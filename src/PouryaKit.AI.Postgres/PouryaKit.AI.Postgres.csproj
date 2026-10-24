@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\PouryaKit.AI\PouryaKit.AI.csproj" />
+    <ProjectReference Include="..\PouryaKit.Persistence.Postgres\PouryaKit.Persistence.Postgres.csproj" />
+  </ItemGroup>
+</Project>

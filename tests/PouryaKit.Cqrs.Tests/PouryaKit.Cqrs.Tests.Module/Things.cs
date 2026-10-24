@@ -1,3 +1,4 @@
+using PouryaKit.Cqrs.Tests.Contracts;
 using PouryaKit.Domain;
 
 namespace PouryaKit.Cqrs.Tests.Module;
@@ -279,5 +280,15 @@ internal sealed class ReadThingHandler(IDispatcher dispatcher, OperationTrace tr
     {
         trace.Add("handle ReadThingCommand");
         return await dispatcher.QueryAsync(new GetThingQuery(Guid.CreateVersion7()), cancellationToken);
+    }
+}
+
+// Handles a command its Contracts declare, outside this assembly.
+internal sealed class ArchiveThingHandler(OperationTrace trace) : CommandHandler<ArchiveThingCommand>
+{
+    public override Task<Result> Handle(ArchiveThingCommand command, CancellationToken cancellationToken)
+    {
+        trace.Add("handle ArchiveThingCommand");
+        return Task.FromResult(Result.Success());
     }
 }

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PouryaKit.Messaging.Wolverine.EFCore\PouryaKit.Messaging.Wolverine.EFCore.csproj" />
+    <ProjectReference Include="..\PouryaKit.Modularity\PouryaKit.Modularity.csproj" />
+    <ProjectReference Include="..\PouryaKit.Persistence.Dapper\PouryaKit.Persistence.Dapper.csproj" />
+    <ProjectReference Include="..\PouryaKit.Persistence.Postgres\PouryaKit.Persistence.Postgres.csproj" />
+    <ProjectReference Include="..\PouryaKit.Reporting\PouryaKit.Reporting.csproj" />
+    <ProjectReference Include="..\PouryaKit.Security\PouryaKit.Security.csproj" />
+    <ProjectReference Include="..\PouryaKit.Storage\PouryaKit.Storage.csproj" />
+    <ProjectReference Include="..\PouryaKit.Validation\PouryaKit.Validation.csproj" />
+    <ProjectReference Include="..\PouryaKit.Web\PouryaKit.Web.csproj" />
+  </ItemGroup>
+</Project>

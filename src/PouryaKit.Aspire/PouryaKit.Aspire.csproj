@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" />
+    <PackageReference Include="Aspire.Hosting.Redis" />
+    <!-- KubernetesClient 19.0.2, under Aspire.Hosting, depends on 7.3.0, which ships its BSD-2-Clause licence as a file;
+         8.x declares the MIT expression the licence test requires (ADR 0002). -->
+    <PackageReference Include="Fractions" />
+    <!-- Aspire.Hosting 13.6.1 depends on MessagePack 2.5.302, which GHSA-qhrr-8q5h-9q3h affects below 2.5.303; the
+         patched floor until Aspire raises its own. -->
+    <PackageReference Include="MessagePack" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The model check's deadlines, proven against a server that never answers. -->
+    <InternalsVisibleTo Include="PouryaKit.Aspire.Tests" />
+  </ItemGroup>
+</Project>

@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Messaging.Wolverine;
-using PouryaKit.Messaging.Wolverine.EFCore;
 using Wolverine;
 
 namespace PouryaKit.Testing;

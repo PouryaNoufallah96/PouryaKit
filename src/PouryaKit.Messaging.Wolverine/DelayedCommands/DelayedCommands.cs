@@ -16,7 +16,7 @@ internal sealed class DelayedCommands(DelayedCommandDeclarations declarations, O
         if (!operation.MayChangeState)
         {
             throw new InvalidOperationException(
-                $"Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, scheduled {type.Name}. Schedule a command from a command's handler, a Domain Event Handler or a Notification Handler."
+                $"Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, scheduled {type.Name}. Schedule a command from a command's handler, a Domain Event Handler, or a Notification or Integration Event Handler."
             );
         }
 
@@ -24,7 +24,7 @@ internal sealed class DelayedCommands(DelayedCommandDeclarations declarations, O
         if (!operation.IsUnitOfWorkActive)
         {
             throw new InvalidOperationException(
-                $"{type.Name} was scheduled while no Unit of Work is active, so no commit would write it to the Outbox and it would never be stored. Schedule a command from a command's handler, a Domain Event Handler or a Notification Handler."
+                $"{type.Name} was scheduled while no Unit of Work is active, so no commit would write it to the Outbox and it would never be stored. Schedule a command from a command's handler, a Domain Event Handler, or a Notification or Integration Event Handler."
             );
         }
 

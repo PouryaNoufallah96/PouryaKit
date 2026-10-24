@@ -7,8 +7,10 @@ namespace PouryaKit.ArchitectureTests;
 
 // Spec #33, user story 8: one JSON representation, owned by Domain. Web and Messaging.Wolverine apply Domain's
 // UsePouryaKitJson to the options their framework hands them, Messaging.Wolverine as UsePouryaKitWireJson, the same
-// representation read strictly (#60), Cqrs to the options it records an idempotent command's response with (#42), and
-// Caching to the options it stores a cached query's answer with (#43); no other code sets JSON options up its own way.
+// representation read strictly (#60), Cqrs to the options it records an idempotent command's response with (#42),
+// Caching to the options it stores a cached query's answer with (#43), Grpc to the options it writes a failed Result's
+// Errors trailer with (#134), and AI to the options a Gateway tool reads a model's arguments and writes its answer with
+// (#135); no other code sets JSON options up its own way.
 public sealed class SharedJsonTests
 {
     private static readonly Assembly Domain = typeof(TypedId).Assembly;
@@ -19,9 +21,12 @@ public sealed class SharedJsonTests
         Assert.Empty(Sample.KitPackages.Where(package => package != Domain).Concat(Sample.Modules).SelectMany(OwnJsonSetups));
         Assert.Equal(
             [
+                "PouryaKit.AI.GatewayToolExtensions",
                 "PouryaKit.Caching.HybridQueryCache",
                 "PouryaKit.Cqrs.Dispatcher",
+                "PouryaKit.Grpc.ResultGrpcExtensions",
                 "PouryaKit.Messaging.Wolverine.WolverineHostApplicationBuilderExtensions",
+                "PouryaKit.Persistence.Marten.MartenHostApplicationBuilderExtensions",
                 "PouryaKit.Web.WebServiceCollectionExtensions",
             ],
             Sample.KitPackages.Where(package => package != Domain).SelectMany(Il.CallsIn).Where(AppliesKitJson).Select(call => call.Owner.FullName).Distinct().Order(StringComparer.Ordinal)
@@ -31,7 +36,8 @@ public sealed class SharedJsonTests
     }
 
     // A body of another shape is never handled with defaults where it crosses between Hosts or waits in the store, while
-    // an HTTP client, a cached answer and a recorded response are read as before.
+    // an HTTP client, a cached answer, a recorded response and a Stream's events, which the Kit itself wrote, are read as
+    // before.
     [Fact]
     public void Only_messaging_wolverine_reads_strictly_and_web_cqrs_and_caching_keep_the_lenient_reading()
     {
@@ -41,7 +47,14 @@ public sealed class SharedJsonTests
 
         Assert.Equal(["PouryaKit.Messaging.Wolverine.WolverineHostApplicationBuilderExtensions"], Callers(nameof(JsonSerializerOptionsExtensions.UsePouryaKitWireJson)));
         Assert.Equal(
-            ["PouryaKit.Caching.HybridQueryCache", "PouryaKit.Cqrs.Dispatcher", "PouryaKit.Web.WebServiceCollectionExtensions"],
+            [
+                "PouryaKit.AI.GatewayToolExtensions",
+                "PouryaKit.Caching.HybridQueryCache",
+                "PouryaKit.Cqrs.Dispatcher",
+                "PouryaKit.Grpc.ResultGrpcExtensions",
+                "PouryaKit.Persistence.Marten.MartenHostApplicationBuilderExtensions",
+                "PouryaKit.Web.WebServiceCollectionExtensions",
+            ],
             Callers(nameof(JsonSerializerOptionsExtensions.UsePouryaKitJson))
         );
     }

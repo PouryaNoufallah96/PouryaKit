@@ -51,8 +51,16 @@ _Avoid_: Health check, startup filter, composition check
 The only entry point through which anything outside a Module asks it to run a command or query.
 _Avoid_: Module facade, mediator, bus
 
+**Gateway tool**:
+A Module's command or query offered to a model as a tool: each call the model makes runs as an Operation through the Module's Gateway, continuing the Operation Context of the run that offered the tool. Built in `PouryaKit.AI`.
+_Avoid_: Function, plugin, agent tool
+
+**MCP tool**:
+A tool of an MCP server the Host's AI options name, offered to a model beside its Gateway tools under the same allow-list and iteration cap: the call runs on that server, never as an Operation, and the Host, not the run, owns the server's client. Built in `PouryaKit.AI`.
+_Avoid_: Plugin, external tool, remote function
+
 **Reverse proxy**:
-The deployable application in front of a system's Hosts that forwards each incoming HTTP request, by configured routes, to the Host that serves it; it runs no Operation. Planned for Wave 3, not built yet.
+The deployable application in front of a system's Hosts that forwards each incoming HTTP request, by configured routes, to the Host that serves it; it runs no Operation. Built on YARP in `PouryaKit.ReverseProxy`.
 _Avoid_: Gateway, API gateway, edge service
 
 ### Execution
@@ -68,6 +76,10 @@ _Avoid_: User accessor, request context, execution context
 **Actor**:
 The person or system on whose authority an Operation runs.
 _Avoid_: User, principal, caller
+
+**Tenant**:
+The customer or company an Operation runs for, carried on the Operation Context and taken only from a verified claim: at the HTTP boundary `PouryaKit.Web` reads it from the claim `PouryaKit.Security.JwtBearer` writes when it validates a token, and work an Operation causes continues its tenant. A tenant-scoped Module runs no Operation and applies no delivery without one, and its tenant-scoped aggregates are read and saved only by Operations of the tenant they belong to.
+_Avoid_: Organization, company id, owner
 
 **Request id**:
 The id a caller gives one request, carried on the Operation Context. With the tenant, the Actor and the command it names the key an outermost idempotent command reserves in its Unit of Work, and a repeat of the request replays that command's first success from it.
@@ -148,8 +160,12 @@ A Module's share of its Host's durable message store: the Integration Events and
 _Avoid_: Queue, message table
 
 **Stream**:
-An aggregate whose stored state is the ordered events it has appended, loaded by folding them; the Kit's second write model. Planned for Wave 3, not built yet.
+An aggregate whose stored state is the ordered events it has appended, loaded by folding them; the Kit's second write model, whose Unit of Work commits its events with the Operation's Notifications and Integration Events through Wolverine's Marten outbox (ADR 0011). A Stream belongs to the tenant of the Operation that wrote it.
 _Avoid_: Event-sourced entity, event stream aggregate
+
+**Saga**:
+A Module's long-running reaction across Integration Events that keeps its own state between steps: started and advanced by Integration Events, timed out by its own timeout messages, and the one reaction that runs outside an Operation, each step with no Operation Context, claimed once in its own transaction, and emitting Integration Events under its system Actor (ADR 0013). A saga's identity is the tenant of the event that started it with that event's business id; one Module declares it with `AddPouryaKitSaga` and derives it from `PouryaKitSaga` (`PouryaKit.Messaging.Wolverine.Sagas`).
+_Avoid_: Process manager, workflow, orchestration
 
 **Page**:
 One bounded slice of a read result, with its position and the total count.
@@ -159,6 +175,14 @@ _Avoid_: Paged list, list result, page list
 A handler's record that it has already applied a specific Notification, Integration Event or Snapshot, or a Module's record that it has run a specific delayed command or occurrence of a recurring command.
 The Module's Receipt store also holds its publication records, keyed `<wire name>#published`, one per Integration Event type and Domain Event; those are not Receipts (ADR 0006).
 _Avoid_: Inbox row, processed flag, idempotency marker (a repeated request is recognised by its Request id, not by a Receipt)
+
+**Channel**:
+The name a Notification Handler pushes a realtime event on, and on which a browser client of the same tenant listens through a Module's SSE endpoint whose rule admits its Actor (ADR 0012). It is no Subscription and no queue: nothing is stored for it, and a client hears it only while connected.
+_Avoid_: Topic, group, room
+
+**Report job**:
+One report an Actor requested from the report Module, stored with its requester and tenant, generated in the background by attempts that each claim it and store their file under a key of their own, and served within its tenant to its requester, or an Actor the Host grants the tenant's jobs, until its retention removes it. Built in `PouryaKit.Reporting.Module`.
+_Avoid_: Report task, export job, report run
 
 ### Delivery of the Kit
 

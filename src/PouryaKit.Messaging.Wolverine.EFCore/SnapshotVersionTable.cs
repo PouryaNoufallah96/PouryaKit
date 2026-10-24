@@ -13,7 +13,7 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 public static class SnapshotVersionTable
 {
     /// <summary>The Snapshot version table's name, in the Module's schema.</summary>
-    public const string Name = "pouryakit_snapshot_versions";
+    public const string Name = ReceiptStatements.SnapshotVersionTable;
 
     extension(MigrationBuilder migrationBuilder)
     {

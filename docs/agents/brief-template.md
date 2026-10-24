@@ -7,7 +7,7 @@ The two briefs a `kit-implementer` reads in a run of tickets: one common brief p
 ````markdown
 # Common brief for <batch> (spec #<spec>)
 
-Repository: `<repository root>`. Integration branch: `<integration branch>`, tip `<tip>`. Your worktree was created from that commit on a branch of its own: confirm the base as your role file says. The integration branch may move while you work; fast-forward or rebase onto it only as your role allows, and report the base you started from.
+Repository: `<repository root>`. Integration branch: `<integration branch>`. Your ticket brief names the tip your worktree was created from, on a branch of its own: confirm the base as your role file says. The integration branch may move while you work; fast-forward or rebase onto it only as your role allows, and report the base you started from. (The tip lives in the ticket brief, never here: a common brief outlives several merges, and session 1 of Wave 3 wrote "common.md's tip is stale" into five briefs.)
 
 ## Why this work matters
 
@@ -55,7 +55,7 @@ Each ticket's brief adds its own test projects. Every command in a brief is copi
 ## Commit, then package validation
 
 1. Commit everything on your worktree branch, in one or a few commits with conventional messages such as `feat(<area>): <change> (#<n>)`. Do not push. Do not write to the tracker.
-2. On the committed tree, run `python3 scripts/packaging/validate.py --no-fetch --since <tip> --output <scratchpad>/validate-<n>`, where `<tip>` is the integration-branch commit this brief names. Put its PASS line, with the commit it ran on, into `docs/acceptance.md` as earlier tickets did, and commit that. A `SKIP` line instead means nothing you changed can reach a package: quote it in your report and record nothing, since CI runs the full validation. On a failure, fix inside `allowed_files` (two attempts), then report.
+2. On the committed tree, run `python3 scripts/packaging/validate.py --no-fetch --since <tip> --output <scratchpad>/validate-<n>`, where `<tip>` is the integration-branch commit this brief names. The script removes that directory after a PASS (it holds about 8 GB; `--keep` retains it for inspection), so nothing is left to clean up. Put its PASS line, with the commit it ran on, into `docs/acceptance.md` as earlier tickets did, and commit that. A `SKIP` line instead means nothing you changed can reach a package: quote it in your report and record nothing, since CI runs the full validation. On a failure, fix inside `allowed_files` (two attempts), then report.
 
 ## Report
 
@@ -67,7 +67,7 @@ Your final message is your role's JSON report, as text, with these additions: `b
 ````markdown
 # Brief: #<n> <title>
 
-Read `common.md` beside this file first.
+Read `common.md` beside this file first. Integration branch tip at your spawn, your base and the `--since` of your validation: `<tip>`.
 
 ## objective
 
@@ -80,6 +80,7 @@ Costly guarantees:
 Design constraints:
 
 - `stop_if`: <package-specific conditions that end the work with a report, such as a new third-party package or a reference the plan forbids>. A file outside `allowed_files` and the docs-sync set is not one: ask the session and continue, as your role file says.
+- A guarantee the final registrations can answer is an `ICompositionCheck` at build, never an options validation at start; a provider package that needs one references `Cqrs`. A structure rule over text admits an allow-list grammar and faults every other shape; it never rejects the shapes it recognises. A proof against a third-party image is run once with the image removed (`docker rmi`) so a fresh pull is proven, and the brief names the registry and a fallback image. A probe that starts a Host or an AppHost outside the test runner stops its whole process tree before the report (an Aspire run's `dcp` outlived its implementer by ninety minutes and held a port). A fix instruction names the guarantee and the trap, never the mechanism: "on the Operation Context" turned a scoped right into a copyable one (#133 F8); the implementer chooses the mechanism and the reviewer judges it.
 - <Invariants and existing tests to keep green, the seams to extend, and the parallel tickets that touch the same files.>
 
 ## allowed_files

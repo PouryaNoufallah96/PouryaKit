@@ -71,5 +71,15 @@ HybridCache decompiled with ilspycmd.
 - **Review fix round (F1-F5):** the wildcard `*` must mark every run (a Stub `EvictEveryEntryCommand` declaring `["*"]` proves it through a real commit); a held read across `RenameProduct` of *another* product, then a rename behind the cache's back, proves the tag-scoped predicate (red with unconditional marking). The mark loop's first shape, `read.Tags.Any(tags.Contains)` per run, allocated a delegate and an enumerator per run in flight per commit (96 B, about 40 ns at 1,000 runs); iterating the evicted tags outside and calling `read.Tags.Contains(tag)` (the collection expression's type is an `ICollection<T>`) allocates nothing per run. Measure `EvictAsync` with N held misses (handlers awaiting one `TaskCompletionSource`, started without awaiting).
 - **A joiner assertion needs the run held:** `StampedeJoins` created before the second call, `joins.Joined` awaited before the commit. Under c1 every sharer goes through the same catch, so no mutation makes the joiner alone red; the trap mutation (refusal thrown as `InvalidOperationException`) fails at the held read first.
 
+## The culture in the cache key (#125 review F2, 2026-10-17)
+
+- **`HybridQueryCache.Key` includes `CultureInfo.CurrentUICulture.Name`** (after the Actor id), so a localized cached query answers per culture. `TypeKeyTests` pins the full key literal (`...|north|Person|ada|en|lamp`) and runs outside HTTP in the process culture: it sets `CultureInfo.CurrentUICulture` to `en` in its own async flow. Any key change edits that literal; the full suite, not `CachingTests`, catches it.
+- Changing `HybridQueryCache.cs` above line 137 moves two diagrams' ranges (execution-core line 15, http-command 25-103 and 112-137 as of #125): adding a using shifts them all.
+
+## Accept-Language is quality-ordered (#157, 2026-10-17)
+
+- `AcceptLanguageHeaderRequestCultureProvider` takes the first `MaximumAcceptLanguageHeaderValuesToTry` values, then orders them by quality (stable, so ties keep listed order); the middleware picks the first supported. `en;q=0.1, fa;q=1` runs in Persian. Say "highest quality among the first 16", never "first listed".
+- A comment edit above `HeaderRequestCulture.cs` 18-33 or `LocalizationServiceCollectionExtensions.cs` 32-44 (execution-core) still needs the two-commit pin even with line counts kept: interim pin to the integration tip staged with the code, then pin to the code commit and refinalize with Archify's `finalize` (`docs/architecture/README.md`, "Diagrams").
+
 **Why:** these decided the #42 and #43 shapes or a test of them, or cost a run.
 **How to apply:** for any Kit table written in the Unit of Work's transaction or cleaned across Modules, any race test, any endpoint opt-in, any Kit `BackgroundService` or test that drives one with the test clock, any HybridCache use, any slot that runs Feature code inside a library callback, and any single-flight or Redis test. Related: [[persistence-and-dapper-facts]], [[cqrs-and-modularity-facts]], [[web-security-and-openapi-facts]].

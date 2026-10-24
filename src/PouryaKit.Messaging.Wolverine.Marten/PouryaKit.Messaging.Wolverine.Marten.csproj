@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="WolverineFx.Marten" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PouryaKit.Messaging.Wolverine\PouryaKit.Messaging.Wolverine.csproj" />
+    <ProjectReference Include="..\PouryaKit.Persistence.Marten\PouryaKit.Persistence.Marten.csproj" />
+  </ItemGroup>
+</Project>

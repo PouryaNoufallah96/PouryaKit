@@ -244,5 +244,51 @@ class ProductionPublishTests(unittest.TestCase):
                 check_production_publish(host, published)
 
 
+class FinishTests(unittest.TestCase):
+    """A PASS leaves no 8 GB evidence directory behind unless asked (Wave 3 session 3: 61 of them filled the disk)."""
+
+    def test_a_pass_removes_the_evidence_directory(self):
+        with tempfile.TemporaryDirectory() as parent:
+            output = Path(parent) / "evidence"
+            output.mkdir()
+            (output / "validation.log").write_text("PASS")
+            validate.finish(output, keep=False)
+            self.assertFalse(output.exists())
+
+    def test_keep_retains_the_evidence_directory(self):
+        with tempfile.TemporaryDirectory() as parent:
+            output = Path(parent) / "evidence"
+            output.mkdir()
+            validate.finish(output, keep=True)
+            self.assertTrue(output.exists())
+
+    def test_main_finishes_only_after_a_pass(self):
+        with tempfile.TemporaryDirectory() as parent, patch.object(validate, "validate", side_effect=RuntimeError("boom")), \
+                patch("sys.argv", ["validate.py", "--no-fetch", "--output", parent + "/kept"]):
+            Path(parent, "kept").mkdir()
+            self.assertEqual(validate.main(), 1)
+            self.assertTrue(Path(parent, "kept").exists())
+        with tempfile.TemporaryDirectory() as parent, patch.object(validate, "validate", return_value=None), \
+                patch("sys.argv", ["validate.py", "--no-fetch", "--output", parent + "/gone"]):
+            Path(parent, "gone").mkdir()
+            self.assertEqual(validate.main(), 0)
+            self.assertFalse(Path(parent, "gone").exists())
+
+    def test_an_output_that_holds_files_is_refused_before_any_work_unless_kept(self):
+        with tempfile.TemporaryDirectory() as parent, patch.object(validate, "validate", return_value=None) as full:
+            output = Path(parent, "evidence")
+            output.mkdir()
+            (output / "revision.json").write_text("{}")
+            with patch("sys.argv", ["validate.py", "--no-fetch", "--output", str(output)]):
+                self.assertEqual(validate.main(), 1)
+            full.assert_not_called()
+            self.assertTrue((output / "revision.json").exists())
+            # CI's flow: its revision record is written into the directory first, and it passes --keep.
+            with patch("sys.argv", ["validate.py", "--no-fetch", "--keep", "--output", str(output)]):
+                self.assertEqual(validate.main(), 0)
+            full.assert_called_once()
+            self.assertTrue((output / "revision.json").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

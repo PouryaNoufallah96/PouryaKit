@@ -12,6 +12,19 @@ import unittest
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().with_name("merge-package.py")
+
+
+def _load_script():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("merge_package", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+merge_package = _load_script()
 WAVE = "feat/wave"  # the throwaway repository's integration branch
 # The machine's own git configuration (hooks, signing, identity) stays out of the throwaway repositories.
 ENV = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")} | {
@@ -327,11 +340,11 @@ class MergePackageTest(unittest.TestCase):
         self.main_at_the_tip()
         head = self.commit("docs/acceptance.md", "# Acceptance\n\n## #1\n\n## #2\n", "docs: a package's section")
         self.git("push", "--quiet", "origin", WAVE)
-        self.move_base({"docs/acceptance.md": "# Acceptance\n\n## #1\n\n## #3\n", ".vscode/settings.json": "{}\n"})
+        self.move_base({"docs/acceptance.md": "# Acceptance\n\n## #1\n\n## #3\n", ".idea/workspace.xml": "<project />\n"})
         done = self.merge("--ready")
         self.assertEqual(done.returncode, 1, done.stdout + done.stderr)
         self.assertIn("would conflict in 1 path(s):\n  docs/acceptance.md\n", done.stdout)
-        self.assertIn("  .vscode/settings.json: '.vscode' is not a top-level entry of this repository\n", done.stdout)
+        self.assertIn("  .idea/workspace.xml: '.idea' is not a top-level entry of this repository\n", done.stdout)
         self.assertEqual(self.summary(done), "ready=no behind=1 conflicts=1 tree=FAIL(1)")
         self.assert_nothing_changed(head)
 
@@ -357,6 +370,17 @@ class MergePackageTest(unittest.TestCase):
         done = self.merge("--ready", "--push")
         self.assertEqual(done.returncode, 2, done.stdout + done.stderr)
         self.assertIn("--ready takes --branch and --base only", done.stderr)
+
+
+class HelperTests(unittest.TestCase):
+    def test_diagram_pairs_counts_a_source_and_its_page_once(self) -> None:
+        conflicted = [
+            "docs/acceptance.md",
+            "docs/architecture/diagrams/execution-core.architecture.json",
+            "docs/architecture/diagrams/execution-core.html",
+            "docs/architecture/diagrams/kit-context.architecture.json",
+        ]
+        self.assertEqual(["execution-core", "kit-context"], merge_package.diagram_pairs(conflicted))
 
 
 if __name__ == "__main__":

@@ -68,6 +68,33 @@ namespace ModularMonolith.Tests.Stub.Migrations
                     b.ToTable("binary_keys", "stub");
                 });
 
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Binder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Tenant")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tenant");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_binders");
+
+                    b.ToTable("binders", "stub");
+                });
+
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Book", b =>
                 {
                     b.Property<Guid>("Id")
@@ -179,6 +206,27 @@ namespace ModularMonolith.Tests.Stub.Migrations
                         .HasName("pk_counters");
 
                     b.ToTable("counters", "stub");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Docket", b =>
+                {
+                    b.Property<string>("Tenant")
+                        .HasColumnType("text")
+                        .HasColumnName("tenant");
+
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Tenant", "Id")
+                        .HasName("pk_dockets");
+
+                    b.ToTable("dockets", "stub");
                 });
 
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Drawer", b =>
@@ -392,6 +440,30 @@ namespace ModularMonolith.Tests.Stub.Migrations
                         .HasDatabaseName("ix_pins_tray_id");
 
                     b.ToTable("pins", "stub");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Sheet", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BinderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("binder_id");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("text");
+
+                    b.HasKey("Id")
+                        .HasName("pk_sheets");
+
+                    b.HasIndex("BinderId")
+                        .HasDatabaseName("ix_sheets_binder_id");
+
+                    b.ToTable("sheets", "stub");
                 });
 
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Shelf", b =>
@@ -643,12 +715,27 @@ namespace ModularMonolith.Tests.Stub.Migrations
                         .HasConstraintName("fk_pins_tray_tray_id");
                 });
 
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Sheet", b =>
+                {
+                    b.HasOne("ModularMonolith.Tests.Stub.Binder", null)
+                        .WithMany("Sheets")
+                        .HasForeignKey("BinderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sheets_binders_binder_id");
+                });
+
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Sticker", b =>
                 {
                     b.HasOne("ModularMonolith.Tests.Stub.Folder", null)
                         .WithMany("Stickers")
                         .HasForeignKey("FolderId")
                         .HasConstraintName("fk_stickers_folders_folder_id");
+                });
+
+            modelBuilder.Entity("ModularMonolith.Tests.Stub.Binder", b =>
+                {
+                    b.Navigation("Sheets");
                 });
 
             modelBuilder.Entity("ModularMonolith.Tests.Stub.Folder", b =>

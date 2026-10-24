@@ -483,12 +483,21 @@ def skipped(ref):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, help="New evidence directory outside the checkout. Default: system temp.")
+    parser.add_argument("--output", type=Path, help="New or empty evidence directory outside the checkout; one that holds files "
+                        "only with --keep. Default: system temp.")
     parser.add_argument("--no-fetch", action="store_true", help="Use full history and tags already fetched by CI checkout; reject shallow history.")
     parser.add_argument("--since", metavar="REF", help="Skip, with one SKIP line and exit 0, when every path that differs from REF "
                         "is documentation or AI setup; the implementer's base. CI passes none, so it always validates.")
+    parser.add_argument("--keep", action="store_true", help="Keep the evidence directory after a PASS. Without it the directory is "
+                        "removed once the PASS line is printed: it holds about 8 GB, and five implementers' runs filled a disk "
+                        "(Wave 3 session 3). CI passes it, since it uploads the directory as the validation artifact.")
     arguments = parser.parse_args()
     output = arguments.output.resolve() if arguments.output else Path(tempfile.mkdtemp(prefix="pouryakit-packages-"))
+    # A PASS without --keep removes the evidence directory with everything in it, so it may hold only what this run writes.
+    if not arguments.keep and output.exists() and (not output.is_dir() or any(output.iterdir())):
+        print(f"FAIL: {output} exists and is not an empty directory, and a PASS without --keep removes the evidence directory "
+              "with everything in it. Name a new or empty directory, or pass --keep.", flush=True)
+        return 1
     try:
         if arguments.since and skipped(arguments.since):
             return 0
@@ -496,7 +505,17 @@ def main():
     except (RuntimeError, ValueError, OSError, KeyError) as error:
         print(f"FAIL: {error}", flush=True)
         return 1
+    finish(output, keep=arguments.keep)
     return 0
+
+
+def finish(output, keep):
+    """After a PASS: the evidence stays only on request; a failed run keeps it for inspection by returning before this."""
+    if keep:
+        print(f"evidence kept at {output}", flush=True)
+        return
+    shutil.rmtree(output, ignore_errors=True)
+    print(f"evidence removed from {output} (pass --keep to retain it)", flush=True)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Contracts of the test Module: a command declared outside the Module's assembly and handled inside it. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\PouryaKit.Cqrs\PouryaKit.Cqrs.csproj" />
+  </ItemGroup>
+</Project>

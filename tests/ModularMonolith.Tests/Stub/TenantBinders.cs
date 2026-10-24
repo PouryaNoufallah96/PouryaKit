@@ -1,0 +1,403 @@
+using Catalog.Categories.Entities;
+using Catalog.Categories.ValueObjects;
+using Catalog.Infrastructure.Data.Context;
+using Catalog.Products.Entities;
+using Catalog.Products.ValueObjects;
+using Dapper;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using PouryaKit.Cqrs;
+using PouryaKit.Domain;
+using PouryaKit.Messaging;
+using PouryaKit.Persistence;
+using PouryaKit.Persistence.Dapper;
+using PouryaKit.Persistence.EFCore;
+
+namespace ModularMonolith.Tests.Stub;
+
+internal sealed record BinderId(Guid Value) : TypedId<Guid>(Value);
+
+internal sealed record SheetId(Guid Value) : TypedId<Guid>(Value);
+
+// A tenant's aggregate, deleted outright when removed, with sheets on a required key: a changed sheet, a sheet moved to
+// another binder and the sheets a removal deletes with it are each a change of the binder that holds, or held, it.
+internal sealed class Binder : AggregateRoot<BinderId>, ITenantScoped
+{
+    private readonly List<Sheet> _sheets = [];
+
+    private Binder() { }
+
+    public string Tenant { get; private set; } = "";
+
+    public string Name { get; private set; } = "";
+
+    public IReadOnlyList<Sheet> Sheets => _sheets;
+
+    public static Binder Create(BinderId id, string tenant, string name, params string[] sheets)
+    {
+        var binder = new Binder { Id = id, Tenant = tenant, Name = name };
+        binder._sheets.AddRange(sheets.Select(text => new Sheet(new SheetId(Guid.CreateVersion7()), text)));
+        return binder;
+    }
+
+    public void Rename(string name) => Name = name;
+
+    public void RewriteSheet(string newText) => _sheets[0].Rewrite(newText);
+
+    public void MoveSheet(Binder other)
+    {
+        var sheet = _sheets[0];
+        _sheets.Remove(sheet);
+        other._sheets.Add(sheet);
+    }
+}
+
+internal sealed class Sheet : Entity<SheetId>
+{
+    private Sheet() { }
+
+    public Sheet(SheetId id, string text)
+    {
+        Id = id;
+        Text = text;
+    }
+
+    public string Text { get; private set; } = "";
+
+    public void Rewrite(string text) => Text = text;
+}
+
+// A tenant's aggregate keyed by its tenant and its own code, which another tenant's docket may share.
+internal sealed class Docket : AggregateRoot<string>, ITenantScoped
+{
+    private Docket() { }
+
+    public string Tenant { get; private set; } = "";
+}
+
+internal sealed record DocketSnapshotV1(string Tenant, string Code, bool IsRemoved, long Version);
+
+internal sealed class DocketSnapshotMapper : ISnapshotMapper<Docket, DocketSnapshotV1>
+{
+    public DocketSnapshotV1 Map(Docket aggregate) => new(aggregate.Tenant, aggregate.Id, false, aggregate.Version);
+
+    public DocketSnapshotV1 Tombstone(Docket aggregate) => new(aggregate.Tenant, aggregate.Id, true, aggregate.Version);
+}
+
+internal sealed class BinderConfiguration : IEntityTypeConfiguration<Binder>
+{
+    public void Configure(EntityTypeBuilder<Binder> builder)
+    {
+        builder.ToTable("binders");
+        builder.HasMany(binder => binder.Sheets).WithOne().IsRequired();
+        builder.Navigation(binder => binder.Sheets).AutoInclude();
+    }
+}
+
+internal sealed class SheetConfiguration : IEntityTypeConfiguration<Sheet>
+{
+    public void Configure(EntityTypeBuilder<Sheet> builder) => builder.ToTable("sheets");
+}
+
+internal sealed class DocketConfiguration : IEntityTypeConfiguration<Docket>
+{
+    public void Configure(EntityTypeBuilder<Docket> builder)
+    {
+        builder.ToTable("dockets");
+        builder.HasKey(docket => new { docket.Tenant, docket.Id });
+    }
+}
+
+// Adds a binder for the tenant named, the Operation's when none is.
+internal sealed record CreateBinderCommand(Guid BinderId, string Name, string[] Sheets, string? Tenant = null) : Command;
+
+internal sealed class CreateBinderCommandHandler(IRepository<Binder, BinderId> binders, OperationContext context)
+    : CommandHandler<CreateBinderCommand>
+{
+    public override async Task<Result> Handle(CreateBinderCommand command, CancellationToken cancellationToken)
+    {
+        await binders.AddAsync(
+            Binder.Create(new BinderId(command.BinderId), command.Tenant ?? context.Tenant!, command.Name, command.Sheets),
+            cancellationToken
+        );
+        return Result.Success();
+    }
+}
+
+public enum BinderChange
+{
+    Rename,
+    RewriteSheet,
+    MoveSheet,
+    Remove,
+}
+
+// Loads both binders with the tenant filter set aside, whichever tenant they belong to, and changes the first; a moved
+// sheet goes from the first to the second.
+internal sealed record ChangeBinderCommand(Guid BinderId, Guid OtherId, BinderChange Change) : Command;
+
+internal sealed class ChangeBinderCommandHandler(StubDbContext dbContext) : CommandHandler<ChangeBinderCommand>
+{
+    public override async Task<Result> Handle(ChangeBinderCommand command, CancellationToken cancellationToken)
+    {
+        var binders = await dbContext
+            .Set<Binder>()
+            .IgnoreQueryFilters([PouryaKitDbContext.TenantFilter])
+            .Where(binder => binder.Id == new BinderId(command.BinderId) || binder.Id == new BinderId(command.OtherId))
+            .ToListAsync(cancellationToken);
+        var binder = binders.Single(binder => binder.Id.Value == command.BinderId);
+        switch (command.Change)
+        {
+            case BinderChange.Rename:
+                binder.Rename("Renamed");
+                break;
+            case BinderChange.RewriteSheet:
+                binder.RewriteSheet("Rewritten");
+                break;
+            case BinderChange.MoveSheet:
+                binder.MoveSheet(binders.Single(other => other.Id.Value == command.OtherId));
+                break;
+            case BinderChange.Remove:
+                dbContext.Remove(binder);
+                break;
+        }
+
+        return Result.Success();
+    }
+}
+
+// Loads a binder with the tenant filter set aside and leaves it unchanged, then writes a note, which is neither
+// tenant-scoped nor auditable.
+internal sealed record WriteNoteBesideBinderCommand(Guid BinderId, string Text) : Command;
+
+internal sealed class WriteNoteBesideBinderCommandHandler(StubDbContext dbContext, IRepository<Note, NoteId> notes)
+    : CommandHandler<WriteNoteBesideBinderCommand>
+{
+    public override async Task<Result> Handle(WriteNoteBesideBinderCommand command, CancellationToken cancellationToken)
+    {
+        await dbContext
+            .Set<Binder>()
+            .IgnoreQueryFilters([PouryaKitDbContext.TenantFilter])
+            .SingleAsync(binder => binder.Id == new BinderId(command.BinderId), cancellationToken);
+        await notes.AddAsync(Note.Write(command.Text), cancellationToken);
+        return Result.Success();
+    }
+}
+
+// Run in a Catalog Operation: loads a product of any tenant with the tenant filter set aside, gives it the tenant named,
+// as no Feature of Catalog does, then renames it or removes it, which keeps it marked deleted.
+internal sealed record ReassignProductCommand(Guid ProductId, string Tenant, bool Remove) : Command;
+
+internal sealed class ReassignProductCommandHandler(CatalogDbContext dbContext) : CommandHandler<ReassignProductCommand>
+{
+    public override async Task<Result> Handle(ReassignProductCommand command, CancellationToken cancellationToken)
+    {
+        var product = await dbContext
+            .Set<Product>()
+            .IgnoreQueryFilters([PouryaKitDbContext.TenantFilter])
+            .SingleAsync(product => product.Id == new ProductId(command.ProductId), cancellationToken);
+        dbContext.Entry(product).Property(product => product.Tenant).CurrentValue = command.Tenant;
+        if (command.Remove)
+        {
+            dbContext.Remove(product);
+        }
+        else
+        {
+            product.Rename("Reassigned");
+        }
+
+        return Result.Success();
+    }
+}
+
+public enum ForgedWrite
+{
+    Attach,
+    Update,
+    Remove,
+}
+
+// Loads the binder named through the tenant filter, then attaches under it a sheet built with the key named, and
+// rewrites it or removes it.
+internal sealed record ForgeSheetCommand(Guid BinderId, Guid SheetId, bool Remove) : Command;
+
+internal sealed class ForgeSheetCommandHandler(StubDbContext dbContext) : CommandHandler<ForgeSheetCommand>
+{
+    public override async Task<Result> Handle(ForgeSheetCommand command, CancellationToken cancellationToken)
+    {
+        var binder = await dbContext.Set<Binder>().SingleAsync(binder => binder.Id == new BinderId(command.BinderId), cancellationToken);
+        var sheet = new Sheet(new SheetId(command.SheetId), "Attached");
+        var entry = dbContext.Entry(sheet);
+        entry.Property("BinderId").CurrentValue = binder.Id;
+        entry.State = EntityState.Unchanged;
+        if (command.Remove)
+        {
+            dbContext.Remove(sheet);
+        }
+        else
+        {
+            sheet.Rewrite("Forged");
+        }
+
+        return Result.Success();
+    }
+}
+
+public enum SheetRelease
+{
+    Detach,
+    Clear,
+}
+
+// Queries the sheet named with the tenant filter set aside, whichever tenant's binder holds it, releases it by detaching it through its entry or by clearing the
+// change tracker, loads the binder named through the tenant filter, tracks the same sheet again under it, through that
+// entry or a new one, with the binder as both its current and its original holder, and rewrites it or removes it.
+internal sealed record ReattachSheetCommand(Guid BinderId, Guid SheetId, SheetRelease Release, bool Remove) : Command;
+
+internal sealed class ReattachSheetCommandHandler(StubDbContext dbContext) : CommandHandler<ReattachSheetCommand>
+{
+    public override async Task<Result> Handle(ReattachSheetCommand command, CancellationToken cancellationToken)
+    {
+        var sheet = await dbContext
+            .Set<Sheet>()
+            .IgnoreQueryFilters([PouryaKitDbContext.TenantFilter])
+            .SingleAsync(sheet => sheet.Id == new SheetId(command.SheetId), cancellationToken);
+        var entry = dbContext.Entry(sheet);
+        if (command.Release == SheetRelease.Detach)
+        {
+            entry.State = EntityState.Detached;
+        }
+        else
+        {
+            dbContext.ChangeTracker.Clear();
+            entry = dbContext.Entry(sheet);
+        }
+
+        var binder = await dbContext.Set<Binder>().SingleAsync(binder => binder.Id == new BinderId(command.BinderId), cancellationToken);
+        var holder = entry.Property("BinderId");
+        holder.CurrentValue = binder.Id;
+        entry.State = EntityState.Unchanged;
+        holder.OriginalValue = binder.Id;
+        if (command.Remove)
+        {
+            dbContext.Remove(sheet);
+        }
+        else
+        {
+            sheet.Rewrite("Reattached");
+        }
+
+        return Result.Success();
+    }
+}
+
+// Reads the texts of the sheets queried through their own set: the one named, or every one when none is, through the
+// tenant filter or with it set aside.
+internal sealed record ReadSheetsQuery(Guid? SheetId, bool CrossTenants) : Query<IReadOnlyList<string>>;
+
+internal sealed class ReadSheetsQueryHandler(StubDbContext dbContext) : QueryHandler<ReadSheetsQuery, IReadOnlyList<string>>
+{
+    public override async Task<Result<IReadOnlyList<string>>> Handle(ReadSheetsQuery query, CancellationToken cancellationToken)
+    {
+        var sheets = query.CrossTenants ? dbContext.Set<Sheet>().IgnoreQueryFilters([PouryaKitDbContext.TenantFilter]) : dbContext.Set<Sheet>();
+        if (query.SheetId is { } id)
+        {
+            sheets = sheets.Where(sheet => sheet.Id == new SheetId(id));
+        }
+
+        return Result.Success<IReadOnlyList<string>>(
+            await sheets.OrderBy(sheet => sheet.Text).Select(sheet => sheet.Text).ToListAsync(cancellationToken)
+        );
+    }
+}
+
+// Reads with Dapper which of the binders named the lease's tenant holds, by the session setting the lease bound, never
+// by a tenant the handler passes.
+internal sealed record ReadBindersQuery(Guid[] BinderIds) : Query<IReadOnlyList<Guid>>;
+
+internal sealed class ReadBindersQueryHandler(IReadConnectionFactory connections) : QueryHandler<ReadBindersQuery, IReadOnlyList<Guid>>
+{
+    public override async Task<Result<IReadOnlyList<Guid>>> Handle(ReadBindersQuery query, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var binders = await connection.QueryAsync<Guid>(
+            new CommandDefinition(
+                "select id from stub.binders where tenant = current_setting('pouryakit.tenant') and id = any(@Ids)",
+                new { Ids = query.BinderIds },
+                cancellationToken: cancellationToken
+            )
+        );
+        return Result.Success<IReadOnlyList<Guid>>([.. binders]);
+    }
+}
+
+public enum HolderForgery
+{
+    OriginalValue,
+    AcceptAllChanges,
+}
+
+// Queries the sheet named with the tenant filter set aside, whichever tenant's binder holds it, loads the binder named through the tenant filter and makes it the
+// sheet's holder as loaded too, by setting the key's original value or by accepting the change tracker's changes, then
+// rewrites the sheet or removes it.
+internal sealed record ForgeSheetHolderCommand(Guid BinderId, Guid SheetId, HolderForgery Forgery, bool Remove) : Command;
+
+internal sealed class ForgeSheetHolderCommandHandler(StubDbContext dbContext) : CommandHandler<ForgeSheetHolderCommand>
+{
+    public override async Task<Result> Handle(ForgeSheetHolderCommand command, CancellationToken cancellationToken)
+    {
+        var sheet = await dbContext
+            .Set<Sheet>()
+            .IgnoreQueryFilters([PouryaKitDbContext.TenantFilter])
+            .SingleAsync(sheet => sheet.Id == new SheetId(command.SheetId), cancellationToken);
+        var binder = await dbContext.Set<Binder>().SingleAsync(binder => binder.Id == new BinderId(command.BinderId), cancellationToken);
+        var holder = dbContext.Entry(sheet).Property("BinderId");
+        holder.CurrentValue = binder.Id;
+        if (command.Forgery == HolderForgery.OriginalValue)
+        {
+            holder.OriginalValue = binder.Id;
+        }
+        else
+        {
+            dbContext.ChangeTracker.AcceptAllChanges();
+        }
+
+        if (command.Remove)
+        {
+            dbContext.Remove(sheet);
+        }
+        else
+        {
+            sheet.Rewrite("Forged");
+        }
+
+        return Result.Success();
+    }
+}
+
+// Run in a Catalog Operation: builds a category with the key and version named and the Operation's tenant, as a Feature
+// that never loads it might, then attaches it and counts a product on it, updates it, which writes every column, or
+// removes it.
+internal sealed record ForgeCategoryCommand(Guid CategoryId, long Version, ForgedWrite Write) : Command;
+
+internal sealed class ForgeCategoryCommandHandler(CatalogDbContext dbContext, OperationContext context) : CommandHandler<ForgeCategoryCommand>
+{
+    public override Task<Result> Handle(ForgeCategoryCommand command, CancellationToken cancellationToken)
+    {
+        var category = Category.Create(new CategoryId(command.CategoryId), "Forged", context.Tenant!).Value;
+        var entry = command.Write == ForgedWrite.Update ? dbContext.Update(category) : dbContext.Attach(category);
+        entry.Property(forged => forged.Version).CurrentValue = command.Version;
+        entry.Property(forged => forged.Version).OriginalValue = command.Version;
+        switch (command.Write)
+        {
+            case ForgedWrite.Attach:
+                category.CountProduct();
+                break;
+            case ForgedWrite.Remove:
+                dbContext.Remove(category);
+                break;
+        }
+
+        return Task.FromResult(Result.Success());
+    }
+}

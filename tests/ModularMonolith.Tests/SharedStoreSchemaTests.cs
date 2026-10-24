@@ -4,10 +4,12 @@ using ModularMonolith.Tests.Stub;
 using Npgsql;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using PouryaKit.Email.MailKit;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.Postgres;
+using PouryaKit.Realtime;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -51,6 +53,9 @@ public sealed class SharedStoreSchemaTests
             // the Stub Module's services, and the Kit's container is validated when it is built.
             builder.Services.AddScoped<CommandHandler<WriteNoteRaisingCommand>, WriteNoteRaisingCommandHandler>();
             builder.Services.AddSingleton<DeliveryLog>();
+            builder.Services.AddPouryaKitMailKit();
+            builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSection("PouryaKit:Email"));
+            builder.Services.AddPouryaKitRealtime(connectionName: "app");
             builder.Services.AddPouryaKitDapper(connectionName: "app");
             builder.Services.AddPouryaKitNotificationHandlers(typeof(StubDbContext).Assembly);
             builder.UsePouryaKitWolverine(connectionName: "app", schema: "stub");

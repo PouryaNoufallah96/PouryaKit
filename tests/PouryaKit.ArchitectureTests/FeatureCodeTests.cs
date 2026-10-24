@@ -51,6 +51,7 @@ public sealed class FeatureCodeTests
                 "Offending.KitStepCallingCommandHandler calls IUnitOfWorkOutbox.WriteAsync.",
                 "Offending.KitStepCallingCommandHandler calls Operation.OnlyReading.",
                 "Offending.KitStepCallingCommandHandler calls OperationContextServiceProviderExtensions.BeginOperation.",
+                "Offending.KitStepCallingCommandHandler calls OutboxWriter.WriteAsync.",
                 "Offending.KitStepCallingCommandHandler calls TrackedState.Capture.",
                 "Offending.KitStepCallingCommandHandler calls TrackedState.ThrowIfChanged.",
                 "Offending.SavingCommandHandler calls DbContext.SaveChangesAsync.",
@@ -96,12 +97,58 @@ public sealed class FeatureCodeTests
         Assert.Empty(ModuleRules.TransportTypesUsedBy(typeof(OffendingCreatedV1).Assembly));
     }
 
+    // ADR 0011: Marten's source generator writes an evolver into every Stream Module's assembly, naming JasperFx's event
+    // types, so the rule allows exactly those; a Stream Module that names Marten's session, or runs the Marten Unit of
+    // Work's own steps, is rejected. The Proving Sample's Ledger and the tests' Accounts are judged.
+    [Fact]
+    public void Feature_code_of_a_stream_module_names_no_marten_weasel_wolverine_or_jasperfx_type_but_the_generated_evolvers()
+    {
+        var offending = typeof(Offending.Stream.SavesItself).Assembly;
+
+        Assert.All(
+            [typeof(ModularMonolith.Tests.Streams.AccountsModule).Assembly, typeof(Ledger.LedgerModule).Assembly],
+            streams =>
+            {
+                Assert.Equal(
+                    ModuleRules.GeneratedEvolverTypes.Order(StringComparer.Ordinal),
+                    ModuleRules.TypesReferencedBy(streams).Where(type => type.Assembly.StartsWith("JasperFx", StringComparison.Ordinal)).Select(type => type.Name).Order(StringComparer.Ordinal)
+                );
+                Assert.Empty(ModuleRules.TransportTypesUsedBy(streams));
+                Assert.Empty(ModuleRules.SavesOrCommits(streams));
+            }
+        );
+        Assert.Equal(
+            ["Offending.Stream uses Marten.IDocumentOperations from Marten.", "Offending.Stream uses Marten.IDocumentSession from Marten."],
+            ModuleRules.TransportTypesUsedBy(offending).Order(StringComparer.Ordinal)
+        );
+        Assert.Equal(
+            ["Offending.Stream.RunsMartenSteps calls IStreamOutbox.WriteAsync.", "Offending.Stream.RunsMartenSteps calls MartenUnitOfWorkTransaction.ExecuteAsync."],
+            ModuleRules.SavesOrCommits(offending).Order(StringComparer.Ordinal)
+        );
+    }
+
+    // ADR 0013: a Saga's Module names no Wolverine type, though Wolverine generates its steps' chains: its sagas derive from
+    // the Kit's PouryaKitSaga, which emits and completes for them, and its timeouts from SagaTimeout. A Module whose saga
+    // and timeout are Wolverine's own names both.
+    [Fact]
+    public void Feature_code_of_a_saga_module_names_no_wolverine_type_through_the_kits_saga_types_and_wolverines_own_saga_is_rejected()
+    {
+        var sagas = typeof(ModularMonolith.Tests.Sagas.ShippingModule).Assembly;
+
+        Assert.Empty(ModuleRules.TransportTypesUsedBy(sagas));
+        Assert.Empty(ModuleRules.SavesOrCommits(sagas));
+        Assert.Equal(
+            ["Offending.Saga uses Wolverine.Saga from Wolverine.", "Offending.Saga uses Wolverine.TimeoutMessage from Wolverine."],
+            ModuleRules.TransportTypesUsedBy(typeof(Offending.Saga.OwnSaga).Assembly).Order(StringComparer.Ordinal)
+        );
+    }
+
     [Fact]
     public void No_module_dbcontext_maps_the_message_stores_envelopes()
     {
         var models = Sample.Models.Values.SelectMany(models => models).ToList();
 
-        Assert.Equal(3, models.Count);
+        Assert.Equal(4, models.Count);
         Assert.Empty(models.SelectMany(model => ModuleRules.EnvelopeStorageIn("a Module's DbContext", model)));
     }
 

@@ -22,17 +22,24 @@ public static class OperationContextHeaderExtensions
         {
             ArgumentNullException.ThrowIfNull(options);
             ArgumentNullException.ThrowIfNull(context);
-            options.Headers[OperationContextHeaders.ActorId] = context.Actor.Id;
-            options.Headers[OperationContextHeaders.ActorKind] = context.Actor.Kind.ToString();
-            if (context.Tenant is not null)
-            {
-                options.Headers[OperationContextHeaders.Tenant] = context.Tenant;
-            }
-
-            options.Headers[OperationContextHeaders.CorrelationId] = context.CorrelationId.ToString();
-            options.Headers[OperationContextHeaders.CausationId] = context.OperationId.ToString();
-            return options;
+            return WithContextHeaders(options, context.Actor, context.Tenant, context.CorrelationId, context.OperationId);
         }
+    }
+
+    // The Operation Context headers: an Operation's, caused by it, and those of a Saga step's emission, which no Operation
+    // causes (PouryaKit.Messaging.Wolverine.Sagas).
+    internal static DeliveryOptions WithContextHeaders(DeliveryOptions options, Actor actor, string? tenant, Guid correlationId, Guid causationId)
+    {
+        options.Headers[OperationContextHeaders.ActorId] = actor.Id;
+        options.Headers[OperationContextHeaders.ActorKind] = actor.Kind.ToString();
+        if (tenant is not null)
+        {
+            options.Headers[OperationContextHeaders.Tenant] = tenant;
+        }
+
+        options.Headers[OperationContextHeaders.CorrelationId] = correlationId.ToString();
+        options.Headers[OperationContextHeaders.CausationId] = causationId.ToString();
+        return options;
     }
 
     // The context of the Operation a delivery runs: a trusted continuation of the one that published the message, with

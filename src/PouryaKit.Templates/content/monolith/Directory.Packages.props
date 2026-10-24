@@ -6,11 +6,14 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="PouryaKit.Caching" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Grpc" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Messaging.Wolverine.EFCore" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Messaging.Wolverine.RabbitMq" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Observability" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Persistence.Dapper" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Persistence.Postgres" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.Realtime" Version="$(PouryaKitVersion)" />
+    <PackageVersion Include="PouryaKit.ReverseProxy" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Security" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Security.JwtBearer" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Testing" Version="$(PouryaKitVersion)" />
@@ -19,6 +22,9 @@
     <PackageVersion Include="PouryaKit.Web.OpenApi" Version="$(PouryaKitVersion)" />
   </ItemGroup>
   <ItemGroup>
+    <PackageVersion Include="Google.Protobuf" Version="3.36.2" />
+    <PackageVersion Include="Grpc.Core.Api" Version="2.84.0" />
+    <PackageVersion Include="Grpc.Tools" Version="2.84.0" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.12" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />

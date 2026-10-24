@@ -2,6 +2,7 @@ using Catalog.Products.ValueObjects;
 using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
+using PouryaKit.Localization;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Modularity;
 using PouryaKit.Persistence.Dapper;
@@ -20,9 +21,12 @@ public sealed class StubModule : IModuleDefinition
     {
         module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         module.AddPouryaKitDapper(connectionName: "app");
+        // Registered with no migration that creates the table, so the first number names the migration helper.
+        module.AddPouryaKitNumberSequences();
         module.AddPouryaKitCqrs();
         module.AddPouryaKitValidation();
         module.AddPouryaKitPermissions();
+        module.AddPouryaKitLocalization();
         module.AddSingleton<StampAuthorizations>();
         module.AddSingleton<ContinuationProbes>();
         module.AddPouryaKitNotificationHandlers();

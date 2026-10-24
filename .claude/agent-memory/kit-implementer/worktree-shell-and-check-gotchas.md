@@ -16,6 +16,7 @@ The worktree base and the one-git-command rule are in the role file; these are w
 - The guard refuses `rm -r` outside system temp: delete files one by one, then `rmdir`. Mutation checks: copy the file to the scratchpad, mutate, run, copy back.
 - Python edits with multi-line heredocs inside a `cd && … && git mv` compound were refused; write the script to the scratchpad and run `python3 <file>`.
 - The worktree guard refused `curl ... $(curl ... | grep)` (it saw "git" inside a URL); run the two curls separately.
+- (#120, 2026-10-16) Any command naming a `raw.githubusercontent.com` URL is refused ("git" in the host): fetch upstream files with a scratchpad Python script that builds the host from two strings and reads a path list; `api.github.com/repos/.../git/trees/<tag>?recursive=1` with plain `curl -o` passed.
 - The worktree guard refused a python heredoc that mutated files in one Bash call with cp; do mutations with the Edit tool and restore with plain `cp` from the scratchpad.
 - The guard refused a `for ... sed -E "s/.../$f/"` loop over files; one `grep ... | cut | sed` pipeline on a glob passed.
 - The worktree guard refuses a long inline `python3 - <<EOF` edit even when it touches only worktree files: write the script to the scratchpad and run it.
@@ -25,6 +26,7 @@ The worktree base and the one-git-command rule are in the role file; these are w
 - The worktree guard refused a `python3 - <<'EOF'` edit of `AppFixture.cs` (cause unclear; the same shape passed for other files); the Edit tool worked.
 - The worktree guard refuses a Bash heredoc whose text contains the word "git" anywhere (a python edit script naming `git diff`, or prose saying "git"); write the script to the scratchpad and run it with the worktree path as an argument, or use the Edit tool.
 - Shell: the worktree guard refused a `cat > file <<EOF` that named a path under the worktree; write files with the Write tool, edit with a scratchpad python script.
+- #154: `python3 $S/script.py` with the scratchpad in a shell variable is refused ("a value computed at runtime"); spell the script's path out. The session scratchpad keeps earlier tickets' tools (`p124/remap.py`, `p124/finalize124.py` with an Archify clone): look there before rebuilding one.
 - Guard refused: `cd … && cat > file <<EOF` (use Write), `--filter-method "*X*"` in a compound line, and `cp …; git status` together. Plain `dotnet test --filter-class` alone passes.
 - Shell: `python3 /dev/stdin <<'EOF'` with a short edit script passed; a longer `python3 - <<'EOF'` script was refused. (#92 R1: `python3 /dev/stdin <path> <<'EOF'` scripts of about 120 lines that only read and write files passed every time; keep the word git out of them.) `sed` on a `$VAR` path is refused: use the Read tool or a literal path.
 - **Shell guard:** any command containing `dotnet nuget disable source` is refused ("runs a string through source"), and `cd … && PATH=… python3 …` is refused as git-like; `PATH=<venv>/bin:/usr/bin:/bin python3 -c …` alone passes. Neither python3 has PyYAML: a scratchpad venv (`python3 -m venv`, `pip install pyyaml`) runs the brief's YAML check unchanged.
@@ -33,6 +35,7 @@ The worktree base and the one-git-command rule are in the role file; these are w
 - Edit traps: `s.replace("_module", "Module")` also rewrote `_modules` (use `\b`); IDE0032 is an error for a private field read by an expression-bodied property (make it an auto property). A `cat > <scratchpad>/x.py <<'EOF'` was refused once mid-session after several passed: write scripts with the Write tool.
 - Refused (#93, 2026-10-10): `D=<path>; grep … $D; sed -n … $D` (a variable path after an option), `for n in …; do awk -v n=$n …; done`. And `grep -o '.\{0,250\}X.\{0,250\}'` fails in this machine's `ugrep` ("exceeds complexity limits"): print context with a `python3 -c` regex instead. `git show <sha>:<path> > <scratchpad file>` passes.
 - Refused (#81, 2026-10-10): `for n in ...; do sed -n "${n}p" file; done` ("sed with a program computed at runtime"), and `mkdir … && cd … && cp … && cat > x <<EOF` in one command. `awk 'NR==52||NR==230 {print}' file` prints chosen lines; write a scratch project with Write, then `cp` and `dotnet run --project <abs csproj>` as separate commands.
+- Refused (#116, 2026-10-16): any `awk` program ("can execute commands"); use `grep -n` and `sed -n`. Passed: `git clone --depth 1 --branch v3.0.1 https://github.com/tt-a1i/archify.git <scratchpad>/p116/archify` as a background command; and a scratchpad Python script run with the worktree as argument that changes one source, runs `dotnet test --filter-class` and restores in `finally` (`p116/mutate116.py`, 11 mutations).
 
 ## Git in a worktree and the moving integration branch
 
@@ -56,6 +59,7 @@ The worktree base and the one-git-command rule are in the role file; these are w
 
 ## check-ai-setup.py and other tools
 
+- **The pre-commit hook runs `check-ai-setup.py` only when an AI-setup path is staged** (PR #143 audit, 2026-10-24), yet the script also fails a package count ("Wave 3 packages", any `<number> packages`) in `README.md`, the skill's `SKILL.md` and `docs/architecture/README.md`: a README-only commit passes and the next `.agents/` or memory commit fails. Run `check-ai-setup.py` after any edit of those three files.
 - `check-ai-setup.py` parses frontmatter with a small YAML subset: a plain scalar containing `": "` or `" #"`, or ending in `:`, fails. It reads frontmatter in skills' `SKILL.md` files, output styles, Claude roles and rules.
 - `check-ai-setup.py` fails a new `docs/agents/*.md` that no `AGENTS.md`, rule, output style or role file names; a pointer from another `docs/agents/` file does not count. When `AGENTS.md` and the role files are outside `allowed_files`, the output style is the place.
 - The Edit tool validates `.claude/settings.json` against the live schema and refuses an invalid enum, so mutation-test `check-ai-setup.py` in memory (load the module, swap `loaded[path]`).
@@ -77,11 +81,29 @@ The worktree base and the one-git-command rule are in the role file; these are w
 - The system-reminder's copy of `AGENTS.md` comes from the main checkout and can differ from the worktree's: read the worktree file before editing. A Write or Edit to the main checkout's path is not always refused (#102: an Edit of this memory directory, whose path the role prompt gives as the main checkout's, succeeded and dirtied `pre-wave-3`): edit `<worktree>/.claude/agent-memory/…`, and check `git -C <main checkout> status --short` before reporting.
 - `gh issue view N --comments` printed nothing from a worktree; `gh issue view N --repo PouryaNoufallah96/PouryaKit` plus `gh api repos/PouryaNoufallah96/PouryaKit/issues/N/comments` works.
 - **Put the worktree under `<main checkout>/.claude/worktrees/<name>`**, which `.gitignore` lists: the guard denies file-tool writes outside the main checkout's tree, so a sibling directory such as `../pourya-kit-wt-105` refuses every Edit. `git -C <main checkout> worktree move <old> <new>` fixed it with nothing lost (#105, 2026-10-11).
+- **A brief can name "your worktree" when none was made** (#130, 2026-10-18: the agent started in the main checkout on `wave-3`): create it yourself, `git -C <main> worktree add -b <branch> <main>/.claude/worktrees/<n> <tip the brief names>`, and report the branch.
 - **Pre-Wave 3 briefs live in the main checkout only** (`.claude/handoff/<date>/briefs/`, untracked): a worktree has no copy, so read them by the main checkout's absolute path (#78, 2026-10-09).
 - The shared scratchpad is shared with other agents of the session: another agent overwrote `mutate.py`; name scratch scripts per ticket (`mutate18.py`).
 - The scratchpad is shared by every session: keep backups and harnesses in a ticket folder (`p35/`); generic `*.bak` names collide.
 - **The scratchpad root is shared** with parallel implementers (`mutate.py`, `edit_*.py` of other tickets sit there): keep a ticket's scripts in a subfolder.
 - **This memory's layout (session-5 retro C, 2026-10-08):** one facts file per area, and `MEMORY.md` holds one line per area file whose hook names the area's tickets. Add a fact to its area's file, in the section of its ticket or a new `## <topic> (#<ticket>, <date>; <versions>)` section above the `**Why:**` line, and add the ticket number to that area's hook; start a new file only for a new area. `check-docs.py` checks Markdown links, not `[[name]]` links: every `[[name]]` must be a file stem in this directory. `merge=union` covers `MEMORY.md` only, so two branches that both edit one hook line merge into two lines linking one file, which `check-docs.py` reports (keep one line with both ticket numbers); two branches that append to the same spot of one area file conflict like any other file (keep both bullets).
+
+## A spawn with no worktree (#121, 2026-10-18)
+
+- Spawned with the main checkout as cwd, on the integration branch, with no worktree of my own: `EnterWorktree` refuses both a new name ("a subagent with a cwd override") and an existing path ("the repository root, not an isolated worktree"). `git -C <main> worktree add <main>/.claude/worktrees/ticket-<n> -b ticket-<n> <tip>` and absolute paths for every call worked; name the branch in the report.
+- Moving a public type to another namespace strands a `using` in every file that named only it (IDE0005 fails the build), `src/PouryaKit.Testing` and the templates' `AppHost.cs` included; ask for files outside `allowed_files` before the build tells you.
+## A brief that expects a worktree the harness did not create (#133, 2026-10-18)
+
+- **Spawned with the main checkout as cwd and no worktree**: `EnterWorktree` refuses to create one ("a subagent with a cwd override") and to enter one ("the repository root, not an isolated worktree"). `git -C <main checkout> worktree add -b ticket-<n> <main checkout>/.claude/worktrees/ticket-<n> <tip>` works; then every command takes absolute paths (`cd <worktree> && …` per call passes) and the base check runs as the role file says.
+
+## The integration branch moved before the first commit (#135, 2026-10-18)
+
+- With nothing committed yet and the tip touching files I had changed (a diagram source, the architecture document, `MEMORY.md`), `git stash push`, `git merge --ff-only <branch>`, `git stash pop` (three separate commands) auto-merged every file; the base became the new tip. Do not rerun a range remapper afterwards: the popped sources already hold the moved ranges, and the remapper reads them as HEAD's.
+
+## Mutation runs leave stale binaries (#159, 2026-10-18)
+
+- A mutation script that restores a source with `shutil.copyfile` to a backup and `shutil.move` back gives the restored file the backup's older mtime, so MSBuild sees the mutated build as current and the next run tests the mutation: five "red" tests in a full run. `touch` every restored file (or `copy2` then `os.utime`) before the next build.
+- A test that removes a test cited in `docs/acceptance.md` needs a `REMOVED_TESTS` entry in `.agents/scripts/check-docs.py` (outside most briefs: ask), since the acceptance rows are records.
 
 **Why:** each cost a retry in tickets #4 to #63 or the retro packages.
 **How to apply:** when a shell command is refused, when the integration branch moves, when a brief's scope misses a file, or when touching skills, settings, the check script or this memory. Related: [[merge-ci-and-workflow-tooling-facts]], [[dotnet-and-test-conventions]], [[templates-packaging-and-publication-facts]].

@@ -5,48 +5,70 @@ using PouryaKit.Cqrs;
 
 namespace PouryaKit.Web;
 
-// The Operation Context on an HTTP request between Kit Hosts, in the same names and format as PouryaKit.Messaging's
-// OperationContextHeaders: one vocabulary for every transport. Web does not reference Messaging (plan section C), so it
-// states the names again; the tests write and read them by Messaging's constants.
-internal static class OperationContextHttpHeaders
+/// <summary>
+/// The Operation Context on a request between Kit Hosts, in the same names and format as PouryaKit.Messaging's
+/// <c>OperationContextHeaders</c>: one vocabulary, and one codec for Web and the transports that reuse its reader, such
+/// as gRPC metadata. Messaging's envelopes keep their own extension, <c>WithOperationContext</c>, without this codec's
+/// value rule.
+/// </summary>
+public static class OperationContextHttpHeaders
 {
     private const int MaxValueLength = 256;
 
+    // Web does not reference Messaging (plan section C), so it states the names again; the tests write and read them by
+    // Messaging's constants.
     private const string ActorId = "pouryakit-actor-id";
     private const string ActorKindName = "pouryakit-actor-kind";
     private const string Tenant = "pouryakit-tenant";
     private const string CorrelationId = "pouryakit-correlation-id";
     private const string CausationId = "pouryakit-causation-id";
 
-    private static readonly string[] Names = [ActorId, ActorKindName, Tenant, CorrelationId, CausationId];
+    // Every name the codec writes or reads, the optional tenant's included: a writer removes them all before it adds the
+    // pairs, so no earlier value survives beside a context without it.
+    internal static readonly string[] Names = [ActorId, ActorKindName, Tenant, CorrelationId, CausationId];
 
     internal static readonly string Rule = $"1 to {MaxValueLength} visible ASCII characters, with spaces only between them";
 
-    // Every value is checked before any header is written, so a request with a value the rule refuses is never sent,
-    // not even in part. Values replace rather than append, so a request sent again carries the same single value of each.
-    public static void Write(HttpRequestHeaders headers, OperationContext context)
+    /// <summary>
+    /// The header pairs that carry <paramref name="context"/> to a Kit Host that trusts the caller as a peer: the
+    /// Actor's id and kind, the tenant when there is one, the correlation, and the context's <c>OperationId</c> as the
+    /// causation. Every value is checked before any pair is returned, so a request is never sent with a value the
+    /// receiving Host refuses, not even in part.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">A value is not 1 to 256 visible ASCII characters with spaces only
+    /// between them.</exception>
+    public static IReadOnlyList<KeyValuePair<string, string>> Pairs(OperationContext context)
     {
-        List<(string Name, string Value)> values = [(ActorId, context.Actor.Id), (ActorKindName, context.Actor.Kind.ToString())];
+        ArgumentNullException.ThrowIfNull(context);
+
+        List<KeyValuePair<string, string>> pairs = [new(ActorId, context.Actor.Id), new(ActorKindName, context.Actor.Kind.ToString())];
         if (context.Tenant is not null)
         {
-            values.Add((Tenant, context.Tenant));
+            pairs.Add(new(Tenant, context.Tenant));
         }
 
-        values.Add((CorrelationId, context.CorrelationId.ToString()));
-        values.Add((CausationId, context.OperationId.ToString()));
-        if (values.FirstOrDefault(header => !IsHeaderValue(header.Value)).Name is { } refused)
+        pairs.Add(new(CorrelationId, context.CorrelationId.ToString()));
+        pairs.Add(new(CausationId, context.OperationId.ToString()));
+        if (pairs.FirstOrDefault(pair => !IsHeaderValue(pair.Value)).Key is { } refused)
         {
             throw new InvalidOperationException(
                 $"The Operation Context's {refused} header value is not {Rule}, so the request is not sent."
             );
         }
 
+        return pairs;
+    }
+
+    // Values replace rather than append, so a request sent again carries the same single value of each.
+    internal static void Write(HttpRequestHeaders headers, OperationContext context)
+    {
+        var pairs = Pairs(context);
         foreach (var name in Names)
         {
             headers.Remove(name);
         }
 
-        foreach (var (name, value) in values)
+        foreach (var (name, value) in pairs)
         {
             headers.TryAddWithoutValidation(name, value);
         }
@@ -57,7 +79,7 @@ internal static class OperationContextHttpHeaders
     // is restored as a trusted continuation (ADR 0007): the permission check does not authorize its Actor again. Null
     // when the request carries none of the headers; a request that carries some but not a complete, readable context is
     // refused with 400, as a request that cannot be read is.
-    public static OperationContext? Continued(IHeaderDictionary headers)
+    internal static OperationContext? Continued(IHeaderDictionary headers)
     {
         if (!Names.Any(headers.ContainsKey))
         {

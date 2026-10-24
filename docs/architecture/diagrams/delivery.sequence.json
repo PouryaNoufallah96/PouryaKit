@@ -15,7 +15,7 @@
     },
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "eb3c45c182e365dd6438c6f49377aa0893fd1603",
+      "revision": "fcb7a719e063b27f6a10b2a05bdc9e58391a4269",
       "link_mode": "web"
     }
   },
@@ -27,21 +27,21 @@
       "sublabel": "a commit",
       "sources": [
         {
-          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
-          "line": 34,
-          "end_line": 127,
+          "path": "src/PouryaKit.Messaging.Wolverine/OutboxWriter.cs",
+          "line": 49,
+          "end_line": 136,
           "label": "one envelope per route, with the context"
         },
         {
-          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
-          "line": 133,
-          "end_line": 144,
+          "path": "src/PouryaKit.Messaging.Wolverine/OutboxWriter.cs",
+          "line": 138,
+          "end_line": 153,
           "label": "the #published record"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
-          "line": 146,
-          "end_line": 163,
+          "line": 51,
+          "end_line": 68,
           "label": "sent after the commit"
         }
       ]
@@ -61,7 +61,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqHostApplicationBuilderExtensions.cs",
           "line": 21,
-          "end_line": 30,
+          "end_line": 31,
           "label": "one queue per kind of Host, its instances share"
         }
       ]
@@ -80,8 +80,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
-          "line": 110,
-          "end_line": 111,
+          "line": 111,
+          "end_line": 112,
           "label": "durable; unknown types dead-lettered"
         },
         {
@@ -100,20 +100,20 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/SubscriptionDelivery.cs",
-          "line": 21,
-          "end_line": 50,
+          "line": 19,
+          "end_line": 48,
           "label": "subscription by queue, new scope"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/SubscriptionDelivery.cs",
-          "line": 52,
-          "end_line": 86,
+          "line": 50,
+          "end_line": 90,
           "label": "a broker envelope fanned out"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs",
-          "line": 38,
-          "end_line": 74,
+          "line": 45,
+          "end_line": 81,
           "label": "a trusted continuation, trace parent"
         }
       ]
@@ -132,9 +132,9 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/Deliver.cs",
-          "line": 23,
-          "end_line": 53,
-          "label": "Receipt, version gate, then handler"
+          "line": 28,
+          "end_line": 75,
+          "label": "tenant check, Receipt, version gate, handler"
         }
       ]
     },
@@ -147,7 +147,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/EfReceipts.cs",
           "line": 8,
-          "end_line": 40,
+          "end_line": 38,
           "label": "Receipt and version rows"
         }
       ]
@@ -360,7 +360,8 @@
       "title": "Retries and dead letters",
       "items": [
         "A thrown exception or a failed Result is retried after 1 s, 10 s and 1 min by default, each wait stored with the delivery; the next failure sets it aside as a dead letter of its subscription.",
-        "Only that subscription's envelope is retried. An envelope of an unknown type is dead-lettered at once, never marked handled."
+        "Only that subscription's envelope is retried. An envelope of an unknown type is dead-lettered at once, never marked handled.",
+        "In a tenant-scoped Module, a delivery with no tenant fails with Tenant.Required before its Receipt and its handler, and is retried and dead-lettered the same way."
       ]
     }
   ]

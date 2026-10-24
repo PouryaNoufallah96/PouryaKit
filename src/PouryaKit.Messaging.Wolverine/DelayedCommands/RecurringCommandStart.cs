@@ -13,15 +13,34 @@ namespace PouryaKit.Messaging.Wolverine;
 // recurring command that has none waiting in the message store, as an Operation of its system Actor, in its Module, so
 // its Unit of Work writes it to the Outbox as it writes every other. Two Hosts that start together may both store one;
 // the Receipt of the occurrence they then share makes one of them apply nothing and end. The attempt that sets an
-// occurrence aside as a dead letter stores one the same way (DelayedCommandDelivery).
+// occurrence aside as a dead letter stores one the same way (DelayedCommandDelivery). A first occurrence that fails to
+// store fails the start once every hosted service has started, and the Host rethrows it without stopping them, so the
+// Host is stopped first; a stop that fails is kept beside the failure, which comes first. A cancelled start is its
+// caller's to end.
 internal sealed class RecurringCommandStart(DelayedCommandDeclarations declarations, IServiceProvider services)
     : IHostedLifecycleService
 {
     public async Task StartedAsync(CancellationToken cancellationToken)
     {
-        foreach (var declared in declarations.All.Where(declared => declared.Recurring is not null))
+        try
         {
-            await StoreFirstUnlessWaitingAsync(services, declared, cancellationToken);
+            foreach (var declared in declarations.All.Where(declared => declared.Recurring is not null))
+            {
+                await StoreFirstUnlessWaitingAsync(services, declared, cancellationToken);
+            }
+        }
+        catch (Exception failure) when (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                await services.GetRequiredService<IHost>().StopAsync(CancellationToken.None);
+            }
+            catch (Exception stop)
+            {
+                throw new AggregateException(failure, stop);
+            }
+
+            throw;
         }
     }
 

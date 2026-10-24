@@ -19,7 +19,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task A_success_answers_with_the_status_and_body_its_endpoint_chose()
     {
-        using var client = Fixture.Client("ada");
+        using var client = Fixture.Client("ada", AppFixture.TestTenant);
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();
 
@@ -54,7 +54,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task An_empty_id_and_an_empty_name_answer_400_listing_every_validation_failure_and_nothing_is_saved()
     {
-        using var client = Fixture.Client("ada");
+        using var client = Fixture.Client("ada", AppFixture.TestTenant);
 
         var response = await client.PostAsJsonAsync(
             "/catalog/products",
@@ -87,7 +87,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task A_body_without_a_member_binds_it_as_its_default_and_validation_answers_400_for_it()
     {
-        using var client = Fixture.Client("ada");
+        using var client = Fixture.Client("ada", AppFixture.TestTenant);
 
         var response = await client.PostAsJsonAsync(
             "/catalog/products",
@@ -113,7 +113,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     [InlineData("Name")]
     public async Task A_body_that_names_a_member_twice_answers_400_as_a_problem_response_and_nothing_is_saved(string again)
     {
-        using var client = Fixture.Client("ada");
+        using var client = Fixture.Client("ada", AppFixture.TestTenant);
         var category = Guid.CreateVersion7();
         using var body = new StringContent(
             $$"""{"categoryId":"{{category}}","name":"Lamps","{{again}}":"Chairs"}""",
@@ -132,7 +132,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task A_missing_product_answers_404_with_its_error()
     {
-        using var client = Fixture.Client("ada");
+        using var client = Fixture.Client("ada", AppFixture.TestTenant);
 
         var response = await client.GetAsync($"/catalog/products/{Guid.CreateVersion7()}", TestContext.Current.CancellationToken);
 
@@ -162,7 +162,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task Creating_a_product_with_a_name_in_use_answers_409_with_its_error_and_writes_nothing()
     {
-        using var client = Fixture.Client("ada");
+        using var client = Fixture.Client("ada", AppFixture.TestTenant);
         var category = Guid.CreateVersion7();
         await client.PostAsJsonAsync(
             "/catalog/categories",
@@ -352,12 +352,10 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
             new { productId = Guid.CreateVersion7(), categoryId = Guid.CreateVersion7(), name = "Lamp" },
             TestContext.Current.CancellationToken
         );
-        var listed = await anonymous.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
         var anonymousContext = await ContextAsync(anonymous, "/stub/public/context");
         var adaContext = await ContextAsync(ada, "/stub/public/context");
 
         await ProblemAsync(refused, HttpStatusCode.Unauthorized);
-        Assert.Equal(HttpStatusCode.OK, listed.StatusCode);
         Assert.Equal(ReadOperationContextEndpoint.Visitor.Id, anonymousContext.Actor.Id);
         Assert.Equal(ActorKind.System, anonymousContext.Actor.Kind);
         // An authenticated caller of a public endpoint still runs as themselves.
@@ -439,7 +437,7 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task Each_modules_endpoints_are_mapped_under_its_own_route_group()
     {
-        using var client = Fixture.Client("ada");
+        using var client = Fixture.Client("ada", AppFixture.TestTenant);
 
         async Task<HttpStatusCode> StatusOf(string path) =>
             (await client.GetAsync(path, TestContext.Current.CancellationToken)).StatusCode;

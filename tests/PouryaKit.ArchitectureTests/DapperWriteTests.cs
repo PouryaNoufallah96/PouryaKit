@@ -33,7 +33,7 @@ public sealed class DapperWriteTests
         Assert.Empty(Sample.Modules.SelectMany(module => ModuleRules.WritesToAggregateTables(module, AggregateTables)));
         var inventory = Assert.Single(Sample.Modules, module => module.GetName().Name == "Inventory");
         Assert.Equal(
-            ["inventory.catalog_products", "inventory.catalog_products", "inventory.product_categories", "inventory.stock_reconciliations"],
+            ["inventory.catalog_products", "inventory.catalog_products", "inventory.product_categories", "inventory.stock_counts", "inventory.stock_reconciliations"],
             Il.LiteralsIn(inventory).SelectMany(literal => ModuleRules.TablesWrittenBy(literal.Text)).Order(StringComparer.Ordinal)
         );
     }
@@ -53,6 +53,37 @@ public sealed class DapperWriteTests
         );
     }
 
+    // #155: the lease owns the session tenant, so no Module's SQL writes session state.
+    [Fact]
+    public void No_module_writes_session_state_and_a_module_that_rebinds_the_tenant_is_rejected()
+    {
+        Assert.Empty(Sample.Modules.SelectMany(ModuleRules.WritesSessionState));
+        Assert.Equal(
+            [
+                "Offending.TenantRebindingQueryHandler writes session state; the lease owns the tenant: \"reset pouryakit.tenant\".",
+                "Offending.TenantRebindingQueryHandler writes session state; the lease owns the tenant: \"select set_config('pouryakit.tenant', 'south', false)\".",
+                "Offending.TenantRebindingQueryHandler writes session state; the lease owns the tenant: \"set pouryakit.tenant = 'south'\".",
+            ],
+            ModuleRules.WritesSessionState(typeof(OffendingModule).Assembly).Order(StringComparer.Ordinal)
+        );
+    }
+
+    [Theory]
+    [InlineData("SET LOCAL pouryakit.tenant = 'south'", true)]
+    [InlineData("select 1; RESET ALL", true)]
+    [InlineData("do $$ begin perform set_config('pouryakit.tenant', 'south', true); end $$", true)]
+    [InlineData("update catalog.products set name = @Name", false)]
+    [InlineData("select id from catalog.products where tenant = current_setting('pouryakit.tenant') -- ; set x = 1", false)]
+    [InlineData("insert into marks (note) values ('set_config')", false)]
+    [InlineData("do $$ begin set pouryakit.tenant = 'south'; end $$", true)]
+    [InlineData("select E'it\\'s'; set pouryakit.tenant = 'south'", true)]
+    [InlineData("select U&\"set\\005Fconfig\"('pouryakit.tenant', 'south', false)", true)]
+    [InlineData("do $$ begin execute 'select set_config(''pouryakit.tenant'', ''south'', false)'; end $$", true)]
+    public void Session_writes_are_found_at_any_statement_boundary_outside_comments_and_strings(string sql, bool writesSessionState)
+    {
+        Assert.Equal(writesSessionState, ModuleRules.HoldsSessionWrite(sql));
+    }
+
     [Theory]
     [InlineData("insert into inventory.catalog_products (product_id) values (@Id) on conflict (product_id) do update set name = excluded.name", "inventory.catalog_products")]
     [InlineData("UPDATE \"Catalog\".\"Products\" SET name = @Name", "catalog.products")]
@@ -62,6 +93,7 @@ public sealed class DapperWriteTests
     [InlineData("update catalog.\nproducts set name = @Name", "catalog.products")]
     [InlineData("delete from catalog\t. \"Products\" where id = @Id", "catalog.products")]
     [InlineData("update /* c */ catalog.products set name = @Name", "catalog.products")]
+    [InlineData("/* a /* b */ ' */ delete from catalog.products --'", "catalog.products")]
     [InlineData("do $$ begin update catalog.products set name = 'x'; end $$", "catalog.products")]
     [InlineData("-- update catalog.products\ninsert into marks (id) values (@Id)", "marks")]
     [InlineData("insert into marks (note) values ('update catalog.products set name = 1')", "marks")]

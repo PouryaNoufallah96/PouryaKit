@@ -31,6 +31,7 @@ ROLE_ROUTING = {
     "kit-scout": ("claude-opus-5-5", "medium", "gpt-6.1-sol", "medium"),
 }
 OUTPUT_STYLE_KEYS = {"name", "description", "keep-coding-instructions"}  # code.claude.com/docs/en/output-styles
+SKILL_DESCRIPTION_LIMIT = 1024  # code.claude.com/docs/en/skills: a longer description is cut, and Wave 3 session 3 had four mergers trim it by hand
 AGENTS_MD_LIMIT = 32768  # Codex project_doc_max_bytes default
 GUARDED_TOOLS = {  # the tools the guard judges; each hooks file must send them to it
     ".claude/settings.json": ("Bash", "Read", "Grep", "Edit", "Write", "NotebookEdit"),
@@ -138,6 +139,13 @@ def check_skills() -> None:
         data, _ = frontmatter(skill / "SKILL.md")
         if not data.get("name") or not data.get("description"):
             failures.append(f"{rel(skill)}/SKILL.md: needs name and description (Codex skips it otherwise)")
+        elif not isinstance(data["description"], str):
+            failures.append(f"{rel(skill)}/SKILL.md: description must be one string, not a list")
+        elif len(data["description"]) > SKILL_DESCRIPTION_LIMIT:
+            failures.append(
+                f"{rel(skill)}/SKILL.md: description is {len(data['description'])} characters, over the "
+                f"{SKILL_DESCRIPTION_LIMIT} Claude Code loads (shorten a trigger phrase, never a Capability's name)"
+            )
         if skill.name != KIT_SKILL and skill.name not in pinned:
             failures.append(f"{rel(skill)}: no entry in skills-lock.json, so nothing pins it; only {KIT_SKILL} is this repository's own")
         link = mirror / skill.name
@@ -319,9 +327,11 @@ def check_hook_commands(file: str) -> None:
         failures.append(f"{file}: no PreToolUse command hook runs {rel(GUARD)} for {', '.join(unguarded)}")
 
 
-def guard_decision(payload: dict) -> tuple[str, str]:
+def guard_decision(payload: dict, switch: str = "") -> tuple[str, str]:
+    # The rules are judged with the guard on, even from a session that switched it off.
+    env = {k: v for k, v in os.environ.items() if k != "POURYAKIT_GUARD"} | ({"POURYAKIT_GUARD": switch} if switch else {})
     run = subprocess.run(
-        [sys.executable, str(GUARD)], input=json.dumps(payload), capture_output=True, text=True, timeout=10
+        [sys.executable, str(GUARD)], input=json.dumps(payload), capture_output=True, text=True, timeout=10, env=env
     )
     try:
         out = json.loads(run.stdout).get("hookSpecificOutput", {})
@@ -448,6 +458,8 @@ def check_guard() -> None:
             failures.append(f"guard: {label}: expected {expected}, got {decision}")
         elif decision == "deny" and not reason.startswith(marker):
             failures.append(f"guard: {label}: the deny reason does not start with '{marker}'")
+    if guard_decision({**shell("rm -rf bin"), "cwd": str(ROOT), "hook_event_name": "PreToolUse"}, switch="off")[0] != "allow":
+        failures.append("guard: POURYAKIT_GUARD=off does not allow a call the rules deny")
     scratch.cleanup()
 
 

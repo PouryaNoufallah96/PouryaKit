@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 
@@ -26,13 +25,18 @@ public static class EfCoreServiceCollectionExtensions
         /// table, the DbContext of a Module with no <c>[Idempotent]</c> command. The store, its cleanup and the table
         /// are PostgreSQL-only, as the Kit is: <c>on conflict</c>, <c>ctid</c>, <c>to_regclass</c>, PostgreSQL's
         /// SQLSTATE codes and a <c>timestamp with time zone</c> column.
-        /// When a messaging package registered an <see cref="IUnitOfWorkOutbox"/>, the Unit of Work commits through it.
+        /// When a messaging package registered an <see cref="IUnitOfWorkOutbox"/>, the Unit of Work commits through it; a
+        /// Host with an Outbox (<see cref="IOutbox"/>) but no <see cref="IUnitOfWorkOutbox"/>, as one whose only message
+        /// store is <c>UsePouryaKitMarten</c>'s, fails when it is built, naming its EF Core Modules, or the application when no Module has one.
         /// It records the DbContext, once, as a <see cref="DbContextConnection"/> with <paramref name="connectionName"/>,
         /// the connection string it stores over when its registration names one, so the Kit's composition checks refuse,
         /// when the Host's container is built, a named connection string the Host's configuration lacks or leaves blank,
         /// and compare its connection with the message store's. A name replaces an earlier record without one; the same name
         /// again, ignoring case as configuration keys do, keeps the first spelling; a second, different name for the same
-        /// DbContext throws.
+        /// DbContext throws. On a Module's builder it also records the DbContext, and registers the
+        /// <see cref="IIdempotencyStore"/>, keyed by the Module, as its Unit of Work is keyed, so a Kit check reads the model
+        /// of the Module's own Unit of Work and an Operation of the Module keeps its key in the Module's own store, whatever
+        /// else the Host holds (<see cref="IModuleServices.RouteByModule{TService}"/>).
         /// A database package such as <c>PouryaKit.Persistence.Postgres</c> calls it; Feature code never does.
         /// </summary>
         public IServiceCollection AddPouryaKitEfCore<TDbContext>(string? connectionName = null)
@@ -63,6 +67,12 @@ public static class EfCoreServiceCollectionExtensions
             }
 
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, DbContextConnectionsCheck>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, UnitOfWorkOutboxCheck>());
+            var module = IModuleServices.ModuleOf(services);
+            if (module is not null)
+            {
+                services.AddKeyedSingleton<DbContextConnection>(module, new DbContextConnection(connectionName, typeof(TDbContext)));
+            }
 
             // Added, not tried: on a Module's builder it becomes that Module's own, whatever the Host already holds.
             services.AddScoped<IUnitOfWork>(provider => new EfUnitOfWork(
@@ -76,13 +86,19 @@ public static class EfCoreServiceCollectionExtensions
             ));
             services.TryAddScoped(typeof(IRepository<,>), typeof(EfRepository<,>));
             services.TryAddScoped<IUnitOfWorkConnection, EfUnitOfWorkConnection>();
-            services.TryAddScoped<IIdempotencyStore, EfIdempotencyStore>();
+            if (module is not null)
+            {
+                services.TryAddKeyedScoped<IIdempotencyStore, EfIdempotencyStore>(module);
+            }
+            else
+            {
+                services.TryAddScoped<IIdempotencyStore, EfIdempotencyStore>();
+            }
+
+            IModuleServices.RouteByModule<IIdempotencyStore>(services);
             services.TryAddSingleton(TimeProvider.System);
             services.AddHostedService<IdempotencyKeyCleanup>();
-            services.AddOptions<PouryaKitIdempotencyOptions>().ValidateOnStart();
-            services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<IValidateOptions<PouryaKitIdempotencyOptions>, IdempotencyKeyCleanup.Validation>()
-            );
+            services.AddPouryaKitIdempotencyOptions();
             return services;
         }
 

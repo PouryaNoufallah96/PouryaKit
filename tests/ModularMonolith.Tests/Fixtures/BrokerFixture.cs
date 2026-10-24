@@ -18,7 +18,6 @@ using PouryaKit.Testing;
 using RabbitMQ.Client;
 using Testcontainers.PostgreSql;
 using Testcontainers.RabbitMq;
-using Wolverine;
 using Wolverine.Runtime;
 
 namespace ModularMonolith.Tests.Fixtures;
@@ -93,7 +92,7 @@ public sealed class BrokerFixture : IAsyncLifetime
 
 /// <summary>
 /// One test's broker vhost and databases, and the two Hosts of the Proving Sample's service composition on them:
-/// <c>ModularMonolith.Host</c> with a broker, which hosts Catalog and Billing, and <c>Inventory.Host</c>.
+/// <c>ModularMonolith.Host</c> with a broker, which hosts Catalog, Billing and Ledger, and <c>Inventory.Host</c>.
 /// </summary>
 public sealed class BrokerEnvironment(BrokerFixture fixture, string catalog, string inventory, Uri broker)
 {
@@ -171,17 +170,29 @@ public sealed class BrokerEnvironment(BrokerFixture fixture, string catalog, str
     /// <summary>A new database for another Inventory Host on the same broker.</summary>
     public Task<string> CreateDatabaseAsync(string name) => fixture.CreateDatabaseAsync($"{name}_{Guid.NewGuid().ToString("N")[..10]}");
 
-    /// <summary>Creates a product in a category of its own through Catalog's Gateway, the product as <paramref name="context"/>.</summary>
+    /// <summary>
+    /// Creates a product in a category of its own through Catalog's Gateway, the product as <paramref name="context"/>, both
+    /// in its tenant, by default the test tenant.
+    /// </summary>
     public static async Task CreateProductAsync(IHost catalogHost, Guid product, string name, OperationContext? context = null)
     {
         var gateway = catalogHost.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>();
         var category = Guid.CreateVersion7();
-        Assert.True((await gateway.SendAsync(new CreateCategoryCommand(category, $"Lamps {category}"), TestContext.Current.CancellationToken)).IsSuccess);
+        var tenant = context?.Tenant ?? AppFixture.TestTenant;
+        Assert.True(
+            (
+                await gateway.SendAsync(
+                    new CreateCategoryCommand(category, $"Lamps {category}"),
+                    new OperationContext(GatewayTestExtensions.TestActor, tenant),
+                    TestContext.Current.CancellationToken
+                )
+            ).IsSuccess
+        );
         Assert.True(
             (
                 await gateway.SendAsync(
                     new CreateProductCommand(product, category, name),
-                    context ?? new OperationContext(GatewayTestExtensions.TestActor),
+                    context ?? new OperationContext(GatewayTestExtensions.TestActor, tenant),
                     TestContext.Current.CancellationToken
                 )
             ).IsSuccess

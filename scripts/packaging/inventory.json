@@ -9,16 +9,33 @@
     { "id": "PouryaKit.Persistence.EFCore", "type": "PouryaKit.Persistence.EFCore.PouryaKitDbContext" },
     { "id": "PouryaKit.Persistence.Postgres", "type": "PouryaKit.Persistence.Postgres.PostgresServiceCollectionExtensions" },
     { "id": "PouryaKit.Persistence.Dapper", "type": "PouryaKit.Persistence.Dapper.IReadConnectionFactory" },
+    { "id": "PouryaKit.Persistence.Marten", "type": "PouryaKit.Persistence.Marten.IStreams" },
     { "id": "PouryaKit.Security", "type": "PouryaKit.Security.IActorPermissions" },
     { "id": "PouryaKit.Observability", "type": "PouryaKit.Observability.OperationTelemetry" },
     { "id": "PouryaKit.Caching", "type": "PouryaKit.Caching.ICacheableQuery" },
+    { "id": "PouryaKit.Storage", "type": "PouryaKit.Storage.IFileStorage" },
+    { "id": "PouryaKit.Storage.S3", "type": "PouryaKit.Storage.S3.S3StorageServiceCollectionExtensions" },
+    { "id": "PouryaKit.Storage.AzureBlob", "type": "PouryaKit.Storage.AzureBlob.AzureBlobStorageServiceCollectionExtensions" },
+    { "id": "PouryaKit.Email", "type": "PouryaKit.Email.IEmailSender" },
+    { "id": "PouryaKit.Email.MailKit", "type": "PouryaKit.Email.MailKit.PouryaKitMailKitOptions" },
+    { "id": "PouryaKit.Localization", "type": "PouryaKit.Localization.LocalizationServiceCollectionExtensions" },
+    { "id": "PouryaKit.ReverseProxy", "type": "PouryaKit.ReverseProxy.ReverseProxyHostApplicationBuilderExtensions" },
+    { "id": "PouryaKit.Aspire", "type": "PouryaKit.Aspire.AspireDistributedApplicationBuilderExtensions" },
+    { "id": "PouryaKit.Realtime", "type": "PouryaKit.Realtime.IRealtimePublisher" },
+    { "id": "PouryaKit.Reporting", "type": "PouryaKit.Reporting.IReportRenderer" },
+    { "id": "PouryaKit.Reporting.Module", "type": "PouryaKit.Reporting.Module.ReportModule" },
     { "id": "PouryaKit.Security.JwtBearer", "type": "PouryaKit.Security.JwtBearer.PouryaKitJwtBearerOptions" },
     { "id": "PouryaKit.Messaging", "type": "PouryaKit.Messaging.WireNameAttribute" },
     { "id": "PouryaKit.Messaging.Wolverine", "type": "PouryaKit.Messaging.Wolverine.IReceipts" },
     { "id": "PouryaKit.Messaging.Wolverine.EFCore", "type": "PouryaKit.Messaging.Wolverine.EFCore.ReceiptTable" },
+    { "id": "PouryaKit.Messaging.Wolverine.Marten", "type": "PouryaKit.Messaging.Wolverine.Marten.WolverineMartenHostApplicationBuilderExtensions" },
+    { "id": "PouryaKit.Messaging.Wolverine.Sagas", "type": "PouryaKit.Messaging.Wolverine.Sagas.PouryaKitSaga" },
     { "id": "PouryaKit.Messaging.Wolverine.RabbitMq", "type": "PouryaKit.Messaging.Wolverine.RabbitMq.RabbitMqHostApplicationBuilderExtensions" },
     { "id": "PouryaKit.Web", "type": "PouryaKit.Web.IEndpoint" },
     { "id": "PouryaKit.Web.OpenApi", "type": "PouryaKit.Web.OpenApi.PouryaKitOpenApiOptions" },
+    { "id": "PouryaKit.Grpc", "type": "PouryaKit.Grpc.ResultGrpcExtensions" },
+    { "id": "PouryaKit.AI", "type": "PouryaKit.AI.GatewayToolExtensions" },
+    { "id": "PouryaKit.AI.Postgres", "type": "PouryaKit.AI.Postgres.IVectorStore" },
     { "id": "PouryaKit.Testing", "type": "PouryaKit.Testing.Delivery" },
     { "id": "PouryaKit.Templates", "kind": "template" }
   ],
@@ -32,22 +49,29 @@
       "name": "modular-monolith",
       "source": "samples/ModularMonolith/src",
       "entries": ["ModularMonolith.Host/ModularMonolith.Host.csproj", "Inventory.Host/Inventory.Host.csproj"],
-      "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Observability", "PouryaKit.Caching", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
-      "excluded": []
+      "packages": ["PouryaKit.Modularity", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Persistence.Postgres", "PouryaKit.Persistence.Dapper", "PouryaKit.Observability", "PouryaKit.Caching", "PouryaKit.Email.MailKit", "PouryaKit.Grpc", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi", "PouryaKit.Realtime", "PouryaKit.AI", "PouryaKit.Reporting.Module", "PouryaKit.Storage.S3"],
+      "excluded": ["PouryaKit.Localization", "PouryaKit.AI.Postgres", "Pgvector"]
+    },
+    {
+      "name": "sagas",
+      "source": "tests/ModularMonolith.Tests/Sagas",
+      "entries": ["ModularMonolith.Tests.Sagas.Host/ModularMonolith.Tests.Sagas.Host.csproj"],
+      "packages": ["PouryaKit.Messaging.Wolverine.Sagas", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Modularity", "PouryaKit.Persistence.Postgres"],
+      "excluded": ["PouryaKit.Testing"]
     },
     {
       "name": "template-monolith",
       "template": "pouryakit-monolith",
-      "packages": ["PouryaKit.Caching", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
+      "packages": ["PouryaKit.Caching", "PouryaKit.Grpc", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.ReverseProxy", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi", "PouryaKit.Realtime"],
       "tests": ["PouryaKit.Testing"],
-      "excluded": ["PouryaKit.Modularity", "PouryaKit.Testing"]
+      "excluded": ["PouryaKit.Modularity", "PouryaKit.AI", "PouryaKit.Testing"]
     },
     {
       "name": "template-modular-monolith",
       "template": "pouryakit-modular-monolith",
-      "packages": ["PouryaKit.Modularity", "PouryaKit.Caching", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi"],
+      "packages": ["PouryaKit.Modularity", "PouryaKit.Caching", "PouryaKit.Grpc", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.ReverseProxy", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi", "PouryaKit.Realtime", "PouryaKit.AI"],
       "tests": ["PouryaKit.Testing"],
-      "excluded": ["PouryaKit.Testing"]
+      "excluded": ["PouryaKit.Testing", "PouryaKit.AI.Postgres", "Pgvector"]
     }
   ]
 }

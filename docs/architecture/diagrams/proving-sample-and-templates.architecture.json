@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "eb3c45c182e365dd6438c6f49377aa0893fd1603",
+      "revision": "1dc41f848c5c2526c7582d99c4ad2da3e774c98e",
       "link_mode": "web"
     }
   },
@@ -28,14 +28,14 @@
       "sources": [
         {
           "path": "tests/ModularMonolith.Tests/Fixtures/AppFixture.cs",
-          "line": 27,
-          "end_line": 72,
+          "line": 28,
+          "end_line": 91,
           "label": "hosts ModularMonolith.Host"
         },
         {
           "path": "tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs",
-          "line": 95,
-          "end_line": 149,
+          "line": 94,
+          "end_line": 148,
           "label": "both Hosts on one broker"
         }
       ]
@@ -44,7 +44,7 @@
       "id": "mmhost",
       "type": "backend",
       "label": "ModularMonolith.Host",
-      "sublabel": "the web Host: Catalog and Billing, and Inventory without a broker",
+      "sublabel": "the web Host: Catalog, Billing, Ledger, and Inventory without a broker",
       "pos": [
         40,
         200
@@ -56,21 +56,55 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 76,
-          "end_line": 87,
+          "line": 84,
+          "end_line": 97,
           "label": "composes the Modules"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 33,
-          "end_line": 40,
+          "line": 41,
+          "end_line": 48,
           "label": "the broker and its service name"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
           "line": 5,
-          "end_line": 27,
+          "end_line": 34,
           "label": "its references"
+        }
+      ]
+    },
+    {
+      "id": "reportmodule",
+      "type": "external",
+      "label": "PouryaKit.Reporting.Module",
+      "sublabel": "the Kit's report Module, a package",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        400,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/PouryaKit.Reporting.Module/ReportModule.cs",
+          "line": 46,
+          "end_line": 71,
+          "label": "schema reports, endpoints, three commands"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/SalesReports.cs",
+          "line": 14,
+          "end_line": 60,
+          "label": "the Host's one report kind"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 113,
+          "end_line": 120,
+          "label": "S3 storage and the Host's two ports"
         }
       ]
     },
@@ -96,8 +130,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 130,
-          "end_line": 141,
+          "line": 132,
+          "end_line": 143,
           "label": "/alive always; /health in Development"
         },
         {
@@ -105,6 +139,40 @@
           "line": 8,
           "end_line": 27,
           "label": "its references"
+        }
+      ]
+    },
+    {
+      "id": "proxy",
+      "type": "cloud",
+      "label": "ModularMonolith.ReverseProxy",
+      "sublabel": "the Reverse proxy, with the service defaults",
+      "pos": [
+        700,
+        136
+      ],
+      "size": [
+        330,
+        52
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.ReverseProxy/ReverseProxyHost.cs",
+          "line": 16,
+          "end_line": 33,
+          "label": "service defaults, YARP routes, /alive"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.ReverseProxy/appsettings.json",
+          "line": 3,
+          "end_line": 31,
+          "label": "every path to modular-monolith, no probe"
+        },
+        {
+          "path": "src/PouryaKit.Templates/content/shared/src/ModularMonolith.ReverseProxy/Program.cs",
+          "line": 7,
+          "end_line": 17,
+          "label": "each template's own copy"
         }
       ]
     },
@@ -118,21 +186,21 @@
         372
       ],
       "size": [
-        240,
+        200,
         80
       ],
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Modules/Billing/Billing/BillingModule.cs",
-          "line": 15,
-          "end_line": 21,
-          "label": "subscribes v1; a delayed command"
+          "line": 17,
+          "end_line": 24,
+          "label": "subscribes v1 and AccountOpenedV1; ExpireQuote"
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Billing/Billing/Billing.csproj",
           "line": 8,
-          "end_line": 14,
-          "label": "Catalog's Contracts, never Catalog"
+          "end_line": 15,
+          "label": "Catalog's and Ledger's Contracts only"
         }
       ]
     },
@@ -142,18 +210,18 @@
       "label": "Catalog",
       "sublabel": "products, categories, cached GetProduct",
       "pos": [
-        410,
+        350,
         380
       ],
       "size": [
-        260,
+        220,
         64
       ],
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 28,
-          "end_line": 48,
+          "line": 29,
+          "end_line": 53,
           "label": "publishes v1, v2 and the Snapshot"
         },
         {
@@ -165,7 +233,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Catalog.csproj",
           "line": 8,
-          "end_line": 19,
+          "end_line": 22,
           "label": "its Contracts and Kit packages"
         }
       ]
@@ -176,18 +244,18 @@
       "label": "Inventory",
       "sublabel": "stock items, Catalog's products, ReconcileStock",
       "pos": [
-        790,
+        680,
         380
       ],
       "size": [
-        250,
+        220,
         64
       ],
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs",
           "line": 19,
-          "end_line": 35,
+          "end_line": 37,
           "label": "three subscriptions; a recurring command"
         },
         {
@@ -199,23 +267,57 @@
       ]
     },
     {
+      "id": "ledger",
+      "type": "backend",
+      "label": "Ledger",
+      "sublabel": "a Stream Module: accounts on Marten",
+      "pos": [
+        930,
+        380
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/Modules/Ledger/Ledger/LedgerModule.cs",
+          "line": 14,
+          "end_line": 25,
+          "label": "Streams, tenant-scoped; publishes v1"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Events/Notifications/ActivateAccountNotificationHandler.cs",
+          "line": 10,
+          "end_line": 27,
+          "label": "activates and publishes in one commit"
+        },
+        {
+          "path": "samples/ModularMonolith/src/Modules/Ledger/Ledger/Ledger.csproj",
+          "line": 8,
+          "end_line": 15,
+          "label": "its Contracts and Kit packages, no Marten"
+        }
+      ]
+    },
+    {
       "id": "servicedefaults",
       "type": "frontend",
       "label": "ModularMonolith.ServiceDefaults",
       "sublabel": "template content, not a Kit package",
       "pos": [
-        1075,
+        1120,
         380
       ],
       "size": [
-        270,
+        230,
         64
       ],
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
           "line": 16,
-          "end_line": 47,
+          "end_line": 48,
           "label": "the service defaults recipes"
         },
         {
@@ -226,8 +328,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 87,
-          "end_line": 95,
+          "line": 89,
+          "end_line": 97,
           "label": "liveness and readiness checks"
         }
       ]
@@ -238,7 +340,7 @@
       "label": "Catalog.Contracts",
       "sublabel": "ProductCreatedV1, V2, ProductSnapshotV1, ICatalogProducts",
       "pos": [
-        480,
+        300,
         560
       ],
       "size": [
@@ -249,8 +351,8 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj",
           "line": 1,
-          "end_line": 5,
-          "label": "plain records, no references"
+          "end_line": 14,
+          "label": "records and a .proto, no Kit"
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/ICatalogProducts.cs",
@@ -264,7 +366,7 @@
       "id": "templates",
       "type": "cloud",
       "label": "PouryaKit.Templates",
-      "sublabel": "pouryakit-monolith (Catalog) and pouryakit-modular-monolith (all three)",
+      "sublabel": "pouryakit-monolith (Catalog) and pouryakit-modular-monolith (all four)",
       "pos": [
         40,
         720
@@ -277,7 +379,7 @@
         {
           "path": "src/PouryaKit.Templates/PouryaKit.Templates.csproj",
           "line": 18,
-          "end_line": 31,
+          "end_line": 32,
           "label": "packs the sample's code when packed"
         },
         {
@@ -293,6 +395,40 @@
           "label": "modular: every sample Module"
         }
       ]
+    },
+    {
+      "id": "apphost",
+      "type": "cloud",
+      "label": "ModularMonolith.AppHost",
+      "sublabel": "Aspire: PostgreSQL, Redis, RabbitMQ",
+      "pos": [
+        1035,
+        40
+      ],
+      "size": [
+        320,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
+          "line": 13,
+          "end_line": 17,
+          "label": "the containers and databases"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
+          "line": 24,
+          "end_line": 59,
+          "label": "each Host on its resources, Ollama opt-in"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj",
+          "line": 1,
+          "end_line": 14,
+          "label": "Aspire.AppHost.Sdk, both Hosts"
+        }
+      ]
     }
   ],
   "boundaries": [
@@ -300,11 +436,13 @@
       "kind": "region",
       "label": "samples/ModularMonolith",
       "wraps": [
+        "proxy",
         "mmhost",
         "invhost",
         "billing",
         "catalog",
         "inventory",
+        "ledger",
         "servicedefaults",
         "contracts"
       ],
@@ -312,6 +450,20 @@
     }
   ],
   "connections": [
+    {
+      "id": "apphost-invhost",
+      "from": "apphost",
+      "to": "invhost",
+      "label": "runs on PostgreSQL, RabbitMQ",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "apphost-mmhost",
+      "from": "apphost",
+      "to": "mmhost",
+      "label": "runs on PostgreSQL, Redis, RabbitMQ"
+    },
     {
       "id": "tests-mmhost",
       "from": "tests",
@@ -327,6 +479,14 @@
       "label": "hosts it with a broker",
       "fromSide": "right",
       "toSide": "top"
+    },
+    {
+      "id": "mmhost-reportmodule",
+      "from": "mmhost",
+      "to": "reportmodule",
+      "label": "composes, as a package",
+      "fromSide": "top",
+      "toSide": "bottom"
     },
     {
       "id": "mmhost-billing",
@@ -354,10 +514,26 @@
       "toSide": "top"
     },
     {
+      "id": "mmhost-ledger",
+      "from": "mmhost",
+      "to": "ledger",
+      "label": "composes",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
       "id": "invhost-inventory",
       "from": "invhost",
       "to": "inventory",
       "label": "composes",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "proxy-mmhost",
+      "from": "proxy",
+      "to": "mmhost",
+      "label": "forwards by route",
       "fromSide": "left",
       "toSide": "top"
     },
@@ -386,6 +562,13 @@
       "variant": "emphasis",
       "fromSide": "right",
       "toSide": "left"
+    },
+    {
+      "id": "ledger-billing",
+      "from": "ledger",
+      "to": "billing",
+      "label": "AccountOpenedV1",
+      "variant": "emphasis"
     },
     {
       "id": "catalog-contracts",
@@ -432,12 +615,16 @@
       "label": "packs"
     },
     {
+      "id": "templates-ledger",
+      "from": "templates",
+      "to": "ledger",
+      "label": "packs"
+    },
+    {
       "id": "templates-servicedefaults",
       "from": "templates",
       "to": "servicedefaults",
-      "label": "packs",
-      "fromSide": "top",
-      "toSide": "bottom"
+      "label": "packs"
     }
   ],
   "cards": [
@@ -447,6 +634,7 @@
       "items": [
         "Green arrows are Integration Events and Snapshots, written to the Outbox in the publishing Unit of Work's commit and delivered to each subscription; no Module references another Module.",
         "Inventory and Billing reference Catalog's Contracts and never Catalog: Inventory receives ProductCreatedV1, ProductCreatedV2 and ProductSnapshotV1, Billing ProductCreatedV1 under its own subscription.",
+        "Ledger, a Stream Module, publishes AccountOpenedV1 in the commit that activates the account; Billing receives it through Ledger's Contracts and opens a welcome quote.",
         "Billing schedules ExpireQuote as a delayed command; Inventory declares ReconcileStock as a recurring command for the system Actor inventory.stock-reconciler."
       ]
     },
@@ -454,9 +642,12 @@
       "dot": "cyan",
       "title": "The two Hosts",
       "items": [
-        "With ConnectionStrings:broker, ModularMonolith.Host composes Catalog and Billing under the service name modular-monolith, and Inventory.Host composes Inventory under the service name inventory; what Catalog publishes then reaches Inventory over RabbitMQ.",
+        "With ConnectionStrings:broker, ModularMonolith.Host composes Catalog, Billing and Ledger under the service name modular-monolith, and Inventory.Host composes Inventory under the service name inventory; what Catalog publishes then reaches Inventory over RabbitMQ.",
         "Inventory.Host composes ModularMonolith.ServiceDefaults; ModularMonolith.Host does not.",
-        "ModularMonolith.ServiceDefaults references EF Core Relational for its readiness check, OpenTelemetry, service discovery, Serilog, PouryaKit.Web and PouryaKit.Observability."
+        "ModularMonolith.ReverseProxy composes the service defaults and PouryaKit.ReverseProxy, runs no Operation, and routes every path to ModularMonolith.Host, whose liveness probe its settings turn off.",
+        "ModularMonolith.ServiceDefaults references EF Core Relational for its readiness check, OpenTelemetry, service discovery, Serilog, PouryaKit.Web and PouryaKit.Observability.",
+        "ModularMonolith.AppHost, an Aspire AppHost, runs both Hosts as processes on PouryaKit.Aspire's containers, giving each the connection strings its composition reads: with the broker, ModularMonolith.Host leaves Inventory to Inventory.Host. Run with LocalAgent=true, it adds Ollama and points that Host's agent at it.",
+        "ModularMonolith.Host also composes PouryaKit.Reporting.Module, a Kit package no template packs, with its one report kind, SalesReports, and stores the reports in an S3 bucket."
       ]
     },
     {
@@ -464,7 +655,7 @@
       "title": "The templates",
       "items": [
         "PouryaKit.Templates keeps no copy of the business code: it packs the sample Modules' code, the service defaults recipes and two files of ModularMonolith.Host when the package is packed.",
-        "Each template's Host, project files and smoke test are the template's own; the monolith takes Catalog without Modularity."
+        "Each template's Host, Reverse proxy, project files and smoke test are the template's own; the monolith takes Catalog without Modularity, and Ledger, a second write model, stays in the modular monolith."
       ]
     }
   ]

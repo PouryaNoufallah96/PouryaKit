@@ -21,9 +21,10 @@ public sealed class SampleNamespaceTests
     {
         var projects = Directory.GetFiles(Source, "*.csproj", SearchOption.AllDirectories);
 
-        // Two Hosts, the service defaults, three Modules and Catalog's Contracts: a walk that finds none judges nothing, and
-        // a walk that skips the files judges nothing either, so the partial type IDE0130 misses must be among the judged.
-        Assert.Equal(7, projects.Length);
+        // Two Hosts, the Reverse proxy, their AppHost, the service defaults, four Modules and Catalog's and Ledger's Contracts: a walk
+        // that finds none judges nothing, and a walk that skips the files judges nothing either, so the partial type IDE0130
+        // misses must be among the judged.
+        Assert.Equal(11, projects.Length);
         var judged = projects.SelectMany(Judged).ToList();
         Assert.Contains(judged, file => file.Path == "ModularMonolith.Host/LoggedNewProductAnnouncer.cs");
         Assert.Empty(judged.SelectMany(file => Drift(file.Path, file.Expected, File.ReadAllText(file.FullPath))));

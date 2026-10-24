@@ -18,9 +18,13 @@ internal sealed class ReadOperationContextEndpoint : IEndpoint
     {
         routes.MapGet("/context", ReadAsync);
         routes.MapGet("/public/context", ReadAsync).AllowAnonymousAs(Visitor);
+        routes.MapGet("/kiosk/context", ReadAsync).AllowAnonymousAs(Kiosk);
     }
 
     public static Actor Visitor { get; } = Actor.System("stub.visitor");
+
+    /// <summary>The Actor of a second public endpoint, whose anonymous callers are not <see cref="Visitor"/>'s.</summary>
+    public static Actor Kiosk { get; } = Actor.System("stub.kiosk");
 
     private static async Task<Microsoft.AspNetCore.Http.IResult> ReadAsync(
         OperationContext context,

@@ -402,3 +402,6 @@ name of one seam the #54 amendment lists.
 - **The Outbox marker is `IOutbox`.** Ticket #81 (decision D16) renamed the Messaging.Wolverine marker the #54
   amendment lists, because it marks that a Host has an Outbox for every kind the glossary's Outbox covers, not for
   Notifications alone. Its place among the pipeline's contracts is unchanged.
+  *Since 2026-10-24 (the PR #143 review) it is `PouryaKit.Cqrs`'s, so each persistence package's composition check
+  reads it: a Host with an Outbox in which a write model's Unit of Work has none fails when it is built. Its place
+  among the pipeline's contracts is still unchanged.*

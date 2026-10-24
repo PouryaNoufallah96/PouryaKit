@@ -178,8 +178,8 @@ ${ticket
     ? `gh issue view ${ticket} --json title,body --jq '"# " + .title + "\\n\\n" + .body' > "$run/spec.md"`
     : `cp '${spec}' "$run/spec.md"`}
 test -s "$run/spec.md" || { echo "kit-review: the spec is empty" >&2; exit 2; }
-${ticket ? `parent=$(grep -A 3 '^## Parent' "$run/spec.md" | grep -oE 'issues/[0-9]+' | head -1 | grep -oE '[0-9]+' || true)
-if [ -n "$parent" ]; then printf '\\n\\n## Parent specification #%s (its body, for a reviewer that cannot fetch it)\\n\\n' "$parent" >> "$run/spec.md"; gh issue view "$parent" --json body --jq .body >> "$run/spec.md"; fi
+${ticket ? `parent=$(grep -A 3 '^## Parent' "$run/spec.md" | grep -oE '(issues/|Part of #|Parent: #)[0-9]+' | head -1 | grep -oE '[0-9]+' || true)
+if [ -n "$parent" ]; then printf '\\n\\n## Parent specification #%s (its body, for a reviewer that cannot fetch it)\\n\\n' "$parent" >> "$run/spec.md"; gh issue view "$parent" --json body --jq .body >> "$run/spec.md"; printf '\\n\\n## Comments on the parent specification #%s (owner decisions and guidance the ticket says apply)\\n\\n' "$parent" >> "$run/spec.md"; gh issue view "$parent" --json comments --jq '.comments[] | "### " + .author.login + " " + .createdAt + "\\n\\n" + .body + "\\n"' >> "$run/spec.md"; fi
 ` : ''}${evidenceFile ? `test -s '${evidenceFile}' || { echo "kit-review: the evidence file is empty" >&2; exit 2; }
 printf '\\n\\n## Recorded execution evidence for the reviewed commit (supplied by the session)\\n\\nA record below that names the revision, the commands, their outcomes and the environment is the execution record of this commit; treat it as evidence, not as a claim to reproduce. BLOCKED stays the verdict only for required evidence that cannot be inspected at all.\\n\\n' >> "$run/spec.md"
 cat '${evidenceFile}' >> "$run/spec.md"

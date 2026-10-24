@@ -76,5 +76,15 @@ Check `.github/workflows/package-publication.yml` before relying on it.
 - **`validate.py`'s closure split:** `check_consumer` reads a project under a `tests` path segment as a test project, whose closure may hold `excluded` packages; `inventory.json`'s `tests` key adds the test-only packages to the evidence's expected list; `check_production_publish(host, published, refused)` refuses a published `*.dll` whose stem starts with a refused prefix.
 - **A local probe of both templates:** `scratchpad/p87/probe.py` imports `validate` (`consumer_feed`, `template_consumer`, `isolated_env`), packs the dirty tree, installs into a hive and builds and tests both generated solutions (about 4 minutes). Generating both templates with one `-n` and `diff -rq` shows the growth path's file count.
 
+## Disk (#142, 2026-10-18)
+
+- **One `validate.py` evidence directory takes about 8 GB** (a NuGet cache per consumer). With several implementers validating at once the disk filled, the restore failed with "No space left on device", and Docker Desktop stopped and would not start again ("unable to start"), failing every container test of the next run. `validate.py` deletes it itself after a PASS unless `--keep`; pass `--keep` only when the run's `manifest.json` and `packages/` are needed afterwards (a local feed or a publication probe), delete that directory once they are used, and check `df -h` before a run.
+
+## validate.py output and the https launch profile (PR #143 review, 2026-10-24)
+
+- **`--output` that holds files is refused without `--keep`** (`main`, before `skipped`), since a PASS `rmtree`s it; CI's `package-validation.yml` writes `revision.json` there first and passes `--keep` (and `docs/ci.md` now shows `--keep`). A brief's `--output` under the scratchpad must therefore be new or empty.
+- **The templates' Host launch profile is `https`** (`https://localhost:7080;http://localhost:5080`, the only profile, so `dotnet run` takes it); `validate.py` runs the Host only with `--no-launch-profile`, and `TemplateRules` reads `launchSettings.json` only for the sourceName token, so neither cares.
+- **A clean consumer compiles without the 8 GB run**: a scratchpad project (Exe, net10.0, `TreatWarningsAsErrors`, implicit usings) with an absolute `ProjectReference` to the worktree's package and the consumer file as `Program.cs` builds in seconds (`scratchpad/p143/aiconsumer`).
+
 **Why:** each cost a probe or a validation run; the credential rule is not testable without the hosted feed.
 **How to apply:** for a new template or any package that is not a library, any `validate.py` run, any clean consumer, any change to the publication workflow, and a hosted proof of the private feed. Related: [[core-json-and-architecture-test-facts]], [[observability-tracing-and-http-facts]], [[worktree-shell-and-check-gotchas]].

@@ -11,7 +11,6 @@ using ModularMonolith.Tests.Stub;
 using Npgsql;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging.Wolverine;
-using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
 using PouryaKit.Testing;
 using Wolverine;
@@ -35,6 +34,7 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
     private const string KindChanged = "stub.kind-changed";
     private const string StaleNote = "stub.stale-note";
     private const string UnstoredNext = "stub.unstored-next";
+    private const string UnstoredFirst = "stub.unstored-first";
 
     [Fact]
     public async Task ReconcileStock_runs_under_its_system_actor_and_the_occurrence_a_dying_host_stored_runs_after_a_restart()
@@ -623,15 +623,44 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         );
     }
 
+    // The first occurrence is stored once every hosted service has started: its failure fails the start, and the Host the
+    // caller is left with has stopped.
     [Fact]
-    public async Task A_host_whose_recurring_command_has_no_cadence_fails_to_start()
+    public async Task A_host_whose_first_occurrence_fails_to_store_stops_and_fails_its_start()
     {
-        await using var host = Compose(Fixture.ConnectionString, TimeSpan.Zero);
+        var connectionString = await NewDatabaseAsync();
+        await using var host = Compose(
+            connectionString,
+            TimeSpan.FromHours(1),
+            builder =>
+                builder
+                    .Services.AddPouryaKitRecurringCommand<WriteKindChangedNoteCommand>(
+                        UnstoredFirst,
+                        systemActor: "stub.unstored-first",
+                        _ => throw new TimeoutException("The test failed to store the first occurrence."),
+                        typeof(StubModule)
+                    )
+                    .Configure(options => options.Every = TimeSpan.FromHours(1))
+        );
+
+        var thrown = await Assert.ThrowsAsync<TimeoutException>(() => HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken));
+
+        Assert.Equal("The test failed to store the first occurrence.", thrown.Message);
+        Assert.True(host.Lifetime.ApplicationStopped.IsCancellationRequested);
+    }
+
+    // TimeSpan.MaxValue would put the first occurrence past DateTimeOffset.MaxValue, which throws only after the Host started.
+    [Theory]
+    [InlineData(0L)]
+    [InlineData(long.MaxValue)]
+    public async Task A_host_whose_recurring_command_has_no_cadence_fails_to_start(long ticks)
+    {
+        await using var host = Compose(Fixture.ConnectionString, TimeSpan.FromTicks(ticks));
 
         var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
 
         Assert.Equal(
-            $"The recurring command {ReconcileStock} has no cadence: set PouryaKitRecurringCommandOptions.Every, named {ReconcileStock}, longer than zero, as its declaration's options builder binds it.",
+            $"The recurring command {ReconcileStock} has no cadence: set PouryaKitRecurringCommandOptions.Every, named {ReconcileStock}, longer than zero and at most 36500.00:00:00 (MaxEvery), as its declaration's options builder binds it.",
             thrown.Message
         );
     }

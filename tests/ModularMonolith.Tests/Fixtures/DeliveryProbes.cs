@@ -126,7 +126,8 @@ internal static class DeliveryProbes
     private static void Decorate<TService>(IServiceCollection services, Func<IServiceProvider, TService, TService> decorate)
         where TService : class
     {
-        var descriptor = services.Single(descriptor => descriptor.ServiceType == typeof(TService));
+        // The unkeyed one the Kit resolves: in a Host of Modules, the resolver of the Operation's Module's own.
+        var descriptor = services.Single(descriptor => descriptor.ServiceType == typeof(TService) && !descriptor.IsKeyedService);
         services.Remove(descriptor);
         services.AddScoped(provider =>
             decorate(

@@ -7,6 +7,8 @@ using Inventory.Infrastructure.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Cqrs;
+using PouryaKit.Reporting.Module;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -17,7 +19,8 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task Each_module_has_its_own_schema_and_migrations_history_with_snake_case_names()
     {
         var tables = await Fixture.RowsAsync(
-            "select table_schema, table_name from information_schema.tables where table_schema not in ('pg_catalog', 'information_schema', 'wolverine') order by 1, 2"
+            // Marten's own schema, events, has its event tables only once a Stream Module first appends.
+            "select table_schema, table_name from information_schema.tables where table_schema not in ('pg_catalog', 'information_schema', 'wolverine', 'events') order by 1, 2"
         );
         var history = await Fixture.RowsAsync(
             """select 'catalog', migration_id from catalog."__EFMigrationsHistory" union all select 'stub', migration_id from stub."__EFMigrationsHistory" order by 1, 2"""
@@ -39,18 +42,28 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["catalog", "products"],
                 ["inventory", "__EFMigrationsHistory"],
                 ["inventory", "catalog_products"],
+                ["inventory", "pouryakit_number_sequences"],
                 ["inventory", "pouryakit_receipts"],
                 ["inventory", "pouryakit_snapshot_versions"],
                 ["inventory", "product_categories"],
+                ["inventory", "stock_counts"],
                 ["inventory", "stock_items"],
                 ["inventory", "stock_reconciliations"],
+                ["ledger", "pouryakit_idempotency_keys"],
+                ["ledger", "pouryakit_receipts"],
+                ["ledger", "pouryakit_snapshot_versions"],
+                ["reports", "__EFMigrationsHistory"],
+                ["reports", "pouryakit_receipts"],
+                ["reports", "report_jobs"],
                 ["stub", "__EFMigrationsHistory"],
                 ["stub", "badges"],
                 ["stub", "binary_keys"],
+                ["stub", "binders"],
                 ["stub", "books"],
                 ["stub", "cards"],
                 ["stub", "cases"],
                 ["stub", "counters"],
+                ["stub", "dockets"],
                 ["stub", "drawers"],
                 ["stub", "folders"],
                 ["stub", "leaflets"],
@@ -62,6 +75,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["stub", "pouryakit_idempotency_keys"],
                 ["stub", "pouryakit_receipts"],
                 ["stub", "pouryakit_snapshot_versions"],
+                ["stub", "sheets"],
                 ["stub", "shelves"],
                 ["stub", "snapshot_key_copies"],
                 ["stub", "stickers"],
@@ -78,6 +92,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 "catalog PersistencePreparation",
                 "catalog Receipts",
                 "catalog IdempotencyKeys",
+                "catalog Tenants",
                 "stub Initial",
                 "stub NoteTallies",
                 "stub Folders",
@@ -90,6 +105,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 "stub IdempotencyKeys",
                 "stub GeneratedValues",
                 "stub ClientGeneratedValues",
+                "stub TenantBinders",
             ],
             history.Select(row => $"{row[0]} {((string)row[1]).Split('_', 2)[1]}")
         );
@@ -107,6 +123,7 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["is_deleted", "boolean"],
                 ["last_changed_at", "timestamp with time zone"],
                 ["last_changed_by", "text"],
+                ["tenant", "text"],
             ],
             columns
         );
@@ -122,8 +139,15 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
             .Select(options => (DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType))
             .ToDictionary(dbContext => dbContext.GetType(), dbContext => dbContext.Database.CreateExecutionStrategy());
 
+        // The report Module's DbContext is internal to its package.
         Assert.Equal(
-            [typeof(BillingDbContext), typeof(CatalogDbContext), typeof(InventoryDbContext), typeof(StubDbContext)],
+            [
+                typeof(BillingDbContext),
+                typeof(CatalogDbContext),
+                typeof(InventoryDbContext),
+                typeof(ReportModule).Assembly.GetType("PouryaKit.Reporting.Module.ReportDbContext", throwOnError: true),
+                typeof(StubDbContext),
+            ],
             strategies.Keys.OrderBy(type => type.Name)
         );
         Assert.All(strategies.Values, strategy => Assert.False(strategy.RetriesOnFailure));
@@ -139,6 +163,8 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
         await Fixture.RowsAsync("update catalog.categories set version = 7");
 
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
+        // A category is tenant-scoped, so the read runs in the test tenant's Operation.
+        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), typeof(CatalogModule));
         var read = await scope
             .ServiceProvider.GetRequiredService<CatalogDbContext>()
             .Set<Category>()

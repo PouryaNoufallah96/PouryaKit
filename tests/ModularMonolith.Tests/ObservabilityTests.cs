@@ -267,7 +267,7 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
                 request.TraceStateString = TraceState;
                 var created = await catalog.SendAsync(
                     new CreateProductCommand(product, category, $"Lamp {product}"),
-                    new OperationContext(Actor.Person("ada")),
+                    new OperationContext(Actor.Person("ada"), AppFixture.TestTenant),
                     TestContext.Current.CancellationToken
                 );
                 Assert.True(created.IsSuccess);

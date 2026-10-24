@@ -6,7 +6,9 @@ namespace PouryaKit.Persistence;
 /// The connection and transaction of the Operation's active Unit of Work, for a Module-internal write with plain SQL,
 /// such as Dapper, that must commit or roll back with the Operation. Use it only from a command's handler or a Domain
 /// Event Handler, and pass both to every statement:
-/// <c>connection.ExecuteAsync(new CommandDefinition(sql, parameters, transaction, cancellationToken: ct))</c>.
+/// <c>connection.ExecuteAsync(new CommandDefinition(sql, parameters, transaction, cancellationToken: ct))</c>. The
+/// realtime push of <c>PouryaKit.Realtime</c> joins it too, from a Notification Handler's delivery, which runs in a Unit of
+/// Work of its own.
 /// A query never writes, and neither does an authorizer or a validator. Write only to the Module's own non-aggregate
 /// tables, such as projections and read models: an aggregate changes only through its repository, or its version and
 /// Snapshots are bypassed.

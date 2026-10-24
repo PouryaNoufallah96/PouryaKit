@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PouryaKit.Persistence.EFCore\PouryaKit.Persistence.EFCore.csproj" />
+    <ProjectReference Include="..\PouryaKit.Web\PouryaKit.Web.csproj" />
+  </ItemGroup>
+</Project>

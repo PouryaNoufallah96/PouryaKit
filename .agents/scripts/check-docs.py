@@ -54,16 +54,19 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   `docs/adr/`, dated records. A moved file is cited at its new path.
 - Diagram sources: each Archify diagram source, `docs/architecture/diagrams/*.json`, pins `meta.repository.revision`,
   and every entry of a `sources` list in it (`path`, `line`, `end_line`, one line when that is absent) must still
-  describe the code: the revision is in HEAD's history, the path names a file at HEAD, `line` and `end_line` are
-  in order within its lines, and `git diff <revision> HEAD` leaves the file unchanged. A change anywhere in a cited
-  file fails, as a range cannot tell a moved line from a rewritten one. The HTML pages are not read.
+  describe the code: the revision is in HEAD's history (during a merge, one reachable from `MERGE_HEAD` counts), the
+  path names a file at HEAD, `line` and `end_line` are in order within its lines, and no hunk of
+  `git diff <revision> HEAD` starts at or above the range's last line: a change below a cited range leaves its lines
+  where they were, while one inside or above it rewrites or moves them, and a range cannot tell the two apart. The
+  HTML pages are not read.
 
 `--staged` reads the diagram sources and their cited files from the index, and compares those files with the pinned
 revision (the default compares HEAD). A cited file staged together with its diagram passes if the ranges fit the indexed
 file, so the repair path is two commits: the code and the diagram's ranges and labels first, then the diagram re-pinned
-to that commit. A cited file staged without its diagram is refused. The other rules still read the working tree: the hook
-refuses docs and AI-setup paths staged in part, but a source file staged in part can make those rules see different names
-or test declarations from the commit. CI's check on the committed tree is the gate.
+to that commit. A change at or above a cited range staged without its diagram is refused; a change below every cited
+range passes. The other rules still read the working tree: the hook refuses docs and AI-setup paths staged in part, but
+a source file staged in part can make those rules see different names or test declarations from the commit. CI's check
+on the committed tree is the gate.
 
 `--fences` only prints: for each Markdown file changed against HEAD, whether its fenced blocks changed, so an
 implementer knows whether the skill's snippet harness must run.
@@ -130,6 +133,8 @@ REMOVED_TESTS = {
         "removed by #61: its row names it as the test that the composition check's test replaces",
     "SnapshotTests.A_snapshot_declared_with_a_module_in_an_application_without_modules_fails_the_operation_that_would_publish_it":
         "removed by #62, as its row says: the refusal at commit that it proved is only a backstop now",
+    "GrpcTests.A_client_addressed_at_kestrels_default_url_in_a_kestrel_host_with_no_listener_fails_the_start":
+        "removed by #159: the default is compared once Kestrel has bound it, and no test binds port 5000; its section names the replacements",
 }
 ADOPTED = re.compile(r"//.*\b(shaped like|adapted from|ported from|taken from)\b", re.IGNORECASE)
 KIT_FILES = "- **Kit files:**"
@@ -548,7 +553,9 @@ def check_diagram_sources(files: list[str]) -> int:
         if not sources:
             continue
         # In HEAD's history, not only present: a commit a rebase or squash left behind stays in a local clone for a while.
-        if not re.fullmatch(r"[0-9a-f]{40}", revision) or subprocess.run(["git", "merge-base", "--is-ancestor", revision, "HEAD"], cwd=ROOT, capture_output=True).returncode:
+        # While a merge is being committed, the incoming branch's commits are not HEAD's ancestors yet: MERGE_HEAD's count.
+        heads = ["HEAD"] + (["MERGE_HEAD"] if not subprocess.run(["git", "rev-parse", "-q", "--verify", "MERGE_HEAD"], cwd=ROOT, capture_output=True).returncode else [])
+        if not re.fullmatch(r"[0-9a-f]{40}", revision) or all(subprocess.run(["git", "merge-base", "--is-ancestor", revision, head], cwd=ROOT, capture_output=True).returncode for head in heads):
             failures.append(f"{diagram}: meta.repository.revision {revision or '(none)'} is unreachable here: a shallow clone, or a revision squashed away; {REVERIFY}")
             continue
         paths = sorted({str(source.get("path")) for source in sources})
@@ -558,14 +565,21 @@ def check_diagram_sources(files: list[str]) -> int:
         grep_args = ("--cached", "-c", "") if STAGED else ("-c", "", "HEAD")
         counts = subprocess.run(["git", "-c", "core.quotePath=false", "--literal-pathspecs", "grep", *grep_args, "--", *paths], cwd=ROOT, capture_output=True, text=True).stdout
         lines = {path: int(count) for path, _, count in ((row if STAGED else row.removeprefix("HEAD:")).rpartition(":") for row in counts.splitlines())}
-        if STAGED:
-            # The commit being made: the index against the revision. A diagram staged with the cited file is being
-            # updated for it (its pin follows in the next commit), so only a cited file staged without its diagram fails.
-            changed = set(git("-c", "core.quotePath=false", "--literal-pathspecs", "diff", "--name-only", "--cached", revision, "--", *paths).splitlines())
-            if git("diff", "--name-only", "--cached", "--", diagram).strip():
-                changed -= set(git("diff", "--name-only", "--cached", "--", *paths).splitlines())
-        else:
-            changed = set(git("-c", "core.quotePath=false", "--literal-pathspecs", "diff", "--name-only", revision, "HEAD", "--", *paths).splitlines())
+        # The hunks that moved or rewrote lines of each cited file since the revision, as (first new line, new line count).
+        # A change strictly below a cited range leaves the range's lines where they were; one at or above it does not.
+        against = ["--cached", revision] if STAGED else [revision, "HEAD"]
+        hunks = {
+            path: [
+                (int(hunk.group(1)), int(hunk.group(2)) if hunk.group(2) is not None else 1)
+                for hunk in re.finditer(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", git("-c", "core.quotePath=false", "--literal-pathspecs", "diff", "-U0", *against, "--", path), re.M)
+            ]
+            for path in paths
+        }
+        if STAGED and git("diff", "--name-only", "--cached", "--", diagram).strip():
+            # The commit being made updates the diagram with the cited file (its pin follows in the next commit), so only
+            # a cited file staged without its diagram is judged.
+            for path in git("diff", "--name-only", "--cached", "--", *paths).splitlines():
+                hunks[path] = []
         for source in sources:
             path, first = str(source.get("path")), source.get("line")
             last = source.get("end_line", first)
@@ -573,8 +587,8 @@ def check_diagram_sources(files: list[str]) -> int:
                 problem = f"names no file at {snapshot}"
             elif not all(type(n) is int for n in (first, last)) or not 1 <= first <= last <= lines[path]:
                 problem = f"is no ordered range within the file's {lines[path]} lines"
-            elif path in changed:
-                problem = f"cites a file changed since the revision {revision[:7]}"
+            elif any(start <= last if count else start < last for start, count in hunks.get(path, [])):
+                problem = f"cites lines changed or moved since the revision {revision[:7]}"
             else:
                 continue
             failures.append(f"{diagram}: {path}:{first}" + (f"-{last}" if last != first else "") + f" {problem}; {REVERIFY}")

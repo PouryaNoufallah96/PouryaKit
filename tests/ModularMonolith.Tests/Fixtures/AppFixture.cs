@@ -22,15 +22,34 @@ namespace ModularMonolith.Tests.Fixtures;
 /// authenticating callers with <see cref="TestAuthentication"/> (its bearer scheme trusts <see cref="TestIssuer"/>),
 /// trusting the caller <see cref="TrustedPeer"/> as a peer Host, granting the tests' own Actor the permissions
 /// <see cref="TestActorPermissions"/> lists, delivering at test speed, and committing through the
-/// <see cref="CommitProbe"/>.
+/// <see cref="CommitProbe"/>. The shared Host also receives <see cref="TenantProbes"/> into Catalog, and runs
+/// <see cref="StreamCommits"/> after each commit of Ledger's Marten store.
 /// </summary>
 public sealed class AppFixture : HostFixture
 {
     /// <summary>The authenticated caller the Host trusts as a peer, configured as the sample Host reads its peers.</summary>
     public const string TrustedPeer = "inventory-host";
 
+    /// <summary>
+    /// The tenant a test's Catalog Operations run for when the test does not care which: Catalog is tenant-scoped, so
+    /// every Operation of it needs one (<see cref="CatalogGatewayExtensions"/>).
+    /// </summary>
+    public const string TestTenant = "tests";
+
+    /// <summary>The Marten store listener of the shared Host, which runs after each commit of a Stream Module's Operation.</summary>
+    internal static StreamCommitProbe StreamCommits { get; } = new();
+
     protected override IHost CreateHost(string connectionString) =>
-        ComposeHost("Development", connectionString, Logs);
+        ComposeHost(
+            "Development",
+            connectionString,
+            Logs,
+            builder =>
+            {
+                TenantProbes.Receive(builder.Services);
+                StreamCommitProbe.Install(builder.Services, StreamCommits);
+            }
+        );
 
     /// <summary>
     /// The application as the tests host it, in <paramref name="environment"/>, built but not started;

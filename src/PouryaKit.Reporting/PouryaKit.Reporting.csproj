@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" />
+    <PackageReference Include="DocumentFormat.OpenXml" />
+    <PackageReference Include="PDFsharp-MigraDoc" />
+    <!-- PDFsharp 6.2.4 depends on 8.0.1, which CVE-2026-84008 and CVE-2026-70162 affect up to 10.0.12; the patched
+         floor until PDFsharp raises its own. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PouryaKit.Domain\PouryaKit.Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Roboto 2.138 (Apache-2.0), embedded so a PDF renders without a system font; its licence ships beside it. -->
+    <EmbeddedResource Include="Fonts\Roboto-Regular.ttf" LogicalName="PouryaKit.Reporting.Roboto-Regular.ttf" />
+    <EmbeddedResource Include="Fonts\Roboto-Bold.ttf" LogicalName="PouryaKit.Reporting.Roboto-Bold.ttf" />
+    <None Include="Fonts\LICENSE.txt" Pack="true" PackagePath="fonts/Roboto-LICENSE.txt" />
+  </ItemGroup>
+</Project>

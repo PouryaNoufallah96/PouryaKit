@@ -8,7 +8,7 @@
     "locale": "en",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "9503cf98baf3455eeacd786c2497f2a27512b8a5",
+      "revision": "8cc8261dab070f0709cf00d6e1a9dbc63e7468e1",
       "provider": "github",
       "link_mode": "web"
     },
@@ -122,15 +122,15 @@
           "label": "a Module added twice throws"
         },
         {
-          "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs",
-          "line": 42,
-          "end_line": 50,
+          "path": "src/PouryaKit.Messaging.Wolverine/MessageStoreHostApplicationBuilderExtensions.cs",
+          "line": 40,
+          "end_line": 48,
           "label": "store connection string checked"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
-          "line": 100,
-          "end_line": 114,
+          "line": 101,
+          "end_line": 115,
           "label": "UseWolverine lambda, then configure"
         }
       ],
@@ -239,8 +239,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs",
-          "line": 117,
-          "end_line": 123,
+          "line": 120,
+          "end_line": 126,
           "label": "recurring cadence validated"
         },
         {
@@ -299,8 +299,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs",
-          "line": 28,
-          "end_line": 29,
+          "line": 31,
+          "end_line": 32,
           "label": "creates its store tables at start"
         },
         {
@@ -324,14 +324,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Composition/DurableQueuesCheck.cs",
-          "line": 26,
-          "end_line": 52,
-          "label": "subscription and delayed queues"
+          "line": 28,
+          "end_line": 72,
+          "label": "subscription, Saga and delayed queues"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Composition/DurableQueuesCheck.cs",
-          "line": 54,
-          "end_line": 70,
+          "line": 74,
+          "end_line": 88,
           "label": "broker listeners durable"
         }
       ]
@@ -350,19 +350,19 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/RecurringCommandStart.cs",
           "line": 12,
-          "end_line": 26,
+          "end_line": 45,
           "label": "after DurableQueuesCheck"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/RecurringCommandStart.cs",
-          "line": 29,
-          "end_line": 51,
+          "line": 48,
+          "end_line": 70,
           "label": "unless one waits in the store"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs",
-          "line": 114,
-          "end_line": 116,
+          "line": 116,
+          "end_line": 119,
           "label": "registered after DurableQueuesCheck"
         }
       ]

@@ -46,6 +46,34 @@ public static class OperationTypes
         return KeyNames.GetOrAdd(operation, static type => $"{type.FullName}, {type.Assembly.GetName().Name}");
     }
 
+    /// <summary>
+    /// Every command and query that registering <paramref name="types"/>, concrete types as
+    /// <see cref="PouryaKit.Core.ImplementingTypes.Of"/> returns them, makes dispatchable: the commands and queries among them, and each
+    /// one a handler among them handles, wherever it is declared, such as in a Module's Contracts. Each once. A Kit
+    /// package's registration of a check on every command and query of the Features reads this set, so the check covers
+    /// what the dispatcher runs.
+    /// </summary>
+    public static IEnumerable<Type> Dispatchable(IEnumerable<Type> types)
+    {
+        ArgumentNullException.ThrowIfNull(types);
+        Type[] all = [.. types];
+        return all.Where(IsOperation).Concat(all.Select(HandlerBase).OfType<Type>().Select(handler => handler.GenericTypeArguments[0])).Distinct();
+    }
+
+    // The handler service a handler class is registered as: the first base class that is one, or null.
+    internal static Type? HandlerBase(Type type)
+    {
+        for (var current = type.BaseType; current is not null; current = current.BaseType)
+        {
+            if (HandledBy(current) is not null)
+            {
+                return current;
+            }
+        }
+
+        return null;
+    }
+
     private static bool DerivesFrom(Type type, bool query)
     {
         ArgumentNullException.ThrowIfNull(type);

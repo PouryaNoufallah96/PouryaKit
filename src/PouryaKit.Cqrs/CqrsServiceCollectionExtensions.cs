@@ -33,6 +33,7 @@ public static class CqrsServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(featureAssemblies);
 
             var assemblies = IModuleServices.FeatureAssembliesOf(services, featureAssemblies);
+            ComposedFeatures.In(services).AddDispatching(IModuleServices.ModuleOf(services), assemblies);
             AddDispatcher(services);
 
             // In declaration order, assembly by assembly, which is the order an operation's authorizers run in.
@@ -45,7 +46,7 @@ public static class CqrsServiceCollectionExtensions
             var types = classes.Where(type => !type.IsGenericTypeDefinition).ToList();
 
             var handlers = types
-                .Select(type => (Implementation: type, Service: HandlerBase(type)))
+                .Select(type => (Implementation: type, Service: OperationTypes.HandlerBase(type)))
                 .Where(handler => handler.Service is not null)
                 .ToList();
             var authorizers = types
@@ -58,7 +59,7 @@ public static class CqrsServiceCollectionExtensions
                 .ToList();
 
             var handlersByOperation = handlers.ToLookup(handler => handler.Service!.GenericTypeArguments[0]);
-            var operations = types.Where(OperationTypes.IsOperation).Concat(handlersByOperation.Select(group => group.Key)).Distinct();
+            var operations = OperationTypes.Dispatchable(types);
             List<string> problems =
             [
                 .. classes
@@ -66,7 +67,7 @@ public static class CqrsServiceCollectionExtensions
                         type.IsGenericTypeDefinition
                         && (
                             OperationTypes.IsOperation(type)
-                            || HandlerBase(type) is not null
+                            || OperationTypes.HandlerBase(type) is not null
                             || AuthorizerInterfaces(type).Any()
                             || DomainEventHandlerInterfaces(type).Any()
                         )
@@ -141,6 +142,7 @@ public static class CqrsServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, DeclaredAuthorizersCheck>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, QueryCacheCheck>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, UnitOfWorkCheck>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, TenantRequirementCheck>());
     }
 
     // A second call with the same assembly adds nothing; a different handler for an operation already handled is a
@@ -167,19 +169,6 @@ public static class CqrsServiceCollectionExtensions
     private static IEnumerable<Type> DomainEventHandlerInterfaces(Type type) =>
         type.GetInterfaces()
             .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDomainEventHandler<>));
-
-    private static Type? HandlerBase(Type type)
-    {
-        for (var current = type.BaseType; current is not null; current = current.BaseType)
-        {
-            if (OperationTypes.HandledBy(current) is not null)
-            {
-                return current;
-            }
-        }
-
-        return null;
-    }
 
     // The dispatcher resolves an authorizer by the exact runtime type, so one for an open type parameter, a base type
     // or a marker interface would register and never run.

@@ -133,7 +133,7 @@ public sealed class PageExpressions<TAggregate>
         if (Declaration.Validate(request) is { IsFailure: true } invalid)
         {
             throw new InvalidOperationException(
-                $"The Page request fails its declaration ({string.Join(", ", invalid.Errors.Select(error => error.Code))}); check it with PageDeclaration.Validate in the query's validator."
+                $"The Page request fails its declaration ({string.Join(", ", invalid.Errors.Select(error => error.Code))}); check it with the AllowedBy(declaration) rule of PouryaKit.Validation in the query's validator."
             );
         }
 

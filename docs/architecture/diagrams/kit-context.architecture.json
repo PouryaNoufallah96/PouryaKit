@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "9503cf98baf3455eeacd786c2497f2a27512b8a5",
+      "revision": "1dc41f848c5c2526c7582d99c4ad2da3e774c98e",
       "link_mode": "web"
     }
   },
@@ -43,22 +43,34 @@
     {
       "id": "proxy",
       "type": "cloud",
-      "label": "Reverse proxy (planned)",
-      "sublabel": "PouryaKit.ReverseProxy, Wave 3",
+      "label": "ModularMonolith.ReverseProxy",
+      "sublabel": "the Reverse proxy, on PouryaKit.ReverseProxy",
       "pos": [
         530,
         60
       ],
       "size": [
-        200,
+        260,
         64
       ],
       "sources": [
         {
+          "path": "samples/ModularMonolith/src/ModularMonolith.ReverseProxy/ReverseProxyHost.cs",
+          "line": 16,
+          "end_line": 33,
+          "label": "service defaults, YARP routes, /alive"
+        },
+        {
+          "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
+          "line": 90,
+          "end_line": 90,
+          "label": "references no Kit package: runs no Operation"
+        },
+        {
           "path": "GLOSSARY.md",
-          "line": 54,
-          "end_line": 56,
-          "label": "planned for Wave 3, not built yet"
+          "line": 62,
+          "end_line": 64,
+          "label": "forwards by route; runs no Operation"
         }
       ]
     },
@@ -78,8 +90,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 45,
-          "end_line": 52,
+          "line": 53,
+          "end_line": 60,
           "label": "bearer JWT; authenticated by default"
         },
         {
@@ -106,20 +118,20 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 76,
-          "end_line": 87,
+          "line": 84,
+          "end_line": 97,
           "label": "composes the Modules; Inventory w/o broker"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 99,
-          "end_line": 103,
-          "label": "message store; RabbitMQ with a broker"
+          "line": 129,
+          "end_line": 136,
+          "label": "message and Marten stores; RabbitMQ if a broker"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
           "line": 15,
-          "end_line": 27,
+          "end_line": 34,
           "label": "references the Kit's projects"
         }
       ]
@@ -147,13 +159,13 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqHostApplicationBuilderExtensions.cs",
           "line": 21,
-          "end_line": 33,
+          "end_line": 34,
           "label": "queue unique to one kind of Host"
         },
         {
           "path": "GLOSSARY.md",
-          "line": 130,
-          "end_line": 132,
+          "line": 142,
+          "end_line": 144,
           "label": "Service name"
         }
       ]
@@ -180,8 +192,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 130,
-          "end_line": 141,
+          "line": 132,
+          "end_line": 143,
           "label": "/alive always; /health in Development"
         },
         {
@@ -208,20 +220,20 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 60,
-          "end_line": 82,
+          "line": 62,
+          "end_line": 84,
           "label": "Kit source and meter; OTLP when set"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 100,
-          "end_line": 117,
+          "line": 102,
+          "end_line": 119,
           "label": "Serilog's OTLP sink when set"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 88,
-          "end_line": 90,
+          "line": 98,
+          "end_line": 100,
           "label": "the Kit exports nothing"
         }
       ]
@@ -282,13 +294,13 @@
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 30,
+          "line": 33,
           "label": "a schema per Module (catalog)"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs",
           "line": 10,
-          "end_line": 24,
+          "end_line": 26,
           "label": "store and DbContexts on one database"
         }
       ]
@@ -309,15 +321,49 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 91,
-          "end_line": 97,
+          "line": 101,
+          "end_line": 107,
           "label": "only when ConnectionStrings:cache is set"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 96,
-          "end_line": 97,
+          "line": 157,
+          "end_line": 158,
           "label": "no Kit package references Redis"
+        }
+      ]
+    },
+    {
+      "id": "smtp",
+      "type": "external",
+      "label": "SMTP server",
+      "sublabel": "a local Papercut in the sample",
+      "pos": [
+        830,
+        470
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 109,
+          "end_line": 112,
+          "label": "MailKit, options from PouryaKit:Email"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/appsettings.json",
+          "line": 12,
+          "end_line": 17,
+          "label": "localhost:2525, no TLS, the sender"
+        },
+        {
+          "path": "src/PouryaKit.Email.MailKit/MailKitEmailSender.cs",
+          "line": 26,
+          "end_line": 36,
+          "label": "a connection per send"
         }
       ]
     },
@@ -348,8 +394,8 @@
         },
         {
           "path": "tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs",
-          "line": 53,
-          "end_line": 66,
+          "line": 52,
+          "end_line": 65,
           "label": "one database per Host in the tests"
         }
       ]
@@ -386,7 +432,7 @@
       "id": "kit",
       "type": "backend",
       "label": "PouryaKit packages",
-      "sublabel": "20 libraries and the templates",
+      "sublabel": "37 libraries and the templates",
       "pos": [
         700,
         650
@@ -399,14 +445,76 @@
         {
           "path": "scripts/packaging/inventory.json",
           "line": 3,
-          "end_line": 23,
-          "label": "the 21 packages"
+          "end_line": 40,
+          "label": "the 38 packages"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 74,
+          "end_line": 135,
           "label": "their allowed references"
+        }
+      ]
+    },
+    {
+      "id": "model",
+      "type": "external",
+      "label": "Model provider",
+      "sublabel": "Ollama in the sample; OpenAI, Azure",
+      "pos": [
+        1070,
+        470
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 121,
+          "end_line": 124,
+          "label": "one chat client, options from PouryaKit:AI"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/appsettings.json",
+          "line": 6,
+          "end_line": 11,
+          "label": "local Ollama, GetProduct the one tool"
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "S3-compatible store",
+      "sublabel": "report files; a local RustFS in the sample",
+      "pos": [
+        1000,
+        650
+      ],
+      "size": [
+        250,
+        64
+      ],
+      "sources": [
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
+          "line": 113,
+          "end_line": 115,
+          "label": "S3, options from PouryaKit:Storage:S3"
+        },
+        {
+          "path": "samples/ModularMonolith/src/ModularMonolith.Host/appsettings.json",
+          "line": 18,
+          "end_line": 27,
+          "label": "localhost:9000, the bucket, keys"
+        },
+        {
+          "path": "src/PouryaKit.Reporting.Module/Features/RenderReport/RenderReportCommandHandler.cs",
+          "line": 41,
+          "end_line": 52,
+          "label": "each attempt stores its file"
         }
       ]
     }
@@ -437,11 +545,10 @@
       "toSide": "bottom"
     },
     {
-      "id": "proxy-planned",
+      "id": "proxy-forwards",
       "from": "proxy",
       "to": "mmhost",
-      "label": "planned: forwards by route",
-      "variant": "dashed",
+      "label": "forwards by route",
       "fromSide": "bottom",
       "toSide": "top"
     },
@@ -468,6 +575,14 @@
       "to": "redis",
       "label": "with a cache string",
       "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mm-smtp",
+      "from": "mmhost",
+      "to": "smtp",
+      "label": "email from Notification Handlers",
       "fromSide": "bottom",
       "toSide": "top"
     },
@@ -524,6 +639,22 @@
       "label": "published to",
       "fromSide": "left",
       "toSide": "right"
+    },
+    {
+      "id": "mm-model",
+      "from": "mmhost",
+      "to": "model",
+      "label": "chat completions",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mm-s3",
+      "from": "mmhost",
+      "to": "s3",
+      "label": "report files",
+      "fromSide": "bottom",
+      "toSide": "top"
     }
   ],
   "cards": [
@@ -531,7 +662,7 @@
       "dot": "cyan",
       "title": "Hosts",
       "items": [
-        "ModularMonolith.Host composes Catalog and Billing, and Inventory too when no broker is configured.",
+        "ModularMonolith.Host composes Catalog, Billing and Ledger, and Inventory too when no broker is configured.",
         "Inventory.Host composes Inventory alone and receives Catalog's ProductCreatedV1, ProductCreatedV2 and ProductSnapshotV1 from RabbitMQ.",
         "A Host keeps its Modules' schemas and its message store in one database: the Host fails when built if a Module's DbContext names another."
       ]
@@ -542,7 +673,9 @@
       "items": [
         "RabbitMQ only with ConnectionStrings:broker: one durable queue per kind of Host, named by its service name.",
         "Redis only with ConnectionStrings:cache; no Kit package references Redis.",
-        "OTLP only through the ServiceDefaults recipes, when OTEL_EXPORTER_OTLP_ENDPOINT is set; PouryaKit.Observability exports nothing, and ModularMonolith.Host composes no exporter."
+        "OTLP only through the ServiceDefaults recipes, when OTEL_EXPORTER_OTLP_ENDPOINT is set; PouryaKit.Observability exports nothing, and ModularMonolith.Host composes no exporter.",
+        "A model provider for Catalog's agent: Ollama's OpenAI-compatible API at localhost:11434 in the sample's settings, or OpenAI or Azure OpenAI through the same client; the provider's HTTP client keeps the Host's resilience pipeline.",
+        "An S3-compatible store for the report Module's files: a local RustFS at localhost:9000 in the sample's settings, or AWS S3 through the same provider."
       ]
     },
     {
@@ -556,9 +689,11 @@
     },
     {
       "dot": "slate",
-      "title": "Planned",
+      "title": "Reverse proxy",
       "items": [
-        "PouryaKit.ReverseProxy, in front of the Hosts, is planned for Wave 3 and not built."
+        "ModularMonolith.ReverseProxy forwards each request by route to a Host that service discovery resolves, the bearer token and the Kit's headers as the client sent them; it runs no Operation. YARP still sets Host and X-Forwarded-*.",
+        "The trace id arrives unchanged, and the proxy's span is the parent of the Host's request.",
+        "It probes each Host's /alive; the sample's settings turn that off for ModularMonolith.Host, which composes no service defaults."
       ]
     }
   ]

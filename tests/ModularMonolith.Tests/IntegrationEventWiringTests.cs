@@ -3,6 +3,7 @@ using Inventory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
+using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
@@ -181,7 +182,7 @@ public sealed class IntegrationEventWiringTests
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
         Assert.Equal(
-            $"{typeof(UnsubscribedV1).FullName} is declared received from another Host as tests.unsubscribed.v1, but no subscription of this Host handles it, so nothing would receive it. Subscribe<UnsubscribedV1, THandler>(subscriptionName) in the Composition Root of the Module that receives it, or remove the {declaration} declaration.",
+            $"{typeof(UnsubscribedV1).FullName} is declared received from another Host as tests.unsubscribed.v1, but no subscription or Saga of this Host handles it, so nothing would receive it. Subscribe<UnsubscribedV1, THandler>(subscriptionName) in the Composition Root of the Module that receives it, or remove the {declaration} declaration.",
             thrown.Message
         );
     }

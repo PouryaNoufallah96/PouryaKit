@@ -11,16 +11,31 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Offending\**;Offending.Contracts\**;Offending.Core\**" />
-    <None Remove="Offending\**;Offending.Contracts\**;Offending.Core\**" />
+    <Compile Remove="Offending\**;Offending.Contracts\**;Offending.Core\**;Offending.Stream\**;Offending.Saga\**" />
+    <None Remove="Offending\**;Offending.Contracts\**;Offending.Core\**;Offending.Stream\**;Offending.Saga\**" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\samples\ModularMonolith\src\Inventory.Host\Inventory.Host.csproj" />
     <ProjectReference Include="..\..\samples\ModularMonolith\src\ModularMonolith.Host\ModularMonolith.Host.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.AI\PouryaKit.AI.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.AI.Postgres\PouryaKit.AI.Postgres.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.Aspire\PouryaKit.Aspire.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Core\PouryaKit.Core.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.Localization\PouryaKit.Localization.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.Messaging.Wolverine.Marten\PouryaKit.Messaging.Wolverine.Marten.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.Realtime\PouryaKit.Realtime.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.Reporting\PouryaKit.Reporting.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.Reporting.Module\PouryaKit.Reporting.Module.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.ReverseProxy\PouryaKit.ReverseProxy.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.Storage.AzureBlob\PouryaKit.Storage.AzureBlob.csproj" />
+    <ProjectReference Include="..\..\src\PouryaKit.Storage.S3\PouryaKit.Storage.S3.csproj" />
     <ProjectReference Include="..\..\src\PouryaKit.Testing\PouryaKit.Testing.csproj" />
     <ProjectReference Include="Offending\Offending.csproj" />
     <ProjectReference Include="Offending.Contracts\Offending.Contracts.csproj" />
     <ProjectReference Include="Offending.Core\Offending.Core.csproj" Aliases="OffendingCore" />
+    <ProjectReference Include="Offending.Stream\Offending.Stream.csproj" />
+    <ProjectReference Include="Offending.Saga\Offending.Saga.csproj" />
+    <ProjectReference Include="..\ModularMonolith.Tests\Streams\ModularMonolith.Tests.Streams.csproj" />
+    <ProjectReference Include="..\ModularMonolith.Tests\Sagas\ModularMonolith.Tests.Sagas.csproj" />
   </ItemGroup>
 </Project>

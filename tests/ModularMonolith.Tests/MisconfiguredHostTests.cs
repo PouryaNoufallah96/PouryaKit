@@ -545,6 +545,31 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         );
     }
 
+    // A multiplexed command holds a server connection only while it runs, so the tenant a Dapper lease set would not reach
+    // its read (ticket #155): refused when the Host is built, and at the first lease where no composition check runs.
+    [Fact]
+    public void A_multiplexed_dapper_connection_string_fails_the_host_when_built_and_the_first_lease_without_the_checks()
+    {
+        const string Refusal =
+            "Dapper reads use the connection string reports, which sets Multiplexing=true, so a read could run in a session another lease set to another tenant. Remove Multiplexing from ConnectionStrings:reports.";
+        KeyValuePair<string, string?>[] reports = [new("ConnectionStrings:reports", "Host=localhost;Database=reports;Multiplexing=true")];
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.Configuration.AddInMemoryCollection(reports);
+        builder.Services.AddPouryaKitDapper(connectionName: "reports");
+        builder.AddPouryaKitCompositionChecks();
+        using var withoutChecks = new ServiceCollection()
+            .AddSingleton<IConfiguration>(new ConfigurationBuilder().AddInMemoryCollection(reports).Build())
+            .AddPouryaKitDapper(connectionName: "reports")
+            .BuildServiceProvider();
+        using var scope = withoutChecks.CreateScope();
+
+        var built = Assert.Throws<InvalidOperationException>(() => builder.Build());
+        var leased = Assert.Throws<InvalidOperationException>(() => scope.ServiceProvider.GetRequiredService<IReadConnectionFactory>());
+
+        Assert.Equal(Refusal, built.Message);
+        Assert.Equal(Refusal, leased.Message);
+    }
+
     // A Web Host with the Kit's OpenAPI registration, whose sunsets are bound from the configuration section the Hosts
     // bind: the sample's, plus each setting, "key=value" under PouryaKit:OpenApi:Sunsets.
     private static WebApplication SunsetsFromConfiguration(string[] settings)

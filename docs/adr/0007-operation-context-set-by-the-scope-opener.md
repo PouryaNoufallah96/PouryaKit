@@ -183,3 +183,36 @@ of Wave 2 found it (finding R1 of both reviewers).
   red with the public constructor back (the peer was refused with 403), and by
   `TrustedRestoreTests.The_packages_cqrs_opens_to_use_no_internal_member_of_it_but_the_trusted_restore`, which now
   requires Web's call beside delivery's and went red the same way.
+
+## Amendment (2026-10-16, ticket #116: the tenant requirement runs for a trusted continuation)
+
+The decision above stands, and so do G.6 and the #57 amendment: a trusted continuation is not authorized again as its
+Actor, and the permission check stands aside for it. Spec #115 ("Multi-tenancy", its second bullet) makes one exception,
+deliberately: in a tenant-scoped Module the tenant requirement "runs for continuations too".
+
+- **The tenant requirement.** `AddPouryaKitTenancy` registers the internal `TenantRequirement<T>` as an `IAuthorizer<T>`
+  for every command and query of a tenant-scoped Module, or of an application without Modules that declares it on its
+  own services. It refuses an Operation whose context has no tenant with `TenantErrors.Required` (`Tenant.Required`,
+  forbidden), and it does not read `IsTrustedContinuation`. It checks the tenant the continuation carries, not its Actor's
+  authority, so it is no re-authorization of the kind G.6 rules out: a continuation runs with the tenant its causing
+  Operation had, or not at all, because a tenant-scoped Module's data belongs to tenants and no authority an earlier
+  Operation held covers work under none.
+- **What did not change.** The trust mark, `Continue()` and `RestoreTrusted` are as the #57 and #48 amendments record. The
+  permission check still lets a trusted continuation through, and an application's own authorizer still decides for
+  itself.
+- Proven by `TenancyTests.A_trusted_continuation_into_a_tenant_scoped_module_runs_for_its_tenant_and_is_refused_without_one`,
+  red with the requirement letting a trusted continuation through ([acceptance](../acceptance.md#tenant-scoped-modules-ticket-116)).
+
+## Amendment (2026-10-17, ticket #119: Web's codec and convention are public for another transport)
+
+The decision above stands, and so do the #57, #48 and #116 amendments. Spec #115 ("gRPC") reuses Web's one codec and its
+begin-the-Operation convention instead of a second of each, so ticket #119 makes two members public and nothing else.
+
+- **The codec.** `OperationContextHttpHeaders`, named internal in the #48 amendment, is public with one public member,
+  `Pairs(context)`: the header names and values the outgoing handler writes, each value checked by the Kit's rule before
+  any pair is returned. The handler writes those pairs. Reading a peer's headers (`Continued`) stays internal, so the
+  restore as trusted is reached only as the #48 amendment's correction records.
+- **The convention.** `BeginOperationPerRequest()` on a `RouteGroupBuilder` is the step `MapPouryaKitModuleEndpoints`
+  applies to each Module's group. A root group outside every Module's applies it the same way, and its endpoints get the
+  same context, a trusted peer's continuation included; the trust rule and the header names are unchanged.
+- Proven by `WebConventionTests` ([acceptance](../acceptance.md#web-conventions-for-other-transports-ticket-119)).

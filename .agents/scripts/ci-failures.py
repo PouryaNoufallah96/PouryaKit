@@ -51,6 +51,23 @@ def failed_tests(lines: list[str]) -> list[list[str]]:
     return blocks
 
 
+def failed_log(repo: str, job: dict) -> str:
+    """The job's failed-step log, or nothing for a job GitHub kept no log of (it never ran a step)."""
+    if not job.get("steps"):
+        return ""
+    return gh("run", "view", "--repo", repo, "--job", str(job["databaseId"]), "--log-failed")
+
+
+def annotations(repo: str, job_id: int) -> list[str]:
+    """The failure-level annotations of a job's check run, where GitHub puts a refusal that produced no log."""
+    try:
+        raw = gh("api", f"repos/{repo}/check-runs/{job_id}/annotations", "--jq", '.[] | select(.annotation_level == "failure") | .message')
+    except subprocess.CalledProcessError as error:
+        print(f"{' '.join(error.cmd)}: {error.stderr.strip()}", file=sys.stderr)
+        return []
+    return [line for line in raw.splitlines() if line.strip()]
+
+
 def main() -> int:
     if len(sys.argv) != 2 or not sys.argv[1].isdigit():
         print("usage: python3 .agents/scripts/ci-failures.py <run-id>", file=sys.stderr)
@@ -60,7 +77,7 @@ def main() -> int:
         repo = gh("repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner").strip()
         jobs = [job for job in json.loads(gh("run", "view", run_id, "--repo", repo, "--json", "jobs"))["jobs"] if job.get("conclusion") in FAILED]
         with ThreadPoolExecutor(max(len(jobs), 1)) as pool:
-            logs = list(pool.map(lambda job: gh("run", "view", "--repo", repo, "--job", str(job["databaseId"]), "--log-failed"), jobs))
+            logs = list(pool.map(lambda job: failed_log(repo, job), jobs))
     except subprocess.CalledProcessError as error:
         print(f"{' '.join(error.cmd)}: {error.stderr.strip()}", file=sys.stderr)
         return 1
@@ -69,6 +86,13 @@ def main() -> int:
     for job, log in zip(jobs, logs):
         steps = ", ".join(step["name"] for step in job.get("steps", []) if step.get("conclusion") in FAILED) or "none reported"
         print(f"job '{job['name']}' ({job['databaseId']}) failed in: {steps}\n")
+        if not job.get("steps"):
+            # A job that never ran a step failed before the workflow started: a runner, billing or permissions refusal, which
+            # only the check run's annotations carry (Wave 3 session 3: two runs died in two seconds with "log not found").
+            for message in annotations(repo, job["databaseId"]):
+                print(f"annotation: {message}")
+            print()
+            continue
         lines = [clean(line) for line in log.splitlines()]
         blocks = failed_tests(lines)
         for block in blocks:

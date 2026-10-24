@@ -182,6 +182,13 @@ def merge(top: Path, head: str, branch: str, message: str) -> None:
         lines = [f"the merge of {head[:7]} stopped on conflicts and is left in progress:", *(f"  {name}" for name in conflicted)]
         if "docs/acceptance.md" in conflicted:
             lines.append("docs/acceptance.md: both sides appended a section; keep both sections, in ticket order.")
+        if pairs := diagram_pairs(conflicted):
+            lines.append(
+                f"{len(pairs)} diagram pair(s) conflict ({', '.join(pairs)}): take both sides' nodes, edges and citations in "
+                "the source, remap each cited range to the merged file, commit the merge with --no-verify, then pin the "
+                "sources to the merge commit and refinalize the pages (docs/agents/running-a-spec.md, \"Merging with "
+                "diagram conflicts\")."
+            )
         lines.append(f"Resolve, commit, then run: python3 .agents/scripts/merge-package.py --post-merge {head[:7]} --branch {branch}")
         raise Stop(CONFLICT, "\n".join(lines))
     stopped = "\nthe merge is still in progress; `git merge --abort` drops it" if in_progress else ""
@@ -208,6 +215,12 @@ def run_check(top: Path, argv: list[str]) -> bool:
         print(output)
     print(f"check {name}: " + ("ok" if done.returncode == 0 else f"FAIL (exit {done.returncode})"))
     return done.returncode == 0
+
+
+def diagram_pairs(paths: list[str]) -> list[str]:
+    """The diagram names (one per source and page pair) among conflicted paths."""
+    names = {Path(p).name.split(".")[0] for p in paths if p.startswith("docs/architecture/diagrams/")}
+    return sorted(names)
 
 
 def post_merge(top: Path, head: str, branch: str, checks: list[list[str]], push: bool) -> int:

@@ -43,7 +43,7 @@ public static class WolverineHostApplicationBuilderExtensions
         /// composed, or of its own services, that no <c>AddPouryaKitNotificationHandlers</c> declares, naming that call.
         /// The Host also fails when it is built, naming each problem, for a subscription whose Integration Event or
         /// Snapshot no Module publishes and no <c>Receive</c> declares, a type received from another Host that no
-        /// subscription handles, a message type Wolverine would also route where another type goes, a delayed command
+        /// subscription or Saga handles, a message type Wolverine would also route where another type goes, a delayed command
         /// whose name a subscription has, a wire name this process already sends the type under, or one Wolverine gave
         /// the type before it was declared, and for a subscription whose Module, or the application, registers no Unit of
         /// Work. Wolverine generates its handler
@@ -83,8 +83,9 @@ public static class WolverineHostApplicationBuilderExtensions
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, RoutingCheck>());
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SubscriptionUnitOfWorkCheck>());
             builder.Services.TryAddScoped<CommandHandler<Deliver>, DeliverHandler>();
-            builder.Services.TryAddScoped<IntegrationEventPublisher>();
-            builder.Services.TryAddScoped<IIntegrationEventPublisher>(scope => scope.GetRequiredService<IntegrationEventPublisher>());
+            builder.Services.TryAddScoped<NotificationDelivery>();
+            builder.Services.TryAddScoped<INotificationDelivery>(scope => scope.GetRequiredService<NotificationDelivery>());
+            builder.Services.TryAddScoped<IIntegrationEventPublisher, IntegrationEventPublisher>();
             builder.Services.TryAddScoped<ISnapshotMappers, SnapshotMappers>();
             DelayedCommandDeclarations.In(builder.Services);
             builder.Services.TryAddScoped<IDelayedCommands, DelayedCommands>();

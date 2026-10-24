@@ -2,6 +2,7 @@ using System.Reflection;
 using Catalog.Products.Events.Notifications;
 using Offending;
 using Offending.Contracts;
+using PouryaKit.Reporting.Module;
 
 namespace PouryaKit.ArchitectureTests;
 
@@ -15,13 +16,19 @@ public sealed class ModuleBoundaryTests
     private static readonly Dictionary<string, IReadOnlySet<Type>> HostPorts = new()
     {
         ["Catalog"] = new HashSet<Type> { typeof(INewProductAnnouncer), typeof(NewProductAnnouncement) },
+        ["PouryaKit.Reporting.Module"] = new HashSet<Type>
+        {
+            typeof(IReportRequestAuthorizer),
+            typeof(IReportLayouts),
+            typeof(ReportRequest),
+        },
     };
 
     [Fact]
-    public void The_host_composes_the_three_sample_modules_and_catalog_has_contracts()
+    public void The_host_composes_the_four_sample_modules_and_the_report_module_and_catalog_and_ledger_have_contracts()
     {
-        Assert.Equal(["Billing", "Catalog", "Inventory"], Sample.Modules.Select(module => module.GetName().Name));
-        Assert.Equal(["Catalog.Contracts"], Sample.Contracts.Select(contracts => contracts.GetName().Name));
+        Assert.Equal(["Billing", "Catalog", "Inventory", "Ledger", "PouryaKit.Reporting.Module"], Sample.Modules.Select(module => module.GetName().Name));
+        Assert.Equal(["Catalog.Contracts", "Ledger.Contracts"], Sample.Contracts.Select(contracts => contracts.GetName().Name));
     }
 
     private static readonly HashSet<string> ModuleNames = [.. Sample.Modules.Select(module => module.GetName().Name!), "Offending"];
@@ -81,6 +88,34 @@ public sealed class ModuleBoundaryTests
             Sample.Modules.SelectMany(module =>
                 ModuleRules.PublicTypesOf(module, HostPorts.GetValueOrDefault(module.GetName().Name!) ?? new HashSet<Type>())
             )
+        );
+    }
+
+    // ADR 0001's #141 amendment: a Saga and its timeouts are public, as the code Wolverine generates names them, through
+    // the Kit's base types. The test Modules keep their Contracts beside them, so those stay; a saga or a timeout of
+    // Wolverine's own is rejected.
+    [Fact]
+    public void A_modules_sagas_and_their_timeouts_are_public_through_the_kits_base_types_and_wolverines_own_are_rejected()
+    {
+        var sagas = typeof(ModularMonolith.Tests.Sagas.ShippingModule).Assembly;
+
+        Assert.Equal(
+            [
+                typeof(ModularMonolith.Tests.Sagas.OrderCancelledV1).FullName,
+                typeof(ModularMonolith.Tests.Sagas.OrderFulfilledV1).FullName,
+                typeof(ModularMonolith.Tests.Sagas.OrderPlacedV1).FullName,
+                typeof(ModularMonolith.Tests.Sagas.PaymentReceivedV1).FullName,
+                typeof(ModularMonolith.Tests.Sagas.PaymentReceivedV2).FullName,
+                typeof(ModularMonolith.Tests.Sagas.ReferenceOpenedV1).FullName,
+                typeof(ModularMonolith.Tests.Sagas.ShelfSnapshotV1).FullName,
+            ],
+            ModuleRules.PublicTypesOf(sagas, new HashSet<Type>()).Order(StringComparer.Ordinal)
+        );
+        Assert.Contains(sagas.GetExportedTypes(), type => type == typeof(ModularMonolith.Tests.Sagas.FulfilmentSaga));
+        Assert.Contains(sagas.GetExportedTypes(), type => type == typeof(ModularMonolith.Tests.Sagas.FulfilmentTimeout));
+        Assert.Equal(
+            [typeof(Offending.Saga.OwnSaga).FullName, typeof(Offending.Saga.OwnTimeout).FullName],
+            ModuleRules.PublicTypesOf(typeof(Offending.Saga.OwnSaga).Assembly, new HashSet<Type>()).Order(StringComparer.Ordinal)
         );
     }
 
