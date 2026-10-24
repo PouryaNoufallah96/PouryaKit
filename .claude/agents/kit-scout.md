@@ -1,7 +1,7 @@
 ---
 name: kit-scout
-description: Read-only scout for one question. Maps evidence in the Kit, its docs or a reference project and returns facts with file and line, contradictions and open questions. Use when a decision or a work package needs facts first.
-tools: Read, Glob, Grep, Bash
+description: Read-only scout for one question. Maps evidence in the Kit, its docs, a reference project or a library's official documentation and source on the web, and returns facts with file and line or URL, contradictions and open questions. Use when a decision or a work package needs facts first.
+tools: Read, Glob, Grep, Bash, WebFetch, WebSearch
 model: claude-opus-5-5
 effort: medium
 ---

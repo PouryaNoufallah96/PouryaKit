@@ -69,7 +69,7 @@ Both reviewers apply these to the diff. Report defects the diff introduced; olde
 - Docs or AI guidance left out of sync with the change. For each sentence or message the diff changes, search its old key phrase across `src/`, the Kit's skill, `docs/architecture/` and `docs/acceptance.md`: a restatement left as it was is a finding.
 - A changed XML summary, code comment or skill sentence that states a behaviour the cited code does not have. Open the code it describes; a sentence that reads right but says the wrong thing is the finding the PR bots found 25 times in one round of PR #103 after six single reviews had passed it.
 - A guarantee the final registrations can answer (one provider, a declared authorizer, a tenant requirement) enforced at start (an options validation, `IStartupCheck`) instead of at build (`ICompositionCheck`): a built Host runs Operations before it starts (#61 F1, #147 F1).
-- A structure rule over text (SQL, a route, a header) that rejects the shapes it recognises instead of admitting an allow-list grammar and failing every other shape: #118 lost two review rounds to new shapes, #154 and #155 inherited the lesson.
+- A structure rule over text (SQL, a route, a header) that rejects the shapes it recognises instead of admitting an allow-list grammar and failing every other shape: #118 lost two review rounds to new shapes, #154 and #155 inherited the lesson. The rule resolves names as the target does: PostgreSQL folds an unquoted identifier to lower case and keeps a quoted one as written, and the Dapper tenant rule folded both, so `p` and `"P"` were one alias to it and two tables to the database; six reviews passed it and the whole-branch audit of PR #143 found it.
 
 ## Rules and what enforces them
 
@@ -95,6 +95,7 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | A review reads the implementer's commit, never the integration branch against itself | `kit-review.js` refuses `head` equal to `base` |
 | Pre-Wave 3 acceptance sections stay in ticket order after every merge | `check-docs.py` (ordered sections), run by `merge-package.py --post-merge` |
 | A package validation leaves no evidence directory behind after a PASS | `validate.py` removes it unless `--keep` (CI passes `--keep` for its artifact); `test_validation.py`, `FinishTests` |
+| A local CI reproduction keeps what it proved: each step's output and the Release test totals | `validate.py` prints the totals in its PASS line (`test_totals`, `TestTotalsTests`); `.agents/scripts/ci-local.sh` keeps every step's output and the validation log |
 | The Kit skill's description stays within the 1024 characters Claude Code loads | `check-ai-setup.py` (`SKILL_DESCRIPTION_LIMIT`); the pre-commit hook and CI's `ai-setup` job run it |
 | A docs or AI-setup edit passes its checks before it commits | `.githooks/pre-commit`: `check-docs.py --staged` on every commit, `check-ai-setup.py` when an AI-setup path is staged, a gated path staged in part refused; CI's `ai-setup` job is the gate (`docs/agents/ai-setup.md`, "Git hooks") |
 

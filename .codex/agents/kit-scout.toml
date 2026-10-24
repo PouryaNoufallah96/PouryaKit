@@ -1,7 +1,7 @@
 # Pair of .claude/agents/kit-scout.md: keep name, description and instructions identical.
 # This file's model and effort take precedence over a spawn override.
 name = "kit-scout"
-description = "Read-only scout for one question. Maps evidence in the Kit, its docs or a reference project and returns facts with file and line, contradictions and open questions. Use when a decision or a work package needs facts first."
+description = "Read-only scout for one question. Maps evidence in the Kit, its docs, a reference project or a library's official documentation and source on the web, and returns facts with file and line or URL, contradictions and open questions. Use when a decision or a work package needs facts first."
 model = "gpt-6.1-sol"
 model_reasoning_effort = "medium"
 sandbox_mode = "read-only"

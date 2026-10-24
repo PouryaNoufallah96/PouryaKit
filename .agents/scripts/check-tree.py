@@ -22,6 +22,10 @@ TOP_LEVEL = {
 
 
 def main() -> int:
+    if not sys.argv[1:] and sys.stdin.isatty():
+        # No paths and nothing piped: a bare call would wait on the terminal forever (Wave 3 session 6 lost a chained command).
+        print("usage: check-tree.py <path>... | <paths on stdin>, for example: git ls-files | python3 .agents/scripts/check-tree.py", file=sys.stderr)
+        return 2
     paths = [p for p in (sys.argv[1:] or sys.stdin.read().splitlines()) if p]
     offences = [f"{p}: '{p.split('/')[0]}' is not a top-level entry of this repository" for p in paths if p.split("/")[0] not in TOP_LEVEL]
     if ".gitignore" in paths:

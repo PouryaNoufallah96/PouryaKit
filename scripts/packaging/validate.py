@@ -39,6 +39,21 @@ def run(command, *, cwd=ROOT, env=None, log=None, expect_failure=False):
     return result.stdout
 
 
+TEST_TOTAL = re.compile(r"^\s*(total|failed|succeeded|skipped): (\d+)\s*$", re.MULTILINE)
+
+
+def test_totals(output):
+    """The Release test run's totals as the PASS line states them, summed over every project's `Test run summary` block
+    of the testing platform's output (total, failed, succeeded, skipped, one per line). The log that holds them is
+    evidence `validate.py` removes after a PASS, and two sessions lost the count with it (Wave 3 sessions 5 and 6)."""
+    totals = {"total": 0, "failed": 0, "succeeded": 0, "skipped": 0}
+    for name, count in TEST_TOTAL.findall(output):
+        totals[name] += int(count)
+    if totals["total"] == 0:
+        raise RuntimeError("The Release test run printed no `Test run summary` totals; the output format changed or no test ran.")
+    return "Release tests total {total}, succeeded {succeeded}, failed {failed}, skipped {skipped}".format(**totals)
+
+
 def properties(project, names, *, cwd=ROOT, target=None):
     command = ["dotnet", "msbuild", project, "-nologo", "-getProperty:" + ",".join(names)]
     if target:
@@ -366,7 +381,7 @@ def validate(output, *, fetch=True):
     (output / "evaluated-projects.json").write_text(json.dumps(evaluated, indent=2))
     inventory_controls(packages, evaluated, output / "inventory-controls.log")
     run(["dotnet", "build", "PouryaKit.slnx", "-c", "Release", "-p:ContinuousIntegrationBuild=true"], log=output / "build.log")
-    run(["dotnet", "test", "PouryaKit.slnx", "-c", "Release", "--no-build"], log=output / "runtime-tests.log")
+    tests = test_totals(run(["dotnet", "test", "PouryaKit.slnx", "-c", "Release", "--no-build"], log=output / "runtime-tests.log"))
     version = properties(ROOT / "src/PouryaKit.Domain/PouryaKit.Domain.csproj", ["MinVerVersion", "PackageVersion"], target="MinVer")
     if version["MinVerVersion"] != version["PackageVersion"]:
         raise RuntimeError(f"MinVer/build version mismatch: {version}")
@@ -455,7 +470,7 @@ def validate(output, *, fetch=True):
                   "sha256": hashlib.sha256((package_output / f"{name}.{evidence['Version']}.nupkg").read_bytes()).hexdigest()} for name in ids]
     (output / "manifest.json").write_text(json.dumps({"commit": commit, "version": evidence["Version"], "packages": artifacts}, indent=2) + "\n")
     print(f"PASS {len(ids)} packages, {len(consumers)} clean consumers ({len(smoke_tests)} generated from templates, "
-          f"smoke tests passed: {', '.join(smoke_tests)}), negative controls and MinVer proof. Manifest: {output / 'manifest.json'}", flush=True)
+          f"smoke tests passed: {', '.join(smoke_tests)}), negative controls and MinVer proof; {tests}. Manifest: {output / 'manifest.json'}", flush=True)
 
 
 def needing_validation(paths):
