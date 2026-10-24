@@ -372,10 +372,6 @@ class MergePackageTest(unittest.TestCase):
         self.assertIn("--ready takes --branch and --base only", done.stderr)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class HelperTests(unittest.TestCase):
     def test_diagram_pairs_counts_a_source_and_its_page_once(self) -> None:
         conflicted = [
@@ -386,3 +382,6 @@ class HelperTests(unittest.TestCase):
         ]
         self.assertEqual(["execution-core", "kit-context"], merge_package.diagram_pairs(conflicted))
 
+
+if __name__ == "__main__":
+    unittest.main()
