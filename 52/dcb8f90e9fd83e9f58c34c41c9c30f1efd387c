@@ -1,0 +1,21 @@
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_067424b212e979::t_878343b9458e0a 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_067424b212e979::t_6a5ca68750e2da 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "52dcb8f90e9fd83e9f58c34c41c9c30f1efd387c",
+  "prompts": {},
+  "sessions": {
+    "s_067424b212e979": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b3b69ca-8b5c-4c58-b18c-05594cfed649",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
