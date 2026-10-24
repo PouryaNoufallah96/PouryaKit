@@ -1,0 +1,22 @@
+tests/ModularMonolith.Tests/StreamTests.cs
+  s_d25075ecfddc3d::t_e88fb421b6a1c6 298,300-302,312-319
+tests/ModularMonolith.Tests/SagaTests.cs
+  s_d25075ecfddc3d::t_865f1bc8c08df1 495-506
+  s_d25075ecfddc3d::t_60c6ecdb3b32d9 883,885-893,895-908
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "077ebf63a6d944573746c981793e4b758e69a714",
+  "prompts": {},
+  "sessions": {
+    "s_d25075ecfddc3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c2faa7bc-43e4-49f1-ba67-db6d73ce0e91",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
