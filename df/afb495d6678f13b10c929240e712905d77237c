@@ -1,0 +1,25 @@
+docs/architecture/diagrams/ci-and-publication.html
+  s_dc235343aadb31::t_4f395b3ad21bb5 4985
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_dc235343aadb31::t_53a73fe8c4e470 11
+docs/architecture/diagrams/kit-context.architecture.json
+  s_dc235343aadb31::t_9495a69e89f029 10
+docs/architecture/diagrams/kit-context.html
+  s_dc235343aadb31::t_c994c34e9cc569 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dfafb495d6678f13b10c929240e712905d77237c",
+  "prompts": {},
+  "sessions": {
+    "s_dc235343aadb31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c959058c-fafb-418d-968e-8aae07d692ee",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
