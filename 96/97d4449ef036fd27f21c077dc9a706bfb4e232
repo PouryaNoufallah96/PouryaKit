@@ -1,0 +1,29 @@
+tests/PouryaKit.ArchitectureTests/Sql.cs
+  s_d25075ecfddc3d::t_019995bb6e5460 261-265
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_d25075ecfddc3d::t_1a29b08055c25c 143
+  s_d25075ecfddc3d::t_f6fadbd0d74df3 194
+  s_d25075ecfddc3d::t_b066001ecbf395 210-211
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_d25075ecfddc3d::t_135b29ff2bcb23 516
+  s_d25075ecfddc3d::t_caf7a44a4b3f10 381
+  s_d25075ecfddc3d::t_e1648c291f81ee 406
+  s_d25075ecfddc3d::t_faf90eee54b221 450
+  s_d25075ecfddc3d::t_f45ed61a0a77e6 389
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9697d4449ef036fd27f21c077dc9a706bfb4e232",
+  "prompts": {},
+  "sessions": {
+    "s_d25075ecfddc3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c2faa7bc-43e4-49f1-ba67-db6d73ce0e91",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
