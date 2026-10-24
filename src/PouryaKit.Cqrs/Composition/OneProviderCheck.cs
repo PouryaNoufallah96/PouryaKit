@@ -28,7 +28,7 @@ public sealed class OneProviderCheck<TService>(string registration, string noun)
                     ?? $"the factory {descriptor.ImplementationFactory!.Method.DeclaringType?.FullName}.{descriptor.ImplementationFactory.Method.Name}"
                 ),
         ];
-        var contract = typeof(TService).Name;
+        var contract = NameOf(typeof(TService));
         return registered.Count switch
         {
             1 => [],
@@ -38,5 +38,8 @@ public sealed class OneProviderCheck<TService>(string registration, string noun)
                 $"The Host registers {registered.Count} {contract} providers, {string.Join(", ", registered)}, and composes exactly one: remove all but one of its {noun} registrations.",
             ],
         };
+
+        static string NameOf(Type type) =>
+            type.IsGenericType ? $"{type.Name.Split('`')[0]}<{string.Join(", ", type.GetGenericArguments().Select(NameOf))}>" : type.Name;
     }
 }

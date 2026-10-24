@@ -22,6 +22,7 @@ Check the merged code before relying on a design note. Each section names its ti
 
 ## validate.py and clean consumers
 
+- **Seven parallel tickets share one validation slot** (Wave 4 batch 1, #174, 2026-10-24): a waiter that rechecks 30 s after the slot frees, polling every 60 s, lost it twice to faster waiters (about 40 minutes); poll every 3 s, recheck after 3 s, then launch from the same script (what to match: [[worktree-shell-and-check-gotchas]], #165). A FAIL keeps its `--output` folder, so a rerun takes a new one; a `53300` in the Release suite is the intermittent failure of #84, rerun once unchanged.
 - `validate.py --output <dir>` fails with `[Errno 17] File exists` when `<dir>` holds an earlier run: after a further commit, `rm -rf` the scratchpad folder (system temp, allowed) and run it again.
 - `python3 scripts/packaging/validate.py --no-fetch --output <scratchpad dir>` runs fine from a worktree after the commit (clean tree required): about 5 minutes, Docker needed, 403 runtime tests at #37, then 14 packages and 16 clean consumers.
 - `scripts/packaging/validate.py` refuses a dirty checkout and only builds the clean consumers (never runs them), so a consumer proves the packed API compiles; `single-module.cs` is copied as the single-module composition's `Program.cs` (ImplicitUsings and TreatWarningsAsErrors on). Commit first, run it, then add its PASS line to the docs.

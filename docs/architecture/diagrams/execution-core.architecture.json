@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "548f4ab8c5384f7590322f4b32d7577b91c4633c",
+      "revision": "82ab7341263b127ef0a8626143293bf26c542e8a",
       "link_mode": "web"
     }
   },
@@ -831,8 +831,8 @@
         },
         {
           "path": "src/PouryaKit.AI/AIServiceCollectionExtensions.cs",
-          "line": 163,
-          "end_line": 211,
+          "line": 170,
+          "end_line": 218,
           "label": "one OpenAI client: guarded chat, embeddings"
         }
       ]
