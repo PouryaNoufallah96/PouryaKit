@@ -1,0 +1,35 @@
+.claude/agents/kit-scout.md
+  s_d25075ecfddc3d::t_36da8fbe1bfcad 3-4
+AGENTS.md
+  s_d25075ecfddc3d::t_36da8fbe1bfcad 72,98
+docs/agents/brief-template.md
+  s_d25075ecfddc3d::t_36da8fbe1bfcad 83
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_d25075ecfddc3d::t_06927bab3d87c6 11
+.agents/scripts/check-tree.py
+  s_d25075ecfddc3d::t_cbc3bb5bea12f1 25-28
+docs/architecture/diagrams/ci-and-publication.html
+  s_d25075ecfddc3d::t_06927bab3d87c6 4985
+docs/agents/ai-setup.md
+  s_d25075ecfddc3d::t_36da8fbe1bfcad 105-106
+docs/agents/running-a-spec.md
+  s_d25075ecfddc3d::t_36da8fbe1bfcad 12
+.codex/agents/kit-scout.toml
+  s_d25075ecfddc3d::t_36da8fbe1bfcad 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b4b80549782e4cefb560bcf3526bdbbbf68e5cbb",
+  "prompts": {},
+  "sessions": {
+    "s_d25075ecfddc3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c2faa7bc-43e4-49f1-ba67-db6d73ce0e91",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
