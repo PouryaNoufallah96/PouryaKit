@@ -2,7 +2,6 @@ bin/
 obj/
 .vs/
 .idea/
-/public/fonts/
 *.user
 *.suo
 TestResults/
@@ -11,7 +10,6 @@ artifacts/
 *.snupkg
 .DS_Store
 .env
-temp_auto_push.bat
 .env.*
 *.local.json
 CLAUDE.local.md
@@ -26,5 +24,3 @@ samples/ModularMonolith/src/*/Internal/Generated/
 tests/ModularMonolith.Tests/Sagas/*/Internal/Generated/
 # Serena's project folder: a local tool's, like the entries above. The Kit tracks none of it.
 .serena/
-branch_structure.json
-temp_interactive_push.bat
