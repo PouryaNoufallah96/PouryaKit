@@ -8,7 +8,7 @@ namespace PouryaKit.Messaging.Wolverine.Sagas;
 // The Kit's route to a saga: an Integration Event a saga takes is published once more, as the saga's input type, to
 // wherever that type routes, the saga's durable queue, beside the event's own routes. Wolverine consults a custom source
 // first, and once one has found routes the first source that is not additive ends the search, whether or not it found
-// any (JasperFx/wolverine V6.48.3, src/Wolverine/Runtime/WolverineRuntime.Routing.cs:280-291), so an additive source here
+// any (JasperFx/wolverine V6.52.0, src/Wolverine/Runtime/WolverineRuntime.Routing.cs:315-335), so an additive source here
 // would cost the event its subscriptions' routes: this one returns them itself, as ExplicitRouting finds them, and ends
 // the search. A copy fanned out from a broker does not come this way: SubscriptionDelivery sends it by queue.
 internal sealed class SagaRouteSource(SagaDeclarations sagas) : IMessageRouteSource

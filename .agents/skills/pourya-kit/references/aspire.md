@@ -14,7 +14,7 @@
 An AppHost project uses the `Aspire.AppHost.Sdk` and references the Hosts it runs and the package. This is the Proving Sample's `samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj`:
 
 ```xml
-<Project Sdk="Aspire.AppHost.Sdk/13.6.1">
+<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <UserSecretsId>pouryakit-modular-monolith-apphost</UserSecretsId>

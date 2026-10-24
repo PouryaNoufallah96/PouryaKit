@@ -9,7 +9,7 @@ The liveness probe every cluster gets, `src/PouryaKit.ReverseProxy/LivenessProbe
 Checked on nuget.org on 2026-10-18 (ticket #126); licence expressions from each package's nuspec. None is reciprocal or commercial (ADR 0002), and `LicenceTests` checks the whole closure.
 
 - `Yarp.ReverseProxy` 2.3.0, `MIT`, the latest stable; its newest asset is `net8.0`, which runs on .NET 10, and it brings `System.IO.Hashing` 8.0.0, `MIT`.
-- `Microsoft.Extensions.ServiceDiscovery.Yarp` 10.10.0, `MIT`, with a `net10.0` asset, on the Kit's `Microsoft.Extensions.ServiceDiscovery` 10.10.0 line (10.11.0 is the latest; the line moves as one). It brings `Microsoft.Extensions.ServiceDiscovery` and `Microsoft.Extensions.ServiceDiscovery.Abstractions` 10.10.0, both `MIT`, and `Yarp.ReverseProxy` 2.3.0.
+- `Microsoft.Extensions.ServiceDiscovery.Yarp` 10.11.0, `MIT`, with a `net10.0` asset, on the Kit's `Microsoft.Extensions.ServiceDiscovery` 10.11.0 line (10.10.0 until ticket #167, 2026-10-24; the line moves as one). It brings `Microsoft.Extensions.ServiceDiscovery` and `Microsoft.Extensions.ServiceDiscovery.Abstractions` 10.11.0, both `MIT`, and `Yarp.ReverseProxy` 2.3.0.
 
 The package also references the ASP.NET Core shared framework (`Microsoft.AspNetCore.App`) and no Kit package. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
 

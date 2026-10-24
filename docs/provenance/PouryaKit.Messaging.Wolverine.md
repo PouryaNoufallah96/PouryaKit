@@ -8,7 +8,7 @@ The delivery of Notifications and Integration Events, one route and durable loca
 
 Checked on nuget.org on 2026-10-05 (ticket #15); licence expressions from each package's nuspec. None is reciprocal or commercial (ADR 0002).
 
-- `WolverineFx` 6.48.3, `MIT`, as ADR 0004 pinned it and its ticket #75 amendment moved it from 6.46.0 to 6.48.2 on 2026-10-09, then to 6.48.3 in the ticket's follow-up the same day; the first move took `JasperFx`, `JasperFx.Events` and `JasperFx.SourceGenerator` from 2.80.2 to 2.81.0, all `MIT`, the second moved no dependency outside the `WolverineFx` packages, and neither added or removed a package. Its restored closure on `net10.0` is 44 packages: 42 `MIT`, `NewId` 4.0.1 `Apache-2.0` and `Polly.Core` 8.6.5 `BSD-3-Clause`. It holds no EF Core, no Npgsql, no Weasel, no Wolverine message store and no Roslyn package (story 73).
+- `WolverineFx` 6.52.0, `MIT`, as ADR 0004 pinned it and its ticket #75 amendment moved it from 6.46.0 to 6.48.2 on 2026-10-09, then to 6.48.3 in the ticket's follow-up the same day, and its ticket #167 amendment to 6.52.0 on 2026-10-24; the first move took `JasperFx`, `JasperFx.Events` and `JasperFx.SourceGenerator` from 2.80.2 to 2.81.0, all `MIT`, the second moved no dependency outside the `WolverineFx` packages, and neither added or removed a package; the third took the three to 2.91.0 and added `System.Linq.Dynamic.Core` 1.7.4, `Apache-2.0`, through `JasperFx`. Its restored closure on `net10.0` is 45 packages: 42 `MIT`, `NewId` 4.0.1 and `System.Linq.Dynamic.Core` 1.7.4 `Apache-2.0`, and `Polly.Core` 8.6.5 `BSD-3-Clause`. It holds no EF Core, no Npgsql, no Weasel, no Wolverine message store and no Roslyn package (story 73).
 
 ## Wolverine policy block
 

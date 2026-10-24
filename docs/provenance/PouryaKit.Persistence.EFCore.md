@@ -18,9 +18,9 @@ The idempotency key store (`EfIdempotencyStore`, `IdempotencyTable`, ticket #42)
 
 Checked on nuget.org on 2026-10-05, and on 2026-10-07 for the Hosting abstractions (10.0.12, the latest stable); licence expressions from each package's nuspec. None is reciprocal or commercial (ADR 0002).
 
-- `Microsoft.EntityFrameworkCore.Relational` 10.0.12, `MIT`.
-- `Microsoft.Extensions.Hosting.Abstractions` 10.0.12, `MIT` (#42 follow-up: the version `Directory.Packages.props` already pins for Modularity), for `BackgroundService`.
-- `Ardalis.Specification.EntityFrameworkCore` 9.3.1, `MIT`. It has no `net10.0` target; its `net9.0` target asks for EF Core 9.0.8 or later, so it restores against EF Core 10.0.12. Its specification evaluator is exercised at runtime against PostgreSQL by `PersistenceTests.The_generic_repository_finds_by_id_and_finds_lists_checks_and_counts_by_specification`. Its `RepositoryBase` is not used, because its `AddAsync` saves.
+- `Microsoft.EntityFrameworkCore.Relational` 10.0.13, `MIT` (10.0.12 until ticket #167, 2026-10-24, as the next).
+- `Microsoft.Extensions.Hosting.Abstractions` 10.0.13, `MIT` (#42 follow-up: the version `Directory.Packages.props` already pins for Modularity), for `BackgroundService`.
+- `Ardalis.Specification.EntityFrameworkCore` 9.3.1, `MIT`. It has no `net10.0` target; its `net9.0` target asks for EF Core 9.0.8 or later, so it restores against EF Core 10.0.13. Its specification evaluator is exercised at runtime against PostgreSQL by `PersistenceTests.The_generic_repository_finds_by_id_and_finds_lists_checks_and_counts_by_specification`. Its `RepositoryBase` is not used, because its `AddAsync` saves.
 
 ## Typed-ID value converter
 

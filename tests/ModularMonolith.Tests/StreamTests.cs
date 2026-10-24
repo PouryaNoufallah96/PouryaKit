@@ -360,16 +360,20 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         Assert.All(atCommit, row => Assert.Equal(atCommit[0][0], Assert.IsType<DateTime>(row[0])));
     }
 
-    // The welcome holds longer than the inbox stale time, so the store hands its delivery out again while the first run
-    // still holds its Receipt: the duplicate's Receipt waits on the first one's row, then records nothing.
+    // The welcome holds, and the test releases its row as the stale sweep would, so the store hands its delivery out again
+    // while the first run still holds its Receipt: the duplicate's Receipt waits on the first one's row, then records nothing.
     [Fact]
     public async Task A_concurrent_duplicate_delivery_waits_for_the_first_receipt_and_never_runs_its_handler()
     {
         var account = Guid.CreateVersion7();
-        AccountProbe.Hold(account, TimeSpan.FromSeconds(2));
-        var host = await StartAsync(streams.MartenOnly(_database, StaleAfter(TimeSpan.FromMilliseconds(500))));
+        var held = AccountProbe.Hold(account, TimeSpan.FromSeconds(2));
+        var host = await StartAsync(streams.MartenOnly(_database));
 
         await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
+        await held.WaitAsync(TimeSpan.FromSeconds(30), Token);
+        // While the first delivery runs, the test releases its row as the store's stale sweep releases one whose holder
+        // stopped restarting its clock, and the store hands it out again.
+        await RowsAsync("update wolverine.wolverine_incoming_envelopes set owner_id = 0 where received_at = 'local://accounts.welcome/' and status = 'Incoming' returning 1");
         await WaitUntilAsync("(select count(*) from pg_stat_activity where wait_event_type = 'Lock' and query like 'insert into \"accounts\".pouryakit_receipts%') > 0");
         await WaitUntilAsync("(select count(*) from wolverine.wolverine_incoming_envelopes where status <> 'Handled') = 0");
 

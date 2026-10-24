@@ -15,7 +15,7 @@
     },
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "fcb7a719e063b27f6a10b2a05bdc9e58391a4269",
+      "revision": "52dbc13f6dba89a9e16b3a918b3b3df795ff04c9",
       "link_mode": "web"
     }
   },
@@ -87,7 +87,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine/PouryaKitMessagingOptions.cs",
           "line": 6,
-          "end_line": 16,
+          "end_line": 13,
           "label": "1 s, 10 s, 1 min, then a dead letter"
         }
       ]

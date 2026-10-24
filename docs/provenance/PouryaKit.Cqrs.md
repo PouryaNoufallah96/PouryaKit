@@ -8,9 +8,9 @@ The dispatcher, its fixed pipeline, `Operation` and `IUnitOfWork` are new Kit co
 
 Checked against the NuGet cache on 2026-10-06; licence expressions from each package's nuspec. Neither is reciprocal or commercial (ADR 0002), and neither is a mediator.
 
-- `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.12, `MIT`.
-- `Microsoft.Extensions.Logging.Abstractions` 10.0.12, `MIT`.
-- `Microsoft.Extensions.DependencyInjection` 10.0.12, `MIT`, and `Microsoft.Extensions.Hosting.Abstractions` 10.0.12,
+- `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.13, `MIT` (10.0.12 until ticket #167, 2026-10-24, as the other three).
+- `Microsoft.Extensions.Logging.Abstractions` 10.0.13, `MIT`.
+- `Microsoft.Extensions.DependencyInjection` 10.0.13, `MIT`, and `Microsoft.Extensions.Hosting.Abstractions` 10.0.13,
   `MIT` (ticket #61, checked 2026-10-07 in the NuGet cache's nuspecs; already in every Host). The validating
   `DefaultServiceProviderFactory` of `AddPouryaKitCompositionChecks` needs the first, which moved here from Modularity;
   its `IHostApplicationBuilder` and the check runner, an `IHostedLifecycleService`, need the second.

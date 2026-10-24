@@ -391,8 +391,9 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
     }
 
     // Each due later than InboxStaleTime after it was stored, as an hourly occurrence always is under the five-minute
-    // default, so each attempt runs stale. Each is held after its Receipt until a recovery poll has handed it out again
-    // and the copy waits on that Receipt.
+    // default. Since WolverineFx 6.51.0 the claim of a due row restarts its stale clock and the running Host keeps it
+    // fresh, so the test itself releases each while it is held after its Receipt, as the stale sweep releases a row whose
+    // holder stopped restarting its clock, and the copy the store hands out waits on that Receipt.
     [Fact]
     public async Task A_delayed_command_and_an_occurrence_due_after_the_stale_time_and_handed_out_again_while_they_run_apply_one_effect_each_and_store_one_next_occurrence()
     {
@@ -424,6 +425,7 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
                     ).IsSuccess
                 );
                 await held.Held;
+                await Sql.RowsAsync(connectionString, $"update wolverine.wolverine_incoming_envelopes set owner_id = 0 where received_at = 'local://{StaleNote}/' and status = 'Incoming' returning 1");
                 await Sql.WaitUntilAsync(connectionString, CopyWaitsOnReceipt("stub"));
             }
 
@@ -444,6 +446,7 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
             using (running)
             {
                 await running.Held;
+                await Sql.RowsAsync(connectionString, $"update wolverine.wolverine_incoming_envelopes set owner_id = 0 where {OnQueue} and status = 'Incoming' returning 1");
                 await Sql.WaitUntilAsync(connectionString, CopyWaitsOnReceipt("inventory"));
             }
 

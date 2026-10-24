@@ -8,12 +8,12 @@ Adopted implementations in `PouryaKit.Testing`. Format and rules: [README](READM
 
 Checked on nuget.org on 2026-10-05; licence expressions from each package's nuspec. None is reciprocal or commercial (ADR 0002).
 
-- `Testcontainers.PostgreSql` 4.15.0, `MIT`. Its closure on `net10.0` (`Testcontainers`, the `Docker.DotNet.Enhanced` packages, `SSH.NET`, `SharpZipLib`, `BouncyCastle.Cryptography`) is all `MIT`.
+- `Testcontainers.PostgreSql` 4.16.0, `MIT` (4.15.0 until ticket #167, 2026-10-24, as the three below). Its closure on `net10.0` (`Testcontainers`, the `Docker.DotNet.Enhanced` packages, `SSH.NET`, `SharpZipLib`, `BouncyCastle.Cryptography`) is all `MIT`.
 - `Respawn` 7.0.0, `Apache-2.0`, with no dependencies.
-- `Microsoft.Extensions.TimeProvider.Testing` 10.10.0, `MIT`, with no dependencies on `net10.0`. It supplies `FakeTimeProvider` for `TestClock` (ADR 0005).
-- `xunit.v3.extensibility.core` 4.0.1, `Apache-2.0`, with `xunit.v3.common` 4.0.1, `Apache-2.0`. It is the library form of xUnit v3; the test runner packages stay in test projects.
+- `Microsoft.Extensions.TimeProvider.Testing` 10.11.0, `MIT` (10.10.0), with no dependencies on `net10.0`. It supplies `FakeTimeProvider` for `TestClock` (ADR 0005).
+- `xunit.v3.extensibility.core` 4.0.2, `Apache-2.0` (4.0.1), with `xunit.v3.common` 4.0.2, `Apache-2.0`. It is the library form of xUnit v3; the test runner packages stay in test projects.
 - `PouryaKit.Messaging.Wolverine.EFCore`, as plan section C lists (ticket #15). With it the package's restored closure is 101 packages: 90 `MIT`, 5 `Apache-2.0`, 3 `BSD-3-Clause` and 3 `PostgreSQL`, all recorded with the packages that bring them.
-- `WolverineFx.RuntimeCompilation` 6.48.3, `MIT`, checked on 2026-10-07 (ticket #58) at 6.46.0 and moved on 2026-10-09 (ticket #75 to 6.48.2, its follow-up to 6.48.3): the version of every Wolverine package the Kit pins, on which it depends exactly. ADR 0004 lets the Testing package reference it, so a test Host can run Development, where Wolverine compiles its handler code at run time, from any build, while the Hosts reference it in Debug builds only. It brings `JasperFx.RuntimeCompiler` 5.0.0 and the `Microsoft.CodeAnalysis` scripting and Visual Basic packages, all `MIT`. The package's restored closure is now 110 packages: 98 `MIT`, 6 `Apache-2.0`, 3 `BSD-3-Clause` and 3 `PostgreSQL`.
+- `WolverineFx.RuntimeCompilation` 6.52.0, `MIT` (6.48.3), checked on 2026-10-07 (ticket #58) at 6.46.0 and moved on 2026-10-09 (ticket #75 to 6.48.2, its follow-up to 6.48.3) and on 2026-10-24 (ticket #167 to 6.52.0): the version of every Wolverine package the Kit pins, on which it depends exactly. ADR 0004 lets the Testing package reference it, so a test Host can run Development, where Wolverine compiles its handler code at run time, from any build, while the Hosts reference it in Debug builds only. It brings `JasperFx.RuntimeCompiler` 5.0.0 and the `Microsoft.CodeAnalysis` scripting and Visual Basic packages, all `MIT`. The package's restored closure is now 111 packages: 98 `MIT`, 7 `Apache-2.0`, 3 `BSD-3-Clause` and 3 `PostgreSQL`; the seventh `Apache-2.0` is `System.Linq.Dynamic.Core` 1.7.4, which `JasperFx` brings since ticket #167.
 
 ## PostgreSQL test fixture
 
