@@ -301,7 +301,7 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/PipelineContractTests.cs",
           "line": 10,
-          "end_line": 54,
+          "end_line": 57,
           "label": "Modules and Hosts implement none"
         }
       ]
