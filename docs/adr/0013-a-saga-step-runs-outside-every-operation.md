@@ -371,3 +371,7 @@ integration to leave sagas alone, or a per-type storage choice, requested upstre
 by the owner's decision against that upstream intent, the reorder in `UsePouryaKitMarten`, with `SagaCheck` asking
 Wolverine which storage each saga chain gets, shipped only with the Marten-only pieces and a test of each Host shown red
 once.
+
+Owner decision (2026-10-24): the reorder is rejected, since it would depend on an undocumented provider list against
+Wolverine's stated intent. The refusal stays until Wolverine's Marten integration offers a supported way to keep a
+saga on the lightweight storage, which a feature request to `JasperFx/wolverine` asks for.
