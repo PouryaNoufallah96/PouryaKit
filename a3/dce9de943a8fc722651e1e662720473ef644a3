@@ -1,0 +1,123 @@
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/GetStockItem/GetStockItemEndpoint.cs
+  s_b933d9add4e23e::t_2e9f4d5568458d 1-18
+tests/ModularMonolith.Tests/HostRecipeTests.cs
+  s_b933d9add4e23e::t_6d627059ca8be2 163-165,173-176,179
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b933d9add4e23e::t_ae0c33131de5c2 7
+  s_b933d9add4e23e::t_675c947d8aa9e9 12
+tests/ModularMonolith.Tests/Fixtures/InventoryProcess.cs
+  s_b933d9add4e23e::t_4cdba8e6911f8e 5-6,12
+tests/ModularMonolith.Tests/GetStockItemTests.cs
+  s_b933d9add4e23e::t_034213b2867bd8 1-96
+.agents/skills/pourya-kit/references/aspire.md
+  s_b933d9add4e23e::t_9f0325cf4a488d 80
+  s_b933d9add4e23e::t_bd993d4944febd 54
+src/PouryaKit.Templates/content/modular/src/Modules/Inventory/Inventory/Inventory.csproj
+  s_b933d9add4e23e::t_6b2f36697c4e6c 11-12
+tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs
+  s_b933d9add4e23e::t_7949f37b3b5a73 123-124
+  s_b933d9add4e23e::t_1ea7dc64395321 139
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_b933d9add4e23e::t_846b6f329ca8d0 138-142
+samples/ModularMonolith/src/Modules/Inventory/Inventory/Infrastructure/Data/Migrations/20261024190321_StockItemTenants.cs
+  s_b933d9add4e23e::t_29aaa3921d0bdd 13-14
+  s_b933d9add4e23e::t_7b2e2af9940e2a 10-12
+  s_b933d9add4e23e::t_896fb4a6b46dde 15-17
+  s_d6af6b09a8b75b::t_f6efa98282b388 1-9,18-32
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_b933d9add4e23e::t_e416c80363b892 53-58,60-64
+  s_b933d9add4e23e::t_c81772e0ea8d3e 14,22,29-31,35-39
+  s_b933d9add4e23e::t_ae4c981351892d 117
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_b933d9add4e23e::t_bf23b98e7802b6 71
+  s_b933d9add4e23e::t_93ae8830691612 84
+  s_b933d9add4e23e::t_ffb3586eb050b2 112
+samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs
+  s_b933d9add4e23e::t_4f8e0aff670896 19,30-33
+samples/ModularMonolith/src/Modules/Inventory/Inventory/Inventory.csproj
+  s_b933d9add4e23e::t_c8b0de613a047a 15-16
+samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj
+  s_b933d9add4e23e::t_45a329b565bcc4 9
+  s_b933d9add4e23e::t_033769c3525fbd 27-29
+.agents/skills/pourya-kit/SKILL.md
+  s_b933d9add4e23e::t_43949c369dc212 40
+  s_b933d9add4e23e::t_d4b8eb121b724c 38
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Entities/StockItem.cs
+  s_b933d9add4e23e::t_7002aea21c2ca5 14-19
+  s_b933d9add4e23e::t_c90e1ac601f971 33,38
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_b933d9add4e23e::t_959e23795f33f0 143
+  s_b933d9add4e23e::t_8203e20e2fd2c0 53
+.agents/skills/pourya-kit/references/templates.md
+  s_b933d9add4e23e::t_2a4e5f3c1167ae 43
+  s_b933d9add4e23e::t_d769071641d18d 55
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/OpenStockItem/OpenStockItemIntegrationEventHandler.cs
+  s_b933d9add4e23e::t_e20aff5a318f33 4,11-14,19
+.agents/skills/pourya-kit/references/messaging.md
+  s_b933d9add4e23e::t_63000b5b344ba9 239,244-247,252
+  s_b933d9add4e23e::t_c4c294e796596d 260
+samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs
+  s_b933d9add4e23e::t_030f7317506230 1,13,15-16
+  s_b933d9add4e23e::t_62bad5f53ecea6 41-42,45
+  s_b933d9add4e23e::t_0a7202faeb4bf3 43-44
+.agents/skills/pourya-kit/references/openapi.md
+  s_b933d9add4e23e::t_ca382fb0133e7a 66
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Errors/StockItemErrors.cs
+  s_b933d9add4e23e::t_09398ec32b538d 1-8
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/GetStockItem/GetStockItemQuery.cs
+  s_b933d9add4e23e::t_fdd4295b214224 1-5
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/GetStockItem/StockItemDto.cs
+  s_b933d9add4e23e::t_d2ec40762a4549 1-3
+tests/ModularMonolith.Tests/Fixtures/ModularMonolithProcess.cs
+  s_b933d9add4e23e::t_98e27f3679e939 11
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_b933d9add4e23e::t_f0cf292a0f7d00 153-159
+samples/ModularMonolith/src/Inventory.Host/InventoryHost.cs
+  s_b933d9add4e23e::t_d48f304cd1ff09 4
+  s_b933d9add4e23e::t_1a289fcb56a490 11-13,19-21,31-33,36-38,46-51,64,68-74,76-80
+tests/ModularMonolith.Tests/Fixtures/TestIssuer.cs
+  s_b933d9add4e23e::t_9f5027dec84b8f 33-40
+  s_b933d9add4e23e::t_b1b51abe0deed7 32
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/GetStockItem/GetStockItemQueryHandler.cs
+  s_b933d9add4e23e::t_74584a261d27e6 1-26
+tests/PouryaKit.Aspire.Tests/AppHostTests.cs
+  s_b933d9add4e23e::t_b76a227433497e 68
+docs/acceptance.md
+  s_b933d9add4e23e::t_86dc6c2e5bbaf3 2828-2843
+docs/architecture/README.md
+  s_b933d9add4e23e::t_24ae66d25b55e7 54,58,64
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b933d9add4e23e::t_179623de37bcbf 189-190,202,392
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b933d9add4e23e::t_7f991ce9ec1efd 230
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b933d9add4e23e::t_a8484c9d86c0f0 38,127-128,140,257-258,264,422
+samples/ModularMonolith/src/Modules/Inventory/Inventory/Infrastructure/Data/Migrations/20261024190321_StockItemTenants.Designer.cs
+  s_b933d9add4e23e::t_99a6cd1389b365 1-85
+samples/ModularMonolith/src/Modules/Inventory/Inventory/Infrastructure/Data/Migrations/InventoryDbContextModelSnapshot.cs
+  s_b933d9add4e23e::t_1aeaebee927995 21,62-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a3dce9de943a8fc722651e1e662720473ef644a3",
+  "prompts": {},
+  "sessions": {
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_d6af6b09a8b75b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a0a3befa1cbe2ab49",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
