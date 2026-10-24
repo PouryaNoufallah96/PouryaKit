@@ -1,0 +1,39 @@
+.agents/scripts/check-docs.py
+  s_dc235343aadb31::t_521e00ff0b3fcc 31-33,440
+.agents/scripts/test_check_docs.py
+  s_dc235343aadb31::t_308c09cee18eba 326-333
+.github/workflows/ci.yml
+  s_dc235343aadb31::t_fc1381b9270315 5
+AGENTS.md
+  s_dc235343aadb31::t_7cb0bad1c1f401 96
+docs/agents/ai-setup.md
+  s_dc235343aadb31::t_88d47554b8f212 28-29
+docs/agents/brief-template.md
+  s_dc235343aadb31::t_e7055e53e35cda 38-41
+docs/architecture/diagrams/ci-and-publication.html
+  s_dc235343aadb31::t_cc3a13b018ef6d 5061-5062,5072,5533
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_dc235343aadb31::t_2037840320cdac 84,612
+docs/architecture/diagrams/kit-context.architecture.json
+  s_dc235343aadb31::t_0d3c7032706cc7 10
+docs/ci.md
+  s_dc235343aadb31::t_ee93a8edb4837a 3
+docs/private-packages.md
+  s_dc235343aadb31::t_bb7dcd83e2a281 11,16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ccdb3ab7559831c9f8370346bc115e687f19ab78",
+  "prompts": {},
+  "sessions": {
+    "s_dc235343aadb31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c959058c-fafb-418d-968e-8aae07d692ee",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
