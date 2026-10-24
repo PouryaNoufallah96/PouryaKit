@@ -1,0 +1,21 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_d25075ecfddc3d::t_f6f80839d2e40d 1
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_d25075ecfddc3d::t_27f0e984978371 137-140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "771a4b8764dd945d32f376f7c726d4e5e805690c",
+  "prompts": {},
+  "sessions": {
+    "s_d25075ecfddc3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c2faa7bc-43e4-49f1-ba67-db6d73ce0e91",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
