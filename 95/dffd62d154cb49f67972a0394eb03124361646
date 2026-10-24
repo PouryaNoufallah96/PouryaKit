@@ -1,0 +1,29 @@
+.agents/skills/pourya-kit/SKILL.md
+  s_dc235343aadb31::t_b6f0aee8f779e9 49-50,65
+.agents/skills/pourya-kit/references/aspire.md
+  s_dc235343aadb31::t_5b7e9fdc41d22a 159-160
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_dc235343aadb31::t_e186be38f1e109 98
+.agents/skills/pourya-kit/references/reverse-proxy.md
+  s_dc235343aadb31::t_eb01f31f6bd270 64,67
+docs/acceptance.md
+  s_dc235343aadb31::t_35015b7f01e4cb 1405,2659-2669
+docs/foundation-review.md
+  s_dc235343aadb31::t_85a0d52f86e090 880
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "95dffd62d154cb49f67972a0394eb03124361646",
+  "prompts": {},
+  "sessions": {
+    "s_dc235343aadb31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c959058c-fafb-418d-968e-8aae07d692ee",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
