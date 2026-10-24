@@ -1,0 +1,113 @@
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsCommand.cs
+  s_b933d9add4e23e::t_a6156780254a0a 5-9
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsEndpoint.cs
+  s_b933d9add4e23e::t_7d07ec6009a268 9-10,21
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsCommandValidator.cs
+  s_b933d9add4e23e::t_7c0673b8341fdb 5-7
+.agents/skills/pourya-kit/references/ai.md
+  s_b933d9add4e23e::t_d6c3835ef9f424 5-6,24,31-32,35-36,55,59,62-67,69,75,77,82,88,94,99-106,109,114-133,136-153,158-160,164,167-171,175,180,183,185,187-190,192-212,215-216,220,225-232,234,242,245,247-248,250,253-256,261,266,272,277,282,287-289,292-293,299,301,303-304,308,310-311,341,347-351
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsCommandHandler.cs
+  s_b933d9add4e23e::t_73edc90a2803e7 1-62
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Errors/ProductErrors.cs
+  s_b933d9add4e23e::t_4658188f36d81d 19-21
+samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs
+  s_b933d9add4e23e::t_34d5065837d1b9 125-126
+.agents/skills/pourya-kit/SKILL.md
+  s_b933d9add4e23e::t_fce3082ca832cd 54
+.agents/skills/pourya-kit/references/templates.md
+  s_b933d9add4e23e::t_dc6eeacbd13f3f 43,135
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_b933d9add4e23e::t_51f0adf6e97c7e 15,23
+.claude/agent-memory/kit-implementer/ai-and-gateway-tool-facts.md
+  s_b933d9add4e23e::t_e162218a54a445 71-82
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_b933d9add4e23e::t_86488d2e1b6c62 109-113
+README.md
+  s_b933d9add4e23e::t_9825feab2bccf2 34
+docs/acceptance.md
+  s_b933d9add4e23e::t_db7496650eade2 2846-2866
+docs/architecture/README.md
+  s_b933d9add4e23e::t_a70a068ae90fff 54,361,365,739
+docs/architecture/diagrams/http-command.sequence.json
+  s_b933d9add4e23e::t_b9665fbe7c02a7 37-38,51-52
+docs/architecture/diagrams/kit-context.architecture.json
+  s_b933d9add4e23e::t_1292321f0e2ac6 127-128,297
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_b933d9add4e23e::t_c857259a353dd2 105-106
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_b933d9add4e23e::t_37bce52a16af27 223-224
+samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs
+  s_b933d9add4e23e::t_01065735cb791b 53
+samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs
+  s_b933d9add4e23e::t_79fd2974247023 16,36
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261024200633_ProductConversations.Designer.cs
+  s_b933d9add4e23e::t_7ef6b224172308 1-172
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261024200633_ProductConversations.cs
+  s_b933d9add4e23e::t_2a352f68dbe8cf 1-47
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/CatalogDbContextModelSnapshot.cs
+  s_b933d9add4e23e::t_4bc6b97131e908 21,43,106,126-165
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Data/Configurations/ProductConversationConfiguration.cs
+  s_b933d9add4e23e::t_acf8f80367e6de 1-21
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Data/Specifications/ProductConversationKeyed.cs
+  s_b933d9add4e23e::t_29c86bd3fcf738 1-9
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Entities/ProductConversation.cs
+  s_b933d9add4e23e::t_2f32cb3b2cd7d8 1-31
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/ProductConversations.cs
+  s_b933d9add4e23e::t_2a987f2191988e 1-59
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/ValueObjects/ProductConversationId.cs
+  s_b933d9add4e23e::t_133aacfd9139b3 1-5
+src/PouryaKit.Templates/PouryaKit.Templates.csproj
+  s_b933d9add4e23e::t_447e85c30d5582 25
+src/PouryaKit.Templates/content/modular/src/ModularMonolith.Host/AppHost.cs
+  s_b933d9add4e23e::t_974c233f2c6708 81-82
+src/PouryaKit.Templates/content/monolith/.template.config/template.json
+  s_b933d9add4e23e::t_3b7c65c86cab99 70
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/CatalogModule.cs
+  s_b933d9add4e23e::t_b53977a0ca8f87 15,42
+tests/ModularMonolith.Tests/AgentRunTests.cs
+  s_b933d9add4e23e::t_45f929252e6343 1,15,18,21,24-26,41-43,311-312,314,391-591,642-651,668-670,673-674
+tests/ModularMonolith.Tests/AiTests.cs
+  s_b933d9add4e23e::t_e00f7de2f5e6da 48-50,52,276-277
+tests/ModularMonolith.Tests/Fixtures/AiFixture.cs
+  s_b933d9add4e23e::t_21c650e394153a 2,4,11-13,35,45-51
+tests/ModularMonolith.Tests/Fixtures/ChatStub.cs
+  s_b933d9add4e23e::t_6d93fed768cab4 121-122,127-128,132-134
+tests/ModularMonolith.Tests/Fixtures/RecordedTelemetry.cs
+  s_b933d9add4e23e::t_eb0dfdabe8ffc8 4-6,86-112
+tests/ModularMonolith.Tests/PersistenceTests.cs
+  s_b933d9add4e23e::t_30e6f59401a7f3 42,97
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_b933d9add4e23e::t_e46848d19408d4 39-43,93
+tests/PouryaKit.ArchitectureTests/TemplateRules.cs
+  s_b933d9add4e23e::t_1543f5fa147792 6,46,56,122-131,133,135-156
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_b933d9add4e23e::t_dec28a995a738c 13-14,18-20,22,24-25,69-88
+samples/ModularMonolith/src/ModularMonolith.Host/CardNumberGuardrail.cs
+  s_e94e5e9772f97d::t_7d1e38421d4cbe 1-24
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/ProductsAskedAbout.cs
+  s_e94e5e9772f97d::t_d3ceab4047a2e5 1-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e4b2103477cf72fbff208ceed743420eb0154dad",
+  "prompts": {},
+  "sessions": {
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": null
+    },
+    "s_e94e5e9772f97d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-acfd40f1d91f44948",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
