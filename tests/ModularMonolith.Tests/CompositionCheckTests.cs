@@ -492,7 +492,8 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     }
 
     // Ticket #174: the Host composes one embedding generator, as it composes one chat client (AiTests). One generator
-    // builds: every VectorSearchTests Host is composed with the checks and AddPouryaKitEmbeddings alone.
+    // builds: every Host VectorFixture.Compose builds goes through AddPouryaKitModules, which installs the checks, and
+    // calls AddPouryaKitEmbeddings once.
     [Theory]
     [InlineData("before")]
     [InlineData("after")]
