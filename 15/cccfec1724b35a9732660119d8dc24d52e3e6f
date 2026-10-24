@@ -1,0 +1,22 @@
+tests/ModularMonolith.Tests/Fixtures/VectorFixture.cs
+  s_d25075ecfddc3d::t_04fb476abb738e 71,73-77,79,81-84
+tests/ModularMonolith.Tests/Fixtures/ReportFixture.cs
+  s_d25075ecfddc3d::t_74c5628fb4bdff 248-250
+  s_d25075ecfddc3d::t_2f189316a2a61f 215
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "15cccfec1724b35a9732660119d8dc24d52e3e6f",
+  "prompts": {},
+  "sessions": {
+    "s_d25075ecfddc3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c2faa7bc-43e4-49f1-ba67-db6d73ce0e91",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
