@@ -162,6 +162,8 @@ A 30-second live check: start `claude` in the repository root and ask it to run 
 
 `.agents/hooks/guard.py` runs before tool calls in both tools, including inside subagents. The script only denies, with a reason, or allows. In Claude Code the `kit-cockpit` mod turns a denied shell command of the main session into the question "Keep blocked / Run it once"; "Run it once" allows that one call. File-tool denies and calls inside subagents stay denied, and so does everything in Codex and in `claude -p`.
 
+To turn the guard off for yourself, add `"env": { "POURYAKIT_GUARD": "off" }` to `.claude/settings.local.json`: the guard then allows every call, and the mod and status line keep running. No settings file can switch off one project hook, and `disableAllHooks` would stop the status line and the mod's band too.
+
 The guard is a seatbelt against accidents, not a sandbox. It stops the common destructive slip; it does not contain a session that sets out to get around it.
 
 | Rule | Denied | Allowed |

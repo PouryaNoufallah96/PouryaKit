@@ -327,9 +327,11 @@ def check_hook_commands(file: str) -> None:
         failures.append(f"{file}: no PreToolUse command hook runs {rel(GUARD)} for {', '.join(unguarded)}")
 
 
-def guard_decision(payload: dict) -> tuple[str, str]:
+def guard_decision(payload: dict, switch: str = "") -> tuple[str, str]:
+    # The rules are judged with the guard on, even from a session that switched it off.
+    env = {k: v for k, v in os.environ.items() if k != "POURYAKIT_GUARD"} | ({"POURYAKIT_GUARD": switch} if switch else {})
     run = subprocess.run(
-        [sys.executable, str(GUARD)], input=json.dumps(payload), capture_output=True, text=True, timeout=10
+        [sys.executable, str(GUARD)], input=json.dumps(payload), capture_output=True, text=True, timeout=10, env=env
     )
     try:
         out = json.loads(run.stdout).get("hookSpecificOutput", {})
@@ -456,6 +458,8 @@ def check_guard() -> None:
             failures.append(f"guard: {label}: expected {expected}, got {decision}")
         elif decision == "deny" and not reason.startswith(marker):
             failures.append(f"guard: {label}: the deny reason does not start with '{marker}'")
+    if guard_decision({**shell("rm -rf bin"), "cwd": str(ROOT), "hook_event_name": "PreToolUse"}, switch="off")[0] != "allow":
+        failures.append("guard: POURYAKIT_GUARD=off does not allow a call the rules deny")
     scratch.cleanup()
 
 

@@ -7,6 +7,10 @@ deletes, and destructive pushes. Hook input it cannot read or judge is allowed w
 warning, because a guard that denies every call locks the session; check-ai-setup.py
 proves it still denies what it must.
 
+POURYAKIT_GUARD=off in the environment allows every call. No settings file can switch off one
+project hook, so this is how one person turns the guard off for their own Claude Code sessions:
+an `env` entry in the gitignored .claude/settings.local.json.
+
 Shell rules apply to `rm`, `find` and `git` at command position: the first word of a
 statement (statements end at ; && || | ( ) ` and newlines), after VAR=value assignments,
 shell keywords and wrappers such as sudo, env and xargs. After a wrapper every guarded word
@@ -283,6 +287,9 @@ def denied_reason(tool: str, tool_input: dict, cwd: Path) -> str | None:
 
 
 def main() -> None:
+    if os.environ.get("POURYAKIT_GUARD") == "off":
+        print("{}")
+        return
     reason = None
     try:
         data = json.load(sys.stdin)
