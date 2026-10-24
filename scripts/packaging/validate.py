@@ -415,8 +415,8 @@ def validate(output, *, fetch=True):
             run(["dotnet", "restore", solution, "--configfile", folder / "NuGet.Config", "--no-http-cache", "-p:RestoreFallbackFolders="],
                 cwd=solution.parent, env=env, log=output / f"consumer-{name}-restore.log")
             run(["dotnet", "build", solution, "-c", "Release", "--no-restore"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-build.log")
-            tests = solution.parent / "tests" / f"{generated}.Tests" / f"{generated}.Tests.csproj"
-            result = run(["dotnet", "test", "--project", tests, "-c", "Release", "--no-build"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-test.log")
+            test_project = solution.parent / "tests" / f"{generated}.Tests" / f"{generated}.Tests.csproj"
+            result = run(["dotnet", "test", "--project", test_project, "-c", "Release", "--no-build"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-test.log")
             passed = re.search(r"succeeded: (\d+)", result)
             failed = re.search(r"failed: (\d+)", result)
             if not passed or not failed or failed.group(1) != "0" or passed.group(1) == "0":

@@ -5,7 +5,7 @@ import tempfile
 import os
 import json
 import subprocess
-from unittest.mock import patch
+from unittest.mock import DEFAULT, patch
 
 import validate
 from validate import check_inventory, check_cache_folders, check_consumer, check_production_publish, isolated_env, prepare_history, test_totals
@@ -305,6 +305,37 @@ class TestTotalsTests(unittest.TestCase):
     def test_an_output_without_totals_is_refused(self) -> None:
         with self.assertRaises(RuntimeError):
             test_totals("Build succeeded.\n")
+
+    def test_the_pass_line_carries_the_totals_after_the_template_consumers_ran(self) -> None:
+        """The template consumers' loop once rebound the totals' name to a generated test project's path."""
+        summary = "Test run summary: Passed!\n  total: 72\n  failed: 0\n  succeeded: 69\n  skipped: 3\n"
+
+        def run(command, **_):
+            if command[:2] == ["dotnet", "pack"]:
+                (command[-1] / "PouryaKit.Templates.1.0.0.nupkg").write_bytes(b"package")
+            if command[:2] == ["dotnet", "test"]:
+                return summary if "PouryaKit.slnx" in command else "  failed: 0\n  succeeded: 4\n"
+            return "commit\n" if "rev-parse" in command else ""
+
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder) / "repo"
+            output = Path(folder) / "evidence"
+            (root / "scripts/packaging").mkdir(parents=True)
+            (root / "scripts/packaging/inventory.json").write_text(json.dumps({
+                "packages": [{"id": "PouryaKit.Templates", "kind": "template"}],
+                "compositions": [{"name": f"template-{name}", "template": f"pouryakit-{name}", "packages": [], "excluded": []}
+                                 for name in ("monolith", "modular-monolith")]}))
+            with patch("builtins.print") as printed, patch.multiple(
+                    validate, ROOT=root, run=run, prepare_history=lambda *_, **__: "commit",
+                    properties=lambda *_, **__: {"MinVerVersion": "1.0.0", "PackageVersion": "1.0.0"},
+                    check_inventory=DEFAULT, inventory_controls=DEFAULT, production_publish=DEFAULT,
+                    check_consumer=lambda *_: [], artifact_controls=DEFAULT, version_proof=DEFAULT):
+                validate.validate(output, fetch=False)
+        self.assertEqual(
+            "PASS 1 packages, 2 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, "
+            "template-modular-monolith (-n acme-shop) 4), negative controls and MinVer proof; "
+            f"Release tests total 72, succeeded 69, failed 0, skipped 3. Manifest: {output / 'manifest.json'}",
+            printed.call_args.args[0])
 
 
 if __name__ == "__main__":
