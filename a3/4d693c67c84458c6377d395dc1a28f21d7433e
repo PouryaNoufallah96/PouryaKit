@@ -1,0 +1,21 @@
+.agents/scripts/test_merge_package.py
+  s_8c0bab9d85c0db::t_c3381f27f3a888 385-387
+scripts/packaging/test_validation.py
+  s_8c0bab9d85c0db::t_d90ff46ab06de9 292-294
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a34d693c67c84458c6377d395dc1a28f21d7433e",
+  "prompts": {},
+  "sessions": {
+    "s_8c0bab9d85c0db": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a0fd3e8760b44f243",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
