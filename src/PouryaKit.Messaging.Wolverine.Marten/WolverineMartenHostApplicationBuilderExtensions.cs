@@ -32,8 +32,9 @@ public static class WolverineMartenHostApplicationBuilderExtensions
         /// <c>UsePouryaKitWolverine(connectionName, schema)</c> of <c>PouryaKit.Messaging.Wolverine.EFCore</c> declared,
         /// which comes first, and the Host fails when it is built if the Marten store, as its configuration built it, is
         /// on another database than that store's, or integrated in another schema. A Stream publishes no Snapshot, so the
-        /// Host also fails when it is built if a Snapshot is declared for a Stream, naming it. Throws when the configuration
-        /// has no such connection string or leaves it blank, and when the Host already has its Marten store.
+        /// Host also fails when it is built if a Snapshot is declared for a Stream, or by a Stream Module, naming it.
+        /// Throws when the configuration has no such connection string or leaves it blank, and when the Host already has
+        /// its Marten store.
         /// </summary>
         public IHostApplicationBuilder UsePouryaKitMarten(string connectionName, string schema = "wolverine")
         {
@@ -52,12 +53,14 @@ public static class WolverineMartenHostApplicationBuilderExtensions
             builder.Services.TryAddScoped<MartenStreamOutbox>();
             builder.Services.TryAddScoped<IStreamOutbox>(scope => scope.GetRequiredService<MartenStreamOutbox>());
             builder.Services.TryAddScoped<IOutbox>(scope => scope.GetRequiredService<MartenStreamOutbox>());
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, StreamSnapshotCheck>());
+            HashSet<Type?> streamModules = [];
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck>(new StreamSnapshotCheck(streamModules)));
             StreamModules
                 .In(builder.Services)
                 .ForEach(
                     (module, moduleSchema) =>
                     {
+                        streamModules.Add(module);
                         if (module is null)
                         {
                             builder.Services.TryAddScoped<IReceipts>(scope => new MartenReceipts(scope.GetRequiredService<IUnitOfWork>()));

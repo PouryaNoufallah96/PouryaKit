@@ -318,3 +318,5 @@ The decision above stands; two limits the #131 amendment recorded are closed.
   Snapshot; `UsePouryaKitMarten` registers the composition check `StreamSnapshotCheck`, which names the Stream and its
   Module, so such a declaration no longer publishes nothing silently.
   `StreamTests.A_snapshot_declared_for_a_stream_fails_the_host_when_it_is_built_naming_the_stream_and_its_module` proves it.
+  *Later in the same review, a Snapshot a Stream Module declares of any aggregate type fails the same way: the check
+  reads the Stream Modules `UsePouryaKitMarten` records through `StreamModules.ForEach`.*

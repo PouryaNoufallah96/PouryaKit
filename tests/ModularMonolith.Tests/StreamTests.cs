@@ -104,19 +104,27 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         Assert.Contains("call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore before UsePouryaKitMarten", refused.Message, StringComparison.Ordinal);
     }
 
-    // A Stream's Unit of Work builds no Snapshot, so a declaration for one would never be sent.
+    // A Stream's Unit of Work builds no Snapshot, so a declaration for one, or by a Stream Module of any type, would never
+    // be sent.
     [Fact]
     public void A_snapshot_declared_for_a_stream_fails_the_host_when_it_is_built_naming_the_stream_and_its_module()
     {
         var refused = Assert.Throws<InvalidOperationException>(() =>
             streams.MartenOnly(
                 _database,
-                services => services.PublishSnapshot<Account, AccountSnapshotV1, AccountSnapshotMapper>("tests.account-snapshot.v1", typeof(AccountsModule))
+                services =>
+                    services
+                        .PublishSnapshot<Account, AccountSnapshotV1, AccountSnapshotMapper>("tests.account-snapshot.v1", typeof(AccountsModule))
+                        .PublishSnapshot<IAggregateRoot, AggregateSnapshotV1, AggregateSnapshotMapper>("tests.aggregate-snapshot.v1", typeof(AccountsModule))
             )
         );
 
         Assert.Contains(
             $"AccountsModule declares a Snapshot of {typeof(Account).FullName}, a Stream, which would never be sent: a Stream's Unit of Work publishes the Notifications and Integration Events of its events, and no Snapshot. Remove the PublishSnapshot declaration, and publish what the Stream's events tell other Modules as Notifications or Integration Events.",
+            refused.Message.Split(Environment.NewLine)
+        );
+        Assert.Contains(
+            $"AccountsModule declares a Snapshot of {typeof(IAggregateRoot).FullName}, which would never be sent: its Unit of Work is a Stream's, which publishes the Notifications and Integration Events of its events, and no Snapshot. Remove the PublishSnapshot declaration, and publish what the Stream's events tell other Modules as Notifications or Integration Events.",
             refused.Message.Split(Environment.NewLine)
         );
     }
