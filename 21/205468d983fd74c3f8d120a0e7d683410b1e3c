@@ -1,0 +1,25 @@
+samples/ModularMonolith/src/ModularMonolith.Host/CardNumberGuardrail.cs
+  s_b933d9add4e23e::t_0725f577194e7a 1,10-12,19,22-35
+.agents/skills/pourya-kit/references/ai.md
+  s_b933d9add4e23e::t_1aa4dcbed5864b 250,253-266,274
+docs/acceptance.md
+  s_b933d9add4e23e::t_bbf0b86a5b633f 2855
+tests/ModularMonolith.Tests/AgentRunTests.cs
+  s_b933d9add4e23e::t_836eebdb326968 41-43,478-508,704,706
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "21205468d983fd74c3f8d120a0e7d683410b1e3c",
+  "prompts": {},
+  "sessions": {
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
