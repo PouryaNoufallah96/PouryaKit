@@ -352,7 +352,7 @@ with a letter, or the Host fails when it is built: Wolverine writes its state ta
 The decision above stands. A Host with a Saga fails when it is built unless Wolverine's lightweight saga storage is
 the first that keeps every type, since Marten's integration puts its own first, alone or beside the EF Core store,
 where the step's claim would never commit (`SagaCheck`; the probe is in the
-[acceptance map](../acceptance.md#saga-package-ticket-142)): a saga and a Stream (Marten) cannot share one Host yet; making the Kit's sagas keep the lightweight provider beside Marten's is a later package.
+[acceptance map](../acceptance.md#saga-package-ticket-142)): a saga and a Stream (Marten) cannot share one Host yet; making the Kit's sagas keep the lightweight provider beside Marten's is a later package. *Superseded on 2026-10-24 by the amendment below: the way out is not a Kit package.*
 
 ## Amendment (2026-10-24, a Saga beside Marten researched)
 
@@ -374,4 +374,5 @@ once.
 
 Owner decision (2026-10-24): the reorder is rejected, since it would depend on an undocumented provider list against
 Wolverine's stated intent. The refusal stays until Wolverine's Marten integration offers a supported way to keep a
-saga on the lightweight storage, which a feature request to `JasperFx/wolverine` asks for.
+saga on the lightweight storage, which a feature request to `JasperFx/wolverine` asks for *(drafted 2026-10-24, not
+posted)*.

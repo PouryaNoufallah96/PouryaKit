@@ -273,7 +273,9 @@ The decision above stands. `PouryaKit.Persistence.Marten` and `PouryaKit.Messagi
   and the envelopes stay in the message store, which delivers them after the inbox stale time or when a Host starts. An
   exception before it is the commit's and propagates, a concurrent change as `UnitOfWorkErrors.ConcurrencyConflict`. A
   store listener of the application (`StoreOptions.Listeners`) runs before the session's, so one that throws after the
-  commit is still reported as a failure; the Kit registers none.
+  commit is still reported as a failure; the Kit registers none. *Superseded on 2026-10-24 by the PR #143 review: the
+  Unit of Work now inserts its listener first, ahead of the store's, so such a listener's exception after the commit is
+  logged as `NotSent` and the Operation returns its success. See the amendment below.*
 - **The packages' references.** Persistence.Marten references Cqrs and Persistence, and `Marten` and `Npgsql`: the Outbox
   step is a seam, `IStreamOutbox`, which Messaging.Wolverine.Marten fills with `OutboxWriter` over a `MartenOutbox`, so
   the I.3 row's `→ Messaging` is not taken; `Npgsql` 10.0.3 is the Kit's line over the 9.0.4 Marten brings, since the
