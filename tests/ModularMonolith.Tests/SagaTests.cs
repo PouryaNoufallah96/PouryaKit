@@ -492,8 +492,18 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
 
         using (var child = await ChildAsync("PAID", order))
         {
-            await WaitUntilAsync($"(select (body->>'Paid')::int from wolverine.shipping_fulfilment_saga where id = '{FulfilmentOf("tenant-a", order)}') = 1");
-            child.Kill(entireProcessTree: true);
+            try
+            {
+                await WaitUntilAsync($"(select (body->>'Paid')::int from wolverine.shipping_fulfilment_saga where id = '{FulfilmentOf("tenant-a", order)}') = 1");
+            }
+            finally
+            {
+                if (!child.HasExited)
+                {
+                    child.Kill(entireProcessTree: true);
+                }
+            }
+
             await child.WaitForExitAsync(Token);
         }
 
@@ -870,18 +880,32 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
                 UseShellExecute = false,
             }
         )!;
-        child.ErrorDataReceived += (_, _) => { };
-        child.BeginErrorReadLine();
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(Token);
-        timeout.CancelAfter(TimeSpan.FromSeconds(120));
-        string? printed;
-        do
+        try
         {
-            printed = await child.StandardOutput.ReadLineAsync(timeout.Token);
-        } while (printed is not null && printed != line);
+            child.ErrorDataReceived += (_, _) => { };
+            child.BeginErrorReadLine();
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(Token);
+            timeout.CancelAfter(TimeSpan.FromSeconds(120));
+            string? printed;
+            do
+            {
+                printed = await child.StandardOutput.ReadLineAsync(timeout.Token);
+            } while (printed is not null && printed != line);
 
-        Assert.Equal(line, printed);
-        return child;
+            Assert.Equal(line, printed);
+            return child;
+        }
+        catch
+        {
+            // No caller holds a child that never printed its line, and disposing a process does not kill it.
+            if (!child.HasExited)
+            {
+                child.Kill(entireProcessTree: true);
+            }
+
+            child.Dispose();
+            throw;
+        }
     }
 
     private async Task<JsonElement?> SagaAsync(string table, string sagaId, string schema = "wolverine")
