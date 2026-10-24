@@ -1,0 +1,29 @@
+.claude/agent-memory/kit-implementer/composition-check-facts.md
+  s_d25075ecfddc3d::t_68fd127cf3ca94 88-92
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_d25075ecfddc3d::t_a5876b82362900 62
+.claude/agent-memory/kit-implementer/ai-and-gateway-tool-facts.md
+  s_d25075ecfddc3d::t_9d4d41fc6edc26 34
+.claude/agent-memory/kit-implementer/core-json-and-architecture-test-facts.md
+  s_d25075ecfddc3d::t_5b236c2a4f7b28 101
+.claude/agent-memory/kit-implementer/report-module-facts.md
+  s_d25075ecfddc3d::t_b1a07d5e376bb1 21
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_d25075ecfddc3d::t_c54dd97b0fbbe5 5,8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "da887ad556abe5bd2e3e38a0c4b7d386a8e3b18c",
+  "prompts": {},
+  "sessions": {
+    "s_d25075ecfddc3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c2faa7bc-43e4-49f1-ba67-db6d73ce0e91",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": null
+    }
+  }
+}
