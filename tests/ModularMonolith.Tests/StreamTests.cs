@@ -360,8 +360,8 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         Assert.All(atCommit, row => Assert.Equal(atCommit[0][0], Assert.IsType<DateTime>(row[0])));
     }
 
-    // The welcome holds longer than the inbox stale time, so the store hands its delivery out again while the first run
-    // still holds its Receipt: the duplicate's Receipt waits on the first one's row, then records nothing.
+    // The welcome holds, and the test releases its row as the stale sweep would, so the store hands its delivery out again
+    // while the first run still holds its Receipt: the duplicate's Receipt waits on the first one's row, then records nothing.
     [Fact]
     public async Task A_concurrent_duplicate_delivery_waits_for_the_first_receipt_and_never_runs_its_handler()
     {
