@@ -1,0 +1,28 @@
+scripts/packaging/validate.py
+  s_d25075ecfddc3d::t_d191d4e9709ec3 42-56,384,473
+docs/ci.md
+  s_d25075ecfddc3d::t_36da8fbe1bfcad 7
+.agents/scripts/ci-local.sh
+  s_d25075ecfddc3d::t_36da8fbe1bfcad 1-23
+scripts/packaging/test_validation.py
+  s_d25075ecfddc3d::t_d191d4e9709ec3 11,293-307
+  s_d25075ecfddc3d::t_0c8bfcbd90a0d7 308-309
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_d25075ecfddc3d::t_d70cc9906bd70d 171-172,177-178,194-195,211-212,223-224,241-242,247-248,253-254,270-271,282-283
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bd70439684eb79339854f4cb03eaf1360c72aa7f",
+  "prompts": {},
+  "sessions": {
+    "s_d25075ecfddc3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c2faa7bc-43e4-49f1-ba67-db6d73ce0e91",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
