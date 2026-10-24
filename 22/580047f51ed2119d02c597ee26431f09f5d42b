@@ -1,0 +1,31 @@
+.agents/skills/pourya-kit/references/grpc.md
+  s_dc235343aadb31::t_826e91ee2ee297 10,108-111
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_dc235343aadb31::t_47fadcf96c76a3 97
+.agents/skills/pourya-kit/references/reporting-module.md
+  s_dc235343aadb31::t_3292b3ad84b61b 109
+docs/acceptance.md
+  s_dc235343aadb31::t_70d6038d628655 2659-2671
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_dc235343aadb31::t_394f9f56d01ad9 304
+tests/PouryaKit.ArchitectureTests/Offending/OffendingModule.cs
+  s_dc235343aadb31::t_400aa2769f0d3c 132-134
+tests/PouryaKit.ArchitectureTests/PipelineContractTests.cs
+  s_dc235343aadb31::t_a6b1c988fac200 51-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "22580047f51ed2119d02c597ee26431f09f5d42b",
+  "prompts": {},
+  "sessions": {
+    "s_dc235343aadb31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c959058c-fafb-418d-968e-8aae07d692ee",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
