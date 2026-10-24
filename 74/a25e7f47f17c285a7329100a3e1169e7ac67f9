@@ -1,0 +1,42 @@
+.agents/skills/pourya-kit/references/ai.md
+  s_dc235343aadb31::t_a4ab956908241b 316,334,339,351
+docs/architecture/diagrams/execution-core.html
+  s_dc235343aadb31::t_a4ab956908241b 4985
+src/PouryaKit.AI/AIServiceCollectionExtensions.cs
+  s_dc235343aadb31::t_a4ab956908241b 105-107,117-121
+src/PouryaKit.Cqrs/Composition/OneProviderCheck.cs
+  s_dc235343aadb31::t_a4ab956908241b 31,41-43
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_dc235343aadb31::t_a4ab956908241b 7,15,493-536
+docs/architecture/diagrams/execution-core.architecture.json
+  s_dc235343aadb31::t_a4ab956908241b 10,834-835
+docs/architecture/README.md
+  s_dc235343aadb31::t_a4ab956908241b 166,363
+docs/provenance/PouryaKit.AI.md
+  s_dc235343aadb31::t_a4ab956908241b 5
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_dc235343aadb31::t_a4ab956908241b 8
+  s_dc235343aadb31::t_4872240c6c24bb 15
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_dc235343aadb31::t_a4ab956908241b 25
+.claude/agent-memory/kit-implementer/composition-check-facts.md
+  s_dc235343aadb31::t_a4ab956908241b 92
+docs/acceptance.md
+  s_dc235343aadb31::t_eff8122454294f 2747-2760
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "74a25e7f47f17c285a7329100a3e1169e7ac67f9",
+  "prompts": {},
+  "sessions": {
+    "s_dc235343aadb31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c959058c-fafb-418d-968e-8aae07d692ee",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
