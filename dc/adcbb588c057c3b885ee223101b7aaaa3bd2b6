@@ -1,0 +1,21 @@
+tests/ModularMonolith.Tests/IntegrationEventTests.cs
+  s_b933d9add4e23e::t_c8a5eba72ff666 117-118
+tests/ModularMonolith.Tests/StreamTests.cs
+  s_b933d9add4e23e::t_9d284a4329b719 373
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dcadcbb588c057c3b885ee223101b7aaaa3bd2b6",
+  "prompts": {},
+  "sessions": {
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
