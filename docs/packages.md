@@ -20,7 +20,7 @@ Each nupkg contains `LICENSE` with the Kit's MIT text and `THIRD-PARTY-NOTICES.m
 
 ## Clean consumers
 
-The inventory also enumerates the compositions:
+The inventory also enumerates the compositions. A template consumer names its template and, as `generated`, the name its solution is generated under; the validation generates, builds, smoke-tests and publishes exactly the templates the inventory's consumers name, and finds each generated solution's Host and test project by that name (`<name>.Host` and `<name>.Tests`), so a template added to the inventory needs no change to the script.
 
 | Consumer | What is built |
 |---|---|

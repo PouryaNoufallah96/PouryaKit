@@ -62,6 +62,7 @@
     {
       "name": "template-monolith",
       "template": "pouryakit-monolith",
+      "generated": "Acme.Shop",
       "packages": ["PouryaKit.Caching", "PouryaKit.Grpc", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.ReverseProxy", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi", "PouryaKit.Realtime"],
       "tests": ["PouryaKit.Testing"],
       "excluded": ["PouryaKit.Modularity", "PouryaKit.AI", "PouryaKit.Testing"]
@@ -69,6 +70,7 @@
     {
       "name": "template-modular-monolith",
       "template": "pouryakit-modular-monolith",
+      "generated": "acme-shop",
       "packages": ["PouryaKit.Modularity", "PouryaKit.Caching", "PouryaKit.Grpc", "PouryaKit.Messaging.Wolverine.EFCore", "PouryaKit.Messaging.Wolverine.RabbitMq", "PouryaKit.Observability", "PouryaKit.Persistence.Dapper", "PouryaKit.Persistence.Postgres", "PouryaKit.ReverseProxy", "PouryaKit.Security", "PouryaKit.Security.JwtBearer", "PouryaKit.Validation", "PouryaKit.Web", "PouryaKit.Web.OpenApi", "PouryaKit.Realtime", "PouryaKit.AI"],
       "tests": ["PouryaKit.Testing"],
       "excluded": ["PouryaKit.Testing", "PouryaKit.AI.Postgres", "Pgvector"]
