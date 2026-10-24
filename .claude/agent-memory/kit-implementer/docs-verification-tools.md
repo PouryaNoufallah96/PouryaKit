@@ -133,5 +133,10 @@ metadata:
 
 - `scratchpad/p143/remap143.py <worktree> [--write]` maps every citation of a file changed against HEAD through a `difflib` line map and edits the numbers with a path-anchored regex; run `--write` once only, since a second run maps the new numbers as HEAD's. A range whose cited code grew (a nested provider class below `HeaderRequestCulture`'s methods) needs its end set by hand. `scratchpad/p143/cites.py <worktree> <substring> ...` lists citations by path before editing; the session-4 `tools/m142/repin.py` pins and refinalizes with the surviving Archify clone.
 
+## A longer node text and an unchanged diagram (#166, 2026-10-24; Archify 3.0.1)
+
+- **Archify shrinks a node's sublabel to fit its width** (8 px to 7.5 px), and at ci-and-publication's 1232 px viewBox the projection fell below 6 px: `composition/desktop-readability` on the trigger node for 36 characters in a 170-wide node. A 31-character text passed; shorten the text before widening a node, which moves the viewBox. Trial with the old revision first (`repin.py <worktree> <current revision> <slug.type>` only refinalizes), then pin.
+- A diagram that only needs a re-pin (kit-context cites `docs/private-packages.md:64-83`; an edit at line 11 is above it) must be staged with the cited file: give it an interim pin to the integration tip in the code commit, then pin it to that commit.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].
