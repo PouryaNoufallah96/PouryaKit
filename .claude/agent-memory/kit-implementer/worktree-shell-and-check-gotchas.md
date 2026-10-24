@@ -105,5 +105,9 @@ The worktree base and the one-git-command rule are in the role file; these are w
 - A mutation script that restores a source with `shutil.copyfile` to a backup and `shutil.move` back gives the restored file the backup's older mtime, so MSBuild sees the mutated build as current and the next run tests the mutation: five "red" tests in a full run. `touch` every restored file (or `copy2` then `os.utime`) before the next build.
 - A test that removes a test cited in `docs/acceptance.md` needs a `REMOVED_TESTS` entry in `.agents/scripts/check-docs.py` (outside most briefs: ask), since the acceptance rows are records.
 
+## Waiting for a free validation slot (#165, 2026-10-24)
+
+- `pgrep -f validate.py` (and `scripts/packaging/validate.py`) also matches other agents' waiter scripts and zsh wrapper lines that merely name it, so a waiter can block for good with no validation running. Match only an interpreter running it: `ps -axo pid=,command=` lines where a `Python` executable is followed by `scripts/packaging/validate.py` (scratchpad `p165/queue165.py`, which then runs the validation itself and logs `running on <head>`). Keep the word out of the waiter's own file name.
+
 **Why:** each cost a retry in tickets #4 to #63 or the retro packages.
 **How to apply:** when a shell command is refused, when the integration branch moves, when a brief's scope misses a file, or when touching skills, settings, the check script or this memory. Related: [[merge-ci-and-workflow-tooling-facts]], [[dotnet-and-test-conventions]], [[templates-packaging-and-publication-facts]].
