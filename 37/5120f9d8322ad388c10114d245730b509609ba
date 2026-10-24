@@ -1,0 +1,27 @@
+.agents/skills/pourya-kit/references/reverse-proxy.md
+  s_b933d9add4e23e::t_cac862116ee476 13
+.agents/skills/pourya-kit/references/templates.md
+  s_b933d9add4e23e::t_e412a836096f2b 100-101,157-158
+docs/architecture/README.md
+  s_b933d9add4e23e::t_de4b4dedd368f4 62,693,748
+docs/packages.md
+  s_b933d9add4e23e::t_206502a6417c0b 32,54
+scripts/packaging/inventory.json
+  s_b933d9add4e23e::t_acc50f29d4245d 85-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "375120f9d8322ad388c10114d245730b509609ba",
+  "prompts": {},
+  "sessions": {
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
