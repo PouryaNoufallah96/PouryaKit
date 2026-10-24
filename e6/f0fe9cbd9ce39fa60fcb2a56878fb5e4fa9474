@@ -1,0 +1,19 @@
+tests/ModularMonolith.Tests/StreamTests.cs
+  s_b933d9add4e23e::t_76faaacf521e06 363-364
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e6f0fe9cbd9ce39fa60fcb2a56878fb5e4fa9474",
+  "prompts": {},
+  "sessions": {
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
