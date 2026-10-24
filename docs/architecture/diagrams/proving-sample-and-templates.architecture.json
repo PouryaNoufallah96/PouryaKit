@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "2011d4346cd5dcf59de74fe9173b087a91dc9bbc",
+      "revision": "ba5643f0dfe2e7acd2b4cac9e80f397b7edfd294",
       "link_mode": "web"
     }
   },
@@ -668,7 +668,7 @@
       "dot": "amber",
       "title": "The templates",
       "items": [
-        "PouryaKit.Templates keeps no copy of the business code: it packs the sample Modules' code, the service defaults recipes and two files of ModularMonolith.Host when the package is packed.",
+        "PouryaKit.Templates keeps no copy of the business code: it packs the sample Modules' code, the service defaults recipes and three files of ModularMonolith.Host when the package is packed.",
         "Each template's Host, project files and smoke test are the template's own; the monolith takes Catalog without Modularity, and Ledger, a second write model, stays in the modular monolith; the service takes Inventory and Catalog's Contracts alone, with Inventory.Host's composition and no Reverse proxy."
       ]
     }
