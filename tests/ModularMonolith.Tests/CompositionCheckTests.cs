@@ -491,9 +491,19 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         Assert.Empty(composition.FeatureAssembliesOf(null));
     }
 
-    // Ticket #174: the Host composes one embedding generator, as it composes one chat client (AiTests). One generator
-    // builds: every Host VectorFixture.Compose builds goes through AddPouryaKitModules, which installs the checks, and
-    // calls AddPouryaKitEmbeddings once.
+    // Ticket #174: the Host composes one embedding generator, as it composes one chat client (AiTests).
+    [Fact]
+    public void A_host_with_one_embedding_generator_builds_with_the_check_installed()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        builder.AddPouryaKitCompositionChecks();
+        builder.Services.AddPouryaKitEmbeddings();
+
+        using var host = builder.Build();
+
+        Assert.Contains(host.Services.GetServices<ICompositionCheck>(), check => check is OneProviderCheck<IEmbeddingGenerator<string, Embedding<float>>>);
+    }
+
     [Theory]
     [InlineData("before")]
     [InlineData("after")]
