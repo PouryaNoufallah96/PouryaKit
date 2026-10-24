@@ -25,8 +25,8 @@ public static class MartenHostApplicationBuilderExtensions
         /// Host, it adds the background service that removes the Stream Modules' expired idempotency keys, as
         /// <see cref="PouryaKitIdempotencyOptions"/> sets, and checks those options when the Host starts. Returns Marten's configuration, on which a messaging
         /// package's registration integrates the store, as <c>UsePouryaKitMarten</c> of
-        /// <c>PouryaKit.Messaging.Wolverine.Marten</c> does. It is for a Host with no messaging: a Host with an Outbox calls
-        /// that one instead, or fails when it is built, naming its Stream Modules. Throws when the configuration has no such
+        /// <c>PouryaKit.Messaging.Wolverine.Marten</c> does. It is for a Host with no message store: one whose store gives it an
+        /// Outbox calls that one instead, or fails when it is built if it has Stream Modules, naming them. Throws when the configuration has no such
         /// connection string or leaves it blank, and when the Host already has its Marten store.
         /// </summary>
         public MartenServiceCollectionExtensions.MartenConfigurationExpression AddPouryaKitMarten(string connectionName)
