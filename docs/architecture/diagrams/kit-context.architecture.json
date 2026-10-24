@@ -663,7 +663,7 @@
       "title": "Hosts",
       "items": [
         "ModularMonolith.Host composes Catalog, Billing and Ledger, and Inventory too when no broker is configured.",
-        "Inventory.Host composes Inventory alone and receives Catalog's ProductCreatedV1, ProductCreatedV2 and ProductSnapshotV1 from RabbitMQ.",
+        "Inventory.Host composes Inventory alone and receives Catalog's ProductCreatedV1, ProductCreatedV2 and ProductSnapshotV1 from RabbitMQ; the pouryakit-service template generates the same composition.",
         "A Host keeps its Modules' schemas and its message store in one database: the Host fails when built if a Module's DbContext names another."
       ]
     },

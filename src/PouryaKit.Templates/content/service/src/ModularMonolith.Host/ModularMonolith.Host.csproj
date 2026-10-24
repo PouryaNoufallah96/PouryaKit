@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="PouryaKit.Messaging.Wolverine.EFCore" />
+    <PackageReference Include="PouryaKit.Messaging.Wolverine.RabbitMq" />
+    <PackageReference Include="PouryaKit.Observability" />
+    <PackageReference Include="PouryaKit.Security.JwtBearer" />
+    <PackageReference Include="PouryaKit.Web" />
+    <PackageReference Include="PouryaKit.Web.OpenApi" />
+  </ItemGroup>
+  <!-- Development compiles Wolverine's handler code at run time with Roslyn from this package; a Release build loads what
+       the codegen write command generated, so its publish carries no runtime compiler (ADR 0004). -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <PackageReference Include="WolverineFx.RuntimeCompilation" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Modules\Inventory\Inventory\Inventory.csproj" />
+    <ProjectReference Include="..\PouryaKitAppName.ServiceDefaults\PouryaKitAppName.ServiceDefaults.csproj" />
+  </ItemGroup>
+</Project>

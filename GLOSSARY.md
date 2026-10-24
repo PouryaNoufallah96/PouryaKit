@@ -203,5 +203,5 @@ The sample application whose passing tests are the evidence that the Kit's guara
 _Avoid_: Demo, example, template
 
 **Project template**:
-A `dotnet new` template that generates a new application from the Proving Sample's business code in one composition, a monolith or a modular monolith.
+A `dotnet new` template that generates a new application from the Proving Sample's business code in one composition: a monolith, a modular monolith, or a service of one Module in a Host of its own.
 _Avoid_: Starter, scaffold, boilerplate, sample

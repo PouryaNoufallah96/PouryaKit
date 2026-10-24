@@ -3,9 +3,9 @@ using static PouryaKit.ArchitectureTests.TemplateRules;
 
 namespace PouryaKit.ArchitectureTests;
 
-// Ticket #53: the monolith and modular-monolith templates of PouryaKit.Templates. Each rule judges the package's content,
-// then an offending variant of it, so a rule that reads nothing fails. Generating, building and running both templates
-// from the packed package is scripts/packaging/validate.py's.
+// Tickets #53 and #171: the monolith, modular-monolith and service templates of PouryaKit.Templates. Each rule judges the
+// package's content, then an offending variant of it, so a rule that reads nothing fails. Generating, building and running
+// each template from the packed package is scripts/packaging/validate.py's.
 public sealed class TemplateTests
 {
     // The excluded sample files the monolith needs nothing in place of: ICatalogProducts answers other Modules, and the
@@ -138,13 +138,16 @@ public sealed class TemplateTests
     public void Each_template_host_builds_the_sample_hosts_pipeline_in_its_order()
     {
         var sample = new TextFile("ModularMonolith.Host/ModularMonolithHost.cs", File.ReadAllText(Path.Combine(SampleRoot, "ModularMonolith.Host", "ModularMonolithHost.cs")));
+        // The service's Host is the sample's Inventory.Host, which maps the service defaults' endpoints too.
+        var inventory = new TextFile("Inventory.Host/InventoryHost.cs", File.ReadAllText(Path.Combine(SampleRoot, "Inventory.Host", "InventoryHost.cs")));
+        (string Template, TextFile Sample)[] hosts = [(Monolith, sample), (Modular, sample), (Service, inventory)];
 
         Assert.All(
-            [Monolith, Modular],
-            template =>
+            hosts,
+            pair =>
             {
-                var host = Own(template).Single(file => file.Text.Contains("app.UseRouting();", StringComparison.Ordinal));
-                Assert.Empty(PipelineDifferences(host, sample));
+                var host = Own(pair.Template).Single(file => file.Text.Contains("app.UseRouting();", StringComparison.Ordinal));
+                Assert.Empty(PipelineDifferences(host, pair.Sample));
                 Assert.Contains("app.MapDefaultEndpoints();", host.Text, StringComparison.Ordinal);
             }
         );
@@ -173,11 +176,11 @@ public sealed class TemplateTests
         [
             (Modular, "src/Modules/Billing/Billing/Billing.csproj", "Modules/Billing/Billing/Billing.csproj", []),
             (Modular, "src/Modules/Catalog/Catalog/Catalog.csproj", "Modules/Catalog/Catalog/Catalog.csproj", []),
-            (Modular, "src/Modules/Inventory/Inventory/Inventory.csproj", "Modules/Inventory/Inventory/Inventory.csproj", []),
             (Modular, "src/Modules/Ledger/Ledger/Ledger.csproj", "Modules/Ledger/Ledger/Ledger.csproj", []),
             (Modular, "src/Modules/Ledger/Ledger.Contracts/Ledger.Contracts.csproj", "Modules/Ledger/Ledger.Contracts/Ledger.Contracts.csproj", []),
             (Monolith, "src/Modules/Catalog/Catalog/Catalog.csproj", "Modules/Catalog/Catalog/Catalog.csproj", ["PouryaKit.AI", "PouryaKit.Modularity"]),
             (Shared, "src/Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj", "Modules/Catalog/Catalog.Contracts/Catalog.Contracts.csproj", []),
+            (Shared, "src/Modules/Inventory/Inventory/Inventory.csproj", "Modules/Inventory/Inventory/Inventory.csproj", []),
             (Shared, "src/ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj", "ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj", []),
         ];
 
@@ -211,8 +214,9 @@ public sealed class TemplateTests
         var (token, derivation) = DerivedSymbol(Monolith, "serviceName");
 
         Assert.Equal(derivation, DerivedSymbol(Modular, "serviceName").Derivation);
+        Assert.Equal(derivation, DerivedSymbol(Service, "serviceName").Derivation);
         Assert.All(
-            [Monolith, Modular],
+            [Monolith, Modular, Service],
             template =>
             {
                 Assert.Empty(UnderivedServiceNames(Generated(template), token));
@@ -223,6 +227,35 @@ public sealed class TemplateTests
             ["src/ModularMonolith.Host/Program.cs passes the service name ModularMonolith; pass modular-monolith, which the template's serviceName symbol derives into a valid queue name from any project name."],
             UnderivedServiceNames(
                 [new("src/ModularMonolith.Host/Program.cs", """builder.UsePouryaKitRabbitMq(connectionName: "broker", serviceName: "ModularMonolith");""")],
+                token
+            )
+        );
+    }
+
+    // Ticket #171: the shared Inventory project is none of the monolith's, and the shared reverse proxy none of the service's.
+    [Fact]
+    public void Each_template_generates_only_the_files_of_the_projects_its_solution_names()
+    {
+        var (token, _) = DerivedSymbol(Monolith, "projectName");
+        var sourceName = SourceName(Monolith);
+
+        Assert.All([Monolith, Modular, Service], template => Assert.Empty(FilesOutsideTheSolution(Generated(template), sourceName, token)));
+        // The rule reads what the sources select: the shared Inventory project, which the service's solution names.
+        Assert.Contains(Generated(Service), file => file.Path == "src/Modules/Inventory/Inventory/Inventory.csproj");
+        var shared = Own(Shared);
+        Assert.Equal(
+            ["src/Modules/Inventory/Inventory/Inventory.csproj is in no project of the solution the template generates."],
+            FilesOutsideTheSolution([.. Generated(Monolith), shared.Single(file => file.Path == "src/Modules/Inventory/Inventory/Inventory.csproj")], sourceName, token)
+        );
+        Assert.Equal(
+            [
+                "src/ModularMonolith.ReverseProxy/ModularMonolith.ReverseProxy.csproj is in no project of the solution the template generates.",
+                "src/ModularMonolith.ReverseProxy/Program.cs is in no project of the solution the template generates.",
+                "src/ModularMonolith.ReverseProxy/appsettings.json is in no project of the solution the template generates.",
+            ],
+            FilesOutsideTheSolution(
+                [.. Generated(Service), .. shared.Where(file => file.Path.StartsWith("src/ModularMonolith.ReverseProxy/", StringComparison.Ordinal))],
+                sourceName,
                 token
             )
         );
@@ -284,11 +317,13 @@ public sealed class TemplateTests
         var sourceName = SourceName(Monolith);
 
         Assert.Equal(derivation, DerivedSymbol(Modular, "projectName").Derivation);
+        Assert.Equal(derivation, DerivedSymbol(Service, "projectName").Derivation);
         Assert.Equal(sourceName, SourceName(Modular));
+        Assert.Equal(sourceName, SourceName(Service));
         // The engine replaces every form of the sourceName in content, each a casing of it, so a token holding one breaks.
         Assert.DoesNotContain(sourceName, token, StringComparison.OrdinalIgnoreCase);
         Assert.All(
-            [Monolith, Modular],
+            [Monolith, Modular, Service],
             template =>
             {
                 Assert.Empty(ProjectPathDefects(Generated(template), sourceName, token));
@@ -326,7 +361,7 @@ public sealed class TemplateTests
             .Value;
 
         Assert.All(
-            [Monolith, Modular],
+            [Monolith, Modular, Service],
             template => Assert.Empty(VersionDifferences(template, File.ReadAllText(Path.Combine(Content, template, "Directory.Packages.props")), kit, token))
         );
         var changed = XDocument.Load(Path.Combine(Content, Modular, "Directory.Packages.props"));
