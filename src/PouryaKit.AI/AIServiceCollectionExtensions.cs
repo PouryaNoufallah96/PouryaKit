@@ -87,7 +87,7 @@ public static class AIServiceCollectionExtensions
                 .AddHttpClient(McpHttpClientName)
                 .UseSocketsHttpHandler((handler, _) => handler.PooledConnectionLifetime = TimeSpan.FromMinutes(2))
                 .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, OneChatClientCheck>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck>(new OneProviderCheck<IChatClient>("AddPouryaKitAI", "chat client")));
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SingletonGuardrailsCheck>());
             services.AddSingleton<IChatClient>(Create);
             services.AddSingleton<IMcpServers, McpServerConnections>();

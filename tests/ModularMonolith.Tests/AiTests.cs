@@ -220,7 +220,7 @@ public sealed class AiTests(AppFixture app, AiFixture ai) : IClassFixture<AiFixt
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
-        Assert.Equal("The Host registers no IChatClient, and composes exactly one: AddPouryaKitAI registered one, then it was removed.", thrown.Message);
+        Assert.Equal("The Host registers no IChatClient provider, and composes exactly one: AddPouryaKitAI registered one, then it was removed.", thrown.Message);
     }
 
     // The second registration adds no provider of its own, and its settings in code still apply. Read validated, as the
