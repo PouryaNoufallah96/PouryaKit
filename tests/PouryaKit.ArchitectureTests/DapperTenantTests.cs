@@ -140,7 +140,7 @@ public sealed class DapperTenantTests
 
     // The store tables EF Core maps an entity type to: its own, a base type's under TPT, and each table split from it.
     private static IEnumerable<string> TablesOf(IEntityType entityType) =>
-        entityType.GetTableMappings().Select(mapping => $"{mapping.Table.Schema ?? entityType.Model.GetDefaultSchema()}.{mapping.Table.Name}".ToLowerInvariant());
+        entityType.GetTableMappings().Select(mapping => $"{mapping.Table.Schema ?? entityType.Model.GetDefaultSchema()}.{mapping.Table.Name}");
 
     [Fact]
     public void A_direct_read_of_a_part_table_and_a_join_to_its_root_without_the_tenant_conjunct_are_rejected()
@@ -191,7 +191,7 @@ public sealed class DapperTenantTests
     [InlineData("select id from catalog.products where tenant = current_setting('pouryakit.tenant')", null)]
     [InlineData("select p.id from catalog.products as p where (p.name = @A or p.name = @B) and p.tenant = current_setting('pouryakit.tenant') order by p.id", null)]
     [InlineData("select p.id from catalog.products p join categories c on c.id = p.category_id where c.tenant = current_setting('pouryakit.tenant') and p.tenant = current_setting('pouryakit.tenant')", null)]
-    [InlineData("select id from \"Catalog\".\"Products\" where created_at between @From and @To and \"Catalog\".\"Products\".tenant = current_setting('pouryakit.tenant')", null)]
+    [InlineData("select id from \"catalog\".\"products\" where created_at between @From and @To and \"catalog\".\"products\".tenant = current_setting('pouryakit.tenant')", null)]
     [InlineData("select id from categories where tenant = current_setting('pouryakit.tenant') -- or true", null)]
     [InlineData("select id from catalog.products where tenant = current_setting('pouryakit.tenant') -- x\r or true", "has an OR at the top level of its WHERE")]
     [InlineData("select id from inventory.stock_items where quantity > 0", null)]
@@ -207,6 +207,8 @@ public sealed class DapperTenantTests
     [InlineData("select p.id from catalog.products p where current_setting('pouryakit.tenant') = p.tenant", "does not hold catalog.products p to the tenant with a top-level conjunct of its WHERE that is exactly p.tenant = current_setting('pouryakit.tenant')")]
     [InlineData("select p.id from catalog.products p where not p.tenant = current_setting('pouryakit.tenant')", "does not hold catalog.products p to the tenant with a top-level conjunct of its WHERE that is exactly p.tenant = current_setting('pouryakit.tenant')")]
     [InlineData("select p.id from catalog.products p where products.tenant = current_setting('pouryakit.tenant')", "does not hold catalog.products p to the tenant with a top-level conjunct of its WHERE that is exactly p.tenant = current_setting('pouryakit.tenant')")]
+    [InlineData("select \"P\".id from catalog.products p join catalog.products \"P\" on true where p.tenant = current_setting('pouryakit.tenant')", "does not hold catalog.products P to the tenant with a top-level conjunct of its WHERE that is exactly P.tenant = current_setting('pouryakit.tenant')")]
+    [InlineData("select \"P\".id from catalog.products p join catalog.products \"P\" on true where p.tenant = current_setting('pouryakit.tenant') and \"P\".tenant = current_setting('pouryakit.tenant')", null)]
     [InlineData("select p.id from catalog.products p, catalog.categories c where p.tenant = current_setting('pouryakit.tenant')", "does not hold catalog.categories c to the tenant with a top-level conjunct of its WHERE that is exactly c.tenant = current_setting('pouryakit.tenant')")]
     [InlineData("select p.id from catalog.products p join catalog.categories c on c.id = p.category_id where tenant = current_setting('pouryakit.tenant')", "does not hold catalog.products p to the tenant with a top-level conjunct of its WHERE that is exactly p.tenant = current_setting('pouryakit.tenant')")]
     [InlineData("select id from catalog.products", "has no WHERE")]

@@ -258,6 +258,9 @@ internal readonly record struct SqlToken(SqlTokenKind Kind, string Text)
     /// <summary>Whether this can name a table, a column or an alias: a word or a double-quoted identifier.</summary>
     public bool IsName => Kind is SqlTokenKind.Word or SqlTokenKind.Quoted;
 
-    /// <summary>The name this token gives, lower case, as the rules compare names.</summary>
-    public string Name => Text.ToLowerInvariant();
+    /// <summary>
+    /// The name this token gives as PostgreSQL resolves it, and as the rules compare names: a word lower case, a
+    /// double-quoted identifier as written.
+    /// </summary>
+    public string Name => Kind == SqlTokenKind.Quoted ? Text : Text.ToLowerInvariant();
 }

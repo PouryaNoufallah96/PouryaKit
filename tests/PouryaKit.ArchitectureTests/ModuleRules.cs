@@ -378,7 +378,7 @@ internal static partial class ModuleRules
             .GetMappingFragments(StoreObjectType.Table)
             .Select(fragment =>
                 KeyValuePair.Create(
-                    $"{fragment.StoreObject.Schema ?? model.GetDefaultSchema()}.{fragment.StoreObject.Name}".ToLowerInvariant(),
+                    $"{fragment.StoreObject.Schema ?? model.GetDefaultSchema()}.{fragment.StoreObject.Name}",
                     new TenantTable(null, [new HolderKey(TableOf(entityType), ColumnsIn(fragment.StoreObject, primaryKey, entityType, primaryKey)!)])
                 )
             )
@@ -386,7 +386,7 @@ internal static partial class ModuleRules
                 KeyValuePair.Create(
                     TableOf(entityType),
                     new TenantTable(
-                        tenantScoped ? entityType.FindProperty(nameof(ITenantScoped.Tenant))!.GetColumnName().ToLowerInvariant() : null,
+                        tenantScoped ? entityType.FindProperty(nameof(ITenantScoped.Tenant))!.GetColumnName() : null,
                         holders
                     )
                 )
@@ -403,7 +403,7 @@ internal static partial class ModuleRules
     internal sealed record HolderKey(string Holder, IReadOnlyList<(string Column, string HolderColumn)> Columns);
 
     private static string TableOf(IReadOnlyEntityType entityType) =>
-        $"{entityType.GetSchema() ?? entityType.Model.GetDefaultSchema()}.{entityType.GetTableName()}".ToLowerInvariant();
+        $"{entityType.GetSchema() ?? entityType.Model.GetDefaultSchema()}.{entityType.GetTableName()}";
 
     // A part's keys to its holders whose columns its own table holds, those its base type declares included; a type
     // mapped to a table of its own below a part (TPT) keeps them in its base type's table, which its primary key joins.
@@ -447,7 +447,7 @@ internal static partial class ModuleRules
         var holderTable = StoreOf(holder);
         var pairs = columns.Zip(holderColumns, (column, holderColumn) => (column.GetColumnName(partTable), holderColumn.GetColumnName(holderTable))).ToList();
         return pairs.All(pair => pair is (not null, not null))
-            ? [.. pairs.Select(pair => (pair.Item1!.ToLowerInvariant(), pair.Item2!.ToLowerInvariant()))]
+            ? [.. pairs.Select(pair => (pair.Item1!, pair.Item2!))]
             : null;
     }
 
@@ -513,7 +513,7 @@ internal static partial class ModuleRules
         }
 
         HashSet<string> words = [.. AnyWord().Matches(sql).Select(word => word.Value.ToLowerInvariant())];
-        return tenantTables.Keys.Where(table => words.Contains(table[(table.IndexOf('.') + 1)..]));
+        return tenantTables.Keys.Where(table => words.Contains(table[(table.IndexOf('.') + 1)..].ToLowerInvariant()));
     }
 
     /// <summary>
