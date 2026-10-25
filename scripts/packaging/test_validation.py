@@ -106,6 +106,7 @@ class SinceTests(unittest.TestCase):
             self.assertEqual((0, False), exit_code("--since", "HEAD~1"))
             self.assertEqual((0, True), exit_code())
             write("scripts/new.py", "pass\n")
+            self.assertEqual((0, False), exit_code("--since", "HEAD~1", "--plan"))
             self.assertEqual((0, True), exit_code("--since", "HEAD~1"))
             (root / "scripts/new.py").unlink()
             write("src/Kit/A.cs", "class A { }\n")
@@ -114,6 +115,9 @@ class SinceTests(unittest.TestCase):
             git("mv", "old/name.txt", "docs/name.txt")
             self.assertEqual(["AGENTS.md", "docs/guide.md", "docs/name.txt", "old/name.txt"], changed("HEAD~1"))
             self.assertEqual((1, False), exit_code("--since", "no-such-ref"))
+            self.assertEqual((0, False), exit_code("--since", "HEAD~1", "--plan"))
+            with self.assertRaises(SystemExit):
+                exit_code("--plan")
             self.assertFalse((root / "evidence").exists())
 
 

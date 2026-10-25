@@ -175,7 +175,7 @@
         {
           "path": "scripts/packaging/validate.py",
           "line": 496,
-          "end_line": 521,
+          "end_line": 529,
           "label": "local run fetches history"
         }
       ]

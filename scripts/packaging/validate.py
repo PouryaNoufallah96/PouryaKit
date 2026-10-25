@@ -500,10 +500,18 @@ def main():
     parser.add_argument("--no-fetch", action="store_true", help="Use full history and tags already fetched by CI checkout; reject shallow history.")
     parser.add_argument("--since", metavar="REF", help="Skip, with one SKIP line and exit 0, when every path that differs from REF "
                         "is documentation or AI setup; the implementer's base. CI passes none, so it always validates.")
+    parser.add_argument("--plan", action="store_true", help="With --since: print the decision (SKIP, or the paths that make the run full) "
+                        "and exit 0 without validating. Asked by the orchestrator when it writes a brief, instead of predicting the "
+                        "decision (two Wave 4 briefs predicted SKIP for paths the script does not exempt).")
     parser.add_argument("--keep", action="store_true", help="Keep the evidence directory after a PASS. Without it the directory is "
                         "removed once the PASS line is printed: it holds about 8 GB, and five implementers' runs filled a disk "
                         "(Wave 3 session 3). CI passes it, since it uploads the directory as the validation artifact.")
     arguments = parser.parse_args()
+    if arguments.plan and not arguments.since:
+        parser.error("--plan needs --since REF")
+    if arguments.plan:
+        skipped(arguments.since)
+        return 0
     output = arguments.output.resolve() if arguments.output else Path(tempfile.mkdtemp(prefix="pouryakit-packages-"))
     # A PASS without --keep removes the evidence directory with everything in it, so it may hold only what this run writes.
     if not arguments.keep and output.exists() and (not output.is_dir() or any(output.iterdir())):

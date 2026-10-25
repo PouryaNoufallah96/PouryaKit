@@ -54,7 +54,7 @@ python3 .agents/scripts/check-ai-setup.py
 python3 .agents/scripts/check-docs.py
 ```
 
-Each ticket's brief adds its own test projects. Every command in a brief is copied from a place that runs it, the CI workflow (`.github/workflows/ci.yml`) or an earlier brief whose report shows it passed, never retyped from memory: session 3 (2026-10-09) shipped `python3 -m unittest .agents/scripts/test_check_docs.py`, which stops with `ValueError: Empty module name` because the leading dot of `.agents` makes no module name. Whether `validate.py` runs in full or prints `SKIP` is the script's decision from its exempt paths; a brief does not predict it.
+Each ticket's brief adds its own test projects. Every command in a brief is copied from a place that runs it, the CI workflow (`.github/workflows/ci.yml`) or an earlier brief whose report shows it passed, never retyped from memory: session 3 (2026-10-09) shipped `python3 -m unittest .agents/scripts/test_check_docs.py`, which stops with `ValueError: Empty module name` because the leading dot of `.agents` makes no module name. Whether `validate.py` runs in full or prints `SKIP` is the script's decision from its exempt paths: the main session asks it with `python3 scripts/packaging/validate.py --since <tip> --plan` on the ticket's expected paths when it matters for scheduling, and a brief never predicts it (two Wave 4 briefs predicted SKIP for `.gitignore` and `.github/`, which the script does not exempt).
 
 ## Commit, then package validation
 
