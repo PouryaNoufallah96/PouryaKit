@@ -1,0 +1,55 @@
+docs/architecture/README.md
+  s_3c1c3bc940fd22::t_e146487b568c9b 740
+  s_ddbee275e60f17::t_b2b79622d90590 64,748
+docs/acceptance.md
+  s_3c1c3bc940fd22::t_63dc5b029b1a77 2882-2892,2894-2897,2899-2900
+  s_3c1c3bc940fd22::t_d40aa664ccc6bc 2893
+  s_3c1c3bc940fd22::t_f5e87914381172 2898
+.agents/skills/pourya-kit/references/aspire.md
+  s_3c1c3bc940fd22::t_7389dda02a6076 119
+  s_ddbee275e60f17::t_ffed2c60ad0a5e 62-63,71,89-105,197,208
+.agents/skills/pourya-kit/SKILL.md
+  s_3c1c3bc940fd22::t_f833de5b10fad7 50
+.agents/skills/pourya-kit/references/grpc.md
+  s_3c1c3bc940fd22::t_1aafe3d1dcc7d3 57,116
+.agents/skills/pourya-kit/references/packages.md
+  s_3c1c3bc940fd22::t_2ea398dbc293e9 7
+.agents/skills/pourya-kit/references/templates.md
+  s_3c1c3bc940fd22::t_168ddb0997640d 82,101
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3c1c3bc940fd22::t_2eaa94cb2aa5ea 15,20
+.claude/agent-memory/kit-implementer/aspire-apphost-facts.md
+  s_3c1c3bc940fd22::t_847158fbdc5038 42-48
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_3c1c3bc940fd22::t_389fd47573f642 124-130
+docs/ci.md
+  s_3c1c3bc940fd22::t_e6bf53547b3088 7
+docs/foundation-review.md
+  s_3c1c3bc940fd22::t_1a28b97d821d1f 900
+docs/packages.md
+  s_3c1c3bc940fd22::t_f625dcb29da9c8 55-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "490671947df9aacc3a7b21e7dffdcc078be85906",
+  "prompts": {},
+  "sessions": {
+    "s_3c1c3bc940fd22": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "04bb6038-47ca-434c-86bd-06142fd8791c",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_ddbee275e60f17": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aimpl-172-e3a4ce750e13adf8",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
