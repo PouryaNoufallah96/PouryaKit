@@ -1,0 +1,29 @@
+.agents/scripts/repin-diagram.py
+  s_b933d9add4e23e::t_7dc6c44b988191 1-15,17-38,47-83
+  s_b933d9add4e23e::t_456bf0e4a9ddbf 16,39-46
+.agents/scripts/resolve-acceptance.py
+  s_b933d9add4e23e::t_e87114b957d0c2 15-20
+  s_b933d9add4e23e::t_9201352a3075d0 1-14,21-60
+docs/agents/ai-setup.md
+  s_b933d9add4e23e::t_7292f9ccb2c397 31-32
+docs/agents/brief-template.md
+  s_b933d9add4e23e::t_dffdc15ead2c2e 99-118
+docs/agents/running-a-spec.md
+  s_b933d9add4e23e::t_ceaa97d3838a7a 43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "13ad6d9f49f9bc78f64dd4bbb4112a3f03d91be1",
+  "prompts": {},
+  "sessions": {
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
