@@ -120,8 +120,8 @@ public sealed class BrokerEnvironment(BrokerFixture fixture, string catalog, str
 
     /// <summary>
     /// Builds <c>Inventory.Host</c> on <paramref name="database"/>, <see cref="Inventory"/> unless given, with the
-    /// test's delivery speed, <see cref="DeliveryProbes"/> and <see cref="AuditSubscription"/>, served in memory; not
-    /// started.
+    /// test's delivery speed, <see cref="DeliveryProbes"/> and <see cref="AuditSubscription"/>, served in memory and
+    /// trusting <see cref="TestIssuer"/>'s bearer tokens; not started.
     /// </summary>
     public IHost ComposeInventoryHost(
         string serviceName = InventoryHost.ServiceName,
@@ -136,6 +136,7 @@ public sealed class BrokerEnvironment(BrokerFixture fixture, string catalog, str
                 $"--ConnectionStrings:app={database ?? inventory}",
                 $"--ConnectionStrings:{InventoryHost.BrokerConnection}={broker}",
                 "--Inventory:ReconcileStock:Every=01:00:00",
+                .. TestIssuer.HostArguments,
             ],
             serviceName
         );

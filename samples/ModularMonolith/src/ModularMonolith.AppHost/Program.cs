@@ -16,23 +16,32 @@ var broker = builder.AddPouryaKitRabbitMq("broker");
 var shop = postgres.AddDatabase("modular-monolith-db", "modular_monolith");
 var inventory = postgres.AddDatabase("inventory-db", "inventory");
 
-// ModularMonolith.Host refuses to start without a bearer issuer, audience and signing key: the key is the base64 value of
+// Each Host refuses to start without a bearer issuer, audience and signing key: the key is the base64 value of
 // the AppHost parameter bearer-signing-key (user secrets, or Parameters__bearer-signing-key), which signs a caller's token.
 const string Issuer = "modular-monolith-apphost";
 var signingKey = builder.AddParameter("bearer-signing-key", secret: true);
 
-builder
+var inventoryHost = builder
     .AddProject<Projects.Inventory_Host>("inventory")
     .WithHttpEndpoint()
     .WithHttpHealthCheck("/alive")
     .WithReference(inventory, "app")
     .WithReference(broker)
+    .WithEnvironment("Authentication__Schemes__Bearer__ValidIssuer", Issuer)
+    .WithEnvironment("Authentication__Schemes__Bearer__ValidAudiences__0", "modular-monolith")
+    .WithEnvironment("Authentication__Schemes__Bearer__SigningKeys__0__Issuer", Issuer)
+    .WithEnvironment("Authentication__Schemes__Bearer__SigningKeys__0__Value", signingKey)
     .WaitFor(inventory)
     .WaitFor(broker);
 
+// ModularMonolith.Host serves REST on its http endpoint and Catalog's gRPC service on its grpc endpoint: a listener without
+// TLS negotiates no HTTP/2, so gRPC needs one of HTTP/2 alone, which REST's HTTP/1.1 callers could not reach. Kestrel takes
+// both as named endpoints, each on the port Aspire's proxy forwards that endpoint to, in place of the URLs Aspire passes.
 var shopHost = builder
     .AddProject<Projects.ModularMonolith_Host>("modular-monolith")
     .WithHttpEndpoint()
+    .WithHttpEndpoint(name: "grpc")
+    .WithEndpointsInEnvironment(_ => false)
     .WithReference(shop, "app")
     .WithReference(cache)
     .WithReference(broker)
@@ -43,6 +52,17 @@ var shopHost = builder
     .WaitFor(shop)
     .WaitFor(cache)
     .WaitFor(broker);
+shopHost.WithEnvironment(context =>
+{
+    foreach (var endpoint in (string[])["http", "grpc"])
+    {
+        context.EnvironmentVariables[$"Kestrel__Endpoints__{endpoint}__Url"] = ReferenceExpression.Create(
+            $"http://localhost:{shopHost.GetEndpoint(endpoint).Property(EndpointProperty.TargetPort)}"
+        );
+    }
+
+    context.EnvironmentVariables["Kestrel__Endpoints__grpc__Protocols"] = "Http2";
+});
 
 // ModularMonolith.Host's agent, AskAboutProducts, calls the model its PouryaKit:AI section names. Only an AppHost run with
 // LocalAgent=true (an argument, or the environment variable LocalAgent) adds Ollama and points the agent at it: the image
@@ -57,5 +77,21 @@ if (bool.TryParse(builder.Configuration["LocalAgent"], out var localAgent) && lo
         .WithEnvironment("PouryaKit__AI__Model", Model)
         .WaitFor(ollama);
 }
+
+// The Reverse proxy in front of both Hosts, on the endpoint its launch profile declares. Its own settings route every path
+// to ModularMonolith.Host with that cluster's probe off, since the Host maps no liveness path. Here Inventory runs in
+// Inventory.Host, so the AppHost routes Inventory's paths to that service, whose /alive the proxy probes. A destination
+// names a Host by its resource name, which service discovery resolves through the endpoint WithReference gives the proxy.
+builder
+    .AddProject<Projects.ModularMonolith_ReverseProxy>("reverse-proxy")
+    .WithHttpHealthCheck("/alive")
+    .WithReference(inventoryHost)
+    .WithReference(shopHost)
+    .WithEnvironment("ReverseProxy__Routes__inventory__ClusterId", "inventory")
+    .WithEnvironment("ReverseProxy__Routes__inventory__Match__Path", "/inventory/{**catch-all}")
+    .WithEnvironment("ReverseProxy__Clusters__inventory__Destinations__host__Address", "http://inventory")
+    .WithEnvironment("ReverseProxy__Clusters__inventory__HealthCheck__Active__Enabled", "true")
+    .WaitFor(inventoryHost)
+    .WaitFor(shopHost);
 
 builder.Build().Run();

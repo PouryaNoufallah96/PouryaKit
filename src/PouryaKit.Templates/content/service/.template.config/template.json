@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json.schemastore.org/template",
+  "author": "Pourya Nofallah",
+  "classifications": ["Web", "API", "Service", "PouryaKit"],
+  "identity": "PouryaKit.Templates.Service",
+  "name": "PouryaKit service",
+  "description": "A Host on PouryaKit of one Module in its own process, the Proving Sample's Inventory, composed with PouryaKit.Modularity: it receives Catalog's Integration Events and Snapshots over RabbitMQ through Catalog's Contracts and serves an authenticated read through its Gateway. With the service defaults and smoke tests against PostgreSQL and RabbitMQ.",
+  "shortName": "pouryakit-service",
+  "sourceName": "ModularMonolith",
+  "defaultName": "Stock",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
+  "symbols": {
+    "serviceName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "queueName",
+      "replaces": "modular-monolith",
+      "description": "The Host's queue on a RabbitMQ broker: the name, lower-cased, each run of other characters a hyphen."
+    },
+    "projectName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "identity",
+      "replaces": "PouryaKitAppName",
+      "description": "The name as typed, in the solution's and the project references' paths: the engine names files and folders with it, but writes the sourceName in content as the name a namespace can hold."
+    },
+    "skipRestore": {
+      "type": "parameter",
+      "datatype": "bool",
+      "description": "If specified, skips the automatic restore of the solution on create.",
+      "defaultValue": "false"
+    }
+  },
+  "forms": {
+    "queueName": {
+      "identifier": "chain",
+      "steps": ["lowerCaseInvariant", "hyphensForOthers", "noOuterHyphens"]
+    },
+    "lowerCaseInvariant": {
+      "identifier": "lowerCaseInvariant"
+    },
+    "hyphensForOthers": {
+      "identifier": "replace",
+      "pattern": "[^a-z0-9]+",
+      "replacement": "-"
+    },
+    "noOuterHyphens": {
+      "identifier": "replace",
+      "pattern": "^-+|-+$",
+      "replacement": ""
+    }
+  },
+  "sources": [
+    {
+      "source": "./",
+      "target": "./"
+    },
+    {
+      "source": "../shared/",
+      "target": "./",
+      "include": [
+        "Directory.Build.props",
+        "src/ModularMonolith.ServiceDefaults/**/*",
+        "src/Modules/Catalog/Catalog.Contracts/**/*",
+        "src/Modules/Inventory/**/*"
+      ]
+    },
+    {
+      "source": "../sample/",
+      "target": "src/",
+      "include": ["Modules/Catalog/Catalog.Contracts/**/*", "Modules/Inventory/**/*", "ModularMonolith.ServiceDefaults/**/*"]
+    }
+  ],
+  "primaryOutputs": [
+    {
+      "path": "ModularMonolith.slnx"
+    }
+  ],
+  "postActions": [
+    {
+      "id": "restore",
+      "condition": "(!skipRestore)",
+      "description": "Restore NuGet packages required by this solution.",
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet restore'"
+        }
+      ],
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true
+    }
+  ]
+}

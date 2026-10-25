@@ -28,8 +28,10 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
 - Union duplicates: in a file `.gitattributes` merges with `merge=union`, a line twice or two lines linking the same
   target fails. A union merge keeps both sides of a line both branches changed.
 - Ordered sections: in `docs/acceptance.md`, the `## <prefix> ..., ticket #N` headings of each prefix in ORDERED_SECTIONS
-  run in ascending ticket order. Parallel tickets append at the end and conflict there by design, and the owner asked
-  for ticket order after every merge (session 5 missed one until an advisor caught it).
+  (`Pre-Wave 3`, `Wave 4`) run in ascending ticket order. Each ticket inserts its section in ticket order, so two
+  parallel tickets conflict at the same place by design, and the owner asked for ticket order after every merge
+  (session 5 missed one until an advisor caught it).
+  The earlier Waves' sections, and Wave 3's, which carry no prefix, are not held to it.
 - Test pointers: in `docs/acceptance.md`, which the Names rule leaves out, a span that is exactly `Class.Method`
   with a class ending in `Tests` must name a declared test: a method that the body of a class of that name declares,
   in a `.cs` file under `tests/` or the templates' generated tests, or in a `test_*.py`. Python is read with `ast`;
@@ -135,6 +137,8 @@ REMOVED_TESTS = {
         "removed by #62, as its row says: the refusal at commit that it proved is only a backstop now",
     "GrpcTests.A_client_addressed_at_kestrels_default_url_in_a_kestrel_host_with_no_listener_fails_the_start":
         "removed by #159: the default is compared once Kestrel has bound it, and no test binds port 5000; its section names the replacements",
+    "InboxStaleTimeTests.A_retry_that_runs_after_the_stale_time_is_handed_out_again_while_it_runs_and_its_receipt_keeps_one_effect":
+        "replaced by #167: since WolverineFx 6.51.0 an instance restarts the stale clock of a delivery it claims or holds, so A_retry_due_after_the_stale_time_is_not_handed_out_again_while_it_runs states the new fact; row 9's concurrent copy stays proven by IntegrationEventTests.Concurrent_deliveries_of_one_integration_event_apply_its_effect_once",
 }
 ADOPTED = re.compile(r"//.*\b(shaped like|adapted from|ported from|taken from)\b", re.IGNORECASE)
 KIT_FILES = "- **Kit files:**"
@@ -436,7 +440,7 @@ def csharp_tests(text: str) -> dict[str, set[str]]:
     return found
 
 
-ORDERED_SECTIONS = ("Pre-Wave 3",)
+ORDERED_SECTIONS = ("Pre-Wave 3", "Wave 4")
 ORDERED_HEADING = re.compile(r"## (?P<prefix>" + "|".join(map(re.escape, ORDERED_SECTIONS)) + r") .*, ticket #(?P<ticket>\d+)\s*$")
 
 

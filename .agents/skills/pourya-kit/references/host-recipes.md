@@ -11,7 +11,7 @@ The service defaults of a Host built on PouryaKit: OpenTelemetry that exports th
 
 ## Composing a Host with them
 
-The Proving Sample's `Inventory.Host` receives what Catalog publishes in another Host over RabbitMQ, and is a minimal web Host only so that it can serve the health endpoints; it needs no `PouryaKit.Web` registration for them. Its `InventoryHost` and `Program`, written as one file:
+The Proving Sample's `Inventory.Host` receives what Catalog publishes in another Host over RabbitMQ, and serves Inventory's endpoints to authenticated callers beside the health endpoints, which need no `PouryaKit.Web` registration of their own. Its `InventoryHost` and `Program`, written as one file:
 
 ```csharp
 using Catalog.Contracts.Products.Events.V1;
@@ -19,15 +19,24 @@ using Catalog.Contracts.Products.Events.V2;
 using Inventory;
 using JasperFx;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Messaging.Wolverine.RabbitMq;
 using PouryaKit.Modularity;
 using PouryaKit.Observability;
+using PouryaKit.Security.JwtBearer;
+using PouryaKit.Web;
+using PouryaKit.Web.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+// Bearer tokens, authenticated by default, and the API versions Inventory declares (security.md, web.md, openapi.md).
+builder.Services.AddPouryaKitJwtBearer(claims => claims.TenantClaim = "tenant");
+builder.Services.AddAuthorization();
+builder.Services.AddPouryaKitWeb();
+builder.Services.AddPouryaKitOpenApi();
 builder.AddPouryaKitModules(modules => modules.Add<InventoryModule>());
 // Catalog runs in another Host: its wire names, as its Composition Root publishes them (rabbitmq.md).
 builder.Services.Receive<ProductCreatedV1>("catalog.product-created.v1");
@@ -41,14 +50,25 @@ builder.UsePouryaKitRabbitMq(connectionName: "broker", serviceName: "inventory")
 builder.AddSerilogDefaults();
 
 var app = builder.Build();
+app.UseExceptionHandler();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapPouryaKitModuleEndpoints();
+// /alive anonymous in every environment, for a probe that carries no token; /health in Development only.
 app.MapDefaultEndpoints();
+if (app.Environment.IsDevelopment())
+{
+    app.MapPouryaKitOpenApi().AllowAnonymous();
+}
+
 // The JasperFx command line runs the Host, or a command such as codegen write (templates.md).
 return await app.RunJasperFxCommands(args);
 ```
 
 - `AddServiceDefaults()` and `AddSerilogDefaults()` extend any `IHostApplicationBuilder`, in the namespace `Microsoft.Extensions.Hosting` as Aspire's do; `MapDefaultEndpoints()` extends `WebApplication`.
 - The recipe exports; the Kit emits. A Host without `AddPouryaKitObservability()` exports no Operation of the Kit, whatever its exporters listen to ([observability.md](observability.md#registering)).
-- `ModularMonolith.Host` does not use the recipes, so the Kit's outgoing HTTP stays proven without them (`OutgoingHttpTests`). The Hosts the project templates generate do, with `AddServiceDefaults()`, `AddSerilogDefaults()` and `MapDefaultEndpoints()`, and their `downstream` client adds only `AddPouryaKitOperationContext()`.
+- `ModularMonolith.Host` does not use the recipes, so the Kit's outgoing HTTP stays proven without them (`OutgoingHttpTests`). The Hosts the project templates generate do, with `AddServiceDefaults()`, `AddSerilogDefaults()` and `MapDefaultEndpoints()`; the monolith's and the modular monolith's `downstream` client adds only `AddPouryaKitOperationContext()`, and the service registers no client ([templates.md](templates.md#the-service)).
 
 ## What each recipe does
 
@@ -62,7 +82,7 @@ return await app.RunJasperFxCommands(args);
 | Serilog | `AddSerilogDefaults()`, opted into by the Host | A console sink, an OTLP sink when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured, the `Serilog` configuration section, and every `ILogEventSink` registered as a service ([below](#serilog)). |
 
 - The tracing adds the sources `PouryaKit` and `Npgsql`, not `Wolverine`. `Npgsql` is Npgsql's own source, the one `AddNpgsql()` of `Npgsql.OpenTelemetry` adds, so no package is needed: each command an Operation sends to its database is a span under the Operation's, with its SQL in `db.query.text`, the Unit of Work's savepoints and writes and the Outbox's inserts into the message store among them, beside a `CONNECT` span for each physical connection opened; the commit itself is no command and has no span. The source and meter Experimental.Microsoft.Extensions.AI are those of the chat client `PouryaKit.AI` builds: a span for each call to the model, under the activity current when it is made, such as the Operation's, and duration and token metrics, with no message content ([ai.md](ai.md#registering)). Add `.AddSource("Wolverine")` to export Wolverine's spans as well; the Kit's trace holds either way, in one Host and across RabbitMQ ([observability.md](observability.md#the-trace-through-delivery)).
-- The packages are pinned in `Directory.Packages.props`: `OpenTelemetry.Extensions.Hosting` and `OpenTelemetry.Exporter.OpenTelemetryProtocol` 1.19.1, `OpenTelemetry.Instrumentation.AspNetCore`, `.Http` and `.Runtime` 1.19.0, `Microsoft.Extensions.ServiceDiscovery` 10.10.0, `Serilog.AspNetCore` 10.0.0, `Serilog.Sinks.Console` 6.1.1 and `Serilog.Sinks.OpenTelemetry` 4.2.0, beside `Microsoft.EntityFrameworkCore.Relational` for the readiness check. No Aspire package. Health checks are in the ASP.NET Core shared framework.
+- The packages are pinned in `Directory.Packages.props`: `OpenTelemetry.Extensions.Hosting`, `OpenTelemetry.Exporter.OpenTelemetryProtocol`, `OpenTelemetry.Instrumentation.AspNetCore`, `.Http` and `.Runtime` 1.20.1, `Microsoft.Extensions.ServiceDiscovery` 10.11.0, `Serilog.AspNetCore` 10.0.0, `Serilog.Sinks.Console` 6.1.1 and `Serilog.Sinks.OpenTelemetry` 4.2.0, beside `Microsoft.EntityFrameworkCore.Relational` for the readiness check. No Aspire package. Health checks are in the ASP.NET Core shared framework.
 
 ## One resilience pipeline
 
@@ -94,8 +114,9 @@ downstream.AddPouryaKitOperationContext();
 - `/alive` is mapped in every environment (ticket #64): a Host deployed behind an orchestrator needs a liveness endpoint. An orchestrator's probe carries no token, so the endpoint allows anonymous callers in a Host that authenticates every endpoint by default, and it answers the status word, `Healthy`, with no detail of any check.
 - `/alive` is exempt from the rate limit, with ASP.NET Core's `DisableRateLimiting()` on the endpoint, which its rate limiting middleware honours for the global limiter too. An anonymous call to an endpoint outside every Module resolves no Actor, so with `PouryaKit:Web:RateLimit` enabled it counts in the one partition of such requests ([web.md](web.md#cors-compression-and-rate-limits)): the probes themselves, or anyone calling `/alive`, would use up its permits, the next probe would answer 429, and the orchestrator would restart a healthy Host. The middleware reads the exemption from the matched endpoint, so `UseRouting()` comes before `UseRateLimiter()`, as the templates' `AppHost.cs` orders them and `TemplateTests` asserts for both. The Kit cannot detect a limiter placed before routing in a Host's own pipeline, since routing marks nothing on a request no endpoint matches, so a project that reorders its middleware keeps that order.
 - `/health` asks every check, `databases` included: it answers 503 `Unhealthy` while a database the Host's DbContexts use does not answer, and `Healthy` again once it does. A Module's DbContext is internal to it, so the check finds each through its registered `DbContextOptions` instead of by type, and asks it what `AddDbContextCheck` asks, `Database.CanConnectAsync()`, which runs `SELECT 1`.
-- `/health` is mapped in Development only, because it reports each database. Elsewhere no endpoint serves it: a Host with the Web defaults answers 401 from its authenticated-by-default policy, and a Host without them, such as `Inventory.Host`, answers 404, as `HostRecipeTests` shows on `Inventory.Host` run as its own process in Production.
-- RabbitMQ has no check of its own: WolverineFx 6.48.3 registers none. A broker that is down shows in Wolverine's own reconnection, not in `/health`.
+- `/health` is mapped in Development only, because it reports each database. Elsewhere no endpoint serves it: a Host with the Web defaults, such as `Inventory.Host`, answers an authenticated caller 404, as `HostRecipeTests` shows on `Inventory.Host` run as its own process in Production; an anonymous one gets the authenticated-by-default policy's 401, since the fallback policy covers a request routing matched to no endpoint. A Host without the Web defaults answers 404.
+- **Readiness outside Development is the platform's, liveness the recipe's.** Spec #74's D13, closed on 2026-10-24 by owner decision W5 of spec #161: the Kit has no readiness option, and the recipe maps no readiness endpoint outside Development. The platform that runs the Host decides when an instance takes traffic, with its own probe over the Host's liveness path and the dependencies it runs for the Host, such as its database; a Kit readiness option would duplicate that probe. The recipe's part is `/alive`, which every Host that composes the service defaults maps in every environment.
+- RabbitMQ has no check of its own: WolverineFx 6.52.0 registers none. A broker that is down shows in Wolverine's own reconnection, not in `/health`.
 
 Aspire's guidance for health endpoints outside Development (https://aka.ms/aspire/healthchecks, "Non-development environments") is that its template maps neither endpoint there, and that a project which enables them protects them with host filtering, authorization or both, and considers a request timeout and an output cache against abuse. The recipe takes this from it and leaves the rest to the Host:
 

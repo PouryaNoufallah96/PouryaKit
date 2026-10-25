@@ -118,14 +118,19 @@ public sealed class ChatStub : IAsyncDisposable
     private async Task AnswerAsync(HttpContext http)
     {
         var body = await JsonSerializer.DeserializeAsync<JsonElement>(http.Request.Body, cancellationToken: http.RequestAborted);
-        ChatReply reply;
+        Func<JsonElement, ChatReply>? answer;
+        ChatReply? scripted;
         int call;
         lock (_lock)
         {
             _requests.Add(body);
-            reply = _answer?.Invoke(body) ?? (_replies.TryDequeue(out var next) ? next : _last);
+            answer = _answer;
+            scripted = answer is null ? (_replies.TryDequeue(out var next) ? next : _last) : null;
             call = ++_calls;
         }
+
+        // Outside the lock, so an answer that holds one request, as a test of two runs at once does, holds no other.
+        var reply = scripted ?? answer!(body);
 
         http.Response.StatusCode = reply.Status;
         if (reply.Status != StatusCodes.Status200OK)

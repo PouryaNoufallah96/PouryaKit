@@ -16,7 +16,8 @@ props or script change after the validation is unproven. It runs `git merge --no
 --post-merge form. The post-merge checks run in order, each a process whose own exit code is read: the merged tree
 against the head's, check-ai-setup.py, check-docs.py. A missing check script fails. --push pushes the current branch to
 origin only when the tree equals the head's and every check passed. The last stdout line after a merge is
-`merge=<sha7> tree=EQUAL|DIFFERS(<n>) checks=ok|FAIL(<names>) push=yes|no`; docs/agents/running-a-spec.md, "State and
+`merge=<sha7> tree=EQUAL|DIFFERS(<n>) checks=ok|FAIL(<names>) push=yes|no`, with `remote=ok|REPLACED(<sha7>)` after a push
+(the remote tip is read back twice, MERGE_PACKAGE_READBACK_SECONDS apart, default 5); docs/agents/running-a-spec.md, "State and
 handoff", says what a differing tree requires.
 
 --ready is the close-out question, asked before the integration branch's pull request is marked ready: does the base
@@ -29,7 +30,9 @@ merges, commits and pushes nothing, so the checkout may be dirty. Its last stdou
 Exit codes: 0 done; 1 a check failed, or --ready found the base ahead; 2 usage; 3 report unreadable; 4 dirty checkout;
 5 head is not a commit; 6 no such branch; 7 branch tip is not the head; 8 not on the integration branch, or it is main;
 9 head already merged (with --post-merge: not merged); 10 conflict, merge left in progress; 11 another git failure;
-12 --push refused, the tree differs; 13 push failed; 14 the head holds code the validation did not run on.
+12 --push refused, the tree differs; 13 push failed; 14 the head holds code the validation did not run on; 15 the remote
+tip read back after the push is not the pushed commit (origin/<branch> was replaced; on 2026-10-25 an attacker holding
+the owner's credential force-replaced each pushed tip within seconds).
 """
 
 from __future__ import annotations
@@ -47,7 +50,7 @@ from pathlib import Path
 TREE_CHECK = ".agents/scripts/check-tree.py"
 CHECKS = (".agents/scripts/check-ai-setup.py", ".agents/scripts/check-docs.py")
 (CHECK_FAILED, USAGE, REPORT, DIRTY, NOT_A_COMMIT, NO_BRANCH, BRANCH_MOVED, WRONG_BRANCH, MERGE_STATE, CONFLICT,
- GIT_FAILED, TREE_DIFFERS, PUSH_FAILED, UNVALIDATED) = range(1, 15)
+ GIT_FAILED, TREE_DIFFERS, PUSH_FAILED, UNVALIDATED, REMOTE_REPLACED) = range(1, 16)
 HEAD = re.compile(r"[0-9a-f]{7,40}")
 VALIDATED = re.compile(r"\b(?:commit|on)\s+([0-9a-f]{7,40})\b", re.IGNORECASE)  # "On commit f7abadc", "ran on ac0481c"
 
@@ -243,12 +246,35 @@ def post_merge(top: Path, head: str, branch: str, checks: list[list[str]], push:
     elif push and tree != "EQUAL":
         print("not pushed: the merged tree differs from the reported head")
         code = TREE_DIFFERS
-    elif push:
+    remote = ""
+    if push and not failed and tree == "EQUAL":
         done = git(top, "push", "origin", branch)
         print((done.stdout + done.stderr).strip())
         code, pushed = (PUSH_FAILED, "no") if done.returncode else (0, "yes")
-    print(f"merge={merged} tree={tree} checks={'FAIL(' + ','.join(failed) + ')' if failed else 'ok'} push={pushed}")
+        if not done.returncode:
+            replaced = remote_tip_differs(top, branch, git_out(top, "rev-parse", "HEAD"))
+            remote = f" remote={'REPLACED(' + replaced[:7] + ')' if replaced else 'ok'}"
+            if replaced:
+                print(f"the remote tip of {branch} is {replaced[:7]}, not the pushed commit: origin/{branch} was replaced after the push; "
+                      "do not trust it, do not merge it, and secure the account (docs/agents/running-a-spec.md, \"State and handoff\")")
+                code = REMOTE_REPLACED
+    print(f"merge={merged} tree={tree} checks={'FAIL(' + ','.join(failed) + ')' if failed else 'ok'} push={pushed}{remote}")
     return code
+
+
+def remote_tip_differs(top: Path, branch: str, pushed: str) -> str:
+    """The remote's tip of `branch` when it is not `pushed`, read from the remote itself twice (a replacement arrived
+    within seconds of each push on 2026-10-25), else an empty string."""
+    import time
+    delay = float(os.environ.get("MERGE_PACKAGE_READBACK_SECONDS", "5"))
+    for attempt in range(2):
+        if attempt:
+            time.sleep(delay)
+        listed = git_out(top, "ls-remote", "origin", f"refs/heads/{branch}").split()
+        tip = listed[0] if listed else ""
+        if tip != pushed:
+            return tip or "(no ref)"
+    return ""
 
 
 def tree_offences(top: Path, tree: str) -> list[str]:

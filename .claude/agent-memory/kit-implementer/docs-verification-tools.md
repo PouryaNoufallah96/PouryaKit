@@ -133,5 +133,31 @@ metadata:
 
 - `scratchpad/p143/remap143.py <worktree> [--write]` maps every citation of a file changed against HEAD through a `difflib` line map and edits the numbers with a path-anchored regex; run `--write` once only, since a second run maps the new numbers as HEAD's. A range whose cited code grew (a nested provider class below `HeaderRequestCulture`'s methods) needs its end set by hand. `scratchpad/p143/cites.py <worktree> <substring> ...` lists citations by path before editing; the session-4 `tools/m142/repin.py` pins and refinalizes with the surviving Archify clone.
 
+## Closing a deferred decision in prose (#175, 2026-10-24)
+
+- A decision deferred by an earlier spec (spec #74's D13) is restated in more places than the brief names: the acceptance row the brief points at, a second "Out of scope" row of the same section (left as history: it records that ticket's scope, not the deferral), and the plan's I.3 row, whose dated `restated` clause carried the deferral and needed a dated `closed` clause (the docs-sync set allows one). Search the decision id (`D13`) across `docs/` as well as the key phrases the brief lists.
+- Linking the replaced row to the new section (`#wave-4-...-ticket-175`) makes `check-docs.py` check the new heading's slug for free; a reason sentence that names test classes or tests must name only what they prove (the MailKit and S3 providers, not "the providers": Azure Blob runs on Azurite).
+
+## Status and record markers (#164, 2026-10-24)
+
+- **A brief that asks to reword a clause inside an owner-decision paragraph while its `stop_if` forbids a decision text change:** keep the decision's words and insert an italic dated parenthetical (`asks for *(drafted 2026-10-24, not posted)*`); list the tension under deviations. A sentence an amendment closed gets ADR 0002's `*Superseded on <date> by …; see the amendment below.*` after it.
+- **A stale phrase often has a third copy in a dated plan note** (I.3's Project template row restated the templates' "Wave 2" label from #53): it was true when dated, so add a dated clause after it rather than editing it.
+- Evidence for a publication status: `gh run list --repo PouryaNoufallah96/PouryaKit --branch main --limit 6` shows each CI run on `main` and whether `Private main publication` ran or was skipped.
+- `check-docs.py` passes package names in backticks in `docs/acceptance.md` (`PouryaKit.AI.Postgres`); only a span shaped like a test pointer is resolved as one.
+
+## Limits into the skill (#165, 2026-10-24; Archify 3.0.1)
+
+- **Two references per area can split one Capability:** `reporting.md` is the renderer (`PouryaKit.Reporting`, no options) and `reporting-module.md` the Report Module (`PouryaKit.Reporting.Module`, `ReportOptions`). A brief naming the first for a Report Module limit was a slip; the docs-sync set (`references/*.md`) covered the right file, recorded as a deviation. Check which package owns the code before writing into a reference, and that a Limits section exists (`grpc.md` had none: add `## Limits` before Testing and a TOC line).
+- **A change inside a cited range fails the pin like one above it:** one entry added to an expected list in `PipelineContractTests.cs` (module-boundaries cites 10-54) needed `end_line` moved, the diagram staged with the code, then a pin commit. The session-6 `tools/repin.py` (copied to the ticket's scratchpad folder) still pointed at a live Archify clone and Chrome; it changed one line per file and deleted its receipts.
+
+## A longer node text and an unchanged diagram (#166, 2026-10-24; Archify 3.0.1)
+
+- **Archify shrinks a node's sublabel to fit its width** (8 px to 7.5 px), and at ci-and-publication's 1232 px viewBox the projection fell below 6 px: `composition/desktop-readability` on the trigger node for 36 characters in a 170-wide node. A 31-character text passed; shorten the text before widening a node, which moves the viewBox. Trial with the old revision first (`repin.py <worktree> <current revision> <slug.type>` only refinalizes), then pin.
+- A diagram that only needs a re-pin (kit-context cites `docs/private-packages.md:64-83`; an edit at line 11 is above it) must be staged with the cited file: give it an interim pin to the integration tip in the code commit, then pin it to that commit.
+
+## A new edge in a dense diagram (#170, 2026-10-24; Archify 3.0.1)
+
+- **One new edge re-plans its neighbours:** `proxy -> invhost` entering `invhost`'s left (or with no sides) made the router send the old `tests-invhost` straight through `apphost` (`clean-flow/edge-through-node`) and stack two corridors (`composition/ambiguous-corridor`); an `apphost -> proxy` edge did the same. `right -> top` passed once its label was 17 characters: a 36-character label failed `composition/label-route-clearance` against the two edges already entering that top. Trial each variant by finalizing in place (the pinned commit must already hold the cited ranges), keep the original source to restore, and drop an edge the layout cannot take. `scratchpad/p170/diag.py <worktree>` prints every diagnostic untruncated; the session-6 `tools/repin.py` cuts its JSON at 1500 characters.
+
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].

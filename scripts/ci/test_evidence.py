@@ -12,6 +12,12 @@ from unittest.mock import patch
 import evidence
 
 
+# The fixture repository's git runs with no user or system configuration and no automatic gc: `git commit` otherwise
+# detaches `gc --auto`, which can still be writing under .git/objects/pack while the temporary directory is removed
+# (ci-local on 2026-10-25: "Directory not empty: .../checkout/.git/objects/pack", once in two runs).
+ISOLATED = {**os.environ, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}
+
+
 class EvidenceTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -90,11 +96,11 @@ class EvidenceTests(unittest.TestCase):
     def test_revision_records_merge_sha_and_distinct_head_and_base_and_rejects_wrong_checkout(self):
         checkout = self.root / "checkout"
         checkout.mkdir()
-        subprocess.run(["git", "init", "-q", str(checkout)], check=True)
+        subprocess.run(["git", "init", "-q", str(checkout)], check=True, env=ISOLATED)
         subprocess.run(["git", "-C", str(checkout), "-c", "user.name=Proof", "-c", "user.email=proof@example.invalid",
-                        "commit", "-q", "--allow-empty", "-m", "fixture"], check=True)
-        commit = subprocess.check_output(["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True).strip()
-        subprocess.run(["git", "-C", str(checkout), "tag", "v0.1.0-preview.1"], check=True)
+                        "-c", "gc.auto=0", "commit", "-q", "--allow-empty", "-m", "fixture"], check=True, env=ISOLATED)
+        commit = subprocess.check_output(["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True, env=ISOLATED).strip()
+        subprocess.run(["git", "-C", str(checkout), "tag", "v0.1.0-preview.1"], check=True, env=ISOLATED)
         event = self.root / "event.json"
         event.write_text(json.dumps({"number": 3, "pull_request": {
             "head": {"sha": "b" * 40, "repo": {"full_name": "fork/repo"}}, "base": {"sha": "c" * 40}}}))

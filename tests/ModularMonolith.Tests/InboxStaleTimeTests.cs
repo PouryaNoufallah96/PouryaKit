@@ -9,9 +9,10 @@ using PouryaKit.Testing;
 namespace ModularMonolith.Tests;
 
 /// <summary>
-/// <c>InboxStaleTime</c> hands out again every delivery a Host has held longer than it, counted from when the delivery
-/// was stored (ADR 0004). A failed delivery waits for its retry in the store, held by no Host, so the release passes it
-/// by; but a retry that runs after the stale time is already past it, and is handed out again while it runs.
+/// <c>InboxStaleTime</c> hands out again a delivery a Host took and no longer holds, once its clock is older than the
+/// stale time (ADR 0004). A failed delivery waits for its retry in the store, held by no Host, so the release passes it
+/// by; and since WolverineFx 6.51.0 the claim of a due retry restarts its clock, so a retry due after the stale time is
+/// not stale when it starts.
 /// </summary>
 public sealed class InboxStaleTimeTests(AppFixture app) : HostTest<AppFixture>(app)
 {
@@ -23,7 +24,7 @@ public sealed class InboxStaleTimeTests(AppFixture app) : HostTest<AppFixture>(a
     {
         var circulated = new NoteToCirculateDomainEvent(Unique());
         Circulation.Fail(Circulation.Ledger, circulated.Text, runs: 1);
-        await using var host = await StartStaleHostAsync();
+        await using var host = await StartStaleHostAsync(StaleTime, RetryDelay);
 
         await Fixture.WaitForDeliveriesAsync(() => CirculateAsync(host, circulated), TestContext.Current.CancellationToken);
 
@@ -40,11 +41,14 @@ public sealed class InboxStaleTimeTests(AppFixture app) : HostTest<AppFixture>(a
     }
 
     [Fact]
-    public async Task A_retry_that_runs_after_the_stale_time_is_handed_out_again_while_it_runs_and_its_receipt_keeps_one_effect()
+    public async Task A_retry_due_after_the_stale_time_is_not_handed_out_again_while_it_runs()
     {
+        // Seconds, not milliseconds: the release compares the database's clock with the Host's, which can differ.
+        var staleTime = TimeSpan.FromSeconds(3);
         var circulated = new NoteToCirculateDomainEvent(Unique());
         Circulation.Fail(Circulation.Ledger, circulated.Text, runs: 1);
-        await using var host = await StartStaleHostAsync();
+        // Due a second after the stale time has passed since the delivery was stored, which WolverineFx 6.48 counted from.
+        await using var host = await StartStaleHostAsync(staleTime, staleTime + TimeSpan.FromSeconds(1));
 
         await CirculateAsync(host, circulated);
         await Fixture.WaitUntilAsync(
@@ -53,19 +57,15 @@ public sealed class InboxStaleTimeTests(AppFixture app) : HostTest<AppFixture>(a
         );
         using (var hold = DeliveryProbes.HoldAfterReceipt(Circulation.Ledger))
         {
-            // The retry, stored longer ago than the stale time, records its Receipt and waits. Nothing in the test
-            // touches its envelope: the store releases it as stale and hands it out again, and that copy waits on the
-            // held Receipt.
+            // A bounded wait for something that must not happen: the retry holds its Receipt across ten recovery polls,
+            // and the claim that started it restarted its clock, so no copy of it begins.
             await hold.Held;
-            await Fixture.WaitUntilAsync(
-                "exists (select 1 from pg_stat_activity where wait_event_type = 'Lock' and query like '%pouryakit_receipts%')",
-                "No copy of the held retry was handed out."
-            );
+            await Task.Delay(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
+            Assert.Equal(2, DeliveryProbes.AttemptsOf(Circulation.Ledger, circulated.Id).Count);
         }
 
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
-        Assert.True(DeliveryProbes.AttemptsOf(Circulation.Ledger, circulated.Id).Count >= 3);
-        // The failed attempt and the held retry ran the handler; every copy found the retry's Receipt.
+        Assert.Equal(2, DeliveryProbes.AttemptsOf(Circulation.Ledger, circulated.Id).Count);
         Assert.Equal(2, Circulation.RunsOf(Circulation.Ledger, circulated.Text).Count);
         Assert.Equal(1L, await CopiesAsync(Circulation.Ledger, circulated.Text));
         Assert.Equal(
@@ -75,7 +75,7 @@ public sealed class InboxStaleTimeTests(AppFixture app) : HostTest<AppFixture>(a
         Assert.Empty(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
     }
 
-    private async Task<WebApplication> StartStaleHostAsync()
+    private async Task<WebApplication> StartStaleHostAsync(TimeSpan staleTime, TimeSpan retryDelay)
     {
         var host = AppFixture.ComposeHost(
             "Development",
@@ -83,8 +83,8 @@ public sealed class InboxStaleTimeTests(AppFixture app) : HostTest<AppFixture>(a
             Fixture.Logs,
             builder =>
             {
-                builder.Services.Configure<PouryaKitMessageStoreOptions>(store => store.InboxStaleTime = StaleTime);
-                builder.Services.Configure<PouryaKitMessagingOptions>(messaging => messaging.RetryDelays = [RetryDelay]);
+                builder.Services.Configure<PouryaKitMessageStoreOptions>(store => store.InboxStaleTime = staleTime);
+                builder.Services.Configure<PouryaKitMessagingOptions>(messaging => messaging.RetryDelays = [retryDelay]);
             }
         );
         await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);

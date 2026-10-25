@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.6.1">
+<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Inventory.Host\Inventory.Host.csproj" />
     <ProjectReference Include="..\ModularMonolith.Host\ModularMonolith.Host.csproj" />
+    <ProjectReference Include="..\ModularMonolith.ReverseProxy\ModularMonolith.ReverseProxy.csproj" />
     <ProjectReference Include="..\..\..\..\src\PouryaKit.Aspire\PouryaKit.Aspire.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 </Project>

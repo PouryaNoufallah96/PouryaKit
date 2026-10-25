@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "1dc41f848c5c2526c7582d99c4ad2da3e774c98e",
+      "revision": "e7c9229fc7bfe07491a5c9be820390af0eb625c7",
       "link_mode": "web"
     }
   },
@@ -35,7 +35,7 @@
         {
           "path": "tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs",
           "line": 94,
-          "end_line": 148,
+          "end_line": 149,
           "label": "both Hosts on one broker"
         }
       ]
@@ -124,8 +124,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/InventoryHost.cs",
-          "line": 13,
-          "end_line": 47,
+          "line": 17,
+          "end_line": 62,
           "label": "Inventory alone, Catalog's wire names"
         },
         {
@@ -137,7 +137,7 @@
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj",
           "line": 8,
-          "end_line": 27,
+          "end_line": 30,
           "label": "its references"
         }
       ]
@@ -164,15 +164,15 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ReverseProxy/appsettings.json",
-          "line": 3,
-          "end_line": 31,
+          "line": 2,
+          "end_line": 30,
           "label": "every path to modular-monolith, no probe"
         },
         {
           "path": "src/PouryaKit.Templates/content/shared/src/ModularMonolith.ReverseProxy/Program.cs",
           "line": 7,
           "end_line": 17,
-          "label": "each template's own copy"
+          "label": "the two Catalog templates' own copy"
         }
       ]
     },
@@ -220,8 +220,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 29,
-          "end_line": 53,
+          "line": 30,
+          "end_line": 55,
           "label": "publishes v1, v2 and the Snapshot"
         },
         {
@@ -254,15 +254,21 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs",
-          "line": 19,
-          "end_line": 37,
+          "line": 23,
+          "end_line": 46,
           "label": "three subscriptions; a recurring command"
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/Inventory.csproj",
           "line": 8,
-          "end_line": 15,
+          "end_line": 17,
           "label": "Catalog's Contracts, never Catalog"
+        },
+        {
+          "path": "src/PouryaKit.Templates/content/service/.template.config/template.json",
+          "line": 57,
+          "end_line": 76,
+          "label": "pouryakit-service takes it with the Contracts"
         }
       ]
     },
@@ -366,7 +372,7 @@
       "id": "templates",
       "type": "cloud",
       "label": "PouryaKit.Templates",
-      "sublabel": "pouryakit-monolith (Catalog) and pouryakit-modular-monolith (all four)",
+      "sublabel": "pouryakit-monolith (Catalog), pouryakit-modular-monolith (all four), pouryakit-service (Inventory)",
       "pos": [
         40,
         720
@@ -385,7 +391,7 @@
         {
           "path": "src/PouryaKit.Templates/content/monolith/.template.config/template.json",
           "line": 57,
-          "end_line": 71,
+          "end_line": 72,
           "label": "monolith: Catalog only"
         },
         {
@@ -419,14 +425,14 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
           "line": 24,
-          "end_line": 59,
-          "label": "each Host on its resources, Ollama opt-in"
+          "end_line": 95,
+          "label": "the Hosts and grpc endpoint, the proxy, Ollama"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj",
           "line": 1,
-          "end_line": 14,
-          "label": "Aspire.AppHost.Sdk, both Hosts"
+          "end_line": 15,
+          "label": "Aspire.AppHost.Sdk, both Hosts, the proxy"
         }
       ]
     }
@@ -538,6 +544,14 @@
       "toSide": "top"
     },
     {
+      "id": "proxy-invhost",
+      "from": "proxy",
+      "to": "invhost",
+      "label": "Inventory's paths",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
       "id": "invhost-servicedefaults",
       "from": "invhost",
       "to": "servicedefaults",
@@ -644,9 +658,9 @@
       "items": [
         "With ConnectionStrings:broker, ModularMonolith.Host composes Catalog, Billing and Ledger under the service name modular-monolith, and Inventory.Host composes Inventory under the service name inventory; what Catalog publishes then reaches Inventory over RabbitMQ.",
         "Inventory.Host composes ModularMonolith.ServiceDefaults; ModularMonolith.Host does not.",
-        "ModularMonolith.ReverseProxy composes the service defaults and PouryaKit.ReverseProxy, runs no Operation, and routes every path to ModularMonolith.Host, whose liveness probe its settings turn off.",
+        "ModularMonolith.ReverseProxy composes the service defaults and PouryaKit.ReverseProxy, runs no Operation, and routes every path to ModularMonolith.Host, whose liveness probe its settings turn off; under the AppHost it routes Inventory's paths to Inventory.Host, with the probe on.",
         "ModularMonolith.ServiceDefaults references EF Core Relational for its readiness check, OpenTelemetry, service discovery, Serilog, PouryaKit.Web and PouryaKit.Observability.",
-        "ModularMonolith.AppHost, an Aspire AppHost, runs both Hosts as processes on PouryaKit.Aspire's containers, giving each the connection strings its composition reads: with the broker, ModularMonolith.Host leaves Inventory to Inventory.Host. Run with LocalAgent=true, it adds Ollama and points that Host's agent at it.",
+        "ModularMonolith.AppHost, an Aspire AppHost, runs both Hosts and the Reverse proxy as processes on PouryaKit.Aspire's containers, giving each the connection strings its composition reads: with the broker, ModularMonolith.Host leaves Inventory to Inventory.Host. Run with LocalAgent=true, it adds Ollama and points that Host's agent at it.",
         "ModularMonolith.Host also composes PouryaKit.Reporting.Module, a Kit package no template packs, with its one report kind, SalesReports, and stores the reports in an S3 bucket."
       ]
     },
@@ -654,8 +668,8 @@
       "dot": "amber",
       "title": "The templates",
       "items": [
-        "PouryaKit.Templates keeps no copy of the business code: it packs the sample Modules' code, the service defaults recipes and two files of ModularMonolith.Host when the package is packed.",
-        "Each template's Host, Reverse proxy, project files and smoke test are the template's own; the monolith takes Catalog without Modularity, and Ledger, a second write model, stays in the modular monolith."
+        "PouryaKit.Templates keeps no copy of the business code: it packs the sample Modules' code, the service defaults recipes and three files of ModularMonolith.Host when the package is packed.",
+        "Each template's Host, project files and smoke test are the template's own; the monolith takes Catalog without Modularity, and Ledger, a second write model, stays in the modular monolith; the service takes Inventory and Catalog's Contracts alone, with Inventory.Host's composition and no Reverse proxy."
       ]
     }
   ]

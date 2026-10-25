@@ -78,6 +78,8 @@ public static class AppHost
         // Ollama, and GetProduct as the one tool a run may be given.
         builder.Services.AddPouryaKitAI();
         builder.Services.Configure<PouryaKitAIOptions>(builder.Configuration.GetSection("PouryaKit:AI"));
+        // The application's guardrail checks every call to the model, before and after it: no card number goes either way.
+        builder.Services.AddSingleton<IChatGuardrail, CardNumberGuardrail>();
         // What a Notification Handler pushes through IRealtimePublisher, such as Catalog's new products, reaches the browsers
         // connected to Catalog's SSE endpoint on any instance of the Host, through PostgreSQL's notifications.
         builder.Services.AddPouryaKitRealtime(connectionName: "app");

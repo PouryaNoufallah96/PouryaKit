@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Microsoft.Extensions.FileSystemGlobbing;
+using PouryaKit.AI;
 using PouryaKit.Modularity;
 
 namespace PouryaKit.ArchitectureTests;
@@ -13,12 +14,13 @@ internal sealed record TextFile(string Path, string Text);
 /// <summary>
 /// The template package's rules (ticket #53), each a function from files to violations, so the same function judges
 /// the package and an offending set. A template generates what its <c>template.json</c> sources select: its own folder,
-/// the folder both templates share, and the Proving Sample's files the package packs.
+/// the folder the templates share, and the Proving Sample's files the package packs.
 /// </summary>
 internal static class TemplateRules
 {
     public const string Monolith = "monolith";
     public const string Modular = "modular";
+    public const string Service = "service";
     public const string Shared = "shared";
 
     /// <summary>The folder of the package's template content, as the package's <c>content/</c> holds it.</summary>
@@ -42,7 +44,7 @@ internal static class TemplateRules
 
     /// <summary>
     /// The Proving Sample's files the package packs under <c>content/sample/</c>, as its project file packs them: every
-    /// Module's C# files, the Host's permission source and announcer, and the service defaults.
+    /// Module's C# files, the Host's permission source, announcer and guardrail, and the service defaults.
     /// </summary>
     public static IReadOnlyList<TextFile> PackedSample { get; } =
         [
@@ -52,6 +54,7 @@ internal static class TemplateRules
                     || file.Path
                         is "ModularMonolith.Host/CallerPermissions.cs"
                             or "ModularMonolith.Host/LoggedNewProductAnnouncer.cs"
+                            or "ModularMonolith.Host/CardNumberGuardrail.cs"
                             or "ModularMonolith.ServiceDefaults/Extensions.cs"
                 ),
         ];
@@ -117,27 +120,41 @@ internal static class TemplateRules
     /// registrations, in a project file or in code. Its test project reaches Modularity only through PouryaKit.Testing,
     /// which <c>validate.py</c> allows in that project's closure alone (ticket #87).
     /// </summary>
-    public static IEnumerable<string> ModularityIn(IEnumerable<TextFile> generated) =>
-        from file in generated
-        from name in ModularityNames
-        where Regex.IsMatch(file.Text, $@"(?<!\w){Regex.Escape(name)}(?!\w)")
-        select $"{file.Path} names {name}, but the monolith composes no Modularity.";
+    public static IEnumerable<string> ModularityIn(IEnumerable<TextFile> generated) => Naming(generated, ModularityNames, "Modularity");
 
-    private static readonly string[] ModularityNames =
-    [
-        typeof(IModuleDefinition).Assembly.GetName().Name!,
-        .. typeof(IModuleDefinition)
-            .Assembly.GetExportedTypes()
-            .Where(type => !type.Name.StartsWith('<'))
-            .SelectMany(type =>
-                type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
-                    .Where(method => !method.IsSpecialName)
-                    .Select(method => method.Name)
-                    .Prepend(type.Name.Split('`')[0])
-            )
-            .Distinct()
-            .Order(StringComparer.Ordinal),
-    ];
+    /// <summary>
+    /// The monolith runs without AI either: no file it generates names PouryaKit.AI, one of its public types or
+    /// registrations, or the Agent Framework it brings, so the sample's agent and the Host's guardrail stay out of it
+    /// (ticket #173).
+    /// </summary>
+    public static IEnumerable<string> AIIn(IEnumerable<TextFile> generated) => Naming(generated, AINames, "AI");
+
+    private static IEnumerable<string> Naming(IEnumerable<TextFile> generated, string[] names, string capability) =>
+        from file in generated
+        from name in names
+        where Regex.IsMatch(file.Text, $@"(?<!\w){Regex.Escape(name)}(?!\w)")
+        select $"{file.Path} names {name}, but the monolith composes no {capability}.";
+
+    private static readonly string[] ModularityNames = NamesOf(typeof(IModuleDefinition).Assembly);
+
+    private static readonly string[] AINames = [.. NamesOf(typeof(IChatGuardrail).Assembly), "Microsoft.Agents.AI"];
+
+    // The package's name, and each public type's and each public static method's, such as a registration.
+    private static string[] NamesOf(Assembly package) =>
+        [
+            package.GetName().Name!,
+            .. package
+                .GetExportedTypes()
+                .Where(type => !type.Name.StartsWith('<'))
+                .SelectMany(type =>
+                    type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                        .Where(method => !method.IsSpecialName)
+                        .Select(method => method.Name)
+                        .Prepend(type.Name.Split('`')[0])
+                )
+                .Distinct()
+                .Order(StringComparer.Ordinal),
+        ];
 
     /// <summary>
     /// Every sample file the monolith excludes, a Composition Root or Gateway endpoint, has the monolith's own file at
@@ -232,14 +249,14 @@ internal static class TemplateRules
 
     /// <summary>
     /// A template Host builds its request pipeline as the Proving Sample's Host does: the same <c>app.Use…</c> and
-    /// <c>app.Map…</c> calls in the same order, with <c>MapDefaultEndpoints</c> allowed, as only a generated Host has the
-    /// service defaults' endpoints. Middleware runs in the order it is added, so a template Host whose order or middleware
-    /// differs serves differently from the Host the Kit's tests run (ticket #87).
+    /// <c>app.Map…</c> calls in the same order, with <c>MapDefaultEndpoints</c> allowed where the sample's Host maps no
+    /// service defaults' endpoints, as <c>ModularMonolith.Host</c> does not. Middleware runs in the order it is added, so a
+    /// template Host whose order or middleware differs serves differently from the Host the Kit's tests run (ticket #87).
     /// </summary>
     public static IEnumerable<string> PipelineDifferences(TextFile host, TextFile sample)
     {
         var expected = Pipeline(sample.Text);
-        var actual = Pipeline(host.Text).Where(call => call != "MapDefaultEndpoints").ToList();
+        var actual = Pipeline(host.Text).Where(call => call != "MapDefaultEndpoints" || expected.Contains(call)).ToList();
         if (!actual.SequenceEqual(expected))
         {
             yield return $"{host.Path} builds its pipeline with {string.Join(", ", actual)}; the sample's {sample.Path} with {string.Join(", ", expected)}.";
@@ -369,6 +386,26 @@ internal static class TemplateRules
                 yield return $"{file.Path} names {path}, which is no project the template generates.";
             }
         }
+    }
+
+    /// <summary>
+    /// Every file a template generates sits at its solution's root or in the folder of a project its solution names: a
+    /// project or a source file its sources select but its solution leaves out, such as the shared Inventory in the
+    /// monolith or the reverse proxy in the service, lands in the generated folder unbuilt (ticket #171). A path in the
+    /// solution names its project through <paramref name="token"/>, read as the <paramref name="sourceName"/> the files carry.
+    /// </summary>
+    public static IEnumerable<string> FilesOutsideTheSolution(IReadOnlyList<TextFile> generated, string sourceName, string token)
+    {
+        var solution = generated.Single(file => file.Path.EndsWith(".slnx", StringComparison.Ordinal));
+        var folders = XDocument
+            .Parse(solution.Text)
+            .Descendants("Project")
+            .Select(project => Path.GetDirectoryName(project.Attribute("Path")!.Value.Replace(token, sourceName, StringComparison.Ordinal))!.Replace('\\', '/') + "/")
+            .ToList();
+        return generated
+            .Select(file => file.Path)
+            .Where(path => path.Contains('/', StringComparison.Ordinal) && !folders.Any(folder => path.StartsWith(folder, StringComparison.Ordinal)))
+            .Select(path => $"{path} is in no project of the solution the template generates.");
     }
 
     // A relative path from a generated file's folder, as a generated path with forward slashes.

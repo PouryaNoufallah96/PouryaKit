@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PouryaKit.Cqrs;
 using PouryaKit.Grpc;
 using PouryaKit.Messaging.Wolverine;
+using PouryaKit.Persistence;
 using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.EFCore;
 using PouryaKit.Persistence.Postgres;
@@ -38,6 +39,7 @@ public static class CatalogModule
             services.AddPouryaKitTenancy(catalog);
             services.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
             services.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
+            services.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConversationConfiguration.KeyIndex, UnitOfWorkErrors.ConcurrencyConflict);
             services.AddPouryaKitDapper(connectionName: "app", catalog);
             services.AddPouryaKitCqrs(catalog);
             services.AddPouryaKitValidation(catalog);

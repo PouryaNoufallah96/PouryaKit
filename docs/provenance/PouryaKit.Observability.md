@@ -6,7 +6,7 @@ The trace through the Outbox is new Kit code, decided in [ADR 0009](../adr/0009-
 
 ## Package dependencies
 
-None shipped. `PouryaKit.Observability` depends on `PouryaKit.Cqrs` only and uses `System.Diagnostics` and `System.Diagnostics.Metrics` from the BCL, with `ActivatorUtilities` from `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.12 (MIT), which arrives through Cqrs. Plan section C first listed `PouryaKit.Messaging` too. Nothing from it is used, because a delivery records the parent it restored on Cqrs's `Operation`, so the reference was left out (ticket #47). No package was added or bumped. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
+None shipped. `PouryaKit.Observability` depends on `PouryaKit.Cqrs` only and uses `System.Diagnostics` and `System.Diagnostics.Metrics` from the BCL, with `ActivatorUtilities` from `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.13 (MIT), which arrives through Cqrs. Plan section C first listed `PouryaKit.Messaging` too. Nothing from it is used, because a delivery records the parent it restored on Cqrs's `Operation`, so the reference was left out (ticket #47). No package was added or bumped. Its private MinVer build reference is recorded in [shared private build tools](README.md#shared-private-build-tools).
 
 ## Operation activity and duration
 

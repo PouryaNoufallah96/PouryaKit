@@ -1,11 +1,13 @@
 """Inventory failures at the evaluated-project seam, including accidentally packable samples."""
+import contextlib
+import io
 import unittest
 from pathlib import Path
 import tempfile
 import os
 import json
 import subprocess
-from unittest.mock import patch
+from unittest.mock import DEFAULT, patch
 
 import validate
 from validate import check_inventory, check_cache_folders, check_consumer, check_production_publish, isolated_env, prepare_history, test_totals
@@ -88,6 +90,13 @@ class SinceTests(unittest.TestCase):
                         patch("sys.argv", ["validate.py", "--no-fetch", "--output", str(root / "evidence"), *arguments]):
                     return validate.main(), full.called
 
+            def plan(*arguments):
+                """`--plan`'s exit code, whether it validated, and the lines it printed but the commands it ran."""
+                printed = io.StringIO()
+                with contextlib.redirect_stdout(printed):
+                    code, validated = exit_code("--since", *arguments, "--plan")
+                return code, validated, [line for line in printed.getvalue().splitlines() if not line.startswith("+ ")]
+
             def changed(ref):
                 with patch.object(validate, "ROOT", root):
                     return validate.changed_since(ref)
@@ -104,8 +113,12 @@ class SinceTests(unittest.TestCase):
             write("AGENTS.md", "# Agents\n")
             self.assertEqual(["AGENTS.md", "docs/guide.md"], changed("HEAD~1"))
             self.assertEqual((0, False), exit_code("--since", "HEAD~1"))
+            self.assertEqual((0, False, ["SKIP: 2 path(s) differ from HEAD~1, and none is one a package, a template or this validation "
+                                         "is built from. CI runs the full validation on every push and pull request."]), plan("HEAD~1"))
             self.assertEqual((0, True), exit_code())
             write("scripts/new.py", "pass\n")
+            self.assertEqual((0, False, ["--since HEAD~1: validating, 1 of 3 changed path(s) can reach a package, such as scripts/new.py"]),
+                             plan("HEAD~1"))
             self.assertEqual((0, True), exit_code("--since", "HEAD~1"))
             (root / "scripts/new.py").unlink()
             write("src/Kit/A.cs", "class A { }\n")
@@ -114,6 +127,13 @@ class SinceTests(unittest.TestCase):
             git("mv", "old/name.txt", "docs/name.txt")
             self.assertEqual(["AGENTS.md", "docs/guide.md", "docs/name.txt", "old/name.txt"], changed("HEAD~1"))
             self.assertEqual((1, False), exit_code("--since", "no-such-ref"))
+            code, validated, printed = plan("no-such-ref")
+            self.assertEqual((1, False), (code, validated))
+            self.assertTrue(printed[-1].startswith("FAIL: Unexpected exit "), printed)
+            self.assertEqual((0, False, ["--since HEAD~1: validating, 1 of 4 changed path(s) can reach a package, such as old/name.txt"]),
+                             plan("HEAD~1"))
+            with self.assertRaises(SystemExit):
+                exit_code("--plan")
             self.assertFalse((root / "evidence").exists())
 
 
@@ -133,6 +153,57 @@ class InventoryTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             check_inventory(expected, {**evaluated, "samples/Sample.csproj": {
                 "IsPackable": "true", "PackageId": "Sample", "EnablePackageValidation": "false"}})
+
+
+def validation(folder, templates):
+    """Runs `validate()` over an inventory of the template package and one consumer per `templates` entry, `{consumer name:
+    (template, generated name)}`, its `dotnet` and `git` steps stubbed and the steps whose result it does not use mocked;
+    `consumer_feed`, `template_consumer`, `isolated_env` and `test_totals` run as they are. Returns the commands it ran, the
+    mocked production step and the PASS line."""
+    summary = "Test run summary: Passed!\n  total: 72\n  failed: 0\n  succeeded: 69\n  skipped: 3\n"
+    commands = []
+
+    def run(command, **_):
+        commands.append(command)
+        if command[:2] == ["dotnet", "pack"]:
+            (command[-1] / "PouryaKit.Templates.1.0.0.nupkg").write_bytes(b"package")
+        if command[:2] == ["dotnet", "test"]:
+            return summary if "PouryaKit.slnx" in command else "  failed: 0\n  succeeded: 4\n"
+        return "commit\n" if "rev-parse" in command else ""
+
+    root = Path(folder) / "repo"
+    (root / "scripts/packaging").mkdir(parents=True)
+    (root / "scripts/packaging/inventory.json").write_text(json.dumps({
+        "packages": [{"id": "PouryaKit.Templates", "kind": "template"}],
+        "compositions": [{"name": name, "template": template, "generated": generated, "packages": [], "excluded": []}
+                         for name, (template, generated) in templates.items()]}))
+    with patch("builtins.print") as printed, patch.multiple(
+            validate, ROOT=root, run=run, prepare_history=lambda *_, **__: "commit",
+            properties=lambda *_, **__: {"MinVerVersion": "1.0.0", "PackageVersion": "1.0.0"},
+            check_inventory=DEFAULT, inventory_controls=DEFAULT, production_publish=DEFAULT,
+            check_consumer=lambda *_: [], artifact_controls=DEFAULT, version_proof=DEFAULT) as mocked:
+        validate.validate(Path(folder) / "evidence", fetch=False)
+    return commands, mocked["production_publish"], printed.call_args.args[0]
+
+
+class TemplateConsumerTests(unittest.TestCase):
+    """A template the inventory lists is validated with no change to the script, under the name its consumer gives (#168)."""
+
+    def test_each_template_consumer_is_generated_built_tested_and_published_under_the_name_its_entry_gives(self):
+        templates = {"template-monolith": ("pouryakit-monolith", "Acme.Shop"),
+                     "template-modular-monolith": ("pouryakit-modular-monolith", "acme-shop"),
+                     "template-service": ("pouryakit-service", "Acme.Stock")}
+        with tempfile.TemporaryDirectory() as folder:
+            commands, production, _ = validation(folder, templates)
+            solutions = {name: Path(folder) / "evidence/consumers" / name / generated for name, (_, generated) in templates.items()}
+        self.assertEqual([["dotnet", "new", template, "-n", generated, "-o", solutions[name]] for name, (template, generated) in templates.items()],
+                         [command[:7] for command in commands if command[:2] == ["dotnet", "new"] and command[2] != "install"])
+        self.assertEqual([solutions[name] / f"{generated}.slnx" for name, (_, generated) in templates.items()],
+                         [command[2] for command in commands if command[:2] == ["dotnet", "build"] and command[2] != "PouryaKit.slnx"])
+        self.assertEqual([solutions[name] / "tests" / f"{generated}.Tests" / f"{generated}.Tests.csproj" for name, (_, generated) in templates.items()],
+                         [command[3] for command in commands if command[:3] == ["dotnet", "test", "--project"]])
+        self.assertEqual([solutions[name] / "src" / f"{generated}.Host" for name, (_, generated) in templates.items()],
+                         [call.args[0] for call in production.call_args_list])
 
 
 class ConsumerCacheTests(unittest.TestCase):
@@ -305,6 +376,17 @@ class TestTotalsTests(unittest.TestCase):
     def test_an_output_without_totals_is_refused(self) -> None:
         with self.assertRaises(RuntimeError):
             test_totals("Build succeeded.\n")
+
+    def test_the_pass_line_carries_the_totals_after_the_template_consumers_ran(self) -> None:
+        """The template consumers' loop once rebound the totals' name to a generated test project's path."""
+        with tempfile.TemporaryDirectory() as folder:
+            _, _, line = validation(folder, {"template-monolith": ("pouryakit-monolith", "Acme.Shop"),
+                                             "template-modular-monolith": ("pouryakit-modular-monolith", "acme-shop")})
+        self.assertEqual(
+            "PASS 1 packages, 2 clean consumers (2 generated from templates, smoke tests passed: template-monolith (-n Acme.Shop) 4, "
+            "template-modular-monolith (-n acme-shop) 4), negative controls and MinVer proof; "
+            f"Release tests total 72, succeeded 69, failed 0, skipped 3. Manifest: {Path(folder) / 'evidence/manifest.json'}",
+            line)
 
 
 if __name__ == "__main__":

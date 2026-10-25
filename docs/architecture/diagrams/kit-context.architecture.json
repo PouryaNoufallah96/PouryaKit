@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "1dc41f848c5c2526c7582d99c4ad2da3e774c98e",
+      "revision": "ba5643f0dfe2e7acd2b4cac9e80f397b7edfd294",
       "link_mode": "web"
     }
   },
@@ -62,8 +62,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 90,
-          "end_line": 90,
+          "line": 87,
+          "end_line": 87,
           "label": "references no Kit package: runs no Operation"
         },
         {
@@ -124,8 +124,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 129,
-          "end_line": 136,
+          "line": 131,
+          "end_line": 138,
           "label": "message and Marten stores; RabbitMQ if a broker"
         },
         {
@@ -186,8 +186,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/InventoryHost.cs",
-          "line": 31,
-          "end_line": 55,
+          "line": 40,
+          "end_line": 82,
           "label": "Inventory alone, receives over RabbitMQ"
         },
         {
@@ -199,7 +199,7 @@
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj",
           "line": 20,
-          "end_line": 27,
+          "end_line": 30,
           "label": "references the Kit's projects"
         }
       ]
@@ -294,7 +294,7 @@
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 33,
+          "line": 34,
           "label": "a schema per Module (catalog)"
         },
         {
@@ -327,8 +327,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 157,
-          "end_line": 158,
+          "line": 151,
+          "end_line": 152,
           "label": "no Kit package references Redis"
         }
       ]
@@ -389,7 +389,7 @@
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs",
-          "line": 21,
+          "line": 25,
           "label": "schema inventory"
         },
         {
@@ -451,7 +451,7 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 17,
-          "end_line": 135,
+          "end_line": 129,
           "label": "their allowed references"
         }
       ]
@@ -663,7 +663,7 @@
       "title": "Hosts",
       "items": [
         "ModularMonolith.Host composes Catalog, Billing and Ledger, and Inventory too when no broker is configured.",
-        "Inventory.Host composes Inventory alone and receives Catalog's ProductCreatedV1, ProductCreatedV2 and ProductSnapshotV1 from RabbitMQ.",
+        "Inventory.Host composes Inventory alone and receives Catalog's ProductCreatedV1, ProductCreatedV2 and ProductSnapshotV1 from RabbitMQ; the pouryakit-service template generates the same composition.",
         "A Host keeps its Modules' schemas and its message store in one database: the Host fails when built if a Module's DbContext names another."
       ]
     },

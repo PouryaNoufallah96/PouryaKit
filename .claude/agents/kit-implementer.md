@@ -33,6 +33,7 @@ Work in a worktree of your own, never in the main checkout: when your working di
 - Report `done` only when every `verify` command passed in your final run.
 - When the brief asks for `validate.py`, run it once, after the last implementation commit and with your memory notes committed first, and write nothing in the checkout while it runs, because it refuses a checkout that changes while it runs. Then record its result as the brief says.
 - Keep the diff small and in the surrounding style. Every changed line traces to the objective.
+- Before you report, take each sentence your diff changed or made false (a summary, a comment, a skill sentence, a document line) and search its old key phrase across `src/`, `samples/`, `tests/`, the Kit skill, `docs/architecture/` and `docs/acceptance.md`; update every restatement you find. A restatement left as it was is the finding raised most often against Wave 4 packages (15 of 20), each costing a fix round.
 - When evidence contradicts an ADR or a section G decision, stop and report the evidence.
 - When you depart from the brief for a sound engineering reason inside `allowed_files`, continue and record it under `deviations`.
 - A design question the brief left open goes under `blockers`; the session that briefed you decides it.

@@ -114,8 +114,8 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
                 $"select id from wolverine.wolverine_incoming_envelopes where received_at = 'local://{InventorySubscription}/'"
             );
 
-            // While the first delivery runs, the store hands the same envelope out twice more, as InboxStaleTime does
-            // for a delivery that outlasts it. Each runs at once and waits on the first one's uncommitted Receipt.
+            // While the first delivery runs, the test releases its row twice, as the stale sweep does for a row whose holder
+            // stopped restarting its clock; each copy runs at once and waits on the first one's uncommitted Receipt.
             for (var handedOut = 1; handedOut <= 2; handedOut++)
             {
                 await Fixture.RowsAsync($"update wolverine.wolverine_incoming_envelopes set owner_id = 0 where id = '{envelope}'");

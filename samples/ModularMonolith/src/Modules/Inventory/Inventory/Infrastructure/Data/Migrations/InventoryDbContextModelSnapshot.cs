@@ -18,7 +18,7 @@ namespace Inventory.Infrastructure.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("inventory")
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -58,6 +58,10 @@ namespace Inventory.Infrastructure.Data.Migrations
                     b.Property<int>("QuantityOnHand")
                         .HasColumnType("integer")
                         .HasColumnName("quantity_on_hand");
+
+                    b.Property<string>("Tenant")
+                        .HasColumnType("text")
+                        .HasColumnName("tenant");
 
                     b.Property<long>("Version")
                         .IsConcurrencyToken()

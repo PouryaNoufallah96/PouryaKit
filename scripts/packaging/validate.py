@@ -18,9 +18,6 @@ ROOT = Path(__file__).resolve().parents[2]
 ARCHITECTURE = ROOT / "tests/PouryaKit.ArchitectureTests/bin/Release/net10.0/PouryaKit.ArchitectureTests.dll"
 # The projects a template generates: package content, not projects of this repository.
 TEMPLATE_CONTENT = ROOT / "src/PouryaKit.Templates/content"
-# The name each template consumer generates its solution under: a dotted one, and a hyphenated one that the engine writes
-# as typed in file and folder names and the paths to them, but as `acme_shop` in code.
-GENERATED = {"pouryakit-monolith": "Acme.Shop", "pouryakit-modular-monolith": "acme-shop"}
 # --since: the only paths whose change cannot reach a package, a template or this validation, because nothing that is
 # built, tested or packed reads them: the docs and the AI setup. Any other path, known or not, means the validation runs.
 EXEMPT_DIRECTORIES = ("docs/", ".agents/", ".claude/", ".codex/", ".githooks/")
@@ -148,9 +145,8 @@ def simple_consumer(folder, ids, types, version):
     return folder / "Consumer.csproj"
 
 
-def template_consumer(folder, template, hive):
-    """Generates the solution of `template`, installed from the produced package, with nothing of this repository's."""
-    name = GENERATED[template]
+def template_consumer(folder, template, name, hive):
+    """Generates the solution of `template` as `name`, installed from the produced package, with nothing of this repository's."""
     run(["dotnet", "new", template, "-n", name, "-o", folder / name, "--no-restore", "--debug:custom-hive", hive], cwd=folder)
     return folder / name / f"{name}.slnx"
 
@@ -409,14 +405,15 @@ def validate(output, *, fetch=True):
             started = time.monotonic()
             # The generated solution brings its own SDK pin, build settings and central versions; only the feed is given.
             consumer_feed(folder, package_output)
-            solution = template_consumer(folder, consumer["template"], hive)
-            generated = GENERATED[consumer["template"]]
+            # Each template consumer names the solution it generates; its Host and test project are found by that name.
+            generated = consumer["generated"]
+            solution = template_consumer(folder, consumer["template"], generated, hive)
             env = isolated_env(folder)
             run(["dotnet", "restore", solution, "--configfile", folder / "NuGet.Config", "--no-http-cache", "-p:RestoreFallbackFolders="],
                 cwd=solution.parent, env=env, log=output / f"consumer-{name}-restore.log")
             run(["dotnet", "build", solution, "-c", "Release", "--no-restore"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-build.log")
-            tests = solution.parent / "tests" / f"{generated}.Tests" / f"{generated}.Tests.csproj"
-            result = run(["dotnet", "test", "--project", tests, "-c", "Release", "--no-build"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-test.log")
+            test_project = solution.parent / "tests" / f"{generated}.Tests" / f"{generated}.Tests.csproj"
+            result = run(["dotnet", "test", "--project", test_project, "-c", "Release", "--no-build"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-test.log")
             passed = re.search(r"succeeded: (\d+)", result)
             failed = re.search(r"failed: (\d+)", result)
             if not passed or not failed or failed.group(1) != "0" or passed.group(1) == "0":
@@ -503,17 +500,25 @@ def main():
     parser.add_argument("--no-fetch", action="store_true", help="Use full history and tags already fetched by CI checkout; reject shallow history.")
     parser.add_argument("--since", metavar="REF", help="Skip, with one SKIP line and exit 0, when every path that differs from REF "
                         "is documentation or AI setup; the implementer's base. CI passes none, so it always validates.")
+    parser.add_argument("--plan", action="store_true", help="With --since: print the decision (SKIP, or the paths that make the run full) "
+                        "and exit 0 without validating. Asked by the orchestrator when it writes a brief, instead of predicting the "
+                        "decision (two Wave 4 briefs predicted SKIP for paths the script does not exempt).")
     parser.add_argument("--keep", action="store_true", help="Keep the evidence directory after a PASS. Without it the directory is "
                         "removed once the PASS line is printed: it holds about 8 GB, and five implementers' runs filled a disk "
                         "(Wave 3 session 3). CI passes it, since it uploads the directory as the validation artifact.")
     arguments = parser.parse_args()
-    output = arguments.output.resolve() if arguments.output else Path(tempfile.mkdtemp(prefix="pouryakit-packages-"))
-    # A PASS without --keep removes the evidence directory with everything in it, so it may hold only what this run writes.
-    if not arguments.keep and output.exists() and (not output.is_dir() or any(output.iterdir())):
-        print(f"FAIL: {output} exists and is not an empty directory, and a PASS without --keep removes the evidence directory "
-              "with everything in it. Name a new or empty directory, or pass --keep.", flush=True)
-        return 1
+    if arguments.plan and not arguments.since:
+        parser.error("--plan needs --since REF")
     try:
+        if arguments.plan:
+            skipped(arguments.since)
+            return 0
+        output = arguments.output.resolve() if arguments.output else Path(tempfile.mkdtemp(prefix="pouryakit-packages-"))
+        # A PASS without --keep removes the evidence directory with everything in it, so it may hold only what this run writes.
+        if not arguments.keep and output.exists() and (not output.is_dir() or any(output.iterdir())):
+            print(f"FAIL: {output} exists and is not an empty directory, and a PASS without --keep removes the evidence directory "
+                  "with everything in it. Name a new or empty directory, or pass --keep.", flush=True)
+            return 1
         if arguments.since and skipped(arguments.since):
             return 0
         validate(output, fetch=not arguments.no_fetch)

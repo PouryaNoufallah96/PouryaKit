@@ -61,13 +61,14 @@
     },
     {
       "source": "../shared/",
-      "target": "./"
+      "target": "./",
+      "exclude": ["src/Modules/Inventory/**/*"]
     },
     {
       "source": "../sample/",
       "target": "src/",
       "include": ["Modules/Catalog/**/*", "ModularMonolith.Host/**/*", "ModularMonolith.ServiceDefaults/**/*"],
-      "exclude": ["**/*Module.cs", "**/*Endpoint.cs", "**/*GrpcService.cs", "**/CatalogProducts.cs", "**/AskAboutProducts/**"]
+      "exclude": ["**/*Module.cs", "**/*Endpoint.cs", "**/*GrpcService.cs", "**/CatalogProducts.cs", "**/AskAboutProducts/**", "**/CardNumberGuardrail.cs"]
     }
   ],
   "primaryOutputs": [

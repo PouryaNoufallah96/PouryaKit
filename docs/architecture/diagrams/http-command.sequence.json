@@ -12,7 +12,7 @@
     ],
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "1dc41f848c5c2526c7582d99c4ad2da3e774c98e",
+      "revision": "e4b2103477cf72fbff208ceed743420eb0154dad",
       "link_mode": "web"
     },
     "legend": {
@@ -34,8 +34,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 45,
-          "end_line": 45,
+          "line": 47,
+          "end_line": 47,
           "label": "Catalog's routes under /catalog"
         }
       ]
@@ -48,8 +48,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 143,
-          "end_line": 155,
+          "line": 145,
+          "end_line": 157,
           "label": "the order of the Host's middleware"
         },
         {

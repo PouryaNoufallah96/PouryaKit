@@ -1212,3 +1212,27 @@ The decision above stands. The Messaging package records each Integration Event 
 queue, and `SubscriptionDelivery` fans the envelope out to the saga's queue as the saga's input, beside each
 subscription's copy, by queue and never through the type's routes ([ADR 0013](0013-a-saga-step-runs-outside-every-operation.md),
 #142 amendment).
+
+## Amendment (2026-10-24, ticket #167: the stale-time rule retired on WolverineFx 6.52.0)
+
+The decision above stands, the stored retry of owner decision 1 included. WolverineFx 6.51.0 restarts a row's stale
+clock when a node claims it and while a receiver holds it (ADR 0004's amendment for #167), so the inferences of the
+amendments for #17 and #44 about the insert time no longer describe the store:
+
+- **A late retry, delayed command or recurring occurrence is not stale when it starts.** The scheduled-job poll's
+  claim restarts the clock, so none of them is handed out again for having been stored longer ago than the stale time.
+  `InboxStaleTimeTests.A_retry_due_after_the_stale_time_is_not_handed_out_again_while_it_runs` holds a retry due a
+  second after a 3-second stale time across ten recovery polls and no copy begins; with the claim's restart switched off
+  by setting the row's clock back, a copy begins. It replaces
+  `InboxStaleTimeTests.A_retry_that_runs_after_the_stale_time_is_handed_out_again_while_it_runs_and_its_receipt_keeps_one_effect`,
+  whose copy no longer comes; the waiting-retry test stands as it was.
+- **The rule a Host follows changes.** The stale time no longer has to exceed the retry delays plus every attempt's
+  run: it stays well above the difference between the Host's clock and the database's, which the release compares, and
+  a loaded Host's delay in restarting a held row's clock, which the 5-minute default does. The default delays stay 1 s,
+  10 s and 1 min.
+- **A concurrent copy still keeps one effect.** A row released while an attempt of it runs, as when its receiver
+  misses a restart, is handed out again, and its Receipt keeps the effect to one and a recurring command's next
+  occurrence to one. The tests that showed it through the stale sweep now release the held row themselves, as
+  `IntegrationEventTests.Concurrent_deliveries_of_one_integration_event_apply_its_effect_once` always did:
+  `StreamTests.A_concurrent_duplicate_delivery_waits_for_the_first_receipt_and_never_runs_its_handler` and
+  `RecurringCommandTests.A_delayed_command_and_an_occurrence_due_after_the_stale_time_and_handed_out_again_while_they_run_apply_one_effect_each_and_store_one_next_occurrence`.

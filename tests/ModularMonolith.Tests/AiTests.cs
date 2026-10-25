@@ -45,10 +45,11 @@ public sealed class AiTests(AppFixture app, AiFixture ai) : IClassFixture<AiFixt
     {
         var (product, name) = await CreateProductAsync(Catalog);
         ai.Stub.Script(ChatReply.Calls(GetProduct(product), GetProduct(product)), ChatReply.Text($"It is the {name}."));
-        // A request id the run carries is never a call's: each call is an Operation of its own.
-        var run = new OperationContext(Ada, AppFixture.TestTenant) { RequestId = "ask-1" };
+        // The sample's agent is a command that is not idempotent, so its run carries no request id: that a request id the run
+        // carries is never a call's, the two-calls test below proves.
+        var run = new OperationContext(Ada, AppFixture.TestTenant);
 
-        var answered = await Catalog.QueryAsync(new AskAboutProductsQuery($"What is {product} called?"), run, TestContext.Current.CancellationToken);
+        var answered = await Catalog.SendAsync(new AskAboutProductsCommand($"What is {product} called?"), run, TestContext.Current.CancellationToken);
 
         Assert.Equal($"It is the {name}.", answered.Value);
         var calls = SeenBy(ai.Host, run);
@@ -272,8 +273,8 @@ public sealed class AiTests(AppFixture app, AiFixture ai) : IClassFixture<AiFixt
             var (product, name) = await CreateProductAsync(catalog);
             var run = new OperationContext(Ada, AppFixture.TestTenant);
 
-            var answered = await catalog.QueryAsync(
-                new AskAboutProductsQuery($"Call the GetProduct tool with the productId {product}, then tell me the product's name."),
+            var answered = await catalog.SendAsync(
+                new AskAboutProductsCommand($"Call the GetProduct tool with the productId {product}, then tell me the product's name."),
                 run,
                 TestContext.Current.CancellationToken
             );

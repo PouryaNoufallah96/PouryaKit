@@ -10,7 +10,7 @@
 
 ## Composing the proxy
 
-The proxy is an application of its own, beside the Hosts it fronts. The Proving Sample's is `ModularMonolith.ReverseProxy`, and each `dotnet new` template generates `src/<name>.ReverseProxy` in front of its Host ([templates.md](templates.md)):
+The proxy is an application of its own, beside the Hosts it fronts. The Proving Sample's is `ModularMonolith.ReverseProxy`, and the monolith and modular monolith templates generate `src/<name>.ReverseProxy` in front of their Host, the service template none ([templates.md](templates.md)):
 
 ```csharp
 using PouryaKit.ReverseProxy;
@@ -51,6 +51,7 @@ Routes and clusters are YARP's configuration, in the `ReverseProxy` section (`Re
 
 - Each cluster probes `/alive` on every destination, the liveness path a Host composing the service defaults maps in every environment, every 15 seconds; two failed probes in a row take the destination out of the cluster until a probe succeeds. A cluster's own `HealthCheck:Active` settings win: `Path` names another path, `Interval` another period, and `Enabled: false` turns the probe off for a Host that maps no `/alive`, as the Proving Sample's settings do for `ModularMonolith.Host`.
 - When every destination of a cluster is out, the cluster answers its requests with 503 until a probe succeeds: the Kit sets the cluster's `HealthCheck:AvailableDestinationsPolicy` to `HealthyAndUnknown` unless its configuration names another, where YARP's default, `HealthyOrPanic`, would forward to every destination again.
+- A route whose path starts with a literal segment outranks a catch-all route, with no `Order`. The Proving Sample's settings route every path to `ModularMonolith.Host`; its AppHost adds the service route through the proxy's environment, `/inventory/{**catch-all}` to the cluster `inventory`, whose destination `http://inventory` resolves to `Inventory.Host` through the endpoint the AppHost's reference gives the proxy, with the probe on, since that Host maps `/alive` ([aspire.md](aspire.md#the-apphost)).
 
 ## What the Kit guarantees
 
@@ -61,10 +62,10 @@ Routes and clusters are YARP's configuration, in the `ReverseProxy` section (`Re
 
 ## Limits
 
-- Liveness only: no readiness probe outside Development, and `/health`, which asks each database, stays a Development endpoint of the service defaults.
+- Liveness only, by decision: the proxy probes `/alive`, the recipe's liveness path, and no readiness path, since readiness outside Development is the platform's probe (spec #74's D13, closed on 2026-10-24 by owner decision W5 of spec #161). A Kit readiness option would duplicate what the platform's probe does over the Host's liveness path and dependencies; `/health`, which asks each database, stays a Development endpoint of the service defaults ([host-recipes.md](host-recipes.md#liveness-and-readiness)).
 - No transform, rate limit, authentication or response cache of the proxy's own; add YARP's where the application needs them, in its own composition.
 - Routes and clusters come from configuration only; there is no code-built route.
-- As shipped, the proxy carries no gRPC: it listens without TLS and forwards to `http://` destinations, where YARP sends HTTP/1.1. A Host's gRPC client calls the other Host directly ([grpc.md](grpc.md)); to proxy gRPC, follow YARP's gRPC guidance.
+- As shipped, the proxy carries no gRPC: it listens without TLS and forwards to `http://` destinations, where YARP sends HTTP/1.1. The limit stays, and the Kit adds no HTTP/2 destination option (owner decision W7 of spec #161, 2026-10-24): a Host's gRPC client targets the other Host directly, at the address its `PouryaKitGrpcClientOptions` name ([grpc.md](grpc.md#calling-another-host)), so the proxy fronts the HTTP API alone. An application that must proxy gRPC follows YARP's gRPC guidance in its own composition.
 
 ## Testing
 
@@ -85,4 +86,4 @@ await proxy.StartAsync(TestContext.Current.CancellationToken);
 using var client = proxy.GetTestClient();
 ```
 
-Its tests read the cluster's destinations and their health from YARP's `IProxyStateLookup`, and the trace from an `ActivityListener` on the `Microsoft.AspNetCore`, `System.Net.Http` and Kit sources, since both Hosts run in the test process.
+Its tests read the cluster's destinations and their health from YARP's `IProxyStateLookup`, and the trace from an `ActivityListener` on the `Microsoft.AspNetCore`, `System.Net.Http` and Kit sources, since both Hosts run in the test process. The service route's test fronts `Inventory.Host` the same way, on the broker fixture: its `GetStockItem` answers the stock item a delivery opened for the token's tenant, and an `IStartupFilter` of the test records the token and the Kit's headers as the Host's pipeline receives them.

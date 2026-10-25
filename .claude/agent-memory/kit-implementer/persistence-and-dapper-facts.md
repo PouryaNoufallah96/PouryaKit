@@ -135,6 +135,11 @@ Check the merged code before relying on a design note. Each section names its ti
 
 - **Dropping a migration's `defaultValue` can break a test's plain SQL insert** that left the column out: the Stub's `HoldChangeCommandHandler` inserted into `catalog.categories` without `tenant`, so `ConflictTests`' two races hit `ReportNotNullViolationError` and timed out at 60 s (the race waits on a hold the failed insert never released). Grep every `insert into <schema>.<table>` in `tests/` before dropping a default, and run the class that uses it, not only the targeted ones.
 
+## A delivered tenant on a mapped entity of a Module that is not tenant-scoped (#169, 2026-10-24; EF Core 10.0.13, dotnet-ef 10.0.12)
+
+- **Inventory's migration from its own Host:** `ConnectionStrings__app=… ConnectionStrings__broker=amqp://… dotnet ef migrations add <Name> --project <abs Inventory.csproj> --startup-project <abs Inventory.Host.csproj> --context InventoryDbContext --output-dir Infrastructure/Data/Migrations` (RabbitMQ reads its string at registration; the bearer section is not needed, nothing starts). It writes a Designer and the snapshot (ProductVersion moves to the runtime's 10.0.13; the 10.0.12 tool only warns), timestamped after the hand-dated SQL-only migrations.
+- **The lease's tenant serves a Module that is not tenant-scoped too:** `ReadConnectionFactory` sets `pouryakit.tenant` for every lease, `''` with no tenant, so `tenant = current_setting('pouryakit.tenant')` over a nullable column answers no tenantless Operation and no row stored without a tenant. `DapperTenantTests` judges only `ITenantScoped` tables, so such a read is held by its runtime test alone.
+
 **Why:** each cost a run, a design detour or a wrong claim in a provenance record, or would have let a test pass vacuously; #9 to #18 build on these seams.
 **How to apply:** start from these when touching Persistence.*, Persistence.Dapper, the Unit of Work seam, conflicts, test migrations, paging, Dapper parameters or EF predicates; re-verify when bumping EF/Npgsql. Related: [[cqrs-and-modularity-facts]], [[snapshot-and-scheduled-command-facts]], [[dotnet-and-test-conventions]].
 

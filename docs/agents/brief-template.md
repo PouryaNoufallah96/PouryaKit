@@ -35,9 +35,13 @@ Follow the last package added (`<package>`, #<ticket>): csproj metadata as its s
 
 `.agents/skills/pourya-kit/SKILL.md` and `references/*.md`, `README.md` (the status list), `docs/architecture/README.md`, `docs/acceptance.md`, `docs/provenance/*.md`, `docs/adr/*.md` (a dated amendment of an ADR the ticket touches, never a rewrite of its record), `docs/foundation-review.md` (only your Capability's section C row and I.3 row, with a dated "Built" note), `docs/*.md` (a top-level doc, such as `docs/packages.md` or `docs/private-packages.md`, where a line restates the behaviour you change), `src/PouryaKit.Templates/content/**` (the monolith's replacement of a changed sample Composition Root or Gateway endpoint, and the template csproj that matches a changed sample csproj, as `.claude/rules/kit-code.md` couples them), `scripts/packaging/consumers/<package>.cs`, `scripts/packaging/inventory.json` (a ticket that adds or removes a package), `Directory.Packages.props`, `PouryaKit.slnx`, `tests/PouryaKit.ArchitectureTests/**` (package graph and structure tests), `GLOSSARY.md` (a term the ticket introduces), and your agent memory directory. A `stop_if` never narrows this set.
 
+## Acceptance record (every ticket)
+
+Add one section to `docs/acceptance.md` headed `## <Wave prefix> <short title>, ticket #<n>`: the Wave's prefix in `check-docs.py`'s `ORDERED_SECTIONS` (`Wave 4`), then text, then `, ticket #<n>` ending the line, the shape its ordered-section rule reads. Insert it in ascending ticket order among the Wave's sections, not at the end: the pre-commit hook refuses a section out of order (three Wave 4 implementers lost a commit to an append), and two tickets inserting at the same place conflict there by design, which the merge resolves in ticket order. Rows: behaviour · proof (test or check, with its pointer) · red-once or check result.
+
 ## Tests
 
-`.claude/rules/kit-code.md`, "Tests": one test per behaviour that matters, and red once for each guarantee the ticket states, listed under `shown_red`. Gateway and HTTP seams run through `AppFixture` or `HostFixture` against PostgreSQL in Testcontainers. One class runs with `dotnet test --project <csproj> --filter-class <fully qualified class> --output Detailed`. A test fails when its collaborators return defaults or the promised effect never occurs.
+`.claude/rules/kit-code.md`, "Tests": one test per behaviour that matters, and red once for each guarantee the ticket states, listed under `shown_red`. Gateway and HTTP seams run through `AppFixture` or `HostFixture` against PostgreSQL in Testcontainers. One Docker host serves every implementer and validation of the session, and PostgreSQL's 100-connection default fails concurrent suites with 53300: use class filters while you develop, and run the full `ModularMonolith.Tests` run and `validate.py` as the command of `.agents/scripts/wait-docker-quiet.sh -- <command>`. It takes the machine's Docker lock as soon as no other waiter holds it, waits while holding it until no validation or test run holds Docker, then runs the command and exits with its status. A wait alone reserves nothing: two agents that see one suite end both start theirs, and a waiter that matched command lines (`pgrep -f`) matched other agents' waiting shells and never cleared. One class runs with `dotnet test --project <csproj> --filter-class <fully qualified class> --output Detailed`. A test fails when its collaborators return defaults or the promised effect never occurs.
 
 ## Verify (run exactly, after your edits; every command passes in the final run)
 
@@ -50,12 +54,12 @@ python3 .agents/scripts/check-ai-setup.py
 python3 .agents/scripts/check-docs.py
 ```
 
-Each ticket's brief adds its own test projects. Every command in a brief is copied from a place that runs it, the CI workflow (`.github/workflows/ci.yml`) or an earlier brief whose report shows it passed, never retyped from memory: session 3 (2026-10-09) shipped `python3 -m unittest .agents/scripts/test_check_docs.py`, which stops with `ValueError: Empty module name` because the leading dot of `.agents` makes no module name. Whether `validate.py` runs in full or prints `SKIP` is the script's decision from its exempt paths; a brief does not predict it.
+Each ticket's brief adds its own test projects. Every command in a brief is copied from a place that runs it, the CI workflow (`.github/workflows/ci.yml`) or an earlier brief whose report shows it passed, never retyped from memory: session 3 (2026-10-09) shipped `python3 -m unittest .agents/scripts/test_check_docs.py`, which stops with `ValueError: Empty module name` because the leading dot of `.agents` makes no module name. Whether `validate.py` runs in full or prints `SKIP` is the script's decision from its exempt paths: the main session asks it with `python3 scripts/packaging/validate.py --since <tip> --plan` on the ticket's expected paths when it matters for scheduling, and a brief never predicts it (two Wave 4 briefs predicted SKIP for `.gitignore` and `.github/`, which the script does not exempt).
 
 ## Commit, then package validation
 
 1. Commit everything on your worktree branch, in one or a few commits with conventional messages such as `feat(<area>): <change> (#<n>)`. Do not push. Do not write to the tracker.
-2. On the committed tree, run `python3 scripts/packaging/validate.py --no-fetch --since <tip> --output <scratchpad>/validate-<n>`, where `<tip>` is the integration-branch commit this brief names. The script removes that directory after a PASS (it holds about 8 GB; `--keep` retains it for inspection), so nothing is left to clean up. Put its PASS line, with the commit it ran on, into `docs/acceptance.md` as earlier tickets did, and commit that. A `SKIP` line instead means nothing you changed can reach a package: quote it in your report and record nothing, since CI runs the full validation. On a failure, fix inside `allowed_files` (two attempts), then report.
+2. On the committed tree, run `.agents/scripts/wait-docker-quiet.sh -- python3 scripts/packaging/validate.py --no-fetch --since <tip> --output <scratchpad>/validate-<n>`, where `<tip>` is the integration-branch commit this brief names. The script removes that directory after a PASS (it holds about 8 GB; `--keep` retains it for inspection), so nothing is left to clean up. Put its PASS line, with the commit it ran on, into `docs/acceptance.md` as earlier tickets did, and commit that. A `SKIP` line instead means nothing you changed can reach a package: quote it in your report and record nothing, since CI runs the full validation. On a failure, fix inside `allowed_files` (two attempts), then report.
 
 ## Report
 
@@ -92,3 +96,23 @@ Design constraints:
 
 The common `verify` block with `<TestClass>` = `<test class>`, plus <the ticket's own test projects>.
 ````
+
+## Merger brief
+
+For a merge `merge-package.py` stops on (`docs/agents/running-a-spec.md`, "Merging with diagram conflicts"). Written four times per session in Waves 3 and 4 before it had a template.
+
+````markdown
+# Merge brief: ticket-<n> into <integration branch> (merger subagent)
+
+Why it matters: #<n> passed its reviews; its merge into `<integration branch>` conflicts in <the files `git merge-tree --write-tree <tip> <head>` listed>. The orchestrator fast-forwards the branch to your result after checking it.
+
+Worktree `<repository>/.claude/worktrees/merge-<n>`, branch `merge-<n>` at `<tip>` (= the integration tip). Use `git -C` and absolute paths; never touch the main checkout, the integration branch or the ticket's worktree. Do not push. No `dotnet test`, no containers (the orchestrator verifies the merged tree); `dotnet build` only when a citation check needs it.
+
+1. `git merge --no-ff <head>`. Read the implementer's `merge_notes` in `<report path>` first. Resolve: `docs/acceptance.md` with `python3 .agents/scripts/resolve-acceptance.py <path>` (both sides' sections in ticket order; where both sides edited an earlier section's row, keep the integration branch's); prose files by keeping both facts in one sentence that says the merged truth; the implementer memory index as one line per memory file holding both sides' ticket numbers; each diagram source with both sides' nodes, edges, cards and citations, every cited range remapped to the merged file and verified against it; either page.
+2. Commit with `--no-verify`, message `Merge ticket-<n>: <title> (#<n>)`, trailers passed explicitly: `--trailer "Co-Authored-By: <session's model line>" --trailer "Claude-Session: <session url>"`.
+3. `python3 .agents/scripts/repin-diagram.py <worktree> <merge sha> <slug>.<type>` for each re-ranged diagram (and any `check-docs.py --staged` names once you stage; `--archify <dir>` or `ARCHIFY_HOME` names the Archify checkout). Commit the pins through the hooks, same trailers.
+4. `python3 .agents/scripts/check-docs.py` and `python3 .agents/scripts/check-ai-setup.py` at zero. Measure your own change against the automerged tree: `git merge-tree --write-tree <tip> <head>` prints that tree id first, then `git diff --stat <tree id> HEAD` must list only the conflicted files, the diagram pairs, memory files and `docs/acceptance.md`.
+
+Report as text, JSON: `merge_commit`, `pin_commit`, `head`, `conflicts_resolved` (file: how), `acceptance_order`, `own_change`, `commands` (each with outcome), `deviations`, `blockers`. Under 4 KB.
+````
+

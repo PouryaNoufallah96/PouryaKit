@@ -15,16 +15,15 @@ public sealed class PouryaKitMessageStoreOptions
     public DurabilityMode Durability { get; set; } = DurabilityMode.Balanced;
 
     /// <summary>
-    /// How long a delivery may stay with an instance that took it before the store hands it out again: the remedy for a
-    /// Notification committed but never sent while its Host lives on. It counts from when the delivery was stored, not
-    /// from its latest attempt: longer than every retry delay together plus every attempt's run, queue wait included
-    /// (<c>PouryaKitMessagingOptions.RetryDelays</c>), it keeps a delivery sent at its commit from going stale, but a
-    /// delayed command or a recurring occurrence due later than it, as an hourly one is under the five-minute default,
-    /// runs stale from its first attempt and, held by no instance while it waits, is handed out again only when a
-    /// recovery poll finds an attempt of it still running. A delivery still running when it passes is handed out
-    /// again, concurrently, on every recovery cycle until one run finishes; its Receipt keeps the effect to one, and a
-    /// recurring command's next occurrence to one, while each copy waits on it with a connection of its own. Zero or
-    /// less stops the Host when it starts, naming this option.
+    /// How long a delivery an instance took and no longer holds waits before the store hands it out again: the remedy for
+    /// a Notification committed but never sent while its Host lives on. Its clock restarts when an instance claims the
+    /// delivery, a due retry, delayed command or recurring occurrence included, so a late attempt is not stale when it
+    /// starts, and three times per stale time while the instance holds it, queued or running, so a long attempt is not
+    /// handed out again while each restart lands in time. The store compares the database's clock with the instance's, so
+    /// keep it well above their difference and a loaded instance's delay, as the five-minute default is. A delivery
+    /// handed out while an attempt of it still runs, as when its Host fails to restart its clock in time, keeps one effect
+    /// through its Receipt, and a recurring command one next occurrence, while each copy waits on it with a connection of
+    /// its own. Zero or less stops the Host when it starts, naming this option.
     /// </summary>
     public TimeSpan InboxStaleTime { get; set; } = TimeSpan.FromMinutes(5);
 }

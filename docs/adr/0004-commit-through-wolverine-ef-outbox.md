@@ -553,3 +553,39 @@ message store, which Wolverine keeps as this one store, with one durability agen
 database and schema; otherwise the Host fails when it starts. A Notification committed by a process killed between
 Marten's commit and the flush is delivered after a restart, as recorded above for the EF outbox. The evidence and the
 invariants for #121, #131 and #132 are in [ADR 0011](0011-each-write-model-has-one-commit-owner.md).
+
+## Amendment (2026-10-24, ticket #167: WolverineFx 6.52.0)
+
+The decision above stands. The seven `WolverineFx*` pins move from 6.48.3 to 6.52.0, the latest stable on nuget.org on
+2026-10-24, and `Marten` from 9.46.0 to 9.53.0 (spec #161, owner decision W8). "Pinned versions and licences" stays as
+the record of what Spike S1 ran on, and each amendment above keeps the version it was read on.
+
+- **What restore moved.** `JasperFx`, `JasperFx.Events` and `JasperFx.SourceGenerator` from 2.81.0 to 2.91.0 (2.94.0
+  where Marten is restored), every `Weasel.*` package from 9.41.0 to 9.46.0, and `WolverineFx.RDBMS` and
+  `WolverineFx.Newtonsoft` with the pins, all `MIT`; one package is new, `System.Linq.Dynamic.Core` 1.7.4,
+  `Apache-2.0`, through `JasperFx`, and none left. `LicenceTests` passes.
+- **The release notes, 6.49.0 to 6.52.0** (`JasperFx/wolverine` releases). 6.52.0 states no breaking API change. Its two
+  behaviour changes miss the Kit: recurring schedules under 15 minutes run on a timer agent, and the Kit's recurring
+  commands are its own chain of scheduled envelopes, not Wolverine schedules; envelopes a transport cannot map are
+  dead-lettered on Azure Service Bus, SNS and Kafka, and the Kit's broker is RabbitMQ. It marks
+  `MultipleHandlerBehavior.ClassicCombineIntoOneLogicalHandler` obsolete, which the Kit never names. 6.50.0's
+  Wolverine.HTTP body binding and 6.49.0's SQL Server envelope ids do not reach a Kit Host.
+- **The inbox stale time (6.51.0, `JasperFx/wolverine` GH-5022).** The finding above that nothing updates the
+  `timestamp` the release compares no longer holds. At tag `V6.52.0` the release takes only rows with status `Incoming`
+  (`src/Persistence/Wolverine.RDBMS/Durability/BumpStaleIncomingEnvelopesOperation.cs`), the scheduled-job poll's claim
+  sets `timestamp` to the database's `now()` (`src/Persistence/Wolverine.RDBMS/MessageDatabase.cs`,
+  `restartIncomingStaleClock`, used by `src/Persistence/Wolverine.Postgresql/PostgresqlMessageStore.cs`), and a durable
+  receiver restarts the clock of every envelope it holds, queued or running, three times per stale time
+  (`src/Wolverine/Runtime/WorkerQueues/DurableReceiver.cs`, `InboxCustody.cs`). So a due retry, delayed command or
+  recurring occurrence is not stale when it starts (`InboxStaleTimeTests`), and the #17 amendment's rule, that the
+  stale time covers the retry schedule, is retired (ADR 0006's amendment for #167). The release compares the Host's
+  clock, less the stale time, with the database's, and a held envelope is released when its receiver misses a restart:
+  in the Kit's loaded test run a 2-second stale time let a held retry be handed out twice. The stale time therefore
+  stays well above the clock difference and a loaded Host's delay, as the 5-minute default does. The remedy for a
+  Notification committed and never sent is unchanged: no receiver holds it, and it is released after the stale time
+  (`NotificationTests`).
+- **The namespace rule.** `JasperFx.SourceGenerator` 2.91.0 writes an internal `JasperFx.Generated.DiscoveredEventModels`
+  into every assembly that sees `JasperFx.Events`, marked only by an auto-generated comment; `NamespaceTests` leaves it
+  out by its full name.
+- **Proof.** The build has no warning, both test projects pass, and `validate.py` passes on the bumped tree
+  ([acceptance](../acceptance.md#wave-4-dependency-refresh-ticket-167)).

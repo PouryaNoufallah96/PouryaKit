@@ -36,7 +36,11 @@ public sealed class DapperTenantTests
     {
         Assert.Equal(["Catalog", "Ledger"], Sample.TenantScopedModules.Select(module => module.GetName().Name));
         Assert.Equal(
-            [KeyValuePair.Create("catalog.categories", (string?)"tenant"), KeyValuePair.Create("catalog.products", (string?)"tenant")],
+            [
+                KeyValuePair.Create("catalog.categories", (string?)"tenant"),
+                KeyValuePair.Create("catalog.product_conversations", (string?)"tenant"),
+                KeyValuePair.Create("catalog.products", (string?)"tenant"),
+            ],
             TenantTables.OrderBy(table => table.Key, StringComparer.Ordinal).Select(table => KeyValuePair.Create(table.Key, table.Value.Tenant))
         );
     }
@@ -86,6 +90,7 @@ public sealed class DapperTenantTests
             [
                 "books.accounts",
                 "catalog.categories",
+                "catalog.product_conversations",
                 "catalog.products",
                 "offending.account_notes",
                 "offending.entry_line_notes",

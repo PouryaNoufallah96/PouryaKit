@@ -4,7 +4,7 @@ Adopted implementations in `PouryaKit.Modularity`. Format and rules: [README](RE
 
 ## Package dependencies
 
-`Microsoft.Extensions.Hosting.Abstractions` 10.0.12, licence `MIT` as published on nuget.org (licence expression in the package's nuspec; checked 2026-10-05), as plan section C lists.
+`Microsoft.Extensions.Hosting.Abstractions` 10.0.13, licence `MIT` as published on nuget.org (licence expression in the package's nuspec; checked 2026-10-05; 10.0.12 until ticket #167, 2026-10-24), as plan section C lists.
 
 `Microsoft.Extensions.DependencyInjection` 10.0.12, licence `MIT` as published on nuget.org (checked 2026-10-05), approved by the owner on 2026-10-05 beyond plan section C's row (ticket #13). `AddPouryaKitModules` needed its `DefaultServiceProviderFactory` and `ServiceProviderOptions` to validate the container in every environment; `Microsoft.Extensions.Hosting.Abstractions` brings only the abstractions. *Since ticket #61 (2026-10-07) the validating factory is Cqrs's, which `AddPouryaKitModules` installs through `AddPouryaKitCompositionChecks`, and Modularity no longer references this package.*
 

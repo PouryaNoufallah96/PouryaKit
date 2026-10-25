@@ -87,17 +87,22 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | Docs name real code, paths and tests | `check-docs.py` (names, links, Kit paths, acceptance pointers, provenance) |
 | A diagram's cited source ranges are current | `check-docs.py` (diagram sources); the pre-commit hook runs it with `--staged`, reading diagrams and cited files from the index: a change at or above a cited range requires its diagram staged too, with ranges that fit the indexed file, while a change below every cited range passes; during a merge, a revision reachable from `MERGE_HEAD` counts; CI's `ai-setup` job runs it on the committed tree |
 | A merged head's code was validated | `merge-package.py` exit 14: only Markdown may differ from the validated commit |
+| A pushed tip is what the remote holds | `merge-package.py` reads the remote tip back after `--push` and exits 15 with `remote=REPLACED(<sha7>)` when it differs (2026-10-25: pushed tips force-replaced within seconds by a stolen credential); `check-tree.py` refuses the replacement's `.vscode/` and `public/` entries |
 | A negative test discriminates the rule's exact predicate | `kit-reviewer` (the review rule above) |
 | A registration-answerable guarantee is a build-time composition check; a structure rule over text admits a grammar | `kit-reviewer` (the two review rules above); `docs/agents/brief-template.md` carries both as design constraints |
 | A parallel merge leaves one line per memory file in the implementer index | `check-docs.py` (union duplicates), run by `merge-package.py --post-merge` and CI |
 | A check registered over scanned types covers every operation the dispatcher runs | `OperationTypes.Dispatchable` is the one discovery; `DeclaredAuthorizersCheck` (an attributed operation with no authorizer) and `TenantRequirementCheck` (a tenant-scoped scope with an unguarded operation) fail the Host when it is built; `kit-reviewer` for a new registration of that shape |
 | A brief's commands come from the environment, never from memory | `docs/agents/brief-template.md`, "Verify" |
 | A review reads the implementer's commit, never the integration branch against itself | `kit-review.js` refuses `head` equal to `base` |
-| Pre-Wave 3 acceptance sections stay in ticket order after every merge | `check-docs.py` (ordered sections), run by `merge-package.py --post-merge` |
+| Pre-Wave 3 and Wave 4 acceptance sections stay in ticket order after every merge | `check-docs.py` (ordered sections), run by `merge-package.py --post-merge` |
 | A package validation leaves no evidence directory behind after a PASS | `validate.py` removes it unless `--keep` (CI passes `--keep` for its artifact); `test_validation.py`, `FinishTests` |
 | A local CI reproduction keeps what it proved: each step's output and the Release test totals | `validate.py` prints the totals in its PASS line (`test_totals`, `TestTotalsTests`); `.agents/scripts/ci-local.sh` keeps every step's output and the validation log |
 | The Kit skill's description stays within the 1024 characters Claude Code loads | `check-ai-setup.py` (`SKILL_DESCRIPTION_LIMIT`); the pre-commit hook and CI's `ai-setup` job run it |
 | A docs or AI-setup edit passes its checks before it commits | `.githooks/pre-commit`: `check-docs.py --staged` on every commit, `check-ai-setup.py` when an AI-setup path is staged, a gated path staged in part refused; CI's `ai-setup` job is the gate (`docs/agents/ai-setup.md`, "Git hooks") |
+| A changed sentence's restatements change with it | `kit-implementer` searches each changed sentence's old key phrase before it reports (its Contract); `kit-reviewer` (the doc-sync review rule) |
+| One Docker user at a time: a validation or a full suite never runs beside another | `.agents/scripts/wait-docker-quiet.sh -- <command>`, which takes a machine-wide lock, then runs the full suite or `validate.py` under it once Docker is quiet (`docs/agents/brief-template.md`, "Tests") |
+| A brief never predicts whether the validation runs or skips | `validate.py --since <tip> --plan` answers it (`docs/agents/brief-template.md`, "Verify") |
+| A merge's acceptance conflict and diagram re-pins use the shared tools, and the merger's own change is measured against the automerged tree | `.agents/scripts/resolve-acceptance.py`, `.agents/scripts/repin-diagram.py`; the merger block of `docs/agents/brief-template.md` |
 
 ## Rule router
 
