@@ -34,9 +34,14 @@ var inventoryHost = builder
     .WaitFor(inventory)
     .WaitFor(broker);
 
+// ModularMonolith.Host serves REST on its http endpoint and Catalog's gRPC service on its grpc endpoint: a listener without
+// TLS negotiates no HTTP/2, so gRPC needs one of HTTP/2 alone, which REST's HTTP/1.1 callers could not reach. Kestrel takes
+// both as named endpoints, each on the port Aspire's proxy forwards that endpoint to, in place of the URLs Aspire passes.
 var shopHost = builder
     .AddProject<Projects.ModularMonolith_Host>("modular-monolith")
     .WithHttpEndpoint()
+    .WithHttpEndpoint(name: "grpc")
+    .WithEndpointsInEnvironment(_ => false)
     .WithReference(shop, "app")
     .WithReference(cache)
     .WithReference(broker)
@@ -47,6 +52,17 @@ var shopHost = builder
     .WaitFor(shop)
     .WaitFor(cache)
     .WaitFor(broker);
+shopHost.WithEnvironment(context =>
+{
+    foreach (var endpoint in (string[])["http", "grpc"])
+    {
+        context.EnvironmentVariables[$"Kestrel__Endpoints__{endpoint}__Url"] = ReferenceExpression.Create(
+            $"http://localhost:{shopHost.GetEndpoint(endpoint).Property(EndpointProperty.TargetPort)}"
+        );
+    }
+
+    context.EnvironmentVariables["Kestrel__Endpoints__grpc__Protocols"] = "Http2";
+});
 
 // ModularMonolith.Host's agent, AskAboutProducts, calls the model its PouryaKit:AI section names. Only an AppHost run with
 // LocalAgent=true (an argument, or the environment variable LocalAgent) adds Ollama and points the agent at it: the image

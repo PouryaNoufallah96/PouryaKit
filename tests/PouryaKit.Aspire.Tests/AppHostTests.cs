@@ -7,6 +7,9 @@ using System.Text.Json;
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
+using Catalog.Contracts.Products;
+using Grpc.Core;
+using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.AppHost;
@@ -192,12 +195,29 @@ public sealed class AppHostTests
         };
         using var proxiedUnversioned = await proxy.SendAsync(unversioned, timeout.Token);
         using var proxiedAnonymous = await proxy.GetAsync("/catalog/products", timeout.Token);
+        // Story 23 of spec #161: Catalog's gRPC service through Aspire's endpoint proxy, a call with HTTP/2's prior knowledge over
+        // cleartext. The proxy, on a port of its own, carries it to the Host's listener of HTTP/2 alone, and the service refuses
+        // an id that is no Guid before any query; the http endpoint's listener, which negotiates no HTTP/2 without TLS, refuses
+        // the call itself.
+        var grpc = app.GetEndpoint("modular-monolith", "grpc");
+        var proxiedGrpc = await GetProductFailureAsync(grpc, timeout.Token);
+        var proxiedToHttp = await GetProductFailureAsync(app.GetEndpoint("modular-monolith", "http"), timeout.Token);
+        var running = await app.ResourceNotifications.WaitForResourceAsync(
+            "modular-monolith",
+            resource => resource.Snapshot.State?.Text == KnownResourceStates.Running,
+            timeout.Token
+        );
+        var listener = running.Snapshot.EnvironmentVariables.Single(variable => variable.Name == "Kestrel__Endpoints__grpc__Url").Value;
 
         Assert.Equal((HttpStatusCode.OK, "Healthy"), (alive.StatusCode, await alive.Content.ReadAsStringAsync(timeout.Token)));
         Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, proxiedUnversioned.StatusCode);
         Assert.Contains("\"ApiVersionUnspecified\"", await proxiedUnversioned.Content.ReadAsStringAsync(timeout.Token), StringComparison.Ordinal);
         Assert.Equal(HttpStatusCode.Unauthorized, proxiedAnonymous.StatusCode);
+        Assert.Equal((StatusCode.InvalidArgument, "product_id is not a Guid."), (proxiedGrpc.StatusCode, proxiedGrpc.Status.Detail));
+        Assert.NotEqual(new Uri(listener!).Port, grpc.Port);
+        Assert.Equal(StatusCode.Internal, proxiedToHttp.StatusCode);
+        Assert.Contains("HTTP_1_1_REQUIRED", proxiedToHttp.Status.Detail, StringComparison.Ordinal);
         // Headless: the running model is still the declared one, which a dashboard would have joined as it started.
         Assert.Equal(Declared, Names(app.Services.GetRequiredService<DistributedApplicationModel>().Resources));
     }
@@ -273,6 +293,20 @@ public sealed class AppHostTests
     }
 
     private static string Base64Url(byte[] bytes) => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+    // Catalog's ProductService.GetProduct at <address>, for a product id that is no Guid, by a caller with a bearer token
+    // signed with the test's key: the failure the call ends in.
+    private static async Task<RpcException> GetProductFailureAsync(Uri address, CancellationToken cancellationToken)
+    {
+        using var channel = GrpcChannel.ForAddress(address);
+        return await Assert.ThrowsAsync<RpcException>(async () =>
+            await new ProductService.ProductServiceClient(channel).GetProductAsync(
+                new GetProductRequest { ProductId = "not-a-guid" },
+                new Metadata { { "authorization", $"Bearer {Token()}" } },
+                cancellationToken: cancellationToken
+            )
+        );
+    }
 
     // ModularMonolith.Host has no health check, so its resource is healthy once its process runs, which can be before Kestrel
     // listens: ask again until it answers, within the test's timeout.

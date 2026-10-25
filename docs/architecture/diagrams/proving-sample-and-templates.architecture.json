@@ -425,8 +425,8 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
           "line": 24,
-          "end_line": 79,
-          "label": "the Hosts, the proxy's route, Ollama opt-in"
+          "end_line": 95,
+          "label": "the Hosts and grpc endpoint, the proxy, Ollama"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj",
