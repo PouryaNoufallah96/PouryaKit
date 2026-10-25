@@ -217,7 +217,8 @@ def prove(output):
     finally:
         for host in hosts:
             host.stop()
-        docker("rm", "-f", postgres, broker, check=False)
+        # With their anonymous volumes, which the images declare for their data.
+        docker("rm", "-f", "-v", postgres, broker, check=False)
 
 
 def main():
@@ -229,7 +230,7 @@ def main():
         prove(output)
     except (RuntimeError, ValueError, OSError) as error:
         logs = output / "composition-proof"
-        print(f"FAIL: {error}" + (f" Each step's output is in {logs}." if logs.is_dir() else ""), flush=True)
+        print(f"FAIL: {error}" + (f"\nEach step's output is in {logs}." if logs.is_dir() else ""), flush=True)
         return 1
     return 0
 
