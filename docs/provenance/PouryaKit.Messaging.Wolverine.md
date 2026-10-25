@@ -20,10 +20,10 @@ Checked on nuget.org on 2026-10-05 (ticket #15); licence expressions from each p
 - **Adoption:** pattern
 - **Ticket:** #15
 - **Intentional differences:**
-  - Kept: a PostgreSQL message store, the EF Core transaction integration, durable local queues, and five minutes as the default inbox stale time, now a Kit setting documented as longer than the longest delivery (ADR 0004).
+  - Kept: a PostgreSQL message store, the EF Core transaction integration, durable local queues, and five minutes as the default inbox stale time, now a Kit setting documented as well above the difference between the database's clock and the Host's (ADR 0004, amendment for #167).
   - No RabbitMQ or other transport; no durable inbox or outbox policy on external endpoints, which the Kit does not have yet.
   - No conventional handler discovery and no conventional local routing: every route is one subscription's explicit queue, named after it (plan section B.2, "explicit queue naming").
-  - The stored retry `ScheduleRetry`, then the dead-letter queue, instead of the in-memory `RetryWithCooldown`, which `InboxStaleTime` can make run a handler again after it succeeded (ADR 0006). Its default delays (1 s, 10 s, 1 min) end well within the default inbox stale time, which counts from when a delivery was stored (ticket #17).
+  - The stored retry `ScheduleRetry`, then the dead-letter queue, instead of the in-memory `RetryWithCooldown`, which `InboxStaleTime` can make run a handler again after it succeeded (ADR 0006). A delivery waiting for its retry is held by no instance, so the inbox stale time never hands it out (ticket #17), and since WolverineFx 6.51.0 the stale clock restarts when an instance claims the due retry, so the delays (1 s, 10 s, 1 min by default) need not fit within the stale time (ticket #167).
   - No outbox stale time: the Kit's Notifications go to local queues and are stored as incoming envelopes (ADR 0004).
   - `UnknownMessageBehavior.DeadLetterQueue`, so a stored delivery whose type lost every subscription is never treated as handled (ADR 0006).
 

@@ -46,4 +46,9 @@ Learned building `PouryaKit.Aspire` and `ModularMonolith.AppHost` (#130, 2026-10
 - **Reading the running resource in a test**: `WaitForResourceAsync(name, state)` returns only the state; the predicate overload returns the `ResourceEvent`, whose `Snapshot.EnvironmentVariables` hold the resolved values (the listener's port). `app.GetEndpoint(resource, name)` is the proxy's URL; `CreateHttpClient(resource)` without a name prefers `https`, then `http`. A test project takes `Grpc.Net.Client` through the pinned `Grpc.Net.ClientFactory`, and the sample's `Catalog.Contracts` by `ProjectReference` for the generated client; a non-Guid `product_id` gets `InvalidArgument` before any query, the answer the AppHost's unmigrated databases allow.
 - **Red runs that start the AppHost**: a scratchpad script that swaps one line of `Program.cs`, runs the start test alone (`--filter-method`, about 20 s each with images cached) and restores in `finally` (`scratchpad/p172/mutate172.py`); the unproxied red used a fixed `port: 5091`.
 
+## Which Host answered through the proxy (#176, 2026-10-25; Aspire 13.6.4, YARP 2.3.0)
+
+- **An anonymous request proves no route**: both sample Hosts' fallback policy answers 401 on any path, mapped or not. With the AppHost-signed token, an unversioned path of a Host's own Module answers 400 `ApiVersionUnspecified` (the header reader of `AddPouryaKitOpenApi`) and the other Host answers it 404, so assert the 400 through the proxy and the other Host's 404 directly.
+- The proxy's own route is overridable from the AppHost for a red run: `.WithEnvironment("ReverseProxy__Routes__modular-monolith__ClusterId", "inventory")` sends the catch-all to `Inventory.Host` (`scratchpad/p176/red_proxy.py`).
+
 Related: [[templates-packaging-and-publication-facts]], [[docs-verification-tools]].

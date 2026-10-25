@@ -509,16 +509,16 @@ def main():
     arguments = parser.parse_args()
     if arguments.plan and not arguments.since:
         parser.error("--plan needs --since REF")
-    if arguments.plan:
-        skipped(arguments.since)
-        return 0
-    output = arguments.output.resolve() if arguments.output else Path(tempfile.mkdtemp(prefix="pouryakit-packages-"))
-    # A PASS without --keep removes the evidence directory with everything in it, so it may hold only what this run writes.
-    if not arguments.keep and output.exists() and (not output.is_dir() or any(output.iterdir())):
-        print(f"FAIL: {output} exists and is not an empty directory, and a PASS without --keep removes the evidence directory "
-              "with everything in it. Name a new or empty directory, or pass --keep.", flush=True)
-        return 1
     try:
+        if arguments.plan:
+            skipped(arguments.since)
+            return 0
+        output = arguments.output.resolve() if arguments.output else Path(tempfile.mkdtemp(prefix="pouryakit-packages-"))
+        # A PASS without --keep removes the evidence directory with everything in it, so it may hold only what this run writes.
+        if not arguments.keep and output.exists() and (not output.is_dir() or any(output.iterdir())):
+            print(f"FAIL: {output} exists and is not an empty directory, and a PASS without --keep removes the evidence directory "
+                  "with everything in it. Name a new or empty directory, or pass --keep.", flush=True)
+            return 1
         if arguments.since and skipped(arguments.since):
             return 0
         validate(output, fetch=not arguments.no_fetch)

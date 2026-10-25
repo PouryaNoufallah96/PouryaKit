@@ -3,7 +3,8 @@
 place. Keeps every `## <prefix> ..., ticket #N` section from both sides of each conflict block, in ascending ticket order,
 for the prefixes check-docs.py orders (`ORDERED_SECTIONS`).
 
-Usage: resolve-acceptance.py [path]   (default docs/acceptance.md; exits 1 when the file holds no conflict block)
+Usage: resolve-acceptance.py [path]   (default docs/acceptance.md; exits 1, writing nothing, when the file holds no
+conflict block or a block in the diff3 or zdiff3 style, whose base section it refuses)
 
 Written four times as a per-session tool in Waves 3 and 4 (docs/agents/running-a-spec.md, "Merging with diagram
 conflicts"); here so a merger finds it where the other scripts are.
@@ -22,6 +23,7 @@ ORDERED_SECTIONS = _check_docs.ORDERED_SECTIONS  # the one source of the ordered
 HEADING = re.compile(r"^## (?:" + "|".join(map(re.escape, ORDERED_SECTIONS)) + r") .*, ticket #(?P<ticket>\d+)\s*$", re.M)
 SPLIT = re.compile(r"(?m)^(?=## (?:" + "|".join(map(re.escape, ORDERED_SECTIONS)) + r") )")
 CONFLICT = re.compile(r"<<<<<<< [^\n]*\n(.*?)=======\n(.*?)>>>>>>> [^\n]*\n", re.S)
+BASE_MARKER = re.compile(r"(?m)^\|{7}(?: |$)")  # diff3 and zdiff3 put the base's text after it, inside the first arm
 
 
 def ticket(section: str) -> int:
@@ -35,6 +37,10 @@ def resolve(text: str) -> tuple[str, list[int]]:
     tickets: list[int] = []
 
     def merge(match: re.Match[str]) -> str:
+        if BASE_MARKER.search(match.group(1)):
+            sys.exit("a conflict block holds a base section (|||||||): merge.conflictStyle is diff3 or zdiff3, and its base "
+                     "text would be kept as a side's. Write the conflict again in the default style, "
+                     "`git checkout --conflict=merge -- <path>`, then run this again.")
         sections = [part for part in SPLIT.split(match.group(1) + match.group(2)) if part.strip()]
         sections.sort(key=ticket)
         tickets.extend(ticket(part) for part in sections)
