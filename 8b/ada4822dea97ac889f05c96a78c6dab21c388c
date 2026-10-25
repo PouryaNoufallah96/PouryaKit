@@ -1,0 +1,27 @@
+.agents/scripts/test_merge_package.py
+  s_3c1c3bc940fd22::t_73c9fc3065ad09 34,316,319-331
+  s_3c1c3bc940fd22::t_af1f376bf92ba0 332
+.agents/scripts/merge-package.py
+  s_3c1c3bc940fd22::t_73c9fc3065ad09 19-20,33-35,53,249-250,254-261,265-277
+  s_3c1c3bc940fd22::t_c65ca2a4a65df4 278-279
+AGENTS.md
+  s_3c1c3bc940fd22::t_93f913c03b5741 90
+docs/agents/running-a-spec.md
+  s_3c1c3bc940fd22::t_92a93a91a6a3d9 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8bada4822dea97ac889f05c96a78c6dab21c388c",
+  "prompts": {},
+  "sessions": {
+    "s_3c1c3bc940fd22": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "04bb6038-47ca-434c-86bd-06142fd8791c",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
