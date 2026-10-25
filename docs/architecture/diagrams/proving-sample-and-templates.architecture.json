@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "ba5643f0dfe2e7acd2b4cac9e80f397b7edfd294",
+      "revision": "e7c9229fc7bfe07491a5c9be820390af0eb625c7",
       "link_mode": "web"
     }
   },
@@ -425,8 +425,8 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
           "line": 24,
-          "end_line": 79,
-          "label": "the Hosts, the proxy's route, Ollama opt-in"
+          "end_line": 95,
+          "label": "the Hosts and grpc endpoint, the proxy, Ollama"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj",

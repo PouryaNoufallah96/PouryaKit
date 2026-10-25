@@ -5,12 +5,15 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.Testing" />
+    <!-- Grpc.Net.Client, for a client of Catalog's ProductService through the AppHost's endpoint proxy. -->
+    <PackageReference Include="Grpc.Net.ClientFactory" />
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\samples\ModularMonolith\src\Modules\Catalog\Catalog.Contracts\Catalog.Contracts.csproj" />
     <ProjectReference Include="..\..\samples\ModularMonolith\src\ModularMonolith.AppHost\ModularMonolith.AppHost.csproj" />
   </ItemGroup>
 </Project>

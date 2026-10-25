@@ -59,6 +59,8 @@ var inventoryHost = builder
 var shopHost = builder
     .AddProject<Projects.ModularMonolith_Host>("modular-monolith")
     .WithHttpEndpoint()
+    .WithHttpEndpoint(name: "grpc")
+    .WithEndpointsInEnvironment(_ => false)
     .WithReference(shop, "app")
     .WithReference(cache)
     .WithReference(broker)
@@ -66,6 +68,7 @@ var shopHost = builder
     .WaitFor(shop)
     .WaitFor(cache)
     .WaitFor(broker);
+// ...its Kestrel endpoints, below...
 
 builder
     .AddProject<Projects.ModularMonolith_ReverseProxy>("reverse-proxy")
@@ -83,6 +86,23 @@ builder.Build().Run();
 - **The composition decides, through its connection strings.** An AppHost cannot see a Host's registrations, so the AppHost's author adds Redis only for a Host whose composition registers a Redis cache, and RabbitMQ only for one that calls `UsePouryaKitRabbitMq`. `WithReference(resource, "app")` sets `ConnectionStrings:app`, the name `UsePouryaKitWolverine(connectionName: "app")` reads; `WithReference(cache)` sets `ConnectionStrings:cache` and `WithReference(broker)` `ConnectionStrings:broker`, the names the sample's composition reads. The sample's `ModularMonolith.Host` caches in Redis and sends over RabbitMQ when those are set, so with a broker Inventory runs in `Inventory.Host`, which receives over RabbitMQ and caches nothing.
 - **Each Host its own database** on the one server: `AddDatabase(name, databaseName)` creates it when the server is ready.
 - **Endpoints.** A Host project without `Properties/launchSettings.json` has none: `WithHttpEndpoint()` gives it one on a free port. `WithHttpHealthCheck("/alive")` waits on a Host that maps the service defaults' liveness path ([host-recipes.md](host-recipes.md#liveness-and-readiness)); the sample's `ModularMonolith.Host` maps none.
+- **gRPC on an endpoint of its own.** An endpoint is, by Aspire's default, a proxy on the port a client calls, in front of the Host's listener on a port of its own. Without TLS a Kestrel listener of both HTTP versions negotiates no HTTP/2 and refuses every gRPC call with `HTTP_1_1_REQUIRED`, and one of HTTP/2 alone refuses REST's HTTP/1.1 callers ([grpc.md](grpc.md#declaring-and-mapping-a-service)), so `ModularMonolith.Host`, which serves Catalog's gRPC service beside its REST endpoints, has a second endpoint, `grpc`, whose listener speaks HTTP/2 alone. Kestrel's named endpoints replace the URLs a project otherwise gets in `ASPNETCORE_URLS`, so `WithEndpointsInEnvironment(_ => false)` passes none, and the AppHost names both listeners, each on the port its endpoint's proxy forwards to:
+
+```csharp
+shopHost.WithEnvironment(context =>
+{
+    foreach (var endpoint in (string[])["http", "grpc"])
+    {
+        context.EnvironmentVariables[$"Kestrel__Endpoints__{endpoint}__Url"] = ReferenceExpression.Create(
+            $"http://localhost:{shopHost.GetEndpoint(endpoint).Property(EndpointProperty.TargetPort)}"
+        );
+    }
+
+    context.EnvironmentVariables["Kestrel__Endpoints__grpc__Protocols"] = "Http2";
+});
+```
+
+Aspire's endpoint proxy carries a gRPC call to the `grpc` endpoint, HTTP/2 with prior knowledge over cleartext, as the start test shows ([below](#testing)); REST callers and the Reverse proxy keep the `http` endpoint.
 - **A Host that authenticates callers** needs its bearer settings, or it fails to start ([security.md](security.md)). The sample passes them as environment variables, the signing key from a secret parameter:
 
 ```csharp
@@ -96,7 +116,7 @@ var signingKey = builder.AddParameter("bearer-signing-key", secret: true);
 
 Set the parameter to a base64 key of at least 32 bytes in the AppHost's user secrets (`Parameters:bearer-signing-key`), and sign a caller's token with it, that issuer and that audience.
 
-The Reverse proxy ([reverse-proxy.md](reverse-proxy.md)) runs in front of both Hosts. Each `WithReference(host)` gives it the Host's endpoint as `services__<resource>__http__0`, the `Services` entry service discovery reads, so a destination `http://<resource>` resolves to that Host in place of the `localhost` address of the proxy's own settings. Those settings route every path to `modular-monolith` with that cluster's probe off, since `ModularMonolith.Host` maps no liveness path (owner decision W11 of spec #161); the AppHost adds the service route, Inventory's paths to `Inventory.Host`, whose `/alive` the proxy probes:
+The Reverse proxy ([reverse-proxy.md](reverse-proxy.md)) runs in front of both Hosts. Each `WithReference(host)` gives it each of the Host's endpoints as `services__<resource>__<endpoint>__0` (`ModularMonolith.Host`'s `grpc` one too), the `Services` entries service discovery reads, so a destination `http://<resource>` resolves to that Host's `http` endpoint in place of the `localhost` address of the proxy's own settings. Those settings route every path to `modular-monolith` with that cluster's probe off, since `ModularMonolith.Host` maps no liveness path (owner decision W11 of spec #161); the AppHost adds the service route, Inventory's paths to `Inventory.Host`, whose `/alive` the proxy probes:
 
 ```csharp
 // on the proxy project, between its references and its waits:
@@ -174,6 +194,7 @@ using var inventory = app.CreateHttpClient("inventory");
 - The model test reads the builder without starting it: every resource's name, as an allow-list, each container's image and its one volume mount, the resources each Host references, and the two Hosts the proxy references; with no `LocalAgent`, no Ollama. A second model test builds it with `LocalAgent=true`: the allow-list gains `ollama` alone, on its pinned image and named volume, with its model check, and `ModularMonolith.Host` waits for it with its `PouryaKit__AI__Provider`, `__Endpoint` and `__Model` set, which `Inventory.Host` is not given. Neither starts anything, so no image or model is downloaded.
 - The route test reads the proxy's configuration as it runs under the AppHost: its `appsettings.json`, then the environment the AppHost gives it, each endpoint as its expression. Inventory's route goes to the cluster `inventory`, whose destination `http://inventory` has its probe `true` and resolves through `Services:inventory:http:0`, the endpoint of the `inventory` resource; the catch-all route goes to `http://modular-monolith`, with its probe `False` and its own reference.
 - The start test runs the containers, both Hosts and the proxy as processes, waits for each Host and for the proxy's `/alive`, and asks `Inventory.Host`'s `/alive`, which its health check already answered, and an endpoint of `ModularMonolith.Host`, which refuses an anonymous caller with 401 once it serves; that Host has no health check, so its resource is healthy once its process runs, and the test asks again until it answers, within its timeout. Through the proxy, the anonymous caller gets the same 401 from `ModularMonolith.Host`, and a caller with a bearer token signed with the test's key, on Inventory's unversioned path, gets `Inventory.Host`'s 400 `ApiVersionUnspecified`, where `ModularMonolith.Host`, which hosts no Inventory beside a broker, answers 404. The running model is still the allow-list, so no dashboard joined it.
+- The same start test calls Catalog's `ProductService.GetProduct` through Aspire's endpoint proxy on each of `ModularMonolith.Host`'s endpoints, with the test's bearer token and a product id that is no Guid, which the service refuses before any query. On `grpc` the call reaches the service, which answers `InvalidArgument` "product_id is not a Guid.", on a port other than the Host's listener's, `Kestrel__Endpoints__grpc__Url` in the running resource's environment; on `http` it fails with `HTTP_1_1_REQUIRED`. The probe behind it (ticket #172) also called each listener directly and got the same two answers, and the AppHost as it was before the `grpc` endpoint, its one `http` endpoint on Kestrel's default listener, gave `HTTP_1_1_REQUIRED` too: the refusal is the listener's, and Aspire's endpoint proxy carries a gRPC call, HTTP/2 with prior knowledge over cleartext, to a listener that speaks it.
 - `OllamaModelHealthCheckTests` run the model check against a loopback server that accepts and never answers, once for `/api/show` and once for the pull after a 404: each check returns unhealthy when its deadline passes.
 - The local agent's start test runs only with `POURYAKIT_OLLAMA_PROBE=1`, the variable of `AiTests`' Ollama probe: it starts the AppHost with `LocalAgent=true`, waits for Ollama's model and the Host, and posts a question to the agent with a bearer token it signs with the test's key, expecting 200 and the model's text. A first run pulls the 7 GB image and the model; its timeout is 30 minutes.
 - The tests fix each server's password, and the start test moves each volume to a name ending `-tests`: its volumes serve its next run, and a developer's, made with the passwords the AppHost generated, are never opened with the test's, which would fail every health check.
@@ -184,5 +205,6 @@ using var inventory = app.CreateHttpClient("inventory");
 - The model is pulled only when the resource starts, by the health check; a model the AppHost stops serving stays in the volume until it is removed.
 - The registrations know nothing of a Host's composition: an AppHost that adds Redis for a Host that registers no Redis cache runs a container nothing uses.
 - The AppHost applies no EF Core migration, and no Host applies one at start ([persistence.md](persistence.md#migrations)): the databases it creates hold no table of an EF Core Module (Catalog, Billing, Inventory) until a developer applies each one's migrations to them, with the connection string Aspire gives the Host, so until then an Operation that reads or writes them fails; Ledger's Marten schema is the exception, applied when the Host starts (`UsePouryaKitMarten`). The start test asks `Inventory.Host` through the proxy for an answer it gives before any query.
+- Every endpoint the AppHost gives a Host is cleartext HTTP, so a gRPC client under the AppHost calls `ModularMonolith.Host`'s `grpc` endpoint: its `http` endpoint refuses the call with `HTTP_1_1_REQUIRED`, through Aspire's proxy or directly, and the Reverse proxy carries no gRPC (owner decision W7 of spec #161, [reverse-proxy.md](reverse-proxy.md#limits)). A Host whose gRPC service the AppHost should serve takes a second endpoint the same way; `Inventory.Host` maps none.
 - `ModularMonolith.Host` maps no liveness path, so the AppHost waits on it only until its process runs. This is by design (owner decision W11 of spec #161, 2026-10-24): the sample composes the service defaults in `Inventory.Host` and `ModularMonolith.ReverseProxy`, not in `ModularMonolith.Host`, which keeps the Kit's outgoing HTTP proven without the recipes ([host-recipes.md](host-recipes.md#composing-a-host-with-them)). Every Host the project templates generate composes them and maps `/alive`.
 - The Proving Sample's AppHost provisions no SMTP server and no S3 store: `ModularMonolith.Host` sends mail to the SMTP server and stores files in the bucket its settings name, a local Papercut on port 2525 and a local RustFS on port 9000 with the bucket modular-monolith, which the Kit does not create. A developer runs both; without the store, a report job cannot store its file. This is by decision too (W11): the recipe shows the Kit's own resources, those of `PouryaKit.Aspire`, and a project adds the SMTP server and the file store of the providers it chose. The MailKit and S3 providers are proven against Papercut and RustFS in Testcontainers (`EmailTests`, `S3StorageTests`).
