@@ -2,7 +2,7 @@
 
 A reusable .NET 10 foundation for modular monoliths built from vertical slices.
 
-Status: Wave 1, Wave 2, Wave 3 and Wave 4 are complete. The Wave 2 set is in the private feed since `feat/wave-2` was merged into `main` on 2026-10-09 ([hosted completion](docs/private-packages.md#hosted-completion)); Wave 3 was merged into `main` at `2637acf2` (PR #143) on 2026-10-24; Wave 4 (spec #161) is complete on `wave-4` (PR #177, 2026-10-25). The Wave 3 and Wave 4 sets join the private feed at the next hosted CI run on `main`, which billing holds. The Kit's packages (every entry of `scripts/packaging/inventory.json`), each usable on its own, make up these Capabilities, plus two features (Paging, Request idempotency) that span several of them:
+Status: Wave 1, Wave 2, Wave 3 and Wave 4 are complete and merged into `main`: Wave 3 at `2637acf2` (PR #143, 2026-10-24), Wave 4 at `e0e9e010` (PR #177, 2026-10-25). All 38 packages are in the private feed at `0.1.0-preview.0.28`, published from `main` `4e9905c9` on 2026-10-26 by a one-time local publication without hosted CI ([local publication](docs/private-packages.md#local-publication)); the Wave 2 set has been there since 2026-10-09 ([hosted completion](docs/private-packages.md#hosted-completion)). The Kit's packages (every entry of `scripts/packaging/inventory.json`), each usable on its own, make up these Capabilities, plus two features (Paging, Request idempotency) that span several of them:
 
 - [Domain primitives](.agents/skills/pourya-kit/references/domain-primitives.md) (`PouryaKit.Domain`)
 - [Commands, queries and validation](.agents/skills/pourya-kit/references/commands-queries-validation.md) (`PouryaKit.Cqrs`, `PouryaKit.Validation`)
