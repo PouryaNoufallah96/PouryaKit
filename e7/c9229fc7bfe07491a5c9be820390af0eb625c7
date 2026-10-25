@@ -1,0 +1,43 @@
+src/PouryaKit.Templates/content/service/src/ModularMonolith.Host/appsettings.Development.json
+  s_3c1c3bc940fd22::t_d8f788f3222e8b 1
+tests/PouryaKit.Aspire.Tests/PouryaKit.Aspire.Tests.csproj
+  s_3c1c3bc940fd22::t_bc184b21628116 8-9,16
+samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs
+  s_3c1c3bc940fd22::t_a6f296a207db52 37-38,43-44
+  s_3c1c3bc940fd22::t_b546b6d152d928 39
+  s_3c1c3bc940fd22::t_d5de3897017bea 55-65
+src/PouryaKit.Templates/content/shared/src/ModularMonolith.Host/appsettings.Development.json
+  s_3c1c3bc940fd22::t_a82fa52846d1c5 1
+scripts/packaging/test_composition_proof.py
+  s_3c1c3bc940fd22::t_4bb76a047dd65c 1-69
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_3c1c3bc940fd22::t_5addcd1df15942 428-429
+tests/PouryaKit.Aspire.Tests/AppHostTests.cs
+  s_3c1c3bc940fd22::t_6ee241096d507b 202-204
+  s_3c1c3bc940fd22::t_52cb300d2413d6 205-210
+  s_3c1c3bc940fd22::t_f99cae60282880 217-220
+  s_3c1c3bc940fd22::t_ddd69b84fdd130 297-310
+  s_3c1c3bc940fd22::t_f47b2161d6b7f8 10-12
+  s_3c1c3bc940fd22::t_e846b2a445e0eb 198-201
+scripts/packaging/composition_proof.py
+  s_3c1c3bc940fd22::t_7931ca4cfdf199 10
+  s_3c1c3bc940fd22::t_4e9e8ef0c6fbf8 111-112
+  s_3c1c3bc940fd22::t_49edca0788e1c9 227,229,231-232
+  s_3c1c3bc940fd22::t_1c4145ada5ed2a 1-9,11-110,113-226,228,230,233-238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e7c9229fc7bfe07491a5c9be820390af0eb625c7",
+  "prompts": {},
+  "sessions": {
+    "s_3c1c3bc940fd22": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "04bb6038-47ca-434c-86bd-06142fd8791c",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
