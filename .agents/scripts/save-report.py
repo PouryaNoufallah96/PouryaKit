@@ -5,7 +5,7 @@ Usage: save-report.py <task-output.jsonl> <dest.md> [--title "<title>"]
 
 The harness writes each background agent's transcript as JSON lines; the report is the last text block of the last
 assistant message. This writes it verbatim under a short header, so a role's report reaches the scratchpad with one
-command (docs/agents/running-a-spec.md, "Reports go to the scratchpad"). Exits 1 when the transcript holds no
+command (docs/agents/running-a-spec.md, "State and handoff"). Exits 1 when the transcript holds no
 assistant text.
 """
 import json
