@@ -1,0 +1,19 @@
+docs/agents/brief-template.md
+  s_b933d9add4e23e::t_d44bad74172ab2 40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e52f8e1cbc15622517b30b8d545e114b5075c0d5",
+  "prompts": {},
+  "sessions": {
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
