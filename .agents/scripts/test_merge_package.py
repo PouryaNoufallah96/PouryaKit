@@ -31,6 +31,7 @@ ENV = {key: value for key, value in os.environ.items() if not key.startswith("GI
     "GIT_CONFIG_GLOBAL": os.devnull,
     "GIT_CONFIG_NOSYSTEM": "1",
     "MERGE_PACKAGE_TESTS": "1",
+    "MERGE_PACKAGE_READBACK_SECONDS": "0",
 }
 
 
@@ -312,8 +313,22 @@ class MergePackageTest(unittest.TestCase):
         done = self.merge("--post-merge", head[:7], "--push", checks=[self.passing])
         merged = self.git("rev-parse", "HEAD")
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
-        self.assertEqual(self.summary(done), f"merge={merged[:7]} tree=EQUAL checks=ok push=yes")
+        self.assertEqual(self.summary(done), f"merge={merged[:7]} tree=EQUAL checks=ok push=yes remote=ok")
         self.assertEqual(self.origin_tip(), merged)
+
+    def test_a_pushed_tip_replaced_on_the_remote_is_reported_and_fails(self) -> None:
+        """An actor holding the credential rewrites the tip right after the push (2026-10-25): the read-back catches it."""
+        head = self.package()
+        self.git("push", "--quiet", "origin", f"{head}:refs/heads/attacker")
+        hook = self.origin / "hooks" / "post-receive"
+        hook.write_text(f"#!/bin/sh\ngit update-ref refs/heads/{WAVE} {head}\n")
+        hook.chmod(0o755)
+        done = self.merge(self.report(head), "-m", "Merge pkg", "--push", checks=[self.passing])
+        merged = self.git("rev-parse", "HEAD")
+        self.assertEqual(done.returncode, 15, done.stdout + done.stderr)
+        self.assertEqual(self.summary(done), f"merge={merged[:7]} tree=EQUAL checks=ok push=yes remote=REPLACED({head[:7]})")
+        self.assertIn("was replaced after the push", done.stdout)
+        self.assertEqual(self.origin_tip(), head)
 
     def test_ready_when_the_base_holds_nothing_the_branch_lacks(self) -> None:
         self.main_at_the_tip()
