@@ -791,7 +791,7 @@ the SSE, reporting and localization additions use `Ultrabusiness@d685de6`
 repositories on 2026-10-06. Nothing here is implemented. *Superseded 2026-10-10 (#89): the Wave 2 rows of I.3 are built,
 and their dated notes record where the build departed from them; Waves 3 and 4 are not built.* *Superseded 2026-10-24
 (#164): the Wave 3 rows are built too (spec #115, merged to `main` in PR #143), each with its dated notes; Wave 4 is
-spec #161, in progress.*
+spec #161, in progress.* *Superseded 2026-10-25 (#176): Wave 4 (spec #161) is complete on `wave-4` (PR #177).*
 
 ### I.1 The three compositions
 
@@ -864,6 +864,8 @@ template recipe (native .NET; the Kit adds nothing) · **A** = application code 
 The active [Phase 5 packaging and releases](#phase-5-packaging-and-releases) scope is complete; Wave 2 feature work can follow.
 *Superseded 2026-10-10 (#89): Wave 2 is built and merged to `main` (2026-10-09); Wave 3 is the next spec, after the prerequisites in I.6.*
 *Superseded 2026-10-24 (#164): Wave 3 is built and merged to `main` (PR #143, 2026-10-24); Wave 4 is spec #161, in progress.*
+*Superseded 2026-10-25 (#176): Wave 4 (spec #161) is complete on `wave-4` (PR #177); its set and Wave 3's join the
+private feed at the next hosted CI run on `main`, which billing holds.*
 Wave 2 is the first follow-on Capability set after the merged Wave 1; Wave 3 needs Wave 2 pieces;
 Wave 4 is the sample agent and the template's third composition.
 
@@ -1130,7 +1132,8 @@ local path; #47 adds only the Operation activity's placement, `tracestate` and a
 Wave 1 is merged and the active [Phase 5 packaging and releases](#phase-5-packaging-and-releases) scope is complete.
 *Since 2026-10-09 Wave 2 is built and merged too (recorded 2026-10-10, #89), so Wave 3 is the next spec, after the
 prerequisites in I.6.* *Since 2026-10-24 Wave 3 is built and merged too (PR #143; recorded 2026-10-24, #164), and
-Wave 4 is spec #161, in progress.*
+Wave 4 is spec #161, in progress.* *Since 2026-10-25 Wave 4 is complete on `wave-4` (spec #161, PR #177; recorded
+2026-10-25, #176), the final Wave.*
 Use one spec per wave: **Wave 2** — paging, one JSON setup, Web
 defaults, Web.OpenApi, Core, Security and JwtBearer, request idempotency, Caching, scheduling,
 Observability, the HttpClient handler, the versioning rule, the RabbitMQ transport after its spike,

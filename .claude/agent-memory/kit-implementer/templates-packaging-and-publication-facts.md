@@ -129,5 +129,9 @@ Check `.github/workflows/package-publication.yml` before relying on it.
 - **A script's own containers leak volumes without `-v`**: `docker run --rm` then `docker rm -f` in a `finally` leaves the anonymous volumes `postgres` and `rabbitmq` declare (two per run, twenty before #172 noticed, after its validation, which then ran again). Remove with `docker rm -f -v`, and count `docker volume ls -f dangling=true -q` before and after a run; the volumes' `CreatedAt` (UTC) matches them to the runs.
 - **https on this Mac**: `/usr/bin/curl` trusts the development certificate and speaks HTTP/2 over ALPN; Python's `urllib` does not trust it (OpenSSL's CA store). The official `rabbitmq:4.3.6` image accepts `guest` through a published port.
 
+## What a reference adds to a closure (#176, 2026-10-25)
+
+- Count a Host's closure as the package libraries (`"type": "package"`) of its `obj/project.assets.json`, licences from each package's `.nuspec` in the global packages folder (`scratchpad/p176/closure.py`). What one reference adds: copy the csproj without that reference into a sibling folder of the same depth (relative paths hold), restore it, diff the two library sets, then `git clean -fdxq <folder>`, which the guard allows where `rm -r` is refused. Inventory.Host: 118, of which the ServiceDefaults add 22; `Google.Protobuf` and `Grpc.Core.Api` arrive through `Catalog.Contracts` since #134.
+
 **Why:** each cost a probe or a validation run; the credential rule is not testable without the hosted feed.
 **How to apply:** for a new template or any package that is not a library, any `validate.py` run, any clean consumer, any change to the publication workflow, and a hosted proof of the private feed. Related: [[core-json-and-architecture-test-facts]], [[observability-tracing-and-http-facts]], [[worktree-shell-and-check-gotchas]].

@@ -99,7 +99,7 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | The Kit skill's description stays within the 1024 characters Claude Code loads | `check-ai-setup.py` (`SKILL_DESCRIPTION_LIMIT`); the pre-commit hook and CI's `ai-setup` job run it |
 | A docs or AI-setup edit passes its checks before it commits | `.githooks/pre-commit`: `check-docs.py --staged` on every commit, `check-ai-setup.py` when an AI-setup path is staged, a gated path staged in part refused; CI's `ai-setup` job is the gate (`docs/agents/ai-setup.md`, "Git hooks") |
 | A changed sentence's restatements change with it | `kit-implementer` searches each changed sentence's old key phrase before it reports (its Contract); `kit-reviewer` (the doc-sync review rule) |
-| One Docker user at a time: a validation or a full suite never runs beside another | `.agents/scripts/wait-docker-quiet.sh`, run before the full suite and `validate.py` (`docs/agents/brief-template.md`, "Tests") |
+| One Docker user at a time: a validation or a full suite never runs beside another | `.agents/scripts/wait-docker-quiet.sh -- <command>`, which runs the full suite or `validate.py` under a machine-wide lock once Docker is quiet (`docs/agents/brief-template.md`, "Tests") |
 | A brief never predicts whether the validation runs or skips | `validate.py --since <tip> --plan` answers it (`docs/agents/brief-template.md`, "Verify") |
 | A merge's acceptance conflict and diagram re-pins use the shared tools, and the merger's own change is measured against the automerged tree | `.agents/scripts/resolve-acceptance.py`, `.agents/scripts/repin-diagram.py`; the merger block of `docs/agents/brief-template.md` |
 

@@ -185,16 +185,16 @@ public sealed class AppHostTests
         using var shop = app.CreateHttpClient("modular-monolith");
         // Started, so its bearer options validated, and serving: an anonymous caller is refused, not left unanswered.
         using var anonymous = await AnsweredAsync(() => shop.GetAsync("/catalog/products", timeout.Token), timeout.Token);
-        // Through the proxy, every path reaches ModularMonolith.Host but Inventory's, which reach Inventory.Host: its API
-        // versioning refuses a verified caller that names no version, where ModularMonolith.Host, which hosts no Inventory
-        // beside a broker, answers 404. No query runs: no Host applies its migrations, and the AppHost applies none.
+        // Through the proxy, every path reaches ModularMonolith.Host but Inventory's, which reach Inventory.Host. Each Host's
+        // API versioning refuses a verified caller that names no version on a path of its own Module, and the other Host
+        // answers that path 404: ModularMonolith.Host hosts no Inventory beside a broker, Inventory.Host no Catalog. An
+        // anonymous caller proves neither route, since both Hosts' fallback policy refuses it on any path. No query runs: no
+        // Host applies its migrations, and the AppHost applies none.
         using var proxy = app.CreateHttpClient("reverse-proxy");
-        using var unversioned = new HttpRequestMessage(HttpMethod.Get, $"/inventory/stock-items/{Guid.CreateVersion7()}")
-        {
-            Headers = { Authorization = new AuthenticationHeaderValue("Bearer", Token()) },
-        };
-        using var proxiedUnversioned = await proxy.SendAsync(unversioned, timeout.Token);
-        using var proxiedAnonymous = await proxy.GetAsync("/catalog/products", timeout.Token);
+        inventory.DefaultRequestHeaders.Authorization = proxy.DefaultRequestHeaders.Authorization = new("Bearer", Token());
+        using var proxiedUnversioned = await proxy.GetAsync($"/inventory/stock-items/{Guid.CreateVersion7()}", timeout.Token);
+        using var proxiedCatalog = await proxy.GetAsync("/catalog/products", timeout.Token);
+        using var catalogAtInventory = await inventory.GetAsync("/catalog/products", timeout.Token);
         // Story 23 of spec #161: Catalog's gRPC service through Aspire's endpoint proxy, a call with HTTP/2's prior knowledge over
         // cleartext. The proxy, on a port of its own, carries it to the Host's listener of HTTP/2 alone, and the service refuses
         // an id that is no Guid before any query; the http endpoint's listener, which negotiates no HTTP/2 without TLS, refuses
@@ -213,7 +213,9 @@ public sealed class AppHostTests
         Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, proxiedUnversioned.StatusCode);
         Assert.Contains("\"ApiVersionUnspecified\"", await proxiedUnversioned.Content.ReadAsStringAsync(timeout.Token), StringComparison.Ordinal);
-        Assert.Equal(HttpStatusCode.Unauthorized, proxiedAnonymous.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, proxiedCatalog.StatusCode);
+        Assert.Contains("\"ApiVersionUnspecified\"", await proxiedCatalog.Content.ReadAsStringAsync(timeout.Token), StringComparison.Ordinal);
+        Assert.Equal(HttpStatusCode.NotFound, catalogAtInventory.StatusCode);
         Assert.Equal((StatusCode.InvalidArgument, "product_id is not a Guid."), (proxiedGrpc.StatusCode, proxiedGrpc.Status.Detail));
         Assert.NotEqual(new Uri(listener!).Port, grpc.Port);
         Assert.Equal(StatusCode.Internal, proxiedToHttp.StatusCode);

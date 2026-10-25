@@ -68,7 +68,7 @@ return await app.RunJasperFxCommands(args);
 
 - `AddServiceDefaults()` and `AddSerilogDefaults()` extend any `IHostApplicationBuilder`, in the namespace `Microsoft.Extensions.Hosting` as Aspire's do; `MapDefaultEndpoints()` extends `WebApplication`.
 - The recipe exports; the Kit emits. A Host without `AddPouryaKitObservability()` exports no Operation of the Kit, whatever its exporters listen to ([observability.md](observability.md#registering)).
-- `ModularMonolith.Host` does not use the recipes, so the Kit's outgoing HTTP stays proven without them (`OutgoingHttpTests`). The Hosts the project templates generate do, with `AddServiceDefaults()`, `AddSerilogDefaults()` and `MapDefaultEndpoints()`, and their `downstream` client adds only `AddPouryaKitOperationContext()`.
+- `ModularMonolith.Host` does not use the recipes, so the Kit's outgoing HTTP stays proven without them (`OutgoingHttpTests`). The Hosts the project templates generate do, with `AddServiceDefaults()`, `AddSerilogDefaults()` and `MapDefaultEndpoints()`; the monolith's and the modular monolith's `downstream` client adds only `AddPouryaKitOperationContext()`, and the service registers no client ([templates.md](templates.md#the-service)).
 
 ## What each recipe does
 

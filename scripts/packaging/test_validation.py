@@ -1,4 +1,6 @@
 """Inventory failures at the evaluated-project seam, including accidentally packable samples."""
+import contextlib
+import io
 import unittest
 from pathlib import Path
 import tempfile
@@ -88,6 +90,13 @@ class SinceTests(unittest.TestCase):
                         patch("sys.argv", ["validate.py", "--no-fetch", "--output", str(root / "evidence"), *arguments]):
                     return validate.main(), full.called
 
+            def plan(*arguments):
+                """`--plan`'s exit code, whether it validated, and the lines it printed but the commands it ran."""
+                printed = io.StringIO()
+                with contextlib.redirect_stdout(printed):
+                    code, validated = exit_code("--since", *arguments, "--plan")
+                return code, validated, [line for line in printed.getvalue().splitlines() if not line.startswith("+ ")]
+
             def changed(ref):
                 with patch.object(validate, "ROOT", root):
                     return validate.changed_since(ref)
@@ -104,9 +113,12 @@ class SinceTests(unittest.TestCase):
             write("AGENTS.md", "# Agents\n")
             self.assertEqual(["AGENTS.md", "docs/guide.md"], changed("HEAD~1"))
             self.assertEqual((0, False), exit_code("--since", "HEAD~1"))
+            self.assertEqual((0, False, ["SKIP: 2 path(s) differ from HEAD~1, and none is one a package, a template or this validation "
+                                         "is built from. CI runs the full validation on every push and pull request."]), plan("HEAD~1"))
             self.assertEqual((0, True), exit_code())
             write("scripts/new.py", "pass\n")
-            self.assertEqual((0, False), exit_code("--since", "HEAD~1", "--plan"))
+            self.assertEqual((0, False, ["--since HEAD~1: validating, 1 of 3 changed path(s) can reach a package, such as scripts/new.py"]),
+                             plan("HEAD~1"))
             self.assertEqual((0, True), exit_code("--since", "HEAD~1"))
             (root / "scripts/new.py").unlink()
             write("src/Kit/A.cs", "class A { }\n")
@@ -115,7 +127,11 @@ class SinceTests(unittest.TestCase):
             git("mv", "old/name.txt", "docs/name.txt")
             self.assertEqual(["AGENTS.md", "docs/guide.md", "docs/name.txt", "old/name.txt"], changed("HEAD~1"))
             self.assertEqual((1, False), exit_code("--since", "no-such-ref"))
-            self.assertEqual((0, False), exit_code("--since", "HEAD~1", "--plan"))
+            code, validated, printed = plan("no-such-ref")
+            self.assertEqual((1, False), (code, validated))
+            self.assertTrue(printed[-1].startswith("FAIL: Unexpected exit "), printed)
+            self.assertEqual((0, False, ["--since HEAD~1: validating, 1 of 4 changed path(s) can reach a package, such as old/name.txt"]),
+                             plan("HEAD~1"))
             with self.assertRaises(SystemExit):
                 exit_code("--plan")
             self.assertFalse((root / "evidence").exists())
