@@ -41,7 +41,7 @@ Add one section to `docs/acceptance.md` headed `## <Wave prefix> <short title>, 
 
 ## Tests
 
-`.claude/rules/kit-code.md`, "Tests": one test per behaviour that matters, and red once for each guarantee the ticket states, listed under `shown_red`. Gateway and HTTP seams run through `AppFixture` or `HostFixture` against PostgreSQL in Testcontainers. One class runs with `dotnet test --project <csproj> --filter-class <fully qualified class> --output Detailed`. A test fails when its collaborators return defaults or the promised effect never occurs.
+`.claude/rules/kit-code.md`, "Tests": one test per behaviour that matters, and red once for each guarantee the ticket states, listed under `shown_red`. Gateway and HTTP seams run through `AppFixture` or `HostFixture` against PostgreSQL in Testcontainers. One Docker host serves every implementer and validation of the session, and PostgreSQL's 100-connection default fails concurrent suites with 53300: use class filters while you develop, and run `.agents/scripts/wait-docker-quiet.sh` before the full `ModularMonolith.Tests` run and before `validate.py` (it exits when no validation or test host runs; the earlier `pgrep -fl validate.py` waiter matched the agent's own shell and never cleared). One class runs with `dotnet test --project <csproj> --filter-class <fully qualified class> --output Detailed`. A test fails when its collaborators return defaults or the promised effect never occurs.
 
 ## Verify (run exactly, after your edits; every command passes in the final run)
 
