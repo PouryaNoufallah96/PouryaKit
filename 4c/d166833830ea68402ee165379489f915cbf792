@@ -1,0 +1,30 @@
+.agents/scripts/wait-docker-quiet.sh
+  s_3c1c3bc940fd22::t_bde61b3aa37146 2-5,16-21,55-84,89-92,94-97,99,110,115,117-118,121-122
+.agents/scripts/test_wait_docker_quiet.py
+  s_3c1c3bc940fd22::t_c46408c0b8255a 31,33-34
+  s_3c1c3bc940fd22::t_a8068d667933fa 1-30,32,35-83
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_3c1c3bc940fd22::t_1ad77376c6afcc 114-115
+AGENTS.md
+  s_3c1c3bc940fd22::t_878275f15fa20f 102
+docs/agents/ai-setup.md
+  s_3c1c3bc940fd22::t_2d354b21689376 30
+docs/agents/brief-template.md
+  s_3c1c3bc940fd22::t_cbdfa5d3c8aaea 44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4cd166833830ea68402ee165379489f915cbf792",
+  "prompts": {},
+  "sessions": {
+    "s_3c1c3bc940fd22": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "04bb6038-47ca-434c-86bd-06142fd8791c",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
