@@ -1,6 +1,6 @@
 # Private packages
 
-The owner narrowed Phase 5 on 2026-10-06 to clean packaging, MinVer versioning and private NuGet publication, following the reference projects where they fit. The workflow uses the existing [Release package validation](packages.md), official artifact actions and `dotnet nuget push`. Named-cut automation, compatibility policy and content-verified recovery from #28/#29 are closed as not planned and require a new scoped ticket. This scope does not claim all original #24 acceptance criteria.
+The owner narrowed Phase 5 on 2026-10-06 to clean packaging, MinVer versioning and private NuGet publication. The workflow uses the existing [Release package validation](packages.md), official artifact actions and `dotnet nuget push`. Named-cut automation, compatibility policy and content-verified recovery from #28/#29 are closed as not planned and require a new scoped ticket. This scope does not claim all original #24 acceptance criteria.
 
 ## Versions and triggers
 
@@ -81,7 +81,3 @@ Add the source and mapping to the consuming project's `NuGet.Config`, keeping cr
 ```
 
 Supply `NuGetPackageSourceCredentials_GitHub` through the shell or secret manager as `Username=<authorized-login>;Password=<read-token>;ValidAuthenticationTypes=Basic`. The source name and environment-variable suffix must agree. Consume packages without a Kit checkout or project references, as [package guidance](packages.md) describes.
-
-## Reference sources
-
-The standard CLI loop follows [`meysamhadeli/woo@149a3cf168496c3bec85945f83ad222e43720e4d .github/workflows/publish.yml`](https://github.com/meysamhadeli/woo/blob/149a3cf168496c3bec85945f83ad222e43720e4d/.github/workflows/publish.yml#L89). The Kit keeps its existing exact inventory, validated artifacts and MinVer instead of Woo's separate version input and public-feed secret. Full history and build/test gating also appear in [`mehdihadeli/CloudNativeKit@e81d65e6376008cb001fdbd886086dc6e84790c6 .github/workflows/build-and-publish.yml`](https://github.com/mehdihadeli/CloudNativeKit/blob/e81d65e6376008cb001fdbd886086dc6e84790c6/.github/workflows/build-and-publish.yml#L26). These are source comparisons, not proof of successful upstream publication runs.

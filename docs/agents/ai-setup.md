@@ -222,7 +222,7 @@ Claude Code 2.1.289 and Codex CLI 0.160.0, on 2026-10-04 (`worktree.baseRef` on 
 
 ## Deliberately excluded
 
-Ideas were taken from the owner's Ultrabusiness and ChainReporter setups. These parts were left behind:
+These parts were left out:
 
 | Excluded | Reason |
 |---|---|

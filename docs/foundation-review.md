@@ -614,11 +614,6 @@ The read-only authorization job requires successful CI and AI/package-validation
 
 `--skip-duplicate` skips HTTP 409. It does not verify matching remote contents or fulfill the original identical-content recovery guarantee. Successful [retry run 37465070135](https://github.com/PouryaNoufallah96/PouryaKit/actions/runs/37465070135) completed `0.1.0-preview.0.10` from original main CI `37456433718`, attempt `1`, artifact `11408539884`, source `2de265641b8cd94a5ddc17980cdcad530f0a8f60`, skipping Domain on HTTP 409, pushing twelve packages and restoring all thirteen with fresh caches. Preserve the original artifacts and retry record; never delete, replace or repack that version. This adds no remote raw-byte identity proof.
 
-**Verified reference sources.** These are static source checks, not successful upstream publication evidence:
-
-- [`meysamhadeli/woo@149a3cf168496c3bec85945f83ad222e43720e4d .github/workflows/publish.yml`](https://github.com/meysamhadeli/woo/blob/149a3cf168496c3bec85945f83ad222e43720e4d/.github/workflows/publish.yml) supplies the common Release build at line 52, `pack --no-build` at lines 59–65 and standard NuGet push at lines 89–93. Keep the Kit's existing exact inventory and MinVer instead of its count-only gate, separate version input and public-feed secret. Duplicate skipping is accepted with the limited HTTP 409 meaning above.
-- [`mehdihadeli/CloudNativeKit@e81d65e6376008cb001fdbd886086dc6e84790c6 .github/workflows/build-and-publish.yml`](https://github.com/mehdihadeli/CloudNativeKit/blob/e81d65e6376008cb001fdbd886086dc6e84790c6/.github/workflows/build-and-publish.yml) supplies full history and build/test gating at lines 26, 36–43 and 76–78. Do not adopt its separate version calculation, repeated publication build or release drafting under `always()`.
-
 **Active acceptance:**
 
 1. Package metadata and consumer proof remain the existing #25 path. Evaluate the nonempty thirteen-package inventory, build Release once, test with `--no-build`, pack with `--no-build`, check metadata/SourceLink and package graph rules, and restore/build every package and supported profile in clean package-only consumers.
