@@ -1,0 +1,21 @@
+scripts/ci/test_evidence.py
+  s_3c1c3bc940fd22::t_d17774e290aad1 15-20,99,101-103
+docs/acceptance.md
+  s_3c1c3bc940fd22::t_dc144652bf3c78 2973-2975
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9638be022f9bb5aa4ad16acc0fac1a557878d026",
+  "prompts": {},
+  "sessions": {
+    "s_3c1c3bc940fd22": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "04bb6038-47ca-434c-86bd-06142fd8791c",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
