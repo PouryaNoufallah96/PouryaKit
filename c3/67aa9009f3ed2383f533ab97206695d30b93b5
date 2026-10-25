@@ -1,0 +1,25 @@
+docs/agents/brief-template.md
+  s_b933d9add4e23e::t_61cf14fa624c51 57
+scripts/packaging/validate.py
+  s_b933d9add4e23e::t_61cf14fa624c51 503-505,510-514
+scripts/packaging/test_validation.py
+  s_b933d9add4e23e::t_61cf14fa624c51 109,118-120
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_b933d9add4e23e::t_9fe80cd6b1bfc8 178
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c367aa9009f3ed2383f533ab97206695d30b93b5",
+  "prompts": {},
+  "sessions": {
+    "s_b933d9add4e23e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8434f7b6-30bd-4d1b-8dc9-3e57a39c4bcf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
