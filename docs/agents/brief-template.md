@@ -96,3 +96,23 @@ Design constraints:
 
 The common `verify` block with `<TestClass>` = `<test class>`, plus <the ticket's own test projects>.
 ````
+
+## Merger brief
+
+For a merge `merge-package.py` stops on (`docs/agents/running-a-spec.md`, "Merging with diagram conflicts"). Written four times per session in Waves 3 and 4 before it had a template.
+
+````markdown
+# Merge brief: ticket-<n> into <integration branch> (merger subagent)
+
+Why it matters: #<n> passed its reviews; its merge into `<integration branch>` conflicts in <the files `git merge-tree --write-tree <tip> <head>` listed>. The orchestrator fast-forwards the branch to your result after checking it.
+
+Worktree `<repository>/.claude/worktrees/merge-<n>`, branch `merge-<n>` at `<tip>` (= the integration tip). Use `git -C` and absolute paths; never touch the main checkout, the integration branch or the ticket's worktree. Do not push. No `dotnet test`, no containers (the orchestrator verifies the merged tree); `dotnet build` only when a citation check needs it.
+
+1. `git merge --no-ff <head>`. Read the implementer's `merge_notes` in `<report path>` first. Resolve: `docs/acceptance.md` with `python3 .agents/scripts/resolve-acceptance.py <path>` (both sides' sections in ticket order; where both sides edited an earlier section's row, keep the integration branch's); prose files by keeping both facts in one sentence that says the merged truth; the implementer memory index as one line per memory file holding both sides' ticket numbers; each diagram source with both sides' nodes, edges, cards and citations, every cited range remapped to the merged file and verified against it; either page.
+2. Commit with `--no-verify`, message `Merge ticket-<n>: <title> (#<n>)`, trailers passed explicitly: `--trailer "Co-Authored-By: <session's model line>" --trailer "Claude-Session: <session url>"`.
+3. `python3 .agents/scripts/repin-diagram.py <worktree> <merge sha> <slug>.<type>` for each re-ranged diagram (and any `check-docs.py --staged` names once you stage; `--archify <dir>` or `ARCHIFY_HOME` names the Archify checkout). Commit the pins through the hooks, same trailers.
+4. `python3 .agents/scripts/check-docs.py` and `python3 .agents/scripts/check-ai-setup.py` at zero. Measure your own change against the automerged tree: `git merge-tree --write-tree <tip> <head>` prints that tree id first, then `git diff --stat <tree id> HEAD` must list only the conflicted files, the diagram pairs, memory files and `docs/acceptance.md`.
+
+Report as text, JSON: `merge_commit`, `pin_commit`, `head`, `conflicts_resolved` (file: how), `acceptance_order`, `own_change`, `commands` (each with outcome), `deviations`, `blockers`. Under 4 KB.
+````
+
