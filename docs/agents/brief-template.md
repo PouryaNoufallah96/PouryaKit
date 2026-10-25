@@ -37,7 +37,7 @@ Follow the last package added (`<package>`, #<ticket>): csproj metadata as its s
 
 ## Acceptance record (every ticket)
 
-Append one section at the end of `docs/acceptance.md` headed `## <Wave prefix> <short title>, ticket #<n>`: the Wave's prefix in `check-docs.py`'s `ORDERED_SECTIONS` (`Wave 4`), then text, then `, ticket #<n>` ending the line, the shape its ordered-section rule reads. Append at the end; the orchestrator keeps the sections in ticket order at each merge. Rows: behaviour · proof (test or check, with its pointer) · red-once or check result.
+Add one section to `docs/acceptance.md` headed `## <Wave prefix> <short title>, ticket #<n>`: the Wave's prefix in `check-docs.py`'s `ORDERED_SECTIONS` (`Wave 4`), then text, then `, ticket #<n>` ending the line, the shape its ordered-section rule reads. Insert it in ascending ticket order among the Wave's sections, not at the end: the pre-commit hook refuses a section out of order (three Wave 4 implementers lost a commit to an append), and two tickets inserting at the same place conflict there by design, which the merge resolves in ticket order. Rows: behaviour · proof (test or check, with its pointer) · red-once or check result.
 
 ## Tests
 
