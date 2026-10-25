@@ -1,0 +1,23 @@
+docs/foundation-review.md
+  s_02e401453049ec::t_6e4674613c7fae 864-865
+README.md
+  s_02e401453049ec::t_6e4674613c7fae 5
+docs/private-packages.md
+  s_02e401453049ec::t_6e4674613c7fae 84-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "de1e8b3363a9f996dc26322f62e431f9efa6c475",
+  "prompts": {},
+  "sessions": {
+    "s_02e401453049ec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7d6be628-41e2-4306-b031-cde6dfb9cb68",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
