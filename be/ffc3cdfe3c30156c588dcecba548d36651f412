@@ -1,0 +1,21 @@
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_3c1c3bc940fd22::t_e889c8e026f53f 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_3c1c3bc940fd22::t_f8df3d9af0a614 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "beffc3cdfe3c30156c588dcecba548d36651f412",
+  "prompts": {},
+  "sessions": {
+    "s_3c1c3bc940fd22": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "04bb6038-47ca-434c-86bd-06142fd8791c",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
