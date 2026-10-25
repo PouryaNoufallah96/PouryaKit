@@ -1,0 +1,19 @@
+docs/acceptance.md
+  s_3c1c3bc940fd22::t_7f966a224d52ab 2976
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9b795a1184db03345086bf7f8f3b35ca2f1b7dc5",
+  "prompts": {},
+  "sessions": {
+    "s_3c1c3bc940fd22": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "04bb6038-47ca-434c-86bd-06142fd8791c",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
