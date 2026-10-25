@@ -861,6 +861,8 @@ The active [Phase 5 packaging and releases](#phase-5-packaging-and-releases) sco
 *Superseded 2026-10-24 (#164): Wave 3 is built and merged to `main` (PR #143, 2026-10-24); Wave 4 is spec #161, in progress.*
 *Superseded 2026-10-25 (#176): Wave 4 (spec #161) is complete on `wave-4` (PR #177); its set and Wave 3's join the
 private feed at the next hosted CI run on `main`, which billing holds.*
+*Superseded 2026-10-26: Wave 4 is merged into `main` (PR #177); all 38 packages are in the private feed at
+`0.1.0-preview.0.28` from `main` `4e9905c9`, by a one-time local publication without hosted CI (`docs/private-packages.md`, "Local publication").*
 Wave 2 is the first follow-on Capability set after the merged Wave 1; Wave 3 needs Wave 2 pieces;
 Wave 4 is the sample agent and the template's third composition.
 

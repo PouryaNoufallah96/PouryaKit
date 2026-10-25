@@ -81,3 +81,15 @@ Add the source and mapping to the consuming project's `NuGet.Config`, keeping cr
 ```
 
 Supply `NuGetPackageSourceCredentials_GitHub` through the shell or secret manager as `Username=<authorized-login>;Password=<read-token>;ValidAuthenticationTypes=Basic`. The source name and environment-variable suffix must agree. Consume packages without a Kit checkout or project references, as [package guidance](packages.md) describes.
+
+## Local publication
+
+On 2026-10-26 the owner approved a one-time exception to the hosted path above: GitHub Actions was unavailable (billing), so the set was validated and published from a developer machine with the standard clients. **Hosted CI did not run for this version**: there is no CI run, receipt (`validation.json`), artifact digest or ephemeral job token behind it, and the machine was the owner's Mac, cleaned after the 2026-10-25 incident but not reinstalled, a residual risk the owner accepted.
+
+- **Source:** `main` `4e9905c9841b021d33deab7b1777ce285b0d6aa8` (PR #179's merge), cloned fresh from GitHub, with no `public/` or `.vscode/` path and no -0700 commit since `8e69b777`.
+- **Validation, once:** `.agents/scripts/ci-local.sh`, the local reproduction of both CI jobs, every step exit 0: `PASS 38 packages, 44 clean consumers (4 generated from templates, smoke tests passed), negative controls and MinVer proof; Release tests total 1381, succeeded 1378, failed 0, skipped 3`. MinVer `0.1.0-preview.0.28`; `manifest.json` SHA-256 `794e60033e063ff9493cf322900abb1f4f793817634a3c117aafab37bc9ca31d`.
+- **Integrity:** before the push, the publisher's own checks: the manifest's commit, version and file names, its package set equal to `scripts/packaging/inventory.json`, and every nupkg's SHA-256 (38 OK).
+- **Push:** the standard `dotnet nuget push --skip-duplicate --no-symbols` of each original package with a short-lived classic token (`write:packages`) entered at a hidden prompt: 38 pushed, none a duplicate. Before it, the feed held `PouryaKit.Domain` up to `0.1.0-preview.0.22` and no `PouryaKit.Realtime`.
+- **Feed check, fresh caches:** every library package referenced at `[0.1.0-preview.0.28]` restored from the feed (37 packages); `dotnet new install PouryaKit.Templates@0.1.0-preview.0.28` from the feed with nuget.org disabled registered `pouryakit-modular-monolith`, `pouryakit-monolith` and `pouryakit-service`; `pouryakit-modular-monolith` generated as `Acme.Shop` restored. The restore of the second name, `acme-shop`, failed with NuGet's `nuget.g.props' already exists`: on macOS the temporary folder is reached as both `/var/...` and `/private/var/...`, the log shows each project restored under both paths, and the two writes collided. The remaining generated solutions were not restored from the feed; the validation above built and tested all four template consumers from the same package bytes.
+
+The originals (38 nupkgs, `manifest.json` and the logs) are kept outside the repository; never delete, replace or repack this version. The byte-identity limits of [Publication and trust](#publication-and-trust) apply.
