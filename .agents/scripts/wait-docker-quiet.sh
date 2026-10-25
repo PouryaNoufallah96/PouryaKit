@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Waits until no package validation and no .NET test run holds Docker on this machine and no waiter holds the machine's
-# Docker lock. Given a command, it takes that lock, runs the command while holding it and exits with the command's status,
-# so the next waiter's command starts only after this one ends.
+# Waits until no package validation and no .NET test run holds Docker on this machine and no other waiter holds the
+# machine's Docker lock. Given a command, it takes the lock as soon as the lock is free, waits for a quiet Docker while
+# holding it, runs the command and exits with the command's status: the lock reserves the next turn, so the next waiter's
+# command starts only after this one ends.
 #
 # Usage: .agents/scripts/wait-docker-quiet.sh [max-minutes] [-- <command...>]
 #   (default 60; exits 2 when the cap is reached before the command starts, 64 on a usage error)
@@ -12,6 +13,12 @@
 # one suite end both start theirs, so the full suite and validate.py run under the lock. A process counts by what it
 # runs, never by a line that names it: a shell that chains this script with its command (`sh -c "wait-docker-quiet.sh &&
 # dotnet test ..."`) holds the same words, and matching such lines made two waiters block each other until the cap.
+#
+# The lock is a directory holding its holder's PID, which the holder's exit trap removes. It is stale when its holder no
+# longer runs (killed, so the trap never ran), or when it holds no PID and is more than a minute old (its holder died
+# between creating it and writing the PID); a younger one without a PID is still being taken. A waiter reclaims a stale
+# lock by renaming it, which only one waiter can do, removes the renamed directory only if it still holds the PID judged
+# dead, and puts back a lock taken again in between; a waiter that took the lock reads its PID back before it counts it.
 set -u
 cap_minutes=60
 if (( $# > 0 )) && [[ $1 != -- ]]; then
@@ -45,24 +52,51 @@ busy() {
   return 1
 }
 
-owned=0
-# True while another live waiter holds the lock. A lock without its PID is one being taken, whose holder writes the PID
-# next; one whose holder died without its exit trap (a SIGKILL) is stale, and removed.
+mine() {
+  [[ $(cat "$lock/pid" 2>/dev/null) == "$$" ]]
+}
+
+# Whether the lock directory $1, whose PID read $2 (empty for none), is stale. `ps -p` sees another user's or session's
+# process, where `kill -0` fails with EPERM and would read it as dead.
+stale() {
+  if [[ -z $2 ]]; then
+    [[ -n $(find "$1" -maxdepth 0 -mmin +1 2>/dev/null) ]]
+  else
+    ! ps -p "$2" >/dev/null 2>&1
+  fi
+}
+
+# Removes the stale lock whose PID read $1; false when another waiter renamed it first or it was taken again since.
+reclaim() {
+  local moved="$lock.stale.$$.$RANDOM"
+  mv "$lock" "$moved" 2>/dev/null || return 1
+  if [[ $(cat "$moved/pid" 2>/dev/null) == "$1" ]]; then
+    rm -f "$moved/pid"
+    rmdir "$moved" 2>/dev/null
+    return 0
+  fi
+  [[ -e $lock ]] || mv "$moved" "$lock" 2>/dev/null
+  rm -f "$moved/pid"
+  rmdir "$moved" 2>/dev/null
+  return 1
+}
+
+# True while another waiter holds the lock or is taking it; a stale lock is reclaimed on the way.
 locked() {
   local holder
   [[ -d $lock ]] || return 1
   holder=$(cat "$lock/pid" 2>/dev/null)
-  [[ -z $holder ]] && return 0
-  (( owned )) && [[ $holder == "$$" ]] && return 1
-  kill -0 "$holder" 2>/dev/null && return 0
-  if [[ $(cat "$lock/pid" 2>/dev/null) == "$holder" ]]; then
-    rm -f "$lock/pid"
-    rmdir "$lock" 2>/dev/null
-  fi
-  return 1
+  [[ $holder == "$$" ]] && return 1
+  stale "$lock" "$holder" || return 0
+  reclaim "$holder" && return 1
+  return 0
 }
+
+# Sourced, as the tests of the functions above source it, the script stops here.
+[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
+
 release() {
-  (( owned )) || return 0
+  mine || return 0
   rm -f "$lock/pid"
   rmdir "$lock" 2>/dev/null
 }
@@ -73,18 +107,19 @@ trap 'exit 143' TERM
 # Ready when Docker is quiet and the lock is free; with a command, ready once this waiter holds the lock and Docker is
 # quiet, so a waiter that holds it waits out a suite run without the lock and reserves the next turn.
 ready() {
+  local problem
   if (( $# == 0 )); then
     ! locked && ! busy
     return
   fi
-  if (( ! owned )); then
+  if ! mine; then
     locked && return 1
-    if ! mkdir "$lock" 2>/dev/null; then
-      [[ -d $lock ]] || { echo "wait-docker-quiet: cannot create $lock" >&2; exit 1; }
+    if ! problem=$(LC_ALL=C mkdir "$lock" 2>&1); then
+      [[ $problem == *"File exists"* ]] || { echo "wait-docker-quiet: cannot create $lock: $problem" >&2; exit 1; }
       return 1
     fi
-    owned=1
-    echo $$ > "$lock/pid"
+    echo $$ > "$lock/pid" 2>/dev/null
+    mine || return 1
   fi
   ! busy
 }
