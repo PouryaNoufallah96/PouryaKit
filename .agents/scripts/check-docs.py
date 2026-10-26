@@ -6,9 +6,14 @@ Usage: python3 .agents/scripts/check-docs.py [--staged | --fences]
 
 It reads every Markdown file git tracks or would track (`git ls-files --cached --others --exclude-standard`), with
 fenced code and frontmatter blanked, except the vendored skills that `skills-lock.json` pins: their text is upstream's.
+The docs site's MDX pages, `website/content/**/*.mdx`, are read the same way for the Names rule alone: their imports,
+JSX and site routes (`/docs/...`) are no Markdown the links, code-span, table or test-pointer rules could judge.
 
-- Names: a backticked PascalCase identifier in the Kit skill, `README.md`, `docs/architecture/` or a top-level
-  `docs/*.md` must name an identifier of the code (`src/`, `samples/`, `tests/`, `scripts/`), or be in ALLOWED.
+- Names: a backticked PascalCase identifier in the Kit skill, `README.md`, `docs/architecture/`, a top-level
+  `docs/*.md`, a package's `src/<Id>/README.md` (exactly one segment between `src/` and the file, so a template's
+  `src/PouryaKit.Templates/content/<x>/README.md` stays out) or a docs site page `website/content/**/*.mdx` (no other
+  `.mdx`, and nothing else under `website/`) must name an identifier of the code (`src/`, `samples/`, `tests/`,
+  `scripts/`), or be in ALLOWED.
   Only code-like spans count: a span holding a path or citation (`/`, `@`), a header, YAML or config key (`Name:`,
   `Name=`) or two adjacent words that are not C# keywords (prose, a command line) is skipped, and so is a dotted
   name rooted in a namespace of ROOTS or at an ALLOWED entry. Out of scope by design: `docs/adr/` and the plan's
@@ -27,7 +32,7 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
 - Union duplicates: in a file `.gitattributes` merges with `merge=union`, a line twice or two lines linking the same
   target fails. A union merge keeps both sides of a line both branches changed.
 - Ordered sections: in `docs/acceptance.md`, the `## <prefix> ..., ticket #N` headings of each prefix in ORDERED_SECTIONS
-  (`Pre-Wave 3`, `Wave 4`) run in ascending ticket order. Each ticket inserts its section in ticket order, so two
+  (`Pre-Wave 3`, `Wave 4`, `Docs site`) run in ascending ticket order. Each ticket inserts its section in ticket order, so two
   parallel tickets conflict at the same place by design, and the owner asked for ticket order after every merge
   (session 5 missed one until an advisor caught it).
   The earlier Waves' sections, and Wave 3's, which carry no prefix, are not held to it.
@@ -84,6 +89,8 @@ ROOT = Path(__file__).resolve().parents[2]
 CODE_DIRS = ("src/", "samples/", "tests/", "scripts/")
 CODE_SUFFIXES = (".cs", ".csproj", ".json", ".py", ".props", ".slnx")
 NAMES_SKIPPED = {"docs/foundation-review.md", "docs/foundation-review-log.md", "docs/acceptance.md"}
+PACKAGE_README = re.compile(r"src/[^/]+/README\.md")  # one segment between src/ and the file: a package, never a template's content
+SITE_PAGE = re.compile(r"website/content/.+\.mdx")  # a docs site page, which only the Names rule reads
 # Namespaces of third-party and framework code; a dotted name rooted in one is not the Kit's.
 ROOTS = {
     "System", "Microsoft", "Wolverine", "WolverineFx", "JasperFx", "Npgsql", "Testcontainers", "Asp", "Serilog",
@@ -278,7 +285,8 @@ def unknown_names(span: str, corpus: set[str]) -> list[str]:
 
 def names_target(path: str) -> bool:
     top_doc = path.startswith("docs/") and path.count("/") == 1 and path not in NAMES_SKIPPED
-    return path.startswith((".agents/skills/pourya-kit/", "docs/architecture/")) or path == "README.md" or top_doc
+    return (path.startswith((".agents/skills/pourya-kit/", "docs/architecture/")) or path == "README.md" or top_doc
+            or bool(PACKAGE_README.fullmatch(path) or SITE_PAGE.fullmatch(path)))
 
 
 def check_names(docs: dict[str, Doc], files: list[str]) -> None:
@@ -433,7 +441,7 @@ def csharp_tests(text: str) -> dict[str, set[str]]:
     return found
 
 
-ORDERED_SECTIONS = ("Pre-Wave 3", "Wave 4")
+ORDERED_SECTIONS = ("Pre-Wave 3", "Wave 4", "Docs site")
 ORDERED_HEADING = re.compile(r"## (?P<prefix>" + "|".join(map(re.escape, ORDERED_SECTIONS)) + r") .*, ticket #(?P<ticket>\d+)\s*$")
 
 
@@ -594,7 +602,8 @@ def main() -> int:
     files = listed()
     skipped = vendored()
     docs = {f: Doc(f) for f in files if f.endswith(".md") and not f.startswith(skipped) and (ROOT / f).is_file()}
-    check_names(docs, files)
+    pages = {f: Doc(f) for f in files if SITE_PAGE.fullmatch(f) and (ROOT / f).is_file()}
+    check_names(docs | pages, files)
     check_links(docs, files)
     check_code_spans(docs)
     check_tables(docs)

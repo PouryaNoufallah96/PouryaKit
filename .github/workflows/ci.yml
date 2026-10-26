@@ -43,3 +43,34 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/package-validation.yml
+
+  # The docs site: install from the committed lockfile, lint, build. Until the site's scaffold adds
+  # website/package.json, every step but the skip line is skipped and the job passes.
+  website:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - if: hashFiles('website/package.json') == ''
+        run: echo "website skipped (website/package.json does not exist yet)"
+
+      # pnpm's version comes from the packageManager field of website/package.json.
+      - if: hashFiles('website/package.json') != ''
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: website/package.json
+
+      - if: hashFiles('website/package.json') != ''
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - if: hashFiles('website/package.json') != ''
+        run: pnpm --dir website install --frozen-lockfile
+      - if: hashFiles('website/package.json') != ''
+        run: pnpm --dir website lint
+      - if: hashFiles('website/package.json') != ''
+        run: pnpm --dir website build

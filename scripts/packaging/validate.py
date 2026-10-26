@@ -19,8 +19,8 @@ ARCHITECTURE = ROOT / "tests/PouryaKit.ArchitectureTests/bin/Release/net10.0/Pou
 # The projects a template generates: package content, not projects of this repository.
 TEMPLATE_CONTENT = ROOT / "src/PouryaKit.Templates/content"
 # --since: the only paths whose change cannot reach a package, a template or this validation, because nothing that is
-# built, tested or packed reads them: the docs and the AI setup. Any other path, known or not, means the validation runs.
-EXEMPT_DIRECTORIES = ("docs/", ".agents/", ".claude/", ".codex/", ".githooks/")
+# built, tested or packed reads them: the docs, the AI setup and the docs site. Any other path, known or not, means it runs.
+EXEMPT_DIRECTORIES = ("docs/", ".agents/", ".claude/", ".codex/", ".githooks/", "website/")
 EXEMPT_FILES = {"AGENTS.md", "CLAUDE.md", "GLOSSARY.md", "README.md", "skills-lock.json"}
 
 
@@ -497,7 +497,7 @@ def main():
                         "only with --keep. Default: system temp.")
     parser.add_argument("--no-fetch", action="store_true", help="Use full history and tags already fetched by CI checkout; reject shallow history.")
     parser.add_argument("--since", metavar="REF", help="Skip, with one SKIP line and exit 0, when every path that differs from REF "
-                        "is documentation or AI setup; the implementer's base. CI passes none, so it always validates.")
+                        "is documentation, AI setup or the docs site; the implementer's base. CI passes none, so it always validates.")
     parser.add_argument("--plan", action="store_true", help="With --since: print the decision (SKIP, or the paths that make the run full) "
                         "and exit 0 without validating. Asked by the orchestrator when it writes a brief, instead of predicting the "
                         "decision (two Wave 4 briefs predicted SKIP for paths the script does not exempt).")
