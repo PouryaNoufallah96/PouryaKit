@@ -1,0 +1,27 @@
+docs/ci.md
+  s_2907c73c709168::t_8c683654b9d43c 3
+.agents/scripts/ci-local.sh
+  s_2907c73c709168::t_d3456157fe49de 4,24-28
+AGENTS.md
+  s_2907c73c709168::t_8c683654b9d43c 82
+.github/workflows/ci.yml
+  s_2907c73c709168::t_d3456157fe49de 47-48,58,62,66-70
+.claude/rules/website.md
+  s_2907c73c709168::t_8c683654b9d43c 19-21,23-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bba195a4595120e52c272633eee9571282f0986a",
+  "prompts": {},
+  "sessions": {
+    "s_2907c73c709168": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a1734560-a43c-4ccf-9966-072c809942ac",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
