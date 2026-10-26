@@ -11,7 +11,8 @@ staged=$(git diff --cached --name-only --diff-filter=AMRD)
 git diff --cached --name-only --diff-filter=AMR | python3 "$(dirname "$0")/../.agents/scripts/check-tree.py"
 top=$(git rev-parse --show-toplevel)
 # A gated path staged in part would be checked as it is on disk, not as it commits: refuse it (final review of #74, R2).
-partial=$(printf '%s\n' "$staged" | grep -E '\.md$|^\.gitattributes$|^skills-lock\.json$|^(\.claude/|\.codex/|\.agents/|AGENTS\.md$|CLAUDE\.md$)' | while IFS= read -r path; do [ -n "$path" ] && git diff --quiet -- "$path" || echo "$path"; done)
+# Markdown and MDX alike: check-docs.py reads a docs site page's names from the working tree too.
+partial=$(printf '%s\n' "$staged" | grep -E '\.mdx?$|^\.gitattributes$|^skills-lock\.json$|^(\.claude/|\.codex/|\.agents/|AGENTS\.md$|CLAUDE\.md$)' | while IFS= read -r path; do [ -n "$path" ] && git diff --quiet -- "$path" || echo "$path"; done)
 if [ -n "$partial" ]; then echo "pre-commit: staged in part, so the checks would read the working tree, not the commit; stage the whole file or stash the rest:" >&2; printf '  %s\n' $partial >&2; exit 1; fi
 # Every commit: the docs check with --staged. A change at or above a cited range needs its diagram staged too, with
 # ranges that fit the indexed file; a change below every cited range passes. The other docs rules retain the

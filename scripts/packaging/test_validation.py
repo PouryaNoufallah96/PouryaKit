@@ -60,16 +60,18 @@ class HistoryTests(unittest.TestCase):
 
 class SinceTests(unittest.TestCase):
     EXEMPT = ["docs/acceptance.md", "docs/agents/ai-setup.md", ".agents/scripts/check-docs.py", ".claude/agent-memory/kit-implementer/MEMORY.md",
-              ".codex/agents/kit-implementer.toml", ".githooks/pre-commit", "AGENTS.md", "CLAUDE.md", "GLOSSARY.md", "README.md", "skills-lock.json"]
+              ".codex/agents/kit-implementer.toml", ".githooks/pre-commit", "AGENTS.md", "CLAUDE.md", "GLOSSARY.md", "README.md", "skills-lock.json",
+              "website/app/page.tsx", "website/content/docs/index.mdx", "website/package.json"]
 
-    def test_only_documentation_and_the_ai_setup_need_no_validation(self):
+    def test_only_documentation_the_ai_setup_and_the_docs_site_need_no_validation(self):
         self.assertEqual([], validate.needing_validation(self.EXEMPT))
         for path in ("src/PouryaKit.Domain/Result.cs", "samples/ModularMonolith/src/ModularMonolith.Host/Program.cs",
                      "tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs", "tests/ModularMonolith.Tests/CachingTests.cs",
                      "scripts/packaging/validate.py", "scripts/packaging/inventory.json", "LICENSE",
                      "Directory.Build.props", "Directory.Build.targets", "Directory.Packages.props", "global.json", "nuget.config",
                      "PouryaKit.slnx", ".config/dotnet-tools.json", ".editorconfig", ".github/workflows/package-validation.yml",
-                     "docs.md", "src/PouryaKit.Templates/content/shared/README.md", "a-new-directory/file.txt"):
+                     "docs.md", "src/PouryaKit.Templates/content/shared/README.md", "a-new-directory/file.txt",
+                     "websites/x", "website.json", "website", "src/PouryaKit.Domain/README.md"):
             with self.subTest(path=path):
                 self.assertEqual([path], validate.needing_validation([*self.EXEMPT, path]))
 

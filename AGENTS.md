@@ -66,7 +66,7 @@ Both reviewers apply these to the diff. Report defects the diff introduced; olde
 - A test that would still pass if every collaborator returned its default or under a weaker predicate than the rule states (a prefix check where the rule says equality, a scope narrower than the ticket names), or coverage that restates another test.
 - A claimed runtime guarantee without runtime proof.
 - A registration that scans types for a check on every command or query (an authorizer, a requirement) must cover the set the dispatcher runs, `OperationTypes.Dispatchable`: an operation declared in another assembly and handled in the scanned one, or an assembly only `AddPouryaKitCqrs` scanned, is the case to open. PR #143's Codex review found it twice after six single-ticket reviews had passed it (#116, then `AddPouryaKitPermissions`).
-- Docs or AI guidance left out of sync with the change. For each sentence or message the diff changes, search its old key phrase across `src/`, the Kit's skill, `docs/architecture/` and `docs/acceptance.md`: a restatement left as it was is a finding.
+- Docs or AI guidance left out of sync with the change. For each sentence or message the diff changes, search its old key phrase across `src/` (each package's `src/*/README.md` among it), the Kit's skill, `docs/architecture/`, `docs/acceptance.md` and the docs site's `website/content/`: a restatement left as it was is a finding.
 - A changed XML summary, code comment or skill sentence that states a behaviour the cited code does not have. Open the code it describes; a sentence that reads right but says the wrong thing is the finding the PR bots found 25 times in one round of PR #103 after six single reviews had passed it.
 - A guarantee the final registrations can answer (one provider, a declared authorizer, a tenant requirement) enforced at start (an options validation, `IStartupCheck`) instead of at build (`ICompositionCheck`): a built Host runs Operations before it starts (#61 F1, #147 F1).
 - A structure rule over text (SQL, a route, a header) that rejects the shapes it recognises instead of admitting an allow-list grammar and failing every other shape: #118 lost two review rounds to new shapes, #154 and #155 inherited the lesson. The rule resolves names as the target does: PostgreSQL folds an unquoted identifier to lower case and keeps a quoted one as written, and the Dapper tenant rule folded both, so `p` and `"P"` were one alias to it and two tables to the database; six reviews passed it and the whole-branch audit of PR #143 found it.
@@ -84,21 +84,21 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | One namespace per Kit package; application namespaces follow folders (ADR 0010) | `NamespaceTests`; IDE0130 in `.editorconfig`; `SampleNamespaceTests` for the Proving Sample, partial types included |
 | Private fields are `_camelCase`; `const` and `static readonly` fields PascalCase | IDE1006 in `.editorconfig` |
 | Every public member of a Kit package has a summary | CS1591 in the build where `IsKitPackage` is true (`Directory.Build.props`) |
-| Docs name real code, paths and tests | `check-docs.py` (names, links, Kit paths, acceptance pointers) |
+| Docs name real code, paths and tests | `check-docs.py` (names, also in `website/content/**/*.mdx` and `src/*/README.md`; links, Kit paths, acceptance pointers) |
 | A diagram's cited source ranges are current | `check-docs.py` (diagram sources); the pre-commit hook runs it with `--staged`, reading diagrams and cited files from the index: a change at or above a cited range requires its diagram staged too, with ranges that fit the indexed file, while a change below every cited range passes; during a merge, a revision reachable from `MERGE_HEAD` counts; CI's `ai-setup` job runs it on the committed tree |
 | A merged head's code was validated | `merge-package.py` exit 14: only Markdown may differ from the validated commit |
-| A pushed tip is what the remote holds | `merge-package.py` reads the remote tip back after `--push` and exits 15 with `remote=REPLACED(<sha7>)` when it differs (2026-10-25: pushed tips force-replaced within seconds by a stolen credential); `check-tree.py` refuses the replacement's `.vscode/` and `public/` entries |
+| A pushed tip is what the remote holds | `merge-package.py` reads the remote tip back after `--push` and exits 15 with `remote=REPLACED(<sha7>)` when it differs (2026-10-25: pushed tips force-replaced within seconds by a stolen credential); `check-tree.py` refuses a `.vscode` or `public` path segment at any depth, the replacement's payload paths (`test_check_tree.py`) |
 | A negative test discriminates the rule's exact predicate | `kit-reviewer` (the review rule above) |
 | A registration-answerable guarantee is a build-time composition check; a structure rule over text admits a grammar | `kit-reviewer` (the two review rules above); `docs/agents/brief-template.md` carries both as design constraints |
 | A parallel merge leaves one line per memory file in the implementer index | `check-docs.py` (union duplicates), run by `merge-package.py --post-merge` and CI |
 | A check registered over scanned types covers every operation the dispatcher runs | `OperationTypes.Dispatchable` is the one discovery; `DeclaredAuthorizersCheck` (an attributed operation with no authorizer) and `TenantRequirementCheck` (a tenant-scoped scope with an unguarded operation) fail the Host when it is built; `kit-reviewer` for a new registration of that shape |
 | A brief's commands come from the environment, never from memory | `docs/agents/brief-template.md`, "Verify" |
 | A review reads the implementer's commit, never the integration branch against itself | `kit-review.js` refuses `head` equal to `base` |
-| Pre-Wave 3 and Wave 4 acceptance sections stay in ticket order after every merge | `check-docs.py` (ordered sections), run by `merge-package.py --post-merge` |
+| Pre-Wave 3, Wave 4 and Docs site acceptance sections stay in ticket order after every merge | `check-docs.py` (ordered sections), run by `merge-package.py --post-merge` |
 | A package validation leaves no evidence directory behind after a PASS | `validate.py` removes it unless `--keep` (CI passes `--keep` for its artifact); `test_validation.py`, `FinishTests` |
 | A local CI reproduction keeps what it proved: each step's output and the Release test totals | `validate.py` prints the totals in its PASS line (`test_totals`, `TestTotalsTests`); `.agents/scripts/ci-local.sh` keeps every step's output and the validation log |
 | The Kit skill's description stays within the 1024 characters Claude Code loads | `check-ai-setup.py` (`SKILL_DESCRIPTION_LIMIT`); the pre-commit hook and CI's `ai-setup` job run it |
-| A docs or AI-setup edit passes its checks before it commits | `.githooks/pre-commit`: `check-docs.py --staged` on every commit, `check-ai-setup.py` when an AI-setup path is staged, a gated path staged in part refused; CI's `ai-setup` job is the gate (`docs/agents/ai-setup.md`, "Git hooks") |
+| A docs or AI-setup edit passes its checks before it commits | `.githooks/pre-commit`: `check-docs.py --staged` on every commit, `check-ai-setup.py` when an AI-setup path is staged, a gated path staged in part refused, a `.md` or `.mdx` file among them (`test_pre_commit.py`); CI's `ai-setup` job is the gate (`docs/agents/ai-setup.md`, "Git hooks") |
 | A changed sentence's restatements change with it | `kit-implementer` searches each changed sentence's old key phrase before it reports (its Contract); `kit-reviewer` (the doc-sync review rule) |
 | One Docker user at a time: a validation or a full suite never runs beside another | `.agents/scripts/wait-docker-quiet.sh -- <command>`, which takes a machine-wide lock, then runs the full suite or `validate.py` under it once Docker is quiet (`docs/agents/brief-template.md`, "Tests") |
 | A brief never predicts whether the validation runs or skips | `validate.py --since <tip> --plan` answers it (`docs/agents/brief-template.md`, "Verify") |
@@ -112,6 +112,7 @@ Claude Code loads these rules by path on its own. Codex does not: read the rule 
 |---|---|
 | `.claude/rules/ai-setup.md` | `.claude/**`, `.codex/**`, `.agents/**`, `AGENTS.md`, `CLAUDE.md`, `skills-lock.json` |
 | `.claude/rules/kit-code.md` | `src/**`, `tests/**`, `samples/**` |
+| `.claude/rules/website.md` | `website/**` |
 
 ## Agent skills
 

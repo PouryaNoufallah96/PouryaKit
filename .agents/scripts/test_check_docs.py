@@ -326,8 +326,35 @@ class CheckDocsTests(unittest.TestCase):
         self.assertFails({"docs/acceptance.md": disordered}, "docs/acceptance.md:7: the Wave 4 section of ticket #162 comes after ticket #166's (line 3); keep these sections in ticket order")
         self.assertPasses({"docs/acceptance.md": "# Acceptance\n\n## Email, ticket #124\n\nx\n\n## Tenancy at save and delivery, ticket #117\n\nx\n"})
 
+    def test_docs_site_acceptance_sections_out_of_ticket_order_fail(self) -> None:
+        ordered = "# Acceptance\n\n## Wave 4 close-out, ticket #176\n\nx\n\n## Docs site plumbing, ticket #185\n\nx\n\n## Docs site scaffold, ticket #186\n\nx\n"
+        self.assertPasses({"docs/acceptance.md": ordered})
+        disordered = "# Acceptance\n\n## Wave 4 close-out, ticket #176\n\nx\n\n## Docs site scaffold, ticket #186\n\nx\n\n## Docs site plumbing, ticket #185\n\nx\n"
+        self.assertFails({"docs/acceptance.md": disordered}, "docs/acceptance.md:11: the Docs site section of ticket #185 comes after ticket #186's (line 7); keep these sections in ticket order")
+
     def test_a_renamed_kit_symbol_fails(self) -> None:
         self.assertFails({"docs/guide.md": "# Guide\n\nCall `Product.Retitle()`.\n"}, "docs/guide.md:3: `Retitle` names nothing in the code")
+
+    def test_a_renamed_kit_symbol_in_a_site_page_or_a_package_readme_fails(self) -> None:
+        page = "---\ntitle: Guide\n---\n\nimport { Callout } from 'fumadocs-ui/components/callout';\n\nCall `Product.Retitle()`.\n"
+        self.write({"website/content/docs/guides/rename.mdx": page, "src/Catalog/README.md": "# Catalog\n\nCall `Product.Retitle()`.\n"})
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn("FAIL  website/content/docs/guides/rename.mdx:7: `Retitle` names nothing in the code", out)
+        self.assertIn("FAIL  src/Catalog/README.md:3: `Retitle` names nothing in the code", out)
+
+    def test_a_renamed_kit_symbol_outside_the_site_pages_and_package_readmes_passes(self) -> None:
+        """A template's README is content a generated project gets, and only `website/content/` holds site pages."""
+        span = "# Notes\n\nCall `Product.Retitle()`.\n"
+        self.assertPasses({"src/PouryaKit.Templates/content/shared/README.md": span, "src/Catalog/docs/README.md": span,
+                           "website/app/notes.mdx": span, "website/notes.mdx": span, "docs/notes.mdx": span})
+
+    def test_a_site_page_is_read_by_the_names_rule_only(self) -> None:
+        """Its imports, JSX and site routes are no Markdown: a route is no file, and a JSX line starting with `|` no table."""
+        page = ("import { Cards, Card } from 'fumadocs-ui/components/card';\n\n# Products\n\n`Product.Rename()` renames a `Product`;"
+                " see [the concepts](/docs/concepts), [a guide](./guides/create-a-command) and [the order][order].\n\n"
+                "<Cards>\n  <Card title=\"Rename\" href=\"/docs/guides/rename\" />\n</Cards>\n\n| {props.label} |\n")
+        self.assertPasses({"website/content/docs/products.mdx": page})
 
     def test_a_link_to_a_missing_file_fails(self) -> None:
         self.assertFails({"docs/guide.md": "# Guide\n\nSee [the shop](../READ-ME.md).\n"}, "docs/guide.md:3: link to ../READ-ME.md: no such file")

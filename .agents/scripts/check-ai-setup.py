@@ -550,7 +550,7 @@ def check_package_counts() -> None:
 
 
 def check_tree() -> None:
-    """Every tracked path sits under a top-level entry of the tree, and .gitignore ignores no tracked path (.agents/scripts/check-tree.py)."""
+    """Every tracked path sits under a top-level entry of the tree with no refused segment, and .gitignore ignores no tracked path (.agents/scripts/check-tree.py)."""
     listed = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
     done = subprocess.run([sys.executable, str(ROOT / ".agents/scripts/check-tree.py")], input=listed, cwd=ROOT, capture_output=True, text=True)
     failures.extend(f"check-tree: {line}" for line in done.stdout.splitlines())
