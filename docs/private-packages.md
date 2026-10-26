@@ -21,7 +21,7 @@ For a named version, choose and create an immutable tag such as `v0.2.0-rc.1` on
 gh workflow run ci.yml --ref main
 ```
 
-Do this before main advances. Inspect the validation artifact's version before consuming it. A tag push alone only validates; publication accepts main CI runs, not tag-head runs. No workflow creates a tag or GitHub Release. Stable versions and public publication require later owner decisions; the publisher accepts only `0.x` preview/rc versions.
+Do this before main advances. Inspect the validation artifact's version before consuming it. A tag push alone only validates; publication accepts main CI runs, not tag-head runs. No workflow creates a tag or GitHub Release. Stable versions require a later owner decision; the publisher accepts only `0.x` preview/rc versions. The owner published `0.1.0-preview.0.28` to nuget.org once by hand ([nuget.org publication](#nugetorg-publication)); no workflow publishes there.
 
 ## Publication and trust
 
@@ -93,3 +93,14 @@ On 2026-10-26 the owner approved a one-time exception to the hosted path above: 
 - **Feed check, fresh caches:** every library package referenced at `[0.1.0-preview.0.28]` restored from the feed (37 packages); `dotnet new install PouryaKit.Templates@0.1.0-preview.0.28` from the feed with nuget.org disabled registered `pouryakit-modular-monolith`, `pouryakit-monolith` and `pouryakit-service`; `pouryakit-modular-monolith` generated as `Acme.Shop` restored. The restore of the second name, `acme-shop`, failed with NuGet's `nuget.g.props' already exists`: on macOS the temporary folder is reached as both `/var/...` and `/private/var/...`, the log shows each project restored under both paths, and the two writes collided. The remaining generated solutions were not restored from the feed; the validation above built and tested all four template consumers from the same package bytes.
 
 The originals (38 nupkgs, `manifest.json` and the logs) are kept outside the repository; never delete, replace or repack this version. The byte-identity limits of [Publication and trust](#publication-and-trust) apply.
+
+## nuget.org publication
+
+On 2026-10-26 the owner published the same 38 originals of `0.1.0-preview.0.28`, those of the [local publication](#local-publication), never rebuilt or repacked, to nuget.org from a developer machine with the standard client and without GitHub Actions. The repository stays private; no tag, GitHub Release or workflow was added, and no workflow publishes to nuget.org.
+
+- **Before the push:** the manifest's commit and version and all 38 SHA-256 hashes verified; none of the 38 IDs existed on nuget.org; every third-party dependency (55 version ranges) resolves on nuget.org, and the 19 dependencies between Kit packages are on the exact `0.1.0-preview.0.28`; each nupkg carries the MIT `LICENSE` and the third-party notices it was packed with, and `PouryaKit.Reporting` also Roboto's licence; no entry holds a local path, a PDB, a token or a key, and the templates' only password is the `localhost` development default.
+- **Push:** `dotnet nuget push --skip-duplicate --no-symbols` of each original with a scoped API key entered at a hidden prompt: 38 created, one after the client retried a transient error. nuget.org warned that no package has a readme.
+- **After the push:** all 38 listed on nuget.org; each downloaded package carries nuget.org's repository signature and, apart from that signature and its content-types part, the originals' exact entries. From nuget.org alone, with fresh caches and a canonical path: the 37 library packages restored at `[0.1.0-preview.0.28]`, `PouryaKit.Templates@0.1.0-preview.0.28` installed `pouryakit-modular-monolith`, `pouryakit-monolith` and `pouryakit-service`, and each, generated as `Acme.Shop` and as `acme-shop`, restored. The local publication's `acme-shop` collision was macOS's `/var` symlink, not the packages: a solution of two plain class libraries fails the same way under `/var`, and a canonical path restores both names. A second anonymous check the same day found all 38 listed, restored the 37 library packages and installed the templates.
+- **Known limits:** the packages' project and repository URLs point at this private repository, so they do not open for the public; the descriptions repeat the ID, and no package has a readme, tags or an icon. Changing any of them needs a new version.
+
+A consumer needs nuget.org alone: `dotnet add package PouryaKit.Domain --version 0.1.0-preview.0.28`, and `dotnet new install PouryaKit.Templates@0.1.0-preview.0.28` for the templates.
