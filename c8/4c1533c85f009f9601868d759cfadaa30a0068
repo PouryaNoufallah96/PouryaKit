@@ -1,0 +1,60 @@
+.agents/skills/pourya-kit/references/sagas.md
+  s_2907c73c709168::t_7145ebae6c4972 89
+.agents/skills/pourya-kit/references/realtime.md
+  s_2907c73c709168::t_7145ebae6c4972 74,91
+.agents/skills/pourya-kit/references/reverse-proxy.md
+  s_2907c73c709168::t_7145ebae6c4972 59,65,68
+.agents/skills/pourya-kit/references/web.md
+  s_2907c73c709168::t_7145ebae6c4972 299
+.agents/skills/pourya-kit/references/security.md
+  s_2907c73c709168::t_7145ebae6c4972 186
+.agents/skills/pourya-kit/references/testing.md
+  s_2907c73c709168::t_7145ebae6c4972 187,201
+.agents/skills/pourya-kit/references/observability.md
+  s_2907c73c709168::t_7145ebae6c4972 3,67,69
+.agents/skills/pourya-kit/references/ai.md
+  s_2907c73c709168::t_7145ebae6c4972 50
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_2907c73c709168::t_7145ebae6c4972 29,33,84,99,101
+.agents/skills/pourya-kit/references/persistence.md
+  s_2907c73c709168::t_7145ebae6c4972 344
+.agents/skills/pourya-kit/SKILL.md
+  s_2907c73c709168::t_81f872548b2573 4-5
+.agents/skills/pourya-kit/references/templates.md
+  s_2907c73c709168::t_3687535c33b085 27
+  s_2907c73c709168::t_32770b8819f321 103
+  s_2907c73c709168::t_7145ebae6c4972 42,73-74,78,84,115
+  s_2907c73c709168::t_8e82b1365fb67f 92-93
+  s_2907c73c709168::t_61b283ccf7d217 19
+  s_2907c73c709168::t_de82c6e5b9b0e3 18,20
+.agents/skills/pourya-kit/references/reporting-module.md
+  s_2907c73c709168::t_7145ebae6c4972 86
+.agents/skills/pourya-kit/references/messaging.md
+  s_2907c73c709168::t_7145ebae6c4972 395,581,692
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_2907c73c709168::t_7145ebae6c4972 114,118
+.agents/skills/pourya-kit/references/aspire.md
+  s_2907c73c709168::t_7145ebae6c4972 119,155,197,208-210
+.agents/skills/pourya-kit/references/email.md
+  s_2907c73c709168::t_7145ebae6c4972 37,71
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_2907c73c709168::t_7145ebae6c4972 16,113
+.agents/skills/pourya-kit/references/publication.md
+  s_2907c73c709168::t_7145ebae6c4972 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c84c1533c85f009f9601868d759cfadaa30a0068",
+  "prompts": {},
+  "sessions": {
+    "s_2907c73c709168": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a1734560-a43c-4ccf-9966-072c809942ac",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
