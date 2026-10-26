@@ -43,16 +43,19 @@ test('a link to a rendered source becomes its page, its anchor carried over', ()
   );
 });
 
-test('a link into the repository with no page, or to the private repository, becomes its own text', () => {
+test('a link into the repository with no page becomes its own text, and a link to another site stays', () => {
   assert.equal(
     rewrite('the [structure tests](../../../../docs/architecture/README.md#structure-tests)'),
     'the structure tests',
   );
   assert.equal(rewrite('see [`docs/packages.md`](../../../../docs/packages.md)'), 'see `docs/packages.md`');
-  assert.equal(rewrite('[source](https://github.com/PouryaNoufallah96/PouryaKit/blob/main/x.cs)'), 'source');
   assert.equal(rewrite('[Wolverine](https://wolverinefx.net/)'), '[Wolverine](https://wolverinefx.net/)');
 });
 
-test('an anchor the target page does not have fails', () => {
+test('a link to the private repository fails, and so does an anchor the target page does not have', () => {
+  assert.throws(
+    () => rewrite('[source](https://github.com/PouryaNoufallah96/PouryaKit/blob/main/x.cs)'),
+    /links the private repository/,
+  );
   assert.throws(() => rewrite('[x](security.md#no-such-section)'), /an anchor .*security\.md does not have/);
 });

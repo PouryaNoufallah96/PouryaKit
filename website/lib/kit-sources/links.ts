@@ -28,9 +28,9 @@ export function resolveLink(from: string, url: string): { target: string; anchor
 
 /**
  * Rewrites every link of a projected source: a link to a source the site renders becomes that page's route, with its
- * anchor carried over; a link into the repository with no page, or to the private repository, becomes its own text, so a
- * page never holds a dead relative link or a private one. A link to another site stays. An anchor the target page does
- * not have fails.
+ * anchor carried over; a link into the repository with no page becomes its own text, so a page never holds a dead
+ * relative link. A link to another site stays. A link to the private repository, and an anchor the target page does not
+ * have, fail.
  */
 export function rewriteLinks(tree: Root, from: string, routes: RouteMap): void {
   visit(tree, (node: Nodes, index, parent) => {
@@ -39,8 +39,7 @@ export function rewriteLinks(tree: Root, from: string, routes: RouteMap): void {
     }
     if (node.type !== 'link' || !parent || index === undefined) return;
     if (privateRepositoryReferences(node.url).length > 0) {
-      unwrap(parent, index, node);
-      return index;
+      throw new Error(`kit-sources: ${from} links the private repository: ${node.url}`);
     }
     const resolved = resolveLink(from, node.url);
     if (!resolved) return;

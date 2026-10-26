@@ -1,8 +1,7 @@
 import { createHash } from 'node:crypto';
 import Slugger from 'github-slugger';
-import type { Heading, List, Root, RootContent, Table } from 'mdast';
-import { firstSentence, parseMarkdown, renderedText } from './markdown.ts';
-import { addressViolations, vocabularyViolations } from './rules.ts';
+import type { Heading, List, Nodes, Root, RootContent, Table } from 'mdast';
+import { firstSentence, nodeViolations, parseMarkdown, renderedText } from './markdown.ts';
 
 // The ADRs' public projection. The records stay as they are; the site publishes each with its tracker references
 // rewritten, and leaves out each passage that still names one. Every passage left out is listed in the committed
@@ -164,8 +163,9 @@ export function withoutTrackerColumns(table: Table): Table {
   };
 }
 
-function failingRule(text: string): string | undefined {
-  return [...addressViolations(text), ...vocabularyViolations(text)][0]?.rule;
+/** The first rule a passage fails, over its rendered text and the URLs it links. */
+function failingRule(node: Nodes): string | undefined {
+  return nodeViolations(node)[0]?.rule;
 }
 
 /** Projects one ADR, given its file name without `.md`, its text and the reviewed rewrites. */
@@ -195,7 +195,7 @@ export function projectAdr(slug: string, source: string, rewrites: AdrRewrite[])
       skipBelow = undefined;
     }
     if (node.type === 'heading') {
-      const rule = failingRule(renderedText(node));
+      const rule = failingRule(node);
       if (rule) {
         // A heading that cites the tracker takes its whole section with it.
         const section = tree.children.slice(tree.children.indexOf(node));
@@ -210,14 +210,14 @@ export function projectAdr(slug: string, source: string, rewrites: AdrRewrite[])
       kept.push(node);
     } else if (node.type === 'list') {
       const items = node.children.filter((item) => {
-        const rule = failingRule(renderedText(item));
+        const rule = failingRule(item);
         if (rule) exclusions.push(exclusion(slug, item, 'list item', renderedText(item), rule));
         return !rule;
       });
       if (items.length > 0) kept.push({ ...node, children: items } as List);
     } else if (node.type === 'table') {
       const [header, ...rows] = withoutTrackerColumns(node).children;
-      const headerRule = failingRule(renderedText(header));
+      const headerRule = failingRule(header);
       if (headerRule) {
         exclusions.push(
           exclusion(slug, node, 'table', node.children.map((row) => renderedText(row)).join('\n'), headerRule),
@@ -225,7 +225,7 @@ export function projectAdr(slug: string, source: string, rewrites: AdrRewrite[])
         continue;
       }
       const keptRows = rows.filter((row) => {
-        const rule = failingRule(row.children.map((cell) => renderedText(cell)).join(' | '));
+        const rule = failingRule(row);
         if (rule)
           exclusions.push(
             exclusion(slug, row, 'table row', row.children.map((cell) => renderedText(cell)).join(' | '), rule),
@@ -234,7 +234,7 @@ export function projectAdr(slug: string, source: string, rewrites: AdrRewrite[])
       });
       if (keptRows.length > 0) kept.push({ ...node, children: [header, ...keptRows] } as Table);
     } else {
-      const rule = failingRule(renderedText(node));
+      const rule = failingRule(node);
       if (rule) {
         exclusions.push(exclusion(slug, node, node.type, renderedText(node), rule));
         continue;
