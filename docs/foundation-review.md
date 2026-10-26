@@ -871,6 +871,8 @@ The active [Phase 5 packaging and releases](#phase-5-packaging-and-releases) sco
 private feed at the next hosted CI run on `main`, which billing holds.*
 *Superseded 2026-10-26: Wave 4 is merged into `main` (PR #177); all 38 packages are in the private feed at
 `0.1.0-preview.0.28` from `main` `4e9905c9`, by a one-time local publication without hosted CI (`docs/private-packages.md`, "Local publication").*
+*Superseded 2026-10-26: the owner published the same 38 originals to nuget.org by hand, without a workflow; the
+repository stays private (`docs/private-packages.md`, "nuget.org publication").*
 Wave 2 is the first follow-on Capability set after the merged Wave 1; Wave 3 needs Wave 2 pieces;
 Wave 4 is the sample agent and the template's third composition.
 
