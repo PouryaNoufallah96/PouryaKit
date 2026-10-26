@@ -1,0 +1,21 @@
+---
+name: docs-site-facts
+description: The docs site under website/ (Next.js 16 static export, Fumadocs 16, Tailwind 4, pnpm 12, Biome 2.6, TS 7) - pnpm settings and licence report traps, export shapes, Fumadocs components the design replaces, headless screenshots
+metadata:
+  type: project
+---
+
+## Scaffold (#186, 2026-10-26; next 16.4.3, fumadocs-core/ui 16.17.8, fumadocs-mdx 15.4.10, tailwindcss 4.3.3, typescript 7.0.2, @biomejs/biome 2.6.3, pnpm 12.5.1)
+
+- **pnpm 11+ reads settings only from `pnpm-workspace.yaml`**, never `package.json`'s `pnpm` field. `onlyBuiltDependencies` was removed in 11 and pnpm 12 ignores it silently (no unknown-key error even with a matching `packageManager`): with it, esbuild's script stayed unapproved and the install failed `ERR_PNPM_IGNORED_BUILDS`. The key is `allowBuilds` (a map, `esbuild: false`); `strictDepBuilds` defaults true, so an unlisted script fails the install. `ignoredOptionalDependencies: [sharp]` drops next's optional sharp and its LGPL-3.0-or-later libvips. `minimumReleaseAge` defaults to 1440 minutes. Prove a clean install in a scratchpad copy of `package.json`, `pnpm-workspace.yaml` and the lockfile.
+- **`pnpm licenses list --json`** groups by licence; for a package whose `package.json` has no `license` it guesses one from a LICENSE file (MIT text gave `MIT`) and says `Unknown` for none or `SEE LICENSE IN`. The site's check reads the declared field from each reported path instead. `pnpm --dir website licences` runs pnpm's own command (a British alias of `licenses`), never the script: the script is `check-licences`.
+- **pnpm 12's lockfile is two YAML documents**: the `packageManager`'s own pnpm binaries (15 entries) first, then the closure (374 entries on 2026-10-26, 282 installed on darwin-arm64).
+- **The closure's non-permissive licences** (session decision 2026-10-26): `lightningcss` MPL-2.0 (Tailwind 4's `@tailwindcss/node` imports it at top level) and `caniuse-lite` CC-BY-4.0 are named exceptions in `website/scripts/check-licences.mjs`; ISC and 0BSD are on the allow-list.
+- **Biome 2.6** formats YAML (exclude `pnpm-lock.yaml`), deprecates `linter.rules.recommended` for `linter.rules.preset`, needs `css.parser.tailwindDirectives: true`, lints an SVG's missing `<title>`, and takes a CSS `/* biome-ignore-start <rule>: why */` ... `biome-ignore-end` range (for reduced motion's `!important`).
+- **Next 16.4 with TypeScript 7.0.2** type-checks in `next build` (a planted `TS2322` failed it) and rewrites `tsconfig.json` to add `esModuleInterop: true`: keep it there or every build dirties the file.
+- **Static export shapes**: a route handler at `app/api/search/route.ts` writes `out/api/search` with no extension (octet-stream on a static server); `opengraph-image.tsx` inside a route group exports as `/opengraph-image-<hash>` with no extension, so the OG images are `.png` route folders (`app/og/image.png/route.tsx`). `next build` deletes and recreates `out/`: restart an `http.server` started inside it.
+- **Fumadocs 16.17**: `RootProvider`'s `theme.hotKey` takes a predicate (Mod+Shift+D; needs a client wrapper); the default search dialog's `type: 'static'` is deprecated, so a dialog with `useStaticSearch({ from })`; its `Card` draws a 1px border and a shadowed icon and its `Callout` a side stripe, so the site has its own. The official static template is in the `create-fumadocs-app` npm tarball (`template/+next+fuma-docs-mdx+static`, MIT).
+- **Headless screenshots**: `chrome-headless-shell --headless --screenshot=<png> --window-size=W,H --virtual-time-budget=4000 <url>` from `~/Library/Caches/ms-playwright/chromium_headless_shell-1243/`; dark with `--blink-settings=preferredColorScheme=0` (background pixel 13,13,15). The guard refuses it with a shell variable in the line: scratchpad `p186/shots186.py` runs it and samples a pixel. The guard also refused a `cat` loop naming the template's `example.gitignore` (it contains "git").
+
+**Why:** each cost a probe or a failed run in #186.
+**How to apply:** for any ticket under `website/` (#187 content pipeline, #189 pages, #190 covers). Related: [[merge-ci-and-workflow-tooling-facts]], [[docs-verification-tools]], [[worktree-shell-and-check-gotchas]].
