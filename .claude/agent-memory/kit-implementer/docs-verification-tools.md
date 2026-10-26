@@ -165,6 +165,7 @@ metadata:
 ## Cleaning the skill for publication (#188, 2026-10-26)
 
 - **"ADR 0006's #50 amendment" loses its pointer when the number goes:** several amendments of one ADR share a date, so name each by the subject in its heading ("ADR 0006's RabbitMQ topology amendment"). A decision code beside a dropped spec number (W5, T2, A1, D13, P1) goes too, as "by decision". `scratchpad/p188/scan188.py <skill dir> [--wide]` lists the ticket's grep hits with context, and with `--wide` the plan pointers it leaves (G.x, plan I.x, Phase 5); `edit188.py` applies exact once-only replacements. A third-party issue (`Wolverine issue #4923`) matches `#[0-9]{2,}` too: make it a link to the issue URL.
+- **Count a grep's hits with the brief's own command, never `git grep`:** `git grep -E '\bW[0-9]+\b'` missed `(W11)` and printed 42 where the brief's `grep -rnE` printed 43, a review finding. Only `SKILL.md` and the references other than `publication.md` and `packages.md` are published (spec section 2): a published file names no private-plan citation (`G.<n>`, `plan I.<n>`, a bare `(I.3)`, which the session's regex misses), and a code-block comment points at no maintainer guide, since the pipeline rewrites links, not comments.
 
 ## Site pages and package READMEs (#185, 2026-10-26)
 
