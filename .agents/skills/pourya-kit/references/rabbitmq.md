@@ -13,7 +13,7 @@
 - [The Host's checks](#the-hosts-checks)
 - [Testing across Hosts](#testing-across-hosts)
 
-The topology is ADR 0006's #50 amendment, topology B. There is no service discovery, no Saga, no template for a Host of one Module, and no exactly-once delivery: each effect in a receiving Module's database is applied once by its Receipt, and an effect outside the database is at least once, as inside one Host.
+The topology is topology B of ADR 0006's RabbitMQ topology amendment. There is no service discovery, no Saga, no template for a Host of one Module, and no exactly-once delivery: each effect in a receiving Module's database is applied once by its Receipt, and an effect outside the database is at least once, as inside one Host.
 
 ## The topology
 
@@ -110,7 +110,7 @@ Not proven here: several instances of one receiving Host sharing its queue under
 
 ## A body the contract cannot read
 
-Only the wire name crosses the broker, never a type, so two Hosts whose contract types under one wire name differ cannot be told apart when they start. The receiving Host reads each body strictly instead, with the Kit's one JSON representation, which refuses a member named twice, and .NET 10's `RespectRequiredConstructorParameters` and `RespectNullableAnnotations`; HTTP bodies keep the lenient reading, so an HTTP client may still leave a member out (ADR 0006, ticket #60 amendment).
+Only the wire name crosses the broker, never a type, so two Hosts whose contract types under one wire name differ cannot be told apart when they start. The receiving Host reads each body strictly instead, with the Kit's one JSON representation, which refuses a member named twice, and .NET 10's `RespectRequiredConstructorParameters` and `RespectNullableAnnotations`; HTTP bodies keep the lenient reading, so an HTTP client may still leave a member out (ADR 0006, its amendment on strict wire reading).
 
 - **The rule.** A body is read only when it carries every member the receiving contract requires, each constructor parameter without a default value and each `required` member, none of them is null where the contract's nullable annotations forbid it, and it names no member of the contract twice, in its own case or another. Annotations count on properties and constructor parameters compiled with nullable reference types enabled, not on collection elements or generic arguments, and a contract of settable or `init` properties without `required` requires nothing: write Contracts as positional records, as the Integration Events of [messaging.md](messaging.md#the-integration-event) are.
 - **What happens to one that fails.** It is never handled. Wolverine sets it aside at once, without retries, as a dead letter received at the Host's queue, `rabbitmq://queue/{serviceName}`, before the fan-out, so no subscription receives a copy, and the dead letter keeps the `System.Text.Json.JsonException` and its message, which names the member, such as `JSON deserialization for type 'Catalog.Contracts.Products.Events.V1.ProductCreatedV1' was missing required properties including: 'name'.`

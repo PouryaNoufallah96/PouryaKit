@@ -1,6 +1,6 @@
 # Observability
 
-`PouryaKit.Observability`: one activity and one duration measurement for every command and query the dispatcher runs, and a trace that continues from an Operation through the Outbox into the deliveries it causes. Namespace `PouryaKit.Observability`. It references `PouryaKit.Cqrs` only and emits through `System.Diagnostics`: the Kit has no OpenTelemetry package, no exporter and no Serilog. Exporting is the Host's job, done with the standard OpenTelemetry setup of the service defaults recipe ([host-recipes.md](host-recipes.md)) that the project templates (#53) carry.
+`PouryaKit.Observability`: one activity and one duration measurement for every command and query the dispatcher runs, and a trace that continues from an Operation through the Outbox into the deliveries it causes. Namespace `PouryaKit.Observability`. It references `PouryaKit.Cqrs` only and emits through `System.Diagnostics`: the Kit has no OpenTelemetry package, no exporter and no Serilog. Exporting is the Host's job, done with the standard OpenTelemetry setup of the service defaults recipe ([host-recipes.md](host-recipes.md)) that the project templates carry.
 
 - [Registering](#registering)
 - [What is emitted](#what-is-emitted)
@@ -64,9 +64,9 @@ request (ASP.NET Core)                  tracestate=vendor=1
 - Wolverine stores the id of the activity current when the Unit of Work writes the Outbox as the envelope's `parent-id`. The Outbox adds that activity's tracestate as the header `OperationContextHeaders.TraceState` (`pouryakit-tracestate`), which Wolverine does not carry.
 - Each delivery restores both into `Operation.TraceParent` when it begins the Operation. The delivery's activity is a child of Wolverine's span of the envelope when the Host samples the `Wolverine` source, and of the publishing Operation when it does not. Either way it carries the publishing tracestate. Without this step every hop would start a new trace.
 - An occurrence of a recurring command continues no Operation, so its delivery restores no parent: its Operation's activity is a child of Wolverine's span of the envelope when the Host samples the `Wolverine` source, and the root of a trace of its own when it does not ([messaging.md](messaging.md#recurring-commands)).
-- A retry is read back from the message store and stays in the trace, as a sibling of the attempt that failed. A delivery recovered on another Host keeps the parent too (proven in Spike #46).
+- A retry is read back from the message store and stays in the trace, as a sibling of the attempt that failed. A delivery recovered on another Host keeps the parent too, as the evidence of ADR 0009 shows.
 
-Across RabbitMQ, into a subscription of another Host ([rabbitmq.md](rabbitmq.md)), the trace continues the same way (ADR 0009, #52 amendment):
+Across RabbitMQ, into a subscription of another Host ([rabbitmq.md](rabbitmq.md)), the trace continues the same way (ADR 0009, its amendment on the trace across RabbitMQ):
 
 ```text
 Catalog Host                                     Inventory.Host

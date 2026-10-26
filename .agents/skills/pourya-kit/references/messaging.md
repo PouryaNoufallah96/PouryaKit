@@ -69,7 +69,7 @@ public sealed record NewProductAnnouncement(Guid ProductId, string Name);
 
 ## Notification Handler or Domain Event Handler
 
-Both react to a Domain Event the Module raised. Choose by when the reaction may happen (G.2):
+Both react to a Domain Event the Module raised. Choose by when the reaction may happen:
 
 - A Domain Event Handler runs inside the Operation's Unit of Work, before the commit, and its changes commit with the change or not at all. Use it to keep the Module's own aggregates consistent with each other ([persistence.md](persistence.md#domain-event-handlers)).
 - A Notification Handler runs after the commit, in an Operation of its own. Use it for anything that reaches outside the Module's own data and cannot be taken back, such as sending an email, pushing to a client, calling another system or publishing an Integration Event for other Modules. Its failure is retried; it never rolls back the change, which is already committed.
@@ -124,7 +124,7 @@ public sealed partial class LoggedNewProductAnnouncer(ILogger<LoggedNewProductAn
 
 ## Integration Events between Modules
 
-Across Modules, a Module tells the others what happened with an Integration Event (G.5): use one when another Module reacts to something that happened in this one. When another Module keeps its own copy of this one's data, publish a Snapshot instead ([Snapshots between Modules](#snapshots-between-modules)). The receiving Module applies it later, in an Operation of its own, and the publishing Operation never waits for it. A synchronous question through the owning Module's Contracts ([modules.md](modules.md#asking-another-module-a-question)) is the exception, for an Operation that cannot go on without the answer.
+Across Modules, a Module tells the others what happened with an Integration Event: use one when another Module reacts to something that happened in this one. When another Module keeps its own copy of this one's data, publish a Snapshot instead ([Snapshots between Modules](#snapshots-between-modules)). The receiving Module applies it later, in an Operation of its own, and the publishing Operation never waits for it. A synchronous question through the owning Module's Contracts ([modules.md](modules.md#asking-another-module-a-question)) is the exception, for an Operation that cannot go on without the answer.
 
 In the Proving Sample, Catalog tells Inventory and Billing about each new product: Inventory opens a stock item for it, and Billing a price list:
 
@@ -215,7 +215,7 @@ internal sealed class PublishProductCreatedNotificationHandler(IIntegrationEvent
 }
 ```
 
-- Publish from a Notification Handler only (G.2): inject `IIntegrationEventPublisher` (`PouryaKit.Messaging`) and call `Publish(domainEvent.Id, integrationEvent)` with the `Id` of the Domain Event the handler is handling. Publishing sends nothing: the delivery's Unit of Work writes the Integration Event to the Module's Outbox when it commits, and it is sent after that commit.
+- Publish from a Notification Handler only: inject `IIntegrationEventPublisher` (`PouryaKit.Messaging`) and call `Publish(domainEvent.Id, integrationEvent)` with the `Id` of the Domain Event the handler is handling. Publishing sends nothing: the delivery's Unit of Work writes the Integration Event to the Module's Outbox when it commits, and it is sent after that commit.
 - Give publishing a Notification Handler of its own, as the sample keeps it apart from the announcement: each handler is retried on its own, so a failing announcement neither holds back nor repeats the Integration Event.
 - `Publish` throws `InvalidOperationException` when it is called:
   - outside a Notification Handler's delivery, such as in a command handler or in an Integration Event Handler;
@@ -293,7 +293,7 @@ events.Publish(
 
 ## Snapshots between Modules
 
-A Snapshot is the current state of one aggregate, published for other Modules, and it supersedes every earlier Snapshot of that aggregate. A Tombstone is the Snapshot that says the aggregate no longer exists. Choose between a Snapshot and an Integration Event by what the receiver needs (G.2, G.5):
+A Snapshot is the current state of one aggregate, published for other Modules, and it supersedes every earlier Snapshot of that aggregate. A Tombstone is the Snapshot that says the aggregate no longer exists. Choose between a Snapshot and an Integration Event by what the receiver needs:
 
 - An Integration Event is a fact: something happened, and the receiver reacts to it, as Inventory opens a stock item for each new product. Each one matters on its own, and a Notification Handler publishes it.
 - A Snapshot is state: what the aggregate is now, for a Module that keeps its own copy of it, as Inventory keeps a copy of each catalog product. Only the newest matters: once a newer one is applied, an older one is worth nothing. Feature code never publishes it; the Unit of Work does, in the commit of every change of the aggregate.
@@ -339,7 +339,7 @@ internal sealed class ProductSnapshotMapper : ISnapshotMapper<Product, ProductSn
 ```
 
 - Implement `ISnapshotMapper<TAggregate, TSnapshot>` (`PouryaKit.Messaging`) in an `internal sealed` class of the aggregate's Business Area, under `Events/`. It has two methods: `Map` builds the Snapshot of an aggregate that exists, and `Tombstone` builds the Snapshot of one the Operation removed, whether it is kept marked deleted or deleted outright. Both receive the aggregate in its final state.
-- Map by hand, member by member, with no mapping library (G.7). Read the version from the aggregate's `Version`: it is the version being committed.
+- Map by hand, member by member, with no mapping library. Read the version from the aggregate's `Version`: it is the version being committed.
 - `PublishSnapshot` registers the mapper scoped, and the Kit resolves it in the scope of the Operation that commits and runs it as a step of the Unit of Work that only reads. It reads the aggregate, and may run a query through an injected `IDispatcher` when it needs more; it writes nothing. The sample's takes nothing. [The rules of a mapper and a key](#the-rules-of-a-mapper-and-a-key) say what is refused and what fails the Operation.
 
 ### Declaring a Snapshot
@@ -392,7 +392,7 @@ internal sealed class CopyProductIntegrationEventHandler(IUnitOfWorkConnection u
 - The copy is not an aggregate. It holds what the publishing Module last published and nothing the receiving Module decides: it has no rule to guard, raises no Domain Event, and needs no version of its own, because the Kit already decides which Snapshot is applied. Inventory's own decisions about a product live in its own aggregates, such as the stock item.
 - Write only the effect: insert or update for a Snapshot, delete for a Tombstone. The handler compares no version: the Kit runs it only for a newer one, and after a Tombstone it runs for no older one, so a deleted row stays deleted.
 - A copy of a tenant-scoped Module's aggregates is keyed by tenant and aggregate, written under the tenant the delivery carries, which the injected `OperationContext` holds; the receiving Module need not be tenant-scoped ([multi-tenancy.md](multi-tenancy.md#deliveries)).
-- Inventory's project references `PouryaKit.Persistence.Dapper`, which brings Dapper for `ExecuteAsync` and `CommandDefinition`. The copy needs only `IUnitOfWorkConnection`, which comes with `UsePouryaKitPostgres`; Inventory calls `AddPouryaKitDapper` for its `GetStockItem` read (ticket #169), not for the copy.
+- Inventory's project references `PouryaKit.Persistence.Dapper`, which brings Dapper for `ExecuteAsync` and `CommandDefinition`. The copy needs only `IUnitOfWorkConnection`, which comes with `UsePouryaKitPostgres`; Inventory calls `AddPouryaKitDapper` for its `GetStockItem` read, not for the copy.
 
 The receiving Module's migration creates the copy and the table the Kit keeps the applied versions in, `CreateSnapshotVersionTable` (`PouryaKit.Messaging.Wolverine.EFCore`), beside the Receipt table it already has ([Receipts](#receipts)). Neither is in the Module's model, so the model does not change; add the migration with `dotnet ef migrations add` as for the Receipt table and fill its `Up` and `Down`:
 
@@ -578,7 +578,7 @@ An Integration Event is delivered the same way, sent after the commit, in a new 
 
 ## Receipts
 
-- A Module keeps its handlers' Receipts in a table `pouryakit_receipts` in its own schema, keyed by the subscription name, lower-cased, and the identity of what was delivered: a Notification's or Integration Event's is the Domain Event's `Id`; a Snapshot's is derived from its wire name, its aggregate's key and its version. Neither key holds a tenant (ADR 0006's #117 amendment): a tenant-scoped Module's Snapshot of an aggregate whose key two tenants could share fails the Host when it is built ([multi-tenancy.md](multi-tenancy.md#declaring-a-tenant-scoped-module)). The table is not part of the Module's model, so a migration creates it with `CreateReceiptTable` and the Module's schema.
+- A Module keeps its handlers' Receipts in a table `pouryakit_receipts` in its own schema, keyed by the subscription name, lower-cased, and the identity of what was delivered: a Notification's or Integration Event's is the Domain Event's `Id`; a Snapshot's is derived from its wire name, its aggregate's key and its version. Neither key holds a tenant (ADR 0006's amendment on tenants at delivery and in the keys): a tenant-scoped Module's Snapshot of an aggregate whose key two tenants could share fails the Host when it is built ([multi-tenancy.md](multi-tenancy.md#declaring-a-tenant-scoped-module)). The table is not part of the Module's model, so a migration creates it with `CreateReceiptTable` and the Module's schema.
 - Which Module needs which table:
   - `pouryakit_receipts` (`CreateReceiptTable`): every Module that declares a Notification Handler, subscribes an Integration Event Handler, publishes Integration Events or declares a delayed or recurring command. Inventory calls it in its first migration, beside its own tables. A publishing Module's table also holds one row per Domain Event and wire name it published, keyed `<wire name>#published`, which no subscription name can take: it is how the Kit refuses a second Notification Handler publishing the same type for one Domain Event, and it is not a Receipt.
   - `pouryakit_snapshot_versions` (`CreateSnapshotVersionTable`, [Keeping a copy](#keeping-a-copy)): every Module that subscribes to a Snapshot, beside its Receipt table.
@@ -689,7 +689,7 @@ public sealed class DeadLetterTriage(IWolverineRuntime runtime)
 - `PouryaKitMessageStoreOptions` (`PouryaKit.Messaging.Wolverine`) holds the store's settings:
   - `Durability`: `DurabilityMode.Balanced`, the default, is safe with any number of Host instances on one store when all are instances of one Host (the store's schema, below). `DurabilityMode.Solo` assumes a single instance and recovers a stopped instance's deliveries at once; the tests use it.
   - `InboxStaleTime`, 5 minutes by default: how long a delivery an instance took and no longer holds waits before the store hands it out again. It is what delivers a Notification or Integration Event committed but never sent while its Host lives on, so such a delivery waits that long. Set it by [the stale-time rule](#the-stale-time-rule). Zero or less stops the Host when it starts, with an `OptionsValidationException` naming the option.
-- The store's schema is the second argument of `UsePouryaKitWolverine(connectionName, schema, configure)`, `wolverine` by default. Instances of one Host share one store and one schema. Two different Hosts, with different handlers, Modules or applications, each take a store of their own: another database, or another schema on one database through that argument. Sharing a schema between different applications is unsupported: a node of one recovers the other's stored deliveries, has no handler for them and dead-letters them (Wolverine issue #4923). This is a deployment rule, and no check enforces it.
+- The store's schema is the second argument of `UsePouryaKitWolverine(connectionName, schema, configure)`, `wolverine` by default. Instances of one Host share one store and one schema. Two different Hosts, with different handlers, Modules or applications, each take a store of their own: another database, or another schema on one database through that argument. Sharing a schema between different applications is unsupported: a node of one recovers the other's stored deliveries, has no handler for them and dead-letters them ([Wolverine issue 4923](https://github.com/JasperFx/wolverine/issues/4923)). This is a deployment rule, and no check enforces it.
 - Change the settings anywhere in the Host's composition, before it is built: `builder.Services.Configure<PouryaKitMessageStoreOptions>(store => store.InboxStaleTime = TimeSpan.FromMinutes(15));`.
 - The store's settings, the Outbox write and the scope's waiting Integration Events and commands are `PouryaKit.Messaging.Wolverine`'s, behind `UsePouryaKitMessageStore` and `OutboxWriter`, which a store package's registration and Unit of Work call; a Host calls the store package's registration, `UsePouryaKitWolverine(connectionName)`, never those. In a Host of Modules each Module's Receipts are its write model's: the EF package keys `EfReceipts` for every Module that keys none of its own, the Marten package keys a Stream Module's in that Module's schema ([stream.md](stream.md)), and the Host resolves the Receipts of the Operation's Module, whichever of `AddPouryaKitModules` and `UsePouryaKitWolverine` comes first.
 
