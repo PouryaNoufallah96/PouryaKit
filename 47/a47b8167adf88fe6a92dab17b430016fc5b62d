@@ -1,0 +1,21 @@
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_2907c73c709168::t_141a25b4540758 11
+docs/acceptance.md
+  s_2907c73c709168::t_bb2d78d7ee3f3d 2993
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "47a47b8167adf88fe6a92dab17b430016fc5b62d",
+  "prompts": {},
+  "sessions": {
+    "s_2907c73c709168": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a1734560-a43c-4ccf-9966-072c809942ac",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
