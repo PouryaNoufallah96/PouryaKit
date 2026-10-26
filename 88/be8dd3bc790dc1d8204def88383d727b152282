@@ -1,0 +1,86 @@
+.agents/scripts/check-tree.py
+  s_2907c73c709168::t_67cf919d7d47ba 18,23-28,31-36
+  s_2907c73c709168::t_4964ff4ab9f6e1 45
+  s_2907c73c709168::t_98af6a6d2a10b9 2-3
+  s_2907c73c709168::t_c74957fca5aef2 29-30
+scripts/packaging/validate.py
+  s_2907c73c709168::t_8c5211548a27c0 22-23
+  s_2907c73c709168::t_8d6a65f2e5b4af 500
+.github/workflows/ci.yml
+  s_2907c73c709168::t_4df882aef57d37 58
+  s_2907c73c709168::t_b3ab7fa16f185f 46-57,59-76
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_2907c73c709168::t_14c531098f66b0 11
+docs/architecture/README.md
+  s_2907c73c709168::t_8c109f403786c1 68
+docs/agents/ai-setup.md
+  s_2907c73c709168::t_46cd6a54a66dda 34
+  s_2907c73c709168::t_19acaab7535991 28
+  s_2907c73c709168::t_94b3d2598fc2c4 183
+  s_2907c73c709168::t_e8085e9d6145d0 212
+  s_2907c73c709168::t_252d6927417794 16
+.agents/scripts/test_check_tree.py
+  s_2907c73c709168::t_291bf8236f07f9 1-42
+.githooks/pre-commit
+  s_2907c73c709168::t_9d43a67b26f69d 14-15
+.claude/agents/kit-implementer.md
+  s_2907c73c709168::t_3d63e3897e4efc 36
+.agents/scripts/check-ai-setup.py
+  s_2907c73c709168::t_e356bfdb889a90 553
+docs/agents/brief-template.md
+  s_2907c73c709168::t_e9876376706bc4 40
+docs/acceptance.md
+  s_2907c73c709168::t_7499ebc0c94b43 2978-2992
+AGENTS.md
+  s_2907c73c709168::t_15d783caf7ddfc 87
+  s_2907c73c709168::t_b36145c0e50e69 101
+  s_2907c73c709168::t_aae63aca1f3102 69
+  s_2907c73c709168::t_8fb86d5155b731 97
+  s_2907c73c709168::t_9692de8f4d921a 90
+  s_2907c73c709168::t_70bebe519487aa 115
+.codex/agents/kit-implementer.toml
+  s_2907c73c709168::t_9e377e2cd7271c 35
+docs/ci.md
+  s_2907c73c709168::t_77c6b310ae3569 3
+  s_2907c73c709168::t_f4f04140e779f7 7
+  s_2907c73c709168::t_0f792488656dc4 17
+.agents/scripts/test_check_docs.py
+  s_2907c73c709168::t_8a3db6f361ddb0 329-334,338-357
+  s_2907c73c709168::t_93ec6f830c57e3 358
+scripts/packaging/test_validation.py
+  s_2907c73c709168::t_556dc358c76bc3 73-74
+  s_2907c73c709168::t_6afd0c42d65ee5 63-64,66
+.agents/scripts/check-docs.py
+  s_2907c73c709168::t_48156da5496379 35
+  s_2907c73c709168::t_bd22652651a418 605-606
+  s_2907c73c709168::t_1fd3627e608c17 288-289
+  s_2907c73c709168::t_e9dcec4290dd68 92-93
+  s_2907c73c709168::t_757e538fd89cc7 9-16
+  s_2907c73c709168::t_57872e7b1af49f 444
+.claude/rules/website.md
+  s_2907c73c709168::t_8a2fceb241506e 1-23
+.agents/scripts/ci-local.sh
+  s_2907c73c709168::t_ccb6c0956f99f5 23-30
+  s_2907c73c709168::t_9a092b8a79e9e8 2-4
+.agents/scripts/test_pre_commit.py
+  s_2907c73c709168::t_cb2de2cbed2361 78
+  s_2907c73c709168::t_29d2c1f1dee5fd 1-77,79-83
+.gitignore
+  s_2907c73c709168::t_d98a0d7ed1e4be 27-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "88be8dd3bc790dc1d8204def88383d727b152282",
+  "prompts": {},
+  "sessions": {
+    "s_2907c73c709168": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a1734560-a43c-4ccf-9966-072c809942ac",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
