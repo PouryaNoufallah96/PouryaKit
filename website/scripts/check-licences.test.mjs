@@ -44,6 +44,7 @@ test('each exception admits its licence for its named packages only', () => {
     planted({
       'caniuse-lite': { name: 'caniuse-lite', version: '1.0.0', license: 'CC-BY-4.0' },
       'browser-data': { name: 'browser-data', version: '1.0.0', license: 'CC-BY-4.0' },
+      'caniuse-lite-evil': { name: 'caniuse-lite-evil', version: '1.0.0', license: 'CC-BY-4.0' },
       lightningcss: { name: 'lightningcss', version: '1.0.0', license: 'MPL-2.0' },
       'lightningcss-linux-x64-gnu': { name: 'lightningcss-linux-x64-gnu', version: '1.0.0', license: 'MPL-2.0' },
       'lightningcss-evil': { name: 'lightningcss-evil', version: '1.0.0', license: 'MPL-2.0' },
@@ -57,6 +58,7 @@ test('each exception admits its licence for its named packages only', () => {
     }),
     [
       'browser-data 1.0.0 is licensed CC-BY-4.0, which the check does not admit.',
+      'caniuse-lite-evil 1.0.0 is licensed CC-BY-4.0, which the check does not admit.',
       'lightningcss-evil 1.0.0 is licensed MPL-2.0, which the check does not admit.',
       'lightningcss-linux-x64-gnu-evil 1.0.0 is licensed MPL-2.0, which the check does not admit.',
       'css-compiler 1.0.0 is licensed MPL-2.0, which the check does not admit.',
