@@ -1,0 +1,42 @@
+website/covers/fonts/OFL.txt
+  s_2907c73c709168::t_88485c85afae88 1-93
+.claude/rules/website.md
+  s_2907c73c709168::t_1aa89df991afd2 25-26
+website/scripts/covers.test.mjs
+  s_2907c73c709168::t_b8652b15723f61 1-27
+.github/workflows/ci.yml
+  s_2907c73c709168::t_c056e6bb2c2e10 48
+website/covers/README.md
+  s_2907c73c709168::t_d75159123ced94 1-4,11-31,50-51
+  s_2907c73c709168::t_529501fc2883b1 5-10,32-49
+website/covers/covers.json
+  s_2907c73c709168::t_b8842054781f04 24-28,30-49,137-141,144-153,155-159
+  s_2907c73c709168::t_83b9a842b2ece1 1-23,29,50-136,142-143,154,160-191
+.gitignore
+  s_2907c73c709168::t_8b52c05b6ab0e5 34-35
+website/package.json
+  s_2907c73c709168::t_8f2e353ed2f2cf 15-16
+website/scripts/covers.ts
+  s_2907c73c709168::t_03f17c47d1817d 10-11
+  s_2907c73c709168::t_b8842054781f04 76-81,90-91
+  s_2907c73c709168::t_eadbdc933897b4 184-202
+  s_2907c73c709168::t_129a7b25cd47e6 12,24-26,45-60,62,126,132-145,163,165-166,169-172,178,222,225
+  s_2907c73c709168::t_8b10003455e5f6 233
+  s_2907c73c709168::t_9f9abc8efd9e41 1-9,13-23,27-44,61,63-75,82-89,92-125,127-131,146-162,164,167-168,173-177,179-183,203-221,223-224,226-232
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2fe421f39695894eadc59320c7846e6b1ba75779",
+  "prompts": {},
+  "sessions": {
+    "s_2907c73c709168": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a1734560-a43c-4ccf-9966-072c809942ac",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
