@@ -1,0 +1,109 @@
+README.md
+  s_02e401453049ec::t_f73687233d6190 5
+.claude/agent-memory/kit-implementer/observability-tracing-and-http-facts.md
+  s_02e401453049ec::t_1a1775378028b5 37
+tests/PouryaKit.ArchitectureTests/PackageArtifactTests.cs
+  s_02e401453049ec::t_835129e8d22e22 30-31,33
+.claude/rules/kit-code.md
+  s_02e401453049ec::t_cf57f345203fc3 21
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_02e401453049ec::t_45b36adc600938 75
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_02e401453049ec::t_8d62a095b00cae 3
+.claude/agent-memory/kit-implementer/caching-and-idempotency-facts.md
+  s_02e401453049ec::t_f16e65c47c5c27 35
+scripts/packaging/validate.py
+  s_02e401453049ec::t_784105c1d11e5e 282
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_02e401453049ec::t_2d84bab0ef0305 22
+docs/architecture/README.md
+  s_02e401453049ec::t_4fa2cca6220134 768
+  s_02e401453049ec::t_8259336480cec5 294
+  s_02e401453049ec::t_bad0c1c216a765 350
+  s_02e401453049ec::t_ac904cba1cc646 371
+  s_02e401453049ec::t_bc04df6186dd86 767
+  s_02e401453049ec::t_36aa4d2bcf0d3f 685
+scripts/packaging/test_validation.py
+  s_02e401453049ec::t_b2531667fbb67f 69
+.agents/scripts/check-docs.py
+  s_02e401453049ec::t_d863257e221403 15-16
+  s_02e401453049ec::t_7f2edd6a3749d2 482,484,486
+  s_02e401453049ec::t_2cddd6b27bfb4c 136-137
+  s_02e401453049ec::t_04cfa510697fbf 45-49
+docs/packages.md
+  s_02e401453049ec::t_d9aa1b9c2bfec3 19
+  s_02e401453049ec::t_c02be94fac49fc 38
+.agents/scripts/test_check_docs.py
+  s_02e401453049ec::t_31c2541714f50e 431,433,436-437,442-443,445
+.agents/scripts/check-tree.py
+  s_02e401453049ec::t_f5bc46b8320d7c 20
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_02e401453049ec::t_264d236b49bffc 114
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_02e401453049ec::t_6a84ea573c294f 606
+  s_865d064fa7c8eb::t_952544dadacf53 171-172,177-178,194-195,211-212,224,241-242,270-271
+docs/agents/brief-template.md
+  s_02e401453049ec::t_412f13e65adf36 36
+  s_02e401453049ec::t_229e814154929d 28
+  s_02e401453049ec::t_b515539bc8a989 32
+samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs
+  s_02e401453049ec::t_1c6f5b77b3959f 1-29
+AGENTS.md
+  s_02e401453049ec::t_06f97fa5ac05e9 16
+  s_02e401453049ec::t_03e6e8f2469a44 87
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_02e401453049ec::t_9343d019fccb37 3
+  s_02e401453049ec::t_de78be9725870e 28
+  s_02e401453049ec::t_5ea5cc23afb8e7 160-164
+  s_02e401453049ec::t_9847065c6b6929 101
+  s_02e401453049ec::t_6e95378a1ba75c 82
+  s_02e401453049ec::t_3224e96a977ede 99
+  s_02e401453049ec::t_d59d8bc15bb91d 27
+docs/agents/ai-setup.md
+  s_02e401453049ec::t_70ac8a0c61bdc1 212
+.claude/agent-memory/kit-implementer/snapshot-and-scheduled-command-facts.md
+  s_02e401453049ec::t_a237fd42c60b36 76
+.claude/agent-memory/kit-implementer/email-and-provider-package-facts.md
+  s_02e401453049ec::t_485d972ef240a7 10
+docs/foundation-review.md
+  s_02e401453049ec::t_f1aaf4fd7f5bfe 688-689
+  s_02e401453049ec::t_3d5d674b124b2f 705-706
+  s_02e401453049ec::t_164676e971ab0a 255-256
+  s_02e401453049ec::t_f5657b52a32f9a 604
+  s_02e401453049ec::t_0db3ceec37c1d1 639-644
+  s_02e401453049ec::t_f9e4cb9e6b91bd 202
+docs/architecture/diagrams/ci-and-publication.html
+  s_02e401453049ec::t_29daa73c8a6551 5518
+tests/PouryaKit.ArchitectureTests/LicenceTests.cs
+  s_02e401453049ec::t_3b24d3feaef201 7
+docs/acceptance.md
+  s_02e401453049ec::t_3c875caba382e7 46,453,498,548,968,984,1427,1606,2010,2025,2043-2044,2194,2242,2258-2259,2274,2293,2308,2336,2358,2382,2384,2406,2456,2458,2482,2501,2510,2523,2525,2542-2543,2563,2609,2933
+docs/architecture/diagrams/kit-context.architecture.json
+  s_02e401453049ec::t_7491877b11348a 195-196,223-224,229-230
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_02e401453049ec::t_62879944831427 133-134,325-326,337-338
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5a0bba12a7e94c26b2f3a56eded0bfb5dd1843c0",
+  "prompts": {},
+  "sessions": {
+    "s_02e401453049ec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7d6be628-41e2-4306-b031-cde6dfb9cb68",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_865d064fa7c8eb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a40198d0f20dbee43",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
