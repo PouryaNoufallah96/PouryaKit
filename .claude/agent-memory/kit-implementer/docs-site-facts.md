@@ -1,6 +1,6 @@
 ---
 name: docs-site-facts
-description: The docs site under website/ (Next.js 16 static export, Fumadocs 16, Tailwind 4, pnpm 12, Biome 2.6, TS 7) - pnpm settings and licence report traps, export shapes, Fumadocs components the design replaces, headless screenshots
+description: The docs site under website/ (Next.js 16 static export, Fumadocs 16, Tailwind 4, pnpm 12, Biome 2.6, TS 7) - pnpm settings and licence report traps, export shapes, Fumadocs components the design replaces, headless screenshots, the content pipeline (Node type stripping, mdxOptions, export scanning)
 metadata:
   type: project
 ---
@@ -18,5 +18,13 @@ metadata:
 - **Fumadocs 16.17**: `RootProvider`'s `theme.hotKey` takes a predicate (Mod+Shift+D; needs a client wrapper); the default search dialog's `type: 'static'` is deprecated, so a dialog with `useStaticSearch({ from })`; its `Card` draws a 1px border and a shadowed icon and its `Callout` a side stripe, so the site has its own. The official static template is in the `create-fumadocs-app` npm tarball (`template/+next+fuma-docs-mdx+static`, MIT).
 - **Headless screenshots**: `chrome-headless-shell --headless --screenshot=<png> --window-size=W,H --virtual-time-budget=4000 <url>` from `~/Library/Caches/ms-playwright/chromium_headless_shell-1243/`; dark with `--blink-settings=preferredColorScheme=0` (background pixel 13,13,15). The guard refuses it with a shell variable in the line: scratchpad `p186/shots186.py` runs it and samples a pixel. The guard also refused a `cat` loop naming the template's `example.gitignore` (it contains "git").
 
-**Why:** each cost a probe or a failed run in #186.
+## Content pipeline (#187, 2026-10-27; remark 15.0.1, remark-gfm 4.0.1, remark-mdx 3.1.1, unist-util-visit 5.2.0, github-slugger 2.0.0, Node 24.21.0)
+
+- **Node 24 runs the `.ts` modules and tests unflagged** (type stripping): relative imports need the `.ts` extension, so `tsconfig.json` needs `allowImportingTsExtensions` for `next build`'s type check, and a type-only import must be `import type` or Node fails at run time. `next build` type-checks the `*.test.ts` files too (a `processor.run` result is `Node`: cast to `Root`). pnpm's strict layout: a transitive package (unified, remark) is importable only once it is a direct dependency; adding it at the closure's version touched only the lockfile's `importers`.
+- **fumadocs-mdx's macro `mdxOptions`**: a collection-level value drops every default plugin; `applyMdxPreset({ remarkPlugins: [...] })` from `fumadocs-mdx/config` keeps them. Order: Fumadocs' `remarkInclude` first, the preset's plugins, then `remarkPostprocess` (the processed Markdown). A plugin that replaces a node must mutate it in place and call `replaceSource(file, node, text)` (`fumadocs-core/mdx-plugins/stringifier`), or "Copy as Markdown" keeps the element; `extractCodeRegion` (`fumadocs-core/mdx-plugins/remark-include`) reads C#'s `#region name`. A throw in a remark plugin fails `next build` ("Error evaluating Node.js code"). A `.md` file compiles as Markdown and `.mdx` as MDX; `<include>` of a `.md` file from an `.mdx` page parses it as Markdown, so a generated reference needs no MDX escaping.
+- **Scanning the export**: the processed Markdown writes each heading's id as `[#id]` (a numeric id matches `#\d{2,}`), and RSC payloads (`*.txt`, inline scripts) escape `<` as `\u003c` (`a:\u003cid\` looked like a Windows drive path): read text, not raw markup, and undo string escapes before the address rules.
+- **A sample region marker**: diagrams cite `CreateProductCommandHandler.cs` by line (`http-command`, `module-boundaries`), so a marker there forces two re-pins; `RenameProductCommandHandler.cs` is cited by no diagram and replaced by no template.
+- **Shell guard**: refused a python heredoc whose text held the word "git" (prose included) and a `sed -n` with a computed line; the Edit tool and scratchpad scripts with the worktree as argument worked.
+
+**Why:** each cost a probe or a failed run in #186 or #187.
 **How to apply:** for any ticket under `website/` (#187 content pipeline, #189 pages, #190 covers). Related: [[merge-ci-and-workflow-tooling-facts]], [[docs-verification-tools]], [[worktree-shell-and-check-gotchas]].
