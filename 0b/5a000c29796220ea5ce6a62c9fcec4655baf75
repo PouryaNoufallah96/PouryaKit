@@ -1,0 +1,19 @@
+docs/acceptance.md
+  s_2907c73c709168::t_ca9929817796d0 3032-3053
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0b5a000c29796220ea5ce6a62c9fcec4655baf75",
+  "prompts": {},
+  "sessions": {
+    "s_2907c73c709168": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a1734560-a43c-4ccf-9966-072c809942ac",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
