@@ -12,9 +12,8 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   Only code-like spans count: a span holding a path or citation (`/`, `@`), a header, YAML or config key (`Name:`,
   `Name=`) or two adjacent words that are not C# keywords (prose, a command line) is skipped, and so is a dotted
   name rooted in a namespace of ROOTS or at an ALLOWED entry. Out of scope by design: `docs/adr/` and the plan's
-  review log (records that name renamed and removed symbols on purpose), `docs/foundation-review.md` (the plan),
-  `docs/acceptance.md` (a record of runs, full of third-party exception and tool names) and `docs/provenance/`
-  (upstream code).
+  review log (records that name renamed and removed symbols on purpose), `docs/foundation-review.md` (the plan) and
+  `docs/acceptance.md` (a record of runs, full of third-party exception and tool names).
 - Links: every relative link and `#anchor` resolves in the working tree, inline or through a reference definition
   (`[id]: target`), with GitHub's heading slugs and duplicates numbered; a `[text][id]` with no definition fails.
 - Code spans: a span longer than 20 characters whose text starts or ends with a space fails, after CommonMark's
@@ -42,17 +41,12 @@ fenced code and frontmatter blanked, except the vendored skills that `skills-loc
   A span that reads both ways, `ArchitectureTests.LayerTests`, names the class when a file of that namespace declares it.
   A renamed test is drift to fix (`git log -S<Method>` finds the new name); a test the row itself says was removed
   goes in REMOVED_TESTS with the reason. `docs/adr/` stays out: it keeps renamed names on purpose.
-- Provenance: a `.cs` file under `src/`, `samples/` or `tests/` whose `//` comment says the code is shaped like,
-  adapted from, ported from or taken from something must be named in the **Kit files** line of a record in
-  `docs/provenance/` (its README's format example is no record). Ordinary prose that trips it is said another way.
 - Kit paths: a path the docs cite into the Kit must name a file or folder that git tracks or would track and the
-  working tree holds: each span that is a path on the **Kit files** line of a record in `docs/provenance/`, and
-  each span that is a path into the Kit's packages (`src/PouryaKit.*`), `samples/` or `tests/` in the rest of such a
-  record, but its **Upstream paths** line, or in a top-level `docs/*.md`, the plan and the acceptance record among
-  them. A `:line` suffix is not part of the path, and a path holding `*` is a glob that must match one. Out of scope
-  by design: an upstream repository's path, which a record cites under **Upstream paths** or as
-  `repository@commit path` and the plan as a path outside the Kit's packages; the test project of a solution
-  generated from the templates (`tests/acme-shop.Tests`), which exists only during a `validate.py` run; and
+  working tree holds: each span that is a path into the Kit's packages (`src/PouryaKit.*`), `samples/` or `tests/`
+  in a top-level `docs/*.md`, the plan and the acceptance record among them. A `:line` suffix is not part of the
+  path, and a path holding `*` is a glob that must match one. Out of scope by design: an upstream repository's path,
+  which the plan cites as `repository@commit path` or as a path outside the Kit's packages; the test project of a
+  solution generated from the templates (`tests/acme-shop.Tests`), which exists only during a `validate.py` run; and
   `docs/adr/`, dated records. A moved file is cited at its new path.
 - Diagram sources: each Archify diagram source, `docs/architecture/diagrams/*.json`, pins `meta.repository.revision`,
   and every entry of a `sources` list in it (`path`, `line`, `end_line`, one line when that is absent) must still
@@ -139,10 +133,9 @@ REMOVED_TESTS = {
         "removed by #159: the default is compared once Kestrel has bound it, and no test binds port 5000; its section names the replacements",
     "InboxStaleTimeTests.A_retry_that_runs_after_the_stale_time_is_handed_out_again_while_it_runs_and_its_receipt_keeps_one_effect":
         "replaced by #167: since WolverineFx 6.51.0 an instance restarts the stale clock of a delivery it claims or holds, so A_retry_due_after_the_stale_time_is_not_handed_out_again_while_it_runs states the new fact; row 9's concurrent copy stays proven by IntegrationEventTests.Concurrent_deliveries_of_one_integration_event_apply_its_effect_once",
+    "CheckDocsTests.test_an_upstream_path_in_a_provenance_record_or_the_plan_passes":
+        "replaced on 2026-10-26 by test_an_upstream_path_in_the_plan_passes: the owner removed the provenance records, so the plan's half is what is left to prove",
 }
-ADOPTED = re.compile(r"//.*\b(shaped like|adapted from|ported from|taken from)\b", re.IGNORECASE)
-KIT_FILES = "- **Kit files:**"
-UPSTREAM_PATHS = "- **Upstream paths:**"
 CITED_PATH = re.compile(r"([\w.-]+/[^\s:]*)(?::[\d,-]+)?")  # a span that is a repository path, maybe with a `:line`
 KIT_ROOTS = ("src/PouryaKit.", "samples/", "tests/")  # the Kit's packages, the Proving Sample and the tests
 # The test project of a solution that `validate.py` or ticket #59's probe generates from the templates under one of
@@ -483,37 +476,14 @@ def check_test_pointers(docs: dict[str, Doc], files: list[str]) -> None:
             failures.append(f"{ACCEPTANCE}:{number}: `{span}` names no test: {missing}; a renamed test is found with `git log -S{method or name.rpartition('.')[2]}`, a removed one goes in REMOVED_TESTS with the reason")
 
 
-def kit_files(files: list[str]):
-    """(record, line number, span) of each code span on the **Kit files** line of a record in `docs/provenance/`; its
-    README's format example is no record."""
-    for path in files:
-        if path.startswith("docs/provenance/") and path.endswith(".md") and not path.endswith("/README.md") and (ROOT / path).is_file():
-            for number, line in enumerate((ROOT / path).read_text(encoding="utf-8").splitlines(), start=1):
-                if line.startswith(KIT_FILES):
-                    yield from ((path, number, span) for span in re.findall(r"`([^`]+)`", line))
-
-
-def check_provenance(files: list[str]) -> None:
-    recorded = {span for _, _, span in kit_files(files)}
-    for path in files:
-        if not (path.startswith(("src/", "samples/", "tests/")) and path.endswith(".cs") and path not in recorded and (ROOT / path).is_file()):
-            continue
-        for number, line in enumerate((ROOT / path).read_text(encoding="utf-8", errors="ignore").splitlines(), start=1):
-            if said := ADOPTED.search(line):
-                failures.append(f"{path}:{number}: the comment says the code is {said.group(1).lower()} something, and no record in docs/provenance/ names the file under Kit files; add the record (docs/provenance/README.md gives its form), or say ordinary prose another way")
-                break
-
-
 def check_kit_paths(docs: dict[str, Doc], files: list[str]) -> None:
     present = {f for f in files if (ROOT / f).exists()}  # tracked, and not deleted from the working tree
     present |= {str(parent) for f in present for parent in Path(f).parents[:-1]}
-    cited = [(path, number, match.group(1)) for path, number, span in kit_files(files) if (match := CITED_PATH.fullmatch(span))]
+    cited = []
     for path, doc in docs.items():
-        record = path.startswith("docs/provenance/") and not path.endswith("/README.md")
-        if record or path.startswith("docs/") and path.count("/") == 1:  # a record's Kit files line is read above
+        if path.startswith("docs/") and path.count("/") == 1:
             cited += [(path, number, match.group(1)) for number, span in doc.spans() if (match := CITED_PATH.fullmatch(span))
-                      and match.group(1).startswith(KIT_ROOTS) and not GENERATED.match(match.group(1))
-                      and not (record and doc.lines[number - 1].startswith((KIT_FILES, UPSTREAM_PATHS)))]
+                      and match.group(1).startswith(KIT_ROOTS) and not GENERATED.match(match.group(1))]
     for path, number, kit_path in cited:
         pattern = kit_path.rstrip("/")
         if not (any(fnmatch.fnmatchcase(f, pattern) for f in present) if "*" in pattern else pattern in present):
@@ -631,7 +601,6 @@ def main() -> int:
     check_union_duplicates(files)
     check_section_order(docs)
     check_test_pointers(docs, files)
-    check_provenance(files)
     check_kit_paths(docs, files)
     diagrams = check_diagram_sources(files)
     for message in failures:

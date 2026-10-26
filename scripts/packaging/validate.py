@@ -279,7 +279,7 @@ def version_proof(output):
 
 def artifact_controls(evidence, output):
     original = Path(evidence["Directory"])
-    cases = ("missing-package", "extra-package", "wrong-version", "missing-notices", "wrong-commit", "forbidden-dependency", "missing-sourcelink")
+    cases = ("missing-package", "extra-package", "wrong-version", "wrong-commit", "forbidden-dependency", "missing-sourcelink")
     for case in cases:
         destination = output / "controls" / case
         shutil.copytree(original, destination)
@@ -293,8 +293,6 @@ def artifact_controls(evidence, output):
             with zipfile.ZipFile(target) as source, zipfile.ZipFile(replacement, "w") as changed:
                 for entry in source.infolist():
                     content = source.read(entry)
-                    if case == "missing-notices" and entry.filename == "THIRD-PARTY-NOTICES.md":
-                        continue
                     if case == "missing-sourcelink" and entry.filename.endswith(".dll"):
                         content = b"invalid assembly"
                     if entry.filename.endswith(".nuspec"):

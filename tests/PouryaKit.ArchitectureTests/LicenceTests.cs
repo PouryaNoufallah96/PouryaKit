@@ -4,7 +4,7 @@ namespace PouryaKit.ArchitectureTests;
 // checked whole, analyzers and source generators included, which is stricter than the runtime closure alone.
 public sealed class LicenceTests
 {
-    // Permissive licences only, as SPDX identifiers; the list is recorded in docs/provenance/README.md.
+    // Permissive licences only, as SPDX identifiers; adding one is an owner decision.
     private static readonly HashSet<string> Permissive = ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "PostgreSQL"];
 
     [Fact]

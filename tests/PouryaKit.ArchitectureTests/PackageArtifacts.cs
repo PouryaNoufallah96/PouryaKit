@@ -80,8 +80,6 @@ internal static class PackageArtifacts
         if (license?.Attribute("type")?.Value != "file" || license?.Value != "LICENSE"
             || !Matches(archive, "LICENSE", Path.Combine(Repository.Root, "LICENSE")))
             yield return $"{name} does not embed the Kit's MIT license.";
-        if (!Matches(archive, "THIRD-PARTY-NOTICES.md", Path.Combine(Repository.Root, "THIRD-PARTY-NOTICES.md")))
-            yield return $"{name} does not embed the third-party notices.";
         foreach (var dependency in nuspec.Descendants().Where(element => element.Name.LocalName == "dependency"
             && element.Attribute("id")!.Value.StartsWith("PouryaKit.", StringComparison.Ordinal)))
         {

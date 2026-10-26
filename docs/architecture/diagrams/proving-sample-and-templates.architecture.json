@@ -130,8 +130,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 132,
-          "end_line": 143,
+          "line": 161,
+          "end_line": 172,
           "label": "/alive always; /health in Development"
         },
         {
@@ -322,8 +322,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 16,
-          "end_line": 48,
+          "line": 45,
+          "end_line": 77,
           "label": "the service defaults recipes"
         },
         {
@@ -334,8 +334,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 89,
-          "end_line": 97,
+          "line": 118,
+          "end_line": 126,
           "label": "liveness and readiness checks"
         }
       ]

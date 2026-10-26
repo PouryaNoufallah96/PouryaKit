@@ -14,7 +14,6 @@ public sealed class PackageArtifactTests
     [InlineData("version", "has the wrong version")]
     [InlineData("repository", "has invalid repository/source commit metadata")]
     [InlineData("LICENSE", "does not embed the Kit's MIT license")]
-    [InlineData("THIRD-PARTY-NOTICES.md", "does not embed the third-party notices")]
     [InlineData("dependency", "has a Kit dependency with a different version")]
     public void Invalid_release_metadata_is_rejected(string defect, string expected)
     {
@@ -28,13 +27,10 @@ public sealed class PackageArtifactTests
         var evidence = new PackageEvidence("unused", Version, Commit, ["PouryaKit.Cqrs"], []);
         using var stream = new MemoryStream();
         using var archive = new ZipArchive(stream, ZipArchiveMode.Update, leaveOpen: true);
-        foreach (var file in new[] { "LICENSE", "THIRD-PARTY-NOTICES.md" })
-        {
-            using var writer = new StreamWriter(archive.CreateEntry(file).Open());
-            writer.Write(File.ReadAllText(Path.Combine(Repository.Root, file)));
-        }
+        using (var writer = new StreamWriter(archive.CreateEntry("LICENSE").Open()))
+            writer.Write(File.ReadAllText(Path.Combine(Repository.Root, "LICENSE")));
         Assert.Empty(PackageArtifacts.MetadataViolations(nuspec, archive, "PouryaKit.Cqrs", evidence));
-        if (defect is "LICENSE" or "THIRD-PARTY-NOTICES.md") archive.GetEntry(defect)!.Delete();
+        if (defect == "LICENSE") archive.GetEntry(defect)!.Delete();
         else if (defect == "version") nuspec.Descendants("version").Single().Value = "0.9.0-preview.1";
         else nuspec.Descendants(defect).Single().SetAttributeValue(defect == "repository" ? "commit" : "version", "wrong");
 
