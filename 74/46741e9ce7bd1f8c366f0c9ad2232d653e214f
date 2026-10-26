@@ -1,0 +1,42 @@
+website/lib/kit-sources/adr-manifest.json
+  s_2907c73c709168::t_bce7936ba2664d 18-25,102,118,158,178-217,222,254,286,294,310,326,334,394-417,426-433,478,482-489,494,526,542,550,566,574,578-585,598,630,646,650-657,662,710,726,750,758,790,798,830,870,895,902,954-961,966,970-993,998,1006,1018-1025,1034-1041,1050-1057,1110,1130-1137,1146-1153,1174,1180-1184,1190,1202-1217,1254,1270,1274-1281,1310,1326,1330-1345,1364,1366-1368
+docs/ci.md
+  s_2907c73c709168::t_a42d918d36ee21 3
+.claude/rules/website.md
+  s_2907c73c709168::t_396cfee7ad3957 13
+  s_2907c73c709168::t_c1bbd87069ea51 33
+  s_2907c73c709168::t_9346924e38aee5 36
+website/lib/kit-sources/rules.ts
+  s_2907c73c709168::t_7a6fadfc3e5bc4 3,11-13,15,19-27,117-120,122,125
+website/lib/kit-sources/export-check.test.ts
+  s_2907c73c709168::t_8115b0445691a8 53-60
+  s_2907c73c709168::t_4b0d40cca49b31 49
+  s_2907c73c709168::t_cdfc869dcdcd39 50-52
+website/lib/kit-sources/adr.ts
+  s_2907c73c709168::t_bce7936ba2664d 29-34,41-43,48-49
+website/lib/kit-sources/rules.test.ts
+  s_2907c73c709168::t_8115b0445691a8 44-75,95-97,105-112
+AGENTS.md
+  s_2907c73c709168::t_af98b473328d1e 88
+website/lib/kit-sources/adr.test.ts
+  s_2907c73c709168::t_8115b0445691a8 13-18
+website/lib/kit-sources/adr-rewrites.json
+  s_2907c73c709168::t_8673205a32b8a6 2-7,14-19,26-37,44-55,62-73,80-97,104-121,128-139,146-157,182-205,228,236-247,252-294,302-337,342-357,394-426
+  s_2907c73c709168::t_9b82e0391eba38 358-393
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7446741e9ce7bd1f8c366f0c9ad2232d653e214f",
+  "prompts": {},
+  "sessions": {
+    "s_2907c73c709168": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a1734560-a43c-4ccf-9966-072c809942ac",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
