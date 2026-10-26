@@ -1,0 +1,33 @@
+.agents/skills/pourya-kit/references/ai.md
+  s_2907c73c709168::t_e0a6610cfe85d7 75
+.agents/skills/pourya-kit/references/messaging.md
+  s_2907c73c709168::t_e0a6610cfe85d7 72,127,218,296,342
+.agents/skills/pourya-kit/references/modules.md
+  s_2907c73c709168::t_e0a6610cfe85d7 95,150
+.agents/skills/pourya-kit/references/templates.md
+  s_2907c73c709168::t_e0a6610cfe85d7 18-19,46,78
+.agents/skills/pourya-kit/references/security.md
+  s_2907c73c709168::t_e0a6610cfe85d7 96,98,186
+.agents/skills/pourya-kit/references/core.md
+  s_2907c73c709168::t_e0a6610cfe85d7 124
+.agents/skills/pourya-kit/references/email.md
+  s_2907c73c709168::t_e0a6610cfe85d7 65
+.agents/skills/pourya-kit/references/multi-tenancy.md
+  s_2907c73c709168::t_e0a6610cfe85d7 29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ceb35eccfb0343446448014be57210d6b07e0724",
+  "prompts": {},
+  "sessions": {
+    "s_2907c73c709168": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a1734560-a43c-4ccf-9966-072c809942ac",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
