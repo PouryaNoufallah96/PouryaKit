@@ -8,8 +8,9 @@ export const docsRoute = '/docs';
 const docsMarkdownRoute = '/llms.mdx/docs';
 const docsImageRoute = '/og/docs';
 
-// The search index is a file in the export, which the browser downloads and searches (Fumadocs static mode).
-export const searchIndexRoute = '/api/search';
+// The search index is a file in the export, which the browser downloads and searches (Fumadocs static mode). Its .json
+// suffix keeps it a file: with trailingSlash, Next.js redirects a path whose last segment has no dot to <path>/.
+export const searchIndexRoute = '/api/search.json';
 
 // The site's own address, for absolute Open Graph URLs: SITE_URL when a deployment sets it, else the production host
 // Vercel's build sets, else the local server.
