@@ -1,0 +1,27 @@
+.claude/agent-memory/kit-implementer/docs-site-facts.md
+  s_2907c73c709168::t_5a6dfcd128d9c3 17
+  s_2907c73c709168::t_641fef6887a732 12
+docs/acceptance.md
+  s_2907c73c709168::t_c1752dd9045c02 3003
+  s_2907c73c709168::t_b3eb91b5ed30ac 3007
+website/lib/shared.ts
+  s_2907c73c709168::t_43db5ee6403471 11-13
+.claude/rules/website.md
+  s_2907c73c709168::t_50aa317c4070f7 20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9af9bce4215dc2880cb8a8d4bbff2c37b93a28cf",
+  "prompts": {},
+  "sessions": {
+    "s_2907c73c709168": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a1734560-a43c-4ccf-9966-072c809942ac",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
