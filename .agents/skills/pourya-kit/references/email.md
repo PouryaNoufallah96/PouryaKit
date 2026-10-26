@@ -62,7 +62,7 @@ internal sealed class WelcomeCustomerNotificationHandler(IEmailSender email)
 
 ## What the Kit guarantees
 
-- **A rolled-back Operation sends no mail.** Its Domain Events never reach the Outbox, so no Notification Handler runs for them (G.2).
+- **A rolled-back Operation sends no mail.** Its Domain Events never reach the Outbox, so no Notification Handler runs for them.
 - **A committed Operation's mail is attempted by a durable delivery**: its Notification Handler's delivery is retried with the Host's bounded retries and then set aside as a dead letter. The server's acceptance is not guaranteed, and a send that succeeded may repeat (below).
 - **The options are checked before the Host serves**, not at the first send.
 

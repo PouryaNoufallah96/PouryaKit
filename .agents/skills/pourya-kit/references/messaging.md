@@ -69,7 +69,7 @@ public sealed record NewProductAnnouncement(Guid ProductId, string Name);
 
 ## Notification Handler or Domain Event Handler
 
-Both react to a Domain Event the Module raised. Choose by when the reaction may happen (G.2):
+Both react to a Domain Event the Module raised. Choose by when the reaction may happen:
 
 - A Domain Event Handler runs inside the Operation's Unit of Work, before the commit, and its changes commit with the change or not at all. Use it to keep the Module's own aggregates consistent with each other ([persistence.md](persistence.md#domain-event-handlers)).
 - A Notification Handler runs after the commit, in an Operation of its own. Use it for anything that reaches outside the Module's own data and cannot be taken back, such as sending an email, pushing to a client, calling another system or publishing an Integration Event for other Modules. Its failure is retried; it never rolls back the change, which is already committed.
@@ -124,7 +124,7 @@ public sealed partial class LoggedNewProductAnnouncer(ILogger<LoggedNewProductAn
 
 ## Integration Events between Modules
 
-Across Modules, a Module tells the others what happened with an Integration Event (G.5): use one when another Module reacts to something that happened in this one. When another Module keeps its own copy of this one's data, publish a Snapshot instead ([Snapshots between Modules](#snapshots-between-modules)). The receiving Module applies it later, in an Operation of its own, and the publishing Operation never waits for it. A synchronous question through the owning Module's Contracts ([modules.md](modules.md#asking-another-module-a-question)) is the exception, for an Operation that cannot go on without the answer.
+Across Modules, a Module tells the others what happened with an Integration Event: use one when another Module reacts to something that happened in this one. When another Module keeps its own copy of this one's data, publish a Snapshot instead ([Snapshots between Modules](#snapshots-between-modules)). The receiving Module applies it later, in an Operation of its own, and the publishing Operation never waits for it. A synchronous question through the owning Module's Contracts ([modules.md](modules.md#asking-another-module-a-question)) is the exception, for an Operation that cannot go on without the answer.
 
 In the Proving Sample, Catalog tells Inventory and Billing about each new product: Inventory opens a stock item for it, and Billing a price list:
 
@@ -215,7 +215,7 @@ internal sealed class PublishProductCreatedNotificationHandler(IIntegrationEvent
 }
 ```
 
-- Publish from a Notification Handler only (G.2): inject `IIntegrationEventPublisher` (`PouryaKit.Messaging`) and call `Publish(domainEvent.Id, integrationEvent)` with the `Id` of the Domain Event the handler is handling. Publishing sends nothing: the delivery's Unit of Work writes the Integration Event to the Module's Outbox when it commits, and it is sent after that commit.
+- Publish from a Notification Handler only: inject `IIntegrationEventPublisher` (`PouryaKit.Messaging`) and call `Publish(domainEvent.Id, integrationEvent)` with the `Id` of the Domain Event the handler is handling. Publishing sends nothing: the delivery's Unit of Work writes the Integration Event to the Module's Outbox when it commits, and it is sent after that commit.
 - Give publishing a Notification Handler of its own, as the sample keeps it apart from the announcement: each handler is retried on its own, so a failing announcement neither holds back nor repeats the Integration Event.
 - `Publish` throws `InvalidOperationException` when it is called:
   - outside a Notification Handler's delivery, such as in a command handler or in an Integration Event Handler;
@@ -293,7 +293,7 @@ events.Publish(
 
 ## Snapshots between Modules
 
-A Snapshot is the current state of one aggregate, published for other Modules, and it supersedes every earlier Snapshot of that aggregate. A Tombstone is the Snapshot that says the aggregate no longer exists. Choose between a Snapshot and an Integration Event by what the receiver needs (G.2, G.5):
+A Snapshot is the current state of one aggregate, published for other Modules, and it supersedes every earlier Snapshot of that aggregate. A Tombstone is the Snapshot that says the aggregate no longer exists. Choose between a Snapshot and an Integration Event by what the receiver needs:
 
 - An Integration Event is a fact: something happened, and the receiver reacts to it, as Inventory opens a stock item for each new product. Each one matters on its own, and a Notification Handler publishes it.
 - A Snapshot is state: what the aggregate is now, for a Module that keeps its own copy of it, as Inventory keeps a copy of each catalog product. Only the newest matters: once a newer one is applied, an older one is worth nothing. Feature code never publishes it; the Unit of Work does, in the commit of every change of the aggregate.
@@ -339,7 +339,7 @@ internal sealed class ProductSnapshotMapper : ISnapshotMapper<Product, ProductSn
 ```
 
 - Implement `ISnapshotMapper<TAggregate, TSnapshot>` (`PouryaKit.Messaging`) in an `internal sealed` class of the aggregate's Business Area, under `Events/`. It has two methods: `Map` builds the Snapshot of an aggregate that exists, and `Tombstone` builds the Snapshot of one the Operation removed, whether it is kept marked deleted or deleted outright. Both receive the aggregate in its final state.
-- Map by hand, member by member, with no mapping library (G.7). Read the version from the aggregate's `Version`: it is the version being committed.
+- Map by hand, member by member, with no mapping library. Read the version from the aggregate's `Version`: it is the version being committed.
 - `PublishSnapshot` registers the mapper scoped, and the Kit resolves it in the scope of the Operation that commits and runs it as a step of the Unit of Work that only reads. It reads the aggregate, and may run a query through an injected `IDispatcher` when it needs more; it writes nothing. The sample's takes nothing. [The rules of a mapper and a key](#the-rules-of-a-mapper-and-a-key) say what is refused and what fails the Operation.
 
 ### Declaring a Snapshot
