@@ -183,7 +183,7 @@ Raise `Iterations` when the guidance does; existing hashes keep verifying and ar
 
 ## JWT bearer authentication
 
-For a Host whose callers present bearer tokens from an identity provider. The Kit verifies and normalizes them; it issues none. JWT token creation is an excluded recommendation: spec #33 records it as a recommendation the owner has not accepted, not a Wave 2 deliverable, and the plan's catalogue refuses token issuance (I.3), so a Host that must issue tokens does it with its identity provider, outside the Kit.
+For a Host whose callers present bearer tokens from an identity provider. The Kit verifies and normalizes them; it issues none. JWT token creation is an excluded recommendation: it was recommended and the owner has not accepted it, and the plan's catalogue refuses token issuance (I.3), so a Host that must issue tokens does it with its identity provider, outside the Kit.
 
 ```csharp
 using PouryaKit.Security.JwtBearer;

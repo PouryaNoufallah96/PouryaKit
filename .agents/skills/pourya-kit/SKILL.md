@@ -1,6 +1,8 @@
 ---
 name: pourya-kit
 description: How to build a .NET modular monolith on PouryaKit. Use when writing, reviewing or testing code that references PouryaKit packages, such as a Module, an aggregate, a Stream, a Saga, a command or query, a Domain Event Handler, a Notification Handler and its email or SSE push, an agent and its Gateway tools, a Dapper read, a cached query and the cache tags a command invalidates, a file in S3, MinIO or Azure Blob, a PDF or CSV report, a report job, a message in English and Persian, an Integration Event Handler, a Snapshot mapper, an endpoint, an API version or OpenAPI document, a gRPC service or client, a permission on a command or query, a tenant-scoped Module and its aggregates, a Host that sends or receives Integration Events and Snapshots over RabbitMQ, a Reverse proxy, the service defaults for telemetry, health, HTTP resilience or Serilog, an Aspire AppHost for a Host, a new project from the Kit's dotnet new templates, a test against the hosted application or an architecture test of a Module's boundaries.
+metadata:
+  version: "0.1.0"
 ---
 
 # PouryaKit
