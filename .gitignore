@@ -31,3 +31,5 @@ website/out/
 website/.source/
 website/.vercel/
 website/next-env.d.ts
+# The typeset covers, which `pnpm --dir website covers` writes from the committed artwork.
+website/covers/out/

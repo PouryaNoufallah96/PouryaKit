@@ -1,0 +1,191 @@
+{
+  "kit": {
+    "eyebrow": ".NET 10",
+    "title": "PouryaKit",
+    "tagline": "Modular monoliths whose Feature code holds only business behaviour"
+  },
+  "families": {
+    "core": "Core",
+    "domain": "Domain",
+    "persistence": "Persistence",
+    "messaging": "Messaging",
+    "web": "Web",
+    "security": "Security",
+    "observability": "Observability",
+    "caching": "Caching",
+    "storage": "Storage",
+    "email": "Email",
+    "ai": "AI",
+    "reporting": "Reporting",
+    "templates": "Templates",
+    "platform": "Platform"
+  },
+  "packages": [
+    {
+      "id": "PouryaKit.Core",
+      "family": "core",
+      "tagline": "Three helpers: predicates, type lookup, a sync-context scope"
+    },
+    { "id": "PouryaKit.Cqrs", "family": "core", "tagline": "Commands and queries through one fixed pipeline" },
+    {
+      "id": "PouryaKit.Validation",
+      "family": "core",
+      "tagline": "FluentValidation validators for commands and queries"
+    },
+    {
+      "id": "PouryaKit.Modularity",
+      "family": "core",
+      "tagline": "Composition Roots, Gateways and one scope per Operation"
+    },
+    {
+      "id": "PouryaKit.Domain",
+      "family": "domain",
+      "tagline": "Result and Error, typed IDs, aggregates and Domain Events"
+    },
+    {
+      "id": "PouryaKit.Persistence",
+      "family": "persistence",
+      "tagline": "Repository and Unit of Work contracts, and their Errors"
+    },
+    {
+      "id": "PouryaKit.Persistence.EFCore",
+      "family": "persistence",
+      "tagline": "A DbContext per Module and the Unit of Work that commits it"
+    },
+    {
+      "id": "PouryaKit.Persistence.Postgres",
+      "family": "persistence",
+      "tagline": "Each Module's EF Core data in its own PostgreSQL schema"
+    },
+    {
+      "id": "PouryaKit.Persistence.Dapper",
+      "family": "persistence",
+      "tagline": "Plain-SQL reads with Dapper on a pooled PostgreSQL connection"
+    },
+    {
+      "id": "PouryaKit.Persistence.Marten",
+      "family": "persistence",
+      "tagline": "Streams: aggregates stored as the events they appended"
+    },
+    {
+      "id": "PouryaKit.Messaging",
+      "family": "messaging",
+      "tagline": "Notification Handlers, Integration Events and Snapshots"
+    },
+    {
+      "id": "PouryaKit.Messaging.Wolverine",
+      "family": "messaging",
+      "tagline": "Durable, retried deliveries on Wolverine, stored in PostgreSQL"
+    },
+    {
+      "id": "PouryaKit.Messaging.Wolverine.EFCore",
+      "family": "messaging",
+      "tagline": "Every EF Core Module's Outbox and Receipts on Wolverine"
+    },
+    {
+      "id": "PouryaKit.Messaging.Wolverine.Marten",
+      "family": "messaging",
+      "tagline": "A Stream's messages sent through Wolverine's Marten outbox"
+    },
+    {
+      "id": "PouryaKit.Messaging.Wolverine.Sagas",
+      "family": "messaging",
+      "tagline": "Sagas that Integration Events advance and timeouts end"
+    },
+    {
+      "id": "PouryaKit.Messaging.Wolverine.RabbitMq",
+      "family": "messaging",
+      "tagline": "Integration Events and Snapshots between Hosts over RabbitMQ"
+    },
+    { "id": "PouryaKit.Web", "family": "web", "tagline": "An endpoint beside each Feature, authenticated by default" },
+    {
+      "id": "PouryaKit.Web.OpenApi",
+      "family": "web",
+      "tagline": "API versions, an OpenAPI document for each, and Scalar"
+    },
+    { "id": "PouryaKit.Grpc", "family": "web", "tagline": "gRPC services and clients on the Kit's Web conventions" },
+    { "id": "PouryaKit.Realtime", "family": "web", "tagline": "Server-sent events pushed from Notification Handlers" },
+    {
+      "id": "PouryaKit.Localization",
+      "family": "web",
+      "tagline": "A Module's messages in English and Persian, by Accept-Language"
+    },
+    {
+      "id": "PouryaKit.Security",
+      "family": "security",
+      "tagline": "Permissions on commands and queries, and PBKDF2 password hashing"
+    },
+    {
+      "id": "PouryaKit.Security.JwtBearer",
+      "family": "security",
+      "tagline": "JWT bearer authentication whose verified claims name the Actor"
+    },
+    {
+      "id": "PouryaKit.Observability",
+      "family": "observability",
+      "tagline": "An activity and a duration metric for every command and query"
+    },
+    {
+      "id": "PouryaKit.Caching",
+      "family": "caching",
+      "tagline": "Query successes cached per Actor and tenant, evicted by tag"
+    },
+    {
+      "id": "PouryaKit.Storage",
+      "family": "storage",
+      "tagline": "One file storage contract: Feature code never names a cloud SDK"
+    },
+    {
+      "id": "PouryaKit.Storage.S3",
+      "family": "storage",
+      "tagline": "File storage on Amazon S3 or an S3-compatible store"
+    },
+    { "id": "PouryaKit.Storage.AzureBlob", "family": "storage", "tagline": "File storage on Azure Blob Storage" },
+    {
+      "id": "PouryaKit.Email",
+      "family": "email",
+      "tagline": "One contract that sends a plain-text mail and returns a Result"
+    },
+    {
+      "id": "PouryaKit.Email.MailKit",
+      "family": "email",
+      "tagline": "The Host's SMTP sender on MailKit, from validated options"
+    },
+    { "id": "PouryaKit.AI", "family": "ai", "tagline": "Agents whose tool calls run as Operations through a Gateway" },
+    {
+      "id": "PouryaKit.AI.Postgres",
+      "family": "ai",
+      "tagline": "Text stored by its embedding and searched with pgvector"
+    },
+    {
+      "id": "PouryaKit.Reporting",
+      "family": "reporting",
+      "tagline": "A Module's report rendered to PDF, CSV or a spreadsheet"
+    },
+    {
+      "id": "PouryaKit.Reporting.Module",
+      "family": "reporting",
+      "tagline": "Report jobs generated in the background, served to their requester"
+    },
+    {
+      "id": "PouryaKit.Templates",
+      "family": "templates",
+      "tagline": "dotnet new templates: a monolith, a modular monolith or a service"
+    },
+    {
+      "id": "PouryaKit.Aspire",
+      "family": "platform",
+      "tagline": "PostgreSQL, Redis, RabbitMQ and Ollama for an Aspire AppHost"
+    },
+    {
+      "id": "PouryaKit.ReverseProxy",
+      "family": "platform",
+      "tagline": "A YARP Host in front of the Hosts, with service discovery"
+    },
+    {
+      "id": "PouryaKit.Testing",
+      "family": "platform",
+      "tagline": "Tests against the hosted application, PostgreSQL in a container"
+    }
+  ]
+}
