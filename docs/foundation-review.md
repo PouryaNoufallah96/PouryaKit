@@ -199,7 +199,7 @@ reason: a `Core` project that everything references.
 
 ```text
 pourya-kit/
-├── PouryaKit.slnx  Directory.Build.props  Directory.Packages.props  THIRD-PARTY-NOTICES.md
+├── PouryaKit.slnx  Directory.Build.props  Directory.Packages.props
 ├── src/
 │   ├── PouryaKit.Domain/                 Result, Error, typed IDs, Entity, AggregateRoot,
 │   │                               IDomainEvent, IBusinessRule
@@ -251,6 +251,8 @@ base, which the package no longer has. Nothing derived from it, its one member r
 already gives value equality.
 
 Recorded on 2026-10-10 by ticket #85 (decision D15): the idempotency store, its cleanup and its table in `PouryaKit.Persistence.EFCore` are PostgreSQL-only, as the Receipts in `PouryaKit.Messaging.Wolverine.EFCore` are.
+
+Corrected on 2026-10-26 by the owner's decision: the tree's first line no longer names the third-party notices file, which the owner removed with the provenance records (E, [Provenance and licensing](#provenance-and-licensing)).
 
 ### Allowed references
 
@@ -599,7 +601,7 @@ compilation.
 
 Needs Phase 4. Wave 1 is merged. On 2026-10-06 the owner narrowed the active scope to "packaging versioning and nuget packages in cleanest way and efficient if any sample references covers all follow them". The existing shared package validation and standard private GitHub Packages publisher are delivered. This replaces the custom publication protocol and preflight machinery from this wave. #28/#29 compatibility automation, named cuts and content-verified recovery are closed as not planned and require a new scoped ticket, and the current scope does not claim all original #24 acceptance criteria. Section G and the ADRs remain unchanged.
 
-Keep central package management, MinVer as the only version engine, SourceLink, `EnablePackageValidation`, MIT and `THIRD-PARTY-NOTICES.md` in each nupkg. All thirteen shipped Kit packages share one version. Private GitHub Packages comes first. Nuget.org activation and stable `1.0` each require a later owner decision.
+Keep central package management, MinVer as the only version engine, SourceLink, `EnablePackageValidation`, MIT and the third-party notices file in each nupkg. *Superseded in part 2026-10-26: the owner removed that file, so each nupkg carries the MIT `LICENSE` alone (E, [Provenance and licensing](#provenance-and-licensing)).* All thirteen shipped Kit packages share one version. Private GitHub Packages comes first. Nuget.org activation and stable `1.0` each require a later owner decision.
 
 MinVer uses minimum major/minor `0.1`, tag prefix `v` and default prerelease identifiers `preview.0`. Fetch full history and tags. Untagged main commits use Git height, such as `0.1.0-preview.0.H`. Owner-created `v0.x` preview/rc tags on current main supply exact named versions when the owner then runs CI manually on main. No workflow creates a tag or GitHub Release, and no version override or second calculation is added. See [MinVer's pinned README](https://github.com/adamralph/minver/blob/9f485aabb9936efd8fb8b633ae09ae4d0659c94f/README.md#L179) and [private package guidance](private-packages.md#versions-and-triggers).
 
@@ -634,8 +636,12 @@ refactors them. (An earlier draft had a "Cybernod adoption" phase; the owner rem
 ### Provenance and licensing
 
 - CNK, Woo, food-delivery, vertical-slice (Hadeli) and mm-ddd (Grzybek) are MIT with no NOTICE files.
-  Keep each copyright line and the MIT text in `THIRD-PARTY-NOTICES.md`; record source commit and
-  path per extracted file.
+  Keep each copyright line and the MIT text in the third-party notices file; record source commit and
+  path per extracted file. *Superseded 2026-10-26: by the owner's decision the third-party notices file and the
+  provenance records are removed, so the repository keeps only material about the Kit itself. The one third-party
+  file adapted into the Kit, `samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs` from .NET
+  Aspire, carries Aspire's MIT notice in its header; Cybernod, the source of the other adapted code, is the owner's
+  own; Roboto's Apache licence ships inside `PouryaKit.Reporting` (`src/PouryaKit.Reporting/Fonts/LICENSE.txt`).*
 - **Rewrite, do not copy:** files derived from `oskardudycz/EventSourcing.NetCore` (CC BY-SA 4.0 —
   `TelemetryPropagator.cs` in CNK and vertical-slice, CNK `SubscribeToAllBackgroundWorker.cs`, Woo
   `EventStoreDB/Extensions.cs`); Stack Overflow-derived helpers in CNK (`ObjectExtensions`,
@@ -679,7 +685,8 @@ Remaining unverified work requires its own proof. The private-fork verification 
 2. **Adoption rule.** Take the best implementation from any shared source and customise it, but the
    result must be one consistent design — one implementation per concern, one naming scheme. The
    kit's own docs and provenance records cite upstream repository, commit and repo-relative path,
-   never a local machine path. Ultrabusiness ownership is unconfirmed, so it is adopted at pattern
+   never a local machine path. *Superseded in part 2026-10-26: the provenance records are removed (E,
+   "Provenance and licensing"); the docs still name no local machine path.* Ultrabusiness ownership is unconfirmed, so it is adopted at pattern
    level (reimplemented, with its test scenarios ported); the public MIT samples may be copied with
    attribution. For every concern, compare verified CNK/Woo behaviour and the Kit's requirements
    across API/design, correctness and runtime failure behaviour, performance where relevant,
@@ -695,7 +702,8 @@ Remaining unverified work requires its own proof. The private-fork verification 
 
 5. **Name and prefix: `PouryaKit`.**
 6. **.NET 10 only**, latest C# language version, current .NET idioms throughout.
-7. The "no local files" rule is confirmed as a docs/provenance rule.
+7. The "no local files" rule is confirmed as a docs and provenance rule. *Superseded in part 2026-10-26: a docs
+   rule, since the provenance records are removed.*
 8. The owner authorised finalising this plan and splitting it into phases worked through the
    repo's skills. Building has not started. *Phase 0 and Wave 1 were built by 2026-10-06 (spec #1).*
 

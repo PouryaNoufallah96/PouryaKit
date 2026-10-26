@@ -66,7 +66,7 @@ class SinceTests(unittest.TestCase):
         self.assertEqual([], validate.needing_validation(self.EXEMPT))
         for path in ("src/PouryaKit.Domain/Result.cs", "samples/ModularMonolith/src/ModularMonolith.Host/Program.cs",
                      "tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs", "tests/ModularMonolith.Tests/CachingTests.cs",
-                     "scripts/packaging/validate.py", "scripts/packaging/inventory.json", "THIRD-PARTY-NOTICES.md", "LICENSE",
+                     "scripts/packaging/validate.py", "scripts/packaging/inventory.json", "LICENSE",
                      "Directory.Build.props", "Directory.Build.targets", "Directory.Packages.props", "global.json", "nuget.config",
                      "PouryaKit.slnx", ".config/dotnet-tools.json", ".editorconfig", ".github/workflows/package-validation.yml",
                      "docs.md", "src/PouryaKit.Templates/content/shared/README.md", "a-new-directory/file.txt"):

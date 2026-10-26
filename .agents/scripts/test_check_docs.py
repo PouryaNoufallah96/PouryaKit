@@ -78,11 +78,6 @@ public sealed class OtherTests { [Fact] public void An_other_is_declared() { } }
 }
 NOT_DECLARED = ("ProductTests.Build", "ProductTests.A_product_is_called", "ProductTests.A_product_is_quoted", "ProductTests.A_product_is_commented",
                 "ProductTests.A_stub_is_declared", "ProductTests.An_other_is_declared", "InventoryTests.helper_is_called")
-ADOPTED = {"src/Catalog/Money.cs": "// A money value, adapted from the Till project's Money.\npublic readonly record struct Money(decimal Amount);\n"}
-RECORD = "# Catalog\n\n## Money\n\n- **Kit files:** `src/Catalog/Money.cs`\n"
-# A record that cites a Kit file, and an upstream repository's paths under Upstream paths and as `repository@commit path`.
-KIT_RECORD = ("# Catalog\n\n## Product\n\n- **Kit files:** `src/Catalog/Product.cs`\n- **Upstream paths:** `src/Till/Product.cs`,"
-              " `tests/Till.Tests/ProductTests.cs`\n\nIts rule is the one of `till@abc1234 tests/Till.Tests/RulesTests.cs:3`.\n")
 # An Archify diagram source citing a three-line file; `diagram` pins it to a revision with the sources given.
 DIAGRAM = "docs/architecture/diagrams/catalog.architecture.json"
 CART = {"src/Catalog/Cart.cs": "public sealed class Cart\n{\n}\n"}
@@ -432,38 +427,22 @@ class CheckDocsTests(unittest.TestCase):
         }
         self.assertPasses(TESTS | modules)
 
-    def test_adopted_code_without_a_provenance_record_fails(self) -> None:
-        """The README's format example names a Kit file too, and is no record."""
-        self.assertFails(ADOPTED | {"docs/provenance/README.md": RECORD}, "src/Catalog/Money.cs:1: the comment says the code is adapted from something, and no record in docs/provenance/ names the file under Kit files")
-
-    def test_an_adopted_test_without_a_provenance_record_fails(self) -> None:
-        ported = {"tests/Shop.Tests/MoneyTests.cs": "public sealed class MoneyTests\n{\n    // Scenarios ported from the Till project's MoneyTests.\n}\n"}
-        self.assertFails(ported, "tests/Shop.Tests/MoneyTests.cs:3: the comment says the code is ported from something, and no record in docs/provenance/ names the file under Kit files")
-
-    def test_adopted_code_a_provenance_record_names_passes_and_so_does_a_string_that_says_the_words(self) -> None:
-        quoted = {"src/Catalog/Messages.cs": 'public static class Messages { public const string Source = "taken from the header"; }\n'}
-        self.assertPasses(ADOPTED | quoted | {"docs/provenance/Catalog.md": RECORD})
-
     def test_cited_kit_paths_that_exist_pass(self) -> None:
-        """A path on a record's Kit files line, and in the plan a path with a `:line` suffix, a folder and a glob."""
+        """In the plan, a path with a `:line` suffix, a folder and a glob."""
         plan = "# Plan\n\n`src/PouryaKit.Shop/Cart.cs:3-7`, `src/PouryaKit.Shop/` and `src/PouryaKit.Shop/*.cs`.\n"
-        self.assertPasses({"src/PouryaKit.Shop/Cart.cs": "public sealed class Cart;\n", "docs/foundation-review.md": plan, "docs/provenance/Catalog.md": KIT_RECORD})
+        self.assertPasses({"src/PouryaKit.Shop/Cart.cs": "public sealed class Cart;\n", "docs/foundation-review.md": plan})
 
     def test_a_cited_kit_file_that_does_not_exist_fails(self) -> None:
-        """On a record's Kit files line and in its prose, and in the plan."""
-        record = KIT_RECORD.replace("src/Catalog/Product.cs", "src/Catalog/Gone.cs") + "\nThe Kit checks it in `tests/Shop.Tests/GoneTests.cs`.\n"
-        self.write({"docs/provenance/Catalog.md": record, "docs/foundation-review.md": "# Plan\n\nSee `src/PouryaKit.Shop/Gone.cs:12`.\n"})
+        """In the plan, cited with a line."""
+        self.write({"docs/foundation-review.md": "# Plan\n\nSee `src/PouryaKit.Shop/Gone.cs:12`.\n"})
         code, out = self.check()
         self.assertEqual(code, 1, out)
-        self.assertIn("FAIL  docs/provenance/Catalog.md:5: `src/Catalog/Gone.cs` names no file or folder in the repository", out)
-        self.assertIn("FAIL  docs/provenance/Catalog.md:10: `tests/Shop.Tests/GoneTests.cs` names no file or folder in the repository", out)
         self.assertIn("FAIL  docs/foundation-review.md:3: `src/PouryaKit.Shop/Gone.cs` names no file or folder in the repository", out)
 
-    def test_an_upstream_path_in_a_provenance_record_or_the_plan_passes(self) -> None:
-        """The record cites upstream paths into `src/` and `tests/` under Upstream paths and as `repository@commit path`;
-        the plan cites one that way and one as a path of its own, outside the Kit's packages."""
+    def test_an_upstream_path_in_the_plan_passes(self) -> None:
+        """The plan cites one as `repository@commit path` and one as a path of its own, outside the Kit's packages."""
         plan = "# Plan\n\nAs `till@abc1234 src/Till/Rules.cs:3` does, and `src/Till/Price.cs:8-12`.\n"
-        self.assertPasses({"docs/provenance/Catalog.md": KIT_RECORD, "docs/foundation-review.md": plan})
+        self.assertPasses({"docs/foundation-review.md": plan})
 
     def test_a_generated_consumer_project_in_the_acceptance_record_passes(self) -> None:
         generated = "# Acceptance\n\nGenerated as `src/acme-shop.Host/acme-shop.Host.csproj` and `tests/acme-shop.Tests`, it passed.\n"

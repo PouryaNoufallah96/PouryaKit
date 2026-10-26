@@ -13,7 +13,7 @@ A reusable .NET 10 foundation for modular monoliths built from vertical slices. 
 - The owner's decisions in section G are final. If implementation produces concrete evidence against one, bring the evidence to the owner; do not change the decision silently.
 - The Kit is for new projects. Never change, migrate or refactor the reference projects; they are sources of ideas only.
 - One implementation per concern, one naming scheme. Adopting code from a reference project is fine; ending up with two ways to do the same thing is not.
-- Cite upstream repository, commit and repo-relative path in docs and provenance records, never a local machine path.
+- Never write a local machine path in docs.
 - The Kit takes no runtime dependency on a reciprocal or commercially licensed package (ADR 0002).
 - Feature code never saves, commits, or touches the Outbox; the Unit of Work owns that (ADR 0003).
 
@@ -84,7 +84,7 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | One namespace per Kit package; application namespaces follow folders (ADR 0010) | `NamespaceTests`; IDE0130 in `.editorconfig`; `SampleNamespaceTests` for the Proving Sample, partial types included |
 | Private fields are `_camelCase`; `const` and `static readonly` fields PascalCase | IDE1006 in `.editorconfig` |
 | Every public member of a Kit package has a summary | CS1591 in the build where `IsKitPackage` is true (`Directory.Build.props`) |
-| Docs name real code, paths and tests | `check-docs.py` (names, links, Kit paths, acceptance pointers, provenance) |
+| Docs name real code, paths and tests | `check-docs.py` (names, links, Kit paths, acceptance pointers) |
 | A diagram's cited source ranges are current | `check-docs.py` (diagram sources); the pre-commit hook runs it with `--staged`, reading diagrams and cited files from the index: a change at or above a cited range requires its diagram staged too, with ranges that fit the indexed file, while a change below every cited range passes; during a merge, a revision reachable from `MERGE_HEAD` counts; CI's `ai-setup` job runs it on the committed tree |
 | A merged head's code was validated | `merge-package.py` exit 14: only Markdown may differ from the validated commit |
 | A pushed tip is what the remote holds | `merge-package.py` reads the remote tip back after `--push` and exits 15 with `remote=REPLACED(<sha7>)` when it differs (2026-10-25: pushed tips force-replaced within seconds by a stolen credential); `check-tree.py` refuses the replacement's `.vscode/` and `public/` entries |

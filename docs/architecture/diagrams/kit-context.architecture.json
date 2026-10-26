@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "3a51d4f9f07e93866cf41a0aa344fb9b0ec845ac",
+      "revision": "5a0bba12a7e94c26b2f3a56eded0bfb5dd1843c0",
       "link_mode": "web"
     }
   },
@@ -192,8 +192,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 132,
-          "end_line": 143,
+          "line": 161,
+          "end_line": 172,
           "label": "/alive always; /health in Development"
         },
         {
@@ -220,14 +220,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 62,
-          "end_line": 84,
+          "line": 91,
+          "end_line": 113,
           "label": "Kit source and meter; OTLP when set"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 102,
-          "end_line": 119,
+          "line": 131,
+          "end_line": 148,
           "label": "Serilog's OTLP sink when set"
         },
         {

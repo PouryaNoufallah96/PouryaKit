@@ -291,7 +291,7 @@ A Notification Handler sends, after its Operation committed, so a rolled-back Op
 
 ## PouryaKit.Email.MailKit
 
-The Email Capability's one provider (plan I.3, ticket #124). It references `PouryaKit.Email`, `PouryaKit.Cqrs` for its composition check (ticket #147), `MailKit` 4.18.2 (MIT; it brings `MimeKit` and a cryptography library, MIT, listed in [its provenance](../provenance/PouryaKit.Email.MailKit.md)) and `Microsoft.Extensions.Options`; its `System.Security.Cryptography.Pkcs` floor went in ticket #167, since `MimeKit` 4.18.2 asks for the patched 10.0.13 itself.
+The Email Capability's one provider (plan I.3, ticket #124). It references `PouryaKit.Email`, `PouryaKit.Cqrs` for its composition check (ticket #147), `MailKit` 4.18.2 (MIT; it brings `MimeKit` and a cryptography library, MIT) and `Microsoft.Extensions.Options`; its `System.Security.Cryptography.Pkcs` floor went in ticket #167, since `MimeKit` 4.18.2 asks for the patched 10.0.13 itself.
 
 | Concern | Types |
 |---|---|
@@ -347,7 +347,7 @@ Everything else is internal, in the one namespace `PouryaKit.Reporting.Module`: 
 
 ## PouryaKit.AI
 
-The AI Capability's chat client, embedding generator, Gateway tool, agents and MCP clients (plan I.3, spec #115's AI decision, tickets #135, #136, #137 and #138). It references `PouryaKit.Cqrs`, `PouryaKit.Modularity`, `Microsoft.Extensions.AI` and `Microsoft.Extensions.AI.OpenAI` 10.11.0, which bring the `OpenAI` client (MIT, listed in [its provenance](../provenance/PouryaKit.AI.md)), the Microsoft Agent Framework's `Microsoft.Agents.AI` and `Microsoft.Agents.AI.Workflows` 1.26.0 (MIT), the official MCP C# SDK's client, `ModelContextProtocol.Core` 2.3.0 (Apache-2.0), `Microsoft.Extensions.Http` and `Microsoft.Extensions.Options`; `PackageGraphTests` keeps `OllamaSharp`, `Azure.AI.OpenAI` and every resilience package out of its closure.
+The AI Capability's chat client, embedding generator, Gateway tool, agents and MCP clients (plan I.3, spec #115's AI decision, tickets #135, #136, #137 and #138). It references `PouryaKit.Cqrs`, `PouryaKit.Modularity`, `Microsoft.Extensions.AI` and `Microsoft.Extensions.AI.OpenAI` 10.11.0, which bring the `OpenAI` client (MIT), the Microsoft Agent Framework's `Microsoft.Agents.AI` and `Microsoft.Agents.AI.Workflows` 1.26.0 (MIT), the official MCP C# SDK's client, `ModelContextProtocol.Core` 2.3.0 (Apache-2.0), `Microsoft.Extensions.Http` and `Microsoft.Extensions.Options`; `PackageGraphTests` keeps `OllamaSharp`, `Azure.AI.OpenAI` and every resilience package out of its closure.
 
 | Concern | Types |
 |---|---|
@@ -368,7 +368,7 @@ An MCP tool, one of the `McpClientTool`s `IMcpServers.ListToolsAsync` lists from
 
 ## PouryaKit.AI.Postgres
 
-Semantic search for the AI Capability over pgvector, optional (plan I.3 AI, spec #115's AI decision, ticket #138). It references `PouryaKit.AI` and `PouryaKit.Persistence.Postgres` and no package of its own; `PackageGraphTests` keeps the `Pgvector` client and this package out of every other Kit package's closure, so a Host without it takes no pgvector ([its provenance](../provenance/PouryaKit.AI.Postgres.md) says why it references neither the vector store plan I.4 named nor the `Pgvector` client).
+Semantic search for the AI Capability over pgvector, optional (plan I.3 AI, spec #115's AI decision, ticket #138). It references `PouryaKit.AI` and `PouryaKit.Persistence.Postgres` and no package of its own; `PackageGraphTests` keeps the `Pgvector` client and this package out of every other Kit package's closure, so a Host without it takes no pgvector (it sends each embedding as a `real[]`, which pgvector casts to its `vector`, so it needs no `Pgvector` client).
 
 | Concern | Types |
 |---|---|
@@ -682,7 +682,7 @@ Optional API versions, OpenAPI documents and the Scalar reference (plan I.3, tic
 
 ## PouryaKit.Grpc
 
-gRPC services and clients on Web's conventions (plan I.3, ticket #134). It references `PouryaKit.Web`, the ASP.NET Core shared framework, `Grpc.AspNetCore.Server` and `Grpc.Net.ClientFactory` 2.84.0 (Apache-2.0), not the `Grpc.AspNetCore` metapackage, which carries `Grpc.Tools` into every consumer; a project that compiles a `.proto`, such as Catalog's Contracts, references `Grpc.Tools` with private assets beside `Google.Protobuf` and `Grpc.Core.Api` ([its provenance](../provenance/PouryaKit.Grpc.md)).
+gRPC services and clients on Web's conventions (plan I.3, ticket #134). It references `PouryaKit.Web`, the ASP.NET Core shared framework, `Grpc.AspNetCore.Server` and `Grpc.Net.ClientFactory` 2.84.0 (Apache-2.0), not the `Grpc.AspNetCore` metapackage, which carries `Grpc.Tools` into every consumer; a project that compiles a `.proto`, such as Catalog's Contracts, references `Grpc.Tools` with private assets beside `Google.Protobuf` and `Grpc.Core.Api`.
 
 | Concern | Types |
 |---|---|
@@ -764,8 +764,8 @@ The `dotnet new` templates a new application starts from (plan I.1 and I.3, "Pro
 | `TypeLookupTests` | No Kit package but Core lists the types of an assembly (`Assembly.GetTypes`, `DefinedTypes`, `ExportedTypes`, `GetExportedTypes`, `Modules`, `GetModules`, `Module.GetTypes`, `Module.FindTypes`), read from the IL; every other one asks `ImplementingTypes`, except `PouryaKit.Validation`, which finds its validators with FluentValidation's own assembly scanner (ticket #55; the exception named by ticket #99) |
 | `NamespaceTests` | Every authored top-level type of each Kit package is in the one namespace named after its assembly, whatever folder its file sits in; compiler-generated definitions are left out by their marker, `CompilerGeneratedAttribute` or `GeneratedCodeAttribute` (ADR 0010, ticket #77) |
 | `SampleNamespaceTests` | Every source file of the Proving Sample's projects declares the project's name plus its folders as its namespace, partial types included, which IDE0130 never reports; the service defaults' `Extensions.cs` is the one exception, and build output and EF Core migrations are skipped. Its negative case holds the rule to equality: a parent namespace, a sub-namespace and a block-scoped declaration each fail (ADR 0010, ticket #112) |
-| `LicenceTests` | Every package in every Kit package's restored closure, analyzers included, declares a licence expression from the permissive list in [`docs/provenance/README.md`](../provenance/README.md#package-licences) (ADR 0002, story 85) |
-| `PackageArtifactTests` and the `--validate-packages` entrypoint | Expected package IDs/version, embedded MIT/notices, repository commit and SourceLink (but for the template package, which holds no assembly), produced nuspec references and restored consumer closures, using `PackageGraph` and `LicenceTests`; the shared Python path runs artifact controls and isolated consumer builds |
+| `LicenceTests` | Every package in every Kit package's restored closure, analyzers included, declares a licence expression from its permissive list, `LicenceTests.Permissive` (ADR 0002, story 85) |
+| `PackageArtifactTests` and the `--validate-packages` entrypoint | Expected package IDs/version, embedded MIT license, repository commit and SourceLink (but for the template package, which holds no assembly), produced nuspec references and restored consumer closures, using `PackageGraph` and `LicenceTests`; the shared Python path runs artifact controls and isolated consumer builds |
 | `TemplateTests` | The template content against the Proving Sample it packs (tickets #53, #59, #64, #68, #87 and #171): no copy of a sample file, no Modularity in the monolith, only files of the projects each solution names, the monolith's own replacement of each file it excludes making that file's calls, each generated Host building the sample Host's pipeline, and no repository taken in the monolith's own files (ADR 0003). Each assertion is listed in the skill's [templates.md](../../.agents/skills/pourya-kit/references/templates.md#how-the-package-is-built) |
 
 Each Module rule is a function in `ModuleRules` from a compiled assembly, or a Module's EF Core model, to its violations, and its XML documentation states what it cannot see. The IL is read by `Il`, with the base class library only, and a project's restored closure by `RestoredPackage`, from its `obj/project.assets.json`. `Sample` finds the Proving Sample's Modules from the Host's references and builds each Module's model from the Host built but never started. Every rule judges the Proving Sample, then `tests/PouryaKit.ArchitectureTests/Offending`, a Module that breaks each rule inside async methods and lambdas, and asserts its exact violations, so a rule that reads nothing fails; `Offending.Contracts` does the same for Contracts, and `Offending.Core`, Core's own sources with a fourth public helper, for `CoreTests`. `NamespaceTests` judges two of them: `Offending`, whose one type in a sub-namespace, `Offending.Stray.StrayType`, keeps its folder's namespace, and `Offending.Core`, whose types are in `PouryaKit.Core`, a namespace unrelated to its name. `docs/acceptance.md` maps each rule to its test class beside the Gateway-seam scenarios.

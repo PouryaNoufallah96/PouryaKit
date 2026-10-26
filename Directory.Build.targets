@@ -15,6 +15,5 @@
   <ItemGroup Condition="'$(IsKitPackage)' == 'true'">
     <PackageReference Include="MinVer" PrivateAssets="all" />
     <None Include="$(MSBuildThisFileDirectory)LICENSE" Pack="true" PackagePath="/" />
-    <None Include="$(MSBuildThisFileDirectory)THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>
