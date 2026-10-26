@@ -55,7 +55,7 @@ function setLines(words: string[], joiner: string, budget: number, most: number,
   if (lines.length > most || lines.some((line) => line.length > budget)) {
     throw new Error(`${what} does not fit ${most} lines of ${budget} characters: ${JSON.stringify(lines)}.`);
   }
-  return lines.map((line) => line.replaceAll(' ', ' '));
+  return lines.map((line) => line.replaceAll(' ', '\u00a0'));
 }
 
 // next/og lays out with flexbox only, so every element with children is a flex container.
@@ -123,7 +123,7 @@ function frame(artwork: string, eyebrow: string, title: ReactElement, tagline: s
               color: '#a5a4ff',
             },
           },
-          eyebrow.replaceAll(' ', ' '),
+          eyebrow.replaceAll(' ', '\u00a0'),
         ),
       ),
       title,
