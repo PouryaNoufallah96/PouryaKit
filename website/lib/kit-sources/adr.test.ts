@@ -10,6 +10,12 @@ test('a parenthetical that only cites the tracker is dropped, and one with subst
   assert.equal(dropCitations('It stands (tickets #42 and #43).'), 'It stands.');
   assert.equal(dropCitations('A Spike (spec #33, "Required Spikes" item 2) ran.'), 'A Spike ran.');
   assert.equal(dropCitations('As before (spec #74, finding V13).'), 'As before.');
+  assert.equal(dropCitations('Trusted (G.6) and scoped (plan section F).'), 'Trusted and scoped.');
+  assert.equal(dropCitations('Cached (I.3 Caching).'), 'Cached.');
+  assert.equal(
+    dropCitations('Never forwarded (G.6, plan I.3; `OutgoingHttpTests`).'),
+    'Never forwarded (G.6, plan I.3; `OutgoingHttpTests`).',
+  );
   assert.equal(dropCitations('Kept (ADR 0013, item 8).'), 'Kept (ADR 0013, item 8).');
   assert.equal(
     dropCitations('Read (ticket #90; read decompiled from WolverineFx 6.48.3).'),

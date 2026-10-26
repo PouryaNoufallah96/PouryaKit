@@ -17,6 +17,14 @@
   },
   {
     "adr": "0002-no-mediator-dependency",
+    "line": 19,
+    "kind": "section",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "c804adc9ef6dc7e9",
+    "text": "Confirmed by Spike S3 (2026-10-05) The Spike code is spikes/s3-dispatcher/ at commit cbc64ba6d99148423e1dcf4d5e754298..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
     "line": 157,
     "kind": "paragraph",
     "rule": "tracker code (#<n>)",
@@ -91,7 +99,7 @@
     "adr": "0002-no-mediator-dependency",
     "line": 333,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "f6a374a2f7456d8a",
     "text": "Not in the set. IAuthorizer<T> and the handler contracts stay the application's: every authorizer it registers runs, ..."
   },
@@ -107,7 +115,7 @@
     "adr": "0002-no-mediator-dependency",
     "line": 357,
     "kind": "paragraph",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "db9a797d582b0d07",
     "text": "The decision above stands, and so do the two slots. What changes is how each key names a type. The #42 and #43 amendm..."
   },
@@ -147,7 +155,7 @@
     "adr": "0003-single-commit-owner",
     "line": 98,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "ee81dc1ecab8f4ba",
     "text": "What the rule cannot cover. A change to an aggregate loaded through the repository, or a Domain Event raised on one, ..."
   },
@@ -169,9 +177,49 @@
   },
   {
     "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 22,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "a43ca98c9a035c9d",
+    "text": "The Spike code is spikes/s1-atomic-commit/ at commit 82b0b8fd8a9c25bf5fb0ca17e4fef85072116fc3, reachable through tag ..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 98,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "29341f6143f52797",
+    "text": "Registration in the Host (S1.Host/SpikeHost.cs). The policy block is reduced from meysamhadeli/woo at 149a3cf, src/Wo..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 101,
+    "kind": "code",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "99b23abcaeb178ac",
+    "text": "services.AddDbContext<CatalogDbContext>(o => o.UseNpgsql(dataSource)); // no EnableRetryOnFailure services.AddDbConte..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 114,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "caae56fcb4c7a0f8",
+    "text": "Commit, abridged from S1.Host/SpikeUnitOfWork.cs. outbox is the scope's IDbContextOutbox<TDbContext>:"
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 116,
+    "kind": "code",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "782064a61b338320",
+    "text": "var db = outbox.DbContext; await using var tx = await db.Database.BeginTransactionAsync(ct); try { var outcome = awai..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
     "line": 242,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "77f534c0f9171b42",
     "text": "Runtime code generation. No Kit runtime package references WolverineFx.RuntimeCompilation. The Host references it, fo..."
   },
@@ -203,7 +251,7 @@
     "adr": "0004-commit-through-wolverine-ef-outbox",
     "line": 326,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "80ad5e52dee97019",
     "text": "DurabilitySettings.MessageIdentity (Notes for S2) is still open; it belongs with brokers in Wave 2 (ADR 0006, Consequ..."
   },
@@ -235,7 +283,7 @@
     "adr": "0004-commit-through-wolverine-ef-outbox",
     "line": 391,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "4c940df9762d83bc",
     "text": "The check. UsePouryaKitWolverine(connectionName) registers the composition check MessageStoreDatabaseCheck. When the ..."
   },
@@ -243,7 +291,7 @@
     "adr": "0004-commit-through-wolverine-ef-outbox",
     "line": 414,
     "kind": "paragraph",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "0d4111b4d951ccfa",
     "text": "The decision above stands. The five WolverineFx* pins move from 6.46.0 to 6.48.2: WolverineFx, WolverineFx.EntityFram..."
   },
@@ -259,7 +307,7 @@
     "adr": "0004-commit-through-wolverine-ef-outbox",
     "line": 433,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "226c46cdee9d5733",
     "text": "Proof. Compatibility: the build has no warning, the whole suite passes on 6.48.2, and validate.py passes (docs/accept..."
   },
@@ -275,7 +323,7 @@
     "adr": "0004-commit-through-wolverine-ef-outbox",
     "line": 483,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "e3f99d4788a62eda",
     "text": "Why the Kit does not need it. Each of those serves a handler Wolverine generates or a caller of the scoped IDbContext..."
   },
@@ -283,7 +331,7 @@
     "adr": "0004-commit-through-wolverine-ef-outbox",
     "line": 491,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "e3a2681ec6b68de6",
     "text": "Proof. With the line and its two using directives removed (4bf4b82), dotnet build PouryaKit.slnx gave 0 warnings and ..."
   },
@@ -345,11 +393,43 @@
   },
   {
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 25,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "218fbd934a1773ca",
+    "text": "The Spike code is in spikes/s2-independent-delivery/ at commit 73acc25c25fe9dea957542985998fae078bde709, reachable th..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 42,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "f2e92a659625e79d",
+    "text": "Every handler is a plain class that implements the Spike's IIntegrationEventHandler<T> or INotificationHandler<T>, re..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 145,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "e29879fa03b747da",
+    "text": "These lines were removed before counting, by line number in the file at the Spike commit:"
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 180,
     "kind": "paragraph",
     "rule": "tracker code (#<n>)",
     "digest": "29d53c8618a10317",
     "text": "Composition Roots. The Notification wire name and subscription names are declared explicitly; see \"Requirements for #..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 232,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "279ace83915cb56a",
+    "text": "The Spike built no Receipts. The pre-built handler runs no Wolverine middleware, so Wolverine marks the envelope Hand..."
   },
   {
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
@@ -395,15 +475,23 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 378,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "fd4bd744d3842268",
     "text": "Brokers in Wave 2.The bare Notification or Integration Event is what is stored and sent, under its own wire name. The..."
   },
   {
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 390,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "cae8f6e3f1d87a7b",
+    "text": "Test run and global.json. The worktree that ran the Spike has no global.json. dotnet test used the main checkout's ro..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 395,
     "kind": "list item",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "aed8bfbd6db5743d",
     "text": "Seen by the reviewer, not repeated here. Under Option C, a Notification Handler published an Integration Event throug..."
   },
@@ -435,7 +523,7 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 492,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "0052aba3c569f376",
     "text": "No subscription, nothing written. The Outbox writes no envelope for a Notification, Integration Event or Snapshot tha..."
   },
@@ -451,7 +539,7 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 512,
     "kind": "paragraph",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "12ae614ae91aafb9",
     "text": "The decision above stands, and the broker extends it. The Spike for ticket #50 compared two RabbitMQ topologies with ..."
   },
@@ -459,7 +547,7 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 523,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "d9ecf0f4506fd4e7",
     "text": "Inbox identity. A needs MessageIdentity.IdAndDestination, because the broker copies one envelope id to every subscrip..."
   },
@@ -475,7 +563,7 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 532,
     "kind": "paragraph",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "3e610dae00ecb26e",
     "text": "Queue names do not decide between them. In the Spike, A's queue is named by the subscription alone (Rmq.Kit/BrokerTop..."
   },
@@ -483,9 +571,17 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 539,
     "kind": "paragraph",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "6d29770ab71cbaf1",
     "text": "B's cost is one more stored envelope per message and Host: three Inbox rows for two subscriptions, against two under ..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 550,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "a6c14a22f286cb84",
+    "text": "The Spike code is in spikes/rabbitmq-topology/ at commit 0c3ef9b2aef914ba30f040f07dd51c25ee6b3720, reachable through ..."
   },
   {
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
@@ -499,7 +595,7 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 595,
     "kind": "table row",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "a441a529ccf2b15f",
     "text": "Queue names across Hosts | QueueNamingTests.Two_services_that_declare_the_same_subscription_names_each_receive_every_..."
   },
@@ -531,7 +627,7 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 752,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "424a46a2a5409404",
     "text": "dead letters and the subscription lookup move to broker addresses, away from what Wave 1 built and tested."
   },
@@ -547,15 +643,23 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 763,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "67d688e92bdb920b",
     "text": "Same process, single node. Both Hosts ran in one test process, each in Durability mode Solo. Several instances of one..."
   },
   {
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 768,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "6218d316a7ba1fe7",
+    "text": "Stand-ins. The Spike's Receipt, Unit of Work and handler interfaces are stand-ins for the Kit's. Its Receipt step mat..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 773,
     "kind": "paragraph",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "61c34d6119e32bce",
     "text": "Implemented in #51 at 408b6e0, as the rule above states, in PouryaKit.Messaging.Wolverine.RabbitMq (UsePouryaKitRabbi..."
   },
@@ -603,7 +707,7 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 914,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "20fa9fb6ba338d1d",
     "text": "The next occurrence commits with this one. RunDelayedCommandHandler records the occurrence's Receipt, stores the next..."
   },
@@ -619,7 +723,7 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 969,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "70885acce00abcaa",
     "text": "The rule. A body is read only when it carries every member the contract requires, each constructor parameter without ..."
   },
@@ -643,7 +747,7 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 1043,
     "kind": "paragraph",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "e76daa0ad47012c5",
     "text": "The decision above stands. The plan sketched the declarations without a Module argument (plan section D: module.Publi..."
   },
@@ -651,7 +755,7 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 1070,
     "kind": "paragraph",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "06f3bbb1b911d07e",
     "text": "The decision above stands. The final structural review of Wave 2 found the refusals of the Host's routes at a moment ..."
   },
@@ -683,7 +787,7 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 1130,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "61469b6763bca68b",
     "text": "What grows. pouryakit_receipts holds one row per delivery a subscription applied, keyed (subscription, message id) wi..."
   },
@@ -691,7 +795,7 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 1135,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "aa38d729c546d356",
     "text": "Why no retention tied to dead-letter expiry. A Receipt is what stops a second effect on a redelivery that never enter..."
   },
@@ -723,7 +827,7 @@
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 1190,
     "kind": "paragraph",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "99530ce3c887d53c",
     "text": "The decision above stands for every subscription. A Saga is the one reaction that runs on a chain Wolverine generates..."
   },
@@ -763,7 +867,7 @@
     "adr": "0007-operation-context-set-by-the-scope-opener",
     "line": 97,
     "kind": "paragraph",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "b7378830350d1474",
     "text": "The decision above stands, but a causation no longer makes a context trusted. Through Wave 1, PouryaKit.Security's pe..."
   },
@@ -788,14 +892,14 @@
     "line": 119,
     "kind": "paragraph",
     "rule": "tracker code (spec #)",
-    "digest": "26406336aa4c13b3",
+    "digest": "b917942acfb674cc",
     "text": "The decision above stands, and so does \"every request starts a new chain of work\" for every caller but one: a configu..."
   },
   {
     "adr": "0007-operation-context-set-by-the-scope-opener",
     "line": 171,
     "kind": "paragraph",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "322978ebe7f6bf53",
     "text": "The decision above stands, and so do the #57 and #48 amendments. The #48 amendment records that Web built a trusted p..."
   },
@@ -849,17 +953,49 @@
   },
   {
     "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 26,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "0a0388f46d364e69",
+    "text": "The Spike code is spikes/w3c-propagation/ at commit c4cf2870993a8bd5bd22ecac895a869166cd0869, reachable through tag s..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
     "line": 50,
     "kind": "list item",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "ccaf2dc349054b90",
     "text": "Stand-in Operation activity. Each scope's outermost IDispatcher call runs inside an activity pouryakit.operation from..."
   },
   {
     "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 54,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "5c1224704493deec",
+    "text": "Upstream activity. A PouryaKit.Spike activity of kind Server is current around the CreateProduct Gateway call, standi..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 57,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "18d0b4f98f706526",
+    "text": "Listeners. One ActivityListener per test. Sample and SampleUsingParentId both return AllDataAndRecorded, because Wolv..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 79,
+    "kind": "code",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "4102f76eac14f623",
+    "text": "upstream (PouryaKit.Spike, Server) 0336c2b0589680a1 tracestate=kit=spike-46,other=v1 └ CreateProduct Operation (poury..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
     "line": 125,
     "kind": "list item",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "ef8bc762976ee6d0",
     "text": "#47 implements only these.The Operation activity is current while the Unit of Work writes the Outbox. Inferred from s..."
   },
@@ -867,7 +1003,7 @@
     "adr": "0009-w3c-trace-context-through-the-outbox",
     "line": 151,
     "kind": "paragraph",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "1487e6ab384f7647",
     "text": "The snippet below is mostly untested design for #47. Only one part ran in the Spike. PropagationTests.cs:84-92, in ev..."
   },
@@ -881,6 +1017,14 @@
   },
   {
     "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 184,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "a89255678199b9af",
+    "text": "No package is added. System.Diagnostics is in the BCL, and the Spike used only the Kit's own pins (WolverineFx 6.46.0..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
     "line": 198,
     "kind": "list item",
     "rule": "tracker code (#<n>)",
@@ -889,11 +1033,27 @@
   },
   {
     "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 202,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "74c03a6c7f4eee75",
+    "text": "Sampling. Every listened source sampled everything. The Spike did not examine head sampling, such as a parent-based r..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
     "line": 227,
     "kind": "list item",
     "rule": "tracker code (#<n>)",
     "digest": "4f308f4367bf0906",
     "text": "#47 owns the Operation activity's placement (around the Unit of Work), the tracestate header, and the parent fallback..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 232,
+    "kind": "list item",
+    "rule": "private plan citation (G.<n>, I.<n>)",
+    "digest": "8cc142a652e86891",
+    "text": "The wording in I.4, \"delivery activities link to the publishing Operation\", reads as \"are children of the publishing ..."
   },
   {
     "adr": "0009-w3c-trace-context-through-the-outbox",
@@ -947,7 +1107,7 @@
     "adr": "0010-one-namespace-per-kit-package",
     "line": 73,
     "kind": "list item",
-    "rule": "delivery vocabulary (Wave)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "8a242f02587ee0ed",
     "text": "Keeping every package flat. Rejected: it costs nothing today and leaves the responsibility map in the docs only, whil..."
   },
@@ -969,11 +1129,27 @@
   },
   {
     "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 24,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "0a6793544239659e",
+    "text": "The Spike code is spikes/marten-two-store/ at commit d03cc7409c9cc5e9c10520142553d473d763b68d, reachable through tag ..."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
     "line": 37,
     "kind": "list item",
     "rule": "tracker code (#<n>)",
     "digest": "08cf2dc56b159c0e",
     "text": "M2.Marten, what #121 and #131 would ship, as a self-contained copy: MartenUnitOfWork (IUnitOfWork, IReadingStateGuard..."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 61,
+    "kind": "paragraph",
+    "rule": "private plan citation (G.<n>, I.<n>)",
+    "digest": "7f59625d93d42ed0",
+    "text": "The ticket and the spec count fifteen, nine from plan I.4 and six \"from the code\", but the spec's list of code items ..."
   },
   {
     "adr": "0011-each-write-model-has-one-commit-owner",
@@ -995,23 +1171,23 @@
     "adr": "0011-each-write-model-has-one-commit-owner",
     "line": 81,
     "kind": "table row",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "a23baf5dec10060c",
     "text": "16 | Conjoined tenancy with the Kit's tenant | Pass. The session opens for OperationContext.Tenant; the delivery rest..."
   },
   {
     "adr": "0011-each-write-model-has-one-commit-owner",
-    "line": 130,
-    "kind": "list item",
-    "rule": "tracker code (#<n>)",
-    "digest": "3e8b39d703543589",
-    "text": "A Stream's identity is a Guid (item 5). G.3 still holds: a typed ID wraps that Guid in Feature code and in the Kit's ..."
+    "line": 149,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "a0506139eb705285",
+    "text": "Host, abridged from M2.Marten/MartenRegistration.cs and M2.Host/SpikeHost.cs:"
   },
   {
     "adr": "0011-each-write-model-has-one-commit-owner",
     "line": 244,
     "kind": "table row",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "7398152dc2bf0c75",
     "text": "Conjoined tenancy keyed by OperationContext.Tenant, Marten's default tenant for none; a delivery appends under the de..."
   },
@@ -1022,6 +1198,22 @@
     "rule": "tracker code (#<n>)",
     "digest": "4c3e468b5df73b63",
     "text": "ADR 0003 and ADR 0004 carry the one-commit-owner amendment of 2026-10-16. The packages follow in #121, #131 and #132,..."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 256,
+    "kind": "list item",
+    "rule": "private plan citation (G.<n>, I.<n>)",
+    "digest": "22b5342f37312332",
+    "text": "Plan I.4's internal Apply methods are corrected here, and a Stream's Guid identity recorded, not in the plan, which k..."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 258,
+    "kind": "list item",
+    "rule": "private plan citation (G.<n>, I.<n>)",
+    "digest": "586e1680d7fdeb01",
+    "text": "Plan I.4 has MartenReceipts keep Receipts, Snapshot versions and the publication record as Marten documents on the sa..."
   },
   {
     "adr": "0011-each-write-model-has-one-commit-owner",
@@ -1059,7 +1251,7 @@
     "adr": "0013-a-saga-step-runs-outside-every-operation",
     "line": 30,
     "kind": "paragraph",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "04dccf6662101390",
     "text": "The Spike code is spikes/saga/ at commit 629b85a8abefd3bfb62bb7d072e30b9669992eae, reachable through tag spike/saga. ..."
   },
@@ -1075,9 +1267,17 @@
     "adr": "0013-a-saga-step-runs-outside-every-operation",
     "line": 75,
     "kind": "table row",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "0c5bdd5ff09f9d3a",
     "text": "2 | Saga state lives in the Kit's message store schema | Pass, with the store in a schema of its own, kitstore: the s..."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 79,
+    "kind": "table row",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "ad2063c8beb90529",
+    "text": "6 | A crash between the saga's save and the envelope's mark applies no step twice, or the limit is recorded | Pass. A..."
   },
   {
     "adr": "0013-a-saga-step-runs-outside-every-operation",
@@ -1107,7 +1307,7 @@
     "adr": "0013-a-saga-step-runs-outside-every-operation",
     "line": 141,
     "kind": "list item",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "98fa4c2c48fed8b8",
     "text": "The claims outlive the saga, as Receipts do. Deleting them with the saga's state lets a late copy of the starting eve..."
   },
@@ -1123,9 +1323,25 @@
     "adr": "0013-a-saga-step-runs-outside-every-operation",
     "line": 151,
     "kind": "list item",
-    "rule": "tracker code (#<n>)",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
     "digest": "10db00c63424e2df",
     "text": "Trace context. The Spike's adapter writes no tracestate (ADR 0009); Wolverine writes the step's current activity as e..."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 235,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "5eaac714ba869c6c",
+    "text": "Read from the restored nuspecs on 2026-10-18. The Spike adds no package to the Kit's closure: every package it uses i..."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 245,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave, Phase, Spike)",
+    "digest": "d4b7498159105cb8",
+    "text": "The Spike's own: Microsoft.Extensions.Hosting 10.0.12, xunit.v3 4.0.1 and Testcontainers.PostgreSql 4.15.0, the Kit's..."
   },
   {
     "adr": "0013-a-saga-step-runs-outside-every-operation",
@@ -1145,10 +1361,10 @@
   },
   {
     "adr": "0013-a-saga-step-runs-outside-every-operation",
-    "line": 285,
+    "line": 288,
     "kind": "list item",
-    "rule": "tracker code (#<n>)",
-    "digest": "2f3b47d9baefca48",
-    "text": "The exception rests on Wolverine members a later version may move: SagaSchemaCodegen.HelperType, the public EnrollAnd..."
+    "rule": "private plan citation (G.<n>, I.<n>)",
+    "digest": "87695a732d53cb80",
+    "text": "Plan I.3's Saga row and I.4's Saga paragraph carry dated notes pointing here; the plan keeps its record."
   }
 ]

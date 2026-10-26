@@ -41,6 +41,38 @@ test('another repository of the owner, the owner alone and another owner pass, s
   }
 });
 
+test("the private plan's citations fail in text: a decision of section G, a row of section I and a section", () => {
+  for (const text of ['as G.6 decides', 'plan I.3', 'the I.3 row', 'or section G.', 'Plan section D sketched']) {
+    assert.ok(vocabularyViolations(text).length > 0, text);
+  }
+  for (const text of ['GDPR', 'IEEE 754', 'the G string', 'section 4']) {
+    assert.deepEqual(vocabularyViolations(text), [], text);
+  }
+});
+
+test("the owner's private projects fail by name, whole words in any case, markup included; the public ones pass", () => {
+  for (const text of [
+    'as Cybernod does',
+    '`cybernod@bae8ac3 src/x.cs`',
+    'CYBERNOD',
+    'Ultrabusiness',
+    'ultra-business',
+    'UltraBusiness docs',
+  ]) {
+    assert.ok(addressViolations(text).length > 0, text);
+  }
+  for (const text of [
+    'cybernodes',
+    'CloudNativeKit',
+    'meysamhadeli/woo',
+    'food-delivery-microservices',
+    'kgrzybek/modular-monolith-with-ddd',
+    'vertical-slice-api-template',
+  ]) {
+    assert.deepEqual(addressViolations(text), [], text);
+  }
+});
+
 test('a local path fails: a macOS or Linux home, the macOS temporary directory and a Windows drive', () => {
   for (const path of [
     '/Users/ada/kit',
@@ -60,6 +92,9 @@ test('delivery vocabulary and tracker codes fail in text, and W3C or a word in l
   for (const text of [
     'in Wave 3',
     'Waves of work',
+    'the next Phase',
+    'The Spike code',
+    'two Spikes ran',
     'decision W11',
     'see spec #183',
     'Spec #115 decided',
@@ -67,7 +102,14 @@ test('delivery vocabulary and tracker codes fail in text, and W3C or a word in l
   ]) {
     assert.ok(vocabularyViolations(text).length > 0, text);
   }
-  for (const text of ['W3C trace context', 'a microwave', 'item #1', 'C# 14']) {
+  for (const text of [
+    'W3C trace context',
+    'a microwave',
+    'a spike in latency',
+    'the first phase',
+    'item #1',
+    'C# 14',
+  ]) {
     assert.deepEqual(vocabularyViolations(text), [], text);
   }
 });

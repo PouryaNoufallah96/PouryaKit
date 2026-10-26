@@ -46,7 +46,18 @@ test('a tracker code fails in rendered text: a page, its Markdown, llms.txt and 
     'docs/index.html tracker code (#<n>)',
     'llms.mdx/docs/content.md tracker code (spec #)',
     'llms.mdx/docs/content.md tracker code (#<n>)',
-    'llms.txt delivery vocabulary (Wave)',
+    'llms.txt delivery vocabulary (Wave, Phase, Spike)',
+  ]);
+});
+
+test("a private project's name fails anywhere, a script's included; a delivery word fails only as text", () => {
+  const findings = findingsFor({
+    '_next/static/chunk.js': 'const from="cybernod@bae8ac3";',
+    'docs/index.html': '<p>The Spike ran.</p><script>self.push("Spike G.12")</script>',
+  });
+  assert.deepEqual(findings, [
+    '_next/static/chunk.js private project (Cybernod)',
+    'docs/index.html delivery vocabulary (Wave, Phase, Spike)',
   ]);
 });
 

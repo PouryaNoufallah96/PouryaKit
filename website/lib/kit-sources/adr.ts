@@ -26,19 +26,27 @@ export type ProjectedAdr = {
 
 const TRACKER = /#\d+|\bW\d+\b|\bWave\b/;
 
-// The parts of a parenthetical that only cite the tracker: a ticket, issue, spec or pull request number, a quoted section
-// of a spec, a finding or decision code, or a review of one of them.
+// A citation of the private plan: a decision of its section G, a row of its section I, or one of its sections.
+const PLAN = /\b[GI]\.\d+|\bsection G\b|\bplan section [A-Z]\b/i;
+
+// The parts of a parenthetical that only cite the tracker or the private plan: a ticket, issue, spec or pull request
+// number, a quoted section of a spec, a finding or decision code, a review of one of them, or a section, decision or row
+// of the plan.
 const CITATION_PARTS = [
   /^(?:the )?(?:(?:tickets?|issues?|specs?|PRs?)\s+)?#\d+(?:(?:\s*,\s*|\s+(?:and|or|to)\s+)#\d+)*(?:'s [a-z ]+| follow-up| review| amendment(?: above| below)?)?$/i,
   /^"[^"]+"(?: item \d+)?$/,
   /^(?:owner )?(?:finding|decision) [A-Z]+\d+$/,
   /^(?:the )?(?:first |second |final )?review(?: round)? of (?:PR|ticket) #\d+$/,
   /^out of scope$/i,
+  /^(?:plan )?(?:section )?[GI]\.\d+(?: [A-Z][a-z]+)?$/,
+  /^(?:the )?[GI]\.\d+ row$/,
+  /^(?:plan )?section [A-Z]$/,
 ];
 
 function isCitation(inner: string): boolean {
   return (
-    TRACKER.test(inner) && inner.split(/[;,]\s*/).every((part) => CITATION_PARTS.some((rule) => rule.test(part.trim())))
+    (TRACKER.test(inner) || PLAN.test(inner)) &&
+    inner.split(/[;,]\s*/).every((part) => CITATION_PARTS.some((rule) => rule.test(part.trim())))
   );
 }
 

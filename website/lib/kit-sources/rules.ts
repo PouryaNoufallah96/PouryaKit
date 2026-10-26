@@ -1,6 +1,6 @@
 // The build-time rules that keep the private repository out of everything the site publishes. Each rule reads text the
 // pipeline has already projected or the export has already rendered; the callers say which text is rendered and which is
-// markup (export-check.ts, project.ts).
+// markup (export-check.ts, markdown.ts).
 
 export type Violation = { rule: string; match: string };
 
@@ -8,12 +8,23 @@ export type Violation = { rule: string; match: string };
 const PRIVATE_OWNER = 'pouryanoufallah96';
 const PRIVATE_REPOSITORY = 'pouryakit';
 
-// Delivery vocabulary and tracker codes, matched in rendered text only: a CSS colour (#615fff) or an attribute is markup.
+// Delivery vocabulary, tracker codes and the private plan's citations, matched in rendered text only: a CSS colour
+// (#615fff), an attribute or a script's `G.12` is markup. The three delivery words are the glossary's own terms, which the
+// site leaves out, capitalised as the glossary writes them.
 const VOCABULARY: [string, RegExp][] = [
-  ['delivery vocabulary (Wave)', /\bWave/g],
+  ['delivery vocabulary (Wave, Phase, Spike)', /\b(?:Wave|Phase|Spike)/g],
   ['tracker code (W<n>)', /\bW\d+\b/g],
   ['tracker code (spec #)', /\bspec #/gi],
   ['tracker code (#<n>)', /#\d{2,}/g],
+  ['private plan citation (G.<n>, I.<n>)', /\b[GI]\.\d+/g],
+  ['private plan citation (section G)', /\bsection G\b/g],
+  ['private plan citation (plan section)', /\bplan section [A-Z]\b/gi],
+];
+
+// The owner's private projects, by name, ignoring case and anywhere, markup included.
+const PRIVATE_NAMES: [string, RegExp][] = [
+  ['private project (Cybernod)', /\bcybernod\b/gi],
+  ['private project (Ultrabusiness)', /\bultra[- ]?business\b/gi],
 ];
 
 // A path on a developer's machine: a macOS or Linux home, the macOS temporary directory, or a Windows drive path.
@@ -103,12 +114,15 @@ function matchAll(text: string, rules: [string, RegExp][]): Violation[] {
   return found;
 }
 
-/** The rules any text the site publishes must pass, markup included: no private repository and no local path. */
+/**
+ * The rules any text the site publishes must pass, markup included: no private repository, no local path and no private
+ * project's name.
+ */
 export function addressViolations(text: string): Violation[] {
-  return [...privateRepositoryReferences(text), ...matchAll(text, LOCAL_PATHS)];
+  return [...privateRepositoryReferences(text), ...matchAll(text, LOCAL_PATHS), ...matchAll(text, PRIVATE_NAMES)];
 }
 
-/** The rule only rendered text must pass: no delivery vocabulary and no tracker code. */
+/** The rules only rendered text must pass: no delivery vocabulary, no tracker code and no private plan citation. */
 export function vocabularyViolations(text: string): Violation[] {
   return matchAll(text, VOCABULARY);
 }

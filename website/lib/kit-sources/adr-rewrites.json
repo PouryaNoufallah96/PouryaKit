@@ -1,15 +1,39 @@
 [
   {
     "adr": "0001-one-host-container",
+    "line": 5,
+    "from": "(as Cybernod does)",
+    "to": "(as a reference project does)"
+  },
+  {
+    "adr": "0001-one-host-container",
     "line": 15,
     "from": "so tickets #13 and #19 made each Module's ownership a composition rule",
     "to": "so each Module's ownership is a composition rule"
   },
   {
     "adr": "0001-one-host-container",
+    "line": 41,
+    "from": "Cybernod finds a Module by its definition's assembly too (`cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.Web/Modules/ModuleRegistry.cs:38-41`); its static registry is not adopted.",
+    "to": "A reference project finds a Module by its definition's assembly too; its static registry is not adopted."
+  },
+  {
+    "adr": "0001-one-host-container",
     "line": 58,
     "from": "Spike #141 recorded the one exception spec #115 approved (decision S1), a Saga, in",
     "to": "The one approved exception, a Saga, is recorded in"
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 17,
+    "from": "Spike S3 below kept the owned dispatcher for that reason.",
+    "to": "The Kit kept its owned dispatcher for that reason."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 150,
+    "from": "Plan G.6 calls it a \"command-level\" authorization hook; the hook covers queries too, and this was reported to the owner when ticket #7 closed. G.6 is unchanged.",
+    "to": "The hook covers queries too."
   },
   {
     "adr": "0003-single-commit-owner",
@@ -19,15 +43,57 @@
   },
   {
     "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 7,
+    "from": "Spike S1 (ticket #2) ran",
+    "to": "An experiment ran"
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 12,
+    "from": "Nothing observed contradicts ADR 0001–0003 or section G.",
+    "to": "Nothing observed contradicts ADR 0001–0003."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
     "line": 14,
     "from": "One gap remains for ticket #15.",
     "to": "One gap remains."
   },
   {
     "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 208,
+    "from": "the Spike's container sets it.",
+    "to": "the test container sets it."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 259,
+    "from": "G.2 is unchanged.",
+    "to": ""
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
     "line": 507,
     "from": "issue #4923",
     "to": "issue 4923"
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 561,
+    "from": "the record of what Spike S1 ran on",
+    "to": "the record of what the experiment ran on"
+  },
+  {
+    "adr": "0005-operation-scoped-clock",
+    "line": 21,
+    "from": "as in `PouryaNoufallah96/cybernod` at `bae8ac3`, `src/BuildingBlocks/BuildingBlocks.Core/Clock/SystemClock.cs`; `kgrzybek/modular-monolith-with-ddd`",
+    "to": "as in a reference project and in `kgrzybek/modular-monolith-with-ddd`"
+  },
+  {
+    "adr": "0005-operation-scoped-clock",
+    "line": 23,
+    "from": "; and Ultrabusiness at `a85eacd`, `src/BuildingBlocks/BuildingBlocks.Core/Common/SystemClock.cs`.",
+    "to": "."
   },
   {
     "adr": "0005-operation-scoped-clock",
@@ -37,15 +103,57 @@
   },
   {
     "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 7,
+    "from": "Spike S2 (ticket #5) compared",
+    "to": "An experiment compared"
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 21,
+    "from": "contradicts ADR 0001–0004 or section G.",
+    "to": "contradicts ADR 0001–0004."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 279,
+    "from": "**Per-retry scope** (plan section F; ADR 0004 left it to S2).",
+    "to": "**Per-retry scope**."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
     "line": 457,
     "from": "Tickets #15, #16 and #18 fixed the formats below, which stored rows and every receiver now depend on, and the rules a consuming project must keep.",
     "to": "The formats below, which stored rows and every receiver now depend on, are fixed, and so are the rules a consuming project must keep."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 476,
+    "from": "Plan section D's sketch left the version check to the receiving Feature. The Kit's delivery step does it instead,",
+    "to": "The Kit's delivery step does the version check, not the receiving Feature,"
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 486,
+    "from": "Plan section D sketched one method and two type parameters.",
+    "to": ""
   },
   {
     "adr": "0007-operation-context-set-by-the-scope-opener",
     "line": 16,
     "from": "The owner delegated this decision to ticket #13 on 2026-10-05.",
     "to": ""
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 45,
+    "from": "The same idea in Ultrabusiness (`a85eacd`, `src/BuildingBlocks/MainArchitecture/Infrastructure/MainArchitecture.Infrastructure/Identity/InternalRequestContext.cs`) is opt-in and loses the Actor and the trace when work crosses the outbox (plan B.1, row 16).",
+    "to": "The same idea in a reference project is opt-in and loses the Actor and the trace when work crosses the outbox."
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 51,
+    "from": "Rejected by G.6: system identity must be explicit.",
+    "to": "Rejected: system identity must be explicit."
   },
   {
     "adr": "0007-operation-context-set-by-the-scope-opener",
@@ -72,6 +180,30 @@
     "to": "These are the facts of the context"
   },
   {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 104,
+    "from": "That is G.6, not a gap:",
+    "to": "That is by design, not a gap:"
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 140,
+    "from": "(`IHttpContextAccessor`, as `cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.Security/Utilities/HttpClientAuthorizationDelegatingHandler.cs` does)",
+    "to": "(`IHttpContextAccessor`, as a reference project does)"
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 144,
+    "from": "(G.6, plan I.3; `OutgoingHttpTests`)",
+    "to": "(`OutgoingHttpTests`)"
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 197,
+    "from": "so it is no re-authorization of the kind G.6 rules out:",
+    "to": "so it does not authorize the continuation again:"
+  },
+  {
     "adr": "0008-one-problem-response-for-every-http-failure",
     "line": 8,
     "from": "Ticket #14 fixed it for a failed `Result` and an exception, and ticket #19 extended it to the failures ASP.NET Core answers itself.",
@@ -93,7 +225,7 @@
     "adr": "0009-w3c-trace-context-through-the-outbox",
     "line": 7,
     "from": "Spike #46",
-    "to": "A Spike"
+    "to": "An experiment"
   },
   {
     "adr": "0009-w3c-trace-context-through-the-outbox",
@@ -102,10 +234,64 @@
     "to": "The Kit implements only three things."
   },
   {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 19,
+    "from": "That meets the acceptance in plan section I.3 (\"a delivery's activity is a child of the sending Operation's trace\") and supersedes the wording \"delivery activities link to the publishing Operation\" in I.4: nothing on this path creates an `ActivityLink`, and a link to an unrelated trace would not satisfy I.3. Nothing observed contradicts ADR 0001 to 0008 or section G.",
+    "to": "So a delivery's activity is a child of the sending Operation's trace, and no delivery activity links to the publishing Operation: nothing on this path creates an `ActivityLink`, and a link to an unrelated trace would leave the delivery outside it. Nothing observed contradicts ADR 0001 to 0008."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 220,
+    "from": "**A link from the delivery to the publishing Operation, as I.4 worded it.** Rejected. Wolverine already parents the delivery, and a link from a new root would not meet I.3's connected-trace acceptance.",
+    "to": "**A link from the delivery to the publishing Operation.** Rejected. Wolverine already parents the delivery, and a link from a new root would leave the delivery outside the publishing Operation's trace."
+  },
+  {
     "adr": "0011-each-write-model-has-one-commit-owner",
     "line": 7,
     "from": "Spike #120",
-    "to": "A Spike"
+    "to": "An experiment"
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 18,
+    "from": "Nothing observed contradicts ADR 0001 to 0010 or section G. Plan I.4's internal `Apply` methods do not hold",
+    "to": "Nothing observed contradicts ADR 0001 to 0010. Internal `Apply` methods do not hold"
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 119,
+    "from": "Rejected, as plan I.4 read from the docs.",
+    "to": "Rejected."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 128,
+    "from": "Plan I.4's \"may be internal\" does not hold; ADR 0001 still holds",
+    "to": "ADR 0001 still holds"
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 130,
+    "from": "G.3 still holds: a typed ID wraps",
+    "to": "A typed ID still wraps"
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 131,
+    "from": "The Spike's `IStreams` took the bare Guid; the typed-ID surface of the Stream API is #131's to settle.",
+    "to": ""
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 281,
+    "from": "the I.3 row's `→ Messaging` is not taken;",
+    "to": "Persistence.Marten does not reference Messaging;"
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 329,
+    "from": "the Spike's \"Pinned versions and licences\"",
+    "to": "the \"Pinned versions and licences\" above"
   },
   {
     "adr": "0012-realtime-through-postgresql-notifications",
@@ -114,9 +300,129 @@
     "to": "This is Realtime's mechanism between instances, built in `PouryaKit.Realtime`."
   },
   {
+    "adr": "0012-realtime-through-postgresql-notifications",
+    "line": 14,
+    "from": "Nothing observed contradicts ADR 0001 to 0011 or section G.",
+    "to": "Nothing observed contradicts ADR 0001 to 0011."
+  },
+  {
+    "adr": "0012-realtime-through-postgresql-notifications",
+    "line": 18,
+    "from": "Plan I.6 answer 4 put realtime push in one optional package",
+    "to": "Realtime push is one optional package"
+  },
+  {
+    "adr": "0012-realtime-through-postgresql-notifications",
+    "line": 20,
+    "from": "The plan left the mechanism between instances open (2026-10-09):",
+    "to": "The mechanism between instances was open:"
+  },
+  {
+    "adr": "0012-realtime-through-postgresql-notifications",
+    "line": 21,
+    "from": "Both reference managers keep their connections in a dictionary of one process (`Ultrabusiness@d685de6 src/BuildingBlocks/BuildingBlocks.SSE/Services/SseConnectionManager.cs:22`, `cybernod@bae8ac3 src/BuildingBlocks/BuildingBlocks.SignalR/Implementations/SignalRConnectionManager.cs:23`), which loses",
+    "to": "Both reference projects' managers keep their connections in a dictionary of one process, which loses"
+  },
+  {
+    "adr": "0012-realtime-through-postgresql-notifications",
+    "line": 60,
+    "from": "the shape learned from `Ultrabusiness@d685de6 src/BuildingBlocks/BuildingBlocks.SSE/Extensions/SseEndpointExtensions.cs:58`;",
+    "to": "the shape learned from a reference project;"
+  },
+  {
+    "adr": "0012-realtime-through-postgresql-notifications",
+    "line": 77,
+    "from": "rejected by I.6 answer 4.",
+    "to": "rejected."
+  },
+  {
     "adr": "0013-a-saga-step-runs-outside-every-operation",
     "line": 7,
     "from": "Spike #141",
-    "to": "A Spike"
+    "to": "An experiment"
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 26,
+    "from": "Nothing observed contradicts ADR 0002 to 0005 or ADR 0007 to 0012, or section G.",
+    "to": "Nothing observed contradicts ADR 0002 to 0005 or ADR 0007 to 0012."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 123,
+    "from": "not tested: the Spike has no broker)",
+    "to": "not tested without a broker)"
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 263,
+    "from": ". The Spike checks it nowhere",
+    "to": "."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 264,
+    "from": "; the Spike shows Wolverine's `UnknownSagaException`",
+    "to": ""
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 265,
+    "from": "; the Spike's adapter writes no `tracestate`",
+    "to": ""
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 266,
+    "from": "; not built by the Spike",
+    "to": ""
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 267,
+    "from": ", not at a saga's first step as the Spike does",
+    "to": ", not at a saga's first step"
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 268,
+    "from": "; not built by the Spike",
+    "to": ""
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 275,
+    "from": "beside G.2's three,",
+    "to": "beside the three kinds of reaction,"
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 287,
+    "from": "#142's invariants are what catch a change.",
+    "to": "The invariants above are what catch a change."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 294,
+    "from": "Where the package departs from the Spike's shape:",
+    "to": "Where the package departs from the experiment's shape:"
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 311,
+    "from": "the gap the Spike's second review recorded is now a test.",
+    "to": "a test now covers that gap."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 333,
+    "from": "in place of the Spike's probe after the commit.",
+    "to": "in place of a probe after the commit."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 383,
+    "from": "The Spike's \"Pinned versions and licences\"",
+    "to": "The \"Pinned versions and licences\" above"
   }
 ]
