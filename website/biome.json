@@ -1,7 +1,18 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
-    "includes": ["**", "!**/node_modules", "!.next", "!out", "!.source", "!next-env.d.ts", "!pnpm-lock.yaml"]
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!.next",
+      "!out",
+      "!.source",
+      "!next-env.d.ts",
+      "!pnpm-lock.yaml",
+      "!.generated",
+      "!content/docs/capabilities",
+      "!content/docs/reference"
+    ]
   },
   "formatter": {
     "indentStyle": "space",

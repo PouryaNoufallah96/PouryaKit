@@ -1,0 +1,1154 @@
+[
+  {
+    "adr": "0001-one-host-container",
+    "line": 24,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "c313d6314f2eb3d3",
+    "text": "A Module that handles a command registers its Unit of Work, or composition fails; a Module with queries only needs no..."
+  },
+  {
+    "adr": "0001-one-host-container",
+    "line": 65,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "2b85b12e39fc142c",
+    "text": "A step reaches no Kit scoped service while the Host keeps Wolverine's default service location policy. Under ServiceL..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 157,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "1cfc8c6447db95ad",
+    "text": "The decision above stands. Plan I.6 decided that the fixed pipeline has two optional slots, idempotency before the Un..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 172,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "ee799f8afd924587",
+    "text": "The Unit of Work owns the writes (ADR 0003). The key and the success are written by an IIdempotencyStore in the Unit ..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 210,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "d9cb11ad2a5cb246",
+    "text": "Only the outermost query of an Operation that has not failed (fix of #43 re-review F5 at commit 9dfa861). The slot ta..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 220,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "f05d8feabe2a4c64",
+    "text": "The Kit's Caching package supplies the one implementation. IQueryCache is a Cqrs seam that exists for the Kit, as IId..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 232,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "0b9e67e7b60361ec",
+    "text": "Nothing a query changed. A query's tracked-state check otherwise runs when its reading boundary closes, after its ans..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 273,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "50daa558817bc71e",
+    "text": "The decision above stands. The owner decided on 2026-10-07 (decision B of the Kit API review) that caching is never s..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 283,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "72e992193ee2bd7f",
+    "text": "Applications still register no steps. The checks run once, when the container is built, from Cqrs's AddPouryaKitCompo..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 296,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "c331ed05ac2179f1",
+    "text": "The decision above stands, and so does the #42 amendment's \"throws InvalidOperationException at dispatch\" for a reque..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 312,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "92196f7205e575fc",
+    "text": "The decision above stands. The #42 and #43 amendments say the two optional slots are filled only by the Kit, yet thei..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 333,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "f6a374a2f7456d8a",
+    "text": "Not in the set. IAuthorizer<T> and the handler contracts stay the application's: every authorizer it registers runs, ..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 343,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "64bb76784f77a5d0",
+    "text": "The decision above stands, and so does the #62 amendment's refusal of a safe method, but not its exception: \"An endpo..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 357,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "db9a797d582b0d07",
+    "text": "The decision above stands, and so do the two slots. What changes is how each key names a type. The #42 and #43 amendm..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 388,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "6da158ed7864364d",
+    "text": "The decision above stands, and so does the #66 amendment's rule. What changes is where the rule is written, and the n..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 391,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "9b782f2abed95947",
+    "text": "One helper. The #66 amendment wrote the rule at both keys, each naming the other, because PouryaKit.Caching sees none..."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 402,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "ee7299762fe1b4e1",
+    "text": "The Outbox marker is IOutbox. Ticket #81 (decision D16) renamed the Messaging.Wolverine marker the #54 amendment list..."
+  },
+  {
+    "adr": "0003-single-commit-owner",
+    "line": 67,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "94a9e0e6dcfde759",
+    "text": "The signal. Operation.IsUnitOfWorkActive (src/PouryaKit.Cqrs/Operation.cs) is public, with a private setter. It is th..."
+  },
+  {
+    "adr": "0003-single-commit-owner",
+    "line": 98,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "ee81dc1ecab8f4ba",
+    "text": "What the rule cannot cover. A change to an aggregate loaded through the repository, or a Domain Event raised on one, ..."
+  },
+  {
+    "adr": "0003-single-commit-owner",
+    "line": 145,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "00d5057f2005f02a",
+    "text": "The decision above stands, and so does the #66 and #67 amendment. Only the shape of one of the Kit's write seams chan..."
+  },
+  {
+    "adr": "0003-single-commit-owner",
+    "line": 164,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "0068c1dada915f14",
+    "text": "Refused at commit, beside the temporary key. SnapshotStep.Build refuses a non-key property whose value the database g..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 242,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "77f534c0f9171b42",
+    "text": "Runtime code generation. No Kit runtime package references WolverineFx.RuntimeCompilation. The Host references it, fo..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 306,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "7f60e32c48ff52db",
+    "text": "The decision above stands. Ticket #17 extended the cost of its InboxStaleTime remedy."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 308,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "9da2fc7be0a62c5c",
+    "text": "The stale time covers the whole retry schedule. The invariant owned by #15 says InboxStaleTime must exceed the longes..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 317,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "ef37600fa9928c2b",
+    "text": "The decision above stands. Ticket #15 met its one-instance invariant by another route than the text names."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 326,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "80ad5e52dee97019",
+    "text": "DurabilitySettings.MessageIdentity (Notes for S2) is still open; it belongs with brokers in Wave 2 (ADR 0006, Consequ..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 331,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "0a47af5e7feca8dc",
+    "text": "The decision above stands. Ticket #58 built \"Defaults chosen\", 2, as Wolverine's code generation guide recommends for..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 382,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "0685a0bd3fc10708",
+    "text": "The decision above stands. \"One message store serves two DbContexts\" holds \"provided every DbContext connects to the ..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 385,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "384517cc328027d4",
+    "text": "What a DbContext on another database did. #54's probe of 2026-10-08 (MessageStoreDatabaseTests at commit 3861dc9, rec..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 391,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "4c940df9762d83bc",
+    "text": "The check. UsePouryaKitWolverine(connectionName) registers the composition check MessageStoreDatabaseCheck. When the ..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 414,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "0d4111b4d951ccfa",
+    "text": "The decision above stands. The five WolverineFx* pins move from 6.46.0 to 6.48.2: WolverineFx, WolverineFx.EntityFram..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 420,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "62414194a4dab84f",
+    "text": "Why. In 6.46.0, after a RabbitMQ connection recovery, Wolverine's connection monitor rebuilt the broker agents in a p..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 433,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "226c46cdee9d5733",
+    "text": "Proof. Compatibility: the build has no warning, the whole suite passes on 6.48.2, and validate.py passes (docs/accept..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 439,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "0c3215b455d4df71",
+    "text": "6.48.3 (2026-10-09, #75 follow-up). The seven pins move on to 6.48.3, published the same day at 14:42 UTC, after a ru..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 483,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "e3f99d4788a62eda",
+    "text": "Why the Kit does not need it. Each of those serves a handler Wolverine generates or a caller of the scoped IDbContext..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 491,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "e3a2681ec6b68de6",
+    "text": "Proof. With the line and its two using directives removed (4bf4b82), dotnet build PouryaKit.slnx gave 0 warnings and ..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 497,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "c7c03b3641b9c210",
+    "text": "The decision above stands. \"One store per Host\", in the spike's registration comment and in \"Consequences\", and a sch..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 507,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "e147fb9ce3416883",
+    "text": "Why. JasperFx/wolverine issue 4923, filed 2026-10-09, reproduced on WolverineFx 6.45.0 and 6.48.2 and open on 2026-10..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 534,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "1709bbb5577aad65",
+    "text": "Two lines of the ticket #58 amendment no longer describe the templates. Each template Host composes in AppHost.Create..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 544,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "f1be4451b2288255",
+    "text": "The decision above stands for the EF write model. Each write model has one commit owner; the EF Unit of Work owns row..."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 573,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "2ef8127d5daf3a45",
+    "text": "The inbox stale time (6.51.0, JasperFx/wolverine GH-5022). The finding above that nothing updates the timestamp the r..."
+  },
+  {
+    "adr": "0005-operation-scoped-clock",
+    "line": 50,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "1d5d03a38f077201",
+    "text": "The decision above stands; one time the Kit uses is not the Operation's. A delayed command (IDelayedCommands.Schedule..."
+  },
+  {
+    "adr": "0005-operation-scoped-clock",
+    "line": 60,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "89bad7081844f6bf",
+    "text": "The amendment for #44 holds for recurring commands too, and more strictly: no Operation computes their times. Each oc..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 180,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "29d53c8618a10317",
+    "text": "Composition Roots. The Notification wire name and subscription names are declared explicitly; see \"Requirements for #..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 238,
+    "kind": "section",
+    "rule": "tracker code (#<n>)",
+    "digest": "5b850f0b42487387",
+    "text": "Requirements for #15: naming Notifications Plan section D declares neither a wire name for a Domain Event delivered a..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 254,
+    "kind": "section",
+    "rule": "tracker code (#<n>)",
+    "digest": "cb4bf6dcad59de5d",
+    "text": "Requirements for #16: subscription names These follow from Option C, not from preference: Unique ignoring case. Wolve..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 281,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "bcd575277f894b08",
+    "text": "MessageIdentity. Routed fan-out gives each route its own envelope id, locally and over TCP. IdAndDestination changed ..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 289,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "a5581844c7757e83",
+    "text": "InboxStaleTime against in-memory retries. With ADR 0004's remedy set, a delivery waiting in an in-memory RetryWithCoo..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 304,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "614d8ab217ca9de4",
+    "text": "A removed subscription or type. With Wolverine's default UnknownMessageBehavior.LogOnly, a stored delivery whose type..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 378,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "fd4bd744d3842268",
+    "text": "Brokers in Wave 2.The bare Notification or Integration Event is what is stored and sent, under its own wire name. The..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 395,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "aed8bfbd6db5743d",
+    "text": "Seen by the reviewer, not repeated here. Under Option C, a Notification Handler published an Integration Event throug..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 403,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "321aa9f1c1282117",
+    "text": "Where the declarations live. The Consequences say PouryaKit.Messaging keeps the Publish, Subscribe and SubscribeNotif..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 425,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "af5da0c43ebad2c9",
+    "text": "The decision above stands. Ticket #17's permanent tests decided what the record inferred about the inbox stale time, ..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 428,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "f12a539ee92407d1",
+    "text": "A persisted retry and a short schedule, not one or the other. The invariant owned by #17 reads \"use a persisted retry..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 492,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "0052aba3c569f376",
+    "text": "No subscription, nothing written. The Outbox writes no envelope for a Notification, Integration Event or Snapshot tha..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 498,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "70b446772ad34466",
+    "text": "What a consuming project must keep.The key of an aggregate that publishes Snapshots is never used again after the agg..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 512,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "12ae614ae91aafb9",
+    "text": "The decision above stands, and the broker extends it. The Spike for ticket #50 compared two RabbitMQ topologies with ..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 523,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "d9ecf0f4506fd4e7",
+    "text": "Inbox identity. A needs MessageIdentity.IdAndDestination, because the broker copies one envelope id to every subscrip..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 527,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "2267bbf69eac4cf9",
+    "text": "Everything after the broker stays as built. Under B the subscription is still read from the local queue, and dead let..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 532,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "3e610dae00ecb26e",
+    "text": "Queue names do not decide between them. In the Spike, A's queue is named by the subscription alone (Rmq.Kit/BrokerTop..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 539,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "6d29770ab71cbaf1",
+    "text": "B's cost is one more stored envelope per message and Host: three Inbox rows for two subscriptions, against two under ..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 579,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "a7a4c904e90b4559",
+    "text": "B's configuration. One durable queue per Host, named by its WolverineOptions.ServiceName, bound to each subscribed wi..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 595,
+    "kind": "table row",
+    "rule": "tracker code (#<n>)",
+    "digest": "a441a529ccf2b15f",
+    "text": "Queue names across Hosts | QueueNamingTests.Two_services_that_declare_the_same_subscription_names_each_receive_every_..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 641,
+    "kind": "table row",
+    "rule": "tracker code (#<n>)",
+    "digest": "310d1a6f65f78874",
+    "text": "WolverineFx.RabbitMQ | 6.46.0 (current stable, same release as the Kit's WolverineFx; net10.0 restore and run) | MIT ..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 651,
+    "kind": "section",
+    "rule": "tracker code (#<n>)",
+    "digest": "37549c114af86e51",
+    "text": "The rule #51 implements Publishing Host. Each published wire name gets one route, from the publication and never from..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 731,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "926d9f721ff538ac",
+    "text": "All rows run against RabbitMQ and PostgreSQL in Testcontainers, with separate publishing and subscribing Hosts, as sp..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 752,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "424a46a2a5409404",
+    "text": "dead letters and the subscription lookup move to broker addresses, away from what Wave 1 built and tested."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 759,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "9b2abc574806c923",
+    "text": "A message published before any subscribing Host has declared its queue is lost under either topology, because the pub..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 763,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "67d688e92bdb920b",
+    "text": "Same process, single node. Both Hosts ran in one test process, each in Durability mode Solo. Several instances of one..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 773,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "61c34d6119e32bce",
+    "text": "Implemented in #51 at 408b6e0, as the rule above states, in PouryaKit.Messaging.Wolverine.RabbitMq (UsePouryaKitRabbi..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 796,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "be7252a36abcd237",
+    "text": "The #51 review then found two gaps, fixed in the same ticket:"
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 818,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "fbf7453599355d84",
+    "text": "The re-review found what the #50 amendment inferred wrongly (finding F6): a store error while the copies are written ..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 849,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "6afa13bb96ba8c9d",
+    "text": "The decision above stands. Ticket #44 delivers a fourth kind of message on the same shape: a command a Module schedul..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 869,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "53cea2d1f6bc38f8",
+    "text": "The stale-time rule does not hold for it. The scheduled-job poll promotes the row with the node as its owner and keep..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 900,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "9572dfef12a8fb8d",
+    "text": "The decision above stands. Ticket #45 adds independent recurring work on the delayed command's shape, with no schedul..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 914,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "20fa9fb6ba338d1d",
+    "text": "The next occurrence commits with this one. RunDelayedCommandHandler records the occurrence's Receipt, stores the next..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 959,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "0a5bde8acd9430b0",
+    "text": "The decision above stands. Wolverine read every envelope body with the Kit's lenient JSON (UsePouryaKitJson), so a bo..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 969,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "70885acce00abcaa",
+    "text": "The rule. A body is read only when it carries every member the contract requires, each constructor parameter without ..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 994,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "9c8c48d69d43d183",
+    "text": "Where the failure lands (decompiled from WolverineFx 6.46.0 and WolverineFx.RDBMS 6.46.0): HandlerPipeline.TryDeseria..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1038,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "a8f2bf0c6d98a056",
+    "text": "Service-name uniqueness is a deployment rule, with no check, for the reasons in the ServiceName bullet of the #50 ame..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1043,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "e76daa0ad47012c5",
+    "text": "The decision above stands. The plan sketched the declarations without a Module argument (plan section D: module.Publi..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1070,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "06f3bbb1b911d07e",
+    "text": "The decision above stands. The final structural review of Wave 2 found the refusals of the Host's routes at a moment ..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1074,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "6e48a0b6f3da42b1",
+    "text": "Routes are refused when the Host is built. The refusals the #16, #49 and #50 amendments place at the start (a subscri..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1114,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "ad8997dd6fa642f0",
+    "text": "The decision above stands, and so does the strict reading of the #60 amendment. Since ticket #86 (decision D9 of spec..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1127,
+    "kind": "paragraph",
+    "rule": "tracker code (spec #)",
+    "digest": "59edd5aab2a3e859",
+    "text": "The decision above stands. Spec #74's decision D1, approved by the owner: the Kit keeps every Receipt and every publi..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1130,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "61469b6763bca68b",
+    "text": "What grows. pouryakit_receipts holds one row per delivery a subscription applied, keyed (subscription, message id) wi..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1135,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "aa38d729c546d356",
+    "text": "Why no retention tied to dead-letter expiry. A Receipt is what stops a second effect on a redelivery that never enter..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1144,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "5b2c27359edb14b7",
+    "text": "The cleanup stays for idempotency keys. IdempotencyKeyCleanup (PouryaKit.Persistence.EFCore, the #42 follow-up) remov..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1152,
+    "kind": "paragraph",
+    "rule": "tracker code (spec #)",
+    "digest": "c850ee1d3c94fbb5",
+    "text": "The decision above stands, and so do the Receipt key (subscription, message id) and the Snapshot version key (subscri..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1182,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "a91fc68b214a9952",
+    "text": "A recurring command in a tenant-scoped Module. An occurrence runs for its system Actor with no tenant (the #45 amendm..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1190,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "99530ce3c887d53c",
+    "text": "The decision above stands for every subscription. A Saga is the one reaction that runs on a chain Wolverine generates..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1205,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "e62a2881e1edcef1",
+    "text": "An Integration Event from another Host reaches a saga only once the broker fan-out of the #50 amendment also delivers..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1210,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "7e05167af49c1526",
+    "text": "The decision above stands. The Messaging package records each Integration Event a Saga takes beside its subscriptions..."
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 1218,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "c01cd138548de793",
+    "text": "The decision above stands, the stored retry of owner decision 1 included. WolverineFx 6.51.0 restarts a row's stale c..."
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 91,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "027d17f4aa8537a8",
+    "text": "The explicit Actor an unauthenticated endpoint needs (Consequences, #14) is named with AllowAnonymousAs(actor); plain..."
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 97,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "b7378830350d1474",
+    "text": "The decision above stands, but a causation no longer makes a context trusted. Through Wave 1, PouryaKit.Security's pe..."
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 101,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "ca425eee0671b2d1",
+    "text": "A restore from material the Kit wrote is trusted. Outside a running Operation, the only member that sets the mark is ..."
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 115,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "55407a810ba78ad7",
+    "text": "The two #38 delivery tests show that the delivery seam keeps its trust."
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 119,
+    "kind": "paragraph",
+    "rule": "tracker code (spec #)",
+    "digest": "26406336aa4c13b3",
+    "text": "The decision above stands, and so does \"every request starts a new chain of work\" for every caller but one: a configu..."
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 171,
+    "kind": "paragraph",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "322978ebe7f6bf53",
+    "text": "The decision above stands, and so do the #57 and #48 amendments. The #48 amendment records that Web built a trusted p..."
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 189,
+    "kind": "paragraph",
+    "rule": "tracker code (spec #)",
+    "digest": "4d196512ba1622d0",
+    "text": "The decision above stands, and so do G.6 and the #57 amendment: a trusted continuation is not authorized again as its..."
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 200,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "664735ba3be1374d",
+    "text": "What did not change. The trust mark, Continue() and RestoreTrusted are as the #57 and #48 amendments record. The perm..."
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 208,
+    "kind": "paragraph",
+    "rule": "tracker code (spec #)",
+    "digest": "e931cb0d889b83fd",
+    "text": "The decision above stands, and so do the #57, #48 and #116 amendments. Spec #115 (\"gRPC\") reuses Web's one codec and ..."
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 211,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "d8d4f3e487832412",
+    "text": "The codec. OperationContextHttpHeaders, named internal in the #48 amendment, is public with one public member, Pairs(..."
+  },
+  {
+    "adr": "0008-one-problem-response-for-every-http-failure",
+    "line": 43,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "3f314c1ff8feb582",
+    "text": "The decision above stands. A request that could not be read answers its own status, 400, without errors; until ticket..."
+  },
+  {
+    "adr": "0008-one-problem-response-for-every-http-failure",
+    "line": 62,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "517a5e0b5dd62491",
+    "text": "The decision above stands for HTTP. A Kit Host also answers over gRPC (PouryaKit.Grpc), and each transport has one fa..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 50,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "ccaf2dc349054b90",
+    "text": "Stand-in Operation activity. Each scope's outermost IDispatcher call runs inside an activity pouryakit.operation from..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 125,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "ef8bc762976ee6d0",
+    "text": "#47 implements only these.The Operation activity is current while the Unit of Work writes the Outbox. Inferred from s..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 151,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "1487e6ab384f7647",
+    "text": "The snippet below is mostly untested design for #47. Only one part ran in the Spike. PropagationTests.cs:84-92, in ev..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 159,
+    "kind": "code",
+    "rule": "tracker code (#<n>)",
+    "digest": "c774357825fca627",
+    "text": "// UNTESTED DESIGN. Write side, in WolverineOutbox.WriteAsync, per published message. Wolverine itself writes // Acti..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 198,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "ed07439b37e04369",
+    "text": "Local delivery only. Every observation is from durable local queues in one process. The RabbitMQ path, including whet..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 227,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "4f308f4367bf0906",
+    "text": "#47 owns the Operation activity's placement (around the Unit of Work), the tracestate header, and the parent fallback..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 237,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "e4451e305773ae90",
+    "text": "The decision above stands: the relationship is parent, not link, and the Kit relies on Wolverine's parent-id wherever..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 241,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "5fe6b7b15e20e312",
+    "text": "The probe. ModularMonolith.Host with a broker (Catalog and Billing) and Inventory.Host, each a real Host on a databas..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 255,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "b82b63341f82b68b",
+    "text": "So both values cross the broker: WolverineFx.RabbitMQ maps Envelope.ParentId to the AMQP header parent-id and carries..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 292,
+    "kind": "paragraph",
+    "rule": "tracker code (spec #)",
+    "digest": "19ab16993627dc0f",
+    "text": "Limitations. A copy recovered after its Host restarts reads the header from the stored copy, as the stored retry does..."
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 298,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "f78c4227b003b4df",
+    "text": "Implemented in #52 at 671a7b3: OperationContextHeaders.TraceParent, written by SubscriptionDelivery.CopiesOf and read..."
+  },
+  {
+    "adr": "0010-one-namespace-per-kit-package",
+    "line": 40,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "328b40bdcb26aa6c",
+    "text": "Each side is enforced once.Kit packages: NamespaceTests in tests/PouryaKit.ArchitectureTests asserts that every autho..."
+  },
+  {
+    "adr": "0010-one-namespace-per-kit-package",
+    "line": 73,
+    "kind": "list item",
+    "rule": "delivery vocabulary (Wave)",
+    "digest": "8a242f02587ee0ed",
+    "text": "Keeping every package flat. Rejected: it costs nothing today and leaves the responsibility map in the docs only, whil..."
+  },
+  {
+    "adr": "0010-one-namespace-per-kit-package",
+    "line": 88,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "a7a97182937b478e",
+    "text": "Ticket #78 moves the files of Cqrs, Messaging.Wolverine, Web and Persistence.EFCore into folders as renames: every fu..."
+  },
+  {
+    "adr": "0010-one-namespace-per-kit-package",
+    "line": 95,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "fed93667622a2627",
+    "text": "The Hosts and the service defaults are outside the warning's scope. On 2026-10-09 their files follow their folders, b..."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 37,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "08cf2dc56b159c0e",
+    "text": "M2.Marten, what #121 and #131 would ship, as a self-contained copy: MartenUnitOfWork (IUnitOfWork, IReadingStateGuard..."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 75,
+    "kind": "table row",
+    "rule": "tracker code (#<n>)",
+    "digest": "ffb852f529c802bd",
+    "text": "10 | The Marten Unit of Work's own write seam, with the store-neutral Outbox part shared | Pass as a mechanism. One c..."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 76,
+    "kind": "table row",
+    "rule": "tracker code (#<n>)",
+    "digest": "39b99ce0a158412b",
+    "text": "11 | Receipts and the idempotency store selected per Module | Pass as a mechanism. Ledger's keyed MartenReceipts and ..."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 81,
+    "kind": "table row",
+    "rule": "tracker code (#<n>)",
+    "digest": "a23baf5dec10060c",
+    "text": "16 | Conjoined tenancy with the Kit's tenant | Pass. The session opens for OperationContext.Tenant; the delivery rest..."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 130,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "3e8b39d703543589",
+    "text": "A Stream's identity is a Guid (item 5). G.3 still holds: a typed ID wraps that Guid in Feature code and in the Kit's ..."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 244,
+    "kind": "table row",
+    "rule": "tracker code (#<n>)",
+    "digest": "7398152dc2bf0c75",
+    "text": "Conjoined tenancy keyed by OperationContext.Tenant, Marten's default tenant for none; a delivery appends under the de..."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 253,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "4c3e468b5df73b63",
+    "text": "ADR 0003 and ADR 0004 carry the one-commit-owner amendment of 2026-10-16. The packages follow in #121, #131 and #132,..."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 267,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "5154d8d2e6a26369",
+    "text": "A send that fails after Marten's commit is not the Operation's failure. Wolverine's send runs in the listener its Mar..."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 284,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "525c2cb8bdc455a4",
+    "text": "One message store. UsePouryaKitMarten(connectionName, schema) registers the Host's one Marten store, integrated with ..."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 308,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "15f0896aa69663dc",
+    "text": "The decision above stands; two limits the #131 amendment recorded are closed."
+  },
+  {
+    "adr": "0012-realtime-through-postgresql-notifications",
+    "line": 104,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "02db078a766f436b",
+    "text": "The decision stands. As built in #133, DeliverHandler set INotificationDelivery before the Notification Handler ran a..."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 30,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "04dccf6662101390",
+    "text": "The Spike code is spikes/saga/ at commit 629b85a8abefd3bfb62bb7d072e30b9669992eae, reachable through tag spike/saga. ..."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 48,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "1d0153596ba8fd76",
+    "text": "SagaSpike.Kit, what #142's Messaging.Wolverine.Sagas would ship, as a self-contained copy: PouryaKitSaga, the base of..."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 75,
+    "kind": "table row",
+    "rule": "tracker code (#<n>)",
+    "digest": "0c5bdd5ff09f9d3a",
+    "text": "2 | Saga state lives in the Kit's message store schema | Pass, with the store in a schema of its own, kitstore: the s..."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 80,
+    "kind": "table row",
+    "rule": "tracker code (#<n>)",
+    "digest": "07630fa31b777c93",
+    "text": "7 | The Release publish carries the generated chain, through the existing code generation step | Pass. codegen write ..."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 113,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "d243b8c719d7a8c3",
+    "text": "The Kit's route returns the event's other routes itself. A custom route source is consulted first, and once one has f..."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 136,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "7f2f022945442968",
+    "text": "A step reaches no Kit scoped service while the Host keeps Wolverine's default service location policy, ServiceLocatio..."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 141,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "98fa4c2c48fed8b8",
+    "text": "The claims outlive the saga, as Receipts do. Deleting them with the saga's state lets a late copy of the starting eve..."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 144,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "16a0b6fc1c76039c",
+    "text": "The package's references. The Kit's storage names Wolverine.RDBMS and Wolverine.Postgresql types and Npgsql, which se..."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 151,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "10db00c63424e2df",
+    "text": "Trace context. The Spike's adapter writes no tracestate (ADR 0009); Wolverine writes the step's current activity as e..."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 250,
+    "kind": "paragraph",
+    "rule": "tracker code (#<n>)",
+    "digest": "6179d0362ae92f8a",
+    "text": "All of them are #142's, on the delivery and Gateway seam of ModularMonolith.Tests unless the row says otherwise."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 273,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "18439b83664fd10b",
+    "text": "ADR 0001 and ADR 0006 carry dated amendments of 2026-10-18 pointing here. The package follows in #142, which turns th..."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 285,
+    "kind": "list item",
+    "rule": "tracker code (#<n>)",
+    "digest": "2f3b47d9baefca48",
+    "text": "The exception rests on Wolverine members a later version may move: SagaSchemaCodegen.HelperType, the public EnrollAnd..."
+  }
+]

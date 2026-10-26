@@ -31,3 +31,7 @@ website/out/
 website/.source/
 website/.vercel/
 website/next-env.d.ts
+# The pages the content pipeline generates from the Kit's sources before each site build (website/lib/kit-sources/site.ts).
+website/.generated/
+website/content/docs/capabilities/
+website/content/docs/reference/

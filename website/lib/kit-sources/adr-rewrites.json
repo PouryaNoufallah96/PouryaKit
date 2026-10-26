@@ -1,0 +1,122 @@
+[
+  {
+    "adr": "0001-one-host-container",
+    "line": 15,
+    "from": "so tickets #13 and #19 made each Module's ownership a composition rule",
+    "to": "so each Module's ownership is a composition rule"
+  },
+  {
+    "adr": "0001-one-host-container",
+    "line": 58,
+    "from": "Spike #141 recorded the one exception spec #115 approved (decision S1), a Saga, in",
+    "to": "The one approved exception, a Saga, is recorded in"
+  },
+  {
+    "adr": "0003-single-commit-owner",
+    "line": 16,
+    "from": "Tickets #9 to #11 and #18 fixed its details, which stored versions, Snapshots and Feature code now depend on.",
+    "to": "Its details below are fixed, and stored versions, Snapshots and Feature code now depend on them."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 14,
+    "from": "One gap remains for ticket #15.",
+    "to": "One gap remains."
+  },
+  {
+    "adr": "0004-commit-through-wolverine-ef-outbox",
+    "line": 507,
+    "from": "issue #4923",
+    "to": "issue 4923"
+  },
+  {
+    "adr": "0005-operation-scoped-clock",
+    "line": 42,
+    "from": "Tickets #15 and #16 run each delivery attempt through the dispatcher",
+    "to": "Each delivery attempt runs through the dispatcher"
+  },
+  {
+    "adr": "0006-independent-delivery-through-a-routed-queue-per-subscription",
+    "line": 457,
+    "from": "Tickets #15, #16 and #18 fixed the formats below, which stored rows and every receiver now depend on, and the rules a consuming project must keep.",
+    "to": "The formats below, which stored rows and every receiver now depend on, are fixed, and so are the rules a consuming project must keep."
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 16,
+    "from": "The owner delegated this decision to ticket #13 on 2026-10-05.",
+    "to": ""
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 64,
+    "from": "**#14 (Web)** builds",
+    "to": "**Web** builds"
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 67,
+    "from": "**#15 and #16 (delivery)** write",
+    "to": "**The delivery packages** write"
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 72,
+    "from": "**#11 (audit)** reads",
+    "to": "**Audit** reads"
+  },
+  {
+    "adr": "0007-operation-context-set-by-the-scope-opener",
+    "line": 76,
+    "from": "Ticket #14 fixed these facts of the context",
+    "to": "These are the facts of the context"
+  },
+  {
+    "adr": "0008-one-problem-response-for-every-http-failure",
+    "line": 8,
+    "from": "Ticket #14 fixed it for a failed `Result` and an exception, and ticket #19 extended it to the failures ASP.NET Core answers itself.",
+    "to": "It holds for a failed `Result` and an exception, and for the failures ASP.NET Core answers itself."
+  },
+  {
+    "adr": "0008-one-problem-response-for-every-http-failure",
+    "line": 36,
+    "from": "Since #36 (2026-10-07) the rate limiter's 429",
+    "to": "Since 2026-10-07 the rate limiter's 429"
+  },
+  {
+    "adr": "0008-one-problem-response-for-every-http-failure",
+    "line": 62,
+    "from": "Since #134 a Kit Host also answers over gRPC",
+    "to": "A Kit Host also answers over gRPC"
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 7,
+    "from": "Spike #46",
+    "to": "A Spike"
+  },
+  {
+    "adr": "0009-w3c-trace-context-through-the-outbox",
+    "line": 11,
+    "from": "Ticket #47 implements only three things.",
+    "to": "The Kit implements only three things."
+  },
+  {
+    "adr": "0011-each-write-model-has-one-commit-owner",
+    "line": 7,
+    "from": "Spike #120",
+    "to": "A Spike"
+  },
+  {
+    "adr": "0012-realtime-through-postgresql-notifications",
+    "line": 7,
+    "from": "Spec #115 decided Realtime's mechanism between instances (R1) and ticket #133 built it in `PouryaKit.Realtime`.",
+    "to": "This is Realtime's mechanism between instances, built in `PouryaKit.Realtime`."
+  },
+  {
+    "adr": "0013-a-saga-step-runs-outside-every-operation",
+    "line": 7,
+    "from": "Spike #141",
+    "to": "A Spike"
+  }
+]

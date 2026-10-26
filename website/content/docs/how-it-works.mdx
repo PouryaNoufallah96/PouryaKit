@@ -11,6 +11,12 @@ A Host is a deployable application that runs Operations. A Module is a business 
   The Unit of Work writes the Outbox, saves and commits, and sends what it wrote only after the commit. Feature code returns its Result and leaves all of it to the Unit of Work.
 </Callout>
 
+## A Feature's handler
+
+A handler returns a Result and saves nothing: the Unit of Work commits what it changed. This one is the Proving Sample's, quoted from its code at build time.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandHandler.cs" region="rename-product-handler" />
+
 ## When to use each template
 
 `PouryaKit.Templates` is a `dotnet new` template package: a new application starts from the Proving Sample's business code in one of three compositions.
