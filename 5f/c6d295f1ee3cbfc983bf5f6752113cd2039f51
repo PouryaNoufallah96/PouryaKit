@@ -1,0 +1,81 @@
+website/content/docs/decision-guides/stream-or-ef-core-aggregate.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-69
+website/content/docs/get-started/ai-skill.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-70
+docs/acceptance.md
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 3089-3096,3098-3106
+  s_76e27a52bbdbcf::t_2ef48f6df45110 3097
+  s_76e27a52bbdbcf::t_f0fab0dce11575 3107
+website/content/docs/get-started/add-a-module.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-86
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandValidator.cs
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 5,14
+.agents/skills/pourya-kit/references/templates.md
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 32,101-102,109
+website/content/docs/decision-guides/meta.json
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-10
+website/content/docs/templates/index.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-61
+.claude/agent-memory/kit-implementer/docs-site-facts.md
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 66-72
+website/content/docs/get-started/install-templates.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-65
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_76e27a52bbdbcf::t_c3605997b74c71 26
+website/content/docs/proving-sample.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-47,49-96
+  s_76e27a52bbdbcf::t_3823581a3d04ab 48
+.claude/rules/website.md
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 36-37
+website/content/docs/templates/modular-monolith.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-64
+website/content/docs/decision-guides/dapper-or-ef-core-page.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-77
+website/content/docs/meta.json
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 3-13
+website/content/docs/get-started/first-host.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-145
+website/content/docs/templates/service.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-71
+website/content/docs/templates/meta.json
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-4
+website/content/docs/index.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 6,8-15,18-84,86-88
+website/content/docs/get-started/prerequisites.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-31
+website/content/docs/decision-guides/s3-or-azure-blob.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-74
+website/content/docs/decision-guides/template-choice.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-45
+website/app/(home)/page.tsx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1,3,6-8,11-94,96-98,100,104,109-116,119,125,128,131-133,135-150,152-221,223-241
+  s_76e27a52bbdbcf::t_3823581a3d04ab 151
+website/content/docs/decision-guides/in-process-or-rabbitmq.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-76
+website/content/docs/templates/monolith.mdx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-70
+website/distribution/manifest.sha256
+  s_76e27a52bbdbcf::t_21a22984fdab0d 72
+website/content/docs/get-started/install-templates.sh
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1
+website/components/kit-code.tsx
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-30
+website/content/docs/get-started/meta.json
+  s_76e27a52bbdbcf::t_16eeb9f546f17f 1-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5fc6d295f1ee3cbfc983bf5f6752113cd2039f51",
+  "prompts": {},
+  "sessions": {
+    "s_76e27a52bbdbcf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cde6d05e-07a5-4e5c-903e-7974d318c31e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
