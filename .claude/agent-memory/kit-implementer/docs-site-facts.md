@@ -44,5 +44,12 @@ metadata:
 - **The ADRs are not published** (owner, Option C, 2026-10-27; plan amendment D7): a clean projection needed 362 keyed rewrites and 16 exclusions over 4,116 lines, and an opening-only one would publish superseded rules. The projection, its rewrite table, its manifest and their tests were removed; their last state is `d7fc91f1`. A link into `docs/adr/` becomes its own text. Do not rebuild an ADR page without a new owner decision.
 - **Reading every owner/repo pair of a path** (final round): a consuming regex swallows `docs/owner` and never tries `owner/repo`; a zero-width match, `(?<![\w.-])(?=([\w.-]+)\/([\w.-]+))`, tries each run start. It then also finds the pair inside a URL the URL rule already reported, which doubled the export check's exact finding lists: skip a pair inside a reported URL's span.
 
-**Why:** each cost a probe or a failed run in #186, #187 or #190.
+## Site pages, frame (#189a, 2026-10-27; SDK 10.0.402, skills CLI 1.7.4, Claude Code 2.1.311)
+
+- **`dotnet` on this Mac is a mise shim**: in a folder whose `global.json` names an SDK it lacks, any `dotnet` call makes mise download and install that SDK into `~/.local/share/mise/dotnet-root` (a probe with `10.0.401` left `sdk/10.0.401` there). Never run `dotnet` under a `global.json` you wrote to test a missing SDK.
+- **One command, two readers**: an MDX page includes a command file as a code block with Fumadocs' `<include lang="bash" meta='title="Terminal"'>./file.sh</include>` (in the preset; `replaceSource` keeps it in the page's Markdown and `llms*.txt`), while a TSX page reads the same file through `readSource(findRoot(), ...)`. A component-rendered block would reach the HTML only. The landing's code is `ServerCodeBlock` (`fumadocs-ui/components/codeblock.rsc`) over `readSnippet`, and its Capability map is `skillEntries(findRoot())`.
+- **The generated Host's REST call names its version**: `GET /catalog/products` answers 400 (`ApiVersionUnspecified`), `/catalog/v2/products` with the user-jwts token 200 and an empty Page, without a token 401. `dotnet user-jwts create` writes `user-jwts.json` beside `secrets.json` in the user-secrets folder: remove both after a proof.
+- **Fumadocs tolerates a `meta.json` page entry that does not exist yet** (`concepts`, `guides` before #189b): the build passes and the sidebar skips it.
+
+**Why:** each cost a probe or a failed run in #186, #187, #189 or #190.
 **How to apply:** for any ticket under `website/` (#187 content pipeline, #189 pages, #190 covers, #194 the public tree that copies the covers). Related: [[merge-ci-and-workflow-tooling-facts]], [[docs-verification-tools]], [[worktree-shell-and-check-gotchas]].
