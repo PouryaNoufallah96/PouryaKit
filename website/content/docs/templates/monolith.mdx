@@ -49,7 +49,7 @@ Add `PouryaKit.Modularity` and turn Catalog's [Composition Root](/docs/reference
 | --- | --- |
 | Every [Capability](/docs/reference/glossary#capability) its projects reference, and no `PouryaKit.Modularity` | [What each composition composes](/docs/capabilities/templates#what-each-composition-composes) |
 | The same composition and [startup checks](/docs/reference/glossary#startup-check) as a Host of Modules, from `AddPouryaKitCompositionChecks` | [What each composition composes](/docs/capabilities/templates#what-each-composition-composes) |
-| Nine files that change when Catalog becomes a Module | [Growing the monolith](/docs/capabilities/templates#growing-the-monolith-into-a-modular-monolith) |
+| The files that change when Catalog becomes a Module | [Growing the monolith](/docs/capabilities/templates#growing-the-monolith-into-a-modular-monolith) |
 
 ## Failure messages
 
@@ -57,8 +57,8 @@ Add `PouryaKit.Modularity` and turn Catalog's [Composition Root](/docs/reference
   <Accordion title="A ConfigureContainer of the Host's own">
     The monolith calls `AddPouryaKitCompositionChecks()` last, so a `ConfigureContainer` added before it keeps the container validation and the checks. Keep that order when you add one.
   </Accordion>
-  <Accordion title="403 Tenant.Required">
-    Catalog is tenant-scoped: a token without the `tenant` claim is refused by every Catalog command and query.
+  <Accordion title="Tenant.Required">
+    Catalog is tenant-scoped, so it refuses a token that names no tenant: [Multi-tenancy](/docs/capabilities/multi-tenancy).
   </Accordion>
 </Accordions>
 

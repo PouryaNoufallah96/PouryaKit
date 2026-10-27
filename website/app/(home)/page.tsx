@@ -14,9 +14,9 @@ const FEATURE = 'samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Fe
 const guarantees = [
   {
     title: 'Feature code never saves',
-    body: 'The Unit of Work writes the Outbox, saves and commits; a handler only returns its Result.',
+    body: "A structure rule: the sample's tests hold its Modules to it, and a project copies them for its own.",
     proof: 'FeatureCodeTests',
-    href: `${docsRoute}/capabilities/persistence#the-unit-of-work`,
+    href: `${docsRoute}/capabilities/testing#structure-tests`,
   },
   {
     title: 'Notifications after the commit',
@@ -68,6 +68,18 @@ const goldenPath = [
   },
 ];
 
+// A glossary term's first use on the page, linked to its anchor.
+function Term({ anchor, children }: { anchor: string; children: ReactNode }) {
+  return (
+    <Link
+      href={`${docsRoute}/reference/glossary#${anchor}`}
+      className="text-foreground underline decoration-primary/50 underline-offset-4 hover:decoration-primary"
+    >
+      {children}
+    </Link>
+  );
+}
+
 function Section({ title, lead, children }: { title: string; lead?: ReactNode; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-6">
@@ -94,6 +106,14 @@ export default function HomePage() {
         </div>
         <h1 className="font-semibold text-4xl tracking-tight md:text-5xl">{siteName}</h1>
         <p className="max-w-2xl text-foreground-secondary text-lg">{siteDescription}</p>
+        <p className="max-w-2xl text-foreground-secondary">
+          Each <Term anchor="feature">Feature</Term> of a <Term anchor="module">Module</Term> supplies its command or
+          query, its handler and its endpoint. The Kit runs the <Term anchor="operation">Operation</Term> with the
+          caller's <Term anchor="operation-context">Operation Context</Term> and <Term anchor="tenant">tenant</Term>,
+          owns its one commit in the <Term anchor="unit-of-work">Unit of Work</Term>, writes its{' '}
+          <Term anchor="outbox">Outbox</Term> and delivers what it published, in any <Term anchor="host">Host</Term>{' '}
+          that composes its <Term anchor="capability">Capabilities</Term>.
+        </p>
         <div className="flex flex-wrap gap-3">
           <Link
             href={`${docsRoute}/get-started/prerequisites`}
@@ -117,8 +137,9 @@ export default function HomePage() {
         title="A Feature holds only business behaviour"
         lead={
           <>
-            Renaming a product in the Proving Sample: the command names the cache entry it makes stale, and the handler
-            returns a Result. Nothing here saves, commits or sends; the Kit runs the Operation around it.{' '}
+            Renaming a product in the <Term anchor="proving-sample">Proving Sample</Term>: the command names the cache
+            entry it makes stale, and the handler returns a <Term anchor="result">Result</Term>. Nothing here saves,
+            commits or sends; the Kit runs the Operation around it.{' '}
             <Link href={`${docsRoute}/proving-sample`} className="font-medium text-primary hover:underline">
               Walk through the Proving Sample
             </Link>
@@ -134,7 +155,7 @@ export default function HomePage() {
 
       <Section
         title="What the Kit guarantees"
-        lead="Each rule below holds in every Host and is proven by the test class it names; its Capability page states it in full."
+        lead="The Proving Sample's tests prove each rule below, in the test class its card names, and the page it links states it in full. The first is a structure rule a project copies into its own tests."
       >
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {guarantees.map((guarantee) => (

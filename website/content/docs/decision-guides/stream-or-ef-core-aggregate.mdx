@@ -19,7 +19,7 @@ The write model of a [Module](/docs/reference/glossary#module). An EF Core aggre
 | Fits | Current-state records read in many shapes, with Dapper or a repository | A history that is the record itself, such as a ledger's entries |
 | Migrations | One per model change, from `dotnet-ef` | None: Marten creates the tables |
 | What it publishes | [Integration Events](/docs/reference/glossary#integration-event), and [Snapshots](/docs/reference/glossary#snapshot) of its aggregates | Integration Events only: a Stream publishes no Snapshot |
-| Only on EF Core | Realtime pushes, `IUnitOfWorkConnection` and number sequences | |
+| What it leaves out | | A few features of the EF Core Unit of Work: [Limits](/docs/capabilities/stream#limits) |
 
 ## Write one
 

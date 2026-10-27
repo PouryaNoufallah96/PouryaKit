@@ -8,7 +8,7 @@ description: The application whose passing tests are the evidence that the Kit's
 The [Proving Sample](/docs/reference/glossary#proving-sample) is a modular monolith built on the Kit: four [Modules](/docs/reference/glossary#module), the [Hosts](/docs/reference/glossary#host) that compose them and the tests that prove every guarantee against PostgreSQL, and against RabbitMQ and Redis where they apply. The [Project templates](/docs/reference/glossary#project-template) generate their business code from it, and the code blocks on this site titled with a file's name are quoted from it, or from the Kit's tests, when the site is built.
 
 <Callout title="Read its code through the modular monolith">
-  The templates are generated from the sample, never maintained beside it: aggregates, commands, queries, handlers, validators, reads and event handlers are the sample's own files, and in the modular monolith its [Composition Roots](/docs/reference/glossary#composition-root) and endpoints are too. `dotnet new pouryakit-modular-monolith` gives you its Modules to read. Its tests are the Kit's own; a generated solution has a smoke test instead.
+  The templates are generated from the sample, never maintained beside it: the business code is the sample's own files, and in the modular monolith its [Composition Roots](/docs/reference/glossary#composition-root) and endpoints are too. `dotnet new pouryakit-modular-monolith` gives you its Modules to read. Its tests are the Kit's own; a generated solution has a smoke test instead.
 </Callout>
 
 ## When to use it
@@ -32,7 +32,7 @@ As the model for your own code: how a Module is laid out, what a Feature's files
 | `Inventory.Host` | Inventory alone, receiving Catalog's [Integration Events](/docs/reference/glossary#integration-event) and Snapshots over RabbitMQ: the service template's composition |
 | `ModularMonolith.ReverseProxy` | A YARP [Reverse proxy](/docs/reference/glossary#reverse-proxy) of its own process in front of the Hosts |
 | `ModularMonolith.AppHost` | An Aspire AppHost that runs the Hosts and their resources |
-| `ModularMonolith.ServiceDefaults` | The service defaults recipes: telemetry, health, service discovery, resilience and Serilog |
+| `ModularMonolith.ServiceDefaults` | The service defaults recipes, which the templates generate as the application's own code: [Host recipes](/docs/capabilities/host-recipes) |
 
 ## A Feature, file by file
 
@@ -52,7 +52,7 @@ A record of what the caller asks for. It also names the cache entry it makes sta
 
 ### The validator
 
-Run by the pipeline's one validation step, before the handler; its failures answer 400 with each failure's code and target.
+Run by the pipeline's one validation step, before the handler; its failures come back as Errors with their codes and targets: [Validation](/docs/capabilities/commands-queries-validation#validation).
 
 <Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandValidator.cs" region="rename-product-validator" />
 

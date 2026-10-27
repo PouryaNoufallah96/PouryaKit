@@ -16,11 +16,9 @@ Which package supplies the [Host](/docs/reference/glossary#host)'s one implement
 | | S3 | Azure Blob |
 | --- | --- | --- |
 | Stores | AWS S3, and S3-compatible stores such as MinIO | Azure Blob Storage, and Azurite for development |
-| Credentials | The AWS SDK's default chain on AWS; an access key and secret key for an S3-compatible store | The account key, through a connection string or a service URL with the account name and key |
-| What it does not take | | A connection string with only a SAS token, and Microsoft Entra credentials: the account key signs every presigned link |
-| Tested against | RustFS, an S3-compatible store | Azurite |
+| Credentials | AWS's own on AWS, or the keys of an S3-compatible store: [S3](/docs/capabilities/storage#s3) | The storage account's key, which signs every presigned link: [Azure Blob Storage](/docs/capabilities/storage#azure-blob-storage) |
 
-Choose by where your files live. On Azure, the account key is the deciding constraint: an account that allows only Entra credentials cannot use this provider.
+Choose by where your files live. On Azure, the account key is the deciding constraint: an account that cannot hand out its key cannot use this provider.
 
 ## Set it up
 
@@ -62,10 +60,10 @@ No file store joins the [Unit of Work](/docs/reference/glossary#unit-of-work)'s 
     A Host that registers a second `IFileStorage`, both providers included, fails when its container is built, naming each registration.
   </Accordion>
   <Accordion title="The Host does not start: invalid options">
-    The options are validated when the Host starts, which fails naming each problem: a missing bucket, region or container, a service URL that is not an absolute address, or a key without its pair.
+    The options are validated when the Host starts, which fails naming each problem; [Registering](/docs/capabilities/storage#registering) lists what each provider checks.
   </Accordion>
   <Accordion title="A call throws the provider's exception">
-    A failure of the store itself, such as a refused credential, a missing bucket or an unreachable endpoint, is infrastructure, not a business outcome, and throws. A missing file is the not-found Error instead.
+    A failure of the store itself is infrastructure, not a business outcome, and throws; a missing file is an Error instead: [The calls](/docs/capabilities/storage#the-calls).
   </Accordion>
 </Accordions>
 

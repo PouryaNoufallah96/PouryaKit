@@ -12,7 +12,7 @@ Inside a Module, your code is [Features](/docs/reference/glossary#feature). A Fe
 The packages are grouped into [Capabilities](/docs/reference/glossary#capability): one or a few packages each, such as Messaging, Web or File storage. A Host references the ones it uses.
 
 <Callout type="warn" title="Feature code never commits">
-  The Unit of Work writes the [Outbox](/docs/reference/glossary#outbox), saves and commits, and sends what it wrote only after the commit. A handler returns its Result and leaves all of it to the Unit of Work; code that saves or commits by itself is refused by the structure tests.
+  The Unit of Work writes the [Outbox](/docs/reference/glossary#outbox), saves and commits, and sends what it wrote only after the commit. A handler returns its Result and leaves all of it to the Unit of Work; the [structure tests](/docs/capabilities/testing#structure-tests) refuse code that saves or commits by itself.
 </Callout>
 
 ## When to use it
@@ -53,11 +53,11 @@ The .NET 10 SDK and Docker; [Prerequisites](/docs/get-started/prerequisites) lis
 
 ## What the Kit guarantees
 
-These hold in every Capability. Each is stated in full on the page it links, and proven by the test class named beside it.
+The Proving Sample's tests prove each rule below, in the test class named beside it, and the page it links states it in full. The first is a structure rule: the Kit holds its own sample to it, and a project copies the [structure tests](/docs/capabilities/testing#structure-tests) to hold its own code to it.
 
 | Rule | Stated in | Proven by |
 | --- | --- | --- |
-| Feature code never saves, commits or touches the Outbox | [The Unit of Work](/docs/capabilities/persistence#the-unit-of-work) | `FeatureCodeTests` |
+| Feature code never saves, commits or touches the Outbox | [Structure tests](/docs/capabilities/testing#structure-tests) | `FeatureCodeTests` |
 | A [Notification Handler](/docs/reference/glossary#notification-handler) runs only after the commit | [Persistence guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) | `NotificationTests` |
 | Every failure answers one problem response | [Problem responses](/docs/capabilities/web#problem-responses) | `WebTests` |
 | There is no default [Actor](/docs/reference/glossary#actor) | [The Operation Context](/docs/capabilities/modules#the-operation-context) | `OperationContextTests` |
@@ -70,13 +70,13 @@ The Kit refuses a mistake as early as it can, and its messages name what to chan
 
 <Accordions>
   <Accordion title="The Host does not build">
-    A [composition check](/docs/reference/glossary#composition-check) found a declaration that cannot work, such as `RemoveProductsCommand declares RequiresPermissionAttribute, but its check is not registered`. Every check is listed in [Host checks](/docs/reference/composition-checks).
+    A [composition check](/docs/reference/glossary#composition-check) found a declaration that cannot work, and its message names the declaration. Every check is listed in [Host checks](/docs/reference/composition-checks).
   </Accordion>
   <Accordion title="The Host does not start">
-    A [startup check](/docs/reference/glossary#startup-check) or an options validation failed, naming the setting or the call. A generated Host without `Authentication:Schemes:Bearer` is the first one most people meet: [Your first Host](/docs/get-started/first-host) fills it.
+    A [startup check](/docs/reference/glossary#startup-check) or an options validation failed, naming the setting or the call. A generated Host without its bearer settings is the first one most people meet: [Your first Host](/docs/get-started/first-host) writes them.
   </Accordion>
-  <Accordion title="A call answers 403 Tenant.Required">
-    Catalog is tenant-scoped in the monolith and the modular monolith, and the caller's token carries no `tenant` claim. See [Multi-tenancy](/docs/capabilities/multi-tenancy).
+  <Accordion title="A call answers Tenant.Required">
+    Catalog is tenant-scoped in the monolith and the modular monolith, and the caller's token names no tenant. See [Multi-tenancy](/docs/capabilities/multi-tenancy).
   </Accordion>
 </Accordions>
 

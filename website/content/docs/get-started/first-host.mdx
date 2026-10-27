@@ -33,7 +33,7 @@ dotnet tool restore
 
 ### Start PostgreSQL
 
-The connection string the generated `appsettings.json` names, `localhost:5432` with the user and password `postgres`, finds this container. It runs the image the Kit's tests use.
+The connection string the generated `appsettings.json` names finds this container, which runs the image the Kit's tests use.
 
 ```bash title="Terminal"
 docker run -d --name acme-shop-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:18.6
@@ -44,7 +44,7 @@ docker run -d --name acme-shop-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgr
 
 ### Migrate Catalog's database
 
-The database need not exist: the update creates it, `app`, before it applies the first migration.
+The database need not exist: the update creates it before it applies the first migration.
 
 ```bash title="Terminal"
 dotnet ef database update --project src/Modules/Catalog/Catalog --startup-project src/Acme.Shop.Host --context CatalogDbContext
@@ -73,7 +73,7 @@ dotnet dev-certs https --trust
 dotnet run --project src/Acme.Shop.Host
 ```
 
-The Host listens on `https://localhost:7080` and `http://localhost:5080`.
+It listens on its launch profile's https and http URLs, which [Running the generated Host](/docs/capabilities/templates#running-the-generated-host) lists.
 
 </Step>
 <Step>
@@ -86,7 +86,7 @@ In a second terminal, with the token from the step before. The answer is 200 wit
 curl -H "Authorization: Bearer <token>" http://localhost:5080/catalog/v2/products
 ```
 
-In Development the Host also serves its OpenAPI documents, and the Scalar reference over them at `/scalar/`.
+In Development the Host also serves its OpenAPI documents and the Scalar reference over them: [Documents and Scalar](/docs/capabilities/openapi#documents-and-scalar).
 
 </Step>
 <Step>
@@ -112,27 +112,27 @@ docker rm -f -v acme-shop-postgres
 
 | Behaviour | Stated in |
 | --- | --- |
-| A product created twice with one `Idempotency-Key` is created once, and both calls get the same answer | [The smoke test](/docs/capabilities/templates#the-smoke-test) |
-| `/alive` answers a caller without a token from a Host composed as it is deployed | [The smoke test](/docs/capabilities/templates#the-smoke-test) |
+| A product created twice with one idempotency key is created once, and both calls get the same answer | [The smoke test](/docs/capabilities/templates#the-smoke-test) |
+| The liveness endpoint answers a caller without a token from a Host composed as it is deployed | [The smoke test](/docs/capabilities/templates#the-smoke-test) |
 | A Host whose permission checks are not registered does not build | [The smoke test](/docs/capabilities/templates#the-smoke-test) |
 
 ## Failure messages
 
 <Accordions>
   <Accordion title="The Host does not start">
-    `Authentication:Schemes:Bearer` is not set: run the `dotnet user-jwts create` step. In production, configure the issuer, audiences and signing keys of your identity provider instead.
+    Its bearer settings are missing: run the `dotnet user-jwts create` step. In production, configure the issuer, audiences and signing keys of your identity provider instead.
   </Accordion>
-  <Accordion title="400 from a call without a version">
-    The call named no API version. Name it in the path, `/catalog/v2/products`, or in an `api-version` header. See [What a caller sees](/docs/capabilities/openapi#what-a-caller-sees).
+  <Accordion title="A call without an API version">
+    Catalog refuses it. Name the version as the call above does, in its path; [What a caller sees](/docs/capabilities/openapi#what-a-caller-sees) has the other way.
   </Accordion>
-  <Accordion title="401">
-    The call carried no token, or one the Host does not accept: every endpoint requires an authenticated caller unless it says otherwise.
+  <Accordion title="A call without a token">
+    The Host refuses a call with no token, or one it does not accept: every endpoint requires an authenticated caller unless it says otherwise.
   </Accordion>
-  <Accordion title="403 Tenant.Required">
-    The token has no `tenant` claim. Create one with `--claim tenant=<name>`.
+  <Accordion title="Tenant.Required">
+    The token names no tenant. Create it with a tenant claim, as the token step does.
   </Accordion>
-  <Accordion title="HTTP_1_1_REQUIRED from a gRPC call">
-    gRPC needs HTTP/2, which the http URL does not negotiate. Call gRPC on the https URL.
+  <Accordion title="A gRPC call on the http URL">
+    gRPC needs HTTP/2, which the http URL does not negotiate: call gRPC on the https URL ([gRPC](/docs/capabilities/grpc)).
   </Accordion>
 </Accordions>
 

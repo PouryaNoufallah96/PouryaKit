@@ -8,7 +8,7 @@ description: Whether a query reads its Page in SQL with Dapper or through an EF 
 How a query's handler reads one [Page](/docs/reference/glossary#page) of a list. Both reads take the same `PageRequest`, the same `PageDeclaration` of what a caller may sort and filter by, and answer the same `Page<T>`. They differ in who writes the query: you write the SQL for Dapper, and EF Core translates a repository's expressions.
 
 <Callout type="warn" title="Dapper runs exactly the SQL you write">
-  No EF Core query filter reaches a Dapper read. Every read of a soft-deletable table states `is_deleted = false` itself, and in a tenant-scoped [Module](/docs/reference/glossary#module) every read of a tenant-scoped table holds it to the [tenant](/docs/reference/glossary#tenant) in its `WHERE`, in the one grammar the structure test accepts. An EF Core Page applies the global query filters for you.
+  No EF Core query filter reaches a Dapper read. A read of a soft-deletable table leaves out removed rows itself, and in a tenant-scoped [Module](/docs/reference/glossary#module) a read of a tenant-scoped table holds it to the [tenant](/docs/reference/glossary#tenant) itself, in the shape the structure test accepts: [Reading](/docs/capabilities/dapper-reads#reading). An EF Core Page applies the global query filters for you.
 </Callout>
 
 ## When to choose each
@@ -58,11 +58,11 @@ An endpoint binds the request with `HttpPageRequest`: [A Page over HTTP](/docs/c
 ## Failure messages
 
 <Accordions>
-  <Accordion title="400 with a Page Error">
-    The request asked for a sort key, field or operator the declaration does not declare, or a size above its maximum. The validator answers it with the Error's code and target before the handler runs.
+  <Accordion title="A Page Error from validation">
+    The request asked for more than the declaration allows. The validator refuses it with the Error's code and target before the handler runs: [Paging](/docs/capabilities/commands-queries-validation#paging).
   </Accordion>
   <Accordion title="PageSql throws when it is built">
-    The `SELECT` or the `COUNT` leaves out a declared filter's parameter, or a filter's value type has no database type. Use every parameter in both, so the total counts what the items select.
+    The SQL does not match the declaration it serves, and the exception says how: [Reading a Page](/docs/capabilities/dapper-reads#reading-a-page).
   </Accordion>
   <Accordion title="A structure test names the conjunct a read needs">
     A Dapper read of a tenant-scoped table in a tenant-scoped Module does not hold that table to the tenant in the shape the rule accepts. The failure names the conjunct to add.
