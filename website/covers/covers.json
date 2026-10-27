@@ -151,7 +151,7 @@
       "family": "email",
       "tagline": "The Host's SMTP sender on MailKit, from validated options"
     },
-    { "id": "PouryaKit.AI", "family": "ai", "tagline": "Agents whose tool calls run as Operations through a Gateway" },
+    { "id": "PouryaKit.AI", "family": "ai", "tagline": "The Host's one chat client, its agents and Gateway tools" },
     {
       "id": "PouryaKit.AI.Postgres",
       "family": "ai",

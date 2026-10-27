@@ -1,8 +1,10 @@
 // Typesets the Kit's covers and the shared package icon onto the committed textless artwork in covers/art/, with
 // next/og's ImageResponse (the Satori and resvg typesetter of the site's Open Graph images) and the Geist fonts
-// committed in covers/fonts/, so nothing is fetched and the model never draws a letter. `pnpm --dir website covers`
-// writes covers/out/kit.png, covers/out/covers/<id>.png for each package in covers/covers.json, and the repository's
-// src/icon.png, then prints each file's sha256: the same artwork gives byte-identical files.
+// committed in covers/fonts/, so the model never draws a letter. next/og fetches a glyph those fonts lack from Google
+// Fonts; covers.test.mjs keeps every string printable ASCII, which they hold, so nothing is fetched.
+// `pnpm --dir website covers` writes covers/out/kit.png, covers/out/covers/<id>.png for each package in
+// covers/covers.json, and the repository's src/icon.png, then prints each file's sha256: the same artwork gives
+// byte-identical files.
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { relative } from 'node:path';

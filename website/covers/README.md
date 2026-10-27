@@ -13,7 +13,7 @@ The cover image of the Kit and of each package, shown at the top of its README o
 
 `pnpm --dir website covers` writes `out/` and the repository's `src/icon.png`, and prints each file's sha256 and size. Two runs from the same artwork write byte-identical files. The script stops on a cover over 1 MB or of another size, and on an ID or tagline that does not fit its lines.
 
-A new package needs an entry in `covers.json`, with its family and a tagline: one true line about it, taken from its row in the skill's Capability table or from its reference. `pnpm --dir website test` fails until `covers.json` and the inventory name the same packages.
+A new package needs an entry in `covers.json`, with its family and a tagline: one true line about it, taken from its row in the skill's Capability table or from its reference. `pnpm --dir website test` fails until `covers.json` and the inventory name the same packages, and on any string outside printable ASCII: the committed fonts hold that set, and `next/og` would fetch a glyph they lack from Google Fonts.
 
 ## Making an artwork
 

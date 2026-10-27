@@ -13,6 +13,15 @@ test('every package in the inventory has exactly one cover, and every cover is a
   assert.deepEqual(new Set(ids), new Set(inventory.packages.map((entry) => entry.id)));
 });
 
+// next/og fetches from Google Fonts any glyph the committed fonts lack. They hold every printable ASCII character and
+// the no-break space covers.ts sets between words, so a cover's own strings stay within printable ASCII.
+test('every string a cover sets is printable ASCII, which the committed fonts hold', () => {
+  const { eyebrow, title, tagline } = data.kit;
+  const strings = [eyebrow, title, tagline, ...Object.values(data.families)];
+  for (const cover of data.packages) strings.push(cover.id, cover.tagline);
+  for (const text of strings) assert.match(text, /^[ -~]+$/, `not printable ASCII: ${JSON.stringify(text)}`);
+});
+
 test('each artwork is a family, the Kit or the icon, at its size and within 1 MB, and every family has one', () => {
   const families = Object.keys(data.families);
   for (const { id, family } of data.packages) assert.ok(families.includes(family), `${id}: no family ${family}`);
