@@ -3,6 +3,7 @@ using PouryaKit.Cqrs;
 
 namespace Catalog.Products.Features.GetProduct;
 
+#region get-product-cacheable-query
 internal sealed record GetProductQuery(Guid ProductId) : Query<ProductDto>, ICacheableQuery
 {
     /// <summary>The tag of every cached read of one product, which a command that changes the product declares.</summary>
@@ -17,3 +18,4 @@ internal sealed record GetProductQuery(Guid ProductId) : Query<ProductDto>, ICac
 
     public IReadOnlyCollection<string> CacheTags => [ProductTag(ProductId), ProductsTag];
 }
+#endregion

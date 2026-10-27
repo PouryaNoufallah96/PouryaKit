@@ -1,0 +1,78 @@
+---
+description: "Make a Module tenant-scoped: every command and query of it needs a tenant, every EF Core read sees only the Operation's tenant, and no save ever reaches another tenant's aggregate."
+---
+
+Multi-tenancy is not a package: it is a registration across packages your Host already has. The [tenant](/docs/reference/glossary#tenant) is `OperationContext.Tenant`, which the HTTP boundary takes only from a verified claim. `AddPouryaKitTenancy` makes a Module tenant-scoped, so every command and query of it needs a tenant. `ITenantScoped` marks an aggregate as one tenant's: EF Core reads it only for the Operation's tenant, and the [Unit of Work](/docs/reference/glossary#unit-of-work) refuses any save that would change another tenant's. Deliveries into a tenant-scoped Module run under the tenant they carry, and one without a tenant is refused.
+
+<Callout type="warn" title="Plain SQL states its tenant itself">
+  No EF Core filter reaches a Dapper read. In a tenant-scoped Module, every SQL read of a tenant-scoped table states the tenant the Kit's lease bound at the top level of its `WHERE`, and a structure test holds each such read to one shape ([Reads](#reads)).
+</Callout>
+
+## When to use it
+
+- One deployment serves several companies or customers, and none may ever see another's data.
+- You declare a Module, or an application of one Module, tenant-scoped.
+- You mark an aggregate as one tenant's and set its tenant from the Operation Context.
+- A read must cross tenants on purpose, such as an operator's view.
+- You diagnose `Tenant.Mismatch`, `Tenant.NotLoaded` or `Tenant.Required`, or test with two tenants.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Declare the Module tenant-scoped, first
+
+Call `AddPouryaKitTenancy()` first in the Composition Root, so the tenant requirement refuses a tenantless Operation before any other authorizer of the Module reads data. It covers every command and query the Module can dispatch, a trusted continuation's included.
+
+</Step>
+<Step>
+
+### Mark each tenant's aggregate
+
+Implement `ITenantScoped` on every aggregate that holds a tenant's data. The aggregate sets its own `Tenant`, from the tenant its handler takes from the Operation Context; the Kit never sets it.
+
+</Step>
+<Step>
+
+### Read and save as usual
+
+EF Core reads go through a named query filter that returns only the Operation's tenant's rows, and the save checks every aggregate it changes. Set the filter aside only on purpose, by name, in a query over the DbContext.
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+Catalog is tenant-scoped. Its product sets its own tenant when it is created:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Entities/Product.cs" region="product-create" />
+
+Its plain SQL read states the tenant the lease bound:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/GetProduct/GetProductQueryHandler.cs" region="get-product-dapper-read" />
+
+The Kit's tests prove the isolation at the Gateway with two tenants: the north tenant finds none of the south tenant's products, renames none and removes only its own.
+
+<Snippet file="tests/ModularMonolith.Tests/TenancyTests.cs" region="tenant-isolation-through-the-gateway" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| Everything tenancy guarantees, in one list | [What the Kit guarantees](#what-the-kit-guarantees) |
+| What the requirement covers, and the build failures of a tenant-scoped Module | [Declaring a tenant-scoped Module](#declaring-a-tenant-scoped-module) |
+| How the filter reads parts, and how a Dapper read holds itself to the tenant | [Reads](#reads) |
+| When a save fails with `Tenant.Mismatch` or `Tenant.NotLoaded` | [Saves](#saves) |
+| What a delivery with no tenant does | [Deliveries](#deliveries) |
+| What tenancy does not cover | [Limits](#limits) |
+
+## Next steps
+
+<Cards>
+  <Card title="Make a Module tenant-scoped" href="/docs/guides/tenant-scoped-module" description="The declaration, the aggregates, the migration and the two-tenant test." />
+  <Card title="Operation Context, Actor and tenant" href="/docs/concepts/operation-context" description="Where the tenant comes from, and how it travels with the work." />
+  <Card title="Security" href="/docs/capabilities/security" description="The bearer scheme whose verified claim becomes the tenant." />
+</Cards>

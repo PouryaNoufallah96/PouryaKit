@@ -1,0 +1,80 @@
+---
+description: "The Kit's second write model: an aggregate whose stored state is the events it appended, on Marten over PostgreSQL, beside or without the EF Core Modules."
+---
+
+A [Stream](/docs/reference/glossary#stream) is an aggregate whose stored state is the events it appended. A behaviour applies its event to the aggregate's state and raises it; the Unit of Work appends the raised events, and loading the Stream folds its stored events through the same `Apply` methods. `PouryaKit.Persistence.Marten` holds the Stream, `IStreams` and the Marten Unit of Work; `PouryaKit.Messaging.Wolverine.Marten` joins the Host's Marten store to the Kit's one message store.
+
+A Stream Module is still a Module: its Operations go through its Gateway and the same pipeline, its Notification Handlers run after the commit, and it publishes Integration Events as any Module does. Only its write model differs, and each Operation commits through exactly one write model.
+
+<Callout type="warn" title="One commit owner per write model">
+  A Stream Module's Operations commit through the Marten Unit of Work alone, and an EF Core Module's through the EF one. A Stream publishes no Snapshot, has no plain-SQL connection, realtime push or number sequence, and cannot share one Host with a Saga yet.
+</Callout>
+
+## When to use it
+
+- An aggregate's history is the point: a ledger, an account, an audit of every change.
+- You register a Stream Module and the Host's Marten store, beside EF Core Modules or without them.
+- You load and start Streams in a handler, and handle a concurrent append as a conflict.
+- You test a Stream Module.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Declare the Stream Module
+
+The Composition Root calls `AddPouryaKitStreams` with the Module's own schema, where its Receipts and idempotency keys live. The Module needs no migration: Marten creates the Module's tables as the Host starts, and its own event tables at the first append.
+
+</Step>
+<Step>
+
+### Register the Host's one Marten store
+
+`UsePouryaKitMarten` joins the Marten store to the message store. In a Host that also has EF Core Modules, `UsePouryaKitWolverine` comes first and the Marten store joins it, so both write models share one store and one durability agent.
+
+</Step>
+<Step>
+
+### Write behaviour as events
+
+A Stream derives from `StreamAggregate`. Each behaviour builds its event, applies it to the state, and raises it. A public `Apply` method per event type is all the fold needs.
+
+</Step>
+<Step>
+
+### Load and start Streams through IStreams
+
+A handler starts a new Stream with `Start` and loads one with `LoadAsync`. Changes append at the version the Stream was read at, so a concurrent append fails the Operation with the Kit's conflict Error.
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+Ledger's account is a Stream: it opens, takes entries and activates, each as an event it applies and raises.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Entities/Account.cs" region="account-stream" />
+
+Posting an entry loads the account and calls its behaviour; the Unit of Work appends the event at the version the account was read at:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/PostEntry/PostEntryCommandHandler.cs" region="post-entry-handler" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| Which registration a Host of Stream Modules, EF Core Modules or both calls | [Registering](#registering) |
+| How a Stream applies, raises and folds its events | [Writing a Stream](#writing-a-stream) |
+| What commits together, and what a concurrent append, a failed send or another tenant does | [What the Kit guarantees](#what-the-kit-guarantees) |
+| What a Stream Module cannot do, and the build failures that say so | [Limits](#limits) |
+
+## Next steps
+
+<Cards>
+  <Card title="Stream or EF Core aggregate" href="/docs/decision-guides/stream-or-ef-core-aggregate" description="When a Stream earns its place beside the EF Core write model." />
+  <Card title="Stream" href="/docs/concepts/stream" description="An aggregate as its events, and how the fold rebuilds it." />
+  <Card title="Persistence and the Unit of Work" href="/docs/capabilities/persistence" description="The EF Core write model a Stream Module sits beside." />
+</Cards>

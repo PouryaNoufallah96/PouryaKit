@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Catalog.Products.Data.Configurations;
 
+#region product-mapping
 internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
 {
     /// <summary>
@@ -24,3 +25,4 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasDatabaseName(NameIndex);
     }
 }
+#endregion

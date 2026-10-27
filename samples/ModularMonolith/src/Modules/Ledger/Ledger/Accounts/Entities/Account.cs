@@ -4,6 +4,7 @@ using PouryaKit.Persistence.Marten;
 
 namespace Ledger.Accounts.Entities;
 
+#region account-stream
 // A Stream: every behaviour applies its event, then raises it for the Unit of Work to append, and Marten folds the
 // stored events through the same Apply methods, which are public because its source generator dispatches only to public
 // ones. Marten stores an event under its type's name without the namespace (account_opened_domain_event), so an event
@@ -50,3 +51,4 @@ internal sealed class Account : StreamAggregate
 
     public void Apply(AccountActivatedDomainEvent activated) => IsActive = true;
 }
+#endregion

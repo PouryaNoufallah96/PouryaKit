@@ -29,6 +29,7 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
     private const string ConfiguredSunset = "Wed, 30 Jun 2027 00:00:00 GMT";
     private const string ConfiguredSunsetLink = "https://example.com/catalog/api-v1-sunset";
 
+    #region version-by-url-or-header
     [Fact]
     public async Task A_version_is_selected_by_its_url_segment_or_by_the_api_version_header()
     {
@@ -53,6 +54,7 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         Assert.Equal(["2.0"], readByUrl.Headers.GetValues("api-supported-versions"));
         Assert.Equal(["1.0"], readByUrl.Headers.GetValues("api-deprecated-versions"));
     }
+    #endregion
 
     [Fact]
     public async Task A_request_naming_no_version_or_two_different_versions_is_refused_with_a_problem_response()

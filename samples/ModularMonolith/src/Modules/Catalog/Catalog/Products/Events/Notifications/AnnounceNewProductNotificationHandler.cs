@@ -6,6 +6,7 @@ using PouryaKit.Realtime;
 
 namespace Catalog.Products.Events.Notifications;
 
+#region announce-new-product-handler
 // Runs after the product is committed, never inside its transaction: an announcement of a product that was then rolled
 // back could not be taken back. The browsers of the product's tenant get it when this delivery commits.
 internal sealed class AnnounceNewProductNotificationHandler(INewProductAnnouncer announcer, IRealtimePublisher realtime)
@@ -24,3 +25,4 @@ internal sealed class AnnounceNewProductNotificationHandler(INewProductAnnouncer
         );
     }
 }
+#endregion

@@ -1,0 +1,73 @@
+---
+description: "Cache a query's successes per Actor, tenant and culture over HybridCache, and evict them by the cache tags a command declares, once its Operation commits."
+---
+
+`PouryaKit.Caching` lets a query opt in to having its successes cached. The query implements `ICacheableQuery` and names its key, its duration and the cache tags of the resources its answer reads. The Kit adds the query's type, the [tenant](/docs/reference/glossary#tenant), the [Actor](/docs/reference/glossary#actor) and the culture to the key, so an entry answers only the query and the caller that stored it. A command that changes a cached resource implements `IInvalidatesCache` and declares the tags it invalidates; the Kit evicts them once the command's Operation commits, and a rolled-back Operation evicts nothing.
+
+Entries live over `HybridCache`, in each Host's memory. A Host that registers a distributed cache, such as Redis, shares them between the application's Hosts; the Kit references no distributed cache itself.
+
+<Callout type="warn" title="An eviction is certain only in the Host that committed">
+  Another Host may answer from its own in-memory copy until the entry expires, so choose the duration with that in mind. Only a command evicts: data changed without one, such as by an Integration Event Handler, needs a short duration or no caching.
+</Callout>
+
+## When to use it
+
+- A query is read far more often than what it reads changes.
+- A command changes something a cached query answers, and the next read must not see the old answer.
+- Several Hosts of the application should share cached answers through Redis.
+- You test what a cached query answers.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Register the cache in the Host
+
+`AddPouryaKitCaching()` fills the dispatcher's query cache. A Host whose queries include a cacheable one and that never calls it fails when it is built, so a cacheable query never runs uncached without a word.
+
+</Step>
+<Step>
+
+### Declare the key, duration and tags on the query
+
+`CacheKey` names only what the query asks; `CacheTags` name the resources its answer reads, and a tag spans every Actor and tenant. Only an Operation's outermost query uses the cache, after its authorization and validation have run.
+
+</Step>
+<Step>
+
+### Declare what a command invalidates
+
+`InvalidatedCacheTags` is read from the command alone, before its handler runs. A command that finds what it changes by a criterion declares a tag every entry it may change carries. Feature code never evicts.
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+Catalog's `GetProduct` is cacheable, tagged with the product it reads and with a tag every product read carries:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/GetProduct/GetProductQuery.cs" region="get-product-cacheable-query" />
+
+Renaming a product invalidates that product's tag, and the entry is evicted once the rename commits:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommand.cs" region="rename-product-invalidates-cache" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| What the registration fills, and the build failure without it | [Registering](#registering) |
+| What the Kit adds to the key, and which queries use the cache | [A cacheable query](#a-cacheable-query) |
+| When tags are read and evicted | [A command that invalidates](#a-command-that-invalidates) |
+| What is never stored, and what a read across a commit does | [What the Kit guarantees](#what-the-kit-guarantees) |
+| What holds only per Host | [Limits](#limits) |
+
+## Next steps
+
+<Cards>
+  <Card title="Commands, queries and validation" href="/docs/capabilities/commands-queries-validation" description="The pipeline the cache sits in, after the checks." />
+  <Card title="Aspire resources" href="/docs/capabilities/aspire" description="Redis for a Host that shares its cache, in the local AppHost." />
+</Cards>

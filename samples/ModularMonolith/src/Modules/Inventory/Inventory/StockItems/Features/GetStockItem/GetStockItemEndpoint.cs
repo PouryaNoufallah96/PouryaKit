@@ -6,6 +6,7 @@ using PouryaKit.Web;
 
 namespace Inventory.StockItems.Features.GetStockItem;
 
+#region get-stock-item-endpoint
 // No :guid route constraint: an id that does not parse is the caller's mistake (400), not a missing route (404).
 internal sealed class GetStockItemEndpoint : IEndpoint
 {
@@ -16,3 +17,4 @@ internal sealed class GetStockItemEndpoint : IEndpoint
                 (await inventory.QueryAsync(new GetStockItemQuery(productId), context, cancellationToken)).ToHttpResult()
         );
 }
+#endregion

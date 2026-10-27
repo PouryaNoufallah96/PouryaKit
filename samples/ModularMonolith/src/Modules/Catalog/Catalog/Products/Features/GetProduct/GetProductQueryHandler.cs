@@ -7,6 +7,7 @@ using PouryaKit.Persistence.Dapper;
 
 namespace Catalog.Products.Features.GetProduct;
 
+#region get-product-dapper-read
 // Plain SQL reads no query filter, so it compares the tenant the lease bound itself, as it names is_deleted.
 internal sealed class GetProductQueryHandler(IReadConnectionFactory connections)
     : QueryHandler<GetProductQuery, ProductDto>
@@ -24,3 +25,4 @@ internal sealed class GetProductQueryHandler(IReadConnectionFactory connections)
         return product is null ? ProductErrors.NotFound : product;
     }
 }
+#endregion
