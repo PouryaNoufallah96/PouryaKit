@@ -33,6 +33,8 @@ website/.vercel/
 website/next-env.d.ts
 # The typeset covers, which `pnpm --dir website covers` writes from the committed artwork.
 website/covers/out/
+# The public repository's tree, which `pnpm --dir website sync-public` writes (website/scripts/sync-public.ts).
+website/distribution/out/
 # The pages the content pipeline generates from the Kit's sources before each site build (website/lib/kit-sources/site.ts).
 website/.generated/
 website/content/docs/capabilities/

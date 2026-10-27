@@ -1,6 +1,6 @@
 ---
 name: docs-site-facts
-description: The docs site under website/ (Next.js 16 static export, Fumadocs 16, Tailwind 4, pnpm 12, Biome 2.6, TS 7) - pnpm settings and licence report traps, export shapes, Fumadocs components the design replaces, headless screenshots, the content pipeline (Node type stripping, mdxOptions, export scanning)
+description: The docs site under website/ (Next.js 16 static export, Fumadocs 16, Tailwind 4, pnpm 12, Biome 2.6, TS 7) - pnpm settings and licence report traps, export shapes, Fumadocs components the design replaces, headless screenshots, the content pipeline (Node type stripping, mdxOptions, export scanning), the public repository's tree
 metadata:
   type: project
 ---
@@ -44,5 +44,15 @@ metadata:
 - **The ADRs are not published** (owner, Option C, 2026-10-27; plan amendment D7): a clean projection needed 362 keyed rewrites and 16 exclusions over 4,116 lines, and an opening-only one would publish superseded rules. The projection, its rewrite table, its manifest and their tests were removed; their last state is `d7fc91f1`. A link into `docs/adr/` becomes its own text. Do not rebuild an ADR page without a new owner decision.
 - **Reading every owner/repo pair of a path** (final round): a consuming regex swallows `docs/owner` and never tries `owner/repo`; a zero-width match, `(?<![\w.-])(?=([\w.-]+)\/([\w.-]+))`, tries each run start. It then also finds the pair inside a URL the URL rule already reported, which doubled the export check's exact finding lists: skip a pair inside a reported URL's span.
 
-**Why:** each cost a probe or a failed run in #186, #187 or #190.
-**How to apply:** for any ticket under `website/` (#187 content pipeline, #189 pages, #190 covers, #194 the public tree that copies the covers). Related: [[merge-ci-and-workflow-tooling-facts]], [[docs-verification-tools]], [[worktree-shell-and-check-gotchas]].
+## Public repository tree (#194, 2026-10-27; Claude Code 2.1.311, skills CLI 1.7.4)
+
+- **remark-gfm pads every table cell to its column's widest** by default (`tablePipeAlign`): SKILL.md's round trip went from 17,869 to 39,746 bytes. `use(remarkGfm, { tablePipeAlign: false })` round-trips the sources but for the delimiter row (`| - |`); `markdown.ts` now sets it for the site too.
+- **Biome lints every file under `website/`**, gitignored dot-folders included (no `vcs.useIgnoreFile`): an output folder holding Markdown, JSON or YAML needs its own `!<folder>` in `biome.json`'s `files.includes` (`!distribution/out`, granted by the session).
+- **`check-docs.py` reads every `.md` file git tracks or would track** and resolves its relative links here: a template of another repository's README must not end in `.md` (`website/distribution/README.md.template`).
+- **`lib/shared.ts` is imported by a client component** (`components/search.tsx`): a constant it shares with the scripts lives in a module that imports nothing (`lib/kit-sources/addresses.ts`).
+- `claude plugin validate` warns on a marketplace with no top-level `description`; with one, `--strict` passes. `npx skills add <path> --list` reads `DISABLE_TELEMETRY` and `DO_NOT_TRACK`. `pnpm --dir website <script> --flag` passes the flag to the script.
+- **A local bare repository stands in for GitHub**: `git ls-remote --symref <path>` prints `ref: refs/heads/main\tHEAD`; `git fetch --depth 1 <path> refs/tags/<tag>` works, and `FETCH_HEAD^{commit}` peels an annotated tag. Test git runs with every `GIT_*` dropped, `GIT_CONFIG_GLOBAL` at `os.devNull`, `GIT_CONFIG_NOSYSTEM=1`, and identity, `core.hooksPath` and `gc.auto=0` by `-c`.
+- **A manifest check makes every skill edit a manifest edit**: `pnpm --dir website sync-public --check` fails CI until `--write-manifest` runs, after `pnpm --dir website covers` (the check reads `covers/out/`).
+
+**Why:** each cost a probe or a failed run in #186, #187, #190 or #194.
+**How to apply:** for any ticket under `website/` (#187 content pipeline, #189 pages, #190 covers, #194 the public tree that copies the covers, #191 package READMEs that link its assets). Related: [[merge-ci-and-workflow-tooling-facts]], [[docs-verification-tools]], [[worktree-shell-and-check-gotchas]].

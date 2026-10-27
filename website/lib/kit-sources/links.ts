@@ -30,9 +30,10 @@ export function resolveLink(from: string, url: string): { target: string; anchor
  * Rewrites every link of a projected source: a link to a source the site renders becomes that page's route, with its
  * anchor carried over; a link into the repository with no page becomes its own text, so a page never holds a dead
  * relative link. A link to another site stays. A link to the private repository, and an anchor the target page does not
- * have, fail.
+ * have, fail. With `at`, the path the page is written to, each route is a path of the same tree, and a link is written
+ * relative to `at`, as the public repository's copy of the skill links between its files.
  */
-export function rewriteLinks(tree: Root, from: string, routes: RouteMap): void {
+export function rewriteLinks(tree: Root, from: string, routes: RouteMap, at?: string): void {
   visit(tree, (node: Nodes, index, parent) => {
     if (node.type === 'linkReference' || node.type === 'definition') {
       throw new Error(`kit-sources: ${from} uses a reference-style link; write it inline`);
@@ -55,7 +56,8 @@ export function rewriteLinks(tree: Root, from: string, routes: RouteMap): void {
       }
       anchor = page.anchors.get(anchor) ?? undefined;
     }
+    const route = at === undefined ? page.route : path.posix.relative(path.posix.dirname(at), page.route);
     if (resolved.target === from && anchor) node.url = `#${anchor}`;
-    else node.url = anchor ? `${page.route}#${anchor}` : page.route;
+    else node.url = anchor ? `${route}#${anchor}` : route;
   });
 }

@@ -1,4 +1,5 @@
 import { createGetUrl } from 'fumadocs-core/source';
+import { SITE_ADDRESS } from './kit-sources/addresses.ts';
 
 export const siteName = 'PouryaKit';
 export const siteDescription =
@@ -13,11 +14,9 @@ const docsImageRoute = '/og/docs';
 export const searchIndexRoute = '/api/search.json';
 
 // The site's own address, for absolute Open Graph URLs: SITE_URL when a deployment sets it, else the production host
-// Vercel's build sets, else the local server.
+// Vercel's build sets, else the site's address, which the public repository's README links too.
 const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-export const siteUrl = new URL(
-  process.env.SITE_URL ?? (vercelHost ? `https://${vercelHost}` : 'http://localhost:3000'),
-);
+export const siteUrl = new URL(process.env.SITE_URL ?? (vercelHost ? `https://${vercelHost}` : SITE_ADDRESS));
 
 // The site's default Open Graph image (app/og/image.png/route.tsx).
 export const defaultImageUrl = '/og/image.png';

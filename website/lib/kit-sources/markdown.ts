@@ -7,8 +7,10 @@ import remarkMdx from 'remark-mdx';
 import { visit } from 'unist-util-visit';
 import { addressViolations, type Violation, vocabularyViolations } from './rules.ts';
 
+// Tables are written unpadded, as the sources write them: padding every cell to its column's widest doubled the skill's
+// SKILL.md, which the public repository publishes for agents to read.
 const markdown = remark()
-  .use(remarkGfm)
+  .use(remarkGfm, { tablePipeAlign: false })
   .use({ settings: { bullet: '-', emphasis: '_', rule: '-' } });
 const mdx = remark().use(remarkGfm).use(remarkMdx);
 
@@ -31,13 +33,20 @@ export function parseMarkdown(text: string): Root {
   return tree;
 }
 
+const FRONTMATTER = /^---\n[\s\S]*?\n---\n/;
+
 /**
  * A Kit source with its YAML frontmatter blanked, each of its lines kept as an empty one so the source's line numbers
  * hold: frontmatter is metadata for its tools, and parsed as Markdown it renders as a rule and a line of text.
  */
 function blankFrontmatter(text: string): string {
-  const match = /^---\n[\s\S]*?\n---\n/.exec(text);
+  const match = FRONTMATTER.exec(text);
   return match ? match[0].replace(/[^\n]/g, '') + text.slice(match[0].length) : text;
+}
+
+/** A Kit source's frontmatter as written, its `---` lines included, or nothing: the skill's copy keeps SKILL.md's. */
+export function sourceFrontmatter(text: string): string {
+  return FRONTMATTER.exec(text)?.[0] ?? '';
 }
 
 /** A Kit source file as Markdown, without its frontmatter. */
