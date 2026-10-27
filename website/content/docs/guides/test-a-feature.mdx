@@ -13,7 +13,7 @@ Tests against the hosted application: the same composition `Program` runs, on Po
 
 ## When to use it
 
-For every [Feature](/docs/reference/glossary#feature), and for each guarantee your [Module](/docs/reference/glossary#module) relies on. A business or validation failure is asserted on the [Result](/docs/reference/glossary#result)'s [Errors](/docs/reference/glossary#error), never on an exception. A generated solution already holds a test project and its fixture, `tests/<Name>.Tests`, whose smoke tests run the generated [Host](/docs/reference/glossary#host).
+For every [Feature](/docs/reference/glossary#feature), and for each guarantee your [Module](/docs/reference/glossary#module) relies on. A business or validation failure is asserted on the [Result](/docs/reference/glossary#result)'s [Errors](/docs/reference/glossary#error), never on an exception. A generated solution already holds a test project and its fixture, whose smoke tests run the generated [Host](/docs/reference/glossary#host): see [The smoke test](/docs/capabilities/templates#the-smoke-test).
 
 ## Steps
 
@@ -84,7 +84,7 @@ dotnet test --project tests/Acme.Shop.Tests/Acme.Shop.Tests.csproj
     `WaitForDeliveriesAsync` was given an Operation that stored no delivery at all, so a test that waits never passes on nothing. `ReplayAsync` throws it for a delivery that is not a dead letter.
   </Accordion>
   <Accordion title="TimeoutException">
-    Deliveries were still pending 30 seconds after the Operation. A failing delivery stays pending through every retry, so check whether a handler keeps failing.
+    Deliveries were still pending when the wait's limit passed. A failing delivery stays pending through every retry, so check whether a handler keeps failing. [Deliveries](/docs/capabilities/testing#deliveries) gives the limit.
   </Accordion>
   <Accordion title="Tenant.Required from a Gateway call">
     The call had no context, so it ran with no tenant. Pass a context with a tenant to a tenant-scoped Module.

@@ -31,7 +31,7 @@ An advancing step, named `Handle`, takes a later event or a timeout. It emits wi
 
 <Snippet file="tests/ModularMonolith.Tests/Sagas/ShippingModule.cs" region="fulfilment-saga-timeout" />
 
-The [Host](/docs/reference/glossary#host) runs sagas on Wolverine's saga storage in its PostgreSQL message store, with `UsePouryaKitWolverine`. Outside Development the Host loads each saga's generated code, which `codegen write` writes before the release build: see [Prepare a release](/docs/guides/prepare-a-release).
+The [Host](/docs/reference/glossary#host) runs sagas on Wolverine's saga storage in its PostgreSQL message store, with `UsePouryaKitWolverine`. Outside Development the Host loads each saga's generated code, which the step before a release writes: see [Prepare a release](/docs/guides/prepare-a-release).
 
 ## What the Kit guarantees
 
@@ -52,7 +52,7 @@ The [Host](/docs/reference/glossary#host) runs sagas on Wolverine's saga storage
     A step that takes a Kit scoped service, such as the Integration Event publisher, is refused at its first message. Emit with `PublishAsync` instead.
   </Accordion>
   <Accordion title="MissingPreBuiltTypesException outside Development">
-    The Host was published without the saga's generated code. Run `codegen write` before the release build.
+    The Host was published without the saga's generated code. Write it before the release build, as [Prepare a release](/docs/guides/prepare-a-release) shows.
   </Accordion>
 </Accordions>
 

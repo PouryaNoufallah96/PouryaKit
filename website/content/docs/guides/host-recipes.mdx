@@ -5,7 +5,7 @@ description: Telemetry export, liveness and readiness, service discovery, one re
 
 ## What you build
 
-The service defaults are recipes, not a [Kit](/docs/reference/glossary#kit) package: a `ServiceDefaults` project in your own solution, shaped like .NET Aspire's, which the templates generate as `<Name>.ServiceDefaults` and compose in every [Host](/docs/reference/glossary#host). You own your copy and change or drop any recipe in it. Each recipe is optional, and none is needed for the Kit to work.
+The service defaults are recipes, not a [Kit](/docs/reference/glossary#kit) package: a service defaults project in your own solution, shaped like .NET Aspire's, which the templates generate and compose in every [Host](/docs/reference/glossary#host). You own your copy and change or drop any recipe in it. Each recipe is optional, and none is needed for the Kit to work.
 
 <Callout type="warn" title="The recipe exports; the Kit emits">
   The OpenTelemetry recipe exports what the Kit emits, but the Kit emits its [Operations](/docs/reference/glossary#operation)' activities and metrics only in a Host that calls `AddPouryaKitObservability()`. See [Observability](/docs/capabilities/observability).
@@ -62,10 +62,10 @@ Every client takes the defaults' one pipeline, which retries safe methods only. 
 
 <Accordions>
   <Accordion title="InvalidOperationException naming RemoveAllResilienceHandlers">
-    A client's handler chain holds two resilience pipelines, as when a client adds its own over the defaults'. Remove the default pipeline first.
+    A client's handler chain holds two resilience pipelines, as when a client adds its own over the defaults'. Remove the default pipeline first: [One resilience pipeline](/docs/capabilities/host-recipes#one-resilience-pipeline).
   </Accordion>
   <Accordion title="Nothing is exported">
-    OTLP export starts only when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured, and the Kit's Operations are emitted only with `AddPouryaKitObservability()`.
+    OTLP export starts only once its endpoint is configured, and the Kit's Operations are emitted only with `AddPouryaKitObservability()`. [What each recipe does](/docs/capabilities/host-recipes#what-each-recipe-does) names the setting.
   </Accordion>
 </Accordions>
 

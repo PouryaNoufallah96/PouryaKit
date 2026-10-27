@@ -49,7 +49,7 @@ A failed [Result](/docs/reference/glossary#result) goes back to the model as a f
     In a run outside an authorized Operation, a call whose operation declares a permission the Actor lacks is a failed tool result, never a bypass.
   </Accordion>
   <Accordion title="The Host does not start">
-    The AI options are checked before the Host serves, and a bad one stops the start, naming the option: for example a blank model, an endpoint that is not an absolute HTTP or HTTPS address, a missing key, a blank tool name, or an MCP server with neither or both of a command and an endpoint.
+    The AI options are checked before the Host serves, and an option they refuse stops the start, naming the option. [Registering](/docs/capabilities/ai#registering) and [MCP tools](/docs/capabilities/ai#mcp-tools) list what each option must hold.
   </Accordion>
 </Accordions>
 

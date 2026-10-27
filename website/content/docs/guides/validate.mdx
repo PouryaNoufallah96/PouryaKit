@@ -31,7 +31,7 @@ Check each member the handler relies on. A typed ID's constructor throws on an e
 
 ### Give a failure your own code where a caller needs one
 
-FluentValidation's error code becomes the Error's code. Set your own with `WithErrorCode`; a failure with none gets `Validation.Failed`.
+FluentValidation's error code becomes the Error's code. Set your own with `WithErrorCode`; [Validation](/docs/capabilities/commands-queries-validation#validation) names the code a failure without one gets.
 
 </Step>
 <Step>
@@ -58,16 +58,16 @@ The [Module](/docs/reference/glossary#module)'s [Composition Root](/docs/referen
 | --- | --- |
 | Every failure as one failed Result, with its code and target | [Validation](/docs/capabilities/commands-queries-validation#validation) |
 | A validator only reads | [Code that only reads](/docs/capabilities/commands-queries-validation#code-that-only-reads) |
-| Validation answers 400 with every failure | [Problem responses](/docs/capabilities/web#problem-responses) |
+| What a failed validation answers over HTTP | [Problem responses](/docs/capabilities/web#problem-responses) |
 
 ## Failure messages
 
 <Accordions>
-  <Accordion title="400 with an errors array">
-    Over HTTP, a failed validation answers 400 as a problem response whose `errors` lists each failure with its `code`, `message` and `target`.
+  <Accordion title="A problem response listing every failure">
+    Over HTTP, a failed validation answers one problem response that lists each failure with its code, message and target: [Problem responses](/docs/capabilities/web#problem-responses).
   </Accordion>
   <Accordion title="A command sent from a validator">
-    A validator may run a query, such as an existence lookup, but a command it sends throws: `A command was sent from an authorizer or a validator.`
+    A validator may run a query, such as an existence lookup, but a command it sends throws an `InvalidOperationException`: [Code that only reads](/docs/capabilities/commands-queries-validation#code-that-only-reads) quotes the message.
   </Accordion>
 </Accordions>
 

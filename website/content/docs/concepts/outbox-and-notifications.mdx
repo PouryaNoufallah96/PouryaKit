@@ -1,16 +1,16 @@
 ---
 title: Outbox and Notifications
-description: A Domain Event stored in the commit becomes a Notification, which each subscribed Notification Handler receives after the commit, on its own.
+description: A committed Domain Event waits in its Module's Outbox as a Notification, for the Notification Handlers that react to it outside the Module's own data.
 ---
 
 ## What it is
 
-When an [Operation](/docs/reference/glossary#operation) commits, each [Domain Event](/docs/reference/glossary#domain-event) it raised that a Notification Handler subscribes to is stored as a [Notification](/docs/reference/glossary#notification): a Domain Event that has been committed and waits to be reacted to outside the [Unit of Work](/docs/reference/glossary#unit-of-work) that raised it. It is stored in the [Module](/docs/reference/glossary#module)'s [Outbox](/docs/reference/glossary#outbox), the Module's share of the [Host](/docs/reference/glossary#host)'s durable message store, in the same transaction as the change.
+When an [Operation](/docs/reference/glossary#operation) commits, each [Domain Event](/docs/reference/glossary#domain-event) it raised that a [Notification Handler](/docs/reference/glossary#notification-handler) subscribes to is stored as a [Notification](/docs/reference/glossary#notification): a Domain Event that has been committed and waits to be reacted to outside the [Unit of Work](/docs/reference/glossary#unit-of-work) that raised it. It is stored in the [Module](/docs/reference/glossary#module)'s [Outbox](/docs/reference/glossary#outbox), the Module's share of the [Host](/docs/reference/glossary#host)'s durable message store, in the same transaction as the change.
 
-A [Notification Handler](/docs/reference/glossary#notification-handler) reacts to it after the commit: it sends something, or publishes an [Integration Event](/docs/reference/glossary#integration-event). Each handler is one [subscription](/docs/reference/glossary#subscription) under a stable name, which names its own durable queue, so its deliveries are retried and set aside as dead letters on their own. Before the handler runs, its delivery records a [Receipt](/docs/reference/glossary#receipt), so a redelivered Notification is applied once. The Outbox's counterpart is the [Inbox](/docs/reference/glossary#inbox): the Integration Events and [Snapshots](/docs/reference/glossary#snapshot) a Module has received but not yet applied.
+A Notification Handler reacts to it after the commit: it sends something, or publishes an [Integration Event](/docs/reference/glossary#integration-event). Each handler is one [subscription](/docs/reference/glossary#subscription) under a stable name, which names its own durable queue, so its deliveries are retried and set aside as dead letters on their own. Before the handler runs, its delivery records a [Receipt](/docs/reference/glossary#receipt), so a redelivered Notification is applied once. The Outbox's counterpart is the [Inbox](/docs/reference/glossary#inbox): the Integration Events and [Snapshots](/docs/reference/glossary#snapshot) a Module has received but not yet applied.
 
 <Callout type="warn" title="An effect outside the database happens at least once">
-  The Receipt commits with what the handler wrote to its Module's database, so that effect happens once. An email or a call to another system cannot roll back with it: when an attempt fails after sending, the next attempt sends again. Make the repeat harmless where the other system allows it, and do the outside effect last.
+  The Receipt commits with what the handler wrote to its Module's database, so that effect happens once. An email or a call to another system cannot roll back with it: when an attempt fails after sending, the next attempt sends again. Make the repeat harmless where the other system allows it, and do the outside effect last: [What the Kit guarantees](/docs/capabilities/messaging#what-the-kit-guarantees).
 </Callout>
 
 ## When to use it
@@ -23,7 +23,7 @@ A Notification Handler implements `INotificationHandler<TDomainEvent>` for one D
 
 <Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/Notifications/AnnounceNewProductNotificationHandler.cs" region="announce-new-product" />
 
-The [Composition Root](/docs/reference/glossary#composition-root) declares the Module's Notification Handlers with `AddPouryaKitNotificationHandlers()`, and the Host runs the deliveries with `UsePouryaKitWolverine`, on Wolverine with its message store in PostgreSQL. Each handler gets a subscription name by convention, such as `catalog.product-created.announce-new-product`, and keeps it: renaming a handler with deliveries in flight changes its name unless you declare the old one. The Module's Receipts live in a table its migration creates:
+The [Composition Root](/docs/reference/glossary#composition-root) declares the Module's Notification Handlers with `AddPouryaKitNotificationHandlers()`, and the Host runs the deliveries with `UsePouryaKitWolverine`, on Wolverine with its message store in PostgreSQL. Each handler gets a subscription name by convention, and keeps it: renaming a handler with deliveries in flight changes its name unless you declare the old one, as [Names](/docs/capabilities/messaging#names) shows. The Module's Receipts live in a table its migration creates:
 
 <Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261005180000_Receipts.cs" region="receipts-migration" />
 
@@ -52,7 +52,7 @@ Each of these is stated in [What the Kit guarantees](/docs/capabilities/messagin
     A handler that returned a failed [Result](/docs/reference/glossary#result) on every attempt is set aside as a dead letter of its subscription. Its message names the subscription and each [Error](/docs/reference/glossary#error) as its code and message. Fix the cause, then replay it: [Dead letters](/docs/capabilities/messaging#dead-letters).
   </Accordion>
   <Accordion title="A Notification Handler no declaration covers">
-    The Host does not build: `The Notification Handlers … of CatalogModule are declared by no AddPouryaKitNotificationHandlers, so they never run. Call AddPouryaKitNotificationHandlers() in its Composition Root.`
+    The Host does not build: a Notification Handler in a composed Module's assembly that no `AddPouryaKitNotificationHandlers` declares would never run, and the line names the Module and the call to add. See [The Host's checks](/docs/capabilities/messaging#the-hosts-checks).
   </Accordion>
   <Accordion title="A missing Receipt table">
     Nothing checks it at startup. Every delivery that needs it fails with an `InvalidOperationException` naming the call to add, then is set aside. Add the migration above.

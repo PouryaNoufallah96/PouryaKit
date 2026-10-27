@@ -5,7 +5,7 @@ description: Add a Feature that changes state, with its command, validator and h
 
 ## What you build
 
-A [Feature](/docs/reference/glossary#feature) that changes state: a command record, an optional validator, and exactly one handler that changes aggregates and returns a [Result](/docs/concepts/operation-result-error). This guide follows the [Proving Sample](/docs/reference/glossary#proving-sample)'s `RenameProduct` Feature in Catalog's Products [Business Area](/docs/reference/glossary#business-area), `Products/Features/RenameProduct/`.
+A [Feature](/docs/reference/glossary#feature) that changes state: a command record, an optional validator, and exactly one handler that changes aggregates and returns a [Result](/docs/reference/glossary#result). This guide follows the [Proving Sample](/docs/reference/glossary#proving-sample)'s `RenameProduct` Feature in Catalog's Products [Business Area](/docs/reference/glossary#business-area), `Products/Features/RenameProduct/`.
 
 <Callout type="warn" title="The handler never saves">
   No `SaveChanges`, transaction or [Outbox](/docs/reference/glossary#outbox) call: the [Unit of Work](/docs/reference/glossary#unit-of-work) commits what the handler changed once it returns a success, and rolls it all back when it fails.
@@ -40,7 +40,7 @@ One validator beside the command, for the shape of its input. A rule that depend
 
 ### Write its one handler
 
-Derive from `CommandHandler<TCommand>`, or `CommandHandler<TCommand, TResponse>` for a command with a value. Load the aggregate through its repository, change it through its methods, and return the [Result](/docs/reference/glossary#result): an [Error](/docs/reference/glossary#error) when the business says no.
+Derive from `CommandHandler<TCommand>`, or `CommandHandler<TCommand, TResponse>` for a command with a value. Load the aggregate through its repository, change it through its methods, and return the Result: an [Error](/docs/reference/glossary#error) when the business says no. See [Operation, Result and Error](/docs/concepts/operation-result-error).
 
 <Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandHandler.cs" region="rename-product-handler" />
 
@@ -65,7 +65,7 @@ Map an endpoint that sends the command through the Module's Gateway, as [Add an 
 
 | Guarantee | Where the skill states it |
 | --- | --- |
-| One handler per command, and what fails the Host when there is not | [Commands and queries](/docs/capabilities/commands-queries-validation#commands-and-queries) |
+| One handler per command, and what fails the [Host](/docs/reference/glossary#host) when there is not | [Commands and queries](/docs/capabilities/commands-queries-validation#commands-and-queries) |
 | The fixed pipeline, and nested commands | [The pipeline](/docs/capabilities/commands-queries-validation#the-pipeline) |
 | One commit or nothing | [What the Kit guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) |
 | How the repository tracks and when it refuses to write | [The repository](/docs/capabilities/persistence#the-repository) |
@@ -77,10 +77,10 @@ Map an endpoint that sends the command through the Module's Gateway, as [Add an 
     A command with no handler or several, or a command, query, handler or authorizer that is a generic type definition, fails while the [Host](/docs/reference/glossary#host) is composed.
   </Accordion>
   <Accordion title="UnitOfWork.ConcurrencyConflict">
-    Another [Operation](/docs/reference/glossary#operation) changed the same product first. Over HTTP it answers 409; send the command again, which runs a new Operation on the current state.
+    Another [Operation](/docs/reference/glossary#operation) changed the same product first. Send the command again, which runs a new Operation on the current state. Over HTTP it answers the conflict's problem response: [Problem responses](/docs/capabilities/web#problem-responses).
   </Accordion>
   <Accordion title="A nested command failed">
-    A nested command that fails, even one whose Result the handler ignored, rolls the whole Operation back, and the Operation fails with its Errors. Pass a failure on with `return result.Errors;`.
+    A nested command that fails, even one whose Result the handler ignored, rolls the whole Operation back, and the Operation fails with its Errors. Pass a failed Result's Errors on instead of ignoring them.
   </Accordion>
 </Accordions>
 

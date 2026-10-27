@@ -49,10 +49,10 @@ Each is declared in its Module's Composition Root under a durable name, `AddPour
 
 <Accordions>
   <Accordion title="Schedule throws">
-    `IDelayedCommands.Schedule` throws for a command the Module did not declare as delayed, for a recurring command, in code that only reads, and where no [Unit of Work](/docs/reference/glossary#unit-of-work) runs, such as an endpoint or a hosted service.
+    `IDelayedCommands.Schedule` throws for a command the Module did not declare as delayed, and wherever no [Unit of Work](/docs/reference/glossary#unit-of-work) would store it, such as an endpoint or a hosted service. [Delayed commands](/docs/capabilities/messaging#delayed-commands) lists each case.
   </Accordion>
   <Accordion title="OptionsValidationException at start">
-    A recurring command's cadence, `Every`, is not longer than zero, or longer than the maximum. A missing configuration never runs it at a default.
+    A recurring command's cadence is missing or outside the range its options accept, and the Host does not start: a missing configuration never runs it at a default. See [Recurring commands](/docs/capabilities/messaging#recurring-commands).
   </Accordion>
   <Accordion title="A recurring command in a tenant-scoped Module">
     The Host does not build: its occurrences would run for a system Actor with no tenant. Declare recurring work in a Module that is not tenant-scoped.

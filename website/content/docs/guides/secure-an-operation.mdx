@@ -5,7 +5,7 @@ description: Declare the permission a command or query requires, register its ch
 
 ## What you build
 
-A permission declared on the command or query itself, checked in the pipeline's authorization step for every [Operation](/docs/reference/glossary#operation), whatever entry point started it. The application says which permissions an [Actor](/docs/reference/glossary#actor) holds; the [Kit](/docs/reference/glossary#kit) reads no claim and no request itself. An Actor without the permission gets `Permission.Denied`, which answers 403 over HTTP, and the command commits nothing.
+A permission declared on the command or query itself, checked in the pipeline's authorization step for every [Operation](/docs/reference/glossary#operation), whatever entry point started it. The application says which permissions an [Actor](/docs/reference/glossary#actor) holds; the [Kit](/docs/reference/glossary#kit) reads no claim and no request itself. An Actor without the permission is denied with a forbidden [Error](/docs/reference/glossary#error), and the command commits nothing: see [Denial](/docs/capabilities/security#denial).
 
 <Callout type="warn" title="A trusted continuation is not checked again">
   Work an authorized Operation causes, such as a delivery the Kit restores or a `Continue()` inside the running Operation, runs on its recorded authority: a declared permission is not checked again for it. So a handler can continue into protected work its Actor holds no permission for. Declare a permission on the Operation that decides to cause such work.
@@ -22,7 +22,7 @@ When a command or query must be limited to Actors who hold a named permission. E
 
 ### Declare the permission on the record
 
-One permission per command or query, named `<module>.<resource>.<action>` and kept in a constant on the record, so tests and grants name it without repeating the string.
+One permission per command or query, named as [Declaring a permission](/docs/capabilities/security#declaring-a-permission) says and kept in a constant on the record, so tests and grants name it without repeating the string.
 
 <Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RemoveProducts/RemoveProductsCommand.cs" region="remove-products-command" />
 
@@ -38,7 +38,7 @@ Call `AddPouryaKitPermissions()` in the [Composition Root](/docs/reference/gloss
 
 ### Say which permissions each Actor holds
 
-Implement `IActorPermissions` in the Host and register it. It receives the Operation's context, so the answer can depend on the Actor and the [tenant](/docs/reference/glossary#tenant). The [Proving Sample](/docs/reference/glossary#proving-sample)'s Host reads them from the HTTP caller's `permission` claims, matched to the Operation's Actor:
+Implement `IActorPermissions` in the Host and register it. It receives the Operation's context, so the answer can depend on the Actor and the [tenant](/docs/reference/glossary#tenant). The [Proving Sample](/docs/reference/glossary#proving-sample)'s Host reads them from the HTTP caller's permission claims, matched to the Operation's Actor:
 
 <Snippet file="samples/ModularMonolith/src/ModularMonolith.Host/CallerPermissions.cs" region="caller-permissions" />
 
@@ -49,7 +49,7 @@ A named system Actor holds only what the application's source grants it. Nothing
 
 ### Prove it both ways
 
-Over HTTP, a caller holding the permission commits the change, and a caller without it gets a 403 problem response and nothing changes. Read the rows back from the database. In the Kit's tests, an endpoint of a test Module sends `RemoveProductsCommand` through Catalog's [Gateway](/docs/reference/glossary#gateway):
+Over HTTP, a caller holding the permission commits the change, and a caller without it gets a forbidden problem response and nothing changes. Read the rows back from the database. In the Kit's tests, an endpoint of a test Module sends `RemoveProductsCommand` through Catalog's [Gateway](/docs/reference/glossary#gateway):
 
 <Snippet file="tests/ModularMonolith.Tests/SecurityTests.cs" region="permission-both-ways-test" />
 
@@ -70,10 +70,10 @@ Over HTTP, a caller holding the permission commits the change, and a caller with
 
 <Accordions>
   <Accordion title="Permission.Denied">
-    The Actor does not hold the permission. Over HTTP it answers 403 with the [Error](/docs/reference/glossary#error) in the problem response's `errors`, and nothing commits.
+    The Actor does not hold the permission. Over HTTP the [Error](/docs/reference/glossary#error) answers a problem response for its kind, and nothing commits: [Denial](/docs/capabilities/security#denial).
   </Accordion>
   <Accordion title="The Host does not build: its check is not registered">
-    `Build()` throws, one line per command or query: `… declares RequiresPermissionAttribute, but its check is not registered, so it would run unchecked. Call AddPouryaKitPermissions with the assembly … in the Composition Root that registers its handler.`
+    `Build()` throws, one line per command or query, naming the assembly to give `AddPouryaKitPermissions` in the Composition Root that registers its handler. [Declaring a permission](/docs/capabilities/security#declaring-a-permission) quotes the message.
   </Accordion>
   <Accordion title="The Host does not build: no permission source">
     A Host whose Modules declare permissions and that registers no `IActorPermissions` fails when it is built.

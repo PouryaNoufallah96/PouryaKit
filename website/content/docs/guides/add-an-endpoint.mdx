@@ -26,28 +26,28 @@ Name it after the Feature with the `Endpoint` suffix. Inventory's `GetStockItem`
 
 <Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/GetStockItem/GetStockItemEndpoint.cs" region="get-stock-item-endpoint" />
 
-Leave a route parameter unconstrained, as `{productId}` is here: an id that does not parse answers 400, where a constraint would answer 404. For a body, declare an `internal sealed` record beside the endpoint and map it to the command by hand.
+Leave a route parameter unconstrained, as this one is, so an id that does not parse is the caller's mistake rather than a missing route; [Endpoints](/docs/capabilities/web#endpoints) gives both answers. For a body, declare an `internal sealed` record beside the endpoint and map it to the command by hand.
 
 </Step>
 <Step>
 
 ### Choose the success shape
 
-`ToHttpResult()` answers 204 for a command with no value and 200 with the value as JSON otherwise. `ToHttpResult(value => ...)` answers another shape, such as 201 Created with a location. Every failure answers one problem response, whichever overload you use.
+`ToHttpResult()` answers a success with or without the value, as the command or query has one; its overload that takes a mapping answers another shape, such as a created resource with its location. Every failure answers one problem response, whichever overload you use. [From Result to response](/docs/capabilities/web#from-result-to-response) gives each status.
 
 </Step>
 <Step>
 
 ### Declare the Module's endpoints
 
-The Module's [Composition Root](/docs/reference/glossary#composition-root) calls `AddPouryaKitEndpoints` with its route prefix, as Inventory's calls it with `/inventory`, and finds every endpoint in the Module's assembly. The [Host](/docs/reference/glossary#host) maps every Module's endpoints with `MapPouryaKitModuleEndpoints()`.
+The Module's [Composition Root](/docs/reference/glossary#composition-root) calls `AddPouryaKitEndpoints` with the Module's route prefix, as Inventory's does, and finds every endpoint in the Module's assembly. The [Host](/docs/reference/glossary#host) maps every Module's endpoints with `MapPouryaKitModuleEndpoints()`.
 
 </Step>
 <Step>
 
 ### Call it as an authenticated caller
 
-The Web [Capability](/docs/reference/glossary#capability) begins the request's [Operation](/docs/reference/glossary#operation) with a context built from the authenticated caller: the Actor from its Actor claim and, where the Host configures one, the tenant from its tenant claim. With the [Kit](/docs/reference/glossary#kit)'s JWT bearer scheme, a token's `sub` is the Actor. A test calls it with `Fixture.Host.GetTestClient()`: see [Testing over HTTP](/docs/capabilities/web#testing-over-http).
+The Web [Capability](/docs/reference/glossary#capability) begins the request's [Operation](/docs/reference/glossary#operation) with a context built from the authenticated caller: the Actor and, where the Host configures one, the tenant, each from the claim the Host names for it; the [Kit](/docs/reference/glossary#kit)'s JWT bearer scheme writes both from a verified token. A test calls it with `Fixture.Host.GetTestClient()`: see [Testing over HTTP](/docs/capabilities/web#testing-over-http).
 
 </Step>
 </Steps>
@@ -58,7 +58,7 @@ The monolith template has no Gateway: its endpoints send through `IDispatcher` i
 
 | Guarantee | Where the skill states it |
 | --- | --- |
-| How a Result becomes a response | [From Result to response](/docs/capabilities/web#from-result-to-response) |
+| How a [Result](/docs/reference/glossary#result) becomes a response | [From Result to response](/docs/capabilities/web#from-result-to-response) |
 | One problem response shape for every failure | [Problem responses](/docs/capabilities/web#problem-responses) |
 | Authenticated access by default, and a public endpoint's Actor | [The caller and the Actor](/docs/capabilities/web#the-caller-and-the-actor) |
 | An endpoint that would never answer stops the Host | [The Host](/docs/capabilities/web#the-host) |
@@ -66,8 +66,8 @@ The monolith template has no Gateway: its endpoints send through `IDispatcher` i
 ## Failure messages
 
 <Accordions>
-  <Accordion title="401 as a problem response">
-    The caller sent no valid token, and the endpoint did not allow anonymous callers.
+  <Accordion title="An unauthenticated caller is refused">
+    The caller sent no valid token, and the endpoint did not allow anonymous callers, so it answers a problem response before it runs: [The caller and the Actor](/docs/capabilities/web#the-caller-and-the-actor).
   </Accordion>
   <Accordion title="StartAsync throws for an endpoint">
     An `IEndpoint` in the Module's assembly that no `AddPouryaKitEndpoints` declares, or that no `MapPouryaKitModuleEndpoints` mapped, would never answer, so the Host stops when it starts, naming the call.
@@ -80,7 +80,7 @@ The monolith template has no Gateway: its endpoints send through `IDispatcher` i
 ## Next steps
 
 <Cards>
-  <Card title="Make a command idempotent" href="/docs/guides/request-idempotency" description="Require an Idempotency-Key on a repeatable write." />
+  <Card title="Make a command idempotent" href="/docs/guides/request-idempotency" description="Let a client repeat a write safely." />
   <Card title="Web" href="/docs/capabilities/web" description="The pipeline, responses, CORS, compression and rate limits." />
   <Card title="API versions and OpenAPI" href="/docs/capabilities/openapi" description="Version a Module's endpoints and serve its documents." />
 </Cards>

@@ -31,7 +31,7 @@ A Stream Module declares its write model in its [Composition Root](/docs/referen
 
 | Guarantee | Where the skill states it |
 | --- | --- |
-| One commit, concurrency, a send that fails after the commit, Receipts, tenancy, one message store | [What the Kit guarantees](/docs/capabilities/stream#what-the-kit-guarantees) |
+| One commit, concurrency, a send that fails after the commit, [Receipts](/docs/reference/glossary#receipt), tenancy, one message store | [What the Kit guarantees](/docs/capabilities/stream#what-the-kit-guarantees) |
 | What a query may do with a Stream | [Reading and changing Streams](/docs/capabilities/stream#reading-and-changing-streams) |
 | What a Stream Module cannot do | [Limits](/docs/capabilities/stream#limits) |
 
@@ -41,8 +41,8 @@ A Stream Module declares its write model in its [Composition Root](/docs/referen
   <Accordion title="UnitOfWork.ConcurrencyConflict">
     Another Operation appended to the Stream after this one read it, or started the same Stream. Nothing is appended and nothing is sent; nothing retries.
   </Accordion>
-  <Accordion title="No source-generated dispatcher found">
-    Marten folds a Stream only through public `Apply` methods. With an internal one, loading the Stream throws Marten's invalid-projection exception when the Operation runs, not at build.
+  <Accordion title="An internal Apply method">
+    Marten folds a Stream only through public `Apply` methods. With an internal one, loading the Stream throws Marten's invalid-projection exception when the Operation runs, not at build. See [Writing a Stream](/docs/capabilities/stream#writing-a-stream).
   </Accordion>
   <Accordion title="A write model with no Outbox">
     A Host with a message store fails when it is built when one write model's Unit of Work would write no [Outbox](/docs/reference/glossary#outbox), such as Stream Modules beside `UsePouryaKitWolverine` with `AddPouryaKitMarten`. The line names the Modules and the registration to call.

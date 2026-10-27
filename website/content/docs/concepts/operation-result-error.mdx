@@ -7,7 +7,7 @@ description: An Operation is one command or query running inside one Module; it 
 
 An [Operation](/docs/reference/glossary#operation) is one command or query running inside one [Module](/docs/reference/glossary#module), from entry to outcome. A command changes state and a query only reads. Each is a sealed record with exactly one handler, and every handler returns a [Result](/docs/reference/glossary#result): a value on success, one or more [Errors](/docs/reference/glossary#error) on failure.
 
-An Error is a named business reason the Operation did not succeed. It has a stable code, such as `Product.NotFound`, a message, and a kind: validation, not found, conflict, forbidden or unexpected. It carries no HTTP status. The Web [Capability](/docs/reference/glossary#capability) turns the kind into one when the Result becomes a response.
+An Error is a named business reason the Operation did not succeed. It has a stable code, a message and a kind, and it carries no HTTP status: the Web [Capability](/docs/reference/glossary#capability) turns its kind into one when the Result becomes a response. [Result and Error](/docs/capabilities/domain-primitives#result-and-error) lists the kinds, and [Problem responses](/docs/capabilities/web#problem-responses) the status each answers.
 
 <Callout type="warn" title="A business failure is an Error, never an exception">
   Return an Error when the Operation cannot succeed for a reason the business knows, such as a missing product or a name already in use. Exceptions are for bugs and infrastructure. A test of a business or validation failure asserts on the Result's Errors, never on an exception.
@@ -23,13 +23,13 @@ A [Business Area](/docs/reference/glossary#business-area) declares its Errors on
 
 <Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Errors/ProductErrors.cs" region="product-errors" />
 
-A handler returns either a value or an Error, and each converts to a Result. This one, from the [Proving Sample](/docs/reference/glossary#proving-sample)'s `RenameProduct` Feature, answers `NotFound` when there is no such product, and otherwise whatever the aggregate's rule answers:
+A handler returns either a value or an Error, and each converts to a Result. This one, from the [Proving Sample](/docs/reference/glossary#proving-sample)'s `RenameProduct` Feature, answers the Business Area's not-found Error when there is no such product, and otherwise whatever the aggregate's rule answers:
 
 <Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandHandler.cs" region="rename-product-handler" />
 
-Every command and query passes the same pipeline: logging, the optional authorization hook, optional validation, then the handler. A command's handler runs inside the [Unit of Work](/docs/reference/glossary#unit-of-work), which commits once for the whole Operation: see [Unit of Work](/docs/concepts/unit-of-work). A failure at any step, a nested command's included, fails the Operation with its Errors.
+Every command and query passes the same fixed pipeline before and around its handler; [The pipeline](/docs/capabilities/commands-queries-validation#the-pipeline) lists its steps. A command's handler runs inside the [Unit of Work](/docs/reference/glossary#unit-of-work), which commits once for the whole Operation: see [Unit of Work](/docs/concepts/unit-of-work). A failure at any step, a nested command's included, fails the Operation with its Errors.
 
-- Pass a failure on with `return result.Errors;`. It keeps every Error.
+- Pass a failed Result's Errors on rather than ignoring them: every Error is kept.
 - Check `IsSuccess` or `IsFailure` before you read `Value`.
 - Check a business rule that depends on state in the aggregate, with `CheckRule`, and input shape in a validator.
 

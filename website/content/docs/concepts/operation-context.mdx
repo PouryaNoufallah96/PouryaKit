@@ -7,12 +7,12 @@ description: Every Operation carries who caused it, the tenant it runs for and i
 
 The [Operation Context](/docs/reference/glossary#operation-context) is the facts about who and what caused an [Operation](/docs/reference/glossary#operation), available wherever the Operation runs. In code it is `OperationContext`, plain data that names:
 
-- the [Actor](/docs/reference/glossary#actor), the person or system on whose authority the Operation runs: `Actor.Person(id)` or `Actor.System(name)`;
+- the [Actor](/docs/reference/glossary#actor), the person or system on whose authority the Operation runs, made with `Actor.Person` or `Actor.System`;
 - the [tenant](/docs/reference/glossary#tenant), the customer or company the Operation runs for, or none where the application has no tenants;
 - the Operation's own id, and the correlation and causation that place it in a chain of work.
 
 <Callout type="warn" title="There is no anonymous or default Actor">
-  Every Operation names its Actor. Work no person caused runs as a named system Actor, such as `Actor.System("catalog-import")`. A tenant comes only from a verified claim, never from a host name or a route.
+  Every Operation names its Actor. Work no person caused runs as a system Actor with a name of its own. A tenant comes only from a verified claim, never from a host name or a route.
 </Callout>
 
 ## When it matters
@@ -55,7 +55,7 @@ A continuation the Kit restores for a delivery, or one a running, authorized Ope
     The scope's Operation was never begun. Send work through a Gateway, which begins one Operation per call; only an application of one Module begins its scopes itself.
   </Accordion>
   <Accordion title="Tenant.Required">
-    A command or query of a tenant-scoped Module ran with no tenant, before its validator and handler. Over HTTP it answers 403. Give the caller a tenant claim, or pass a context with a tenant.
+    A command or query of a tenant-scoped Module ran with no tenant, before its validator and handler. Over HTTP it answers a problem response for its kind, forbidden ([Problem responses](/docs/capabilities/web#problem-responses)). Give the caller a tenant claim, or pass a context with a tenant.
   </Accordion>
 </Accordions>
 

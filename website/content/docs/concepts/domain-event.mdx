@@ -8,14 +8,14 @@ description: A fact an aggregate raises inside its Module, handled in the same c
 A [Domain Event](/docs/reference/glossary#domain-event) is a fact raised by an aggregate, visible only inside its [Module](/docs/reference/glossary#module). A [Domain Event Handler](/docs/reference/glossary#domain-event-handler) is a reaction to it inside the same Module that takes part in the same [Unit of Work](/docs/reference/glossary#unit-of-work): its changes commit with the change that raised the Domain Event, or not at all.
 
 <Callout type="warn" title="A Domain Event Handler runs before the commit">
-  Use it to keep the Module's own aggregates consistent with each other. Anything that reaches outside the Module's own data, such as an email, a push to a browser or an [Integration Event](/docs/reference/glossary#integration-event), belongs in a [Notification Handler](/docs/concepts/outbox-and-notifications), which runs after the commit. Whatever a Domain Event Handler sent would stay sent when the [Operation](/docs/reference/glossary#operation) rolls back.
+  Use it to keep the Module's own aggregates consistent with each other. Anything that reaches outside the Module's own data, such as an email, a push to a browser or an [Integration Event](/docs/reference/glossary#integration-event), belongs in a [Notification Handler](/docs/reference/glossary#notification-handler), which runs after the commit. Whatever a Domain Event Handler sent would stay sent when the [Operation](/docs/reference/glossary#operation) rolls back.
 </Callout>
 
 ## When to use it
 
 When one aggregate's change must change another aggregate of the same Module in the same commit. In the [Proving Sample](/docs/reference/glossary#proving-sample), each new product is counted in its category, so a product and its category's count are saved together, or neither is.
 
-One Domain Event may have both kinds of reaction: Catalog's `ProductCreatedDomainEvent` is counted by a Domain Event Handler in the product's commit, and announced and published by [Notification Handlers](/docs/reference/glossary#notification-handler) after it.
+One Domain Event may have both kinds of reaction: Catalog's `ProductCreatedDomainEvent` is counted by a Domain Event Handler in the product's commit, and announced and published by Notification Handlers after it: see [Outbox and Notifications](/docs/concepts/outbox-and-notifications).
 
 ## How it works
 
@@ -71,7 +71,7 @@ Send the command whose aggregate raises the Domain Event through the [Gateway](/
 
 <Accordions>
   <Accordion title="The Operation fails with the handler's Errors">
-    A Domain Event Handler that returns a failed Result stops the handling at once. The whole Operation rolls back and fails with that handler's [Errors](/docs/reference/glossary#error), as `Category.NotFound` does in the test above.
+    A Domain Event Handler that returns a failed Result stops the handling at once. The whole Operation rolls back and fails with that handler's [Errors](/docs/reference/glossary#error), as the missing category's Error does in the test above.
   </Accordion>
   <Accordion title="Domain Events still raised after the last round">
     Handlers that keep raising each other's Domain Events are a cycle. After the drain's last round the Operation throws an `InvalidOperationException` and nothing commits.

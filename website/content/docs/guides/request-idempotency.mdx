@@ -5,10 +5,10 @@ description: Let a client repeat a request it never got an answer to, and replay
 
 ## What you build
 
-A command a client may send again, after a response it never received, opts in with `[Idempotent]`. The client gives each request a [request id](/docs/reference/glossary#request-id), over HTTP its `Idempotency-Key` header. Inside the command's [Unit of Work](/docs/reference/glossary#unit-of-work) the [Kit](/docs/reference/glossary#kit) reserves a key made of the [tenant](/docs/reference/glossary#tenant), the [Actor](/docs/reference/glossary#actor), the command and that request id, so a repeat replays the first success without running the handler: nothing is written, saved or published again.
+A command a client may send again, after a response it never received, opts in with `[Idempotent]`. The client gives each request a [request id](/docs/reference/glossary#request-id), over HTTP in a header the endpoint requires. Inside the command's [Unit of Work](/docs/reference/glossary#unit-of-work) the [Kit](/docs/reference/glossary#kit) reserves a key for that request, so a repeat replays the first success instead of running the handler again. [Request idempotency](/docs/capabilities/commands-queries-validation#request-idempotency) says what the key holds and what a repeat does.
 
 <Callout type="warn" title="The key alone decides">
-  The Kit compares no body. A repeat with the same key and another body also replays the first success, so a client gives each distinct request its own key and reuses a key only to repeat one. Only a success is kept: a request that failed recorded nothing, and its repeat runs again.
+  The Kit compares no body, so a client gives each distinct request its own key and reuses a key only to repeat one. Only a success is kept: a request that failed recorded nothing, and its repeat runs again.
 </Callout>
 
 ## When to use it
@@ -29,7 +29,7 @@ For a write a client may retry after a lost response, such as creating a product
 
 ### Require the key on its endpoint
 
-Call `RequireIdempotencyKey()` on the [Module](/docs/reference/glossary#module)'s POST, PUT, PATCH or DELETE endpoint that sends the command. Every request to it must then carry an `Idempotency-Key` header, whose value becomes the request's id. [A repeatable write](/docs/capabilities/web#a-repeatable-write) shows `CreateProduct`'s endpoint. Another [Gateway](/docs/reference/glossary#gateway) caller sets the request id on the context it builds.
+Call `RequireIdempotencyKey()` on the [Module](/docs/reference/glossary#module)'s write endpoint that sends the command. Every request to it must then carry the key, which becomes the request's id. [A repeatable write](/docs/capabilities/web#a-repeatable-write) shows `CreateProduct`'s endpoint and names the header. Another [Gateway](/docs/reference/glossary#gateway) caller sets the request id on the context it builds.
 
 </Step>
 <Step>
@@ -71,8 +71,8 @@ Send the request twice with one key, and assert the same status, location and bo
 ## Failure messages
 
 <Accordions>
-  <Accordion title="400 without errors">
-    The request carried no `Idempotency-Key`, two of them, or a value the header's rule refuses. Its `detail` states the rule, and the body is never read.
+  <Accordion title="A request without a readable key">
+    A request that carries no key, more than one, or a value the header's rule refuses is answered with a problem response that states the rule, before its body is read: [A repeatable write](/docs/capabilities/web#a-repeatable-write).
   </Accordion>
   <Accordion title="InvalidOperationException naming the key table's call">
     The Module has no key table yet. The first opted-in command with a request id throws, and nothing commits. Add the migration above.
@@ -81,7 +81,7 @@ Send the request twice with one key, and assert the same status, location and bo
     A request id reached an outermost command that does not opt in with `[Idempotent]`. Opt the command in, or stop requiring the key.
   </Accordion>
   <Accordion title="RequireIdempotencyKey on a read">
-    On an endpoint mapped for GET, HEAD, OPTIONS or TRACE, or for no method at all, it throws when the endpoint is built, which stops the Host's start. Map the command with POST, PUT, PATCH or DELETE.
+    On an endpoint that is not mapped for a write, it throws when the endpoint is built, which stops the Host's start. Map the command as a write: [A repeatable write](/docs/capabilities/web#a-repeatable-write) lists the methods.
   </Accordion>
 </Accordions>
 

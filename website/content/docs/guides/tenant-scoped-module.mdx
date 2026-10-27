@@ -40,7 +40,7 @@ Make a unique value unique per tenant: Catalog's name index is on the tenant and
 
 ### State the tenant in every plain SQL read
 
-EF Core reads of a tenant-scoped entity are filtered to the Operation's tenant for you. Dapper runs exactly the SQL you write, so a read of a tenant-scoped table states `tenant = current_setting('pouryakit.tenant')` itself, against the tenant the Kit's connection lease set. A structure test holds every such read to one grammar: see [Reading](/docs/capabilities/dapper-reads#reading).
+EF Core reads of a tenant-scoped entity are filtered to the Operation's tenant for you. Dapper runs exactly the SQL you write, so a read of a tenant-scoped table holds each such table to the tenant itself, against the tenant the Kit's connection lease set, never one the handler passes. A structure test holds every such read to one grammar: [Reading](/docs/capabilities/dapper-reads#reading) gives the predicate and the grammar.
 
 <Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryHandler.cs" region="list-products-handler" />
 
@@ -70,7 +70,7 @@ Create in one tenant and in another through the [Gateway](/docs/reference/glossa
 
 <Accordions>
   <Accordion title="Tenant.Required">
-    The Operation, or a delivery into the Module, has no tenant. It fails before its validator and handler, and over HTTP answers 403. A delivery is retried, then set aside as a dead letter.
+    The Operation, or a delivery into the Module, has no tenant. It fails before its validator and handler, and over HTTP answers the forbidden problem response. A delivery is retried, then set aside as a dead letter. See [What the Kit guarantees](/docs/capabilities/multi-tenancy#what-the-kit-guarantees).
   </Accordion>
   <Accordion title="Tenant.Mismatch">
     The Operation added an aggregate for another tenant, or changed or removed one loaded under another tenant. The save is refused and nothing commits.

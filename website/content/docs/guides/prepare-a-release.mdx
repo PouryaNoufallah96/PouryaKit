@@ -5,10 +5,10 @@ description: Write Wolverine's generated code into the Host before the Release b
 
 ## What you build
 
-A Release publish of the [Host](/docs/reference/glossary#host) that starts outside Development. There, Wolverine loads its generated handler code from the Host's assembly instead of compiling it when the Host starts, and the Host's Release build carries no runtime compiler. The step before the release, `codegen write`, writes that code into the Host project.
+A Release publish of the [Host](/docs/reference/glossary#host) that starts outside Development. There, Wolverine loads its generated handler code from the Host's assembly instead of compiling it when the Host starts, and the Host's Release build carries no runtime compiler. The step before the release writes that code into the Host project.
 
 <Callout type="warn" title="A Host with Wolverine handlers or Sagas of its own needs the step">
-  The [Kit](/docs/reference/glossary#kit)'s own deliveries need no generated code, so a Kit Host still starts without it, and Wolverine logs that it falls back to a scan. Once the application adds Wolverine handlers of its own, or a [Saga](/docs/reference/glossary#saga), each has a generated type, and a Host published without it does not start.
+  The [Kit](/docs/reference/glossary#kit)'s own deliveries need no generated code, so a Kit Host still starts without it. Once the application adds Wolverine handlers of its own, or a [Saga](/docs/reference/glossary#saga), each has a generated type, and a Host published without it does not start.
 </Callout>
 
 ## When to use it
@@ -22,13 +22,13 @@ Before every Release publish of a Host, or as a step of the build before the pub
 
 ### Write Wolverine's generated code
 
-The generated Host's command line is JasperFx's, so `codegen write` builds the Host and never starts it: it needs no database and no runtime compiler.
+The generated Host's command line is JasperFx's, so this step builds the Host and never starts it: it needs no database and no runtime compiler.
 
 ```bash title="Terminal"
 dotnet run --project src/Acme.Shop.Host -- codegen write
 ```
 
-It writes into `Internal/Generated` in the Host project. Commit that folder, as Wolverine's own guide does.
+It writes the code into the Host project. Commit it, as Wolverine's own guide does: [Pre-generating Wolverine's code for production](/docs/capabilities/templates#pre-generating-wolverines-code-for-production) names the folder.
 
 </Step>
 <Step>
@@ -39,7 +39,7 @@ It writes into `Internal/Generated` in the Host project. Commit that folder, as 
 dotnet publish src/Acme.Shop.Host -c Release -o publish
 ```
 
-Publish with its own restore, or after a restore that evaluated Release. A plain restore evaluates Debug, which lists the runtime compiler, and a Release build without a restore after it would carry it again.
+Publish with its own restore: a restore made for another build configuration brings the runtime compiler back into the publish. [Pre-generating Wolverine's code for production](/docs/capabilities/templates#pre-generating-wolverines-code-for-production) gives the restore to use otherwise.
 
 </Step>
 <Step>
@@ -53,12 +53,12 @@ The Host applies no migration when it starts. Apply each [Module](/docs/referenc
 
 ### Configure it for production
 
-Configure the Host through settings files, user secrets or the environment: an argument that is no JasperFx command stops it. In production, configure the issuer, audiences and signing keys of your real identity provider.
+Configure the Host through settings files, user secrets or the environment: an argument on its command line that is no JasperFx command stops it. In production, configure the issuer, audiences and signing keys of your real identity provider.
 
 </Step>
 </Steps>
 
-To move a generated solution to another Kit version, change `PouryaKitVersion` in its `Directory.Packages.props`: every Kit package is pinned to it.
+To move a generated solution to another Kit version, change the Kit version its central package versions pin: see [Install and generate](/docs/capabilities/templates#install-and-generate).
 
 ## What the Kit guarantees
 
@@ -73,12 +73,12 @@ To move a generated solution to another Kit version, change `PouryaKitVersion` i
 
 <Accordions>
   <Accordion title="MissingPreBuiltTypesException">
-    The Host was published without the generated code its own Wolverine handlers or Sagas need, so it does not start outside Development. Run `codegen write` and publish again.
+    The Host was published without the generated code its own Wolverine handlers or Sagas need, so it does not start outside Development. Write the code and publish again.
   </Accordion>
-  <Accordion title="check-env fails">
-    `check-env` runs the environment checks, and fails on a Host with no generated code even where the Host itself would start.
+  <Accordion title="The environment checks fail">
+    The JasperFx environment checks fail on a Host with no generated code even where the Host itself would start: [Pre-generating Wolverine's code for production](/docs/capabilities/templates#pre-generating-wolverines-code-for-production).
   </Accordion>
-  <Accordion title="Invalid usage">
+  <Accordion title="The Host refuses its command line">
     The Host was given an argument that is no JasperFx command, such as a configuration value on its command line. Configure it through settings, user secrets or the environment instead.
   </Accordion>
 </Accordions>

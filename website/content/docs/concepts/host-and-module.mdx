@@ -16,14 +16,14 @@ Inside a Module, code is grouped by [Business Area](/docs/reference/glossary#bus
 ## When it matters
 
 - **One business boundary**: start with the monolith template, one Module's data and rules in one Host. It grows into the modular monolith when a second Module arrives, without changing its business code. See [Templates](/docs/templates) and [Choose a template](/docs/decision-guides/template-choice).
-- **Several boundaries in one process**: the modular monolith, each Module reached through its Gateway.
+- **Several boundaries in one process**: the modular monolith, each Module reached through its [Gateway](/docs/reference/glossary#gateway).
 - **One Module in a process of its own**: the service template, which receives another Host's Integration Events and Snapshots over RabbitMQ.
 
 ## How it works
 
 Each Module declares everything it needs and offers in one Composition Root: a public sealed class that implements `IModuleDefinition`. Its `Configure` method declares the Module's data, its Features, what it publishes and subscribes to, and its endpoints, on a `ModuleBuilder`. The Host adds each Module once, with `AddPouryaKitModules`. The [Composition Root section](/docs/capabilities/modules#the-composition-root) shows the [Proving Sample](/docs/reference/glossary#proving-sample)'s Catalog and the Host that composes it.
 
-Anything outside a Module asks it to run a command or query through its [Gateway](/docs/reference/glossary#gateway), `IGatewayProcessor<TModule>`. Each call is one Operation in a scope of its own, run with the [Operation Context](/docs/reference/glossary#operation-context) the caller passes. An endpoint is the most common caller. This one, from the Proving Sample's Inventory Module, sends a query through Inventory's Gateway:
+Anything outside a Module asks it to run a command or query through its Gateway, `IGatewayProcessor<TModule>`. Each call is one Operation in a scope of its own, run with the [Operation Context](/docs/reference/glossary#operation-context) the caller passes. An endpoint is the most common caller. This one, from the Proving Sample's Inventory Module, sends a query through Inventory's Gateway:
 
 <Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/GetStockItem/GetStockItemEndpoint.cs" region="get-stock-item-endpoint" />
 
@@ -45,13 +45,13 @@ Each rule is stated, with its proof, in the skill section the row links to.
 
 <Accordions>
   <Accordion title="A command sent through another Module's Gateway">
-    The Gateway refuses it with an `InvalidOperationException` that names both Modules, and opens no scope. Send it through the Gateway of the Module whose Composition Root registers its handler.
+    The Gateway refuses it with an `InvalidOperationException` that names both Modules. Send it through the Gateway of the Module whose Composition Root registers its handler: [Which Module an Operation belongs to](/docs/capabilities/modules#which-module-an-operation-belongs-to).
   </Accordion>
   <Accordion title="A Module that handles a command but has no data">
-    The Host stops while it is composed: `… handles the command … but registers no Unit of Work. Declare its data in its Composition Root, for example with UsePouryaKitPostgres.` A Module that only answers queries needs none.
+    The Host stops while it is composed, naming the Module and the command: declare the Module's data in its Composition Root. A Module that only answers queries needs none. [The Host's checks](/docs/capabilities/modules#the-hosts-checks) quotes the message.
   </Accordion>
   <Accordion title="A declaration made for another Module">
-    A Composition Root that declares on another Module's behalf throws while the Host is composed: `The Composition Root of … declares for …`.
+    A Composition Root that declares on another Module's behalf throws while the Host is composed, naming both. See [The Composition Root](/docs/capabilities/modules#the-composition-root).
   </Accordion>
 </Accordions>
 

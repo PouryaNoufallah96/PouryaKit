@@ -10,10 +10,10 @@ Every declaration refuses its own mistakes while the [Host](/docs/reference/glos
 - a [composition check](/docs/reference/glossary#composition-check) checks the Host's whole composition when its container is built, before anything runs, such as a [Module](/docs/reference/glossary#module)'s declaration made without its Module;
 - a [startup check](/docs/reference/glossary#startup-check) checks what only the built application can answer, such as an endpoint it never mapped, when the Host starts and before any hosted service starts.
 
-They explain most first-run errors. Each failure is one exception with one line per problem, and each line names its fix.
+They explain most first-run errors. The composition and startup checks report every problem they find in one exception, a line per problem, and each line names its fix.
 
 <Callout type="warn" title="Read the whole message, and keep the container the Kit built">
-  The message lists every problem it found, not only the first. And leave `ConfigureContainer` out of a Host of Modules: one called after `AddPouryaKitModules` replaces the container the checks were installed on, and the Host stops when it starts, naming the call.
+  The message lists every problem the checks found, not only the first. And leave `ConfigureContainer` out of a Host of Modules: one called after `AddPouryaKitModules` replaces the container the checks were installed on, and the Host stops when it starts, naming the call.
 </Callout>
 
 ## When it matters
@@ -25,8 +25,8 @@ On every build and every start of a Host, in each environment: a Host built and 
 A Host's checks run at these moments:
 
 1. **While the Host is composed**: each declaration throws for its own mistake, such as a Module added twice or a name that is invalid.
-2. **When the Host is built**: the container is validated in every environment, then the composition checks run on the final registrations, and `Build()` throws one `InvalidOperationException`.
-3. **When the Host starts**: the startup checks run before any hosted service, and `StartAsync` throws in the same shape.
+2. **When the Host is built**: the container is validated in every environment, and a problem it finds makes `Build()` throw an `AggregateException`. Then the composition checks run on the final registrations, and `Build()` throws one `InvalidOperationException` for every problem they find.
+3. **When the Host starts**: the startup checks run before any hosted service, and `StartAsync` throws one `InvalidOperationException` in the same shape.
 4. **Once Wolverine has started**: one last check of the queues, the only one at Wolverine's own moment.
 
 `AddPouryaKitModules` and `UsePouryaKitWolverine` install the checks. A Host without Modules, such as the monolith template's, calls `AddPouryaKitCompositionChecks()` itself.
@@ -50,13 +50,13 @@ The skill lists each check, at its moment, with its message:
 
 <Accordions>
   <Accordion title="A permission without its check">
-    `Build()` throws: `… declares RequiresPermissionAttribute, but its check is not registered, so it would run unchecked. Call AddPouryaKitPermissions with the assembly … in the Composition Root that registers its handler.` Add `AddPouryaKitPermissions()` to that [Composition Root](/docs/reference/glossary#composition-root).
+    `Build()` throws, naming each command or query that declares a permission no [Composition Root](/docs/reference/glossary#composition-root) registered the check of, and the assembly to name. Add `AddPouryaKitPermissions()` to the Composition Root that registers its handler: [Declaring a permission](/docs/capabilities/security#declaring-a-permission) quotes the message.
   </Accordion>
   <Accordion title="A connection string the configuration does not set">
-    `Build()` throws, naming the connection and its key, `ConnectionStrings:{name}`. Nothing connects.
+    One that a persistence or Dapper registration names fails the Host when it is built, naming the connection and its configuration key. One that a Host-builder call reads itself, such as `UsePouryaKitWolverine` or `UsePouryaKitRabbitMq`, fails earlier, while the Host is composed. Nothing connects. See [The Host's checks](/docs/capabilities/modules#the-hosts-checks).
   </Accordion>
   <Accordion title="A declaration without its Module">
-    A publication, subscription, [Notification Handler](/docs/reference/glossary#notification-handler), delayed or [recurring command](/docs/reference/glossary#recurring-command) declared on the Host's services in a Host of Modules belongs to no Module. `Build()` throws, naming its form on the Module's builder and the form that names the Module.
+    A declaration made on the Host's services in a Host of Modules belongs to no Module. `Build()` throws, naming its form on the Module's builder and the form that names the Module: see [The Host's checks for messaging](/docs/capabilities/messaging#the-hosts-checks).
   </Accordion>
   <Accordion title="An endpoint that would never answer">
     `StartAsync` throws for an endpoint in a Module's [Feature](/docs/reference/glossary#feature) assemblies that no `AddPouryaKitEndpoints` declares or no `MapPouryaKitModuleEndpoints` mapped.

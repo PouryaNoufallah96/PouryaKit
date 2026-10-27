@@ -13,7 +13,7 @@ A query that answers one [Page](/docs/reference/glossary#page) of a list: one bo
 
 ## When to use it
 
-For any read that returns a list. A read of one item is an ordinary query that answers it or a `NotFound` Error.
+For any read that returns a list. A read of one item is an ordinary query that answers it or the [Business Area](/docs/reference/glossary#business-area)'s not-found Error.
 
 ## Steps
 
@@ -22,7 +22,7 @@ For any read that returns a list. A read of one item is an ordinary query that a
 
 ### Declare the query and what it may be sorted and filtered by
 
-The first sort key is the default. Each filter field names its value type and the operators it accepts, and `maxSize` caps the page size.
+The declaration names the sort keys, each filter field with its value type and the operators it accepts, and the largest page a caller may ask for. [Paging](/docs/capabilities/commands-queries-validation#paging) says what it accepts and what it defaults to.
 
 <Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQuery.cs" region="list-products-query" />
 
@@ -40,18 +40,18 @@ The first sort key is the default. Each filter field names its value type and th
 
 ### Read the Page
 
-Write the read's SQL once, in a static `PageSql`: the select of the items and the count of the same selection, sharing one `FROM` and `WHERE`. Map each sort key to a column, name a unique tie-breaker with `ThenBy`, and test each declared filter, which arrives as `@{field}_{operator}`, for null.
+Write the read's SQL once, in a static `PageSql`: the select of the items and the count of the same selection, sharing one selection. Map each sort key to a column, name a unique tie-breaker with `ThenBy`, and test each declared filter's parameter for null, as [Reading a Page](/docs/capabilities/dapper-reads#reading-a-page) describes.
 
 <Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryHandler.cs" region="list-products-handler" />
 
-Catalog is tenant-scoped and its products soft-deletable, so the read states both the [tenant](/docs/reference/glossary#tenant) and `not p.is_deleted` itself: plain SQL reads no query filter. To read the Page through EF Core instead, see [Reading a Page](/docs/capabilities/persistence#reading-a-page) and [Dapper or an EF Core Page](/docs/decision-guides/dapper-or-ef-core-page).
+Catalog is tenant-scoped and its products soft-deletable, so the read holds its rows to the [tenant](/docs/reference/glossary#tenant) and leaves removed products out itself: plain SQL reads no query filter. [Reading](/docs/capabilities/dapper-reads#reading) gives the predicates such a read states. To read the Page through EF Core instead, see [Reading a Page](/docs/capabilities/persistence#reading-a-page) and [Dapper or an EF Core Page](/docs/decision-guides/dapper-or-ef-core-page).
 
 </Step>
 <Step>
 
 ### Bind it from the query string
 
-The endpoint takes an `HttpPageRequest` parameter and passes its `Request` to the query, so a caller sends `?page=2&size=20&sort=name&direction=desc` and filters as `filter[name][contains]=lamp`. Never read paging parameters by hand. [A Page over HTTP](/docs/capabilities/web#a-page-over-http) shows `ListProducts`'s endpoint and the body it answers.
+The endpoint takes an `HttpPageRequest` parameter and passes its `Request` to the query, so the page, its size, its sort and its filters arrive from the caller's query string. Never read paging parameters by hand. [A Page over HTTP](/docs/capabilities/web#a-page-over-http) shows `ListProducts`'s endpoint, the query string it reads and the body it answers.
 
 </Step>
 </Steps>
@@ -68,11 +68,11 @@ The endpoint takes an `HttpPageRequest` parameter and passes its `Request` to th
 ## Failure messages
 
 <Accordions>
-  <Accordion title="400 with Page.SortUnknown, Page.FilterUnknown or another Page code">
-    The request names a sort key, field or operator the declaration does not, or a size above its maximum. Each validation Error carries its code and its target, such as `Sort`. The [Error codes](/docs/reference/error-codes) page lists every `Page.` code.
+  <Accordion title="Page.SortUnknown, Page.FilterUnknown and the other Page codes">
+    The request names a sort key, field or operator the declaration does not, or asks for more than it allows. The validation step answers each with an Error that names its target. The [Error codes](/docs/reference/error-codes) page lists every code, and [A Page over HTTP](/docs/capabilities/web#a-page-over-http) the response.
   </Accordion>
-  <Accordion title="400 with a detail and no errors">
-    The query string itself could not be read, such as a page that is not a whole number or a direction other than `asc` or `desc`. Its `detail` names the rule it broke.
+  <Accordion title="A query string that cannot be read">
+    A malformed paging parameter is refused before the query runs, with a problem response whose detail names the rule it broke: [A Page over HTTP](/docs/capabilities/web#a-page-over-http).
   </Accordion>
   <Accordion title="InvalidOperationException before any SQL runs">
     A request reached the read without its validator, or the read's mapping misses part of the declaration. A forgotten validator fails loudly; it never runs a caller's text as SQL.

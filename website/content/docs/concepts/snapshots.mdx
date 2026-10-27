@@ -1,6 +1,6 @@
 ---
 title: Snapshots and Tombstones
-description: The current state of one aggregate, published in the commit of every change for a Module that keeps its own copy, and applied only when it is newer.
+description: The current state of one aggregate, published for a Module that keeps its own copy of it, and the Tombstone that says it no longer exists.
 ---
 
 ## What it is
@@ -42,7 +42,7 @@ A public record in the publishing Module's [Contracts](/docs/reference/glossary#
 
 ### Declare it in the Composition Root
 
-The publishing Module declares the aggregate, the Snapshot type, the mapper and the [wire name](/docs/reference/glossary#wire-name) with `PublishSnapshot`, as Catalog declares `ProductSnapshotV1` under `catalog.product-snapshot.v1`. The receiving Module subscribes an ordinary [Integration Event Handler](/docs/reference/glossary#integration-event-handler) with `Subscribe`.
+The publishing Module declares the aggregate, the Snapshot type, the mapper and the [wire name](/docs/reference/glossary#wire-name) with `PublishSnapshot`, as Catalog declares `ProductSnapshotV1`: see [Declaring a Snapshot](/docs/capabilities/messaging#declaring-a-snapshot). The receiving Module subscribes an ordinary [Integration Event Handler](/docs/reference/glossary#integration-event-handler) with `Subscribe`.
 
 </Step>
 <Step>
@@ -72,7 +72,7 @@ The receiving Module's migration creates the copy's table and the table where th
 
 <Accordions>
   <Accordion title="A mapper that writes">
-    A mapper that sends a command, adds or removes through a repository, joins the connection or publishes is refused with an `InvalidOperationException`, which fails the Operation, and nothing commits. A mapper that catches the refusal of its command still fails the Operation.
+    A mapper only reads: a write it attempts is refused with an `InvalidOperationException`, which fails the Operation, and nothing commits, even when the mapper catches the refusal of a command. [The rules of a mapper and a key](/docs/capabilities/messaging#the-rules-of-a-mapper-and-a-key) lists what is refused.
   </Accordion>
   <Accordion title="A key the database generates">
     The Snapshot is built before the save, so a key the database generates does not exist yet. The Operation that creates such an aggregate fails at its commit with an `InvalidOperationException`. Create keys in the application, as `TypedId.New` does.
