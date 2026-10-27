@@ -1,5 +1,5 @@
 import type { Root, Table, TableRow } from 'mdast';
-import { parseMarkdown, renderedText } from './markdown.ts';
+import { parseSource, renderedText } from './markdown.ts';
 import { listDirectory, REFERENCES, readSource, SKILL } from './paths.ts';
 
 /**
@@ -101,7 +101,7 @@ export function packagesOf(cell: string[]): string[] {
 /** The Capability and guide tables of the skill, in their order, holding only published references. */
 export function skillEntries(root: string): SkillEntry[] {
   const published = new Set(publishedReferences(root));
-  const tree = parseMarkdown(readSource(root, SKILL));
+  const tree = parseSource(readSource(root, SKILL));
   const entries: SkillEntry[] = [];
   for (const row of tableAfter(tree, 'Capabilities').children.slice(1)) {
     const file = referenceOf(row, 3);

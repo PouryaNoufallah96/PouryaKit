@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import type { List } from 'mdast';
 import { applyRewrites, compareManifest, dropCitations, projectAdr } from './adr.ts';
-import { nodeViolations, stringifyMarkdown } from './markdown.ts';
+import { nodeViolations, parseMarkdown, stringifyMarkdown } from './markdown.ts';
 import { findRoot } from './paths.ts';
 import { adrExclusions, projectAdrs, readManifest } from './site.ts';
 
@@ -36,10 +37,43 @@ test("an amendment heading loses its citation and keeps its subject; fenced code
 test('a reviewed rewrite applies on its keyed line, and fails once that line no longer holds its text', () => {
   const text = 'Title\n\nso tickets #13\nand #19 made it a rule.\n';
   const rewrite = { adr: '0001-x', line: 3, from: 'so tickets #13 and #19 made it', to: 'so it is' };
-  assert.equal(applyRewrites('0001-x', text, [rewrite]), 'Title\n\nso it is\n a rule.\n');
+  assert.equal(applyRewrites('0001-x', text, [rewrite]), 'Title\n\nso it\nis a rule.\n');
   assert.throws(() => applyRewrites('0001-x', text, [{ ...rewrite, line: 4 }]), /no longer matches its line/);
   assert.throws(() => applyRewrites('0001-x', text.replace('#19', '#20'), [rewrite]), /no longer matches its line/);
   assert.throws(() => applyRewrites('0001-x', text, [{ ...rewrite, to: 'a\nb\nc' }]), /adds lines/);
+});
+
+test('a rewrite over several lines keeps its sentence in one paragraph, at its lines, with no space before punctuation', () => {
+  const text = 'Title\n\n- Tickets #15 and\n  #16 run each attempt\n  through it, so it holds.\n- Next.\n';
+  const rewrite = {
+    adr: '0001-x',
+    line: 3,
+    from: 'Tickets #15 and #16 run each attempt through it',
+    to: 'Each attempt runs through it',
+  };
+  const projected = applyRewrites('0001-x', text, [rewrite]);
+  assert.equal(projected, 'Title\n\n- Each attempt\n  runs\n  through it, so it holds.\n- Next.\n');
+  const [, list] = parseMarkdown(projected).children as [unknown, List];
+  assert.equal(list.children[0].children.length, 1);
+  assert.equal(list.children[1].position?.start.line, 6);
+
+  const dropped = 'Title\n\nIt holds\n(as the record does), and more.\n';
+  const citation = { adr: '0001-x', line: 4, from: '(as the record does)', to: '' };
+  assert.equal(applyRewrites('0001-x', dropped, [citation]), 'Title\n\nIt holds,\n and more.\n');
+  assert.equal(dropCitations('It holds\n(ticket #13). Next.'), 'It holds.\n Next.');
+  assert.equal(dropCitations('- One per client\n  (#52).\n- Next.'), '- One per\n client.\n- Next.');
+});
+
+test('a rewrite that empties a line moves a word down to hold it, and one that still leaves an empty line fails', () => {
+  const text = 'Title\n\nIt holds\nG.2 is unchanged.\nand stays.\n';
+  const removed = { adr: '0001-x', line: 4, from: 'G.2 is unchanged.', to: '' };
+  assert.equal(applyRewrites('0001-x', text, [removed]), 'Title\n\nIt\nholds\nand stays.\n');
+  const spanning = 'Title\n\nIt holds as\nG.2 and the\nrecord say.\n';
+  assert.throws(
+    () =>
+      applyRewrites('0001-x', spanning, [{ adr: '0001-x', line: 3, from: 'as G.2 and the record say.', to: 'here.' }]),
+    /leaves line 4 empty/,
+  );
 });
 
 const record = [

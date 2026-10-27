@@ -8,13 +8,18 @@ export type Violation = { rule: string; match: string };
 const PRIVATE_OWNER = 'pouryanoufallah96';
 const PRIVATE_REPOSITORY = 'pouryakit';
 
-// Delivery vocabulary, tracker codes and the private plan's citations, matched in rendered text only: a CSS colour
-// (#615fff), an attribute or a script's `G.12` is markup. The three delivery words are the glossary's own terms, which the
-// site leaves out, capitalised as the glossary writes them.
+// Delivery vocabulary, tracker codes and the private plan's citations, matched in rendered text only, with every run of
+// white space read as one space, so a soft line break hides nothing: a CSS colour (#615fff), an attribute or a script's
+// `G.12` is markup. The three delivery words are the glossary's own terms, which the site leaves out: Wave and Phase
+// capitalised as the glossary writes them, and spike in any case and anywhere, since the delivery named its folders,
+// tags and types after it (`spikes/saga/`, `SagaSpike`). A delivery's story and session are refused by their number.
 const VOCABULARY: [string, RegExp][] = [
-  ['delivery vocabulary (Wave, Phase, Spike)', /\b(?:Wave|Phase|Spike)/g],
+  ['delivery vocabulary (Wave, Phase)', /\b(?:Wave|Phase)/g],
+  ['delivery vocabulary (spike)', /spike/gi],
+  ['delivery process (story <n>, session <n>)', /\b(?:stor(?:y|ies)|sessions?) \d+/gi],
   ['tracker code (W<n>)', /\bW\d+\b/g],
   ['tracker code (spec #)', /\bspec #/gi],
+  ['tracker code (ticket #<n>)', /\b(?:tickets?|issues?|PRs?|pull requests?) #\d/gi],
   ['tracker code (#<n>)', /#\d{2,}/g],
   ['private plan citation (G.<n>, I.<n>)', /\b[GI]\.\d+/g],
   ['private plan citation (section G)', /\bsection G\b/g],
@@ -32,16 +37,16 @@ const LOCAL_PATHS: [string, RegExp][] = [
   ['local path (/Users/)', /\/Users\//g],
   ['local path (/home/)', /\/home\//g],
   ['local path (/private/tmp/)', /\/private\/tmp\//g],
-  ['local path (Windows drive)', /(?<![A-Za-z0-9_$.])[A-Za-z]:\\{1,2}[A-Za-z0-9 _.-]+\\/g],
+  ['local path (Windows drive)', /(?<![A-Za-z0-9_$.])[A-Za-z]:\\{1,2}[A-Za-z0-9_.-]/g],
 ];
 
 // A host GitHub serves a repository's content from, followed by a path or an SSH colon. A scheme is optional, so a URL
 // written as text (github.com/<owner>/<repo>) counts too.
 const GITHUB_URL =
-  /(?<![\w.-])(?:[a-z][a-z0-9+.-]*:\/\/)?(?:[\w.-]+@)?((?:[a-z0-9-]+\.)*(?:github\.com|githubusercontent\.com|github\.io|jsdelivr\.net))([/:][^\s"'`<>()[\]{}\\|^]*)?/gi;
+  /(?<![\w.-])(?:[a-z][a-z0-9+.-]*:\/\/)?(?:[\w.-]+@)?((?:[a-z0-9-]+\.)*(?:github\.com|github\.dev|githubusercontent\.com|github\.io|jsdelivr\.net))([/:][^\s"'`<>()[\]{}\\|^]*)?/gi;
 
-// The owner/repo shorthand a CLI takes (npx skills add <owner>/<repo>), with no host.
-const SHORTHAND = /(?<![\w./-])([\w.-]+)\/([\w.-]+)(?![\w/-])/g;
+// The owner/repo shorthand a CLI takes (npx skills add <owner>/<repo>), with no host, alone or followed by a path.
+const SHORTHAND = /(?<![\w./-])([\w.-]+)\/([\w.-]+)(?![\w-])/g;
 
 function repositoryOf(host: string, path: string): { owner: string; repository: string } | undefined {
   const segments = path
@@ -78,11 +83,12 @@ function repositoryOf(host: string, path: string): { owner: string; repository: 
   return { owner: owner.toLowerCase(), repository: normalizeRepository(repository) };
 }
 
-// What GitHub serves under a repository's name: <repo>, <repo>.git, <repo>.wiki and, on a CDN, <repo>@<version>.
+// What GitHub serves under a repository's name: <repo>, <repo>.git, <repo>.wiki and, on a CDN, <repo>@<version>. The
+// name is its run of the characters a repository name may hold, without the dots that end it, so what follows it in a
+// sentence (`<repo>.`, `<repo>,`, `<repo>**`) is not read as part of it.
 function normalizeRepository(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/@.*$/, '')
+  return (/^[a-z0-9._-]*/.exec(name.toLowerCase())?.[0] ?? '')
+    .replace(/\.+$/, '')
     .replace(/\.git$/, '')
     .replace(/\.wiki$/, '');
 }
@@ -122,9 +128,20 @@ export function addressViolations(text: string): Violation[] {
   return [...privateRepositoryReferences(text), ...matchAll(text, LOCAL_PATHS), ...matchAll(text, PRIVATE_NAMES)];
 }
 
+/**
+ * Text with its soft white space read as one space: a line break inside a block, as Markdown and HTML render it. A blank
+ * line is a block's end, and stays one, so a phrase never runs from one block into the next, such as a table's cells.
+ */
+export function softSpaced(text: string): string {
+  return text
+    .replace(/[ \t]*\n(?:[ \t]*\n)+[ \t]*/g, '\n\n')
+    .replace(/[ \t]*(?<!\n)\n(?!\n)[ \t]*/g, ' ')
+    .replace(/[ \t]+/g, ' ');
+}
+
 /** The rules only rendered text must pass: no delivery vocabulary, no tracker code and no private plan citation. */
 export function vocabularyViolations(text: string): Violation[] {
-  return matchAll(text, VOCABULARY);
+  return matchAll(softSpaced(text), VOCABULARY);
 }
 
 /** Every rule, for text that is rendered as it stands. */

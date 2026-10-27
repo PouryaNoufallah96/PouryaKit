@@ -21,6 +21,14 @@ test('the site generates a page per published reference, ADR and package, and th
   assert.ok(!pages.some((page) => /packages\.md|publication\.md/.test(page)));
 });
 
+test("no generated page carries a source's frontmatter: the Capabilities index starts at the skill's text", () => {
+  const files = buildSite(root);
+  const index = files.find((file) => file.path === 'content/docs/capabilities/index.md')?.content ?? '';
+  const body = index.replace(/^---\n[\s\S]*?\n---\n/, '');
+  assert.doesNotMatch(body, /^\s*(?:---|\*\*\*)\s*\n/);
+  for (const file of files) assert.ok(!file.content.includes('name: pourya-kit'), file.path);
+});
+
 test("a top heading that would renumber one of the reference's anchors fails", () => {
   const reference = parseMarkdown('# Web\n\n## Testing\n\n## Limits\n');
   assert.equal(referenceAnchors(reference, ['When to use it', 'Reference'], 'top.mdx').get('testing'), 'testing');

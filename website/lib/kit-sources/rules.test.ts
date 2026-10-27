@@ -17,12 +17,34 @@ const privateShapes = [
   'https://pouryanoufallah96.github.io/PouryaKit/',
   'https://github.com/PouryaNoufallah96/PouryaKit.wiki',
   'https://github.com/PouryaNoufallah96/Pourya%4Bit',
+  'https://github.dev/PouryaNoufallah96/PouryaKit',
   'npx skills add PouryaNoufallah96/PouryaKit',
+  'see PouryaNoufallah96/PouryaKit/blob/main/x.cs',
 ];
 
 test('every shape of a URL or name GitHub resolves to the private repository fails, whatever its case', () => {
   for (const shape of privateShapes) {
     assert.ok(privateRepositoryReferences(`see ${shape} here`).length > 0, shape);
+  }
+});
+
+test('a reference to the private repository fails however the sentence around it ends', () => {
+  const ends = ['.', ',', ';', ':', '!', '?', '...', '**', '.git.', '@v1.'];
+  for (const shape of ['https://github.com/PouryaNoufallah96/PouryaKit', 'github.com/PouryaNoufallah96/PouryaKit']) {
+    for (const end of ends) {
+      assert.ok(privateRepositoryReferences(`see ${shape}${end} and more`).length > 0, `${shape}${end} mid-sentence`);
+      assert.ok(privateRepositoryReferences(`see ${shape}${end}`).length > 0, `${shape}${end} at the end`);
+    }
+  }
+  for (const end of ['.', ',', ';', '!']) {
+    assert.ok(privateRepositoryReferences(`add PouryaNoufallah96/PouryaKit${end}`).length > 0, `shorthand${end}`);
+  }
+  for (const shape of [
+    'github.com/PouryaNoufallah96/PouryaKit-public.',
+    'github.com/PouryaNoufallah96/PouryaKit.Core.',
+    'PouryaNoufallah96/pouryakit-public, and',
+  ]) {
+    assert.deepEqual(privateRepositoryReferences(shape), [], shape);
   }
 });
 
@@ -42,7 +64,15 @@ test('another repository of the owner, the owner alone and another owner pass, s
 });
 
 test("the private plan's citations fail in text: a decision of section G, a row of section I and a section", () => {
-  for (const text of ['as G.6 decides', 'plan I.3', 'the I.3 row', 'or section G.', 'Plan section D sketched']) {
+  for (const text of [
+    'as G.6 decides',
+    'plan I.3',
+    'the I.3 row',
+    'or section G.',
+    'Plan section D sketched',
+    'as plan\nsection C expects',
+    'see spec\n  #183',
+  ]) {
     assert.ok(vocabularyViolations(text).length > 0, text);
   }
   for (const text of ['GDPR', 'IEEE 754', 'the G string', 'section 4']) {
@@ -80,6 +110,7 @@ test('a local path fails: a macOS or Linux home, the macOS temporary directory a
     '/private/tmp/kit',
     'C:\\Users\\ada\\kit',
     'D:\\\\work\\\\kit',
+    'D:\\repo',
   ]) {
     assert.ok(addressViolations(`at ${path}`).length > 0, path);
   }
@@ -88,7 +119,7 @@ test('a local path fails: a macOS or Linux home, the macOS temporary directory a
   }
 });
 
-test('delivery vocabulary and tracker codes fail in text, and W3C or a word in lower case does not', () => {
+test('delivery vocabulary and tracker codes fail in text, and W3C or Wave and Phase in lower case do not', () => {
   for (const text of [
     'in Wave 3',
     'Waves of work',
@@ -99,16 +130,50 @@ test('delivery vocabulary and tracker codes fail in text, and W3C or a word in l
     'see spec #183',
     'Spec #115 decided',
     'fixed in #12',
+    'Shape for ticket #7',
+    'tickets #9 and #10',
+    'Issue #4 asked',
+  ]) {
+    assert.ok(vocabularyViolations(text).length > 0, text);
+  }
+  for (const text of ['W3C trace context', 'a microwave', 'the first phase', 'item #1', 'C# 14']) {
+    assert.deepEqual(vocabularyViolations(text), [], text);
+  }
+});
+
+test('the word spike fails in any case, in a path and inside an identifier', () => {
+  for (const text of [
+    'a spike in latency',
+    'The spike that proved it',
+    'dotnet test spikes/s1-atomic-commit',
+    'spikes/saga/SagaSpike.Shipping/ShippingModule.cs',
+    'SagaSpike.Kit',
+    'tracestate=kit=spike-46',
+    'SPIKE',
+  ]) {
+    assert.ok(vocabularyViolations(text).length > 0, text);
+  }
+  for (const text of ['a spoke', 'the spire', 'a pike']) {
+    assert.deepEqual(vocabularyViolations(text), [], text);
+  }
+});
+
+test('a story or a session of the delivery fails by its number; the words alone, and an orchestrator, pass', () => {
+  for (const text of [
+    'spec story 71',
+    'Story 17 requires',
+    'stories 70 and 71',
+    'in session 6',
+    "session 7's reports",
   ]) {
     assert.ok(vocabularyViolations(text).length > 0, text);
   }
   for (const text of [
-    'W3C trace context',
-    'a microwave',
-    'a spike in latency',
-    'the first phase',
-    'item #1',
-    'C# 14',
+    'a user story',
+    "the Marten session's commit",
+    'one session per Operation',
+    'an orchestrator restarts a Host',
+    'the orchestrator would restart a healthy Host',
   ]) {
     assert.deepEqual(vocabularyViolations(text), [], text);
   }

@@ -31,6 +31,20 @@ export function parseMarkdown(text: string): Root {
   return tree;
 }
 
+/**
+ * A Kit source with its YAML frontmatter blanked, each of its lines kept as an empty one so the source's line numbers
+ * hold: frontmatter is metadata for its tools, and parsed as Markdown it renders as a rule and a line of text.
+ */
+export function blankFrontmatter(text: string): string {
+  const match = /^---\n[\s\S]*?\n---\n/.exec(text);
+  return match ? match[0].replace(/[^\n]/g, '') + text.slice(match[0].length) : text;
+}
+
+/** A Kit source file as Markdown, without its frontmatter. */
+export function parseSource(text: string): Root {
+  return parseMarkdown(blankFrontmatter(text));
+}
+
 /** A site page written in MDX, such as a Capability page's hand-written top. */
 export function parseMdx(text: string): Root {
   return mdx.parse(text);

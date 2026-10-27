@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import Slugger from 'github-slugger';
 import type { Heading, List, Nodes, Root, RootContent, Table } from 'mdast';
-import { firstSentence, nodeViolations, parseMarkdown, renderedText } from './markdown.ts';
+import { blankFrontmatter, firstSentence, nodeViolations, parseMarkdown, renderedText } from './markdown.ts';
 
 // The ADRs' public projection. The records stay as they are; the site publishes each with its tracker references
 // rewritten, and leaves out each passage that still names one. Every passage left out is listed in the committed
@@ -43,21 +43,86 @@ const CITATION_PARTS = [
   /^(?:plan )?section [A-Z]$/,
 ];
 
-function isCitation(inner: string): boolean {
+function isCitation(text: string): boolean {
+  // A soft line break inside a parenthetical is a space.
+  const inner = text.replace(/\s+/g, ' ');
   return (
     (TRACKER.test(inner) || PLAN.test(inner)) &&
     inner.split(/[;,]\s*/).every((part) => CITATION_PARTS.some((rule) => rule.test(part.trim())))
   );
 }
 
+/** One replacement of the source's text between two offsets, with where it comes from for an error. */
+type Edit = { start: number; end: number; text: string; where: string };
+
 // A replacement keeps the line breaks of the text it replaces, each with the indentation after it, so every line of the
-// projected ADR stays at its line in the source and the manifest's lines are the record's.
-function keepLines(matched: string, replacement: string, where: string): string {
+// projected ADR stays at its line in the source and the manifest's lines are the record's. The breaks it drops take the
+// place of its own spaces, spread over it, so its sentence runs on over the same lines; one that leaves nothing in front of
+// punctuation moves the punctuation up to the text before it, so no ` .` or ` ,` stays. An edit that would still leave an
+// empty line, which splits its paragraph, fails: its rewrite takes in a word more of its neighbours.
+function placeEdit(text: string, edit: Edit): Edit {
+  const matched = text.slice(edit.start, edit.end);
   const breaks = matched.match(/\n[ \t]*/g) ?? [];
-  const own = (replacement.match(/\n/g) ?? []).length;
+  const own = (edit.text.match(/\n/g) ?? []).length;
   if (own > breaks.length)
-    throw new Error(`kit-sources: the rewrite at ${where} adds lines; keep it to the lines it replaces`);
-  return replacement + breaks.slice(own).join('');
+    throw new Error(`kit-sources: the rewrite at ${edit.where} adds lines; keep it to the lines it replaces`);
+  const dropped = breaks.slice(own);
+  // Spaces outside inline code first, since a break inside a code span still reads as a space but splits its source.
+  const spaces = [...edit.text.matchAll(/ /g)].map((space) => space.index);
+  const prose = spaces.filter((index) => (edit.text.slice(0, index).match(/`/g) ?? []).length % 2 === 0);
+  const usable = prose.length >= dropped.length ? prose : spaces;
+  // Spread evenly, so the replacement's lines are of like length.
+  const placed =
+    usable.length > dropped.length
+      ? dropped.map((_, at) => usable[Math.floor(((at + 1) * usable.length) / (dropped.length + 1))])
+      : usable;
+  let replacement = edit.text;
+  placed.forEach((index, at) => {
+    const offset = replacement.length - edit.text.length;
+    replacement = replacement.slice(0, index + offset) + dropped[at] + replacement.slice(index + offset + 1);
+  });
+  const rest = dropped.slice(placed.length).join('');
+  if (edit.text.trim() !== '') return { ...edit, text: replacement + rest };
+  const before = text.slice(0, edit.start);
+  const punctuation = /^[.,;:!?)]+/.exec(text.slice(edit.end))?.[0] ?? '';
+  const end = edit.end + punctuation.length;
+  const lineAfter = /^[^\n]*/.exec(text.slice(end))?.[0] ?? '';
+  const word = /[ \t]*(\S+)[ \t]*\n([ \t]*)$/.exec(before);
+  if (word && lineAfter.trim() === '') {
+    // The edit empties its line: the last word of the line before moves down to hold the line and the punctuation.
+    return { ...edit, start: word.index, end, text: `\n${word[2]}${word[1]}${punctuation}${rest}` };
+  }
+  const space = /(?<=\S)[ \t]*(?:\n[ \t]*)?$/.exec(before)?.[0] ?? '';
+  if (punctuation === '' || space === '') return { ...edit, text: rest };
+  return {
+    ...edit,
+    start: edit.start - space.length,
+    end,
+    text: punctuation + (space.includes('\n') ? space : '') + rest,
+  };
+}
+
+/** Applies edits that keep the source's lines; one that would leave an empty line where the source has text fails. */
+function applyEdits(text: string, edits: Edit[]): string {
+  const placed = edits.map((edit) => placeEdit(text, edit)).sort((a, b) => a.start - b.start);
+  for (let index = 1; index < placed.length; index++) {
+    if (placed[index].start < placed[index - 1].end)
+      throw new Error(`kit-sources: the edits at ${placed[index - 1].where} and ${placed[index].where} overlap`);
+  }
+  let result = text;
+  for (const edit of placed.toReversed()) result = result.slice(0, edit.start) + edit.text + result.slice(edit.end);
+  const before = text.split('\n');
+  const after = result.split('\n');
+  if (after.length !== before.length) throw new Error('kit-sources: an ADR edit changed the number of lines');
+  const starts = lineStarts(text);
+  for (let line = 0; line < after.length; line++) {
+    if (after[line].trim() !== '' || before[line].trim() === '') continue;
+    const edit = placed.find((each) => each.start <= (starts[line + 1] ?? text.length) && each.end >= starts[line]);
+    throw new Error(
+      `kit-sources: the edit at ${edit?.where ?? 'an unknown place'} leaves line ${line + 1} empty, which splits its paragraph; take a word more of its neighbours into the rewrite`,
+    );
+  }
+  return result;
 }
 
 function flexible(text: string): RegExp {
@@ -95,12 +160,9 @@ export function applyRewrites(slug: string, text: string, rewrites: AdrRewrite[]
         );
       }
       const [match] = matches;
-      return { start: match.index, end: match.index + match[0].length, text: keepLines(match[0], rewrite.to, where) };
-    })
-    .sort((a, b) => b.start - a.start);
-  let result = text;
-  for (const edit of edits) result = result.slice(0, edit.start) + edit.text + result.slice(edit.end);
-  return result;
+      return { start: match.index, end: match.index + match[0].length, text: rewrite.to, where };
+    });
+  return applyEdits(text, edits);
 }
 
 /** The generic rules, outside fenced code: a parenthetical that only cites the tracker goes, and so does an amendment heading's citation. */
@@ -115,28 +177,36 @@ export function dropCitations(text: string): string {
     if (last && last.code === code) last.text += `\n${line}`;
     else segments.push({ code, text: line });
   }
-  return segments
-    .map((segment) =>
-      segment.code
-        ? segment.text
-        : segment.text
-            .replace(/^(#{2,6} Amendment \()(\d{4}-\d{2}-\d{2}), ([^\n]*)\)[ \t]*$/gm, (heading, open, date, rest) => {
+  const headed = segments.map((segment) =>
+    segment.code
+      ? segment
+      : {
+          ...segment,
+          text: segment.text.replace(
+            /^(#{2,6} Amendment \()(\d{4}-\d{2}-\d{2}), ([^\n]*)\)[ \t]*$/gm,
+            (heading, open, date, rest) => {
               const colon = rest.indexOf(': ');
               if (colon !== -1 && TRACKER.test(rest.slice(0, colon)))
                 return `${open}${date}: ${rest.slice(colon + 2)})`;
               if (colon === -1 && TRACKER.test(rest)) return `${open}${date})`;
               return heading;
-            })
-            .replace(/[ \t]?\(([^()]*)\)/g, (whole, inner: string) =>
-              isCitation(inner) ? keepLines(whole, '', 'a citation') : whole,
-            ),
-    )
-    .join('\n');
-}
-
-function blankFrontmatter(text: string): string {
-  const match = /^---\n[\s\S]*?\n---\n/.exec(text);
-  return match ? match[0].replace(/[^\n]/g, '') + text.slice(match[0].length) : text;
+            },
+          ),
+        },
+  );
+  const edits: Edit[] = [];
+  let offset = 0;
+  for (const segment of headed) {
+    if (!segment.code) {
+      for (const match of segment.text.matchAll(/[ \t]?\(([^()]*)\)/g)) {
+        if (!isCitation(match[1])) continue;
+        const start = offset + match.index;
+        edits.push({ start, end: start + match[0].length, text: '', where: `a citation, ${JSON.stringify(match[0])}` });
+      }
+    }
+    offset += segment.text.length + 1;
+  }
+  return applyEdits(headed.map((segment) => segment.text).join('\n'), edits);
 }
 
 function normalized(text: string) {

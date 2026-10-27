@@ -13,6 +13,7 @@ import {
   nodeViolations,
   parseMarkdown,
   parseMdx,
+  parseSource,
   renderedText,
   stringifyMarkdown,
 } from './markdown.ts';
@@ -183,7 +184,7 @@ export function buildSite(root: string): GeneratedFile[] {
   // The skill references, parsed first so a link between two of them can be checked against the other's anchors.
   const references = entries.map((entry) => {
     const source = `${REFERENCES}/${entry.file}`;
-    const tree = parseMarkdown(readSource(root, source));
+    const tree = parseSource(readSource(root, source));
     const body = withoutTitle(tree);
     const top = readTop(root, entry.slug);
     const anchors = referenceAnchors(tree, top ? [...top.headings, 'Reference'] : [], top?.file ?? source);
@@ -204,7 +205,7 @@ export function buildSite(root: string): GeneratedFile[] {
   for (const kit of packages) {
     const page = { route: `${PACKAGES_ROUTE}/${kit.slug}` };
     if (kit.readme) {
-      const tree = parseMarkdown(readSource(root, kit.readme));
+      const tree = parseSource(readSource(root, kit.readme));
       readmes.set(kit.id, tree);
       routes.set(kit.readme, { ...page, anchors: anchorMap(tree, withoutTitle(tree)) });
     } else {
@@ -321,7 +322,7 @@ export function buildSite(root: string): GeneratedFile[] {
 
 function capabilitiesIndex(root: string, routes: RouteMap, entries: SkillEntry[]): GeneratedFile {
   // The skill's own front page: what holds in every Capability and the Capability table, with the published guides.
-  const skill = parseMarkdown(readSource(root, SKILL));
+  const skill = parseSource(readSource(root, SKILL));
   const body = withoutTitle(skill);
   const guides = body.findIndex((node) => node.type === 'heading' && renderedText(node) === 'Guides');
   const table = body.slice(guides).find((node) => node.type === 'table') as Table;

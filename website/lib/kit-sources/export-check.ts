@@ -10,7 +10,8 @@ import { addressViolations, type Violation, vocabularyViolations } from './rules
 // carry a path, with character references and string escapes undone first. Only rendered text is read for delivery vocabulary and tracker codes, since a CSS colour (#615fff), an
 // attribute or a script is no text a reader sees: an HTML page's text outside its scripts and styles, with its
 // character references decoded; each page's Markdown and llms*.txt as Markdown text, code included, link destinations
-// and heading ids left out; and every string of the search index.
+// and heading ids left out; and every string of the search index. A phrase is read across a soft line break, never
+// from one block into the next: a table's cells, a page's paragraphs and the index's strings each end a block.
 
 export type Finding = Violation & { file: string };
 
@@ -39,17 +40,47 @@ export function unescapeStrings(text: string): string {
   );
 }
 
-/** An HTML page's rendered text: scripts, styles and comments dropped, tags removed, character references decoded. */
+// A block's end in extracted text: a blank line, which the rules never read a phrase across (`softSpaced`).
+const BLOCK_END = '\n\n';
+
+// The HTML elements that end a block of text, such as a table's cells: every other tag is inline and renders nothing.
+const HTML_BLOCK =
+  /<\/?(?:address|article|aside|blockquote|button|caption|dd|details|dialog|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|label|legend|li|main|nav|ol|option|p|pre|section|select|summary|table|tbody|td|tfoot|th|thead|title|tr|ul)\b[^>]*>/gi;
+
+// The Markdown nodes that end a block of text.
+const MARKDOWN_BLOCK = new Set([
+  'blockquote',
+  'code',
+  'heading',
+  'list',
+  'listItem',
+  'mdxJsxFlowElement',
+  'paragraph',
+  'table',
+  'tableCell',
+  'tableRow',
+  'thematicBreak',
+]);
+
+/**
+ * An HTML page's rendered text: scripts, styles and comments dropped, each block's end a blank line, other tags removed,
+ * character references decoded.
+ */
 export function htmlText(html: string): string {
   return decodeEntities(
     html
-      .replace(/<!--[\s\S]*?-->/g, ' ')
-      .replace(/<(script|style|noscript|template)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
-      .replace(/<[^>]*>/g, ' '),
+      .replace(/<!--[\s\S]*?-->/g, BLOCK_END)
+      .replace(/<(script|style|noscript|template)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, BLOCK_END)
+      .replace(/<br\b[^>]*>/gi, '\n')
+      .replace(HTML_BLOCK, BLOCK_END)
+      .replace(/<[^>]*>/g, ''),
   );
 }
 
-/** The text of Markdown or MDX a reader sees: text and code, image descriptions and component attributes. */
+/**
+ * The text of Markdown or MDX a reader sees, each block's end a blank line: text and code, image descriptions and
+ * component attributes.
+ */
 export function markdownText(markdown: string): string {
   let tree: Root;
   try {
@@ -59,19 +90,23 @@ export function markdownText(markdown: string): string {
   }
   const parts: string[] = [];
   visit(tree, (node) => {
+    if (MARKDOWN_BLOCK.has(node.type)) parts.push(BLOCK_END);
     if (node.type === 'heading') {
       // Fumadocs writes a heading's id after it, as `[#id]`: markup, not text.
       const last = node.children.at(-1);
       if (last?.type === 'text') last.value = last.value.replace(/\s*\[#[^\]]*\]\s*$/, '');
     }
-    if ('value' in node && typeof node.value === 'string' && node.type !== 'html') parts.push(node.value);
+    // A code block's lines are lines of their own.
+    if (node.type === 'code') parts.push(node.value.replaceAll('\n', BLOCK_END));
+    else if ('value' in node && typeof node.value === 'string' && node.type !== 'html') parts.push(node.value);
     if (node.type === 'image' && node.alt) parts.push(node.alt);
     const attributes = (node as { attributes?: { type: string; value?: unknown }[] }).attributes;
     for (const attribute of attributes ?? []) {
-      if (attribute.type === 'mdxJsxAttribute' && typeof attribute.value === 'string') parts.push(attribute.value);
+      if (attribute.type === 'mdxJsxAttribute' && typeof attribute.value === 'string')
+        parts.push(BLOCK_END, attribute.value);
     }
   });
-  return parts.join('\n');
+  return parts.join('');
 }
 
 function jsonStrings(value: unknown, out: string[] = []): string[] {
@@ -88,7 +123,7 @@ export function renderedTextOf(relative: string, content: string): string | unde
   const name = path.posix.basename(relative);
   if (relative.endsWith('.html')) return htmlText(content);
   if (relative.endsWith('.md') || name === 'llms.txt' || name === 'llms-full.txt') return markdownText(content);
-  if (relative === 'api/search.json') return jsonStrings(JSON.parse(content)).join('\n');
+  if (relative === 'api/search.json') return jsonStrings(JSON.parse(content)).join(BLOCK_END);
   return undefined;
 }
 

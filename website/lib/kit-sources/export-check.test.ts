@@ -46,7 +46,7 @@ test('a tracker code fails in rendered text: a page, its Markdown, llms.txt and 
     'docs/index.html tracker code (#<n>)',
     'llms.mdx/docs/content.md tracker code (spec #)',
     'llms.mdx/docs/content.md tracker code (#<n>)',
-    'llms.txt delivery vocabulary (Wave, Phase, Spike)',
+    'llms.txt delivery vocabulary (Wave, Phase)',
   ]);
 });
 
@@ -57,7 +57,21 @@ test("a private project's name fails anywhere, a script's included; a delivery w
   });
   assert.deepEqual(findings, [
     '_next/static/chunk.js private project (Cybernod)',
-    'docs/index.html delivery vocabulary (Wave, Phase, Spike)',
+    'docs/index.html delivery vocabulary (spike)',
+  ]);
+});
+
+test('a phrase is read across a soft line break and inline markup, never from one block into the next', () => {
+  const findings = findingsFor({
+    'docs/a.html':
+      '<table><tr><td>not enrolled in the session</td></tr><tr><td>3</td></tr></table><p>in <em>session</em>\n6</p>',
+    'docs/b.html': '<ul><li>the plan</li><li>section C</li></ul>',
+    'llms.mdx/docs/a/content.md':
+      '| a | b |\n|---|---|\n| in the session | x |\n| 3 | y |\n\nas plan\nsection C expects\n',
+  });
+  assert.deepEqual(findings, [
+    'docs/a.html delivery process (story <n>, session <n>)',
+    'llms.mdx/docs/a/content.md private plan citation (plan section)',
   ]);
 });
 
