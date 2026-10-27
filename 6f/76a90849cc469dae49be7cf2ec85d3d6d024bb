@@ -1,0 +1,112 @@
+website/content/docs/concepts/composition-and-startup-checks.mdx
+  s_76e27a52bbdbcf::t_b51a23d583fc9c 13,16,28-29,53,56,59
+website/content/docs/guides/validate.mdx
+  s_76e27a52bbdbcf::t_1f3c4e21cfb21b 34
+  s_76e27a52bbdbcf::t_dcd52ccd8c6cb7 61,66-67,70
+website/content/docs/guides/request-idempotency.mdx
+  s_76e27a52bbdbcf::t_801bafba283b19 8,11,32,74-75,84
+website/content/docs/guides/paged-query.mdx
+  s_76e27a52bbdbcf::t_134e7df8dc8098 16
+  s_76e27a52bbdbcf::t_4000970993094e 25,43,47,54,71-72,74-75
+website/content/docs/concepts/domain-event.mdx
+  s_76e27a52bbdbcf::t_5c520060b1d7d9 18
+  s_76e27a52bbdbcf::t_f8a001f8b45fac 11
+  s_76e27a52bbdbcf::t_89f076b49d47d0 74
+website/content/docs/concepts/stream.mdx
+  s_76e27a52bbdbcf::t_134e7df8dc8098 34
+  s_76e27a52bbdbcf::t_0394d7f8548109 44-45
+website/content/docs/guides/secure-an-operation.mdx
+  s_76e27a52bbdbcf::t_60b7d111f707a4 73,76
+  s_76e27a52bbdbcf::t_ee8468feb0eadf 52
+  s_76e27a52bbdbcf::t_134e7df8dc8098 8
+  s_76e27a52bbdbcf::t_e372b5d16517c9 25
+  s_76e27a52bbdbcf::t_512ab8ccb88f3d 41
+website/content/docs/guides/test-a-feature.mdx
+  s_76e27a52bbdbcf::t_9d022c62120a52 16
+  s_76e27a52bbdbcf::t_d31cb4c18e9b0c 87
+website/content/docs/concepts/saga.mdx
+  s_76e27a52bbdbcf::t_47184eabe16da6 34
+  s_76e27a52bbdbcf::t_1df3fa04326cbf 55
+website/content/docs/guides/schedule-commands.mdx
+  s_76e27a52bbdbcf::t_6797ee4df5c1f3 10,13-14,16,21,30,39,69,76,97,100,102
+website/content/docs/concepts/index.mdx
+  s_76e27a52bbdbcf::t_5b71d378bdf214 27
+website/content/docs/concepts/operation-context.mdx
+  s_76e27a52bbdbcf::t_3506fa6d237424 58
+  s_76e27a52bbdbcf::t_55266676ef9c0f 15
+  s_76e27a52bbdbcf::t_73dcc0710ba481 10
+website/content/docs/concepts/operation-result-error.mdx
+  s_76e27a52bbdbcf::t_e56f5a7eca436f 10,26,30,32
+website/content/docs/concepts/outbox-and-notifications.mdx
+  s_76e27a52bbdbcf::t_6483f847b1dc52 10
+  s_76e27a52bbdbcf::t_cb646f27571581 3
+  s_76e27a52bbdbcf::t_88dfad44ccb352 26
+  s_76e27a52bbdbcf::t_c425d33298eb47 8
+  s_76e27a52bbdbcf::t_085984122139f8 13
+  s_76e27a52bbdbcf::t_edfdfda3b62592 55
+website/content/docs/concepts/host-and-module.mdx
+  s_76e27a52bbdbcf::t_4bb6cb8fbfa49f 19
+  s_76e27a52bbdbcf::t_2215f3c1eba277 26
+  s_76e27a52bbdbcf::t_2a11e6f6123254 48,51,54
+website/content/docs/guides/tenant-scoped-module.mdx
+  s_76e27a52bbdbcf::t_839fa4daa67570 73
+  s_76e27a52bbdbcf::t_ba7242411a5fdf 43
+website/content/docs/guides/prepare-a-release.mdx
+  s_76e27a52bbdbcf::t_c7de3a3af445c0 8,11,25,31,42,56,61,76,78-79,81
+website/content/docs/guides/create-a-command.mdx
+  s_76e27a52bbdbcf::t_858875da254c5b 80,83
+  s_76e27a52bbdbcf::t_129ad9c7e244ca 8
+  s_76e27a52bbdbcf::t_993b22dbac40da 43
+  s_76e27a52bbdbcf::t_134e7df8dc8098 68
+website/content/docs/concepts/unit-of-work.mdx
+  s_76e27a52bbdbcf::t_134e7df8dc8098 35
+  s_76e27a52bbdbcf::t_6866881eac3747 45,48,51
+  s_76e27a52bbdbcf::t_1d0880ecbb3842 20,22,26
+website/content/docs/guides/host-recipes.mdx
+  s_76e27a52bbdbcf::t_3081536203dc92 68
+  s_76e27a52bbdbcf::t_4c5c06f1260249 8
+  s_76e27a52bbdbcf::t_0b9dda3b320fe6 65
+website/content/docs/concepts/snapshots.mdx
+  s_76e27a52bbdbcf::t_7a9f3dff017b55 3
+  s_76e27a52bbdbcf::t_1888fc1b71cf66 45
+  s_76e27a52bbdbcf::t_ebfabc65931967 75
+website/content/docs/guides/publish-and-subscribe.mdx
+  s_76e27a52bbdbcf::t_c6013e07bb0507 25
+  s_76e27a52bbdbcf::t_5405cc689fedbb 57
+  s_76e27a52bbdbcf::t_494d2c96fab633 8,11
+  s_76e27a52bbdbcf::t_a38d1d68573cdc 96
+  s_76e27a52bbdbcf::t_c764051ff7fb2c 34
+website/content/docs/concepts/integration-events.mdx
+  s_76e27a52bbdbcf::t_04e2fbeee611c3 19
+  s_76e27a52bbdbcf::t_4c75c848360192 3
+  s_76e27a52bbdbcf::t_385d4f1ec72f66 63
+  s_76e27a52bbdbcf::t_51c33946b83010 10
+  s_76e27a52bbdbcf::t_f86aad7bc42bc5 54
+  s_76e27a52bbdbcf::t_2cd90b93379e2c 27-28
+website/content/docs/concepts/delayed-and-recurring-commands.mdx
+  s_76e27a52bbdbcf::t_7fe68606ff7fb3 52,55
+website/content/docs/concepts/gateway-and-mcp-tools.mdx
+  s_76e27a52bbdbcf::t_17f8b2ed6c2883 52
+website/content/docs/guides/add-an-endpoint.mdx
+  s_76e27a52bbdbcf::t_134e7df8dc8098 61
+  s_76e27a52bbdbcf::t_a7197b5ec32d16 50
+  s_76e27a52bbdbcf::t_06f0a6ffb77426 69-70
+  s_76e27a52bbdbcf::t_3d910472e868e9 83
+  s_76e27a52bbdbcf::t_8b10be85cb194d 29,36,43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6f76a90849cc469dae49be7cf2ec85d3d6d024bb",
+  "prompts": {},
+  "sessions": {
+    "s_76e27a52bbdbcf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cde6d05e-07a5-4e5c-903e-7974d318c31e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
