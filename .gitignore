@@ -33,3 +33,7 @@ website/.vercel/
 website/next-env.d.ts
 # The typeset covers, which `pnpm --dir website covers` writes from the committed artwork.
 website/covers/out/
+# The pages the content pipeline generates from the Kit's sources before each site build (website/lib/kit-sources/site.ts).
+website/.generated/
+website/content/docs/capabilities/
+website/content/docs/reference/

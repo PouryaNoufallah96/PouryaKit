@@ -7,6 +7,7 @@ using PouryaKit.Persistence;
 
 namespace Catalog.Products.Features.RenameProduct;
 
+#region rename-product-handler
 internal sealed class RenameProductCommandHandler(IRepository<Product, ProductId> products)
     : CommandHandler<RenameProductCommand>
 {
@@ -16,3 +17,4 @@ internal sealed class RenameProductCommandHandler(IRepository<Product, ProductId
         return product is null ? ProductErrors.NotFound : product.Rename(command.Name);
     }
 }
+#endregion
