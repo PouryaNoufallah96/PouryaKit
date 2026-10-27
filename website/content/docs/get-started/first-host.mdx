@@ -1,0 +1,145 @@
+---
+title: Your first Host
+description: Generate the monolith, start PostgreSQL, migrate, create a token, run the Host and call it.
+---
+
+## What it is
+
+The shortest path from an installed template package to a running [Host](/docs/reference/glossary#host) that answers an authenticated call. It uses the monolith template, whose one [Module](/docs/reference/glossary#module) is the [Proving Sample](/docs/reference/glossary#proving-sample)'s Catalog; the modular monolith runs the same way with more Modules to migrate.
+
+<Callout type="warn" title="The Host applies no migrations">
+  Migrating is a step of its own, `dotnet ef database update`, run once per Module before the Host starts and again after each new migration. The Host also needs a bearer token's settings to start, which `dotnet user-jwts` writes for development.
+</Callout>
+
+## When to use it
+
+Right after you [install the templates](/docs/get-started/install-templates), with Docker running. Run each command from the folder you want the solution in, then from the solution's own folder as the steps say.
+
+## Run it
+
+<Steps>
+<Step>
+
+### Generate the solution and restore its tools
+
+```bash title="Terminal"
+dotnet new pouryakit-monolith -n Acme.Shop
+cd Acme.Shop
+dotnet tool restore
+```
+
+</Step>
+<Step>
+
+### Start PostgreSQL
+
+The connection string the generated `appsettings.json` names finds this container, which runs the image the Kit's tests use.
+
+```bash title="Terminal"
+docker run -d --name acme-shop-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:18.6
+```
+
+</Step>
+<Step>
+
+### Migrate Catalog's database
+
+The database need not exist: the update creates it before it applies the first migration.
+
+```bash title="Terminal"
+dotnet ef database update --project src/Modules/Catalog/Catalog --startup-project src/Acme.Shop.Host --context CatalogDbContext
+```
+
+</Step>
+<Step>
+
+### Create a development token
+
+It writes the bearer settings the Host needs and prints a token. The `tenant` claim matters: Catalog is tenant-scoped, so its commands and queries refuse a caller without a [tenant](/docs/reference/glossary#tenant).
+
+```bash title="Terminal"
+dotnet user-jwts create --project src/Acme.Shop.Host --claim tenant=acme
+```
+
+</Step>
+<Step>
+
+### Run the Host
+
+Trust ASP.NET Core's development certificate once per machine, since the https URL uses it, then run.
+
+```bash title="Terminal"
+dotnet dev-certs https --trust
+dotnet run --project src/Acme.Shop.Host
+```
+
+It listens on its launch profile's https and http URLs, which [Running the generated Host](/docs/capabilities/templates#running-the-generated-host) lists.
+
+</Step>
+<Step>
+
+### Call it
+
+In a second terminal, with the token from the step before. The answer is 200 with an empty Page of products.
+
+```bash title="Terminal"
+curl -H "Authorization: Bearer <token>" http://localhost:5080/catalog/v2/products
+```
+
+In Development the Host also serves its OpenAPI documents and the Scalar reference over them: [Documents and Scalar](/docs/capabilities/openapi#documents-and-scalar).
+
+</Step>
+<Step>
+
+### Run the smoke test
+
+The generated test project hosts the same Host against PostgreSQL in a container of its own, so it needs Docker but not the container above.
+
+```bash title="Terminal"
+dotnet test --project tests/Acme.Shop.Tests/Acme.Shop.Tests.csproj
+```
+
+</Step>
+</Steps>
+
+When you are done, remove the container and its data:
+
+```bash title="Terminal"
+docker rm -f -v acme-shop-postgres
+```
+
+## What the smoke test proves
+
+| Behaviour | Stated in |
+| --- | --- |
+| A product created twice with one idempotency key is created once, and both calls get the same answer | [The smoke test](/docs/capabilities/templates#the-smoke-test) |
+| The liveness endpoint answers a caller without a token from a Host composed as it is deployed | [The smoke test](/docs/capabilities/templates#the-smoke-test) |
+| A Host whose permission checks are not registered does not build | [The smoke test](/docs/capabilities/templates#the-smoke-test) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="The Host does not start">
+    Its bearer settings are missing: run the `dotnet user-jwts create` step. In production, configure the issuer, audiences and signing keys of your identity provider instead.
+  </Accordion>
+  <Accordion title="A call without an API version">
+    Catalog refuses it. Name the version as the call above does, in its path; [What a caller sees](/docs/capabilities/openapi#what-a-caller-sees) has the other way.
+  </Accordion>
+  <Accordion title="A call without a token">
+    The Host refuses a call with no token, or one it does not accept: every endpoint requires an authenticated caller unless it says otherwise.
+  </Accordion>
+  <Accordion title="Tenant.Required">
+    The token names no tenant. Create it with a tenant claim, as the token step does.
+  </Accordion>
+  <Accordion title="A gRPC call on the http URL">
+    gRPC needs HTTP/2, which the http URL does not negotiate: call gRPC on the https URL ([gRPC](/docs/capabilities/grpc)).
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Add a Module" href="/docs/get-started/add-a-module" description="Grow the solution past its first Module." />
+  <Card title="Running the generated Host" href="/docs/capabilities/templates#running-the-generated-host" description="Every setting the generated Host reads, and the service's ports." />
+  <Card title="The Proving Sample" href="/docs/proving-sample" description="Where the generated code comes from." />
+</Cards>

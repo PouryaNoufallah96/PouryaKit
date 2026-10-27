@@ -1,0 +1,45 @@
+---
+title: Template choice
+description: The questions that decide between the monolith, the modular monolith and the service.
+---
+
+## What it decides
+
+Which of the three [Project templates](/docs/reference/glossary#project-template) a new application starts from. [Choose a template](/docs/templates) describes each one; this guide is the order to ask the questions in.
+
+<Callout title="A choice you can change later">
+  Every template generates the same business code. The monolith grows into the modular monolith by changing [a few files](/docs/capabilities/templates#growing-the-monolith-into-a-modular-monolith), and a [Module](/docs/reference/glossary#module) of the modular monolith moves into a [Host](/docs/reference/glossary#host) of its own as the service. Pick for today, not for the largest shape you can imagine.
+</Callout>
+
+## The questions
+
+| Question | If yes | If no |
+| --- | --- | --- |
+| Will one Module run in a process of its own and receive another Host's [Integration Events](/docs/reference/glossary#integration-event)? | The service | Keep asking |
+| Does the application already have, or soon need, a second Module? | The modular monolith | The monolith |
+| Do you need [Streams](/docs/reference/glossary#stream) or the AI [Capability](/docs/reference/glossary#capability) from the first day? | The modular monolith, which composes both | The monolith is enough |
+
+## What each one composes
+
+| Template | Composes |
+| --- | --- |
+| Monolith | Catalog alone, on the Host's own services, without `PouryaKit.Modularity` |
+| Modular monolith | Catalog, Billing, Inventory and Ledger, with Streams and AI |
+| Service | Inventory alone, always on its RabbitMQ broker, with fewer Capabilities than the other two |
+
+[What each composition composes](/docs/capabilities/templates#what-each-composition-composes) has the full table.
+
+## Generate it
+
+```bash title="Terminal"
+dotnet new pouryakit-monolith -n Acme.Shop
+dotnet new pouryakit-modular-monolith -n Acme.Shop
+dotnet new pouryakit-service -n Acme.Stock
+```
+
+## Next steps
+
+<Cards>
+  <Card title="Choose a template" href="/docs/templates" description="Each template, what it generates and how to run it." />
+  <Card title="In-process or RabbitMQ" href="/docs/decision-guides/in-process-or-rabbitmq" description="When a Module needs a Host of its own." />
+</Cards>

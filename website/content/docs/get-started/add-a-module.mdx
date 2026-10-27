@@ -1,0 +1,86 @@
+---
+title: Add a Module
+description: Grow a solution past its first Module, from the monolith or in the modular monolith.
+---
+
+## What it is
+
+A [Module](/docs/reference/glossary#module) is a business boundary inside a [Host](/docs/reference/glossary#host): its own project, data, rules and public [Contracts](/docs/reference/glossary#contracts). Its [Composition Root](/docs/reference/glossary#composition-root) declares everything it needs and offers, and the Host adds it once. Anything outside the Module reaches it through its [Gateway](/docs/reference/glossary#gateway).
+
+<Callout type="warn" title="The monolith has no Modules yet">
+  The monolith registers Catalog on the Host's own services, without `PouryaKit.Modularity`. A second Module needs the modular monolith's composition, and growing into it leaves the business code as it is.
+</Callout>
+
+## When to use it
+
+When a part of your business has data and rules of its own that other parts should reach only through its Contracts. Calls between Modules of one Host stay in-process: [Integration Events](/docs/reference/glossary#integration-event) and [Snapshots](/docs/reference/glossary#snapshot) through the Host's [Outbox](/docs/reference/glossary#outbox), and a question through the owning Module's Contracts, never HTTP.
+
+## Add it
+
+<Steps>
+<Step>
+
+### Start from the modular monolith
+
+Generate it, or grow the monolith into it: [Growing the monolith into a modular monolith](/docs/capabilities/templates#growing-the-monolith-into-a-modular-monolith) lists the files that change.
+
+```bash title="Terminal"
+dotnet new pouryakit-modular-monolith -n Acme.Shop
+```
+
+</Step>
+<Step>
+
+### Create the Module's projects
+
+Give the Module a folder under `src/Modules/` with its project, and a Contracts project when other Modules use what it publishes, as Catalog has `Catalog.Contracts`. Its project references `PouryaKit.Modularity` and the Kit packages its [Features](/docs/reference/glossary#feature) use; [Asking another Module a question](/docs/capabilities/modules#asking-another-module-a-question) says what a Contracts project may reference. Add the project to the solution and reference it from the Host.
+
+</Step>
+<Step>
+
+### Write its Composition Root
+
+One public sealed class that implements `IModuleDefinition`, whose `Configure(ModuleBuilder module)` declares the Module's data, Features, handlers, publications, subscriptions and endpoints. It never names its own Module or assembly: the Kit infers both. [The Composition Root](/docs/capabilities/modules#the-composition-root) shows Catalog's.
+
+</Step>
+<Step>
+
+### Add it to the Host
+
+In `AppHost.cs`, add it beside the others with `modules.Add<…>()` in `AddPouryaKitModules`, and give it its own section in `appsettings.json` when it has settings.
+
+</Step>
+<Step>
+
+### Give it a migration and migrate
+
+Each Module keeps its own schema and its migrations in its own folder; [Migrations](/docs/capabilities/persistence#migrations) has the `dotnet ef migrations add` command. Then migrate it as [Your first Host](/docs/get-started/first-host) migrates Catalog, naming its project and its DbContext.
+
+</Step>
+</Steps>
+
+## What holds for every Module
+
+| Rule | Stated in | Proven by |
+| --- | --- | --- |
+| A Module references no other Module's implementation | [Structure tests](/docs/capabilities/testing#structure-tests) | `ModuleBoundaryTests` |
+| A declaration belongs to the Module whose builder it was made on | [The Composition Root](/docs/capabilities/modules#the-composition-root) | `CompositionCheckTests` |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="A declaration left on the Host's services">
+    A declaration made on `builder.Services` in a Host of Modules belongs to no Module, and the Host fails when it is built, naming the form to use instead.
+  </Accordion>
+  <Accordion title="A ConfigureContainer after AddPouryaKitModules">
+    It replaces the container the checks install, and the Host fails when it starts, naming the call.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Modules" href="/docs/capabilities/modules" description="The Composition Root, the Gateway, the Operation Context and the Host's checks." />
+  <Card title="The modular monolith" href="/docs/templates/modular-monolith" description="What the template composes, Module by Module." />
+  <Card title="In-process or RabbitMQ" href="/docs/decision-guides/in-process-or-rabbitmq" description="When a Module should run in a Host of its own." />
+</Cards>

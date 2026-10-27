@@ -63,5 +63,12 @@ metadata:
 - **A page restates no literal a reference owns** (review 189c R1, medium): no status code, default, count, endpoint path, header name, connection name, SQL predicate or version number, even when true; say what happens and link the reference section that owns the value. Error code names may stay as failure messages, and names the SKILL.md table itself uses (`Idempotency-Key`, `Accept-Language`) passed. Before reporting, grep the pages for digits, `default`, backticked paths and counts. Name a requester an Actor, never a user (`GLOSSARY.md`).
 - A headless screenshot of a built page: scratchpad `p189c/shots.py <worktree> <out dir> <slug>...` serves `website/out` on a free port and shoots light and dark.
 
+## Site pages, frame (#189a, 2026-10-27; SDK 10.0.402, skills CLI 1.7.4, Claude Code 2.1.311)
+
+- **`dotnet` on this Mac is a mise shim**: in a folder whose `global.json` names an SDK it lacks, any `dotnet` call makes mise download and install that SDK into `~/.local/share/mise/dotnet-root` (a probe with `10.0.401` left `sdk/10.0.401` there). Never run `dotnet` under a `global.json` you wrote to test a missing SDK.
+- **One command, two readers**: an MDX page includes a command file as a code block with Fumadocs' `<include lang="bash" meta='title="Terminal"'>./file.sh</include>` (in the preset; `replaceSource` keeps it in the page's Markdown and `llms*.txt`), while a TSX page reads the same file through `readSource(findRoot(), ...)`. A component-rendered block would reach the HTML only. The landing's code is `ServerCodeBlock` (`fumadocs-ui/components/codeblock.rsc`) over `readSnippet`, and its Capability map is `skillEntries(findRoot())`.
+- **The generated Host's REST call names its version**: `GET /catalog/products` answers 400 (`ApiVersionUnspecified`), `/catalog/v2/products` with the user-jwts token 200 and an empty Page, without a token 401. `dotnet user-jwts create` writes `user-jwts.json` beside `secrets.json` in the user-secrets folder: remove both after a proof.
+- **Fumadocs tolerates a `meta.json` page entry that does not exist yet** (`concepts`, `guides` before #189b): the build passes and the sidebar skips it.
+
 **Why:** each cost a probe or a failed run in #186, #187, #189, #190 or #194.
 **How to apply:** for any ticket under `website/` (#187 content pipeline, #189 pages, #190 covers, #194 the public tree that copies the covers, #191 package READMEs that link its assets). Related: [[merge-ci-and-workflow-tooling-facts]], [[docs-verification-tools]], [[worktree-shell-and-check-gotchas]].
