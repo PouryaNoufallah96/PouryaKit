@@ -12,7 +12,8 @@
     "build": "next build",
     "lint": "biome check .",
     "check-licences": "node scripts/check-licences.mjs",
-    "test": "node --test scripts/check-licences.test.mjs"
+    "covers": "node scripts/covers.ts",
+    "test": "node --test scripts/check-licences.test.mjs scripts/covers.test.mjs"
   },
   "dependencies": {
     "fumadocs-core": "16.17.8",
