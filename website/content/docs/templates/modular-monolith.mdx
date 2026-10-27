@@ -5,15 +5,15 @@ description: pouryakit-modular-monolith, several Modules in one Host, each reach
 
 ## What it is
 
-`pouryakit-modular-monolith` generates one Host of [Modules](/docs/reference/glossary#module): the Proving Sample's Catalog with `Catalog.Contracts`, Billing, Inventory, and Ledger, a Stream Module, with `Ledger.Contracts`. Each Module has a Composition Root of its own, an `IModuleDefinition` the Host adds with `AddPouryaKitModules`, and its endpoints send through the Module's [Gateway](/docs/reference/glossary#gateway).
+`pouryakit-modular-monolith` generates one [Host](/docs/reference/glossary#host) of [Modules](/docs/reference/glossary#module): the [Proving Sample](/docs/reference/glossary#proving-sample)'s Catalog with `Catalog.Contracts`, Billing, Inventory, and Ledger, a Stream Module, with `Ledger.Contracts`. Each Module has a [Composition Root](/docs/reference/glossary#composition-root) of its own, an `IModuleDefinition` the Host adds with `AddPouryaKitModules`, and its endpoints send through the Module's [Gateway](/docs/reference/glossary#gateway).
 
 <Callout type="warn" title="Calls between Modules stay in-process">
-  Integration Events and Snapshots go through the Host's Outbox, and a question goes through the owning Module's Contracts. Modules of one Host never call each other over HTTP.
+  [Integration Events](/docs/reference/glossary#integration-event) and [Snapshots](/docs/reference/glossary#snapshot) go through the Host's [Outbox](/docs/reference/glossary#outbox), and a question goes through the owning Module's [Contracts](/docs/reference/glossary#contracts). Modules of one Host never call each other over HTTP.
 </Callout>
 
 ## When to use it
 
-When the application has, or soon will have, more than one business boundary, and they deploy together. It also shows each way Modules talk: Catalog publishes what Inventory and Billing receive, Ledger keeps its accounts as a [Stream](/docs/reference/glossary#stream), and Catalog's agent runs on the AI Capability.
+When the application has, or soon will have, more than one business boundary, and they deploy together. It also shows each way Modules talk: Catalog publishes what Inventory and Billing receive, Ledger keeps its accounts as a [Stream](/docs/reference/glossary#stream), and Catalog's agent runs on the AI [Capability](/docs/reference/glossary#capability).
 
 ## Generate and run it
 

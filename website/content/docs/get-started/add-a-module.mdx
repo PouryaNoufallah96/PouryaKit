@@ -5,7 +5,7 @@ description: Grow a solution past its first Module, from the monolith or in the 
 
 ## What it is
 
-A [Module](/docs/reference/glossary#module) is a business boundary inside a Host: its own project, data, rules and public [Contracts](/docs/reference/glossary#contracts). Its [Composition Root](/docs/reference/glossary#composition-root) declares everything it needs and offers, and the Host adds it once. Anything outside the Module reaches it through its [Gateway](/docs/reference/glossary#gateway).
+A [Module](/docs/reference/glossary#module) is a business boundary inside a [Host](/docs/reference/glossary#host): its own project, data, rules and public [Contracts](/docs/reference/glossary#contracts). Its [Composition Root](/docs/reference/glossary#composition-root) declares everything it needs and offers, and the Host adds it once. Anything outside the Module reaches it through its [Gateway](/docs/reference/glossary#gateway).
 
 <Callout type="warn" title="The monolith has no Modules yet">
   The monolith registers Catalog on the Host's own services, without `PouryaKit.Modularity`. A second Module needs the modular monolith's composition. No aggregate, command, query, handler, validator, repository, read or event handler changes when you grow into it; the Composition Root, the endpoints and the Host's composition do.
@@ -13,7 +13,7 @@ A [Module](/docs/reference/glossary#module) is a business boundary inside a Host
 
 ## When to use it
 
-When a part of your business has data and rules of its own that other parts should reach only through its Contracts. Calls between Modules of one Host stay in-process: Integration Events and Snapshots through the Host's Outbox, and a question through the owning Module's Contracts, never HTTP.
+When a part of your business has data and rules of its own that other parts should reach only through its Contracts. Calls between Modules of one Host stay in-process: [Integration Events](/docs/reference/glossary#integration-event) and [Snapshots](/docs/reference/glossary#snapshot) through the Host's [Outbox](/docs/reference/glossary#outbox), and a question through the owning Module's Contracts, never HTTP.
 
 ## Add it
 
@@ -33,7 +33,7 @@ dotnet new pouryakit-modular-monolith -n Acme.Shop
 
 ### Create the Module's projects
 
-Give the Module a folder under `src/Modules/` with its project, and a Contracts project when other Modules use what it publishes, as Catalog has `Catalog.Contracts`. Its project references `PouryaKit.Modularity` and the Kit packages its Features use; a Contracts project references nothing from the Kit and no Module. Add the project to the solution and reference it from the Host.
+Give the Module a folder under `src/Modules/` with its project, and a Contracts project when other Modules use what it publishes, as Catalog has `Catalog.Contracts`. Its project references `PouryaKit.Modularity` and the Kit packages its [Features](/docs/reference/glossary#feature) use; a Contracts project references nothing from the Kit and no Module. Add the project to the solution and reference it from the Host.
 
 </Step>
 <Step>

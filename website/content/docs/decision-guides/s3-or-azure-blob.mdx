@@ -5,7 +5,7 @@ description: Which provider stores a Host's files behind IFileStorage, and what 
 
 ## What it decides
 
-Which package supplies the Host's one implementation of `IFileStorage`, the File storage contract a Feature uploads, downloads and deletes through: `PouryaKit.Storage.S3` or `PouryaKit.Storage.AzureBlob`.
+Which package supplies the [Host](/docs/reference/glossary#host)'s one implementation of `IFileStorage`, the File storage contract a [Feature](/docs/reference/glossary#feature) uploads, downloads and deletes through: `PouryaKit.Storage.S3` or `PouryaKit.Storage.AzureBlob`.
 
 <Callout title="Feature code is the same on either">
   A Feature names only `IFileStorage` and never a cloud SDK, so changing provider changes the Host's registration and its configuration, not a Feature. A Host composes exactly one provider.
@@ -43,7 +43,7 @@ Neither provider creates one: the bucket or container must exist before the Host
 
 ### Store, then record
 
-No file store joins the Unit of Work's commit: store the file first, then record its key in the command's state. [Store, then record](/docs/capabilities/storage#store-then-record) shows the order and what to do with a file a failed command left.
+No file store joins the [Unit of Work](/docs/reference/glossary#unit-of-work)'s commit: store the file first, then record its key in the command's state. [Store, then record](/docs/capabilities/storage#store-then-record) shows the order and what to do with a file a failed command left.
 
 </Step>
 </Steps>

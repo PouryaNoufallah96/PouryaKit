@@ -5,10 +5,10 @@ description: Whether a Module's Integration Events and Snapshots stay inside one
 
 ## What it decides
 
-How [Integration Events](/docs/reference/glossary#integration-event) and [Snapshots](/docs/reference/glossary#snapshot) reach the Modules that subscribe to them. Inside one Host they go through the Host's Outbox to its own subscriptions. With `PouryaKit.Messaging.Wolverine.RabbitMq`, a Host also sends them to, and receives them from, other Hosts through a RabbitMQ broker.
+How [Integration Events](/docs/reference/glossary#integration-event) and [Snapshots](/docs/reference/glossary#snapshot) reach the [Modules](/docs/reference/glossary#module) that subscribe to them. Inside one [Host](/docs/reference/glossary#host) they go through the Host's [Outbox](/docs/reference/glossary#outbox) to its own subscriptions. With `PouryaKit.Messaging.Wolverine.RabbitMq`, a Host also sends them to, and receives them from, other Hosts through a RabbitMQ broker.
 
 <Callout title="A Host's choice, not a Module's">
-  Modules, Contracts and Feature code never reference the RabbitMQ package, and nothing in them changes when a Host adds it. The same Inventory Module runs in the modular monolith and, unchanged, in a Host of its own.
+  Modules, [Contracts](/docs/reference/glossary#contracts) and [Feature](/docs/reference/glossary#feature) code never reference the RabbitMQ package, and nothing in them changes when a Host adds it. The same Inventory Module runs in the modular monolith and, unchanged, in a Host of its own.
 </Callout>
 
 ## When to choose each
@@ -18,7 +18,7 @@ How [Integration Events](/docs/reference/glossary#integration-event) and [Snapsh
 | Where the subscribing Module runs | In the same Host as the publisher | In another Host, such as one generated with `pouryakit-service` |
 | What the Host composes | The Outbox of its message store | The same, and `UsePouryaKitRabbitMq` with a service name, the Host's queue |
 | What a receiving Host declares | Nothing: its Modules publish what they subscribe to | `Receive` or `ReceiveSnapshot` for each wire name another Host publishes |
-| Delivery | Each effect in a subscribing Module's database applied once, by its Receipt | The same across the broker; an effect outside the database is at least once, as inside one Host |
+| Delivery | Each effect in a subscribing Module's database applied once, by its [Receipt](/docs/reference/glossary#receipt) | The same across the broker; an effect outside the database is at least once, as inside one Host |
 
 Keep Modules in one Host while they deploy together; reach for the broker when a Module must run, scale or fail in a process of its own.
 

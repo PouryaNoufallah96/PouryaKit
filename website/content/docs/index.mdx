@@ -12,7 +12,7 @@ Inside a Module, your code is [Features](/docs/reference/glossary#feature). A Fe
 The packages are grouped into [Capabilities](/docs/reference/glossary#capability): one or a few packages each, such as Messaging, Web or File storage. A Host references the ones it uses.
 
 <Callout type="warn" title="Feature code never commits">
-  The Unit of Work writes the Outbox, saves and commits, and sends what it wrote only after the commit. A handler returns its Result and leaves all of it to the Unit of Work; code that saves or commits by itself is refused by the structure tests.
+  The Unit of Work writes the [Outbox](/docs/reference/glossary#outbox), saves and commits, and sends what it wrote only after the commit. A handler returns its Result and leaves all of it to the Unit of Work; code that saves or commits by itself is refused by the structure tests.
 </Callout>
 
 ## When to use it
@@ -58,10 +58,10 @@ These hold in every Capability. Each is stated in full on the page it links, and
 | Rule | Stated in | Proven by |
 | --- | --- | --- |
 | Feature code never saves, commits or touches the Outbox | [The Unit of Work](/docs/capabilities/persistence#the-unit-of-work) | `FeatureCodeTests` |
-| A Notification Handler runs only after the commit | [Persistence guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) | `NotificationTests` |
+| A [Notification Handler](/docs/reference/glossary#notification-handler) runs only after the commit | [Persistence guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) | `NotificationTests` |
 | Every failure answers one problem response | [Problem responses](/docs/capabilities/web#problem-responses) | `WebTests` |
-| There is no default Actor | [The Operation Context](/docs/capabilities/modules#the-operation-context) | `OperationContextTests` |
-| A tenant-scoped Module keeps to its Operation's tenant | [Multi-tenancy guarantees](/docs/capabilities/multi-tenancy#what-the-kit-guarantees) | `TenancyTests` |
+| There is no default [Actor](/docs/reference/glossary#actor) | [The Operation Context](/docs/capabilities/modules#the-operation-context) | `OperationContextTests` |
+| A tenant-scoped Module keeps to its Operation's [tenant](/docs/reference/glossary#tenant) | [Multi-tenancy guarantees](/docs/capabilities/multi-tenancy#what-the-kit-guarantees) | `TenancyTests` |
 | A declaration that cannot work fails the Host when it is built | [The Host's checks](/docs/capabilities/modules#the-hosts-checks) | `CompositionCheckTests` |
 
 ## Failure messages

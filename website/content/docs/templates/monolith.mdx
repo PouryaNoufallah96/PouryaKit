@@ -5,10 +5,10 @@ description: pouryakit-monolith, the single-Module start that grows into the mod
 
 ## What it is
 
-`pouryakit-monolith` generates one Host with one Module's data and rules: the Proving Sample's Catalog and `Catalog.Contracts`, behind the Kit's HTTP pipeline, beside projects for its Reverse proxy and its service defaults and a smoke test. Its endpoints send through `IDispatcher`, and the Host registers Catalog on its own services with `builder.Services.AddCatalog()`.
+`pouryakit-monolith` generates one [Host](/docs/reference/glossary#host) with one [Module](/docs/reference/glossary#module)'s data and rules: the [Proving Sample](/docs/reference/glossary#proving-sample)'s Catalog and `Catalog.Contracts`, behind the Kit's HTTP pipeline, beside projects for its [Reverse proxy](/docs/reference/glossary#reverse-proxy) and its service defaults and a smoke test. Its endpoints send through `IDispatcher`, and the Host registers Catalog on its own services with `builder.Services.AddCatalog()`.
 
 <Callout type="warn" title="One Module in all but name">
-  The monolith leaves out `PouryaKit.Modularity`, so the Host holds one Unit of Work: one Module's data. Its Operations name no Module, and its declarations belong to the application. A second Module is the modular monolith's composition.
+  The monolith leaves out `PouryaKit.Modularity`, so the Host holds one [Unit of Work](/docs/reference/glossary#unit-of-work): one Module's data. Its [Operations](/docs/reference/glossary#operation) name no Module, and its declarations belong to the application. A second Module is the modular monolith's composition.
 </Callout>
 
 ## When to use it
@@ -38,7 +38,7 @@ dotnet new pouryakit-monolith -n Acme.Shop
 
 ### Grow it when a second Module arrives
 
-Add `PouryaKit.Modularity` and turn Catalog's Composition Root into an `IModuleDefinition`; [Add a Module](/docs/get-started/add-a-module) shows the path.
+Add `PouryaKit.Modularity` and turn Catalog's [Composition Root](/docs/reference/glossary#composition-root) into an `IModuleDefinition`; [Add a Module](/docs/get-started/add-a-module) shows the path.
 
 </Step>
 </Steps>
@@ -47,8 +47,8 @@ Add `PouryaKit.Modularity` and turn Catalog's Composition Root into an `IModuleD
 
 | | Stated in |
 | --- | --- |
-| Every Capability its projects reference, and no `PouryaKit.Modularity` | [What each composition composes](/docs/capabilities/templates#what-each-composition-composes) |
-| The same composition and startup checks as a Host of Modules, from `AddPouryaKitCompositionChecks` | [What each composition composes](/docs/capabilities/templates#what-each-composition-composes) |
+| Every [Capability](/docs/reference/glossary#capability) its projects reference, and no `PouryaKit.Modularity` | [What each composition composes](/docs/capabilities/templates#what-each-composition-composes) |
+| The same composition and [startup checks](/docs/reference/glossary#startup-check) as a Host of Modules, from `AddPouryaKitCompositionChecks` | [What each composition composes](/docs/capabilities/templates#what-each-composition-composes) |
 | Nine files that change when Catalog becomes a Module | [Growing the monolith](/docs/capabilities/templates#growing-the-monolith-into-a-modular-monolith) |
 
 ## Failure messages

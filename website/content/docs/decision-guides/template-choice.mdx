@@ -8,16 +8,16 @@ description: The questions that decide between the monolith, the modular monolit
 Which of the three [Project templates](/docs/reference/glossary#project-template) a new application starts from. [Choose a template](/docs/templates) describes each one; this guide is the order to ask the questions in.
 
 <Callout title="A choice you can change later">
-  Every template generates the same business code. The monolith grows into the modular monolith by changing nine files, and a Module of the modular monolith moves into a Host of its own as the service. Pick for today, not for the largest shape you can imagine.
+  Every template generates the same business code. The monolith grows into the modular monolith by changing nine files, and a [Module](/docs/reference/glossary#module) of the modular monolith moves into a [Host](/docs/reference/glossary#host) of its own as the service. Pick for today, not for the largest shape you can imagine.
 </Callout>
 
 ## The questions
 
 | Question | If yes | If no |
 | --- | --- | --- |
-| Will one Module run in a process of its own and receive another Host's Integration Events? | The service | Keep asking |
+| Will one Module run in a process of its own and receive another Host's [Integration Events](/docs/reference/glossary#integration-event)? | The service | Keep asking |
 | Does the application already have, or soon need, a second Module? | The modular monolith | The monolith |
-| Do you need Streams or the AI Capability from the first day? | The modular monolith, which composes both | The monolith is enough |
+| Do you need [Streams](/docs/reference/glossary#stream) or the AI [Capability](/docs/reference/glossary#capability) from the first day? | The modular monolith, which composes both | The monolith is enough |
 
 ## What each one composes
 
@@ -25,7 +25,7 @@ Which of the three [Project templates](/docs/reference/glossary#project-template
 | --- | --- |
 | Monolith | Catalog alone, on the Host's own services, with every Capability its projects reference and no `PouryaKit.Modularity` |
 | Modular monolith | The monolith's Capabilities, with Streams, AI and `PouryaKit.Modularity`, for Catalog, Billing, Inventory and Ledger |
-| Service | Inventory alone, with RabbitMQ always on, and no Reverse proxy, gRPC, Realtime, Caching or AI |
+| Service | Inventory alone, with RabbitMQ always on, and no [Reverse proxy](/docs/reference/glossary#reverse-proxy), gRPC, Realtime, Caching or AI |
 
 [What each composition composes](/docs/capabilities/templates#what-each-composition-composes) has the full table.
 

@@ -8,17 +8,17 @@ description: Whether a query reads its Page in SQL with Dapper or through an EF 
 How a query's handler reads one [Page](/docs/reference/glossary#page) of a list. Both reads take the same `PageRequest`, the same `PageDeclaration` of what a caller may sort and filter by, and answer the same `Page<T>`. They differ in who writes the query: you write the SQL for Dapper, and EF Core translates a repository's expressions.
 
 <Callout type="warn" title="Dapper runs exactly the SQL you write">
-  No EF Core query filter reaches a Dapper read. Every read of a soft-deletable table states `is_deleted = false` itself, and in a tenant-scoped Module every read of a tenant-scoped table holds it to the tenant in its `WHERE`, in the one grammar the structure test accepts. An EF Core Page applies the global query filters for you.
+  No EF Core query filter reaches a Dapper read. Every read of a soft-deletable table states `is_deleted = false` itself, and in a tenant-scoped [Module](/docs/reference/glossary#module) every read of a tenant-scoped table holds it to the [tenant](/docs/reference/glossary#tenant) in its `WHERE`, in the one grammar the structure test accepts. An EF Core Page applies the global query filters for you.
 </Callout>
 
 ## When to choose each
 
 | | Dapper | EF Core repository |
 | --- | --- | --- |
-| When | A query's read, normally: the Proving Sample's `ListProducts` reads this way | When a Feature reads its Page through its aggregate's EF Core mapping instead |
+| When | A query's read, normally: the [Proving Sample](/docs/reference/glossary#proving-sample)'s `ListProducts` reads this way | When a [Feature](/docs/reference/glossary#feature) reads its Page through its aggregate's EF Core mapping instead |
 | What you write | The `SELECT` and `COUNT` once, in a `PageSql`, with each sort key mapped to a column | A specific repository member on `PageAsync`, with `PageExpressions` mapping each declared name |
 | Soft delete and tenant | Stated in your SQL | Applied by the global query filters |
-| What it reads | What is committed, on a connection of its own | Through the Module's Unit of Work |
+| What it reads | What is committed, on a connection of its own | Through the Module's [Unit of Work](/docs/reference/glossary#unit-of-work) |
 
 Both map the declared names to your own columns or expressions, so no text a caller sends becomes SQL, and both throw before any query runs for a request that never passed validation.
 
