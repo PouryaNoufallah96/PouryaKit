@@ -1,0 +1,93 @@
+---
+title: Create a command
+description: Add a Feature that changes state, with its command, validator and handler, and leave the commit to the Kit.
+---
+
+## What you build
+
+A [Feature](/docs/reference/glossary#feature) that changes state: a command record, an optional validator, and exactly one handler that changes aggregates and returns a [Result](/docs/concepts/operation-result-error). This guide follows the [Proving Sample](/docs/reference/glossary#proving-sample)'s `RenameProduct` Feature in Catalog's Products [Business Area](/docs/reference/glossary#business-area), `Products/Features/RenameProduct/`.
+
+<Callout type="warn" title="The handler never saves">
+  No `SaveChanges`, transaction or [Outbox](/docs/reference/glossary#outbox) call: the [Unit of Work](/docs/concepts/unit-of-work) commits what the handler changed once it returns a success, and rolls it all back when it fails.
+</Callout>
+
+## When to use it
+
+For every change a caller asks a [Module](/docs/reference/glossary#module) to make. A read is a query instead: see [Answer a paged query](/docs/guides/paged-query).
+
+## Steps
+
+<Steps>
+<Step>
+
+### Declare the command
+
+A sealed record, named after its intent with the `Command` suffix. `Command` has no value; `Command<TResponse>` answers one. Keep it `internal`: callers outside the Module reach it through its [Gateway](/docs/reference/glossary#gateway). This one also names the cache entries it makes stale, which only matters with [Caching](/docs/capabilities/caching).
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommand.cs" region="rename-product-command" />
+
+</Step>
+<Step>
+
+### Check its input
+
+One validator beside the command, for the shape of its input. A rule that depends on state belongs in the aggregate. See [Validate a command or query](/docs/guides/validate).
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandValidator.cs" region="rename-product-validator" />
+
+</Step>
+<Step>
+
+### Write its one handler
+
+Derive from `CommandHandler<TCommand>`, or `CommandHandler<TCommand, TResponse>` for a command with a value. Load the aggregate through its repository, change it through its methods, and return the [Result](/docs/reference/glossary#result): an [Error](/docs/reference/glossary#error) when the business says no.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandHandler.cs" region="rename-product-handler" />
+
+</Step>
+<Step>
+
+### Register the Module's Features
+
+The Module's [Composition Root](/docs/reference/glossary#composition-root) already calls `AddPouryaKitCqrs()` and `AddPouryaKitValidation()`. With no assembly named, each scans the Module's own assembly, so a new Feature needs no registration of its own.
+
+</Step>
+<Step>
+
+### Serve it and test it
+
+Map an endpoint that sends the command through the Module's Gateway, as [Add an endpoint](/docs/guides/add-an-endpoint) shows, and test it as [Test a Feature](/docs/guides/test-a-feature) shows: assert on the Result's Errors, never on exceptions.
+
+</Step>
+</Steps>
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| One handler per command, and what fails the Host when there is not | [Commands and queries](/docs/capabilities/commands-queries-validation#commands-and-queries) |
+| The fixed pipeline, and nested commands | [The pipeline](/docs/capabilities/commands-queries-validation#the-pipeline) |
+| One commit or nothing | [What the Kit guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) |
+| How the repository tracks and when it refuses to write | [The repository](/docs/capabilities/persistence#the-repository) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="The Host stops while it is composed">
+    A command with no handler or several, or a command, query, handler or authorizer that is a generic type definition, fails while the [Host](/docs/reference/glossary#host) is composed.
+  </Accordion>
+  <Accordion title="UnitOfWork.ConcurrencyConflict">
+    Another [Operation](/docs/reference/glossary#operation) changed the same product first. Over HTTP it answers 409; send the command again, which runs a new Operation on the current state.
+  </Accordion>
+  <Accordion title="A nested command failed">
+    A nested command that fails, even one whose Result the handler ignored, rolls the whole Operation back, and the Operation fails with its Errors. Pass a failure on with `return result.Errors;`.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Add an endpoint" href="/docs/guides/add-an-endpoint" description="Serve the command over HTTP." />
+  <Card title="Make a command idempotent" href="/docs/guides/request-idempotency" description="Replay a repeated request." />
+  <Card title="Commands, queries and validation" href="/docs/capabilities/commands-queries-validation" description="Every rule of commands and queries." />
+</Cards>

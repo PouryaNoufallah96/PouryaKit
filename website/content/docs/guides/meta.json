@@ -1,0 +1,19 @@
+{
+  "title": "Guides",
+  "pages": [
+    "index",
+    "create-a-command",
+    "paged-query",
+    "validate",
+    "add-an-endpoint",
+    "request-idempotency",
+    "publish-and-subscribe",
+    "schedule-commands",
+    "secure-an-operation",
+    "tenant-scoped-module",
+    "add-a-migration",
+    "test-a-feature",
+    "host-recipes",
+    "prepare-a-release"
+  ]
+}

@@ -8,6 +8,7 @@ using PouryaKit.Persistence;
 
 namespace Catalog.Categories.Events.DomainEventHandlers;
 
+#region count-product-in-category
 // Counts a new product in its category in the same transaction as the product: both are saved, or neither is.
 internal sealed class CountProductInCategoryDomainEventHandler(IRepository<Category, CategoryId> categories)
     : IDomainEventHandler<ProductCreatedDomainEvent>
@@ -24,3 +25,4 @@ internal sealed class CountProductInCategoryDomainEventHandler(IRepository<Categ
         return Result.Success();
     }
 }
+#endregion

@@ -4,6 +4,7 @@ using PouryaKit.Persistence.Dapper;
 
 namespace Catalog.Products.Features.ListProducts;
 
+#region list-products-handler
 internal sealed class ListProductsQueryHandler(IReadConnectionFactory connections)
     : QueryHandler<ListProductsQuery, Page<ProductListItemDto>>
 {
@@ -37,3 +38,4 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
         return await connection.QueryPageAsync<ProductListItemDto>(Sql, query.Page, cancellationToken: cancellationToken);
     }
 }
+#endregion

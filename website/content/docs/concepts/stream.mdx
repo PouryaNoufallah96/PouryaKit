@@ -1,0 +1,58 @@
+---
+title: Stream
+description: An aggregate whose stored state is the events it appended, the Kit's second write model, which commits through its own Unit of Work on Marten.
+---
+
+## What it is
+
+A [Stream](/docs/reference/glossary#stream) is an aggregate whose stored state is the ordered events it has appended, loaded by folding them. It is the [Kit](/docs/reference/glossary#kit)'s second write model, beside EF Core aggregates, stored by Marten in the same PostgreSQL database. Its [Unit of Work](/docs/reference/glossary#unit-of-work) commits its events with the [Operation](/docs/reference/glossary#operation)'s [Notifications](/docs/reference/glossary#notification) and [Integration Events](/docs/reference/glossary#integration-event) in one transaction. A Stream belongs to the [tenant](/docs/reference/glossary#tenant) of the Operation that wrote it.
+
+<Callout type="warn" title="One commit owner per write model">
+  A Stream [Module](/docs/reference/glossary#module)'s Operations commit through the Marten Unit of Work alone, and an EF Core Module's through the EF Core one: no Operation commits through both. A Stream publishes no [Snapshot](/docs/reference/glossary#snapshot), and a Stream Module and a [Saga](/docs/reference/glossary#saga) cannot share one [Host](/docs/reference/glossary#host) yet.
+</Callout>
+
+## When to use it
+
+When an aggregate is best kept as the events it went through. In the [Proving Sample](/docs/reference/glossary#proving-sample), Ledger is a Stream Module beside the EF Core Modules Catalog, Inventory and Billing: it keeps accounts, posts entries to them, and reads an account's balance by folding its entries. [Stream or EF Core aggregate](/docs/decision-guides/stream-or-ef-core-aggregate) compares the two write models.
+
+## How it works
+
+A Stream derives from `StreamAggregate`. Each behaviour applies its event to the Stream, then raises it, and the Unit of Work appends what was raised. Marten folds the stored events through the same public `Apply` methods:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Entities/Account.cs" region="account-stream" />
+
+A handler loads and starts Streams through `IStreams`, and saves nothing:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/PostEntry/PostEntryCommandHandler.cs" region="post-entry-handler" />
+
+A Stream Module declares its write model in its [Composition Root](/docs/reference/glossary#composition-root) with `AddPouryaKitStreams`, with a schema of its own, and the Host registers its one Marten store with `UsePouryaKitMarten`, after `UsePouryaKitWolverine` when it also has EF Core Modules. A Stream Module needs no migration. Each event is a [Domain Event](/docs/reference/glossary#domain-event), so a [Notification Handler](/docs/reference/glossary#notification-handler) subscribes to it as to any other. [Registering](/docs/capabilities/stream#registering) shows Ledger's Composition Root and the Host.
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| One commit, concurrency, a send that fails after the commit, Receipts, tenancy, one message store | [What the Kit guarantees](/docs/capabilities/stream#what-the-kit-guarantees) |
+| What a query may do with a Stream | [Reading and changing Streams](/docs/capabilities/stream#reading-and-changing-streams) |
+| What a Stream Module cannot do | [Limits](/docs/capabilities/stream#limits) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="UnitOfWork.ConcurrencyConflict">
+    Another Operation appended to the Stream after this one read it, or started the same Stream. Nothing is appended and nothing is sent; nothing retries.
+  </Accordion>
+  <Accordion title="No source-generated dispatcher found">
+    Marten folds a Stream only through public `Apply` methods. With an internal one, loading the Stream throws Marten's invalid-projection exception when the Operation runs, not at build.
+  </Accordion>
+  <Accordion title="A write model with no Outbox">
+    A Host with a message store fails when it is built when one write model's Unit of Work would write no [Outbox](/docs/reference/glossary#outbox), such as Stream Modules beside `UsePouryaKitWolverine` with `AddPouryaKitMarten`. The line names the Modules and the registration to call.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Saga" href="/docs/concepts/saga" description="A long-running reaction across Integration Events." />
+  <Card title="Streams" href="/docs/capabilities/stream" description="Registering, writing, reading and testing a Stream." />
+  <Card title="Stream or EF Core aggregate" href="/docs/decision-guides/stream-or-ef-core-aggregate" description="Choose a write model for an aggregate." />
+</Cards>

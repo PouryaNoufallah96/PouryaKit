@@ -1,0 +1,68 @@
+---
+title: Outbox and Notifications
+description: A Domain Event stored in the commit becomes a Notification, which each subscribed Notification Handler receives after the commit, on its own.
+---
+
+## What it is
+
+When an [Operation](/docs/reference/glossary#operation) commits, each [Domain Event](/docs/reference/glossary#domain-event) it raised that a Notification Handler subscribes to is stored as a [Notification](/docs/reference/glossary#notification): a Domain Event that has been committed and waits to be reacted to outside the [Unit of Work](/docs/reference/glossary#unit-of-work) that raised it. It is stored in the [Module](/docs/reference/glossary#module)'s [Outbox](/docs/reference/glossary#outbox), the Module's share of the [Host](/docs/reference/glossary#host)'s durable message store, in the same transaction as the change.
+
+A [Notification Handler](/docs/reference/glossary#notification-handler) reacts to it after the commit: it sends something, or publishes an [Integration Event](/docs/reference/glossary#integration-event). Each handler is one [subscription](/docs/reference/glossary#subscription) under a stable name, which names its own durable queue, so its deliveries are retried and set aside as dead letters on their own. Before the handler runs, its delivery records a [Receipt](/docs/reference/glossary#receipt), so a redelivered Notification is applied once. The Outbox's counterpart is the [Inbox](/docs/reference/glossary#inbox): the Integration Events and [Snapshots](/docs/reference/glossary#snapshot) a Module has received but not yet applied.
+
+<Callout type="warn" title="An effect outside the database happens at least once">
+  The Receipt commits with what the handler wrote to its Module's database, so that effect happens once. An email or a call to another system cannot roll back with it: when an attempt fails after sending, the next attempt sends again. Make the repeat harmless where the other system allows it, and do the outside effect last.
+</Callout>
+
+## When to use it
+
+For anything that reaches outside the Module's own data and cannot be taken back: sending an email, pushing to a browser, calling another system, publishing an [Integration Event](/docs/concepts/integration-events). A change that must commit with the change that raised the Domain Event belongs in a [Domain Event Handler](/docs/concepts/domain-event).
+
+## How it works
+
+A Notification Handler implements `INotificationHandler<TDomainEvent>` for one Domain Event type. It reaches outside the Module through a port, an interface the Module declares and the Host implements, so it never names a transport. This one announces each new product through the port `INewProductAnnouncer`, then pushes it to the browsers of its [tenant](/docs/reference/glossary#tenant):
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/Notifications/AnnounceNewProductNotificationHandler.cs" region="announce-new-product" />
+
+The [Composition Root](/docs/reference/glossary#composition-root) declares the Module's Notification Handlers with `AddPouryaKitNotificationHandlers()`, and the Host runs the deliveries with `UsePouryaKitWolverine`, on Wolverine with its message store in PostgreSQL. Each handler gets a subscription name by convention, such as `catalog.product-created.announce-new-product`, and keeps it: renaming a handler with deliveries in flight changes its name unless you declare the old one. The Module's Receipts live in a table its migration creates:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261005180000_Receipts.cs" region="receipts-migration" />
+
+A test runs the Operation and waits for every delivery it caused, those deliveries' own deliveries included:
+
+<Snippet file="tests/ModularMonolith.Tests/NotificationTests.cs" region="new-product-announced-test" />
+
+## What the Kit guarantees
+
+Each of these is stated in [What the Kit guarantees](/docs/capabilities/messaging#what-the-kit-guarantees) for messaging:
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| Stored in the commit | [What the Kit guarantees](/docs/capabilities/messaging#what-the-kit-guarantees) |
+| Sent after the commit | [What the Kit guarantees](/docs/capabilities/messaging#what-the-kit-guarantees) |
+| A continuation in its own scope | [What the Kit guarantees](/docs/capabilities/messaging#what-the-kit-guarantees) |
+| Each handler on its own | [What the Kit guarantees](/docs/capabilities/messaging#what-the-kit-guarantees) |
+| A database effect once, an outside effect at least once | [What the Kit guarantees](/docs/capabilities/messaging#what-the-kit-guarantees) |
+| How a failed delivery is retried, then set aside | [Retries](/docs/capabilities/messaging#retries) and [Dead letters](/docs/capabilities/messaging#dead-letters) |
+| How names are derived, and what a rename does | [Names](/docs/capabilities/messaging#names) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="NotificationHandlerFailedException in a dead letter">
+    A handler that returned a failed [Result](/docs/reference/glossary#result) on every attempt is set aside as a dead letter of its subscription. Its message names the subscription and each [Error](/docs/reference/glossary#error) as its code and message. Fix the cause, then replay it: [Dead letters](/docs/capabilities/messaging#dead-letters).
+  </Accordion>
+  <Accordion title="A Notification Handler no declaration covers">
+    The Host does not build: `The Notification Handlers … of CatalogModule are declared by no AddPouryaKitNotificationHandlers, so they never run. Call AddPouryaKitNotificationHandlers() in its Composition Root.`
+  </Accordion>
+  <Accordion title="A missing Receipt table">
+    Nothing checks it at startup. Every delivery that needs it fails with an `InvalidOperationException` naming the call to add, then is set aside. Add the migration above.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Integration Events" href="/docs/concepts/integration-events" description="Tell other Modules what happened." />
+  <Card title="Messaging" href="/docs/capabilities/messaging" description="Every rule of Notifications, Integration Events and Snapshots." />
+  <Card title="Test a Feature" href="/docs/guides/test-a-feature" description="Wait for and assert the deliveries an Operation caused." />
+</Cards>

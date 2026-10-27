@@ -1,0 +1,80 @@
+---
+title: Validate a command or query
+description: Check a command's or query's input in a FluentValidation validator beside it, and get every failure back as Errors before the handler runs.
+---
+
+## What you build
+
+One validator per command or query that needs input checks: an `internal` FluentValidation `AbstractValidator<T>` beside it in the [Feature](/docs/reference/glossary#feature). Every failure of every validator comes back as one failed [Result](/docs/reference/glossary#result) before the handler runs, each an [Error](/docs/reference/glossary#error) of kind validation with its code and the property it names as its target. Nothing throws.
+
+<Callout type="warn" title="Shape here, business rules in the aggregate">
+  A validator checks the shape of the input: present, long enough, in range. A rule that depends on state, such as a name already in use or a sale that has ended, belongs in the aggregate, through `CheckRule`, or in a unique index. See [Business rules](/docs/capabilities/domain-primitives#business-rules).
+</Callout>
+
+## When to use it
+
+For any command or query whose input can be wrong. A command or query with no validator has nothing checked in that step.
+
+## Steps
+
+<Steps>
+<Step>
+
+### Write the validator beside the command
+
+Check each member the handler relies on. A typed ID's constructor throws on an empty Guid, so check an id before the handler wraps it.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommandValidator.cs" region="create-product-validator" />
+
+</Step>
+<Step>
+
+### Give a failure your own code where a caller needs one
+
+FluentValidation's error code becomes the Error's code. Set your own with `WithErrorCode`; a failure with none gets `Validation.Failed`.
+
+</Step>
+<Step>
+
+### Validate a Page request the same way
+
+A query that reads a [Page](/docs/reference/glossary#page) checks its request against its declaration with `AllowedBy`, in the same validator step:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryValidator.cs" region="list-products-validator" />
+
+</Step>
+<Step>
+
+### Register the Module's validators
+
+The [Module](/docs/reference/glossary#module)'s [Composition Root](/docs/reference/glossary#composition-root) calls `AddPouryaKitValidation()`, which finds every concrete validator in the Module's assembly. An abstract base validator is skipped on purpose, and so is an open generic one: derive a concrete validator from it.
+
+</Step>
+</Steps>
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| Every failure as one failed Result, with its code and target | [Validation](/docs/capabilities/commands-queries-validation#validation) |
+| A validator only reads | [Code that only reads](/docs/capabilities/commands-queries-validation#code-that-only-reads) |
+| Validation answers 400 with every failure | [Problem responses](/docs/capabilities/web#problem-responses) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="400 with an errors array">
+    Over HTTP, a failed validation answers 400 as a problem response whose `errors` lists each failure with its `code`, `message` and `target`.
+  </Accordion>
+  <Accordion title="A command sent from a validator">
+    A validator may run a query, such as an existence lookup, but a command it sends throws: `A command was sent from an authorizer or a validator.`
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Add an endpoint" href="/docs/guides/add-an-endpoint" description="Serve the Feature over HTTP." />
+  <Card title="Operation, Result and Error" href="/docs/concepts/operation-result-error" description="How a failure becomes a Result." />
+  <Card title="Commands, queries and validation" href="/docs/capabilities/commands-queries-validation#validation" description="The validation rules in full." />
+</Cards>

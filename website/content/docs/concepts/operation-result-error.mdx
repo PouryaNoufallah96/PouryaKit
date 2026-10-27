@@ -1,0 +1,69 @@
+---
+title: Operation, Result and Error
+description: An Operation is one command or query running inside one Module; it ends in a Result, and a business failure is an Error in it.
+---
+
+## What it is
+
+An [Operation](/docs/reference/glossary#operation) is one command or query running inside one [Module](/docs/reference/glossary#module), from entry to outcome. A command changes state and a query only reads. Each is a sealed record with exactly one handler, and every handler returns a [Result](/docs/reference/glossary#result): a value on success, one or more [Errors](/docs/reference/glossary#error) on failure.
+
+An Error is a named business reason the Operation did not succeed. It has a stable code, such as `Product.NotFound`, a message, and a kind: validation, not found, conflict, forbidden or unexpected. It carries no HTTP status. The Web [Capability](/docs/reference/glossary#capability) turns the kind into one when the Result becomes a response.
+
+<Callout type="warn" title="A business failure is an Error, never an exception">
+  Return an Error when the Operation cannot succeed for a reason the business knows, such as a missing product or a name already in use. Exceptions are for bugs and infrastructure. A test of a business or validation failure asserts on the Result's Errors, never on an exception.
+</Callout>
+
+## When it matters
+
+Every [Feature](/docs/reference/glossary#feature) has one. A command that changes something, such as renaming a product, is a `Command` or a `Command<TResponse>`. A read, such as one product or a page of them, is a `Query<TResponse>`. Each passes the same fixed steps, so a Feature supplies only its record, its handler and, when it needs them, a validator and an authorizer.
+
+## How it works
+
+A [Business Area](/docs/reference/glossary#business-area) declares its Errors once, as static fields:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Errors/ProductErrors.cs" region="product-errors" />
+
+A handler returns either a value or an Error, and each converts to a Result. This one, from the [Proving Sample](/docs/reference/glossary#proving-sample)'s `RenameProduct` Feature, answers `NotFound` when there is no such product, and otherwise whatever the aggregate's rule answers:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandHandler.cs" region="rename-product-handler" />
+
+Every command and query passes the same pipeline: logging, the optional authorization hook, optional validation, then the handler. A command's handler runs inside the [Unit of Work](/docs/concepts/unit-of-work), which commits once for the whole Operation. A failure at any step, a nested command's included, fails the Operation with its Errors.
+
+- Pass a failure on with `return result.Errors;`. It keeps every Error.
+- Check `IsSuccess` or `IsFailure` before you read `Value`.
+- Check a business rule that depends on state in the aggregate, with `CheckRule`, and input shape in a validator.
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| How a value or an Error becomes a Result | [Result and Error](/docs/capabilities/domain-primitives#result-and-error) |
+| One handler per command or query | [Commands and queries](/docs/capabilities/commands-queries-validation#commands-and-queries) |
+| The fixed pipeline, and what a failed nested command does | [The pipeline](/docs/capabilities/commands-queries-validation#the-pipeline) |
+| What a query, an authorizer or a validator may change | [Code that only reads](/docs/capabilities/commands-queries-validation#code-that-only-reads) |
+| Which HTTP status each kind of Error answers | [Problem responses](/docs/capabilities/web#problem-responses) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="A command or query with no handler, or several">
+    The [Host](/docs/reference/glossary#host) stops while it is composed. Give each one exactly one handler.
+  </Accordion>
+  <Accordion title="Value read from a failed Result">
+    Reading `Value` from a failure throws. Check `IsSuccess` first.
+  </Accordion>
+  <Accordion title="Operation.ReadingChangedState">
+    Code that only reads, such as a query's handler, changed tracked state, so the command it ran in fails with this Error and nothing commits. See [code that only reads](/docs/capabilities/commands-queries-validation#code-that-only-reads).
+  </Accordion>
+  <Accordion title="Every Error code the Kit declares">
+    The [Error codes](/docs/reference/error-codes) page lists each one with its kind and message.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Operation Context, Actor and tenant" href="/docs/concepts/operation-context" description="Who an Operation runs for, and how that travels." />
+  <Card title="Create a command" href="/docs/guides/create-a-command" description="Write a command, its validator and its handler." />
+  <Card title="Commands, queries and validation" href="/docs/capabilities/commands-queries-validation" description="The full rules of the pipeline." />
+</Cards>

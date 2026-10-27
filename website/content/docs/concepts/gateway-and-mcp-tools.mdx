@@ -1,0 +1,62 @@
+---
+title: Gateway tools and MCP tools
+description: A Gateway tool runs a model's call as an Operation through a Module's Gateway; an MCP tool runs on its server and is no Operation.
+---
+
+## What it is
+
+A [Gateway tool](/docs/reference/glossary#gateway-tool) is a [Module](/docs/reference/glossary#module)'s command or query offered to a model as a tool. Each call the model makes runs as an [Operation](/docs/reference/glossary#operation) through the Module's [Gateway](/docs/reference/glossary#gateway), continuing the [Operation Context](/docs/reference/glossary#operation-context) of the run that offered the tool. Validation, the authorizers and, for a command, its own [Unit of Work](/docs/reference/glossary#unit-of-work) apply to each call.
+
+An [MCP tool](/docs/reference/glossary#mcp-tool) is a tool of an MCP server the [Host](/docs/reference/glossary#host)'s AI options name, offered to a model beside its Gateway tools. The call runs on that server, never as an Operation, and the Host, not the run, owns the server's client.
+
+<Callout type="warn" title="The allow-list decides what a model may call">
+  The Host's AI options name every tool a run may be given, Gateway or MCP. A tool the list does not name is withheld from the model. An MCP tool call has no [Actor](/docs/reference/glossary#actor), [tenant](/docs/reference/glossary#tenant) or authorizer of the [Kit](/docs/reference/glossary#kit)'s, so for an MCP server the allow-list alone decides which of its tools a run may call.
+</Callout>
+
+## When to use it
+
+- **A model needs to read or change your data**: give its run a Gateway tool over a command or query of the Module, and the call runs through the same pipeline as any other Operation.
+- **A model needs a capability another program provides**: name that program's MCP server in the Host's AI options and give the run its tools.
+
+The [Proving Sample](/docs/reference/glossary#proving-sample)'s agent, Catalog's `AskAboutProducts` command, gives its model one Gateway tool, `GetProduct`.
+
+## How it works
+
+`Tool` on a Module's `IGatewayProcessor<TModule>` makes a command or query a Gateway tool for one run's Operation Context. The model's arguments are read into a record, whose schema the model is given, and mapped explicitly to the operation:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsCommandHandler.cs" region="get-product-tool" />
+
+A run inside an authorized Operation, as in this command's handler, gives each call a trusted continuation, so a permission the operation declares is not checked again: give such a run only tools its Operation may run. A run outside one, with a context your code builds, gives untrusted continuations, and each call's permissions are checked for the Actor.
+
+A failed [Result](/docs/reference/glossary#result) goes back to the model as a failed tool result with its [Errors](/docs/reference/glossary#error), never as an exception, so the model can recover. An MCP server's tools are listed with `IMcpServers.ListToolsAsync` and given to the run beside its Gateway tools.
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| A Gateway tool call is an Operation; an MCP tool call is not | [What the Kit guarantees](/docs/capabilities/ai#what-the-kit-guarantees) |
+| The allow-list and the iteration cap hold for every run and every tool | [What the Kit guarantees](/docs/capabilities/ai#what-the-kit-guarantees) |
+| A run's authority, and what a failed call returns | [A Gateway tool](/docs/capabilities/ai#a-gateway-tool) |
+| How the Host owns and ends each MCP client | [MCP tools](/docs/capabilities/ai#mcp-tools) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="A tool the model asks for but cannot call">
+    A function the allow-list does not name is withheld from the model, and a call it asks for anyway is answered as a function that does not exist. Name the tool in the Host's AI options.
+  </Accordion>
+  <Accordion title="A denied tool call">
+    In a run outside an authorized Operation, a call whose operation declares a permission the Actor lacks is a failed tool result, never a bypass.
+  </Accordion>
+  <Accordion title="The Host does not start">
+    The AI options are checked before the Host serves, and a bad one stops the start, naming the option: for example a blank model, an endpoint that is not an absolute HTTP or HTTPS address, a missing key, a blank tool name, or an MCP server with neither or both of a command and an endpoint.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="AI" href="/docs/capabilities/ai" description="The chat client, agents, sessions, guardrails and embeddings." />
+  <Card title="Guides" href="/docs/guides" description="Everyday tasks, step by step." />
+  <Card title="Concepts" href="/docs/concepts" description="Back to every concept, in order." />
+</Cards>

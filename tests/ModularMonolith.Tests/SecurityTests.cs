@@ -145,6 +145,7 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(ReadStampLedgerQuery.Ledger, served.Value);
     }
 
+    #region permission-both-ways-test
     [Fact]
     public async Task A_caller_holding_the_declared_permission_commits_the_command()
     {
@@ -181,6 +182,7 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         );
         Assert.Equal([[false, 1L]], await Fixture.RowsAsync($"select is_deleted, version from catalog.products where id = '{lamp}'"));
     }
+    #endregion
 
     [Fact]
     public async Task A_continuation_runs_a_permission_protected_command_on_its_recorded_authority_without_authorizing_the_actor_again()

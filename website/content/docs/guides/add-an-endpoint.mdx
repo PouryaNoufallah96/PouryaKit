@@ -1,0 +1,86 @@
+---
+title: Add an endpoint
+description: Serve a Feature over HTTP with an endpoint beside it that sends its command or query through the Module's Gateway and answers its Result.
+---
+
+## What you build
+
+One `internal sealed` class implementing `IEndpoint` beside its [Feature](/docs/reference/glossary#feature). Its `Map` maps the Feature's route on its [Module](/docs/reference/glossary#module)'s route group. It injects the request's `OperationContext` and the Module's [Gateway](/docs/reference/glossary#gateway), sends the command or query, and answers with `ToHttpResult()`. It holds no business logic and touches no repository.
+
+<Callout type="warn" title="Authenticated by default">
+  Every endpoint refuses an unauthenticated caller unless it says otherwise. A public endpoint names the system [Actor](/docs/reference/glossary#actor) its anonymous callers run as, with `AllowAnonymousAs`. A tenant-scoped Module maps no public endpoint: an anonymous caller has no [tenant](/docs/reference/glossary#tenant).
+</Callout>
+
+## When to use it
+
+For each Feature a client calls over HTTP. A Feature only other Modules use needs no endpoint: they reach it through the Module's [Contracts](/docs/reference/glossary#contracts).
+
+## Steps
+
+<Steps>
+<Step>
+
+### Write the endpoint beside its Feature
+
+Name it after the Feature with the `Endpoint` suffix. Inventory's `GetStockItem` endpoint sends its query through Inventory's Gateway with the context the request began:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/GetStockItem/GetStockItemEndpoint.cs" region="get-stock-item-endpoint" />
+
+Leave a route parameter unconstrained, as `{productId}` is here: an id that does not parse answers 400, where a constraint would answer 404. For a body, declare an `internal sealed` record beside the endpoint and map it to the command by hand.
+
+</Step>
+<Step>
+
+### Choose the success shape
+
+`ToHttpResult()` answers 204 for a command with no value and 200 with the value as JSON otherwise. `ToHttpResult(value => ...)` answers another shape, such as 201 Created with a location. Every failure answers one problem response, whichever overload you use.
+
+</Step>
+<Step>
+
+### Declare the Module's endpoints
+
+The Module's [Composition Root](/docs/reference/glossary#composition-root) calls `AddPouryaKitEndpoints` with its route prefix, as Inventory's calls it with `/inventory`, and finds every endpoint in the Module's assembly. The [Host](/docs/reference/glossary#host) maps every Module's endpoints with `MapPouryaKitModuleEndpoints()`.
+
+</Step>
+<Step>
+
+### Call it as an authenticated caller
+
+The Web [Capability](/docs/reference/glossary#capability) begins the request's [Operation](/docs/reference/glossary#operation) with a context built from the authenticated caller: the Actor from its Actor claim and, where the Host configures one, the tenant from its tenant claim. With the [Kit](/docs/reference/glossary#kit)'s JWT bearer scheme, a token's `sub` is the Actor. A test calls it with `Fixture.Host.GetTestClient()`: see [Testing over HTTP](/docs/capabilities/web#testing-over-http).
+
+</Step>
+</Steps>
+
+The monolith template has no Gateway: its endpoints send through `IDispatcher` instead. See [What each composition composes](/docs/capabilities/templates#what-each-composition-composes).
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| How a Result becomes a response | [From Result to response](/docs/capabilities/web#from-result-to-response) |
+| One problem response shape for every failure | [Problem responses](/docs/capabilities/web#problem-responses) |
+| Authenticated access by default, and a public endpoint's Actor | [The caller and the Actor](/docs/capabilities/web#the-caller-and-the-actor) |
+| An endpoint that would never answer stops the Host | [The Host](/docs/capabilities/web#the-host) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="401 as a problem response">
+    The caller sent no valid token, and the endpoint did not allow anonymous callers.
+  </Accordion>
+  <Accordion title="StartAsync throws for an endpoint">
+    An `IEndpoint` in the Module's assembly that no `AddPouryaKitEndpoints` declares, or that no `MapPouryaKitModuleEndpoints` mapped, would never answer, so the Host stops when it starts, naming the call.
+  </Accordion>
+  <Accordion title="A plain AllowAnonymous on a Module's endpoint">
+    The Host stops when it starts: no Operation runs as an unnamed Actor. Use `AllowAnonymousAs` with a system Actor of the endpoint's own.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Make a command idempotent" href="/docs/guides/request-idempotency" description="Require an Idempotency-Key on a repeatable write." />
+  <Card title="Web" href="/docs/capabilities/web" description="The pipeline, responses, CORS, compression and rate limits." />
+  <Card title="API versions and OpenAPI" href="/docs/capabilities/openapi" description="Version a Module's endpoints and serve its documents." />
+</Cards>

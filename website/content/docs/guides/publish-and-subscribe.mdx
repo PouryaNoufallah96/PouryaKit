@@ -1,0 +1,112 @@
+---
+title: Publish and subscribe to an Integration Event
+description: Tell other Modules what happened, with an Integration Event declared in Contracts, published from a Notification Handler and applied in each subscribing Module.
+---
+
+## What you build
+
+An [Integration Event](/docs/concepts/integration-events) one [Module](/docs/reference/glossary#module) publishes after a change commits, and an [Integration Event Handler](/docs/reference/glossary#integration-event-handler) in each Module that reacts to it. This guide follows the [Proving Sample](/docs/reference/glossary#proving-sample): Catalog publishes `ProductCreatedV1` for each new product, and Inventory opens a stock item for it.
+
+<Callout type="warn" title="Publish from a Notification Handler only">
+  The [Integration Event](/docs/reference/glossary#integration-event) describes a change that already committed, so it is published after the commit, from a [Notification Handler](/docs/reference/glossary#notification-handler) of the [Domain Event](/docs/reference/glossary#domain-event) the change raised. A command handler or an Integration Event Handler that publishes throws.
+</Callout>
+
+## When to use it
+
+When another Module reacts to something that happened in this one. When it keeps its own copy of this Module's data, publish a [Snapshot](/docs/concepts/snapshots) instead.
+
+## Steps
+
+<Steps>
+<Step>
+
+### Declare the Integration Event in the publishing Module's Contracts
+
+A public sealed record under `Events/V1/`, named with its version, with plain values only and nothing from the [Kit](/docs/reference/glossary#kit). Give it the Domain Event's identity and time, so every receiver sees what the publisher saw.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/Events/V1/ProductCreatedV1.cs" region="product-created-v1" />
+
+</Step>
+<Step>
+
+### Declare the publication
+
+In the publishing Module's [Composition Root](/docs/reference/glossary#composition-root), declare the type under its [wire name](/docs/reference/glossary#wire-name) with `Publish`, as Catalog declares `ProductCreatedV1` under `catalog.product-created.v1`. Put the version in the wire name, and change it only with a new version of the type.
+
+</Step>
+<Step>
+
+### Publish it from a Notification Handler
+
+Give publishing a Notification Handler of its own for the Domain Event, so a failing announcement neither holds back nor repeats it. It injects `IIntegrationEventPublisher` and calls `Publish` with the identity of the Domain Event it handles. Publishing sends nothing: the delivery's [Unit of Work](/docs/reference/glossary#unit-of-work) writes it to the [Outbox](/docs/reference/glossary#outbox), and it is sent after that commit. [Publishing from a Notification Handler](/docs/capabilities/messaging#publishing-from-a-notification-handler) shows Catalog's `PublishProductCreatedNotificationHandler`.
+
+</Step>
+<Step>
+
+### Write the handler in the receiving Module
+
+An `internal sealed` class implementing `IIntegrationEventHandler<TIntegrationEvent>`, beside the [Feature](/docs/reference/glossary#feature) it serves. It holds only the business effect: the Kit records its [Receipt](/docs/reference/glossary#receipt), commits and acknowledges.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/OpenStockItem/OpenStockItemIntegrationEventHandler.cs" region="open-stock-item" />
+
+</Step>
+<Step>
+
+### Subscribe it
+
+In the receiving Module's Composition Root, subscribe the handler under a [subscription](/docs/reference/glossary#subscription) name of its own with `Subscribe`, as Inventory subscribes `OpenStockItemIntegrationEventHandler` under `inventory.product-created`. The receiving project references the publishing Module's [Contracts](/docs/reference/glossary#contracts) project, never the Module.
+
+</Step>
+<Step>
+
+### Give each Module its Receipt table
+
+Both Modules need the Receipt table in their own schema: the publisher keeps its publication records there, and the receiver the Receipts of what it applied. Add each one's table with a migration, filled by hand since the model does not change:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261005180000_Receipts.cs" region="receipts-migration" />
+
+</Step>
+<Step>
+
+### Test the delivery
+
+Run the command through the [Gateway](/docs/reference/glossary#gateway), wait for every delivery it caused, and assert each subscription's delivery and its effect. See [Test a Feature](/docs/guides/test-a-feature).
+
+</Step>
+</Steps>
+
+The publishing Module may run in another [Host](/docs/reference/glossary#host). Then the receiving Host declares the wire name with `Receive`, both Hosts join a RabbitMQ broker, and neither Module changes: see [RabbitMQ between Hosts](/docs/capabilities/rabbitmq).
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| One durable delivery per subscription, applied once, a continuation of the change | [What the Kit guarantees](/docs/capabilities/messaging#what-the-kit-guarantees) |
+| What `Publish` refuses | [Publishing from a Notification Handler](/docs/capabilities/messaging#publishing-from-a-notification-handler) |
+| Several Modules subscribing to one Integration Event | [Declaring what a Module publishes and subscribes](/docs/capabilities/messaging#declaring-what-a-module-publishes-and-subscribes) |
+| Adding a new version, and retiring the old one | [A new version of an Integration Event](/docs/capabilities/messaging#a-new-version-of-an-integration-event) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="The Host does not build: a subscription nothing publishes">
+    The routing check names each subscription to an Integration Event that no Module of the Host publishes and no `Receive` declares.
+  </Accordion>
+  <Accordion title="A missing, invalid or colliding name">
+    A wire name or subscription name that is missing, invalid, reserved or colliding fails the Host's composition, naming every problem.
+  </Accordion>
+  <Accordion title="A second Notification Handler publishing the same type">
+    One Domain Event yields at most one Integration Event of each type. The second delivery to commit fails until it is set aside as a dead letter.
+  </Accordion>
+  <Accordion title="IntegrationEventHandlerFailedException in a dead letter">
+    The receiving handler failed on every attempt. Only its subscription's delivery is set aside; the other subscriptions keep what they did. Fix the cause, then replay it.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Schedule a delayed or recurring command" href="/docs/guides/schedule-commands" description="Run a command later, or on a cadence." />
+  <Card title="Messaging" href="/docs/capabilities/messaging" description="Notifications, Integration Events, Snapshots and dead letters." />
+  <Card title="In-process or RabbitMQ" href="/docs/decision-guides/in-process-or-rabbitmq" description="When a Module's events cross to another Host." />
+</Cards>

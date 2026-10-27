@@ -1,0 +1,73 @@
+---
+title: Integration Events
+description: A fact one Module publishes for the others, delivered after the commit to each subscribing Module on its own and applied once.
+---
+
+## What it is
+
+An [Integration Event](/docs/reference/glossary#integration-event) is a fact a [Module](/docs/reference/glossary#module) publishes for other Modules, describing something that happened. Another Module reacts to it in an [Integration Event Handler](/docs/reference/glossary#integration-event-handler), in an [Operation](/docs/reference/glossary#operation) of its own, and the publishing Operation never waits for it.
+
+Each Integration Event is stored and sent under its [wire name](/docs/reference/glossary#wire-name), a stable name that carries its version, such as `catalog.product-created.v1`. One wire name is one version of one contract type.
+
+<Callout type="warn" title="Publish only from a Notification Handler, and never change a published contract">
+  An Integration Event is published by a [Notification Handler](/docs/reference/glossary#notification-handler), after the change it describes has committed. A command handler or an Integration Event Handler never publishes one. A change receivers could not read is a new version: a new type under a new wire name, published beside the old one.
+</Callout>
+
+## When to use it
+
+- **Another Module reacts to what happened** in this one: an Integration Event. In the [Proving Sample](/docs/reference/glossary#proving-sample), Inventory opens a stock item and Billing a price list for each product Catalog creates.
+- **Another Module keeps its own copy** of this one's data: a [Snapshot](/docs/concepts/snapshots) instead.
+- **An Operation cannot go on without an answer** from another Module: a question through that Module's [Contracts](/docs/reference/glossary#contracts), the one synchronous exception.
+
+## How it works
+
+In the Proving Sample, Catalog tells Inventory and Billing about each new product:
+
+1. `CreateProduct` commits the product, and its `ProductCreatedDomainEvent` is stored as a [Notification](/docs/reference/glossary#notification) in the same commit.
+2. After that commit, Catalog's `PublishProductCreatedNotificationHandler` publishes `ProductCreatedV1`, which is stored in Catalog's [Outbox](/docs/reference/glossary#outbox) in the commit of that delivery, once per [subscription](/docs/reference/glossary#subscription).
+3. After that commit, Inventory and Billing each apply it in their own [Unit of Work](/docs/reference/glossary#unit-of-work), each in a delivery of its own.
+
+The Integration Event is a public record in the publishing Module's Contracts project, with plain values only, and carries the identity and time of the [Domain Event](/docs/reference/glossary#domain-event) it follows from:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/Events/V1/ProductCreatedV1.cs" region="product-created-v1" />
+
+The receiving Module holds only the business effect, and the [Kit](/docs/reference/glossary#kit) records the [Receipt](/docs/reference/glossary#receipt), commits and acknowledges:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/OpenStockItem/OpenStockItemIntegrationEventHandler.cs" region="open-stock-item" />
+
+The publishing Module declares what it publishes with `Publish` and the receiving Module what it subscribes to with `Subscribe`, each in its [Composition Root](/docs/reference/glossary#composition-root). The receiving project references the publishing Module's Contracts project, never the Module itself. When the publishing Module runs in another [Host](/docs/reference/glossary#host), the receiving Host declares the wire name with `Receive` and both Hosts join a broker: see [RabbitMQ between Hosts](/docs/capabilities/rabbitmq). The Modules do not change.
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| Stored with the publishing handler's Receipt, one durable delivery per subscription, applied once | [What the Kit guarantees](/docs/capabilities/messaging#what-the-kit-guarantees) |
+| What `Publish` refuses | [Publishing from a Notification Handler](/docs/capabilities/messaging#publishing-from-a-notification-handler) |
+| How a new version is published beside the old one | [A new version of an Integration Event](/docs/capabilities/messaging#a-new-version-of-an-integration-event) |
+| Wire names and subscription names | [Names](/docs/capabilities/messaging#names) |
+| Across Hosts, over a broker | [RabbitMQ between Hosts](/docs/capabilities/rabbitmq) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="InvalidOperationException from Publish">
+    `Publish` throws outside a Notification Handler's delivery, with an identity other than the delivered Domain Event's, for a type the Module did not declare, for a [Snapshot](/docs/reference/glossary#snapshot) type, or a second time with one type in one delivery. In a Notification Handler the exception fails the delivery, which is retried, then set aside.
+  </Accordion>
+  <Accordion title="A subscription to an Integration Event no Module publishes">
+    The Host does not build: its routing check names each subscription that no Module of the Host publishes and no `Receive` declares.
+  </Accordion>
+  <Accordion title="IntegrationEventHandlerFailedException in a dead letter">
+    A receiving handler that returned a failed [Result](/docs/reference/glossary#result) on every attempt is set aside as a dead letter of its subscription, naming each [Error](/docs/reference/glossary#error). The other subscriptions of the same Integration Event keep what they did.
+  </Accordion>
+  <Accordion title="JsonException in a dead letter">
+    A body its type cannot read, such as one that lacks a member the type requires, is set aside at once, without retries, never handled with a default.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Snapshots and Tombstones" href="/docs/concepts/snapshots" description="Publish state for a Module that keeps a copy." />
+  <Card title="Publish and subscribe" href="/docs/guides/publish-and-subscribe" description="Add an Integration Event and its handler, step by step." />
+  <Card title="In-process or RabbitMQ" href="/docs/decision-guides/in-process-or-rabbitmq" description="When a Module's events cross to another Host." />
+</Cards>

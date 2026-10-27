@@ -1,0 +1,65 @@
+---
+title: Saga
+description: A Module's long-running reaction across Integration Events that keeps its own state between steps, and the one reaction that runs outside an Operation.
+---
+
+## What it is
+
+A [Saga](/docs/reference/glossary#saga) is a [Module](/docs/reference/glossary#module)'s long-running reaction across [Integration Events](/docs/reference/glossary#integration-event) that keeps its own state between steps. Integration Events start and advance it, its own timeouts end it, and each step can emit Integration Events of its own. A saga's identity is the [tenant](/docs/reference/glossary#tenant) of the event that started it with that event's business id.
+
+A Saga is the one reaction that runs outside an [Operation](/docs/reference/glossary#operation). Each step runs with no [Operation Context](/docs/reference/glossary#operation-context), is claimed once in its own transaction, and emits its Integration Events under the saga's system [Actor](/docs/reference/glossary#actor).
+
+<Callout type="warn" title="A step only changes the saga's state, emits and schedules">
+  No authorizer, validator, [Unit of Work](/docs/reference/glossary#unit-of-work) or [Receipt](/docs/reference/glossary#receipt) runs for a step. A step that dies before its commit runs again, so a call to another service or a file it wrote would repeat. Anything else is the work of a [subscription](/docs/reference/glossary#subscription) that receives what the saga emits.
+</Callout>
+
+## When to use it
+
+When a reaction waits for several Integration Events, keeps what it has seen between them, and gives up after a time. In the [Kit](/docs/reference/glossary#kit)'s tests, a fulfilment saga starts when an order is placed, counts its payments, and either fulfils the order once all payments arrived or cancels it when they did not arrive in time. A reaction to one Integration Event at a time is an [Integration Event Handler](/docs/concepts/integration-events).
+
+## How it works
+
+A Module declares its saga in its [Composition Root](/docs/reference/glossary#composition-root): its name and system Actor, the Integration Events that start or advance it with the business id each one names, and its timeouts.
+
+<Snippet file="tests/ModularMonolith.Tests/Sagas/ShippingModule.cs" region="fulfilment-saga-declaration" />
+
+The saga derives from `PouryaKitSaga`. A starting step, named `Start`, returns the new saga and the timeouts it schedules:
+
+<Snippet file="tests/ModularMonolith.Tests/Sagas/ShippingModule.cs" region="fulfilment-saga-start" />
+
+An advancing step, named `Handle`, takes a later event or a timeout. It emits with `PublishAsync` and completes the saga with `MarkCompleted`:
+
+<Snippet file="tests/ModularMonolith.Tests/Sagas/ShippingModule.cs" region="fulfilment-saga-timeout" />
+
+The [Host](/docs/reference/glossary#host) runs sagas on Wolverine's saga storage in its PostgreSQL message store, with `UsePouryaKitWolverine`. Outside Development the Host loads each saga's generated code, which `codegen write` writes before the release build: see [Prepare a release](/docs/guides/prepare-a-release).
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| A route of its own, one claim per step, the tenant in the identity, emissions an ordinary subscription receives | [What the Kit guarantees](/docs/capabilities/sagas#what-the-kit-guarantees) |
+| What a step must not do | [What a step must not do](/docs/capabilities/sagas#what-a-step-must-not-do) |
+| What fails the Host when it is built or started | [The Host](/docs/capabilities/sagas#the-host) |
+| What a saga cannot do yet | [Limits](/docs/capabilities/sagas#limits) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="SagaInputRefusedException in a dead letter">
+    An event with no tenant, or one whose identity names a saga that does not exist and that it does not start, is refused before any step, retried, then set aside. An advancing event that arrives after its saga completed is refused the same way.
+  </Accordion>
+  <Accordion title="InvalidServiceLocationException">
+    A step that takes a Kit scoped service, such as the Integration Event publisher, is refused at its first message. Emit with `PublishAsync` instead.
+  </Accordion>
+  <Accordion title="MissingPreBuiltTypesException outside Development">
+    The Host was published without the saga's generated code. Run `codegen write` before the release build.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Gateway tools and MCP tools" href="/docs/concepts/gateway-and-mcp-tools" description="What a model may call, and on whose authority." />
+  <Card title="Sagas" href="/docs/capabilities/sagas" description="Declaring, writing, hosting and testing a saga." />
+  <Card title="Prepare a release" href="/docs/guides/prepare-a-release" description="Pre-generate Wolverine's code and publish the Host." />
+</Cards>

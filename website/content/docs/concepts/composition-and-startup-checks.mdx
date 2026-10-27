@@ -1,0 +1,72 @@
+---
+title: Composition and startup checks
+description: A Host refuses its own mistakes before it serves, when its container is built and when it starts, and each failure names its fix.
+---
+
+## What it is
+
+Every declaration refuses its own mistakes while the [Host](/docs/reference/glossary#host) is composed. Then the Host's checks run before it serves:
+
+- a [composition check](/docs/reference/glossary#composition-check) checks the Host's whole composition when its container is built, before anything runs, such as a [Module](/docs/reference/glossary#module)'s declaration made without its Module;
+- a [startup check](/docs/reference/glossary#startup-check) checks what only the built application can answer, such as an endpoint it never mapped, when the Host starts and before any hosted service starts.
+
+They explain most first-run errors. Each failure is one exception with one line per problem, and each line names its fix.
+
+<Callout type="warn" title="Read the whole message, and keep the container the Kit built">
+  The message lists every problem it found, not only the first. And leave `ConfigureContainer` out of a Host of Modules: one called after `AddPouryaKitModules` replaces the container the checks were installed on, and the Host stops when it starts, naming the call.
+</Callout>
+
+## When it matters
+
+On every build and every start of a Host, in each environment: a Host built and never started runs [Operations](/docs/reference/glossary#operation) through its [Gateways](/docs/reference/glossary#gateway), so a guarantee the final registrations can answer is checked when the Host is built, not later. You meet them when you add a declaration and forget its other half, such as a permission without its check, or a [subscription](/docs/reference/glossary#subscription) in a Module with no [Unit of Work](/docs/reference/glossary#unit-of-work).
+
+## How it works
+
+A Host's checks run at these moments:
+
+1. **While the Host is composed**: each declaration throws for its own mistake, such as a Module added twice or a name that is invalid.
+2. **When the Host is built**: the container is validated in every environment, then the composition checks run on the final registrations, and `Build()` throws one `InvalidOperationException`.
+3. **When the Host starts**: the startup checks run before any hosted service, and `StartAsync` throws in the same shape.
+4. **Once Wolverine has started**: one last check of the queues, the only one at Wolverine's own moment.
+
+`AddPouryaKitModules` and `UsePouryaKitWolverine` install the checks. A Host without Modules, such as the monolith template's, calls `AddPouryaKitCompositionChecks()` itself.
+
+Test a check with a Host of the test's own that makes the mistake, and assert the exception at the moment its check runs. This test builds a Host that handles a command but registers no Unit of Work:
+
+<Snippet file="tests/ModularMonolith.Tests/CompositionCheckTests.cs" region="missing-unit-of-work-check-test" />
+
+## Every check
+
+The skill lists each check, at its moment, with its message:
+
+| Checks | Where the skill states them |
+| --- | --- |
+| Every Host: the container, the composition checks and the startup checks | [The Host's checks](/docs/capabilities/modules#the-hosts-checks) |
+| Publications, subscriptions, routes and the message store | [The Host's checks for messaging](/docs/capabilities/messaging#the-hosts-checks) |
+| A Host that sends or receives over a broker | [The Host's checks for RabbitMQ](/docs/capabilities/rabbitmq#the-hosts-checks) |
+| All of them, in one place | [Host checks](/docs/reference/composition-checks) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="A permission without its check">
+    `Build()` throws: `… declares RequiresPermissionAttribute, but its check is not registered, so it would run unchecked. Call AddPouryaKitPermissions with the assembly … in the Composition Root that registers its handler.` Add `AddPouryaKitPermissions()` to that [Composition Root](/docs/reference/glossary#composition-root).
+  </Accordion>
+  <Accordion title="A connection string the configuration does not set">
+    `Build()` throws, naming the connection and its key, `ConnectionStrings:{name}`. Nothing connects.
+  </Accordion>
+  <Accordion title="A declaration without its Module">
+    A publication, subscription, [Notification Handler](/docs/reference/glossary#notification-handler), delayed or [recurring command](/docs/reference/glossary#recurring-command) declared on the Host's services in a Host of Modules belongs to no Module. `Build()` throws, naming its form on the Module's builder and the form that names the Module.
+  </Accordion>
+  <Accordion title="An endpoint that would never answer">
+    `StartAsync` throws for an endpoint in a Module's [Feature](/docs/reference/glossary#feature) assemblies that no `AddPouryaKitEndpoints` declares or no `MapPouryaKitModuleEndpoints` mapped.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Delayed and recurring commands" href="/docs/concepts/delayed-and-recurring-commands" description="Commands that run later or on a cadence." />
+  <Card title="Host checks" href="/docs/reference/composition-checks" description="Where each check is listed." />
+  <Card title="Modules" href="/docs/capabilities/modules" description="The Composition Root and the Host that composes it." />
+</Cards>

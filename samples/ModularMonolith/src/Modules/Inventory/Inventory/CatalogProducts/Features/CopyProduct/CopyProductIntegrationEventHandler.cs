@@ -7,6 +7,7 @@ using PouryaKit.Persistence;
 
 namespace Inventory.CatalogProducts.Features.CopyProduct;
 
+#region copy-product
 // Keeps Inventory's copy of each catalog product current, in a table of its own that is no aggregate: it holds what
 // Catalog last published and nothing Inventory decides, keyed by tenant and product under the tenant the Snapshot was
 // delivered for. Only the effect: the Kit runs this only for a Snapshot newer than every one applied of that product,
@@ -35,3 +36,4 @@ internal sealed class CopyProductIntegrationEventHandler(IUnitOfWorkConnection u
         return Result.Success();
     }
 }
+#endregion

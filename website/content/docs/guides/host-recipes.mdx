@@ -1,0 +1,78 @@
+---
+title: Compose the service defaults
+description: Telemetry export, liveness and readiness, service discovery, one resilience pipeline and Serilog for a Host, from the service defaults project your solution owns.
+---
+
+## What you build
+
+The service defaults are recipes, not a [Kit](/docs/reference/glossary#kit) package: a `ServiceDefaults` project in your own solution, shaped like .NET Aspire's, which the templates generate as `<Name>.ServiceDefaults` and compose in every [Host](/docs/reference/glossary#host). You own your copy and change or drop any recipe in it. Each recipe is optional, and none is needed for the Kit to work.
+
+<Callout type="warn" title="The recipe exports; the Kit emits">
+  The OpenTelemetry recipe exports what the Kit emits, but the Kit emits its [Operations](/docs/reference/glossary#operation)' activities and metrics only in a Host that calls `AddPouryaKitObservability()`. See [Observability](/docs/capabilities/observability).
+</Callout>
+
+## When to use it
+
+In every Host you deploy. A generated Host already composes all three entry points; read this when you change one of them, add a client that needs other limits, or compose a Host by hand.
+
+## Steps
+
+<Steps>
+<Step>
+
+### Add the defaults to the builder
+
+`AddServiceDefaults()` adds OpenTelemetry, the health checks, service discovery and one resilience pipeline for every outgoing `HttpClient`. [What each recipe does](/docs/capabilities/host-recipes#what-each-recipe-does) lists each one.
+
+</Step>
+<Step>
+
+### Map the health endpoints
+
+`MapDefaultEndpoints()` maps the liveness endpoint in every environment and the full health endpoint in Development only. [Liveness and readiness](/docs/capabilities/host-recipes#liveness-and-readiness) says why readiness outside Development is your platform's.
+
+</Step>
+<Step>
+
+### Opt into Serilog
+
+`AddSerilogDefaults()` replaces the logging providers with Serilog, when the Host wants it. See [Serilog](/docs/capabilities/host-recipes#serilog).
+
+</Step>
+<Step>
+
+### Give one client its own limits
+
+Every client takes the defaults' one pipeline, which retries safe methods only. A client that needs other limits removes the default pipeline before adding its own, since two pipelines on one client are refused: see [One resilience pipeline](/docs/capabilities/host-recipes#one-resilience-pipeline).
+
+</Step>
+</Steps>
+
+[Composing a Host with them](/docs/capabilities/host-recipes#composing-a-host-with-them) shows the [Proving Sample](/docs/reference/glossary#proving-sample)'s `Inventory.Host`, which composes all three.
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| What each recipe adds, and what leaves the process | [What each recipe does](/docs/capabilities/host-recipes#what-each-recipe-does) |
+| One resilience pipeline per client | [One resilience pipeline](/docs/capabilities/host-recipes#one-resilience-pipeline) |
+| Testing a Host that uses them | [Testing a Host with them](/docs/capabilities/host-recipes#testing-a-host-with-them) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="InvalidOperationException naming RemoveAllResilienceHandlers">
+    A client's handler chain holds two resilience pipelines, as when a client adds its own over the defaults'. Remove the default pipeline first.
+  </Accordion>
+  <Accordion title="Nothing is exported">
+    OTLP export starts only when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured, and the Kit's Operations are emitted only with `AddPouryaKitObservability()`.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Host recipes" href="/docs/capabilities/host-recipes" description="Every recipe, in full." />
+  <Card title="Prepare a release" href="/docs/guides/prepare-a-release" description="Pre-generate Wolverine's code and publish the Host." />
+  <Card title="Aspire resources" href="/docs/capabilities/aspire" description="Run a Host's resources locally with an AppHost." />
+</Cards>

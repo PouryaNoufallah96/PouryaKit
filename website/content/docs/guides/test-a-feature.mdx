@@ -1,0 +1,100 @@
+---
+title: Test a Feature
+description: Run a Feature's Operations against the hosted application on a real PostgreSQL, through its Module's Gateway or over HTTP, and assert its Result, its rows and its deliveries.
+---
+
+## What you build
+
+Tests against the hosted application: the same composition `Program` runs, on PostgreSQL in a container, with the data reset between tests. `PouryaKit.Testing` provides the fixture, `HostFixture`, and the base class every test derives from, `HostTest<TFixture>`.
+
+<Callout type="warn" title="Docker must run, and tests run one at a time">
+  The fixture starts PostgreSQL in Testcontainers before the first test. Tests that share a fixture run one at a time, and each starts with no rows and no stored deliveries.
+</Callout>
+
+## When to use it
+
+For every [Feature](/docs/reference/glossary#feature), and for each guarantee your [Module](/docs/reference/glossary#module) relies on. A business or validation failure is asserted on the [Result](/docs/reference/glossary#result)'s [Errors](/docs/reference/glossary#error), never on an exception. A generated solution already holds a test project and its fixture, `tests/<Name>.Tests`, whose smoke tests run the generated [Host](/docs/reference/glossary#host).
+
+## Steps
+
+<Steps>
+<Step>
+
+### Derive one fixture for the test assembly
+
+Derive one `HostFixture` and register it with `AssemblyFixture`. Its `CreateHost` builds the application's Host with the same builder and pipeline methods `Program` uses, served in memory for HTTP tests and with deliveries at test speed. The fixture applies every Module's migrations, then starts the Host. [The fixture](/docs/capabilities/testing#the-fixture) shows the [Proving Sample](/docs/reference/glossary#proving-sample)'s.
+
+</Step>
+<Step>
+
+### Send Operations through the Gateway
+
+Derive each test class from `HostTest<TFixture>` and send with `Fixture.Gateway<TModule>()`, each call one [Operation](/docs/reference/glossary#operation) in its own scope, exactly as the application does. Assert on the Result and read rows back with your own SQL:
+
+<Snippet file="tests/ModularMonolith.Tests/DomainEventTests.cs" region="category-counts-product-test" />
+
+A [Gateway](/docs/reference/glossary#gateway) call without a context runs as the test [Actor](/docs/reference/glossary#actor) with no [tenant](/docs/reference/glossary#tenant). A tenant-scoped Module refuses it, so pass a context with a tenant there: see [The Operation Context in tests](/docs/capabilities/testing#the-operation-context-in-tests).
+
+</Step>
+<Step>
+
+### Wait for and assert deliveries
+
+`Fixture.WaitForDeliveriesAsync` runs the Operation and waits until every delivery it caused is handled or set aside, deliveries those deliveries caused included, then returns one entry per delivery:
+
+<Snippet file="tests/ModularMonolith.Tests/NotificationTests.cs" region="new-product-announced-test" />
+
+`Fixture.AssertNothingSentAsync` runs an Operation and fails unless it sent nothing, which is what a rolled-back Operation leaves.
+
+</Step>
+<Step>
+
+### Test over HTTP
+
+Call the Host's endpoints with `Fixture.Host.GetTestClient()`, authenticated as the caller the test names, and assert the status, the problem response and the rows. [Make a command idempotent](/docs/guides/request-idempotency) and [Secure an Operation](/docs/guides/secure-an-operation) each end with such a test.
+
+</Step>
+<Step>
+
+### Run the tests
+
+In a generated solution, with Docker running:
+
+```bash title="Terminal"
+dotnet test --project tests/Acme.Shop.Tests/Acme.Shop.Tests.csproj
+```
+
+</Step>
+</Steps>
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| What the fixture starts, migrates and stops | [The fixture](/docs/capabilities/testing#the-fixture) |
+| The reset between tests | [Each test](/docs/capabilities/testing#each-test) |
+| What a wait returns, and when it fails | [Deliveries](/docs/capabilities/testing#deliveries) |
+| Reading and replaying dead letters | [Dead letters](/docs/capabilities/testing#dead-letters) |
+| The structure rules every Module follows, and how to copy them | [Structure tests](/docs/capabilities/testing#structure-tests) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="DeliveryAssertionException">
+    `WaitForDeliveriesAsync` was given an Operation that stored no delivery at all, so a test that waits never passes on nothing. `ReplayAsync` throws it for a delivery that is not a dead letter.
+  </Accordion>
+  <Accordion title="TimeoutException">
+    Deliveries were still pending 30 seconds after the Operation. A failing delivery stays pending through every retry, so check whether a handler keeps failing.
+  </Accordion>
+  <Accordion title="Tenant.Required from a Gateway call">
+    The call had no context, so it ran with no tenant. Pass a context with a tenant to a tenant-scoped Module.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Compose the service defaults" href="/docs/guides/host-recipes" description="Telemetry, health, resilience and Serilog." />
+  <Card title="Testing" href="/docs/capabilities/testing" description="The fixture, time, deliveries, dead letters and structure tests." />
+  <Card title="Domain Event" href="/docs/concepts/domain-event" description="The reaction the first test above proves." />
+</Cards>

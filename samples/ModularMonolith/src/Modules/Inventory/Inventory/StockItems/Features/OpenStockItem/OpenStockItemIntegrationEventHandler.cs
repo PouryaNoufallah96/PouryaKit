@@ -8,6 +8,7 @@ using PouryaKit.Persistence;
 
 namespace Inventory.StockItems.Features.OpenStockItem;
 
+#region open-stock-item
 // Starts keeping stock of every product Catalog creates, for the tenant the event was delivered for, which GetStockItem
 // answers. Only the effect: the Kit records the Receipt, commits and acknowledges, so a redelivered or concurrently
 // duplicated ProductCreatedV1 opens one stock item.
@@ -20,3 +21,4 @@ internal sealed class OpenStockItemIntegrationEventHandler(IRepository<StockItem
         return Result.Success();
     }
 }
+#endregion

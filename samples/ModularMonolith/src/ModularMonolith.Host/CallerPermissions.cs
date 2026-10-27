@@ -6,6 +6,7 @@ using PouryaKit.Web;
 
 namespace ModularMonolith.Host;
 
+#region caller-permissions
 /// <summary>
 /// The Host's source of permissions: the <see cref="ClaimType"/> claims the authentication scheme issued to the HTTP
 /// caller whose Operation this is. Any other Actor, a named system Actor included, holds none, so independent work never
@@ -27,3 +28,4 @@ public sealed class CallerPermissions(IHttpContextAccessor http, IOptions<Pourya
         );
     }
 }
+#endregion

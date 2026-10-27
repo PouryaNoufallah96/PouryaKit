@@ -1,0 +1,92 @@
+---
+title: Prepare a release
+description: Write Wolverine's generated code into the Host before the Release build, publish the Host without a runtime compiler, and migrate before it starts.
+---
+
+## What you build
+
+A Release publish of the [Host](/docs/reference/glossary#host) that starts outside Development. There, Wolverine loads its generated handler code from the Host's assembly instead of compiling it when the Host starts, and the Host's Release build carries no runtime compiler. The step before the release, `codegen write`, writes that code into the Host project.
+
+<Callout type="warn" title="A Host with Wolverine handlers or Sagas of its own needs the step">
+  The [Kit](/docs/reference/glossary#kit)'s own deliveries need no generated code, so a Kit Host still starts without it, and Wolverine logs that it falls back to a scan. Once the application adds Wolverine handlers of its own, or a [Saga](/docs/reference/glossary#saga), each has a generated type, and a Host published without it does not start.
+</Callout>
+
+## When to use it
+
+Before every Release publish of a Host, or as a step of the build before the publish. Write the code again whenever a Wolverine handler or a Saga changes.
+
+## Steps
+
+<Steps>
+<Step>
+
+### Write Wolverine's generated code
+
+The generated Host's command line is JasperFx's, so `codegen write` builds the Host and never starts it: it needs no database and no runtime compiler.
+
+```bash title="Terminal"
+dotnet run --project src/Acme.Shop.Host -- codegen write
+```
+
+It writes into `Internal/Generated` in the Host project. Commit that folder, as Wolverine's own guide does.
+
+</Step>
+<Step>
+
+### Publish the Host
+
+```bash title="Terminal"
+dotnet publish src/Acme.Shop.Host -c Release -o publish
+```
+
+Publish with its own restore, or after a restore that evaluated Release. A plain restore evaluates Debug, which lists the runtime compiler, and a Release build without a restore after it would carry it again.
+
+</Step>
+<Step>
+
+### Migrate the database
+
+The Host applies no migration when it starts. Apply each [Module](/docs/reference/glossary#module)'s migrations before the new version runs: see [Add a migration](/docs/guides/add-a-migration). Wolverine still creates its own message storage when the Host starts.
+
+</Step>
+<Step>
+
+### Configure it for production
+
+Configure the Host through settings files, user secrets or the environment: an argument that is no JasperFx command stops it. In production, configure the issuer, audiences and signing keys of your real identity provider.
+
+</Step>
+</Steps>
+
+To move a generated solution to another Kit version, change `PouryaKitVersion` in its `Directory.Packages.props`: every Kit package is pinned to it.
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| What the step writes, and when a Host needs it | [Pre-generating Wolverine's code for production](/docs/capabilities/templates#pre-generating-wolverines-code-for-production) |
+| Static code loading outside Development | [Declaring handlers and running deliveries](/docs/capabilities/messaging#declaring-handlers-and-running-deliveries) |
+| A Host with Sagas | [The Host](/docs/capabilities/sagas#the-host) |
+| The Kit version a generated project pins | [Install and generate](/docs/capabilities/templates#install-and-generate) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="MissingPreBuiltTypesException">
+    The Host was published without the generated code its own Wolverine handlers or Sagas need, so it does not start outside Development. Run `codegen write` and publish again.
+  </Accordion>
+  <Accordion title="check-env fails">
+    `check-env` runs the environment checks, and fails on a Host with no generated code even where the Host itself would start.
+  </Accordion>
+  <Accordion title="Invalid usage">
+    The Host was given an argument that is no JasperFx command, such as a configuration value on its command line. Configure it through settings, user secrets or the environment instead.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Project templates" href="/docs/capabilities/templates" description="Running, migrating, testing and upgrading a generated solution." />
+  <Card title="Saga" href="/docs/concepts/saga" description="The reaction whose steps need generated code." />
+  <Card title="Guides" href="/docs/guides" description="Back to every guide." />
+</Cards>

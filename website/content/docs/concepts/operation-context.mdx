@@ -1,0 +1,68 @@
+---
+title: Operation Context, Actor and tenant
+description: Every Operation carries who caused it, the tenant it runs for and its chain of work, passed explicitly and never read from an ambient request.
+---
+
+## What it is
+
+The [Operation Context](/docs/reference/glossary#operation-context) is the facts about who and what caused an [Operation](/docs/reference/glossary#operation), available wherever the Operation runs. In code it is `OperationContext`, plain data that names:
+
+- the [Actor](/docs/reference/glossary#actor), the person or system on whose authority the Operation runs: `Actor.Person(id)` or `Actor.System(name)`;
+- the [tenant](/docs/reference/glossary#tenant), the customer or company the Operation runs for, or none where the application has no tenants;
+- the Operation's own id, and the correlation and causation that place it in a chain of work.
+
+<Callout type="warn" title="There is no anonymous or default Actor">
+  Every Operation names its Actor. Work no person caused runs as a named system Actor, such as `Actor.System("catalog-import")`. A tenant comes only from a verified claim, never from a host name or a route.
+</Callout>
+
+## When it matters
+
+- **You start work**: create a new context with its Actor and tenant and pass it to the [Gateway](/docs/reference/glossary#gateway), one context per Operation.
+- **You continue work** an Operation caused: call `Continue()` on its context. The Actor, tenant and correlation carry over, and the new Operation records the old one as its cause.
+- **You read who or which tenant** in a handler, an authorizer, a validator or a [Domain Event Handler](/docs/reference/glossary#domain-event-handler): inject `OperationContext`.
+
+At the HTTP boundary you create nothing: the Web [Capability](/docs/reference/glossary#capability) builds each request's context from the authenticated caller, and the endpoint passes it to the Gateway. The [Kit](/docs/reference/glossary#kit) restores the context of each [Notification](/docs/reference/glossary#notification), [Integration Event](/docs/reference/glossary#integration-event), [Snapshot](/docs/reference/glossary#snapshot) and [delayed command](/docs/reference/glossary#delayed-command) it delivers, so its handler runs as a continuation of the Operation that caused it.
+
+## How it works
+
+Inject the context and read it. This [Integration Event Handler](/docs/reference/glossary#integration-event-handler), from the [Proving Sample](/docs/reference/glossary#proving-sample)'s Inventory [Module](/docs/reference/glossary#module), opens a stock item for the tenant the delivery carries:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/OpenStockItem/OpenStockItemIntegrationEventHandler.cs" region="open-stock-item" />
+
+Recurring work no person asks for runs as the system Actor its declaration names. Inventory's reconciliation records that Actor with each run:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/ReconcileStock/ReconcileStockCommandHandler.cs" region="reconcile-stock-handler" />
+
+A continuation the Kit restores for a delivery, or one a running, authorized Operation gives with `Continue()`, is a trusted continuation: its `IsTrustedContinuation` is true, and a permission it declares is not checked again. A context your code builds is never trusted, whatever causation you give it. Recognise a trusted continuation by that flag, never by `CausationId`.
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| What a context holds, and how it starts and continues work | [The Operation Context](/docs/capabilities/modules#the-operation-context) |
+| How an HTTP caller becomes an Actor and a tenant | [The caller and the Actor](/docs/capabilities/web#the-caller-and-the-actor) |
+| What a trusted continuation may skip, and what still runs | [Continuations](/docs/capabilities/security#continuations) |
+| A tenant-scoped Module runs nothing without a tenant | [Declaring a tenant-scoped Module](/docs/capabilities/multi-tenancy#declaring-a-tenant-scoped-module) |
+| How a test passes a context of its own | [The Operation Context in tests](/docs/capabilities/testing#the-operation-context-in-tests) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="ArgumentNullException from the Gateway">
+    The Gateway was given no context. Every call needs one: create it, or pass the one your endpoint or handler injected.
+  </Accordion>
+  <Accordion title="InvalidOperationException resolving OperationContext">
+    The scope's Operation was never begun. Send work through a Gateway, which begins one Operation per call; only an application of one Module begins its scopes itself.
+  </Accordion>
+  <Accordion title="Tenant.Required">
+    A command or query of a tenant-scoped Module ran with no tenant, before its validator and handler. Over HTTP it answers 403. Give the caller a tenant claim, or pass a context with a tenant.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Unit of Work" href="/docs/concepts/unit-of-work" description="How an Operation's changes commit together." />
+  <Card title="Secure an Operation" href="/docs/guides/secure-an-operation" description="Declare the permission a command or query requires." />
+  <Card title="Make a Module tenant-scoped" href="/docs/guides/tenant-scoped-module" description="Hold every Operation of a Module to its tenant." />
+</Cards>

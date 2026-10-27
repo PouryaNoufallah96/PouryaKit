@@ -2,6 +2,7 @@ using PouryaKit.Cqrs;
 
 namespace Catalog.Products.Features.ListProducts;
 
+#region list-products-query
 internal sealed record ListProductsQuery(PageRequest Page) : Query<Page<ProductListItemDto>>
 {
     /// <summary>What a caller may sort and filter the product list by.</summary>
@@ -16,3 +17,4 @@ internal sealed record ListProductsQuery(PageRequest Page) : Query<Page<ProductL
         maxSize: 50
     );
 }
+#endregion

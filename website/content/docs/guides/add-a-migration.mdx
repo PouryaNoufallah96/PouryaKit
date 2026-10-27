@@ -1,0 +1,100 @@
+---
+title: Add a migration
+description: Change a Module's schema with dotnet-ef, from its own migrations folder, and apply it before the Host starts.
+---
+
+## What you build
+
+An EF Core migration in the [Module](/docs/reference/glossary#module)'s own migrations folder, for the Module's own schema. Each Module keeps its migrations apart, with its own history table in its schema. The DbContext stays `internal` and needs no design-time factory: `dotnet-ef` builds the [Host](/docs/reference/glossary#host) as its `Program` does and finds the DbContext in its container.
+
+<Callout type="warn" title="The Host applies no migration when it starts">
+  Apply migrations yourself, before the Host runs, as part of your deployment. In tests, `HostFixture` applies every Module's migrations before it starts the Host.
+</Callout>
+
+## When to use it
+
+Whenever a Module's model changes: a new aggregate or property, opting an aggregate into audit, soft delete or a [tenant](/docs/reference/glossary#tenant), or a new unique index. Also once for each table the [Kit](/docs/reference/glossary#kit) keeps outside the model, such as the [Receipt](/docs/reference/glossary#receipt) table or the idempotency key table.
+
+## Steps
+
+<Steps>
+<Step>
+
+### Restore the tools
+
+The solution's tool manifest holds `dotnet-ef`. From the solution's folder:
+
+```bash title="Terminal"
+dotnet tool restore
+```
+
+</Step>
+<Step>
+
+### Add the migration
+
+From the folder that holds `src/`, name the Module's project, the Host as the startup project, the DbContext and the output folder. These are the [Proving Sample](/docs/reference/glossary#proving-sample)'s paths:
+
+```bash title="Terminal"
+dotnet ef migrations add Initial \
+  --project src/Modules/Catalog/Catalog \
+  --startup-project src/ModularMonolith.Host \
+  --context CatalogDbContext \
+  --output-dir Infrastructure/Data/Migrations
+```
+
+</Step>
+<Step>
+
+### Fill a migration for a table outside the model
+
+The Receipt table, the [Snapshot](/docs/reference/glossary#snapshot) version table and the idempotency key table are not in the Module's model, so their migration is empty and the model snapshot stays as it was. Fill its `Up` and `Down` with the Kit's call and the Module's schema:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261005180000_Receipts.cs" region="receipts-migration" />
+
+</Step>
+<Step>
+
+### Apply it
+
+In a solution generated from a template, apply each Module's migrations to the database the Host's connection string names. A missing database is created before the first migration:
+
+```bash title="Terminal"
+dotnet ef database update --project src/Modules/Catalog/Catalog --startup-project src/Acme.Shop.Host --context CatalogDbContext
+```
+
+The modular monolith also migrates Billing and Inventory the same way, and Ledger, a [Stream](/docs/reference/glossary#stream) Module, needs none.
+
+</Step>
+</Steps>
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| How a Module's migrations are added | [Migrations](/docs/capabilities/persistence#migrations) |
+| Which Module needs the Receipt and Snapshot version tables | [Receipts](/docs/capabilities/messaging#receipts) |
+| The idempotency key table | [Migrations](/docs/capabilities/persistence#migrations) |
+| Running and migrating a generated Host | [Running the generated Host](/docs/capabilities/templates#running-the-generated-host) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="A missing Receipt or Snapshot version table">
+    Nothing checks it at startup. Every delivery that needs it fails with an `InvalidOperationException` that names the call to add, then is set aside as a dead letter.
+  </Accordion>
+  <Accordion title="A missing idempotency key table">
+    The first opted-in command with a [request id](/docs/reference/glossary#request-id) throws an `InvalidOperationException` that names the call, and nothing commits.
+  </Accordion>
+  <Accordion title="A missing number sequence table">
+    The first number throws an `InvalidOperationException` that names `CreateNumberSequenceTable`, and nothing commits.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Test a Feature" href="/docs/guides/test-a-feature" description="The fixture applies every migration before the tests." />
+  <Card title="Persistence and the Unit of Work" href="/docs/capabilities/persistence" description="Mappings, schemas and migrations." />
+  <Card title="Your first Host" href="/docs/get-started/first-host" description="Generate, migrate and run a Host." />
+</Cards>

@@ -2,6 +2,7 @@ using PouryaKit.Domain;
 
 namespace Catalog.Products.Errors;
 
+#region product-errors
 internal static class ProductErrors
 {
     public static readonly Error NameRequired = Error.Validation("Product.NameRequired", "A product needs a name.", "Name");
@@ -20,3 +21,4 @@ internal static class ProductErrors
     // The Host's guardrail refused a question about the products, or the answer to it: the refusal is the message.
     public static Error QuestionRefused(string refusal) => Error.Validation("Product.QuestionRefused", refusal);
 }
+#endregion
