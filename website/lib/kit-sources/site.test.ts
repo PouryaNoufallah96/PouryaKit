@@ -10,15 +10,26 @@ import { buildSite, referenceAnchors } from './site.ts';
 
 const root = findRoot();
 
-test('the site generates a page per published reference, ADR and package, and the Reference pages', () => {
+test('the site generates a page per published reference and package, and the Reference pages', () => {
   const pages = buildSite(root).map((file) => file.path);
   assert.equal(pages.filter((page) => /^content\/docs\/capabilities\/[a-z-]+\.mdx$/.test(page)).length, 29);
-  assert.equal(pages.filter((page) => /^content\/docs\/reference\/adr\/\d{4}-.+\.md$/.test(page)).length, 13);
   assert.equal(pages.filter((page) => /^content\/docs\/reference\/packages\/pouryakit.*\.md$/.test(page)).length, 38);
-  for (const page of ['glossary', 'error-codes', 'composition-checks', 'packages/index', 'adr/index']) {
+  for (const page of ['glossary', 'error-codes', 'composition-checks', 'packages/index']) {
     assert.ok(pages.includes(`content/docs/reference/${page}.md`), page);
   }
   assert.ok(!pages.some((page) => /packages\.md|publication\.md/.test(page)));
+});
+
+test("no ADR is published: no page of one, and a reference's link to one renders as its own text", () => {
+  const files = buildSite(root);
+  assert.deepEqual(
+    files
+      .filter((file) => /\/adr\b/.test(file.path) || /docs\/adr\b|reference\/adr\b/.test(file.content))
+      .map((file) => file.path),
+    [],
+  );
+  const tenancy = files.find((file) => file.path === '.generated/references/multi-tenancy.md')?.content ?? '';
+  assert.match(tenancy, /\(ADR 0007\): in a scope nobody began/);
 });
 
 test("no generated page carries a source's frontmatter: the Capabilities index starts at the skill's text", () => {

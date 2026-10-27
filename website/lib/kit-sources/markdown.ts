@@ -35,7 +35,7 @@ export function parseMarkdown(text: string): Root {
  * A Kit source with its YAML frontmatter blanked, each of its lines kept as an empty one so the source's line numbers
  * hold: frontmatter is metadata for its tools, and parsed as Markdown it renders as a rule and a line of text.
  */
-export function blankFrontmatter(text: string): string {
+function blankFrontmatter(text: string): string {
   const match = /^---\n[\s\S]*?\n---\n/.exec(text);
   return match ? match[0].replace(/[^\n]/g, '') + text.slice(match[0].length) : text;
 }
@@ -68,9 +68,28 @@ export function urlsOf(node: Nodes): string[] {
   return urls;
 }
 
-/** The rules a projected node must pass: its rendered text and its URLs. */
+// The nodes whose children are blocks: a page, a quote, a list and its items, a table and its rows, a component.
+const BLOCK_PARENTS = new Set([
+  'root',
+  'blockquote',
+  'list',
+  'listItem',
+  'table',
+  'tableRow',
+  'footnoteDefinition',
+  'mdxJsxFlowElement',
+]);
+
+/** A node's rendered text with each block's end a blank line, which the rules never read a phrase across. */
+function blockText(node: Nodes): string {
+  return BLOCK_PARENTS.has(node.type) && 'children' in node
+    ? node.children.map((child) => blockText(child as Nodes)).join('\n\n')
+    : renderedText(node);
+}
+
+/** The rules a projected node must pass: its rendered text, block by block, and its URLs. */
 export function nodeViolations(node: Nodes): Violation[] {
-  const text = renderedText(node);
+  const text = blockText(node);
   return [...addressViolations(text), ...vocabularyViolations(text), ...urlsOf(node).flatMap(addressViolations)];
 }
 

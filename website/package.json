@@ -12,8 +12,7 @@
     "build": "node scripts/kit-content.ts generate && next build && node scripts/kit-content.ts check-export",
     "lint": "biome check .",
     "check-licences": "node scripts/check-licences.mjs",
-    "test": "node --test scripts/check-licences.test.mjs lib/kit-sources/*.test.ts",
-    "adr-manifest": "node scripts/kit-content.ts adr-manifest"
+    "test": "node --test scripts/check-licences.test.mjs lib/kit-sources/*.test.ts"
   },
   "dependencies": {
     "fumadocs-core": "16.17.8",

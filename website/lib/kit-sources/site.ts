@@ -3,7 +3,6 @@ import path from 'node:path';
 import Slugger from 'github-slugger';
 import type { Heading, Root, RootContent, Table } from 'mdast';
 import { visit } from 'unist-util-visit';
-import { type AdrExclusion, type AdrRewrite, compareManifest, type ProjectedAdr, projectAdr } from './adr.ts';
 import { type ErrorCode, readErrorCodes } from './errors.ts';
 import { glossaryMarkdown, parseGlossary, projectGlossary } from './glossary.ts';
 import { type PageRoute, type RouteMap, rewriteLinks } from './links.ts';
@@ -19,10 +18,8 @@ import {
 } from './markdown.ts';
 import { type KitPackage, readPackages } from './packages.ts';
 import {
-  ADRS,
   CAPABILITY_TOPS,
   GLOSSARY,
-  listDirectory,
   PACKAGES,
   REFERENCES,
   readSource,
@@ -34,20 +31,15 @@ import { type SkillEntry, skillEntries } from './references.ts';
 import { describe } from './rules.ts';
 
 // The pages the site renders from the Kit's sources, generated before `next build` into folders git ignores: the
-// Capability pages, and the Reference pages (the package matrix and one page per package, the ADRs, the glossary, the
-// Error codes and the Host's checks). Every page is projected, its links rewritten, and checked against the rules
-// before it is written.
+// Capability pages, and the Reference pages (the package matrix and one page per package, the glossary, the Error codes
+// and the Host's checks). Every page is projected, its links rewritten, and checked against the rules before it is
+// written. The ADRs stay private and have no page (owner, 2026-10-27), so a link to one becomes its own text.
 
 /** The folders the generator owns, relative to `website/`; it empties them before it writes. */
 export const GENERATED = ['content/docs/capabilities', 'content/docs/reference', '.generated'];
 
-export const ADR_REWRITES = 'website/lib/kit-sources/adr-rewrites.json';
-export const ADR_MANIFEST = 'website/lib/kit-sources/adr-manifest.json';
-export const MANIFEST_COMMAND = 'pnpm --dir website adr-manifest';
-
 const CAPABILITIES_ROUTE = '/docs/capabilities';
 const REFERENCE_ROUTE = '/docs/reference';
-const ADR_ROUTE = `${REFERENCE_ROUTE}/adr`;
 const PACKAGES_ROUTE = `${REFERENCE_ROUTE}/packages`;
 const GLOSSARY_ROUTE = `${REFERENCE_ROUTE}/glossary`;
 
@@ -145,38 +137,10 @@ function meta(title: string, pages: string[]) {
   return `${JSON.stringify({ title, pages }, null, 2)}\n`;
 }
 
-/** Projects every ADR with the reviewed rewrites. */
-export function projectAdrs(root: string): ProjectedAdr[] {
-  const rewrites = JSON.parse(readSource(root, ADR_REWRITES)) as AdrRewrite[];
-  const files = listDirectory(root, ADRS).filter((file) => /^\d{4}-.+\.md$/.test(file));
-  const unknown = rewrites.filter((rewrite) => !files.includes(`${rewrite.adr}.md`));
-  if (unknown.length > 0)
-    throw new Error(
-      `kit-sources: ${ADR_REWRITES} names ADRs that do not exist: ${unknown.map((rewrite) => rewrite.adr).join(', ')}`,
-    );
-  return files.map((file) => projectAdr(file.replace(/\.md$/, ''), readSource(root, `${ADRS}/${file}`), rewrites));
-}
-
-/** The passages the ADR projection leaves out, as the committed manifest lists them. */
-export function adrExclusions(adrs: ProjectedAdr[]): AdrExclusion[] {
-  return adrs.flatMap((adr) => adr.exclusions);
-}
-
-export function readManifest(root: string): AdrExclusion[] {
-  return JSON.parse(readSource(root, ADR_MANIFEST)) as AdrExclusion[];
-}
-
-/** Every generated page, checked; the ADR projection must leave out exactly what the committed manifest lists. */
+/** Every generated page, checked. */
 export function buildSite(root: string): GeneratedFile[] {
   const entries = skillEntries(root);
   const packages = readPackages(root, entries);
-  const adrs = projectAdrs(root);
-  const differences = compareManifest(adrExclusions(adrs), readManifest(root));
-  if (differences.length > 0) {
-    throw new Error(
-      `kit-sources: the ADR projection no longer leaves out what ${ADR_MANIFEST} lists; review the ADR change, then run ${MANIFEST_COMMAND} and review the manifest's diff:\n${differences.join('\n')}`,
-    );
-  }
 
   const routes: RouteMap = new Map<string, PageRoute>();
   const files: GeneratedFile[] = [];
@@ -192,8 +156,6 @@ export function buildSite(root: string): GeneratedFile[] {
     return { entry, source, title: titleOf(tree, source), body, top };
   });
   routes.set(SKILL, { route: CAPABILITIES_ROUTE });
-  for (const adr of adrs)
-    routes.set(`${ADRS}/${adr.slug}.md`, { route: `${ADR_ROUTE}/${adr.slug}`, anchors: adr.anchors });
 
   const glossarySource = readSource(root, GLOSSARY);
   const glossaryTree = parseMarkdown(glossaryMarkdown(projectGlossary(parseGlossary(glossarySource))));
@@ -240,35 +202,6 @@ export function buildSite(root: string): GeneratedFile[] {
     content: meta('Capabilities', ['index', ...groups('Capabilities'), '---Guides---', ...groups('Guides')]),
   });
 
-  // Reference: the ADRs.
-  for (const adr of adrs) {
-    rewriteLinks(adr.tree, `${ADRS}/${adr.slug}.md`, routes);
-    files.push(
-      markdownPage({
-        file: `content/docs/reference/adr/${adr.slug}.md`,
-        source: `${ADRS}/${adr.slug}.md`,
-        title: `ADR ${adr.slug.slice(0, 4)}: ${adr.title}`,
-        description: adr.description,
-        tree: adr.tree,
-      }),
-    );
-  }
-  files.push(
-    markdownPage({
-      file: 'content/docs/reference/adr/index.md',
-      source: ADRS,
-      title: 'Architecture decisions',
-      description: 'The decisions that shape the Kit and are expensive to reverse, each with its amendments.',
-      tree: parseMarkdown(
-        `| ADR | Decision |\n|---|---|\n${adrs.map((adr) => `| ${adr.slug.slice(0, 4)} | [${cell(adr.title)}](${ADR_ROUTE}/${adr.slug}) |`).join('\n')}\n`,
-      ),
-    }),
-  );
-  files.push({
-    path: 'content/docs/reference/adr/meta.json',
-    content: meta('Architecture decisions', ['index', ...adrs.map((adr) => adr.slug)]),
-  });
-
   // Reference: the glossary.
   rewriteLinks(glossaryTree, GLOSSARY, routes);
   files.push(
@@ -301,11 +234,10 @@ export function buildSite(root: string): GeneratedFile[] {
       file: 'content/docs/reference/index.md',
       source: 'website/lib/kit-sources/site.ts',
       title: 'Reference',
-      description: 'Every package, decision, term, Error code and Host check of the Kit.',
+      description: 'Every package, term, Error code and Host check of the Kit.',
       tree: parseMarkdown(
         [
           `- [Packages](${PACKAGES_ROUTE}): every package, the Capabilities it serves and the packages it references.`,
-          `- [Architecture decisions](${ADR_ROUTE}): the decisions that shape the Kit.`,
           `- [Glossary](${GLOSSARY_ROUTE}): the Kit's terms.`,
           `- [Error codes](${REFERENCE_ROUTE}/error-codes): the Errors the Kit's packages fail an Operation with.`,
           `- [Host checks](${REFERENCE_ROUTE}/composition-checks): the checks a Host runs when it is built and when it starts.`,
@@ -315,7 +247,7 @@ export function buildSite(root: string): GeneratedFile[] {
   );
   files.push({
     path: 'content/docs/reference/meta.json',
-    content: meta('Reference', ['index', 'packages', 'adr', 'glossary', 'error-codes', 'composition-checks']),
+    content: meta('Reference', ['index', 'packages', 'glossary', 'error-codes', 'composition-checks']),
   });
   return files;
 }

@@ -7,19 +7,15 @@ const from = '.agents/skills/pourya-kit/references/multi-tenancy.md';
 const routes: RouteMap = new Map([
   [
     '.agents/skills/pourya-kit/references/security.md',
-    { route: '/docs/capabilities/security', anchors: new Map([['continuations', 'continuations']]) },
-  ],
-  [from, { route: '/docs/capabilities/multi-tenancy', anchors: new Map([['testing', 'testing']]) }],
-  [
-    'docs/adr/0007-operation-context-set-by-the-scope-opener.md',
     {
-      route: '/docs/reference/adr/0007-operation-context-set-by-the-scope-opener',
+      route: '/docs/capabilities/security',
       anchors: new Map<string, string | null>([
-        ['amendment-2026-10-07-ticket-57-x', 'amendment-2026-10-07-x'],
-        ['requirements-for-15', null],
+        ['continuations', 'continuations'],
+        ['security', null],
       ]),
     },
   ],
+  [from, { route: '/docs/capabilities/multi-tenancy', anchors: new Map([['testing', 'testing']]) }],
 ]);
 
 function rewrite(markdown: string) {
@@ -31,16 +27,7 @@ function rewrite(markdown: string) {
 test('a link to a rendered source becomes its page, its anchor carried over', () => {
   assert.equal(rewrite('[trust](security.md#continuations)'), '[trust](/docs/capabilities/security#continuations)');
   assert.equal(rewrite('[tests](#testing)'), '[tests](#testing)');
-  assert.equal(
-    rewrite(
-      '[ADR 0007](../../../../docs/adr/0007-operation-context-set-by-the-scope-opener.md#amendment-2026-10-07-ticket-57-x)',
-    ),
-    '[ADR 0007](/docs/reference/adr/0007-operation-context-set-by-the-scope-opener#amendment-2026-10-07-x)',
-  );
-  assert.equal(
-    rewrite('[it](../../../../docs/adr/0007-operation-context-set-by-the-scope-opener.md#requirements-for-15)'),
-    '[it](/docs/reference/adr/0007-operation-context-set-by-the-scope-opener)',
-  );
+  assert.equal(rewrite('[it](security.md#security)'), '[it](/docs/capabilities/security)');
 });
 
 test('a link into the repository with no page becomes its own text, and a link to another site stays', () => {
@@ -49,6 +36,12 @@ test('a link into the repository with no page becomes its own text, and a link t
     'the structure tests',
   );
   assert.equal(rewrite('see [`docs/packages.md`](../../../../docs/packages.md)'), 'see `docs/packages.md`');
+  assert.equal(
+    rewrite(
+      'set by it ([ADR 0007](../../../../docs/adr/0007-operation-context-set-by-the-scope-opener.md#amendment-2026-10-07-x))',
+    ),
+    'set by it (ADR 0007)',
+  );
   assert.equal(rewrite('[Wolverine](https://wolverinefx.net/)'), '[Wolverine](https://wolverinefx.net/)');
 });
 

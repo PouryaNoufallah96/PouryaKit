@@ -22,7 +22,7 @@ const VOCABULARY: [string, RegExp][] = [
   ['tracker code (ticket #<n>)', /\b(?:tickets?|issues?|PRs?|pull requests?) #\d/gi],
   ['tracker code (#<n>)', /#\d{2,}/g],
   ['private plan citation (G.<n>, I.<n>)', /\b[GI]\.\d+/g],
-  ['private plan citation (section G)', /\bsection G\b/g],
+  ['private plan citation (section G)', /\bsection G\b/gi],
   ['private plan citation (plan section)', /\bplan section [A-Z]\b/gi],
 ];
 
@@ -37,7 +37,7 @@ const LOCAL_PATHS: [string, RegExp][] = [
   ['local path (/Users/)', /\/Users\//g],
   ['local path (/home/)', /\/home\//g],
   ['local path (/private/tmp/)', /\/private\/tmp\//g],
-  ['local path (Windows drive)', /(?<![A-Za-z0-9_$.])[A-Za-z]:\\{1,2}[A-Za-z0-9_.-]/g],
+  ['local path (Windows drive)', /(?<![A-Za-z0-9_$.])[A-Za-z]:(?:\\{1,2}|\/)[A-Za-z0-9_.-]/g],
 ];
 
 // A host GitHub serves a repository's content from, followed by a path or an SSH colon. A scheme is optional, so a URL
@@ -45,29 +45,24 @@ const LOCAL_PATHS: [string, RegExp][] = [
 const GITHUB_URL =
   /(?<![\w.-])(?:[a-z][a-z0-9+.-]*:\/\/)?(?:[\w.-]+@)?((?:[a-z0-9-]+\.)*(?:github\.com|github\.dev|githubusercontent\.com|github\.io|jsdelivr\.net))([/:][^\s"'`<>()[\]{}\\|^]*)?/gi;
 
-// The owner/repo shorthand a CLI takes (npx skills add <owner>/<repo>), with no host, alone or followed by a path.
-const SHORTHAND = /(?<![\w./-])([\w.-]+)\/([\w.-]+)(?![\w-])/g;
+// The owner/repo shorthand a CLI takes (npx skills add <owner>/<repo>), with no host, alone, after a `/` or followed by a
+// path: every two adjacent segments of a path are read as a pair, so a host-less /<owner>/<repo>/... counts too.
+const SHORTHAND = /(?<![\w.-])(?=([\w.-]+)\/([\w.-]+)(?![\w-]))/g;
 
 function repositoryOf(host: string, path: string): { owner: string; repository: string } | undefined {
   const segments = path
     .replace(/^:/, '/')
     .split(/[?#]/)[0]
     .split('/')
-    .filter((segment) => segment !== '')
-    .map((segment) => {
-      try {
-        return decodeURIComponent(segment);
-      } catch {
-        return segment;
-      }
-    });
+    .filter((segment) => segment !== '');
   const lowerHost = host.toLowerCase();
   let owner: string | undefined;
   let repository: string | undefined;
-  if (lowerHost === 'cdn.jsdelivr.net' || lowerHost.endsWith('.jsdelivr.net')) {
-    // cdn.jsdelivr.net/gh/<owner>/<repo>@<version>/<file>
-    if (segments[0]?.toLowerCase() !== 'gh') return undefined;
-    [owner, repository] = [segments[1], segments[2]];
+  if (lowerHost === 'jsdelivr.net' || lowerHost.endsWith('.jsdelivr.net')) {
+    // cdn.jsdelivr.net/gh/<owner>/<repo>@<version>/<file>, and its page www.jsdelivr.net/package/gh/<owner>/<repo>
+    const at = segments[0]?.toLowerCase() === 'package' ? 1 : 0;
+    if (segments[at]?.toLowerCase() !== 'gh') return undefined;
+    [owner, repository] = [segments[at + 1], segments[at + 2]];
   } else if (lowerHost === 'api.github.com') {
     // api.github.com/repos/<owner>/<repo>
     if (segments[0]?.toLowerCase() !== 'repos') return undefined;
@@ -97,17 +92,32 @@ function isPrivate(owner: string, repository: string) {
   return owner.toLowerCase() === PRIVATE_OWNER && normalizeRepository(repository) === PRIVATE_REPOSITORY;
 }
 
-/** Every reference to the private repository in `text`: a URL on any GitHub host, with or without a scheme, or a bare owner/repo. */
-export function privateRepositoryReferences(text: string): Violation[] {
+// An address as GitHub reads it: its percent escapes decoded over the whole text, so an escaped `/` or `:` (a URL inside
+// another's query) separates as the character does, and a line break after a `/` or a `:` undone, since a hard-wrapped
+// source may break an address there and a page renders it on one line. Each escape is one byte, enough for the ASCII
+// names compared.
+function asAddressed(text: string) {
+  return text
+    .replace(/%([0-9a-f]{2})/gi, (_, hex: string) => String.fromCharCode(Number.parseInt(hex, 16)))
+    .replace(/(?<=[/:])[^\S\n]*\n[^\S\n]*/g, '');
+}
+
+/** Every reference to the private repository in `source`: a URL on any GitHub host, with or without a scheme, or a bare owner/repo. */
+export function privateRepositoryReferences(source: string): Violation[] {
+  const text = asAddressed(source);
   const found: Violation[] = [];
+  // Where each URL found is, so an owner/repo pair inside it is not found a second time.
+  const urls: [number, number][] = [];
   for (const match of text.matchAll(GITHUB_URL)) {
     const repository = repositoryOf(match[1], match[2] ?? '');
     if (repository && isPrivate(repository.owner, repository.repository)) {
       found.push({ rule: 'private repository', match: match[0] });
+      urls.push([match.index, match.index + match[0].length]);
     }
   }
   for (const match of text.matchAll(SHORTHAND)) {
-    if (isPrivate(match[1], match[2])) found.push({ rule: 'private repository', match: match[0] });
+    if (urls.some(([start, end]) => match.index >= start && match.index < end)) continue;
+    if (isPrivate(match[1], match[2])) found.push({ rule: 'private repository', match: `${match[1]}/${match[2]}` });
   }
   return found;
 }
@@ -129,14 +139,15 @@ export function addressViolations(text: string): Violation[] {
 }
 
 /**
- * Text with its soft white space read as one space: a line break inside a block, as Markdown and HTML render it. A blank
- * line is a block's end, and stays one, so a phrase never runs from one block into the next, such as a table's cells.
+ * Text with its soft white space read as one space: a line break inside a block, as Markdown and HTML render it, and any
+ * other white space, a no-break space included. A blank line is a block's end, and stays one, so a phrase never runs from
+ * one block into the next, such as a table's cells.
  */
 export function softSpaced(text: string): string {
   return text
-    .replace(/[ \t]*\n(?:[ \t]*\n)+[ \t]*/g, '\n\n')
-    .replace(/[ \t]*(?<!\n)\n(?!\n)[ \t]*/g, ' ')
-    .replace(/[ \t]+/g, ' ');
+    .replace(/[^\S\n]*\n(?:[^\S\n]*\n)+[^\S\n]*/g, '\n\n')
+    .replace(/[^\S\n]*(?<!\n)\n(?!\n)[^\S\n]*/g, ' ')
+    .replace(/[^\S\n]+/g, ' ');
 }
 
 /** The rules only rendered text must pass: no delivery vocabulary, no tracker code and no private plan citation. */

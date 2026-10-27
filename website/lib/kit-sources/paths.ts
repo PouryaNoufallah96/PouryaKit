@@ -4,7 +4,6 @@ import path from 'node:path';
 // The Kit's sources, as paths relative to the repository root.
 export const SKILL = '.agents/skills/pourya-kit/SKILL.md';
 export const REFERENCES = '.agents/skills/pourya-kit/references';
-export const ADRS = 'docs/adr';
 export const GLOSSARY = 'GLOSSARY.md';
 export const PACKAGES = 'src';
 export const INVENTORY = 'scripts/packaging/inventory.json';

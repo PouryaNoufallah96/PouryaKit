@@ -20,6 +20,10 @@ const privateShapes = [
   'https://github.dev/PouryaNoufallah96/PouryaKit',
   'npx skills add PouryaNoufallah96/PouryaKit',
   'see PouryaNoufallah96/PouryaKit/blob/main/x.cs',
+  'https://github.com/PouryaNoufallah96/\nPouryaKit/blob/main/x.cs',
+  'https://example.com/?u=https%3A%2F%2Fgithub.com%2FPouryaNoufallah96%2FPouryaKit',
+  'https://www.jsdelivr.net/package/gh/PouryaNoufallah96/PouryaKit',
+  '/PouryaNoufallah96/PouryaKit/blob/main/x.cs',
 ];
 
 test('every shape of a URL or name GitHub resolves to the private repository fails, whatever its case', () => {
@@ -72,6 +76,8 @@ test("the private plan's citations fail in text: a decision of section G, a row 
     'Plan section D sketched',
     'as plan\nsection C expects',
     'see spec\n  #183',
+    'Section G decides',
+    'as plan\u00a0section C expects',
   ]) {
     assert.ok(vocabularyViolations(text).length > 0, text);
   }
@@ -111,6 +117,7 @@ test('a local path fails: a macOS or Linux home, the macOS temporary directory a
     'C:\\Users\\ada\\kit',
     'D:\\\\work\\\\kit',
     'D:\\repo',
+    'D:/repo',
   ]) {
     assert.ok(addressViolations(`at ${path}`).length > 0, path);
   }
@@ -165,6 +172,8 @@ test('a story or a session of the delivery fails by its number; the words alone,
     'stories 70 and 71',
     'in session 6',
     "session 7's reports",
+    'Story\u00a071 requires',
+    'in session\u00a06',
   ]) {
     assert.ok(vocabularyViolations(text).length > 0, text);
   }
