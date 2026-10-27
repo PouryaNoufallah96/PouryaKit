@@ -1,0 +1,55 @@
+website/app/(home)/page.tsx
+  s_76e27a52bbdbcf::t_0d09e2902af7c3 19,71-82,109-116,140-142,158
+  s_76e27a52bbdbcf::t_b67c628ad0c16d 17
+website/content/docs/get-started/first-host.mdx
+  s_76e27a52bbdbcf::t_518d65ac3fee39 36,47,76,89,115-116,123,125-126,128-129,131-132,134-135
+website/content/docs/templates/monolith.mdx
+  s_76e27a52bbdbcf::t_ec6c81607ec184 52,60-61
+website/content/docs/decision-guides/template-choice.mdx
+  s_76e27a52bbdbcf::t_a2ebf074a007e8 11,26-28
+website/content/docs/decision-guides/stream-or-ef-core-aggregate.mdx
+  s_76e27a52bbdbcf::t_fdb36d8d48ded8 22
+website/content/docs/decision-guides/in-process-or-rabbitmq.mdx
+  s_76e27a52bbdbcf::t_b8086390b31b0f 21,48,64
+website/content/docs/decision-guides/s3-or-azure-blob.mdx
+  s_76e27a52bbdbcf::t_9f3e9e2b81d0e3 19,21,63,66
+website/content/docs/templates/modular-monolith.mdx
+  s_76e27a52bbdbcf::t_a03e0efdad259a 51
+website/content/docs/get-started/prerequisites.mdx
+  s_76e27a52bbdbcf::t_c9071c344fc994 19
+website/content/docs/get-started/add-a-module.mdx
+  s_76e27a52bbdbcf::t_b886e975b5db8a 11,25,36,66,73
+website/content/docs/get-started/install-templates.mdx
+  s_76e27a52bbdbcf::t_c9071c344fc994 11
+website/content/docs/templates/service.mdx
+  s_76e27a52bbdbcf::t_c1ec1b9f48362c 11,34,41,51,59
+website/content/docs/templates/index.mdx
+  s_76e27a52bbdbcf::t_db15f3327bcb8e 11
+website/content/docs/index.mdx
+  s_76e27a52bbdbcf::t_498e25652a00ea 15
+  s_76e27a52bbdbcf::t_b03bafb8d0f2b3 56,60,73,76,78-79
+website/content/docs/decision-guides/dapper-or-ef-core-page.mdx
+  s_76e27a52bbdbcf::t_73ff75f0f62cad 11,61-62,65
+website/content/docs/proving-sample.mdx
+  s_76e27a52bbdbcf::t_90f257194bef1e 11,35
+  s_76e27a52bbdbcf::t_550af80e952aed 55
+docs/acceptance.md
+  s_76e27a52bbdbcf::t_5b5e0320e6df46 3082
+  s_76e27a52bbdbcf::t_1d1f076d549646 3074,3077
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "14788a1883b4d5130bb1ce286928ac2a4a76ea0f",
+  "prompts": {},
+  "sessions": {
+    "s_76e27a52bbdbcf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cde6d05e-07a5-4e5c-903e-7974d318c31e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
