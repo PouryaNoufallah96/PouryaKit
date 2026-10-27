@@ -1,0 +1,186 @@
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Categories/Events/DomainEventHandlers/CountProductInCategoryDomainEventHandler.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 11,28
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommand.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 5,12
+website/content/docs/concepts/unit-of-work.mdx
+  s_76e27a52bbdbcf::t_e59b8aca870050 1-7,9-10,12-15,17-21,23-28,30-32,34-68
+  s_76e27a52bbdbcf::t_486146401dbd47 8,11,16,22,29,33
+website/content/docs/concepts/host-and-module.mdx
+  s_76e27a52bbdbcf::t_611cae140d8a36 1-7,9-12,14-23,25,27-29,31-64
+  s_76e27a52bbdbcf::t_486146401dbd47 8,13,24,26
+  s_76e27a52bbdbcf::t_e168b36fe22f68 30
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RemoveProducts/RemoveProductsCommand.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 8,18
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommand.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 7,12
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/OpenStockItem/OpenStockItemIntegrationEventHandler.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 11,24
+tests/ModularMonolith.Tests/SecurityTests.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 148,185
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 28,56
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsCommandHandler.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 35,42
+website/content/docs/concepts/domain-event.mdx
+  s_76e27a52bbdbcf::t_486146401dbd47 8,11,16,18,45,54,74,80
+  s_76e27a52bbdbcf::t_7bb1bc9853fef9 1-7,9-10,12-15,17,19-44,46-53,55-73,75-79,81-90
+website/content/docs/concepts/operation-result-error.mdx
+  s_76e27a52bbdbcf::t_12061ceece091e 56
+  s_76e27a52bbdbcf::t_e51a362f4ee95a 1-7,9,11-17,19-21,23-25,27-49,51-55,57-69
+  s_76e27a52bbdbcf::t_486146401dbd47 8,10,18,22,26,50
+website/content/docs/guides/meta.json
+  s_76e27a52bbdbcf::t_43614f8c815ccf 1-19
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/ProductSnapshotMapper.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 7,16
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/ReconcileStock/ReconcileStockCommandHandler.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 8,29
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryHandler.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 7,41
+website/content/docs/guides/secure-an-operation.mdx
+  s_76e27a52bbdbcf::t_486146401dbd47 8,16,34,41,52,73
+  s_76e27a52bbdbcf::t_6ba28bf77b10ec 1-7,9-15,17-33,35-40,42-51,53-72,74-89
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261005180000_Receipts.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 8,18
+website/content/docs/guides/validate.mdx
+  s_76e27a52bbdbcf::t_4e8cea9b24c1f0 34
+  s_76e27a52bbdbcf::t_e4520ededdf57a 27
+  s_76e27a52bbdbcf::t_03f708c4e65752 1-7,9-15,17-26,28-33,35-40,42-49,51-80
+  s_76e27a52bbdbcf::t_486146401dbd47 8,41,50
+  s_76e27a52bbdbcf::t_895ec8f4eeae8d 16
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommandValidator.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 5,15
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/GetStockItem/GetStockItemEndpoint.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 9,20
+website/content/docs/guides/publish-and-subscribe.mdx
+  s_76e27a52bbdbcf::t_486146401dbd47 8,11,25,34,41,48,57,73,78
+  s_76e27a52bbdbcf::t_0498ca9cb88e53 64
+  s_76e27a52bbdbcf::t_89144a965384ed 3
+  s_76e27a52bbdbcf::t_c52b1e3124f9ca 1-2,4-7,9-10,12-24,26-33,35-40,42-47,49-56,58-63,65-72,74-77,79-112
+samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/Events/V1/ProductSnapshotV1.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 3,12
+website/content/docs/guides/index.mdx
+  s_76e27a52bbdbcf::t_8af58f19e912f8 1-5,7-41
+  s_76e27a52bbdbcf::t_486146401dbd47 6
+tests/ModularMonolith.Tests/DomainEventTests.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 13,35
+website/content/docs/guides/schedule-commands.mdx
+  s_76e27a52bbdbcf::t_af2e8086c885d8 1-7,9,12-13,15-18,20-27,29-43,45-57,59-73,75-100,102-111
+  s_76e27a52bbdbcf::t_486146401dbd47 8,10-11,14,19,28,44,58,74,101
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/DomainEvents/ProductCreatedDomainEvent.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 7,9
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 217,232
+website/content/docs/concepts/gateway-and-mcp-tools.mdx
+  s_76e27a52bbdbcf::t_486146401dbd47 8,10,13,21,31
+  s_76e27a52bbdbcf::t_16a39d79cffac0 52
+  s_76e27a52bbdbcf::t_5fa56f3ad62f2e 1-7,9,11-12,14-20,22-30,32-51,53-62
+website/content/docs/concepts/meta.json
+  s_76e27a52bbdbcf::t_e720c2d28cb1bf 1-19
+tests/ModularMonolith.Tests/IdempotencyTests.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 160,191
+website/content/docs/guides/paged-query.mdx
+  s_76e27a52bbdbcf::t_df4a2b93ab14d3 1-7,9-10,12-46,48-88
+  s_76e27a52bbdbcf::t_486146401dbd47 8,11,47
+website/content/docs/guides/request-idempotency.mdx
+  s_76e27a52bbdbcf::t_77db7b19bdf0a3 1-7,9-15,17-31,33-47,49-94
+  s_76e27a52bbdbcf::t_486146401dbd47 16,32,48
+  s_76e27a52bbdbcf::t_700d69cc976b61 8
+website/content/docs/concepts/snapshots.mdx
+  s_76e27a52bbdbcf::t_dd47fc65bc4068 75
+  s_76e27a52bbdbcf::t_486146401dbd47 8,10,13,27,36,45,52,56,81
+  s_76e27a52bbdbcf::t_73972af6628c4e 1-7,9,11-12,14-26,28-35,37-44,46-51,53-55,57-74,76-80,82-91
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Errors/ProductErrors.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 5,24
+website/content/docs/concepts/operation-context.mdx
+  s_76e27a52bbdbcf::t_e6e907b7b33d29 1-7,9-19,21,23,25-27,29-68
+  s_76e27a52bbdbcf::t_486146401dbd47 8,20,22,24,28
+samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Features/OpenQuote/OpenQuoteCommandHandler.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 11,25
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandValidator.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 5,14
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261007120000_IdempotencyKeys.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 8,18
+website/content/docs/guides/test-a-feature.mdx
+  s_76e27a52bbdbcf::t_f103445a7cf551 1-15,17-24,26-31,33-35,37-100
+  s_76e27a52bbdbcf::t_486146401dbd47 16,25,32,36
+website/content/docs/concepts/saga.mdx
+  s_76e27a52bbdbcf::t_486146401dbd47 8,10,13,18,22,34
+  s_76e27a52bbdbcf::t_561f56507c073d 1-7,9,11-12,14-17,19-21,23-33,35-65
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/Notifications/AnnounceNewProductNotificationHandler.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 9,28
+website/content/docs/concepts/composition-and-startup-checks.mdx
+  s_76e27a52bbdbcf::t_486146401dbd47 8,10,21,53,59,62
+  s_76e27a52bbdbcf::t_ec782c8731a13e 1-7,9,11-20,22-52,54-58,60-61,63-72
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Entities/Account.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 7,54
+samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/Events/V1/ProductCreatedV1.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 3,10
+tests/ModularMonolith.Tests/Sagas/ShippingModule.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 18,28,55,62,91,98
+website/content/docs/guides/tenant-scoped-module.mdx
+  s_76e27a52bbdbcf::t_babd0b1bbfcd0c 1-7,9-24,26-31,33-51,53-81,83-92
+  s_76e27a52bbdbcf::t_486146401dbd47 8,25,32,52,82
+website/content/docs/guides/add-an-endpoint.mdx
+  s_76e27a52bbdbcf::t_486146401dbd47 8,11,16,43,50
+  s_76e27a52bbdbcf::t_b86373d9d06062 1-7,9-10,12-15,17-42,44-49,51-86
+samples/ModularMonolith/src/ModularMonolith.Host/CallerPermissions.cs
+  s_76e27a52bbdbcf::t_e2841db383fa23 9,31
+website/content/docs/concepts/outbox-and-notifications.mdx
+  s_76e27a52bbdbcf::t_26feabf7d3a670 1-7,9,11-21,23-25,27-51,53-68
+  s_76e27a52bbdbcf::t_486146401dbd47 8,22,26,52
+  s_76e27a52bbdbcf::t_f6f40dbc31f55c 10
+website/content/docs/concepts/index.mdx
+  s_76e27a52bbdbcf::t_486146401dbd47 6,11
+  s_76e27a52bbdbcf::t_170781afa56074 1-5,7-10,12-45
+samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Features/PostEntry/PostEntryCommandHandler.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 10,26
+website/content/docs/concepts/integration-events.mdx
+  s_76e27a52bbdbcf::t_486146401dbd47 8,13,18,20,26-28,30,34,38,54,60
+  s_76e27a52bbdbcf::t_7e83511b23bfe3 1-7,9-12,14-17,19,21-25,29,31-33,35-37,39-53,55-59,61-73
+website/content/docs/guides/prepare-a-release.mdx
+  s_76e27a52bbdbcf::t_27e7284bbd96f8 1-7,9-10,12-48,50-92
+  s_76e27a52bbdbcf::t_486146401dbd47 8,11,49
+samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Features/ExpireQuote/ExpireQuoteCommandHandler.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 10,20
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQuery.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 5,20
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Entities/Product.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 38,59
+website/content/docs/concepts/stream.mdx
+  s_76e27a52bbdbcf::t_486146401dbd47 8,11,16,28,48
+  s_76e27a52bbdbcf::t_a367661fe6f5e5 1-7,9-10,12-15,17-27,29-47,49-58
+website/content/docs/guides/add-a-migration.mdx
+  s_76e27a52bbdbcf::t_78a648e3eab520 1-7,9-15,17-35,37-50,52-65,67-86,88-100
+  s_76e27a52bbdbcf::t_486146401dbd47 8,16,36,51,66,87
+website/content/docs/guides/host-recipes.mdx
+  s_76e27a52bbdbcf::t_1d61bb5dcf337a 1-7,9-10,12-50,52-78
+  s_76e27a52bbdbcf::t_486146401dbd47 8,11,51
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryValidator.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 6,12
+samples/ModularMonolith/src/Modules/Inventory/Inventory/CatalogProducts/Features/CopyProduct/CopyProductIntegrationEventHandler.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 10,39
+tests/ModularMonolith.Tests/TenancyTests.cs
+  s_76e27a52bbdbcf::t_c44cc027d7aacd 36,58
+website/content/docs/guides/create-a-command.mdx
+  s_76e27a52bbdbcf::t_486146401dbd47 8,11,16,25,43,52,77,80
+  s_76e27a52bbdbcf::t_2d5ac2f89baf8c 1-7,9-10,12-15,17-24,26-42,44-51,53-76,78-79,81-93
+website/content/docs/concepts/delayed-and-recurring-commands.mdx
+  s_76e27a52bbdbcf::t_cfd66f08e3872f 1-7,9-11,13-28,30-32,34-51,53-60,62-71
+  s_76e27a52bbdbcf::t_486146401dbd47 8,12,29,33,52,61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b2d22051398399cbd7211c7e1723d8c669b3fcb1",
+  "prompts": {},
+  "sessions": {
+    "s_76e27a52bbdbcf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cde6d05e-07a5-4e5c-903e-7974d318c31e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
