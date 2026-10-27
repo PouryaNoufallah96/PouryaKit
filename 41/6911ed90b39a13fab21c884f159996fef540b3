@@ -1,0 +1,79 @@
+website/content/capabilities/reporting-module.mdx
+  s_76e27a52bbdbcf::t_5391a62322547c 15
+  s_76e27a52bbdbcf::t_91624376a9beaa 41
+  s_76e27a52bbdbcf::t_fa9d8c59fe423a 34
+  s_76e27a52bbdbcf::t_0b7e17c74b40c8 10
+  s_76e27a52bbdbcf::t_5060f44d4e8eb6 48
+  s_76e27a52bbdbcf::t_10b3c81f5ada63 5
+website/content/capabilities/host-recipes.mdx
+  s_76e27a52bbdbcf::t_f6cc6e4482e63b 10
+  s_76e27a52bbdbcf::t_0add9d3dce6ea8 34
+  s_76e27a52bbdbcf::t_7457f38683962b 48
+website/content/capabilities/localization.mdx
+  s_76e27a52bbdbcf::t_f1879a41bcb73e 5
+  s_76e27a52bbdbcf::t_3bc18878611a0f 41
+  s_76e27a52bbdbcf::t_96151b6c2a2948 10
+docs/acceptance.md
+  s_76e27a52bbdbcf::t_47fbff7a2880a0 3081-3082
+  s_76e27a52bbdbcf::t_8884f258370d76 3083
+website/content/capabilities/templates.mdx
+  s_76e27a52bbdbcf::t_b504a5e54275e9 69
+  s_76e27a52bbdbcf::t_beb653355ebeea 5
+website/content/capabilities/dapper-reads.mdx
+  s_76e27a52bbdbcf::t_de18f8aa96fea7 10
+  s_76e27a52bbdbcf::t_e5e5bc210a6078 55
+website/content/capabilities/security.mdx
+  s_76e27a52bbdbcf::t_3c0c38e102a7c7 5
+website/content/capabilities/web.mdx
+  s_76e27a52bbdbcf::t_928a5c3d0d9e58 5
+  s_76e27a52bbdbcf::t_85389479567d16 49
+  s_76e27a52bbdbcf::t_7429be04fc51ad 10
+website/content/capabilities/reporting.mdx
+  s_76e27a52bbdbcf::t_c59589c1635096 10
+  s_76e27a52bbdbcf::t_349778760efc06 5
+  s_76e27a52bbdbcf::t_6361c58f4e5bb7 61
+website/content/capabilities/core.mdx
+  s_76e27a52bbdbcf::t_387cfaeae14eac 51
+  s_76e27a52bbdbcf::t_84a78907f3575d 10
+  s_76e27a52bbdbcf::t_cff6d480a7d3d6 64
+  s_76e27a52bbdbcf::t_16c86c1642cfd5 2
+  s_76e27a52bbdbcf::t_548fde0af7eeeb 5
+website/content/capabilities/reverse-proxy.mdx
+  s_76e27a52bbdbcf::t_2153b797332590 42
+  s_76e27a52bbdbcf::t_f176a244e072ee 10
+website/content/capabilities/grpc.mdx
+  s_76e27a52bbdbcf::t_e2060f2d82735c 5
+  s_76e27a52bbdbcf::t_36f1159344dc46 10
+website/content/capabilities/multi-tenancy.mdx
+  s_76e27a52bbdbcf::t_5e03ec655da056 8
+website/content/capabilities/openapi.mdx
+  s_76e27a52bbdbcf::t_06c1839b1abfc7 49
+  s_76e27a52bbdbcf::t_d5f9e8f69ec007 10
+  s_76e27a52bbdbcf::t_623bd84ed70d8f 5
+website/content/capabilities/realtime.mdx
+  s_76e27a52bbdbcf::t_57f43b18095f5a 41
+website/content/capabilities/aspire.mdx
+  s_76e27a52bbdbcf::t_aa116abb43a9ed 35
+  s_76e27a52bbdbcf::t_4b31d94a6f6b3f 49
+  s_76e27a52bbdbcf::t_f198abc804eb33 42
+.claude/agent-memory/kit-implementer/docs-site-facts.md
+  s_76e27a52bbdbcf::t_0751a5177ac283 53
+website/content/capabilities/observability.mdx
+  s_76e27a52bbdbcf::t_b28467a630a8cb 27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "416911ed90b39a13fab21c884f159996fef540b3",
+  "prompts": {},
+  "sessions": {
+    "s_76e27a52bbdbcf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cde6d05e-07a5-4e5c-903e-7974d318c31e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
