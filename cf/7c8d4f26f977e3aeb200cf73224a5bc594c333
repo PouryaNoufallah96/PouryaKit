@@ -1,0 +1,28 @@
+website/covers/covers.json
+  s_2907c73c709168::t_207d9191306730 154
+website/scripts/covers.ts
+  s_2907c73c709168::t_0c2f963b501a65 3
+  s_2907c73c709168::t_6b595a2a3bd6b0 4-7
+website/scripts/covers.test.mjs
+  s_2907c73c709168::t_c85bd767d109a6 16-24
+.claude/rules/website.md
+  s_2907c73c709168::t_e522c1500ccd97 25
+website/covers/README.md
+  s_2907c73c709168::t_834d120533a792 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cf7c8d4f26f977e3aeb200cf73224a5bc594c333",
+  "prompts": {},
+  "sessions": {
+    "s_2907c73c709168": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a1734560-a43c-4ccf-9966-072c809942ac",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
