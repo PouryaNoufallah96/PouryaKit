@@ -1,0 +1,71 @@
+---
+title: Service
+description: pouryakit-service, one Module in a Host of its own process, receiving another Host's Integration Events and Snapshots over RabbitMQ.
+---
+
+## What it is
+
+`pouryakit-service` generates the composition the Proving Sample's `Inventory.Host` runs: the Inventory Module alone, in a Host with its own database, receiving what Catalog publishes in another Host over a RabbitMQ broker. It holds the Host, its service defaults, Inventory, `Catalog.Contracts` for what it receives, and a smoke test.
+
+<Callout type="warn" title="A Host that receives needs its broker">
+  The service always joins RabbitMQ, on `ConnectionStrings:broker`, under the service name the template derives from `-n`. Start it before the Host that publishes: a message published before the service's queue exists on the broker reaches no queue of it.
+</Callout>
+
+## When to use it
+
+When you split a Module out of a modular monolith into a process of its own, as Inventory is split out in the Proving Sample. Inside one Host, keep the Module in the modular monolith: [In-process or RabbitMQ](/docs/decision-guides/in-process-or-rabbitmq) weighs the two.
+
+## Generate and run it
+
+<Steps>
+<Step>
+
+### Generate it
+
+```bash title="Terminal"
+dotnet new pouryakit-service -n Acme.Stock
+```
+
+</Step>
+<Step>
+
+### Give it PostgreSQL and a broker
+
+Its `appsettings.json` names the database `inventory` and the broker `amqp://guest:guest@localhost:5672/`. It migrates Inventory alone, with `InventoryDbContext`, and its launch profile listens on ports 7081 and 5081, so it runs beside a monolith or a modular monolith. [Running the generated Host](/docs/capabilities/templates#running-the-generated-host) has the PostgreSQL and migration commands; the broker is any RabbitMQ that connection string reaches.
+
+</Step>
+<Step>
+
+### Publish from another Host
+
+The publishing Host configures `ConnectionStrings:broker` and a service name of its own; a product Catalog creates there opens its stock item here. [A Host that receives](/docs/capabilities/rabbitmq#a-host-that-receives) shows what the service declares to receive it.
+
+</Step>
+</Steps>
+
+## What it composes
+
+| | Stated in |
+| --- | --- |
+| Only what the service needs: no Catalog, monolith Host or Reverse proxy | [The service](/docs/capabilities/templates#the-service) |
+| `Receive` and `ReceiveSnapshot` for Catalog's three wire names | [The service](/docs/capabilities/templates#the-service) |
+| One read, the stock item, to an authenticated caller of its tenant | [The service](/docs/capabilities/templates#the-service) |
+| Delivery between the two Hosts, proven with both running as processes | [The service](/docs/capabilities/templates#the-service) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="A subscription to an event no Module of the Host publishes">
+    Without its `Receive` declaration, the Host fails when it is built: the subscription's type has no wire name here, and the refusal names `Receive`.
+  </Accordion>
+  <Accordion title="Nothing arrives">
+    The wire name on `Receive` must be the publishing Module's, character for character. A misspelt one binds the queue to an exchange nobody publishes to, and no check across Hosts can see it.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="RabbitMQ between Hosts" href="/docs/capabilities/rabbitmq" description="The topology, the service name and what the Kit guarantees across the broker." />
+  <Card title="Modular monolith" href="/docs/templates/modular-monolith" description="The Host the service receives from." />
+</Cards>

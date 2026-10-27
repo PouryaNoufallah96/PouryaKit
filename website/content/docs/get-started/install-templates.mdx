@@ -1,0 +1,65 @@
+---
+title: Install the templates
+description: Install PouryaKit.Templates at the published version, which every solution it generates pins.
+---
+
+## What it is
+
+`PouryaKit.Templates` is a `dotnet new` template package with three [Project templates](/docs/reference/glossary#project-template): `pouryakit-monolith`, `pouryakit-modular-monolith` and `pouryakit-service`. Each starts a new application from the [Proving Sample's](/docs/reference/glossary#proving-sample) business code in one composition.
+
+<Callout type="warn" title="Name the version">
+  The template package's version becomes the Kit version every generated project pins, as `PouryaKitVersion` in its `Directory.Packages.props`. Without a version, the install takes whatever version its sources resolve that day. `@` separates the version; the SDK's help still shows `::`, which the SDK reports as deprecated when it is used.
+</Callout>
+
+## When to use it
+
+Once per machine, and again for each new Kit version you want new solutions to start from. A solution you already generated keeps its version until you change `PouryaKitVersion` in it.
+
+## Install and generate
+
+<Steps>
+<Step>
+
+### Install the template package
+
+From nuget.org, at the published version:
+
+<include lang="bash" meta='title="Terminal"'>./install-templates.sh</include>
+
+The install lists the three templates it added, by name and short name.
+
+</Step>
+<Step>
+
+### Generate a solution
+
+Pick one composition; [Choose a template](/docs/templates) compares them.
+
+```bash title="Terminal"
+dotnet new pouryakit-monolith -n Acme.Shop
+dotnet new pouryakit-modular-monolith -n Acme.Shop
+dotnet new pouryakit-service -n Acme.Stock
+```
+
+Each generates a solution in a folder named after `-n`, and restores it; `--no-restore` skips the restore.
+
+</Step>
+</Steps>
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="The restore fails">
+    The restore needs a NuGet source with the Kit's packages, and nuget.org has them: a configuration that leaves nuget.org out for a source without them fails the restore.
+  </Accordion>
+  <Accordion title="The SDK reports :: as deprecated">
+    The version was separated with `::`, the form the SDK's help still shows. Use `@`, as above.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Your first Host" href="/docs/get-started/first-host" description="Run the generated monolith against PostgreSQL and call it." />
+  <Card title="Project templates" href="/docs/capabilities/templates" description="How each name you pass to -n is used, and everything a template generates." />
+</Cards>

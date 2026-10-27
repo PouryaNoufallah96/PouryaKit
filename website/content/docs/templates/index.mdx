@@ -1,0 +1,61 @@
+---
+title: Choose a template
+description: Three compositions of the same business code, a monolith, a modular monolith and a service, and what sets them apart.
+---
+
+## What they are
+
+`PouryaKit.Templates` holds three [Project templates](/docs/reference/glossary#project-template). Each starts a new application from the [Proving Sample's](/docs/reference/glossary#proving-sample) business code; they differ only in how that code is composed into a [Host](/docs/reference/glossary#host).
+
+<Callout title="The same business code in every template">
+  Aggregates, commands, queries, handlers, validators, the repository, Dapper reads and every event handler are the Proving Sample's own files in each template. Only the Composition Root and the endpoint adapters differ, so moving from one composition to another changes no aggregate, handler, validator or read.
+</Callout>
+
+## When to use each
+
+| Template | Short name | Choose it when |
+| --- | --- | --- |
+| [Monolith](/docs/templates/monolith) | `pouryakit-monolith` | You start with one Module and no need for Modularity yet |
+| [Modular monolith](/docs/templates/modular-monolith) | `pouryakit-modular-monolith` | You have, or soon will have, several Modules in one Host |
+| [Service](/docs/templates/service) | `pouryakit-service` | One Module runs in a Host of its own and receives another Host's Integration Events and Snapshots over RabbitMQ |
+
+[Template choice](/docs/decision-guides/template-choice) walks through the questions that decide it.
+
+## Install and generate
+
+<Steps>
+<Step>
+
+### Install the template package
+
+<include lang="bash" meta='title="Terminal"'>../get-started/install-templates.sh</include>
+
+</Step>
+<Step>
+
+### Generate the one you chose
+
+```bash title="Terminal"
+dotnet new pouryakit-monolith -n Acme.Shop
+dotnet new pouryakit-modular-monolith -n Acme.Shop
+dotnet new pouryakit-service -n Acme.Stock
+```
+
+</Step>
+</Steps>
+
+## What every template holds
+
+| | Stated in |
+| --- | --- |
+| The Host's composition and startup checks, the same in each | [What each composition composes](/docs/capabilities/templates#what-each-composition-composes) |
+| A smoke test that hosts the generated Host against PostgreSQL in a container | [The smoke test](/docs/capabilities/templates#the-smoke-test) |
+| The service defaults recipes, as the application's own code | [The optional recipes](/docs/capabilities/templates#the-optional-recipes) |
+| Every Kit package pinned at the template package's version | [Install and generate](/docs/capabilities/templates#install-and-generate) |
+
+## Next steps
+
+<Cards>
+  <Card title="Your first Host" href="/docs/get-started/first-host" description="Run the monolith and call it." />
+  <Card title="Project templates" href="/docs/capabilities/templates" description="The full reference: every file, setting and test a template generates." />
+</Cards>

@@ -1,0 +1,76 @@
+---
+title: In-process or RabbitMQ
+description: Whether a Module's Integration Events and Snapshots stay inside one Host or cross to other Hosts through RabbitMQ.
+---
+
+## What it decides
+
+How [Integration Events](/docs/reference/glossary#integration-event) and [Snapshots](/docs/reference/glossary#snapshot) reach the Modules that subscribe to them. Inside one Host they go through the Host's Outbox to its own subscriptions. With `PouryaKit.Messaging.Wolverine.RabbitMq`, a Host also sends them to, and receives them from, other Hosts through a RabbitMQ broker.
+
+<Callout title="A Host's choice, not a Module's">
+  Modules, Contracts and Feature code never reference the RabbitMQ package, and nothing in them changes when a Host adds it. The same Inventory Module runs in the modular monolith and, unchanged, in a Host of its own.
+</Callout>
+
+## When to choose each
+
+| | In-process | RabbitMQ |
+| --- | --- | --- |
+| Where the subscribing Module runs | In the same Host as the publisher | In another Host, such as one generated with `pouryakit-service` |
+| What the Host composes | The Outbox of its message store | The same, and `UsePouryaKitRabbitMq` with a service name, the Host's queue |
+| What a receiving Host declares | Nothing: its Modules publish what they subscribe to | `Receive` or `ReceiveSnapshot` for each wire name another Host publishes |
+| Delivery | Each effect in a subscribing Module's database applied once, by its Receipt | The same across the broker; an effect outside the database is at least once, as inside one Host |
+
+Keep Modules in one Host while they deploy together; reach for the broker when a Module must run, scale or fail in a process of its own.
+
+## Move a Module to its own Host
+
+<Steps>
+<Step>
+
+### Generate the receiving Host
+
+```bash title="Terminal"
+dotnet new pouryakit-service -n Acme.Stock
+```
+
+</Step>
+<Step>
+
+### Declare what it receives
+
+The receiving Host declares each Integration Event and Snapshot another Host publishes, under the publishing Module's wire name: [A Host that receives](/docs/capabilities/rabbitmq#a-host-that-receives).
+
+</Step>
+<Step>
+
+### Give each Host its service name and broker
+
+Both Hosts configure `ConnectionStrings:broker`, each under a service name of its own: [The service name](/docs/capabilities/rabbitmq#the-service-name). Start the receiving Host first, so its queue exists before anything is published to it.
+
+</Step>
+</Steps>
+
+## What the Kit guarantees
+
+| | Stated in | Proven by |
+| --- | --- | --- |
+| Inside one Host | [Messaging guarantees](/docs/capabilities/messaging#what-the-kit-guarantees) | `IntegrationEventTests` |
+| Across the broker | [What the Kit guarantees across the broker](/docs/capabilities/rabbitmq#what-the-kit-guarantees-across-the-broker) | `RabbitMqDeliveryTests` |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="The receiving Host does not build">
+    A subscription whose type no Module of the Host publishes has no wire name until the Host declares it with `Receive`; the refusal names `Receive`. A declaration nothing in the Host handles fails too, naming `Subscribe<T, THandler>`.
+  </Accordion>
+  <Accordion title="Nothing arrives">
+    The wire name is the publishing Module's, character for character: a misspelt one binds the queue to an exchange nobody publishes to. Two different Hosts that share a service name share one queue and split its messages. No check across Hosts can see either.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="RabbitMQ between Hosts" href="/docs/capabilities/rabbitmq" description="The topology, dead letters at the broker queue and deploying a Host that receives." />
+  <Card title="Service" href="/docs/templates/service" description="The template for a Module in a Host of its own." />
+</Cards>

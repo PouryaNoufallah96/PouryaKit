@@ -1,0 +1,96 @@
+---
+title: The Proving Sample
+description: The application whose passing tests are the evidence that the Kit's guarantees hold, and the source of the templates' business code.
+---
+
+## What it is
+
+The [Proving Sample](/docs/reference/glossary#proving-sample) is a modular monolith built on the Kit: four Modules, the Hosts that compose them and the tests that prove every guarantee against PostgreSQL, and against RabbitMQ and Redis where they apply. The [Project templates](/docs/reference/glossary#project-template) generate their business code from it, and the code blocks on this site titled with a file's name are quoted from it, or from the Kit's tests, when the site is built.
+
+<Callout title="Read its code through the modular monolith">
+  The templates are generated from the sample, never maintained beside it: aggregates, commands, queries, handlers, validators, reads and event handlers are the sample's own files, and in the modular monolith its Composition Roots and endpoints are too. `dotnet new pouryakit-modular-monolith` gives you its Modules to read. Its tests are the Kit's own; a generated solution has a smoke test instead.
+</Callout>
+
+## When to use it
+
+As the model for your own code: how a Module is laid out, what a Feature's files hold, how Modules talk, and how a test runs an Operation against a real database.
+
+## The Modules
+
+| Module | Write model | What it shows |
+| --- | --- | --- |
+| Catalog | EF Core, tenant-scoped | Products and categories; publishes `ProductCreatedV1`, `ProductCreatedV2` and a Snapshot of each product; reads with Dapper; an agent that answers questions about products |
+| Inventory | EF Core | Opens a stock item for each new product, keeps a copy of Catalog's products from their Snapshots, and reconciles stock on a cadence |
+| Billing | EF Core | Opens a price list for each new product, and a welcome quote for each new account, whose expiry is a delayed command |
+| Ledger | Stream | Accounts and their entries as appended events; publishes `AccountOpenedV1`, which Billing receives |
+
+## The Hosts
+
+| Project | What it is |
+| --- | --- |
+| `ModularMonolith.Host` | The four Modules in one Host, with the Kit's report Module |
+| `Inventory.Host` | Inventory alone, receiving Catalog's Integration Events and Snapshots over RabbitMQ: the service template's composition |
+| `ModularMonolith.ReverseProxy` | A YARP [Reverse proxy](/docs/reference/glossary#reverse-proxy) of its own process in front of the Hosts |
+| `ModularMonolith.AppHost` | An Aspire AppHost that runs the Hosts and their resources |
+| `ModularMonolith.ServiceDefaults` | The service defaults recipes: telemetry, health, service discovery, resilience and Serilog |
+
+## A Feature, file by file
+
+A Module is split into [Business Areas](/docs/reference/glossary#business-area), such as Catalog's Products, each with its entities, data access, events and Features together. A [Feature](/docs/reference/glossary#feature) is one command or query and everything that serves it, in a folder of its own. Renaming a product is `Products/Features/RenameProduct`:
+
+<Steps>
+<Step>
+
+### The command
+
+A record of what the caller asks for. It also names the cache entry it makes stale, so the Kit removes it once the command commits.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommand.cs" region="rename-product-command" />
+
+</Step>
+<Step>
+
+### The validator
+
+Run by the pipeline's one validation step, before the handler; its failures answer 400 with each failure's code and target.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandValidator.cs" region="rename-product-validator" />
+
+</Step>
+<Step>
+
+### The handler
+
+Loads the aggregate through the repository and returns a Result. The Unit of Work saves the change and commits.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandHandler.cs" region="rename-product-handler" />
+
+</Step>
+<Step>
+
+### The endpoint
+
+Beside them, `RenameProductEndpoint` maps the HTTP route and sends the command through Catalog's Gateway, with the Operation Context of the caller: [Endpoints](/docs/capabilities/web#endpoints).
+
+</Step>
+</Steps>
+
+## What its tests prove
+
+The guarantees are proven by the sample's tests, a test class per behaviour. A few to start from:
+
+| Behaviour | Proven by |
+| --- | --- |
+| An Operation commits once, or writes nothing | `UnitOfWorkTests` |
+| A product Catalog creates opens one stock item in Inventory, through an Integration Event | `IntegrationEventTests` |
+| Each Module keeps to its own boundaries | `ModuleBoundaryTests` |
+| A misconfigured Host fails when it is built or started | `CompositionCheckTests`, `MisconfiguredHostTests` |
+
+[Testing](/docs/capabilities/testing) shows how to write the same kind of test against your own Host.
+
+## Next steps
+
+<Cards>
+  <Card title="Modular monolith" href="/docs/templates/modular-monolith" description="Generate the sample's Modules as a solution of your own." />
+  <Card title="Testing" href="/docs/capabilities/testing" description="The fixture, the Operation Context in tests and the delivery assertions." />
+</Cards>

@@ -1,0 +1,64 @@
+---
+title: Modular monolith
+description: pouryakit-modular-monolith, several Modules in one Host, each reached through its Gateway.
+---
+
+## What it is
+
+`pouryakit-modular-monolith` generates one Host of [Modules](/docs/reference/glossary#module): the Proving Sample's Catalog with `Catalog.Contracts`, Billing, Inventory, and Ledger, a Stream Module, with `Ledger.Contracts`. Each Module has a Composition Root of its own, an `IModuleDefinition` the Host adds with `AddPouryaKitModules`, and its endpoints send through the Module's [Gateway](/docs/reference/glossary#gateway).
+
+<Callout type="warn" title="Calls between Modules stay in-process">
+  Integration Events and Snapshots go through the Host's Outbox, and a question goes through the owning Module's Contracts. Modules of one Host never call each other over HTTP.
+</Callout>
+
+## When to use it
+
+When the application has, or soon will have, more than one business boundary, and they deploy together. It also shows each way Modules talk: Catalog publishes what Inventory and Billing receive, Ledger keeps its accounts as a [Stream](/docs/reference/glossary#stream), and Catalog's agent runs on the AI Capability.
+
+## Generate and run it
+
+<Steps>
+<Step>
+
+### Generate it
+
+```bash title="Terminal"
+dotnet new pouryakit-modular-monolith -n Acme.Shop
+```
+
+</Step>
+<Step>
+
+### Migrate each EF Core Module
+
+Run it as [Your first Host](/docs/get-started/first-host) runs the monolith, and migrate Billing (`BillingDbContext`) and Inventory (`InventoryDbContext`) the same way as Catalog. Ledger needs no migration: Marten creates its tables itself.
+
+</Step>
+</Steps>
+
+## What it composes
+
+| | Stated in |
+| --- | --- |
+| The monolith's Capabilities, with Streams, AI and `PouryaKit.Modularity` | [What each composition composes](/docs/capabilities/templates#what-each-composition-composes) |
+| Ledger's Marten store joining the Host's message store | [Streams](/docs/capabilities/stream#registering) |
+| A cross-Module effect in the smoke test: a product Catalog creates opens its stock item in Inventory | [The smoke test](/docs/capabilities/templates#the-smoke-test) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="A declaration without its Module">
+    A declaration left on `builder.Services` in a Host of Modules fails the Host when it is built, naming its form on the Module's builder and the form that names the Module.
+  </Accordion>
+  <Accordion title="A ConfigureContainer after AddPouryaKitModules">
+    It replaces the container the checks install, and the Host fails when it starts, naming the call.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Add a Module" href="/docs/get-started/add-a-module" description="A Module of your own beside the sample's." />
+  <Card title="Service" href="/docs/templates/service" description="One Module in a Host of its own, over RabbitMQ." />
+  <Card title="Modules" href="/docs/capabilities/modules" description="The Composition Root, the Gateway and the Host's checks." />
+</Cards>

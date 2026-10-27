@@ -1,0 +1,76 @@
+---
+title: S3 or Azure Blob
+description: Which provider stores a Host's files behind IFileStorage, and what each one asks of your account.
+---
+
+## What it decides
+
+Which package supplies the Host's one implementation of `IFileStorage`, the File storage contract a Feature uploads, downloads and deletes through: `PouryaKit.Storage.S3` or `PouryaKit.Storage.AzureBlob`.
+
+<Callout title="Feature code is the same on either">
+  A Feature names only `IFileStorage` and never a cloud SDK, so changing provider changes the Host's registration and its configuration, not a Feature. A Host composes exactly one provider.
+</Callout>
+
+## When to choose each
+
+| | S3 | Azure Blob |
+| --- | --- | --- |
+| Stores | AWS S3, and S3-compatible stores such as MinIO | Azure Blob Storage, and Azurite for development |
+| Credentials | The AWS SDK's default chain on AWS; an access key and secret key for an S3-compatible store | The account key, through a connection string or a service URL with the account name and key |
+| What it does not take | | A connection string with only a SAS token, and Microsoft Entra credentials: the account key signs every presigned link |
+| Tested against | RustFS, an S3-compatible store | Azurite |
+
+Choose by where your files live. On Azure, the account key is the deciding constraint: an account that allows only Entra credentials cannot use this provider.
+
+## Set it up
+
+<Steps>
+<Step>
+
+### Create the bucket or container
+
+Neither provider creates one: the bucket or container must exist before the Host uses it.
+
+</Step>
+<Step>
+
+### Register the provider and bind its options
+
+[Registering](/docs/capabilities/storage#registering) has the registration and the configuration of each, and the options each one validates when the Host starts.
+
+</Step>
+<Step>
+
+### Store, then record
+
+No file store joins the Unit of Work's commit: store the file first, then record its key in the command's state. [Store, then record](/docs/capabilities/storage#store-then-record) shows the order and what to do with a file a failed command left.
+
+</Step>
+</Steps>
+
+## What the Kit guarantees
+
+| | Stated in | Proven by |
+| --- | --- | --- |
+| The contract behaves the same against each provider's store | [File storage guarantees](/docs/capabilities/storage#what-the-kit-guarantees) | `S3StorageTests`, `AzureBlobStorageTests` |
+| One provider per Host, validated before it serves | [One provider](/docs/capabilities/storage#one-provider) | `S3StorageTests`, `AzureBlobStorageTests` |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="The Host does not build: two providers">
+    A Host that registers a second `IFileStorage`, both providers included, fails when its container is built, naming each registration.
+  </Accordion>
+  <Accordion title="The Host does not start: invalid options">
+    The options are validated when the Host starts, which fails naming each problem: a missing bucket, region or container, a service URL that is not an absolute address, or a key without its pair.
+  </Accordion>
+  <Accordion title="A call throws the provider's exception">
+    A failure of the store itself, such as a refused credential, a missing bucket or an unreachable endpoint, is infrastructure, not a business outcome, and throws. A missing file is the not-found Error instead.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="File storage" href="/docs/capabilities/storage" description="The calls, their limits and testing against RustFS or Azurite." />
+</Cards>

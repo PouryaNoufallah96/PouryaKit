@@ -29,7 +29,7 @@ dotnet new pouryakit-service -n Acme.Stock
 - Each template generates a solution in a folder named after `-n`: `Acme.Shop.slnx`, `src/Acme.Shop.Host`, `src/Acme.Shop.ServiceDefaults`, `src/Acme.Shop.ReverseProxy` but in the service, the Modules under `src/Modules/` with their sample names, and `tests/Acme.Shop.Tests`. Without `-n` it takes the output folder's name.
 - `dotnet new` restores the solution once it is generated; `--no-restore` skips that. The restore needs a NuGet source with the Kit's packages.
 - `Directory.Packages.props` pins every Kit package at `$(PouryaKitVersion)`, the version the template package was packed with, and every third-party package at the version the Kit builds and tests with. Upgrade the Kit by changing `PouryaKitVersion`.
-- `global.json` pins the Kit's SDK and Microsoft.Testing.Platform; `.config/dotnet-tools.json` holds `dotnet-ef`.
+- `global.json` pins the Kit's SDK, which a later patch of the same feature band also satisfies (`rollForward` is `latestPatch`), and Microsoft.Testing.Platform; `.config/dotnet-tools.json` holds `dotnet-ef`.
 
 ## What each composition composes
 
@@ -98,12 +98,15 @@ dotnet user-jwts create --project src/Acme.Shop.Host --claim tenant=acme
 # Once per machine: trusts ASP.NET Core's development certificate, which the https URL uses.
 dotnet dev-certs https --trust
 dotnet run --project src/Acme.Shop.Host
+# In a second terminal, with the token user-jwts printed: 200 and an empty Page of products.
+curl -H "Authorization: Bearer <token>" http://localhost:5080/catalog/v2/products
 ```
 
 - PostgreSQL runs in Docker from the image the Kit's tests use, `postgres:18.6`, on the port and with the user and password the generated `appsettings.json` names (`Host=localhost;Port=5432;...;Username=postgres;Password=postgres`). The database need not exist: `dotnet ef database update` creates a missing one, `app` in the monolith and the modular monolith and `inventory` in the service, before it applies the first migration. `docker rm -f -v acme-shop-postgres` removes the container and its data.
 - The Host applies no migrations at startup; they are the Host's, as [persistence.md](persistence.md) says.
 - Without `Authentication:Schemes:Bearer` the Host does not start. `dotnet user-jwts create --claim tenant=<name>` fills it for development and prints a token: it writes the issuer and the launch profile's URLs as audiences into the Host's `appsettings.Development.json`, which each template generates empty for it, since the tool writes nothing without one, and the signing key into the Host's user secrets, whose id it adds to the Host's project file; Catalog is tenant-scoped in the monolith and the modular monolith ([multi-tenancy.md](multi-tenancy.md)), so a token without the `tenant` claim gets 403 `Tenant.Required` from every Catalog command and query; in production, configure the issuer, audiences and signing keys of the real identity provider.
 - The `https` launch profile runs in Development on `https://localhost:7080` and `http://localhost:5080` (the service's on 7081 and 5081), where `/health`, the OpenAPI documents and the Scalar reference are mapped, beside `/alive`, which every environment maps. In the monolith and the modular monolith the https URL serves REST and gRPC; on the http URL a gRPC call fails with `HTTP_1_1_REQUIRED`, since a listener without TLS negotiates no HTTP/2 ([grpc.md](grpc.md)). A token's `sub` is the Actor, its `tenant` the tenant, and its `permission` claims the Actor's permissions.
+- A call names the API version in its path, `/catalog/v2/products`, or in an `api-version` header; without one Catalog answers 400, and without a token 401 ([openapi.md](openapi.md#what-a-caller-sees)).
 
 ## The smoke test
 

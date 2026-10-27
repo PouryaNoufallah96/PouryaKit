@@ -1,0 +1,54 @@
+---
+title: Prerequisites
+description: The SDK, Docker and the tools your first Host needs, and what each one is for.
+---
+
+## What you need
+
+A generated solution builds with the .NET SDK, runs its database in Docker and migrates with `dotnet-ef`. Everything else it needs comes from NuGet when the solution restores.
+
+| Tool | What it is for |
+| --- | --- |
+| The .NET 10 SDK | Installing the templates, building, running and testing the solution |
+| Docker | PostgreSQL for the running Host, and the containers the generated smoke test starts |
+| `dotnet-ef` | Migrating each Module's database; the solution's tool manifest holds it, so `dotnet tool restore` installs it |
+| `curl`, or any HTTP client | Calling the running Host |
+| Node.js | Only to install the [AI skill](/docs/get-started/ai-skill) with `npx` |
+
+<Callout type="warn" title="The SDK is pinned">
+  Each generated solution has a `global.json` that pins the SDK the Kit builds with. A later patch of the same feature band also runs it, since its `rollForward` is `latestPatch`; an older patch or another band does not. The generated `global.json` names the version to install.
+</Callout>
+
+## When to check
+
+Before you [install the templates](/docs/get-started/install-templates): `dotnet new` restores the solution it generates, and from then on every `dotnet` command in its folder runs on the pinned SDK.
+
+## Check your machine
+
+<Steps>
+<Step>
+
+### The SDKs you have
+
+```bash title="Terminal"
+dotnet --list-sdks
+```
+
+</Step>
+<Step>
+
+### Docker is running
+
+```bash title="Terminal"
+docker info
+```
+
+</Step>
+</Steps>
+
+## Next steps
+
+<Cards>
+  <Card title="Install the templates" href="/docs/get-started/install-templates" description="PouryaKit.Templates at the published version." />
+  <Card title="Your first Host" href="/docs/get-started/first-host" description="Generate, migrate, run and call." />
+</Cards>
