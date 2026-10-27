@@ -81,6 +81,12 @@ test('the marketplace publishes the skill from the repository root under its nam
     { name: 'pourya-kit', source: './', strict: false, skills: ['./skills/pourya-kit'] },
   );
   assert.equal(plugin.version, skillMetadata(root).version);
+
+  const bumped = fixture('version');
+  const skill = path.join(bumped, SKILL);
+  writeFileSync(skill, readFileSync(skill, 'utf8').replace(/^(\s+version: )"[^"]+"$/m, '$1"9.9.9"'));
+  const copy = JSON.parse(text(assembleTree(bumped, covers), '.claude-plugin/marketplace.json') ?? '');
+  assert.equal(copy.plugins[0].version, '9.9.9');
 });
 
 test("SKILL.md's copy keeps its frontmatter, and a maintainer guide or an ADR is its own text in the copy", () => {
