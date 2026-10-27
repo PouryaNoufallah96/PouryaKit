@@ -171,6 +171,7 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal((StatusCode.InvalidArgument, message), (refused.StatusCode, refused.Status.Detail));
     }
 
+    #region failed-result-as-grpc-status
     [Fact]
     public async Task A_failed_result_answers_its_errors_kind_with_every_error_in_the_trailer()
     {
@@ -188,6 +189,7 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(StatusCode.InvalidArgument, empty.StatusCode);
         Assert.Equal("ProductId", Target(Assert.Single(Errors(empty))));
     }
+    #endregion
 
     // ADR 0008's gRPC amendment: the status follows the kind HTTP's status follows, for one kind and for every pair, and
     // the trailer lists every Error in order.

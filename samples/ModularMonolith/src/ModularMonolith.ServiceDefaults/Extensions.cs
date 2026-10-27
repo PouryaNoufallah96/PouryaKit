@@ -172,6 +172,7 @@ public static class Extensions
         }
     }
 
+    #region database-readiness-check
     // AddDbContextCheck's question, whether the database answers, for each DbContext the Host registered: a Module's
     // DbContext is internal to it, so it is found through its registered options instead of by its type.
     private sealed class DbContextsHealthCheck(IServiceScopeFactory scopes) : IHealthCheck
@@ -191,4 +192,5 @@ public static class Extensions
             return HealthCheckResult.Healthy();
         }
     }
+    #endregion
 }

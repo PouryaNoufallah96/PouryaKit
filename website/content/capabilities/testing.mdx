@@ -1,0 +1,79 @@
+---
+description: "Test against the hosted application: PostgreSQL in a container, data reset between tests, Operations sent through a Gateway, deliveries awaited and asserted, dead letters read and replayed."
+---
+
+`PouryaKit.Testing` tests your application the way it runs. One `HostFixture` per test assembly builds the real Host with the same composition `Program` uses, starts PostgreSQL in a container, applies every Module's migrations and starts the application on it. Each test class derives from `HostTest<TFixture>`, which waits for the deliveries an earlier test caused and then empties every table, so no test sees another's data. A test sends its Operations through `Fixture.Gateway<TModule>()`, exactly as the application does, and asserts on the returned [Result](/docs/reference/glossary#result) and on the rows it reads back.
+
+The same package waits for the deliveries an Operation caused, reads and replays dead letters, fixes the time, and lets a test abandon a Host. The structure rules every Module follows come as a pattern to copy into your own architecture tests, not as a package.
+
+<Callout type="warn" title="The fixture needs Docker">
+  `HostFixture` runs PostgreSQL in a Testcontainers container, so the machine that runs the tests needs Docker. Tests that share a fixture run one at a time.
+</Callout>
+
+## When to use it
+
+- You test a Feature against the hosted application, through its Module's Gateway or over HTTP.
+- A test needs a particular Actor, tenant or correlation, or a fixed time.
+- You wait for the deliveries an Operation caused and assert what they did, or read and replay a dead letter.
+- You abandon a Host mid-delivery to test a crash.
+- You check, or copy into your own project, the structure rules a Module follows.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Derive one fixture for the assembly
+
+A `HostFixture` subclass builds the application's Host, not started, from the same builder and pipeline methods `Program` uses, and registers with `AssemblyFixture`. The fixture runs the container, migrates every Module and starts the Host before the first test.
+
+</Step>
+<Step>
+
+### Derive each test class from HostTest
+
+Before each test, `HostTest<TFixture>` waits until every delivery of earlier tests has finished, then deletes every row and every stored delivery.
+
+</Step>
+<Step>
+
+### Send Operations through the Gateway
+
+`Fixture.Gateway<TModule>()` runs each call as one Operation in its own scope. Called without a context, it runs as the test Actor with no tenant; pass an `OperationContext` of your own when the Actor or the tenant matters.
+
+</Step>
+<Step>
+
+### Assert Results and rows
+
+Assert on the Result's `Errors` for business and validation failures, never on exceptions, and read rows back with your own SQL on the fixture's connection string.
+
+</Step>
+</Steps>
+
+## In the Kit's tests
+
+A test through Catalog's Gateway: a product created in an existing category commits with its count, and one in a missing category fails with the category's Error and leaves no product.
+
+<Snippet file="tests/ModularMonolith.Tests/DomainEventTests.cs" region="category-counts-a-new-product-test" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| What the fixture starts, migrates and needs | [The fixture](#the-fixture) |
+| What happens before each test, and how to send Operations | [Each test](#each-test) |
+| Which Actor and tenant a test runs as | [The Operation Context in tests](#the-operation-context-in-tests) |
+| How to fix the time of Domain Events and Operations | [Time](#time) |
+| How to wait for, assert and abandon deliveries | [Deliveries](#deliveries) |
+| How to read and replay dead letters | [Dead letters](#dead-letters) |
+| Every structure rule, and how to copy it into your project | [Structure tests](#structure-tests) |
+
+## Next steps
+
+<Cards>
+  <Card title="Test a Feature" href="/docs/guides/test-a-feature" description="A Feature's tests, from the fixture to its failure paths." />
+  <Card title="Commands, queries and validation" href="/docs/capabilities/commands-queries-validation" description="The Results a test asserts on." />
+</Cards>

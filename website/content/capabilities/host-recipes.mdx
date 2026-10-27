@@ -1,0 +1,70 @@
+---
+description: "The service defaults a Kit Host composes: OpenTelemetry that exports the Kit's telemetry, liveness and readiness endpoints, service discovery, one resilience pipeline for every client, and Serilog."
+---
+
+The Host recipes are a Host's service defaults, shaped like .NET Aspire's `ServiceDefaults` template: OpenTelemetry that exports the Kit's activities and metrics, liveness and readiness endpoints, service discovery, one standard resilience pipeline for every outgoing client, and Serilog when the Host wants it. They live in the Proving Sample's `ModularMonolith.ServiceDefaults` project.
+
+They are template content, not a Kit package: the project templates generate the project as `<Name>.ServiceDefaults` and compose the recipes in their Hosts, and your application owns and changes its copy. Each recipe is optional, and none is needed for the Kit to work.
+
+<Callout type="warn" title="The recipe exports; the Kit emits">
+  A Host without `AddPouryaKitObservability()` exports no Operation of the Kit, whatever its exporters listen to. And readiness outside Development is the platform's probe: the recipe maps `/alive` in every environment and `/health` in Development only.
+</Callout>
+
+## When to use it
+
+- You compose a Host's telemetry export, health endpoints, service discovery and outgoing HTTP in one place.
+- An orchestrator probes the Host's liveness, without a token.
+- One outgoing client needs other retry limits than the shared pipeline's.
+- You log through Serilog, or test a Host that uses the recipes.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Add the service defaults to the Host
+
+`AddServiceDefaults()` adds OpenTelemetry, the health checks, service discovery and the shared resilience pipeline. `MapDefaultEndpoints()` maps the health endpoints, and `AddSerilogDefaults()` opts into Serilog.
+
+</Step>
+<Step>
+
+### Keep liveness inside the process
+
+`/alive` asks only the checks tagged `live`, which never leave the process, so it stays healthy while a database is down: an orchestrator gains nothing by restarting the Host then. It is anonymous and exempt from the rate limit, since a probe carries no token.
+
+</Step>
+<Step>
+
+### Retry safe methods only
+
+Every client gets the Kit's standard handler, which retries safe methods and sends a write once. A client that needs other limits removes the shared pipeline and adds its own, under a name of its own.
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+`/health`, mapped in Development, asks each database the Host's DbContexts use. A Module's DbContext is internal to it, so the readiness check finds each one through its registered options:
+
+<Snippet file="samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs" region="database-readiness-check" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| How a Host composes the recipes, end to end | [Composing a Host with them](#composing-a-host-with-them) |
+| What each recipe adds | [What each recipe does](#what-each-recipe-does) |
+| How a client keeps or replaces the shared pipeline, and what the Kit refuses | [One resilience pipeline](#one-resilience-pipeline) |
+| What each health endpoint asks, and where it is mapped | [Liveness and readiness](#liveness-and-readiness) |
+| What Serilog replaces | [Serilog](#serilog) |
+
+## Next steps
+
+<Cards>
+  <Card title="Observability" href="/docs/capabilities/observability" description="The activities and metrics the recipe exports." />
+  <Card title="Reverse proxy" href="/docs/capabilities/reverse-proxy" description="The proxy that probes each Host's liveness path." />
+  <Card title="Project templates" href="/docs/capabilities/templates" description="The templates that generate the recipes into every Host." />
+</Cards>

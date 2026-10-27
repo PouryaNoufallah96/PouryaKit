@@ -10,6 +10,7 @@ using PouryaKit.Aspire;
 // cannot store its file.
 var builder = DistributedApplication.CreateBuilder(AppHostOptions.Create(args));
 
+#region apphost-resources
 var postgres = builder.AddPouryaKitPostgres("postgres");
 var cache = builder.AddPouryaKitRedis("cache");
 var broker = builder.AddPouryaKitRabbitMq("broker");
@@ -33,6 +34,7 @@ var inventoryHost = builder
     .WithEnvironment("Authentication__Schemes__Bearer__SigningKeys__0__Value", signingKey)
     .WaitFor(inventory)
     .WaitFor(broker);
+#endregion
 
 // ModularMonolith.Host serves REST on its http endpoint and Catalog's gRPC service on its grpc endpoint: a listener without
 // TLS negotiates no HTTP/2, so gRPC needs one of HTTP/2 alone, which REST's HTTP/1.1 callers could not reach. Kestrel takes
@@ -78,6 +80,7 @@ if (bool.TryParse(builder.Configuration["LocalAgent"], out var localAgent) && lo
         .WaitFor(ollama);
 }
 
+#region apphost-reverse-proxy
 // The Reverse proxy in front of both Hosts, on the endpoint its launch profile declares. Its own settings route every path
 // to ModularMonolith.Host with that cluster's probe off, since the Host maps no liveness path. Here Inventory runs in
 // Inventory.Host, so the AppHost routes Inventory's paths to that service, whose /alive the proxy probes. A destination
@@ -93,5 +96,6 @@ builder
     .WithEnvironment("ReverseProxy__Clusters__inventory__HealthCheck__Active__Enabled", "true")
     .WaitFor(inventoryHost)
     .WaitFor(shopHost);
+#endregion
 
 builder.Build().Run();

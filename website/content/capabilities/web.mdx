@@ -1,0 +1,80 @@
+---
+description: "An endpoint beside each Feature, authenticated access by default, one problem response for every failure, and outgoing HTTP that carries the Operation Context."
+---
+
+`PouryaKit.Web` is the Kit's HTTP boundary. Each Feature has its own endpoint, a small `IEndpoint` class beside its command or query, which a Module's Composition Root maps under the Module's route prefix. Before the endpoint runs, the Kit authenticates the caller and begins the request's Operation with an [Operation Context](/docs/reference/glossary#operation-context) built from the caller's verified claims. The endpoint passes that context to its Module's [Gateway](/docs/reference/glossary#gateway) and turns the [Result](/docs/reference/glossary#result) into a response with `ToHttpResult()`: a success as 200, 201 or 204, and every failure as one RFC 9457 problem response that lists each [Error](/docs/reference/glossary#error).
+
+The same package binds page requests from the query string, requires an `Idempotency-Key` on a repeatable write, carries the Operation Context on outgoing calls to other Kit Hosts with the standard retry, and configures CORS, response compression and a rate limit per Actor.
+
+<Callout type="warn" title="Every endpoint is authenticated unless it says otherwise">
+  A caller without a verified identity gets 401 before any endpoint runs. An endpoint that is public states the system Actor its anonymous callers run as, with `AllowAnonymousAs`. A tenant-scoped Module maps no public endpoint, since an anonymous caller has no tenant.
+</Callout>
+
+## When to use it
+
+- You are writing an endpoint, or composing the Host's HTTP pipeline.
+- You choose a response's shape, or bind page, sort and filter parameters from the query string.
+- An endpoint must be public, or a repeatable write must require an `Idempotency-Key`.
+- You read the caller's claims into the Operation Context, or call another Host with it.
+- You configure CORS policies, response compression or the rate limit per Actor, or test over HTTP.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Compose the pipeline in the Host
+
+`AddPouryaKitWeb` sets authenticated access as the fallback policy and adds the problem responses, and `MapPouryaKitModuleEndpoints` maps every Module's endpoints inside its own authenticated route group.
+
+</Step>
+<Step>
+
+### Map one endpoint per Feature
+
+`AddPouryaKitEndpoints(routePrefix)` in the Composition Root finds the Module's `IEndpoint` classes; there is no central route list. Each maps its route relative to the prefix, binds the route and body, and holds no business logic.
+
+</Step>
+<Step>
+
+### Send through the Gateway with the request's context
+
+The endpoint injects `OperationContext`, its Module's Gateway and the cancellation token, sends the command or query, and returns `ToHttpResult()`. It never builds a context itself.
+
+</Step>
+<Step>
+
+### Let the Errors pick the status
+
+The Errors' kinds decide the status, and when they differ the most severe decides, so a caller never fixes its input while a weightier reason stands. An exception answers 500 with nothing of it in the body. The full table is under [Problem responses](#problem-responses).
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+Inventory's `GetStockItem` endpoint: one route, the request's context passed to the Gateway, the Result turned into a response.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/GetStockItem/GetStockItemEndpoint.cs" region="get-stock-item-endpoint" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| How the Host's pipeline is composed, in order | [The Host](#the-host) |
+| What a Result answers on success and on failure | [From Result to response](#from-result-to-response), [Problem responses](#problem-responses) |
+| How page, sort and filter parameters bind, and what a bad one answers | [A Page over HTTP](#a-page-over-http) |
+| How a repeated request with the same key replays | [A repeatable write](#a-repeatable-write) |
+| How the caller becomes the Actor and tenant, and how a public endpoint is declared | [The caller and the Actor](#the-caller-and-the-actor) |
+| How one Host calls another and continues its Operation | [Calls between Kit Hosts](#calls-between-kit-hosts) |
+| The codes of the Errors a response lists | [Error codes](/docs/reference/error-codes) |
+
+## Next steps
+
+<Cards>
+  <Card title="Add an endpoint" href="/docs/guides/add-an-endpoint" description="A Feature's endpoint, from its route to its test over HTTP." />
+  <Card title="Request idempotency" href="/docs/guides/request-idempotency" description="Make a write safe to send again with an Idempotency-Key." />
+  <Card title="API versions and OpenAPI" href="/docs/capabilities/openapi" description="Versions per Module, and one OpenAPI document per version." />
+</Cards>

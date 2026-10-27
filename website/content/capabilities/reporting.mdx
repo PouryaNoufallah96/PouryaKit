@@ -1,0 +1,69 @@
+---
+description: "Lay out a Module's report once and render it to a PDF, a CSV file or a spreadsheet in memory, with a logo, an accent colour and an embedded font."
+---
+
+`PouryaKit.Reporting` has one renderer, `IReportRenderer`. A Module builds a `ReportLayout` from what it read: a title, an introduction of headings and paragraphs, one table of text cells, and its branding, a logo and an accent colour. `Render` turns the layout into a PDF, a CSV file or a spreadsheet in memory and returns a [Result](/docs/reference/glossary#result) with the file's bytes, content type and extension. The layout stays in the Module; the Kit supplies the primitives, the font, the branding and the three formats.
+
+It stores nothing. The caller stores the rendered bytes through [File storage](/docs/capabilities/storage), and the [Report Module](/docs/capabilities/reporting-module) runs that whole job in the background for you.
+
+<Callout type="warn" title="The Module formats every value">
+  Every cell is text. A number, an amount or a date is formatted by the Module, in the culture it chooses, before it goes in the table. The embedded font holds Latin, Greek and Cyrillic glyphs, not Persian or Arabic, and the PDF lays out no right-to-left text.
+</Callout>
+
+## When to use it
+
+- A Module produces a document for people to download, print or open in a spreadsheet.
+- You brand a report with a logo and an accent colour.
+- You store a rendered file, or need to know which layouts the renderer refuses.
+- You test a rendered file with each format's standard reader.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Register the renderer in the Composition Root
+
+`ReportRenderer` keeps no state, so one instance serves every caller: register it with `TryAddSingleton`, which lets several Modules do so. The package has no options.
+
+</Step>
+<Step>
+
+### Build the layout from what the Module read
+
+A `ReportLayout` takes a title and a `ReportTable` of columns and rows; its introduction, page header and footer, and branding are optional. Each row has exactly one cell per column.
+
+</Step>
+<Step>
+
+### Render, then store, then record
+
+`Render(layout, format)` refuses a layout it cannot draw with a validation Error and renders nothing. Upload the bytes under a fresh key and record the key afterwards, as [File storage](/docs/capabilities/storage) explains.
+
+</Step>
+</Steps>
+
+## In the Kit's tests
+
+A month's sales laid out once, with a heading and a paragraph of introduction, a page header and footer, and a logo and accent colour; the tests render it to every format and read each back:
+
+<Snippet file="tests/PouryaKit.Reporting.Tests/ReportRendererTests.cs" region="monthly-sales-layout" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| How the renderer is registered, and its PDF font resolver | [Registering](#registering) |
+| What a layout holds | [A Module's layout](#a-modules-layout) |
+| What `Render` returns, and the Errors of a layout it refuses | [Rendering and storing](#rendering-and-storing) |
+| What each format holds, and how a CSV cell is kept from running as a formula | [The three formats](#the-three-formats) |
+| What the renderer does not draw, and why its PDF library is pinned | [Limits](#limits) |
+
+## Next steps
+
+<Cards>
+  <Card title="Report Module" href="/docs/capabilities/reporting-module" description="Report jobs requested over HTTP, rendered in the background and served by link." />
+  <Card title="File storage" href="/docs/capabilities/storage" description="Where a rendered file is stored." />
+</Cards>

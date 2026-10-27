@@ -1,0 +1,72 @@
+---
+description: "The Host's one chat client for OpenAI, Azure OpenAI or Ollama, a Module's commands and queries as Gateway tools that run as Operations, agents and workflows over that client, and semantic search over pgvector."
+---
+
+`PouryaKit.AI` gives the Host one chat client, `IChatClient` of Microsoft.Extensions.AI, built from validated options for OpenAI, Azure OpenAI or Ollama through the OpenAI client alone. A run of that client may call a Module's command or query as a [Gateway tool](/docs/reference/glossary#gateway-tool): each call runs through the Module's [Gateway](/docs/reference/glossary#gateway) as an Operation of its own, with the run's [Operation Context](/docs/reference/glossary#operation-context) continued, so validation, the authorizers and the tenant requirement apply to it. A run may also be given an [MCP tool](/docs/reference/glossary#mcp-tool) of a server the Host's options name, over stdio or HTTP.
+
+Over the same client, agents of the Microsoft Agent Framework run plain, streamed or for a typed answer, in sequential, concurrent and handoff workflows, with sessions and memory kept in your application's stores, a chat reducer and a guardrail hook. The optional `PouryaKit.AI.Postgres` stores text by its embedding with pgvector and finds it again by meaning, within the tenant.
+
+<Callout type="warn" title="The model decides what to call; the Kit decides what each call may do">
+  The allow-list names the tools a run may be given, and the iteration cap bounds how often it calls the model. A run inside an authorized Operation gives its tool calls that Operation's authority, so give such a run only the tools its Operation may run.
+</Callout>
+
+## When to use it
+
+- A Feature answers in natural language, or lets a model look things up through the Module's own queries.
+- You compose the Host's chat client from validated options, for a hosted provider or a local Ollama.
+- A run needs a Module's command or query, or an MCP server's tools.
+- An agent keeps a conversation's session and memory per Actor, or a workflow runs several agents.
+- You check every call to the model with a guardrail, or search stored text by meaning.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Register the Host's one client
+
+`AddPouryaKitAI()` registers the client from `PouryaKitAIOptions`: the provider, its endpoint, the model, the key, the allow-list and the iteration cap. Invalid options stop the Host when it starts, and a second chat client fails it when it is built.
+
+</Step>
+<Step>
+
+### Turn an operation into a Gateway tool
+
+`Tool` on a Module's `IGatewayProcessor<TModule>` makes a command or query a tool for one run's context. The model's arguments are read into a record of yours, mapped explicitly to the operation, and a failed Result goes back to the model as its Errors, never as an exception.
+
+</Step>
+<Step>
+
+### Build the agent in the handler, for each run
+
+An agent is built over the Host's client in the handler that runs it, since its Gateway tools are bound to that run's context. Its session and memory are read from your stores as the turn starts and written by the command's Unit of Work.
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+Catalog's `AskAboutProducts` runs an agent with one Gateway tool, `GetProduct`, in the asking Actor's conversation. A refused turn fails, so the Unit of Work keeps nothing of it:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsCommandHandler.cs" region="ask-about-products-handler" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| The options, their checks, and the client's pipeline | [Registering](#registering) |
+| How a tool call runs, with whose authority, and what a failure returns | [A Gateway tool](#a-gateway-tool), [MCP tools](#mcp-tools) |
+| How sessions, memory, reducers and workflows are kept | [Sessions](#sessions), [Memory](#memory), [Workflows](#workflows) |
+| What a guardrail sees and what its refusal stops | [Guardrails](#guardrails) |
+| How text is embedded, stored and found within its tenant | [Embeddings and semantic search](#embeddings-and-semantic-search) |
+| Everything the Kit guarantees, and what it does not | [What the Kit guarantees](#what-the-kit-guarantees), [Limits](#limits) |
+
+## Next steps
+
+<Cards>
+  <Card title="Gateway and MCP tools" href="/docs/concepts/gateway-and-mcp-tools" description="Why a model's tool call is an Operation, and what it may do." />
+  <Card title="Aspire resources" href="/docs/capabilities/aspire" description="A local Ollama model for the Host's agent." />
+  <Card title="Commands, queries and validation" href="/docs/capabilities/commands-queries-validation" description="The operations a Gateway tool runs." />
+</Cards>

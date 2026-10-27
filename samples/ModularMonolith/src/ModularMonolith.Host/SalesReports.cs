@@ -6,6 +6,7 @@ using PouryaKit.Reporting.Module;
 
 namespace ModularMonolith.Host;
 
+#region sales-report-ports
 /// <summary>
 /// The Host's one report kind, <see cref="Kind"/>: a month's sales, which a person of a tenant may request for a month
 /// given as <c>yyyy-MM</c>, laid out as one table. A real application reads the lines from its Modules, asking each
@@ -58,3 +59,4 @@ public sealed class SalesReports : IReportRequestAuthorizer, IReportLayouts
             ? parsed
             : null;
 }
+#endregion

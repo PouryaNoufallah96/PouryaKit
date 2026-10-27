@@ -96,8 +96,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/SalesReports.cs",
-          "line": 14,
-          "end_line": 60,
+          "line": 15,
+          "end_line": 61,
           "label": "the Host's one report kind"
         },
         {
@@ -192,8 +192,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/Modules/Billing/Billing/BillingModule.cs",
-          "line": 17,
-          "end_line": 24,
+          "line": 18,
+          "end_line": 25,
           "label": "subscribes v1 and AccountOpenedV1; ExpireQuote"
         },
         {
@@ -418,14 +418,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
-          "line": 13,
-          "end_line": 17,
+          "line": 14,
+          "end_line": 18,
           "label": "the containers and databases"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
-          "line": 24,
-          "end_line": 95,
+          "line": 25,
+          "end_line": 98,
           "label": "the Hosts and grpc endpoint, the proxy, Ollama"
         },
         {

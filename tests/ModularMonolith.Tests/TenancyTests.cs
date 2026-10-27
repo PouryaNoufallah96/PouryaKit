@@ -33,6 +33,7 @@ namespace ModularMonolith.Tests;
 // every EF Core read sees only the Operation's tenant's rows, and every command and query of it needs a tenant.
 public sealed class TenancyTests(AppFixture app) : HostTest<AppFixture>(app)
 {
+    #region tenant-isolation-through-the-gateway
     [Fact]
     public async Task A_tenant_reads_writes_and_removes_none_of_another_tenants_products_through_the_gateway()
     {
@@ -54,6 +55,7 @@ public sealed class TenancyTests(AppFixture app) : HostTest<AppFixture>(app)
             await Fixture.RowsAsync("select tenant, name, is_deleted from catalog.products order by tenant")
         );
     }
+    #endregion
 
     [Fact]
     public async Task Over_http_a_tenant_gets_and_lists_none_of_another_tenants_products()

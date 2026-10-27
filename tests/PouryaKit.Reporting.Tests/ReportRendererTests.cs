@@ -30,6 +30,7 @@ public sealed class ReportRendererTests
         ["-4+cmd", "+1,250.50", "@SUM(A1)"],
     ];
 
+    #region monthly-sales-layout
     private static readonly ReportLayout Sales = new(
         "Monthly sales",
         new ReportTable([new("Product"), new("Quantity", ReportAlignment.Right), new("Amount", ReportAlignment.Right)], Rows)
@@ -40,6 +41,7 @@ public sealed class ReportRendererTests
         PageFooter = "Confidential",
         Branding = new() { Logo = Logo, Accent = new(0x1F, 0x4E, 0x79) },
     };
+    #endregion
 
     private readonly ReportRenderer _renderer = new();
 

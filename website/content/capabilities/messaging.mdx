@@ -1,0 +1,106 @@
+---
+description: "React after the commit, tell other Modules what happened, keep a copy of another Module's data, and run commands later or on a cadence: every delivery durable, retried and applied once."
+---
+
+Messaging is how work continues after an Operation commits. A [Notification Handler](/docs/reference/glossary#notification-handler) reacts to a Domain Event once the change is committed, for anything that reaches outside the Module's data. It may publish an [Integration Event](/docs/reference/glossary#integration-event) to tell other Modules what happened, and an [Integration Event Handler](/docs/reference/glossary#integration-event-handler) in each receiving Module applies it. A [Snapshot](/docs/reference/glossary#snapshot) lets a Module keep its own copy of another's aggregate. A [delayed command](/docs/reference/glossary#delayed-command) runs later as a continuation of the Operation that scheduled it, and a [recurring command](/docs/reference/glossary#recurring-command) runs on a cadence as a named system Actor.
+
+Every one of these is stored in the [Outbox](/docs/reference/glossary#outbox) in the commit of the change, sent only after it, and delivered on Wolverine with its message store in PostgreSQL. Each delivery runs as an Operation of its own, is retried, records a [Receipt](/docs/reference/glossary#receipt) so its database effect applies once, and ends as a dead letter you can replay when its attempts run out. Feature code uses `PouryaKit.Messaging`; the Composition Root and the Host use `PouryaKit.Messaging.Wolverine` and `PouryaKit.Messaging.Wolverine.EFCore`.
+
+<Callout type="warn" title="An outside effect happens at least once">
+  The Receipt makes an effect in the Module's database apply once. An email, a push or a call to another system cannot roll back with it, so a retry may repeat it: do the outside effect last, and make a repeat harmless where the other system allows it.
+</Callout>
+
+## When to use it
+
+- Something must happen after a change commits and could not be taken back: send a mail, push to a browser, call another system.
+- Another Module reacts to what happened in this one: publish an Integration Event, subscribe its handler.
+- A Module keeps a copy of another Module's data: publish the aggregate's Snapshot and Tombstone.
+- A command must run later, such as a quote's expiry, or on a cadence, such as a nightly reconciliation.
+- You rename, version or retire a message, or find and replay a dead letter.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Choose the reaction
+
+A Domain Event Handler runs inside the Operation, before the commit, and keeps the Module's own aggregates consistent. A Notification Handler runs after the commit, in an Operation of its own, for everything else. One Domain Event may have both.
+
+</Step>
+<Step>
+
+### Declare it in the Composition Root
+
+`AddPouryaKitNotificationHandlers` finds the Module's Notification Handlers. `Publish` and `PublishSnapshot` declare what the Module sends under its stable [wire name](/docs/reference/glossary#wire-name), `Subscribe` declares a receiving handler under its [subscription](/docs/reference/glossary#subscription) name, and the delayed and recurring commands are declared the same way.
+
+</Step>
+<Step>
+
+### Run the deliveries in the Host
+
+`UsePouryaKitWolverine` runs every delivery of the Host on Wolverine, with its message store in the same database as the Modules' DbContexts, since the Outbox is written in their transactions.
+
+</Step>
+<Step>
+
+### Write only the effect
+
+A handler returns a Result and never saves, commits or touches the Outbox. The delivery records the Receipt, commits and acknowledges; a failed Result is retried like an exception.
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+<Tabs items={['Notification Handler', 'Integration Event Handler', 'Snapshot mapper', 'Delayed command']}>
+<Tab value="Notification Handler">
+
+Catalog announces each new product once it is committed, through a port the Host implements, and pushes it to the browsers of its tenant:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/Notifications/AnnounceNewProductNotificationHandler.cs" region="announce-new-product-handler" />
+
+</Tab>
+<Tab value="Integration Event Handler">
+
+Inventory opens a stock item for every product Catalog creates. The handler writes only its effect; the Kit records the Receipt, so a redelivery opens one stock item:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/OpenStockItem/OpenStockItemIntegrationEventHandler.cs" region="open-stock-item-handler" />
+
+</Tab>
+<Tab value="Snapshot mapper">
+
+The product as other Modules see it. The Kit calls the mapper for each product an Operation changed, after every reaction ran and with the version being committed, and the mapper only reads:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/ProductSnapshotMapper.cs" region="product-snapshot-mapper" />
+
+</Tab>
+<Tab value="Delayed command">
+
+Billing opens a quote and schedules its expiry. The quote and the scheduled command commit together, or neither does:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Features/OpenQuote/OpenQuoteCommandHandler.cs" region="open-quote-handler" />
+
+</Tab>
+</Tabs>
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| What is stored in the commit, what is sent after it, and what applies once | [What the Kit guarantees](#what-the-kit-guarantees) |
+| What a Snapshot guarantees about order, duplicates and the Tombstone | [What the Kit guarantees for a Snapshot](#what-the-kit-guarantees-for-a-snapshot) |
+| How a failed delivery is retried, and where it goes after the last attempt | [Retries](#retries), [Dead letters](#dead-letters) |
+| How a stable name survives a rename, and how to version an Integration Event | [Names](#names), [A new version of an Integration Event](#a-new-version-of-an-integration-event) |
+| What a recurring command does across a restart | [Restart semantics](#restart-semantics) |
+| Every check the Host runs on its messages, and the message it fails with | [The Host's checks](#the-hosts-checks) |
+
+## Next steps
+
+<Cards>
+  <Card title="Publish and subscribe" href="/docs/guides/publish-and-subscribe" description="Tell another Module what happened, step by step." />
+  <Card title="Outbox, Notification and Receipt" href="/docs/concepts/outbox-and-notifications" description="How a delivery stays durable and applies once." />
+  <Card title="RabbitMQ between Hosts" href="/docs/capabilities/rabbitmq" description="The same deliveries, from one Host to another over a broker." />
+</Cards>

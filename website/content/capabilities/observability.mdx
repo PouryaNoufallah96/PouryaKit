@@ -1,0 +1,69 @@
+---
+description: "One activity and one duration measurement for every command and query, and one trace from an Operation through the Outbox into every delivery it causes, in its Host or another."
+---
+
+`PouryaKit.Observability` makes every [Operation](/docs/reference/glossary#operation) visible. Each command and query the dispatcher runs is one activity and one duration measurement, tagged with its Module, its type, its Actor kind and its outcome. The work an Operation publishes stays in its trace: the Outbox carries the trace parent and tracestate into each delivery, so a product created in Catalog and stocked in Inventory is one trace, in one Host or across RabbitMQ.
+
+It emits through `System.Diagnostics` only. The Kit has no OpenTelemetry package, no exporter and no Serilog: exporting is the Host's job, done with the standard OpenTelemetry setup of the [Host recipes](/docs/capabilities/host-recipes).
+
+<Callout type="warn" title="Every Host in the trace registers it">
+  A Host that never calls `AddPouryaKitObservability()` emits nothing from the Kit, and its deliveries have no activity. A receiving Host calls it too, or the trace stops at its door.
+</Callout>
+
+## When to use it
+
+- You observe the Host's Operations as activities and duration metrics.
+- You choose what the Host's exporter listens to.
+- You follow one trace from an Operation through the Outbox into its deliveries, in its Host or in another over RabbitMQ.
+- You assert telemetry in a test with listeners.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Register it after the dispatcher
+
+`AddPouryaKitObservability()` on the Host, after `AddPouryaKitModules`, wraps the dispatcher. With nothing listening, a dispatch costs one check and allocates nothing.
+
+</Step>
+<Step>
+
+### Let the activity span the Operation
+
+The activity is current for the whole Operation: authorization, validation, the handler, the Domain Event drain, the Outbox write and the commit. A nested command is a child activity of the one that sent it. Feature code starts no activity of its own.
+
+</Step>
+<Step>
+
+### Export from the Host
+
+The Host's exporter listens to the source and meter named by `OperationTelemetry.SourceName`, and to Wolverine's spans when it wants them. The service defaults recipe does this, and exports over OTLP when the endpoint is configured.
+
+</Step>
+</Steps>
+
+## In the Kit's tests
+
+No backend is needed: a test listens, starts an activity of its own for the request, and filters what it recorded by its trace id. Here only an activity listener is attached, and the command is still an activity tagged with its name and its outcome:
+
+<Snippet file="tests/ModularMonolith.Tests/ObservabilityTests.cs" region="operation-activity-test" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| Where the registration goes, what it costs, and whose meter it uses | [Registering](#registering) |
+| Every name, tag and status the Kit emits | [What is emitted](#what-is-emitted) |
+| How a trace continues through the Outbox, across RabbitMQ and through the Reverse proxy | [The trace through delivery](#the-trace-through-delivery) |
+| What the exporter listens to | [Exporting](#exporting) |
+| How to assert activities and durations in a test | [Testing telemetry](#testing-telemetry) |
+
+## Next steps
+
+<Cards>
+  <Card title="Host recipes" href="/docs/capabilities/host-recipes" description="The OpenTelemetry, health, resilience and Serilog setup a Host composes." />
+  <Card title="Messaging" href="/docs/capabilities/messaging" description="The deliveries a trace follows." />
+</Cards>

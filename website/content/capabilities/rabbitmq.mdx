@@ -1,0 +1,72 @@
+---
+description: "Deliver Integration Events and Snapshots from one Host to another through a RabbitMQ broker, with every guarantee of in-process messaging kept across it."
+---
+
+Inside one Host, the Kit delivers [Integration Events](/docs/reference/glossary#integration-event) and [Snapshots](/docs/reference/glossary#snapshot) through its message store. `PouryaKit.Messaging.Wolverine.RabbitMq` adds a broker between Hosts: each published [wire name](/docs/reference/glossary#wire-name) goes to a fanout exchange of its own, and each receiving Host has one durable queue, named by its [service name](/docs/reference/glossary#service-name), that fans each message out to its local [subscriptions](/docs/reference/glossary#subscription). From there a delivery is exactly what it is inside one Host: its own retries, [Receipt](/docs/reference/glossary#receipt) and dead letter.
+
+Only the Hosts change. Modules, Contracts and Feature code never reference the package, and nothing in them changes when a Host adds it.
+
+<Callout type="warn" title="Start a receiving Host before its first publication">
+  A Host's queue and its bindings are declared when the Host starts, and the broker drops a message no queue is bound to. Start each Host that receives a wire name once before the first publication it must receive: on its first deployment, and on the one that adds its first subscription to a wire name.
+</Callout>
+
+## When to use it
+
+- A Module runs in a Host of its own, a service, and receives another Host's Integration Events and Snapshots.
+- You split a Module out of the modular monolith and keep its subscriptions working.
+- You choose a Host's service name, or deploy a Host that receives.
+- A receiving Host gets a body its contract cannot read, or you look for dead letters at its broker queue.
+- You test two Hosts on one broker.
+
+## How it works
+
+<Steps>
+<Step>
+
+### The publishing Host joins the broker
+
+After `UsePouryaKitWolverine`, the Host calls `UsePouryaKitRabbitMq` with its broker connection and its service name. The `Publish` and `PublishSnapshot` declarations its Modules already make decide every exchange it sends to.
+
+</Step>
+<Step>
+
+### The receiving Host declares what it receives
+
+A Host that subscribes to a message no Module of it publishes declares it with `Receive` or `ReceiveSnapshot`, under the wire name the publishing Module declares. The Host's queue is bound to that exchange, and its Modules subscribe as they always do.
+
+</Step>
+<Step>
+
+### Each kind of Host keeps its own service name
+
+Replicas of one Host share its queue as competing receivers. Two different Hosts must never share a name, or they would split its messages between them.
+
+</Step>
+</Steps>
+
+## In the Kit's tests
+
+Two Hosts with different service names, both Inventory, each receive every product the Catalog Host creates:
+
+<Snippet file="tests/ModularMonolith.Tests/RabbitMqDeliveryTests.cs" region="two-service-names-receive-every-message" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| How exchanges, the Host queue and the fan-out fit together | [The topology](#the-topology) |
+| What holds across the broker, each with its test | [What the Kit guarantees across the broker](#what-the-kit-guarantees-across-the-broker) |
+| What a receiving Host does with a body its contract cannot read | [A body the contract cannot read](#a-body-the-contract-cannot-read) |
+| Where a delivery that never reached a subscription is set aside | [Dead letters at the broker queue](#dead-letters-at-the-broker-queue) |
+| When to start a receiving Host, and how to stop receiving a wire name | [Deploying a Host that receives](#deploying-a-host-that-receives) |
+| The checks a Host with a broker fails on | [The Host's checks](#the-hosts-checks) |
+
+## Next steps
+
+<Cards>
+  <Card title="In-process or RabbitMQ" href="/docs/decision-guides/in-process-or-rabbitmq" description="When a Module earns a Host and a broker of its own." />
+  <Card title="The service template" href="/docs/templates/service" description="A Host of one Module that receives over RabbitMQ, generated for you." />
+  <Card title="Messaging" href="/docs/capabilities/messaging" description="The deliveries the broker carries, and what each guarantees." />
+</Cards>

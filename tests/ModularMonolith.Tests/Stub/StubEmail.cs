@@ -8,6 +8,7 @@ namespace ModularMonolith.Tests.Stub;
 // Notification Handlers that mail a note, raised by WriteNoteRaisingCommand: one sends, the other sends and then fails
 // its first delivery, as a delivery that dies after the mail server accepted the mail.
 
+#region mail-note-handler
 internal sealed record NoteMailedDomainEvent(string To, string Text) : DomainEvent;
 
 internal sealed class MailNoteNotificationHandler(IEmailSender email) : INotificationHandler<NoteMailedDomainEvent>
@@ -15,6 +16,7 @@ internal sealed class MailNoteNotificationHandler(IEmailSender email) : INotific
     public Task<Result> Handle(NoteMailedDomainEvent domainEvent, CancellationToken cancellationToken) =>
         email.SendAsync(new EmailMessage(domainEvent.To, domainEvent.Text, $"The note {domainEvent.Text} is written."), cancellationToken);
 }
+#endregion
 
 internal sealed record NoteMailedThenFailingDomainEvent(string To, string Text) : DomainEvent;
 

@@ -1,0 +1,68 @@
+---
+description: "Store, download and delete files under a key, and give a time-limited link to one, through one contract over S3, MinIO or Azure Blob Storage."
+---
+
+`PouryaKit.Storage` gives Feature code one contract, `IFileStorage`: upload a stream under a key, download it, delete it, and get a presigned link that reads it without credentials until it expires. Every call is cancellable and returns a [Result](/docs/reference/glossary#result), so a missing file is `StorageErrors.FileNotFound`, an Error, never an exception. A provider package supplies the Host's one implementation: `PouryaKit.Storage.S3` for AWS S3 and S3-compatible stores such as MinIO, or `PouryaKit.Storage.AzureBlob` for Azure Blob Storage. Feature code is the same on either, and never names a cloud SDK.
+
+<Callout type="warn" title="A file is never part of the commit">
+  No file store joins the Unit of Work's transaction. Store the file first, under a fresh key, and only then record the key in the command's state. A command that fails after the upload leaves an object no record names, which your application's retention removes.
+</Callout>
+
+## When to use it
+
+- A Feature stores a file, downloads it or deletes it under a key.
+- A browser or another system needs a time-limited link to read a file.
+- A command records a stored file's key, and a failed command must not leave a record of a missing file.
+- You choose and configure the S3, MinIO or Azure Blob provider.
+- You test against RustFS or Azurite.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Register one provider in the Host
+
+Bind the provider's options from configuration and call `AddPouryaKitS3Storage` or `AddPouryaKitAzureBlobStorage`. A Host composes exactly one provider: a second one fails when its container is built, naming both, and invalid options stop the Host when it starts.
+
+</Step>
+<Step>
+
+### Upload before you record
+
+In a command's handler, upload under a key the Feature chooses, and record the key only once the upload returned. A recorded key then always names a stored file.
+
+</Step>
+<Step>
+
+### Delete in reverse order
+
+Remove the record in the command, then delete the object once the Operation committed, for example from a Notification Handler, so a rolled-back command never loses a file its record still names.
+
+</Step>
+</Steps>
+
+## In the Kit's tests
+
+The S3 provider against a real S3-compatible store, RustFS in a container, through the same contract a Feature uses:
+
+<Snippet file="tests/PouryaKit.Storage.Tests/S3StorageTests.cs" region="upload-then-download" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| How each provider is configured, and the build failure of a second one | [Registering](#registering), [One provider](#one-provider) |
+| How a command records a stored file safely | [Store, then record](#store-then-record) |
+| What each call returns, and how long a link may live | [The calls](#the-calls) |
+| What the Kit guarantees, and what it leaves to your retention | [What the Kit guarantees](#what-the-kit-guarantees) |
+| What the contract does not offer | [Limits](#limits) |
+
+## Next steps
+
+<Cards>
+  <Card title="S3 or Azure Blob" href="/docs/decision-guides/s3-or-azure-blob" description="Which provider fits where your application runs." />
+  <Card title="Report Module" href="/docs/capabilities/reporting-module" description="Report jobs that store their files through the Host's one provider." />
+</Cards>

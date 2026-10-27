@@ -4,6 +4,7 @@ option csharp_namespace = "Catalog.Contracts.Products";
 
 package catalog.v1;
 
+// #region product-service-contract
 // The questions about products Catalog answers for another Host, each as an Operation through Catalog's Gateway. A
 // failed answer is a status by the most severe Error kind, with every Error in the pouryakit-errors-bin trailer.
 service ProductService {
@@ -20,3 +21,4 @@ message ProductReply {
   string category_id = 2;
   string name = 3;
 }
+// #endregion
