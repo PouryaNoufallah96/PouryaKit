@@ -15,7 +15,7 @@ A Saga is the one reaction that runs outside an [Operation](/docs/reference/glos
 
 ## When to use it
 
-When a reaction waits for several Integration Events, keeps what it has seen between them, and gives up after a time. In the [Kit](/docs/reference/glossary#kit)'s tests, a fulfilment saga starts when an order is placed, counts its payments, and either fulfils the order once all payments arrived or cancels it when they did not arrive in time. A reaction to one Integration Event at a time is an [Integration Event Handler](/docs/concepts/integration-events).
+When a reaction waits for several Integration Events, keeps what it has seen between them, and gives up after a time. In the [Kit](/docs/reference/glossary#kit)'s tests, a fulfilment saga starts when an order is placed, counts its payments, and either fulfils the order once all payments arrived or cancels it when they did not arrive in time. A reaction to one Integration Event at a time is an [Integration Event Handler](/docs/reference/glossary#integration-event-handler): see [Integration Events](/docs/concepts/integration-events).
 
 ## How it works
 

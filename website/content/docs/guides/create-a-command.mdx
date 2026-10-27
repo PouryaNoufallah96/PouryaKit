@@ -8,7 +8,7 @@ description: Add a Feature that changes state, with its command, validator and h
 A [Feature](/docs/reference/glossary#feature) that changes state: a command record, an optional validator, and exactly one handler that changes aggregates and returns a [Result](/docs/concepts/operation-result-error). This guide follows the [Proving Sample](/docs/reference/glossary#proving-sample)'s `RenameProduct` Feature in Catalog's Products [Business Area](/docs/reference/glossary#business-area), `Products/Features/RenameProduct/`.
 
 <Callout type="warn" title="The handler never saves">
-  No `SaveChanges`, transaction or [Outbox](/docs/reference/glossary#outbox) call: the [Unit of Work](/docs/concepts/unit-of-work) commits what the handler changed once it returns a success, and rolls it all back when it fails.
+  No `SaveChanges`, transaction or [Outbox](/docs/reference/glossary#outbox) call: the [Unit of Work](/docs/reference/glossary#unit-of-work) commits what the handler changed once it returns a success, and rolls it all back when it fails.
 </Callout>
 
 ## When to use it

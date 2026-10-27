@@ -27,7 +27,7 @@ A handler returns either a value or an Error, and each converts to a Result. Thi
 
 <Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandHandler.cs" region="rename-product-handler" />
 
-Every command and query passes the same pipeline: logging, the optional authorization hook, optional validation, then the handler. A command's handler runs inside the [Unit of Work](/docs/concepts/unit-of-work), which commits once for the whole Operation. A failure at any step, a nested command's included, fails the Operation with its Errors.
+Every command and query passes the same pipeline: logging, the optional authorization hook, optional validation, then the handler. A command's handler runs inside the [Unit of Work](/docs/reference/glossary#unit-of-work), which commits once for the whole Operation: see [Unit of Work](/docs/concepts/unit-of-work). A failure at any step, a nested command's included, fails the Operation with its Errors.
 
 - Pass a failure on with `return result.Errors;`. It keeps every Error.
 - Check `IsSuccess` or `IsFailure` before you read `Value`.

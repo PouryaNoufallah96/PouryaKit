@@ -21,7 +21,7 @@ After the outermost handler returns a success, the Unit of Work:
 
 1. runs the [Domain Event Handlers](/docs/concepts/domain-event) of the [Domain Events](/docs/reference/glossary#domain-event) the Operation's aggregates raised;
 2. prepares persistence: audit and soft-delete fields, and each changed aggregate's version;
-3. builds the [Snapshots](/docs/concepts/snapshots) other Modules subscribe to;
+3. builds the [Snapshots](/docs/reference/glossary#snapshot) other Modules subscribe to;
 4. writes the [Outbox](/docs/concepts/outbox-and-notifications);
 5. saves once and commits;
 6. only then sends what it wrote.
