@@ -90,7 +90,11 @@ function blockText(node: Nodes): string {
 /** The rules a projected node must pass: its rendered text, block by block, and its URLs. */
 export function nodeViolations(node: Nodes): Violation[] {
   const text = blockText(node);
-  return [...addressViolations(text), ...vocabularyViolations(text), ...urlsOf(node).flatMap(addressViolations)];
+  return [
+    ...addressViolations(text),
+    ...vocabularyViolations(text),
+    ...urlsOf(node).flatMap((url) => addressViolations(url)),
+  ];
 }
 
 /** Each heading's anchor as Fumadocs gives it on the rendered page: GitHub's slugs, numbered when repeated. */

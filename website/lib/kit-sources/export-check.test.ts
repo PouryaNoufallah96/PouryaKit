@@ -34,6 +34,17 @@ test('a private link or a local path in a script or a payload fails, its string 
   assert.deepEqual(findings, ['_next/static/chunk.js private repository', 'docs/index.txt local path (/Users/)']);
 });
 
+test('in a script, a one-letter key or a ternary before a regular expression is no drive; a backslash drive is', () => {
+  const findings = findingsFor({
+    '_next/static/chunk.js': 'const r={a:/re/},s=e?t:/x/.test(v),d="D:\\\\work";',
+    'docs/index.txt': '1:["at D:/repo"]',
+  });
+  assert.deepEqual(findings, [
+    '_next/static/chunk.js local path (Windows drive)',
+    'docs/index.txt local path (Windows drive)',
+  ]);
+});
+
 test('a tracker code fails in rendered text: a page, its Markdown, llms.txt and the search index', () => {
   const findings = findingsFor({
     'docs/index.html': '<p>Fixed in #123.</p>',

@@ -147,7 +147,8 @@ export function checkExport(out: string): { findings: Finding[]; scanned: number
     if (content.includes('\u0000')) continue;
     scanned++;
     const addressed = unescapeStrings(relative.endsWith('.html') ? decodeEntities(content) : content);
-    for (const violation of addressViolations(addressed)) findings.push({ ...violation, file: relative });
+    for (const violation of addressViolations(addressed, relative.endsWith('.js')))
+      findings.push({ ...violation, file: relative });
     const text = renderedTextOf(relative, content);
     if (text === undefined) continue;
     rendered++;

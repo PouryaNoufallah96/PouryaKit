@@ -37,7 +37,13 @@ const LOCAL_PATHS: [string, RegExp][] = [
   ['local path (/Users/)', /\/Users\//g],
   ['local path (/home/)', /\/home\//g],
   ['local path (/private/tmp/)', /\/private\/tmp\//g],
-  ['local path (Windows drive)', /(?<![A-Za-z0-9_$.])[A-Za-z]:(?:\\{1,2}|\/)[A-Za-z0-9_.-]/g],
+  ['local path (Windows drive)', /(?<![A-Za-z0-9_$.])[A-Za-z]:\\{1,2}[A-Za-z0-9_.-]/g],
+];
+
+// A Windows drive written with a forward slash (D:/repo), read everywhere but in JavaScript, where a one-letter key or
+// a ternary before a regular expression literal (`{a:/re/}`, `e?t:/x/`) has the same shape.
+const SLASH_DRIVE: [string, RegExp][] = [
+  ['local path (Windows drive)', /(?<![A-Za-z0-9_$.])[A-Za-z]:\/[A-Za-z0-9_.-]/g],
 ];
 
 // A host GitHub serves a repository's content from, followed by a path or an SSH colon. A scheme is optional, so a URL
@@ -132,10 +138,11 @@ function matchAll(text: string, rules: [string, RegExp][]): Violation[] {
 
 /**
  * The rules any text the site publishes must pass, markup included: no private repository, no local path and no private
- * project's name.
+ * project's name. In JavaScript (`javascript`), a drive written with a forward slash is not read (`SLASH_DRIVE`).
  */
-export function addressViolations(text: string): Violation[] {
-  return [...privateRepositoryReferences(text), ...matchAll(text, LOCAL_PATHS), ...matchAll(text, PRIVATE_NAMES)];
+export function addressViolations(text: string, javascript = false): Violation[] {
+  const local = javascript ? LOCAL_PATHS : [...LOCAL_PATHS, ...SLASH_DRIVE];
+  return [...privateRepositoryReferences(text), ...matchAll(text, local), ...matchAll(text, PRIVATE_NAMES)];
 }
 
 /**
