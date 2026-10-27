@@ -1,0 +1,23 @@
+docs/acceptance.md
+  s_76e27a52bbdbcf::t_30a640652a0c50 3066-3084
+.claude/agent-memory/kit-implementer/docs-site-facts.md
+  s_76e27a52bbdbcf::t_43d59ba200a8fa 47-55
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_76e27a52bbdbcf::t_221b2ec0e8d8de 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8120fc757bf5a161fc44235d5b5c2f473f3dd99c",
+  "prompts": {},
+  "sessions": {
+    "s_76e27a52bbdbcf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cde6d05e-07a5-4e5c-903e-7974d318c31e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
