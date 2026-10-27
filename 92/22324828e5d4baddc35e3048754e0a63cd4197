@@ -1,0 +1,36 @@
+.claude/agent-memory/kit-implementer/docs-site-facts.md
+  s_76e27a52bbdbcf::t_3d3ecc5fe01caa 31
+  s_76e27a52bbdbcf::t_8dfe864eb56150 33-34
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_76e27a52bbdbcf::t_011f2c5ee93395 26
+docs/acceptance.md
+  s_76e27a52bbdbcf::t_11d370ab92cb36 3038
+  s_76e27a52bbdbcf::t_5c4e14f259a700 3024
+  s_76e27a52bbdbcf::t_08e5298cbd05b9 3032
+  s_76e27a52bbdbcf::t_b5c905bbb125de 3030
+  s_76e27a52bbdbcf::t_cdf119a0f9f801 3040
+  s_76e27a52bbdbcf::t_7c0c8c118bf1a7 3039
+  s_76e27a52bbdbcf::t_2352a40e3ba420 3020
+  s_76e27a52bbdbcf::t_ea13a51dae7330 3042-3048
+.claude/rules/website.md
+  s_76e27a52bbdbcf::t_d23edb5412975f 33-34
+  s_76e27a52bbdbcf::t_e0649e27d23111 31
+  s_76e27a52bbdbcf::t_0711eab167a877 36
+  s_76e27a52bbdbcf::t_89d7bdffbf8abc 30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9222324828e5d4baddc35e3048754e0a63cd4197",
+  "prompts": {},
+  "sessions": {
+    "s_76e27a52bbdbcf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cde6d05e-07a5-4e5c-903e-7974d318c31e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
