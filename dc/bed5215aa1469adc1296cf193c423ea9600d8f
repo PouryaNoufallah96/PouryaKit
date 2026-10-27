@@ -1,0 +1,23 @@
+.claude/rules/website.md
+  s_76e27a52bbdbcf::t_dc3650cbe1edf4 42
+AGENTS.md
+  s_76e27a52bbdbcf::t_1196da2f75eee7 136
+website/lib/kit-sources/distribution.test.ts
+  s_76e27a52bbdbcf::t_b9368a38eb4f2e 84-89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dcbed5215aa1469adc1296cf193c423ea9600d8f",
+  "prompts": {},
+  "sessions": {
+    "s_76e27a52bbdbcf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cde6d05e-07a5-4e5c-903e-7974d318c31e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
