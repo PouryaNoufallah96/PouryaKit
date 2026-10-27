@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { Badge } from '@/components/badge';
 import { Card } from '@/components/card';
 import { CommandBlock, KitSnippet, templatesInstall } from '@/components/kit-code';
+import { PUBLIC_REPOSITORY } from '@/lib/kit-sources/addresses.ts';
 import { findRoot } from '@/lib/kit-sources/paths.ts';
 import { skillEntries } from '@/lib/kit-sources/references.ts';
 import { docsRoute, siteDescription, siteName } from '@/lib/shared';
@@ -211,7 +212,7 @@ export default function HomePage() {
             agents:
           </p>
           <div className="not-prose mt-3">
-            <CommandBlock code="npx skills add PouryaNoufallah96/pouryakit-public" />
+            <CommandBlock code={`npx skills add ${PUBLIC_REPOSITORY}`} />
           </div>
           <Link
             href={`${docsRoute}/get-started/ai-skill`}

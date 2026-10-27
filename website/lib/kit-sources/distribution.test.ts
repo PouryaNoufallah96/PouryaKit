@@ -6,7 +6,7 @@ import path from 'node:path';
 import { after, test } from 'node:test';
 import Slugger from 'github-slugger';
 import { visit } from 'unist-util-visit';
-import { MARKETPLACE, PLUGIN } from './addresses.ts';
+import { MARKETPLACE, PLUGIN, PUBLIC_REPOSITORY } from './addresses.ts';
 import {
   assembleTree,
   fillReadme,
@@ -162,6 +162,16 @@ test('the README fills every name it uses from one place and refuses one it does
   assert.match(readme, /raw\.githubusercontent\.com\/PouryaNoufallah96\/pouryakit-public\/assets-v1\/assets\/kit\.png/);
   assert.throws(() => fillReadme('see {{website}}'), /names \{\{website\}\}/);
   assert.throws(() => fillReadme('see {{ site }}'), /a \{\{ or \}\}/);
+});
+
+test("the AI skill page's install commands name the public repository, the marketplace and the plugin", () => {
+  // The page keeps its commands as text, so they reach its Markdown; this holds them to addresses.ts.
+  const page = readFileSync(path.join(root, 'website/content/docs/get-started/ai-skill.mdx'), 'utf8');
+  const sources = [...page.matchAll(/(?:skills add|plugin marketplace add) (\S+)/g)].map((match) => match[1]);
+  const installs = [...page.matchAll(/plugin install (\S+)/g)].map((match) => match[1]);
+  assert.ok(sources.length >= 3 && installs.length >= 1);
+  assert.deepEqual(new Set(sources), new Set([PUBLIC_REPOSITORY]));
+  assert.deepEqual(new Set(installs), new Set([`${PLUGIN}@${MARKETPLACE}`]));
 });
 
 test('the regeneration check fails on a changed source, in either direction, and passes after regeneration', () => {
