@@ -25,6 +25,7 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
 {
     private DeliveryLog Log => Fixture.Host.Services.GetRequiredService<DeliveryLog>();
 
+    #region new-product-announced-test
     [Fact]
     public async Task A_new_product_is_announced_by_the_host_after_it_is_committed()
     {
@@ -52,6 +53,7 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
         Assert.Single(Fixture.Logs.Entries, entry => entry.Message == $"New in the catalog: Lamp ({product})");
     }
+    #endregion
 
     [Fact]
     public async Task A_notification_is_stored_once_per_subscription_in_the_commit_of_the_change_and_sent_only_after_it()

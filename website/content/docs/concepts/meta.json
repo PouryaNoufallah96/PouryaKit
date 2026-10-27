@@ -1,0 +1,19 @@
+{
+  "title": "Concepts",
+  "pages": [
+    "index",
+    "host-and-module",
+    "operation-result-error",
+    "operation-context",
+    "unit-of-work",
+    "domain-event",
+    "outbox-and-notifications",
+    "integration-events",
+    "snapshots",
+    "composition-and-startup-checks",
+    "delayed-and-recurring-commands",
+    "stream",
+    "saga",
+    "gateway-and-mcp-tools"
+  ]
+}

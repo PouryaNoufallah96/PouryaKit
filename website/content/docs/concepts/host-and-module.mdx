@@ -1,0 +1,64 @@
+---
+title: Host and Module
+description: A Host is the application you deploy; a Module is a business boundary inside it, reached only through its Gateway.
+---
+
+## What it is
+
+A [Host](/docs/reference/glossary#host) is the application you deploy: one process that runs [Operations](/docs/reference/glossary#operation). A [Module](/docs/reference/glossary#module) is a business boundary inside a Host. It owns its data, its rules and its public [Contracts](/docs/reference/glossary#contracts), the messages it publishes and the questions it answers.
+
+Inside a Module, code is grouped by [Business Area](/docs/reference/glossary#business-area), one aggregate or a close group of them, and each Business Area holds its [Features](/docs/reference/glossary#feature): one command or query with everything needed to serve it. One Host holds one container for all of its Modules. What keeps the Modules apart is the compiler and the structure tests: everything in a Module stays `internal` except its [Composition Root](/docs/reference/glossary#composition-root) and a few named kinds of type, and a Module references another only through that Module's Contracts.
+
+<Callout type="warn" title="Modules of one Host never call each other over HTTP">
+  Inside a Module, aggregates talk through [Domain Events](/docs/reference/glossary#domain-event). Across Modules, a Module tells the others what happened with an [Integration Event](/docs/reference/glossary#integration-event), or keeps a copy of their data from [Snapshots](/docs/reference/glossary#snapshot). It asks another Module a question directly, through that Module's Contracts, only when the Operation cannot go on without the answer.
+</Callout>
+
+## When it matters
+
+- **One business boundary**: start with the monolith template, one Module's data and rules in one Host. It grows into the modular monolith when a second Module arrives, without changing its business code. See [Templates](/docs/templates) and [Choose a template](/docs/decision-guides/template-choice).
+- **Several boundaries in one process**: the modular monolith, each Module reached through its [Gateway](/docs/reference/glossary#gateway).
+- **One Module in a process of its own**: the service template, which receives another Host's Integration Events and Snapshots over RabbitMQ.
+
+## How it works
+
+Each Module declares everything it needs and offers in one Composition Root: a public sealed class that implements `IModuleDefinition`. Its `Configure` method declares the Module's data, its Features, what it publishes and subscribes to, and its endpoints, on a `ModuleBuilder`. The Host adds each Module once, with `AddPouryaKitModules`. The [Composition Root section](/docs/capabilities/modules#the-composition-root) shows the [Proving Sample](/docs/reference/glossary#proving-sample)'s Catalog and the Host that composes it.
+
+Anything outside a Module asks it to run a command or query through its Gateway, `IGatewayProcessor<TModule>`. Each call is one Operation in a scope of its own, run with the [Operation Context](/docs/reference/glossary#operation-context) the caller passes. An endpoint is the most common caller. This one, from the Proving Sample's Inventory Module, sends a query through Inventory's Gateway:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/GetStockItem/GetStockItemEndpoint.cs" region="get-stock-item-endpoint" />
+
+When another Module needs an answer before its Operation can go on, the owning Module publishes the question as an interface in its Contracts and answers it through its own Gateway. [Asking another Module a question](/docs/capabilities/modules#asking-another-module-a-question) walks through how Catalog answers product questions.
+
+## What the Kit guarantees
+
+Each rule is stated, with its proof, in the skill section the row links to.
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| What a Module may make public, and what it may reference | [Structure tests](/docs/capabilities/testing#structure-tests) |
+| Which Module's Gateway runs a command or query | [Which Module an Operation belongs to](/docs/capabilities/modules#which-module-an-operation-belongs-to) |
+| One Operation per Gateway call, in its own scope | [The Gateway](/docs/capabilities/modules#the-gateway) |
+| How Modules talk to each other | [Asking another Module a question](/docs/capabilities/modules#asking-another-module-a-question) |
+| What a mistake in a Host's composition does | [The Host's checks](/docs/capabilities/modules#the-hosts-checks) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="A command sent through another Module's Gateway">
+    The Gateway refuses it with an `InvalidOperationException` that names both Modules. Send it through the Gateway of the Module whose Composition Root registers its handler: [Which Module an Operation belongs to](/docs/capabilities/modules#which-module-an-operation-belongs-to).
+  </Accordion>
+  <Accordion title="A Module that handles a command but has no data">
+    The Host stops while it is composed, naming the Module and the command: declare the Module's data in its Composition Root. A Module that only answers queries needs none. [The Host's checks](/docs/capabilities/modules#the-hosts-checks) quotes the message.
+  </Accordion>
+  <Accordion title="A declaration made for another Module">
+    A Composition Root that declares on another Module's behalf throws while the Host is composed, naming both. See [The Composition Root](/docs/capabilities/modules#the-composition-root).
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Operation, Result and Error" href="/docs/concepts/operation-result-error" description="What runs inside a Module, and how it reports a failure." />
+  <Card title="Add a Module" href="/docs/get-started/add-a-module" description="Add a second Module to a generated solution." />
+  <Card title="Modules" href="/docs/capabilities/modules" description="The Composition Root, the Gateway and the Host's checks, in full." />
+</Cards>

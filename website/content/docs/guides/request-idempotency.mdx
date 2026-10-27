@@ -1,0 +1,94 @@
+---
+title: Make a command idempotent
+description: Let a client repeat a request it never got an answer to, and replay the first success instead of running the command again.
+---
+
+## What you build
+
+A command a client may send again, after a response it never received, opts in with `[Idempotent]`. The client gives each request a [request id](/docs/reference/glossary#request-id), over HTTP in a header the endpoint requires. Inside the command's [Unit of Work](/docs/reference/glossary#unit-of-work) the [Kit](/docs/reference/glossary#kit) reserves a key for that request, so a repeat replays the first success instead of running the handler again. [Request idempotency](/docs/capabilities/commands-queries-validation#request-idempotency) says what the key holds and what a repeat does.
+
+<Callout type="warn" title="The key alone decides">
+  The Kit compares no body, so a client gives each distinct request its own key and reuses a key only to repeat one. Only a success is kept: a request that failed recorded nothing, and its repeat runs again.
+</Callout>
+
+## When to use it
+
+For a write a client may retry after a lost response, such as creating a product. A command that runs only inside another, or a query, never needs it: a nested command joins the outer [Operation](/docs/reference/glossary#operation), and a query ignores the request id.
+
+## Steps
+
+<Steps>
+<Step>
+
+### Opt the command in
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommand.cs" region="create-product-command" />
+
+</Step>
+<Step>
+
+### Require the key on its endpoint
+
+Call `RequireIdempotencyKey()` on the [Module](/docs/reference/glossary#module)'s write endpoint that sends the command. Every request to it must then carry the key, which becomes the request's id. [A repeatable write](/docs/capabilities/web#a-repeatable-write) shows `CreateProduct`'s endpoint and names the header. Another [Gateway](/docs/reference/glossary#gateway) caller sets the request id on the context it builds.
+
+</Step>
+<Step>
+
+### Add the key table to the Module's schema
+
+The keys live in a table of the Module's own schema, outside its model. Add an empty migration with `dotnet ef migrations add IdempotencyKeys` and the Module's options, as in [Add a migration](/docs/guides/add-a-migration), then fill it:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261007120000_IdempotencyKeys.cs" region="idempotency-keys-migration" />
+
+</Step>
+<Step>
+
+### Decide how long a key replays
+
+The [Host](/docs/reference/glossary#host) keeps each key for its retention, then removes it, and a later repeat runs as a new request. Choose a retention longer than any client keeps retrying: see [Idempotency key retention](/docs/capabilities/persistence#idempotency-key-retention) for the setting and its default.
+
+</Step>
+<Step>
+
+### Test the repeat
+
+Send the request twice with one key, and assert the same status, location and body, one row, and nothing sent the second time:
+
+<Snippet file="tests/ModularMonolith.Tests/IdempotencyTests.cs" region="repeated-idempotency-key-test" />
+
+</Step>
+</Steps>
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| What the key is, what a repeat replays, and what a concurrent repeat does | [Request idempotency](/docs/capabilities/commands-queries-validation#request-idempotency) |
+| The header's rule, and what a repeat answers over HTTP | [A repeatable write](/docs/capabilities/web#a-repeatable-write) |
+| The key table and its migration | [Migrations](/docs/capabilities/persistence#migrations) |
+| How long a key replays | [Idempotency key retention](/docs/capabilities/persistence#idempotency-key-retention) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="A request without a readable key">
+    A request that carries no key, more than one, or a value the header's rule refuses is answered with a problem response that states the rule, before its body is read: [A repeatable write](/docs/capabilities/web#a-repeatable-write).
+  </Accordion>
+  <Accordion title="InvalidOperationException naming the key table's call">
+    The Module has no key table yet. The first opted-in command with a request id throws, and nothing commits. Add the migration above.
+  </Accordion>
+  <Accordion title="InvalidOperationException at dispatch">
+    A request id reached an outermost command that does not opt in with `[Idempotent]`. Opt the command in, or stop requiring the key.
+  </Accordion>
+  <Accordion title="RequireIdempotencyKey on a read">
+    On an endpoint that is not mapped for a write, it throws when the endpoint is built, which stops the Host's start. Map the command as a write: [A repeatable write](/docs/capabilities/web#a-repeatable-write) lists the methods.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Publish and subscribe to an Integration Event" href="/docs/guides/publish-and-subscribe" description="Tell other Modules what happened." />
+  <Card title="Test a Feature" href="/docs/guides/test-a-feature" description="Run Operations against the hosted application." />
+  <Card title="Web" href="/docs/capabilities/web#a-repeatable-write" description="Repeatable writes over HTTP, in full." />
+</Cards>

@@ -1,0 +1,71 @@
+---
+title: Delayed and recurring commands
+description: A delayed command continues the Operation that scheduled it, later; a recurring command runs on a cadence as a named system Actor, continuing nothing.
+---
+
+## What it is
+
+A [delayed command](/docs/reference/glossary#delayed-command) is a command an [Operation](/docs/reference/glossary#operation) schedules to run later in its own [Module](/docs/reference/glossary#module). It is committed with the Operation and runs once due as its continuation, with its [Actor](/docs/reference/glossary#actor), [tenant](/docs/reference/glossary#tenant) and correlation.
+
+A [recurring command](/docs/reference/glossary#recurring-command) is a command a Module declares to run at every occurrence of a cadence. Each occurrence is an Operation of its own, for the system Actor the declaration names, and continues nothing.
+
+Both are ordinary commands with ordinary handlers. The Module's [Outbox](/docs/reference/glossary#outbox) stores them until they are due, and each run records a [Receipt](/docs/reference/glossary#receipt), so a redelivered run applies its database effect once.
+
+<Callout type="warn" title="Two kinds of authority">
+  A delayed command runs on the authority of the Operation that scheduled it. A recurring command runs as its declared system Actor, with no tenant, so a tenant-scoped Module cannot declare one. Write each handler for the state it finds when it runs, which may have changed since.
+</Callout>
+
+## When to use it
+
+- **Something must happen later because of what an Operation did**, such as a quote that expires: a delayed command, scheduled by that Operation, committed with it or not at all.
+- **Work recurs on a cadence and no Operation asks for it**, such as a nightly reconciliation: a recurring command.
+
+## How it works
+
+Billing's `OpenQuote` opens a quote and schedules its expiry in the same commit:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Features/OpenQuote/OpenQuoteCommandHandler.cs" region="open-quote-handler" />
+
+When it is due, `ExpireQuote` runs as a continuation of the Operation that opened the quote. The [Kit](/docs/reference/glossary#kit) never removes a scheduled command, so the handler checks the state it finds:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Features/ExpireQuote/ExpireQuoteCommandHandler.cs" region="expire-quote-handler" />
+
+Inventory reconciles its stock on a cadence the [Host](/docs/reference/glossary#host)'s configuration sets, as the system Actor its [Composition Root](/docs/reference/glossary#composition-root) names:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/ReconcileStock/ReconcileStockCommandHandler.cs" region="reconcile-stock-handler" />
+
+Each is declared in its Module's Composition Root under a durable name, `AddPouryaKitDelayedCommand` or `AddPouryaKitRecurringCommand`. The name is its queue and half of its Receipts' key, so keep it when the command is renamed. [Schedule a delayed or recurring command](/docs/guides/schedule-commands) walks through both.
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| Nothing schedules before the commit; when a delayed command runs; on whose authority | [Delayed commands](/docs/capabilities/messaging#delayed-commands) |
+| When occurrences fall; on whose authority; what a failed occurrence does to the cadence | [Recurring commands](/docs/capabilities/messaging#recurring-commands) |
+| What a restart, a missed occurrence or two starting Hosts do | [Restart semantics](/docs/capabilities/messaging#restart-semantics) |
+| Testing what is not yet due | [Deliveries](/docs/capabilities/testing#deliveries) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="Schedule throws">
+    `IDelayedCommands.Schedule` throws for a command the Module did not declare as delayed, and wherever no [Unit of Work](/docs/reference/glossary#unit-of-work) would store it, such as an endpoint or a hosted service. [Delayed commands](/docs/capabilities/messaging#delayed-commands) lists each case.
+  </Accordion>
+  <Accordion title="OptionsValidationException at start">
+    A recurring command's cadence is missing or outside the range its options accept, and the Host does not start: a missing configuration never runs it at a default. See [Recurring commands](/docs/capabilities/messaging#recurring-commands).
+  </Accordion>
+  <Accordion title="A recurring command in a tenant-scoped Module">
+    The Host does not build: its occurrences would run for a system Actor with no tenant. Declare recurring work in a Module that is not tenant-scoped.
+  </Accordion>
+  <Accordion title="DelayedCommandFailedException in a dead letter">
+    A run that returned a failed [Result](/docs/reference/glossary#result) on every attempt is set aside as a dead letter of its name, naming each [Error](/docs/reference/glossary#error). A recurring command's cadence goes on, unless the stored occurrence no longer reads as its command.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Stream" href="/docs/concepts/stream" description="The Kit's second write model." />
+  <Card title="Schedule a delayed or recurring command" href="/docs/guides/schedule-commands" description="Declare, schedule and test both kinds." />
+  <Card title="Messaging" href="/docs/capabilities/messaging#delayed-commands" description="Delayed and recurring commands, in full." />
+</Cards>

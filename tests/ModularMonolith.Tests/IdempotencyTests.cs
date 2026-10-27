@@ -157,6 +157,7 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(2L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
     }
 
+    #region repeated-idempotency-key-test
     [Fact]
     public async Task A_repeated_idempotency_key_answers_the_first_status_and_body_without_creating_or_sending_anything()
     {
@@ -187,6 +188,7 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
         );
         Assert.Equal(1L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
     }
+    #endregion
 
     // A blank tenant claim is no tenant at the HTTP boundary, so its request and one without the claim are the same
     // caller's, with one key, and neither is a tenant that collides with the empty string the key stores for no tenant.

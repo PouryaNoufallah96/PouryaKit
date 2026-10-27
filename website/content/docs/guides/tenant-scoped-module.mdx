@@ -1,0 +1,92 @@
+---
+title: Make a Module tenant-scoped
+description: Require a tenant for every command and query of a Module, and read and save its aggregates only within the tenant of the Operation.
+---
+
+## What you build
+
+A tenant-scoped [Module](/docs/reference/glossary#module) runs no [Operation](/docs/reference/glossary#operation) and applies no delivery without a [tenant](/docs/reference/glossary#tenant), and its tenant-scoped aggregates are read and saved only by Operations of the tenant they belong to. It is a registration across packages the [Host](/docs/reference/glossary#host) already has, not a package of its own. In the [Proving Sample](/docs/reference/glossary#proving-sample), Catalog and Ledger are tenant-scoped.
+
+<Callout type="warn" title="A tenant comes only from a verified claim">
+  At the HTTP boundary the tenant is read from the claim the bearer scheme verified, never from a host name or a route. So a tenant-scoped Module maps no public endpoint: an anonymous caller has no tenant, and its Operation would be refused.
+</Callout>
+
+## When to use it
+
+When one Host serves several customers or companies and each must see and change only its own data. A Module that is not tenant-scoped can still keep a delivered tenant on its own rows, as Inventory does: see [Deliveries](/docs/capabilities/multi-tenancy#deliveries).
+
+## Steps
+
+<Steps>
+<Step>
+
+### Declare the Module tenant-scoped, first
+
+Call `AddPouryaKitTenancy()` first in the Module's [Composition Root](/docs/reference/glossary#composition-root), before `AddPouryaKitCqrs` and `AddPouryaKitPermissions`. It registers the tenant requirement for every command and query the Module can dispatch, and a requirement registered first refuses a tenantless Operation before any authorizer of the Module's own reads data.
+
+</Step>
+<Step>
+
+### Mark each aggregate that holds a tenant's data
+
+Implement `ITenantScoped` on the aggregate, with a `Tenant` property it sets itself, from the tenant its handler takes from the [Operation Context](/docs/reference/glossary#operation-context). The [Kit](/docs/reference/glossary#kit) never sets it.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Entities/Product.cs" region="product-create" />
+
+Make a unique value unique per tenant: Catalog's name index is on the tenant and the name together. Then add a migration for the new column and index.
+
+</Step>
+<Step>
+
+### State the tenant in every plain SQL read
+
+EF Core reads of a tenant-scoped entity are filtered to the Operation's tenant for you. Dapper runs exactly the SQL you write, so a read of a tenant-scoped table holds each such table to the tenant itself, against the tenant the Kit's connection lease set, never one the handler passes. A structure test holds every such read to one grammar: [Reading](/docs/capabilities/dapper-reads#reading) gives the predicate and the grammar.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryHandler.cs" region="list-products-handler" />
+
+</Step>
+<Step>
+
+### Prove isolation with two tenants
+
+Create in one tenant and in another through the [Gateway](/docs/reference/glossary#gateway), each with a context of its own tenant, then show that one tenant's get, list, change and removal find none of the other's:
+
+<Snippet file="tests/ModularMonolith.Tests/TenancyTests.cs" region="tenant-isolation-through-the-gateway" />
+
+</Step>
+</Steps>
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| No command or query runs without a tenant, a trusted continuation included | [What the Kit guarantees](/docs/capabilities/multi-tenancy#what-the-kit-guarantees) |
+| EF Core reads see only the Operation's tenant's rows | [Reads](/docs/capabilities/multi-tenancy#reads) |
+| No Operation saves another tenant's aggregate | [Saves](/docs/capabilities/multi-tenancy#saves) |
+| No delivery is applied without a tenant | [Deliveries](/docs/capabilities/multi-tenancy#deliveries) |
+| What a tenant-scoped Module cannot declare | [Declaring a tenant-scoped Module](/docs/capabilities/multi-tenancy#declaring-a-tenant-scoped-module) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="Tenant.Required">
+    The Operation, or a delivery into the Module, has no tenant. It fails before its validator and handler, and over HTTP answers the forbidden problem response. A delivery is retried, then set aside as a dead letter. See [What the Kit guarantees](/docs/capabilities/multi-tenancy#what-the-kit-guarantees).
+  </Accordion>
+  <Accordion title="Tenant.Mismatch">
+    The Operation added an aggregate for another tenant, or changed or removed one loaded under another tenant. The save is refused and nothing commits.
+  </Accordion>
+  <Accordion title="Tenant.NotLoaded">
+    The Operation changed a tenant-scoped aggregate it attached instead of loading it through a query. Load it through the repository.
+  </Accordion>
+  <Accordion title="The Host does not build">
+    A tenant-scoped Module may not declare a [recurring command](/docs/reference/glossary#recurring-command), a [Snapshot](/docs/reference/glossary#snapshot) of an aggregate whose key two tenants could share, or dispatch a command or query its tenancy declaration does not cover. Each check names the Module and what to change.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Add a migration" href="/docs/guides/add-a-migration" description="Add the tenant column and index." />
+  <Card title="Multi-tenancy" href="/docs/capabilities/multi-tenancy" description="Reads, saves, deliveries and their limits." />
+  <Card title="Operation Context, Actor and tenant" href="/docs/concepts/operation-context" description="Where an Operation's tenant comes from." />
+</Cards>

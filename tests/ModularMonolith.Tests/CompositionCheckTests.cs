@@ -214,6 +214,7 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         Assert.EndsWith(". Call AddPouryaKitCaching() on the Host's services.", thrown.Message);
     }
 
+    #region missing-unit-of-work-check-test
     [Fact]
     public void A_features_command_in_a_host_without_a_unit_of_work_fails_the_host_when_built()
     {
@@ -228,6 +229,7 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
             thrown.Message
         );
     }
+    #endregion
 
     // A scanned handler of a command from an assembly nothing scans, as a Contracts assembly's, counts (#61 review
     // finding F7).
