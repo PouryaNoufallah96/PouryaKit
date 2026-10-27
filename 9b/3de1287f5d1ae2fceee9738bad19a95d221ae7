@@ -1,0 +1,58 @@
+website/package.json
+  s_76e27a52bbdbcf::t_8485136add1b49 15
+website/scripts/kit-content.ts
+  s_76e27a52bbdbcf::t_27fb0d867c12bb 1,7,23
+website/lib/kit-sources/markdown.test.ts
+  s_76e27a52bbdbcf::t_6ad10f13c85925 1-12,15-16
+  s_76e27a52bbdbcf::t_687c1cdb4af220 13-14
+website/lib/kit-sources/rules.test.ts
+  s_76e27a52bbdbcf::t_6ea5b421091352 79-80
+  s_76e27a52bbdbcf::t_21ba80b7f66d8e 120
+  s_76e27a52bbdbcf::t_c91334e1655e6f 23-26
+  s_76e27a52bbdbcf::t_def5765439f857 175-176
+website/lib/kit-sources/site.test.ts
+  s_76e27a52bbdbcf::t_ed2924d4066e26 26-28
+  s_76e27a52bbdbcf::t_de8720d526e8e7 13,17,23-25,29-32
+  s_76e27a52bbdbcf::t_2c8d34369164c9 33-34
+website/lib/kit-sources/site.ts
+  s_76e27a52bbdbcf::t_b617fd6caacb2a 237
+  s_76e27a52bbdbcf::t_f9f413d78cead5 250
+  s_76e27a52bbdbcf::t_5ec74f30315a96 140
+  s_76e27a52bbdbcf::t_377ca0666b3e66 34-36
+website/lib/kit-sources/links.test.ts
+  s_76e27a52bbdbcf::t_ce8bd270eb77df 30
+  s_76e27a52bbdbcf::t_221f8e6dad998b 11,13-14,18
+  s_76e27a52bbdbcf::t_25fddd31b3b0cb 39-44
+website/lib/kit-sources/markdown.ts
+  s_76e27a52bbdbcf::t_d7e25d1dd5f58a 85
+  s_76e27a52bbdbcf::t_16da6945117e58 71-84,86-90,92
+  s_76e27a52bbdbcf::t_0d050405f70399 38
+website/lib/kit-sources/rules.ts
+  s_76e27a52bbdbcf::t_a65ba61d82ccff 120
+  s_76e27a52bbdbcf::t_1b1d966b6189b5 142-144,148-150
+  s_76e27a52bbdbcf::t_e10da3be1b0284 103-104,106
+  s_76e27a52bbdbcf::t_4765982fbe8f04 25
+  s_76e27a52bbdbcf::t_68fb834b51db27 105
+  s_76e27a52bbdbcf::t_5087b9d390f316 61-65
+  s_76e27a52bbdbcf::t_a58675a65ae786 40
+  s_76e27a52bbdbcf::t_dbd92980c1384e 48-50
+  s_76e27a52bbdbcf::t_25d55856f08ad9 57
+  s_76e27a52bbdbcf::t_7f1f7305f62874 95-102,107
+  s_76e27a52bbdbcf::t_cef12d9a57f6b1 109-110,115,119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9b3de1287f5d1ae2fceee9738bad19a95d221ae7",
+  "prompts": {},
+  "sessions": {
+    "s_76e27a52bbdbcf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cde6d05e-07a5-4e5c-903e-7974d318c31e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
