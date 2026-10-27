@@ -1,0 +1,29 @@
+.claude/rules/website.md
+  s_76e27a52bbdbcf::t_54cc76f13c1ed7 36
+docs/acceptance.md
+  s_76e27a52bbdbcf::t_2f7388016f4e0d 3046
+website/lib/kit-sources/export-check.test.ts
+  s_76e27a52bbdbcf::t_8aa2afafadbdde 37-47
+website/lib/kit-sources/export-check.ts
+  s_76e27a52bbdbcf::t_167d95417e845a 150-151
+website/lib/kit-sources/markdown.ts
+  s_76e27a52bbdbcf::t_6177c89437f566 93-97
+website/lib/kit-sources/rules.ts
+  s_76e27a52bbdbcf::t_cdd873e69e94cb 40-46,141,143-145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "82d4330dde05862b15e4d0c64dec3f548acb9ba6",
+  "prompts": {},
+  "sessions": {
+    "s_76e27a52bbdbcf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cde6d05e-07a5-4e5c-903e-7974d318c31e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
