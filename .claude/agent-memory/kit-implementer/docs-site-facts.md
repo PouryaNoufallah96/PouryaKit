@@ -26,5 +26,11 @@ metadata:
 - **A sample region marker**: diagrams cite `CreateProductCommandHandler.cs` by line (`http-command`, `module-boundaries`), so a marker there forces two re-pins; `RenameProductCommandHandler.cs` is cited by no diagram and replaced by no template.
 - **Shell guard**: refused a python heredoc whose text held the word "git" (prose included) and a `sed -n` with a computed line; the Edit tool and scratchpad scripts with the worktree as argument worked.
 
+## Content pipeline fix round (#187, 2026-10-27)
+
+- **Folding white space joins blocks**: reading the vocabulary with `\s+` as one space made `…in the session` and the next table row's `3` read `session 3` in the real build (HTML tags were spaces, Markdown parts joined by `\n`). The extractors must end each block with a blank line (`BLOCK_END`) and the fold must keep it (`softSpaced`); an inline tag renders nothing. `mdast-util-to-string` joins table cells with no separator at all.
+- **A word a rule refuses may be an ordinary one in the skill**: "orchestrator" is a container orchestrator in four references (and `orchestrate_tools` a span name), so a word rule needs a grep of `.agents/skills/pourya-kit/` first; the session dropped it.
+- **ADR rewrites at scale**: about 290 keyed rewrites were written from patch files by a scratchpad tool (`p187fix/rw.py`: blocks of `<adr> <line or ?>`, from, to; `?` finds the one line the text starts on, a phrase repeated in the ADR needs its line). `p187fix/leads.ts` lists every amendment whose heading or lead the projection drops; the test "every real amendment keeps its heading and its lead" now holds it. A `from` matches only where it starts on its keyed line, not where it ends; name an amendment by its date, or its subject where two share a date.
+
 **Why:** each cost a probe or a failed run in #186 or #187.
 **How to apply:** for any ticket under `website/` (#187 content pipeline, #189 pages, #190 covers). Related: [[merge-ci-and-workflow-tooling-facts]], [[docs-verification-tools]], [[worktree-shell-and-check-gotchas]].
