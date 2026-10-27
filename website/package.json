@@ -13,6 +13,7 @@
     "lint": "biome check .",
     "check-licences": "node scripts/check-licences.mjs",
     "covers": "node scripts/covers.ts",
+    "sync-public": "node scripts/sync-public.ts",
     "test": "node --test scripts/check-licences.test.mjs scripts/covers.test.mjs lib/kit-sources/*.test.ts"
   },
   "dependencies": {

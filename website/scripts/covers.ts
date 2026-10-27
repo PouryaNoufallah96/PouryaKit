@@ -2,9 +2,10 @@
 // next/og's ImageResponse (the Satori and resvg typesetter of the site's Open Graph images) and the Geist fonts
 // committed in covers/fonts/, so the model never draws a letter. next/og fetches a glyph those fonts lack from Google
 // Fonts; covers.test.mjs keeps every string printable ASCII, which they hold, so nothing is fetched.
-// `pnpm --dir website covers` writes covers/out/kit.png, covers/out/covers/<id>.png for each package in
-// covers/covers.json, and the repository's src/icon.png, then prints each file's sha256: the same artwork gives
-// byte-identical files.
+// `pnpm --dir website covers` writes covers/out/kit.png, covers/out/covers/<id>.png for each package of
+// scripts/packaging/inventory.json (the list the site and the public repository read, lib/kit-sources/packages.ts), set
+// with its family and tagline from covers/covers.json, and the repository's src/icon.png, then prints each file's
+// sha256: the same artwork gives byte-identical files.
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { relative } from 'node:path';
@@ -12,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 // next has no exports map, so Node's own resolver needs the file name.
 import { ImageResponse } from 'next/og.js';
 import { createElement as h, type ReactElement } from 'react';
+import { readPackageIds } from '../lib/kit-sources/packages.ts';
 
 type Covers = {
   kit: { eyebrow: string; title: string; tagline: string };
@@ -216,8 +218,14 @@ function write(target: URL, png: Buffer, width: number, height: number) {
   console.log(`${hash}  ${String(png.length).padStart(7)}  ${relative(fileURLToPath(root), fileURLToPath(target))}`);
 }
 
+const ids = readPackageIds(fileURLToPath(root));
+const entries = new Map(data.packages.map((entry) => [entry.id, entry]));
 for (const { id, family } of data.packages) {
+  if (!ids.includes(id)) throw new Error(`covers.json has an entry for ${id}, which is no package of the inventory.`);
   if (!data.families[family]) throw new Error(`${id} names the family ${family}, which covers.json does not list.`);
+}
+for (const id of ids) {
+  if (!entries.has(id)) throw new Error(`covers.json has no entry for ${id}, a package of the inventory.`);
 }
 
 mkdirSync(new URL('covers/', out), { recursive: true });
@@ -228,7 +236,8 @@ write(
   cover.width,
   cover.height,
 );
-for (const { id, family, tagline } of data.packages) {
+for (const id of ids) {
+  const { family, tagline } = entries.get(id) as Covers['packages'][number];
   const element = frame(art(family), data.families[family], packageTitle(id), tagline);
   write(new URL(`covers/${id}.png`, out), await render(element, cover.width, cover.height), cover.width, cover.height);
 }

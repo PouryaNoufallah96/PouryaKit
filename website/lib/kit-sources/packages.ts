@@ -17,10 +17,15 @@ export function packageSlug(id: string) {
   return id.toLowerCase().replaceAll('.', '-');
 }
 
+/** The Kit's package IDs in the packaging inventory's order: the one list the site, the covers and the public repository read. */
+export function readPackageIds(root: string): string[] {
+  const inventory = JSON.parse(readSource(root, INVENTORY)) as { packages: { id: string }[] };
+  return inventory.packages.map((entry) => entry.id);
+}
+
 /** The Kit's packages, as the packaging inventory lists them, with each one's project references and Capabilities. */
 export function readPackages(root: string, entries: SkillEntry[]): KitPackage[] {
-  const inventory = JSON.parse(readSource(root, INVENTORY)) as { packages: { id: string }[] };
-  const ids = inventory.packages.map((entry) => entry.id);
+  const ids = readPackageIds(root);
   const known = new Set(ids);
   for (const entry of entries) {
     for (const id of entry.packages) {

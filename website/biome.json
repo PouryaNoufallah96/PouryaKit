@@ -6,6 +6,7 @@
       "!**/node_modules",
       "!.next",
       "!out",
+      "!distribution/out",
       "!.source",
       "!next-env.d.ts",
       "!pnpm-lock.yaml",
