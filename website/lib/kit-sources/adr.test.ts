@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { List } from 'mdast';
 import { applyRewrites, compareManifest, dropCitations, projectAdr } from './adr.ts';
-import { nodeViolations, parseMarkdown, stringifyMarkdown } from './markdown.ts';
-import { findRoot } from './paths.ts';
+import { nodeViolations, parseMarkdown, parseSource, renderedText, stringifyMarkdown } from './markdown.ts';
+import { ADRS, findRoot, readSource } from './paths.ts';
 import { adrExclusions, projectAdrs, readManifest } from './site.ts';
 
 test('a parenthetical that only cites the tracker is dropped, and one with substance stays', () => {
@@ -13,6 +13,7 @@ test('a parenthetical that only cites the tracker is dropped, and one with subst
   assert.equal(dropCitations('As before (spec #74, finding V13).'), 'As before.');
   assert.equal(dropCitations('Trusted (G.6) and scoped (plan section F).'), 'Trusted and scoped.');
   assert.equal(dropCitations('Cached (I.3 Caching).'), 'Cached.');
+  assert.equal(dropCitations('Scoped (plan\n  section F) here.'), 'Scoped\n   here.');
   assert.equal(
     dropCitations('Never forwarded (G.6, plan I.3; `OutgoingHttpTests`).'),
     'Never forwarded (G.6, plan I.3; `OutgoingHttpTests`).',
@@ -136,4 +137,27 @@ test('the real ADRs project with no tracker code left, and leave out exactly wha
   const adrs = projectAdrs(root);
   for (const adr of adrs) assert.deepEqual(nodeViolations(adr.tree), [], adr.slug);
   assert.deepEqual(compareManifest(adrExclusions(adrs), readManifest(root)), []);
+});
+
+test('every real amendment keeps its heading and its lead on the public page, so no decision is left out with it', () => {
+  const root = findRoot();
+  const lost: string[] = [];
+  let amendments = 0;
+  let written = 0;
+  for (const adr of projectAdrs(root)) {
+    const text = readSource(root, `${ADRS}/${adr.slug}.md`);
+    written += (text.match(/^## Amendment/gm) ?? []).length;
+    const source = parseSource(text).children;
+    const kept = new Set(adr.tree.children.map((node) => node.position?.start.line));
+    source.forEach((node, index) => {
+      if (node.type !== 'heading' || !renderedText(node).startsWith('Amendment')) return;
+      amendments++;
+      for (const block of [node, source[index + 1]]) {
+        if (!kept.has(block.position?.start.line)) lost.push(`${adr.slug}:${block.position?.start.line}`);
+      }
+    });
+  }
+  assert.ok(written > 0);
+  assert.equal(amendments, written);
+  assert.deepEqual(lost, []);
 });

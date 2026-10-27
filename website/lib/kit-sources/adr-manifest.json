@@ -1,11 +1,11 @@
 [
   {
     "adr": "0002-no-mediator-dependency",
-    "line": 19,
-    "kind": "section",
+    "line": 21,
+    "kind": "paragraph",
     "rule": "delivery vocabulary (spike)",
-    "digest": "c804adc9ef6dc7e9",
-    "text": "Confirmed by Spike S3 (2026-10-05) The Spike code is spikes/s3-dispatcher/ at commit cbc64ba6d99148423e1dcf4d5e754298..."
+    "digest": "4b353d5db402133d",
+    "text": "The Spike code is spikes/s3-dispatcher/ at commit cbc64ba6d99148423e1dcf4d5e754298ce728ef6, reachable through the tag..."
   },
   {
     "adr": "0004-commit-through-wolverine-ef-outbox",

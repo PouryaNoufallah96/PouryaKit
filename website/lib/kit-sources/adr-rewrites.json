@@ -43,15 +43,69 @@
   },
   {
     "adr": "0002-no-mediator-dependency",
-    "line": 135,
-    "from": "Ticket #7 closed its two open points, and these rules",
-    "to": "These rules"
+    "line": 19,
+    "from": "## Confirmed by Spike S3 (2026-10-05)",
+    "to": "## Confirmed by an experiment (2026-10-05)"
   },
   {
     "adr": "0002-no-mediator-dependency",
-    "line": 149,
-    "from": ", as invariant 1 above already states",
-    "to": ""
+    "line": 64,
+    "from": "'Spike.Common.OperationTrace'",
+    "to": "'….OperationTrace'"
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 73,
+    "from": "a case the Spike did not test.",
+    "to": "a case the experiment did not test."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 76,
+    "from": "### Shape for ticket #7",
+    "to": "### Shape"
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 112,
+    "from": "The Spike decided \"join\" by nesting depth,",
+    "to": "The experiment decided \"join\" by nesting depth,"
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 113,
+    "from": "Open points for ticket #7:",
+    "to": "Open points:"
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 115,
+    "from": "(the Spike marked failed nested commands only); *answered by ticket #7: it does not,",
+    "to": "(the experiment marked failed nested commands only); *answered: it does not,"
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 117,
+    "from": "*Answered by ticket #7: it may not,",
+    "to": "*Answered: it may not,"
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 121,
+    "from": "Ticket #7 proves these through dispatch",
+    "to": "The Kit proves these through dispatch"
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 129,
+    "from": "data and Outbox included, in Phase 2 (plan section E).",
+    "to": "data and Outbox included."
+  },
+  {
+    "adr": "0002-no-mediator-dependency",
+    "line": 135,
+    "from": "Ticket #7 closed its two open points, and these rules",
+    "to": "Its two open points are closed, and these rules"
   },
   {
     "adr": "0002-no-mediator-dependency",

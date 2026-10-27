@@ -57,9 +57,10 @@ type Edit = { start: number; end: number; text: string; where: string };
 
 // A replacement keeps the line breaks of the text it replaces, each with the indentation after it, so every line of the
 // projected ADR stays at its line in the source and the manifest's lines are the record's. The breaks it drops take the
-// place of its own spaces, spread over it, so its sentence runs on over the same lines; one that leaves nothing in front of
-// punctuation moves the punctuation up to the text before it, so no ` .` or ` ,` stays. An edit that would still leave an
-// empty line, which splits its paragraph, fails: its rewrite takes in a word more of its neighbours.
+// place of its own spaces, spread over it, so its sentence runs on over the same lines. An edit that removes text and so
+// empties its line takes the last word of the line before down to hold it; one that leaves nothing in front of punctuation
+// moves the punctuation up to the text before it, so no ` .` or ` ,` stays. An edit that would still leave an empty line,
+// which splits its paragraph, fails: its rewrite takes in a word more of its neighbours.
 function placeEdit(text: string, edit: Edit): Edit {
   const matched = text.slice(edit.start, edit.end);
   const breaks = matched.match(/\n[ \t]*/g) ?? [];
