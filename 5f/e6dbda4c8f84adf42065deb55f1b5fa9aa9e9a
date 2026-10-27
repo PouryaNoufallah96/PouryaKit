@@ -1,0 +1,88 @@
+website/lib/kit-sources/addresses.ts
+  s_76e27a52bbdbcf::t_17e8472fa90a6f 1-12,16-21
+  s_76e27a52bbdbcf::t_194611fc08f1e3 13-15
+website/lib/kit-sources/links.ts
+  s_76e27a52bbdbcf::t_2039d39d914eda 33-34,36
+  s_76e27a52bbdbcf::t_142c1d09e4038c 59,61
+website/lib/shared.ts
+  s_76e27a52bbdbcf::t_1dc5aa86500cc2 17,19
+  s_76e27a52bbdbcf::t_a64a37e37f1475 2
+website/biome.json
+  s_76e27a52bbdbcf::t_38321abc9a3ce3 9
+website/lib/kit-sources/distribution.ts
+  s_76e27a52bbdbcf::t_dc4f6d51d31b28 7,126-128,239-240,278-279
+  s_76e27a52bbdbcf::t_a5836f0974aacb 1-6,8-29,36-125,129-131,133-215,217-238,241-277,280-323
+  s_76e27a52bbdbcf::t_43974aefdbca45 30-35
+  s_76e27a52bbdbcf::t_4e193b86b04bc5 216
+  s_76e27a52bbdbcf::t_ab454e62c71831 132
+.gitignore
+  s_76e27a52bbdbcf::t_ff0626bafaae2c 36-37
+website/lib/kit-sources/markdown.ts
+  s_76e27a52bbdbcf::t_6ed337d8b25830 43,47-49
+  s_76e27a52bbdbcf::t_04bf0be1326456 10-11,13
+  s_76e27a52bbdbcf::t_14f8004211d685 36-37
+  s_76e27a52bbdbcf::t_00738aa3fe86e2 50-51
+website/distribution/manifest.sha256
+  s_76e27a52bbdbcf::t_2f8f76682b9ef0 2-47,49-74
+  s_76e27a52bbdbcf::t_8b3b632b70ec78 1
+  s_76e27a52bbdbcf::t_a7c593e09812b2 48
+.github/workflows/ci.yml
+  s_76e27a52bbdbcf::t_33e73e0970a2f0 50-51
+  s_76e27a52bbdbcf::t_79dc586a8555bd 74-75
+docs/ci.md
+  s_76e27a52bbdbcf::t_3992cd620957b8 3
+.claude/rules/website.md
+  s_76e27a52bbdbcf::t_a6ee1a2bb41dc0 26
+  s_76e27a52bbdbcf::t_8c0c58e7ee8892 31
+  s_76e27a52bbdbcf::t_7cd1861566b9cf 25
+  s_76e27a52bbdbcf::t_a1187c9402d2e5 38-40,42-46
+  s_76e27a52bbdbcf::t_4eb1dc787ed124 41
+docs/acceptance.md
+  s_76e27a52bbdbcf::t_ea287c71bc01ea 3107
+  s_76e27a52bbdbcf::t_82921b606476d6 3091-3101,3103-3106
+  s_76e27a52bbdbcf::t_a22392d773245d 3102
+website/scripts/covers.ts
+  s_76e27a52bbdbcf::t_c1ac0a799191fb 227-229
+  s_76e27a52bbdbcf::t_bfdaa9c67c5d67 240
+  s_76e27a52bbdbcf::t_e5b57696a0573e 5-8,16
+  s_76e27a52bbdbcf::t_1c5f56a6d9f3d0 221-222,224
+  s_76e27a52bbdbcf::t_eca4a44649c361 239
+.agents/scripts/ci-local.sh
+  s_76e27a52bbdbcf::t_fe79de2c9f36fd 29-30
+website/lib/kit-sources/packages.ts
+  s_76e27a52bbdbcf::t_903707f9febe2c 20-25,28
+website/lib/kit-sources/distribution.test.ts
+  s_76e27a52bbdbcf::t_99b3c2cbcb3f34 93-94
+  s_76e27a52bbdbcf::t_3494b0294eb348 184
+  s_76e27a52bbdbcf::t_dc4f6d51d31b28 96-99
+  s_76e27a52bbdbcf::t_2af06498cc0bdf 143
+  s_76e27a52bbdbcf::t_62dcd4d61ce7f2 1-92,95,100-103,105,115-142,144-183,185-229
+  s_76e27a52bbdbcf::t_c937b603cb6276 104,106-114
+docs/architecture/README.md
+  s_76e27a52bbdbcf::t_de6eb9502646c6 68
+website/package.json
+  s_76e27a52bbdbcf::t_56b5bfdc0d4085 16
+website/scripts/sync-public.ts
+  s_76e27a52bbdbcf::t_6b8f4810b3629c 52-59,63,66
+  s_76e27a52bbdbcf::t_f7e0a10a84a776 1-25,27-51,60-62,64-65,67-82,85-104
+  s_76e27a52bbdbcf::t_fb8ca05fd9edfa 26
+  s_76e27a52bbdbcf::t_6b196f88f8231d 83-84
+website/distribution/README.md.template
+  s_76e27a52bbdbcf::t_2e24e77408cb37 1-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5fe6dbda4c8f84adf42065deb55f1b5fa9aa9e9a",
+  "prompts": {},
+  "sessions": {
+    "s_76e27a52bbdbcf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cde6d05e-07a5-4e5c-903e-7974d318c31e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
