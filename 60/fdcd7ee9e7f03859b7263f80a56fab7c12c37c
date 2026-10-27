@@ -1,0 +1,126 @@
+website/content/docs/concepts/integration-events.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-35,37-73
+  s_76e27a52bbdbcf::t_e722156284e19f 36
+samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/Events/V1/ProductCreatedV1.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 3,10
+website/content/docs/concepts/saga.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-65
+samples/ModularMonolith/src/Modules/Inventory/Inventory/CatalogProducts/Features/CopyProduct/CopyProductIntegrationEventHandler.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 10,39
+docs/acceptance.md
+  s_76e27a52bbdbcf::t_560f319e4fc307 3108-3122,3125
+  s_76e27a52bbdbcf::t_c38ea7fad80b3c 3123-3124
+  s_76e27a52bbdbcf::t_aa5252c2ff2a07 3126
+website/content/docs/guides/create-a-command.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-26,28-93
+  s_76e27a52bbdbcf::t_7a6aa78d17f1f2 27
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQuery.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 5,20
+website/content/docs/guides/index.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-41
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261005180000_Receipts.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 8,18
+tests/ModularMonolith.Tests/IdempotencyTests.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 160,191
+samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/Events/V1/ProductSnapshotV1.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 3,12
+.claude/agent-memory/kit-implementer/docs-site-facts.md
+  s_76e27a52bbdbcf::t_560f319e4fc307 73-80
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 28,56
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261007120000_IdempotencyKeys.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 8,18
+samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/ReconcileStock/ReconcileStockCommandHandler.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 8,29
+website/content/docs/concepts/operation-result-error.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-69
+website/content/docs/concepts/outbox-and-notifications.mdx
+  s_76e27a52bbdbcf::t_7a6aa78d17f1f2 24
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-23,25-68
+website/content/docs/concepts/meta.json
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-19
+website/content/docs/concepts/operation-context.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-29,31-68
+  s_76e27a52bbdbcf::t_e722156284e19f 30
+website/content/docs/concepts/stream.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-58
+website/content/docs/guides/add-a-migration.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-100
+website/content/docs/guides/prepare-a-release.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-92
+website/content/docs/concepts/host-and-module.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-64
+website/content/docs/guides/schedule-commands.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-113
+website/content/docs/guides/secure-an-operation.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-89
+website/content/docs/concepts/gateway-and-mcp-tools.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-62
+tests/ModularMonolith.Tests/SecurityTests.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 148,185
+website/content/docs/guides/paged-query.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-88
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsCommandHandler.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 36,43
+website/content/docs/guides/validate.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-80
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryValidator.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 6,12
+website/content/docs/concepts/snapshots.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-91
+website/content/docs/concepts/unit-of-work.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-61
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 217,232
+website/content/docs/concepts/domain-event.mdx
+  s_76e27a52bbdbcf::t_e722156284e19f 56
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-46,48-55,57-90
+  s_76e27a52bbdbcf::t_7a6aa78d17f1f2 47
+website/content/docs/guides/add-an-endpoint.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-86
+website/content/docs/guides/host-recipes.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-78
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryHandler.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 7,41
+website/content/docs/guides/request-idempotency.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-94
+website/content/docs/guides/publish-and-subscribe.mdx
+  s_76e27a52bbdbcf::t_e722156284e19f 50
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-49,51-112
+website/content/docs/guides/tenant-scoped-module.mdx
+  s_76e27a52bbdbcf::t_7a6aa78d17f1f2 54
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-53,55-92
+website/content/docs/guides/test-a-feature.mdx
+  s_76e27a52bbdbcf::t_e722156284e19f 34
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-33,35-100
+website/content/docs/guides/meta.json
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-19
+website/content/docs/concepts/index.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-45
+samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Features/ExpireQuote/ExpireQuoteCommandHandler.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 10,20
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_76e27a52bbdbcf::t_b4dc86929e6b2e 26
+website/content/docs/concepts/delayed-and-recurring-commands.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-71
+samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/DomainEvents/ProductCreatedDomainEvent.cs
+  s_76e27a52bbdbcf::t_560f319e4fc307 7,9
+website/content/docs/concepts/composition-and-startup-checks.mdx
+  s_76e27a52bbdbcf::t_560f319e4fc307 1-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "60fdcd7ee9e7f03859b7263f80a56fab7c12c37c",
+  "prompts": {},
+  "sessions": {
+    "s_76e27a52bbdbcf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cde6d05e-07a5-4e5c-903e-7974d318c31e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
