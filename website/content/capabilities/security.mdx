@@ -2,7 +2,7 @@
 description: "Declare the permission a command or query requires, answer which permissions an Actor holds, and optionally hash passwords and verify JWT bearer tokens."
 ---
 
-`PouryaKit.Security` checks one kind of rule: "this [Actor](/docs/reference/glossary#actor) holds this permission". You put `[RequiresPermission]` on a command or query, and the pipeline's authorization step asks your application's `IActorPermissions` before validation and the handler run. An Actor without it gets `Permission.Denied`, a 403 over HTTP, and nothing commits. A trusted continuation, such as a delivery the Kit restored or a question one authorized Operation asks another Module, is not asked again.
+`PouryaKit.Security` checks one kind of rule: "this [Actor](/docs/reference/glossary#actor) holds this permission". You put `[RequiresPermission]` on a command or query, and the pipeline's authorization step asks your application's `IActorPermissions` before validation and the handler run. An Actor without it gets `Permission.Denied`, and nothing commits ([Denial](#denial)). A trusted continuation, such as a delivery the Kit restored or a question one authorized Operation asks another Module, is not asked again.
 
 The same package hashes and verifies stored passwords with PBKDF2, and `PouryaKit.Security.JwtBearer` sets up the Host's JWT bearer authentication so each verified token names the Actor and the [tenant](/docs/reference/glossary#tenant). The Kit issues no token and has no role system, policy framework or identity store.
 

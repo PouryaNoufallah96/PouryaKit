@@ -2,12 +2,12 @@
 description: "API versions a Module declares, served by URL segment and by header, with a configured sunset for a deprecated version and one OpenAPI document per version."
 ---
 
-A Module that changes its HTTP contract keeps serving its callers on the old version while new callers move to the new one. `PouryaKit.Web.OpenApi` lets the Module declare its versions in its Composition Root, on Asp.Versioning's own version set, and serves each endpoint on a versioned path (`/catalog/v2/...`) and on the unversioned path, where the `api-version` header selects the version. A deprecated version announces the sunset the Host configures, and every supported version gets an OpenAPI document of its own, listed by the Scalar API reference.
+A Module that changes its HTTP contract keeps serving its callers on the old version while new callers move to the new one. `PouryaKit.Web.OpenApi` lets the Module declare its versions in its Composition Root, on Asp.Versioning's own version set, and serves each endpoint on a versioned path, with the version as a URL segment, and on the unversioned path, where a version header selects it ([What a caller sees](#what-a-caller-sees)). A deprecated version announces the sunset the Host configures, and every supported version gets an OpenAPI document of its own, listed by the Scalar API reference.
 
 The documents are ASP.NET Core's own OpenAPI: there is no Swagger generator. A Host that does not register the package, and a Module that declares no version, keep the plain unversioned paths of [Web](/docs/capabilities/web).
 
 <Callout type="warn" title="A version belongs to the Module, but its number is shared">
-  Versions of different Modules that share a number share one document and one sunset. So a Module that joins a Host declares a version no other Module deprecates, as Inventory declares 2.0, Catalog's current version, beside Catalog's deprecated 1.0.
+  Versions of different Modules that share a number share one document and one sunset. So a Module that joins a Host declares a version no other Module deprecates, as Inventory declares Catalog's current version rather than the one Catalog deprecates ([Declaring a Module's versions](#declaring-a-modules-versions)).
 </Callout>
 
 ## When to use it
@@ -46,7 +46,7 @@ An endpoint that exists in some versions only says so with `MapToApiVersion`. A 
 
 ## In the Kit's tests
 
-Catalog's rename exists only in version 2.0. The Kit's tests select a version by its URL segment and by the `api-version` header, and see version 1.0 refuse the rename while it still answers the read:
+Catalog's rename exists only in its current version. The Kit's tests select a version by its URL segment and by its header, and see the deprecated version refuse the rename while it still answers the read:
 
 <Snippet file="tests/ModularMonolith.Tests/OpenApiTests.cs" region="version-by-url-or-header" />
 

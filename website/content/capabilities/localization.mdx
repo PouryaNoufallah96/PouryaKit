@@ -2,12 +2,12 @@
 description: "Write a Module's messages in English and Persian, and run each HTTP request in the culture its client's Accept-Language header names."
 ---
 
-`PouryaKit.Localization` lets a Module answer in English or Persian. A Feature injects `IStringLocalizer<T>` for a type of its own and reads each message by its key, from `.resx` files beside that type's file: the neutral file holds English and the `.fa.resx` file Persian. Each HTTP request runs in the culture its client's `Accept-Language` header names, English by default, and that culture flows through the [Gateway](/docs/reference/glossary#gateway) into the Operation's handlers.
+`PouryaKit.Localization` lets a Module answer in English or Persian. A Feature injects `IStringLocalizer<T>` for a type of its own and reads each message by its key, from `.resx` files beside that type's file: the neutral file holds English and the `.fa.resx` file Persian. Each HTTP request runs in the culture its client's `Accept-Language` header names ([What the Kit guarantees](#what-the-kit-guarantees)), and that culture flows through the [Gateway](/docs/reference/glossary#gateway) into the Operation's handlers.
 
 It is optional and adds no NuGet package: it references `PouryaKit.Cqrs` and the ASP.NET Core shared framework only. A Host that answers in English alone leaves it out, as both of the Proving Sample's Hosts do.
 
 <Callout type="warn" title="A delivery runs in the process's culture">
-  A Notification Handler, an Integration Event Handler or a delayed or recurring command runs outside any HTTP request, so it does not read the culture of the request that caused it. The Kit's own Error messages stay English in every culture.
+  A Notification Handler, an Integration Event Handler or a delayed or recurring command runs outside any HTTP request, so it does not read the culture of the request that caused it. What else stays unlocalized is under [Limits](#limits) and [What the Kit guarantees](#what-the-kit-guarantees).
 </Callout>
 
 ## When to use it
@@ -38,7 +38,7 @@ Declare an empty `internal sealed` class first in its file, and put its `.resx` 
 
 ### Read a message by its key
 
-Inject `IStringLocalizer<T>` for the marker type and read `messages["Key"]`. A key with no Persian entry falls back to English.
+Inject `IStringLocalizer<T>` for the marker type and read `messages["Key"]` in the request's culture. What a missing entry answers is under [A Module writing localized messages](#a-module-writing-localized-messages).
 
 </Step>
 </Steps>

@@ -2,17 +2,17 @@
 description: "The Kit's report Module: a Host adds it once, implements two ports for its report kinds, and its callers request report jobs over HTTP, then download each finished file by link."
 ---
 
-`PouryaKit.Reporting.Module` is a [Module](/docs/reference/glossary#module) the Kit ships as a package. A Host adds it once beside its own Modules. A caller requests a [report job](/docs/reference/glossary#report-job) with `POST /reports`; the Module stores the job in its own schema, generates the file in the background through the [Reporting](/docs/capabilities/reporting) renderer, stores it in the Host's one [File storage](/docs/capabilities/storage) provider, and serves the job's state and a time-limited download link to its requester. A recurring retention removes expired jobs and their files.
+`PouryaKit.Reporting.Module` is a [Module](/docs/reference/glossary#module) the Kit ships as a package. A Host adds it once beside its own Modules. A caller requests a [report job](/docs/reference/glossary#report-job) over HTTP; the Module stores the job in its own schema, generates the file in the background through the [Reporting](/docs/capabilities/reporting) renderer, stores it in the Host's one [File storage](/docs/capabilities/storage) provider, and serves the job's state and a time-limited download link to its requester. A recurring retention removes expired jobs and their files.
 
 The report kinds are the Host's. It implements two ports: `IReportRequestAuthorizer` decides who may request a kind with which parameters, and `IReportLayouts` lays the kind out from what the application holds.
 
 <Callout type="warn" title="One connection name, fixed">
-  The Module stores over the connection string `app` and cannot be told another, since a Composition Root takes no parameters. Give the Host's database that name, and keep the message store on the same database. The file is rendered in memory inside the attempt's Unit of Work, so keep a kind to what fits there.
+  The Module stores over one fixed connection string name and cannot be told another, since a Composition Root takes no parameters. Give the Host's database that name, and keep the message store on the same database ([Composing it](#composing-it)). The file is rendered in memory inside the attempt's Unit of Work, so keep a kind to what fits there.
 </Callout>
 
 ## When to use it
 
-- Users request reports that take a while to build, and download them when ready.
+- An Actor requests a report that takes a while to build, and downloads it when it is ready.
 - You add report kinds to a Host by implementing the two ports.
 - You need to know what a stale claim, a late settlement, another Actor or tenant, or the retention does to a job.
 - You test report jobs against a storage container.
@@ -31,21 +31,21 @@ Add `ReportModule` with the Host's other Modules, register one file storage prov
 
 ### Authorize a request, then lay it out
 
-`MayRequestAsync` runs in the request's authorization step, before anything is stored; false answers 403 and nothing is scheduled. `LayOutAsync` runs later in the background, as a continuation of the request with the requester's Actor and tenant, and may run more than once for one job.
+`MayRequestAsync` runs in the request's authorization step, before anything is stored, so a refused request stores and schedules nothing ([The Host's ports](#the-hosts-ports)). `LayOutAsync` runs later in the background, as a continuation of the request with the requester's Actor and tenant, and may run more than once for one job.
 
 </Step>
 <Step>
 
 ### Follow a job to its file
 
-`POST /reports` answers 202 with the job's location. `GET` on it answers the job's state and, once it is completed, a presigned download link. Only the requester reads a job, within its tenant, unless the Host grants an Actor the tenant's jobs.
+A request is accepted with the job's location, and reading the job answers its state and, once it is completed, a presigned download link. Only the requester reads a job, within its tenant, unless the Host grants an Actor the tenant's jobs ([The endpoints](#the-endpoints)).
 
 </Step>
 </Steps>
 
 ## In the Proving Sample
 
-The Host's one report kind, a month's sales, implements both ports in one class: a person of a tenant may request it for a month given as `yyyy-MM`, laid out as one table.
+The Host's one report kind, a month's sales, implements both ports in one class: a person of a tenant may request it for a month, laid out as one table.
 
 <Snippet file="samples/ModularMonolith/src/ModularMonolith.Host/SalesReports.cs" region="sales-report-ports" />
 

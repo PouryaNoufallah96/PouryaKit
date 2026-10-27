@@ -7,7 +7,7 @@ A query's handler that reads for display usually reads in SQL. `PouryaKit.Persis
 Beside it, `IUnitOfWorkConnection` of `PouryaKit.Persistence` lets a command write a Module-internal table in plain SQL inside the [Unit of Work](/docs/reference/glossary#unit-of-work), so the write commits or rolls back with the Operation.
 
 <Callout type="warn" title="Dapper runs exactly the SQL you write">
-  No EF Core query filter reaches a plain SQL read. A read of a soft-deletable table states `is_deleted = false` itself, and in a tenant-scoped Module a read of a tenant-scoped table states the tenant the lease bound, `tenant = current_setting('pouryakit.tenant')`, never a tenant the handler passes.
+  No EF Core query filter reaches a plain SQL read. A read of a soft-deletable table leaves out the removed rows itself, and in a tenant-scoped Module a read of a tenant-scoped table states the tenant the lease bound, never a tenant the handler passes ([Reading](#reading)).
 </Callout>
 
 ## When to use it
@@ -52,7 +52,7 @@ A Page read writes its `SELECT` and `COUNT` once in a `PageSql` and maps each de
 
 ## In the Proving Sample
 
-Catalog's `GetProduct` reads one product in plain SQL. It states the tenant and `is_deleted` itself, and passes a typed ID as a parameter:
+Catalog's `GetProduct` reads one product in plain SQL. It states the tenant and leaves out removed products itself, and passes a typed ID as a parameter:
 
 <Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/GetProduct/GetProductQueryHandler.cs" region="get-product-dapper-read" />
 

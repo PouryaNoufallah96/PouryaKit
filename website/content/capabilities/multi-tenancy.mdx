@@ -5,7 +5,7 @@ description: "Make a Module tenant-scoped: every command and query of it needs a
 Multi-tenancy is not a package: it is a registration across packages your Host already has. The [tenant](/docs/reference/glossary#tenant) is `OperationContext.Tenant`, which the HTTP boundary takes only from a verified claim. `AddPouryaKitTenancy` makes a Module tenant-scoped, so every command and query of it needs a tenant. `ITenantScoped` marks an aggregate as one tenant's: EF Core reads it only for the Operation's tenant, and the [Unit of Work](/docs/reference/glossary#unit-of-work) refuses any save that would change another tenant's. Deliveries into a tenant-scoped Module run under the tenant they carry, and one without a tenant is refused.
 
 <Callout type="warn" title="Plain SQL states its tenant itself">
-  No EF Core filter reaches a Dapper read. In a tenant-scoped Module, every SQL read of a tenant-scoped table states `tenant = current_setting('pouryakit.tenant')` at the top level of its `WHERE`, the tenant the Kit's lease bound, and a structure test holds each such read to that shape.
+  No EF Core filter reaches a Dapper read. In a tenant-scoped Module, every SQL read of a tenant-scoped table states the tenant the Kit's lease bound at the top level of its `WHERE`, and a structure test holds each such read to one shape ([Reads](#reads)).
 </Callout>
 
 ## When to use it

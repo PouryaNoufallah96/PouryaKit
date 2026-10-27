@@ -7,7 +7,7 @@ description: "A YARP Host of its own process in front of a system's Hosts: route
 It runs no Operation and references no Kit package. It authenticates no one either: each Host it fronts authenticates its own callers, and the client's bearer token and the Kit's headers reach the Host as sent. In the glossary it is the Reverse proxy; a [Gateway](/docs/reference/glossary#gateway) is a Module's own entry point.
 
 <Callout type="warn" title="Liveness only, and no gRPC">
-  The proxy probes `/alive`, the liveness path of the service defaults, and no readiness path: readiness outside Development is the platform's probe. As shipped it forwards HTTP/1.1 only, so a Host's gRPC client calls the other Host directly.
+  The proxy probes the liveness path of the service defaults and no readiness path: readiness outside Development is the platform's probe. As shipped it carries no gRPC, so a Host's gRPC client calls the other Host directly ([Limits](#limits)).
 </Callout>
 
 ## When to use it
@@ -39,7 +39,7 @@ Routes and clusters are YARP's own configuration, in the `ReverseProxy` section,
 
 ### Keep dead endpoints out
 
-Every cluster probes each destination's `/alive`. A destination that fails twice in a row leaves its cluster until a probe succeeds, and a cluster with none left answers 503 rather than forwarding to every destination again.
+Every cluster probes each destination's liveness path. A destination whose probes keep failing leaves its cluster until a probe succeeds, and a cluster with none left refuses its requests rather than forwarding to every destination again ([Routes, clusters and discovery](#routes-clusters-and-discovery)).
 
 </Step>
 </Steps>

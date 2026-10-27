@@ -32,21 +32,21 @@ The AppHost gives each [Host](/docs/reference/glossary#host) the resources its c
 
 ### Give each Host its own database and connection names
 
-`AddDatabase` creates a database per Host on the one server, and `WithReference(resource, "app")` sets the connection string a Host's composition reads under that name.
+`AddDatabase` creates a database per Host on the one server, and `WithReference` with a connection name sets the connection string a Host's composition reads under that name.
 
 </Step>
 <Step>
 
 ### Wait for what each Host needs
 
-`WaitFor` holds a Host until its database and broker are ready, and `WithHttpHealthCheck("/alive")` waits on a Host that maps the service defaults' liveness path.
+`WaitFor` holds a Host until its database and broker are ready, and `WithHttpHealthCheck` waits on a Host that maps the service defaults' liveness path ([The AppHost](#the-apphost)).
 
 </Step>
 </Steps>
 
 ## In the Proving Sample
 
-The sample's AppHost: one PostgreSQL server with a database per Host, Redis and RabbitMQ, and `Inventory.Host` given its database under `app`, the broker, its bearer settings and its liveness check.
+The sample's AppHost: one PostgreSQL server with a database per Host, Redis and RabbitMQ, and `Inventory.Host` given its database under the connection name its composition reads, the broker, its bearer settings and its liveness check.
 
 <Snippet file="samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs" region="apphost-resources" />
 

@@ -2,7 +2,7 @@
 description: "Start a new application with dotnet new as a monolith, a modular monolith or a service of one Module, generated from the Proving Sample's business code."
 ---
 
-`PouryaKit.Templates` is a `dotnet new` template package. A new application starts from the [Proving Sample](/docs/reference/glossary#proving-sample)'s business code in one of three compositions: the monolith, one Module behind a plain registration that grows into the modular monolith when a second Module arrives; the modular monolith, several Modules in one Host, each reached through its Gateway; and the service, one Module in a Host of its own that receives another Host's Integration Events and Snapshots over RabbitMQ.
+`PouryaKit.Templates` is a `dotnet new` template package. A new application starts from the [Proving Sample](/docs/reference/glossary#proving-sample)'s business code in one of its compositions: the monolith, one Module behind a plain registration that grows into the modular monolith when a second Module arrives; the modular monolith, several Modules in one Host, each reached through its Gateway; and the service, one Module in a Host of its own that receives another Host's Integration Events and Snapshots over RabbitMQ.
 
 The templates are generated from the sample, never maintained beside it. Aggregates, commands, queries, handlers, validators, the repository, Dapper reads and every event handler are the sample's own files in every template; only the Composition Root and the endpoint adapters differ.
 
@@ -66,7 +66,7 @@ The rules are the skill's, in full under "Reference" below:
 ## Next steps
 
 <Cards>
-  <Card title="Choose a template" href="/docs/templates" description="The three compositions side by side." />
+  <Card title="Choose a template" href="/docs/templates" description="The compositions side by side." />
   <Card title="Your first Host" href="/docs/get-started/first-host" description="Generate, migrate, run and call a Host, step by step." />
   <Card title="Template choice" href="/docs/decision-guides/template-choice" description="Which composition fits the application you are starting." />
 </Cards>

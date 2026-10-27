@@ -1,13 +1,13 @@
 ---
-description: "Three small helpers the Kit's own packages use and your code may too: predicate composition, the implementing-type lookup and a synchronization-context scope."
+description: "Small helpers the Kit's own packages use and your code may too: predicate composition, the implementing-type lookup and a synchronization-context scope."
 ---
 
-`PouryaKit.Core` holds three helpers and nothing else. `AndAlso` and `OrElse` compose two expression predicates into one lambda a LINQ provider such as EF Core can translate. `ImplementingTypes.Of` finds the concrete types of given assemblies that implement a contract, the same lookup the Kit's registrations use to find handlers, authorizers and endpoints. `SynchronizationContextScope` blocks on asynchronous code safely where a synchronous member has to.
+`PouryaKit.Core` holds a few small helpers and nothing else. `AndAlso` and `OrElse` compose two expression predicates into one lambda a LINQ provider such as EF Core can translate. `ImplementingTypes.Of` finds the concrete types of given assemblies that implement a contract, the same lookup the Kit's registrations use to find handlers, authorizers and endpoints. `SynchronizationContextScope` blocks on asynchronous code safely where a synchronous member has to.
 
 You rarely reference it yourself: `PouryaKit.Cqrs`, `PouryaKit.Web`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Persistence.Dapper`, `PouryaKit.Persistence.EFCore` and `PouryaKit.Security` reference it, so a Module that uses any of them already has it.
 
 <Callout type="info" title="Core stays this small">
-  Core's public types are exactly these three, and an architecture test fails when a fourth appears. A helper that belongs to one Capability lives in that Capability's package, and one that belongs to your application lives in your application.
+  Core's public types are fixed, and an architecture test holds them to that set ([What Core never holds](#what-core-never-holds)). A helper that belongs to one Capability lives in that Capability's package, and one that belongs to your application lives in your application.
 </Callout>
 
 ## When to use it
@@ -48,7 +48,7 @@ Two predicates composed with `AndAlso`: `AboveTen()` decides first, and `Even()`
 
 <Snippet file="tests/PouryaKit.Core.Tests/PredicateBuilderTests.cs" region="and-also-predicates" />
 
-The lookup finds each concrete class that closes an open generic contract, reading an assembly once even when it is named twice:
+The lookup finds each concrete class that closes an open generic contract, directly or through a base class:
 
 <Snippet file="tests/PouryaKit.Core.Tests/ImplementingTypesTests.cs" region="implementing-types-of" />
 
@@ -61,7 +61,7 @@ The rules are the skill's, in full under "Reference" below:
 | What the composed predicate's parameter is, and how a guard protects the right side | [Predicate composition](#predicate-composition) |
 | What the lookup returns, and how to list the candidates a registration must validate | [Implementing-type lookup](#implementing-type-lookup) |
 | What the scope sets, restores and refuses | [Synchronization-context scope](#synchronization-context-scope) |
-| Why there is no fourth helper | [What Core never holds](#what-core-never-holds) |
+| Why Core holds nothing more | [What Core never holds](#what-core-never-holds) |
 
 ## Next steps
 

@@ -7,7 +7,7 @@ The Host recipes are a Host's service defaults, shaped like .NET Aspire's `Servi
 They are template content, not a Kit package: the project templates generate the project as `<Name>.ServiceDefaults` and compose the recipes in their Hosts, and your application owns and changes its copy. Each recipe is optional, and none is needed for the Kit to work.
 
 <Callout type="warn" title="The recipe exports; the Kit emits">
-  A Host without `AddPouryaKitObservability()` exports no Operation of the Kit, whatever its exporters listen to. And readiness outside Development is the platform's probe: the recipe maps `/alive` in every environment and `/health` in Development only.
+  A Host without `AddPouryaKitObservability()` exports no Operation of the Kit, whatever its exporters listen to. And readiness outside Development is the platform's probe: the recipe maps its liveness endpoint everywhere and its database check in Development only ([Liveness and readiness](#liveness-and-readiness)).
 </Callout>
 
 ## When to use it
@@ -31,7 +31,7 @@ They are template content, not a Kit package: the project templates generate the
 
 ### Keep liveness inside the process
 
-`/alive` asks only the checks tagged `live`, which never leave the process, so it stays healthy while a database is down: an orchestrator gains nothing by restarting the Host then. It is anonymous and exempt from the rate limit, since a probe carries no token.
+The liveness endpoint asks only the checks that never leave the process, so it stays healthy while a database is down: an orchestrator gains nothing by restarting the Host then. It is anonymous and exempt from the rate limit, since a probe carries no token.
 
 </Step>
 <Step>
@@ -45,7 +45,7 @@ Every client gets the Kit's standard handler, which retries safe methods and sen
 
 ## In the Proving Sample
 
-`/health`, mapped in Development, asks each database the Host's DbContexts use. A Module's DbContext is internal to it, so the readiness check finds each one through its registered options:
+The health endpoint, mapped in Development, asks each database the Host's DbContexts use. A Module's DbContext is internal to it, so the readiness check finds each one through its registered options:
 
 <Snippet file="samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs" region="database-readiness-check" />
 

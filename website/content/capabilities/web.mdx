@@ -2,12 +2,12 @@
 description: "An endpoint beside each Feature, authenticated access by default, one problem response for every failure, and outgoing HTTP that carries the Operation Context."
 ---
 
-`PouryaKit.Web` is the Kit's HTTP boundary. Each Feature has its own endpoint, a small `IEndpoint` class beside its command or query, which a Module's Composition Root maps under the Module's route prefix. Before the endpoint runs, the Kit authenticates the caller and begins the request's Operation with an [Operation Context](/docs/reference/glossary#operation-context) built from the caller's verified claims. The endpoint passes that context to its Module's [Gateway](/docs/reference/glossary#gateway) and turns the [Result](/docs/reference/glossary#result) into a response with `ToHttpResult()`: a success as 200, 201 or 204, and every failure as one RFC 9457 problem response that lists each [Error](/docs/reference/glossary#error).
+`PouryaKit.Web` is the Kit's HTTP boundary. Each Feature has its own endpoint, a small `IEndpoint` class beside its command or query, which a Module's Composition Root maps under the Module's route prefix. Before the endpoint runs, the Kit authenticates the caller and begins the request's Operation with an [Operation Context](/docs/reference/glossary#operation-context) built from the caller's verified claims. The endpoint passes that context to its Module's [Gateway](/docs/reference/glossary#gateway) and turns the [Result](/docs/reference/glossary#result) into a response with `ToHttpResult()`: the success as its response, and every failure as one problem response that lists each [Error](/docs/reference/glossary#error) ([From Result to response](#from-result-to-response)).
 
 The same package binds page requests from the query string, requires an `Idempotency-Key` on a repeatable write, carries the Operation Context on outgoing calls to other Kit Hosts with the standard retry, and configures CORS, response compression and a rate limit per Actor.
 
 <Callout type="warn" title="Every endpoint is authenticated unless it says otherwise">
-  A caller without a verified identity gets 401 before any endpoint runs. An endpoint that is public states the system Actor its anonymous callers run as, with `AllowAnonymousAs`. A tenant-scoped Module maps no public endpoint, since an anonymous caller has no tenant.
+  A caller without a verified identity is refused before any endpoint runs ([The caller and the Actor](#the-caller-and-the-actor)). An endpoint that is public states the system Actor its anonymous callers run as, with `AllowAnonymousAs`. A tenant-scoped Module maps no public endpoint, since an anonymous caller has no tenant.
 </Callout>
 
 ## When to use it
@@ -46,7 +46,7 @@ The endpoint injects `OperationContext`, its Module's Gateway and the cancellati
 
 ### Let the Errors pick the status
 
-The Errors' kinds decide the status, and when they differ the most severe decides, so a caller never fixes its input while a weightier reason stands. An exception answers 500 with nothing of it in the body. The full table is under [Problem responses](#problem-responses).
+The Errors' kinds decide the status, and when they differ the most severe decides, so a caller never fixes its input while a weightier reason stands. The full table, and what an exception answers, are under [Problem responses](#problem-responses).
 
 </Step>
 </Steps>

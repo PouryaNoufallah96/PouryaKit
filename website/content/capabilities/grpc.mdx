@@ -2,12 +2,12 @@
 description: "Serve a Module's gRPC service from a Protobuf contract in its Contracts, answer a failed Result as a gRPC status with every Error in a trailer, and call another Host with the Operation Context."
 ---
 
-`PouryaKit.Grpc` puts gRPC on the same conventions as the Kit's HTTP endpoints. The `.proto` contract lives in the Module's [Contracts](/docs/reference/glossary#contracts), which both sides compile: the Module's service and another Host's client. A service is declared in the Module's [Composition Root](/docs/reference/glossary#composition-root), mapped once in the Host, and runs each call through the Module's [Gateway](/docs/reference/glossary#gateway) with the [Operation Context](/docs/reference/glossary#operation-context) the call began with. A failed [Result](/docs/reference/glossary#result) answers a gRPC status chosen as HTTP chooses its status, with every Error in the `pouryakit-errors-bin` trailer.
+`PouryaKit.Grpc` puts gRPC on the same conventions as the Kit's HTTP endpoints. The `.proto` contract lives in the Module's [Contracts](/docs/reference/glossary#contracts), which both sides compile: the Module's service and another Host's client. A service is declared in the Module's [Composition Root](/docs/reference/glossary#composition-root), mapped once in the Host, and runs each call through the Module's [Gateway](/docs/reference/glossary#gateway) with the [Operation Context](/docs/reference/glossary#operation-context) the call began with. A failed [Result](/docs/reference/glossary#result) answers a gRPC status chosen as HTTP chooses its status, with every Error in a trailer ([Failures](#failures)).
 
 On the calling side, a client registered with the Kit carries the Operation Context in its call metadata, with a deadline from validated options, so the called Host continues the caller's Operation when it trusts the caller as a peer.
 
 <Callout type="warn" title="gRPC without TLS needs an HTTP/2-only listener">
-  Over TLS one listener serves gRPC and REST alike. Without TLS, Kestrel's default listener speaks HTTP/1.1 and every gRPC call fails with `HTTP_1_1_REQUIRED`, so the Host needs a second listener of HTTP/2 alone for gRPC, beside the one REST callers reach.
+  Over TLS one listener serves gRPC and REST alike. Without TLS, a listener that serves both negotiates no HTTP/2, so every gRPC call fails with `HTTP_1_1_REQUIRED`: the Host needs a listener of HTTP/2 alone for gRPC, beside the one REST callers reach ([Declaring and mapping a service](#declaring-and-mapping-a-service)).
 </Callout>
 
 ## When to use it

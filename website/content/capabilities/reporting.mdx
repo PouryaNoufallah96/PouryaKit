@@ -2,12 +2,12 @@
 description: "Lay out a Module's report once and render it to a PDF, a CSV file or a spreadsheet in memory, with a logo, an accent colour and an embedded font."
 ---
 
-`PouryaKit.Reporting` has one renderer, `IReportRenderer`. A Module builds a `ReportLayout` from what it read: a title, an introduction of headings and paragraphs, one table of text cells, and its branding, a logo and an accent colour. `Render` turns the layout into a PDF, a CSV file or a spreadsheet in memory and returns a [Result](/docs/reference/glossary#result) with the file's bytes, content type and extension. The layout stays in the Module; the Kit supplies the primitives, the font, the branding and the three formats.
+`PouryaKit.Reporting` has one renderer, `IReportRenderer`. A Module builds a `ReportLayout` from what it read: a title, an introduction of headings and paragraphs, one table of text cells, and its branding, a logo and an accent colour. `Render` turns the layout into a PDF, a CSV file or a spreadsheet in memory and returns a [Result](/docs/reference/glossary#result) with the file's bytes, content type and extension. The layout stays in the Module; the Kit supplies the primitives, the font, the branding and the formats ([what each format holds](#the-three-formats)).
 
 It stores nothing. The caller stores the rendered bytes through [File storage](/docs/capabilities/storage), and the [Report Module](/docs/capabilities/reporting-module) runs that whole job in the background for you.
 
 <Callout type="warn" title="The Module formats every value">
-  Every cell is text. A number, an amount or a date is formatted by the Module, in the culture it chooses, before it goes in the table. The embedded font holds Latin, Greek and Cyrillic glyphs, not Persian or Arabic, and the PDF lays out no right-to-left text.
+  Every cell is text. A number, an amount or a date is formatted by the Module, in the culture it chooses, before it goes in the table. The embedded font holds no Persian or Arabic glyphs, and the PDF lays out no right-to-left text ([Limits](#limits)).
 </Callout>
 
 ## When to use it
@@ -58,7 +58,7 @@ The rules are the skill's, in full under "Reference" below:
 | How the renderer is registered, and its PDF font resolver | [Registering](#registering) |
 | What a layout holds | [A Module's layout](#a-modules-layout) |
 | What `Render` returns, and the Errors of a layout it refuses | [Rendering and storing](#rendering-and-storing) |
-| What each format holds, and how a CSV cell is kept from running as a formula | [The three formats](#the-three-formats) |
+| What each format holds, and how a CSV cell is kept from running as a formula | [The formats](#the-three-formats) |
 | What the renderer does not draw, and why its PDF library is pinned | [Limits](#limits) |
 
 ## Next steps

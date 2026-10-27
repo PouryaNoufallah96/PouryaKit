@@ -24,7 +24,7 @@ It emits through `System.Diagnostics` only. The Kit has no OpenTelemetry package
 
 ### Register it after the dispatcher
 
-`AddPouryaKitObservability()` on the Host, after `AddPouryaKitModules`, wraps the dispatcher. With nothing listening, a dispatch costs one check and allocates nothing.
+`AddPouryaKitObservability()` on the Host, after `AddPouryaKitModules`, wraps the dispatcher. With nothing listening, it adds next to nothing to a dispatch ([Registering](#registering)).
 
 </Step>
 <Step>
