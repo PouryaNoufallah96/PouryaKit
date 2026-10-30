@@ -1,0 +1,178 @@
+src/PouryaKit.Security/README.md
+  s_3dd7725a647c44::t_4868500dfbdf61 36
+  s_3dd7725a647c44::t_eb23794da97f1d 1-35,37-83
+src/PouryaKit.Storage.AzureBlob/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-46
+src/PouryaKit.Testing/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-80
+src/PouryaKit.Storage/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-52
+src/PouryaKit.Reporting.Module/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-64
+src/PouryaKit.Web/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-77
+src/PouryaKit.Persistence/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-55
+src/PouryaKit.Aspire/README.md
+  s_3dd7725a647c44::t_0d53b09f51286a 23
+  s_3dd7725a647c44::t_eb23794da97f1d 1-22,24-60
+src/PouryaKit.Security/PouryaKit.Security.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Persistence.Postgres/PouryaKit.Persistence.Postgres.csproj
+  s_3dd7725a647c44::t_4868500dfbdf61 3
+  s_3dd7725a647c44::t_eb23794da97f1d 2,4-5
+src/PouryaKit.Testing/PouryaKit.Testing.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Persistence.Postgres/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-34,36-38,44-61
+  s_3dd7725a647c44::t_4868500dfbdf61 35,39-43
+src/PouryaKit.Validation/PouryaKit.Validation.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Validation/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-60
+src/PouryaKit.Core/PouryaKit.Core.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Domain/PouryaKit.Domain.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Messaging/PouryaKit.Messaging.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Persistence/PouryaKit.Persistence.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Messaging.Wolverine.EFCore/PouryaKit.Messaging.Wolverine.EFCore.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Templates/PouryaKit.Templates.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 4-5
+src/PouryaKit.Aspire/PouryaKit.Aspire.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Messaging.Wolverine.RabbitMq/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-57
+src/PouryaKit.Persistence.EFCore/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-66
+src/PouryaKit.Security.JwtBearer/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-48
+src/PouryaKit.Messaging.Wolverine.EFCore/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-52
+src/PouryaKit.Cqrs/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-80
+src/PouryaKit.Messaging.Wolverine.RabbitMq/PouryaKit.Messaging.Wolverine.RabbitMq.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Persistence.Dapper/PouryaKit.Persistence.Dapper.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Messaging.Wolverine.Marten/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-47
+src/PouryaKit.Grpc/PouryaKit.Grpc.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Reporting.Module/PouryaKit.Reporting.Module.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Observability/PouryaKit.Observability.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.ReverseProxy/PouryaKit.ReverseProxy.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Messaging.Wolverine/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-54,62-81
+  s_3dd7725a647c44::t_4868500dfbdf61 55-61
+src/PouryaKit.Messaging.Wolverine.Sagas/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-72
+src/PouryaKit.Modularity/PouryaKit.Modularity.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Messaging.Wolverine/PouryaKit.Messaging.Wolverine.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Web.OpenApi/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-60
+src/PouryaKit.Persistence.Dapper/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-69
+src/PouryaKit.Security.JwtBearer/PouryaKit.Security.JwtBearer.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Storage.S3/PouryaKit.Storage.S3.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Observability/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-57
+src/PouryaKit.ReverseProxy/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-58
+src/PouryaKit.AI.Postgres/README.md
+  s_3dd7725a647c44::t_4868500dfbdf61 34,37-38,40,43
+  s_3dd7725a647c44::t_eb23794da97f1d 1-33,35-36,39,41-42,44-61
+src/PouryaKit.Email/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-52
+src/PouryaKit.Localization/PouryaKit.Localization.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Messaging.Wolverine.Marten/PouryaKit.Messaging.Wolverine.Marten.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Messaging.Wolverine.Sagas/PouryaKit.Messaging.Wolverine.Sagas.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Realtime/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-81
+src/PouryaKit.Web.OpenApi/PouryaKit.Web.OpenApi.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Caching/PouryaKit.Caching.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Cqrs/PouryaKit.Cqrs.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Realtime/PouryaKit.Realtime.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.AI.Postgres/PouryaKit.AI.Postgres.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Email.MailKit/PouryaKit.Email.MailKit.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.AI/PouryaKit.AI.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Email/PouryaKit.Email.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Storage/PouryaKit.Storage.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Templates/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-55
+src/PouryaKit.Domain/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-70
+src/PouryaKit.Core/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-48
+src/PouryaKit.Caching/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-70
+src/PouryaKit.Storage.AzureBlob/PouryaKit.Storage.AzureBlob.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Messaging/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-75
+src/PouryaKit.Persistence.Marten/PouryaKit.Persistence.Marten.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Reporting/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-59
+src/PouryaKit.Localization/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-61
+src/PouryaKit.AI/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-65
+src/PouryaKit.Persistence.EFCore/PouryaKit.Persistence.EFCore.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Grpc/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-76
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_3dd7725a647c44::t_692b4820d1d631 10
+src/PouryaKit.Persistence.Marten/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-41,48,50-86
+  s_3dd7725a647c44::t_4868500dfbdf61 42-47,49
+src/PouryaKit.Reporting/PouryaKit.Reporting.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+src/PouryaKit.Modularity/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-75
+src/PouryaKit.Storage.S3/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-47
+src/PouryaKit.Email.MailKit/README.md
+  s_3dd7725a647c44::t_eb23794da97f1d 1-47
+src/PouryaKit.Web/PouryaKit.Web.csproj
+  s_3dd7725a647c44::t_eb23794da97f1d 2-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e53d19c40d57a1801531b9fa0d4f58642e256623",
+  "prompts": {},
+  "sessions": {
+    "s_3dd7725a647c44": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "92130a8e-005c-4d69-9e3f-5264776a6a57",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
