@@ -33,6 +33,11 @@ export function parseMarkdown(text: string): Root {
   return tree;
 }
 
+/** A Markdown file as written, for the check that refuses what `parseMarkdown` would turn into text. */
+export function parseVerbatim(text: string): Root {
+  return markdown.parse(text);
+}
+
 const FRONTMATTER = /^---\n[\s\S]*?\n---\n/;
 
 /**
@@ -61,6 +66,11 @@ export function parseMdx(text: string): Root {
 
 export function stringifyMarkdown(tree: Root): string {
   return markdown.stringify(tree);
+}
+
+/** A generated page in MDX, for one that holds a component: the text's `<` and `{` are escaped, so prose stays prose. */
+export function stringifyMdx(tree: Root): string {
+  return mdx.stringify(tree);
 }
 
 /** The text a node renders, code included; link destinations are markup and stay out. */

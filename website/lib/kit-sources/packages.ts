@@ -9,8 +9,8 @@ export type KitPackage = {
   references: string[];
   /** The Capabilities whose row in the skill's table names it. */
   capabilities: SkillEntry[];
-  /** `src/<Id>/README.md` when the package has one. */
-  readme?: string;
+  /** `src/<Id>/README.md`. */
+  readme: string;
 };
 
 export function packageSlug(id: string) {
@@ -39,13 +39,12 @@ export function readPackages(root: string, entries: SkillEntry[]): KitPackage[] 
     const references = [...readSource(root, project).matchAll(/<ProjectReference Include="[^"]*?([\w.]+)\.csproj"/g)]
       .map((match) => match[1])
       .filter((reference) => known.has(reference));
-    const readme = `${PACKAGES}/${id}/README.md`;
     return {
       id,
       slug: packageSlug(id),
       references,
       capabilities: entries.filter((entry) => entry.packages.includes(id)),
-      readme: sourceExists(root, readme) ? readme : undefined,
+      readme: `${PACKAGES}/${id}/README.md`,
     };
   });
 }

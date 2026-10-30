@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>The contracts Feature code reacts and publishes with: Notification Handlers, Integration Events and their handlers, Snapshot mappers and wire names.</PackageDescription>
+    <PackageTags>messaging;integration-events;notifications</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\PouryaKit.Domain\PouryaKit.Domain.csproj" />
   </ItemGroup>

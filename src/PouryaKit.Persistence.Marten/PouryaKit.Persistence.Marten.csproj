@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>Streams on Marten over PostgreSQL: aggregates stored as the events they appended, loaded by folding them, with a Unit of Work of their own.</PackageDescription>
+    <PackageTags>marten;event-sourcing;postgresql</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Marten" />
     <!-- The Unit of Work runs the Kit's statements on Npgsql itself; Marten 9.53.0 brings 9.0.4, the Kit's line is 10. -->

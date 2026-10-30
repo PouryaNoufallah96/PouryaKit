@@ -3,6 +3,7 @@ import path from 'node:path';
 import Slugger from 'github-slugger';
 import type { Heading, Root, RootContent, Table } from 'mdast';
 import { visit } from 'unist-util-visit';
+import { SITE_ADDRESS } from './addresses.ts';
 import { type ErrorCode, readErrorCodes } from './errors.ts';
 import { glossaryMarkdown, parseGlossary, projectGlossary } from './glossary.ts';
 import { type PageRoute, type RouteMap, rewriteLinks } from './links.ts';
@@ -15,6 +16,7 @@ import {
   parseSource,
   renderedText,
   stringifyMarkdown,
+  stringifyMdx,
 } from './markdown.ts';
 import { type KitPackage, readPackages } from './packages.ts';
 import {
@@ -27,6 +29,7 @@ import {
   SKILL,
   sourceExists,
 } from './paths.ts';
+import { afterTitle, allReadmeViolations, withCallouts } from './readmes.ts';
 import { type SkillEntry, skillEntries } from './references.ts';
 import { describe } from './rules.ts';
 
@@ -125,6 +128,15 @@ function markdownPage(page: Page): GeneratedFile {
   };
 }
 
+// A README's page holds a component, the site's Callout, so it is MDX; `.md` compiles as Markdown alone.
+function readmePage(page: Page): GeneratedFile {
+  check(page);
+  return {
+    path: page.file,
+    content: frontmatter({ title: page.title, description: page.description }) + stringifyMdx(page.tree),
+  };
+}
+
 function cell(text: string) {
   return text.replaceAll('|', '\\|').replace(/\s+/g, ' ').trim();
 }
@@ -139,6 +151,8 @@ function meta(title: string, pages: string[]) {
 
 /** Every generated page, checked. */
 export function buildSite(root: string): GeneratedFile[] {
+  const violations = allReadmeViolations(root);
+  if (violations.length > 0) throw new Error(`kit-sources: ${violations.join('\n')}`);
   const entries = skillEntries(root);
   const packages = readPackages(root, entries);
 
@@ -165,15 +179,11 @@ export function buildSite(root: string): GeneratedFile[] {
 
   const readmes = new Map<string, Root>();
   for (const kit of packages) {
-    const page = { route: `${PACKAGES_ROUTE}/${kit.slug}` };
-    if (kit.readme) {
-      const tree = parseSource(readSource(root, kit.readme));
-      readmes.set(kit.id, tree);
-      routes.set(kit.readme, { ...page, anchors: anchorMap(tree, withoutTitle(tree)) });
-    } else {
-      routes.set(`${PACKAGES}/${kit.id}/README.md`, page);
-    }
-    routes.set(`${PACKAGES}/${kit.id}`, routes.get(kit.readme ?? `${PACKAGES}/${kit.id}/README.md`) as PageRoute);
+    const tree = parseSource(readSource(root, kit.readme));
+    readmes.set(kit.id, tree);
+    const page = { route: `${PACKAGES_ROUTE}/${kit.slug}`, anchors: anchorMap(tree, afterTitle(tree)) };
+    routes.set(kit.readme, page);
+    routes.set(`${PACKAGES}/${kit.id}`, page);
   }
 
   // Capabilities: one page per published reference, its hand-written top (when #189's file exists) above it.
@@ -278,37 +288,21 @@ function packagePages(packages: KitPackage[], readmes: Map<string, Root>, routes
   const link = (id: string) => `[${code(id)}](${PACKAGES_ROUTE}/${packages.find((kit) => kit.id === id)?.slug})`;
   const capabilities = (kit: KitPackage) =>
     kit.capabilities.map((entry) => `[${entry.name}](${CAPABILITIES_ROUTE}/${entry.slug})`).join(', ');
-  const referencedBy = (kit: KitPackage) =>
-    packages.filter((other) => other.references.includes(kit.id)).map((other) => other.id);
   const files: GeneratedFile[] = [];
   for (const kit of packages) {
-    const source = kit.readme ?? `${PACKAGES}/${kit.id}`;
-    const readme = readmes.get(kit.id);
-    let tree: Root;
-    let description: string;
-    if (readme) {
-      tree = { type: 'root', children: withoutTitle(readme) };
-      description = introOf(tree.children);
-    } else {
-      // No README yet: the package's row of the matrix.
-      const lines = [
-        `- Capabilities: ${capabilities(kit) || 'none of the skill’s Capability rows names it'}`,
-        `- References: ${kit.references.map(link).join(', ') || 'no other Kit package'}`,
-        `- Referenced by: ${referencedBy(kit).map(link).join(', ') || 'no other Kit package'}`,
-      ];
-      tree = parseMarkdown(`${lines.join('\n')}\n`);
-      description =
-        kit.capabilities.length > 0
-          ? `A package of ${kit.capabilities.map((entry) => entry.name).join(', ')}.`
-          : `A package of the Kit.`;
-    }
-    rewriteLinks(tree, kit.readme ?? `${PACKAGES}/${kit.id}/README.md`, routes);
+    const body = afterTitle(readmes.get(kit.id) as Root);
+    const tree: Root = { type: 'root', children: withCallouts(body) };
+    // A link to the site is absolute for nuget.org; on the site it is a route of the same deployment.
+    visit(tree, 'link', (link) => {
+      if (URL.parse(link.url)?.origin === SITE_ADDRESS) link.url = link.url.slice(SITE_ADDRESS.length) || '/';
+    });
+    rewriteLinks(tree, kit.readme, routes);
     files.push(
-      markdownPage({
-        file: `content/docs/reference/packages/${kit.slug}.md`,
-        source,
+      readmePage({
+        file: `content/docs/reference/packages/${kit.slug}.mdx`,
+        source: kit.readme,
         title: kit.id,
-        description,
+        description: introOf(body),
         tree,
       }),
     );

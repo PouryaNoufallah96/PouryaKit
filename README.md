@@ -1,6 +1,14 @@
+![PouryaKit](https://raw.githubusercontent.com/PouryaNoufallah96/pouryakit-public/assets-v1/assets/kit.png)
+
+[![NuGet](https://img.shields.io/nuget/vpre/PouryaKit.Templates?style=flat-square&logo=nuget&color=615fff)](https://www.nuget.org/packages/PouryaKit.Templates)
+![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet)
+![License: MIT](https://img.shields.io/badge/license-MIT-615fff?style=flat-square)
+
 # PouryaKit
 
 A reusable .NET 10 foundation for modular monoliths built from vertical slices.
+
+[Docs](https://pouryakit.vercel.app) · [Install](https://pouryakit.vercel.app/docs/get-started/install-templates)
 
 Status: Wave 1, Wave 2, Wave 3 and Wave 4 are complete and merged into `main`: Wave 3 at `2637acf2` (PR #143, 2026-10-24), Wave 4 at `e0e9e010` (PR #177, 2026-10-25). All the Kit's packages are in the private feed at `0.1.0-preview.0.28`, published from `main` `4e9905c9` on 2026-10-26 by a one-time local publication without hosted CI ([local publication](docs/private-packages.md#local-publication)), and on nuget.org since the same day ([nuget.org publication](docs/private-packages.md#nugetorg-publication)); the Wave 2 set has been there since 2026-10-09 ([hosted completion](docs/private-packages.md#hosted-completion)). The Kit's packages (every entry of `scripts/packaging/inventory.json`), each usable on its own, make up these Capabilities, plus two features (Paging, Request idempotency) that span several of them:
 

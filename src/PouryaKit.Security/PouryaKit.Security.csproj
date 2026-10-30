@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>Permissions on commands and queries, checked in the pipeline against your application's own source, and PBKDF2 password hashing.</PackageDescription>
+    <PackageTags>security;authorization;permissions;pbkdf2</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\PouryaKit.Core\PouryaKit.Core.csproj" />
     <ProjectReference Include="..\PouryaKit.Cqrs\PouryaKit.Cqrs.csproj" />

@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>A Module's messages in English and Persian, read through IStringLocalizer in the culture each request's Accept-Language header names.</PackageDescription>
+    <PackageTags>localization;i18n;aspnetcore</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>FluentValidation validators for commands and queries, run as one step of the Kit's pipeline, so invalid input comes back as Errors before a handler runs.</PackageDescription>
+    <PackageTags>validation;fluentvalidation;cqrs</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
   </ItemGroup>

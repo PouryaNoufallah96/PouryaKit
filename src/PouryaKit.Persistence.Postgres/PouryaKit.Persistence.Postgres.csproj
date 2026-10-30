@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>Each Module's EF Core data in its own PostgreSQL schema on Npgsql, with unique-value Errors and gap-free number sequences.</PackageDescription>
+    <PackageTags>postgresql;npgsql;efcore</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />

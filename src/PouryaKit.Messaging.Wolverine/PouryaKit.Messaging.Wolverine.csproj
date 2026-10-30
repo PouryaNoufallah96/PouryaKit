@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>Durable deliveries on Wolverine with the message store in PostgreSQL: Notifications, Integration Events, Snapshots, delayed and recurring commands, each retried on its own.</PackageDescription>
+    <PackageTags>wolverine;outbox;postgresql;messaging</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="WolverineFx" />
   </ItemGroup>

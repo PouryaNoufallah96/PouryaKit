@@ -13,7 +13,7 @@ const root = findRoot();
 test('the site generates a page per published reference and package, and the Reference pages', () => {
   const pages = buildSite(root).map((file) => file.path);
   assert.equal(pages.filter((page) => /^content\/docs\/capabilities\/[a-z-]+\.mdx$/.test(page)).length, 29);
-  assert.equal(pages.filter((page) => /^content\/docs\/reference\/packages\/pouryakit.*\.md$/.test(page)).length, 38);
+  assert.equal(pages.filter((page) => /^content\/docs\/reference\/packages\/pouryakit.*\.mdx$/.test(page)).length, 38);
   for (const page of ['glossary', 'error-codes', 'composition-checks', 'packages/index']) {
     assert.ok(pages.includes(`content/docs/reference/${page}.md`), page);
   }

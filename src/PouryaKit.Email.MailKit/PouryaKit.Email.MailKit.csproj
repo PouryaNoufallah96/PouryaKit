@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>The Host's SMTP sender on MailKit, configured from options the Host validates before it serves.</PackageDescription>
+    <PackageTags>email;smtp;mailkit</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MailKit" />
     <PackageReference Include="Microsoft.Extensions.Options" />
