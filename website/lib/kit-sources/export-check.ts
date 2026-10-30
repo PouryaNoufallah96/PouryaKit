@@ -9,7 +9,7 @@ import { addressViolations, type Violation, vocabularyViolations } from './rules
 // The build's last step: the rules over what the static export publishes. Every file of out/ is read for the address
 // rules (the private repository, a local path), markup included, since a link lives in an attribute and a bundle can
 // carry a path, with character references and string escapes undone first, and rendered text too, since inline markup
-// can split a name a browser shows whole. Only rendered text is read for delivery vocabulary and tracker codes, since a CSS colour (#615fff), an
+// or an invisible character can split a name a browser shows whole. Only rendered text is read for delivery vocabulary and tracker codes, since a CSS colour (#615fff), an
 // attribute or a script is no text a reader sees: an HTML page's text outside its scripts and styles, with its
 // character references decoded; each page's Markdown and llms*.txt as Markdown text, code included, link destinations
 // and heading ids left out; and every string of the search index. A phrase is read across a soft line break, never
@@ -18,6 +18,9 @@ import { addressViolations, type Violation, vocabularyViolations } from './rules
 export type Finding = Violation & { file: string };
 
 const BINARY = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif', '.ico', '.woff', '.woff2', '.ttf', '.otf']);
+
+// A soft hyphen and the zero-width characters: a browser draws them as nothing, so a name they split still reads whole.
+const INVISIBLE = /[­​-‍⁠﻿]/g;
 
 /**
  * Every character reference undone once, as the HTML parser reads them: each named one, the numeric ones and the legacy
@@ -154,7 +157,7 @@ export function checkExport(out: string): { findings: Finding[]; scanned: number
     const addressed = unescapeStrings(parsed ? decodeEntities(content) : content);
     const markup = addressViolations(addressed, relative.endsWith('.js'));
     for (const violation of markup) findings.push({ ...violation, file: relative });
-    const text = renderedTextOf(relative, content);
+    const text = renderedTextOf(relative, content)?.replace(INVISIBLE, '');
     if (text === undefined) continue;
     rendered++;
     // What the markup already showed is one finding, not two; what is left is a name its inline markup split.

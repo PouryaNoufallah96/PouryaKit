@@ -91,6 +91,22 @@ test('a character reference decodes once, and text no browser decodes stays text
   assert.deepEqual(findings, []);
 });
 
+test('a character a browser draws as nothing hides no name in text, as a reference or literally', () => {
+  const findings = findingsFor({
+    'docs/a.html': '<p>Cyber&shy;nod</p>',
+    'docs/b.html': '<p>Cyber&#x200B;nod</p>',
+    'docs/c.html': '<p>PouryaNoufallah96/Pourya­Kit</p>',
+    'docs/d.md': 'PouryaNoufallah96/Pourya‍Kit\n',
+    'docs/e.html': '<p>Cyber nod</p>',
+  });
+  assert.deepEqual(findings, [
+    'docs/a.html private project (Cybernod)',
+    'docs/b.html private project (Cybernod)',
+    'docs/c.html private repository',
+    'docs/d.md private repository',
+  ]);
+});
+
 test('a private link or a local path in a script or a payload fails, its string escapes undone', () => {
   const findings = findingsFor({
     '_next/static/chunk.js': 'const a="https:\\/\\/github.com\\/PouryaNoufallah96\\/PouryaKit";',
