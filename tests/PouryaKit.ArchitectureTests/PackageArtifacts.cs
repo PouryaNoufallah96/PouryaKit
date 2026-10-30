@@ -95,12 +95,13 @@ internal static class PackageArtifacts
     private static IEnumerable<string> PublicPageViolations(XDocument nuspec, ZipArchive archive, string name)
     {
         var source = Path.Combine(Repository.Root, "src", name);
+        var projectFile = Path.Combine(source, $"{name}.csproj");
+        if (!File.Exists(projectFile)) { yield return $"{name} is no package of src/."; yield break; }
         if (Optional(nuspec, "readme") != "README.md" || !SameBytes(archive, "README.md", Path.Combine(source, "README.md")))
             yield return $"{name} does not carry its own README.";
         if (Optional(nuspec, "icon") != "icon.png" || !SameBytes(archive, "icon.png", Path.Combine(Repository.Root, "src", "icon.png")))
             yield return $"{name} does not carry the shared icon.";
-        var project = XDocument.Load(Path.Combine(source, $"{name}.csproj"));
-        foreach (var error in DescriptionViolations(name, Optional(nuspec, "description"), Optional(project, "PackageDescription"))) yield return error;
+        foreach (var error in DescriptionViolations(name, Optional(nuspec, "description"), Optional(XDocument.Load(projectFile), "PackageDescription"))) yield return error;
         var tags = (Optional(nuspec, "tags") ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (tags.Distinct(StringComparer.OrdinalIgnoreCase).Count() != tags.Length || SharedTags.Any(tag => !tags.Contains(tag)))
             yield return $"{name}'s tags are not the shared ones and its own, each once.";

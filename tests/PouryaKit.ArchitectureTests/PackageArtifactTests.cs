@@ -94,6 +94,16 @@ public sealed class PackageArtifactTests
         Assert.Equal([expected], PackageArtifacts.MetadataViolations(nuspec, archive, Id, Evidence));
     }
 
+    // A stray nupkg keeps its message, and the inventory's after it, instead of stopping the run on a missing file.
+    [Fact]
+    public void A_package_with_no_project_under_src_is_named_and_not_read()
+    {
+        using var stream = new MemoryStream();
+        using var archive = Package(stream);
+
+        Assert.Equal(["PouryaKit.Nothing is no package of src/."], PackageArtifacts.MetadataViolations(Nuspec(), archive, "PouryaKit.Nothing", Evidence));
+    }
+
     [Theory]
     [InlineData("Commands and queries.", null, "PouryaKit.Cqrs's description is not its project's own PackageDescription.")]
     [InlineData("PouryaKit.Cqrs: commands and queries.", "PouryaKit.Cqrs: commands and queries.", "PouryaKit.Cqrs's description starts with its ID.")]
