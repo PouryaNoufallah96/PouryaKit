@@ -1,0 +1,23 @@
+src/PouryaKit.Messaging/README.md
+  s_3dd7725a647c44::t_e24b1630986340 64
+src/PouryaKit.Validation/README.md
+  s_3dd7725a647c44::t_b9d1fb353ee731 22
+docs/packages.md
+  s_3dd7725a647c44::t_3a8d898985eee6 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8ef3c445c270c8de457bb003736fecf487282997",
+  "prompts": {},
+  "sessions": {
+    "s_3dd7725a647c44": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "92130a8e-005c-4d69-9e3f-5264776a6a57",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
