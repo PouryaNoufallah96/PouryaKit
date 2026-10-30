@@ -1,0 +1,24 @@
+tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs
+  s_3dd7725a647c44::t_0c7a1b584777a3 98-99,104
+tests/PouryaKit.ArchitectureTests/PackageArtifactTests.cs
+  s_3dd7725a647c44::t_d76343a50ebeec 99-105
+  s_3dd7725a647c44::t_0c7a1b584777a3 97-98,106
+docs/acceptance.md
+  s_3dd7725a647c44::t_4c85161b8be84d 3164,3170
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c83caf761270a5e874d73f8cbeec3c8d57ab22a8",
+  "prompts": {},
+  "sessions": {
+    "s_3dd7725a647c44": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "92130a8e-005c-4d69-9e3f-5264776a6a57",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
