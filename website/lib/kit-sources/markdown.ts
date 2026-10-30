@@ -5,7 +5,7 @@ import { remark } from 'remark';
 import remarkGfm from 'remark-gfm';
 import remarkMdx from 'remark-mdx';
 import { visit } from 'unist-util-visit';
-import { addressViolations, type Violation, vocabularyViolations } from './rules.ts';
+import { addressViolations, renderedTextViolations, type Violation, vocabularyViolations } from './rules.ts';
 
 // Tables are written unpadded, as the sources write them: padding every cell to its column's widest doubled the skill's
 // SKILL.md, which the public repository publishes for agents to read.
@@ -106,13 +106,32 @@ function blockText(node: Nodes): string {
     : renderedText(node);
 }
 
-/** The rules a projected node must pass: its rendered text, block by block, and its URLs. */
+// What a node publishes beyond its rendered text and URLs: the public repository's README and copy of the skill keep each.
+const PUBLISHED_FIELDS = ['title', 'lang', 'meta', 'label'];
+
+/** A link's, an image's or a definition's title, a code fence's info string and a reference's label. */
+function publishedFields(node: Nodes): string[] {
+  const fields: string[] = [];
+  visit(node, (child) => {
+    for (const key of PUBLISHED_FIELDS) {
+      const value = (child as unknown as Record<string, unknown>)[key];
+      if (typeof value === 'string') fields.push(value);
+    }
+  });
+  return fields;
+}
+
+/**
+ * The rules a projected node must pass: its rendered text, block by block, its URLs, as markup, and every other string
+ * it publishes, each read as rendered text and a block of its own.
+ */
 export function nodeViolations(node: Nodes): Violation[] {
   const text = blockText(node);
   return [
     ...addressViolations(text),
     ...vocabularyViolations(text),
     ...urlsOf(node).flatMap((url) => addressViolations(url)),
+    ...publishedFields(node).flatMap((field) => renderedTextViolations(field)),
   ];
 }
 

@@ -39,15 +39,18 @@ test("the allow-list publishes every reference but the two maintainer guides, an
 
 test('a reference on neither list fails, and so does a listed reference that is gone', () => {
   const extra = referencesDirectory([...PUBLISHED_REFERENCES, ...MAINTAINER_GUIDES, 'new-capability.md']);
+  const stray = referencesDirectory([...PUBLISHED_REFERENCES, ...MAINTAINER_GUIDES, 'notes.txt']);
   const missing = referencesDirectory([
     ...PUBLISHED_REFERENCES.filter((file) => file !== 'web.md'),
     ...MAINTAINER_GUIDES,
   ]);
   try {
     assert.throws(() => publishedReferences(extra), /new-capability\.md .* is on neither list/);
+    assert.throws(() => publishedReferences(stray), /notes\.txt .* is on neither list/);
     assert.throws(() => publishedReferences(missing), /published references missing .*: web\.md/);
   } finally {
     rmSync(extra, { recursive: true, force: true });
+    rmSync(stray, { recursive: true, force: true });
     rmSync(missing, { recursive: true, force: true });
   }
 });

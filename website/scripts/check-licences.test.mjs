@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { check, closure, violations } from './check-licences.mjs';
+import { admits, check, closure, violations } from './check-licences.mjs';
 
 const site = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -37,6 +37,43 @@ test('a planted non-permissive licence and a planted missing licence fail, as do
       'legacy 1.0.0 declares no licence.',
     ],
   );
+});
+
+test('an expression outside the grammar fails though a branch of it is an admitted identifier', () => {
+  for (const expression of [
+    'SEE LICENSE IN COPYING OR MIT',
+    'MIT OR SEE LICENSE IN COPYING',
+    'MIT OR ',
+    ' OR MIT',
+    'MIT OR OR Apache-2.0',
+    'MIT AND  OR MIT',
+    'MIT OR AND',
+    'MIT OR WITH',
+    'MIT OR (GPL-2.0 WITH x)',
+    'MIT OR GPL-2.0 WITH Classpath-exception-2.0',
+    'MIT OR (Apache-2.0)',
+    '(MIT) OR Apache-2.0',
+    'MIT OR Apache-2.0 AND',
+    'MIT OR Apache-2.0/ISC',
+  ]) {
+    assert.equal(admits(expression, 'planted'), false, JSON.stringify(expression));
+  }
+});
+
+test('inside the grammar an OR needs one admitted side, and an AND binds tighter and needs every term', () => {
+  for (const expression of [
+    'MIT',
+    'MIT OR GPL-3.0-only',
+    'GPL-3.0-only OR MIT',
+    'MIT OR GPL-2.0+',
+    'MIT AND ISC',
+    'GPL-3.0-only OR MIT AND ISC',
+  ]) {
+    assert.equal(admits(expression, 'planted'), true, expression);
+  }
+  for (const expression of ['GPL-3.0-only', 'MIT AND GPL-3.0-only', 'GPL-3.0-only OR MIT AND GPL-2.0-only']) {
+    assert.equal(admits(expression, 'planted'), false, expression);
+  }
 });
 
 test('each exception admits its licence for its named packages only', () => {

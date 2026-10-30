@@ -25,6 +25,24 @@ test('a private link in an attribute fails the export, though no reader sees it 
   assert.deepEqual(findings, ['docs/index.html private repository']);
 });
 
+test('a private link behind a dot segment fails the export, literal or escaped, in an attribute and in a script', () => {
+  const findings = findingsFor({
+    '_next/static/chunk.js':
+      'const a="https:\\/\\/github.com\\/PouryaNoufallah96\\/pouryakit-public\\/..\\/PouryaKit";',
+    'docs/a.html': '<a href="https://github.com/PouryaNoufallah96/pouryakit-public/../PouryaKit">source</a>',
+    'docs/b.html': '<a href="https://github.com/PouryaNoufallah96/pouryakit-public/%2e%2E/PouryaKit">source</a>',
+    'docs/c.html': '<a href="https://github.com/PouryaNoufallah96/x/../pouryakit-public">source</a>',
+    'docs/d.html': '<a href="https://github.com/../../PouryaNoufallah96/pouryakit-public">source</a>',
+    'docs/e.html': '<a href="https://github.com/PouryaNoufallah96/x%2F../../PouryaKit">source</a>',
+  });
+  assert.deepEqual(findings, [
+    '_next/static/chunk.js private repository',
+    'docs/a.html private repository',
+    'docs/b.html private repository',
+    'docs/e.html private repository',
+  ]);
+});
+
 test('a private link or a local path in a script or a payload fails, its string escapes undone', () => {
   const findings = findingsFor({
     '_next/static/chunk.js': 'const a="https:\\/\\/github.com\\/PouryaNoufallah96\\/PouryaKit";',
@@ -83,6 +101,20 @@ test('a phrase is read across a soft line break and inline markup, never from on
   assert.deepEqual(findings, [
     'docs/a.html delivery process (story <n>, session <n>)',
     'llms.mdx/docs/a/content.md private plan citation (plan section)',
+  ]);
+});
+
+test("a link's or an image's title is rendered text in a page's Markdown, a block of its own, and its destination is not", () => {
+  const findings = findingsFor({
+    'llms.mdx/docs/a/content.md': '# A\n\nRead [the page](/docs/a "since Wave 4").\n',
+    'llms.mdx/docs/b/content.md': '# B\n\n![Cover](/cover.png "decision W11")\n',
+    'llms.mdx/docs/c/content.md': '# C\n\nin session [six](/docs/Wave/spike#123 "6") more\n',
+    'llms.mdx/docs/d/content.md': '# D\n\nas plan [section](/docs/a "the plan") C expects\n',
+  });
+  assert.deepEqual(findings, [
+    'llms.mdx/docs/a/content.md delivery vocabulary (Wave, Phase)',
+    'llms.mdx/docs/b/content.md tracker code (W<n>)',
+    'llms.mdx/docs/d/content.md private plan citation (plan section)',
   ]);
 });
 

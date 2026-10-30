@@ -55,12 +55,20 @@ const GITHUB_URL =
 // path: every two adjacent segments of a path are read as a pair, so a host-less /<owner>/<repo>/... counts too.
 const SHORTHAND = /(?<![\w.-])(?=([\w.-]+)\/([\w.-]+)(?![\w-]))/g;
 
+// A path's segments as a browser requests them: `.` dropped and `..` removing the segment before it, an empty one too, and
+// climbing no higher than the root. Only then is an empty segment dropped, so `a//../b` is `a/b`, not `b`.
+function resolvedSegments(path: string) {
+  const segments: string[] = [];
+  for (const segment of path.split('/')) {
+    if (segment === '..') segments.pop();
+    else if (segment !== '.') segments.push(segment);
+  }
+  return segments.filter((segment) => segment !== '');
+}
+
 function repositoryOf(host: string, path: string): { owner: string; repository: string } | undefined {
-  const segments = path
-    .replace(/^:/, '/')
-    .split(/[?#]/)[0]
-    .split('/')
-    .filter((segment) => segment !== '');
+  // What follows the host's colon is a port or, in SSH's form, the owner.
+  const segments = resolvedSegments(path.replace(/^:(?:\d+(?=\/))?/, '/').split(/[?#]/)[0]);
   const lowerHost = host.toLowerCase();
   let owner: string | undefined;
   let repository: string | undefined;
@@ -98,19 +106,30 @@ function isPrivate(owner: string, repository: string) {
   return owner.toLowerCase() === PRIVATE_OWNER && normalizeRepository(repository) === PRIVATE_REPOSITORY;
 }
 
-// An address as GitHub reads it: its percent escapes decoded over the whole text, so an escaped `/` or `:` (a URL inside
-// another's query) separates as the character does, and a line break after a `/` or a `:` undone, since a hard-wrapped
-// source may break an address there and a page renders it on one line. Each escape is one byte, enough for the ASCII
-// names compared.
-function asAddressed(text: string) {
+// An address as a browser sends it and GitHub reads it. The percent escapes of what a name or an address is made of are
+// decoded over the whole text, so an escaped dot makes a dot segment and an escaped `/` or `:` (a URL inside another's
+// query) separates as the character does; any other escape stays, as it stays inside a browser's path segment, so `%3F`
+// ends no path where `?` would. A `\` is the `/` a browser reads it as. A line break after a `/` or a `:` is undone, since
+// a hard-wrapped source may break an address there and a page renders it on one line. Each escape is one byte, enough for
+// the ASCII names compared. With `keepEscapedSlash`, an escaped `/` stays in its segment, as a browser keeps it in a path,
+// so a `..` after it removes that whole segment.
+function asAddressed(text: string, keepEscapedSlash = false) {
   return text
-    .replace(/%([0-9a-f]{2})/gi, (_, hex: string) => String.fromCharCode(Number.parseInt(hex, 16)))
+    .replace(/%([0-9a-f]{2})/gi, (whole, hex: string) => {
+      const character = String.fromCharCode(Number.parseInt(hex, 16));
+      return /[\w.:/@-]/.test(character) && !(keepEscapedSlash && character === '/') ? character : whole;
+    })
+    .replaceAll('\\', '/')
     .replace(/(?<=[/:])[^\S\n]*\n[^\S\n]*/g, '');
 }
 
 /** Every reference to the private repository in `source`: a URL on any GitHub host, with or without a scheme, or a bare owner/repo. */
 export function privateRepositoryReferences(source: string): Violation[] {
-  const text = asAddressed(source);
+  // Both readings of an escaped `/` must pass: decoded, a URL inside another's query; kept, a browser's path segment.
+  return [...new Set([asAddressed(source), asAddressed(source, true)])].flatMap(referencesIn);
+}
+
+function referencesIn(text: string): Violation[] {
   const found: Violation[] = [];
   // Where each URL found is, so an owner/repo pair inside it is not found a second time.
   const urls: [number, number][] = [];
