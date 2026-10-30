@@ -1,0 +1,25 @@
+docs/agents/ai-setup.md
+  s_0523cd0a0dc5f1::t_5260efa90b26eb 141-142
+AGENTS.md
+  s_0523cd0a0dc5f1::t_a52f5005247cbf 91
+.claude/settings.json
+  s_0523cd0a0dc5f1::t_554e6436e1c610 5-6
+.claude/output-styles/kit-orchestrator.md
+  s_0523cd0a0dc5f1::t_0fa5ca61c2c8ae 30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cbad328dbc91718a578b67814e4c9d398bf906e6",
+  "prompts": {},
+  "sessions": {
+    "s_0523cd0a0dc5f1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4b0d5b41-49a0-493b-afc2-9df5a4fdbf1d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
