@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import type { Root } from 'mdast';
 import { parseEntities } from 'parse-entities';
+import { type DefaultTreeAdapterTypes, parse } from 'parse5';
 import { visit } from 'unist-util-visit';
 import { parseMarkdown, parseMdx } from './markdown.ts';
 import { addressViolations, type Violation, vocabularyViolations } from './rules.ts';
@@ -43,9 +44,15 @@ export function unescapeStrings(text: string): string {
 // A block's end in extracted text: a blank line, which the rules never read a phrase across (`softSpaced`).
 const BLOCK_END = '\n\n';
 
-// The HTML elements that end a block of text, such as a table's cells: every other tag is inline and renders nothing.
-const HTML_BLOCK =
-  /<\/?(?:address|article|aside|blockquote|button|caption|dd|details|dialog|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|label|legend|li|main|nav|ol|option|p|pre|section|select|summary|table|tbody|td|tfoot|th|thead|title|tr|ul)\b[^>]*>/gi;
+// The HTML elements that end a block of text, such as a table's cells: every other element is inline and renders nothing.
+const HTML_BLOCK = new Set(
+  'address article aside blockquote button caption dd details dialog div dl dt fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 header hr label legend li main nav ol option p pre section select summary table tbody td tfoot th thead title tr ul'.split(
+    ' ',
+  ),
+);
+
+// The HTML elements whose text no reader sees.
+const HTML_HIDDEN = new Set(['noscript', 'script', 'style', 'template']);
 
 // The Markdown nodes that end a block of text.
 const MARKDOWN_BLOCK = new Set([
@@ -63,18 +70,24 @@ const MARKDOWN_BLOCK = new Set([
 ]);
 
 /**
- * An HTML page's rendered text: scripts, styles and comments dropped, each block's end a blank line, other tags removed,
- * character references decoded.
+ * An HTML page's rendered text, read by an HTML parser as a browser reads it, so that no comment, attribute or character
+ * reference changes what a phrase is: React writes `<!-- -->` between two text nodes of one sentence. Each block's end is
+ * a blank line; a comment and every other element are nothing.
  */
 export function htmlText(html: string): string {
-  return decodeEntities(
-    html
-      .replace(/<!--[\s\S]*?-->/g, BLOCK_END)
-      .replace(/<(script|style|noscript|template)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, BLOCK_END)
-      .replace(/<br\b[^>]*>/gi, '\n')
-      .replace(HTML_BLOCK, BLOCK_END)
-      .replace(/<[^>]*>/g, ''),
-  );
+  const parts: string[] = [];
+  const read = (node: DefaultTreeAdapterTypes.Node) => {
+    if (node.nodeName === '#text') parts.push((node as DefaultTreeAdapterTypes.TextNode).value);
+    else if (node.nodeName === 'br') parts.push('\n');
+    else if ('childNodes' in node && !HTML_HIDDEN.has(node.nodeName)) {
+      const block = HTML_BLOCK.has(node.nodeName);
+      if (block) parts.push(BLOCK_END);
+      node.childNodes.forEach(read);
+      if (block) parts.push(BLOCK_END);
+    }
+  };
+  read(parse(html));
+  return parts.join('');
 }
 
 /**

@@ -91,6 +91,21 @@ test('a character reference decodes once, and text no browser decodes stays text
   assert.deepEqual(findings, []);
 });
 
+test('a page reads as a browser parses it: a comment or an attribute hides no name, and hidden text is no text', () => {
+  const findings = findingsFor({
+    'docs/a.html': '<p>Cyber<!-- -->nod</p>',
+    'docs/b.html': '<p>PouryaNoufallah96/<!-- -->PouryaKit</p>',
+    'docs/c.html': '<p title="a>b">Cyber<b title=">">nod</b></p>',
+    'docs/d.html': '<p>session</p><!-- --><p>3</p>',
+    'docs/e.html': '<noscript>session 3</noscript><template>session 3</template><p>clean</p>',
+  });
+  assert.deepEqual(findings, [
+    'docs/a.html private project (Cybernod)',
+    'docs/b.html private repository',
+    'docs/c.html private project (Cybernod)',
+  ]);
+});
+
 test('a character a browser draws as nothing hides no name in text, as a reference or literally', () => {
   const findings = findingsFor({
     'docs/a.html': '<p>Cyber&shy;nod</p>',
