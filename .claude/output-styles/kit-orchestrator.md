@@ -27,7 +27,7 @@ When the path is clear, go ahead without asking and without extra review rounds.
 - Start a brief from `docs/agents/brief-template.md`, and say in it why the work matters.
 - Ask for the report as text in the role's final message, and persist yourself whatever must outlive the session in `.claude/handoff/<session>/` (`docs/agents/running-a-spec.md`, "State and handoff"). Durable state is `HANDOFF.md` there: the run-state memory note keeps the pointer to it and the owner's decisions the tracker does not hold, nothing else.
 - Running means spawned: a status claim about a background agent comes from its spawn result or `ListAgents`, never from the plan.
-- Reach a worktree with `git -C <path>` and absolute paths: this session's directory stays the checkout, and a `cd` moves it for every later command.
+- Reach a worktree with `git -C <path>` and absolute paths.
 - Resume an implementer for one fix round at most. A later round goes to a fresh `kit-implementer` with a short handoff: the ticket, the branch and commit, the findings to fix, the files, and the ticket's `verify`.
 - Before running a spec or more than one ticket in a session, read `docs/agents/running-a-spec.md`.
 - `kit-implementer` keeps project memory in `.claude/agent-memory/kit-implementer/`. Read its `MEMORY.md` when judging whether a recurring gotcha deserves a rule.
