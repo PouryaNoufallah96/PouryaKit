@@ -1,0 +1,87 @@
+website/lib/kit-sources/references.ts
+  s_3dd7725a647c44::t_c24d17dc679c2d 58-61,63,68
+.claude/agent-memory/kit-implementer/docs-site-facts.md
+  s_3dd7725a647c44::t_df2198ce4e74ac 91-99
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_3dd7725a647c44::t_2dea1649291be5 117-120
+website/lib/kit-sources/markdown.test.ts
+  s_3dd7725a647c44::t_dea6c8c2f406a4 17-37,39-42
+  s_3dd7725a647c44::t_fbf973c3fbc537 38
+.github/workflows/ci.yml
+  s_3dd7725a647c44::t_3518d5b9149837 50-52
+  s_3dd7725a647c44::t_75a25fa1491296 76
+docs/architecture/README.md
+  s_3dd7725a647c44::t_7c7cd16bffa233 768
+website/lib/kit-sources/markdown.ts
+  s_3dd7725a647c44::t_aed0eccd18ab68 8
+  s_3dd7725a647c44::t_70e22eece1af1f 109-127,134
+docs/acceptance.md
+  s_3dd7725a647c44::t_fab7440cde7740 2979-2985,2987-2994
+  s_3dd7725a647c44::t_009e6af06ba2ea 2986
+docs/packages.md
+  s_3dd7725a647c44::t_4be0d698811edb 19
+.claude/rules/website.md
+  s_3dd7725a647c44::t_4a33eb2fc56873 44
+  s_3dd7725a647c44::t_1b8f6e139e3e4b 32
+  s_3dd7725a647c44::t_34e3e16fbeb48f 39
+  s_3dd7725a647c44::t_d710ac5295bfd8 24
+  s_3dd7725a647c44::t_e22c83d26183f8 26
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3dd7725a647c44::t_89cfe48d8fb241 2,26
+tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs
+  s_3dd7725a647c44::t_4fee72d680c933 104-105,107-108
+website/lib/kit-sources/rules.test.ts
+  s_3dd7725a647c44::t_6f759f8c6cb251 70-133
+website/scripts/check-licences.test.mjs
+  s_3dd7725a647c44::t_a021ba11102ffa 7
+  s_3dd7725a647c44::t_015a8d1cd626d4 42-78
+tests/PouryaKit.ArchitectureTests/PackageArtifactTests.cs
+  s_3dd7725a647c44::t_77f64e9fe3b04e 20
+  s_3dd7725a647c44::t_027bf49bab2bcd 69-73
+  s_3dd7725a647c44::t_6d424c4ad18906 28-30
+  s_3dd7725a647c44::t_c0422b07faadd1 95-100
+.claude/rules/kit-code.md
+  s_3dd7725a647c44::t_d9eecb718bea10 25
+website/lib/kit-sources/distribution.test.ts
+  s_3dd7725a647c44::t_10994c60278273 156-203
+.agents/scripts/ci-local.sh
+  s_3dd7725a647c44::t_6873f84beb8b92 30
+website/lib/kit-sources/export-check.ts
+  s_3dd7725a647c44::t_59df80d4a442f6 104,111
+  s_3dd7725a647c44::t_a8c45ce9872161 81-82
+  s_3dd7725a647c44::t_c99442a61bca15 92
+website/scripts/check-licences.mjs
+  s_3dd7725a647c44::t_f918238d4a2da3 38-42,44-48
+  s_3dd7725a647c44::t_09fa8c3c3516b4 37
+docs/ci.md
+  s_3dd7725a647c44::t_d359e470538b13 3
+website/lib/kit-sources/distribution.ts
+  s_3dd7725a647c44::t_f8351ea11f41c5 69
+website/lib/kit-sources/references.test.ts
+  s_3dd7725a647c44::t_89d8cd1a941765 42,49,53
+website/lib/kit-sources/export-check.test.ts
+  s_3dd7725a647c44::t_09d40f4eea3416 110,115
+  s_3dd7725a647c44::t_e83111afeaaae0 105-109,111-114,116-118
+  s_3dd7725a647c44::t_ebec5d1cd148e5 28-29,32-43
+  s_3dd7725a647c44::t_0cc2f98d148046 30-31
+website/lib/kit-sources/rules.ts
+  s_3dd7725a647c44::t_c082108f7634cf 117,119
+  s_3dd7725a647c44::t_3743a684cd0090 58-68,70-71
+  s_3dd7725a647c44::t_08b1ce2362aa6e 109-114,118,120-121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "02d4481091b77abc15f977a4b794b4676481ed3e",
+  "prompts": {},
+  "sessions": {
+    "s_3dd7725a647c44": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "92130a8e-005c-4d69-9e3f-5264776a6a57",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
