@@ -37,6 +37,8 @@ app.UseAuthorization();
 app.MapPouryaKitModuleEndpoints();
 ```
 
+CORS and the rate limit each take a middleware of their own: `UseCors` between `UseRouting` and `UseAuthentication`, and `UseRateLimiter` after `UseAuthorization`. Compression needs no call.
+
 Find the Module's endpoints in its Composition Root:
 
 ```csharp

@@ -6,7 +6,7 @@
 
 # PouryaKit.Storage
 
-One file storage contract for Feature code. `IFileStorage` uploads a stream under a key, downloads it, deletes it, and gives a presigned link that reads it without credentials until it expires. Every call is cancellable and returns a Result, so a missing file is an Error, never an exception, and Feature code never names a cloud SDK.
+One file storage contract for Feature code. `IFileStorage` uploads a stream under a key, downloads it, deletes it, and gives a presigned link that reads it without credentials until it expires. Every call is cancellable and returns a Result for what a Feature expects, so a missing file is an Error, never an exception, and Feature code never names a cloud SDK. A failure of the store itself throws.
 
 ## Install
 
@@ -37,7 +37,7 @@ await using var file = download.Value;
 ## What you get
 
 - One contract on every provider, so Feature code is the same on either.
-- A `Result` from every call, with a missing file as `StorageErrors.FileNotFound`.
+- A `Result` for each expected outcome, with a missing file as `StorageErrors.FileNotFound`, and an exception for a failure of the store itself.
 - Presigned links with a lifetime you choose.
 - A Host that fails when it is built unless it composes exactly one provider.
 

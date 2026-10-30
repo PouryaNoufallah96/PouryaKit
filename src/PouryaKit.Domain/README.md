@@ -6,7 +6,7 @@
 
 # PouryaKit.Domain
 
-The plain types your aggregates are made of. An aggregate derives from `AggregateRoot<TId>` and is keyed by a typed ID, its behaviours check business rules and return a `Result` with a value or an `Error` for an expected business failure, and what happened is raised as a Domain Event. The package has no dependencies, so it adds nothing to your domain but these types.
+The plain types your aggregates are made of. An aggregate derives from `AggregateRoot<TId>` and is keyed by a typed ID, a behaviour that can fail checks its business rules and returns a `Result` with a value or an `Error` for an expected business failure, and what happened is raised as a Domain Event. The package has no dependencies, so it adds nothing to your domain but these types.
 
 ## Install
 
@@ -20,7 +20,7 @@ dotnet add package PouryaKit.Domain --prerelease
 - A business rule decides whether a change may happen.
 - Something in the domain happened that other code reacts to: a Domain Event.
 - You are declaring the Errors of a Business Area.
-- Domain code needs the current time.
+- A business rule compares with the current time, or a test fixes the time a Domain Event records.
 
 A Module's handlers return these types through [`PouryaKit.Cqrs`](https://www.nuget.org/packages/PouryaKit.Cqrs), and [`PouryaKit.Persistence.Postgres`](https://www.nuget.org/packages/PouryaKit.Persistence.Postgres) stores its aggregates.
 
@@ -57,7 +57,7 @@ public static Result<Product> Create(ProductId id, CategoryId categoryId, string
 - Typed IDs: one sealed record per aggregate, over a `Guid`, `long`, `int` or `string`, so the compiler refuses one aggregate's ID where another's belongs.
 - Domain Events raised by the aggregate, for the Unit of Work to run.
 - Opt-in markers for audit and soft delete, whose fields the Unit of Work sets, and for a tenant's aggregates.
-- `DomainClock`, the time domain code reads, which a test can fix.
+- `DomainClock`, the time a Domain Event records, which a test can fix. A business rule that compares with now takes the time as a parameter.
 
 > [!WARNING]
 > Return an Error for anything an Actor can cause, such as a missing name. Exceptions are for bugs and infrastructure. Never set an aggregate's `Version` or clear its Domain Events: the Unit of Work owns both.

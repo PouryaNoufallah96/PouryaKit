@@ -6,7 +6,7 @@
 
 # PouryaKit.Security.JwtBearer
 
-JWT bearer authentication for a Host. It sets up ASP.NET Core's bearer scheme so each verified token names the Actor and the tenant of the Operations it causes. The Kit issues no token: the issuer, audiences and signing keys are your identity provider's, in the Host's configuration.
+JWT bearer authentication for a Host. It sets up ASP.NET Core's bearer scheme so each verified token names the Actor of the Operations it causes and, when the Host names a tenant claim and the token carries it, their tenant. The Kit issues no token: the issuer, audiences and signing keys are your identity provider's, in the Host's configuration.
 
 ## Install
 
@@ -26,7 +26,7 @@ It builds on [`PouryaKit.Security`](https://www.nuget.org/packages/PouryaKit.Sec
 Register it in the Host, naming the claim that holds the tenant, with authorization and the Web pipeline:
 
 ```csharp
-builder.Services.AddPouryaKitJwtBearer(claims => claims.TenantClaim = TenantClaim);
+builder.Services.AddPouryaKitJwtBearer(claims => claims.TenantClaim = "tenant");
 builder.Services.AddAuthorization();
 builder.Services.AddPouryaKitWeb();
 ```
@@ -34,7 +34,7 @@ builder.Services.AddPouryaKitWeb();
 ## What you get
 
 - ASP.NET Core's own bearer scheme, with its token validation.
-- An Actor and a tenant taken only from claims the scheme verified.
+- An Actor, and a tenant where the token carries one, taken only from claims the scheme verified.
 - Settings from the standard authentication configuration section, as any issuer is configured.
 
 > [!WARNING]

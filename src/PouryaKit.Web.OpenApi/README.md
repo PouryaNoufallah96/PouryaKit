@@ -21,7 +21,7 @@ dotnet add package PouryaKit.Web.OpenApi --prerelease
 - You deprecate a version and announce the date it is meant to end.
 - You serve one OpenAPI document per version and the Scalar reference over them.
 
-It extends [`PouryaKit.Web`](https://www.nuget.org/packages/PouryaKit.Web). A Host that does not register it, and a Module that declares no version, keep the plain unversioned paths.
+It extends [`PouryaKit.Web`](https://www.nuget.org/packages/PouryaKit.Web). A Module that declares no version keeps the plain unversioned paths, in a Host with or without it; a Module that declares versions needs the Host to register it, or mapping its endpoints throws.
 
 ## Quick start
 

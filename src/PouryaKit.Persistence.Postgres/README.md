@@ -32,7 +32,7 @@ module.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "ca
 module.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
 ```
 
-Number sequences take a registration of their own:
+Number sequences take a registration of their own, and a migration of the Module that calls `CreateNumberSequenceTable` with its schema, or the first number throws:
 
 ```csharp
 module.AddPouryaKitNumberSequences();

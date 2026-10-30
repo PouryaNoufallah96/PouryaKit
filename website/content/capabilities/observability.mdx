@@ -2,7 +2,7 @@
 description: "One activity and one duration measurement for every command and query, and one trace from an Operation through the Outbox into every delivery it causes, in its Host or another."
 ---
 
-`PouryaKit.Observability` makes every [Operation](/docs/reference/glossary#operation) visible. Each command and query the dispatcher runs is one activity and one duration measurement, tagged with its Module, its type, its Actor kind and its outcome. The work an Operation publishes stays in its trace: the Outbox carries the trace parent and tracestate into each delivery, so a product created in Catalog and stocked in Inventory is one trace, in one Host or across RabbitMQ.
+`PouryaKit.Observability` makes every [Operation](/docs/reference/glossary#operation) visible. Each command and query the dispatcher runs is one activity and one duration measurement, tagged with its type, its Actor kind and its outcome, and with its Module in a Host of Modules. The work an Operation publishes stays in its trace: the Outbox carries the trace parent and tracestate into each delivery, so a product created in Catalog and stocked in Inventory is one trace, in one Host or across RabbitMQ.
 
 It emits through `System.Diagnostics` only. The Kit has no OpenTelemetry package, no exporter and no Serilog: exporting is the Host's job, done with the standard OpenTelemetry setup of the [Host recipes](/docs/capabilities/host-recipes).
 

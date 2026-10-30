@@ -47,11 +47,11 @@ var getProduct = catalog.Tool(
 
 ## What you get
 
-- One `IChatClient` per Host, wrapped in its allow-list, iteration cap and guardrails.
+- One `IChatClient` per Host, wrapped in its allow-list, iteration cap and the guardrails the Host registers.
 - Gateway tools that run as Operations, under the run's Operation Context.
 - MCP tools of the servers the Host's options name, under the same allow-list.
 - Agents and workflows over that client, with sessions and memory in your application's stores.
-- One resilience pipeline on the provider's client.
+- No resilience of its own on the provider's client, so a Host whose defaults add one pipeline to every client keeps exactly that one.
 
 > [!WARNING]
 > The model decides what to call; the Kit decides what each call may do. A run inside an authorized Operation gives its tool calls that Operation's authority, so give such a run only the tools its Operation may run.

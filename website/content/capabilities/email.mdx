@@ -31,7 +31,7 @@ Mail goes out from a [Notification Handler](/docs/reference/glossary#notificatio
 
 ### Send from a Notification Handler
 
-Inject `IEmailSender` and send an `EmailMessage`. The send succeeds once the mail server accepted the mail; a recipient that is not one mailbox address fails with `Email.InvalidAddress`, sending nothing.
+Inject `IEmailSender` and send an `EmailMessage`. The send succeeds once the mail server accepted the mail; a recipient that is not one mailbox address with a domain fails with `Email.InvalidAddress`, sending nothing.
 
 </Step>
 <Step>

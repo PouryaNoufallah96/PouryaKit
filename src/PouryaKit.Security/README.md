@@ -21,7 +21,7 @@ dotnet add package PouryaKit.Security --prerelease
 - You decide what a continuation or a system Actor may run.
 - Your application stores its own passwords and needs to hash, verify and upgrade them.
 
-It plugs into the pipeline of [`PouryaKit.Cqrs`](https://www.nuget.org/packages/PouryaKit.Cqrs). [`PouryaKit.Security.JwtBearer`](https://www.nuget.org/packages/PouryaKit.Security.JwtBearer) turns bearer tokens into the Actor and tenant.
+It plugs into the pipeline of [`PouryaKit.Cqrs`](https://www.nuget.org/packages/PouryaKit.Cqrs). [`PouryaKit.Security.JwtBearer`](https://www.nuget.org/packages/PouryaKit.Security.JwtBearer) turns bearer tokens into the Actor and, where the token carries one, the tenant.
 
 ## Quick start
 
