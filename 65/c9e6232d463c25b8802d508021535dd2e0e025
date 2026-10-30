@@ -1,0 +1,112 @@
+README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Persistence/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+website/lib/kit-sources/export-check.test.ts
+  s_2af227689c22be::t_1076ae67975534 47
+  s_2af227689c22be::t_64a441a6e47464 48-51
+website/content/docs/get-started/ai-skill.mdx
+  s_2af227689c22be::t_64a441a6e47464 8,27,30,39,49
+.claude/rules/website.md
+  s_2af227689c22be::t_64a441a6e47464 43,45
+src/PouryaKit.Validation/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Web.OpenApi/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Messaging.Wolverine.EFCore/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Messaging.Wolverine/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Messaging.Wolverine.RabbitMq/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+website/lib/kit-sources/addresses.ts
+  s_2af227689c22be::t_64a441a6e47464 8
+src/PouryaKit.Security/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+docs/acceptance.md
+  s_2af227689c22be::t_64a441a6e47464 2996,3052,3064,3202
+src/PouryaKit.Modularity/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+website/lib/kit-sources/rules.test.ts
+  s_2af227689c22be::t_64a441a6e47464 47,49,57-60,72-76,78,80-87,95-97,103-104,114,119-122
+src/PouryaKit.Core/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Grpc/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Persistence.Marten/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.AI/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Storage/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Storage.S3/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Messaging/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Reporting/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Caching/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Localization/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Persistence.EFCore/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Reporting.Module/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Security.JwtBearer/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Templates/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Messaging.Wolverine.Sagas/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+website/distribution/manifest.sha256
+  s_2af227689c22be::t_46e7aabe6443a2 3
+src/PouryaKit.ReverseProxy/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Email/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Persistence.Postgres/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Email.MailKit/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Domain/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.AI.Postgres/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Aspire/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Messaging.Wolverine.Marten/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Observability/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Storage.AzureBlob/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+website/lib/kit-sources/distribution.test.ts
+  s_2af227689c22be::t_64a441a6e47464 165-168,175-176,212
+src/PouryaKit.Persistence.Dapper/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Testing/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Web/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Realtime/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+src/PouryaKit.Cqrs/README.md
+  s_2af227689c22be::t_64a441a6e47464 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "65c9e6232d463c25b8802d508021535dd2e0e025",
+  "prompts": {},
+  "sessions": {
+    "s_2af227689c22be": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3a643f64-8120-4ead-af2a-61d3fe9e77f8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
