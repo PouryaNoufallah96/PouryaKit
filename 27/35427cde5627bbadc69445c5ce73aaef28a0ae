@@ -1,0 +1,88 @@
+.agents/skills/pourya-kit/references/openapi.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 3
+website/content/capabilities/storage.mdx
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 5
+.agents/skills/pourya-kit/references/storage.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 3
+src/PouryaKit.Grpc/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 55
+src/PouryaKit.Localization/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 9
+src/PouryaKit.Testing/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 32
+src/PouryaKit.Modularity/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 50
+website/content/capabilities/messaging.mdx
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 7
+website/distribution/manifest.sha256
+  s_0523cd0a0dc5f1::t_bcee152de5e47a 61,70
+src/PouryaKit.Security.JwtBearer/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 9,29,37
+src/PouryaKit.Persistence.Postgres/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 35
+src/PouryaKit.Web/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 41
+  s_0523cd0a0dc5f1::t_801fb8c7590024 40
+website/content/capabilities/templates.mdx
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 41
+src/PouryaKit.Messaging.Wolverine/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 9
+src/PouryaKit.AI/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 50,54
+src/PouryaKit.Messaging.Wolverine.Marten/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 26
+website/content/capabilities/openapi.mdx
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 7
+src/PouryaKit.Observability/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 9
+src/PouryaKit.Messaging.Wolverine.EFCore/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 38-39
+src/PouryaKit.Email/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 40
+src/PouryaKit.Domain/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 9,23,60
+website/content/capabilities/email.mdx
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 34
+website/content/capabilities/observability.mdx
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 5
+src/PouryaKit.Messaging.Wolverine.RabbitMq/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 27,31
+src/PouryaKit.AI.Postgres/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 27
+src/PouryaKit.Web.OpenApi/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 24
+website/content/capabilities/security.mdx
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 7
+src/PouryaKit.Storage/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 9,40
+src/PouryaKit.ReverseProxy/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 27
+docs/acceptance.md
+  s_0523cd0a0dc5f1::t_4408ed19f40190 3001-3002
+src/PouryaKit.Security/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 24
+website/content/capabilities/reverse-proxy.mdx
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 42
+website/content/capabilities/domain-primitives.mdx
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 5,17,31
+src/PouryaKit.Reporting.Module/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 27
+src/PouryaKit.Cqrs/README.md
+  s_0523cd0a0dc5f1::t_4fd495dbf697cc 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2735427cde5627bbadc69445c5ce73aaef28a0ae",
+  "prompts": {},
+  "sessions": {
+    "s_0523cd0a0dc5f1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4b0d5b41-49a0-493b-afc2-9df5a4fdbf1d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
