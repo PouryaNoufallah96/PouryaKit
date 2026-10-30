@@ -20,7 +20,7 @@ dotnet add package PouryaKit.ReverseProxy --prerelease
 - A Module split out as a service keeps its paths, routed to its own Host.
 - You want one trace from the client through the proxy to the Operation.
 
-It sits in front of the Hosts of [`PouryaKit.Web`](https://www.nuget.org/packages/PouryaKit.Web), each of which authenticates its own clients, and [`PouryaKit.Aspire`](https://www.nuget.org/packages/PouryaKit.Aspire) runs it locally.
+It sits in front of the Hosts of [`PouryaKit.Web`](https://www.nuget.org/packages/PouryaKit.Web), each of which authenticates its own clients, and an AppHost with [`PouryaKit.Aspire`](https://www.nuget.org/packages/PouryaKit.Aspire) runs it locally.
 
 ## Quick start
 

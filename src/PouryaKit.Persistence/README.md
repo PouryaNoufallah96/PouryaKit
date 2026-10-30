@@ -40,7 +40,7 @@ internal sealed class RenameProductCommandHandler(IRepository<Product, ProductId
 
 ## What you get
 
-- A generic repository with specifications, so a Feature never needs a repository of its own.
+- A generic repository with specifications, and nothing on it saves.
 - `UnitOfWorkErrors`, so a commit that cannot go through is an Error, not an exception.
 - A plain-SQL write that commits or rolls back with the Operation, through `IUnitOfWorkConnection`.
 

@@ -61,7 +61,7 @@ internal sealed class GetStockItemEndpoint : IEndpoint
 
 - Authenticated access by default: a public endpoint says so, and names the system Actor it runs as.
 - One problem response for every failure, chosen by the Errors' kinds.
-- An `OperationContext` built from verified claims, never from what a client asserts.
+- An `OperationContext` built from the verified claims.
 - Outgoing HTTP that carries the Operation Context, with the standard retry for safe methods.
 - A Page bound from the query string, and an idempotency key required on a repeatable write.
 

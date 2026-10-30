@@ -70,7 +70,7 @@ module
 - Dead letters you can find and replay.
 
 > [!WARNING]
-> Outside Development, Wolverine loads its handler code from the Host's assembly, so a Host generates it before the Release build. See [Prepare a release](https://pouryakit.vercel.app/docs/guides/prepare-a-release).
+> The Kit's own deliveries need no generated code, but a Wolverine handler a Host adds does: outside Development, a Host without that code does not start, so generate it before the Release build. See [Prepare a release](https://pouryakit.vercel.app/docs/guides/prepare-a-release).
 
 ## Learn more
 
