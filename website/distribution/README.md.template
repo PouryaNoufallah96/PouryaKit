@@ -25,10 +25,11 @@ claude plugin install {{plugin}}@{{marketplace}}
 
 Inside a Claude Code session, the same is `/plugin marketplace add {{repository}}`, then `/plugin install {{plugin}}@{{marketplace}}`.
 
-For Codex:
+For Codex, as a plugin from the same marketplace:
 
 ```sh
-npx skills add {{repository}} -a codex
+codex plugin marketplace add {{repository}}
+codex plugin add {{plugin}}@{{marketplace}}
 ```
 
 ## What the skill holds

@@ -8,7 +8,7 @@ description: Give Claude Code, Codex or another coding agent the Kit's skill, th
 The Kit's AI skill, `pourya-kit`, is what a coding agent reads before it writes code on the Kit: what each [Capability](/docs/reference/glossary#capability) guarantees, how to declare it and what to avoid, Capability by Capability. It is the source of the Capability references on this site, so the agent and you read the same rules. It installs from the public repository `PouryaNoufallah96/pouryakit-public`.
 
 <Callout type="warn" title="Read from the repository, not your solution">
-  Every install below takes the skill from the repository's default branch, and keeps that copy until you update it: `npx skills update` for the skills CLI, `claude plugin update pourya-kit@pouryakit` in Claude Code. Upgrading the Kit in a solution does not update it.
+  Every install below takes the skill from the repository's default branch, and keeps that copy until you update it: `npx skills update` for the skills CLI, `claude plugin update pourya-kit@pouryakit` in Claude Code, `codex plugin marketplace upgrade pouryakit` in Codex. Upgrading the Kit in a solution does not update it.
 </Callout>
 
 ## When to use it
@@ -43,10 +43,11 @@ claude plugin install pourya-kit@pouryakit
 </Tab>
 <Tab value="Codex">
 
-The skills CLI installs it for Codex when you name the agent.
+Add the repository as a plugin marketplace, then install the skill's plugin from it.
 
 ```bash title="Terminal"
-npx skills add PouryaNoufallah96/pouryakit-public -a codex
+codex plugin marketplace add PouryaNoufallah96/pouryakit-public
+codex plugin add pourya-kit@pouryakit
 ```
 
 </Tab>
@@ -60,6 +61,9 @@ npx skills list
 
 # The plugins Claude Code installed
 claude plugin list
+
+# The plugins Codex installed
+codex plugin list
 ```
 
 ## Next steps

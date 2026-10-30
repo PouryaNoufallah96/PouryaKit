@@ -208,6 +208,7 @@ test('the README fills every name it uses from one place and refuses one it does
   const readme = text(tree, 'README.md') ?? '';
   assert.doesNotMatch(readme, /\{\{|\}\}/);
   assert.match(readme, /claude plugin install pourya-kit@pouryakit/);
+  assert.match(readme, /codex plugin add pourya-kit@pouryakit/);
   assert.match(readme, /raw\.githubusercontent\.com\/PouryaNoufallah96\/pouryakit-public\/assets-v1\/assets\/kit\.png/);
   assert.throws(() => fillReadme('see {{website}}'), /names \{\{website\}\}/);
   assert.throws(() => fillReadme('see {{ site }}'), /a \{\{ or \}\}/);
@@ -217,8 +218,8 @@ test("the AI skill page's install commands name the public repository, the marke
   // The page keeps its commands as text, so they reach its Markdown; this holds them to addresses.ts.
   const page = readFileSync(path.join(root, 'website/content/docs/get-started/ai-skill.mdx'), 'utf8');
   const sources = [...page.matchAll(/(?:skills add|plugin marketplace add) (\S+)/g)].map((match) => match[1]);
-  const installs = [...page.matchAll(/plugin install (\S+)/g)].map((match) => match[1]);
-  assert.ok(sources.length >= 3 && installs.length >= 1);
+  const installs = [...page.matchAll(/plugin (?:install|add) (\S+)/g)].map((match) => match[1]);
+  assert.ok(sources.length >= 4 && installs.length >= 2);
   assert.deepEqual(new Set(sources), new Set([PUBLIC_REPOSITORY]));
   assert.deepEqual(new Set(installs), new Set([`${PLUGIN}@${MARKETPLACE}`]));
 });
