@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>gRPC services and clients on the Kit's Web conventions: each call runs through a Module's Gateway, and a failed Result answers a gRPC status with every Error in a trailer.</PackageDescription>
+    <PackageTags>grpc;protobuf;aspnetcore</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

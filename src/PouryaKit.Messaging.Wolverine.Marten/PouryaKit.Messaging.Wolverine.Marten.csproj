@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>A Stream's messages sent through Wolverine's Marten outbox, so its events commit with the Notifications and Integration Events they cause.</PackageDescription>
+    <PackageTags>wolverine;marten;outbox</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="WolverineFx.Marten" />
   </ItemGroup>

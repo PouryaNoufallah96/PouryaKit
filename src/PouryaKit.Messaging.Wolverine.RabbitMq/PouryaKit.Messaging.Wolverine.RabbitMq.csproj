@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>Integration Events and Snapshots between Hosts over RabbitMQ, with the retries, Receipts and dead letters of a delivery inside one Host.</PackageDescription>
+    <PackageTags>rabbitmq;wolverine;messaging</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="WolverineFx.RabbitMQ" />
   </ItemGroup>

@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>A YARP Reverse proxy of its own process in front of a system's Hosts, with routes from configuration, service discovery, a liveness probe and one trace.</PackageDescription>
+    <PackageTags>yarp;reverse-proxy;service-discovery</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

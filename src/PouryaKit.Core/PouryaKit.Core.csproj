@@ -1,2 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>Small helpers the Kit's packages share: predicate composition a LINQ provider can translate, the implementing-type lookup and a synchronization-context scope.</PackageDescription>
+    <PackageTags>helpers;linq;predicates</PackageTags>
+  </PropertyGroup>
 </Project>

@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>The Kit's report Module: report jobs generated in the background, stored through the Host's file storage and served to their requester by a time-limited link.</PackageDescription>
+    <PackageTags>reporting;report-jobs;modules</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

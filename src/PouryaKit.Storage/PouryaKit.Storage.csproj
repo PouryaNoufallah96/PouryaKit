@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>One file storage contract for Feature code: upload, download, delete and presigned links, each returning a Result, with no cloud SDK in a Module.</PackageDescription>
+    <PackageTags>storage;files;blob-storage</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\PouryaKit.Cqrs\PouryaKit.Cqrs.csproj" />
     <ProjectReference Include="..\PouryaKit.Domain\PouryaKit.Domain.csproj" />

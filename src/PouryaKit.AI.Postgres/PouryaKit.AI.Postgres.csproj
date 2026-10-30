@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>Text stored by its embedding and searched by meaning with pgvector in PostgreSQL, within the tenant, in the Operation's Unit of Work.</PackageDescription>
+    <PackageTags>pgvector;embeddings;semantic-search;postgresql</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\PouryaKit.AI\PouryaKit.AI.csproj" />
     <ProjectReference Include="..\PouryaKit.Persistence.Postgres\PouryaKit.Persistence.Postgres.csproj" />

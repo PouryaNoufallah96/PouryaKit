@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>API versions a Module declares, served by URL segment and by header, with a configured sunset, one ASP.NET Core OpenAPI document per version and the Scalar reference.</PackageDescription>
+    <PackageTags>openapi;api-versioning;scalar</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
