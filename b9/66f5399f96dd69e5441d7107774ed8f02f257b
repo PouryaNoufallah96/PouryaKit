@@ -1,0 +1,25 @@
+docs/agents/ai-setup.md
+  s_0523cd0a0dc5f1::t_25ed19c6854c68 143-144
+.claude/settings.json
+  s_0523cd0a0dc5f1::t_ad073a942019aa 6-7
+.codex/config.toml
+  s_0523cd0a0dc5f1::t_f5ffb50956bea3 14-17
+AGENTS.md
+  s_0523cd0a0dc5f1::t_dee96e652e468c 92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b966f5399f96dd69e5441d7107774ed8f02f257b",
+  "prompts": {},
+  "sessions": {
+    "s_0523cd0a0dc5f1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4b0d5b41-49a0-493b-afc2-9df5a4fdbf1d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
