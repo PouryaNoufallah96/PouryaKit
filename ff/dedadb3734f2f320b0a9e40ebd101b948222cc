@@ -1,0 +1,23 @@
+.claude/agent-memory/kit-implementer/docs-site-facts.md
+  s_3dd7725a647c44::t_ee1d7992b6f7d7 81-89
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_3dd7725a647c44::t_ee1d7992b6f7d7 142-149
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3dd7725a647c44::t_ee1d7992b6f7d7 15,26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ffdedadb3734f2f320b0a9e40ebd101b948222cc",
+  "prompts": {},
+  "sessions": {
+    "s_3dd7725a647c44": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "92130a8e-005c-4d69-9e3f-5264776a6a57",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
