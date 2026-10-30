@@ -1,4 +1,4 @@
-![PouryaKit.Core](https://raw.githubusercontent.com/PouryaNoufallah96/pouryakit-public/assets-v1/assets/covers/PouryaKit.Core.png)
+![PouryaKit.Core](https://raw.githubusercontent.com/PouryaNoufallah96/pouryakit-pub/assets-v1/assets/covers/PouryaKit.Core.png)
 
 [![NuGet](https://img.shields.io/nuget/vpre/PouryaKit.Core?style=flat-square&logo=nuget&color=615fff)](https://www.nuget.org/packages/PouryaKit.Core)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet)
