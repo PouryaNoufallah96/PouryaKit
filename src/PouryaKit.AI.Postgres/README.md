@@ -24,7 +24,7 @@ It builds on [`PouryaKit.AI`](https://www.nuget.org/packages/PouryaKit.AI), whic
 
 ## Quick start
 
-Add the vector store to the Module, and create its collection in a migration, as the Kit's tests do:
+Add the vector store to a Module stored with `UsePouryaKitPostgres`, and create its collection in a migration, as the Kit's tests do. The Host registers its embedding generator with `AddPouryaKitEmbeddings`:
 
 ```csharp
 module.AddPouryaKitVectorStore();

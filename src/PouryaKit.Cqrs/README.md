@@ -6,7 +6,7 @@
 
 # PouryaKit.Cqrs
 
-Commands and queries that run as Operations through one fixed pipeline. You declare each Feature as a sealed record with exactly one handler and send it. The Kit runs it through logging, the optional authorization hook, validation and the handler, and a command's handler runs inside the Unit of Work, which commits once for the whole Operation.
+Commands and queries that run as Operations through one fixed pipeline. You declare each Feature as a sealed record with exactly one handler and send it. The Kit runs it through logging, the optional authorization hook, optional validation and the handler, and a command's handler runs inside the Unit of Work, which commits once for the whole Operation.
 
 ## Install
 

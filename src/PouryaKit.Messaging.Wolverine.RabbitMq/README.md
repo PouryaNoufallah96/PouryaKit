@@ -24,11 +24,11 @@ Only the Hosts change: Modules, Contracts and Feature code never reference it. I
 
 ## Quick start
 
-A Host joins the broker under its service name, after its message store:
+A Host joins the broker under its service name, after its message store. `connectionName` names a connection string of the Host's configuration, never the broker's address:
 
 ```csharp
 builder.UsePouryaKitWolverine(connectionName: "app");
-builder.UsePouryaKitRabbitMq(BrokerConnection, serviceName);
+builder.UsePouryaKitRabbitMq(connectionName: "broker", serviceName: "modular-monolith");
 ```
 
 A receiving Host declares each wire name it receives from another Host:

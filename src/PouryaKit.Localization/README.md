@@ -6,7 +6,7 @@
 
 # PouryaKit.Localization
 
-A Module's messages in English and Persian. A Feature injects `IStringLocalizer<T>` for a type of its own and reads each message by its key, from `.resx` files beside that type's file. Each HTTP request runs in the culture its client asks for, and that culture flows through the Gateway into the Operation's handlers.
+A Module's messages in English and Persian. A Feature injects `IStringLocalizer<T>` for a type of its own and reads each message by its key, from `.resx` files beside that type's file. Each HTTP request runs in English or Persian as its client's `Accept-Language` header names, in English otherwise, and that culture flows through the Gateway into the Operation's handlers.
 
 ## Install
 

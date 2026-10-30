@@ -39,7 +39,7 @@ Routes and clusters are YARP's own configuration, in the `ReverseProxy` section,
 
 ### Keep dead endpoints out
 
-Every cluster probes each destination's liveness path. A destination whose probes keep failing leaves its cluster until a probe succeeds, and a cluster with none left refuses its requests rather than forwarding to every destination again ([Routes, clusters and discovery](#routes-clusters-and-discovery)).
+Unless its configuration says otherwise, every cluster probes each destination's liveness path. A destination whose probes keep failing leaves its cluster until a probe succeeds, and a cluster with none left refuses its requests rather than forwarding to every destination again ([Routes, clusters and discovery](#routes-clusters-and-discovery)).
 
 </Step>
 </Steps>

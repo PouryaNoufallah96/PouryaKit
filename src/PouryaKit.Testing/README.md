@@ -29,6 +29,7 @@ Derive one fixture for the assembly, over your Host's composition, as the templa
 
 ```csharp
 [assembly: AssemblyFixture(typeof(App))]
+[assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
 
 public sealed class App : HostFixture
 {

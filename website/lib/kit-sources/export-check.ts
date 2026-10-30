@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import type { Root } from 'mdast';
+import { parseEntities } from 'parse-entities';
 import { visit } from 'unist-util-visit';
 import { parseMarkdown, parseMdx } from './markdown.ts';
 import { addressViolations, type Violation, vocabularyViolations } from './rules.ts';
@@ -18,17 +19,12 @@ export type Finding = Violation & { file: string };
 
 const BINARY = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif', '.ico', '.woff', '.woff2', '.ttf', '.otf']);
 
-const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
-
+/**
+ * Every character reference undone once, as the HTML parser reads them: each named one, the numeric ones and the legacy
+ * names with or without a semicolon. A table alone would not do, since `&nbsp` is a reference and `&sol` is not.
+ */
 export function decodeEntities(text: string): string {
-  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, name: string) => {
-    if (name[0] === '#') {
-      const code =
-        name[1] === 'x' || name[1] === 'X' ? Number.parseInt(name.slice(2), 16) : Number.parseInt(name.slice(1), 10);
-      return Number.isFinite(code) ? String.fromCodePoint(code) : whole;
-    }
-    return ENTITIES[name.toLowerCase()] ?? whole;
-  });
+  return parseEntities(text);
 }
 
 /**
@@ -121,11 +117,15 @@ function jsonStrings(value: unknown, out: string[] = []): string[] {
   return out;
 }
 
+function isMarkdown(relative: string): boolean {
+  const name = path.posix.basename(relative);
+  return relative.endsWith('.md') || name === 'llms.txt' || name === 'llms-full.txt';
+}
+
 /** The rendered text of one exported file, or undefined for a file that renders none (a script, a style, a payload). */
 export function renderedTextOf(relative: string, content: string): string | undefined {
-  const name = path.posix.basename(relative);
   if (relative.endsWith('.html')) return htmlText(content);
-  if (relative.endsWith('.md') || name === 'llms.txt' || name === 'llms-full.txt') return markdownText(content);
+  if (isMarkdown(relative)) return markdownText(content);
   if (relative === 'api/search.json') return jsonStrings(JSON.parse(content)).join(BLOCK_END);
   return undefined;
 }
@@ -149,7 +149,9 @@ export function checkExport(out: string): { findings: Finding[]; scanned: number
     const content = readFileSync(path.join(out, relative), 'utf8');
     if (content.includes('\u0000')) continue;
     scanned++;
-    const addressed = unescapeStrings(relative.endsWith('.html') ? decodeEntities(content) : content);
+    // HTML and Markdown parsers undo character references, in a link's destination too; a string in a script stays as written.
+    const parsed = relative.endsWith('.html') || isMarkdown(relative);
+    const addressed = unescapeStrings(parsed ? decodeEntities(content) : content);
     const markup = addressViolations(addressed, relative.endsWith('.js'));
     for (const violation of markup) findings.push({ ...violation, file: relative });
     const text = renderedTextOf(relative, content);

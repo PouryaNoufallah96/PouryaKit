@@ -52,7 +52,7 @@ internal sealed class ProductGrpcService(IGatewayProcessor<CatalogModule> catalo
 }
 ```
 
-Another Host registers a client that carries the Operation Context, as the Kit's tests do:
+Another Host registers a client that carries the Operation Context under a name of its own, `Client` here, as the Kit's tests do. Configure the `PouryaKitGrpcClientOptions` of that name with its `Address` and `Deadline`, or the Host fails when it starts:
 
 ```csharp
 services.AddPouryaKitGrpcClient<ProductService.ProductServiceClient>(Client);

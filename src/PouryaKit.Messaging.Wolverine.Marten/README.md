@@ -23,7 +23,7 @@ It joins [`PouryaKit.Persistence.Marten`](https://www.nuget.org/packages/PouryaK
 
 ## Quick start
 
-Register the Host's Marten store, after the message store's registration when the Host also has EF Core Modules:
+Register the Host's Marten store. A Host of Stream Modules alone calls only `UsePouryaKitMarten`, which declares the message store itself; a Host that also has EF Core Modules calls it after `UsePouryaKitWolverine` of [`PouryaKit.Messaging.Wolverine.EFCore`](https://www.nuget.org/packages/PouryaKit.Messaging.Wolverine.EFCore):
 
 ```csharp
 builder.UsePouryaKitWolverine(connectionName: "app");

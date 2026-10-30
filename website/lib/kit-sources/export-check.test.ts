@@ -60,6 +60,37 @@ test('a private link behind a dot segment fails the export, literal or escaped, 
   ]);
 });
 
+test('a character reference hides nothing a browser reads: named, numeric, without its semicolon, in markup and in text', () => {
+  const findings = findingsFor({
+    'docs/a.html': '<p>PouryaNoufallah96&sol;PouryaKit</p>',
+    'docs/b.html': '<a href="https://github.com&sol;PouryaNoufallah96&sol;PouryaKit">source</a>',
+    'docs/c.html': '<p>PouryaNoufallah96&#47PouryaKit</p>',
+    'docs/d.html': '<a href="https://github.com&#x2FPouryaNoufallah96&#x2fPouryaKit">source</a>',
+    'docs/e.html': '<p>Cyber<strong>n&#111d</strong> ships in session&nbsp3</p>',
+    'llms.mdx/docs/f/content.md': '# F\n\n[source](https://github.com&sol;PouryaNoufallah96&sol;PouryaKit)\n',
+  });
+  assert.deepEqual(findings, [
+    'docs/a.html private repository',
+    'docs/b.html private repository',
+    'docs/c.html private repository',
+    'docs/d.html private repository',
+    'docs/e.html private project (Cybernod)',
+    'docs/e.html delivery process (story <n>, session <n>)',
+    'llms.mdx/docs/f/content.md private repository',
+  ]);
+});
+
+test('a character reference decodes once, and text no browser decodes stays text', () => {
+  const findings = findingsFor({
+    'docs/a.html': '<p>PouryaNoufallah96&amp;sol;PouryaKit</p>',
+    'docs/b.html': '<p>PouryaNoufallah96&solPouryaKit</p>',
+    'docs/c.html': '<p>PouryaNoufallah96&Sol;PouryaKit</p>',
+    'docs/d.html': '<p>&#x110000; and &#0; are no characters</p>',
+    '_next/static/chunk.js': 'const a="PouryaNoufallah96&sol;PouryaKit";',
+  });
+  assert.deepEqual(findings, []);
+});
+
 test('a private link or a local path in a script or a payload fails, its string escapes undone', () => {
   const findings = findingsFor({
     '_next/static/chunk.js': 'const a="https:\\/\\/github.com\\/PouryaNoufallah96\\/PouryaKit";',

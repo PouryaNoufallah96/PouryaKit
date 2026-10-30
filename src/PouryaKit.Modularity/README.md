@@ -47,7 +47,7 @@ public sealed class BillingModule : IModuleDefinition
 }
 ```
 
-Run an Operation through its Gateway, with the context of the running request:
+Run an Operation through its Gateway, with the context of the running request. This endpoint also needs [`PouryaKit.Web`](https://www.nuget.org/packages/PouryaKit.Web), which begins the request's Operation and supplies `ToHttpResult()`:
 
 ```csharp
 routes.MapGet(

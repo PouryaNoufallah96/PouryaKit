@@ -37,7 +37,7 @@ internal sealed class MailNoteNotificationHandler(IEmailSender email) : INotific
 
 ## What you get
 
-- A `Result` from every send, which the Notification Handler returns.
+- A `Result` from each send, which the Notification Handler returns. A server that cannot be reached, refuses the login or refuses the mail throws, and the delivery is retried.
 - No mail for a rolled-back Operation.
 - A committed Operation's mail attempted by a durable delivery, retried and in the end set aside as a dead letter with its reason.
 

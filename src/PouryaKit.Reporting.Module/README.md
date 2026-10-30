@@ -24,7 +24,7 @@ It renders with [`PouryaKit.Reporting`](https://www.nuget.org/packages/PouryaKit
 
 ## Quick start
 
-Add the Module to the Host and implement its two ports, as the Proving Sample does:
+Add the Module to the Host and implement its two ports, as the Proving Sample does. The Host also registers an `IActorPermissions` of [`PouryaKit.Security`](https://www.nuget.org/packages/PouryaKit.Security) and one file storage provider, or its build fails:
 
 ```csharp
 modules.Add<ReportModule>();

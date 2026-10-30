@@ -6,7 +6,7 @@
 
 # PouryaKit.Messaging.Wolverine
 
-Durable deliveries on Wolverine, with the message store in PostgreSQL. A Composition Root declares here what a Module handles, publishes and subscribes to, and which commands it runs later or on a cadence. Every one of these is stored in the Outbox in the commit of the change and sent only after it, and each delivery runs as an Operation of its own, is retried, and ends as a dead letter you can replay when its attempts run out.
+Durable deliveries on Wolverine, with the message store in PostgreSQL. A Composition Root declares here what a Module handles, publishes and subscribes to, and which commands it runs later or on a cadence. Every one of these is stored in the Outbox in the commit that causes it and sent only after it, and each delivery runs as an Operation of its own, is retried, and ends as a dead letter you can replay when its attempts run out.
 
 ## Install
 

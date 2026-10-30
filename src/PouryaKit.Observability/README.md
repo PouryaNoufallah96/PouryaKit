@@ -6,7 +6,7 @@
 
 # PouryaKit.Observability
 
-An activity and a duration metric for every command and query. Each Operation the dispatcher runs is one activity and one measurement, tagged with its Module, its type, its Actor kind and its outcome, and the Outbox carries the trace into each delivery, in one Host or across RabbitMQ. It emits through `System.Diagnostics` only: exporting is the Host's job.
+An activity and a duration metric for every command and query. Each Operation the dispatcher runs is one activity and one measurement, tagged with its type, its Actor kind and its outcome, and with its Module in a Host of Modules, and the Outbox carries the trace into each delivery, in one Host or across RabbitMQ. It emits through `System.Diagnostics` only: exporting is the Host's job.
 
 ## Install
 

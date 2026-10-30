@@ -24,7 +24,7 @@ It sits in front of the Hosts of [`PouryaKit.Web`](https://www.nuget.org/package
 
 ## Quick start
 
-Compose the proxy as its own application, as the templates generate it:
+Compose the proxy as its own application, as the templates generate it. `AddServiceDefaults()` and `MapDefaultEndpoints()` are your solution's own service defaults, which no package ships: the templates generate them, and the [Host recipes](https://pouryakit.vercel.app/docs/guides/host-recipes) say what they hold:
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);

@@ -38,7 +38,7 @@ dotnet new pouryakit-service -n Acme.Stock
 
 ### Run it on PostgreSQL
 
-Start PostgreSQL, apply each Module's migrations with `dotnet-ef`, create a development token with `dotnet user-jwts`, and run the Host. The service also needs the RabbitMQ broker its configuration names.
+Start PostgreSQL, apply each EF Core Module's migrations with `dotnet-ef` (a Stream Module has none), create a development token with `dotnet user-jwts`, and run the Host. The service also needs the RabbitMQ broker its configuration names.
 
 </Step>
 <Step>

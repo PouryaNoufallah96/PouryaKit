@@ -35,6 +35,8 @@ Add the Receipt table to each Module that handles a delivery, in a migration:
 migrationBuilder.CreateReceiptTable("billing");
 ```
 
+A Module that subscribes to a Snapshot also calls `CreateSnapshotVersionTable` with its schema, in a migration, or its first Snapshot delivery fails.
+
 ## What you get
 
 - The Outbox written in the same commit as the change.
