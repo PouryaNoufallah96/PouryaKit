@@ -1,0 +1,74 @@
+---
+description: "Serve a Module's gRPC service from a Protobuf contract in its Contracts, answer a failed Result as a gRPC status with every Error in a trailer, and call another Host with the Operation Context."
+---
+
+`PouryaKit.Grpc` puts gRPC on the same conventions as the Kit's HTTP endpoints. The `.proto` contract lives in the Module's [Contracts](/docs/reference/glossary#contracts), which both sides compile: the Module's service and another Host's client. A service is declared in the Module's [Composition Root](/docs/reference/glossary#composition-root), mapped once in the Host, and runs each call through the Module's [Gateway](/docs/reference/glossary#gateway) with the [Operation Context](/docs/reference/glossary#operation-context) the call began with. A failed [Result](/docs/reference/glossary#result) answers a gRPC status chosen as HTTP chooses its status, with every Error in a trailer ([Failures](#failures)).
+
+On the calling side, a client registered with the Kit carries the Operation Context in its call metadata, with a deadline from validated options, so the called Host continues the caller's Operation when it trusts the caller as a peer.
+
+<Callout type="warn" title="gRPC without TLS needs an HTTP/2-only listener">
+  Over TLS one listener serves gRPC and REST alike. Without TLS, a listener that serves both negotiates no HTTP/2, so every gRPC call fails with `HTTP_1_1_REQUIRED`: the Host needs a listener of HTTP/2 alone for gRPC, beside the one REST callers reach ([Declaring and mapping a service](#declaring-and-mapping-a-service)).
+</Callout>
+
+## When to use it
+
+- Another Host asks a Module questions over gRPC rather than HTTP.
+- You write a Module's gRPC service from a Protobuf contract, and map the services in the Host.
+- A client must read every Error of a failed call, not only its status.
+- A Host calls another Host with a client that carries the Operation Context and a deadline.
+- You test two Hosts over gRPC.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Put the contract in the Contracts
+
+The `.proto` file lives in the Module's Contracts project, which takes the code generator and the Protobuf runtime itself and still references nothing of the Kit.
+
+</Step>
+<Step>
+
+### Declare the service and map it once
+
+`AddPouryaKitGrpcService` in the Composition Root declares the service, and `MapPouryaKitGrpcServices` in the Host maps every declared service on one authenticated route group. The service injects the call's Operation Context and its Module's Gateway, and turns the Result into a response with `ToGrpcResponse`.
+
+</Step>
+<Step>
+
+### Call another Host through a registered client
+
+`AddPouryaKitGrpcClient` registers a generated client under a name, with an address and a deadline from options. Each call passes its context with `WithOperationContext`. A client never calls its own Host: a call between Modules of one Host goes through the Gateway.
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+Catalog's Contracts declare the product service, compiled by Catalog's service and by any Host's client:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/products.proto" region="product-service-contract" />
+
+The Kit's tests read a failed call back: a missing product answers `NotFound` with its Error in the trailer, and an empty id answers `InvalidArgument` naming its target.
+
+<Snippet file="tests/ModularMonolith.Tests/GrpcTests.cs" region="failed-result-as-grpc-status" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| How the Contracts project compiles the `.proto` | [The contract](#the-contract) |
+| How a service is mapped, authenticated and given its context, and how a listener must be set up | [Declaring and mapping a service](#declaring-and-mapping-a-service) |
+| Which status each Error kind answers, and how the trailer is read | [Failures](#failures) |
+| What a client sends, and what its options require | [Calling another Host](#calling-another-host) |
+| Why a client's address may never be its own Host | [The loopback rule](#the-loopback-rule) |
+
+## Next steps
+
+<Cards>
+  <Card title="Web" href="/docs/capabilities/web" description="The HTTP conventions a gRPC service shares: authentication, the context and trusted peers." />
+  <Card title="Modules" href="/docs/capabilities/modules" description="Why Modules of one Host ask each other through the Gateway, never over gRPC." />
+</Cards>

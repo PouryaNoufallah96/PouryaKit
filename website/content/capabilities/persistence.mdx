@@ -1,0 +1,88 @@
+---
+description: "Each Module keeps its aggregates in its own PostgreSQL schema through EF Core, and the Unit of Work saves and commits every Operation once, with no save in your code."
+---
+
+`PouryaKit.Persistence.Postgres` gives a Module its own DbContext and schema on PostgreSQL, through EF Core, and makes that DbContext the Module's [Unit of Work](/docs/reference/glossary#unit-of-work). Your handler loads and adds aggregates through the generic repository, `IRepository<TAggregate, TId>`, and returns. After the handler, the Unit of Work runs the [Domain Event Handlers](/docs/reference/glossary#domain-event-handler), stamps audit and soft-delete fields, writes the [Outbox](/docs/reference/glossary#outbox), saves once and commits. A concurrent change, or a duplicate value on a unique index the Module mapped, comes back as an [Error](/docs/reference/glossary#error), not an exception.
+
+Reads for display usually go through [Dapper reads](/docs/capabilities/dapper-reads) instead.
+
+<Callout type="warn" title="Nothing in a Module saves or commits">
+  Feature code reaches its data through the repository, never calls `SaveChanges` and never opens a transaction: a structure test rejects a Module that saves or commits. The repository itself writes only inside a Unit of Work, so an add or a remove anywhere else throws instead of being silently lost.
+</Callout>
+
+## When to use it
+
+- You are mapping an aggregate, or reading and changing it through the repository and a specification.
+- Two aggregates of one Module must change together, in one commit: a Domain Event Handler.
+- An aggregate needs audit fields, soft delete, a unique value or a gap-free number.
+- You need to handle a concurrent change or a duplicate value as an Error.
+- You are adding a migration, the idempotency key table's included.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Give the Module its DbContext and schema
+
+Declare one empty `internal sealed` DbContext that derives from `PouryaKitDbContext`, and call `UsePouryaKitPostgres` in the Composition Root. The Kit's conventions store typed IDs as their values, make `Version` the concurrency token, name everything in snake_case and leave removed rows out of queries.
+
+</Step>
+<Step>
+
+### Map only what is specific
+
+One `IEntityTypeConfiguration<T>` per aggregate, beside its Business Area, states its table, lengths, unique indexes and owned parts. No ID converter, no schema, no concurrency token, no query filter.
+
+</Step>
+<Step>
+
+### Change aggregates through the repository
+
+Inject `IRepository<TAggregate, TId>`, find or add the aggregate, call its methods and return. The repository tracks the change in the Operation's Unit of Work; it never saves.
+
+</Step>
+<Step>
+
+### Keep the Module consistent in the same commit
+
+A Domain Event Handler reacts to a Domain Event inside the Module before the save. What it changes commits with the change that caused it, or not at all.
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+Catalog maps its products with a unique name per tenant among the products not removed; the Composition Root maps that index's violation to `ProductErrors.NameInUse`:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Data/Configurations/ProductConfiguration.cs" region="product-mapping" />
+
+When a product is created, its category counts it in the same transaction. If the category is missing, the handler's Error rolls back the product too:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Categories/Events/DomainEventHandlers/CountProductInCategoryDomainEventHandler.cs" region="count-product-in-category-handler" />
+
+The Kit's tests prove it through Catalog's Gateway: the count and the product commit together, and a failed count leaves no product.
+
+<Snippet file="tests/ModularMonolith.Tests/DomainEventTests.cs" region="category-counts-a-new-product-test" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| Everything the commit guarantees, each with the test that proves it | [What the Kit guarantees](#what-the-kit-guarantees) |
+| The steps of the commit, in order | [The Unit of Work](#the-unit-of-work) |
+| Where the repository may write, and what it does elsewhere | [The repository](#the-repository) |
+| How a concurrent change becomes a conflict Error | [Versions and conflicts](#versions-and-conflicts) |
+| How a duplicate value becomes the Module's own Error | [Unique values](#unique-values) |
+| When Domain Event Handlers run, in which order, and what a failure does | [Domain Event Handlers](#domain-event-handlers) |
+| The codes of the Errors a save can fail with | [Error codes](/docs/reference/error-codes) |
+
+## Next steps
+
+<Cards>
+  <Card title="Unit of Work" href="/docs/concepts/unit-of-work" description="The commit sequence, step by step." />
+  <Card title="Add a migration" href="/docs/guides/add-a-migration" description="Create and apply a Module's migrations with dotnet-ef." />
+  <Card title="Dapper reads" href="/docs/capabilities/dapper-reads" description="Read for display in plain SQL, beside the same schema." />
+</Cards>

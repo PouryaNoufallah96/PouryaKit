@@ -1,0 +1,89 @@
+---
+title: What is PouryaKit
+description: A reusable .NET 10 foundation for modular monoliths, in which Feature code holds only business behaviour.
+---
+
+## What it is
+
+PouryaKit is a set of NuGet packages and `dotnet new` templates for applications built as a [Host](/docs/reference/glossary#host) of [Modules](/docs/reference/glossary#module) on .NET 10 and PostgreSQL. Each Module is a business boundary that owns its data, its rules and its public [Contracts](/docs/reference/glossary#contracts).
+
+Inside a Module, your code is [Features](/docs/reference/glossary#feature). A Feature supplies the aggregate, the command or query, its validator and handler, its data access and its endpoint. The Kit runs everything around it: it dispatches the [Operation](/docs/reference/glossary#operation), validates it, owns its single commit in the [Unit of Work](/docs/reference/glossary#unit-of-work), runs its reactions and delivers its [Integration Events](/docs/reference/glossary#integration-event) and [Snapshots](/docs/reference/glossary#snapshot) to other Modules.
+
+The packages are grouped into [Capabilities](/docs/reference/glossary#capability): one or a few packages each, such as Messaging, Web or File storage. A Host references the ones it uses.
+
+<Callout type="warn" title="Feature code never commits">
+  The Unit of Work writes the [Outbox](/docs/reference/glossary#outbox), saves and commits, and sends what it wrote only after the commit. A handler returns its Result and leaves all of it to the Unit of Work; the [structure tests](/docs/capabilities/testing#structure-tests) refuse code that saves or commits by itself.
+</Callout>
+
+## When to use it
+
+Start a new .NET 10 application on the Kit when its business code should be split into Modules that each own their data, and you want the commit, the Outbox, the deliveries between Modules and the checks on your composition handled for you. One Module is a fine start: the [monolith template](/docs/templates/monolith) grows into a [modular monolith](/docs/templates/modular-monolith) when a second Module arrives, and a Module can later run as a [service](/docs/templates/service) of its own.
+
+## A Feature
+
+The handler that renames a product in the [Proving Sample](/docs/reference/glossary#proving-sample), quoted from its code when this site is built. It returns a [Result](/docs/reference/glossary#result): an [Error](/docs/reference/glossary#error) when the product does not exist, or what the rename returned. Nothing in it saves.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandHandler.cs" region="rename-product-handler" />
+
+## Start a project
+
+<Steps>
+<Step>
+
+### Check the prerequisites
+
+The .NET 10 SDK and Docker; [Prerequisites](/docs/get-started/prerequisites) lists what each step needs.
+
+</Step>
+<Step>
+
+### Install the templates
+
+<include lang="bash" meta='title="Terminal"'>./get-started/install-templates.sh</include>
+
+</Step>
+<Step>
+
+### Run your first Host
+
+[Your first Host](/docs/get-started/first-host) generates a solution, starts PostgreSQL, migrates, and calls the running Host.
+
+</Step>
+</Steps>
+
+## What the Kit guarantees
+
+The Proving Sample's tests prove each rule below, in the test class named beside it, and the page it links states it in full. The first is a structure rule: the Kit holds its own sample to it, and a project copies the [structure tests](/docs/capabilities/testing#structure-tests) to hold its own code to it.
+
+| Rule | Stated in | Proven by |
+| --- | --- | --- |
+| Feature code never saves, commits or touches the Outbox | [Structure tests](/docs/capabilities/testing#structure-tests) | `FeatureCodeTests` |
+| A [Notification Handler](/docs/reference/glossary#notification-handler) runs only after the commit | [Persistence guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) | `NotificationTests` |
+| Every failure answers one problem response | [Problem responses](/docs/capabilities/web#problem-responses) | `WebTests` |
+| There is no default [Actor](/docs/reference/glossary#actor) | [The Operation Context](/docs/capabilities/modules#the-operation-context) | `OperationContextTests` |
+| A tenant-scoped Module keeps to its Operation's [tenant](/docs/reference/glossary#tenant) | [Multi-tenancy guarantees](/docs/capabilities/multi-tenancy#what-the-kit-guarantees) | `TenancyTests` |
+| A declaration that cannot work fails the Host when it is built | [The Host's checks](/docs/capabilities/modules#the-hosts-checks) | `CompositionCheckTests` |
+
+## Failure messages
+
+The Kit refuses a mistake as early as it can, and its messages name what to change.
+
+<Accordions>
+  <Accordion title="The Host does not build">
+    A [composition check](/docs/reference/glossary#composition-check) found a declaration that cannot work, and its message names the declaration. Every check is listed in [Host checks](/docs/reference/composition-checks).
+  </Accordion>
+  <Accordion title="The Host does not start">
+    A [startup check](/docs/reference/glossary#startup-check) or an options validation failed, naming the setting or the call. A generated Host without its bearer settings is the first one most people meet: [Your first Host](/docs/get-started/first-host) writes them.
+  </Accordion>
+  <Accordion title="A call answers Tenant.Required">
+    Catalog is tenant-scoped in the monolith and the modular monolith, and the caller's token names no tenant. See [Multi-tenancy](/docs/capabilities/multi-tenancy).
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Prerequisites" href="/docs/get-started/prerequisites" description="What to install before the first Host." />
+  <Card title="Choose a template" href="/docs/templates" description="The monolith, the modular monolith and the service." />
+  <Card title="Capabilities" href="/docs/capabilities" description="Every Capability, its packages and its reference." />
+</Cards>

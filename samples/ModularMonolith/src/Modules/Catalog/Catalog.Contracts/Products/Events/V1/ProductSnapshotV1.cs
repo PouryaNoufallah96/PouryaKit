@@ -1,5 +1,6 @@
 namespace Catalog.Contracts.Products.Events.V1;
 
+#region product-snapshot-v1
 /// <summary>
 /// The current state of one product, which supersedes every earlier Snapshot of it: <paramref name="Version"/> grows
 /// with every change Catalog commits, so apply it only when it is newer than the one applied. When
@@ -8,3 +9,4 @@ namespace Catalog.Contracts.Products.Events.V1;
 /// not an edit of this one.
 /// </summary>
 public sealed record ProductSnapshotV1(Guid ProductId, string Name, bool IsRemoved, long Version);
+#endregion

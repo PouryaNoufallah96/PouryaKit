@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>The Host's file storage on Azure Blob Storage, from validated options, behind the one file storage contract.</PackageDescription>
+    <PackageTags>azure;azure-blob-storage;storage</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" />
     <PackageReference Include="Microsoft.Extensions.Options" />

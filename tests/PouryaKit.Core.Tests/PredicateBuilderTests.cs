@@ -16,10 +16,12 @@ public class PredicateBuilderTests
     [InlineData(12, true, true)]
     public void AndAlso_is_true_when_both_are_and_evaluates_the_right_predicate_only_when_the_left_is_true(int value, bool left, bool right)
     {
+        #region and-also-predicates
         var composed = AboveTen().AndAlso(Even()).Compile();
 
         Assert.Equal(left && right, composed(value));
         Assert.Equal(left ? 1 : 0, _rightEvaluations);
+        #endregion
     }
 
     [Theory]

@@ -11,6 +11,7 @@ using PouryaKit.Persistence.Postgres;
 
 namespace Billing;
 
+#region billing-composition-root
 /// <summary>The Billing Module's Composition Root.</summary>
 public sealed class BillingModule : IModuleDefinition
 {
@@ -23,3 +24,4 @@ public sealed class BillingModule : IModuleDefinition
         module.AddPouryaKitDelayedCommand<ExpireQuoteCommand>("billing.expire-quote");
     }
 }
+#endregion

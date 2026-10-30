@@ -1,0 +1,69 @@
+---
+title: Stream or EF Core aggregate
+description: Whether a Module stores its aggregates' current state with EF Core or the events they appended, as Streams on Marten.
+---
+
+## What it decides
+
+The write model of a [Module](/docs/reference/glossary#module). An EF Core aggregate stores its current state in tables the Module maps. A [Stream](/docs/reference/glossary#stream) is an aggregate whose stored state is the events it appended, kept by Marten over PostgreSQL; the [Proving Sample](/docs/reference/glossary#proving-sample)'s Ledger keeps its accounts this way, beside the EF Core Modules Catalog, Inventory and Billing.
+
+<Callout type="warn" title="One write model per Module">
+  Each write model has its own [Unit of Work](/docs/reference/glossary#unit-of-work) and commits alone: a Stream Module's [Operations](/docs/reference/glossary#operation) commit through the Marten Unit of Work, an EF Core Module's through the EF Core one, and no Operation commits through both. Both kinds of Module share one [Host](/docs/reference/glossary#host) and its one message store.
+</Callout>
+
+## When to choose each
+
+| | EF Core aggregate | Stream |
+| --- | --- | --- |
+| Stored state | The aggregate's current state | The events it appended, folded into its state when it is loaded |
+| Fits | Current-state records read in many shapes, with Dapper or a repository | A history that is the record itself, such as a ledger's entries |
+| Migrations | One per model change, from `dotnet-ef` | None: Marten creates the tables |
+| What it publishes | [Integration Events](/docs/reference/glossary#integration-event), and [Snapshots](/docs/reference/glossary#snapshot) of its aggregates | Integration Events only: a Stream publishes no Snapshot |
+| What it leaves out | | A few features of the EF Core Unit of Work: [Limits](/docs/capabilities/stream#limits) |
+
+## Write one
+
+<Steps>
+<Step>
+
+### Register the Module's write model
+
+An EF Core Module calls `UsePouryaKitPostgres` in its [Composition Root](/docs/reference/glossary#composition-root); a Stream Module calls `AddPouryaKitStreams` with its schema, and the Host registers its one Marten store with `UsePouryaKitMarten`, after `UsePouryaKitWolverine` when it also has EF Core Modules. [Registering](/docs/capabilities/stream#registering) shows Ledger's.
+
+</Step>
+<Step>
+
+### Write the aggregate
+
+[The repository](/docs/capabilities/persistence#the-repository) for an EF Core aggregate, or [Writing a Stream](/docs/capabilities/stream#writing-a-stream).
+
+</Step>
+</Steps>
+
+## What the Kit guarantees
+
+| | Stated in | Proven by |
+| --- | --- | --- |
+| An EF Core Operation commits once, with its [Outbox](/docs/reference/glossary#outbox) | [Persistence guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) | `UnitOfWorkTests` |
+| A Stream's events, envelopes and [Receipts](/docs/reference/glossary#receipt) commit in one transaction | [Stream guarantees](/docs/capabilities/stream#what-the-kit-guarantees) | `StreamTests` |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="A Snapshot declared for a Stream">
+    It would never be sent, so the Host fails when it is built, naming the type and the Module.
+  </Accordion>
+  <Accordion title="UsePouryaKitMarten before UsePouryaKitWolverine">
+    In a Host that also has EF Core Modules, the EF Core call throws, naming the order: Wolverine is registered once, and the Marten store joins the message store the EF Core package declared.
+  </Accordion>
+  <Accordion title="A Stream Module beside a Saga">
+    They cannot share one Host yet: a Host with `UsePouryaKitMarten` and `AddPouryaKitSaga` is refused when it is built.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Streams" href="/docs/capabilities/stream" description="Registering, writing, reading and testing a Stream Module." />
+  <Card title="Persistence and the Unit of Work" href="/docs/capabilities/persistence" description="The EF Core write model and its commit." />
+</Cards>

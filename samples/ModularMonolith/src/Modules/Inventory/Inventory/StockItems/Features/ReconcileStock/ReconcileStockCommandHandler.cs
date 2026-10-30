@@ -5,6 +5,7 @@ using PouryaKit.Persistence;
 
 namespace Inventory.StockItems.Features.ReconcileStock;
 
+#region reconcile-stock-handler
 // Records, at each occurrence, how many stock items Inventory keeps, and on whose authority: the system Actor the
 // Composition Root declared, since no person asked for it. Only the effect: the Kit records the occurrence's Receipt,
 // stores the next occurrence and commits, so an occurrence delivered twice records one reconciliation.
@@ -25,3 +26,4 @@ internal sealed class ReconcileStockCommandHandler(IUnitOfWorkConnection unitOfW
         return Result.Success();
     }
 }
+#endregion

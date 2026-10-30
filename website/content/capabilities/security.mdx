@@ -1,0 +1,76 @@
+---
+description: "Declare the permission a command or query requires, answer which permissions an Actor holds, and optionally hash passwords and verify JWT bearer tokens."
+---
+
+`PouryaKit.Security` checks one kind of rule: "this [Actor](/docs/reference/glossary#actor) holds this permission". You put `[RequiresPermission]` on a command or query, and the pipeline's authorization step asks your application's `IActorPermissions` before validation and the handler run. An Actor without it gets `Permission.Denied`, and nothing commits ([Denial](#denial)). A trusted continuation, such as a delivery the Kit restored or a question one authorized Operation asks another Module, is not asked again.
+
+The same package hashes and verifies stored passwords with PBKDF2, and `PouryaKit.Security.JwtBearer` sets up the Host's JWT bearer authentication so each verified token names the Actor and, when the Host names a tenant claim and the token carries it, the [tenant](/docs/reference/glossary#tenant). The Kit issues no token and has no role system, policy framework or identity store.
+
+<Callout type="warn" title="Nothing holds a permission by default">
+  The Kit reads no claim itself: your `IActorPermissions` decides for every Actor, a named system Actor included. Match the claims to the context's Actor, since code inside a request may run an Operation as someone else.
+</Callout>
+
+## When to use it
+
+- A command or query may run only for Actors that hold a permission.
+- You supply the permissions an Actor holds, from claims or your own store.
+- You decide what a continuation or a system Actor may run.
+- Your application stores its own passwords and needs to hash, verify and upgrade them.
+- Callers present bearer tokens from an identity provider, and the Host must turn their verified claims into the Actor and tenant.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Declare the permission on the record
+
+Put `[RequiresPermission(name)]` on the command or query, one permission each, named `<module>.<resource>.<action>` and kept in a constant on the record so tests and grants name it without repeating the string.
+
+</Step>
+<Step>
+
+### Register the check in the Composition Root
+
+`AddPouryaKitPermissions()` registers the check for every command and query of the Module that declares one. A declared permission whose check no Composition Root registered fails the Host when it is built, so it never runs unchecked.
+
+</Step>
+<Step>
+
+### Say which permissions an Actor holds
+
+The Host implements `IActorPermissions` and registers it. It receives the Operation Context, so its answer can depend on the Actor and the tenant.
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+Catalog's bulk removal declares the permission it requires and keeps its name in a constant:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RemoveProducts/RemoveProductsCommand.cs" region="remove-products-command" />
+
+The Host answers from the HTTP caller's claims, for that caller's own Actor only:
+
+<Snippet file="samples/ModularMonolith/src/ModularMonolith.Host/CallerPermissions.cs" region="caller-permissions" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| Where the attribute goes, which assemblies the check covers, and the build failure when it is missing | [Declaring a permission](#declaring-a-permission) |
+| What `IActorPermissions` is asked, and for whom | [The Actor's permissions](#the-actors-permissions) |
+| The Error a denied Actor gets, and what a denied nested command does | [Denial](#denial) |
+| Which continuations are trusted, and what still runs for them | [Continuations](#continuations) |
+| The stored hash's format and how an upgrade is detected | [Password hashing](#password-hashing) |
+| What the bearer scheme validates, and which claims become the Actor and tenant | [JWT bearer authentication](#jwt-bearer-authentication) |
+
+## Next steps
+
+<Cards>
+  <Card title="Secure an Operation" href="/docs/guides/secure-an-operation" description="A permission from its declaration to its test over HTTP." />
+  <Card title="Operation Context, Actor and tenant" href="/docs/concepts/operation-context" description="Who an Operation runs for, and when it is a trusted continuation." />
+  <Card title="Web" href="/docs/capabilities/web" description="Authenticated access by default, and how the caller becomes the Actor." />
+</Cards>

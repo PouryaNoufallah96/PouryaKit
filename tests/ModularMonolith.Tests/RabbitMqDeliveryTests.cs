@@ -430,6 +430,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker)
         Assert.Equal((1L, 1L), (await ReceiptsAsync(environment, StockItems), await StockItemsAsync(environment, product)));
     }
 
+    #region two-service-names-receive-every-message
     [Fact]
     public async Task Two_hosts_with_different_service_names_each_receive_every_message()
     {
@@ -455,6 +456,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker)
             );
         }
     }
+    #endregion
 
     [Fact]
     public async Task Each_local_copy_carries_the_broker_envelopes_identity_and_operation_context_under_an_id_of_its_own()

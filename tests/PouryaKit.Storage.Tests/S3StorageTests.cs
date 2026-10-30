@@ -14,6 +14,7 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
 {
     private static readonly byte[] Report = Encoding.UTF8.GetBytes("%PDF-1.7 quarterly report");
 
+    #region upload-then-download
     [Fact]
     public async Task An_uploaded_file_downloads_with_its_content_and_content_type()
     {
@@ -26,6 +27,7 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
         Assert.Equal("application/pdf", file.ContentType);
         Assert.Equal(Report, await ReadAll(file.Content));
     }
+    #endregion
 
     [Fact]
     public async Task An_upload_stores_the_stream_from_its_current_position_and_leaves_it_open()

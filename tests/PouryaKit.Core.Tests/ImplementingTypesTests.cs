@@ -7,6 +7,7 @@ public class ImplementingTypesTests
 {
     private static readonly System.Reflection.Assembly Fixtures = typeof(IHandler<>).Assembly;
 
+    #region implementing-types-of
     [Fact]
     public void An_open_generic_definition_finds_each_concrete_class_that_closes_it_directly_or_through_a_base_class()
     {
@@ -15,6 +16,7 @@ public class ImplementingTypesTests
         Assert.Equal([typeof(DerivedHandler), typeof(NoteHandler)], ImplementingTypes.Of(typeof(IHandler<>), Fixtures, Fixtures));
         Assert.Equal([typeof(Ledger)], ImplementingTypes.Of(typeof(Store<>), Fixtures));
     }
+    #endregion
 
     [Fact]
     public void A_non_generic_or_closed_contract_finds_each_concrete_class_assignable_to_it()

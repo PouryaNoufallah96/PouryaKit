@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>The repository and Unit of Work contracts Feature code is written against, with their Errors, so a handler never saves or commits.</PackageDescription>
+    <PackageTags>repository;unit-of-work;specification</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Ardalis.Specification" />
   </ItemGroup>

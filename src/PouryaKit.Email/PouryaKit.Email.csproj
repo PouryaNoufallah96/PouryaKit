@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>One contract that sends a plain-text mail and returns a Result, so a Module never names a mail provider.</PackageDescription>
+    <PackageTags>email;mail</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\PouryaKit.Domain\PouryaKit.Domain.csproj" />
   </ItemGroup>

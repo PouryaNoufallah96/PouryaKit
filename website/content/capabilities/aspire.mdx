@@ -1,0 +1,71 @@
+---
+description: "The containers a Kit Host runs on locally, for an Aspire AppHost: PostgreSQL, Redis, RabbitMQ and Ollama on pinned images with named volumes."
+---
+
+`PouryaKit.Aspire` is for an Aspire AppHost and nothing else. It adds the containers a Kit Host runs on locally: PostgreSQL always, Redis for a Host that caches through Redis, RabbitMQ for a Host that sends or receives over RabbitMQ, and Ollama for a Host whose agent runs locally. Each is pinned to the image tag the Kit's own tests run, with its data in a named volume that outlives a run, so your local infrastructure is the one the Kit's tests prove.
+
+The AppHost gives each [Host](/docs/reference/glossary#host) the resources its composition uses, under the connection names that composition reads, and passes the bearer settings a Host needs to start. No Aspire package reaches any other Kit package's closure, so keep this one out of your Hosts' own projects.
+
+<Callout type="warn" title="The AppHost applies no migration">
+  The databases it creates hold no table of an EF Core Module until you apply each Module's migrations to them, and no Host applies one at start. Until then, an Operation that reads or writes those tables fails.
+</Callout>
+
+## When to use it
+
+- You run the application's Hosts and their infrastructure locally with Aspire.
+- You give each Host the database, cache and broker its composition uses, under its connection names.
+- You pass a Host's bearer settings, or run the Reverse proxy in front of the Hosts.
+- You serve a Host's gRPC through Aspire's endpoint proxy on an endpoint of its own.
+- You run an agent against a local model, or test the AppHost headless.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Add the resources the compositions use
+
+`AddPouryaKitPostgres`, `AddPouryaKitRedis`, `AddPouryaKitRabbitMq` and `AddPouryaKitOllama` each add one container on its pinned image with a named volume. Add Redis and RabbitMQ only for a Host whose composition uses them: an AppHost cannot see a Host's registrations.
+
+</Step>
+<Step>
+
+### Give each Host its own database and connection names
+
+`AddDatabase` creates a database per Host on the one server, and `WithReference` with a connection name sets the connection string a Host's composition reads under that name.
+
+</Step>
+<Step>
+
+### Wait for what each Host needs
+
+`WaitFor` holds a Host until its database and broker are ready, and `WithHttpHealthCheck` waits on a Host that maps the service defaults' liveness path ([The AppHost](#the-apphost)).
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+The sample's AppHost: one PostgreSQL server with a database per Host, Redis and RabbitMQ, and `Inventory.Host` given its database under the connection name its composition reads, the broker, its bearer settings and its liveness check.
+
+<Snippet file="samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs" region="apphost-resources" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| How the AppHost is composed: connection names, endpoints, gRPC and bearer settings | [The AppHost](#the-apphost) |
+| How a local model is pulled and served | [A local agent](#a-local-agent) |
+| What each registration adds, and nothing more | [What each registration adds](#what-each-registration-adds) |
+| How to run it, and how the Kit tests it headless | [Running it](#running-it), [Testing](#testing) |
+| What the sample's AppHost leaves out, and why | [Limits](#limits) |
+
+## Next steps
+
+<Cards>
+  <Card title="Reverse proxy" href="/docs/capabilities/reverse-proxy" description="The proxy the AppHost runs in front of the Hosts." />
+  <Card title="Host recipes" href="/docs/capabilities/host-recipes" description="The service defaults whose liveness path the AppHost waits on." />
+  <Card title="The Proving Sample" href="/docs/proving-sample" description="The Hosts and Modules this AppHost runs." />
+</Cards>

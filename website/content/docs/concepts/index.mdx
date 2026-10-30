@@ -1,0 +1,45 @@
+---
+title: Concepts
+description: The ideas PouryaKit is built on, one page each, in the order to learn them.
+---
+
+PouryaKit gives every [Feature](/docs/reference/glossary#feature) the same shape: a command or query, its validator and handler, its data access and its endpoint. The [Kit](/docs/reference/glossary#kit) runs the rest. These pages explain the ideas behind that shape. Each one says what the idea is, the one thing to keep in mind, when it matters to you, and where the Kit's skill states its exact rules.
+
+Read them in order: each page builds on the ones before it. The words in them are the Kit's own, and each links to its entry in the [glossary](/docs/reference/glossary) the first time it appears.
+
+<Callout title="Where the rules live">
+  These pages explain and link. The guarantees, options and messages are stated once, in the [Capability](/docs/reference/glossary#capability) pages, which render the Kit's skill. When a page here and a Capability page seem to differ, the Capability page is the rule.
+</Callout>
+
+## The core
+
+<Cards>
+  <Card title="Host and Module" href="/docs/concepts/host-and-module" description="The application you deploy, and the business boundaries inside it." />
+  <Card title="Operation, Result and Error" href="/docs/concepts/operation-result-error" description="One command or query from entry to outcome, and how it says it failed." />
+  <Card title="Operation Context, Actor and tenant" href="/docs/concepts/operation-context" description="Who caused an Operation, for which tenant, and in which chain of work." />
+  <Card title="Unit of Work" href="/docs/concepts/unit-of-work" description="The one owner of every commit, and why your handler never saves." />
+</Cards>
+
+## Reactions and messages
+
+<Cards>
+  <Card title="Domain Event" href="/docs/concepts/domain-event" description="A fact inside a Module, handled in the same commit." />
+  <Card title="Outbox and Notifications" href="/docs/concepts/outbox-and-notifications" description="Reactions that run after the commit, outside the Module's own data." />
+  <Card title="Integration Events" href="/docs/concepts/integration-events" description="Facts one Module publishes for the others." />
+  <Card title="Snapshots and Tombstones" href="/docs/concepts/snapshots" description="The current state of an aggregate, for a Module that keeps a copy." />
+</Cards>
+
+## The Host at work
+
+<Cards>
+  <Card title="Composition and startup checks" href="/docs/concepts/composition-and-startup-checks" description="How a Host refuses its own mistakes before it serves." />
+  <Card title="Delayed and recurring commands" href="/docs/concepts/delayed-and-recurring-commands" description="Commands that run later, or on a cadence." />
+</Cards>
+
+## Further write models and reactions
+
+<Cards>
+  <Card title="Stream" href="/docs/concepts/stream" description="An aggregate stored as the events it appended." />
+  <Card title="Saga" href="/docs/concepts/saga" description="A long-running reaction across Integration Events." />
+  <Card title="Gateway tools and MCP tools" href="/docs/concepts/gateway-and-mcp-tools" description="What a model may call, and on whose authority." />
+</Cards>

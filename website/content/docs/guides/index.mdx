@@ -1,0 +1,41 @@
+---
+title: Guides
+description: Everyday tasks with PouryaKit, each one step by step, with the Proving Sample's real code.
+---
+
+Each guide is one task, in the order you do it. The code in them is the [Proving Sample](/docs/reference/glossary#proving-sample)'s, or the [Kit](/docs/reference/glossary#kit)'s own tests', quoted from the source when this site is built. Every command is the skill's.
+
+The guides assume a solution generated from a template: see [Get started](/docs/get-started/first-host). For the idea behind a step, follow the link to its [concept](/docs/concepts); for every rule and option, to its [Capability](/docs/reference/glossary#capability)'s page under [Capabilities](/docs/capabilities).
+
+## Features
+
+<Cards>
+  <Card title="Create a command" href="/docs/guides/create-a-command" description="A command, its validator and its handler." />
+  <Card title="Answer a paged query" href="/docs/guides/paged-query" description="One Page of a sorted, filtered list." />
+  <Card title="Validate a command or query" href="/docs/guides/validate" description="Check input before the handler runs." />
+  <Card title="Add an endpoint" href="/docs/guides/add-an-endpoint" description="Serve a Feature over HTTP." />
+  <Card title="Make a command idempotent" href="/docs/guides/request-idempotency" description="Replay a client's repeated request instead of running it twice." />
+</Cards>
+
+## Between Modules and over time
+
+<Cards>
+  <Card title="Publish and subscribe to an Integration Event" href="/docs/guides/publish-and-subscribe" description="Tell other Modules what happened." />
+  <Card title="Schedule a delayed or recurring command" href="/docs/guides/schedule-commands" description="Run a command later, or on a cadence." />
+</Cards>
+
+## Who may do what
+
+<Cards>
+  <Card title="Secure an Operation" href="/docs/guides/secure-an-operation" description="Require a permission for a command or query." />
+  <Card title="Make a Module tenant-scoped" href="/docs/guides/tenant-scoped-module" description="Hold every Operation and aggregate to its tenant." />
+</Cards>
+
+## Data, tests and release
+
+<Cards>
+  <Card title="Add a migration" href="/docs/guides/add-a-migration" description="Change a Module's schema and apply it." />
+  <Card title="Test a Feature" href="/docs/guides/test-a-feature" description="Run Operations against the hosted application." />
+  <Card title="Compose the service defaults" href="/docs/guides/host-recipes" description="Telemetry, health, resilience and Serilog for a Host." />
+  <Card title="Prepare a release" href="/docs/guides/prepare-a-release" description="Pre-generate Wolverine's code and publish the Host." />
+</Cards>

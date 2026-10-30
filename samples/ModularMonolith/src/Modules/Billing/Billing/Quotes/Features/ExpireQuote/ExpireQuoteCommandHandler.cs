@@ -7,6 +7,7 @@ using PouryaKit.Persistence;
 
 namespace Billing.Quotes.Features.ExpireQuote;
 
+#region expire-quote-handler
 // Runs when the expiry OpenQuote scheduled is due, as a continuation of the Operation that opened the quote.
 internal sealed class ExpireQuoteCommandHandler(IRepository<Quote, QuoteId> quotes) : CommandHandler<ExpireQuoteCommand>
 {
@@ -16,3 +17,4 @@ internal sealed class ExpireQuoteCommandHandler(IRepository<Quote, QuoteId> quot
         return quote is null ? QuoteErrors.NotFound : quote.Expire();
     }
 }
+#endregion

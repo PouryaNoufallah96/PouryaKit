@@ -9,6 +9,7 @@ using PouryaKit.Web;
 
 namespace ModularMonolith.Tests.Stub;
 
+#region greet-localized-query
 // The Stub Module's localized messages: StubMessages.resx in English, StubMessages.fa.resx in Persian, beside this file.
 internal sealed class StubMessages;
 
@@ -19,6 +20,7 @@ internal sealed class GreetQueryHandler(IStringLocalizer<StubMessages> messages)
     public override Task<Result<string>> Handle(GreetQuery query, CancellationToken cancellationToken) =>
         Task.FromResult<Result<string>>(messages["Greeting"].Value);
 }
+#endregion
 
 // The same greeting, cached: one key for every caller's culture, so only the Kit's key tells the cultures apart.
 internal sealed record GreetCachedQuery : Query<string>, ICacheableQuery

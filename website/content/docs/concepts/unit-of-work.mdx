@@ -1,0 +1,61 @@
+---
+title: Unit of Work
+description: The one owner of an Operation's outcome, which commits everything it changed together or discards it together.
+---
+
+## What it is
+
+The [Unit of Work](/docs/reference/glossary#unit-of-work) is the single owner of an [Operation](/docs/reference/glossary#operation)'s outcome: everything the Operation changed is kept together or discarded together. Each command runs in one transaction that the Unit of Work begins and owns. Your handler changes aggregates through a repository and returns its [Result](/docs/reference/glossary#result); the Unit of Work does everything after that.
+
+<Callout type="warn" title="Feature code never saves, commits or touches the Outbox">
+  No `SaveChanges`, no transaction, no [Outbox](/docs/reference/glossary#outbox) write in a handler of any kind. The Unit of Work does each of them once, for the whole Operation, and structure tests reject a [Module](/docs/reference/glossary#module) whose code does any of it.
+</Callout>
+
+## When it matters
+
+Every command. You never call the Unit of Work yourself: the Module's persistence package registers it when the [Composition Root](/docs/reference/glossary#composition-root) declares the Module's data, for example with `UsePouryaKitPostgres`, and the [Kit](/docs/reference/glossary#kit) runs it around each command. A query starts none of its own.
+
+## How it works
+
+After the outermost handler returns a success, the Unit of Work finishes the Operation in a fixed order. It runs the [Domain Event Handlers](/docs/reference/glossary#domain-event-handler) of the [Domain Events](/docs/reference/glossary#domain-event) the Operation's aggregates raised, prepares what it saves, builds the [Snapshots](/docs/reference/glossary#snapshot) other Modules subscribe to and writes the Outbox, then saves and commits once. [The Unit of Work](/docs/capabilities/persistence#the-unit-of-work) lists each step, and [Outbox and Notifications](/docs/concepts/outbox-and-notifications) explains what happens to what it wrote.
+
+A failed Result anywhere, a nested command's or a Domain Event Handler's included, rolls all of it back. This handler changes a product and saves nothing; the Unit of Work commits the change:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandHandler.cs" region="rename-product-handler" />
+
+An aggregate's version guards it against a concurrent change. When another Operation committed a change to the same aggregate first, the save is refused and the Operation fails with a conflict [Error](/docs/reference/glossary#error). Nothing retries it: the caller sends the command again through the [Gateway](/docs/reference/glossary#gateway), which runs a new Operation on the current state. See [Versions and conflicts](/docs/capabilities/persistence#versions-and-conflicts).
+
+## What the Kit guarantees
+
+The Kit states each guarantee and names the test that proves it in [What the Kit guarantees](/docs/capabilities/persistence#what-the-kit-guarantees):
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| One commit or nothing | [What the Kit guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) |
+| Saved with no save in [Feature](/docs/reference/glossary#feature) code | [What the Kit guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) |
+| The Outbox in the commit, the send after it | [What the Kit guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) |
+| One version step per Operation | [Versions and conflicts](/docs/capabilities/persistence#versions-and-conflicts) |
+| A refused save is an Error | [Unique values](/docs/capabilities/persistence#unique-values) |
+| No write without a Unit of Work | [The repository](/docs/capabilities/persistence#the-repository) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="UnitOfWork.ConcurrencyConflict">
+    Another Operation committed a change to the same aggregate first. Everything rolls back, and over HTTP the conflict answers a problem response ([Problem responses](/docs/capabilities/web#problem-responses)). Send the command again, or report the conflict.
+  </Accordion>
+  <Accordion title="A unique index the Module mapped">
+    A save that violates a unique index the Composition Root mapped fails with the Error the Module mapped to it. An unmapped constraint stays an exception. See [Unique values](/docs/capabilities/persistence#unique-values).
+  </Accordion>
+  <Accordion title="A repository write with no Unit of Work">
+    A write where no command runs, such as in an endpoint or a hosted service, throws an `InvalidOperationException` that says no commit would save the change. Send a command to write. [The repository](/docs/capabilities/persistence#the-repository) quotes the message.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Domain Event" href="/docs/concepts/domain-event" description="A reaction that commits with the change that caused it." />
+  <Card title="Persistence and the Unit of Work" href="/docs/capabilities/persistence" description="Mappings, repositories, audit, soft delete and conflicts." />
+  <Card title="Add a migration" href="/docs/guides/add-a-migration" description="Change a Module's schema." />
+</Cards>

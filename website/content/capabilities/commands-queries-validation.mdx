@@ -1,0 +1,84 @@
+---
+description: "Write each Feature as a command or a query with one handler and an optional validator, and let the Kit run every one through the same fixed pipeline."
+---
+
+A [Feature](/docs/reference/glossary#feature) is one command or query, with its handler and, when its input needs checking, its validator. A command changes state and a query only reads. You declare each as a sealed record, give it exactly one handler, and send it. The Kit runs it as an [Operation](/docs/reference/glossary#operation) through one fixed pipeline: logging, the optional authorization hook, validation, then the handler. A command's handler runs inside the [Unit of Work](/docs/reference/glossary#unit-of-work), which commits once for the whole Operation.
+
+`PouryaKit.Cqrs` holds the commands, queries, handlers and the dispatcher; `PouryaKit.Validation` puts FluentValidation's validators into the pipeline.
+
+<Callout type="warn" title="A handler returns a Result and never saves">
+  Return a [Result](/docs/reference/glossary#result): a value, or an [Error](/docs/reference/glossary#error) for an expected business failure. Leave saving, committing, transactions and the [Outbox](/docs/reference/glossary#outbox) to the Unit of Work. A structure test rejects a Module whose code does any of it.
+</Callout>
+
+## When to use it
+
+- You are writing a Feature: a command that changes an aggregate, or a query that answers a read.
+- A request's input needs checking before the handler runs.
+- A client may send a command again after a response it never received, and should get the first answer.
+- A query returns a list that a caller sorts, filters and pages.
+- One command or query needs a rule of its own about who may run it.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Declare the record
+
+A command derives from `Command<TResponse>`, or `Command` when it returns no value, and a query from `Query<TResponse>`. Name it after its intent with the `Command` or `Query` suffix, and keep it `internal`, in the Feature's folder beside its handler.
+
+</Step>
+<Step>
+
+### Write its one handler
+
+The handler derives from `CommandHandler<,>`, `CommandHandler<>` or `QueryHandler<,>` and returns a Result. Inside it, send a nested command with an injected `IDispatcher`: it joins the outer Unit of Work, so the Operation still commits once.
+
+</Step>
+<Step>
+
+### Check the input shape
+
+Write one validator beside the record. The pipeline runs every validator before the handler and returns all their failures as one failed Result, so the handler only sees valid input. A rule that depends on stored state belongs in the aggregate instead.
+
+</Step>
+<Step>
+
+### Register the Module's Features
+
+`AddPouryaKitCqrs()` and `AddPouryaKitValidation()` on the Module's builder find the handlers and validators of the Module's assembly. Anything outside the Module then sends the command through the Module's [Gateway](/docs/reference/glossary#gateway).
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+Catalog's `CreateProduct` Feature declares its command, opted in to request idempotency, and checks its input before any handler runs:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommand.cs" region="create-product-command" />
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommandValidator.cs" region="create-product-validator" />
+
+`RenameProduct`'s handler loads the product, asks it to rename itself and returns what the aggregate answered. There is no save: the Unit of Work commits the change after the handler returns.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandHandler.cs" region="rename-product-handler" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| The pipeline's steps, and what a failed nested command does to the Operation | [The pipeline](#the-pipeline) |
+| What a repeated request replays, and what it never compares | [Request idempotency](#request-idempotency) |
+| Which code may only read, and what it gets when it tries to write | [Code that only reads](#code-that-only-reads) |
+| How a validator's failures become Errors | [Validation](#validation) |
+| What a caller may sort and filter by, and the Errors a bad page request gets | [Paging](#paging), [Error codes](/docs/reference/error-codes) |
+
+## Next steps
+
+<Cards>
+  <Card title="Create a command" href="/docs/guides/create-a-command" description="A Feature from its record to its endpoint, step by step." />
+  <Card title="Modules" href="/docs/capabilities/modules" description="The Composition Root that registers the Features, and the Gateway that runs them." />
+  <Card title="Persistence and the Unit of Work" href="/docs/capabilities/persistence" description="The repository a handler uses and the commit it never makes itself." />
+</Cards>

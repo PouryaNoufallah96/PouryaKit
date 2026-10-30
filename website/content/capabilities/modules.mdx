@@ -1,0 +1,83 @@
+---
+description: "A Module is a business boundary inside a Host: its Composition Root declares what it needs and offers, and its Gateway is the only way in."
+---
+
+A [Host](/docs/reference/glossary#host) runs one or more [Modules](/docs/reference/glossary#module). Each Module owns its data, its rules and its public [Contracts](/docs/reference/glossary#contracts), and declares all of it in one public class, its [Composition Root](/docs/reference/glossary#composition-root), which implements `IModuleDefinition`. Everything else in the Module stays `internal`.
+
+Anything outside the Module runs one of its Operations through its [Gateway](/docs/reference/glossary#gateway), `IGatewayProcessor<TModule>`, and passes an [Operation Context](/docs/reference/glossary#operation-context) that says which [Actor](/docs/reference/glossary#actor) and [tenant](/docs/reference/glossary#tenant) it runs for. An endpoint, a scheduled job, another Module's question and a test all come in the same way. `PouryaKit.Modularity` holds the Composition Root and the Gateway; `OperationContext` is in `PouryaKit.Cqrs`.
+
+<Callout type="warn" title="There is no anonymous or default Actor">
+  Every Gateway call needs an Operation Context. Create a new one for each Operation that starts work, with `Actor.Person` or a named `Actor.System`, and pass `Continue()` of the running context for work an Operation causes.
+</Callout>
+
+## When to use it
+
+- You are writing a Module's Composition Root, or composing the Host from its Modules.
+- Code outside a Module needs to run one of its commands or queries: an endpoint, a job, a test.
+- One Module needs an answer from another before its Operation can go on.
+- A Host fails when it is built or started, and you want to know which check stopped it.
+- Your application has a single Module and you want to leave Modularity out.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Declare the Module
+
+Write one public sealed class that implements `IModuleDefinition`. Its `Configure` method declares the Module's data, Features, handlers, publications, subscriptions and endpoints on the `ModuleBuilder` it receives. It never names its own Module or assembly: the Kit finds the Features in the assembly of the definition.
+
+</Step>
+<Step>
+
+### Add it to the Host
+
+`builder.AddPouryaKitModules(...)` runs each Module's Composition Root once and registers its Gateway. All Modules share the Host's one container; each keeps its own Unit of Work, schema and stores.
+
+</Step>
+<Step>
+
+### Run Operations through the Gateway
+
+`SendAsync` runs a command and `QueryAsync` a query, each as one Operation in a new scope that is disposed when the call returns. A command belongs to the Module that registers its handler, so another Module's Gateway refuses it.
+
+</Step>
+<Step>
+
+### Let the Host check its composition
+
+A declaration refuses its own mistakes while the Host is composed. Then the Host's checks run when it is built, when it starts and once Wolverine has started. Each failure names the problem and its fix, before the Host serves anything.
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+Billing's Composition Root declares its database schema, its Features, the Integration Events it subscribes to and a delayed command:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Billing/Billing/BillingModule.cs" region="billing-composition-root" />
+
+Inventory's `GetStockItem` endpoint runs its query through Inventory's Gateway with the Operation Context the HTTP boundary built from the authenticated caller:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/GetStockItem/GetStockItemEndpoint.cs" region="get-stock-item-endpoint" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| What a Composition Root declares, and how a Module's own settings are bound | [The Composition Root](#the-composition-root) |
+| What each Gateway call opens and disposes | [The Gateway](#the-gateway) |
+| How a context starts, continues and becomes trusted | [The Operation Context](#the-operation-context) |
+| Which Module runs a command, and what another Module's Gateway does with it | [Which Module an Operation belongs to](#which-module-an-operation-belongs-to) |
+| Every check a Host runs, when it runs, and the message it fails with | [The Host's checks](#the-hosts-checks), [Host checks](/docs/reference/composition-checks) |
+| How one Module asks another a question | [Asking another Module a question](#asking-another-module-a-question) |
+
+## Next steps
+
+<Cards>
+  <Card title="Host and Module" href="/docs/concepts/host-and-module" description="The two boundaries every Kit application is built from." />
+  <Card title="Operation Context, Actor and tenant" href="/docs/concepts/operation-context" description="Who an Operation runs for, and how that travels with the work it causes." />
+  <Card title="Web" href="/docs/capabilities/web" description="The endpoints that build the context and call the Gateway for you." />
+</Cards>

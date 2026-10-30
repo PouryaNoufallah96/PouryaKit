@@ -2,6 +2,7 @@ using FluentValidation;
 
 namespace Catalog.Products.Features.RenameProduct;
 
+#region rename-product-validator
 internal sealed class RenameProductCommandValidator : AbstractValidator<RenameProductCommand>
 {
     public RenameProductCommandValidator()
@@ -10,3 +11,4 @@ internal sealed class RenameProductCommandValidator : AbstractValidator<RenamePr
         RuleFor(command => command.Name).NotEmpty().MaximumLength(200);
     }
 }
+#endregion

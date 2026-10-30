@@ -1,0 +1,70 @@
+---
+title: Monolith
+description: pouryakit-monolith, the single-Module start that grows into the modular monolith when a second Module arrives.
+---
+
+## What it is
+
+`pouryakit-monolith` generates one [Host](/docs/reference/glossary#host) with one [Module](/docs/reference/glossary#module)'s data and rules: the [Proving Sample](/docs/reference/glossary#proving-sample)'s Catalog and `Catalog.Contracts`, behind the Kit's HTTP pipeline, beside projects for its [Reverse proxy](/docs/reference/glossary#reverse-proxy) and its service defaults and a smoke test. Its endpoints send through `IDispatcher`, and the Host registers Catalog on its own services with `builder.Services.AddCatalog()`.
+
+<Callout type="warn" title="One Module in all but name">
+  The monolith leaves out `PouryaKit.Modularity`, so the Host holds one [Unit of Work](/docs/reference/glossary#unit-of-work): one Module's data. Its [Operations](/docs/reference/glossary#operation) name no Module, and its declarations belong to the application. A second Module is the modular monolith's composition.
+</Callout>
+
+## When to use it
+
+When the application starts with one business boundary. It is where a project of one Module starts, not a limit on it: the same Catalog code runs in the modular monolith.
+
+## Generate and run it
+
+<Steps>
+<Step>
+
+### Generate it
+
+```bash title="Terminal"
+dotnet new pouryakit-monolith -n Acme.Shop
+```
+
+</Step>
+<Step>
+
+### Run it
+
+[Your first Host](/docs/get-started/first-host) starts PostgreSQL, migrates Catalog, creates a token, runs the Host and calls it.
+
+</Step>
+<Step>
+
+### Grow it when a second Module arrives
+
+Add `PouryaKit.Modularity` and turn Catalog's [Composition Root](/docs/reference/glossary#composition-root) into an `IModuleDefinition`; [Add a Module](/docs/get-started/add-a-module) shows the path.
+
+</Step>
+</Steps>
+
+## What it composes
+
+| | Stated in |
+| --- | --- |
+| Every [Capability](/docs/reference/glossary#capability) its projects reference, and no `PouryaKit.Modularity` | [What each composition composes](/docs/capabilities/templates#what-each-composition-composes) |
+| The same composition and [startup checks](/docs/reference/glossary#startup-check) as a Host of Modules, from `AddPouryaKitCompositionChecks` | [What each composition composes](/docs/capabilities/templates#what-each-composition-composes) |
+| The files that change when Catalog becomes a Module | [Growing the monolith](/docs/capabilities/templates#growing-the-monolith-into-a-modular-monolith) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="A ConfigureContainer of the Host's own">
+    The monolith calls `AddPouryaKitCompositionChecks()` last, so a `ConfigureContainer` added before it keeps the container validation and the checks. Keep that order when you add one.
+  </Accordion>
+  <Accordion title="Tenant.Required">
+    Catalog is tenant-scoped, so it refuses a token that names no tenant: [Multi-tenancy](/docs/capabilities/multi-tenancy).
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Your first Host" href="/docs/get-started/first-host" description="Run the monolith against PostgreSQL." />
+  <Card title="Modular monolith" href="/docs/templates/modular-monolith" description="Several Modules in one Host." />
+</Cards>

@@ -1,6 +1,6 @@
 # API versions and OpenAPI
 
-`PouryaKit.Web.OpenApi`, optional: the API versions a Module declares, served on its own route group by URL segment and by header, a deprecated version's configured sunset, one OpenAPI document per supported version with each operation's security requirement, and the Scalar API reference over those documents. Namespace `PouryaKit.Web.OpenApi`. It references `PouryaKit.Web`, `Asp.Versioning.Http`, `Asp.Versioning.OpenApi`, `Microsoft.AspNetCore.OpenApi` and `Scalar.AspNetCore`. A Host that does not register it, and a Module that declares no version, keep the unversioned paths of [web.md](web.md); `PouryaKit.Web` references none of this stack.
+`PouryaKit.Web.OpenApi`, optional: the API versions a Module declares, served on its own route group by URL segment and by header, a deprecated version's configured sunset, one OpenAPI document per supported version with each operation's security requirement, and the Scalar API reference over those documents. Namespace `PouryaKit.Web.OpenApi`. It references `PouryaKit.Web`, `Asp.Versioning.Http`, `Asp.Versioning.OpenApi`, `Microsoft.AspNetCore.OpenApi` and `Scalar.AspNetCore`. A Module that declares no version keeps the unversioned paths of [web.md](web.md), and one that declares versions needs the Host to register it ([Declaring a Module's versions](#declaring-a-modules-versions)); `PouryaKit.Web` references none of this stack.
 
 - [Declaring a Module's versions](#declaring-a-modules-versions)
 - [The Host](#the-host)

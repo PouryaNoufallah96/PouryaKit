@@ -1,0 +1,68 @@
+---
+description: "Send a plain-text mail from a Notification Handler through one contract, on the Host's MailKit sender configured once from validated options."
+---
+
+`PouryaKit.Email` gives a Module one contract, `IEmailSender`, that sends a plain-text mail to one recipient and returns a [Result](/docs/reference/glossary#result). `PouryaKit.Email.MailKit` is the one provider: the Host's sender on MailKit, configured from options the Host checks before it serves. A Module references only the contract and never names MailKit.
+
+Mail goes out from a [Notification Handler](/docs/reference/glossary#notification-handler), after the Operation that raised the Domain Event committed. So a rolled-back Operation sends no mail, and a committed one's mail is attempted by a durable delivery that is retried and, in the end, set aside as a dead letter with its reason.
+
+<Callout type="warn" title="A mail may be sent twice">
+  Mail is not transactional. When the delivery that sent a mail fails afterwards, its retry sends the mail again. Send last in the handler, and give each mail its own Notification Handler, so a failure elsewhere does not repeat it.
+</Callout>
+
+## When to use it
+
+- An Operation's outcome is mailed to someone: a welcome, a receipt, a notice.
+- You configure the Host's SMTP server and sender address.
+- You need to know what a rolled-back Operation or a failed delivery does to a mail.
+- You test mail against a Papercut container.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Register the sender in the Host
+
+`AddPouryaKitMailKit()` registers the Host's one `IEmailSender`, and its options come from configuration. A Host that registers a second sender fails when its container is built, and invalid options stop it when it starts.
+
+</Step>
+<Step>
+
+### Send from a Notification Handler
+
+Inject `IEmailSender` and send an `EmailMessage`. The send succeeds once the mail server accepted the mail; a recipient that is not one mailbox address with a domain fails with `Email.InvalidAddress`, sending nothing.
+
+</Step>
+<Step>
+
+### Let the delivery retry
+
+A server that cannot be reached, refuses the login or refuses the mail throws, and the delivery is retried, then set aside as a dead letter you can replay once the cause is fixed.
+
+</Step>
+</Steps>
+
+## In the Kit's tests
+
+A Notification Handler of the test Module mails a note once the Operation that wrote it committed:
+
+<Snippet file="tests/ModularMonolith.Tests/Stub/StubEmail.cs" region="mail-note-handler" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| The options, their checks, and how each send connects | [Registering](#registering) |
+| What a send returns, and what it throws | [Sending from a Notification Handler](#sending-from-a-notification-handler) |
+| What a rollback and a failed delivery do to a mail | [What the Kit guarantees](#what-the-kit-guarantees) |
+| What the sender does not offer | [Limits](#limits) |
+
+## Next steps
+
+<Cards>
+  <Card title="Messaging" href="/docs/capabilities/messaging" description="The Notification Handlers a mail is sent from, and their retries." />
+  <Card title="Testing" href="/docs/capabilities/testing" description="The fixture that runs the application against its containers." />
+</Cards>

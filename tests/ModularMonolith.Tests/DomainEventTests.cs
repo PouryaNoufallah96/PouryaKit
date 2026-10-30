@@ -10,6 +10,7 @@ namespace ModularMonolith.Tests;
 
 public sealed class DomainEventTests(AppFixture app) : HostTest<AppFixture>(app)
 {
+    #region category-counts-a-new-product-test
     [Fact]
     public async Task A_category_counts_a_new_product_in_the_same_commit_and_a_failed_count_leaves_no_product()
     {
@@ -31,6 +32,7 @@ public sealed class DomainEventTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal([[lamps, 1]], await Fixture.RowsAsync("select id, product_count from catalog.categories"));
         Assert.Equal(["Desk lamp"], (await Fixture.RowsAsync("select name from catalog.products")).Select(row => row[0]));
     }
+    #endregion
 
     [Fact]
     public async Task The_handlers_of_a_domain_event_run_one_at_a_time_in_the_order_of_their_names()

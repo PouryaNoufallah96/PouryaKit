@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>An activity and a duration metric for every command and query through System.Diagnostics, and one trace from an Operation into every delivery it causes.</PackageDescription>
+    <PackageTags>observability;tracing;metrics;diagnostics</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\PouryaKit.Cqrs\PouryaKit.Cqrs.csproj" />
   </ItemGroup>

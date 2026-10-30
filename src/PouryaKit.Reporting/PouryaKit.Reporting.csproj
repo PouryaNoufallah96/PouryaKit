@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>A Module's report laid out once and rendered in memory to a PDF, a CSV file or a spreadsheet, with a logo, an accent colour and an embedded font.</PackageDescription>
+    <PackageTags>reporting;pdf;csv;xlsx</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CsvHelper" />
     <PackageReference Include="DocumentFormat.OpenXml" />

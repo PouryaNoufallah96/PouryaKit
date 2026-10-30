@@ -1,0 +1,88 @@
+---
+title: Answer a paged query
+description: Read one Page of a sorted, filtered list, with the sort keys and filters a caller may use declared beside the query.
+---
+
+## What you build
+
+A query that answers one [Page](/docs/reference/glossary#page) of a list: one bounded slice of the result, with its position and the total count. The query carries a `PageRequest` and answers `Page<T>`; a `PageDeclaration` beside it says what a caller may sort and filter by. This guide follows the [Proving Sample](/docs/reference/glossary#proving-sample)'s `ListProducts` [Feature](/docs/reference/glossary#feature).
+
+<Callout type="warn" title="Nothing a caller sends becomes SQL">
+  Sort keys and filter fields are declared by name, and the read maps each name to your own column or expression. A sort key or filter the declaration does not name is a validation [Error](/docs/reference/glossary#error), and a filter's value only ever reaches the database as a parameter.
+</Callout>
+
+## When to use it
+
+For any read that returns a list. A read of one item is an ordinary query that answers it or the [Business Area](/docs/reference/glossary#business-area)'s not-found Error.
+
+## Steps
+
+<Steps>
+<Step>
+
+### Declare the query and what it may be sorted and filtered by
+
+The declaration names the sort keys, each filter field with its value type and the operators it accepts, and the largest page a caller may ask for. [Paging](/docs/capabilities/commands-queries-validation#paging) says what it accepts and what it defaults to.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQuery.cs" region="list-products-query" />
+
+</Step>
+<Step>
+
+### Check the request against the declaration
+
+`AllowedBy` runs in the pipeline's one validation step, so its Errors come back with any others. Keep the `NotNull`: a null request adds nothing.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryValidator.cs" region="list-products-validator" />
+
+</Step>
+<Step>
+
+### Read the Page
+
+Write the read's SQL once, in a static `PageSql`: the select of the items and the count of the same selection, sharing one selection. Map each sort key to a column, name a unique tie-breaker with `ThenBy`, and test each declared filter's parameter for null, as [Reading a Page](/docs/capabilities/dapper-reads#reading-a-page) describes.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/ListProducts/ListProductsQueryHandler.cs" region="list-products-handler" />
+
+Catalog is tenant-scoped and its products soft-deletable, so the read holds its rows to the [tenant](/docs/reference/glossary#tenant) and leaves removed products out itself: plain SQL reads no query filter. [Reading](/docs/capabilities/dapper-reads#reading) gives the predicates such a read states. To read the Page through EF Core instead, see [Reading a Page](/docs/capabilities/persistence#reading-a-page) and [Dapper or an EF Core Page](/docs/decision-guides/dapper-or-ef-core-page).
+
+</Step>
+<Step>
+
+### Bind it from the query string
+
+The endpoint takes an `HttpPageRequest` parameter and passes its `Request` to the query, so the page, its size, its sort and its filters arrive from the caller's query string. Never read paging parameters by hand. [A Page over HTTP](/docs/capabilities/web#a-page-over-http) shows `ListProducts`'s endpoint, the query string it reads and the body it answers.
+
+</Step>
+</Steps>
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| What a declaration accepts, and the Errors a request outside it gets | [Paging](/docs/capabilities/commands-queries-validation#paging) |
+| How the Dapper read binds filters and counts the total | [Reading a Page](/docs/capabilities/dapper-reads#reading-a-page) |
+| The tenant predicate a tenant-scoped read must state | [Reading](/docs/capabilities/dapper-reads#reading) |
+| How the query string binds, and what a malformed one answers | [A Page over HTTP](/docs/capabilities/web#a-page-over-http) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="Page.SortUnknown, Page.FilterUnknown and the other Page codes">
+    The request names a sort key, field or operator the declaration does not, or asks for more than it allows. The validation step answers each with an Error that names its target. The [Error codes](/docs/reference/error-codes) page lists every code, and [A Page over HTTP](/docs/capabilities/web#a-page-over-http) the response.
+  </Accordion>
+  <Accordion title="A query string that cannot be read">
+    A malformed paging parameter is refused before the query runs, with a problem response whose detail names the rule it broke: [A Page over HTTP](/docs/capabilities/web#a-page-over-http).
+  </Accordion>
+  <Accordion title="InvalidOperationException before any SQL runs">
+    A request reached the read without its validator, or the read's mapping misses part of the declaration. A forgotten validator fails loudly; it never runs a caller's text as SQL.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Validate a command or query" href="/docs/guides/validate" description="Every input check in one step." />
+  <Card title="Dapper reads" href="/docs/capabilities/dapper-reads" description="Plain SQL reads, typed IDs and the tenant." />
+  <Card title="Dapper or an EF Core Page" href="/docs/decision-guides/dapper-or-ef-core-page" description="Choose how a Page is read." />
+</Cards>

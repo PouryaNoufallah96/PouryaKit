@@ -1,0 +1,113 @@
+---
+title: Schedule a delayed or recurring command
+description: Schedule one of a Module's commands to run later from the Operation that causes it, or declare one to run on a cadence as a system Actor.
+---
+
+## What you build
+
+Either kind is an ordinary command with an ordinary handler, declared in its [Module](/docs/reference/glossary#module)'s [Composition Root](/docs/reference/glossary#composition-root) under a durable name:
+
+- a [delayed command](/docs/reference/glossary#delayed-command), which an [Operation](/docs/reference/glossary#operation) schedules and which runs once due, as that Operation's continuation;
+- a [recurring command](/docs/reference/glossary#recurring-command), which runs at every occurrence of a cadence as the system [Actor](/docs/reference/glossary#actor) its declaration names.
+
+[Delayed and recurring commands](/docs/concepts/delayed-and-recurring-commands) explains the two kinds of authority.
+
+<Callout type="warn" title="The name is durable">
+  The commands stored before you rename a delayed or recurring command's declaration, or rename or move its type, are set aside as dead letters and never run: [Delayed commands](/docs/capabilities/messaging#delayed-commands) says why.
+</Callout>
+
+## When to use it
+
+A delayed command when an Operation causes something that must happen later, such as a quote's expiry. A recurring command for work on a cadence that no Operation asks for, such as a nightly reconciliation. A tenant-scoped Module declares no recurring command.
+
+## Steps: a delayed command
+
+<Steps>
+<Step>
+
+### Schedule it from the Operation that causes it
+
+Inject `IDelayedCommands` into a command's handler, a [Domain Event Handler](/docs/reference/glossary#domain-event-handler), a [Notification Handler](/docs/reference/glossary#notification-handler) or an [Integration Event Handler](/docs/reference/glossary#integration-event-handler), and call `Schedule` with the command and the time it is due. It only records the command: the [Unit of Work](/docs/reference/glossary#unit-of-work) writes it in the same commit as the change, or not at all.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Features/OpenQuote/OpenQuoteCommandHandler.cs" region="open-quote-handler" />
+
+</Step>
+<Step>
+
+### Declare it in the Composition Root
+
+Declare each delayed command once, under its name, with `AddPouryaKitDelayedCommand`, as Billing declares `ExpireQuoteCommand`: see [Delayed commands](/docs/capabilities/messaging#delayed-commands). A Module schedules only commands it declared.
+
+</Step>
+<Step>
+
+### Handle it for the state it finds
+
+The [Kit](/docs/reference/glossary#kit) never removes a scheduled command, so cancelling is the handler's business: check the state, as `ExpireQuote` refuses a quote that is no longer open.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Billing/Billing/Quotes/Features/ExpireQuote/ExpireQuoteCommandHandler.cs" region="expire-quote-handler" />
+
+</Step>
+</Steps>
+
+## Steps: a recurring command
+
+<Steps>
+<Step>
+
+### Write the command and its handler
+
+The command carries the occurrence it runs. The handler runs as the system Actor of the declaration, with no [tenant](/docs/reference/glossary#tenant).
+
+<Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/ReconcileStock/ReconcileStockCommandHandler.cs" region="reconcile-stock-handler" />
+
+</Step>
+<Step>
+
+### Declare it with its system Actor and bind its cadence
+
+Declare it once with `AddPouryaKitRecurringCommand`: its name, the system Actor every occurrence runs as, and the function that builds the command for each occurrence. Bind the cadence from a configuration section on the options builder it returns, as Inventory does. [Recurring commands](/docs/capabilities/messaging#recurring-commands) shows Inventory's declaration and the section it binds.
+
+</Step>
+<Step>
+
+### Set the cadence in the Host's configuration
+
+Set the cadence in that section of the [Host](/docs/reference/glossary#host)'s configuration. A missing or invalid cadence stops the Host when it starts: it never runs at a default.
+
+</Step>
+</Steps>
+
+## Testing
+
+The message store compares due times with the system clock, not the Host's `TimeProvider`, so a test that needs a delayed command to run uses a short real delay. The test fixture does not wait for a command not yet due. A test that needs occurrences to run starts its own Host, on a database of its own, with a short cadence. See [Deliveries](/docs/capabilities/testing#deliveries).
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| When a delayed command runs, on whose authority, and once in the database | [Delayed commands](/docs/capabilities/messaging#delayed-commands) |
+| When occurrences fall, on whose authority, and what a failure does to the cadence | [Recurring commands](/docs/capabilities/messaging#recurring-commands) |
+| Restarts and missed occurrences | [Restart semantics](/docs/capabilities/messaging#restart-semantics) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="Schedule throws InvalidOperationException">
+    The command was not declared as a delayed command of this Module, or no Unit of Work would store it where `Schedule` was called, such as an endpoint or a hosted service. [Delayed commands](/docs/capabilities/messaging#delayed-commands) lists each case.
+  </Accordion>
+  <Accordion title="OptionsValidationException when the Host starts">
+    The recurring command's cadence is missing or outside the range its options accept: [Recurring commands](/docs/capabilities/messaging#recurring-commands).
+  </Accordion>
+  <Accordion title="A dead letter of the command's name">
+    A run failed on every attempt, or was stored under a name or type no declaration has any more. A failed [Result](/docs/reference/glossary#result) becomes a `DelayedCommandFailedException`, naming each [Error](/docs/reference/glossary#error).
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Secure an Operation" href="/docs/guides/secure-an-operation" description="Require a permission for a command or query." />
+  <Card title="Delayed and recurring commands" href="/docs/concepts/delayed-and-recurring-commands" description="The two kinds of authority, explained." />
+  <Card title="Messaging" href="/docs/capabilities/messaging#delayed-commands" description="Every rule of scheduled work." />
+</Cards>

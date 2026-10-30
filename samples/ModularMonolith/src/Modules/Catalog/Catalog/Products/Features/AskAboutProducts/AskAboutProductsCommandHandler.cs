@@ -12,6 +12,7 @@ using PouryaKit.Persistence;
 
 namespace Catalog.Products.Features.AskAboutProducts;
 
+#region ask-about-products-handler
 // The sample's agent: an Agent Framework agent over the Host's one chat client, whose allow-list, iteration cap and
 // guardrails hold for every call it makes to the model, with one tool, GetProduct through Catalog's Gateway. The run
 // executes inside this authorized command, so each look-up continues it, as the asking Actor and tenant. The Actor's
@@ -32,12 +33,14 @@ internal sealed class AskAboutProductsCommandHandler(
 
     public override async Task<Result<string>> Handle(AskAboutProductsCommand command, CancellationToken cancellationToken)
     {
+        #region get-product-tool
         var getProduct = catalog.Tool(
             "GetProduct",
             "Finds one product of the catalog by its id: its id, its category's id and its name.",
             context,
             (ProductToFind product) => new GetProductQuery(product.ProductId)
         );
+        #endregion
         var store = new ProductConversations(conversations, context);
         var key = ProductConversations.KeyOf(context);
 #pragma warning disable MEAI001 // Microsoft.Extensions.AI 10.11's reducers are experimental.
@@ -63,3 +66,4 @@ internal sealed class AskAboutProductsCommandHandler(
         return answer.Text;
     }
 }
+#endregion

@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>Every EF Core Module's Outbox and Receipts on Wolverine: what a Module publishes is written in the commit of its change, in PostgreSQL.</PackageDescription>
+    <PackageTags>wolverine;efcore;outbox</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="WolverineFx.EntityFrameworkCore" />
     <PackageReference Include="WolverineFx.Postgresql" />

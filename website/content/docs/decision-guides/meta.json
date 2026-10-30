@@ -1,0 +1,10 @@
+{
+  "title": "Decision guides",
+  "pages": [
+    "template-choice",
+    "in-process-or-rabbitmq",
+    "s3-or-azure-blob",
+    "dapper-or-ef-core-page",
+    "stream-or-ef-core-aggregate"
+  ]
+}

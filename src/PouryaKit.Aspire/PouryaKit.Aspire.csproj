@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>PostgreSQL, Redis, RabbitMQ and Ollama for an Aspire AppHost, on the image tags the Kit's own tests run and with named volumes.</PackageDescription>
+    <PackageTags>aspire;apphost;containers</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <PackageReference Include="Aspire.Hosting.RabbitMQ" />

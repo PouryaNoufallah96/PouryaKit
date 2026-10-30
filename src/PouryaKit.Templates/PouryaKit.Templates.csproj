@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageType>Template</PackageType>
-    <PackageDescription>PouryaKit's dotnet new templates: a monolith, a modular monolith and a service of one Module generated from the Proving Sample's business code, on the Kit's packages of the same version.</PackageDescription>
-    <PackageTags>dotnet-new;templates;modular-monolith;vertical-slices</PackageTags>
+    <PackageDescription>dotnet new templates that generate a monolith, a modular monolith or a service of one Module from the Proving Sample's business code, on the Kit's packages of the same version.</PackageDescription>
+    <PackageTags>dotnet-new;templates;project-templates</PackageTags>
     <EnableDefaultItems>false</EnableDefaultItems>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <IncludeSymbols>false</IncludeSymbols>

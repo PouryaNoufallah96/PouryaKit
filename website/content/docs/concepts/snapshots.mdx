@@ -1,0 +1,91 @@
+---
+title: Snapshots and Tombstones
+description: The current state of one aggregate, published for a Module that keeps its own copy of it, and the Tombstone that says it no longer exists.
+---
+
+## What it is
+
+A [Snapshot](/docs/reference/glossary#snapshot) is the current state of one aggregate, published for other [Modules](/docs/reference/glossary#module), and it supersedes every earlier Snapshot of that aggregate. A [Tombstone](/docs/reference/glossary#tombstone) is the Snapshot that says the aggregate no longer exists.
+
+An [Integration Event](/docs/reference/glossary#integration-event) is a fact, and each one matters on its own. A Snapshot is state, and only the newest matters: once a newer one is applied, an older one is worth nothing. One aggregate may have both, as Catalog's product does.
+
+<Callout type="warn" title="Feature code never publishes a Snapshot">
+  The [Unit of Work](/docs/reference/glossary#unit-of-work) publishes it, in the commit of every change of the aggregate, built by a mapper you write. The receiver applies the newest version it is given and skips older ones, so a Snapshot handler keeps a copy current: it never counts or reacts to each change.
+</Callout>
+
+## When to use it
+
+When another Module keeps its own copy of this Module's data, as Inventory keeps a copy of each catalog product. When another Module reacts to something that happened, publish an [Integration Event](/docs/concepts/integration-events) instead.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Declare the Snapshot
+
+A public record in the publishing Module's [Contracts](/docs/reference/glossary#contracts), with the aggregate's key, the state other Modules need, a field that says whether it is the Tombstone, and the aggregate's version.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/Events/V1/ProductSnapshotV1.cs" region="product-snapshot-v1" />
+
+</Step>
+<Step>
+
+### Write its mapper
+
+`Map` builds the Snapshot of an aggregate that exists, and `Tombstone` the Snapshot of one the [Operation](/docs/reference/glossary#operation) removed. The mapper runs after every reaction, with the version being committed, and only reads.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/ProductSnapshotMapper.cs" region="product-snapshot-mapper" />
+
+</Step>
+<Step>
+
+### Declare it in the Composition Root
+
+The publishing Module declares the aggregate, the Snapshot type, the mapper and the [wire name](/docs/reference/glossary#wire-name) with `PublishSnapshot`, as Catalog declares `ProductSnapshotV1`: see [Declaring a Snapshot](/docs/capabilities/messaging#declaring-a-snapshot). The receiving Module subscribes an ordinary [Integration Event Handler](/docs/reference/glossary#integration-event-handler) with `Subscribe`.
+
+</Step>
+<Step>
+
+### Keep the copy
+
+Write only the effect: insert or update for a Snapshot, delete for a Tombstone. The copy is a table of the receiving Module's own that no aggregate maps, written with plain SQL in the receiving Module's Unit of Work. The handler compares no version: the [Kit](/docs/reference/glossary#kit) runs it only for a newer one.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/CatalogProducts/Features/CopyProduct/CopyProductIntegrationEventHandler.cs" region="copy-product" />
+
+The receiving Module's migration creates the copy's table and the table where the Kit keeps the versions applied, with `CreateSnapshotVersionTable`, beside its [Receipt](/docs/reference/glossary#receipt) table.
+
+</Step>
+</Steps>
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| One per changed aggregate, per Snapshot type, per Operation, built from what commits | [What the Kit guarantees for a Snapshot](/docs/capabilities/messaging#what-the-kit-guarantees-for-a-snapshot) |
+| Applied only when newer, whatever the order of delivery | [What the Kit guarantees for a Snapshot](/docs/capabilities/messaging#what-the-kit-guarantees-for-a-snapshot) |
+| No copy before the aggregate's next change | [What the Kit guarantees for a Snapshot](/docs/capabilities/messaging#what-the-kit-guarantees-for-a-snapshot) |
+| What a mapper and an aggregate's key must keep to | [The rules of a mapper and a key](/docs/capabilities/messaging#the-rules-of-a-mapper-and-a-key) |
+| A Snapshot of a tenant-scoped Module's aggregate | [Declaring a tenant-scoped Module](/docs/capabilities/multi-tenancy#declaring-a-tenant-scoped-module) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="A mapper that writes">
+    A mapper only reads: a write it attempts is refused with an `InvalidOperationException`, which fails the Operation, and nothing commits, even when the mapper catches the refusal of a command. [The rules of a mapper and a key](/docs/capabilities/messaging#the-rules-of-a-mapper-and-a-key) lists what is refused.
+  </Accordion>
+  <Accordion title="A key the database generates">
+    The Snapshot is built before the save, so a key the database generates does not exist yet. The Operation that creates such an aggregate fails at its commit with an `InvalidOperationException`. Create keys in the application, as `TypedId.New` does.
+  </Accordion>
+  <Accordion title="A type published both ways">
+    Declaring a type with both `Publish` and `PublishSnapshot` fails while the [Host](/docs/reference/glossary#host) is composed. A type is either an Integration Event or the Snapshot of one aggregate.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Composition and startup checks" href="/docs/concepts/composition-and-startup-checks" description="How a Host refuses its own mistakes." />
+  <Card title="Keeping a copy" href="/docs/capabilities/messaging#keeping-a-copy" description="The copy, its table and the version table, in full." />
+  <Card title="Publish and subscribe" href="/docs/guides/publish-and-subscribe" description="The Integration Event path, step by step." />
+</Cards>

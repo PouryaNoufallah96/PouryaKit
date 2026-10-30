@@ -1,0 +1,69 @@
+---
+description: "A YARP Host of its own process in front of a system's Hosts: routes and clusters from configuration, service discovery, a liveness probe, and one trace from the client to the Operation."
+---
+
+`PouryaKit.ReverseProxy` is a [Reverse proxy](/docs/reference/glossary#reverse-proxy): an application of its own, on YARP, that sits in front of the system's [Hosts](/docs/reference/glossary#host). It forwards each request by the routes and clusters of its configuration to a Host that service discovery resolves, probes each Host's liveness path and takes a dead endpoint out of its cluster, and keeps the client's trace, so one request is one trace from the client through the proxy to the Operation.
+
+It runs no Operation and references no Kit package. It authenticates no one either: each Host it fronts authenticates its own callers, and the client's bearer token and the Kit's headers reach the Host as sent. In the glossary it is the Reverse proxy; a [Gateway](/docs/reference/glossary#gateway) is a Module's own entry point.
+
+<Callout type="warn" title="Liveness only, and no gRPC">
+  The proxy probes the liveness path of the service defaults and no readiness path: readiness outside Development is the platform's probe. As shipped it carries no gRPC, so a Host's gRPC client calls the other Host directly ([Limits](#limits)).
+</Callout>
+
+## When to use it
+
+- Several Hosts should answer clients on one address.
+- A Module split out as a service keeps its paths, routed to its own Host.
+- You configure routes and clusters with service discovery, and a liveness probe that drops a dead endpoint.
+- You want one trace from the client through the proxy to the Operation.
+- You test a Host behind the proxy.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Compose the proxy as its own application
+
+The proxy's `Program` adds the service defaults, so discovery has providers to ask and its spans are recorded, then `AddPouryaKitReverseProxy()`, and maps YARP's `MapReverseProxy()`. The monolith and modular monolith templates generate one in front of their Host.
+
+</Step>
+<Step>
+
+### Route by configuration
+
+Routes and clusters are YARP's own configuration, in the `ReverseProxy` section, and change with it at run time. A destination whose address names a service resolves into each endpoint discovery lists for it.
+
+</Step>
+<Step>
+
+### Keep dead endpoints out
+
+Unless its configuration says otherwise, every cluster probes each destination's liveness path. A destination whose probes keep failing leaves its cluster until a probe succeeds, and a cluster with none left refuses its requests rather than forwarding to every destination again ([Routes, clusters and discovery](#routes-clusters-and-discovery)).
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+The sample's AppHost runs the proxy in front of both Hosts and routes Inventory's paths to the service by its resource name, with the probe on:
+
+<Snippet file="samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs" region="apphost-reverse-proxy" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| What the composition needs, and what it registers | [Composing the proxy](#composing-the-proxy) |
+| How routes, clusters, discovery and the probe work together | [Routes, clusters and discovery](#routes-clusters-and-discovery) |
+| What reaches the Host, and how the trace continues | [What the Kit guarantees](#what-the-kit-guarantees) |
+| Why there is no readiness probe and no gRPC | [Limits](#limits) |
+
+## Next steps
+
+<Cards>
+  <Card title="Aspire resources" href="/docs/capabilities/aspire" description="The AppHost that runs the proxy beside the Hosts it fronts." />
+  <Card title="Host recipes" href="/docs/capabilities/host-recipes" description="The liveness endpoint the proxy probes." />
+</Cards>

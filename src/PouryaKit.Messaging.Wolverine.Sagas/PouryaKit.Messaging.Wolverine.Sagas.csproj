@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>Sagas on Wolverine: Integration Events start and advance them, their timeouts end them, and each step is claimed once in PostgreSQL.</PackageDescription>
+    <PackageTags>wolverine;sagas;postgresql</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="WolverineFx.Postgresql" />
   </ItemGroup>

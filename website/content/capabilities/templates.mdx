@@ -1,0 +1,72 @@
+---
+description: "Start a new application with dotnet new as a monolith, a modular monolith or a service of one Module, generated from the Proving Sample's business code."
+---
+
+`PouryaKit.Templates` is a `dotnet new` template package. A new application starts from the [Proving Sample](/docs/reference/glossary#proving-sample)'s business code in one of its compositions: the monolith, one Module behind a plain registration that grows into the modular monolith when a second Module arrives; the modular monolith, several Modules in one Host, each reached through its Gateway; and the service, one Module in a Host of its own that receives another Host's Integration Events and Snapshots over RabbitMQ.
+
+The templates are generated from the sample, never maintained beside it. Aggregates, commands, queries, handlers, validators, the repository, Dapper reads and every event handler are the sample's own files in every template; only the Composition Root and the endpoint adapters differ.
+
+<Callout type="warn" title="Name the version you install">
+  The template package's version becomes the Kit version every generated project pins, so install it with an explicit version: [Install the templates](/docs/get-started/install-templates) gives the command. The generated Host applies no migration at startup and does not start without its bearer settings; [Your first Host](/docs/get-started/first-host) walks through both.
+</Callout>
+
+## When to use it
+
+- You start a new application on the Kit.
+- You choose between a monolith, a modular monolith and a service.
+- You grow the monolith into a modular monolith, or split a Module out as a service over RabbitMQ.
+- You run, migrate and test the generated solution, or upgrade its Kit version.
+- You pre-generate Wolverine's code for a production build.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Generate a solution
+
+Each template generates a solution in a folder named after `-n`, with the Host, its service defaults, the Modules and a test project. `dotnet new` restores it once it is generated, from a NuGet source that has the Kit's packages.
+
+```bash title="Terminal"
+dotnet new pouryakit-monolith -n Acme.Shop
+dotnet new pouryakit-modular-monolith -n Acme.Shop
+dotnet new pouryakit-service -n Acme.Stock
+```
+
+</Step>
+<Step>
+
+### Run it on PostgreSQL
+
+Start PostgreSQL, apply each EF Core Module's migrations with `dotnet-ef` (a Stream Module has none), create a development token with `dotnet user-jwts`, and run the Host. The service also needs the RabbitMQ broker its configuration names.
+
+</Step>
+<Step>
+
+### Prove it with the smoke test
+
+The generated test project hosts the generated Host through `PouryaKit.Testing`, in memory, on PostgreSQL in a container, and calls it with bearer tokens of a test issuer.
+
+</Step>
+</Steps>
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| How `-n` names folders, files and namespaces | [Install and generate](#install-and-generate) |
+| What each composition holds, and the checks every template runs | [What each composition composes](#what-each-composition-composes) |
+| How the monolith becomes a modular monolith with its business code unchanged | [Growing the monolith into a modular monolith](#growing-the-monolith-into-a-modular-monolith) |
+| What the service receives and serves | [The service](#the-service) |
+| The commands that run the generated Host | [Running the generated Host](#running-the-generated-host) |
+| How to build for production | [Pre-generating Wolverine's code for production](#pre-generating-wolverines-code-for-production) |
+
+## Next steps
+
+<Cards>
+  <Card title="Choose a template" href="/docs/templates" description="The compositions side by side." />
+  <Card title="Your first Host" href="/docs/get-started/first-host" description="Generate, migrate, run and call a Host, step by step." />
+  <Card title="Template choice" href="/docs/decision-guides/template-choice" description="Which composition fits the application you are starting." />
+</Cards>

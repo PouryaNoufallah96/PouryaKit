@@ -198,6 +198,7 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         );
     }
 
+    #region operation-activity-test
     [Fact]
     public async Task With_only_an_activity_listener_a_command_is_still_an_activity()
     {
@@ -214,6 +215,7 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
             activity => Tag(activity, OperationTelemetry.OperationTag) == nameof(WriteNoteCommand) && Tag(activity, OperationTelemetry.OutcomeTag) == OperationTelemetry.Succeeded
         );
     }
+    #endregion
 
     // The meter is the Host container's, from its IMeterFactory, so each Host owns its instruments and disposes them with
     // itself; a static meter has no owner.

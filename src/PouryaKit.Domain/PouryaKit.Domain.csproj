@@ -1,2 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>The plain types an aggregate is written with: Result and Error, typed IDs, aggregates and entities, Domain Events and business rules, with no dependencies.</PackageDescription>
+    <PackageTags>domain-driven-design;result-pattern;typed-ids;aggregates</PackageTags>
+  </PropertyGroup>
 </Project>

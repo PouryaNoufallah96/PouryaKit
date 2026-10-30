@@ -1,0 +1,70 @@
+---
+description: "API versions a Module declares, served by URL segment and by header, with a configured sunset for a deprecated version and one OpenAPI document per version."
+---
+
+A Module that changes its HTTP contract keeps serving its callers on the old version while new callers move to the new one. `PouryaKit.Web.OpenApi` lets the Module declare its versions in its Composition Root, on Asp.Versioning's own version set, and serves each endpoint on a versioned path, with the version as a URL segment, and on the unversioned path, where a version header selects it ([What a caller sees](#what-a-caller-sees)). A deprecated version announces the sunset the Host configures, and every supported version gets an OpenAPI document of its own, listed by the Scalar API reference.
+
+The documents are ASP.NET Core's own OpenAPI: there is no Swagger generator. A Module that declares no version keeps the plain unversioned paths of [Web](/docs/capabilities/web), and one that declares versions needs the Host to register the package ([Declaring a Module's versions](#declaring-a-modules-versions)).
+
+<Callout type="warn" title="A version belongs to the Module, but its number is shared">
+  Versions of different Modules that share a number share one document and one sunset. So a Module that joins a Host declares a version no other Module deprecates, as Inventory declares Catalog's current version rather than the one Catalog deprecates ([Declaring a Module's versions](#declaring-a-modules-versions)).
+</Callout>
+
+## When to use it
+
+- A Module's HTTP contract changes and existing callers must keep working.
+- An endpoint exists only in some versions of its Module.
+- You deprecate a version and announce the date it is meant to end.
+- You serve one OpenAPI document per version and the Scalar reference over them.
+- You check an operation's security requirement in a document.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Declare the Module's versions
+
+`AddPouryaKitApiVersions` in the Composition Root names the same route prefix as the Module's `AddPouryaKitEndpoints` and states each version as supported or deprecated. Every endpoint of the Module serves every declared version.
+
+</Step>
+<Step>
+
+### Map an endpoint to some versions only
+
+An endpoint that exists in some versions only says so with `MapToApiVersion`. A caller of any other version is refused with a problem response.
+
+</Step>
+<Step>
+
+### Register versions and documents in the Host
+
+`AddPouryaKitOpenApi` registers the version readers, the version headers on every response, the sunsets and one document per supported version. `MapPouryaKitOpenApi` serves the documents and the Scalar page, authenticated like every endpoint unless the Host says otherwise.
+
+</Step>
+</Steps>
+
+## In the Kit's tests
+
+Catalog's rename exists only in its current version. The Kit's tests select a version by its URL segment and by its header, and see the deprecated version refuse the rename while it still answers the read:
+
+<Snippet file="tests/ModularMonolith.Tests/OpenApiTests.cs" region="version-by-url-or-header" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| How a Module declares versions, and the startup failure of a prefix no Module maps | [Declaring a Module's versions](#declaring-a-modules-versions) |
+| What the Host registers and serves | [The Host](#the-host) |
+| What each request shape answers, and how a location names the requested version | [What a caller sees](#what-a-caller-sees) |
+| How a sunset is configured, validated and announced | [Deprecation and sunset](#deprecation-and-sunset) |
+| Which operations carry a security requirement in a document | [Documents and Scalar](#documents-and-scalar) |
+
+## Next steps
+
+<Cards>
+  <Card title="Web" href="/docs/capabilities/web" description="The endpoints a version serves, and the problem response a refusal answers." />
+  <Card title="Add an endpoint" href="/docs/guides/add-an-endpoint" description="A Feature's endpoint, mapped in the versions it serves." />
+</Cards>

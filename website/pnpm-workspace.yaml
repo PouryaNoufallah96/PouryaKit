@@ -1,0 +1,10 @@
+# pnpm reads this app's settings here (pnpm 11 and later ignore the "pnpm" field of package.json).
+
+# Install scripts: a dependency's script runs only when it is listed true here; an unlisted one fails the install.
+allowBuilds:
+  esbuild: false
+
+# Next.js's optional image optimiser: a static export with unoptimized images never loads it, and its libvips
+# binaries are LGPL-3.0-or-later.
+ignoredOptionalDependencies:
+  - sharp

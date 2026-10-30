@@ -1,0 +1,77 @@
+---
+description: "Read for display in plain SQL with Dapper on a pooled PostgreSQL connection, with typed IDs as parameters and results and a Page helper that never turns caller input into SQL."
+---
+
+A query's handler that reads for display usually reads in SQL. `PouryaKit.Persistence.Dapper` gives each handler `IReadConnectionFactory`, which leases an open connection from the Host's one PostgreSQL pool, and makes every typed ID of the Module work as a Dapper parameter and result. For a list, `PageSql` and `QueryPageAsync` read one [Page](/docs/reference/glossary#page) of it, sorted and filtered only by what the query declared.
+
+Beside it, `IUnitOfWorkConnection` of `PouryaKit.Persistence` lets a command write a Module-internal table in plain SQL inside the [Unit of Work](/docs/reference/glossary#unit-of-work), so the write commits or rolls back with the Operation.
+
+<Callout type="warn" title="Dapper runs exactly the SQL you write">
+  No EF Core query filter reaches a plain SQL read. A read of a soft-deletable table leaves out the removed rows itself, and in a tenant-scoped Module a read of a tenant-scoped table states the tenant the lease bound, never a tenant the handler passes ([Reading](#reading)).
+</Callout>
+
+## When to use it
+
+- A query reads rows for display, by ID or by a filter you write.
+- A query answers a sorted and filtered Page of a list.
+- You read or write typed IDs with Dapper.
+- A command, a Domain Event Handler or a delivery writes a projection, a tally or a copy that no aggregate maps.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Register the read connection
+
+Call `AddPouryaKitDapper` in the Composition Root of each Module that reads with Dapper. Every Module of a Host names the same connection, and the Host fails when it is built if its configuration does not set it.
+
+</Step>
+<Step>
+
+### Lease a connection in the handler
+
+Open a lease with `connections.OpenAsync` inside the query's handler and dispose it when you are done. The lease binds the Operation's tenant as a session setting when it opens, and reads only what is committed.
+
+</Step>
+<Step>
+
+### Write the SQL against your own schema
+
+Name each table with its Module's schema, alias snake_case columns to your DTO's members, and pass the cancellation token through a `CommandDefinition`. Another Module's data comes through its Contracts, never through its tables.
+
+</Step>
+<Step>
+
+### Map a Page's names to your columns
+
+A Page read writes its `SELECT` and `COUNT` once in a `PageSql` and maps each declared sort key to a column. Each declared filter arrives as a parameter, so no text a caller sends ever becomes SQL.
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+Catalog's `GetProduct` reads one product in plain SQL. It states the tenant and leaves out removed products itself, and passes a typed ID as a parameter:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/GetProduct/GetProductQueryHandler.cs" region="get-product-dapper-read" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| Which connection string a Module names, and when a missing one fails the Host | [Registration](#registration) |
+| What a lease binds, what it sees and the SQL shape a tenant-scoped read must keep | [Reading](#reading) |
+| How a Page read maps sort keys and filters, and what it refuses | [Reading a Page](#reading-a-page) |
+| Which typed IDs work as parameters and results | [Typed IDs](#typed-ids) |
+| Where a plain-SQL write may run, and which tables it may touch | [Writing with plain SQL in the Unit of Work](#writing-with-plain-sql-in-the-unit-of-work) |
+
+## Next steps
+
+<Cards>
+  <Card title="Paged query" href="/docs/guides/paged-query" description="Declare what a caller may sort and filter by, and read one Page." />
+  <Card title="Dapper or an EF Core Page" href="/docs/decision-guides/dapper-or-ef-core-page" description="When to read a Page in SQL, and when through a repository." />
+  <Card title="Multi-tenancy" href="/docs/capabilities/multi-tenancy" description="Why a plain SQL read states its tenant, and the shape a structure test holds it to." />
+</Cards>

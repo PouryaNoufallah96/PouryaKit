@@ -1,0 +1,71 @@
+---
+description: "Small helpers the Kit's own packages use and your code may too: predicate composition, the implementing-type lookup and a synchronization-context scope."
+---
+
+`PouryaKit.Core` holds a few small helpers and nothing else. `AndAlso` and `OrElse` compose two expression predicates into one lambda a LINQ provider such as EF Core can translate. `ImplementingTypes.Of` finds the concrete types of given assemblies that implement a contract, the same lookup the Kit's registrations use to find handlers, authorizers and endpoints. `SynchronizationContextScope` blocks on asynchronous code safely where a synchronous member has to.
+
+You rarely reference it yourself: `PouryaKit.Cqrs`, `PouryaKit.Web`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Persistence.Dapper`, `PouryaKit.Persistence.EFCore` and `PouryaKit.Security` reference it, so a Module that uses any of them already has it.
+
+<Callout type="info" title="Core stays this small">
+  Core's public types are fixed, and an architecture test holds them to that set ([What Core never holds](#what-core-never-holds)). A helper that belongs to one Capability lives in that Capability's package, and one that belongs to your application lives in your application.
+</Callout>
+
+## When to use it
+
+- You build a query filter from optional parts and want one predicate EF Core can translate.
+- Your application registers its own implementations of a contract it finds in its assemblies.
+- A synchronous member has to wait for asynchronous code on a thread that may have a synchronization context.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Compose predicates
+
+`left.AndAlso(right)` and `left.OrElse(right)` short-circuit as `&&` and `||` do, and put both bodies on one new parameter, so the result is a single lambda with no invocation inside. Pass it to a specification's `Query.Where` or any `IQueryable`.
+
+</Step>
+<Step>
+
+### Find what implements a contract
+
+`ImplementingTypes.Of(contract, assemblies)` returns each concrete type once, ordered by full name. An open generic contract finds every class that closes it, directly or through a base class.
+
+</Step>
+<Step>
+
+### Block on asynchronous code only inside a scope
+
+`SynchronizationContextScope.Enter()` clears the current context and restores it when the scope is disposed. It is a `ref struct`, so the compiler refuses one that lives across an `await`. Code that is asynchronous all the way down needs no scope.
+
+</Step>
+</Steps>
+
+## In the Kit's tests
+
+Two predicates composed with `AndAlso`: `AboveTen()` decides first, and `Even()` runs only when it has not already decided the result.
+
+<Snippet file="tests/PouryaKit.Core.Tests/PredicateBuilderTests.cs" region="and-also-predicates" />
+
+The lookup finds each concrete class that closes an open generic contract, directly or through a base class:
+
+<Snippet file="tests/PouryaKit.Core.Tests/ImplementingTypesTests.cs" region="implementing-types-of" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| What the composed predicate's parameter is, and how a guard protects the right side | [Predicate composition](#predicate-composition) |
+| What the lookup returns, and how to list the candidates a registration must validate | [Implementing-type lookup](#implementing-type-lookup) |
+| What the scope sets, restores and refuses | [Synchronization-context scope](#synchronization-context-scope) |
+| Why Core holds nothing more | [What Core never holds](#what-core-never-holds) |
+
+## Next steps
+
+<Cards>
+  <Card title="Persistence and the Unit of Work" href="/docs/capabilities/persistence" description="Specifications, where a composed predicate usually goes." />
+  <Card title="Commands, queries and validation" href="/docs/capabilities/commands-queries-validation" description="The registrations that find handlers with the same lookup." />
+</Cards>

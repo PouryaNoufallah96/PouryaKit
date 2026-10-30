@@ -15,6 +15,7 @@ public sealed class ShippingModule : IModuleDefinition
     {
         module.Publish<OrderFulfilledV1>("shipping.order-fulfilled.v1");
         module.Publish<OrderCancelledV1>("shipping.order-cancelled.v1");
+        #region fulfilment-saga-declaration
         module.AddPouryaKitSaga<FulfilmentSaga>(
             Fulfilment,
             systemActor: Fulfilment,
@@ -24,6 +25,7 @@ public sealed class ShippingModule : IModuleDefinition
                 .Input<PaymentReceivedV2>(paid => paid.OrderId)
                 .Timeout<FulfilmentTimeout>()
         );
+        #endregion
         // Two sagas of one event: each its own chain, on its own queue.
         module.AddPouryaKitSaga<ReferenceSaga>("shipping.reference", "shipping.reference", saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference));
         module.AddPouryaKitSaga<ReminderSaga>(
@@ -50,12 +52,14 @@ public sealed class FulfilmentSaga : PouryaKitSaga
     /// <summary>The payment methods that arrived, under the second payment contract.</summary>
     public List<string> Methods { get; set; } = [];
 
+    #region fulfilment-saga-start
     /// <summary>Starts the saga, and schedules its timeout.</summary>
     public static (FulfilmentSaga, FulfilmentTimeout) Start(SagaInput<FulfilmentSaga, OrderPlacedV1> placed) =>
         (
             new FulfilmentSaga { Order = placed.Event.OrderId, Installments = placed.Event.Installments },
             new FulfilmentTimeout(TimeSpan.FromSeconds(placed.Event.PayWithinSeconds))
         );
+    #endregion
 
     /// <summary>One payment arrived; the last one fulfils the order.</summary>
     public async Task Handle(SagaInput<FulfilmentSaga, PaymentReceivedV1> paid)
@@ -84,12 +88,14 @@ public sealed class FulfilmentSaga : PouryaKitSaga
         }
     }
 
+    #region fulfilment-saga-timeout
     /// <summary>The payments did not arrive in time.</summary>
     public async Task Handle(FulfilmentTimeout timeout)
     {
         await PublishAsync(new OrderCancelledV1(Order, Paid));
         MarkCompleted();
     }
+    #endregion
 }
 
 /// <summary>The fulfilment saga's timeout.</summary>

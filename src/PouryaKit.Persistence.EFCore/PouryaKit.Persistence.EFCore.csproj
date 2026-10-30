@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>The EF Core Unit of Work: a DbContext per Module that saves and commits each Operation once, with the repository, audit, soft delete and conflicts as Errors.</PackageDescription>
+    <PackageTags>efcore;entity-framework-core;unit-of-work</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Ardalis.Specification.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />

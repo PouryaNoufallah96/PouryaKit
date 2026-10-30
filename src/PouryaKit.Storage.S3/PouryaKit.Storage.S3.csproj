@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>The Host's file storage on Amazon S3 or an S3-compatible store such as MinIO, on the AWS SDK, from validated options.</PackageDescription>
+    <PackageTags>s3;aws;minio;storage</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" />
     <PackageReference Include="Microsoft.Extensions.Options" />

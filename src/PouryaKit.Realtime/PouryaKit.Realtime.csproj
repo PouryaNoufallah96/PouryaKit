@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>Server-sent events pushed from Notification Handlers, carried between a Host's instances by PostgreSQL notifications, only within the delivery's tenant.</PackageDescription>
+    <PackageTags>server-sent-events;sse;realtime;postgresql</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

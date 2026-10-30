@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageDescription>ASP.NET Core endpoints beside each Feature: authenticated access by default, one problem response for every failure and outgoing HTTP that carries the Operation Context.</PackageDescription>
+    <PackageTags>aspnetcore;minimal-api;problem-details</PackageTags>
+  </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

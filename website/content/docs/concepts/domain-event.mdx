@@ -1,0 +1,90 @@
+---
+title: Domain Event
+description: A fact an aggregate raises inside its Module, handled in the same commit as the change that raised it.
+---
+
+## What it is
+
+A [Domain Event](/docs/reference/glossary#domain-event) is a fact raised by an aggregate, visible only inside its [Module](/docs/reference/glossary#module). A [Domain Event Handler](/docs/reference/glossary#domain-event-handler) is a reaction to it inside the same Module that takes part in the same [Unit of Work](/docs/reference/glossary#unit-of-work): its changes commit with the change that raised the Domain Event, or not at all.
+
+<Callout type="warn" title="A Domain Event Handler runs before the commit">
+  Use it to keep the Module's own aggregates consistent with each other. Anything that reaches outside the Module's own data, such as an email, a push to a browser or an [Integration Event](/docs/reference/glossary#integration-event), belongs in a [Notification Handler](/docs/reference/glossary#notification-handler), which runs after the commit. Whatever a Domain Event Handler sent would stay sent when the [Operation](/docs/reference/glossary#operation) rolls back.
+</Callout>
+
+## When to use it
+
+When one aggregate's change must change another aggregate of the same Module in the same commit. In the [Proving Sample](/docs/reference/glossary#proving-sample), each new product is counted in its category, so a product and its category's count are saved together, or neither is.
+
+One Domain Event may have both kinds of reaction: Catalog's `ProductCreatedDomainEvent` is counted by a Domain Event Handler in the product's commit, and announced and published by Notification Handlers after it: see [Outbox and Notifications](/docs/concepts/outbox-and-notifications).
+
+## How it works
+
+<Steps>
+<Step>
+
+### Declare the Domain Event
+
+A sealed record deriving from `DomainEvent`, named in the past tense. It carries typed IDs and values, never the aggregate itself.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/DomainEvents/ProductCreatedDomainEvent.cs" region="product-created-domain-event" />
+
+</Step>
+<Step>
+
+### Raise it from the aggregate
+
+The aggregate calls `Raise` when the fact happens. Only the Unit of Work takes and clears Domain Events.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Entities/Product.cs" region="product-create" />
+
+</Step>
+<Step>
+
+### Handle it in the same Module
+
+An `internal sealed` class implementing `IDomainEventHandler<TDomainEvent>`, beside the [Business Area](/docs/reference/glossary#business-area) that reacts. It changes aggregates through a repository, saves nothing and returns a [Result](/docs/reference/glossary#result). `AddPouryaKitCqrs` registers it with the Module's other handlers.
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Categories/Events/DomainEventHandlers/CountProductInCategoryDomainEventHandler.cs" region="count-product-in-category-handler" />
+
+</Step>
+<Step>
+
+### Test both outcomes
+
+Send the command whose aggregate raises the Domain Event through the [Gateway](/docs/reference/glossary#gateway), and assert both aggregates' rows: written together on success, and neither written when the reaction fails.
+
+<Snippet file="tests/ModularMonolith.Tests/DomainEventTests.cs" region="category-counts-a-new-product-test" />
+
+</Step>
+</Steps>
+
+## What the Kit guarantees
+
+| Guarantee | Where the skill states it |
+| --- | --- |
+| When a Domain Event Handler runs, in which order and in which transaction | [Domain Event Handlers](/docs/capabilities/persistence#domain-event-handlers) |
+| What a failed handler does to the Operation | [Domain Event Handlers](/docs/capabilities/persistence#domain-event-handlers) |
+| How a Domain Event is declared, raised and serialized | [Domain Events](/docs/capabilities/domain-primitives#domain-events) |
+| When to choose a Notification Handler instead | [Notification Handler or Domain Event Handler](/docs/capabilities/messaging#notification-handler-or-domain-event-handler) |
+
+## Failure messages
+
+<Accordions>
+  <Accordion title="The Operation fails with the handler's Errors">
+    A Domain Event Handler that returns a failed Result stops the handling at once. The whole Operation rolls back and fails with that handler's [Errors](/docs/reference/glossary#error), as the missing category's Error does in the test above.
+  </Accordion>
+  <Accordion title="Domain Events still raised after the last round">
+    Handlers that keep raising each other's Domain Events are a cycle. After the drain's last round the Operation throws an `InvalidOperationException` and nothing commits.
+  </Accordion>
+  <Accordion title="A handler of several Domain Event types">
+    A class that handles several types, or an abstract Domain Event type, fails while the [Host](/docs/reference/glossary#host) is composed. Write one handler class per Domain Event type.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card title="Outbox and Notifications" href="/docs/concepts/outbox-and-notifications" description="Reactions that run after the commit." />
+  <Card title="Domain primitives" href="/docs/capabilities/domain-primitives" description="Aggregates, typed IDs, Domain Events and business rules." />
+  <Card title="Test a Feature" href="/docs/guides/test-a-feature" description="Run Operations against the hosted application." />
+</Cards>

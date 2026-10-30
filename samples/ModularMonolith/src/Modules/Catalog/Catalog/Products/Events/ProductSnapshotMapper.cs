@@ -4,6 +4,7 @@ using PouryaKit.Messaging;
 
 namespace Catalog.Products.Events;
 
+#region product-snapshot-mapper
 // The product as other Modules see it. The Kit calls it once for every product an Operation changed, after every
 // reaction ran and the version is the one being committed; it only reads.
 internal sealed class ProductSnapshotMapper : ISnapshotMapper<Product, ProductSnapshotV1>
@@ -12,3 +13,4 @@ internal sealed class ProductSnapshotMapper : ISnapshotMapper<Product, ProductSn
 
     public ProductSnapshotV1 Tombstone(Product product) => new(product.Id.Value, product.Name, IsRemoved: true, product.Version);
 }
+#endregion

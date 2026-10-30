@@ -35,6 +35,7 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
 
     public string? DeletedBy { get; private set; }
 
+    #region product-create
     public static Result<Product> Create(ProductId id, CategoryId categoryId, string name, string tenant)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -55,6 +56,7 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
         product.Raise(new ProductCreatedDomainEvent(id, categoryId, product.Name));
         return product;
     }
+    #endregion
 
     // Raises no Domain Event: renaming is the proof that a change with none still conflicts with a concurrent one.
     public Result Rename(string name)

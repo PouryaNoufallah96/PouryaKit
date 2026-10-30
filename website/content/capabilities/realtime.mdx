@@ -1,0 +1,73 @@
+---
+description: "Push server-sent events to browsers from a Notification Handler: a push reaches every instance's clients once its delivery commits, only within its tenant and on the Channels the endpoint admits."
+---
+
+`PouryaKit.Realtime` pushes small events to browser clients over server-sent events. A [Notification Handler](/docs/reference/glossary#notification-handler) calls `IRealtimePublisher.PublishAsync` with a [Channel](/docs/reference/glossary#channel) and a plain record of the Module's Contracts. The push is a PostgreSQL notification written on the delivery's own transaction, so PostgreSQL hands it to the listener of every instance of the Host only when that delivery commits. Each instance passes it on to its connected clients of the delivery's [tenant](/docs/reference/glossary#tenant) that listen on the Channel, through an SSE endpoint the Module maps with `MapPouryaKitRealtime`.
+
+There is no SignalR and no second channel to the client: the database the Modules already use carries the push between instances.
+
+<Callout type="warn" title="Delivery to clients is at most once">
+  A client receives a push only while it is connected, and nothing is stored or replayed. When a client connects again, or receives a `gap` event after the listener lost its connection, it reads its state through a query. Keep each push a small fact or a reference; the client reads the rest.
+</Callout>
+
+## When to use it
+
+- Browsers should see a change as soon as it commits: a new product, a finished job, a message in an inbox.
+- You map a Module's SSE endpoint and decide which Channels an Actor may listen on.
+- You need to know what a rollback, a second instance, a lost listener connection or an oversized event does to a push.
+- You test server-sent events over HTTP.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Register the listener in the Host
+
+`AddPouryaKitRealtime` with the connection string every Module stores over registers the publisher and one listener per instance, which listens before the Host serves.
+
+</Step>
+<Step>
+
+### Push from a Notification Handler
+
+A push is allowed only during a Notification Handler's delivery, after the Operation that raised the Domain Event committed. The tenant is the delivery's; a handler never names one.
+
+</Step>
+<Step>
+
+### Map the endpoint and its rule
+
+The Module maps its endpoint from an `IEndpoint`, so it lies in the Module's authenticated route group. Its rule admits each Channel a client names for the request's Actor; a Channel the rule refuses is refused before anything is streamed ([Mapping the SSE endpoint](#mapping-the-sse-endpoint)).
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+Catalog announces each new product after it commits, and pushes it on `NewProduct.Channel` to the browsers of its tenant:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/Notifications/AnnounceNewProductNotificationHandler.cs" region="announce-new-product-handler" />
+
+Its SSE endpoint admits that one Channel for every authenticated caller, and each caller receives only its own tenant's pushes:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/Realtime/NewProductsRealtime.cs" region="new-products-sse-endpoint" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| What the listener's connection is, and when a Host fails to build or start | [Registering](#registering) |
+| Where a push may be made, and the Error of an oversized one | [Pushing from a Notification Handler](#pushing-from-a-notification-handler) |
+| What a client sends, receives and is refused | [Mapping the SSE endpoint](#mapping-the-sse-endpoint) |
+| What reaches which client, and when | [What the Kit guarantees](#what-the-kit-guarantees) |
+| What happens to a slow client, a missed push and identical pushes | [Limits](#limits) |
+
+## Next steps
+
+<Cards>
+  <Card title="Messaging" href="/docs/capabilities/messaging" description="The Notification Handlers a push is made from." />
+  <Card title="Web" href="/docs/capabilities/web" description="The authenticated route group the endpoint lies in." />
+</Cards>

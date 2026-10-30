@@ -1,0 +1,80 @@
+---
+description: "The plain types every Module's business code is written with: Result and Error, typed IDs, aggregates and entities, Domain Events and business rules."
+---
+
+`PouryaKit.Domain` is the package your aggregates are made of. An aggregate derives from `AggregateRoot<TId>` and is keyed by a typed ID, a sealed record over a `Guid`, `long`, `int` or `string`. A method that can fail checks its business rules and returns a [Result](/docs/reference/glossary#result): a value, or an [Error](/docs/reference/glossary#error) for an expected business failure. When something worth reacting to happens, the aggregate raises a [Domain Event](/docs/reference/glossary#domain-event). The package has no dependencies, so it adds nothing to your domain but these types.
+
+<Callout type="warn" title="A business failure is a Result, never an exception">
+  Return an Error for anything a caller can cause, such as a missing name or an unknown product. Exceptions are for bugs and infrastructure. And never set an aggregate's `Version` or clear its Domain Events: the [Unit of Work](/docs/reference/glossary#unit-of-work) owns both.
+</Callout>
+
+## When to use it
+
+- You are writing an aggregate, an entity or the typed ID that keys it.
+- A business rule decides whether a change may happen.
+- Something in the domain happened that other code reacts to: a Domain Event.
+- You are declaring the Errors of a Business Area.
+- A business rule compares with the current time, or a test fixes the time a Domain Event records.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Key each aggregate by its own ID type
+
+Declare one typed ID per aggregate. Two IDs are equal only when their type and value are, so a product's ID can never be passed where a category's is expected. `TypedId.New<ProductId>()` creates a new, time-ordered one, and the Kit's JSON, EF Core and Dapper setup all read and write it as its bare value, with no converter of yours.
+
+</Step>
+<Step>
+
+### Return a Result from a behaviour that can fail
+
+A value or an Error converts to a Result on its own, so a method returns either directly. Check a rule with `CheckRule` from inside the aggregate: a broken rule comes back as a failed Result, and you pass it on with `return result.Errors;`.
+
+</Step>
+<Step>
+
+### Raise what happened
+
+Call `Raise` with a Domain Event, a sealed record named in the past tense. It carries typed IDs and values, never the aggregate. Inside the Module, a Domain Event Handler reacts in the same commit; after the commit, a Notification Handler can tell the world.
+
+</Step>
+<Step>
+
+### Declare each Error once
+
+Give every Error a stable code, a message and a kind through its factory, such as `Error.Validation` or `Error.NotFound`. The kind, not an HTTP status, is what the Web package turns into a response.
+
+</Step>
+</Steps>
+
+## In the Proving Sample
+
+Catalog's product Errors, declared once as static fields:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Errors/ProductErrors.cs" region="product-errors" />
+
+The product aggregate creates itself, refusing a blank name with an Error and raising `ProductCreatedDomainEvent` when it succeeds:
+
+<Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Entities/Product.cs" region="product-create" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| How a value or an Error becomes a Result, and what reading a failed one does | [Result and Error](#result-and-error) |
+| How a typed ID is created, compared and written as JSON | [Typed IDs](#typed-ids) |
+| What the Unit of Work owns on an aggregate, and how equality works | [Aggregates and entities](#aggregates-and-entities) |
+| How a Domain Event keeps its identity and time | [Domain Events](#domain-events) |
+| How to make "now" testable | [The clock](#the-clock) |
+
+## Next steps
+
+<Cards>
+  <Card title="Operation, Result and Error" href="/docs/concepts/operation-result-error" description="Why a failure travels as a value through the whole Operation." />
+  <Card title="Commands, queries and validation" href="/docs/capabilities/commands-queries-validation" description="The handlers that call your aggregates and return their Results." />
+  <Card title="Persistence and the Unit of Work" href="/docs/capabilities/persistence" description="How an aggregate is mapped, saved and versioned without code of yours." />
+</Cards>

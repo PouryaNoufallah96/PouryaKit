@@ -71,7 +71,7 @@ internal sealed class NewProductsRealtime : IEndpoint
 - The response is the framework's `TypedResults.ServerSentEvents`: first an event of type `connected`, from which every event pushed for the client's Channels reaches it; then each pushed event, of the type of its Channel, with the event's JSON as its data; and an event of type `gap` after the instance's listener reconnected. A browser's `EventSource` listens with `addEventListener(channel, …)`.
 - The tenant is the request's Operation Context's: a client of tenant X never receives tenant Y's event, and a client without a tenant receives only pushes made without one.
 - The connection is served by the request itself, never from inside a Gateway call: streaming opens no Gateway scope and no Unit of Work, while the request's scope and its Operation, which the route group began, last until the connection ends. Feature code never holds a connection. It ends when the client disconnects, and when the Host stops.
-- How a browser presents its token is the application's (spec #115, "Out of Scope"): `EventSource` sends cookies but no `Authorization` header.
+- How a browser presents its token is the application's: `EventSource` sends cookies but no `Authorization` header.
 
 ## What the Kit guarantees
 
@@ -88,7 +88,7 @@ internal sealed class NewProductsRealtime : IEndpoint
 - **A slow client is disconnected.** Each client has a buffer of 256 events, which the listener fills without waiting; a client a full buffer behind is disconnected: its stream drains the events its buffer already holds, drops the overflow event and every later one, and closes, and `EventSource` reconnects, so the client re-reads its state.
 - **Identical pushes in one transaction arrive once**: PostgreSQL folds notifications of one channel with identical payloads in one transaction.
 - One Channel namespace per database: the Hosts of one database share the PostgreSQL channel `pouryakit_realtime`, so two applications on one database name their Channels apart.
-- A Marten Unit of Work does not push (spec #115, "Out of Scope"); no SignalR and no second push channel to the client.
+- A Marten Unit of Work does not push; no SignalR and no second push channel to the client.
 
 ## Testing
 

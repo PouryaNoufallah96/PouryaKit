@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!.next",
+      "!out",
+      "!distribution/out",
+      "!.source",
+      "!next-env.d.ts",
+      "!pnpm-lock.yaml",
+      "!.generated",
+      "!content/docs/capabilities",
+      "!content/docs/reference"
+    ]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+  "javascript": {
+    "formatter": { "quoteStyle": "single" }
+  },
+  "css": {
+    "parser": { "tailwindDirectives": true }
+  },
+  "linter": {
+    "rules": { "preset": "recommended" },
+    "domains": { "next": "recommended", "react": "recommended" }
+  },
+  "assist": {
+    "actions": { "source": { "organizeImports": "on" } }
+  }
+}

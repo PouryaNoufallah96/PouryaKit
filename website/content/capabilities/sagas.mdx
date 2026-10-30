@@ -1,0 +1,85 @@
+---
+description: "A Module's long-running reaction across Integration Events, with its own state between steps and timeouts that end it, each step claimed once in its own transaction."
+---
+
+Some business processes span several events: an order is fulfilled once all its payments arrive, or cancelled when they do not arrive in time. A [Saga](/docs/reference/glossary#saga) is that process as one Module's reaction. [Integration Events](/docs/reference/glossary#integration-event) start it and advance it, it keeps its own state between steps, and its timeouts end it. Each step may emit Integration Events of its own Module, which ordinary subscriptions receive.
+
+`PouryaKit.Messaging.Wolverine.Sagas` keeps the state on Wolverine's lightweight saga storage in the Host's PostgreSQL message store. The Kit routes each step, claims it once in its own transaction, keys the saga by the event's tenant and business id, and writes what the step emits into the Module's Outbox.
+
+<Callout type="warn" title="A step runs outside every Operation">
+  No authorizer, validator or Unit of Work runs for a step, and a step that dies before its commit runs again. So a step only changes the saga's state, emits and schedules timeouts. A call to another service or a file written belongs to a subscription that receives what the saga emits.
+</Callout>
+
+## When to use it
+
+- A reaction spans several Integration Events and must remember what it saw between them.
+- Waiting has a deadline: a timeout ends the process when an event never arrives.
+- Several payments, approvals or replies must all arrive before one outcome is published.
+- You are hosting a Saga and pre-generating its steps for production, or testing one.
+
+## How it works
+
+<Steps>
+<Step>
+
+### Declare it in the Composition Root
+
+`AddPouryaKitSaga` names the saga, the system Actor its emissions carry, each Integration Event that starts or advances it with the business id the event names, and its timeouts. The name is the saga's durable queue and its state table, so keep it when you rename the type.
+
+</Step>
+<Step>
+
+### Write its steps
+
+A saga derives from `PouryaKitSaga`. A step named `Start` creates the saga and returns the timeouts it schedules; a step named `Handle` advances it. Each takes the event as a `SagaInput<TSaga, TEvent>`, or one of its timeouts.
+
+</Step>
+<Step>
+
+### Emit and complete
+
+`PublishAsync` emits an Integration Event the Module declares with `Publish`. `MarkCompleted` ends the saga, and its state is deleted with that step's commit.
+
+</Step>
+<Step>
+
+### Host it on the message store
+
+The Host calls `UsePouryaKitWolverine` with its connection, and the saga's tables are created with the store. Outside Development, Wolverine loads the saga's generated steps from the Host's assembly, written there before the Release build.
+
+</Step>
+</Steps>
+
+## In the Kit's tests
+
+The Shipping Module's fulfilment saga: started by an order, advanced by each payment under two contracts, and ended by a timeout.
+
+<Snippet file="tests/ModularMonolith.Tests/Sagas/ShippingModule.cs" region="fulfilment-saga-declaration" />
+
+The starting step creates the saga from the order and schedules its deadline:
+
+<Snippet file="tests/ModularMonolith.Tests/Sagas/ShippingModule.cs" region="fulfilment-saga-start" />
+
+When the deadline passes first, the timeout step cancels the order and completes the saga:
+
+<Snippet file="tests/ModularMonolith.Tests/Sagas/ShippingModule.cs" region="fulfilment-saga-timeout" />
+
+## Guarantees and failures
+
+The rules are the skill's, in full under "Reference" below:
+
+| You want to know | Read |
+| --- | --- |
+| What the name, the inputs and the emissions of a saga may be | [Declaring a Saga](#declaring-a-saga) |
+| How a step is claimed once, keyed by tenant, and what two steps at once do | [What the Kit guarantees](#what-the-kit-guarantees) |
+| What a step must never do | [What a step must not do](#what-a-step-must-not-do) |
+| What the Host checks when it is built and starts | [The Host](#the-host) |
+| Why a Saga and a Stream cannot share one Host yet | [Limits](#limits) |
+
+## Next steps
+
+<Cards>
+  <Card title="Saga" href="/docs/concepts/saga" description="When a long-running reaction is a Saga, and when it is a few subscriptions." />
+  <Card title="Messaging" href="/docs/capabilities/messaging" description="The Integration Events a saga takes and emits." />
+  <Card title="Prepare a release" href="/docs/guides/prepare-a-release" description="Pre-generate Wolverine's code, the saga's steps included." />
+</Cards>

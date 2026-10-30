@@ -1,0 +1,111 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/shadcn.css";
+@import "fumadocs-ui/css/preset.css";
+
+/* The design tokens: shadcn's names in OKLCH, which Fumadocs reads through shadcn.css. One accent, Cobalt Indigo
+   (#615fff), the same in both themes; every other colour is a neutral, cooled slightly in dark. */
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --foreground-secondary: oklch(0.4 0 0);
+  --card: oklch(0.985 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(0.985 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.585 0.233 277.117);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --ring: oklch(0.45 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.45 0 0);
+}
+
+.dark {
+  --background: oklch(0.16 0.004 285);
+  --foreground: oklch(0.985 0 0);
+  --foreground-secondary: oklch(0.82 0.012 285);
+  --card: oklch(0.205 0.005 285);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.235 0.006 285);
+  --popover-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.265 0.007 285);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.265 0.007 285);
+  --muted-foreground: oklch(0.708 0.012 285);
+  --accent: oklch(0.32 0.008 285);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --ring: oklch(0.78 0 0);
+  --sidebar: oklch(0.185 0.005 285);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.265 0.007 285);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.78 0 0);
+}
+
+/* The same tokens as Tailwind utilities (bg-card, border-muted, text-foreground-secondary), the radius scale around
+   0.625rem, and the Geist faces next/font loads. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+@layer base {
+  /* A neutral focus ring, never the accent. */
+  :focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--ring) 50%, transparent);
+    outline-offset: 2px;
+  }
+}
+
+/* Reduced motion: no animation, transition or smooth scroll, and no view transition on a theme switch. */
+/* biome-ignore-start lint/complexity/noImportantStyles: the user's setting must override every component's own motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+/* biome-ignore-end lint/complexity/noImportantStyles: the user's setting must override every component's own motion */
