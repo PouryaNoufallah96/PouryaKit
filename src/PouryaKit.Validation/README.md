@@ -19,7 +19,7 @@ dotnet add package PouryaKit.Validation --prerelease
 - A command's or query's input needs checking before its handler runs.
 - A paged query must refuse a size, sort or filter it did not declare.
 
-It plugs into [`PouryaKit.Cqrs`](https://www.nuget.org/packages/PouryaKit.Cqrs), whose pipeline runs it, and [`PouryaKit.Web`](https://www.nuget.org/packages/PouryaKit.Web) groups its Errors by input in a problem response.
+It plugs into [`PouryaKit.Cqrs`](https://www.nuget.org/packages/PouryaKit.Cqrs), whose pipeline runs it, and [`PouryaKit.Web`](https://www.nuget.org/packages/PouryaKit.Web) answers its Errors in a problem response, each naming its input.
 
 ## Quick start
 

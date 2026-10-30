@@ -61,7 +61,7 @@ internal sealed class OpenStockItemIntegrationEventHandler(IRepository<StockItem
 - Three kinds of reaction, kept distinct, each with its own contract.
 - Handlers that write only the effect: the Kit records the Receipt, commits and acknowledges.
 - A Snapshot mapper that says what other Modules see of an aggregate, and its Tombstone.
-- Wire names that stay stable when a class is renamed.
+- Declared wire and subscription names that stay stable when a class is renamed.
 
 > [!WARNING]
 > An outside effect happens at least once. The Receipt makes an effect in the Module's database apply once; an email, a push or a call to another system cannot roll back with it, so do the outside effect last.
