@@ -1,0 +1,20 @@
+website/components/card.tsx
+  s_0523cd0a0dc5f1::t_cdbbed899b9fbc 2,4-5
+  s_0523cd0a0dc5f1::t_f25cad319667ca 30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a8ecfa17e87c3c77a3854354b230c9c99d5d60dd",
+  "prompts": {},
+  "sessions": {
+    "s_0523cd0a0dc5f1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4b0d5b41-49a0-493b-afc2-9df5a4fdbf1d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
