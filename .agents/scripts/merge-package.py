@@ -11,9 +11,9 @@ script refuses `--branch main` (only the pull request merges into main), a curre
 checkout, a head that is not a commit, a branch name that is not one (`pkg~1` names an older commit, not a branch), a
 branch whose tip is not that head (the agent committed after reporting), a head already merged, and a head whose
 code the package validation did not run on: the report names the commit `validate.py` ran on (`validated`, or `commit
-<sha>` in `validate`), and every path that differs between that commit and the head must be Markdown, since a `.cs`,
-props or script change after the validation is unproven; `src/<Id>/README.md` is packed into its package, so it counts
-as code. It runs `git merge --no-ff`. A conflict leaves the merge in progress: the orchestrator resolves and commits it, then runs the
+<sha>` in `validate`), and `validate.py` itself (`needing_validation`) must find no path between that commit and the
+head that a package, a template or the validation is built from, the same answer its `--since --plan` gives; a package's
+`src/<Id>/README.md` and a template's Markdown are packed, so they need it, and the docs and the docs site do not. It runs `git merge --no-ff`. A conflict leaves the merge in progress: the orchestrator resolves and commits it, then runs the
 --post-merge form. The post-merge checks run in order, each a process whose own exit code is read: the merged tree
 against the head's, check-ai-setup.py, check-docs.py. A missing check script fails. --push pushes the current branch to
 origin only when the tree equals the head's and every check passed. The last stdout line after a merge is
@@ -39,6 +39,7 @@ the owner's credential force-replaced each pushed tip within seconds).
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import re
@@ -48,13 +49,17 @@ import sys
 import tempfile
 from pathlib import Path
 
+_spec = importlib.util.spec_from_file_location("validate", Path(__file__).resolve().parents[2] / "scripts/packaging/validate.py")
+_validate = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_validate)
+needing_validation = _validate.needing_validation  # the one answer to what a change after a validation leaves unproven
+
 TREE_CHECK = ".agents/scripts/check-tree.py"
 CHECKS = (".agents/scripts/check-ai-setup.py", ".agents/scripts/check-docs.py")
 (CHECK_FAILED, USAGE, REPORT, DIRTY, NOT_A_COMMIT, NO_BRANCH, BRANCH_MOVED, WRONG_BRANCH, MERGE_STATE, CONFLICT,
  GIT_FAILED, TREE_DIFFERS, PUSH_FAILED, UNVALIDATED, REMOTE_REPLACED) = range(1, 16)
 HEAD = re.compile(r"[0-9a-f]{7,40}")
 VALIDATED = re.compile(r"\b(?:commit|on)\s+([0-9a-f]{7,40})\b", re.IGNORECASE)  # "On commit f7abadc", "ran on ac0481c"
-PACKED_MARKDOWN = re.compile(r"src/[^/]+/README\.md")  # one segment: a template's content/.../README.md is not the package's
 
 
 
@@ -119,18 +124,17 @@ def read_report(path: Path) -> tuple[str, str, str]:
 
 
 def require_validated(top: Path, head: str, validated: str) -> str:
-    """The validation's commit is an ancestor of the head, and only Markdown differs between them: a `.cs`, props or
-    script change after `validate.py` ran is unproven, and so is a package's README, which is packed into its nupkg; the
-    implementer reruns it on the head."""
+    """The validation's commit is an ancestor of the head, and nothing a package is built from differs between them, by
+    `validate.py`'s own answer: anything else after it ran is unproven, and the implementer reruns it on the head."""
     full = commit(top, validated)
     if not full:
         raise Stop(NOT_A_COMMIT, f"the validated commit {validated} is not a commit in this repository")
     if git(top, "merge-base", "--is-ancestor", full, head).returncode:
         raise Stop(UNVALIDATED, f"the validated commit {validated[:7]} is not an ancestor of the head {head[:7]}: rerun validate.py on the head")
-    code = [name for name in git_out(top, "diff", "--name-only", "--no-renames", full, head).splitlines() if not name.endswith(".md") or PACKED_MARKDOWN.fullmatch(name)]
+    code = needing_validation(git_out(top, "diff", "--name-only", "--no-renames", full, head).splitlines())
     if code:
         raise Stop(UNVALIDATED, f"the head {head[:7]} holds code the validation on {validated[:7]} did not run on; rerun validate.py on the head:\n" + "\n".join(f"  {name}" for name in code))
-    print(f"validated={validated[:7]}: only Markdown differs between it and the head {head[:7]}")
+    print(f"validated={validated[:7]}: nothing a package is built from differs between it and the head {head[:7]}")
     return full
 
 

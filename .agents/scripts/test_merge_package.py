@@ -222,7 +222,7 @@ class MergePackageTest(unittest.TestCase):
         self.git("checkout", "--quiet", WAVE)
         done = self.merge(self.report(head, validated=validated), "-m", "Merge pkg", checks=[self.passing])
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
-        self.assertIn(f"validated={validated[:7]}: only Markdown differs", done.stdout)
+        self.assertIn(f"validated={validated[:7]}: nothing a package is built from differs", done.stdout)
 
     def test_refuses_a_packed_readme_committed_after_the_validation(self) -> None:
         # A package's README ships inside its nupkg, so a change to it is unvalidated code, unlike other Markdown (#191).
@@ -235,11 +235,21 @@ class MergePackageTest(unittest.TestCase):
         self.assertIn("  src/PouryaKit.Domain/README.md", done.stderr)
         self.assertEqual(self.git("rev-parse", "HEAD"), self.base)
 
-    def test_accepts_a_readme_outside_a_package_root_committed_after_the_validation(self) -> None:
-        # One segment under src/ is the package's own; the rule names no other README.
+    def test_refuses_a_template_readme_committed_after_the_validation(self) -> None:
+        # A template's content is packed into PouryaKit.Templates, so Markdown there needs the validation too.
         validated = self.package()
         self.git("checkout", "--quiet", "pkg")
         head = self.commit("src/PouryaKit.Templates/content/shared/README.md", "# Generated\n", "docs: a template's README")
+        self.git("checkout", "--quiet", WAVE)
+        done = self.merge(self.report(head, validated=validated), "-m", "Merge pkg", checks=[self.passing])
+        self.assertEqual(done.returncode, 14, done.stdout + done.stderr)
+        self.assertIn("  src/PouryaKit.Templates/content/shared/README.md", done.stderr)
+
+    def test_accepts_a_docs_site_change_committed_after_the_validation(self) -> None:
+        # `validate.py --plan` answers SKIP for it, so this gate has no ground to refuse it.
+        validated = self.package()
+        self.git("checkout", "--quiet", "pkg")
+        head = self.commit("website/lib/kit-sources/export-check.ts", "export {};\n", "fix(website): after the validation")
         self.git("checkout", "--quiet", WAVE)
         done = self.merge(self.report(head, validated=validated), "-m", "Merge pkg", checks=[self.passing])
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
