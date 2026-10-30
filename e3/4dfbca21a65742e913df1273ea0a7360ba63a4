@@ -1,0 +1,25 @@
+docs/agents/brief-template.md
+  s_0523cd0a0dc5f1::t_629b326e2b6d39 87
+docs/agents/running-a-spec.md
+  s_0523cd0a0dc5f1::t_39603259048530 13
+AGENTS.md
+  s_0523cd0a0dc5f1::t_8dda85a1f7a8b8 72
+  s_0523cd0a0dc5f1::t_498ec872ae6544 70
+  s_0523cd0a0dc5f1::t_911a8869b10792 95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e34dfbca21a65742e913df1273ea0a7360ba63a4",
+  "prompts": {},
+  "sessions": {
+    "s_0523cd0a0dc5f1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4b0d5b41-49a0-493b-afc2-9df5a4fdbf1d",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
