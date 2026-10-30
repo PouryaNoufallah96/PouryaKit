@@ -1,0 +1,26 @@
+docs/agents/running-a-spec.md
+  s_2af227689c22be::t_f5d930f2ebbf4d 34
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_2af227689c22be::t_aa494bc71069be 127
+  s_2af227689c22be::t_4123e958b7f19b 92
+AGENTS.md
+  s_2af227689c22be::t_d28d3a7cf70e0b 92
+docs/acceptance.md
+  s_2af227689c22be::t_c39f2dadbd3114 3194
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a71d0c1763ef14215fe78f4c5c25759c7ce96142",
+  "prompts": {},
+  "sessions": {
+    "s_2af227689c22be": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3a643f64-8120-4ead-af2a-61d3fe9e77f8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
