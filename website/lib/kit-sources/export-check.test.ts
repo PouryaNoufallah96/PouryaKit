@@ -33,11 +33,13 @@ test('a private link behind a dot segment fails the export, literal or escaped, 
     'docs/b.html': '<a href="https://github.com/PouryaNoufallah96/pouryakit-public/%2e%2E/PouryaKit">source</a>',
     'docs/c.html': '<a href="https://github.com/PouryaNoufallah96/x/../pouryakit-public">source</a>',
     'docs/d.html': '<a href="https://github.com/../../PouryaNoufallah96/pouryakit-public">source</a>',
+    'docs/e.html': '<a href="https://github.com/PouryaNoufallah96/x%2F../../PouryaKit">source</a>',
   });
   assert.deepEqual(findings, [
     '_next/static/chunk.js private repository',
     'docs/a.html private repository',
     'docs/b.html private repository',
+    'docs/e.html private repository',
   ]);
 });
 

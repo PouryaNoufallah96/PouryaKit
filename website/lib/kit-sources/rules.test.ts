@@ -76,6 +76,7 @@ test('a dot segment is resolved as a browser resolves it, escaped or not, on eve
     'https://github.com/PouryaNoufallah96/pouryakit-public/.%2e/PouryaKit',
     'https://github.com/someone/./../PouryaNoufallah96/%2e/PouryaKit/blob/main/x.cs',
     'https://github.com/PouryaNoufallah96%2Fpouryakit-public%2F..%2FPouryaKit',
+    'https://github.com/PouryaNoufallah96/x%2F../../PouryaKit',
     'https://example.com/?u=https%3A%2F%2Fgithub.com%2FPouryaNoufallah96%2Fpouryakit-public%2F..%2FPouryaKit',
     'https://github.com/PouryaNoufallah96/pouryakit-public/..\\PouryaKit',
     'https://github.com:443/PouryaNoufallah96/pouryakit-public/../PouryaKit',

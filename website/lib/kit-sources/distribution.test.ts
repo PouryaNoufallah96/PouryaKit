@@ -174,6 +174,7 @@ test('a private link behind a dot segment fails the sync, literal or escaped, as
   for (const [name, line] of [
     ['dots-readme', '[source](https://github.com/PouryaNoufallah96/pouryakit-public/../PouryaKit)'],
     ['dots-readme-escaped', '[source](https://github.com/PouryaNoufallah96/pouryakit-public/%2e%2e/PouryaKit)'],
+    ['dots-readme-slash', '[source](https://github.com/PouryaNoufallah96/x%2F../../PouryaKit)'],
   ]) {
     const repository = fixture(name);
     appendFileSync(path.join(repository, README_TEMPLATE), `\n${line}\n`);

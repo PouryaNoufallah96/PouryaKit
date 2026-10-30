@@ -111,12 +111,13 @@ function isPrivate(owner: string, repository: string) {
 // query) separates as the character does; any other escape stays, as it stays inside a browser's path segment, so `%3F`
 // ends no path where `?` would. A `\` is the `/` a browser reads it as. A line break after a `/` or a `:` is undone, since
 // a hard-wrapped source may break an address there and a page renders it on one line. Each escape is one byte, enough for
-// the ASCII names compared.
-function asAddressed(text: string) {
+// the ASCII names compared. With `keepEscapedSlash`, an escaped `/` stays in its segment, as a browser keeps it in a path,
+// so a `..` after it removes that whole segment.
+function asAddressed(text: string, keepEscapedSlash = false) {
   return text
     .replace(/%([0-9a-f]{2})/gi, (whole, hex: string) => {
       const character = String.fromCharCode(Number.parseInt(hex, 16));
-      return /[\w.:/@-]/.test(character) ? character : whole;
+      return /[\w.:/@-]/.test(character) && !(keepEscapedSlash && character === '/') ? character : whole;
     })
     .replaceAll('\\', '/')
     .replace(/(?<=[/:])[^\S\n]*\n[^\S\n]*/g, '');
@@ -124,7 +125,11 @@ function asAddressed(text: string) {
 
 /** Every reference to the private repository in `source`: a URL on any GitHub host, with or without a scheme, or a bare owner/repo. */
 export function privateRepositoryReferences(source: string): Violation[] {
-  const text = asAddressed(source);
+  // Both readings of an escaped `/` must pass: decoded, a URL inside another's query; kept, a browser's path segment.
+  return [...new Set([asAddressed(source), asAddressed(source, true)])].flatMap(referencesIn);
+}
+
+function referencesIn(text: string): Violation[] {
   const found: Violation[] = [];
   // Where each URL found is, so an owner/repo pair inside it is not found a second time.
   const urls: [number, number][] = [];
