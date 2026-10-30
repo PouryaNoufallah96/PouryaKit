@@ -1,7 +1,8 @@
 import Link from 'fumadocs-core/link';
-import type { ComponentProps, ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 
-type CardProps = Omit<ComponentProps<'div'>, 'title'> & {
+// On HTMLElement, since the rest of these props land on a link or a div.
+type CardProps = Omit<HTMLAttributes<HTMLElement>, 'title'> & {
   title: ReactNode;
   description?: ReactNode;
   icon?: ReactNode;
@@ -26,7 +27,7 @@ export function Card({ title, description, icon, href, className, children, ...p
   const classes = `block rounded-xl border-2 border-muted bg-card p-4 text-card-foreground transition-colors @max-lg:col-span-full dark:border-foreground/10 ${className ?? ''}`;
 
   return href ? (
-    <Link href={href} data-card="" className={`${classes} hover:bg-accent/80`}>
+    <Link href={href} data-card="" className={`${classes} hover:bg-accent/80`} {...props}>
       {body}
     </Link>
   ) : (
