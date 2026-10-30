@@ -11,3 +11,7 @@ review_model = "gpt-6-astra"
 # Fallback for a spawned agent that is not one of the three roles. Those pin model and effort in .codex/agents.
 default_subagent_model = "gpt-6.1-sol"
 default_subagent_reasoning_effort = "high"
+
+[shell_environment_policy.set]
+# The same key as .claude/settings.json: docs/agents/ai-setup.md, "An agent's shell and the SDK".
+MISE_AUTO_INSTALL_DISABLE_TOOLS = "dotnet"
