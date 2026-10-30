@@ -44,9 +44,9 @@ test('a reference to the private repository fails however the sentence around it
     assert.ok(privateRepositoryReferences(`add PouryaNoufallah96/PouryaKit${end}`).length > 0, `shorthand${end}`);
   }
   for (const shape of [
-    'github.com/PouryaNoufallah96/PouryaKit-public.',
+    'github.com/PouryaNoufallah96/PouryaKit-pub.',
     'github.com/PouryaNoufallah96/PouryaKit.Core.',
-    'PouryaNoufallah96/pouryakit-public, and',
+    'PouryaNoufallah96/pouryakit-pub, and',
   ]) {
     assert.deepEqual(privateRepositoryReferences(shape), [], shape);
   }
@@ -54,10 +54,10 @@ test('a reference to the private repository fails however the sentence around it
 
 test('another repository of the owner, the owner alone and another owner pass, so the rule compares names, not substrings', () => {
   for (const shape of [
-    'https://github.com/PouryaNoufallah96/pouryakit-public',
-    'github.com/PouryaNoufallah96/PouryaKit-public/blob/main/README.md',
-    'https://raw.githubusercontent.com/PouryaNoufallah96/pouryakit-public/assets-v1/assets/kit.png',
-    'npx skills add PouryaNoufallah96/pouryakit-public',
+    'https://github.com/PouryaNoufallah96/pouryakit-pub',
+    'github.com/PouryaNoufallah96/PouryaKit-pub/blob/main/README.md',
+    'https://raw.githubusercontent.com/PouryaNoufallah96/pouryakit-pub/assets-v1/assets/kit.png',
+    'npx skills add PouryaNoufallah96/pouryakit-pub',
     'https://github.com/PouryaNoufallah96',
     'https://github.com/someone/PouryaKit',
     'https://www.nuget.org/packages/PouryaKit.Core',
@@ -69,22 +69,22 @@ test('another repository of the owner, the owner alone and another owner pass, s
 
 test('a dot segment is resolved as a browser resolves it, escaped or not, on every host the rule reads', () => {
   for (const shape of [
-    'https://github.com/PouryaNoufallah96/pouryakit-public/../PouryaKit',
-    'github.com/PouryaNoufallah96/pouryakit-public/../PouryaKit',
-    'https://github.com/PouryaNoufallah96/pouryakit-public/%2e%2e/PouryaKit',
-    'https://github.com/PouryaNoufallah96/pouryakit-public/%2E./PouryaKit',
-    'https://github.com/PouryaNoufallah96/pouryakit-public/.%2e/PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-pub/../PouryaKit',
+    'github.com/PouryaNoufallah96/pouryakit-pub/../PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-pub/%2e%2e/PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-pub/%2E./PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-pub/.%2e/PouryaKit',
     'https://github.com/someone/./../PouryaNoufallah96/%2e/PouryaKit/blob/main/x.cs',
-    'https://github.com/PouryaNoufallah96%2Fpouryakit-public%2F..%2FPouryaKit',
+    'https://github.com/PouryaNoufallah96%2Fpouryakit-pub%2F..%2FPouryaKit',
     'https://github.com/PouryaNoufallah96/x%2F../../PouryaKit',
-    'https://example.com/?u=https%3A%2F%2Fgithub.com%2FPouryaNoufallah96%2Fpouryakit-public%2F..%2FPouryaKit',
-    'https://github.com/PouryaNoufallah96/pouryakit-public/..\\PouryaKit',
-    'https://github.com:443/PouryaNoufallah96/pouryakit-public/../PouryaKit',
-    'https://raw.githubusercontent.com/PouryaNoufallah96/pouryakit-public/../PouryaKit/main/x.md',
-    'https://cdn.jsdelivr.net/gh/PouryaNoufallah96/pouryakit-public/../PouryaKit@v1/x.md',
-    'https://api.github.com/repos/PouryaNoufallah96/pouryakit-public/../PouryaKit/contents',
-    'https://pouryanoufallah96.github.io/pouryakit-public/../PouryaKit/',
-    'git@github.com:PouryaNoufallah96/pouryakit-public/../PouryaKit.git',
+    'https://example.com/?u=https%3A%2F%2Fgithub.com%2FPouryaNoufallah96%2Fpouryakit-pub%2F..%2FPouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-pub/..\\PouryaKit',
+    'https://github.com:443/PouryaNoufallah96/pouryakit-pub/../PouryaKit',
+    'https://raw.githubusercontent.com/PouryaNoufallah96/pouryakit-pub/../PouryaKit/main/x.md',
+    'https://cdn.jsdelivr.net/gh/PouryaNoufallah96/pouryakit-pub/../PouryaKit@v1/x.md',
+    'https://api.github.com/repos/PouryaNoufallah96/pouryakit-pub/../PouryaKit/contents',
+    'https://pouryanoufallah96.github.io/pouryakit-pub/../PouryaKit/',
+    'git@github.com:PouryaNoufallah96/pouryakit-pub/../PouryaKit.git',
   ]) {
     assert.ok(privateRepositoryReferences(`see ${shape} here`).length > 0, shape);
   }
@@ -92,16 +92,16 @@ test('a dot segment is resolved as a browser resolves it, escaped or not, on eve
 
 test('an escape that stays in a path keeps its segment, so the dot segment after it is still resolved', () => {
   for (const shape of [
-    'https://github.com/PouryaNoufallah96/pouryakit-public%3F/../PouryaKit',
-    'https://github.com/PouryaNoufallah96/pouryakit-public%23/../PouryaKit',
-    'https://github.com/PouryaNoufallah96/pouryakit-public%20x/../PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-pub%3F/../PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-pub%23/../PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-pub%20x/../PouryaKit',
     'https://github.com/PouryaNoufallah96/x%22/../PouryaKit',
   ]) {
     assert.ok(privateRepositoryReferences(`see ${shape} here`).length > 0, shape);
   }
   for (const shape of [
-    'https://github.com/PouryaNoufallah96/pouryakit-public?x=/../PouryaKit',
-    'https://github.com/PouryaNoufallah96/pouryakit-public#/../PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-pub?x=/../PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-pub#/../PouryaKit',
   ]) {
     assert.deepEqual(privateRepositoryReferences(shape), [], shape);
   }
@@ -111,15 +111,15 @@ test('a climb past the root stops there and reads the pair that remains, and thr
   for (const shape of [
     'https://github.com/../PouryaNoufallah96/PouryaKit',
     'https://github.com/../../../PouryaNoufallah96/x/../PouryaKit',
-    'https://github.com//../PouryaNoufallah96/pouryakit-public/%2e%2e/PouryaKit',
+    'https://github.com//../PouryaNoufallah96/pouryakit-pub/%2e%2e/PouryaKit',
   ]) {
     assert.ok(privateRepositoryReferences(shape).length > 0, shape);
   }
   for (const shape of [
-    'https://github.com/PouryaNoufallah96/x/../pouryakit-public',
-    'https://github.com/../PouryaNoufallah96/pouryakit-public/blob/main/x.md',
-    'https://github.com/PouryaNoufallah96/pouryakit-public/x/../../../PouryaKit',
-    'https://github.com/PouryaNoufallah96/pouryakit-public//../PouryaKit',
+    'https://github.com/PouryaNoufallah96/x/../pouryakit-pub',
+    'https://github.com/../PouryaNoufallah96/pouryakit-pub/blob/main/x.md',
+    'https://github.com/PouryaNoufallah96/pouryakit-pub/x/../../../PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-pub//../PouryaKit',
     'https://github.com/someone/x/../PouryaKit',
     'https://github.com/..',
     'https://github.com/../..',

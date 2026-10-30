@@ -44,12 +44,11 @@ test('a name inline markup splits fails as a reader sees it, once, and two block
 
 test('a private link behind a dot segment fails the export, literal or escaped, in an attribute and in a script', () => {
   const findings = findingsFor({
-    '_next/static/chunk.js':
-      'const a="https:\\/\\/github.com\\/PouryaNoufallah96\\/pouryakit-public\\/..\\/PouryaKit";',
-    'docs/a.html': '<a href="https://github.com/PouryaNoufallah96/pouryakit-public/../PouryaKit">source</a>',
-    'docs/b.html': '<a href="https://github.com/PouryaNoufallah96/pouryakit-public/%2e%2E/PouryaKit">source</a>',
-    'docs/c.html': '<a href="https://github.com/PouryaNoufallah96/x/../pouryakit-public">source</a>',
-    'docs/d.html': '<a href="https://github.com/../../PouryaNoufallah96/pouryakit-public">source</a>',
+    '_next/static/chunk.js': 'const a="https:\\/\\/github.com\\/PouryaNoufallah96\\/pouryakit-pub\\/..\\/PouryaKit";',
+    'docs/a.html': '<a href="https://github.com/PouryaNoufallah96/pouryakit-pub/../PouryaKit">source</a>',
+    'docs/b.html': '<a href="https://github.com/PouryaNoufallah96/pouryakit-pub/%2e%2E/PouryaKit">source</a>',
+    'docs/c.html': '<a href="https://github.com/PouryaNoufallah96/x/../pouryakit-pub">source</a>',
+    'docs/d.html': '<a href="https://github.com/../../PouryaNoufallah96/pouryakit-pub">source</a>',
     'docs/e.html': '<a href="https://github.com/PouryaNoufallah96/x%2F../../PouryaKit">source</a>',
   });
   assert.deepEqual(findings, [

@@ -5,7 +5,7 @@
 export const SITE_ADDRESS = 'https://pouryakit.vercel.app';
 
 /** The public repository, as `npx skills add` and `claude plugin marketplace add` take it. */
-export const PUBLIC_REPOSITORY = 'PouryaNoufallah96/pouryakit-public';
+export const PUBLIC_REPOSITORY = 'PouryaNoufallah96/pouryakit-pub';
 
 /** The public repository's tag that README image URLs pin, so a published README never shows a later image. */
 export const ASSETS_TAG = 'assets-v1';

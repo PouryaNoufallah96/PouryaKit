@@ -5,7 +5,7 @@ description: Give Claude Code, Codex or another coding agent the Kit's skill, th
 
 ## What it is
 
-The Kit's AI skill, `pourya-kit`, is what a coding agent reads before it writes code on the Kit: what each [Capability](/docs/reference/glossary#capability) guarantees, how to declare it and what to avoid, Capability by Capability. It is the source of the Capability references on this site, so the agent and you read the same rules. It installs from the public repository `PouryaNoufallah96/pouryakit-public`.
+The Kit's AI skill, `pourya-kit`, is what a coding agent reads before it writes code on the Kit: what each [Capability](/docs/reference/glossary#capability) guarantees, how to declare it and what to avoid, Capability by Capability. It is the source of the Capability references on this site, so the agent and you read the same rules. It installs from the public repository `PouryaNoufallah96/pouryakit-pub`.
 
 <Callout type="warn" title="Read from the repository, not your solution">
   Every install below takes the skill from the repository's default branch, and keeps that copy until you update it: `npx skills update` for the skills CLI, `claude plugin update pourya-kit@pouryakit` in Claude Code, `codex plugin marketplace upgrade pouryakit` in Codex. Upgrading the Kit in a solution does not update it.
@@ -24,10 +24,10 @@ The [skills CLI](https://github.com/vercel-labs/skills) installs it into your pr
 
 ```bash title="Terminal"
 # Into the current project
-npx skills add PouryaNoufallah96/pouryakit-public
+npx skills add PouryaNoufallah96/pouryakit-pub
 
 # For your user, in every project
-npx skills add PouryaNoufallah96/pouryakit-public -g
+npx skills add PouryaNoufallah96/pouryakit-pub -g
 ```
 
 </Tab>
@@ -36,7 +36,7 @@ npx skills add PouryaNoufallah96/pouryakit-public -g
 Add the repository as a plugin marketplace, then install the skill's plugin from it.
 
 ```bash title="Terminal"
-claude plugin marketplace add PouryaNoufallah96/pouryakit-public
+claude plugin marketplace add PouryaNoufallah96/pouryakit-pub
 claude plugin install pourya-kit@pouryakit
 ```
 
@@ -46,7 +46,7 @@ claude plugin install pourya-kit@pouryakit
 Add the repository as a plugin marketplace, then install the skill's plugin from it.
 
 ```bash title="Terminal"
-codex plugin marketplace add PouryaNoufallah96/pouryakit-public
+codex plugin marketplace add PouryaNoufallah96/pouryakit-pub
 codex plugin add pourya-kit@pouryakit
 ```
 

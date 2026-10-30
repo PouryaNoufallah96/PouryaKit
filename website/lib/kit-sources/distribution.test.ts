@@ -162,18 +162,18 @@ test("a source the site's rules refuse fails the sync, and so does a file of the
 test('a private link behind a dot segment fails the sync, literal or escaped, as a link, as text and in the README', () => {
   const web = '.agents/skills/pourya-kit/references/web.md';
   for (const [name, line] of [
-    ['dots-link', '[source](https://github.com/PouryaNoufallah96/pouryakit-public/../PouryaKit/blob/main/x.cs)'],
-    ['dots-escaped', '[source](https://github.com/PouryaNoufallah96/pouryakit-public/%2e%2E/PouryaKit)'],
-    ['dots-text', 'See `github.com/PouryaNoufallah96/pouryakit-public/../PouryaKit` here.'],
-    ['dots-text-escaped', 'See `github.com/PouryaNoufallah96/pouryakit-public/%2e%2e/PouryaKit` here.'],
+    ['dots-link', '[source](https://github.com/PouryaNoufallah96/pouryakit-pub/../PouryaKit/blob/main/x.cs)'],
+    ['dots-escaped', '[source](https://github.com/PouryaNoufallah96/pouryakit-pub/%2e%2E/PouryaKit)'],
+    ['dots-text', 'See `github.com/PouryaNoufallah96/pouryakit-pub/../PouryaKit` here.'],
+    ['dots-text-escaped', 'See `github.com/PouryaNoufallah96/pouryakit-pub/%2e%2e/PouryaKit` here.'],
   ]) {
     const repository = fixture(name);
     appendFileSync(path.join(repository, web), `\n${line}\n`);
     assert.throws(() => assembleTree(repository, covers), /private repository/, line);
   }
   for (const [name, line] of [
-    ['dots-readme', '[source](https://github.com/PouryaNoufallah96/pouryakit-public/../PouryaKit)'],
-    ['dots-readme-escaped', '[source](https://github.com/PouryaNoufallah96/pouryakit-public/%2e%2e/PouryaKit)'],
+    ['dots-readme', '[source](https://github.com/PouryaNoufallah96/pouryakit-pub/../PouryaKit)'],
+    ['dots-readme-escaped', '[source](https://github.com/PouryaNoufallah96/pouryakit-pub/%2e%2e/PouryaKit)'],
     ['dots-readme-slash', '[source](https://github.com/PouryaNoufallah96/x%2F../../PouryaKit)'],
   ]) {
     const repository = fixture(name);
@@ -209,7 +209,7 @@ test('the README fills every name it uses from one place and refuses one it does
   assert.doesNotMatch(readme, /\{\{|\}\}/);
   assert.match(readme, /claude plugin install pourya-kit@pouryakit/);
   assert.match(readme, /codex plugin add pourya-kit@pouryakit/);
-  assert.match(readme, /raw\.githubusercontent\.com\/PouryaNoufallah96\/pouryakit-public\/assets-v1\/assets\/kit\.png/);
+  assert.match(readme, /raw\.githubusercontent\.com\/PouryaNoufallah96\/pouryakit-pub\/assets-v1\/assets\/kit\.png/);
   assert.throws(() => fillReadme('see {{website}}'), /names \{\{website\}\}/);
   assert.throws(() => fillReadme('see {{ site }}'), /a \{\{ or \}\}/);
 });
