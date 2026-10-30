@@ -1,0 +1,31 @@
+website/lib/kit-sources/export-check.ts
+  s_0523cd0a0dc5f1::t_96b7f185984ca9 73-75,78-90
+  s_0523cd0a0dc5f1::t_253e2a8836147b 5
+  s_0523cd0a0dc5f1::t_95aa13c7475c3e 47-55
+website/package.json
+  s_0523cd0a0dc5f1::t_45a3a8b4ccd3b4 29
+website/lib/kit-sources/export-check.test.ts
+  s_0523cd0a0dc5f1::t_d0424de971d745 94-108
+.claude/rules/website.md
+  s_0523cd0a0dc5f1::t_8193e4506e2ea1 39
+docs/acceptance.md
+  s_0523cd0a0dc5f1::t_8193e4506e2ea1 3005
+website/pnpm-lock.yaml
+  s_0523cd0a0dc5f1::t_f90ff4918f7674 196-198,1410-1413,1978-1980,3156-3157,4025-4028
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d4f5004526eb7ef481eeb843da2a88cc5ab3ece6",
+  "prompts": {},
+  "sessions": {
+    "s_0523cd0a0dc5f1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4b0d5b41-49a0-493b-afc2-9df5a4fdbf1d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
