@@ -1,0 +1,33 @@
+website/lib/kit-sources/snippets.test.ts
+  s_0523cd0a0dc5f1::t_d99bf824cc1869 23-30,32-36
+  s_0523cd0a0dc5f1::t_bf7792c6c11b5a 31
+.claude/rules/website.md
+  s_0523cd0a0dc5f1::t_50c9e97a44cc26 39
+website/lib/kit-sources/export-check.test.ts
+  s_0523cd0a0dc5f1::t_3a51829613c66b 28-38,40-44
+  s_0523cd0a0dc5f1::t_7db32ec35f7b57 39
+src/PouryaKit.Testing/README.md
+  s_0523cd0a0dc5f1::t_02149b78249908 65-71
+docs/acceptance.md
+  s_0523cd0a0dc5f1::t_d6e2defe21ea76 2994
+  s_0523cd0a0dc5f1::t_9e506d69e51210 2997-2999
+website/lib/kit-sources/export-check.ts
+  s_0523cd0a0dc5f1::t_423050831bd286 10-11
+  s_0523cd0a0dc5f1::t_6001ae10e76ca7 153-154,158-161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "948bdb874530b6dd16e8dee58365bdc8370c486f",
+  "prompts": {},
+  "sessions": {
+    "s_0523cd0a0dc5f1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4b0d5b41-49a0-493b-afc2-9df5a4fdbf1d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
