@@ -1,12 +1,14 @@
 <Project>
   <PropertyGroup Condition="'$(IsKitPackage)' == 'true'">
     <Authors>Pourya Nofallah</Authors>
-    <Description>PouryaKit $(MSBuildProjectName): a .NET 10 Capability for vertical slices and modular monoliths.</Description>
-    <PackageProjectUrl>https://github.com/PouryaNoufallah96/PouryaKit</PackageProjectUrl>
+    <PackageProjectUrl>https://pouryakit.vercel.app</PackageProjectUrl>
     <RepositoryUrl>https://github.com/PouryaNoufallah96/PouryaKit</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageTags>pouryakit;dotnet;modular-monolith;$(PackageTags)</PackageTags>
     <EnablePackageValidation>true</EnablePackageValidation>
     <EnableSourceLink>true</EnableSourceLink>
     <EnableSourceControlManagerQueries>true</EnableSourceControlManagerQueries>
@@ -15,5 +17,7 @@
   <ItemGroup Condition="'$(IsKitPackage)' == 'true'">
     <PackageReference Include="MinVer" PrivateAssets="all" />
     <None Include="$(MSBuildThisFileDirectory)LICENSE" Pack="true" PackagePath="/" />
+    <None Include="$(MSBuildProjectDirectory)/README.md" Pack="true" PackagePath="/" />
+    <None Include="$(MSBuildThisFileDirectory)src/icon.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>

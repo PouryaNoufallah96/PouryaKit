@@ -224,6 +224,26 @@ class MergePackageTest(unittest.TestCase):
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
         self.assertIn(f"validated={validated[:7]}: only Markdown differs", done.stdout)
 
+    def test_refuses_a_packed_readme_committed_after_the_validation(self) -> None:
+        # A package's README ships inside its nupkg, so a change to it is unvalidated code, unlike other Markdown (#191).
+        validated = self.package()
+        self.git("checkout", "--quiet", "pkg")
+        head = self.commit("src/PouryaKit.Domain/README.md", "# PouryaKit.Domain\n", "docs: a README after the validation")
+        self.git("checkout", "--quiet", WAVE)
+        done = self.merge(self.report(head, validated=validated), "-m", "Merge pkg", checks=[self.passing])
+        self.assertEqual(done.returncode, 14, done.stdout + done.stderr)
+        self.assertIn("  src/PouryaKit.Domain/README.md", done.stderr)
+        self.assertEqual(self.git("rev-parse", "HEAD"), self.base)
+
+    def test_accepts_a_readme_outside_a_package_root_committed_after_the_validation(self) -> None:
+        # One segment under src/ is the package's own; the rule names no other README.
+        validated = self.package()
+        self.git("checkout", "--quiet", "pkg")
+        head = self.commit("src/PouryaKit.Templates/content/shared/README.md", "# Generated\n", "docs: a template's README")
+        self.git("checkout", "--quiet", WAVE)
+        done = self.merge(self.report(head, validated=validated), "-m", "Merge pkg", checks=[self.passing])
+        self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+
     def test_reads_the_validated_commit_from_the_validate_line(self) -> None:
         head = self.package()
         line = f"PASS 21 packages. On commit {head[:7]}, version 0.1.0-preview.0.23"
