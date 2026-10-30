@@ -101,9 +101,11 @@ internal static class PackageArtifacts
             yield return $"{name} does not carry its own README.";
         if (Optional(nuspec, "icon") != "icon.png" || !SameBytes(archive, "icon.png", Path.Combine(Repository.Root, "src", "icon.png")))
             yield return $"{name} does not carry the shared icon.";
-        foreach (var error in DescriptionViolations(name, Optional(nuspec, "description"), Optional(XDocument.Load(projectFile), "PackageDescription"))) yield return error;
+        var project = XDocument.Load(projectFile);
+        foreach (var error in DescriptionViolations(name, Optional(nuspec, "description"), Optional(project, "PackageDescription"))) yield return error;
         var tags = (Optional(nuspec, "tags") ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (tags.Distinct(StringComparer.OrdinalIgnoreCase).Count() != tags.Length || SharedTags.Any(tag => !tags.Contains(tag)))
+        var own = (Optional(project, "PackageTags") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (tags.Distinct(StringComparer.OrdinalIgnoreCase).Count() != tags.Length || !tags.ToHashSet().SetEquals([.. SharedTags, .. own]))
             yield return $"{name}'s tags are not the shared ones and its own, each once.";
     }
 

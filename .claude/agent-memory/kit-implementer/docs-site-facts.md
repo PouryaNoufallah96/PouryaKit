@@ -88,5 +88,14 @@ metadata:
 - **Check a README's absolutes before the validation, not during it:** `grep -nE "never|always|every|only|nothing"` over the READMEs against the skill found four overclaims ("a Feature never needs a repository of its own" beside the sample's `IProductRepository`) minutes into a run, and a README edit voids the run. A stopped run was already past the Release suite, the pack and `--validate-packages`, about five minutes in, so its log is good evidence that real nupkgs pass a new artifact assertion.
 - **Headless proof of a page:** scratchpad `p191/shot.py <out> <png> <route>` serves `out/` on a free port and shoots it with `chrome-headless-shell`.
 
+## Close-out fixes (#183, 2026-10-30; mdast-util-to-string via remark 15.0.1, Node 24.21.0)
+
+- **`mdast-util-to-string` reads only `value`, `alt` and children, while `remark-stringify` keeps `title`, a fence's `lang` and `meta`, and a reference's `label`**: a rules check over rendered text misses all four, and the public repository's README and skill copy publish them. Read each as a block of its own; never run vocabulary rules over raw Markdown, which refuses URLs.
+- **A title read inline splits a phrase**: pushing it into `markdownText`'s parts cut `plan [section](x "t") C` in two, so titles go after the text.
+- **URL reading traps**: resolve dot segments before dropping empty segments, or `a//../b` reads as `b`. The owner/repo pair scan masks most URL gaps because a literal adjacent pair still matches, so a gap shows only once a dot segment separates the pair: a port (`:443/`) was read as the SSH colon and became the owner, and a decoded `%3F` or `%20` ended the path before the dots. No `new URL()`: schemeless and SSH shapes throw. Still unresolved, reported: a literal delimiter the URL regex stops at (`(`, `|`), and a host-less path, which no browser sends to GitHub.
+- **A guard test that passes on the old code proves nothing yet**: mutate its predicate once (`p183close/mutate183.py`), and check the mutation can reach it. `in session [six](u "6")` did not catch a joined title; `[in session](u "6")` does.
+- **A stale commit in a proof**: `git add` a garbage file and run the step, since `git diff` compares the working tree with the index, which stands for CI's checkout. Reset the index in `finally`.
+- **Real nuspecs without a validation**: `dotnet pack PouryaKit.slnx -c Release -p:ContinuousIntegrationBuild=true -o <scratchpad>` (minutes, no Docker), then read each nupkg's nuspec.
+
 **Why:** each cost a probe or a failed run in #186, #187, #189, #190 or #194.
 **How to apply:** for any ticket under `website/` (#187 content pipeline, #189 pages, #190 covers, #194 the public tree that copies the covers, #191 package READMEs that link its assets). Related: [[merge-ci-and-workflow-tooling-facts]], [[docs-verification-tools]], [[worktree-shell-and-check-gotchas]].

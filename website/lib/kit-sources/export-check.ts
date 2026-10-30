@@ -78,8 +78,8 @@ export function htmlText(html: string): string {
 }
 
 /**
- * The text of Markdown or MDX a reader sees, each block's end a blank line: text and code, image descriptions and
- * component attributes.
+ * The text of Markdown or MDX a reader sees, each block's end a blank line: text and code, image descriptions, link and
+ * image titles and component attributes. A title comes after the text, so a phrase is still read across its link.
  */
 export function markdownText(markdown: string): string {
   let tree: Root;
@@ -89,6 +89,7 @@ export function markdownText(markdown: string): string {
     tree = parseMarkdown(markdown);
   }
   const parts: string[] = [];
+  const titles: string[] = [];
   visit(tree, (node) => {
     if (MARKDOWN_BLOCK.has(node.type)) parts.push(BLOCK_END);
     if (node.type === 'heading') {
@@ -100,13 +101,14 @@ export function markdownText(markdown: string): string {
     if (node.type === 'code') parts.push(node.value.replaceAll('\n', BLOCK_END));
     else if ('value' in node && typeof node.value === 'string' && node.type !== 'html') parts.push(node.value);
     if (node.type === 'image' && node.alt) parts.push(node.alt);
+    if ((node.type === 'link' || node.type === 'image') && node.title) titles.push(node.title);
     const attributes = (node as { attributes?: { type: string; value?: unknown }[] }).attributes;
     for (const attribute of attributes ?? []) {
       if (attribute.type === 'mdxJsxAttribute' && typeof attribute.value === 'string')
         parts.push(BLOCK_END, attribute.value);
     }
   });
-  return parts.join('');
+  return [...parts, ...titles.flatMap((title) => [BLOCK_END, title])].join('');
 }
 
 function jsonStrings(value: unknown, out: string[] = []): string[] {

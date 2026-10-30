@@ -55,12 +55,20 @@ const GITHUB_URL =
 // path: every two adjacent segments of a path are read as a pair, so a host-less /<owner>/<repo>/... counts too.
 const SHORTHAND = /(?<![\w.-])(?=([\w.-]+)\/([\w.-]+)(?![\w-]))/g;
 
+// A path's segments as a browser requests them: `.` dropped and `..` removing the segment before it, an empty one too, and
+// climbing no higher than the root. Only then is an empty segment dropped, so `a//../b` is `a/b`, not `b`.
+function resolvedSegments(path: string) {
+  const segments: string[] = [];
+  for (const segment of path.split('/')) {
+    if (segment === '..') segments.pop();
+    else if (segment !== '.') segments.push(segment);
+  }
+  return segments.filter((segment) => segment !== '');
+}
+
 function repositoryOf(host: string, path: string): { owner: string; repository: string } | undefined {
-  const segments = path
-    .replace(/^:/, '/')
-    .split(/[?#]/)[0]
-    .split('/')
-    .filter((segment) => segment !== '');
+  // What follows the host's colon is a port or, in SSH's form, the owner.
+  const segments = resolvedSegments(path.replace(/^:(?:\d+(?=\/))?/, '/').split(/[?#]/)[0]);
   const lowerHost = host.toLowerCase();
   let owner: string | undefined;
   let repository: string | undefined;
@@ -98,13 +106,19 @@ function isPrivate(owner: string, repository: string) {
   return owner.toLowerCase() === PRIVATE_OWNER && normalizeRepository(repository) === PRIVATE_REPOSITORY;
 }
 
-// An address as GitHub reads it: its percent escapes decoded over the whole text, so an escaped `/` or `:` (a URL inside
-// another's query) separates as the character does, and a line break after a `/` or a `:` undone, since a hard-wrapped
-// source may break an address there and a page renders it on one line. Each escape is one byte, enough for the ASCII
-// names compared.
+// An address as a browser sends it and GitHub reads it. The percent escapes of what a name or an address is made of are
+// decoded over the whole text, so an escaped dot makes a dot segment and an escaped `/` or `:` (a URL inside another's
+// query) separates as the character does; any other escape stays, as it stays inside a browser's path segment, so `%3F`
+// ends no path where `?` would. A `\` is the `/` a browser reads it as. A line break after a `/` or a `:` is undone, since
+// a hard-wrapped source may break an address there and a page renders it on one line. Each escape is one byte, enough for
+// the ASCII names compared.
 function asAddressed(text: string) {
   return text
-    .replace(/%([0-9a-f]{2})/gi, (_, hex: string) => String.fromCharCode(Number.parseInt(hex, 16)))
+    .replace(/%([0-9a-f]{2})/gi, (whole, hex: string) => {
+      const character = String.fromCharCode(Number.parseInt(hex, 16));
+      return /[\w.:/@-]/.test(character) ? character : whole;
+    })
+    .replaceAll('\\', '/')
     .replace(/(?<=[/:])[^\S\n]*\n[^\S\n]*/g, '');
 }
 

@@ -66,6 +66,7 @@ function fail(where: string, violations: Violation[]) {
 }
 
 // What the skill's folder holds: a file the sync does not know fails, so nothing is published or left out unseen.
+// `publishedReferences` holds `references/` to its two lists the same way.
 function expectEntries(root: string, folder: string, expected: string[]) {
   const present = listDirectory(root, folder);
   if (present.join('\n') !== [...expected].sort().join('\n')) {

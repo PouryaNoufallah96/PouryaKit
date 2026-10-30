@@ -47,8 +47,9 @@ jobs:
   # The docs site: install from the committed lockfile (install scripts only for pnpm-workspace.yaml's allowBuilds),
   # check every npm package's licence, run the site's tests (`pnpm --dir website test`), lint, and build the static
   # export, which generates the pages it renders from the Kit's sources and fails when out/ carries anything private
-  # (website/lib/kit-sources/). Then typeset the covers and regenerate the public repository's tree, which fails when
-  # any file differs from website/distribution/manifest.sha256 (website/scripts/sync-public.ts).
+  # (website/lib/kit-sources/). Then typeset the covers, fail when that render differs from the committed src/icon.png
+  # (each nupkg packs the committed file and the public repository the render), and regenerate the public repository's
+  # tree, which fails when any file differs from website/distribution/manifest.sha256 (website/scripts/sync-public.ts).
   website:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -72,4 +73,5 @@ jobs:
       - run: pnpm --dir website lint
       - run: pnpm --dir website build
       - run: pnpm --dir website covers
+      - run: git diff --exit-code -- src/icon.png
       - run: pnpm --dir website sync-public --check

@@ -34,10 +34,18 @@ function admitted(term, name) {
   );
 }
 
-// An expression passes when one of its choices (OR) is a conjunction (AND) of admitted identifiers. A term matches
-// only by equality with an admitted identifier, so every other shape fails: parentheses, WITH, a custom text.
+// What a term may be, an SPDX identifier's shape: no operator, parenthesis, space or empty text.
+const IDENTIFIER = /^(?!(?:AND|OR|WITH)$)[A-Za-z0-9][A-Za-z0-9.-]*\+?$/;
+
+// The grammar is choices (OR) of conjunctions (AND) of identifiers, and the whole expression must be in it before any
+// branch counts, so every other shape fails, beside an admitted MIT too: parentheses, WITH, a custom text, an empty
+// branch. In it, an expression passes when one choice is a conjunction of admitted identifiers.
 export function admits(expression, name) {
-  return expression.split(' OR ').some((choice) => choice.split(' AND ').every((term) => admitted(term, name)));
+  const choices = expression.split(' OR ').map((choice) => choice.split(' AND '));
+  return (
+    choices.flat().every((term) => IDENTIFIER.test(term)) &&
+    choices.some((terms) => terms.every((term) => admitted(term, name)))
+  );
 }
 
 // Each reported package with the licence its own package.json declares: pnpm guesses one from a LICENSE file when the

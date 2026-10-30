@@ -67,6 +67,70 @@ test('another repository of the owner, the owner alone and another owner pass, s
   }
 });
 
+test('a dot segment is resolved as a browser resolves it, escaped or not, on every host the rule reads', () => {
+  for (const shape of [
+    'https://github.com/PouryaNoufallah96/pouryakit-public/../PouryaKit',
+    'github.com/PouryaNoufallah96/pouryakit-public/../PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-public/%2e%2e/PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-public/%2E./PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-public/.%2e/PouryaKit',
+    'https://github.com/someone/./../PouryaNoufallah96/%2e/PouryaKit/blob/main/x.cs',
+    'https://github.com/PouryaNoufallah96%2Fpouryakit-public%2F..%2FPouryaKit',
+    'https://example.com/?u=https%3A%2F%2Fgithub.com%2FPouryaNoufallah96%2Fpouryakit-public%2F..%2FPouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-public/..\\PouryaKit',
+    'https://github.com:443/PouryaNoufallah96/pouryakit-public/../PouryaKit',
+    'https://raw.githubusercontent.com/PouryaNoufallah96/pouryakit-public/../PouryaKit/main/x.md',
+    'https://cdn.jsdelivr.net/gh/PouryaNoufallah96/pouryakit-public/../PouryaKit@v1/x.md',
+    'https://api.github.com/repos/PouryaNoufallah96/pouryakit-public/../PouryaKit/contents',
+    'https://pouryanoufallah96.github.io/pouryakit-public/../PouryaKit/',
+    'git@github.com:PouryaNoufallah96/pouryakit-public/../PouryaKit.git',
+  ]) {
+    assert.ok(privateRepositoryReferences(`see ${shape} here`).length > 0, shape);
+  }
+});
+
+test('an escape that stays in a path keeps its segment, so the dot segment after it is still resolved', () => {
+  for (const shape of [
+    'https://github.com/PouryaNoufallah96/pouryakit-public%3F/../PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-public%23/../PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-public%20x/../PouryaKit',
+    'https://github.com/PouryaNoufallah96/x%22/../PouryaKit',
+  ]) {
+    assert.ok(privateRepositoryReferences(`see ${shape} here`).length > 0, shape);
+  }
+  for (const shape of [
+    'https://github.com/PouryaNoufallah96/pouryakit-public?x=/../PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-public#/../PouryaKit',
+  ]) {
+    assert.deepEqual(privateRepositoryReferences(shape), [], shape);
+  }
+});
+
+test('a climb past the root stops there and reads the pair that remains, and throws on none', () => {
+  for (const shape of [
+    'https://github.com/../PouryaNoufallah96/PouryaKit',
+    'https://github.com/../../../PouryaNoufallah96/x/../PouryaKit',
+    'https://github.com//../PouryaNoufallah96/pouryakit-public/%2e%2e/PouryaKit',
+  ]) {
+    assert.ok(privateRepositoryReferences(shape).length > 0, shape);
+  }
+  for (const shape of [
+    'https://github.com/PouryaNoufallah96/x/../pouryakit-public',
+    'https://github.com/../PouryaNoufallah96/pouryakit-public/blob/main/x.md',
+    'https://github.com/PouryaNoufallah96/pouryakit-public/x/../../../PouryaKit',
+    'https://github.com/PouryaNoufallah96/pouryakit-public//../PouryaKit',
+    'https://github.com/someone/x/../PouryaKit',
+    'https://github.com/..',
+    'https://github.com/../..',
+    'https://github.com/.',
+    'https://cdn.jsdelivr.net/..',
+    'https://pouryanoufallah96.github.io/..',
+    'https://api.github.com/repos/..',
+  ]) {
+    assert.deepEqual(privateRepositoryReferences(shape), [], shape);
+  }
+});
+
 test("the private plan's citations fail in text: a decision of section G, a row of section I and a section", () => {
   for (const text of [
     'as G.6 decides',

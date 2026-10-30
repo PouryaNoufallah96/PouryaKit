@@ -55,14 +55,17 @@ export type SkillEntry = {
   group: 'Capabilities' | 'Guides';
 };
 
-/** The published references, checked against the directory: an unlisted file and a listed file that is gone both fail. */
+/**
+ * The published references, checked against the directory: an unlisted file of any kind and a listed file that is gone
+ * both fail.
+ */
 export function publishedReferences(root: string): string[] {
-  const present = listDirectory(root, REFERENCES).filter((file) => file.endsWith('.md'));
+  const present = listDirectory(root, REFERENCES);
   const known = new Set<string>([...PUBLISHED_REFERENCES, ...MAINTAINER_GUIDES]);
   const unlisted = present.filter((file) => !known.has(file));
   if (unlisted.length > 0) {
     throw new Error(
-      `kit-sources: ${unlisted.join(', ')} under ${REFERENCES} is on neither list in lib/kit-sources/references.ts; add it to PUBLISHED_REFERENCES to publish it, or to MAINTAINER_GUIDES`,
+      `kit-sources: ${unlisted.join(', ')} under ${REFERENCES} is on neither list in lib/kit-sources/references.ts; add a reference to PUBLISHED_REFERENCES to publish it, or to MAINTAINER_GUIDES, and move any other file out`,
     );
   }
   const missing = [...PUBLISHED_REFERENCES].filter((file) => !present.includes(file));

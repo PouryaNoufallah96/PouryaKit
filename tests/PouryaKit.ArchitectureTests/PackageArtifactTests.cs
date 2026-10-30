@@ -17,7 +17,7 @@ public sealed class PackageArtifactTests
         var nuspec = XDocument.Parse($"""
             <package><metadata><id>{Id}</id><version>{Version}</version>
               <description />
-              <tags>pouryakit dotnet modular-monolith cqrs</tags>
+              <tags />
               <readme>README.md</readme>
               <icon>icon.png</icon>
               <license type="file">LICENSE</license>
@@ -25,8 +25,9 @@ public sealed class PackageArtifactTests
               <dependencies><group><dependency id="PouryaKit.Domain" version="{Version}" /></group></dependencies>
             </metadata></package>
             """);
-        nuspec.Descendants("description").Single().Value =
-            XDocument.Load(Path.Combine(Repository.Root, "src", Id, $"{Id}.csproj")).Descendants("PackageDescription").Single().Value;
+        var project = XDocument.Load(Path.Combine(Repository.Root, "src", Id, $"{Id}.csproj"));
+        nuspec.Descendants("description").Single().Value = project.Descendants("PackageDescription").Single().Value;
+        nuspec.Descendants("tags").Single().Value = $"pouryakit dotnet modular-monolith {project.Descendants("PackageTags").Single().Value.Replace(';', ' ')}";
         return nuspec;
     }
 
@@ -65,7 +66,11 @@ public sealed class PackageArtifactTests
     [InlineData("icon entry", "PouryaKit.Cqrs does not carry the shared icon.")]
     [InlineData("icon file", "PouryaKit.Cqrs does not carry the shared icon.")]
     [InlineData("unset description", "PouryaKit.Cqrs's description is not its project's own PackageDescription.")]
-    [InlineData("missing tag", "PouryaKit.Cqrs's tags are not the shared ones and its own, each once.")]
+    [InlineData("missing shared tag", "PouryaKit.Cqrs's tags are not the shared ones and its own, each once.")]
+    [InlineData("missing own tag", "PouryaKit.Cqrs's tags are not the shared ones and its own, each once.")]
+    [InlineData("shared tags only", "PouryaKit.Cqrs's tags are not the shared ones and its own, each once.")]
+    [InlineData("replaced tag", "PouryaKit.Cqrs's tags are not the shared ones and its own, each once.")]
+    [InlineData("extra tag", "PouryaKit.Cqrs's tags are not the shared ones and its own, each once.")]
     [InlineData("repeated tag", "PouryaKit.Cqrs's tags are not the shared ones and its own, each once.")]
     public void A_package_page_that_is_not_the_packages_own_is_rejected(string defect, string expected)
     {
@@ -87,8 +92,12 @@ public sealed class PackageArtifactTests
             case "icon entry": Set("icon", "docs/icon.png"); break;
             case "icon file": Corrupt("icon.png"); break;
             case "unset description": Set("description", "Package Description"); break;
-            case "missing tag": Set("tags", "pouryakit dotnet cqrs"); break;
-            case "repeated tag": Set("tags", "pouryakit dotnet modular-monolith cqrs Cqrs"); break;
+            case "missing shared tag": Set("tags", "pouryakit dotnet cqrs commands queries dispatcher"); break;
+            case "missing own tag": Set("tags", "pouryakit dotnet modular-monolith cqrs commands queries"); break;
+            case "shared tags only": Set("tags", "pouryakit dotnet modular-monolith"); break;
+            case "replaced tag": Set("tags", "pouryakit dotnet modular-monolith cqrs commands queries mediator"); break;
+            case "extra tag": Set("tags", "pouryakit dotnet modular-monolith cqrs commands queries dispatcher mediator"); break;
+            case "repeated tag": Set("tags", "pouryakit dotnet modular-monolith cqrs commands queries dispatcher cqrs"); break;
         }
 
         Assert.Equal([expected], PackageArtifacts.MetadataViolations(nuspec, archive, Id, Evidence));
