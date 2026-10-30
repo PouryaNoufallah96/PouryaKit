@@ -7,7 +7,8 @@ import { addressViolations, type Violation, vocabularyViolations } from './rules
 
 // The build's last step: the rules over what the static export publishes. Every file of out/ is read for the address
 // rules (the private repository, a local path), markup included, since a link lives in an attribute and a bundle can
-// carry a path, with character references and string escapes undone first. Only rendered text is read for delivery vocabulary and tracker codes, since a CSS colour (#615fff), an
+// carry a path, with character references and string escapes undone first, and rendered text too, since inline markup
+// can split a name a browser shows whole. Only rendered text is read for delivery vocabulary and tracker codes, since a CSS colour (#615fff), an
 // attribute or a script is no text a reader sees: an HTML page's text outside its scripts and styles, with its
 // character references decoded; each page's Markdown and llms*.txt as Markdown text, code included, link destinations
 // and heading ids left out; and every string of the search index. A phrase is read across a soft line break, never
@@ -149,12 +150,15 @@ export function checkExport(out: string): { findings: Finding[]; scanned: number
     if (content.includes('\u0000')) continue;
     scanned++;
     const addressed = unescapeStrings(relative.endsWith('.html') ? decodeEntities(content) : content);
-    for (const violation of addressViolations(addressed, relative.endsWith('.js')))
-      findings.push({ ...violation, file: relative });
+    const markup = addressViolations(addressed, relative.endsWith('.js'));
+    for (const violation of markup) findings.push({ ...violation, file: relative });
     const text = renderedTextOf(relative, content);
     if (text === undefined) continue;
     rendered++;
-    for (const violation of vocabularyViolations(text)) findings.push({ ...violation, file: relative });
+    // What the markup already showed is one finding, not two; what is left is a name its inline markup split.
+    const seen = new Set(markup.map(({ rule, match }) => `${rule}\0${match}`));
+    const split = addressViolations(text).filter(({ rule, match }) => !seen.has(`${rule}\0${match}`));
+    for (const violation of [...split, ...vocabularyViolations(text)]) findings.push({ ...violation, file: relative });
   }
   return { findings, scanned, rendered };
 }

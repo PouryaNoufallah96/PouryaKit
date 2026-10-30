@@ -20,6 +20,20 @@ test("a named region of the Proving Sample's code is its lines between the marke
   assert.doesNotMatch(code, /#region|#endregion|namespace/);
 });
 
+test('a region is exactly the lines between its markers, each of them kept', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'kit-snippet-'));
+  try {
+    mkdirSync(path.join(fixture, 'tests'), { recursive: true });
+    writeFileSync(
+      path.join(fixture, 'tests/A.cs'),
+      'before\n#region a\nclass A\n{\n    int B() => 1;\n\n    int C() => 2;\n}\n#endregion\nafter\n',
+    );
+    assert.equal(readSnippet(fixture, 'tests/A.cs', 'a'), 'class A\n{\n    int B() => 1;\n\n    int C() => 2;\n}');
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
 test('a missing region, a missing file and a file outside the sample and the tests each fail', () => {
   assert.throws(() => readSnippet(root, handler, 'no-such-region'), /the region no-such-region does not exist/);
   assert.throws(() => readSnippet(root, `${handler}.missing`, 'rename-product-handler'), /does not exist/);

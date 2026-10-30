@@ -25,6 +25,23 @@ test('a private link in an attribute fails the export, though no reader sees it 
   assert.deepEqual(findings, ['docs/index.html private repository']);
 });
 
+test('a name inline markup splits fails as a reader sees it, once, and two blocks stay two', () => {
+  const findings = findingsFor({
+    'docs/a.html': '<p><code>PouryaNoufallah96</code>/<code>PouryaKit</code></p>',
+    'docs/b.html': '<p>Built for Cyber<strong>nod</strong>.</p>',
+    'docs/c.html': '<p>PouryaNoufallah96/PouryaKit</p>',
+    'docs/d.html': '<p>PouryaNoufallah96</p><p>/PouryaKit</p>',
+    'docs/e.html': '<p>Cyber</p><p>nod</p>',
+    'docs/f.md': '**PouryaNoufallah96**/`PouryaKit`\n',
+  });
+  assert.deepEqual(findings, [
+    'docs/a.html private repository',
+    'docs/b.html private project (Cybernod)',
+    'docs/c.html private repository',
+    'docs/f.md private repository',
+  ]);
+});
+
 test('a private link behind a dot segment fails the export, literal or escaped, in an attribute and in a script', () => {
   const findings = findingsFor({
     '_next/static/chunk.js':
