@@ -1,0 +1,42 @@
+docs/agents/ai-setup.md
+  s_ebdd029215ce19::t_c623f0f9ae8e7b 34
+website/lib/kit-sources/rules.ts
+  s_ebdd029215ce19::t_c623f0f9ae8e7b 195
+website/lib/kit-sources/distribution.test.ts
+  s_ebdd029215ce19::t_c623f0f9ae8e7b 169-170
+docs/agents/brief-template.md
+  s_ebdd029215ce19::t_c623f0f9ae8e7b 58
+.githooks/pre-commit
+  s_ebdd029215ce19::t_c623f0f9ae8e7b 15,22-23
+website/lib/kit-sources/distribution.ts
+  s_ebdd029215ce19::t_c623f0f9ae8e7b 136-137
+  s_ebdd029215ce19::t_af7ec54913ea8b 16
+.agents/scripts/publish-public.sh
+  s_ebdd029215ce19::t_c623f0f9ae8e7b 68,148-150
+.agents/scripts/publish-nuget.sh
+  s_ebdd029215ce19::t_c623f0f9ae8e7b 22-24,33-34,47-48,51-59,61,91,135
+.agents/scripts/test_ci_local.py
+  s_ebdd029215ce19::t_c623f0f9ae8e7b 12,29-38
+  s_ebdd029215ce19::t_f76445b95c5ef5 39
+.agents/scripts/deploy-site.sh
+  s_ebdd029215ce19::t_c623f0f9ae8e7b 53-54,78
+.agents/scripts/test_release_scripts.py
+  s_ebdd029215ce19::t_c623f0f9ae8e7b 16,51-53,55,57-59,66-67
+  s_ebdd029215ce19::t_ad7828bf6e5c16 68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "973924db73e9c0caec022964d3050174c2b06032",
+  "prompts": {},
+  "sessions": {
+    "s_ebdd029215ce19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80160123-5e97-4bc1-94e2-0b32b7a21bc0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
