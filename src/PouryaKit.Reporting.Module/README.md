@@ -35,10 +35,17 @@ builder.Services.AddSingleton<IReportLayouts, SalesReports>();
 The first port decides who may request a kind, with which parameters:
 
 ```csharp
-public Task<bool> MayRequestAsync(OperationContext context, ReportRequest request, CancellationToken cancellationToken)
+public Task<bool> MayRequestAsync(
+    OperationContext context,
+    ReportRequest request,
+    CancellationToken cancellationToken
+)
 {
     return Task.FromResult(
-        context.Actor.Kind == ActorKind.Person && context.Tenant is not null && request.Kind == Kind && MonthOf(request) is not null
+        context.Actor.Kind == ActorKind.Person
+            && context.Tenant is not null
+            && request.Kind == Kind
+            && MonthOf(request) is not null
     );
 }
 ```

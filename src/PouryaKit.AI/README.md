@@ -30,7 +30,9 @@ Register the Host's one client and bind its options, as the Proving Sample does:
 
 ```csharp
 builder.Services.AddPouryaKitAI();
-builder.Services.Configure<PouryaKitAIOptions>(builder.Configuration.GetSection("PouryaKit:AI"));
+builder.Services.Configure<PouryaKitAIOptions>(
+    builder.Configuration.GetSection("PouryaKit:AI")
+);
 builder.Services.AddSingleton<IChatGuardrail, CardNumberGuardrail>();
 ```
 

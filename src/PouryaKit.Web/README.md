@@ -53,8 +53,19 @@ internal sealed class GetStockItemEndpoint : IEndpoint
     public void Map(IEndpointRouteBuilder routes) =>
         routes.MapGet(
             "/stock-items/{productId}",
-            async (Guid productId, OperationContext context, IGatewayProcessor<InventoryModule> inventory, CancellationToken cancellationToken) =>
-                (await inventory.QueryAsync(new GetStockItemQuery(productId), context, cancellationToken)).ToHttpResult()
+            async (
+                Guid productId,
+                OperationContext context,
+                IGatewayProcessor<InventoryModule> inventory,
+                CancellationToken cancellationToken
+            ) =>
+                (
+                    await inventory.QueryAsync(
+                        new GetStockItemQuery(productId),
+                        context,
+                        cancellationToken
+                    )
+                ).ToHttpResult()
         );
 }
 ```

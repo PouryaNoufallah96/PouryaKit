@@ -40,8 +40,12 @@ public sealed class BillingModule : IModuleDefinition
     {
         module.UsePouryaKitPostgres<BillingDbContext>(connectionName: "app", schema: "billing");
         module.AddPouryaKitCqrs();
-        module.Subscribe<ProductCreatedV1, OpenPriceListIntegrationEventHandler>("billing.product-created");
-        module.Subscribe<AccountOpenedV1, OpenWelcomeQuoteIntegrationEventHandler>("billing.account-opened");
+        module.Subscribe<ProductCreatedV1, OpenPriceListIntegrationEventHandler>(
+            "billing.product-created"
+        );
+        module.Subscribe<AccountOpenedV1, OpenWelcomeQuoteIntegrationEventHandler>(
+            "billing.account-opened"
+        );
         module.AddPouryaKitDelayedCommand<ExpireQuoteCommand>("billing.expire-quote");
     }
 }
@@ -52,8 +56,19 @@ Run an Operation through its Gateway, with the context of the running request. T
 ```csharp
 routes.MapGet(
     "/stock-items/{productId}",
-    async (Guid productId, OperationContext context, IGatewayProcessor<InventoryModule> inventory, CancellationToken cancellationToken) =>
-        (await inventory.QueryAsync(new GetStockItemQuery(productId), context, cancellationToken)).ToHttpResult()
+    async (
+        Guid productId,
+        OperationContext context,
+        IGatewayProcessor<InventoryModule> inventory,
+        CancellationToken cancellationToken
+    ) =>
+        (
+            await inventory.QueryAsync(
+                new GetStockItemQuery(productId),
+                context,
+                cancellationToken
+            )
+        ).ToHttpResult()
 );
 ```
 

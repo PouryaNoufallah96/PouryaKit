@@ -35,20 +35,32 @@ app.MapPouryaKitGrpcServices();
 A service runs each call through the Gateway, as the Proving Sample's does:
 
 ```csharp
-internal sealed class ProductGrpcService(IGatewayProcessor<CatalogModule> catalog, OperationContext context)
-    : ProductService.ProductServiceBase
+internal sealed class ProductGrpcService(
+    IGatewayProcessor<CatalogModule> catalog,
+    OperationContext context
+) : ProductService.ProductServiceBase
 {
-    public override async Task<ProductReply> GetProduct(GetProductRequest request, ServerCallContext call) =>
+    public override async Task<ProductReply> GetProduct(
+        GetProductRequest request,
+        ServerCallContext call
+    ) =>
         Guid.TryParse(request.ProductId, CultureInfo.InvariantCulture, out var productId)
-            ? (await catalog.QueryAsync(new GetProductQuery(productId), context, call.CancellationToken)).ToGrpcResponse(product =>
-                new ProductReply
+            ? (
+                await catalog.QueryAsync(
+                    new GetProductQuery(productId),
+                    context,
+                    call.CancellationToken
+                )
+            ).ToGrpcResponse(product => new ProductReply
                 {
                     Id = product.Id.ToString(),
                     CategoryId = product.CategoryId.ToString(),
                     Name = product.Name,
                 }
             )
-            : throw new RpcException(new Status(StatusCode.InvalidArgument, "product_id is not a Guid."));
+            : throw new RpcException(
+                new Status(StatusCode.InvalidArgument, "product_id is not a Guid.")
+            );
 }
 ```
 

@@ -37,10 +37,13 @@ internal sealed class StubMessages;
 
 internal sealed record GreetQuery : Query<string>;
 
-internal sealed class GreetQueryHandler(IStringLocalizer<StubMessages> messages) : QueryHandler<GreetQuery, string>
+internal sealed class GreetQueryHandler(IStringLocalizer<StubMessages> messages)
+    : QueryHandler<GreetQuery, string>
 {
-    public override Task<Result<string>> Handle(GreetQuery query, CancellationToken cancellationToken) =>
-        Task.FromResult<Result<string>>(messages["Greeting"].Value);
+    public override Task<Result<string>> Handle(
+        GreetQuery query,
+        CancellationToken cancellationToken
+    ) => Task.FromResult<Result<string>>(messages["Greeting"].Value);
 }
 ```
 

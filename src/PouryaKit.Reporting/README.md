@@ -29,10 +29,21 @@ Register the renderer in each Module that renders reports ([Registering](https:/
 ```csharp
 private static readonly ReportLayout Sales = new(
     "Monthly sales",
-    new ReportTable([new("Product"), new("Quantity", ReportAlignment.Right), new("Amount", ReportAlignment.Right)], Rows)
+    new ReportTable(
+        [
+            new("Product"),
+            new("Quantity", ReportAlignment.Right),
+            new("Amount", ReportAlignment.Right),
+        ],
+        Rows
+    )
 )
 {
-    Introduction = [new ReportHeading("October 2026"), new ReportParagraph("Every order the shop settled this month.")],
+    Introduction =
+    [
+        new ReportHeading("October 2026"),
+        new ReportParagraph("Every order the shop settled this month."),
+    ],
     PageHeader = "Acme Shop",
     PageFooter = "Confidential",
     Branding = new() { Logo = Logo, Accent = new(0x1F, 0x4E, 0x79) },

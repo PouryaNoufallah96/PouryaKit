@@ -37,10 +37,20 @@ A command stores text under a key, then searches by meaning what it stored:
 internal sealed class StoreThenSearchPassageCommandHandler(IVectorStore vectors)
     : CommandHandler<StoreThenSearchPassageCommand, IReadOnlyList<VectorMatch>>
 {
-    public override async Task<Result<IReadOnlyList<VectorMatch>>> Handle(StoreThenSearchPassageCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<IReadOnlyList<VectorMatch>>> Handle(
+        StoreThenSearchPassageCommand command,
+        CancellationToken cancellationToken
+    )
     {
-        await vectors.StoreAsync(VectorsModule.Passages, command.Key, command.Text, cancellationToken);
-        return Result.Success(await vectors.SearchAsync(VectorsModule.Passages, command.Text, 1, cancellationToken));
+        await vectors.StoreAsync(
+            VectorsModule.Passages,
+            command.Key,
+            command.Text,
+            cancellationToken
+        );
+        return Result.Success(
+            await vectors.SearchAsync(VectorsModule.Passages, command.Text, 1, cancellationToken)
+        );
     }
 }
 ```

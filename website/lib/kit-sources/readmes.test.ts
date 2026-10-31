@@ -104,7 +104,7 @@ test('a link names a page of the site or a Kit package on nuget.org, and nothing
 
 test('a line of C# that no real file holds fails, and a comment or a blank line is excepted', () => {
   const handler =
-    'internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId> products, OperationContext context)';
+    'internal sealed class CreateProductCommandHandler(';
   assert.match(
     drifted(cqrs, swap(handler, handler.replace('CreateProductCommandHandler', 'MakeProductCommandHandler'))),
     /this line of C# is in no file/,

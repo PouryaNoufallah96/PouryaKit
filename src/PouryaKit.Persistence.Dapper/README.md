@@ -36,7 +36,10 @@ Lease a connection in the handler and write the SQL against your own schema, as 
 internal sealed class GetProductQueryHandler(IReadConnectionFactory connections)
     : QueryHandler<GetProductQuery, ProductDto>
 {
-    public override async Task<Result<ProductDto>> Handle(GetProductQuery query, CancellationToken cancellationToken)
+    public override async Task<Result<ProductDto>> Handle(
+        GetProductQuery query,
+        CancellationToken cancellationToken
+    )
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var product = await connection.QuerySingleOrDefaultAsync<ProductDto>(

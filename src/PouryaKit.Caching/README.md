@@ -46,9 +46,12 @@ internal sealed record GetProductQuery(Guid ProductId) : Query<ProductDto>, ICac
     public IReadOnlyCollection<string> CacheTags => [ProductTag(ProductId), ProductsTag];
 }
 
-internal sealed record RenameProductCommand(Guid ProductId, string Name) : Command, IInvalidatesCache
+internal sealed record RenameProductCommand(Guid ProductId, string Name)
+    : Command,
+        IInvalidatesCache
 {
-    public IReadOnlyCollection<string> InvalidatedCacheTags => [GetProductQuery.ProductTag(ProductId)];
+    public IReadOnlyCollection<string> InvalidatedCacheTags =>
+        [GetProductQuery.ProductTag(ProductId)];
 }
 ```
 

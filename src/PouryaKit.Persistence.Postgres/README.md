@@ -29,7 +29,10 @@ Declare the Module's store in its Composition Root, as the Proving Sample's Cata
 
 ```csharp
 module.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
-module.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
+module.MapPouryaKitUniqueConstraint<CatalogDbContext>(
+    ProductConfiguration.NameIndex,
+    ProductErrors.NameInUse
+);
 ```
 
 Number sequences take a registration of their own, and a migration of the Module that calls `CreateNumberSequenceTable` with its schema, or the first number throws:

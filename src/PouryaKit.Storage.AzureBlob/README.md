@@ -26,7 +26,9 @@ It implements [`PouryaKit.Storage`](https://www.nuget.org/packages/PouryaKit.Sto
 Bind the provider's options from configuration, then register it in the Host, as the Kit's tests do:
 
 ```csharp
-builder.Services.Configure<PouryaKitAzureBlobStorageOptions>(builder.Configuration.GetSection("PouryaKit:Storage:AzureBlob"));
+builder.Services.Configure<PouryaKitAzureBlobStorageOptions>(
+    builder.Configuration.GetSection("PouryaKit:Storage:AzureBlob")
+);
 builder.Services.AddPouryaKitAzureBlobStorage();
 ```
 

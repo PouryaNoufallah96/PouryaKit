@@ -29,7 +29,9 @@ Declare the permission on the record, as the Proving Sample does:
 
 ```csharp
 [RequiresPermission(RemoveProductsCommand.Permission)]
-internal sealed record RemoveProductsCommand(IReadOnlyList<string> Names) : Command<int>, IInvalidatesCache
+internal sealed record RemoveProductsCommand(IReadOnlyList<string> Names)
+    : Command<int>,
+        IInvalidatesCache
 {
     public const string Permission = "catalog.products.remove";
 
@@ -47,11 +49,16 @@ builder.Services.AddScoped<IActorPermissions, CallerPermissions>();
 Say which permissions an Actor holds:
 
 ```csharp
-public sealed class CallerPermissions(IHttpContextAccessor http, IOptions<PouryaKitWebOptions> web) : IActorPermissions
+public sealed class CallerPermissions(IHttpContextAccessor http, IOptions<PouryaKitWebOptions> web)
+    : IActorPermissions
 {
     public const string ClaimType = "permission";
 
-    public Task<bool> HasPermissionAsync(OperationContext context, string permission, CancellationToken cancellationToken)
+    public Task<bool> HasPermissionAsync(
+        OperationContext context,
+        string permission,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(context);
         var caller = http.HttpContext?.User;

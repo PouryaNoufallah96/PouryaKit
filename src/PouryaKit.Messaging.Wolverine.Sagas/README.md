@@ -30,8 +30,7 @@ Declare the saga, with its system Actor, in the Composition Root, as the Kit's t
 module.AddPouryaKitSaga<FulfilmentSaga>(
     Fulfilment,
     systemActor: Fulfilment,
-    saga => saga
-        .Input<OrderPlacedV1>(placed => placed.OrderId)
+    saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)
         .Input<PaymentReceivedV1>(paid => paid.OrderId)
         .Input<PaymentReceivedV2>(paid => paid.OrderId)
         .Timeout<FulfilmentTimeout>()
@@ -41,9 +40,15 @@ module.AddPouryaKitSaga<FulfilmentSaga>(
 An Integration Event starts it and schedules its timeout, and the timeout ends it:
 
 ```csharp
-public static (FulfilmentSaga, FulfilmentTimeout) Start(SagaInput<FulfilmentSaga, OrderPlacedV1> placed) =>
+public static (FulfilmentSaga, FulfilmentTimeout) Start(
+    SagaInput<FulfilmentSaga, OrderPlacedV1> placed
+) =>
     (
-        new FulfilmentSaga { Order = placed.Event.OrderId, Installments = placed.Event.Installments },
+        new FulfilmentSaga
+        {
+            Order = placed.Event.OrderId,
+            Installments = placed.Event.Installments,
+        },
         new FulfilmentTimeout(TimeSpan.FromSeconds(placed.Event.PayWithinSeconds))
     );
 

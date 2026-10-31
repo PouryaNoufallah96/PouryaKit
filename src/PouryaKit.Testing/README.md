@@ -33,7 +33,8 @@ Derive one fixture for the assembly, over your Host's composition, as the templa
 
 public sealed class App : HostFixture
 {
-    protected override IHost CreateHost(string connectionString) => ComposeHost(Environments.Development, connectionString);
+    protected override IHost CreateHost(string connectionString) =>
+        ComposeHost(Environments.Development, connectionString);
 }
 ```
 
@@ -45,7 +46,10 @@ public async Task A_category_counts_a_new_product_in_the_same_commit_and_a_faile
 {
     var catalog = Fixture.Gateway<CatalogModule>();
     var lamps = Guid.CreateVersion7();
-    await catalog.SendAsync(new CreateCategoryCommand(lamps, "Lamps"), TestContext.Current.CancellationToken);
+    await catalog.SendAsync(
+        new CreateCategoryCommand(lamps, "Lamps"),
+        TestContext.Current.CancellationToken
+    );
 
     var created = await catalog.SendAsync(
         new CreateProductCommand(Guid.CreateVersion7(), lamps, "Desk lamp"),
@@ -58,8 +62,16 @@ public async Task A_category_counts_a_new_product_in_the_same_commit_and_a_faile
 
     Assert.True(created.IsSuccess);
     Assert.Equal(CategoryErrors.NotFound, Assert.Single(refused.Errors));
-    Assert.Equal([[lamps, 1]], await Fixture.RowsAsync("select id, product_count from catalog.categories"));
-    Assert.Equal(["Desk lamp"], (await Fixture.RowsAsync("select name from catalog.products")).Select(row => row[0]));
+    Assert.Equal(
+        [
+            [lamps, 1],
+        ],
+        await Fixture.RowsAsync("select id, product_count from catalog.categories")
+    );
+    Assert.Equal(
+        ["Desk lamp"],
+        (await Fixture.RowsAsync("select name from catalog.products")).Select(row => row[0])
+    );
 }
 ```
 
@@ -67,7 +79,15 @@ A Gateway call without a context runs as the test Actor with no tenant, and a te
 
 ```csharp
 var context = new OperationContext(GatewayTestExtensions.TestActor, tenant);
-Assert.True((await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), context, TestContext.Current.CancellationToken)).IsSuccess);
+Assert.True(
+    (
+        await catalog.SendAsync(
+            new CreateCategoryCommand(category, "Lamps"),
+            context,
+            TestContext.Current.CancellationToken
+        )
+    ).IsSuccess
+);
 ```
 
 ## What you get

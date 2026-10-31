@@ -28,7 +28,8 @@ You rarely reference it alone: [`PouryaKit.Persistence.Postgres`](https://www.nu
 Derive the Module's DbContext, then map only what is specific, as the Proving Sample does:
 
 ```csharp
-internal sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options) : PouryaKitDbContext(options);
+internal sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
+    : PouryaKitDbContext(options);
 
 internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
 {

@@ -31,11 +31,19 @@ A Notification Handler publishes an Integration Event once the product is commit
 internal sealed class PublishProductCreatedNotificationHandler(IIntegrationEventPublisher events)
     : INotificationHandler<ProductCreatedDomainEvent>
 {
-    public Task<Result> Handle(ProductCreatedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public Task<Result> Handle(
+        ProductCreatedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         events.Publish(
             domainEvent.Id,
-            new ProductCreatedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.ProductId.Value, domainEvent.Name)
+            new ProductCreatedV1(
+                domainEvent.Id,
+                domainEvent.OccurredOn,
+                domainEvent.ProductId.Value,
+                domainEvent.Name
+            )
         );
         return Task.FromResult(Result.Success());
     }
@@ -45,12 +53,20 @@ internal sealed class PublishProductCreatedNotificationHandler(IIntegrationEvent
 Another Module applies it in an Integration Event Handler, writing only the effect:
 
 ```csharp
-internal sealed class OpenStockItemIntegrationEventHandler(IRepository<StockItem, StockItemId> stockItems, OperationContext context)
-    : IIntegrationEventHandler<ProductCreatedV1>
+internal sealed class OpenStockItemIntegrationEventHandler(
+    IRepository<StockItem, StockItemId> stockItems,
+    OperationContext context
+) : IIntegrationEventHandler<ProductCreatedV1>
 {
-    public async Task<Result> Handle(ProductCreatedV1 integrationEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        ProductCreatedV1 integrationEvent,
+        CancellationToken cancellationToken
+    )
     {
-        await stockItems.AddAsync(StockItem.Open(integrationEvent.ProductId, integrationEvent.OccurredOn, context.Tenant), cancellationToken);
+        await stockItems.AddAsync(
+            StockItem.Open(integrationEvent.ProductId, integrationEvent.OccurredOn, context.Tenant),
+            cancellationToken
+        );
         return Result.Success();
     }
 }

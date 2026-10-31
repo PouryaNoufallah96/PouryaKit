@@ -30,7 +30,10 @@ Declare the Module's versions in its Composition Root, as the Proving Sample's C
 ```csharp
 module.AddPouryaKitApiVersions(
     "/catalog",
-    versions => versions.HasDeprecatedApiVersion(new ApiVersion(1, 0)).HasApiVersion(new ApiVersion(2, 0))
+    versions =>
+        versions
+            .HasDeprecatedApiVersion(new ApiVersion(1, 0))
+            .HasApiVersion(new ApiVersion(2, 0))
 );
 ```
 
@@ -38,7 +41,9 @@ Register the versions and their documents in the Host, and map the documents:
 
 ```csharp
 builder.Services.AddPouryaKitOpenApi();
-builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
+builder.Services.Configure<PouryaKitOpenApiOptions>(
+    builder.Configuration.GetSection("PouryaKit:OpenApi")
+);
 app.MapPouryaKitOpenApi().AllowAnonymous();
 ```
 

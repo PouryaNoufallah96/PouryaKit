@@ -28,7 +28,16 @@ Inject `IFileStorage` where a Feature handles a file. From the Kit's tests, an u
 
 ```csharp
 var key = Key();
-Assert.True((await fixture.Storage.UploadAsync(key, new MemoryStream(Report), "application/pdf", Cancel)).IsSuccess);
+Assert.True(
+    (
+        await fixture.Storage.UploadAsync(
+            key,
+            new MemoryStream(Report),
+            "application/pdf",
+            Cancel
+        )
+    ).IsSuccess
+);
 
 var download = await fixture.Storage.DownloadAsync(key, Cancel);
 await using var file = download.Value;

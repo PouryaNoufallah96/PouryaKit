@@ -26,7 +26,9 @@ It implements [`PouryaKit.Storage`](https://www.nuget.org/packages/PouryaKit.Sto
 Bind the provider's options from configuration, then register it in the Host, as the Proving Sample does:
 
 ```csharp
-builder.Services.Configure<PouryaKitS3StorageOptions>(builder.Configuration.GetSection("PouryaKit:Storage:S3"));
+builder.Services.Configure<PouryaKitS3StorageOptions>(
+    builder.Configuration.GetSection("PouryaKit:Storage:S3")
+);
 builder.Services.AddPouryaKitS3Storage();
 ```
 

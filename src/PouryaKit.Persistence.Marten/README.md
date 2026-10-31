@@ -55,9 +55,15 @@ Load and change a Stream in the handler through `IStreams`:
 ```csharp
 internal sealed class PostEntryCommandHandler(IStreams streams) : CommandHandler<PostEntryCommand>
 {
-    public override async Task<Result> Handle(PostEntryCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        PostEntryCommand command,
+        CancellationToken cancellationToken
+    )
     {
-        if (await streams.LoadAsync<Account>(new AccountId(command.AccountId), cancellationToken) is not { } account)
+        if (
+            await streams.LoadAsync<Account>(new AccountId(command.AccountId), cancellationToken)
+            is not { } account
+        )
         {
             return AccountErrors.NotFound;
         }

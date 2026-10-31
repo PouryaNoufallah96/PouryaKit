@@ -28,10 +28,21 @@ Send from a Notification Handler, as the Kit's tests do:
 ```csharp
 internal sealed record NoteMailedDomainEvent(string To, string Text) : DomainEvent;
 
-internal sealed class MailNoteNotificationHandler(IEmailSender email) : INotificationHandler<NoteMailedDomainEvent>
+internal sealed class MailNoteNotificationHandler(IEmailSender email)
+    : INotificationHandler<NoteMailedDomainEvent>
 {
-    public Task<Result> Handle(NoteMailedDomainEvent domainEvent, CancellationToken cancellationToken) =>
-        email.SendAsync(new EmailMessage(domainEvent.To, domainEvent.Text, $"The note {domainEvent.Text} is written."), cancellationToken);
+    public Task<Result> Handle(
+        NoteMailedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    ) =>
+        email.SendAsync(
+            new EmailMessage(
+                domainEvent.To,
+                domainEvent.Text,
+                $"The note {domainEvent.Text} is written."
+            ),
+            cancellationToken
+        );
 }
 ```
 

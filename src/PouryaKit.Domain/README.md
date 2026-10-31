@@ -29,7 +29,12 @@ A Module's handlers return these types through [`PouryaKit.Cqrs`](https://www.nu
 There is nothing to register. A behaviour checks its rule, returns an Error for a business failure and raises a Domain Event on success, as the Proving Sample's `Product` does:
 
 ```csharp
-public static Result<Product> Create(ProductId id, CategoryId categoryId, string name, string tenant)
+public static Result<Product> Create(
+    ProductId id,
+    CategoryId categoryId,
+    string name,
+    string tenant
+)
 {
     ArgumentNullException.ThrowIfNull(id);
     ArgumentNullException.ThrowIfNull(categoryId);

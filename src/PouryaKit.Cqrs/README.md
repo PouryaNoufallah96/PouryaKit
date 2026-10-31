@@ -35,12 +35,18 @@ Declare the command and its one handler, as the Proving Sample does:
 
 ```csharp
 [Idempotent]
-internal sealed record CreateProductCommand(Guid ProductId, Guid CategoryId, string Name) : Command<Guid>;
+internal sealed record CreateProductCommand(Guid ProductId, Guid CategoryId, string Name)
+    : Command<Guid>;
 
-internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId> products, OperationContext context)
-    : CommandHandler<CreateProductCommand, Guid>
+internal sealed class CreateProductCommandHandler(
+    IRepository<Product, ProductId> products,
+    OperationContext context
+) : CommandHandler<CreateProductCommand, Guid>
 {
-    public override async Task<Result<Guid>> Handle(CreateProductCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<Guid>> Handle(
+        CreateProductCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var product = Product.Create(
             new ProductId(command.ProductId),

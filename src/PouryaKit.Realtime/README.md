@@ -42,10 +42,15 @@ internal sealed class NewProductsRealtime : IEndpoint
 Push from a Notification Handler, as the Proving Sample does:
 
 ```csharp
-internal sealed class AnnounceNewProductNotificationHandler(INewProductAnnouncer announcer, IRealtimePublisher realtime)
-    : INotificationHandler<ProductCreatedDomainEvent>
+internal sealed class AnnounceNewProductNotificationHandler(
+    INewProductAnnouncer announcer,
+    IRealtimePublisher realtime
+) : INotificationHandler<ProductCreatedDomainEvent>
 {
-    public async Task<Result> Handle(ProductCreatedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        ProductCreatedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         await announcer.AnnounceAsync(
             new NewProductAnnouncement(domainEvent.ProductId.Value, domainEvent.Name),

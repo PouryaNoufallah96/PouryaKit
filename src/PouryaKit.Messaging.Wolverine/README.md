@@ -29,17 +29,25 @@ Declare a Module's messaging in its Composition Root, from the Proving Sample's 
 ```csharp
 module.AddPouryaKitNotificationHandlers();
 module.Publish<ProductCreatedV1>("catalog.product-created.v1");
-module.Subscribe<ProductCreatedV1, OpenPriceListIntegrationEventHandler>("billing.product-created");
+module.Subscribe<ProductCreatedV1, OpenPriceListIntegrationEventHandler>(
+    "billing.product-created"
+);
 module.AddPouryaKitDelayedCommand<ExpireQuoteCommand>("billing.expire-quote");
 ```
 
 Schedule a delayed command from a handler; the Unit of Work writes it with the quote, in one commit:
 
 ```csharp
-internal sealed class OpenQuoteCommandHandler(IRepository<Quote, QuoteId> quotes, IDelayedCommands later, TimeProvider time)
-    : CommandHandler<OpenQuoteCommand>
+internal sealed class OpenQuoteCommandHandler(
+    IRepository<Quote, QuoteId> quotes,
+    IDelayedCommands later,
+    TimeProvider time
+) : CommandHandler<OpenQuoteCommand>
 {
-    public override async Task<Result> Handle(OpenQuoteCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        OpenQuoteCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var quote = Quote.Open(new QuoteId(command.QuoteId), time.GetUtcNow() + command.ValidFor);
         await quotes.AddAsync(quote, cancellationToken);

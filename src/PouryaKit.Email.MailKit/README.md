@@ -28,7 +28,9 @@ Register it in the Host and bind its options from configuration, as the Proving 
 
 ```csharp
 builder.Services.AddPouryaKitMailKit();
-builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSection("PouryaKit:Email"));
+builder.Services.Configure<PouryaKitMailKitOptions>(
+    builder.Configuration.GetSection("PouryaKit:Email")
+);
 ```
 
 ## What you get

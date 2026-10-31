@@ -36,7 +36,12 @@ A Host's exporter listens to the Kit's source and meter, as the service defaults
 
 ```csharp
 .AddMeter(OperationTelemetry.SourceName, ChatClientSource)
-.AddSource(builder.Environment.ApplicationName, OperationTelemetry.SourceName, NpgsqlSource, ChatClientSource)
+.AddSource(
+    builder.Environment.ApplicationName,
+    OperationTelemetry.SourceName,
+    NpgsqlSource,
+    ChatClientSource
+)
 ```
 
 ## What you get
