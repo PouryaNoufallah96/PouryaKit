@@ -155,6 +155,28 @@ test("a source the site's rules refuse fails the sync, and so does a file of the
   assert.throws(() => assembleTree(stray, covers), /diagram\.png under .* is on neither list/);
 });
 
+test('the copy refuses what an outside agent cannot open or trust, and keeps a generated path', () => {
+  const web = '.agents/skills/pourya-kit/references/web.md';
+  for (const [name, line, rule] of [
+    ['glossary', "- Names follow the Kit's `GLOSSARY.md`: Module, Feature.", /only the private repository holds/],
+    ['sample', '`dotnet run --project samples/ModularMonolith/src/ModularMonolith.AppHost` starts it.', /private/],
+    [
+      'sample-text',
+      "The Proving Sample's Ledger (samples/ModularMonolith/src/Modules/Ledger/) is a Stream Module.",
+      /private/,
+    ],
+    ['test-path', 'The proof is `tests/ModularMonolith.Tests/StreamTests.cs`.', /private/],
+    ['version', '```bash\n# From nuget.org, such as 0.1.0-preview.0.28.\n```', /a published version/],
+  ] as const) {
+    const repository = fixture(name);
+    appendFileSync(path.join(repository, web), `\n${line}\n`);
+    assert.throws(() => assembleTree(repository, covers), rule, line);
+  }
+  const generated = fixture('generated');
+  appendFileSync(path.join(generated, web), '\n`tests/Acme.Shop.Tests` hosts the generated Host.\n');
+  assert.ok(assembleTree(generated, covers).length > 0);
+});
+
 test('a private link behind a dot segment fails the sync, literal or escaped, as a link, as text and in the README', () => {
   const web = '.agents/skills/pourya-kit/references/web.md';
   for (const [name, line] of [

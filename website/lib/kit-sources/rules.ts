@@ -186,6 +186,22 @@ export function renderedTextViolations(text: string): Violation[] {
   return [...addressViolations(text), ...vocabularyViolations(text)];
 }
 
+// What an agent reading the public copy cannot open or trust. A path that only this repository holds is a dead end, and
+// a version goes stale with the next release, which then means another release of the skill. A generated solution's own
+// paths, such as tests/Acme.Shop.Tests, are the reader's.
+const COPY_RULES: [string, RegExp][] = [
+  [
+    'a path only the private repository holds',
+    /(?<![\w./-])(?:GLOSSARY\.md|AGENTS\.md|samples\/|tests\/(?:ModularMonolith|PouryaKit)|scripts\/(?:packaging|ci)\/|docs\/(?:adr|agents|architecture)\/|\.agents\/)/g,
+  ],
+  ['a published version', /\b\d+\.\d+\.\d+-(?:preview|rc)\b/g],
+];
+
+/** The rules of the public skill's text, code included: an outside agent has this copy and nothing else. */
+export function copyViolations(text: string): Violation[] {
+  return matchAll(text, COPY_RULES);
+}
+
 export function describe(violations: Violation[]) {
   return violations.map((violation) => `${violation.rule}: ${JSON.stringify(violation.match)}`).join('; ');
 }

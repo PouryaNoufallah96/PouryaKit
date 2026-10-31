@@ -85,6 +85,7 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | Private fields are `_camelCase`; `const` and `static readonly` fields PascalCase | IDE1006 in `.editorconfig` |
 | A release pins nothing: its commit, version and tags come from the manifest, the checkout or the remote | `test_release_scripts.py` over `.agents/scripts/publish-nuget.sh`, `publish-public.sh` and `deploy-site.sh`, and refuses a stray ref on the public repository |
 | A change to a script commits only with its tests green, however the command is chained | `.githooks/pre-commit` runs `.agents/scripts`' tests when those scripts, the guard or the hooks are staged |
+| The public skill names nothing an outside agent cannot open, and no version | `copyViolations` (`website/lib/kit-sources/rules.ts`) fails the sync; `.agents/scripts/publish-public.sh` refuses a changed skill whose version did not move |
 | A commit runs its hooks | `.agents/hooks/guard.py` denies `--no-verify` on a commit or merge; `docs/agents/brief-template.md` gives parallel packages the path that needs no bypass |
 | C# and project files are formatted with CSharpier, and the docs site with Biome | CI's `format` and `website` jobs; `.githooks/pre-commit` on the files a commit stages; `.csharpierignore` names what stays out |
 | A local CI reproduction runs every job and step CI does | `test_ci_local.py` compares `.agents/scripts/ci-local.sh` with `.github/workflows/ci.yml` |
