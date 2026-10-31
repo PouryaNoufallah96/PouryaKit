@@ -61,4 +61,5 @@ dotnet test PouryaKit.slnx
 - Diagrams of the Kit's structure, runtime flows and publication, in reading order: [the architecture document's Diagrams section](docs/architecture/README.md#diagrams)
 - Which test proves each acceptance scenario: [docs/acceptance.md](docs/acceptance.md)
 - Decisions: [docs/adr/](docs/adr/)
+- Plan: [docs/foundation-review.md](docs/foundation-review.md)
 - Vocabulary: [GLOSSARY.md](GLOSSARY.md)
