@@ -303,7 +303,7 @@ These follow from Option C, not from preference:
   `UnknownMessageBehavior.DeadLetterQueue` it is dead-lettered instead. A stored delivery whose subscription was
   renamed fails the name lookup and is dead-lettered after the retry ladder. A subscription removed while its type
   keeps others takes the same code path; that case was not tested separately. *Tested (2026-10-10) on 6.48.3; see
-  its note below.*
+  the delayed commands amendment's 2026-10-10 "Pinned" note on a command type no declaration names, below.*
 - **Lazy code generation.** Generated chains compile at first delivery, not at Host start. Option C generates none, but
   the Kit still needs its own startup check of every subscription.
 

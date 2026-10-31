@@ -18,9 +18,11 @@ open-generic handlers and no `Result`-aware rollback.
 
 ## Confirmed by Spike S3 (2026-10-05)
 
-Each option served the same Module from a second assembly, with internal commands, queries, handlers,
-validators and authorizers behind one public Gateway class, in a container built with `ValidateOnBuild` and
-`ValidateScopes`.
+The Spike code is `spikes/s3-dispatcher/` at commit `cbc64ba6d99148423e1dcf4d5e754298ce728ef6`,
+reachable through the tag `spike/s3-dispatcher`; it is not merged. Each option served the same Module
+from a second assembly, with internal commands, queries, handlers, validators and authorizers behind one
+public Gateway class, in a container built with `ValidateOnBuild` and `ValidateScopes`.
+`dotnet test spikes/s3-dispatcher` passed 21 of 21.
 
 Behaviour did not decide it. `OwnedDispatcherTests`, `SourceGeneratedMediatorTests` (generator in the
 Host) and `GeneratorInModuleBehaviourTests` (generator in the Module) all pass
@@ -317,8 +319,8 @@ rule is written, and the name of one seam the pipeline contracts amendment lists
 - **One helper.** The type's assembly in the keys amendment wrote the rule at both keys, each naming the other, because
   `PouryaKit.Caching` sees none of Cqrs's internals. It is written once, as the public
   `OperationTypes.KeyName(Type)` of `PouryaKit.Cqrs`, which the dispatcher's idempotency key and Caching's query cache
-  key both call. It caches the name per type, so `Assembly.GetName()` no longer runs for every cacheable query. The
-  keys are not identical as wholes: both hold the tenant and the Actor, the idempotency key adds the request id, and
+  key both call. It caches the name per type, so `Assembly.GetName()` no longer runs for every cacheable query.
+  *Corrected on 2026-10-11:* the keys are not identical as wholes: both hold the tenant and the Actor, the idempotency key adds the request id, and
   the cache key the query's own key. Both hold the type's name as `OperationTypes.KeyName` writes it: as it is in the
   idempotency key's `command` column, and escaped in the cache key, as every part of that key is.
   `TypeKeyTests.The_idempotency_key_and_the_cache_key_name_a_type_by_its_full_name_and_its_assemblys_simple_name`

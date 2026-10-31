@@ -61,6 +61,8 @@ guide, `docs/guide/durability/sagas.md`. Paths below are into that repository un
   Every other event is published by `Orders` through the Kit's Notification Handler path.
 - **Between commit and mark**: `SagaSpikeOptions.AfterCommit`, run by the Kit's storage after the step's commit and
   before the step returns, so before Wolverine flushes what the step stored or marks its envelope handled.
+- **Red once.** Each deciding test was run once with its behaviour switched off, by a one-line mutation, and failed; the
+  switch is named in its row.
 
 ## The items
 
@@ -353,7 +355,7 @@ where the step's claim would never commit (`SagaCheck`): a saga and a Stream (Ma
 The refusal of the amendment above stands, and the way out is not a Kit package. Wolverine documents that "If the
 Marten integration is active, Marten will take precedence for the `Saga` storage for each type"
 (`JasperFx/wolverine`, tag `V6.48.3`, commit `c1eab2a7f04de7350c3b54741ae00351c6c303d1`,
-`docs/guide/durability/sagas.md`), and it fixed the opposite order as a bug (issue 3443, recorded in
+`docs/guide/durability/sagas.md`), and it fixed the opposite order as a bug ([issue 3443](https://github.com/JasperFx/wolverine/issues/3443), recorded in
 `src/Wolverine/Persistence/Sagas/LightweightSagaPersistenceFrameProvider.cs` at that tag): neither 6.48.3 nor 6.52.0
 offers a supported way to keep one saga type on the lightweight storage while Marten's integration is active. A probe on
 `619ad6b4` showed that moving the lightweight provider first in Wolverine's list of providers, which is not a documented

@@ -407,7 +407,7 @@ citations above stay as they were read.
   plain loop: one `ReconnectedAsync` exception ended it, and that listener and every one after it kept a channel with no
   consumer while its status stayed `Accepting` and health stayed green. 6.48.0 rebuilds each agent on its own, retries a
   failed rebuild on a bounded schedule and tolerates tearing down a channel the client already closed
-  (`JasperFx/wolverine` issues 4864 and 4867). A Kit Host receives through exactly one durable broker listener.
+  (`JasperFx/wolverine` [issue 4864](https://github.com/JasperFx/wolverine/issues/4864) and [pull request 4867](https://github.com/JasperFx/wolverine/pull/4867)). A Kit Host receives through exactly one durable broker listener.
 - **Which release.** 6.48.2. The 6.48.1 notes concern global partitioning, which the Kit does not use; the 6.48.2 notes make the leader's agent assignment scale to tens of thousands of
   agents and add `DurabilitySettings.LeaderTakeoverHoldEvaluations` (default 1), which withholds first-time placements
   for one evaluation after a leader takeover, and stands down while no other node holds an assignment. The Kit uses no
@@ -419,24 +419,24 @@ citations above stay as they were read.
   own tests. `RabbitMqDeliveryTests.A_host_whose_broker_connections_drop_while_it_runs_consumes_its_queue_again_and_a_publication_committed_after_arrives`
   closes every connection of the test's vhost from the broker while both Hosts run: the Inventory Host's queue loses its
   consumer, gets it back, and a publication committed afterwards arrives. It passes on 6.46.0 as well, so it is not a
-  regression test for the upstream fix (issue 4867): a single broker's forced close makes no rebuild throw, and the defect needs one that does.
+  regression test for the upstream fix ([pull request 4867](https://github.com/JasperFx/wolverine/pull/4867)): a single broker's forced close makes no rebuild throw, and the defect needs one that does.
 - **6.48.3.** The seven pins move on to 6.48.3. Its notes: a blue/green warm-up spreads over every green node that
-  joins, not only the first (issue 4904); three gaps in that machinery, found by a randomized soak, are closed (issue
-  4909); fleet-scale simulated scenarios, test code only (issue 4905); a chain that only reads through `IQuerySession`
-  but sends gets its commit, in the Marten, Polecat and Fisher frame providers (issues 4910 and 4912). The tags also
-  differ by issue 4903, which the notes leave out: `IgnoreEnvelopes`
+  joins, not only the first ([pull request 4904](https://github.com/JasperFx/wolverine/pull/4904)); three gaps in that machinery, found by a randomized soak, are closed
+  ([pull request 4909](https://github.com/JasperFx/wolverine/pull/4909)); fleet-scale simulated scenarios, test code only ([pull request 4905](https://github.com/JasperFx/wolverine/pull/4905)); a chain that only reads through `IQuerySession`
+  but sends gets its commit, in the Marten, Polecat and Fisher frame providers ([pull requests 4910](https://github.com/JasperFx/wolverine/pull/4910) and [4912](https://github.com/JasperFx/wolverine/pull/4912)). The tags also
+  differ by [pull request 4903](https://github.com/JasperFx/wolverine/pull/4903), which the notes leave out: `IgnoreEnvelopes`
   applies inside the `AddStage` stages of a tracked test session. The Kit uses no Marten, Polecat, Fisher, event
-  subscription or tracked session. Issues 4904 and 4909 change the leader's agent placement, which every Balanced node runs,
+  subscription or tracked session. [Pull requests 4904](https://github.com/JasperFx/wolverine/pull/4904) and [4909](https://github.com/JasperFx/wolverine/pull/4909) change the leader's agent placement, which every Balanced node runs,
   a single one included, but their new branches act only when the leader moves an agent between nodes; a single node
   only starts its own. Each package stays `MIT` with a `net10.0` asset, and its dependencies change only within the
   `WolverineFx` packages (`WolverineFx.RDBMS` and `WolverineFx.Newtonsoft` follow to 6.48.3): `JasperFx` 2.81.0, Weasel
   9.41.0 and `RabbitMQ.Client` 7.2.2 stay, and restore resolves the same 312 package versions but those seven. No file
-  of `Wolverine.RabbitMQ` changed between V6.48.2 and V6.48.3, so the repair is the one described above: issue 4867 (merge
+  of `Wolverine.RabbitMQ` changed between V6.48.2 and V6.48.3, so the repair is the one described above: [pull request 4867](https://github.com/JasperFx/wolverine/pull/4867) (merge
   commit `cbb1c4e`, 2026-10-07) is an ancestor of V6.48.0, V6.48.2 and V6.48.3 and not of V6.46.0, and the decompiled
   `Wolverine.RabbitMQ.dll` of 6.46.0 and 6.48.2 differ in exactly its two files: `ConnectionMonitor.cs`, which rebuilds
   each agent in its own try/catch and retries a failed rebuild after 1, 2, 5, 10, 20 and 30 s, and
   `RabbitMqChannelAgent.cs`, whose teardown tolerates a closed channel. The drop test above proves recovery after a
-  clean drop and delivery after it, and no regression test for issue 4867 that uses only the broker exists: every refusal a
+  clean drop and delivery after it, and no regression test for [pull request 4867](https://github.com/JasperFx/wolverine/pull/4867) that uses only the broker exists: every refusal a
   single-node broker can produce on demand closes the channel at channel level, and 6.46.0's unchanged channel-shutdown
   hook then rebuilds again, while the exceptions that strand a listener (the client's own disposal errors, a quorum
   queue without a majority) cannot be produced on demand, and upstream's regression test injects an internal fake agent
@@ -485,7 +485,7 @@ different Hosts on one schema are unsupported. They are now a stated rule, and t
   Modules or applications, each take a store of their own: another database, or another schema on one database through
   the `schema` argument of `UsePouryaKitWolverine(connectionName, schema, configure)`. Sharing a schema between different
   applications is unsupported.
-- **Why.** `JasperFx/wolverine` issue 4923, reproduced on WolverineFx 6.45.0 and 6.48.2: when two different applications share one envelope-store schema in Balanced mode, the durability agent of a
+- **Why.** `JasperFx/wolverine` [issue 4923](https://github.com/JasperFx/wolverine/issues/4923), reproduced on WolverineFx 6.45.0 and 6.48.2: when two different applications share one envelope-store schema in Balanced mode, the durability agent of a
   node without the handlers recovers the other application's inbox rows and dead-letters them, as a Kit Host does with
   every message it has no handler for (`UsePouryaKitWolverine` sets `UnknownMessageBehavior.DeadLetterQueue`), or drops
   them under Wolverine's default. The maintainer's only comment, of 2026-10-09: "Process A and Process B in your usage
@@ -550,7 +550,7 @@ the record of what Spike S1 ran on, and each amendment above keeps the version i
   dead-lettered on Azure Service Bus, SNS and Kafka, and the Kit's broker is RabbitMQ. It marks
   `MultipleHandlerBehavior.ClassicCombineIntoOneLogicalHandler` obsolete, which the Kit never names. 6.50.0's
   Wolverine.HTTP body binding and 6.49.0's SQL Server envelope ids do not reach a Kit Host.
-- **The inbox stale time (6.51.0, `JasperFx/wolverine` issue 5022).** The finding above that nothing updates the
+- **The inbox stale time (6.51.0, `JasperFx/wolverine` [issue 5022](https://github.com/JasperFx/wolverine/issues/5022)).** The finding above that nothing updates the
   `timestamp` the release compares no longer holds. At tag `V6.52.0` the release takes only rows with status `Incoming`
   (`src/Persistence/Wolverine.RDBMS/Durability/BumpStaleIncomingEnvelopesOperation.cs`), the scheduled-job poll's claim
   sets `timestamp` to the database's `now()` (`src/Persistence/Wolverine.RDBMS/MessageDatabase.cs`,
