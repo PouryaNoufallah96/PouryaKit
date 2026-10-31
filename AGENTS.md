@@ -84,6 +84,7 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | One namespace per Kit package; application namespaces follow folders (ADR 0010) | `NamespaceTests`; IDE0130 in `.editorconfig`; `SampleNamespaceTests` for the Proving Sample, partial types included |
 | Private fields are `_camelCase`; `const` and `static readonly` fields PascalCase | IDE1006 in `.editorconfig` |
 | A release pins nothing: its commit, version and tags come from the manifest, the checkout or the remote | `test_release_scripts.py` over `.agents/scripts/publish-nuget.sh`, `publish-public.sh` and `deploy-site.sh`, and refuses a stray ref on the public repository |
+| A change to a script commits only with its tests green, however the command is chained | `.githooks/pre-commit` runs `.agents/scripts`' tests when those scripts, the guard or the hooks are staged |
 | A commit runs its hooks | `.agents/hooks/guard.py` denies `--no-verify` on a commit or merge; `docs/agents/brief-template.md` gives parallel packages the path that needs no bypass |
 | C# and project files are formatted with CSharpier, and the docs site with Biome | CI's `format` and `website` jobs; `.githooks/pre-commit` on the files a commit stages; `.csharpierignore` names what stays out |
 | A local CI reproduction runs every job and step CI does | `test_ci_local.py` compares `.agents/scripts/ci-local.sh` with `.github/workflows/ci.yml` |

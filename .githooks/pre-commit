@@ -39,6 +39,15 @@ if [ -n "$csharp" ]; then
     echo "pre-commit: no restored CSharpier, so the format check did not run; run dotnet tool restore" >&2
   fi
 fi
+# The scripts' own tests, when a commit changes them: a command that chains past a failing test still cannot commit it.
+# Git exports its repository to a hook, and the tests build repositories of their own. About 30 seconds.
+if printf '%s\n' "$staged" | grep -qE '^(\.agents/scripts/|\.agents/hooks/|\.githooks/)'; then
+  if ! output=$(cd "$top" && env -u GIT_DIR -u GIT_INDEX_FILE -u GIT_WORK_TREE -u GIT_PREFIX python3 -m unittest discover -s .agents/scripts -p 'test_*.py' 2>&1); then
+    printf '%s\n' "$output" | tail -20 >&2
+    echo "pre-commit: the tests in .agents/scripts failed" >&2
+    exit 1
+  fi
+fi
 if printf '%s\n' "$staged" | grep -qE '^(\.claude/|\.codex/|\.agents/|AGENTS\.md$|CLAUDE\.md$|skills-lock\.json$)'; then
   (cd "$top" && python3 .agents/scripts/check-ai-setup.py) || { echo "pre-commit: check-ai-setup.py failed" >&2; exit 1; }
 fi

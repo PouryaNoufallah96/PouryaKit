@@ -103,6 +103,22 @@ class PreCommitTests(unittest.TestCase):
         self.git("add", "website/lib/rules.ts")
         self.assertIn("so Biome did not run", self.commit().stderr)
 
+    def test_a_commit_of_a_script_whose_test_fails_is_refused(self) -> None:
+        name = ".agents/scripts/test_failing.py"
+        self.write(name, "import unittest\n\nclass T(unittest.TestCase):\n    def test_it(self):\n        self.fail('red')\n")
+        self.git("add", name)
+        refused = self.commit()
+        self.assertIn("pre-commit: the tests in .agents/scripts failed", refused.stderr)
+        self.assertEqual(self.base, self.head())
+
+    def test_a_commit_of_a_script_whose_tests_pass_is_committed(self) -> None:
+        # A staged hook file runs the tests without the AI-setup check, which this throwaway repository does not hold.
+        self.write(".agents/scripts/test_passing.py", "import unittest\n\nclass T(unittest.TestCase):\n    def test_it(self):\n        pass\n")
+        self.write(".githooks/note.txt", "a change\n")
+        self.git("add", ".githooks/note.txt")
+        self.assertEqual(0, self.commit().returncode)
+        self.assertNotEqual(self.base, self.head())
+
 
 if __name__ == "__main__":
     unittest.main()
