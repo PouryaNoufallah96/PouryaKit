@@ -1,0 +1,90 @@
+website/content/capabilities/testing.mdx
+  s_4926c3e896d599::t_a47ea861d8abce 7
+  s_4926c3e896d599::t_afccf2173191e3 19
+  s_4926c3e896d599::t_77d21b1d721a24 70
+website/lib/kit-sources/distribution.test.ts
+  s_4926c3e896d599::t_43475691c47fba 217
+  s_4926c3e896d599::t_378875c8905185 44
+  s_4926c3e896d599::t_98cc02b6696218 25
+  s_4926c3e896d599::t_413feb020ad696 32
+  s_4926c3e896d599::t_200fdbebd95246 38
+  s_4926c3e896d599::t_ec1e8452899a86 9
+  s_4926c3e896d599::t_3e6f73141ff2ab 73,119,126,131,136,140,160,164,177,186,193,197,202,209,234-235,238
+website/covers/README.md
+  s_4926c3e896d599::t_6ba48376c838ba 19
+  s_4926c3e896d599::t_d1ca0825acc795 18
+AGENTS.md
+  s_4926c3e896d599::t_377ad2b32e2662 144
+website/app/(home)/page.tsx
+  s_4926c3e896d599::t_c6d86de00d2d85 19
+  s_4926c3e896d599::t_8f14763bd7eff6 213-214
+  s_4926c3e896d599::t_afac1c2961f7a3 38-39
+website/distribution/manifest.sha256
+  s_4926c3e896d599::t_4acdec07b6b3bc 3-4,33
+website/lib/kit-sources/readmes.test.ts
+  s_4926c3e896d599::t_48e3fc9f32bd08 51
+website/distribution/README.md.template
+  s_4926c3e896d599::t_16719eb1944ded 7
+website/content/docs/guides/test-a-feature.mdx
+  s_4926c3e896d599::t_86cfd5172497ac 78
+.agents/scripts/test_release_scripts.py
+  s_4926c3e896d599::t_01b7bb6f603e8b 72-75,78,80,84,89-95,97-119
+  s_4926c3e896d599::t_597691b323b599 18-21
+  s_4926c3e896d599::t_4bafe09fb643e9 7
+  s_4926c3e896d599::t_b41de4b30c699b 50-51
+.agents/scripts/publish-public.sh
+  s_4926c3e896d599::t_5651e64e0be53c 6-7
+  s_4926c3e896d599::t_4cd49ae36e44b5 76-85,87
+  s_4926c3e896d599::t_555f35efef78d2 93-100,103-110
+  s_4926c3e896d599::t_9db47e01c9a5b9 156-173
+  s_4926c3e896d599::t_f4f31e217bb92d 213
+  s_4926c3e896d599::t_0b0a2937c2f81f 3-4
+  s_4926c3e896d599::t_89add52811c23f 24-25
+  s_4926c3e896d599::t_7b60837afe3634 11-14
+  s_4926c3e896d599::t_ae34a69d3ce51e 34
+  s_4926c3e896d599::t_cf2622413fd1f3 121-124
+  s_4926c3e896d599::t_4ed739cf85f52a 181
+  s_4926c3e896d599::t_952b92f9e92d86 111
+website/content/docs/index.mdx
+  s_4926c3e896d599::t_7b111a48a3b912 66
+  s_4926c3e896d599::t_2412800954aa9a 14-15
+  s_4926c3e896d599::t_53d697c4afcc05 58
+.agents/skills/pourya-kit/SKILL.md
+  s_4926c3e896d599::t_3fb3ac1b92547a 24
+  s_4926c3e896d599::t_fef143fe5cbaef 52
+  s_4926c3e896d599::t_e9df3cdfe9f777 12
+.agents/skills/pourya-kit/references/testing.md
+  s_4926c3e896d599::t_b0de909fa1e346 205,207-208
+  s_4926c3e896d599::t_dad92fc0f34d48 197
+  s_4926c3e896d599::t_435131f0f66edd 187
+  s_4926c3e896d599::t_4c387cf1e06514 210
+  s_4926c3e896d599::t_2812f81f8d754a 3
+website/scripts/sync-public.ts
+  s_4926c3e896d599::t_32e96b138f1c9f 1
+website/content/docs/proving-sample.mdx
+  s_4926c3e896d599::t_9f528273b29019 11
+website/lib/kit-sources/distribution.ts
+  s_4926c3e896d599::t_6b66dfea58372a 21
+  s_4926c3e896d599::t_69a14a2ef5fbce 218-219
+  s_4926c3e896d599::t_d91d2197f1b072 25-30
+  s_4926c3e896d599::t_6aba207ec10ea6 3
+.claude/rules/website.md
+  s_4926c3e896d599::t_9fda982594ea95 44
+  s_4926c3e896d599::t_ceba6cac606547 47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5be13f92398e3783c1ff017647f14773863dbace",
+  "prompts": {},
+  "sessions": {
+    "s_4926c3e896d599": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6cbfcd2f-381f-4b35-b9ab-c5741ec52a83",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
