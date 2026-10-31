@@ -10,7 +10,7 @@
 - [Dead letters](#dead-letters)
 - [Structure tests](#structure-tests)
 
-One fixture for the test assembly and a test against the hosted application, after the Proving Sample:
+One fixture for the test assembly and a test against the hosted application, after the Proving Sample. A generated solution already has this fixture, the `App` of its test project, and its smoke test shows how a test gets a token ([templates.md](templates.md#the-smoke-test)): extend those.
 
 ```csharp
 using Microsoft.AspNetCore.Authentication;

@@ -25,6 +25,12 @@ These hold in every Capability:
 - Names follow the Kit's [glossary](https://pouryakit.vercel.app/docs/reference/glossary): Module, Feature, Operation, Operation Context, Actor, Domain Event, Notification Handler, Integration Event, Snapshot, and for messages the wire name, the subscription and, on a broker, the service name, Wolverine's name for a Host there.
 - A declaration refuses its own mistakes while the Host is composed. A composition check stops the Host when its container is built, and a startup check when it starts ([modules.md](references/modules.md#the-hosts-checks)).
 
+## Start here
+
+- A new application: [templates.md](references/templates.md), then [Adding a Module](references/modules.md#adding-a-module).
+- A Feature in a Module: [commands-queries-validation.md](references/commands-queries-validation.md), [persistence.md](references/persistence.md), [web.md](references/web.md), then [testing.md](references/testing.md).
+- A reaction in another Module: [messaging.md](references/messaging.md), with [rabbitmq.md](references/rabbitmq.md) once the Modules run in separate Hosts.
+
 ## Capabilities
 
 Read the reference file of each Capability the code touches before writing it.

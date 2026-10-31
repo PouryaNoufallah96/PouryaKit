@@ -106,7 +106,7 @@ Every guarantee of [messaging.md](messaging.md#what-the-kit-guarantees) for an I
 - **Snapshots stay ordered.** Redelivered across the broker in reverse order or concurrently, an older Snapshot never replaces a newer one, and a live Snapshot never brings back a copy its Tombstone removed.
 - **The Kit's JSON.** Envelopes cross the broker in the Kit's JSON representation, the same as stored and HTTP bodies, never in Newtonsoft.Json's, which the transport package brings along, and are read strictly (`UsePouryaKitWireJson`, [A body the contract cannot read](#a-body-the-contract-cannot-read)).
 
-Not proven here: several instances of one receiving Host sharing its queue under `DurabilityMode.Balanced`.
+Several instances of one receiving Host sharing its queue under `DurabilityMode.Balanced` are untested.
 
 ## A body the contract cannot read
 
