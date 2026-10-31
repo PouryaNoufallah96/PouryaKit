@@ -1,0 +1,23 @@
+docs/architecture/diagrams/kit-context.architecture.json
+  s_ebdd029215ce19::t_2a238494f68f8a 425-426
+docs/architecture/diagrams/kit-context.html
+  s_ebdd029215ce19::t_ff7f2b2ac98af5 4985
+docs/private-packages.md
+  s_ebdd029215ce19::t_b58c1a41b8be71 3,7,13,16,18,24,43,56,81,83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6f9530296a98fe59aa5b5400646a2b179315d2e5",
+  "prompts": {},
+  "sessions": {
+    "s_ebdd029215ce19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80160123-5e97-4bc1-94e2-0b32b7a21bc0",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
