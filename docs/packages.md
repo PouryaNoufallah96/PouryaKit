@@ -45,7 +45,7 @@ Run the validator with `--keep`, since after a PASS it removes its output direct
 <PackageReference Include="PouryaKit.Web" Version="0.1.0-preview.0.HEIGHT" />
 ```
 
-Replace the example version with the manifest's actual MinVer version. The shared validator never publishes; the [private publisher](private-packages.md) handles GitHub Packages publication and consumption. After its push it restores every library package from the feed and installs `PouryaKit.Templates` from it rather than referencing it, then generates and restores the solution of each template; only `main` publishes. `0.1.0-preview.0.28` is also on nuget.org ([nuget.org publication](private-packages.md#nugetorg-publication)), where no workflow publishes.
+Replace the example version with the manifest's actual MinVer version. The shared validator never publishes; the [private publisher](private-packages.md) handles GitHub Packages publication and consumption. After its push it restores every library package from the feed and installs `PouryaKit.Templates` from it rather than referencing it, then generates and restores the solution of each template; only `main` publishes. `0.1.0-preview.1` is also on nuget.org ([nuget.org publication](private-packages.md#nugetorg-publication)), where no workflow publishes.
 
 ## Evidence
 
