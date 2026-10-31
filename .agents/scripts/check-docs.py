@@ -30,6 +30,12 @@ JSX and site routes (`/docs/...`) are no Markdown the links, code-span, table or
   from its table, or a heading or paragraph put inside one, fails.
 - Union duplicates: in a file `.gitattributes` merges with `merge=union`, a line twice or two lines linking the same
   target fails. A union merge keeps both sides of a line both branches changed.
+- Tracker numbers: none in `README.md`, `GLOSSARY.md`, `AGENTS.md`, a package's `src/<Id>/README.md`, `docs/**/*.md`,
+  a file of the Kit skill or `.claude/rules/*.md`, frontmatter included; `docs/agents/issue-tracker.md` documents the
+  tracker and stays out. A tracker number is a `#` with two or more digits, `PR`, `pull request`, `issue`, `ticket` or
+  `spec` with a number, or a link to this repository's `issues/` or `pull/`, read outside fenced code and across a
+  soft line break. A third party's issue link passes with the number in its text. `C#14`, a character reference
+  (`&#123;`), a heading's anchor (`#12-steps`) and a version (`spec 3.1`) are no tracker number.
 - Test pointers: in `docs/acceptance.md`, a span that is exactly `Class.Method` with a class ending in `Tests` must
   name a declared test: a method that the body of a class of that name declares,
   in a `.cs` file under `tests/` or the templates' generated tests, or in a `test_*.py`. Python is read with `ast`;
@@ -85,6 +91,11 @@ CODE_SUFFIXES = (".cs", ".csproj", ".json", ".py", ".props", ".slnx")
 NAMES_SKIPPED = {"docs/foundation-review.md"}
 PACKAGE_README = re.compile(r"src/[^/]+/README\.md")  # one segment between src/ and the file: a package, never a template's content
 SITE_PAGE = re.compile(r"website/content/.+\.mdx")  # a docs site page, which only the Names rule reads
+NO_TRACKER = re.compile(r"(?:README|GLOSSARY|AGENTS)\.md|src/[^/]+/README\.md|docs/.+\.md|\.agents/skills/pourya-kit/.+|\.claude/rules/[^/]+\.md")
+TRACKER_GUIDE = "docs/agents/issue-tracker.md"  # it documents the tracker, so its examples stay
+TRACKER_NUMBER = re.compile(r"(?<![\w&])#\d{2,}(?![\w-])|\b(?:PRs?|(?i:pull requests?|issues?|tickets?|specs?))(?:\s*#|\s+)\d+\b(?!\.\d)")
+TRACKER_LINK = re.compile(r"github\.com/PouryaNoufallah96/PouryaKit/(?:issues|pull)/[^\s)>]*", re.I)
+ISSUE_LINK = re.compile(r"\[[^\]]*\]\(<?https?://[^\s)]*/(?:issues|pull)/\d+[^\s)]*\)", re.I)  # may quote its number in its text
 # Namespaces of third-party and framework code; a dotted name rooted in one is not the Kit's.
 ROOTS = {
     "System", "Microsoft", "Wolverine", "WolverineFx", "JasperFx", "Npgsql", "Testcontainers", "Asp", "Serilog",
@@ -166,10 +177,10 @@ def vendored() -> tuple[str, ...]:
     return tuple(f".agents/skills/{name}/" for name in skills)
 
 
-def blank_code(text: str) -> tuple[list[str], list[tuple[str, str]]]:
-    """The file's lines with frontmatter and fenced code blanked, and each fenced block as (info, content)."""
+def blank_code(text: str, keep_frontmatter: bool = False) -> tuple[list[str], list[tuple[str, str]]]:
+    """The file's lines with fenced code blanked, frontmatter too unless it is kept, and each fenced block as (info, content)."""
     lines, blocks, fence = text.split("\n"), [], None
-    if lines[0] == "---" and "---" in lines[1:]:
+    if not keep_frontmatter and lines[0] == "---" and "---" in lines[1:]:
         end = lines.index("---", 1)
         lines[: end + 1] = [""] * (end + 1)
     for number, line in enumerate(lines):
@@ -381,6 +392,17 @@ def check_union_duplicates(files: list[str]) -> None:
                 targets.setdefault(target, number)
 
 
+def check_tracker_numbers(files: list[str]) -> None:
+    for path in files:
+        if path == TRACKER_GUIDE or not NO_TRACKER.fullmatch(path) or not (ROOT / path).is_file():
+            continue
+        for first, text in inline_blocks(blank_code((ROOT / path).read_text(encoding="utf-8"), keep_frontmatter=True)[0]):
+            prose = ISSUE_LINK.sub(lambda link: re.sub(r"[^\n]", " ", link.group()), text)
+            for match in (*TRACKER_LINK.finditer(text), *TRACKER_NUMBER.finditer(prose)):
+                number = first + 1 + text.count("\n", 0, match.start())
+                failures.append(f"{path}:{number}: `{' '.join(match.group().split())}` is a tracker number; state the rule or the behaviour without it")
+
+
 def python_tests(text: str) -> dict[str, set[str]]:
     """Each class of a Python source whose name ends in Tests, with the methods its body declares."""
     try:
@@ -569,6 +591,7 @@ def main() -> int:
     check_code_spans(docs)
     check_tables(docs)
     check_union_duplicates(files)
+    check_tracker_numbers(files)
     check_test_pointers(docs, files)
     check_kit_paths(docs, files)
     diagrams = check_diagram_sources(files)

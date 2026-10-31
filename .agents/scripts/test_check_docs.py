@@ -389,6 +389,58 @@ class CheckDocsTests(unittest.TestCase):
         both = CLEAN[MEMORY] + "- [Product facts](product-facts.md) — the product, renamed\n"
         self.assertFails({MEMORY: both}, f"{MEMORY}:3: links product-facts.md, as line 1 does")
 
+    def test_each_shape_of_a_tracker_number_fails(self) -> None:
+        shapes = {"#12": "#12", "`#123`": "#123", "(#45)": "#45", "PR 12": "PR 12", "PRs #12": "PRs #12", "pull request 7": "pull request 7",
+                  "Pull Request #7": "Pull Request #7", "issue 7": "issue 7", "Issues #7": "Issues #7", "ticket 7": "ticket 7", "ticket#7": "ticket#7",
+                  "tickets #7": "tickets #7", "spec 1": "spec 1", "Spec #1": "Spec #1", "[a fix](docs/guide.md) in spec 12.": "spec 12"}
+        self.write({"docs/guide.md": "# Guide\n\n## The product\n\n" + "\n\n".join(f"See {shape}" for shape in shapes) + "\n"})
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        for line, found in enumerate(shapes.values()):
+            self.assertIn(f"FAIL  docs/guide.md:{5 + 2 * line}: `{found}` is a tracker number", out)
+
+    def test_a_tracker_number_wrapped_across_a_line_or_in_frontmatter_fails(self) -> None:
+        self.assertFails({"docs/guide.md": "# Guide\n\n## The product\n\nThe ticket\n#7 did it.\n"}, "docs/guide.md:5: `ticket #7` is a tracker number")
+        self.assertFails({".claude/rules/shop.md": "---\npaths:\n  - \"#123\"\n---\n\n# Shop\n"}, ".claude/rules/shop.md:3: `#123` is a tracker number")
+
+    def test_a_link_to_this_repositorys_tracker_fails_and_a_third_partys_passes(self) -> None:
+        ours = ("See [the proof](https://github.com/PouryaNoufallah96/PouryaKit/pull/30) and\n"
+                "[ticket 27](https://github.com/pouryanoufallah96/pouryakit/issues/27#issuecomment-1).\n")
+        self.write({"docs/guide.md": "# Guide\n\n## The product\n\n" + ours})
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn("FAIL  docs/guide.md:5: `github.com/PouryaNoufallah96/PouryaKit/pull/30` is a tracker number", out)
+        self.assertIn("FAIL  docs/guide.md:6: `github.com/pouryanoufallah96/pouryakit/issues/27#issuecomment-1` is a tracker number", out)
+        self.assertNotIn("`ticket 27`", out)  # the link is the one failure, not its text as well
+        theirs = ("It dead-letters them ([Wolverine issue 4923](https://github.com/JasperFx/wolverine/issues/4923),"
+                  " [PR #12](https://github.com/dotnet/aspnetcore/pull/12#discussion_r1)).\n")
+        self.assertPasses({"docs/guide.md": "# Guide\n\n## The product\n\n" + theirs})
+        # The exception is for an issue link, not for any link.
+        self.assertFails({"docs/guide.md": "# Guide\n\n## The product\n\nSee [ticket 7](https://example.com/).\n"}, "docs/guide.md:5: `ticket 7` is a tracker number")
+
+    def test_what_only_resembles_a_tracker_number_passes(self) -> None:
+        text = ("# Guide\n\n## The product\n\n## 12 steps\n\nStep #7, C#14, `&#123;`, [the steps](#12-steps), the OpenAPI spec 3.1, a pr 12, the issue\n"
+                "tracker, `ticket-123`, `gh issue view 42` and `issues/<parent>`.\n\n```text\n#123, PR 12 and ticket 7 in a fence.\n```\n\n"
+                "~~~~\nhttps://github.com/PouryaNoufallah96/PouryaKit/issues/27\n~~~~\n")
+        self.assertPasses({"docs/guide.md": text})
+
+    def test_the_tracker_rule_reads_its_files_and_no_others(self) -> None:
+        paths = ("README.md", "GLOSSARY.md", "AGENTS.md", "src/Catalog/README.md", "docs/guide.md", "docs/adr/0008-carts.md", "docs/agents/running.md",
+                 ".agents/skills/pourya-kit/SKILL.md", ".agents/skills/pourya-kit/references/carts.md", ".agents/skills/pourya-kit/agents/openai.yaml",
+                 ".claude/rules/shop.md")
+        self.write({path: "# Shop\n\nSee #123.\n" for path in paths})
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        for path in paths:
+            self.assertIn(f"FAIL  {path}:3: `#123` is a tracker number", out)
+        self.write(CLEAN)
+        for path in set(paths) - set(CLEAN):
+            (self.root / path).unlink()
+        guide = "# Tracker\n\nA bare `#42` may be either; see PR 12 and https://github.com/PouryaNoufallah96/PouryaKit/issues/27.\n"
+        self.assertPasses({path: guide for path in ("docs/agents/issue-tracker.md", "src/Catalog/docs/README.md", "src/PouryaKit.Templates/content/shared/README.md",
+                                                    "website/content/docs/tracker.mdx", "CHANGELOG.md", ".claude/agents/tracker.md", ".claude/rules/nested/tracker.md",
+                                                    ".agents/skills/other/SKILL.md")})
+
     def test_acceptance_pointers_to_existing_tests_pass(self) -> None:
         self.assertPasses(TESTS)
 
