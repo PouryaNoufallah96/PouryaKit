@@ -409,6 +409,9 @@ def check_guard() -> None:
         "sudo rm -rf /tmp/kit-test/out",
         "git push --force-with-lease origin feat/x",
         "git push -u origin feat/x",
+        'git commit -m "docs: why --no-verify is refused"',
+        "git commit -q -F message.txt",
+        "git commit -am fix",
         'bash -lc "dotnet build && dotnet test"',
         "dotnet test \\\n  --filter Name",  # a backslash-newline joins what surrounds it
         "echo 'a\\\nb'",
@@ -441,6 +444,12 @@ def check_guard() -> None:
         "git -C . push --force origin main",
         "git push origin +main",
         "git push origin :old-branch",
+        "git commit --no-verify -m fix",  # the five commits of the docs cleanup
+        "git commit -q --no-verify -F -",
+        "git commit -n -m fix",
+        "git commit -qnm fix",
+        "git -C /tmp/wt commit --no-verify -m fix",
+        "git merge --no-verify topic",
         'rm -rf "$DIR/out"',
         "rm -rf /tmp/../Users/x",
         "rm -\\\nrf ./build",  # the shell runs rm -rf ./build

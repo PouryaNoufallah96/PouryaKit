@@ -3,7 +3,7 @@
 
 A seatbelt against accidents, not a sandbox. Denies file-tool writes outside the working
 tree (reference projects are read-only), file-tool access to secret files, recursive
-deletes, and destructive pushes. Hook input it cannot read or judge is allowed with a
+deletes, destructive pushes and skipped hooks. Hook input it cannot read or judge is allowed with a
 warning, because a guard that denies every call locks the session; check-ai-setup.py
 proves it still denies what it must.
 
@@ -224,6 +224,10 @@ def command_reason(name: str, args: list[str], xargs: bool = False) -> str | Non
             for arg in rest
         ):
             return "Force, mirror and delete pushes are blocked. --force-with-lease is allowed."
+        if subcommand in ("commit", "merge") and (
+            "--no-verify" in rest or (subcommand == "commit" and any(short_flag(arg, "n") for arg in rest))
+        ):
+            return "Skipping the hooks is blocked. Fix what they report, or stop and report it."
     return None
 
 
