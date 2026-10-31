@@ -1,0 +1,21 @@
+docs/adr/0013-a-saga-step-runs-outside-every-operation.md
+  s_ebdd029215ce19::t_d7ff49eb441dd9 249-266
+  s_ebdd029215ce19::t_76a2c295852d64 7,15,25,31-34,47,72,77,113-114,116-117,137,139,143,149,232,247,270,283,285,288-289,306,333,342,345,349,365,369,371,373,376
+  s_ebdd029215ce19::t_cc29bb5f6253ac 248
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f832bce89bddf633e190fad667a42b59351a2949",
+  "prompts": {},
+  "sessions": {
+    "s_ebdd029215ce19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80160123-5e97-4bc1-94e2-0b32b7a21bc0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
