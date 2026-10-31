@@ -2,7 +2,7 @@
 name: pourya-kit
 description: How to build a .NET modular monolith on PouryaKit. Use when writing, reviewing or testing code that references PouryaKit packages, such as a Module, an aggregate, a Stream, a Saga, a command or query, a Domain Event Handler, a Notification Handler and its email or SSE push, an agent and its Gateway tools, a Dapper read, a cached query and the cache tags a command invalidates, a file in S3, MinIO or Azure Blob, a PDF or CSV report, a report job, a message in English and Persian, an Integration Event Handler, a Snapshot mapper, an endpoint, an API version or OpenAPI document, a gRPC service or client, a permission on a command or query, a tenant-scoped Module and its aggregates, a Host that sends or receives Integration Events and Snapshots over RabbitMQ, a Reverse proxy, the service defaults for telemetry, health, HTTP resilience or Serilog, an Aspire AppHost for a Host, a new project from the Kit's dotnet new templates, a test against the hosted application or an architecture test of a Module's boundaries.
 metadata:
-  version: "0.1.0"
+  version: "0.1.1"
 ---
 
 # PouryaKit
@@ -60,10 +60,10 @@ Read the reference file of each Capability the code touches before writing it.
 
 ## Guides
 
-These three are guides, not Capabilities, because no Kit package delivers them. The Host recipes are template content, the Proving Sample's `ModularMonolith.ServiceDefaults`, which the project templates generate. The other two cover how every package in `scripts/packaging/inventory.json` is validated, consumed and published. Read a guide before the work it names.
+No Kit package delivers these guides. The Host recipes are template content, the Proving Sample's `ModularMonolith.ServiceDefaults`, which the project templates generate. Read a guide before the work it names.
 
 | Guide | Read when | Reference |
 |---|---|---|
 | Host recipes | Composing a Host's service defaults: exporting the Kit's telemetry with OpenTelemetry, liveness and readiness endpoints and why readiness outside Development is the platform's, service discovery, one standard resilience pipeline for every outgoing client and a client that replaces it, logging through Serilog, or testing a Host that uses them | [host-recipes.md](references/host-recipes.md) |
-| Package consumption and validation | Choosing a coherent package version, consuming the verified local feed, changing packability or metadata, or running the shared Release package proof | [packages.md](references/packages.md) |
-| Private publication | Consuming the private feed, publishing a validated main version, using an owner-created prerelease tag or retrying preserved originals | [publication.md](references/publication.md) |
+| Package consumption and validation | Choosing a coherent package version or consuming a verified local package set | [packages.md](references/packages.md) |
+| Private publication | Consuming the private feed | [publication.md](references/publication.md) |
