@@ -1,0 +1,39 @@
+.agents/skills/pourya-kit/references/commands-queries-validation.md
+  s_ebdd029215ce19::t_17d6791ca03972 111
+.agents/skills/pourya-kit/references/sagas.md
+  s_ebdd029215ce19::t_17d6791ca03972 114
+.agents/skills/pourya-kit/references/security.md
+  s_ebdd029215ce19::t_17d6791ca03972 15
+.agents/skills/pourya-kit/references/testing.md
+  s_ebdd029215ce19::t_17d6791ca03972 72,203
+.agents/skills/pourya-kit/references/templates.md
+  s_ebdd029215ce19::t_17d6791ca03972 3,18,58,79-80,111
+.agents/skills/pourya-kit/references/aspire.md
+  s_ebdd029215ce19::t_17d6791ca03972 167
+.agents/skills/pourya-kit/references/observability.md
+  s_ebdd029215ce19::t_17d6791ca03972 3
+.agents/skills/pourya-kit/references/web.md
+  s_ebdd029215ce19::t_17d6791ca03972 304
+.agents/skills/pourya-kit/references/persistence.md
+  s_ebdd029215ce19::t_17d6791ca03972 113
+.agents/skills/pourya-kit/references/localization.md
+  s_ebdd029215ce19::t_17d6791ca03972 57
+.agents/skills/pourya-kit/references/messaging.md
+  s_ebdd029215ce19::t_17d6791ca03972 3,549,716
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ee5a44655a216ebd4d03225ced4d08e9e2279bc2",
+  "prompts": {},
+  "sessions": {
+    "s_ebdd029215ce19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80160123-5e97-4bc1-94e2-0b32b7a21bc0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
