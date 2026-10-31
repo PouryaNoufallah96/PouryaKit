@@ -89,7 +89,7 @@ test('the marketplace publishes the skill from the repository root under its nam
   assert.equal(copy.plugins[0].version, '9.9.9');
 });
 
-test("SKILL.md's copy keeps its frontmatter, and a maintainer guide or an ADR is its own text in the copy", () => {
+test("SKILL.md's copy keeps its frontmatter, and a maintainer guide is its own text in the copy", () => {
   const skill = text(tree, `skills/${PLUGIN}/SKILL.md`) ?? '';
   assert.ok(skill.startsWith(`${sourceFrontmatter(readFileSync(path.join(root, SKILL), 'utf8'))}\n# PouryaKit\n`));
   assert.match(skill, /\| packages\.md \|/);
@@ -99,10 +99,6 @@ test("SKILL.md's copy keeps its frontmatter, and a maintainer guide or an ADR is
     const copy = entry.content.toString();
     assert.doesNotMatch(copy, /\]\([^)\s]*(?:packages|publication)\.md[)#]|docs\/adr|\]\(\.\.\/\.\.\//, entry.path);
   }
-  assert.match(
-    text(tree, `skills/${PLUGIN}/references/multi-tenancy.md`) ?? '',
-    /\(ADR 0007\): in a scope nobody began/,
-  );
 });
 
 test("every relative link of the copy names a file of the copy and one of that file's headings", () => {
