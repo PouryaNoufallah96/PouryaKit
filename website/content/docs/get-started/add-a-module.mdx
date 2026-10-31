@@ -61,10 +61,10 @@ Each Module keeps its own schema and its migrations in its own folder; [Migratio
 
 ## What holds for every Module
 
-| Rule | Stated in | Proven by |
-| --- | --- | --- |
-| A Module references no other Module's implementation | [Structure tests](/docs/capabilities/testing#structure-tests) | `ModuleBoundaryTests` |
-| A declaration belongs to the Module whose builder it was made on | [The Composition Root](/docs/capabilities/modules#the-composition-root) | `CompositionCheckTests` |
+| Rule | Stated in |
+| --- | --- |
+| A Module references no other Module's implementation | [Structure tests](/docs/capabilities/testing#structure-tests) |
+| A declaration belongs to the Module whose builder it was made on | [The Composition Root](/docs/capabilities/modules#the-composition-root) |
 
 ## Failure messages
 

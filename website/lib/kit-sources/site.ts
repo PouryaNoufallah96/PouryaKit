@@ -36,7 +36,7 @@ import { describe } from './rules.ts';
 // The pages the site renders from the Kit's sources, generated before `next build` into folders git ignores: the
 // Capability pages, and the Reference pages (the package matrix and one page per package, the glossary, the Error codes
 // and the Host's checks). Every page is projected, its links rewritten, and checked against the rules before it is
-// written. The ADRs stay private and have no page (owner, 2026-10-27), so a link to one becomes its own text.
+// written. The ADRs stay private and have no page, so a link to one becomes its own text.
 
 /** The folders the generator owns, relative to `website/`; it empties them before it writes. */
 export const GENERATED = ['content/docs/capabilities', 'content/docs/reference', '.generated'];
@@ -186,7 +186,7 @@ export function buildSite(root: string): GeneratedFile[] {
     routes.set(`${PACKAGES}/${kit.id}`, page);
   }
 
-  // Capabilities: one page per published reference, its hand-written top (when #189's file exists) above it.
+  // Capabilities: one page per published reference, its hand-written top (when it has one) above it.
   for (const reference of references) {
     const tree: Root = { type: 'root', children: reference.body };
     rewriteLinks(tree, reference.source, routes);
@@ -320,7 +320,7 @@ function packagePages(packages: KitPackage[], readmes: Map<string, Root>, routes
       source: `${SKILL} and ${PACKAGES}/*/*.csproj`,
       title: 'Packages',
       description:
-        "Every package of the Kit, the Capabilities the skill's table puts it in, and the Kit packages its project references.",
+        'Every package of the Kit, the Capabilities it belongs to, and the Kit packages its project references.',
       tree: parseMarkdown(`${matrix.join('\n')}\n`),
     }),
   );
@@ -339,7 +339,7 @@ function errorCodesPage(codes: ErrorCode[], routes: RouteMap): GeneratedFile {
     return `## ${id}\n\n| Code | Kind | Message | When |\n|---|---|---|---|\n${rows.join('\n')}\n`;
   });
   const intro =
-    'The Errors the Kit fails an Operation with, by package, read from its `*Errors` and `*ErrorCodes` types. The kind decides the HTTP status (see [problem responses](.agents/skills/pourya-kit/references/web.md#problem-responses)); a code constant names the Errors a validation returns, each with its own message.';
+    'The Errors the Kit fails an Operation with, by package. The kind decides the HTTP status (see [problem responses](.agents/skills/pourya-kit/references/web.md#problem-responses)); a code constant names the Errors a validation returns, each with its own message.';
   const tree = parseMarkdown(`${intro}\n\n${sections.join('\n')}`);
   rewriteLinks(tree, 'error-codes.md', routes);
   return markdownPage({
@@ -356,7 +356,7 @@ function checksPage(routes: RouteMap): GeneratedFile {
   // the skill's sections, which name each check and quote its message.
   const tree = parseMarkdown(
     [
-      "A Host refuses its own composition mistakes before it serves: its checks run when the Host is built, when it starts and once Wolverine has started, and each failure names its fix. The skill's sections list every check and quote its message:",
+      'A Host refuses its own composition mistakes before it serves: its checks run when the Host is built, when it starts and once Wolverine has started, and each failure names its fix. These sections list every check and quote its message:',
       '',
       "- [The Host's checks](.agents/skills/pourya-kit/references/modules.md#the-hosts-checks), for every Host: the container's validation, the composition checks and the startup checks.",
       "- [The Host's checks for messaging](.agents/skills/pourya-kit/references/messaging.md#the-hosts-checks): publications, subscriptions, routes and the message store.",

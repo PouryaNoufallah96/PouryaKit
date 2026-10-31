@@ -4,8 +4,6 @@ description: "Start a new application with dotnet new as a monolith, a modular m
 
 `PouryaKit.Templates` is a `dotnet new` template package. A new application starts from the [Proving Sample](/docs/reference/glossary#proving-sample)'s business code in one of its compositions: the monolith, one Module behind a plain registration that grows into the modular monolith when a second Module arrives; the modular monolith, several Modules in one Host, each reached through its Gateway; and the service, one Module in a Host of its own that receives another Host's Integration Events and Snapshots over RabbitMQ.
 
-The templates are generated from the sample, never maintained beside it. Aggregates, commands, queries, handlers, validators, the repository, Dapper reads and every event handler are the sample's own files in every template; only the Composition Root and the endpoint adapters differ.
-
 <Callout type="warn" title="Name the version you install">
   The template package's version becomes the Kit version every generated project pins, so install it with an explicit version: [Install the templates](/docs/get-started/install-templates) gives the command. The generated Host applies no migration at startup and does not start without its bearer settings; [Your first Host](/docs/get-started/first-host) walks through both.
 </Callout>
@@ -51,8 +49,6 @@ The generated test project hosts the generated Host through `PouryaKit.Testing`,
 </Steps>
 
 ## Guarantees and failures
-
-The rules are the skill's, in full under "Reference" below:
 
 | You want to know | Read |
 | --- | --- |

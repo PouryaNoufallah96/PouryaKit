@@ -26,7 +26,7 @@ Name it after the Feature with the `Endpoint` suffix. Inventory's `GetStockItem`
 
 <Snippet file="samples/ModularMonolith/src/Modules/Inventory/Inventory/StockItems/Features/GetStockItem/GetStockItemEndpoint.cs" region="get-stock-item-endpoint" />
 
-Leave a route parameter unconstrained, as this one is, so an id that does not parse is the caller's mistake rather than a missing route; [Endpoints](/docs/capabilities/web#endpoints) gives both answers. For a body, declare an `internal sealed` record beside the endpoint and map it to the command by hand.
+For a body, declare an `internal sealed` record beside the endpoint and map it to the command by hand.
 
 </Step>
 <Step>
@@ -56,7 +56,7 @@ The monolith template has no Gateway: its endpoints send through `IDispatcher` i
 
 ## What the Kit guarantees
 
-| Guarantee | Where the skill states it |
+| Guarantee | Stated in |
 | --- | --- |
 | How a [Result](/docs/reference/glossary#result) becomes a response | [From Result to response](/docs/capabilities/web#from-result-to-response) |
 | One problem response shape for every failure | [Problem responses](/docs/capabilities/web#problem-responses) |
