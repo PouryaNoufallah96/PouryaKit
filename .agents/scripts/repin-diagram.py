@@ -8,10 +8,10 @@ docs/architecture/diagrams/<slug>.<type>.json and the page <slug>.html. The Arch
 $ARCHIFY_HOME, the directory that holds bin/archify.mjs (the v3.0.1 clone keeps it one level down:
 <clone>/archify). Chrome is $ARCHIFY_CHROME, else Playwright's headless shell under ~/Library/Caches/ms-playwright.
 Prints the finalize result's ok, status, gates and diagnostics, removes the receipt files Archify leaves beside the page,
-and prints both files' SHA-256 for the acceptance record. Exit code is finalize's.
+and prints both files' SHA-256. Exit code is finalize's.
 
 A merge that re-ranges a diagram pins it to the merge commit and refinalizes (docs/agents/running-a-spec.md, "Merging
-with diagram conflicts"); sessions wrote this tool four times under their handoff directories before it lived here.
+with diagram conflicts").
 """
 import argparse
 import glob
