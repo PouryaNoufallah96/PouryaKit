@@ -6,7 +6,7 @@
 
 # PouryaKit.Aspire
 
-The containers a Kit Host runs on locally, for an Aspire AppHost and nothing else. It adds PostgreSQL, Redis, RabbitMQ and Ollama, each pinned to the image tag the Kit's own tests run, with its data in a named volume that outlives a run, so your local infrastructure is the one the Kit's tests prove.
+The containers a Kit Host runs on locally, for an Aspire AppHost and nothing else. It adds PostgreSQL, Redis, RabbitMQ and Ollama, each pinned to the image tag the Kit's own tests run, with its data in a named volume that outlives a run.
 
 ## Install
 

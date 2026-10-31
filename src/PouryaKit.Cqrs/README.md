@@ -69,7 +69,7 @@ internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId
 - A Host that refuses its own composition mistakes when it is built, with a composition check that names each one.
 
 > [!WARNING]
-> A handler returns a Result and never saves. Leave saving, committing, transactions and the Outbox to the Unit of Work: a structure test rejects a Module whose code does any of it.
+> A handler returns a Result and never saves. The Unit of Work owns saving, committing, transactions and the Outbox ([Persistence and the Unit of Work](https://pouryakit.vercel.app/docs/capabilities/persistence)).
 
 ## Learn more
 

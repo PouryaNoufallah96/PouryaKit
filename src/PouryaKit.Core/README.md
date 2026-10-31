@@ -39,7 +39,7 @@ using var scope = SynchronizationContextScope.Enter();
 - A scope that runs a blocking wait without the current synchronization context.
 
 > [!TIP]
-> Core stays this small: an architecture test holds its public types to a fixed set. A helper that belongs to one Capability lives in that Capability's package, and one that belongs to your application lives in your application.
+> A helper that belongs to one Capability lives in that Capability's package, and one that belongs to your application lives in your application.
 
 ## Learn more
 

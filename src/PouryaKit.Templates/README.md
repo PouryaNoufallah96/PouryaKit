@@ -38,7 +38,7 @@ Then start PostgreSQL, apply the migrations and run it: [Your first Host](https:
 
 ## What you get
 
-- The Proving Sample's own business code, generated rather than maintained beside it.
+- The Proving Sample's business code.
 - A Composition Root and endpoint adapters for each composition.
 - A smoke test in every generated solution.
 - The SDK, the test runner and `dotnet-ef` pinned as the Kit pins them.
