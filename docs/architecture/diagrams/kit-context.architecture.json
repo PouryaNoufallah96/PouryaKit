@@ -422,8 +422,8 @@
         },
         {
           "path": "docs/private-packages.md",
-          "line": 64,
-          "end_line": 83,
+          "line": 58,
+          "end_line": 77,
           "label": "a consumer restores PouryaKit.* from it"
         }
       ]
