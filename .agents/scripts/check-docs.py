@@ -109,7 +109,6 @@ ALLOWED = {
     "IReportExporter": "illustrative: the skill's example of an application interface",
     "AuditHandler": "illustrative: the skill's example of a second Integration Event Handler",
     "SharedFeatures": "illustrative: the skill's example of a second Feature assembly",
-    "IntentionalHostedConsumerFailure": "illustrative: the undefined call a temporary CI proof added (docs/ci.md)",
     "GitHub": "the NuGet source key a consumer's NuGet.Config declares (docs/private-packages.md)",
     "AssemblyVersion": "MSBuild property",
     "FileVersion": "MSBuild property",
