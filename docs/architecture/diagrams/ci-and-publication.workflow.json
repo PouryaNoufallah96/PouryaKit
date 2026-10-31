@@ -635,7 +635,7 @@
       "items": [
         "docs/packages.md: the validation path, clean consumers, evidence.",
         "docs/ci.md: checkout, credentials, the artifact contract.",
-        "docs/private-packages.md: versions, triggers, trust, retry, hosted runs."
+        "docs/private-packages.md: versions, triggers, trust, retry, consumption."
       ]
     }
   ]
