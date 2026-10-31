@@ -164,7 +164,7 @@ if (bool.TryParse(builder.Configuration["LocalAgent"], out var localAgent) && lo
 | `AddPouryaKitOllama(name, model)` | `ContainerResource`, healthy once it serves `model` | `docker.io/ollama/ollama:0.40.6` | `/root/.ollama` |
 
 - Each call but Ollama's is Aspire's own `AddPostgres`, `AddRedis` or `AddRabbitMQ` with the image pinned (`WithImage`) and `WithDataVolume()`, so it returns Aspire's resource builder and anything Aspire offers on it still applies; Ollama's is `AddContainer` with a volume Aspire names the same way.
-- The tags are the ones the Kit's Testcontainers fixtures and its Ollama probe run, so local infrastructure is what the Kit's tests prove. Aspire's own defaults float on a minor version (`18.3`, `8.6`, `4.3`).
+- The tags are the ones the Kit's tests run. Aspire's own defaults float on a minor version (`18.3`, `8.6`, `4.3`).
 - The volume's name is Aspire's, from the AppHost's project and the resource name (`modularmonolith.apphost-<hash>-postgres-data`): it outlives a run, so data persists between runs.
 - The package adds nothing else: no dashboard, tracing, logging, metrics or API-reference resource (Jaeger, Zipkin, Tempo, Loki, Kibana, Prometheus, Grafana, Elasticsearch, Swagger). A Host on the service defaults exports its telemetry over OTLP to whatever `OTEL_EXPORTER_OTLP_ENDPOINT` names ([host-recipes.md](host-recipes.md)), and the Kit adds no collector.
 

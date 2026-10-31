@@ -12,7 +12,7 @@
 - [Password hashing](#password-hashing)
 - [JWT bearer authentication](#jwt-bearer-authentication)
 
-The Kit has no role system, policy framework, identity store or admin bypass, and issues no token: no token endpoint, provider SDK, API key or PKCE flow. A rule that is not "this Actor holds this permission", such as one that reads the command's data, is an `IAuthorizer<T>` of the Module's own ([commands-queries-validation.md](commands-queries-validation.md#authorization-hook)).
+The Kit has no role system, policy framework or admin bypass, and no token endpoint, provider SDK, API key or PKCE flow. A rule that is not "this Actor holds this permission", such as one that reads the command's data, is an `IAuthorizer<T>` of the Module's own ([commands-queries-validation.md](commands-queries-validation.md#authorization-hook)).
 
 ## Declaring a permission
 

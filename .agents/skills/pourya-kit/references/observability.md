@@ -1,6 +1,6 @@
 # Observability
 
-`PouryaKit.Observability`: one activity and one duration measurement for every command and query the dispatcher runs, and a trace that continues from an Operation through the Outbox into the deliveries it causes. Namespace `PouryaKit.Observability`. It references `PouryaKit.Cqrs` only and emits through `System.Diagnostics`: the Kit has no OpenTelemetry package, no exporter and no Serilog. Exporting is the Host's job, done with the standard OpenTelemetry setup of the service defaults recipe ([host-recipes.md](host-recipes.md)) that the project templates carry.
+`PouryaKit.Observability`: one activity and one duration measurement for every command and query the dispatcher runs, and a trace that continues from an Operation through the Outbox into the deliveries it causes. Namespace `PouryaKit.Observability`. It references `PouryaKit.Cqrs` only and emits through `System.Diagnostics`: the Kit has no OpenTelemetry package, no exporter and no Serilog.
 
 - [Registering](#registering)
 - [What is emitted](#what-is-emitted)
