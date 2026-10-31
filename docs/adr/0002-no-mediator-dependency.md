@@ -18,12 +18,9 @@ open-generic handlers and no `Result`-aware rollback.
 
 ## Confirmed by Spike S3 (2026-10-05)
 
-The Spike code is `spikes/s3-dispatcher/` at commit `cbc64ba6d99148423e1dcf4d5e754298ce728ef6`,
-reachable through the tag `spike/s3-dispatcher`; it is not merged. Each option served the same Module
-from a second assembly, with internal commands, queries, handlers, validators and authorizers behind one
-public Gateway class, in a container built with `ValidateOnBuild` and `ValidateScopes`.
-`dotnet test spikes/s3-dispatcher` passed 21 of 21. It needs the Microsoft.Testing.Platform runner
-opt-in from the repository's root `global.json`, which is not part of the Spike commit.
+Each option served the same Module from a second assembly, with internal commands, queries, handlers,
+validators and authorizers behind one public Gateway class, in a container built with `ValidateOnBuild` and
+`ValidateScopes`.
 
 Behaviour did not decide it. `OwnedDispatcherTests`, `SourceGeneratedMediatorTests` (generator in the
 Host) and `GeneratorInModuleBehaviourTests` (generator in the Module) all pass
@@ -73,67 +70,10 @@ also fall on every project that runs the generator:
   rejects several handlers, a case the Spike did not test.
 - **Licence.** MIT, so not a differentiator.
 
-### Shape for ticket #7
-
-Adapt the following to `IUnitOfWork` (ADR 0003) and a real logger:
-
-```csharp
-internal sealed class Dispatcher(IServiceProvider services, OperationState operation, IUnitOfWork unitOfWork) : IDispatcher
-{
-    // Send/Query: one cached generic invoker per operation type resolves ICommandHandler<TCommand, T>
-    // or IQueryHandler<TQuery, T> and calls Run.
-
-    // Failure tracking wraps the whole pipeline, outside every short-circuiting step.
-    private async Task<Result<T>> Run<TOp, T>(TOp op, bool isCommand, Func<CancellationToken, Task<Result<T>>> handle, CancellationToken ct)
-    {
-        var result = await Pipeline(op, isCommand, handle, ct);
-        if (isCommand && result.IsFailure) operation.MarkRollbackOnly();
-        return result;
-    }
-
-    // The fixed order is written out here, never registered: logging, authorization hook, validation, Unit of Work.
-    private async Task<Result<T>> Pipeline<TOp, T>(TOp op, bool isCommand, Func<CancellationToken, Task<Result<T>>> handle, CancellationToken ct)
-    {
-        // logging scope opens here and closes in a finally
-        foreach (var authorizer in services.GetServices<IAuthorizer<TOp>>())   // none registered: the step does nothing
-            if (authorizer.Authorize(op) is { } denied) return denied;
-        var errors = services.GetServices<IValidator<TOp>>().SelectMany(v => v.Validate(op)).ToList();
-        if (errors.Count > 0) return Result<T>.Fail(errors);
-        if (!isCommand) return await handle(ct);
-        // A command starts the Unit of Work, or joins it when a Unit of Work is already active. The
-        // owner rolls back on a failed Result or when the Operation is rollback-only.
-        return await unitOfWork.Run(handle, ct);
-    }
-}
-// AddDispatcher(params Assembly[] moduleAssemblies) registers internal handlers, validators and
-// authorizers by reflection, then throws when any command or query has zero or several handlers.
-```
-
-The Spike decided "join" by nesting depth, which also counts queries, so a command sent from a query
-handler would join a Unit of Work nobody owns. Open points for ticket #7:
-
-- whether a failed nested query marks the Operation rollback-only too (the Spike marked failed nested
-  commands only); *answered by ticket #7: it does not, see the amendment below;*
-- whether a query handler may send a command at all. *Answered by ticket #7: it may not, see the amendment below.*
-
-### Invariants to keep as permanent tests (ticket #7)
-
-Ticket #7 proves these through dispatch with a stand-in Unit of Work, with handlers as internal types
-in a separate test Module assembly:
-
-1. A command passes logging, authorization, validation and the Unit of Work in that order; a query
-   passes the same steps without the Unit of Work.
-2. A nested command that fails in its handler, its validation or its authorization marks the Operation
-   rollback-only, and the outer Unit of Work rolls back even though the outer handler ignored the
-   failure. A successful nested command joins the outer Unit of Work, which commits once. The Gateway
-   seam proves the same against PostgreSQL, data and Outbox included, in Phase 2 (plan section E).
-3. Handlers that are internal types in another assembly are found without `InternalsVisibleTo`, and a
-   command or query with zero or several handlers fails registration at startup.
-
 ## Amendment (2026-10-06, Wave 1 as built)
 
-The decision above stands. Ticket #7 closed its two open points, and these rules are now behaviour Feature code relies
-on (`src/PouryaKit.Cqrs/Dispatcher.cs`, `src/PouryaKit.Cqrs/Operation.cs`):
+The decision above stands. These rules are behaviour Feature code relies
+on (`src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs`, `src/PouryaKit.Cqrs/Operations/Operation.cs`):
 
 - **A failed nested query marks nothing.** A command that fails, at any step or by an exception, or a failed Domain Event Handler,
   marks the Operation rollback-only; a query marks nothing, because it has no effect to undo
@@ -146,21 +86,21 @@ on (`src/PouryaKit.Cqrs/Dispatcher.cs`, `src/PouryaKit.Cqrs/Operation.cs`):
   `DispatchTests.A_nested_commands_authorizer_that_sends_a_command_throws_inside_the_unit_of_work`,
   `DispatchTests.An_authorizer_may_run_a_query_before_the_unit_of_work_starts`).
 - **The authorization hook runs for queries as well as commands.** Every `IAuthorizer<T>` registered for a query runs
-  before its validation, as invariant 1 above already states
+  before its validation: a command passes logging, authorization, validation and the Unit of Work in that order, and a
+  query passes the same steps without the Unit of Work
   (`DispatchTests.A_query_runs_the_same_steps_without_the_unit_of_work`). Plan G.6 calls it a "command-level"
-  authorization hook; the hook covers queries too, and this was reported to the owner when ticket #7 closed. G.6 is
-  unchanged. Narrowing the hook to commands would leave every query authorizer an application registered silently
+  authorization hook; the hook covers queries too. G.6 is unchanged. Narrowing the hook to commands would leave every query authorizer an application registered silently
   unrun.
 
-## Amendment (2026-10-07, tickets #42 and #43: the optional idempotency and caching slots)
+## Amendment (2026-10-07: the optional idempotency and caching slots)
 
 The decision above stands. Plan I.6 decided that the fixed pipeline has two optional slots, idempotency before the
 Unit of Work and caching around a query, filled only by the Kit, and that applications still register no steps.
-Ticket #42 implemented the idempotency slot at commit `829e7ad` (`src/PouryaKit.Cqrs/Dispatcher.cs`, `Steps`), and
-ticket #43 the caching slot, in the same method, at commit `4aa98b7`. *Since 2026-10-08 (ticket #54) a structure test,
+The idempotency slot and the caching slot are in `src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs`, `Steps`. *Since
+2026-10-08 a structure test,
 not only this text, keeps the slots the Kit's: see the amendment below.*
 
-The idempotency slot (ticket #42):
+The idempotency slot:
 
 - **Position.** The slot belongs to the outermost command of an Operation only, after logging, the authorization hook
   and validation, and around its handler inside the Unit of Work: once `IUnitOfWork.RunAsync` has begun the
@@ -175,7 +115,7 @@ The idempotency slot (ticket #42):
   `insert … on conflict do nothing`, so a concurrent repeat waits on the uncommitted key and then replays the committed
   success, or runs when the first transaction rolled back. A key is kept for its retention, 24 hours unless
   `PouryaKitIdempotencyOptions` says otherwise, then removed by one cleanup outside every request and Unit of Work, so a
-  repeat after that runs as a new request (ticket #42 follow-up, [architecture](../architecture/README.md#pouryakitpersistenceefcore)).
+  repeat after that runs as a new request ([architecture](../architecture/README.md#pouryakitpersistenceefcore)).
 - **When it runs.** A command opts in with `[Idempotent]`. The slot runs when such a command is outermost and its
   `OperationContext.RequestId` is set; the key is the tenant (a null tenant stored as one fixed sentinel, the empty
   string, which no tenant can equal because `OperationContext` refuses a blank one), the Actor, the command's full
@@ -202,12 +142,12 @@ Proven against PostgreSQL by `IdempotencyTests` in `tests/ModularMonolith.Tests`
 `A_concurrent_repeat_waits_for_the_first_operation_then_runs_when_it_rolled_back`, and by
 `PouryaKit.Cqrs.Tests.IdempotencyTests.Only_an_outermost_command_with_a_request_id_reserves_its_key_inside_the_unit_of_work_before_its_handler`.
 
-The caching slot (ticket #43):
+The caching slot:
 
 - **Position.** The slot belongs to a query, after logging, the authorization hook and validation, around its handler,
   so a stored answer never skips a check. The dispatcher sends the query to the `IQueryCache` seam with its Operation's
   context, a delegate that runs the handler and one that ends its read.
-- **Only the outermost query of an Operation that has not failed** (fix of #43 re-review F5 at commit `9dfa861`). The
+- **Only the outermost query of an Operation that has not failed.** The
   slot takes a query only when it is its Operation's outermost step, with no command, authorizer, validator, other
   query or step that only reads open around it (`Operation.IsOutermostQuery`), and only while the Operation is not
   rollback-only. A nested query's reading boundary begins from the tracked state the enclosing steps left, so a change
@@ -221,10 +161,10 @@ The caching slot (ticket #43):
   Kit, as `IIdempotencyStore` exists for persistence packages; `PouryaKit.Caching` registers its implementation over
   `HybridCache`, and `PouryaKit.Cqrs` never references Caching. The dispatcher takes whatever `IQueryCache` is
   registered, so a Host registration that replaces it is possible, but outside what this ADR supports. *Since
-  2026-10-08 (ticket #54) an application's own implementation fails a structure test; see the amendment below.* A query opts in
+  2026-10-08 an application's own implementation fails a structure test; see the amendment below.* A query opts in
   with Caching's `ICacheableQuery` (key, duration, tags). Its implementation makes one `HybridCache.GetOrCreateAsync`
   call, so concurrent misses in one Host share a handler run; another Host runs its own. The effective key adds the
-  query's full type name, the tenant (a null tenant as `OperationContext.NoTenant`, the empty string #42's key table
+  query's full type name, the tenant (a null tenant as `OperationContext.NoTenant`, the empty string the idempotency key table
   stores too) and the Actor's kind and id to the declared key, while tags name resources and span Actors.
 - **Never a failed Result.** The factory throws a private exception that carries a failure, so `HybridCache` stores
   nothing, in memory or in a distributed cache, and every caller that joined the run receives the failure. The
@@ -232,7 +172,7 @@ The caching slot (ticket #43):
 - **Nothing a query changed.** A query's tracked-state check otherwise runs when its reading boundary closes, after its
   answer would already be stored. On the cached path the shared run handles, serializes, checks, then publishes: the
   cache serializes a success, calls the dispatcher's delegate that closes the boundary, and only then returns the
-  serialized answer to `HybridCache` (fix of #43 re-review F6 at commit `9dfa861`), so the check also sees a change
+  serialized answer to `HybridCache`, so the check also sees a change
   that serializing made, such as a deferred enumerable's. A change then throws, marks the Operation rollback-only, and
   is stored nowhere: every caller that joined the run receives the exception, and the next query runs the handler again.
   The serialization stays in Caching and the check in Cqrs, which never references Caching.
@@ -248,30 +188,20 @@ The caching slot (ticket #43):
   then, so a distributed cache that refuses an eviction is logged and never fails the command.
 - **Optional, at the cost of a null check.** A Host without `AddPouryaKitCaching()` has no `IQueryCache`, and every
   query runs as before. Unlike a request id, a cacheable query in such a Host promises nothing the Host then breaks, so
-  nothing throws. *Superseded on 2026-10-07 by the owner's decision B (ticket #61): a cacheable query is never silent.
+  nothing throws. *Superseded on 2026-10-07: a cacheable query is never silent.
   See the amendment below.*
 - **Applications still register no steps.** The slot is written out in the dispatcher; the cache is a seam the Kit
   fills, not a step.
 
-Proven against PostgreSQL by `CachingTests` in `tests/ModularMonolith.Tests`, among them
-`An_entry_answers_only_its_own_actor_and_tenant`, `A_failed_result_is_never_stored`,
-`A_query_nested_in_a_write_unit_of_work_that_rolls_back_leaves_no_entry` and
-`A_rolled_back_rename_evicts_nothing_so_the_valid_entry_survives`,
-`A_caller_that_leaves_the_run_it_started_keeps_its_operation_so_a_joiner_gets_a_trusted_success_of_one_run`,
-`A_query_that_changes_tracked_state_stores_nothing_and_its_joiner_receives_the_failure`,
-`A_query_whose_answer_changes_tracked_state_when_serialized_stores_nothing_and_its_joiner_receives_the_failure`,
-`A_query_nested_in_one_that_changed_tracked_state_stores_nothing_so_a_later_read_answers_the_committed_value`,
-`A_query_sent_by_an_authorizer_that_changed_tracked_state_stores_nothing_so_a_later_read_answers_the_committed_value`,
-`A_query_nested_in_another_is_answered_but_never_cached` and
-`A_query_in_an_operation_that_already_failed_stores_nothing_so_a_later_read_answers_the_committed_value`, against a real Redis shared by two Hosts by
+Proven against PostgreSQL by `CachingTests` in `tests/ModularMonolith.Tests`, against a real Redis shared by two Hosts by
 `With_redis_a_second_host_reads_the_entry_the_first_stored_without_running_its_handler`, and by
 `PouryaKit.Cqrs.Tests.QueryCacheTests`. Neither single flight across Hosts nor eviction of another Host's in-memory
 copies is claimed.
 
-## Amendment (2026-10-07, ticket #61: a cacheable query never runs uncached without a word)
+## Amendment (2026-10-07: a cacheable query never runs uncached without a word)
 
-The decision above stands. The owner decided on 2026-10-07 (decision B of the Kit API review) that caching is never
-silent, which supersedes the #43 amendment's "Optional, at the cost of a null check".
+The decision above stands. Caching is never silent, which supersedes the optional idempotency and caching slots
+amendment's "Optional, at the cost of a null check".
 
 - **A Host that registers a cacheable query calls `AddPouryaKitCaching()`, or is not built.** Caching's
   `ICacheableQuery` inherits Cqrs's marker `IRequiresQueryCache`, and one of Cqrs's composition checks fails the Host
@@ -282,18 +212,18 @@ silent, which supersedes the #43 amendment's "Optional, at the cost of a null ch
   slot keeps its null check for it.
 - **Applications still register no steps.** The checks run once, when the container is built, from Cqrs's
   `AddPouryaKitCompositionChecks`, which `AddPouryaKitModules` calls and a Host without Modules calls itself; they add
-  nothing to the pipeline. The declared-authorizer check (#56) is one of them and still stops the Host when it is built:
+  nothing to the pipeline. The declared-authorizer check is one of them and still stops the Host when it is built:
   a built Host runs Operations through its Gateways before it starts, so no check waits for the start.
-  *Since ticket #62 (2026-10-08) `UsePouryaKitWolverine` calls the entry too, and a check that only the built
+  *Since 2026-10-08 `UsePouryaKitWolverine` calls the entry too, and a check that only the built
   application can answer, such as an endpoint never mapped, is an `IStartupCheck` run at `StartingAsync`; a
   composition check still never waits for the start ([ADR 0006](0006-independent-delivery-through-a-routed-queue-per-subscription.md),
-  the amendment for #54).*
+  the amendment on the routing refusals at the build).*
 - Proven by `CompositionCheckTests.A_cacheable_query_in_a_host_without_caching_fails_the_host_when_built_naming_the_call`,
   red with the check switched off, against PostgreSQL.
 
-## Amendment (2026-10-08, ticket #62: an Idempotency-Key on a read is refused when its endpoint is built)
+## Amendment (2026-10-08: an Idempotency-Key on a read is refused when its endpoint is built)
 
-The decision above stands, and so does the #42 amendment's "throws `InvalidOperationException` at dispatch" for a
+The decision above stands, and so does the optional idempotency and caching slots amendment's "throws `InvalidOperationException` at dispatch" for a
 request id on a command that does not opt in.
 
 - **`RequireIdempotencyKey()` on an endpoint mapped for GET, HEAD, OPTIONS or TRACE throws when the endpoint is built**,
@@ -302,17 +232,15 @@ request id on a command that does not opt in.
   and change nothing. An endpoint mapped for every method, with no method metadata, is not refused.
 - **Whether the command opts in stays a dispatch check.** The endpoint's delegate builds the command it sends, so the
   endpoint cannot know its type when it is built; the dispatcher's refusal of a request id on a command without
-  `[Idempotent]` is the one check of it. The ticket's planned build-time command check was not built for that reason,
-  the design review's finding API-01, which the orchestrator accepted on 2026-10-08.
+  `[Idempotent]` is the one check of it.
 - Proven by `MisconfiguredHostTests.An_endpoint_that_requires_an_idempotency_key_on_a_get_fails_the_host_at_start`, red
   with the refusal switched off, against PostgreSQL.
 
-## Amendment (2026-10-08, ticket #54: applications implement none of the pipeline's contracts)
+## Amendment (2026-10-08: applications implement none of the pipeline's contracts)
 
-The decision above stands. The #42 and #43 amendments say the two optional slots are filled only by the Kit, yet their
+The decision above stands. The optional idempotency and caching slots amendment says the two optional slots are filled only by the Kit, yet their
 contracts are public and the dispatcher takes whatever implementation is registered, so an application could implement
-or replace one, and only Feature code calling one was refused. The owner approved enforcing it on 2026-10-07
-(decision D4).
+or replace one, and only Feature code calling one was refused.
 
 - **Public so the Kit's own packages fill them.** `IIdempotencyStore` and `IQueryCache` are public Cqrs contracts
   because `PouryaKit.Persistence.EFCore` and `PouryaKit.Caching` fill them and Cqrs references neither. The
@@ -338,12 +266,12 @@ or replace one, and only Feature code calling one was refused. The owner approve
   `PipelineContractTests.No_module_or_host_implements_a_pipeline_contract_and_the_kit_implements_each`, red with
   `IDispatcher` and `IGatewayProcessor<TModule>` taken off the list.
 
-## Amendment (2026-10-08, Wave 2 final structural review: an Idempotency-Key needs a write method)
+## Amendment (2026-10-08: an Idempotency-Key needs a write method)
 
-The decision above stands, and so does the #62 amendment's refusal of a safe method, but not its exception: "An
+The decision above stands, and so does the Idempotency-Key on a read amendment's refusal of a safe method, but not its exception: "An
 endpoint mapped for every method, with no method metadata, is not refused" no longer holds. Such an endpoint, mapped
 with `Map(pattern, handler)` or with an empty `HttpMethodMetadata`, answers every method, GET included, so it required
-a key that a query ignores (finding R5 of the final structural review).
+a key that a query ignores.
 
 - **`RequireIdempotencyKey()` needs explicit, non-empty method metadata with no safe method in it.** An endpoint with no
   method metadata or an empty method list throws in the same `Finally` hook when it is built, naming the fix: map the
@@ -352,12 +280,11 @@ a key that a query ignores (finding R5 of the final structural review).
 - Proven by `MisconfiguredHostTests.An_endpoint_that_requires_an_idempotency_key_but_names_no_method_fails_the_host_at_start`,
   for both shapes, red with the new refusal switched off (both Hosts started), against PostgreSQL.
 
-## Amendment (2026-10-08, ticket #66: a type's assembly in the idempotency key and the query cache key)
+## Amendment (2026-10-08: a type's assembly in the idempotency key and the query cache key)
 
-The decision above stands, and so do the two slots. What changes is how each key names a type. The #42 and #43
-amendments say "the command's full type name" and "the query's full type name"; both now also carry the simple name of
-the assembly that holds the type. The owner decided it on 2026-10-08, on a finding of the AI reviews of the pull request
-that merges Wave 2.
+The decision above stands, and so do the two slots. What changes is how each key names a type. The optional idempotency and caching slots
+amendment says "the command's full type name" and "the query's full type name"; both now also carry the simple name of
+the assembly that holds the type.
 
 - **Why.** The runtime lets two assemblies hold a type of one namespace-qualified name, and the Kit refuses neither.
   With the full name alone, two such cacheable queries in one Host, or in two Hosts on one distributed cache, shared an
@@ -373,8 +300,7 @@ that merges Wave 2.
 - **Never the assembly-qualified name.** It carries the assembly's version, culture and public key token: two Hosts on
   different builds of one assembly would stop sharing a distributed cache's entries, a deploy would orphan every
   stored idempotency key, and it would take from the 1024 characters `HybridCache` allows a key.
-- **What it costs.** Nothing today: no package is published, so no stored row and no cache entry carries the former
-  key. From the first publication on, renaming the assembly that holds a command or a query starts new keys, as
+- **What it costs.** Renaming the assembly that holds a command or a query starts new keys, as
   renaming the type always did: a repeat inside the retention runs once more, and a cached answer is read again.
   The key table's `command` column is `text` in its primary key, so no schema or migration changes.
 - Proven against PostgreSQL by `SameNamedTypeTests` in `tests/ModularMonolith.Tests`, an application whose Features come
@@ -383,25 +309,23 @@ that merges Wave 2.
   `Two_idempotent_commands_of_one_full_name_in_two_assemblies_each_run_under_one_request_id`, each red with the
   assembly left out of its key, when the second caller received the first type's answer.
 
-## Amendment (2026-10-10, ticket #81: one helper names a type in every key, and the Outbox marker is `IOutbox`)
+## Amendment (2026-10-10: one helper names a type in every key, and the Outbox marker is `IOutbox`)
 
-The decision above stands, and so does the #66 amendment's rule. What changes is where the rule is written, and the
-name of one seam the #54 amendment lists.
+The decision above stands, and so does the rule of the type's assembly in the keys amendment. What changes is where the
+rule is written, and the name of one seam the pipeline contracts amendment lists.
 
-- **One helper.** The #66 amendment wrote the rule at both keys, each naming the other, because `PouryaKit.Caching`
-  sees none of Cqrs's internals. Since ticket #81 (spec #74, finding V13) it is written once, as the public
+- **One helper.** The type's assembly in the keys amendment wrote the rule at both keys, each naming the other, because
+  `PouryaKit.Caching` sees none of Cqrs's internals. It is written once, as the public
   `OperationTypes.KeyName(Type)` of `PouryaKit.Cqrs`, which the dispatcher's idempotency key and Caching's query cache
   key both call. It caches the name per type, so `Assembly.GetName()` no longer runs for every cacheable query. The
-  keys are byte-identical: `TypeKeyTests.The_idempotency_key_and_the_cache_key_name_a_type_by_its_full_name_and_its_assemblys_simple_name`
-  pins both as the key table and a distributed cache hold them, and passed unchanged before and after the helper; it
-  is red with the helper returning the assembly-qualified name.
-  *Corrected on 2026-10-11 (ticket #105, the first review round of PR #103): the keys are not byte-identical as
-  wholes. Both hold the tenant and the Actor; the idempotency key adds the request id, and the cache key the query's
-  own key. Both hold the type's name as `OperationTypes.KeyName` writes it: as it is in the idempotency key's
-  `command` column, and escaped in the cache key, as every part of that key is.*
-- **The Outbox marker is `IOutbox`.** Ticket #81 (decision D16) renamed the Messaging.Wolverine marker the #54
-  amendment lists, because it marks that a Host has an Outbox for every kind the glossary's Outbox covers, not for
+  keys are not identical as wholes: both hold the tenant and the Actor, the idempotency key adds the request id, and
+  the cache key the query's own key. Both hold the type's name as `OperationTypes.KeyName` writes it: as it is in the
+  idempotency key's `command` column, and escaped in the cache key, as every part of that key is.
+  `TypeKeyTests.The_idempotency_key_and_the_cache_key_name_a_type_by_its_full_name_and_its_assemblys_simple_name`
+  pins both as the key table and a distributed cache hold them.
+- **The Outbox marker is `IOutbox`.** The Outbox marker the pipeline contracts amendment lists is named `IOutbox`,
+  because it marks that a Host has an Outbox for every kind the glossary's Outbox covers, not for
   Notifications alone. Its place among the pipeline's contracts is unchanged.
-  *Since 2026-10-24 (the PR #143 review) it is `PouryaKit.Cqrs`'s, so each persistence package's composition check
+  *Since 2026-10-24 it is `PouryaKit.Cqrs`'s, so each persistence package's composition check
   reads it: a Host with an Outbox in which a write model's Unit of Work has none fails when it is built. Its place
   among the pipeline's contracts is still unchanged.*

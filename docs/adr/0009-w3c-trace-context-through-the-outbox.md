@@ -4,11 +4,11 @@ status: accepted
 
 # A delivery's Operation joins the publishing Operation's trace as a child; the Kit adds only the Operation activity's placement, tracestate and a parent fallback
 
-Spike #46 (spec #33, "Required Spikes" item 2) ran the Proving Sample's Catalog-to-Inventory chain through the Kit's EF
+A spike ran the Proving Sample's Catalog-to-Inventory chain through the Kit's EF
 Outbox and durable local queues against WolverineFx 6.46.0 and PostgreSQL, with `ActivityListener`s. Wolverine already
 carries the W3C `traceparent` through the Outbox: when the Unit of Work publishes, it writes the current activity's id
 as the envelope's `parent-id`, persists it in the stored envelope, and starts its execution span of the delivery as a
-child of it, on the first attempt, on a stored retry and on a delivery another Host recovers. Ticket #47 implements
+child of it, on the first attempt, on a stored retry and on a delivery another Host recovers. The Kit implements
 only three things. First, its Operation activity must be current while the Unit of Work writes the Outbox, because that
 activity is what Wolverine writes as the parent. Second, it carries `tracestate`, which Wolverine does not. Third, it
 gives the delivery's Operation a parent fallback: Wolverine's span exists only when a Host samples Wolverine's own
@@ -24,16 +24,8 @@ contradicts ADR 0001 to 0008 or section G.
 ## Evidence
 
 The Spike code is `spikes/w3c-propagation/` at commit `c4cf2870993a8bd5bd22ecac895a869166cd0869`, reachable through tag
-`spike/w3c-propagation`. It is not merged. One test project, `spikes/w3c-propagation/W3cPropagation.Tests.csproj`, is
-the folder's only entry. The tests were run on 2026-10-07:
-
-```
-dotnet build spikes/w3c-propagation
-dotnet test --project spikes/w3c-propagation/W3cPropagation.Tests.csproj --timeout 300s --output Detailed
-```
-
-.NET SDK 10.0.401, Microsoft Testing Platform, xunit.v3 4.0.1, `postgres:18.6` in Testcontainers 4.15.0. 6 of 6 tests
-passed. Each test gets a database of its own and Hosts of its own.
+`spike/w3c-propagation`. It is not merged. The tests ran against `postgres:18.6` in Testcontainers; 6 of 6 passed. Each
+test gets a database of its own and Hosts of its own.
 
 **Configuration.**
 
@@ -49,7 +41,7 @@ passed. Each test gets a database of its own and Hosts of its own.
   Integration Event is therefore that Notification delivery Operation, one delivery below `CreateProduct`.
 - **Stand-in Operation activity.** Each scope's outermost `IDispatcher` call runs inside an activity
   `pouryakit.operation` from the Spike's source `PouryaKit.Spike` (a scoped decorator replacing the `IDispatcher`
-  registration). It wraps the Unit of Work, so it is current while the Unit of Work writes the Outbox, as #47's Operation
+  registration). It wraps the Unit of Work, so it is current while the Unit of Work writes the Outbox, as the Kit's Operation
   activity must be. It covers both the Gateway's scope and the scope `SubscriptionDelivery` opens for each delivery.
 - **Upstream activity.** A `PouryaKit.Spike` activity of kind `Server` is current around the `CreateProduct` Gateway
   call, standing in for an incoming request whose W3C context is already restored, with `TraceStateString` either null
@@ -73,18 +65,6 @@ passed. Each test gets a database of its own and Hosts of its own.
 | Restoring the parent explicitly | `First_attempt`, all four cases | `ActivityContext.TryParse(parent-id, tracestate, isRemote: true, out var parent)` on the stored `parent-id` of `publish-product-created`, then `StartActivity("pouryakit.operation", ActivityKind.Internal, parent)`, gives an activity in the upstream trace whose parent is `CreateProduct`'s Operation and whose `TraceStateString` is the given tracestate. |
 | Stored retry | `Stored_retry` (Wolverine's source listened, tracestate set) | Inventory's first attempt is failed before its Receipt; the Kit's `ScheduleRetry` writes it back to the store and a second attempt runs. Both attempts' Wolverine spans are children of the publishing Operation, in the upstream trace. The retry's span is tagged `wolverine.message.scheduled=True`. Neither span has a link, and tracestate is null on both. |
 | Recovered after a restart | `Recovered_after_restart` (Wolverine's source listened, tracestate set) | Host A holds Inventory's first attempt before its Receipt and is stopped with `StopMode.Quick`. Host B, started on the same database, recovers the stored envelope. Its Inventory delivery Operation is in the upstream trace, and its parent is Wolverine's span on Host B, whose parent is the publishing Operation that ran on Host A. tracestate is null. |
-
-A worked example from the final run, `First_attempt(true, "kit=spike-46,other=v1")`, trace `48874ee9f8e45bc205cca8d6b5251411`:
-
-```
-upstream (PouryaKit.Spike, Server)                       0336c2b0589680a1  tracestate=kit=spike-46,other=v1
-└ CreateProduct Operation (pouryakit.operation)          982958935d86687b  tracestate=kit=spike-46,other=v1
-  └ Wolverine catalog.product-created                    3f9d089bdb027274  tracestate=null
-    └ Notification delivery Operation (publishes)        83baa54fa51a87cf  tracestate=null
-      │   stored parent-id = 00-48874ee9f8e45bc205cca8d6b5251411-83baa54fa51a87cf-01
-      └ Wolverine catalog.product-created.v1             7d3546df51497a39  tracestate=null
-        └ Inventory delivery Operation                   7b6ff9ce038d7627  tracestate=null
-```
 
 Source reading of `jasperfx/wolverine` at tag `V6.46.0` (commit `1f22835a2b3e32dbf4b75c7a5273622ee74a4929`) explains
 these results. These points are inferred from source, not observed:
@@ -122,82 +102,47 @@ these results. These points are inferred from source, not observed:
    current at publish), storing it with the envelope in the Outbox, restoring it on the first attempt, on a stored retry
    and on a recovered delivery, and parenting its own execution span on it. The Kit writes no `traceparent` header of
    its own.
-3. **#47 implements only these.**
+3. **The Kit implements only these.**
    - **The Operation activity is current while the Unit of Work writes the Outbox.** Inferred from source, not
      separated by a test: Wolverine reads `Activity.Current` in `PublishAsync` (`src/Wolverine/Runtime/MessageBus.cs:315`
      and `:428` at `V6.46.0`), which `WolverineOutbox.WriteAsync` calls during the commit, before the flush. The Spike's
      stand-in wraps the whole dispatcher call, so it is current at both the write and the flush; no test ends it between
-     them. An Operation activity that ends before the Unit of Work writes the Outbox is never the parent. *Shown red in
-     #47 (2026-10-07): `ObservabilityTests.A_product_created_in_catalog_and_stocked_in_inventory_is_one_trace_with_the_upstream_tracestate`
-     fails when the Operation activity ends before the Unit of Work writes the Outbox, since the stored `parent-id` no
-     longer names it (the acceptance record's #47 section).*
+     them. An Operation activity that ends before the Unit of Work writes the Outbox is never the parent. *Pinned by
+     `ObservabilityTests.A_product_created_in_catalog_and_stocked_in_inventory_is_one_trace_with_the_upstream_tracestate`:
+     the stored `parent-id` names the Operation activity.*
    - **Carry tracestate.** Seam: `src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs`, `WriteAsync`, beside
      `WithOperationContext`. It writes `Activity.Current?.TraceStateString` into a Kit header, because the stored envelope
-     has none. The header name follows the Kit's header naming (`OperationContextHeaders`) and is #47's to choose.
-     *Moved 2026-10-18 (#121, ADR 0011): the write is `OutboxWriter.WriteAsync`, in
+     has none. The header name follows the Kit's header naming (`OperationContextHeaders`).
+     *Moved 2026-10-18 (ADR 0011): the write is `OutboxWriter.WriteAsync`, in
      `src/PouryaKit.Messaging.Wolverine/OutboxWriter.cs`, which the EF Outbox calls; nothing else changed.*
    - **Parent fallback and tracestate restore.** Seam: `src/PouryaKit.Messaging.Wolverine/SubscriptionDelivery.cs`,
      `HandleAsync`, the only place that holds the `Envelope`. It parses `envelope.ParentId` and the Kit's tracestate
      header into an `ActivityContext`, and the delivery's Operation activity starts with it as its parent when no
      activity of that trace is current. In both cases the Operation activity's `TraceStateString` is set from the header.
-     How the parsed context reaches #47's pipeline step is #47's design. One option is to record it on the scope's
+     How the parsed context reaches the pipeline step is the Kit's design. One option is to record it on the scope's
      `Operation` when `BeginOperation` runs.
 
    No other propagation behaviour is needed for the local path.
 
-   *Implemented in #47 at `49bc97e`: the header is `OperationContextHeaders.TraceState` (`pouryakit-tracestate`), and the
+   *Implemented: the header is `OperationContextHeaders.TraceState` (`pouryakit-tracestate`), and the
    parsed context reaches the activity as `Operation.TraceParent`; `ObservabilityTests` pins the invariants below.*
-
-The snippet below is mostly untested design for #47. Only one part ran in the Spike. `PropagationTests.cs:84-92`, in
-every `First_attempt` case, parsed a stored `parent-id` together with a tracestate the test supplied directly, using
-`ActivityContext.TryParse(parentId, traceState, isRemote: true, out var parent)`, then started
-`StartActivity("pouryakit.operation", ActivityKind.Internal, parent)`. The observed result was the publishing trace, the
-publishing Operation as parent, and that tracestate. The rest never ran: writing the `pouryakit-tracestate` header,
-reading it back from the envelope, the conditional parent and setting `TraceStateString`. The header name is a
-placeholder.
-
-```csharp
-// UNTESTED DESIGN. Write side, in WolverineOutbox.WriteAsync, per published message. Wolverine itself writes
-// Activity.Current.Id as the envelope's parent-id in PublishAsync; only the tracestate needs the Kit.
-var options = new DeliveryOptions().WithOperationContext(context);
-if (Activity.Current?.TraceStateString is { Length: > 0 } traceState)
-{
-    options.Headers["pouryakit-tracestate"] = traceState;
-}
-
-// Read side, in SubscriptionDelivery.HandleAsync: the publishing Operation's context. Reading the header is untested
-// design; the TryParse call is the one that ran (PropagationTests.cs:85), with a stored parent-id.
-envelope.Headers.TryGetValue("pouryakit-tracestate", out var state);
-ActivityContext.TryParse(envelope.ParentId, state, isRemote: true, out var published);
-
-// UNTESTED DESIGN. Where #47 starts the Operation activity: Wolverine's execution span of this envelope is current only
-// when a Host samples the "Wolverine" source. A default parent means "the current activity". Starting an activity with
-// a parsed parent ran (PropagationTests.cs:86); this condition did not.
-var parent = Activity.Current?.TraceId == published.TraceId ? default : published;
-using var activity = source.StartActivity("pouryakit.operation", ActivityKind.Internal, parent);
-if (activity is not null && published.TraceState is { } restored)
-{
-    activity.TraceStateString = restored;
-}
-```
 
 No package is added. `System.Diagnostics` is in the BCL, and the Spike used only the Kit's own pins (WolverineFx 6.46.0,
 MIT; `Microsoft.AspNetCore.TestHost` 10.0.12, MIT, test-only).
 
 ## Invariants worth a permanent test
 
-| Invariant | Seam | Owner |
-|---|---|---|
-| With only the Kit's Operation source listened (not `Wolverine`), Inventory's delivery Operation of `ProductCreatedV1` has the publishing Operation's trace id, and its parent is the publishing Notification delivery Operation's span. Red once: without the fallback it is the root of a new trace (`First_attempt(false, …)` observed exactly that). | Gateway (`ModularMonolith.Tests`, test `ActivityListener`) | #47 |
-| With `Wolverine` listened as well, the same delivery is in the same trace and its parent is Wolverine's execution span of that envelope, whose parent is the publishing Operation: no second parent and no new trace. | Gateway | #47 |
-| A tracestate current when an Operation publishes arrives on the delivery's Operation activity, asserted on a stored retry or a recovered delivery: a durable local queue hands the first attempt the published in-memory envelope (`tests/ModularMonolith.Tests/IntegrationEventTests.cs:203`, `An_integration_event_handler_that_fails_is_retried_in_new_scopes_and_leaves_neither_its_effect_nor_its_receipt`), so only those attempts read it back from the store. | Gateway | #47 |
-| The Operation activity is current while the Unit of Work writes the Outbox: the stored `parent-id` names the publishing Operation's span. | Gateway | #47 |
+| Invariant | Seam |
+|---|---|
+| With only the Kit's Operation source listened (not `Wolverine`), Inventory's delivery Operation of `ProductCreatedV1` has the publishing Operation's trace id, and its parent is the publishing Notification delivery Operation's span. | Gateway (`ModularMonolith.Tests`, test `ActivityListener`) |
+| With `Wolverine` listened as well, the same delivery is in the same trace and its parent is Wolverine's execution span of that envelope, whose parent is the publishing Operation: no second parent and no new trace. | Gateway |
+| A tracestate current when an Operation publishes arrives on the delivery's Operation activity, asserted on a stored retry or a recovered delivery: a durable local queue hands the first attempt the published in-memory envelope (`tests/ModularMonolith.Tests/IntegrationEventTests.cs:203`, `An_integration_event_handler_that_fails_is_retried_in_new_scopes_and_leaves_neither_its_effect_nor_its_receipt`), so only those attempts read it back from the store. | Gateway |
+| The Operation activity is current while the Unit of Work writes the Outbox: the stored `parent-id` names the publishing Operation's span. | Gateway |
 
 ## Limitations
 
 - **Local delivery only.** Every observation is from durable local queues in one process. The RabbitMQ path, including
-  whether `parent-id` and the Kit's tracestate header survive the broker's envelope mapping, was not examined. #52 must
-  probe and prove it before cross-process propagation is claimed. *Answered by the #52 amendment below: both survive
+  whether `parent-id` and the Kit's tracestate header survive the broker's envelope mapping, was not examined. *Answered by the amendment below on the trace across RabbitMQ: both survive
   the broker, and the receiving Host's fan-out needs one header to keep the parent.*
 - **Sampling.** Every listened source sampled everything. The Spike did not examine head sampling, such as a
   parent-based ratio sampler, or the sampled flag in `parent-id`. It also did not examine a Host that disables
@@ -224,7 +169,7 @@ MIT; `Microsoft.AspNetCore.TestHost` 10.0.12, MIT, test-only).
 
 ## Consequences
 
-- #47 owns the Operation activity's placement (around the Unit of Work), the tracestate header, and the parent fallback
+- The Kit owns the Operation activity's placement (around the Unit of Work), the tracestate header, and the parent fallback
   in `SubscriptionDelivery`. It builds nothing else for local propagation.
 - Wolverine's `messaging.conversation_id` tag on its spans is the trace id, because `MessageBus` defaults its
   correlation to `Activity.Current.RootId` (`src/Wolverine/Runtime/MessageBus.cs:28`; inferred). The Operation
@@ -232,19 +177,19 @@ MIT; `Microsoft.AspNetCore.TestHost` 10.0.12, MIT, test-only).
 - The wording in I.4, "delivery activities link to the publishing Operation", reads as "are children of the publishing
   Operation's trace" under this record. Plan sections I.4 and I.6 carry an inline note pointing here.
 
-## Amendment (2026-10-07, ticket #52: the trace across RabbitMQ)
+## Amendment (2026-10-07: the trace across RabbitMQ)
 
 The decision above stands: the relationship is parent, not link, and the Kit relies on Wolverine's `parent-id` wherever
-Wolverine keeps it. Ticket #52 probed the broker path of ADR 0006's #50 amendment before changing any code, and adds one
-header for the one hop where Wolverine loses the parent.
+Wolverine keeps it. The broker path of ADR 0006's RabbitMQ topology amendment was probed before any code changed, and one
+header is added for the one hop where Wolverine loses the parent.
 
 **The probe.** `ModularMonolith.Host` with a broker (Catalog and Billing) and `Inventory.Host`, each a real Host on a
 database of its own and joined only by RabbitMQ (`rabbitmq:4.3.6`) in Testcontainers, both in the test process, with
 `AddPouryaKitObservability()` on both and the listeners of `RecordedTelemetry`. An `ActivityListener` sees its own
-process only, which is why the pair runs in one process; #51's child-process run proves the delivery, not the trace. The
+process only, which is why the pair runs in one process; the RabbitMQ topology amendment's child-process run proves the delivery, not the trace. The
 chain is the local proof's: `CreateProduct` inside an upstream activity with tracestate `kit=52,other=v1`, the delivery
 Operation of its Notification `catalog.product-created.publish-product-created` publishing `ProductCreatedV1`, and
-Inventory's `inventory.product-created` delivery in `Inventory.Host`. Observed at `8b7ab96`, before any change:
+Inventory's `inventory.product-created` delivery in `Inventory.Host`. Observed before any change:
 
 | Point | Wolverine's source not listened | Wolverine's source listened |
 |---|---|---|
@@ -253,8 +198,7 @@ Inventory's `inventory.product-created` delivery in `Inventory.Host`. Observed a
 | Inventory's delivery Operation | the root of a new trace, with no tracestate | in the upstream trace: its parent is Wolverine's span of the copy, whose parent is Wolverine's span of the broker envelope, whose parent is the publishing Operation; tracestate `kit=52,other=v1` |
 
 So both values cross the broker: WolverineFx.RabbitMQ maps `Envelope.ParentId` to the AMQP header `parent-id` and
-carries every other header. The parent is lost inside the receiving Host. The fan-out (`SubscriptionDelivery.FanOutAsync`,
-#51) sends each copy with `EndpointFor(local://{subscription}).SendAsync`, and Wolverine's `DestinationEndpoint.SendAsync`
+carries every other header. The parent is lost inside the receiving Host. The fan-out (`SubscriptionDelivery.FanOutAsync`) sends each copy with `EndpointFor(local://{subscription}).SendAsync`, and Wolverine's `DestinationEndpoint.SendAsync`
 applies the delivery options and then `TrackEnvelopeCorrelation(envelope, Activity.Current)`, which sets the copy's
 `ParentId` to `Activity.Current?.Id` (read from the `V6.46.0` package with ilspycmd; inferred, not separated by a test).
 With no listener sampling Wolverine nothing is current there, so the copy names no parent, and the delivery's parse of
@@ -285,15 +229,9 @@ their Wolverine `TenantId` is null; the Kit reads neither, since tenant and corr
 - In both modes the delivery Operation has the upstream trace id and tracestate, on the first attempt, which runs from
   the copy the fan-out handed over in memory, and on a stored retry, which reads the copy back from the store; the two
   attempts are siblings under the same parent. Nothing creates a link.
-- Red once: without the header write, or without the fallback read, the unlistened mode starts a new trace again, while
-  the listened mode stays in the trace by design; without `pouryakit-tracestate` among the copied headers both modes
-  lose the tracestate; without `AddPouryaKitObservability()` in `Inventory.Host` neither has a delivery activity.
 
 **Limitations.** A copy recovered after its Host restarts reads the header from the stored copy, as the stored retry
 does; that path was not run separately. Sampling, id format and the ASP.NET Core ingress stay as the Limitations above
 say. The proof Host's exporters are the service defaults recipe of `ModularMonolith.ServiceDefaults`, template content
-that adds the `PouryaKit` source and meter and not `Wolverine` (spec #33's template decision; plan I.3, "Health,
+that adds the `PouryaKit` source and meter and not `Wolverine` (plan I.3, "Health,
 resilience, service discovery, Serilog"): the trace holds either way.
-
-*Implemented in #52 at `671a7b3`: `OperationContextHeaders.TraceParent`, written by `SubscriptionDelivery.CopiesOf` and read
-by `ContinuedOperationContext`; `CrossProcessTracingTests` pins both listener modes.*
