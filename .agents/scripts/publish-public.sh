@@ -1,11 +1,16 @@
 #!/bin/bash
 # Publishes the reviewed public tree to the public repository as a new commit and tag. The owner runs this.
-# Usage:     bash .agents/scripts/publish-public.sh <new tag, assets-v and a number>
-# Rehearsal: PUBLIC_REMOTE=<bare repository> bash .agents/scripts/publish-public.sh <new tag>
+# Usage:     bash .agents/scripts/publish-public.sh <new tag, assets-v and a number> [--images]
+# Rehearsal: PUBLIC_REMOTE=<bare repository> bash .agents/scripts/publish-public.sh <new tag> [--images]
 #
-# The tag the READMEs pin (ASSETS_TAG in addresses.ts) stays where it is, protected. Each new release gets its own tag,
+# The tag the READMEs pin (ASSETS_TAG in addresses.ts) stays where it is, protected: it is where the images live, since
+# the tree holds none, so a clone of the default branch fetches the skill alone. Each new release gets its own tag,
 # because --verify-remote needs the default branch to equal the tag it reads. The commit, the parent and every other
 # tag come from the checkout and the remote: nothing here is pinned, so a release needs no edit of this file.
+#
+# --images publishes a new or changed cover. Raise ASSETS_TAG and the READMEs' cover URLs first: a tag never moves, so
+# every published URL keeps its image. The run adds that tag beside the default branch, on a commit holding only assets/,
+# in the same atomic push as the release, so the branch stays small and the two land together or not at all.
 #
 # Why each line is here (#184, #192):
 # - The push comes from a fresh clone of the public repository, never from the private checkout, which holds
@@ -16,6 +21,8 @@
 #   commit is read before the push, and through the anonymous API after it.
 # - verifyRemote reads only HEAD and the tag, so the refs are read separately, three times across 40 s, because the
 #   daemon's push once landed 7 s after the commit.
+# - Everything a release needs is checked before the push: the images are read from the pinned tag's tree in step 1, or
+#   from the commit that adds them. What follows the push only reads back what landed.
 set -euo pipefail
 
 kit="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -24,6 +31,7 @@ address() { sed -n "s/^.*$1 = '\(.*\)';\$/\1/p" "$kit/website/lib/kit-sources/ad
 remote="${PUBLIC_REMOTE:-https://github.com/$(address PUBLIC_REPOSITORY).git}"
 pinned_tag="$(address ASSETS_TAG)"
 tag="${1:-}"
+new_images="${2:-}"
 
 # A machine with no global identity has nothing personal to look for, and an empty pattern would match every commit.
 personal_email="$(git config --global user.email || true)"
@@ -65,16 +73,41 @@ holds_private() {
   printf '%s' "$1" | grep -qiF -e "$personal_email" -e "$personal_name" -e 'Claude-Session' -e 'session_' -e 'claude.ai/code'
 }
 
-[[ "$tag" =~ ^assets-v[0-9]+$ ]] || stop 64 "usage: publish-public.sh <new tag, assets-v and a number>"
+# Every image a README pins, in byte order.
+images() {
+  {
+    printf '%s\n' assets/kit.png assets/icon.png
+    jq -r '.packages[].id | "assets/covers/\(.).png"' "$kit/scripts/packaging/inventory.json"
+  } | LC_ALL=C sort
+}
 
-echo "1/6 the remote holds only main and assets tags, $pinned_tag among them, and not $tag"
+[[ $# -le 2 && "$tag" =~ ^assets-v[0-9]+$ && "$new_images" =~ ^(--images)?$ ]] ||
+  stop 64 "usage: publish-public.sh <new tag, assets-v and a number> [--images]"
+
+echo "1/6 the remote holds only main and assets tags, and not $tag, and the images are in place"
 existing="$(anonymously git ls-remote "$remote")"
 parent="$(printf '%s\n' "$existing" | awk '$2 == "refs/heads/main" { print $1 }')"
 strays="$(printf '%s\n' "$existing" | awk '$2 != "HEAD" && $2 != "refs/heads/main" && $2 !~ /^refs\/tags\/assets-v[0-9]+$/')"
 [ -n "$parent" ] && [ -z "$strays" ] || stop 2 "the remote holds something else; nothing was pushed:
 $existing"
-printf '%s\n' "$existing" | grep -q "refs/tags/$pinned_tag\$" || stop 2 "the remote has no $pinned_tag; nothing was pushed"
+if [ -n "$new_images" ]; then
+  if printf '%s\n' "$existing" | grep -q "refs/tags/$pinned_tag\$"; then
+    stop 2 "$pinned_tag already exists and a tag never moves: raise ASSETS_TAG; nothing was pushed"
+  fi
+  [ "$tag" != "$pinned_tag" ] || stop 2 "the release and the images need a tag each; nothing was pushed"
+else
+  printf '%s\n' "$existing" | grep -q "refs/tags/$pinned_tag\$" || stop 2 "the remote has no $pinned_tag; nothing was pushed"
+fi
 if printf '%s\n' "$existing" | grep -q "refs/tags/$tag\$"; then stop 2 "$tag already exists; nothing was pushed"; fi
+
+work="$(mktemp -d)"
+
+if [ -z "$new_images" ]; then
+  anonymously git clone -q --filter=blob:none --depth 1 --no-checkout --branch "$pinned_tag" "$remote" "$work/pinned"
+  missing="$(LC_ALL=C comm -23 <(images) <(git -C "$work/pinned" ls-tree -r --name-only HEAD | LC_ALL=C sort))"
+  [ -z "$missing" ] || stop 8 "$pinned_tag lacks these images, so raise ASSETS_TAG and add --images; nothing was pushed:
+$missing"
+fi
 
 echo "2/6 the checkout is clean and equals origin/main"
 [ -z "$(git -C "$kit" status --porcelain)" ] || stop 10 "the checkout has changes; nothing was pushed"
@@ -83,12 +116,12 @@ if [ -z "${PUBLIC_REMOTE:-}" ]; then
     stop 10 "the checkout is not origin/main; nothing was pushed"
 fi
 
-work="$(mktemp -d)"
-
 echo "3/6 the tree is regenerated and matches the committed manifest"
 pnpm --dir "$kit/website" install --frozen-lockfile >"$work/install.log"
-pnpm --dir "$kit/website" covers >"$work/covers.log"
-[ -z "$(git -C "$kit" status --porcelain)" ] || stop 10 "the covers changed a tracked file; nothing was pushed"
+if [ -n "$new_images" ]; then
+  pnpm --dir "$kit/website" covers >"$work/covers.log"
+  [ -z "$(git -C "$kit" status --porcelain)" ] || stop 10 "the covers changed a tracked file; nothing was pushed"
+fi
 pnpm --dir "$kit/website" sync-public --check | tail -1
 pnpm --dir "$kit/website" sync-public "$work/tree" >"$work/tree.log"
 
@@ -120,8 +153,24 @@ holds_private "$(git -C "$clone" cat-file -p "$commit")" &&
 [ -z "$(git -C "$clone" for-each-ref refs/notes)" ] || stop 4 "a notes ref exists locally; nothing was pushed"
 git -C "$clone" tag --no-sign "$tag" "$commit"
 
-echo "5/6 pushing ${commit:0:8} to main and $tag"
-git -C "$clone" push -q --atomic origin "refs/heads/main:refs/heads/main" "refs/tags/$tag:refs/tags/$tag"
+refs=("refs/heads/main:refs/heads/main" "refs/tags/$tag:refs/tags/$tag")
+if [ -n "$new_images" ]; then
+  mkdir -p "$work/images/assets"
+  cp -R "$kit/website/covers/out/." "$work/images/assets/"
+  cp "$kit/src/icon.png" "$work/images/assets/icon.png"
+  (cd "$work/images" && GIT_INDEX_FILE="$work/images.index" git --git-dir="$clone/.git" --work-tree=. add -A)
+  images_tree="$(GIT_INDEX_FILE="$work/images.index" git -C "$clone" write-tree)"
+  images_commit="$(git -C "$clone" commit-tree "$images_tree" -p "$parent" -m "feat: the images at $pinned_tag")"
+  [ "$(git -C "$clone" ls-tree -r --name-only "$images_commit" | LC_ALL=C sort)" = "$(images)" ] ||
+    stop 7 "the typeset images differ from the inventory; nothing was pushed"
+  holds_private "$(git -C "$clone" cat-file -p "$images_commit")" &&
+    stop 3 "the images commit carries the personal identity or a session link; nothing was pushed"
+  git -C "$clone" tag --no-sign "$pinned_tag" "$images_commit"
+  refs+=("refs/tags/$pinned_tag:refs/tags/$pinned_tag")
+fi
+
+echo "5/6 pushing ${commit:0:8} to main and $tag${new_images:+, with the images at $pinned_tag}, all or nothing"
+git -C "$clone" push -q --atomic origin "${refs[@]}"
 pushed=yes
 rm -rf "$clone"
 
@@ -129,6 +178,7 @@ echo "6/6 reading it back as an anonymous client (about a minute)"
 expected="$(
   printf '%s\n' "$existing" | awk -v commit="$commit" '$2 == "HEAD" || $2 == "refs/heads/main" { print commit "\t" $2; next } { print }'
   printf '%s\trefs/tags/%s\n' "$commit" "$tag"
+  [ -z "$new_images" ] || printf '%s\trefs/tags/%s\n' "$images_commit" "$pinned_tag"
 )"
 expected="$(printf '%s\n' "$expected" | LC_ALL=C sort)"
 for read_number in 1 2 3; do
@@ -160,7 +210,7 @@ case "$remote" in
       done
       [ "$status" = 200 ] || stop 8 "$asset answered $status (PUSHED, tell Claude)"
       assets=$((assets + 1))
-    done < <(printf '%s\n' "$published" | grep '^assets/')
+    done < <(images)
     echo "    $assets images answer 200 anonymously at $pinned_tag, the tag the READMEs pin"
     ;;
 esac

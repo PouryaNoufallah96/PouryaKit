@@ -16,7 +16,7 @@ const FEATURE = 'samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Fe
 const guarantees = [
   {
     title: 'Feature code never saves',
-    body: "A structure rule: the sample's tests hold its Modules to it, and a project copies them for its own.",
+    body: "A structure rule: the sample's tests hold its Modules to it. They are not published, so a project writes its own.",
     href: `${docsRoute}/capabilities/testing#structure-tests`,
   },
   {
@@ -35,8 +35,8 @@ const guarantees = [
     href: `${docsRoute}/capabilities/modules#the-operation-context`,
   },
   {
-    title: 'Tenant isolation',
-    body: "A tenant-scoped Module reads and writes only its Operation's tenant's data.",
+    title: 'Tenant scoping',
+    body: "EF Core reads and saves keep to the Operation's tenant; plain SQL states the tenant itself.",
     href: `${docsRoute}/capabilities/multi-tenancy#what-the-kit-guarantees`,
   },
   {
@@ -210,8 +210,8 @@ export default function HomePage() {
         </Card>
         <Card icon={<Package />} title="Packages on nuget.org">
           <p>
-            Every package is published on nuget.org at {install.version}. The templates' package pins that version in
-            each solution it generates.
+            Every package is published on nuget.org at {install.version} under the MIT licence. The templates' package
+            pins that version in each solution it generates. The Kit's source repository is private.
           </p>
           <div className="mt-3 flex flex-col gap-1">
             <a

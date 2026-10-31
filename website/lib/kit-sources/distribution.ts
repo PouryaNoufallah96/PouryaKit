@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { Root, TableRow } from 'mdast';
@@ -18,16 +18,16 @@ import {
   stringifyMarkdown,
   urlsOf,
 } from './markdown.ts';
-import { readPackageIds } from './packages.ts';
-import { listDirectory, REFERENCES, readSource, resolveInside, SKILL } from './paths.ts';
+import { listDirectory, REFERENCES, readSource, SKILL } from './paths.ts';
 import { MAINTAINER_GUIDES, publishedReferences } from './references.ts';
 import { copyViolations, describe, renderedTextViolations, type Violation } from './rules.ts';
 
-// The public repository's tree: the Kit's skill as a Claude Code plugin marketplace and an `npx skills` source, the
-// covers, a front-door README and the licence. The skill is projected as the site projects it: the published references
-// only, each link rewritten by the site's rule and every file held to the site's build-time rules, so the copy can hold
-// nothing the site could not. A committed manifest of every file's sha256 is what was reviewed; the check regenerates the
-// tree and fails on any difference, and the remote check compares the published commit with it.
+// The public repository's tree: the Kit's skill as a Claude Code plugin marketplace and an `npx skills` source, a
+// front-door README and the licence. The images stay at the tag the READMEs pin, so a clone of the default branch fetches
+// the skill alone. The skill is projected as the site projects it: the published references only, each link rewritten by
+// the site's rule and every file held to the site's build-time rules, so the copy can hold nothing the site could not. A
+// committed manifest of every file's sha256 is what was reviewed; the check regenerates the tree and fails on any
+// difference, and the remote check compares the published commit with it.
 
 /**
  * The front-door README, a template the sync fills (`{{site}}`, `{{repository}}`, `{{assets}}`, `{{marketplace}}`,
@@ -39,9 +39,6 @@ export const README_TEMPLATE = 'website/distribution/README.md.template';
 /** Every file of the tree and its sha256, one `<sha256>  <path>` line each, as `sha256sum` writes them. */
 export const MANIFEST = 'website/distribution/manifest.sha256';
 
-/** Where `pnpm --dir website covers` writes the Kit's and the packages' covers. */
-const COVERS = 'website/covers/out';
-
 /** The default directory the tree is written to; the sync owns it and empties it first. */
 export const OUTPUT = 'website/distribution/out';
 
@@ -50,7 +47,6 @@ export const PUBLIC_REMOTE = `https://github.com/${PUBLIC_REPOSITORY}.git`;
 
 const SKILL_FOLDER = path.posix.dirname(SKILL);
 const AGENT_METADATA = `${SKILL_FOLDER}/agents/openai.yaml`;
-const ICON = 'src/icon.png';
 const LICENSE = 'LICENSE';
 const COPY = `skills/${PLUGIN}`;
 
@@ -219,26 +215,12 @@ function copied(root: string, source: string, target: string): TreeFile {
   return file(target, text);
 }
 
-/** The Kit's cover, every package's cover in the inventory's order and the packages' shared icon. */
-function assets(root: string, covers: string): TreeFile[] {
-  const png = (source: string) => {
-    if (!existsSync(source)) throw new Error(`kit-sources: ${source} is missing; run pnpm --dir website covers first`);
-    return readFileSync(source);
-  };
-  return [
-    file('assets/kit.png', png(path.join(covers, 'kit.png'))),
-    ...readPackageIds(root).map((id) => file(`assets/covers/${id}.png`, png(path.join(covers, 'covers', `${id}.png`)))),
-    file('assets/icon.png', readFileSync(resolveInside(root, ICON))),
-  ];
-}
-
-/** Every file of the public repository, in path order. `covers` is where the covers were typeset. */
-export function assembleTree(root: string, covers = resolveInside(root, COVERS)): TreeFile[] {
+/** Every file of the public repository, in path order. */
+export function assembleTree(root: string): TreeFile[] {
   const files = [
     marketplace(root),
     ...skillCopy(root),
     copied(root, AGENT_METADATA, `${COPY}/agents/openai.yaml`),
-    ...assets(root, covers),
     copied(root, LICENSE, 'LICENSE'),
   ];
   files.push(readme(root, [...files.map((entry) => entry.path), 'README.md']));

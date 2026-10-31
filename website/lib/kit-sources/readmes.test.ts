@@ -48,7 +48,7 @@ test('a README that drifts from the shape fails', () => {
   const vercel = `![${cqrs}](${SITE_ADDRESS}/covers/${cqrs}.png)`;
   const fragments: { edit: (text: string) => string; expected: RegExp }[] = [
     { edit: swap(cover, vercel), expected: /does not open with the cover/ },
-    { edit: swap(cover, cover.replace('assets-v1', 'assets-v0')), expected: /does not open with the cover/ },
+    { edit: swap(cover, cover.replace(/assets-v\d+/, 'assets-v0')), expected: /does not open with the cover/ },
     { edit: swap(cover, cover.replace(cqrs, 'PouryaKit.Web')), expected: /does not open with the cover/ },
     { edit: swap('](https://www.nuget.org/packages/PouryaKit.Cqrs)\n', ')\n'), expected: /badges are not the three/ },
     {

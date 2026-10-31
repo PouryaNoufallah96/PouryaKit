@@ -11,6 +11,8 @@ Inside a Module, your code is [Features](/docs/reference/glossary#feature). A Fe
 
 The packages are grouped into [Capabilities](/docs/reference/glossary#capability): one or a few packages each, such as Messaging, Web or File storage. A Host references the ones it uses.
 
+The packages are MIT-licensed. The Kit's source repository is private, so the source link on a package's nuget.org page does not open.
+
 <Callout type="warn" title="Feature code never commits">
   The Unit of Work writes the [Outbox](/docs/reference/glossary#outbox), saves and commits, and sends what it wrote only after the commit. A handler returns its Result and leaves all of it to the Unit of Work; the [structure tests](/docs/capabilities/testing#structure-tests) refuse code that saves or commits by itself.
 </Callout>
@@ -53,7 +55,7 @@ The .NET 10 SDK and Docker; [Prerequisites](/docs/get-started/prerequisites) lis
 
 ## What the Kit guarantees
 
-The first rule is a structure rule: a project copies the [structure tests](/docs/capabilities/testing#structure-tests) to hold its own code to it.
+The first rule is a structure rule: the Kit's own tests are not published, so a project writes its own [structure tests](/docs/capabilities/testing#structure-tests) to hold its code to it.
 
 | Rule | Stated in |
 | --- | --- |
@@ -61,7 +63,7 @@ The first rule is a structure rule: a project copies the [structure tests](/docs
 | A [Notification Handler](/docs/reference/glossary#notification-handler) runs only after the commit | [Persistence guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) |
 | Every failure answers one problem response | [Problem responses](/docs/capabilities/web#problem-responses) |
 | There is no default [Actor](/docs/reference/glossary#actor) | [The Operation Context](/docs/capabilities/modules#the-operation-context) |
-| A tenant-scoped Module keeps to its Operation's [tenant](/docs/reference/glossary#tenant) | [Multi-tenancy guarantees](/docs/capabilities/multi-tenancy#what-the-kit-guarantees) |
+| In a tenant-scoped Module, EF Core reads and saves keep to the Operation's [tenant](/docs/reference/glossary#tenant); plain SQL states it itself | [Multi-tenancy guarantees](/docs/capabilities/multi-tenancy#what-the-kit-guarantees) |
 | A declaration that cannot work fails the Host when it is built | [The Host's checks](/docs/capabilities/modules#the-hosts-checks) |
 
 ## Failure messages

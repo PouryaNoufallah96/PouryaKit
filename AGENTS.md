@@ -141,4 +141,4 @@ Single-context: `GLOSSARY.md` at the root, decisions in `docs/adr/`. See `docs/a
 
 ### The Kit's own skill
 
-`.agents/skills/pourya-kit/`: step 7 updates the delivered Capability's file under `references/` and its row in `SKILL.md`. Every edit under that folder ends with `pnpm --dir website covers`, then `pnpm --dir website sync-public --write-manifest`, so the public repository's manifest follows (CI's `website` job runs `sync-public --check`).
+`.agents/skills/pourya-kit/`: step 7 updates the delivered Capability's file under `references/` and its row in `SKILL.md`. Every edit under that folder ends with `pnpm --dir website sync-public --write-manifest`, so the public repository's manifest follows (CI's `website` job runs `sync-public --check`).
