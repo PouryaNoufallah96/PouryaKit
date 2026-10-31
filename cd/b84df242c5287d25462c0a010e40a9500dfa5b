@@ -1,0 +1,23 @@
+docs/architecture/diagrams/delivery.sequence.json
+  s_ebdd029215ce19::t_2f71de06bf99c3 18
+docs/architecture/diagrams/kit-context.architecture.json
+  s_ebdd029215ce19::t_42753c59ec2774 10
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_ebdd029215ce19::t_ca19a6a78fb3da 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cdb84df242c5287d25462c0a010e40a9500dfa5b",
+  "prompts": {},
+  "sessions": {
+    "s_ebdd029215ce19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80160123-5e97-4bc1-94e2-0b32b7a21bc0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
