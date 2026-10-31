@@ -75,7 +75,7 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
         );
     }
 
-    // Final structural review R1 (ADR 0007's #57 amendment): the peer's request is a trusted continuation, so the
+    // Final structural review R1 (ADR 0007's continuation trust amendment): the peer's request is a trusted continuation, so the
     // permission the command declares is not checked again for the continued Actor. Neither Ada nor the peer holds it
     // here. The same headers from a caller the Host does not trust are that caller's own request, and it is refused.
     [Fact]

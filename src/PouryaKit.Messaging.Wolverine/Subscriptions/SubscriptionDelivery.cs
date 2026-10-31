@@ -47,7 +47,7 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
         }
     }
 
-    // An envelope from another Host arrives once, at this Host's queue on a broker (ADR 0006, ticket #50 amendment), and
+    // An envelope from another Host arrives once, at this Host's queue on a broker (ADR 0006's RabbitMQ topology amendment), and
     // is sent again to the local queue of each subscription to its type, and as its input to the queue of each Saga that
     // takes it (ADR 0013), and nowhere else: through the type's routes it
     // would also reach any broker route the type has, and an envelope that came through a binding the Kit never made would

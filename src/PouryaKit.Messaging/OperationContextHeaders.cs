@@ -32,7 +32,7 @@ public static class OperationContextHeaders
     /// The W3C <c>traceparent</c> that a message received from another Host named as its parent, on each copy the
     /// receiving Host sends to the local queue of a subscription to it. Wolverine gives each copy the activity current at
     /// that send as its parent, none when no listener samples Wolverine, so the copy keeps the publishing Operation's here
-    /// (ADR 0009, #52 amendment).
+    /// (ADR 0009's trace across RabbitMQ amendment).
     /// </summary>
     public const string TraceParent = "pouryakit-traceparent";
 }

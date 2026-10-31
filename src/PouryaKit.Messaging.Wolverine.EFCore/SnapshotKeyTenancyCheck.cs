@@ -9,9 +9,10 @@ using PouryaKit.Persistence.EFCore;
 namespace PouryaKit.Messaging.Wolverine.EFCore;
 
 // A Snapshot a tenant-scoped Module, or a tenant-scoped application, declares of an aggregate whose key two tenants could
-// share. A Snapshot's identity and its version's key hold the aggregate's key and no tenant (ADR 0006, #117 amendment), so
-// a receiver would take one tenant's Snapshot for another's, and apply one of the two only. A key that includes the
-// tenant, or a single Guid, which the application generates, is unique across tenants. As at commit, a declaration
+// share. A Snapshot's identity and its version's key hold the aggregate's key and no tenant (ADR 0006's tenants at
+// delivery and in the keys amendment), so a receiver would take one tenant's Snapshot for another's, and apply one of
+// the two only. A key that includes the tenant, or a single Guid, which the application generates, is unique across
+// tenants. As at commit, a declaration
 // reaches only its own Module's aggregates: those of the DbContext `AddPouryaKitEfCore` recorded keyed by the Module, as
 // its Unit of Work is, or every DbContext of an application without Modules, created in the check's own scope, as
 // MessageStoreDatabaseCheck creates them; one whose named connection string the configuration lacks is

@@ -91,9 +91,9 @@ public sealed class ModuleBoundaryTests
         );
     }
 
-    // ADR 0001's #141 amendment: a Saga and its timeouts are public, as the code Wolverine generates names them, through
-    // the Kit's base types. The test Modules keep their Contracts beside them, so those stay; a saga or a timeout of
-    // Wolverine's own is rejected.
+    // ADR 0001's amendment "a Saga is the one public handler type": a Saga and its timeouts are public, as the code
+    // Wolverine generates names them, through the Kit's base types. The test Modules keep their Contracts beside them,
+    // so those stay; a saga or a timeout of Wolverine's own is rejected.
     [Fact]
     public void A_modules_sagas_and_their_timeouts_are_public_through_the_kits_base_types_and_wolverines_own_are_rejected()
     {
