@@ -1,0 +1,39 @@
+docs/architecture/diagrams/host-start.workflow.json
+  s_4b06632559563a::t_0d54ee34c02c26 11
+docs/architecture/diagrams/execution-core.architecture.json
+  s_4b06632559563a::t_0d54ee34c02c26 10
+docs/architecture/diagrams/http-command.sequence.json
+  s_4b06632559563a::t_0d54ee34c02c26 15
+docs/architecture/diagrams/delivery.sequence.json
+  s_4b06632559563a::t_0d54ee34c02c26 18
+docs/architecture/diagrams/kit-context.architecture.json
+  s_4b06632559563a::t_0d54ee34c02c26 10
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_4b06632559563a::t_0d54ee34c02c26 11
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_4b06632559563a::t_0d54ee34c02c26 10
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_4b06632559563a::t_0d54ee34c02c26 10
+docs/architecture/diagrams/delayed-and-recurring-commands.lifecycle.json
+  s_4b06632559563a::t_0d54ee34c02c26 10
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_4b06632559563a::t_0d54ee34c02c26 10
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_4b06632559563a::t_0d54ee34c02c26 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f74da8654471f9d6bd74e74b78f94859fce109a1",
+  "prompts": {},
+  "sessions": {
+    "s_4b06632559563a": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c09caea9-3daf-488f-867f-3395215652d2",
+        "model": "grok-4.7"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
