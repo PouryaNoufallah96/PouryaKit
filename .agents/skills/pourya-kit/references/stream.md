@@ -1,6 +1,6 @@
 # Streams
 
-`PouryaKit.Persistence.Marten` and `PouryaKit.Messaging.Wolverine.Marten`: the Kit's second write model, a Stream, an aggregate whose stored state is the events it appended, on Marten 9.53.0 over PostgreSQL. The first package holds the Stream, `IStreams`, the Marten Unit of Work and the Host's Marten store; it references `PouryaKit.Cqrs` and `PouryaKit.Persistence`, and no Wolverine. The second integrates the store with Wolverine's Marten outbox on the Host's one message store, and keeps a Stream Module's Receipts; it references `PouryaKit.Messaging.Wolverine` and the first. Their namespaces are the package names. ADR 0011 records why each write model has one commit owner: a Stream Module's Operations commit through the Marten Unit of Work alone, an EF Module's through the EF one, and no Operation commits through both.
+`PouryaKit.Persistence.Marten` and `PouryaKit.Messaging.Wolverine.Marten`: the Kit's second write model, a Stream, an aggregate whose stored state is the events it appended, on Marten 9.53.0 over PostgreSQL. The first package holds the Stream, `IStreams`, the Marten Unit of Work and the Host's Marten store; it references `PouryaKit.Cqrs` and `PouryaKit.Persistence`, and no Wolverine. The second integrates the store with Wolverine's Marten outbox on the Host's one message store, and keeps a Stream Module's Receipts; it references `PouryaKit.Messaging.Wolverine` and the first. Their namespaces are the package names. Each write model has one commit owner: a Stream Module's Operations commit through the Marten Unit of Work alone, an EF Module's through the EF one, and no Operation commits through both.
 
 - [Registering](#registering)
 - [Writing a Stream](#writing-a-stream)
@@ -194,7 +194,7 @@ internal sealed class ActivateAccountNotificationHandler(IStreams streams, IInte
 - A Host with a message store gives each write model its Outbox: a Host with an Outbox in which one write model's Unit of Work has none fails when it is built, naming that write model's Modules and the registration to call, since their Operations would commit and never write what they publish. Stream Modules beside the EF message store (`UsePouryaKitWolverine`) and `AddPouryaKitMarten` call for `UsePouryaKitMarten` instead (`The Operations of LedgerModule would commit their Streams' events and never write what they publish: …`); EF Core Modules in a Host whose only message store is `UsePouryaKitMarten` call for `UsePouryaKitWolverine(connectionName)`, before it (`The Operations of BillingModule would commit their changes and never write what they publish or schedule: …`).
 - Realtime pushes, `IUnitOfWorkConnection` and number sequences are the EF Unit of Work's; a Stream Module has none of them.
 - A Stream's projections are folds of one stream; Marten's projection daemon and its documents are not part of the Kit.
-- Wolverine's own aggregate-handler workflow is not used: the Kit's dispatcher runs every Operation (ADR 0011, "Rejected options").
+- Wolverine's own aggregate-handler workflow is not used: the Kit's dispatcher runs every Operation.
 - A Stream Module and a Saga cannot share one Host yet: Marten's integration puts its saga storage before Wolverine's lightweight one, so a Host with `UsePouryaKitMarten` and `AddPouryaKitSaga` is refused when it is built ([sagas.md](sagas.md#limits)).
 
 ## Testing

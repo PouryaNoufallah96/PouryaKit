@@ -1,6 +1,6 @@
 # Realtime
 
-`PouryaKit.Realtime`: server-sent events to browser clients. A Notification Handler pushes a realtime event on a Channel through `IRealtimePublisher`; the push is a PostgreSQL notification written on the delivery's own transaction, which PostgreSQL hands to the listener of every instance of the Host when that transaction commits; each instance passes it to its clients of the delivery's tenant that listen on the Channel, through an SSE endpoint a Module maps with `MapPouryaKitRealtime`. It references `PouryaKit.Web`, `PouryaKit.Persistence.EFCore` and Npgsql. Namespace `PouryaKit.Realtime`. The mechanism is ADR 0012.
+`PouryaKit.Realtime`: server-sent events to browser clients. A Notification Handler pushes a realtime event on a Channel through `IRealtimePublisher`; the push is a PostgreSQL notification written on the delivery's own transaction, which PostgreSQL hands to the listener of every instance of the Host when that transaction commits; each instance passes it to its clients of the delivery's tenant that listen on the Channel, through an SSE endpoint a Module maps with `MapPouryaKitRealtime`. It references `PouryaKit.Web`, `PouryaKit.Persistence.EFCore` and Npgsql. Namespace `PouryaKit.Realtime`.
 
 - [Registering](#registering)
 - [Pushing from a Notification Handler](#pushing-from-a-notification-handler)

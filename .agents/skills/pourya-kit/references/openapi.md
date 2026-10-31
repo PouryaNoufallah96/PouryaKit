@@ -134,7 +134,7 @@ if (app.Environment.IsDevelopment())
 - Bound from configuration, an entry whose `Date` or `Link` the binder cannot convert (`next June`, `http://`) is left out without an error, so its version reports no sunset: the configuration binder skips a dictionary entry it fails to bind unless the Host's `Configure` call sets `BinderOptions.ErrorOnUnknownConfiguration`.
 - A response of a version with a sunset carries `Sunset: Wed, 30 Jun 2027 00:00:00 GMT` and `Link: <https://example.com/catalog/api-v1-sunset>; rel="sunset"; type="text/html"`.
 - The version's document states it in `info.description` (`This API version is deprecated. Its sunset date is Wed, 30 Jun 2027 00:00:00 GMT.`, then the link) and in `x-api-versioning.links`, and marks each of its operations `deprecated`.
-- Nothing is derived from the current time (ADR 0005): the date is the configured one, never "now + n days", and the notice names it the same way before and after it passes. Asp.Versioning's default notice says "was" or "will be" from the clock; the Kit replaces it.
+- Nothing is derived from the current time: the date is the configured one, never "now + n days", and the notice names it the same way before and after it passes. Asp.Versioning's default notice says "was" or "will be" from the clock; the Kit replaces it.
 
 ## Documents and Scalar
 

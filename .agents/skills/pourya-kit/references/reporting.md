@@ -108,7 +108,7 @@ Rendering is synchronous and in memory, so the whole file is one byte array; ren
 
 - One table per report, of text cells; no charts, images in cells, merged cells or cell styles.
 - One font, Roboto 2.138 regular and bold, with italic simulated: it holds Latin, Greek and Cyrillic glyphs, not Persian or Arabic, and the PDF writer lays out no right-to-left text.
-- PDFsharp is pinned at 6.2.4, its last MIT release: 6.5.0 and later are AGPL-3.0-only, which ADR 0002 does not allow.
+- PDFsharp is pinned at 6.2.4, its last MIT release: 6.5.0 and later are AGPL-3.0-only, and the Kit takes no reciprocally licensed package.
 - QuestPDF and ClosedXML are not used (licence), and no second file library: `PackageGraphTests` keeps them out of the package.
 
 ## Testing

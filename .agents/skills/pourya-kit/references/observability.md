@@ -50,7 +50,7 @@ The names are constants on `OperationTelemetry`:
 
 ## The trace through delivery
 
-The work an Operation publishes stays in its trace, as a child, never as a link (ADR 0009):
+The work an Operation publishes stays in its trace, as a child, never as a link:
 
 ```text
 request (ASP.NET Core)                  tracestate=vendor=1
@@ -64,9 +64,9 @@ request (ASP.NET Core)                  tracestate=vendor=1
 - Wolverine stores the id of the activity current when the Unit of Work writes the Outbox as the envelope's `parent-id`. The Outbox adds that activity's tracestate as the header `OperationContextHeaders.TraceState` (`pouryakit-tracestate`), which Wolverine does not carry.
 - Each delivery restores both into `Operation.TraceParent` when it begins the Operation. The delivery's activity is a child of Wolverine's span of the envelope when the Host samples the `Wolverine` source, and of the publishing Operation when it does not. Either way it carries the publishing tracestate. Without this step every hop would start a new trace.
 - An occurrence of a recurring command continues no Operation, so its delivery restores no parent: its Operation's activity is a child of Wolverine's span of the envelope when the Host samples the `Wolverine` source, and the root of a trace of its own when it does not ([messaging.md](messaging.md#recurring-commands)).
-- A retry is read back from the message store and stays in the trace, as a sibling of the attempt that failed. A delivery recovered on another Host keeps the parent too, as the evidence of ADR 0009 shows.
+- A retry is read back from the message store and stays in the trace, as a sibling of the attempt that failed. A delivery recovered on another Host keeps the parent too.
 
-Across RabbitMQ, into a subscription of another Host ([rabbitmq.md](rabbitmq.md)), the trace continues the same way (ADR 0009, its amendment on the trace across RabbitMQ):
+Across RabbitMQ, into a subscription of another Host ([rabbitmq.md](rabbitmq.md)), the trace continues the same way:
 
 ```text
 Catalog Host                                     Inventory.Host
