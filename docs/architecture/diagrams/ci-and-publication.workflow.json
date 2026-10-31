@@ -8,7 +8,7 @@
     "locale": "en",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "88be8dd3bc790dc1d8204def88383d727b152282",
+      "revision": "6a4e455f9abef490510aedbcdcdc67dc5ec76174",
       "provider": "github",
       "link_mode": "web"
     },
@@ -635,7 +635,7 @@
       "items": [
         "docs/packages.md: the validation path, clean consumers, evidence.",
         "docs/ci.md: checkout, credentials, the artifact contract.",
-        "docs/private-packages.md: versions, triggers, trust, retry, hosted runs."
+        "docs/private-packages.md: versions, triggers, trust, retry, consumption."
       ]
     }
   ]

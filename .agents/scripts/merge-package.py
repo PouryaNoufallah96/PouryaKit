@@ -32,8 +32,7 @@ Exit codes: 0 done; 1 a check failed, or --ready found the base ahead; 2 usage; 
 5 head is not a commit; 6 no such branch; 7 branch tip is not the head; 8 not on the integration branch, or it is main;
 9 head already merged (with --post-merge: not merged); 10 conflict, merge left in progress; 11 another git failure;
 12 --push refused, the tree differs; 13 push failed; 14 the head holds code the validation did not run on; 15 the remote
-tip read back after the push is not the pushed commit (origin/<branch> was replaced; on 2026-10-25 an attacker holding
-the owner's credential force-replaced each pushed tip within seconds).
+tip read back after the push is not the pushed commit (origin/<branch> was replaced).
 """
 
 from __future__ import annotations
@@ -95,8 +94,8 @@ def read_report(path: Path) -> tuple[str, str, str]:
         raise Stop(REPORT, f"cannot read the report {path}: {error.strerror}")
     # Top-level objects only: after one parses, the scan resumes past its end, so a nested object is never "the last".
     # An object that does not parse is remembered: when the last object that did parse has no head, the report's own
-    # JSON is the likely culprit (session 5, #87: a malformed `fixes` entry made the scan step inside and take a nested
-    # `commands` entry as the report), and the message names the line and the decoder's reason.
+    # JSON is the likely culprit (a malformed `fixes` entry makes the scan step inside and take a nested `commands`
+    # entry as the report), and the message names the line and the decoder's reason.
     decoder, found, at, broken = json.JSONDecoder(), None, text.find("{"), None
     while at != -1:
         try:
@@ -190,8 +189,6 @@ def merge(top: Path, head: str, branch: str, message: str) -> None:
     in_progress = bool(commit(top, "MERGE_HEAD"))
     if conflicted and in_progress:
         lines = [f"the merge of {head[:7]} stopped on conflicts and is left in progress:", *(f"  {name}" for name in conflicted)]
-        if "docs/acceptance.md" in conflicted:
-            lines.append("docs/acceptance.md: both sides appended a section; keep both sections, in ticket order.")
         if pairs := diagram_pairs(conflicted):
             lines.append(
                 f"{len(pairs)} diagram pair(s) conflict ({', '.join(pairs)}): take both sides' nodes, edges and citations in "
@@ -270,8 +267,8 @@ def post_merge(top: Path, head: str, branch: str, checks: list[list[str]], push:
 
 
 def remote_tip_differs(top: Path, branch: str, pushed: str) -> str:
-    """The remote's tip of `branch` when it is not `pushed`, read from the remote itself twice (a replacement arrived
-    within seconds of each push on 2026-10-25), else an empty string."""
+    """The remote's tip of `branch` when it is not `pushed`, read from the remote itself twice (a replacement can
+    arrive seconds after a push), else an empty string."""
     import time
     delay = float(os.environ.get("MERGE_PACKAGE_READBACK_SECONDS", "5"))
     for attempt in range(2):

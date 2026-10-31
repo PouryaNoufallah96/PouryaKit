@@ -43,7 +43,7 @@ CLEAN = {
     ".claude/agent-memory/kit-implementer/order-facts.md": "# Order\n",
     ".gitattributes": f"{MEMORY} merge=union\n",
 }
-# A C# test and a Python one, and a record that points at both, names the first one's file and a member that is no test.
+# A C# test and a Python one, and a map that points at both, names the first one's file and a member that is no test.
 TESTS = {
     # Two declared tests, and six names that are no test of ProductTests: one called by an initializer, one called by a
     # test, one in a string, one in a comment, one declared by a nested type and one by another class of the file.
@@ -73,7 +73,7 @@ public sealed class OtherTests { [Fact] public void An_other_is_declared() { } }
     "    def test_inventory_is_exact(self):\n        self.helper_is_called()\n",
     # Qualified by its namespace, a pointer names the method or the class alone; `Shop.ArchitectureTests` names a project.
     "docs/acceptance.md": "# Acceptance\n\n`ProductTests.A_product_is_renamed`, `ProductTests.A_product_is_priced` and"
-    " `InventoryTests.test_inventory_is_exact` pass; see `ProductTests.cs`. `Product.Retitle` is gone.\n"
+    " `InventoryTests.test_inventory_is_exact` pass; see `ProductTests.cs`. `Product.Rename` is no test.\n"
     "`Shop.Tests.ProductTests.A_product_is_priced` and `Shop.ArchitectureTests.LayerTests` pass in `Shop.ArchitectureTests`.\n",
 }
 NOT_DECLARED = ("ProductTests.Build", "ProductTests.A_product_is_called", "ProductTests.A_product_is_quoted", "ProductTests.A_product_is_commented",
@@ -158,7 +158,6 @@ class CheckDocsTests(unittest.TestCase):
         self.assertFails({}, f"{DIAGRAM}: src/Catalog/Cart.cs:2-3 cites lines changed or moved since the revision {revision[:7]}; {REVERIFY}")
 
     def test_a_diagram_citing_a_file_changed_only_below_its_range_passes(self) -> None:
-        """Session 1 of Wave 3 (2026-10-16): three one-sentence fixes below a cited range each cost a two-commit re-pin."""
         self.write(CART)
         revision = self.commit()
         self.write(diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 1, "end_line": 2}) | {"src/Catalog/Cart.cs": CART["src/Catalog/Cart.cs"] + "// Carts.\n"})
@@ -169,7 +168,7 @@ class CheckDocsTests(unittest.TestCase):
         self.assertEqual(self.check()[0], 0)
 
     def test_a_staged_change_to_a_cited_file_fails_only_with_the_staged_flag(self) -> None:
-        """The hook's case: the commit that changes a cited file must fail itself, not the one after it (session 7, three times)."""
+        """The hook's case: the commit that changes a cited file must fail itself, not the one after it."""
         self.write(CART)
         revision = self.commit()
         self.write(diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 1, "end_line": 2}))
@@ -283,7 +282,7 @@ class CheckDocsTests(unittest.TestCase):
         self.assertIn(f"FAIL  {DIAGRAM}: src/Catalog/Till.cs:1 names no file at HEAD; {REVERIFY}", out)
 
     def test_a_diagram_pinned_to_a_commit_of_the_branch_being_merged_passes_during_the_merge(self) -> None:
-        """The #122 merge of Wave 3 (2026-10-16): the pin was reachable from MERGE_HEAD only, and the hook refused the merge commit."""
+        """A pin reachable from MERGE_HEAD only passes while the merge commits."""
         self.write(CART)
         self.commit()
         git(self.root, "checkout", "-q", "-b", "feature")
@@ -308,29 +307,6 @@ class CheckDocsTests(unittest.TestCase):
         for revision in ("0123456789abcdef" * 2 + "01234567", squashed):
             with self.subTest(revision=revision):
                 self.assertFails(diagram(revision, {"path": "src/Catalog/Cart.cs", "line": 1}), f"{DIAGRAM}: meta.repository.revision {revision} is unreachable here: a shallow clone, or a revision squashed away; {REVERIFY}")
-
-    def test_pre_wave_3_acceptance_sections_out_of_ticket_order_fail(self) -> None:
-        """Session 5: #88's section was appended after #97's and left there until an advisor caught it."""
-        ordered = "# Acceptance\n\n## Pre-Wave 3 the Web fixes, ticket #86\n\nx\n\n## Pre-Wave 3 naming, ticket #88\n\nx\n\n## Pre-Wave 3 the OpenAPI options, ticket #97\n\nx\n"
-        self.assertPasses({"docs/acceptance.md": ordered})
-        disordered = "# Acceptance\n\n## Pre-Wave 3 the Web fixes, ticket #86\n\nx\n\n## Pre-Wave 3 the OpenAPI options, ticket #97\n\nx\n\n## Pre-Wave 3 naming, ticket #88\n\nx\n"
-        self.assertFails({"docs/acceptance.md": disordered}, "docs/acceptance.md:11: the Pre-Wave 3 section of ticket #88 comes after ticket #97's (line 7); keep these sections in ticket order")
-        # Earlier waves' records are not held to it: their sections sit in the order the Phases ran.
-        self.assertPasses({"docs/acceptance.md": "# Acceptance\n\n## Wave 2 caching, ticket #43\n\nx\n\n## Wave 2 messaging, ticket #42\n\nx\n"})
-
-    def test_wave_4_acceptance_sections_out_of_ticket_order_fail(self) -> None:
-        """Wave 4 is ordered from its first merge (#166); Wave 3's sections carry no prefix and stay as they merged."""
-        ordered = "# Acceptance\n\n## Wave 4 the validation fix, ticket #162\n\nx\n\n## Wave 4 the CI trigger, ticket #166\n\nx\n"
-        self.assertPasses({"docs/acceptance.md": ordered})
-        disordered = "# Acceptance\n\n## Wave 4 the CI trigger, ticket #166\n\nx\n\n## Wave 4 the validation fix, ticket #162\n\nx\n"
-        self.assertFails({"docs/acceptance.md": disordered}, "docs/acceptance.md:7: the Wave 4 section of ticket #162 comes after ticket #166's (line 3); keep these sections in ticket order")
-        self.assertPasses({"docs/acceptance.md": "# Acceptance\n\n## Email, ticket #124\n\nx\n\n## Tenancy at save and delivery, ticket #117\n\nx\n"})
-
-    def test_docs_site_acceptance_sections_out_of_ticket_order_fail(self) -> None:
-        ordered = "# Acceptance\n\n## Wave 4 close-out, ticket #176\n\nx\n\n## Docs site plumbing, ticket #185\n\nx\n\n## Docs site scaffold, ticket #186\n\nx\n"
-        self.assertPasses({"docs/acceptance.md": ordered})
-        disordered = "# Acceptance\n\n## Wave 4 close-out, ticket #176\n\nx\n\n## Docs site scaffold, ticket #186\n\nx\n\n## Docs site plumbing, ticket #185\n\nx\n"
-        self.assertFails({"docs/acceptance.md": disordered}, "docs/acceptance.md:11: the Docs site section of ticket #185 comes after ticket #186's (line 7); keep these sections in ticket order")
 
     def test_a_renamed_kit_symbol_fails(self) -> None:
         self.assertFails({"docs/guide.md": "# Guide\n\nCall `Product.Retitle()`.\n"}, "docs/guide.md:3: `Retitle` names nothing in the code")
@@ -413,6 +389,58 @@ class CheckDocsTests(unittest.TestCase):
         both = CLEAN[MEMORY] + "- [Product facts](product-facts.md) — the product, renamed\n"
         self.assertFails({MEMORY: both}, f"{MEMORY}:3: links product-facts.md, as line 1 does")
 
+    def test_each_shape_of_a_tracker_number_fails(self) -> None:
+        shapes = {"#12": "#12", "`#123`": "#123", "(#45)": "#45", "PR 12": "PR 12", "PRs #12": "PRs #12", "pull request 7": "pull request 7",
+                  "Pull Request #7": "Pull Request #7", "issue 7": "issue 7", "Issues #7": "Issues #7", "ticket 7": "ticket 7", "ticket#7": "ticket#7",
+                  "tickets #7": "tickets #7", "spec 1": "spec 1", "Spec #1": "Spec #1", "[a fix](docs/guide.md) in spec 12.": "spec 12"}
+        self.write({"docs/guide.md": "# Guide\n\n## The product\n\n" + "\n\n".join(f"See {shape}" for shape in shapes) + "\n"})
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        for line, found in enumerate(shapes.values()):
+            self.assertIn(f"FAIL  docs/guide.md:{5 + 2 * line}: `{found}` is a tracker number", out)
+
+    def test_a_tracker_number_wrapped_across_a_line_or_in_frontmatter_fails(self) -> None:
+        self.assertFails({"docs/guide.md": "# Guide\n\n## The product\n\nThe ticket\n#7 did it.\n"}, "docs/guide.md:5: `ticket #7` is a tracker number")
+        self.assertFails({".claude/rules/shop.md": "---\npaths:\n  - \"#123\"\n---\n\n# Shop\n"}, ".claude/rules/shop.md:3: `#123` is a tracker number")
+
+    def test_a_link_to_this_repositorys_tracker_fails_and_a_third_partys_passes(self) -> None:
+        ours = ("See [the proof](https://github.com/PouryaNoufallah96/PouryaKit/pull/30) and\n"
+                "[ticket 27](https://github.com/pouryanoufallah96/pouryakit/issues/27#issuecomment-1).\n")
+        self.write({"docs/guide.md": "# Guide\n\n## The product\n\n" + ours})
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        self.assertIn("FAIL  docs/guide.md:5: `github.com/PouryaNoufallah96/PouryaKit/pull/30` is a tracker number", out)
+        self.assertIn("FAIL  docs/guide.md:6: `github.com/pouryanoufallah96/pouryakit/issues/27#issuecomment-1` is a tracker number", out)
+        self.assertNotIn("`ticket 27`", out)  # the link is the one failure, not its text as well
+        theirs = ("It dead-letters them ([Wolverine issue 4923](https://github.com/JasperFx/wolverine/issues/4923),"
+                  " [PR #12](https://github.com/dotnet/aspnetcore/pull/12#discussion_r1)).\n")
+        self.assertPasses({"docs/guide.md": "# Guide\n\n## The product\n\n" + theirs})
+        # The exception is for an issue link, not for any link.
+        self.assertFails({"docs/guide.md": "# Guide\n\n## The product\n\nSee [ticket 7](https://example.com/).\n"}, "docs/guide.md:5: `ticket 7` is a tracker number")
+
+    def test_what_only_resembles_a_tracker_number_passes(self) -> None:
+        text = ("# Guide\n\n## The product\n\n## 12 steps\n\nStep #7, C#14, `&#123;`, [the steps](#12-steps), the OpenAPI spec 3.1, a pr 12, the issue\n"
+                "tracker, `ticket-123`, `gh issue view 42` and `issues/<parent>`.\n\n```text\n#123, PR 12 and ticket 7 in a fence.\n```\n\n"
+                "~~~~\nhttps://github.com/PouryaNoufallah96/PouryaKit/issues/27\n~~~~\n")
+        self.assertPasses({"docs/guide.md": text})
+
+    def test_the_tracker_rule_reads_its_files_and_no_others(self) -> None:
+        paths = ("README.md", "GLOSSARY.md", "AGENTS.md", "src/Catalog/README.md", "docs/guide.md", "docs/adr/0008-carts.md", "docs/agents/running.md",
+                 ".agents/skills/pourya-kit/SKILL.md", ".agents/skills/pourya-kit/references/carts.md", ".agents/skills/pourya-kit/agents/openai.yaml",
+                 ".claude/rules/shop.md")
+        self.write({path: "# Shop\n\nSee #123.\n" for path in paths})
+        code, out = self.check()
+        self.assertEqual(code, 1, out)
+        for path in paths:
+            self.assertIn(f"FAIL  {path}:3: `#123` is a tracker number", out)
+        self.write(CLEAN)
+        for path in set(paths) - set(CLEAN):
+            (self.root / path).unlink()
+        guide = "# Tracker\n\nA bare `#42` may be either; see PR 12 and https://github.com/PouryaNoufallah96/PouryaKit/issues/27.\n"
+        self.assertPasses({path: guide for path in ("docs/agents/issue-tracker.md", "src/Catalog/docs/README.md", "src/PouryaKit.Templates/content/shared/README.md",
+                                                    "website/content/docs/tracker.mdx", "CHANGELOG.md", ".claude/agents/tracker.md", ".claude/rules/nested/tracker.md",
+                                                    ".agents/skills/other/SKILL.md")})
+
     def test_acceptance_pointers_to_existing_tests_pass(self) -> None:
         self.assertPasses(TESTS)
 
@@ -447,7 +475,7 @@ class CheckDocsTests(unittest.TestCase):
 
     def test_a_class_pointer_in_a_namespace_that_reads_like_a_test_class_passes(self) -> None:
         """`ArchitectureTests.ModuleTests` also reads as the method ModuleTests of a class ArchitectureTests, which no file
-        declares; the class its namespace qualifies is the one meant (cubic on PR #103)."""
+        declares; the class its namespace qualifies is the one meant."""
         modules = {
             "tests/ArchitectureTests/ModuleTests.cs": "namespace ArchitectureTests;\n\npublic sealed class ModuleTests { [Fact] public void Modules_hold() { } }\n",
             "docs/acceptance.md": TESTS["docs/acceptance.md"] + "`ArchitectureTests.ModuleTests` passes.\n",
@@ -471,7 +499,7 @@ class CheckDocsTests(unittest.TestCase):
         plan = "# Plan\n\nAs `till@abc1234 src/Till/Rules.cs:3` does, and `src/Till/Price.cs:8-12`.\n"
         self.assertPasses({"docs/foundation-review.md": plan})
 
-    def test_a_generated_consumer_project_in_the_acceptance_record_passes(self) -> None:
+    def test_a_generated_consumer_project_in_the_acceptance_map_passes(self) -> None:
         generated = "# Acceptance\n\nGenerated as `src/acme-shop.Host/acme-shop.Host.csproj` and `tests/acme-shop.Tests`, it passed.\n"
         self.assertPasses({"docs/acceptance.md": generated})
 

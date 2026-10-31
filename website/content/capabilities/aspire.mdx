@@ -2,7 +2,7 @@
 description: "The containers a Kit Host runs on locally, for an Aspire AppHost: PostgreSQL, Redis, RabbitMQ and Ollama on pinned images with named volumes."
 ---
 
-`PouryaKit.Aspire` is for an Aspire AppHost and nothing else. It adds the containers a Kit Host runs on locally: PostgreSQL always, Redis for a Host that caches through Redis, RabbitMQ for a Host that sends or receives over RabbitMQ, and Ollama for a Host whose agent runs locally. Each is pinned to the image tag the Kit's own tests run, with its data in a named volume that outlives a run, so your local infrastructure is the one the Kit's tests prove.
+`PouryaKit.Aspire` is for an Aspire AppHost and nothing else. It adds the containers a Kit Host runs on locally: PostgreSQL always, Redis for a Host that caches through Redis, RabbitMQ for a Host that sends or receives over RabbitMQ, and Ollama for a Host whose agent runs locally. Each is pinned to the image tag the Kit's own tests run, with its data in a named volume that outlives a run.
 
 The AppHost gives each [Host](/docs/reference/glossary#host) the resources its composition uses, under the connection names that composition reads, and passes the bearer settings a Host needs to start. No Aspire package reaches any other Kit package's closure, so keep this one out of your Hosts' own projects.
 
@@ -51,8 +51,6 @@ The sample's AppHost: one PostgreSQL server with a database per Host, Redis and 
 <Snippet file="samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs" region="apphost-resources" />
 
 ## Guarantees and failures
-
-The rules are the skill's, in full under "Reference" below:
 
 | You want to know | Read |
 | --- | --- |

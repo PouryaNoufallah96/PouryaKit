@@ -11,7 +11,7 @@ A Spike answers one design question with throwaway code. What lasts is its decis
 
 ## Evidence standard
 
-All three Phase 0 records overstated their evidence at first: two deciding points reversed under a fair configuration of the rejected option, one real gap was missed, one decision was blocked and reversed. A record holds when:
+A record holds when:
 
 - Every test-backed claim names the test that shows it and the configuration it holds under.
 - Observed and inferred are labelled. A statement from reading source or documentation says so and cites repository, tag and path.

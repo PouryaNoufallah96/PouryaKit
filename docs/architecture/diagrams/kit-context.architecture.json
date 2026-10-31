@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "aaeb2c3f880be185e396b02b72e5995452ec7973",
+      "revision": "fa46f0c51a88bb87cdc1c852e64e92dac618c6ec",
       "link_mode": "web"
     }
   },
@@ -422,8 +422,8 @@
         },
         {
           "path": "docs/private-packages.md",
-          "line": 64,
-          "end_line": 83,
+          "line": 58,
+          "end_line": 77,
           "label": "a consumer restores PouryaKit.* from it"
         }
       ]

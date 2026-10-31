@@ -1,6 +1,4 @@
 # The implementer memory index is one line per area file: a merge keeps both sides' lines without a conflict, and
 # two branches that edit the same area's hook leave two lines linking that file, which `.agents/scripts/check-docs.py`
-# reports; keep the line that carries both edits. `docs/acceptance.md`
-# left this driver on 2026-10-08 (session-5 retro): union put a new section inside one of its tables, and a conflict
-# of two appended sections is the signal to keep both, in ticket order.
+# reports; keep the line that carries both edits.
 .claude/agent-memory/kit-implementer/MEMORY.md merge=union

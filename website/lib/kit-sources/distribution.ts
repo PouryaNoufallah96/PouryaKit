@@ -3,7 +3,8 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import type { Root } from 'mdast';
+import type { Root, TableRow } from 'mdast';
+import { visit } from 'unist-util-visit';
 import { ASSETS_URL, MARKETPLACE, OWNER, PLUGIN, PUBLIC_REPOSITORY, SITE_ADDRESS } from './addresses.ts';
 import { type RouteMap, resolveLink, rewriteLinks } from './links.ts';
 import {
@@ -18,7 +19,7 @@ import {
 } from './markdown.ts';
 import { readPackageIds } from './packages.ts';
 import { listDirectory, REFERENCES, readSource, resolveInside, SKILL } from './paths.ts';
-import { publishedReferences } from './references.ts';
+import { MAINTAINER_GUIDES, publishedReferences } from './references.ts';
 import { describe, renderedTextViolations, type Violation } from './rules.ts';
 
 // The public repository's tree: the Kit's skill as a Claude Code plugin marketplace and an `npx skills` source, the
@@ -92,10 +93,25 @@ export function skillMetadata(root: string): { name: string; description: string
   };
 }
 
+/** Removes each table row that links a maintainer guide: an agent reading the copy cannot open one. */
+function dropMaintainerRows(tree: Root) {
+  const linksGuide = (row: TableRow) => {
+    let found = false;
+    visit(row, 'link', (link) => {
+      found ||= MAINTAINER_GUIDES.some((guide) => path.posix.basename(link.url.split('#')[0]) === guide);
+    });
+    return found;
+  };
+  for (const node of tree.children) {
+    if (node.type === 'table') node.children = node.children.filter((row) => !linksGuide(row));
+  }
+}
+
 /**
  * SKILL.md and the published references, projected: each link rewritten by the site's rule, a link to another file of
  * the copy written relative to it and checked against that file's headings, and every other link into the repository
- * (the maintainer guides, the ADRs, the docs) its own text. SKILL.md keeps its frontmatter, which agents read.
+ * (the ADRs, the docs) its own text. SKILL.md keeps its frontmatter, which agents read, and loses the rows of the
+ * maintainer guides, which the copy does not hold.
  */
 function skillCopy(root: string): TreeFile[] {
   expectEntries(root, SKILL_FOLDER, ['SKILL.md', 'agents', 'references']);
@@ -113,6 +129,7 @@ function skillCopy(root: string): TreeFile[] {
   );
   return sources.map((source) => {
     const tree = trees.get(source) as Root;
+    if (source === SKILL) dropMaintainerRows(tree);
     rewriteLinks(tree, source, routes, copyOf(source));
     const frontmatter = sourceFrontmatter(texts.get(source) as string);
     fail(`${copyOf(source)} (from ${source})`, [...nodeViolations(tree), ...renderedTextViolations(frontmatter)]);

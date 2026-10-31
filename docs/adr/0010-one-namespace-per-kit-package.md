@@ -8,15 +8,15 @@ At `505fd44` (2026-10-09) every Kit package is flat: each file sits at the proje
 package name, and the four largest roots hold 40 files (Cqrs, Messaging.Wolverine), 26 (Web) and 20
 (Persistence.EFCore). The Proving Sample's Modules and the templates' content use Business Area and Feature folders
 whose namespaces follow them. Nothing configures either side: no project sets a `RootNamespace`, and `.editorconfig`
-has no namespace-and-folder setting. The owner's decision D14 of 2026-10-09 (spec #74) gives the four largest packages
-folders by responsibility with no namespace change (ticket #78). From then on a Kit package's folders and its namespace
+has no namespace-and-folder setting. The four largest packages get folders by responsibility with no namespace
+change. From then on a Kit package's folders and its namespace
 differ on purpose, while an editor gives a new file its folder's namespace by default, so the policy is recorded and
 enforced here, on the flat tree, before any file moves.
 
 It is recorded now because it is expensive to reverse. Changing a type's namespace is a binary and a source break, and
 no forwarder exists for it, as one does for a type moved to another assembly
-([library change rules](https://learn.microsoft.com/en-us/dotnet/core/compatibility/library-change-rules)). Before the
-first public release the Kit has no consumer to break; after it, reversing this policy breaks every consumer.
+([library change rules](https://learn.microsoft.com/en-us/dotnet/core/compatibility/library-change-rules)). Reversing this policy
+breaks every consumer.
 
 ## Decision
 
@@ -52,8 +52,8 @@ first public release the Kit has no consumer to break; after it, reversing this 
      exception. The build treats warnings as errors and runs code style (`TreatWarningsAsErrors` and
      `EnforceCodeStyleInBuild` in `Directory.Build.props`), so a namespace there that does not follow its folder fails
      the build.
-     *(2026-10-11, #110: the warning's scope is the whole Proving Sample, `samples/ModularMonolith/src/**`; see the
-     note under Consequences.)* *(2026-10-11, #112: `SampleNamespaceTests` also holds the Proving Sample to it where
+     *(2026-10-11: the warning's scope is the whole Proving Sample, `samples/ModularMonolith/src/**`; see the
+     note under Consequences.)* *(2026-10-11: `SampleNamespaceTests` also holds the Proving Sample to it where
      IDE0130 is silent; see the note under Consequences.)*
    - The templates' generated solutions stay out: their shared props set no `EnforceCodeStyleInBuild`, and a hyphenated
      name such as `acme-shop` gives an invalid root namespace that makes the analyzer skip root files. `TemplateTests`
@@ -61,8 +61,6 @@ first public release the Kit has no consumer to break; after it, reversing this 
      question.
 
 ## Considered Options
-
-Each was measured on 2026-10-09 at `505fd44`.
 
 - **Namespaces following folders.** Rejected: 65 public types would change namespace (Cqrs 30 of 41,
   Messaging.Wolverine 16 of 21, Web 12 of 15, Persistence.EFCore 7 of 12), and about 525 `using` lines with them,
@@ -85,20 +83,19 @@ Each was measured on 2026-10-09 at `505fd44`.
 
 ## Consequences
 
-- Ticket #78 moves the files of Cqrs, Messaging.Wolverine, Web and Persistence.EFCore into folders as renames: every
+- The files of Cqrs, Messaging.Wolverine, Web and Persistence.EFCore sit in folders, moved as renames: every
   full type name stays the same, and no consumer, template or packaging consumer changes. The other packages stay flat;
   `PouryaKit.Core` must, because `Offending.Core` compiles its sources as `src/PouryaKit.Core/*.cs`, without recursion.
-- A Kit type's namespace is part of the public API. Changing one is a breaking change for the owner to decide, never a
+- A Kit type's namespace is part of the public API. Changing one is a breaking change to decide on its own, never a
   side effect of a move.
-- `PouryaKit.Core.Tests`' `Lookup.cs` declares `PouryaKit.Core.Tests.Lookup` for the types the lookup reads. It was the
-  one file the scoped warning found, and it moved into a `Lookup/` folder with its namespace kept.
+- `PouryaKit.Core.Tests`' `Lookup.cs` declares `PouryaKit.Core.Tests.Lookup` for the types the lookup reads. It sits
+  in a `Lookup/` folder, which its namespace follows.
 - The Hosts and the service defaults are outside the warning's scope. On 2026-10-09 their files follow their folders,
   but for the service defaults' `Extensions.cs`, whose `none` already stands, so a wider scope needs no new exception.
-  *(2026-10-11, #110: the scope is now `samples/ModularMonolith/src/**`, so the Hosts and the service defaults are
+  *(2026-10-11: the scope is now `samples/ModularMonolith/src/**`, so the Hosts and the service defaults are
   inside it, and the build fails without the `none` of `Extensions.cs`. IDE0130 does not report a namespace that holds a
   partial type with a second declaration, such as a class whose logging methods a source generator completes.)*
-  *(2026-10-11, #112: `SampleNamespaceTests` in `tests/PouryaKit.ArchitectureTests` closes that gap. It reads the
+  *(2026-10-11: `SampleNamespaceTests` in `tests/PouryaKit.ArchitectureTests` closes that gap. It reads the
   namespace each source file of the Proving Sample's projects declares and asserts that it equals the project's name
-  plus the file's folders, with `Extensions.cs` its one listed exception; build output and `Migrations/` are skipped.
-  `LoggedNewProductAnnouncer.cs`, moved to `ModularMonolith`, built green and failed the test.)*
+  plus the file's folders, with `Extensions.cs` its one listed exception; build output and `Migrations/` are skipped.)*
 - `.claude/rules/kit-code.md` states the policy in one line.

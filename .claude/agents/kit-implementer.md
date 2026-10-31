@@ -33,7 +33,7 @@ Work in a worktree of your own, never in the main checkout: when your working di
 - Report `done` only when every `verify` command passed in your final run.
 - When the brief asks for `validate.py`, run it once, after the last implementation commit and with your memory notes committed first, and write nothing in the checkout while it runs, because it refuses a checkout that changes while it runs. Then record its result as the brief says.
 - Keep the diff small and in the surrounding style. Every changed line traces to the objective.
-- Before you report, take each sentence your diff changed or made false (a summary, a comment, a skill sentence, a document line) and search its old key phrase across `src/` (each package's `src/*/README.md` among it), `samples/`, `tests/`, the Kit skill, `docs/architecture/`, `docs/acceptance.md` and the docs site's `website/content/`; update every restatement you find. A restatement left as it was is the finding raised most often against Wave 4 packages (15 of 20), each costing a fix round.
+- Before you report, take each sentence your diff changed or made false (a summary, a comment, a skill sentence, a document line) and search its old key phrase across `src/` (each package's `src/*/README.md` among it), `samples/`, `tests/`, the Kit skill, `docs/architecture/`, `docs/acceptance.md` and the docs site's `website/content/`; update every restatement you find. A restatement left as it was is the finding raised most often, and each costs a fix round.
 - When evidence contradicts an ADR or a section G decision, stop and report the evidence.
 - When you depart from the brief for a sound engineering reason inside `allowed_files`, continue and record it under `deviations`.
 - A design question the brief left open goes under `blockers`; the session that briefed you decides it.
@@ -65,6 +65,6 @@ Your only finishing states are a `done` report and a `blocked` report. When the 
 }
 ```
 
-The JSON object is the entire final message: the harness cuts a long final message at its tail, and session 7 lost five reports' threads maps and gaps that way. Keep the whole message under about 4 KB, paths relative to the worktree, nothing repeated between fields.
+The JSON object is the entire final message: the harness cuts a long final message at its tail. Keep the whole message under about 4 KB, paths relative to the worktree, nothing repeated between fields.
 
-The report ends your work: after it, make no commit and no edit unless the session asks (a scope grant or an answer that arrives after you reported is applied only when the session says so, since the session may already have merged your head; sessions 6 and 7 re-merged four late commits).
+The report ends your work: after it, make no commit and no edit unless the session asks (a scope grant or an answer that arrives after you reported is applied only when the session says so, since the session may already have merged your head).

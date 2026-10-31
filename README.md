@@ -10,7 +10,7 @@ A reusable .NET 10 foundation for modular monoliths built from vertical slices.
 
 [Docs](https://pouryakit.vercel.app) · [Install](https://pouryakit.vercel.app/docs/get-started/install-templates)
 
-Status: Wave 1, Wave 2, Wave 3 and Wave 4 are complete and merged into `main`: Wave 3 at `2637acf2` (PR #143, 2026-10-24), Wave 4 at `e0e9e010` (PR #177, 2026-10-25). All the Kit's packages are in the private feed at `0.1.0-preview.0.28`, published from `main` `4e9905c9` on 2026-10-26 by a one-time local publication without hosted CI ([local publication](docs/private-packages.md#local-publication)), and on nuget.org since the same day ([nuget.org publication](docs/private-packages.md#nugetorg-publication)); the Wave 2 set has been there since 2026-10-09 ([hosted completion](docs/private-packages.md#hosted-completion)). The Kit's packages (every entry of `scripts/packaging/inventory.json`), each usable on its own, make up these Capabilities, plus two features (Paging, Request idempotency) that span several of them:
+All the Kit's packages are on nuget.org as previews, and the [docs site](https://pouryakit.vercel.app) shows how to use them. The packages (every entry of `scripts/packaging/inventory.json`), each usable on its own, make up these Capabilities, plus two features (Paging, Request idempotency) that span several of them:
 
 - [Domain primitives](.agents/skills/pourya-kit/references/domain-primitives.md) (`PouryaKit.Domain`)
 - [Commands, queries and validation](.agents/skills/pourya-kit/references/commands-queries-validation.md) (`PouryaKit.Cqrs`, `PouryaKit.Validation`)
@@ -27,27 +27,25 @@ Status: Wave 1, Wave 2, Wave 3 and Wave 4 are complete and merged into `main`: W
 - [Paging](.agents/skills/pourya-kit/references/commands-queries-validation.md#paging) (`PouryaKit.Cqrs`, `PouryaKit.Persistence.Dapper`, `PouryaKit.Persistence.EFCore`, `PouryaKit.Web`)
 - [Request idempotency](.agents/skills/pourya-kit/references/commands-queries-validation.md#request-idempotency) (`PouryaKit.Cqrs`, `PouryaKit.Persistence.EFCore`, `PouryaKit.Web`)
 - [API versions and OpenAPI](.agents/skills/pourya-kit/references/openapi.md) (`PouryaKit.Web.OpenApi`)
-- [Project templates](.agents/skills/pourya-kit/references/templates.md) (`PouryaKit.Templates`; Wave 4: the service template, `pouryakit-service`)
+- [Project templates](.agents/skills/pourya-kit/references/templates.md) (`PouryaKit.Templates`: the monolith, modular monolith and service templates)
 - [RabbitMQ between Hosts](.agents/skills/pourya-kit/references/rabbitmq.md) (`PouryaKit.Messaging.Wolverine.RabbitMq`)
-- [Email](.agents/skills/pourya-kit/references/email.md) (`PouryaKit.Email`, `PouryaKit.Email.MailKit`; Wave 3)
-- [Multi-tenancy](.agents/skills/pourya-kit/references/multi-tenancy.md) (`PouryaKit.Domain`, `PouryaKit.Cqrs`, `PouryaKit.Persistence.EFCore`, `PouryaKit.Messaging.Wolverine`; Wave 3: tenant-scoped Modules, their EF Core filter, their tenant requirement, the save's ownership check, the refusal of a delivery with no tenant, and the composition refusals of a recurring command and a shared Snapshot key, the Dapper tenant rule, and the Dapper lease that binds the tenant)
-- [File storage](.agents/skills/pourya-kit/references/storage.md) (`PouryaKit.Storage`, `PouryaKit.Storage.S3`, `PouryaKit.Storage.AzureBlob`; Wave 3: the contract and its S3 and Azure Blob providers)
-- [Localization](.agents/skills/pourya-kit/references/localization.md) (`PouryaKit.Localization`; Wave 3, optional: English and Persian)
-- [Reverse proxy](.agents/skills/pourya-kit/references/reverse-proxy.md) (`PouryaKit.ReverseProxy`; Wave 3: a YARP Host of its own process in front of the Hosts)
-- [gRPC](.agents/skills/pourya-kit/references/grpc.md) (`PouryaKit.Grpc`; Wave 3: services and clients on Web's conventions)
-- [Aspire resources](.agents/skills/pourya-kit/references/aspire.md) (`PouryaKit.Aspire`; Wave 3, AppHost-only: PostgreSQL, Redis, RabbitMQ and Ollama on pinned images, and the Proving Sample's AppHost)
-- [Realtime](.agents/skills/pourya-kit/references/realtime.md) (`PouryaKit.Realtime`; Wave 3, optional: server-sent events from Notification Handlers, heard on every instance through PostgreSQL's notifications)
-- [Reporting](.agents/skills/pourya-kit/references/reporting.md) (`PouryaKit.Reporting`; Wave 3, optional: a Module's report layout rendered to PDF, CSV and a spreadsheet)
-- [Report Module](.agents/skills/pourya-kit/references/reporting-module.md) (`PouryaKit.Reporting.Module`; Wave 3, optional: the first Module the Kit ships as a package, report jobs generated in the background, fenced, served to their requester and removed after their retention)
-- [AI](.agents/skills/pourya-kit/references/ai.md) (`PouryaKit.AI`, `PouryaKit.AI.Postgres`; Wave 3: the chat client for OpenAI, Azure OpenAI and Ollama, the Gateway tool that runs a model's call as an Operation, the Host-owned clients of MCP servers over stdio and HTTP whose tools a run is given under the same allow-list, and the Agent Framework's agents and workflows over that client, with sessions and memory in the application's stores, a chat reducer and a guardrail hook; embeddings over the same client, and semantic search over pgvector in the package's own schema, within the Operation's tenant; Wave 4: the Proving Sample's agent, a command that keeps each Actor's conversation in the tenant, its session and memory, through its Unit of Work, under the Host's guardrail)
-- [Streams](.agents/skills/pourya-kit/references/stream.md) (`PouryaKit.Persistence.Marten`, `PouryaKit.Messaging.Wolverine.Marten`; Wave 3: the Stream write model on Marten, committed with its Notifications and Integration Events through Wolverine's Marten outbox)
-- [Sagas](.agents/skills/pourya-kit/references/sagas.md) (`PouryaKit.Messaging.Wolverine.Sagas`; Wave 3, optional: a Module's Saga on Wolverine, routed, claimed, tenant-guarded and emitting through the Kit, outside every Operation)
+- [Email](.agents/skills/pourya-kit/references/email.md) (`PouryaKit.Email`, `PouryaKit.Email.MailKit`)
+- [Multi-tenancy](.agents/skills/pourya-kit/references/multi-tenancy.md) (`PouryaKit.Domain`, `PouryaKit.Cqrs`, `PouryaKit.Persistence.EFCore`, `PouryaKit.Messaging.Wolverine`: tenant-scoped Modules and the checks that keep one tenant's data from another)
+- [File storage](.agents/skills/pourya-kit/references/storage.md) (`PouryaKit.Storage`, `PouryaKit.Storage.S3`, `PouryaKit.Storage.AzureBlob`: the contract and its S3 and Azure Blob providers)
+- [Localization](.agents/skills/pourya-kit/references/localization.md) (`PouryaKit.Localization`; optional: English and Persian)
+- [Reverse proxy](.agents/skills/pourya-kit/references/reverse-proxy.md) (`PouryaKit.ReverseProxy`: a YARP Host of its own process in front of the Hosts)
+- [gRPC](.agents/skills/pourya-kit/references/grpc.md) (`PouryaKit.Grpc`: services and clients on Web's conventions)
+- [Aspire resources](.agents/skills/pourya-kit/references/aspire.md) (`PouryaKit.Aspire`; AppHost-only: PostgreSQL, Redis, RabbitMQ and Ollama on pinned images, and the Proving Sample's AppHost)
+- [Realtime](.agents/skills/pourya-kit/references/realtime.md) (`PouryaKit.Realtime`; optional: server-sent events from Notification Handlers, heard on every instance through PostgreSQL's notifications)
+- [Reporting](.agents/skills/pourya-kit/references/reporting.md) (`PouryaKit.Reporting`; optional: a Module's report layout rendered to PDF, CSV and a spreadsheet)
+- [Report Module](.agents/skills/pourya-kit/references/reporting-module.md) (`PouryaKit.Reporting.Module`; optional: the first Module the Kit ships as a package, report jobs generated in the background, fenced, served to their requester and removed after their retention)
+- [AI](.agents/skills/pourya-kit/references/ai.md) (`PouryaKit.AI`, `PouryaKit.AI.Postgres`: the chat client, the Gateway tool, MCP clients, agents and workflows, embeddings and semantic search)
+- [Streams](.agents/skills/pourya-kit/references/stream.md) (`PouryaKit.Persistence.Marten`, `PouryaKit.Messaging.Wolverine.Marten`: the Stream write model on Marten, committed with its Notifications and Integration Events through Wolverine's Marten outbox)
+- [Sagas](.agents/skills/pourya-kit/references/sagas.md) (`PouryaKit.Messaging.Wolverine.Sagas`; optional: a Module's Saga on Wolverine, routed, claimed, tenant-guarded and emitting through the Kit, outside every Operation)
 
-The skill's [Capability table](.agents/skills/pourya-kit/SKILL.md#capabilities) owns this list and says when to read each reference. It folds Paging and Request idempotency into the rows of the packages they span.
+The skill's [Capability table](.agents/skills/pourya-kit/SKILL.md#capabilities) lists them with their packages and says when to read each reference.
 
 The Proving Sample in `samples/ModularMonolith/` proves every guarantee against PostgreSQL, and against RabbitMQ and Redis where they apply, and architecture tests guard its boundaries and every package's dependencies. Its `ModularMonolith.Host` composes four Modules, the EF Core Modules Catalog, Inventory and Billing and the Stream Module Ledger, or all but Inventory when `Inventory.Host` receives from it over RabbitMQ, and the Kit's [report Module](.agents/skills/pourya-kit/references/reporting-module.md) with one report kind of its own. `Inventory.Host` and `ModularMonolith.ReverseProxy`, the [Reverse proxy](.agents/skills/pourya-kit/references/reverse-proxy.md) in front of the Hosts, compose the optional [service defaults recipes](.agents/skills/pourya-kit/references/host-recipes.md) of `ModularMonolith.ServiceDefaults` (OpenTelemetry export, liveness and readiness, service discovery, one HTTP resilience pipeline, Serilog), which are template content, not a Kit package.
-
-The [package validation path](docs/packages.md) builds and tests Release once, packs every package in `scripts/packaging/inventory.json` at one MinVer version, and verifies them in clean package-only consumers. [CI](docs/ci.md) runs this path with read-only permissions, preserving tested-SHA receipts and bounded package artifacts. Same-repository hosted success/failure and permission isolation are verified; real private fork execution has an owner-accepted verification exception. [Private publication](docs/private-packages.md) downloads trusted main originals, uses standard NuGet push, then restores every library package and installs the template package from the private feed. MinVer supplies snapshots and owner-tagged preview/rc versions through the same validation path. The owner narrowed [Phase 5](docs/foundation-review.md#phase-5-packaging-and-releases) on 2026-10-06; the active scope is complete, and [Hosted completion](docs/private-packages.md#hosted-completion) records the CI and publication runs that proved it, and those that proved Wave 2. Wave 3 is complete; Wave 4's service template, `pouryakit-service`, is generated, smoke-tested and published by the same path.
 
 Build and test with the .NET SDK pinned in `global.json`:
 
@@ -56,19 +54,12 @@ dotnet build PouryaKit.slnx
 dotnet test PouryaKit.slnx
 ```
 
-With Docker running, validate the Release package set, PostgreSQL suite and clean consumers:
-
-```bash
-python3 scripts/packaging/validate.py
-```
-
-The command prints its evidence directory outside the checkout, including the packages, checksum manifest and separate runtime and consumer logs. It fetches origin's tags and completes shallow history before MinVer runs. [Package guidance](docs/packages.md) describes consumption and the proof boundary.
+[Package validation](docs/packages.md) checks the Release package set, the PostgreSQL suite and clean consumers. [CI](docs/ci.md) runs it, and [private packages](docs/private-packages.md) covers publication and consumption.
 
 - Using the Kit, Capability by Capability: the Kit's skill, [.agents/skills/pourya-kit/](.agents/skills/pourya-kit/SKILL.md)
-- Packages, their references and the commit sequence: [docs/architecture/README.md](docs/architecture/README.md)
+- Packages, their references and the Unit of Work's commit sequence: [docs/architecture/README.md](docs/architecture/README.md)
 - Diagrams of the Kit's structure, runtime flows and publication, in reading order: [the architecture document's Diagrams section](docs/architecture/README.md#diagrams)
 - Which test proves each acceptance scenario: [docs/acceptance.md](docs/acceptance.md)
 - Decisions: [docs/adr/](docs/adr/)
-- Plan and evidence: [docs/foundation-review.md](docs/foundation-review.md)
-- Review history: [docs/foundation-review-log.md](docs/foundation-review-log.md)
+- Plan: [docs/foundation-review.md](docs/foundation-review.md)
 - Vocabulary: [GLOSSARY.md](GLOSSARY.md)

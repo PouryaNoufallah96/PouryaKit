@@ -27,7 +27,7 @@ using Wolverine.Transports.Sending;
 
 namespace ModularMonolith.Tests;
 
-// Delivery between Hosts over RabbitMQ (ADR 0006, ticket #50 amendment), each row of its invariants table: the
+// Delivery between Hosts over RabbitMQ (ADR 0006's RabbitMQ topology amendment), each row of its invariants table: the
 // Proving Sample's service composition, ModularMonolith.Host with a broker (Catalog, Billing and Ledger) and Inventory.Host, each
 // a real Host with its own database and ServiceName, joined only by the broker.
 [Collection<BrokerCollection>]

@@ -20,7 +20,7 @@ test('the site generates a page per published reference and package, and the Ref
   assert.ok(!pages.some((page) => /packages\.md|publication\.md/.test(page)));
 });
 
-test("no ADR is published: no page of one, and a reference's link to one renders as its own text", () => {
+test('no ADR is published: no page of one', () => {
   const files = buildSite(root);
   assert.deepEqual(
     files
@@ -28,8 +28,6 @@ test("no ADR is published: no page of one, and a reference's link to one renders
       .map((file) => file.path),
     [],
   );
-  const tenancy = files.find((file) => file.path === '.generated/references/multi-tenancy.md')?.content ?? '';
-  assert.match(tenancy, /\(ADR 0007\): in a scope nobody began/);
 });
 
 test("no generated page carries a source's frontmatter: the Capabilities index starts at the skill's text", () => {

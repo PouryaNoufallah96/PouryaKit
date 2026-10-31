@@ -90,6 +90,25 @@
   }
 }
 
+/* The docs layout fills the window. Fumadocs caps it at 97rem and gives the spare width to its outer columns, where the
+   sidebar's background stretches beside its content and leaves an empty band on the left. */
+#nd-docs-layout {
+  --fd-layout-width: 100%;
+}
+
+/* The sidebar's footer bar is made for icon links beside the theme switch. The site has none, so the switch fills the bar
+   as two equal segments, rather than sitting at the end of an empty box. */
+#nd-sidebar [data-theme-toggle] {
+  flex: 1;
+  margin-inline-end: 0.125rem;
+  border: 0;
+  padding: 0;
+}
+
+#nd-sidebar [data-theme-toggle] > * {
+  flex: 1;
+}
+
 /* Reduced motion: no animation, transition or smooth scroll, and no view transition on a theme switch. */
 /* biome-ignore-start lint/complexity/noImportantStyles: the user's setting must override every component's own motion */
 @media (prefers-reduced-motion: reduce) {

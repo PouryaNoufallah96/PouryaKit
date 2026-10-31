@@ -4,7 +4,7 @@ status: accepted
 
 # A Saga step runs on Wolverine's own chain outside every Operation; the Kit routes it, claims it in its transaction and emits for it
 
-Spike #141 (spec #115, "Saga", decision S1) ran Wolverine sagas beside the Kit's delivery step against WolverineFx
+A spike ran Wolverine sagas beside the Kit's delivery step against WolverineFx
 6.48.3 and PostgreSQL, through the Kit's own Modules, Outbox, subscriptions and message store. **A Saga is the one
 reaction that runs outside an Operation, the exception to ADR 0001 and ADR 0006: its state and handler type is a public
 Wolverine `Saga` that Wolverine discovers and whose chain Wolverine generates, and a step runs with no Operation Context
@@ -12,7 +12,7 @@ and the Host's authority. The Kit bounds the exception. It routes each Integrati
 durable local queue, as a Kit input type of that saga and that event. It claims each step, keyed by the saga's name, the
 input's wire name and the event's identity, in the step's own transaction and before Wolverine loads the saga, so a
 second delivery of one event applies nothing and a crash between the step's commit and the mark of its envelope applies
-no step twice. The claims outlive the saga: the spec's "kept until the saga completes" is read as a floor, not as the
+no step twice. The claims outlive the saga: the requirement "kept until the saga completes" is read as a floor, not as the
 point they are deleted, since deleting them then lets a late copy of the starting event start the saga again. It makes
 the saga's identity the event's tenant with its business id, each escaped, so no tenant can name another's saga, and
 refuses an event with no tenant before any step. It writes every emission, a timeout's included, through an adapter
@@ -22,17 +22,16 @@ kept in the saga's state by the step that scheduled it, one for each timeout, tw
 included.** The saga's state is a row of
 Wolverine's lightweight saga table in the Kit's message store schema, and a Host with a saga carries the generated chains
 in its Release publish through the existing code generation step. A middleware that begins an Operation around a step
-was tried: the step can read the context it sets, and stays outside every Unit of Work and the Kit's publisher, so S1's
+was tried: the step can read the context it sets, and stays outside every Unit of Work and the Kit's publisher, so the rule
 "no Operation Context on a step" stands. Nothing observed contradicts ADR 0002 to 0005 or ADR 0007 to 0012, or section G.
 
 ## Evidence
 
 The Spike code is `spikes/saga/` at commit `629b85a8abefd3bfb62bb7d072e30b9669992eae`, reachable through tag
-`spike/saga`. It is not merged. It was run on 2026-10-18 with `dotnet test spikes/saga` (.NET SDK 10.0.402, Microsoft
-Testing Platform, xunit.v3 4.0.1, `postgres:18.6` with `track_commit_timestamp=on` and `max_connections=300` in
-Testcontainers 4.15.0, Docker 29.8.2, macOS arm64), on the Kit at `2152782c`: 22 of 22 tests passed in about 42 s. Each
-test gets a database of its own; tests run one at a time. Spike code: 2,216 lines of C# over 24 files, counted with
-`wc -l` at that commit, blank lines and comments included; 704 of them in `SagaSpike.Kit`, what #142 would ship.
+`spike/saga`. It is not merged. It runs with `dotnet test spikes/saga` against `postgres:18.6` with
+`track_commit_timestamp=on` and `max_connections=300` in Testcontainers: 22 of 22 tests passed. Each test gets a
+database of its own; tests run one at a time. Spike code: 2,216 lines of C# over 24 files, counted with `wc -l` at that
+commit, blank lines and comments included; 704 of them in `SagaSpike.Kit`, what the Kit's saga package would ship.
 
 Read in source: `JasperFx/wolverine` tag `V6.48.3`, commit `c1eab2a7f04de7350c3b54741ae00351c6c303d1`, and its saga
 guide, `docs/guide/durability/sagas.md`. Paths below are into that repository unless they start with `spikes/`.
@@ -45,7 +44,7 @@ guide, `docs/guide/durability/sagas.md`. Paths below are into that repository un
   stored retry), and `PouryaKit.Testing`'s delivery settings inline in the Host (Solo durability, 100 ms polling,
   retries after 100 ms and 100 ms), since the Host is also published in Release, which carries no `PouryaKit.Testing`.
   Nothing under `src/` or `samples/` changed.
-- **`SagaSpike.Kit`, what #142's `Messaging.Wolverine.Sagas` would ship, as a self-contained copy**: `PouryaKitSaga`, the
+- **`SagaSpike.Kit`, what the `Messaging.Wolverine.Sagas` package would ship, as a self-contained copy**: `PouryaKitSaga`, the
   base of a saga (its identity, tenant and correlation, and the emission adapter `PublishAsync`); `SagaInput<TSaga,
   TEvent>`, the Kit's input type; `AddSpikeSaga`, the declaration on a Module's builder; `SagaRouteSource`, the Kit's
   route; `SagaStepPolicy` and `SagaStorage`, which open the saga's storage on a transaction the Kit owns and claim the
@@ -72,12 +71,12 @@ Every outcome is observed in the test it names unless the row says read or infer
 | # | Item | Outcome | Test | Red once with |
 |---|---|---|---|---|
 | 1 | A Saga and a Kit subscription on one message type stay separate | Pass, through the Kit's route. `OrderPlacedV1`, published by Orders' Notification Handler, reaches Billing's subscription, one Receipt, and starts the saga, one row, with no dead letter. One event also starts two sagas beside the subscription (item 8's test). The rejected route, the event routed as itself to a plain Wolverine saga's queue, never starts it: the Kit's pre-built handler of the type runs on that queue too, finds no subscription of that name, and the delivery is set aside with `UnknownSubscriptionException`. Read: `HandlerGraph.HandlerFor` returns a handler registered with `AddMessageHandler` on every queue unless the type's chain has a sticky endpoint for it (`src/Wolverine/Runtime/Handlers/HandlerGraph.cs:167-262`), and a single saga never gets one: a saga chain separates its sagas only for two or more saga types under `MultipleHandlerBehavior.Separated` (`src/Wolverine/Persistence/Sagas/SagaChain.cs:88-122`). The Kit therefore delivers the event as `SagaInput<TSaga, TEvent>`, a type with no pre-built handler, whose chain is that saga's alone | `SeparationTests.A_saga_and_a_kit_subscription_on_one_integration_event_each_receive_it_once`; `SeparationTests.Routed_as_itself_an_integration_event_a_kit_subscription_handles_never_reaches_a_wolverine_saga` | The Kit's route off: the saga never started |
-| 2 | Saga state lives in the Kit's message store schema | Pass, with the store in a schema of its own, `kitstore`: the saga's row is in `kitstore.fulfilmentsaga_saga`, Wolverine's lightweight table (id `varchar`, body `jsonb`, version, created, last modified), and the Kit's claims in `kitstore.pouryakit_saga_steps`, and neither table is in any other schema. A step's state, its claim and each envelope it stored have one `pg_xact_commit_timestamp`, read between its commit and its return: the first payment's state and claim, and the completing payment's claim and emission. Read: the Spike's table is created at its first step, and a table whose `SagaTableDefinition` is registered, as the package registers each saga's, with the message store when the Host starts (`SagaServiceCollectionExtensions.cs`, the #142 amendment below; noted 2026-10-23); either is in the schema of the store's `DatabaseSettings`, and an update matches the version it loaded, else `SagaConcurrencyException` (`src/Persistence/Wolverine.Postgresql/Internals/DatabaseSagaSchema.cs:46-132`) | `StateTests.Saga_state_and_its_step_claims_are_rows_of_the_message_store_schema_committed_with_the_steps_emissions` | The saga's table built from settings of schema `public`: no state in `kitstore` |
+| 2 | Saga state lives in the Kit's message store schema | Pass, with the store in a schema of its own, `kitstore`: the saga's row is in `kitstore.fulfilmentsaga_saga`, Wolverine's lightweight table (id `varchar`, body `jsonb`, version, created, last modified), and the Kit's claims in `kitstore.pouryakit_saga_steps`, and neither table is in any other schema. A step's state, its claim and each envelope it stored have one `pg_xact_commit_timestamp`, read between its commit and its return: the first payment's state and claim, and the completing payment's claim and emission. Read: the Spike's table is created at its first step, and a table whose `SagaTableDefinition` is registered, as the package registers each saga's, with the message store when the Host starts (`SagaServiceCollectionExtensions.cs`, the package as built amendment below; noted 2026-10-23); either is in the schema of the store's `DatabaseSettings`, and an update matches the version it loaded, else `SagaConcurrencyException` (`src/Persistence/Wolverine.Postgresql/Internals/DatabaseSagaSchema.cs:46-132`) | `StateTests.Saga_state_and_its_step_claims_are_rows_of_the_message_store_schema_committed_with_the_steps_emissions` | The saga's table built from settings of schema `public`: no state in `kitstore` |
 | 3 | One advancing event under two envelope ids applies once; two contracts sharing one origin both apply | Pass. A payment delivered under two envelope ids advances the saga once, one claim; Orders' two payment contracts for one Domain Event, one identity, both advance it, one claim each; and the claims outlive the saga: a copy of the starting event delivered after the saga completed starts no saga. The rejected option, the claim keyed by the envelope id alone, advances the saga twice | `DeduplicationTests.One_payment_delivered_under_two_envelope_ids_advances_the_saga_once`; `DeduplicationTests.Two_contracts_published_for_one_payment_both_reach_the_saga`; `DeduplicationTests.A_copy_of_the_starting_event_delivered_after_the_saga_completed_starts_no_saga`; `DeduplicationTests.Keyed_by_its_envelope_id_one_payment_under_two_envelope_ids_advances_the_saga_twice` | No claim: two payments counted. A key without the wire name: the second contract skipped. The claims deleted with the saga's state: the copy started a new saga |
 | 4 | The same business id in two tenants is two sagas; a wrong-tenant event changes nothing and emits nothing | Pass. One order id under `tenant-a` and `tenant-b` is two sagas, `tenant-a:<id>` and `tenant-b:<id>`, and a payment of `tenant-b` advances only its own. Each part of the identity is escaped as a URI's data (`SagaStorage.SagaId`, as `HybridQueryCache` escapes each part of its key), so tenant `a:b` with the reference `c` and tenant `a` with the reference `b:c` are two sagas. A payment of `tenant-c` names a saga that does not exist: Wolverine's chain throws its own `UnknownSagaException` before the step, at each of the delivery's three attempts, the delivery is then set aside, and nothing is claimed, changed or emitted; the refusal is Wolverine's, not one the Kit names. An event with no tenant is refused before any step, set aside with `Tenant.Required`, and no saga table or claim exists. The events are published as the Outbox writes them, since Orders' own table keys an order by its id alone | `TenancyTests.One_order_id_in_two_tenants_is_two_sagas_and_a_payment_advances_only_its_own_tenants`; `TenancyTests.Two_tenants_whose_tenant_and_business_id_join_alike_are_two_sagas`; `TenancyTests.A_payment_of_another_tenant_changes_no_saga_and_emits_nothing`; `TenancyTests.An_event_with_no_tenant_is_refused_before_any_step` | The identity without the tenant: the second start collided, and the foreign payment advanced the saga. The parts joined unescaped: one saga for the two tenants, the second start refused. The tenantless refusal off: a saga started |
 | 5 | A Saga's emission, a timeout's included, reaches an ordinary subscription in a tenant-scoped Module through the Kit-owned adapter | Pass. The completing payment's `OrderFulfilledV1` reaches Billing under Actor `System` `shipping.fulfilment`, tenant `tenant-a`, the correlation of the Operation that placed the order, not of the one that paid, and the step's identity as causation; Billing's Receipt keys it by the emission's identity. The timeout's `OrderCancelledV1` reaches Billing the same way, with the tenant, the correlation and a stable identity the saga's state kept: when the starting step stores the saga, the Kit keeps in its state, under the timeout's envelope, an identity derived from that step's identity (`SagaStorage.TimeoutId`), and the timeout's step takes that identity, never the envelope's id, for its claim, its own identity and what it emits. The test reads the identity from the saga's state before the timeout fires, finds it differs from the timeout envelope's id, and finds the claim, the causation and Billing's Receipt key derived from it. Each timeout a step schedules keeps an identity of its own: the derivation also takes the timeout's ordinal, its place from 0 among the step's timeouts of that type in the order the step scheduled them, the order of `MessageContext.Outstanding`, a list Wolverine appends each stored envelope to (`src/Wolverine/Runtime/MessageBus.cs:17,73-78,365-369`, read). `ReminderSaga`'s starting step schedules two `ReminderTimeout`s: both apply, under two claims whose identities are the two the saga's state kept. The rejected option, the saga publishing as Wolverine publishes from a saga: Billing sets the delivery aside, "has no pouryakit-actor-kind header" | `EmissionTests.A_completing_steps_emission_reaches_a_tenant_scoped_subscription_under_the_sagas_actor_and_the_starting_events_tenant_and_correlation`; `EmissionTests.A_timeouts_emission_reaches_the_subscription_with_the_identity_tenant_and_correlation_kept_in_the_saga_state`; `EmissionTests.Two_timeouts_of_one_type_from_one_step_each_keep_their_own_identity_and_both_apply`; `EmissionTests.Without_the_kits_adapter_a_sagas_emission_is_set_aside_by_an_ordinary_subscription` | The adapter off: Billing never received it. The adapter without the saga's state: Billing refused the timeout's emission, which had no tenant. The timeout's identity from its envelope: the claim was another identity. The ordinal left out of the timeout's identity: the second reminder was skipped, one of the two applied |
 | 6 | A crash between the saga's save and the envelope's mark applies no step twice, or the limit is recorded | Pass. A child process (`dotnet SagaSpike.Host.dll crash-after-commit ...`) prints `COMMITTED` after a payment step's commit and before the step returns, and is killed (SIGKILL): the payment counted, its envelope `Incoming` and owned by the dead node. A Host started on the store recovers and delivers it again, the claim is found, and the payment stays counted once. Killed inside the step, before its commit, the step's claim rolls back with it, and the redelivery applies the step once. Read: lightweight storage commits at the end of the generated method (`src/Persistence/Wolverine.RDBMS/Sagas/DatabaseSagaStorage.cs:34-46`), and the durable receiver marks the envelope handled afterwards, on its own (`src/Wolverine/Runtime/WorkerQueues/DurableReceiver.cs:188-203`); only EF Core's envelope transaction marks it inside the application's transaction (`src/Persistence/Wolverine.RDBMS/IMessageDatabase.cs:103-123`, `src/Persistence/Wolverine.EntityFrameworkCore/Internals/EfCoreEnvelopeTransaction.cs:230`). The limit: the claim stops a committed step from applying twice, and a step killed before its commit runs its code again, so an effect a step had outside its transaction would repeat; the Spike's steps have none, their state, claim, emissions and timeouts all in the one transaction, and that is the rule for saga code. The rejected option, Wolverine's own logical deduplication, loses the payment of a step killed before its commit | `CrashTests.A_step_committed_before_its_process_is_killed_is_not_applied_again_after_restart`; `CrashTests.A_step_whose_process_is_killed_before_it_commits` (`kit`, and `wolverine` for the rejected option) | The restarted Host without the claim: the payment counted twice and the saga completed. The claim on a connection of its own: it survived the kill |
-| 7 | The Release publish carries the generated chain, through the existing code generation step | Pass. `codegen write` from the Release build writes the saga's chains into the Host's `Internal/Generated`, with the Kit's storage helper and claim guard in them; a Release restore and publish holds neither `Wolverine.RuntimeCompilation.dll` nor `JasperFx.RuntimeCompiler.dll`; the published Host, in Production (`TypeLoadMode.Static`), starts the saga. The steps are `validate.py`'s `production_publish`, as ADR 0004's #58 amendment records them | `ReleasePublishTests.A_release_publish_carries_the_sagas_generated_chain_and_runs_it_in_production` | No `codegen write`: the published Host did not start, `MissingPreBuiltTypesException`, "4 expected pre-built handler type(s) could not be loaded from the configured ApplicationAssembly 'SagaSpike.Host'" |
+| 7 | The Release publish carries the generated chain, through the existing code generation step | Pass. `codegen write` from the Release build writes the saga's chains into the Host's `Internal/Generated`, with the Kit's storage helper and claim guard in them; a Release restore and publish holds neither `Wolverine.RuntimeCompilation.dll` nor `JasperFx.RuntimeCompiler.dll`; the published Host, in Production (`TypeLoadMode.Static`), starts the saga. The steps are `validate.py`'s `production_publish`, which [package validation](../packages.md#clean-consumers) describes | `ReleasePublishTests.A_release_publish_carries_the_sagas_generated_chain_and_runs_it_in_production` | No `codegen write`: the published Host did not start, `MissingPreBuiltTypesException`, "4 expected pre-built handler type(s) could not be loaded from the configured ApplicationAssembly 'SagaSpike.Host'" |
 | 8 | Whether middleware can restore the Operation Context around a step | Tried, recorded. Under Wolverine's default `ServiceLocationPolicy.NotAllowed` a step cannot take the Kit's `Operation`, an opaque scoped factory, or `IIntegrationEventPublisher`, an internal type: the chain is refused when Wolverine generates it, at the first message (`InvalidServiceLocationException`), and the delivery set aside. With service location allowed, a Wolverine `Before` middleware that begins an Operation on the step's scope with the event's Operation Context headers, as the delivery step does, gives the step that context, Actor, tenant, correlation and Module; without it the step has none. Either way no Unit of Work is active and the Kit's publisher refuses the step, "outside a Notification Handler's delivery". The step's writes commit in the saga's transaction, which no Unit of Work, authorizer, validator or Receipt runs in, so a restored context would claim an Operation the step is not | `OperationContextTests.Middleware_can_begin_an_operation_around_a_step_which_still_runs_outside_the_kits_unit_of_work_and_publisher` (with and without the middleware); `OperationContextTests.Under_wolverines_default_service_location_policy_a_step_cannot_take_the_kits_operation` | Not a guarantee; the two cases are each other's control |
 
 ## Rejected options, one honest attempt each
@@ -113,11 +112,11 @@ Every outcome is observed in the test it names unless the row says read or infer
 - **The Kit's route returns the event's other routes itself.** A custom route source is consulted first, and once one
   has found routes the first source that is not additive ends the search, whether or not it found any; Wolverine's
   `AgentMessages` comes before `ExplicitRouting` (`src/Wolverine/Runtime/WolverineRuntime.Routing.cs:58-120,280-291`,
-  `src/Wolverine/WolverineOptions.MessageTransformations.cs:10-30`). An additive Kit source dropped Billing's route, seen
-  in a diagnostic run before the fix, so `SagaRouteSource` returns the endpoints whose subscriptions match the event, as
+  `src/Wolverine/WolverineOptions.MessageTransformations.cs:10-30`). An additive Kit source would drop Billing's route, so
+  `SagaRouteSource` returns the endpoints whose subscriptions match the event, as
   `ExplicitRouting` finds them, with `MessageRoute.For`, and ends the search. It reads `Endpoint.Subscriptions`, but not
-  the internal `IsFromConvention` that `ExplicitRouting` also reads; the Kit's routes are all explicit. #142 may instead
-  have the Outbox write the input type beside the event, which changes `OutboxWriter` (not tried).
+  the internal `IsFromConvention` that `ExplicitRouting` also reads; the Kit's routes are all explicit. The Outbox could instead
+  write the input type beside the event, which changes `OutboxWriter` (not tried).
 - **An event from another Host does not reach a saga yet.** `SubscriptionDelivery` fans a broker envelope out to the
   subscriptions' local queues by name, never through routing, so the Kit's route never sees it (inferred from
   `src/PouryaKit.Messaging.Wolverine/Subscriptions/SubscriptionDelivery.cs`, not tested: the Spike has no broker).
@@ -137,19 +136,19 @@ Every outcome is observed in the test it names unless the row says read or infer
   `ServiceLocationPolicy.NotAllowed` (item 8): a saga takes its input, `IMessageContext`, and what Wolverine builds
   without service location. `OperationContextTests.Under_wolverines_default_service_location_policy_a_step_cannot_take_the_kits_operation`
   fails if that default changes; a Host that allows service location gives a step the Kit's `Operation` and its
-  publisher (item 8's other test), so #142 keeps the policy for a Host with a saga (an invariant below).
+  publisher (item 8's other test), so `PouryaKit.Messaging.Wolverine.Sagas` keeps the policy for a Host with a saga (an invariant below).
 - **The claims outlive the saga, as Receipts do.** Deleting them with the saga's state lets a late copy of the starting
-  event start the saga again (item 3's red run), the path ADR 0006's #90 amendment records for Receipts. The Spike keeps
+  event start the saga again (item 3's red run), the path ADR 0006's amendment on Receipts and publication records describes. The Spike keeps
   them; a bounded retention is its own decision, with the same accounting of every redelivery path first.
 - **The package's references.** The Kit's storage names `Wolverine.RDBMS` and `Wolverine.Postgresql` types and Npgsql,
   which section C keeps out of `PouryaKit.Messaging.Wolverine` and gives to `PouryaKit.Messaging.Wolverine.EFCore`;
-  #142's `Messaging.Wolverine.Sagas` row decides where the package sits.
+  section C's `Messaging.Wolverine.Sagas` row decides where the package sits.
 - **Two steps of one saga at once.** Lightweight storage updates a saga only at the version it loaded, else
   `SagaConcurrencyException` (`DatabaseSagaSchema.cs:107-132`, read); the losing step's claim rolls back with it, and the
   Kit's stored retry runs it again on the new state (inferred). The two payment contracts of one Domain Event reach one
   saga at about the same time and both apply (item 3), whether or not their steps overlapped in that run.
 - **Trace context.** The Spike's adapter writes no `tracestate` (ADR 0009); Wolverine writes the step's current activity
-  as each envelope's parent id (`MessageBus.cs:428`, read). Not checked by the Spike; #142's.
+  as each envelope's parent id (`MessageBus.cs:428`, read). Not checked by the Spike; the package's.
 - **A timeout's identity member.** Wolverine reads a saga's identity from a member of the message named by
   `[SagaIdentity]`, `{Saga}Id`, `{Saga without "Saga"}Id`, `SagaId` or `Id`, before the envelope's saga id
   (`SagaChain.cs:208-226`, `PullSagaIdFromMessageFrame.cs:55-60`), read: a timeout with such a member would leave the
@@ -232,7 +231,7 @@ the saga, from the envelopes the step stored (`MessageContext.Outstanding`).
 
 ## Pinned versions and licences
 
-Read from the restored nuspecs on 2026-10-18. The Spike adds no package to the Kit's closure: every package it uses is
+The Spike adds no package to the Kit's closure: every package it uses is
 already in `PouryaKit.Messaging.Wolverine.EFCore`'s, at the same version.
 
 | Package | Version | Licence |
@@ -247,31 +246,30 @@ pins.
 
 ## Invariants for permanent tests
 
-All of them are #142's, on the delivery and Gateway seam of `ModularMonolith.Tests` unless the row says otherwise.
+Each is now a permanent test, as the package as built amendment below records. They sit on the delivery and Gateway seam of `ModularMonolith.Tests` unless the row says otherwise.
 
-| Invariant | Seam | Owner |
-|---|---|---|
-| A saga and a Kit subscription on one Integration Event each receive it once, through the Kit's route to the saga's own durable queue; two sagas of one event are two chains | Delivery | #142 |
-| The event's other routes survive the Kit's route: every subscription of the event keeps its delivery | Delivery | #142 |
-| A saga's state and its claims are rows of the message store's schema, a non-default one included; a step's state, claim and stored envelopes commit together | Delivery | #142 |
-| One event delivered under two envelope ids is one step; two contracts with one identity are two; a copy of the starting event after the saga completed starts nothing | Delivery | #142 |
-| A saga's identity is the event's tenant with its business id, each part escaped: one id in two tenants is two sagas, two tenants whose tenant and business id join alike are two, another tenant's event changes no saga and emits nothing, and an event with no tenant is refused before any step | Delivery | #142 |
-| A step's emission, a timeout's included, reaches a tenant-scoped subscription under the declared system Actor, the starting event's tenant and correlation, the step's identity as causation, and an identity Billing's Receipt keys and every delivery of the step repeats; a timeout's step takes the stable identity the saga's state kept when it was scheduled, and two timeouts of one type from one step keep two identities and both apply | Delivery | #142 |
-| A step committed before its process dies is not applied again after restart; a step that dies before its commit is applied once | Delivery, child process | #142 |
-| A Host with a saga carries its generated chains, the Kit's storage and claim included, in its Release publish; without `codegen write` it does not start outside Development | `validate.py`, as for the Proving Sample's Hosts | #142 |
-| A step has no Operation Context: the Kit's publisher refuses it | Delivery | #142 |
-| A Host with a saga keeps Wolverine's `ServiceLocationPolicy.NotAllowed`, so a step reaches no Kit scoped service, or the Host fails when it is built: the policy is a value of the built container's `WolverineOptions`, which the Kit's extensions are applied to when they are resolved, before the Host starts (`HostTests.The_host_joins_a_configured_broker_under_its_derived_service_name`, read), so an `ICompositionCheck` answers it, as for every guarantee the final registrations show. The Spike checks it nowhere | Composition check | #142 |
-| An event that names no saga is refused with an error the Kit names, as `UnknownSubscriptionException` replaced a bare lookup failure for a subscription; the Spike shows Wolverine's `UnknownSagaException` | Delivery | #142 |
-| A step's emission carries the trace context ADR 0009 gives every envelope the Outbox writes; the Spike's adapter writes no `tracestate` | Delivery | #142 |
-| An Integration Event from another Host reaches a saga (the broker fan-out delivers its input type to each saga's queue); not built by the Spike | Delivery, two Hosts | #142 |
-| The claims' table is created with the message store, not at a saga's first step as the Spike does | Host | #142 |
-| One step emits at most one Integration Event of each type, as one Domain Event yields at most one: an emission's identity has no ordinal, unlike a timeout's; not built by the Spike | Delivery | #142 |
-| A declared saga is public, each input has a wire name, and a timeout type has no identity member, or the Host fails when it is built | Composition check | #142 |
+| Invariant | Seam |
+|---|---|
+| A saga and a Kit subscription on one Integration Event each receive it once, through the Kit's route to the saga's own durable queue; two sagas of one event are two chains | Delivery |
+| The event's other routes survive the Kit's route: every subscription of the event keeps its delivery | Delivery |
+| A saga's state and its claims are rows of the message store's schema, a non-default one included; a step's state, claim and stored envelopes commit together | Delivery |
+| One event delivered under two envelope ids is one step; two contracts with one identity are two; a copy of the starting event after the saga completed starts nothing | Delivery |
+| A saga's identity is the event's tenant with its business id, each part escaped: one id in two tenants is two sagas, two tenants whose tenant and business id join alike are two, another tenant's event changes no saga and emits nothing, and an event with no tenant is refused before any step | Delivery |
+| A step's emission, a timeout's included, reaches a tenant-scoped subscription under the declared system Actor, the starting event's tenant and correlation, the step's identity as causation, and an identity Billing's Receipt keys and every delivery of the step repeats; a timeout's step takes the stable identity the saga's state kept when it was scheduled, and two timeouts of one type from one step keep two identities and both apply | Delivery |
+| A step committed before its process dies is not applied again after restart; a step that dies before its commit is applied once | Delivery, child process |
+| A Host with a saga carries its generated chains, the Kit's storage and claim included, in its Release publish; without `codegen write` it does not start outside Development | `validate.py`, as for the Proving Sample's Hosts |
+| A step has no Operation Context: the Kit's publisher refuses it | Delivery |
+| A Host with a saga keeps Wolverine's `ServiceLocationPolicy.NotAllowed`, so a step reaches no Kit scoped service, or the Host fails when it is built: the policy is a value of the built container's `WolverineOptions`, which the Kit's extensions are applied to when they are resolved, before the Host starts (`HostTests.The_host_joins_a_configured_broker_under_its_derived_service_name`, read), so an `ICompositionCheck` answers it, as for every guarantee the final registrations show. The Spike checks it nowhere | Composition check |
+| An event that names no saga is refused with an error the Kit names, as `UnknownSubscriptionException` replaced a bare lookup failure for a subscription; the Spike shows Wolverine's `UnknownSagaException` | Delivery |
+| A step's emission carries the trace context ADR 0009 gives every envelope the Outbox writes; the Spike's adapter writes no `tracestate` | Delivery |
+| An Integration Event from another Host reaches a saga (the broker fan-out delivers its input type to each saga's queue); not built by the Spike | Delivery, two Hosts |
+| The claims' table is created with the message store, not at a saga's first step as the Spike does | Host |
+| One step emits at most one Integration Event of each type, as one Domain Event yields at most one: an emission's identity has no ordinal, unlike a timeout's; not built by the Spike | Delivery |
+| A declared saga is public, each input has a wire name, and a timeout type has no identity member, or the Host fails when it is built | Composition check |
 
 ## Consequences
 
-- ADR 0001 and ADR 0006 carry dated amendments of 2026-10-18 pointing here. The package follows in #142, which turns the
-  invariants into tests over merged code; nothing of `spikes/saga/` is merged.
+- ADR 0001 and ADR 0006 carry amendments pointing here.
 - A Saga is a fourth kind of reaction beside G.2's three, and the only one whose handler is a public type Wolverine
   generates code for. Its step is no Operation: no authorizer, validator, Unit of Work or Receipt runs for it, and the
   claim in the step's transaction does the Receipt's work.
@@ -284,14 +282,13 @@ All of them are #142's, on the delivery and Gateway seam of `ModularMonolith.Tes
   (ADR 0003).
 - The exception rests on Wolverine members a later version may move: `SagaSchemaCodegen.HelperType`, the public
   `EnrollAndFetchSagaStorageFrame` and `DatabaseSagaSchema<,>`, the route sources' precedence, and `MessageRoute.For`.
-  #142's invariants are what catch a change.
-- Plan I.3's Saga row and I.4's Saga paragraph carry dated notes pointing here; the plan keeps its record.
+  The package's invariants are what catch a change.
 
-## Amendment (2026-10-18, ticket #142: the package as built)
+## Amendment (2026-10-18: the package as built)
 
 The decision above stands. `PouryaKit.Messaging.Wolverine.Sagas` builds it on the Kit's seams, and each invariant above is
-a permanent test of `ModularMonolith.Tests.SagaTests` or of the structure tests, run once with its behaviour switched off
-(the [acceptance map](../acceptance.md#saga-package-ticket-142) names each). Where the package departs from the Spike's
+a permanent test of `ModularMonolith.Tests.SagaTests` or of the structure tests, run once with its behaviour switched off.
+Where the package departs from the Spike's
 shape:
 
 - **A saga's Module names no Wolverine type but the base of its timeouts.** A step emits with `PublishAsync(event)`, which
@@ -308,7 +305,7 @@ shape:
 - **The Kit names its refusals.** An Integration Event with no tenant, and an advancing one whose identity names a saga
   that does not exist, another tenant's or one that completed, fail with `SagaInputRefusedException` before any step, in
   place of Wolverine's `UnknownSagaException`. A timeout whose saga completed ends unread, with no claim, as Wolverine's
-  chain returns for it: the gap the Spike's second review recorded is now a test.
+  chain returns for it.
 - **One emission of each type per step**, refused at the second, since an emission's identity derives from its step and
   wire name alone. Emissions are written through `OutboxWriter`'s emission write, which writes the headers `WriteAsync`
   gives an Integration Event and continues the input's trace (ADR 0009): Wolverine's span of the step is the parent when
@@ -335,7 +332,7 @@ shape:
 - **The Release publish** is package validation's: a composition of `scripts/packaging/inventory.json` publishes the test
   Modules' Host with codegen write, as the Proving Sample's Hosts are; the Proving Sample declares no saga.
 
-## Amendment (2026-10-23, ticket #142's second review: a completion at the version it loaded)
+## Amendment (2026-10-23: a completion at the version it loaded)
 
 The finding "Two steps of one saga at once" holds for an update only. Wolverine's lightweight storage deletes a completed
 saga by its identity alone and ignores the count of rows deleted (`Wolverine.Postgresql.Internals.DatabaseSagaSchema`,
@@ -344,22 +341,21 @@ commit what they emitted: a final payment's fulfilment beside the timeout's canc
 state at the version the step loaded and throws Wolverine's `SagaConcurrencyException` otherwise, the exception of its
 update, so the losing step rolls back and the Kit's retries run it on the committed state: a payment whose saga a timeout
 completed meanwhile is set aside as a dead letter, and a completing step whose state another step changed completes on
-the new state (`SagaTests`, the [acceptance map](../acceptance.md#saga-package-ticket-142)). A saga's name also starts
+the new state (`SagaTests`). A saga's name also starts
 with a letter, or the Host fails when it is built: Wolverine writes its state table's name into its statements unquoted.
 
-## Amendment (2026-10-24, the Wave 3 final quality pass: one saga storage)
+## Amendment (2026-10-24: one saga storage)
 
 The decision above stands. A Host with a Saga fails when it is built unless Wolverine's lightweight saga storage is
 the first that keeps every type, since Marten's integration puts its own first, alone or beside the EF Core store,
-where the step's claim would never commit (`SagaCheck`; the probe is in the
-[acceptance map](../acceptance.md#saga-package-ticket-142)): a saga and a Stream (Marten) cannot share one Host yet; making the Kit's sagas keep the lightweight provider beside Marten's is a later package. *Superseded on 2026-10-24 by the amendment below: the way out is not a Kit package.*
+where the step's claim would never commit (`SagaCheck`): a saga and a Stream (Marten) cannot share one Host yet; making the Kit's sagas keep the lightweight provider beside Marten's is a later package. *Superseded on 2026-10-24 by the amendment below: the way out is not a Kit package.*
 
 ## Amendment (2026-10-24, a Saga beside Marten researched)
 
 The refusal of the amendment above stands, and the way out is not a Kit package. Wolverine documents that "If the
 Marten integration is active, Marten will take precedence for the `Saga` storage for each type"
 (`JasperFx/wolverine`, tag `V6.48.3`, commit `c1eab2a7f04de7350c3b54741ae00351c6c303d1`,
-`docs/guide/durability/sagas.md`), and it fixed the opposite order as a bug (issue 3443, recorded in
+`docs/guide/durability/sagas.md`), and it fixed the opposite order as a bug ([issue 3443](https://github.com/JasperFx/wolverine/issues/3443), recorded in
 `src/Wolverine/Persistence/Sagas/LightweightSagaPersistenceFrameProvider.cs` at that tag): neither 6.48.3 nor 6.52.0
 offers a supported way to keep one saga type on the lightweight storage while Marten's integration is active. A probe on
 `619ad6b4` showed that moving the lightweight provider first in Wolverine's list of providers, which is not a documented
@@ -368,19 +364,18 @@ emitted in one commit; a Marten-only Host also needed its saga tables created at
 data source. Keeping the state in Marten documents instead would put it outside the message store's schema and add a
 second saga storage, both refused above. Two ways forward, each a decision of its own: an option in Wolverine's Marten
 integration to leave sagas alone, or a per-type storage choice, requested upstream with the probe as its reproducer; or,
-by the owner's decision against that upstream intent, the reorder in `UsePouryaKitMarten`, with `SagaCheck` asking
+against that upstream intent, the reorder in `UsePouryaKitMarten`, with `SagaCheck` asking
 Wolverine which storage each saga chain gets, shipped only with the Marten-only pieces and a test of each Host shown red
 once.
 
-Owner decision (2026-10-24): the reorder is rejected, since it would depend on an undocumented provider list against
+Decision (2026-10-24): the reorder is rejected, since it would depend on an undocumented provider list against
 Wolverine's stated intent. The refusal stays until Wolverine's Marten integration offers a supported way to keep a
-saga on the lightweight storage, which a feature request to `JasperFx/wolverine` asks for *(drafted 2026-10-24, not
-posted)*.
+saga on the lightweight storage.
 
-## Amendment (2026-10-24, ticket #167: WolverineFx 6.52.0)
+## Amendment (2026-10-24: WolverineFx 6.52.0)
 
 The decision above stands, and so does the refusal of a Saga beside Marten: the Kit's pins move to WolverineFx 6.52.0,
-which session 6's research had already found to offer no supported option for it (the amendment above). The Spike's
+which offers no supported option for it either (the amendment above). The Spike's
 "Pinned versions and licences" and the source readings at `V6.48.3` stay as the record of what they ran on. At tag
 `V6.52.0` the route search the Kit's `SagaRouteSource` relies on is unchanged for a source that is not pass-through
 (`src/Wolverine/Runtime/WolverineRuntime.Routing.cs:315-335`; 6.49.0 added `IPassThroughMessageRouteSource`, which the

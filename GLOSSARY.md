@@ -160,11 +160,11 @@ A Module's share of its Host's durable message store: the Integration Events and
 _Avoid_: Queue, message table
 
 **Stream**:
-An aggregate whose stored state is the ordered events it has appended, loaded by folding them; the Kit's second write model, whose Unit of Work commits its events with the Operation's Notifications and Integration Events through Wolverine's Marten outbox (ADR 0011). A Stream belongs to the tenant of the Operation that wrote it.
+An aggregate whose stored state is the ordered events it has appended, loaded by folding them; the Kit's second write model, whose Unit of Work commits its events with the Operation's Notifications and Integration Events through Wolverine's Marten outbox. A Stream belongs to the tenant of the Operation that wrote it.
 _Avoid_: Event-sourced entity, event stream aggregate
 
 **Saga**:
-A Module's long-running reaction across Integration Events that keeps its own state between steps: started and advanced by Integration Events, timed out by its own timeout messages, and the one reaction that runs outside an Operation, each step with no Operation Context, claimed once in its own transaction, and emitting Integration Events under its system Actor (ADR 0013). A saga's identity is the tenant of the event that started it with that event's business id; one Module declares it with `AddPouryaKitSaga` and derives it from `PouryaKitSaga` (`PouryaKit.Messaging.Wolverine.Sagas`).
+A Module's long-running reaction across Integration Events that keeps its own state between steps: started and advanced by Integration Events, timed out by its own timeout messages, and the one reaction that runs outside an Operation, each step with no Operation Context, claimed once in its own transaction, and emitting Integration Events under its system Actor. A saga's identity is the tenant of the event that started it with that event's business id; one Module declares it with `AddPouryaKitSaga` and derives it from `PouryaKitSaga` (`PouryaKit.Messaging.Wolverine.Sagas`).
 _Avoid_: Process manager, workflow, orchestration
 
 **Page**:
@@ -173,11 +173,11 @@ _Avoid_: Paged list, list result, page list
 
 **Receipt**:
 A handler's record that it has already applied a specific Notification, Integration Event or Snapshot, or a Module's record that it has run a specific delayed command or occurrence of a recurring command.
-The Module's Receipt store also holds its publication records, keyed `<wire name>#published`, one per Integration Event type and Domain Event; those are not Receipts (ADR 0006).
+The Module's Receipt store also holds its publication records, keyed `<wire name>#published`, one per Integration Event type and Domain Event; those are not Receipts.
 _Avoid_: Inbox row, processed flag, idempotency marker (a repeated request is recognised by its Request id, not by a Receipt)
 
 **Channel**:
-The name a Notification Handler pushes a realtime event on, and on which a browser client of the same tenant listens through a Module's SSE endpoint whose rule admits its Actor (ADR 0012). It is no Subscription and no queue: nothing is stored for it, and a client hears it only while connected.
+The name a Notification Handler pushes a realtime event on, and on which a browser client of the same tenant listens through a Module's SSE endpoint whose rule admits its Actor. It is no Subscription and no queue: nothing is stored for it, and a client hears it only while connected.
 _Avoid_: Topic, group, room
 
 **Report job**:

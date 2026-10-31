@@ -4,7 +4,7 @@ using Wolverine.RabbitMQ;
 namespace PouryaKit.Messaging.Wolverine.RabbitMq;
 
 // Applied when Wolverine's options are first built, after every Composition Root ran, so every publication and
-// subscription of the Host is known (ADR 0006, ticket #50 amendment, topology B).
+// subscription of the Host is known (ADR 0006's RabbitMQ topology amendment, topology B).
 internal sealed class RabbitMqExtension(string connectionString, string serviceName, IWireNames wireNames) : IWolverineExtension
 {
     public void Configure(WolverineOptions wolverine)

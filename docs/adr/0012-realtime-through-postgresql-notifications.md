@@ -4,7 +4,7 @@ status: accepted
 
 # A realtime push is a PostgreSQL notification on its delivery's own transaction, heard by one listener per instance
 
-Spec #115 decided Realtime's mechanism between instances (R1) and ticket #133 built it in `PouryaKit.Realtime`. **A
+Realtime's mechanism between instances is built in `PouryaKit.Realtime`. **A
 Notification Handler pushes a realtime event with `IRealtimePublisher`, which runs `pg_notify` on the delivery's own
 transaction, the EF Unit of Work's; PostgreSQL delivers the notification to every session that listens on the channel
 only when that transaction commits; each instance of the Host holds one dedicated listening connection and passes each
@@ -17,11 +17,9 @@ client reads through a query. Nothing observed contradicts ADR 0001 to 0011 or s
 
 Plan I.6 answer 4 put realtime push in one optional package used from Messaging: a Notification Handler pushes after
 commit, a client connected to any instance receives the event, through SSE, with no SignalR package and no second push
-channel. The plan left the mechanism between instances open (2026-10-09): a Notification is delivered to its handler
+channel. A Notification is delivered to its handler
 once, on one instance, so a client connected to another instance needs something between instances. Both reference
-managers keep their connections in a dictionary of one process (`Ultrabusiness@d685de6
-src/BuildingBlocks/BuildingBlocks.SSE/Services/SseConnectionManager.cs:22`, `cybernod@bae8ac3
-src/BuildingBlocks/BuildingBlocks.SignalR/Implementations/SignalRConnectionManager.cs:23`), which loses every push to a
+managers keep their connections in a dictionary of one process, which loses every push to a
 client of another instance.
 
 ## Decision
@@ -57,8 +55,7 @@ client of another instance.
 - **The clients are the instance's, in memory, keyed by tenant and Channel.** The endpoint takes the tenant and the
   Actor from the request's Operation Context, which the Module's route group begins and authenticates; the endpoint's
   rule admits each requested Channel for the Actor, or the request is refused with a problem response before anything
-  streams. The response is the framework's `TypedResults.ServerSentEvents`, the shape learned from
-  `Ultrabusiness@d685de6 src/BuildingBlocks/BuildingBlocks.SSE/Extensions/SseEndpointExtensions.cs:58`; it is served by
+  streams. The response is the framework's `TypedResults.ServerSentEvents`; it is served by
   the request, never from inside a Gateway call: streaming opens no Gateway scope and no Unit of Work, while the request's
   scope and its Operation last until the connection ends. A client a full buffer of
   256 events behind is disconnected, since the listener never waits for one.
@@ -70,9 +67,9 @@ client of another instance.
 
 ## Considered Options
 
-- **A per-instance RabbitMQ queue**, rejected by the spec: the broker is optional, and the Kit's durable-queue check
+- **A per-instance RabbitMQ queue**, rejected: the broker is optional, and the Kit's durable-queue check
   refuses a non-durable listener.
-- **Redis publish and subscribe**, rejected by the spec: no Kit package references a Redis client.
+- **Redis publish and subscribe**, rejected: no Kit package references a Redis client.
 - **A connection list in the process**, as both references keep, rejected: it loses delivery across instances.
 - **SignalR, or a second push channel**, rejected by I.6 answer 4. "No second push channel" is read against SignalR
   beside SSE; a database signal between instances is not a channel to a client.
@@ -85,11 +82,11 @@ client of another instance.
 - Identical pushes on one channel in one transaction arrive once: PostgreSQL folds them.
 - The Hosts of one database share the PostgreSQL channel, so two applications on one database name their Channels
   apart.
-- A Marten Unit of Work does not push (spec #115, "Out of Scope"): `IUnitOfWorkConnection` is the EF Unit of Work's.
+- A Marten Unit of Work does not push: `IUnitOfWorkConnection` is the EF Unit of Work's.
 
 ## Invariants worth a permanent test
 
-`RealtimeTests` in `tests/ModularMonolith.Tests` hold each, red once with its behaviour switched off: a push committed
+`RealtimeTests` in `tests/ModularMonolith.Tests` hold each: a push committed
 on one instance reaches a client of another, with two instances of one Host on one store under Balanced durability; a
 delivery that rolls back pushes nothing; a trusted peer's command, a command sent with `Continue()` and a command a
 Notification Handler sends through the Gateway with its delivery's own context cannot push, and the last cannot publish;
@@ -99,13 +96,13 @@ ends in a `gap` and a listener that hears the next push; and, against the sample
 rate limiter counts one permit for a connection, response compression leaves the event stream alone, and status code
 pages leave a started connection as it was written.
 
-## Amendment (2026-10-18, ticket #159: the record lasts for the Notification Handler's run alone)
+## Amendment (2026-10-18: the record lasts for the Notification Handler's run alone)
 
-The decision stands. As built in #133, `DeliverHandler` set `INotificationDelivery` before the Notification Handler
+The decision stands. Before this amendment, `DeliverHandler` set `INotificationDelivery` before the Notification Handler
 ran and left it set, and the Unit of Work drains the Domain Events the handler's own change raised in that same scope
 once the handler returns, so a Domain Event Handler of that change passed both publishers' gate, although the decision
 above excludes the delivery's Domain Event Handlers. The delivery step now sets the record before the handler runs and
 clears it when the handler returns, whether it succeeded, failed or threw, before the drain: the Notification Handler
 pushes and publishes, and a Domain Event Handler of what it changed throws at either publisher, as it would anywhere
 else. `RealtimeTests.A_domain_event_handler_of_a_notification_handlers_change_cannot_push_or_publish_while_the_handler_can`
-holds it, red once with the record left set.
+holds it.

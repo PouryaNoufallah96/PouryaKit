@@ -4,14 +4,14 @@ status: accepted
 
 # The Unit of Work commits through Wolverine's EF outbox inside its own transaction
 
-Spike S1 (ticket #2) ran the commit design of ADR 0003 against WolverineFx 6.46.0 and PostgreSQL. The Kit's
+Spike S1 ran the commit design of ADR 0003 against WolverineFx 6.46.0 and PostgreSQL. The Kit's
 Unit of Work commits business rows and Outbox rows atomically for two Modules' DbContexts in one Host
 container through one Wolverine message store. It does so by owning an explicit database transaction:
 begin, run the Operation, `SaveChangesAsync`, commit, and only then `FlushOutgoingMessagesAsync` on
 `IDbContextOutbox<TDbContext>`. Module DbContexts carry no Wolverine mapping. The EF mode is `Eager`.
 Nothing observed contradicts ADR 0001–0003 or section G.
 
-One gap remains for ticket #15. If the commit succeeds but the flush never happens, and the Host stays
+One gap remains. If the commit succeeds but the flush never happens, and the Host stays
 alive, the Notification is delayed rather than lost. It is delivered when the Host stops. If
 `InboxStaleTime` is set, it is delivered after `InboxStaleTime` plus up to two recovery polls. That remedy
 has a cost: a handler that runs longer than the stale time is handed out again on every recovery cycle. See
@@ -20,11 +20,9 @@ has a cost: a handler that runs longer than the stale time is handed out again o
 ## Evidence
 
 The Spike code is `spikes/s1-atomic-commit/` at commit `82b0b8fd8a9c25bf5fb0ca17e4fef85072116fc3`, reachable
-through tag `spike/s1-atomic-commit`. It is not merged. Earlier rounds of tests were committed at
-`64e2b16` and `72fefde`.
+through tag `spike/s1-atomic-commit`. It is not merged.
 
-The tests were run on 2026-10-05 with `dotnet test spikes/s1-atomic-commit` (.NET SDK 10.0.401, Microsoft
-Testing Platform), against `postgres:18.6` in Testcontainers 4.15.0. 38 of 38 tests passed.
+The tests ran against `postgres:18.6` in Testcontainers; 38 of 38 passed.
 
 - Each test gets a fresh database.
 - Catalog (`catalog` schema) and Inventory (`inventory` schema) each have their own DbContext.
@@ -74,8 +72,7 @@ Versions and licences are as published on nuget.org and read from the restored n
 | JasperFx / Weasel.* | 2.80.2 / 9.41.0 (transitive) | MIT |
 
 The Host's full closure is 90 packages: 83 MIT, 3 BSD-3-Clause (NetTopologySuite, NetTopologySuite.IO.PostGis,
-Polly.Core), 3 PostgreSQL (the Npgsql packages) and 1 Apache-2.0 (NewId). None is reciprocal or commercial,
-so no `stop_if` applies.
+Polly.Core), 3 PostgreSQL (the Npgsql packages) and 1 Apache-2.0 (NewId). None is reciprocal or commercial.
 
 The closure contains Roslyn, and it arrives from two sources:
 
@@ -132,10 +129,7 @@ catch
 await outbox.FlushOutgoingMessagesAsync();         // only after a successful commit
 ```
 
-## Observed behaviour previously listed as inferred (plan section F)
-
-Per-retry scope, also listed in section F, was not examined and remains unverified (S2). *Answered by ADR 0006, "What
-this refines in ADR 0004": each attempt runs in a new scope the Kit opens.*
+## Observed behaviour
 
 - **Send timing with the outbox.** Publishing writes the envelope row at once, inside the Unit of Work's
   transaction. With a Wolverine-mapped DbContext it is written at `SaveChangesAsync` instead. Nothing is sent
@@ -214,21 +208,21 @@ this refines in ADR 0004": each attempt runs in a new scope the Kit opens.*
 
 ## Invariants for permanent tests
 
-| Invariant | Seam | Owner |
-|---|---|---|
-| A failed Result, a failure after save, or a failed save leaves no business row, no Outbox row and no delivery, for each Module | Gateway | #15 |
-| A successful Operation's business rows and Notifications become visible together, and the Notification is delivered | Gateway | #15 |
-| A Notification committed before the Host dies is delivered after restart (the test needs a stop point between commit and flush) | Gateway | #15 |
-| A Notification committed but not flushed on a live Host is delivered without a restart. The remedy the evidence supports is setting `InboxStaleTime` from a Kit setting; Woo's 5 minutes is a starting value. Its cost: delivery is delayed by `InboxStaleTime` plus up to two recovery polls; a handler running longer than it is handed out again, concurrently, on every recovery cycle until one run completes, so `InboxStaleTime` must exceed the longest handler run (including queue wait) the Host expects; and the inbox table gains a `timestamp` column. Rejected: retrying the flush, because the flush swallows send failures and a lost commit acknowledgement hides the commit; and accepting delivery at the next restart, which is unbounded on a long-lived Host. | Gateway | #15 |
-| One `IDbContextOutbox<T>` instance, one scope, serves exactly one commit attempt: never reused after a rollback, never asked to commit twice | Gateway | #15 |
-| Feature code never reaches `IMessageBus`, `IMessageContext` or `IDbContextOutbox<>`; only the Unit of Work publishes and flushes | Structure | #15 |
-| Module DbContexts do not map Wolverine envelope storage (`MapWolverineEnvelopeStorage`, `AddDbContextWithWolverineIntegration`) | Structure | #15 |
-| A Notification or Integration Event applies its effect once, through the handler's Receipt. This must hold for a re-run after a crash during handling, and also under several concurrent duplicate hand-outs, such as those `InboxStaleTime` produces when a handler outlasts it | Gateway | #16 |
+| Invariant | Seam |
+|---|---|
+| A failed Result, a failure after save, or a failed save leaves no business row, no Outbox row and no delivery, for each Module | Gateway |
+| A successful Operation's business rows and Notifications become visible together, and the Notification is delivered | Gateway |
+| A Notification committed before the Host dies is delivered after restart (the test needs a stop point between commit and flush) | Gateway |
+| A Notification committed but not flushed on a live Host is delivered without a restart. The remedy the evidence supports is setting `InboxStaleTime` from a Kit setting; Woo's 5 minutes is a starting value. Its cost: delivery is delayed by `InboxStaleTime` plus up to two recovery polls; a handler running longer than it is handed out again, concurrently, on every recovery cycle until one run completes, so `InboxStaleTime` must exceed the longest handler run (including queue wait) the Host expects; and the inbox table gains a `timestamp` column. Rejected: retrying the flush, because the flush swallows send failures and a lost commit acknowledgement hides the commit; and accepting delivery at the next restart, which is unbounded on a long-lived Host. | Gateway |
+| One `IDbContextOutbox<T>` instance, one scope, serves exactly one commit attempt: never reused after a rollback, never asked to commit twice | Gateway |
+| Feature code never reaches `IMessageBus`, `IMessageContext` or `IDbContextOutbox<>`; only the Unit of Work publishes and flushes | Structure |
+| Module DbContexts do not map Wolverine envelope storage (`MapWolverineEnvelopeStorage`, `AddDbContextWithWolverineIntegration`) | Structure |
+| A Notification or Integration Event applies its effect once, through the handler's Receipt. This must hold for a re-run after a crash during handling, and also under several concurrent duplicate hand-outs, such as those `InboxStaleTime` produces when a handler outlasts it | Gateway |
 
 ## Defaults chosen
 
-On 2026-10-05 the owner asked for these defaults to be settled by what the reference projects and Wolverine
-recommend across a monolith, a modular monolith and microservices. The owner can overturn any of them.
+These defaults follow what the reference projects and Wolverine recommend across a monolith, a modular monolith and
+microservices.
 Wolverine documents are cited at tag `V6.46.0`.
 
 1. **Durability mode.** A Kit Host keeps Wolverine's default, Balanced, because it is the only mode that is
@@ -272,7 +266,6 @@ Wolverine documents are cited at tag `V6.46.0`.
 - Retry and recovery tests need short durability timers or Solo mode. The defaults take more than a minute
   to recover a dead node's envelopes. An `InboxStaleTime` shorter than a handler's run hands the envelope out
   again on every recovery cycle while the handler is still running.
-- Per-retry scope (plan section F) was not examined. *Answered by ADR 0006, as above.*
 - Woo's block also sets `ConventionalLocalRoutingIsAdditive`, `UseDurableInboxOnAllListeners`,
   `UseDurableOutboxOnAllSendingEndpoints`, `RetryWithCooldown` and the inbox and outbox stale times. S1 used
   none of them, except `InboxStaleTime` in the stranded-Notification tests.
@@ -301,20 +294,20 @@ Wolverine documents are cited at tag `V6.46.0`.
 - Disposing a Host logs `ObjectDisposedException` errors from Wolverine's database batcher. They are noise,
   and test log assertions should tolerate them.
 
-## Amendment (2026-10-05, ticket #17)
+## Amendment (2026-10-05: the stale time covers the whole retry schedule)
 
-The decision above stands. Ticket #17 extended the cost of its `InboxStaleTime` remedy.
+The decision above stands. The cost of its `InboxStaleTime` remedy extends to the retry schedule.
 
-- **The stale time covers the whole retry schedule.** The invariant owned by #15 says `InboxStaleTime` must exceed
+- **The stale time covers the whole retry schedule.** The invariant above says `InboxStaleTime` must exceed
   the longest handler run, queue wait included. The release compares the insert time, and a stored retry keeps it, so
   a delivery that fails ages through its retry delays as well. `InboxStaleTime` must exceed the sum of the retry
   delays plus every attempt's run, queue wait included: an attempt that runs after it is handed out again while it
   runs, and the Receipt keeps the effect to one (`InboxStaleTimeTests`). The evidence, and the default retry delays
-  shortened to fit, are in ADR 0006's amendment for ticket #17.
+  shortened to fit, are in ADR 0006's persisted retry and stale time amendment.
 
 ## Amendment (2026-10-06, Wave 1 as built)
 
-The decision above stands. Ticket #15 met its one-instance invariant by another route than the text names.
+The decision above stands. The one-instance invariant is met by another route than the text names.
 
 - **A new outbox for each commit attempt.** The decision and the invariant "One `IDbContextOutbox<T>` instance, one
   scope, serves exactly one commit attempt" name the scope's `IDbContextOutbox<TDbContext>`. The Unit of Work's Outbox
@@ -326,9 +319,9 @@ The decision above stands. Ticket #15 met its one-instance invariant by another 
 - `DurabilitySettings.MessageIdentity` (Notes for S2) is still open; it belongs with brokers in Wave 2 (ADR 0006,
   Consequences).
 
-## Amendment (2026-10-07, ticket #58: code generation for production)
+## Amendment (2026-10-07: code generation for production)
 
-The decision above stands. Ticket #58 built "Defaults chosen", 2, as Wolverine's code generation guide recommends for
+The decision above stands. "Defaults chosen", 2, is built as Wolverine's code generation guide recommends for
 the pinned version (`JasperFx/wolverine` commit `dc63f46`, `docs/guide/codegen.md:188-211,235-260`; its sample
 `JasperFx/CritterStackSamples` commit `76ce8e2`, `CqrsMinimalApi/`).
 
@@ -371,19 +364,13 @@ the pinned version (`JasperFx/wolverine` commit `dc63f46`, `docs/guide/codegen.m
   templates document the step, and a generated solution commits its own, as the guide's sample does.
 - **Message storage is still built at startup.** The guide's sample also sets `Production.ResourceAutoCreate` to
   `AutoCreate.None`; the Kit does not, since nothing else creates Wolverine's tables for a Kit Host.
-- **Proof.** `scripts/packaging/validate.py` runs `codegen write` on each Host, the two generated ones and the Proving
-  Sample's two in its copied sample, publishes it in Release and checks the publish (`check_production_publish`), all on
-  the consumers' copies, so the checkout gets no generated file. The Proving Sample's child-process test runs
-  `Inventory.Host` in Production, Static, from the tests' build. Each published generated Host was started once by hand
-  in Production against PostgreSQL (`docs/acceptance.md`).
 
-## Amendment (2026-10-08, ticket #63: the store's database checked when the Host is built)
+## Amendment (2026-10-08: the store's database checked when the Host is built)
 
 The decision above stands. "One message store serves two DbContexts" holds "provided every DbContext connects to the
-store's database", and until ticket #63 nothing checked that proviso: it was a deployment rule only.
+store's database", and until then nothing checked that proviso: it was a deployment rule only.
 
-- **What a DbContext on another database did.** #54's probe of 2026-10-08 (`MessageStoreDatabaseTests` at commit
-  `3861dc9`, recorded in `docs/acceptance.md`) confirmed the unmapped path above: Wolverine writes each envelope on the
+- **What a DbContext on another database did.** A probe confirmed the unmapped path above: Wolverine writes each envelope on the
   Unit of Work's own connection and transaction, in the store's schema, so into the DbContext's database. With no store
   tables there, the first Operation that wrote to the Outbox failed with `42P01` and nothing committed. With a copy of the
   store's tables there, it committed into that copy, the handlers ran once from the in-memory flush, and the rows stayed
@@ -397,22 +384,21 @@ store's database", and until ticket #63 nothing checked that proviso: it was a d
   an Npgsql data source included, on hosts, ports and database as Npgsql reads them, and fails the build with one line
   per DbContext on another database. It opens no connection, and two names for one database pass
   (`MessageStoreDatabaseTests`). A string that names neither a database nor a user, on either side, leaves the database
-  to the client's user, so it fails the build too, asking for `Database`, or at least `Username` (orchestrator's decision
-  of 2026-10-08, second review of #63).
+  to the client's user, so it fails the build too, asking for `Database`, or at least `Username`.
 
-## Amendment (2026-10-08, ticket #64: the `PouryaKit` prefix on two registrations)
+## Amendment (2026-10-08: the `PouryaKit` prefix on two registrations)
 
-The decision above stands. On 2026-10-08 the owner decided that the two registrations of the Kit without the `PouryaKit`
-prefix take it before the first publication, with no alias and no forwarder: `UsePostgres<TDbContext>`
+The decision above stands. The two registrations of the Kit without the `PouryaKit`
+prefix take it, with no alias and no forwarder: `UsePostgres<TDbContext>`
 (`PouryaKit.Persistence.Postgres`) is now `UsePouryaKitPostgres<TDbContext>`, and `MapUniqueConstraint<TDbContext>`
 (`PouryaKit.Persistence.EFCore`) is now `MapPouryaKitUniqueConstraint<TDbContext>`. Signatures and behaviour are
 unchanged. The text above keeps the former names, as it was written: where it says `UsePostgres`, the code says
 `UsePouryaKitPostgres`, and the line `MessageStoreDatabaseCheck` reports names the new call.
 
-## Amendment (2026-10-09, ticket #75: WolverineFx 6.48.2)
+## Amendment (2026-10-09: WolverineFx 6.48.2)
 
 The decision above stands. The five `WolverineFx*` pins move from 6.46.0 to 6.48.2: `WolverineFx`,
-`WolverineFx.EntityFrameworkCore`, `WolverineFx.Postgresql`, `WolverineFx.RabbitMQ` (ADR 0006's #50 amendment) and
+`WolverineFx.EntityFrameworkCore`, `WolverineFx.Postgresql`, `WolverineFx.RabbitMQ` (ADR 0006's RabbitMQ topology amendment) and
 `WolverineFx.RuntimeCompilation`, in `Directory.Packages.props` and in each template's own, which `TemplateTests` keeps
 equal to it. "Pinned versions and licences" stays as the record of what Spike S1 ran on, and the `V6.46.0` source
 citations above stay as they were read.
@@ -421,38 +407,36 @@ citations above stay as they were read.
   plain loop: one `ReconnectedAsync` exception ended it, and that listener and every one after it kept a channel with no
   consumer while its status stayed `Accepting` and health stayed green. 6.48.0 rebuilds each agent on its own, retries a
   failed rebuild on a bounded schedule and tolerates tearing down a channel the client already closed
-  (`JasperFx/wolverine` #4864, #4867). A Kit Host receives through exactly one durable broker listener.
-- **Which release.** 6.48.2, as the ticket names it. The 6.48.1 notes fix the order in which a global partition slot's
-  backlog resumes on its new owner; the 6.48.2 notes make the leader's agent assignment scale to tens of thousands of
+  (`JasperFx/wolverine` [issue 4864](https://github.com/JasperFx/wolverine/issues/4864) and [pull request 4867](https://github.com/JasperFx/wolverine/pull/4867)). A Kit Host receives through exactly one durable broker listener.
+- **Which release.** 6.48.2. The 6.48.1 notes concern global partitioning, which the Kit does not use; the 6.48.2 notes make the leader's agent assignment scale to tens of thousands of
   agents and add `DurabilitySettings.LeaderTakeoverHoldEvaluations` (default 1), which withholds first-time placements
   for one evaluation after a leader takeover, and stands down while no other node holds an assignment. The Kit uses no
   global partitioning and leaves the setting at its default. Each package is `MIT` with a `net10.0` asset; against
   6.46.0 their only dependency change is `JasperFx`, `JasperFx.Events` and `JasperFx.SourceGenerator` 2.80.2 to 2.81.0,
   `MIT`; `WolverineFx.RDBMS` and `WolverineFx.Newtonsoft` follow to 6.48.2, and restore resolves no other new version
   (Weasel stays at 9.41.0).
-- **Proof.** Compatibility: the build has no warning, the whole suite passes on 6.48.2, and `validate.py` passes
-  (`docs/acceptance.md`, "Pre-Wave 3 WolverineFx 6.48.2, ticket #75"). The repair itself is upstream's, proven by its
+- **Proof.** The repair itself is upstream's, proven by its
   own tests. `RabbitMqDeliveryTests.A_host_whose_broker_connections_drop_while_it_runs_consumes_its_queue_again_and_a_publication_committed_after_arrives`
   closes every connection of the test's vhost from the broker while both Hosts run: the Inventory Host's queue loses its
   consumer, gets it back, and a publication committed afterwards arrives. It passes on 6.46.0 as well, so it is not a
-  regression test for #4867: a single broker's forced close makes no rebuild throw, and the defect needs one that does.
-- **6.48.3 (2026-10-09, #75 follow-up).** The seven pins move on to 6.48.3, published the same day at 14:42 UTC, after
-  a run on it. Its notes: a blue/green warm-up spreads over every green node that joins, not only the first (#4904);
-  three gaps in that machinery, found by a randomized soak, are closed (#4909); fleet-scale simulated scenarios, test
-  code only (#4905); a chain that only reads through `IQuerySession` but sends gets its commit, in the Marten, Polecat
-  and Fisher frame providers (#4910, #4912). The tags also differ by #4903, which the notes leave out: `IgnoreEnvelopes`
+  regression test for the upstream fix ([pull request 4867](https://github.com/JasperFx/wolverine/pull/4867)): a single broker's forced close makes no rebuild throw, and the defect needs one that does.
+- **6.48.3.** The seven pins move on to 6.48.3. Its notes: a blue/green warm-up spreads over every green node that
+  joins, not only the first ([pull request 4904](https://github.com/JasperFx/wolverine/pull/4904)); three gaps in that machinery, found by a randomized soak, are closed
+  ([pull request 4909](https://github.com/JasperFx/wolverine/pull/4909)); fleet-scale simulated scenarios, test code only ([pull request 4905](https://github.com/JasperFx/wolverine/pull/4905)); a chain that only reads through `IQuerySession`
+  but sends gets its commit, in the Marten, Polecat and Fisher frame providers ([pull requests 4910](https://github.com/JasperFx/wolverine/pull/4910) and [4912](https://github.com/JasperFx/wolverine/pull/4912)). The tags also
+  differ by [pull request 4903](https://github.com/JasperFx/wolverine/pull/4903), which the notes leave out: `IgnoreEnvelopes`
   applies inside the `AddStage` stages of a tracked test session. The Kit uses no Marten, Polecat, Fisher, event
-  subscription or tracked session. #4904 and #4909 change the leader's agent placement, which every Balanced node runs,
+  subscription or tracked session. [Pull requests 4904](https://github.com/JasperFx/wolverine/pull/4904) and [4909](https://github.com/JasperFx/wolverine/pull/4909) change the leader's agent placement, which every Balanced node runs,
   a single one included, but their new branches act only when the leader moves an agent between nodes; a single node
   only starts its own. Each package stays `MIT` with a `net10.0` asset, and its dependencies change only within the
   `WolverineFx` packages (`WolverineFx.RDBMS` and `WolverineFx.Newtonsoft` follow to 6.48.3): `JasperFx` 2.81.0, Weasel
   9.41.0 and `RabbitMQ.Client` 7.2.2 stay, and restore resolves the same 312 package versions but those seven. No file
-  of `Wolverine.RabbitMQ` changed between V6.48.2 and V6.48.3, so the repair is the one described above: #4867 (merge
+  of `Wolverine.RabbitMQ` changed between V6.48.2 and V6.48.3, so the repair is the one described above: [pull request 4867](https://github.com/JasperFx/wolverine/pull/4867) (merge
   commit `cbb1c4e`, 2026-10-07) is an ancestor of V6.48.0, V6.48.2 and V6.48.3 and not of V6.46.0, and the decompiled
   `Wolverine.RabbitMQ.dll` of 6.46.0 and 6.48.2 differ in exactly its two files: `ConnectionMonitor.cs`, which rebuilds
   each agent in its own try/catch and retries a failed rebuild after 1, 2, 5, 10, 20 and 30 s, and
   `RabbitMqChannelAgent.cs`, whose teardown tolerates a closed channel. The drop test above proves recovery after a
-  clean drop and delivery after it, and no regression test for #4867 that uses only the broker exists: every refusal a
+  clean drop and delivery after it, and no regression test for [pull request 4867](https://github.com/JasperFx/wolverine/pull/4867) that uses only the broker exists: every refusal a
   single-node broker can produce on demand closes the channel at channel level, and 6.46.0's unchanged channel-shutdown
   hook then rebuilds again, while the exceptions that strand a listener (the client's own disposal errors, a quorum
   queue without a majority) cannot be produced on demand, and upstream's regression test injects an internal fake agent
@@ -463,9 +447,9 @@ citations above stay as they were read.
   it" can apply to a Kit Host. That queue was observed in the broker during a `RabbitMqDeliveryTests` run, one per Host
   with one consumer; the shared connection is read from the decompiled code. A known limit, not a Kit defect: after
   its last retry, about 68 s after the recovery, 6.48.x gives up, and the agent stays without a consumer until the next
-  connection recovery, still with no health signal. Proof: `docs/acceptance.md`, the #75 section.
+  connection recovery, still with no health signal.
 
-## Amendment (2026-10-10, ticket #82: no EF Core transaction middleware)
+## Amendment (2026-10-10: no EF Core transaction middleware)
 
 The decision above stands: the Unit of Work owns its transaction and writes the Outbox in it.
 `UsePouryaKitWolverine(connectionName)` no longer calls `UseEntityFrameworkCoreTransactions(TransactionMiddlewareMode.Eager)`,
@@ -488,36 +472,32 @@ describes the Kit: it configures no EF Core middleware mode at all.
   middleware on a `[Transactional]` handler; for the owned Unit of Work the mode made no difference even in Spike S1.
   An application that adds a Wolverine handler of its own with EF Core middleware calls `UseEntityFrameworkCoreTransactions`
   itself, in the `configure` the call takes.
-- **Proof.** With the line and its two `using` directives removed (`4bf4b82`), `dotnet build PouryaKit.slnx` gave 0
-  warnings and `dotnet test PouryaKit.slnx` passed 830, 0 failed, the suite's whole count, in 2m27s
-  (`docs/acceptance.md`, "Pre-Wave 3 proofs before fixes, ticket #82").
 
-## Amendment (2026-10-10, ticket #96: two different Hosts never share a store's schema)
+## Amendment (2026-10-10: two different Hosts never share a store's schema)
 
 The decision above stands. "One store per Host", in the spike's registration comment and in "Consequences", and a schema
 "configurable per Host", in "Defaults chosen", 3, described the Kit's layout without excluding anything: the Kit's
 documentation promised `DurabilityMode.Balanced` safe with any number of instances on one store, and never said that two
-different Hosts on one schema are unsupported. Since ticket #96 they are a stated rule, and the upstream guidance that
+different Hosts on one schema are unsupported. They are now a stated rule, and the upstream guidance that
 "Defaults chosen", 3, cites is its reason.
 
 - **The rule.** Instances of one Host share one store and one schema. Two different Hosts, with different handlers,
   Modules or applications, each take a store of their own: another database, or another schema on one database through
   the `schema` argument of `UsePouryaKitWolverine(connectionName, schema, configure)`. Sharing a schema between different
   applications is unsupported.
-- **Why.** `JasperFx/wolverine` issue #4923, filed 2026-10-09, reproduced on WolverineFx 6.45.0 and 6.48.2 and open on
-  2026-10-10: when two different applications share one envelope-store schema in Balanced mode, the durability agent of a
+- **Why.** `JasperFx/wolverine` [issue 4923](https://github.com/JasperFx/wolverine/issues/4923), reproduced on WolverineFx 6.45.0 and 6.48.2: when two different applications share one envelope-store schema in Balanced mode, the durability agent of a
   node without the handlers recovers the other application's inbox rows and dead-letters them, as a Kit Host does with
   every message it has no handler for (`UsePouryaKitWolverine` sets `UnknownMessageBehavior.DeadLetterQueue`), or drops
   them under Wolverine's default. The maintainer's only comment, of 2026-10-09: "Process A and Process B in your usage
   should *not* be using the same Wolverine storage." Wolverine's PostgreSQL guide says the same in a code comment of its
   sample (`JasperFx/wolverine` tag `V6.48.3`, commit `c1eab2a7f04de7350c3b54741ae00351c6c303d1`,
   `docs/guide/durability/postgresql.md:192-195`): "If separate logical services are targeting the same physical database,
-  you should use a separate schema name for each logical application". The Kit's pin, WolverineFx 6.48.3 (the #75
-  amendment), was published at 14:42 UTC on 2026-10-09, before the issue was filed at 18:11 UTC, and contains no fix.
-- **Documented, not checked.** The owner decided on 2026-10-10 to document the rule and add no runtime guard: Wolverine's
+  you should use a separate schema name for each logical application". The Kit's pin, WolverineFx 6.48.3 (the WolverineFx 6.48.2
+  amendment), contains no fix.
+- **Documented, not checked.** The rule is documented and has no runtime guard: Wolverine's
   node record holds no application identity (its insert writes an id, the control URI, capabilities, a description and a
   version: `JasperFx/wolverine` tag `V6.48.3`, `src/Persistence/Wolverine.Postgresql/PostgresqlNodePersistence.cs:66`),
-  so a check would have nothing to observe. `MessageStoreDatabaseCheck` (the #63 amendment) compares one Host's
+  so a check would have nothing to observe. `MessageStoreDatabaseCheck` (the store's database amendment) compares one Host's
   DbContexts with that Host's own store and cannot see another Host. The Proving Sample keeps the rule with a database for
   each of `ModularMonolith.Host` and `Inventory.Host`, and `BrokerFixture` gives each of its two Hosts a database of its
   own.
@@ -529,9 +509,9 @@ different Hosts on one schema are unsupported. Since ticket #96 they are a state
   text above keeps its wording. The skill's `rabbitmq.md` keeps its own rule for the broker: two different Hosts never
   share a service name, and so never a queue.
 
-## Amendment (2026-10-10, ticket #87: the generated test project through `PouryaKit.Testing`)
+## Amendment (2026-10-10: the generated test project through `PouryaKit.Testing`)
 
-Two lines of the ticket #58 amendment no longer describe the templates. Each template Host composes in
+Two lines of the code generation for production amendment no longer describe the templates. Each template Host composes in
 `AppHost.CreateBuilder(args)` and `AppHost.Build(builder)`, as the Proving Sample's `ModularMonolithHost` does, and its
 `Program.cs` is `return await AppHost.Build(AppHost.CreateBuilder(args)).RunJasperFxCommands(args);`: every Host still
 owns the command line. A generated solution's test project references `PouryaKit.Testing`, which brings
@@ -539,7 +519,7 @@ owns the command line. A generated solution's test project references `PouryaKit
 `HostFixture`, never through `Program`, so it sets nothing for JasperFx. The Testing package's exception stands as
 recorded: no other Kit package references the compiler.
 
-## Amendment (2026-10-16, ticket #120: a Stream commits through Wolverine's Marten outbox)
+## Amendment (2026-10-16: a Stream commits through Wolverine's Marten outbox)
 
 The decision above stands for the EF write model. Each write model has one commit owner; the EF Unit of Work owns rows
 and commits through the EF outbox; the Marten Unit of Work owns a Stream and commits through Wolverine's Marten outbox;
@@ -552,12 +532,12 @@ Operation's only write, Marten's save commits nothing, and the Unit of Work comm
 message store, which Wolverine keeps as this one store, with one durability agent, only when it names this store's
 database and schema; otherwise the Host fails when it starts. A Notification committed by a process killed between
 Marten's commit and the flush is delivered after a restart, as recorded above for the EF outbox. The evidence and the
-invariants for #121, #131 and #132 are in [ADR 0011](0011-each-write-model-has-one-commit-owner.md).
+invariants are in [ADR 0011](0011-each-write-model-has-one-commit-owner.md).
 
-## Amendment (2026-10-24, ticket #167: WolverineFx 6.52.0)
+## Amendment (2026-10-24: WolverineFx 6.52.0)
 
 The decision above stands. The seven `WolverineFx*` pins move from 6.48.3 to 6.52.0, the latest stable on nuget.org on
-2026-10-24, and `Marten` from 9.46.0 to 9.53.0 (spec #161, owner decision W8). "Pinned versions and licences" stays as
+2026-10-24, and `Marten` from 9.46.0 to 9.53.0. "Pinned versions and licences" stays as
 the record of what Spike S1 ran on, and each amendment above keeps the version it was read on.
 
 - **What restore moved.** `JasperFx`, `JasperFx.Events` and `JasperFx.SourceGenerator` from 2.81.0 to 2.91.0 (2.94.0
@@ -570,15 +550,15 @@ the record of what Spike S1 ran on, and each amendment above keeps the version i
   dead-lettered on Azure Service Bus, SNS and Kafka, and the Kit's broker is RabbitMQ. It marks
   `MultipleHandlerBehavior.ClassicCombineIntoOneLogicalHandler` obsolete, which the Kit never names. 6.50.0's
   Wolverine.HTTP body binding and 6.49.0's SQL Server envelope ids do not reach a Kit Host.
-- **The inbox stale time (6.51.0, `JasperFx/wolverine` GH-5022).** The finding above that nothing updates the
+- **The inbox stale time (6.51.0, `JasperFx/wolverine` [issue 5022](https://github.com/JasperFx/wolverine/issues/5022)).** The finding above that nothing updates the
   `timestamp` the release compares no longer holds. At tag `V6.52.0` the release takes only rows with status `Incoming`
   (`src/Persistence/Wolverine.RDBMS/Durability/BumpStaleIncomingEnvelopesOperation.cs`), the scheduled-job poll's claim
   sets `timestamp` to the database's `now()` (`src/Persistence/Wolverine.RDBMS/MessageDatabase.cs`,
   `restartIncomingStaleClock`, used by `src/Persistence/Wolverine.Postgresql/PostgresqlMessageStore.cs`), and a durable
   receiver restarts the clock of every envelope it holds, queued or running, three times per stale time
   (`src/Wolverine/Runtime/WorkerQueues/DurableReceiver.cs`, `InboxCustody.cs`). So a due retry, delayed command or
-  recurring occurrence is not stale when it starts (`InboxStaleTimeTests`), and the #17 amendment's rule, that the
-  stale time covers the retry schedule, is retired (ADR 0006's amendment for #167). The release compares the Host's
+  recurring occurrence is not stale when it starts (`InboxStaleTimeTests`), and the rule of the stale time amendment above, that the
+  stale time covers the retry schedule, is retired (ADR 0006's amendment on the retired stale-time rule). The release compares the Host's
   clock, less the stale time, with the database's, and a held envelope is released when its receiver misses a restart:
   in the Kit's loaded test run a 2-second stale time let a held retry be handed out twice. The stale time therefore
   stays well above the clock difference and a loaded Host's delay, as the 5-minute default does. The remedy for a
@@ -587,5 +567,3 @@ the record of what Spike S1 ran on, and each amendment above keeps the version i
 - **The namespace rule.** `JasperFx.SourceGenerator` 2.91.0 writes an internal `JasperFx.Generated.DiscoveredEventModels`
   into every assembly that sees `JasperFx.Events`, marked only by an auto-generated comment; `NamespaceTests` leaves it
   out by its full name.
-- **Proof.** The build has no warning, both test projects pass, and `validate.py` passes on the bumped tree
-  ([acceptance](../acceptance.md#wave-4-dependency-refresh-ticket-167)).

@@ -21,7 +21,7 @@ Start a new .NET 10 application on the Kit when its business code should be spli
 
 ## A Feature
 
-The handler that renames a product in the [Proving Sample](/docs/reference/glossary#proving-sample), quoted from its code when this site is built. It returns a [Result](/docs/reference/glossary#result): an [Error](/docs/reference/glossary#error) when the product does not exist, or what the rename returned. Nothing in it saves.
+The handler that renames a product in the [Proving Sample](/docs/reference/glossary#proving-sample). It returns a [Result](/docs/reference/glossary#result): an [Error](/docs/reference/glossary#error) when the product does not exist, or what the rename returned. Nothing in it saves.
 
 <Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct/RenameProductCommandHandler.cs" region="rename-product-handler" />
 
@@ -53,16 +53,16 @@ The .NET 10 SDK and Docker; [Prerequisites](/docs/get-started/prerequisites) lis
 
 ## What the Kit guarantees
 
-The Proving Sample's tests prove each rule below, in the test class named beside it, and the page it links states it in full. The first is a structure rule: the Kit holds its own sample to it, and a project copies the [structure tests](/docs/capabilities/testing#structure-tests) to hold its own code to it.
+The first rule is a structure rule: a project copies the [structure tests](/docs/capabilities/testing#structure-tests) to hold its own code to it.
 
-| Rule | Stated in | Proven by |
-| --- | --- | --- |
-| Feature code never saves, commits or touches the Outbox | [Structure tests](/docs/capabilities/testing#structure-tests) | `FeatureCodeTests` |
-| A [Notification Handler](/docs/reference/glossary#notification-handler) runs only after the commit | [Persistence guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) | `NotificationTests` |
-| Every failure answers one problem response | [Problem responses](/docs/capabilities/web#problem-responses) | `WebTests` |
-| There is no default [Actor](/docs/reference/glossary#actor) | [The Operation Context](/docs/capabilities/modules#the-operation-context) | `OperationContextTests` |
-| A tenant-scoped Module keeps to its Operation's [tenant](/docs/reference/glossary#tenant) | [Multi-tenancy guarantees](/docs/capabilities/multi-tenancy#what-the-kit-guarantees) | `TenancyTests` |
-| A declaration that cannot work fails the Host when it is built | [The Host's checks](/docs/capabilities/modules#the-hosts-checks) | `CompositionCheckTests` |
+| Rule | Stated in |
+| --- | --- |
+| Feature code never saves, commits or touches the Outbox | [Structure tests](/docs/capabilities/testing#structure-tests) |
+| A [Notification Handler](/docs/reference/glossary#notification-handler) runs only after the commit | [Persistence guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) |
+| Every failure answers one problem response | [Problem responses](/docs/capabilities/web#problem-responses) |
+| There is no default [Actor](/docs/reference/glossary#actor) | [The Operation Context](/docs/capabilities/modules#the-operation-context) |
+| A tenant-scoped Module keeps to its Operation's [tenant](/docs/reference/glossary#tenant) | [Multi-tenancy guarantees](/docs/capabilities/multi-tenancy#what-the-kit-guarantees) |
+| A declaration that cannot work fails the Host when it is built | [The Host's checks](/docs/capabilities/modules#the-hosts-checks) |
 
 ## Failure messages
 
