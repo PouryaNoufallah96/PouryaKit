@@ -511,7 +511,7 @@ def main():
         if arguments.plan:
             skipped(arguments.since)
             return 0
-        output = arguments.output.resolve() if arguments.output else Path(tempfile.mkdtemp(prefix="pouryakit-packages-"))
+        output = (arguments.output or Path(tempfile.mkdtemp(prefix="pouryakit-packages-"))).resolve()
         # A PASS without --keep removes the evidence directory with everything in it, so it may hold only what this run writes.
         if not arguments.keep and output.exists() and (not output.is_dir() or any(output.iterdir())):
             print(f"FAIL: {output} exists and is not an empty directory, and a PASS without --keep removes the evidence directory "
