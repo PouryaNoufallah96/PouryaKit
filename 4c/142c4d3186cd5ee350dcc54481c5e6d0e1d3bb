@@ -1,0 +1,41 @@
+.agents/skills/pourya-kit/references/messaging.md
+  s_ebdd029215ce19::t_e9bc090dcc2729 425
+.agents/skills/pourya-kit/references/packages.md
+  s_ebdd029215ce19::t_8c45369c1e9792 11
+.agents/skills/pourya-kit/references/testing.md
+  s_ebdd029215ce19::t_0f663a241da94e 72,144
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_ebdd029215ce19::t_a93f8d7286d215 1-2
+AGENTS.md
+  s_ebdd029215ce19::t_44f42811ab43e7 88
+docs/adr/0002-no-mediator-dependency.md
+  s_ebdd029215ce19::t_419117954ede8f 25-26
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_ebdd029215ce19::t_653b6a0804b0e0 25-28
+docs/adr/0013-a-saga-step-runs-outside-every-operation.md
+  s_ebdd029215ce19::t_7bac26a0c9ab0e 141
+docs/architecture/diagrams/kit-context.html
+  s_ebdd029215ce19::t_7cc35e0c246a89 4985
+docs/packages.md
+  s_ebdd029215ce19::t_541790bd7b7324 48
+docs/private-packages.md
+  s_ebdd029215ce19::t_18940ea92901ca 81
+website/distribution/manifest.sha256
+  s_ebdd029215ce19::t_0e082b9ca991a0 57,73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4c142c4d3186cd5ee350dcc54481c5e6d0e1d3bb",
+  "prompts": {},
+  "sessions": {
+    "s_ebdd029215ce19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80160123-5e97-4bc1-94e2-0b32b7a21bc0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
